@@ -159,34 +159,41 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
   };
 
   return (
-    <section className="stack">
-      <section className="card">
-        <div className="section-heading">
-          <div>
-            <div className="eyebrow">Упражнения клиента</div>
-            <h2>Каталог</h2>
-          </div>
-          <button className="primary-button" type="button" onClick={() => setShowCreate(true)}>+ Упражнение</button>
+    <section className="exercise-catalog stack">
+      <header className="exercise-catalog-header">
+        <div>
+          <div className="eyebrow">Упражнения клиента</div>
+          <h2>Каталог</h2>
         </div>
+        <button className="primary-button" type="button" onClick={() => setShowCreate(true)}>+ Упражнение</button>
+      </header>
 
+      <div className="exercise-catalog-search">
         <input
           className="text-input"
           type="search"
+          aria-label="Поиск упражнения"
           placeholder="Поиск упражнения…"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
+      </div>
 
-        {error && !showCreate ? <p className="inline-message error-text">{error}</p> : null}
-        {exercises === null ? <p>Загружаем каталог…</p> : exercises.length === 0 ? (
-          <div className="empty-state"><strong>Ничего не найдено</strong><p>Измените запрос или создайте своё упражнение.</p></div>
+      {error && !showCreate ? <p className="inline-message error-text">{error}</p> : null}
+
+      <section className="exercise-catalog-surface" aria-live="polite">
+        {exercises === null ? <p className="catalogue-status">Загружаем каталог…</p> : exercises.length === 0 ? (
+          <div className="empty-state catalogue-empty"><strong>Ничего не найдено</strong><p>Измените запрос или создайте своё упражнение.</p></div>
         ) : (
-          <div className="exercise-list">
+          <div className="exercise-list" role="list">
             {exercises.map((exercise) => (
-              <div className="exercise-row" key={exercise.id}>
+              <div className="exercise-row" role="listitem" key={exercise.id}>
                 <div className="exercise-row-main">
-                  {exercise.category_code ? <span className={`category-accent category-${exercise.category_code}`} aria-hidden="true" /> : null}
-                  <div>
+                  <span
+                    className={`category-accent category-${exercise.category_code ?? 'other'}`}
+                    aria-hidden="true"
+                  />
+                  <div className="exercise-row-copy">
                     <strong>{exercise.name}</strong>
                     <small>
                       {trackingLabels[exercise.tracking_type]}
