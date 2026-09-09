@@ -1,3 +1,4 @@
+import { createExerciseForClient, hasActiveCoachClient, listExercisesForClient, type TrackingType } from './lib/exercises';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 
@@ -136,6 +137,12 @@ function requireRole(auth: AuthContext, role: Role): void {
   }
 }
 
+async function requireCoachClient(db: D1Database, coachUserId: number, clientUserId: number): Promise<void> {
+  if (!(await hasActiveCoachClient(db, coachUserId, clientUserId))) {
+    throw new HttpError(404, 'CLIENT_NOT_FOUND', 'Client is not linked to this coach');
+  }
+}
+
 function inviteTokenFromStartParam(startParam?: string): string | null {
   if (!startParam?.startsWith('invite_')) return null;
   const token = startParam.slice('invite_'.length);
@@ -164,8 +171,68 @@ async function findInvite(db: D1Database, token: string): Promise<InviteRow | nu
     .first<InviteRow>();
 }
 
+const trackingTypes = new Set<TrackingType>(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight']);
+
+function isTrackingType(value: unknown): value is TrackingType {
+  return typeof value === 'string' && trackingTypes.has(value as TrackingType);
+}
+
+async function handleExerciseRoute(request: Request, env: Env, clientUserId: number): Promise<Response> {
+  const auth = await requireUser(request, env);
+  requireRole(auth, 'coach');
+  await requireCoachClient(env.DB_BINDING, auth.row.id, clientUserId);
+
+  const url = new URL(request.url);
+  if (request.method === 'GET') {
+    const search = (url.searchParams.get('search') ?? '').trim().slice(0, 100);
+    const exercises = await listExercisesForClient(env.DB_BINDING, auth.row.id, clientUserId, search);
+    return json({ exercises });
+  }
+
+  if (request.method === 'POST') {
+    let body: {
+      scope?: unknown;
+      name?: unknown;
+      trackingType?: unknown;
+      primaryMuscle?: unknown;
+      equipment?: unknown;
+    } = {};
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
+    }
+
+    if (body.scope !== 'coach' && body.scope !== 'client') {
+      throw new HttpError(400, 'INVALID_SCOPE', 'Exercise scope must be coach or client');
+    }
+    const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
+    if (!name) throw new HttpError(400, 'INVALID_NAME', 'Exercise name is required');
+    if (!isTrackingType(body.trackingType)) {
+      throw new HttpError(400, 'INVALID_TRACKING_TYPE', 'Unsupported exercise tracking type');
+    }
+
+    const primaryMuscle = typeof body.primaryMuscle === 'string' ? body.primaryMuscle.trim().slice(0, 80) || null : null;
+    const equipment = typeof body.equipment === 'string' ? body.equipment.trim().slice(0, 80) || null : null;
+    const exercise = await createExerciseForClient(env.DB_BINDING, auth.row.id, clientUserId, {
+      scope: body.scope,
+      name,
+      trackingType: body.trackingType,
+      primaryMuscle,
+      equipment,
+    });
+
+    if (!exercise) throw new HttpError(409, 'EXERCISE_EXISTS', 'An exercise with this name already exists in this scope');
+    return json({ exercise }, { status: 201 });
+  }
+
+  throw new HttpError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+}
+
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+  const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);
+  if (exerciseMatch) return handleExerciseRoute(request, env, Number(exerciseMatch[1]));
 
   if (url.pathname === '/api/health' && request.method === 'GET') {
     const result = await env.DB_BINDING.prepare('SELECT 1 AS ok').first<{ ok: number }>();
