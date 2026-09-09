@@ -1,0 +1,144 @@
+:root,
+:root[data-theme='default'] {
+  --theme-bg: #0B1118;
+  --theme-bg-text: #F5F7FA;
+  --theme-bg-muted: #9BAABA;
+  --theme-surface: #111A24;
+  --theme-surface-2: #162230;
+  --theme-input: #192635;
+  --theme-border: #2A3948;
+  --theme-surface-text: #F5F7FA;
+  --theme-surface-muted: #9BAABA;
+}
+
+:root[data-theme='graphite-cobalt'] {
+  --theme-bg: #202327;
+  --theme-bg-text: #F7F8FA;
+  --theme-bg-muted: #A7ADB5;
+  --theme-surface: #123B7A;
+  --theme-surface-2: #174A94;
+  --theme-input: #153F7D;
+  --theme-border: #2F63A5;
+  --theme-surface-text: #F7FAFF;
+  --theme-surface-muted: #C2D3EA;
+}
+
+:root[data-theme='emerald-sand'] {
+  --theme-bg: #073B2C;
+  --theme-bg-text: #F4F3EA;
+  --theme-bg-muted: #B9C7C0;
+  --theme-surface: #D8C3A5;
+  --theme-surface-2: #C9B18F;
+  --theme-input: #E4D2B8;
+  --theme-border: #9A8366;
+  --theme-surface-text: #171A17;
+  --theme-surface-muted: #655849;
+}
+
+:root[data-theme='burgundy-milk'] {
+  --theme-bg: #5A0B18;
+  --theme-bg-text: #FFF4F3;
+  --theme-bg-muted: #D6BBB9;
+  --theme-surface: #EFE3CF;
+  --theme-surface-2: #E3D3BC;
+  --theme-input: #F7EBDD;
+  --theme-border: #BFAE99;
+  --theme-surface-text: #23181A;
+  --theme-surface-muted: #6E5F5A;
+}
+
+:root[data-theme='black-terracotta'] {
+  --theme-bg: #08090A;
+  --theme-bg-text: #F8F8F8;
+  --theme-bg-muted: #AAAAAA;
+  --theme-surface: #B84F2A;
+  --theme-surface-2: #9F3F20;
+  --theme-input: #C85C35;
+  --theme-border: #D97956;
+  --theme-surface-text: #FFF8F3;
+  --theme-surface-muted: #F3D3C7;
+}
+
+:root {
+  --color-bg: var(--theme-bg);
+  --color-text: var(--theme-bg-text);
+  --color-text-secondary: var(--theme-bg-muted);
+}
+
+html,
+body {
+  color: var(--theme-bg-text);
+  background: var(--theme-bg);
+}
+
+.card,
+.modal-dialog,
+.role-switch,
+.client-tabs button,
+.link-box,
+.selector-button,
+.text-input,
+.exercise-media-slot,
+.selection-chip {
+  --color-surface: var(--theme-surface);
+  --color-surface-2: var(--theme-surface-2);
+  --color-input: var(--theme-input);
+  --color-border: var(--theme-border);
+  --color-text: var(--theme-surface-text);
+  --color-text-secondary: var(--theme-surface-muted);
+}
+
+.card,
+.modal-dialog,
+.role-switch {
+  color: var(--theme-surface-text);
+  border-color: var(--theme-border);
+  background: var(--theme-surface);
+}
+
+.card p,
+.card .client-row small,
+.card .exercise-row small,
+.card .empty-state p,
+.modal-dialog .media-note,
+.modal-dialog .text-button {
+  color: var(--theme-surface-muted);
+}
+
+.text-input,
+.selector-button,
+.link-box,
+.exercise-media-slot {
+  color: var(--theme-surface-text);
+  border-color: var(--theme-border);
+  background: var(--theme-input);
+}
+
+.text-input::placeholder {
+  color: var(--theme-surface-muted);
+  opacity: .9;
+}
+
+.client-tabs button,
+.selection-chip,
+.scope-badge,
+.secondary-button,
+.back-button {
+  color: var(--theme-surface-text);
+  border-color: var(--theme-border);
+  background: var(--theme-surface-2);
+}
+
+.category-row {
+  color: var(--theme-surface-text);
+  border-color: color-mix(in srgb, var(--theme-border) 70%, transparent);
+}
+
+.category-list {
+  border-color: color-mix(in srgb, var(--theme-border) 70%, transparent);
+}
+
+.shell-header p,
+.client-workspace-header p {
+  color: var(--theme-bg-muted);
+}
