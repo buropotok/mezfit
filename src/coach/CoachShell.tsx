@@ -36,11 +36,14 @@ function ClientWorkspace({ initData, client, onBack }: { initData: string; clien
   const name = displayName(client);
 
   return (
-    <section className="stack">
-      <section className="client-workspace-header">
-        <button className="back-button" type="button" onClick={onBack}>← Клиенты</button>
-        <div><div className="eyebrow">Клиент</div><h2>{name}</h2></div>
-      </section>
+    <section className="stack client-workspace">
+      <header className="client-workspace-appbar">
+        <button className="client-workspace-back" type="button" onClick={onBack} aria-label="Назад к списку клиентов">←</button>
+        <div className="client-workspace-title">
+          <span>Клиент</span>
+          <strong>{name}</strong>
+        </div>
+      </header>
       <nav className="client-tabs" aria-label={`Разделы клиента ${name}`}>
         {tabs.map((item) => (
           <button type="button" key={item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
@@ -104,22 +107,25 @@ export function CoachShell({ initData }: { initData: string }) {
   };
 
   return (
-    <section className="stack">
-      <section className="card">
-        <div className="section-heading">
-          <div><div className="eyebrow">Coach mode</div><h2>Клиенты</h2></div>
-          <button className="primary-button" onClick={createInvite} disabled={busy}>{busy ? 'Создаём…' : '+ Клиент'}</button>
+    <section className="stack coach-directory">
+      <header className="coach-directory-header">
+        <div>
+          <div className="eyebrow">Тренер</div>
+          <h2>Клиенты</h2>
         </div>
+        <button className="primary-button" onClick={createInvite} disabled={busy}>{busy ? 'Создаём…' : '+ Клиент'}</button>
+      </header>
 
-        {clients === null ? <p>Загружаем клиентов…</p> : clients.length === 0 ? (
-          <div className="empty-state"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
+      <section className="client-directory-surface" aria-label="Список клиентов">
+        {clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
+          <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
         ) : (
-          <div className="client-list">
+          <div className="client-list compact-client-list">
             {clients.map((client) => (
               <button className="client-row" key={client.relationshipId} type="button" onClick={() => setSelectedClient(client)}>
                 <span className="avatar">{client.user.firstName.slice(0, 1).toUpperCase()}</span>
                 <span><strong>{displayName(client)}</strong><small>{client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}</small></span>
-                <span aria-hidden="true">›</span>
+                <span className="row-chevron" aria-hidden="true">›</span>
               </button>
             ))}
           </div>
