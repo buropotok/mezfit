@@ -48,6 +48,8 @@ Telegram-provided safe-area/content-safe-area values are platform inputs and mus
 
 Required close paths: destination selection, backdrop tap, Escape. Keyboard focus stays inside the open drawer and returns to the hamburger after closing.
 
+Drawer motion is 220 ms on open with `cubic-bezier(0.2, 0, 0, 1)` and 180 ms on close with `cubic-bezier(0.4, 0, 1, 1)`. The panel translates from `-100%` while the backdrop fades. `prefers-reduced-motion` suppresses non-essential motion.
+
 The drawer must tolerate Telegram viewport changes without clipping its last actionable row. When Telegram reports a viewport or safe-area change, the shell recomputes usable geometry instead of assuming a fixed physical screen height.
 
 ## Global destinations
@@ -74,6 +76,26 @@ The drawer must tolerate Telegram viewport changes without clipping its last act
 8. О приложении
 
 Unimplemented destinations remain visible and render a compact stable placeholder. We do not hide navigation merely because a destination is scheduled for a later issue.
+
+## Gym Keeper APK icon mapping
+
+The production navigation icon family is extracted from `com.kg.app.sportdiary_615_rs.apk`, using the original 24×24 monochrome resources. Mezfit renders their alpha masks with `currentColor`, preserving the exact artwork while allowing theme/active-state tinting.
+
+| Mezfit action/destination | APK resource |
+| --- | --- |
+| Клиенты | `ic_change_person.png` |
+| Программа / Программы | `ic_workout.png` |
+| Упражнения | `ic_exercise.png` |
+| Календарь | `ic_calendar.png` |
+| Сегодня | `ic_today.png` |
+| История | `ic_history.png` |
+| Прогресс | `ic_stat.png` |
+| Настройки | `ic_settings.png` |
+| О приложении | `ic_info.png` |
+| Back | `ic_back.png` |
+| global menu trigger | `ic_more.png` (closest APK-family menu action asset) |
+
+Do not replace these with emoji, Unicode glyphs or a mixed third-party icon library. App-bar artwork renders at 22 px inside the canonical 44×44 target; drawer artwork uses the canonical 24 px slot.
 
 ## Selected-client contextual navigation
 
