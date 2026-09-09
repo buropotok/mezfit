@@ -38,18 +38,37 @@
   border-radius: var(--radius-control);
   color: var(--theme-bg-text);
   background: transparent;
-  font-size: 22px;
-  line-height: 1;
   cursor: pointer;
 }
 .navigation-icon-button:active { background: color-mix(in srgb, var(--theme-bg-text) 10%, transparent); }
 .navigation-appbar-spacer { width: 44px; height: 44px; }
 .navigation-content { min-width: 0; }
 
+.gk-reference-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  background: currentColor;
+  -webkit-mask-image: var(--gk-icon-url);
+  mask-image: var(--gk-icon-url);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+.navigation-action-icon {
+  width: 22px;
+  height: 22px;
+}
+
 .drawer-layer {
   position: fixed;
   inset: 0;
   z-index: 60;
+  pointer-events: auto;
 }
 .drawer-backdrop {
   position: absolute;
@@ -60,8 +79,11 @@
   padding: 0;
   border: 0;
   border-radius: 0;
+  opacity: 0;
   background: rgb(0 0 0 / 56%);
   cursor: default;
+  transition: opacity 220ms cubic-bezier(.2, 0, 0, 1);
+  will-change: opacity;
 }
 .navigation-drawer {
   position: absolute;
@@ -73,7 +95,21 @@
   background: var(--theme-surface);
   border-right: 1px solid var(--theme-border);
   box-shadow: 8px 0 24px rgb(0 0 0 / 24%);
+  transform: translate3d(-100%, 0, 0);
+  transition: transform 220ms cubic-bezier(.2, 0, 0, 1);
+  will-change: transform;
 }
+.drawer-layer.is-open .drawer-backdrop { opacity: 1; }
+.drawer-layer.is-open .navigation-drawer { transform: translate3d(0, 0, 0); }
+.drawer-layer.is-closing .drawer-backdrop {
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(.4, 0, 1, 1);
+}
+.drawer-layer.is-closing .navigation-drawer {
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(.4, 0, 1, 1);
+}
+
 .drawer-account {
   min-height: 76px;
   display: grid;
@@ -158,11 +194,7 @@
 }
 .drawer-row-icon {
   width: 24px;
-  display: grid;
-  place-items: center;
-  color: currentColor;
-  font-size: 17px;
-  line-height: 20px;
+  height: 24px;
 }
 
 .global-placeholder {
@@ -175,6 +207,14 @@
 }
 .global-placeholder h2 { margin-bottom: var(--space-2); }
 .global-placeholder p { margin-bottom: 0; color: var(--theme-surface-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-backdrop,
+  .navigation-drawer {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+}
 
 @media (max-width: 380px) {
   .navigation-appbar { margin-bottom: var(--space-2); }
