@@ -1,19 +1,31 @@
 {
   "name": "mezfit",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "dev:worker": "wrangler dev",
     "build": "vite build",
-    "deploy": "wrangler deploy"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "cf:typegen": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply DB_BINDING --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB_BINDING --remote",
+    "deploy": "npm run db:migrate:remote && wrangler deploy"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
-    "wrangler": "latest",
     "react": "latest",
     "react-dom": "latest"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest",
+    "wrangler": "latest"
+  }
 }
