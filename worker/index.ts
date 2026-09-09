@@ -1,4 +1,11 @@
-import { createExerciseForClient, hasActiveCoachClient, listExercisesForClient, type TrackingType } from './lib/exercises';
+import {
+  createExerciseForClient,
+  hasActiveCoachClient,
+  listExercisesForClient,
+  type ExerciseCategoryCode,
+  type ExerciseEquipmentCode,
+  type TrackingType,
+} from './lib/exercises';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 
@@ -172,9 +179,23 @@ async function findInvite(db: D1Database, token: string): Promise<InviteRow | nu
 }
 
 const trackingTypes = new Set<TrackingType>(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight']);
+const exerciseCategoryCodes = new Set<ExerciseCategoryCode>([
+  'chest', 'arms', 'back', 'legs', 'shoulders', 'core', 'full_body', 'cardio', 'other',
+]);
+const exerciseEquipmentCodes = new Set<ExerciseEquipmentCode>([
+  'bodyweight', 'barbell', 'dumbbell_single', 'dumbbell_pair', 'cable', 'machine', 'other',
+]);
 
 function isTrackingType(value: unknown): value is TrackingType {
   return typeof value === 'string' && trackingTypes.has(value as TrackingType);
+}
+
+function isExerciseCategoryCode(value: unknown): value is ExerciseCategoryCode {
+  return typeof value === 'string' && exerciseCategoryCodes.has(value as ExerciseCategoryCode);
+}
+
+function isExerciseEquipmentCode(value: unknown): value is ExerciseEquipmentCode {
+  return typeof value === 'string' && exerciseEquipmentCodes.has(value as ExerciseEquipmentCode);
 }
 
 async function handleExerciseRoute(request: Request, env: Env, clientUserId: number): Promise<Response> {
@@ -193,9 +214,10 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
     let body: {
       scope?: unknown;
       name?: unknown;
+      description?: unknown;
       trackingType?: unknown;
-      primaryMuscle?: unknown;
-      equipment?: unknown;
+      categoryCode?: unknown;
+      equipmentCode?: unknown;
     } = {};
     try {
       body = (await request.json()) as typeof body;
@@ -208,18 +230,24 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
     }
     const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
     if (!name) throw new HttpError(400, 'INVALID_NAME', 'Exercise name is required');
+    const description = typeof body.description === 'string' ? body.description.trim().slice(0, 500) || null : null;
     if (!isTrackingType(body.trackingType)) {
       throw new HttpError(400, 'INVALID_TRACKING_TYPE', 'Unsupported exercise tracking type');
     }
+    if (!isExerciseCategoryCode(body.categoryCode)) {
+      throw new HttpError(400, 'INVALID_CATEGORY', 'Unsupported exercise category');
+    }
+    if (!isExerciseEquipmentCode(body.equipmentCode)) {
+      throw new HttpError(400, 'INVALID_EQUIPMENT', 'Unsupported exercise equipment');
+    }
 
-    const primaryMuscle = typeof body.primaryMuscle === 'string' ? body.primaryMuscle.trim().slice(0, 80) || null : null;
-    const equipment = typeof body.equipment === 'string' ? body.equipment.trim().slice(0, 80) || null : null;
     const exercise = await createExerciseForClient(env.DB_BINDING, auth.row.id, clientUserId, {
       scope: body.scope,
       name,
+      description,
       trackingType: body.trackingType,
-      primaryMuscle,
-      equipment,
+      categoryCode: body.categoryCode,
+      equipmentCode: body.equipmentCode,
     });
 
     if (!exercise) throw new HttpError(409, 'EXERCISE_EXISTS', 'An exercise with this name already exists in this scope');
