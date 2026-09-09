@@ -12,6 +12,7 @@ export interface ValidatedTelegramInitData {
   user: TelegramInitUser;
   authDate: Date;
   queryId?: string;
+  startParam?: string;
 }
 
 export class TelegramAuthError extends Error {
@@ -107,5 +108,6 @@ export async function validateTelegramInitData(
     user,
     authDate,
     queryId: params.get('query_id') ?? undefined,
+    startParam: params.get('start_param') ?? undefined,
   };
 }
