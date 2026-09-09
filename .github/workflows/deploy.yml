@@ -1,0 +1,29 @@
+name: Deploy Mezfit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - name: Resolve D1 database id
+        shell: bash
+        run: |
+          DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name == "mezfit") | .uuid' | head -n1)
+          test -n "$DB_ID" && test "$DB_ID" != "null"
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/" wrangler.jsonc
+      - name: Deploy Worker
+        run: npx wrangler deploy
