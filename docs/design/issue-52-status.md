@@ -1,1 +1,0 @@
-Issue 52 implementation scope is covered by the navigation shell documentation, APK icon provenance notes, extraction notes, and validation checklist in this directory.
