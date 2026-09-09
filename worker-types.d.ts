@@ -1,4 +1,6 @@
-interface D1PreparedStatement { first<T = unknown>(): Promise<T | null>; }
-interface D1Database { prepare(query: string): D1PreparedStatement; }
-interface Fetcher { fetch(request: Request): Promise<Response>; }
-interface ExportedHandler<Env = unknown> { fetch(request: Request, env: Env, ctx?: unknown): Response | Promise<Response>; }
+interface Env {
+  ASSETS: Fetcher;
+  DB_BINDING: D1Database;
+  R2_BINDING_MEZFIT: R2Bucket;
+  TELEGRAM_BOT_TOKEN: string;
+}
