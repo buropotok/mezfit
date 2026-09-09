@@ -1,1 +1,0 @@
-The APK-derived 24×24 PNG bytes are delivered as text-safe base64 data URIs in `src/gymKeeperIcons.ts`, allowing the repository integration to preserve the exact extracted artwork without binary transcoding.
