@@ -1,0 +1,37 @@
+.center > .card {
+  width: min(420px, 100%);
+}
+
+.role-switch button {
+  height: 44px;
+  min-height: 44px;
+}
+
+.shell-header {
+  min-height: var(--appbar-h);
+  margin-bottom: var(--space-3);
+}
+.shell-header > div:first-child {
+  min-width: 0;
+}
+.shell-header h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.choice {
+  min-height: 64px;
+}
+
+@media (max-width: 420px) {
+  .shell-header {
+    gap: var(--space-2);
+  }
+  .role-switch {
+    flex: 0 0 auto;
+  }
+  .role-switch button {
+    padding-inline: var(--space-2);
+  }
+}
