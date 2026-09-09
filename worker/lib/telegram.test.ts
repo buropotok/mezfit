@@ -3,8 +3,18 @@ import { TelegramAuthError, validateTelegramInitData } from './telegram';
 
 const encoder = new TextEncoder();
 
-async function hmacSha256(key: BufferSource, data: string): Promise<Uint8Array> {
-  const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
+
+async function hmacSha256(key: Uint8Array, data: string): Promise<Uint8Array> {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    toArrayBuffer(key),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
   return new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(data)));
 }
 
