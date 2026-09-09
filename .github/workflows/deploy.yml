@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - run: npm test
+      - run: npm run typecheck
       - run: npm run build
       - name: Resolve D1 database id
         shell: bash
@@ -25,5 +27,7 @@ jobs:
           DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name == "mezfit") | .uuid' | head -n1)
           test -n "$DB_ID" && test "$DB_ID" != "null"
           sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/" wrangler.jsonc
+      - name: Apply D1 migrations
+        run: npx wrangler d1 migrations apply DB_BINDING --remote
       - name: Deploy Worker
         run: npx wrangler deploy
