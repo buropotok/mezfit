@@ -1,0 +1,91 @@
+.coach-directory {
+  gap: var(--space-2);
+}
+
+.coach-directory-header {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.coach-directory-header h2 { margin-bottom: 0; }
+
+.client-directory-surface {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-surface);
+  background: var(--color-surface);
+}
+.client-directory-surface .client-list,
+.compact-client-list {
+  margin: 0;
+}
+.directory-message {
+  margin: 0;
+  padding: var(--space-3);
+}
+.directory-empty {
+  padding: var(--space-3);
+}
+.row-chevron {
+  width: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-secondary);
+  font-size: 22px;
+}
+
+.client-workspace {
+  gap: var(--space-2);
+}
+.client-workspace-appbar {
+  height: var(--appbar-h);
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+.client-workspace-back {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  background: var(--color-surface-2);
+  font-size: 20px;
+  cursor: pointer;
+}
+.client-workspace-title {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.client-workspace-title span {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+}
+.client-workspace-title strong {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.client-workspace .client-tabs {
+  padding-bottom: var(--space-2);
+}
+
+@media (max-width: 420px) {
+  .coach-directory-header .primary-button {
+    padding-inline: var(--space-3);
+  }
+}

@@ -74,6 +74,7 @@ body {
 .card,
 .modal-dialog,
 .role-switch,
+.client-directory-surface,
 .client-tabs button,
 .link-box,
 .selector-button,
@@ -90,7 +91,8 @@ body {
 
 .card,
 .modal-dialog,
-.role-switch {
+.role-switch,
+.client-directory-surface {
   color: var(--theme-surface-text);
   border-color: var(--theme-border);
   background: var(--theme-surface);
@@ -100,6 +102,8 @@ body {
 .card .client-row small,
 .card .exercise-row small,
 .card .empty-state p,
+.client-directory-surface p,
+.client-directory-surface .client-row small,
 .modal-dialog .media-note,
 .modal-dialog .text-button {
   color: var(--theme-surface-muted);
@@ -123,7 +127,8 @@ body {
 .selection-chip,
 .scope-badge,
 .secondary-button,
-.back-button {
+.back-button,
+.client-workspace-back {
   color: var(--theme-surface-text);
   border-color: var(--theme-border);
   background: var(--theme-surface-2);
