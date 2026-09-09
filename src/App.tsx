@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import {
   acceptCurrentInvite,
   addRole,
@@ -9,6 +9,11 @@ import {
   type Role,
 } from './api';
 import { CoachShell } from './coach/CoachShell';
+import {
+  NavigationShell,
+  type AppDestination,
+  type NavigationContext,
+} from './NavigationShell';
 import { getTelegramWebApp } from './telegram';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -51,27 +56,16 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-function ShellHeader({ me, activeRole, onSwitch }: { me: MeResponse; activeRole: Role; onSwitch: (role: Role) => void }) {
-  return (
-    <header className="shell-header">
-      <div>
-        <div className="eyebrow">Mezfit</div>
-        <h1>{me.user.firstName}</h1>
-      </div>
-      {me.roles.length > 1 ? (
-        <div className="role-switch" aria-label="Режим приложения">
-          {me.roles.map((role) => (
-            <button key={role} className={role === activeRole ? 'active' : ''} onClick={() => onSwitch(role)}>
-              {role === 'coach' ? 'Тренер' : 'Клиент'}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </header>
-  );
-}
+const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
+  programs: { title: 'Программа', text: 'Здесь будет назначенная тренером программа.' },
+  exercises: { title: 'Упражнения', text: 'Здесь будет доступ к упражнениям и истории результатов по ним.' },
+  history: { title: 'История', text: 'Здесь появятся завершённые тренировки и фактические результаты.' },
+  progress: { title: 'Прогресс', text: 'Здесь появятся замеры и производные показатели прогресса.' },
+  settings: { title: 'Настройки', text: 'Настройки Mezfit будут добавляться по мере появления пользовательских параметров.' },
+  about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
+};
 
-function ClientShell({ initData }: { initData: string }) {
+function ClientShell({ initData, destination }: { initData: string; destination: AppDestination }) {
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
   const [accepted, setAccepted] = useState(false);
   const [message, setMessage] = useState('');
@@ -116,10 +110,20 @@ function ClientShell({ initData }: { initData: string }) {
     );
   }
 
+  if (destination !== 'today') {
+    const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
+    return (
+      <section className="global-placeholder">
+        <h2>{placeholder.title}</h2>
+        <p>{placeholder.text}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="card">
-      <div className="eyebrow">Client mode</div>
-      <h2>{accepted ? 'Готово' : 'Сегодня'}</h2>
+      <div className="eyebrow">Сегодня</div>
+      <h2>{accepted ? 'Готово' : 'Тренировка'}</h2>
       <p>{accepted ? 'Вы подключены к тренеру. Назначенная программа появится здесь.' : invite === undefined ? 'Проверяем приглашение…' : 'Здесь будет ваша назначенная тренировка.'}</p>
       {message ? <p className="inline-message">{message}</p> : null}
     </section>
@@ -128,6 +132,13 @@ function ClientShell({ initData }: { initData: string }) {
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
+  const [coachDestination, setCoachDestination] = useState<AppDestination>('clients');
+  const [clientDestination, setClientDestination] = useState<AppDestination>('today');
+  const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
+
+  const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
+    setNavigationContext(context);
+  }, []);
 
   useEffect(() => {
     const webApp = getTelegramWebApp();
@@ -204,10 +215,35 @@ export function App() {
     );
   }
 
+  const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
+  const changeDestination = (next: AppDestination) => {
+    setNavigationContext(null);
+    if (state.activeRole === 'coach') setCoachDestination(next);
+    else setClientDestination(next);
+  };
+  const switchRole = (role: Role) => {
+    setNavigationContext(null);
+    dispatch({ type: 'switch-role', role });
+  };
+
   return (
-    <main className="app-shell">
-      <ShellHeader me={state.me} activeRole={state.activeRole} onSwitch={(role) => dispatch({ type: 'switch-role', role })} />
-      {state.activeRole === 'coach' ? <CoachShell initData={state.initData} /> : <ClientShell initData={state.initData} />}
-    </main>
+    <NavigationShell
+      me={state.me}
+      activeRole={state.activeRole}
+      destination={destination}
+      context={navigationContext}
+      onDestinationChange={changeDestination}
+      onRoleSwitch={switchRole}
+    >
+      {state.activeRole === 'coach' ? (
+        <CoachShell
+          initData={state.initData}
+          destination={coachDestination}
+          onNavigationContextChange={handleNavigationContextChange}
+        />
+      ) : (
+        <ClientShell initData={state.initData} destination={clientDestination} />
+      )}
+    </NavigationShell>
   );
 }

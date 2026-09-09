@@ -6,6 +6,7 @@ import './style.css';
 import './exercise.css';
 import './coach.css';
 import './shell.css';
+import './navigation.css';
 import './theme.css';
 
 function resolveRoot(): HTMLElement {

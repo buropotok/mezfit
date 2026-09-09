@@ -4,6 +4,7 @@ import {
   getCoachClients,
   type CoachClientListItem,
 } from '../api';
+import type { AppDestination, NavigationContext } from '../NavigationShell';
 import { ExerciseCatalog } from './ExerciseCatalog';
 
 type ClientTab = 'overview' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
@@ -16,6 +17,14 @@ const tabs: Array<{ id: ClientTab; label: string }> = [
   { id: 'progress', label: 'Прогресс' },
   { id: 'history', label: 'История' },
 ];
+
+const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
+  programs: { title: 'Программы', text: 'Здесь будет глобальный список программ тренера и быстрый переход к назначению клиенту.' },
+  exercises: { title: 'Упражнения', text: 'Здесь будет глобальный каталог упражнений тренера. История конкретного клиента остаётся внутри карточки клиента.' },
+  calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
+  settings: { title: 'Настройки', text: 'Системные настройки будут добавляться отдельными задачами.' },
+  about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
+};
 
 function displayName(client: CoachClientListItem): string {
   return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
@@ -31,19 +40,21 @@ function Placeholder({ title, text }: { title: string; text: string }) {
   );
 }
 
-function ClientWorkspace({ initData, client, onBack }: { initData: string; client: CoachClientListItem; onBack: () => void }) {
+function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
+  return (
+    <section className="global-placeholder">
+      <h2>{title}</h2>
+      <p>{text}</p>
+    </section>
+  );
+}
+
+function ClientWorkspace({ initData, client }: { initData: string; client: CoachClientListItem }) {
   const [tab, setTab] = useState<ClientTab>('overview');
   const name = displayName(client);
 
   return (
     <section className="stack client-workspace">
-      <header className="client-workspace-appbar">
-        <button className="client-workspace-back" type="button" onClick={onBack} aria-label="Назад к списку клиентов">←</button>
-        <div className="client-workspace-title">
-          <span>Клиент</span>
-          <strong>{name}</strong>
-        </div>
-      </header>
       <nav className="client-tabs" aria-label={`Разделы клиента ${name}`}>
         {tabs.map((item) => (
           <button type="button" key={item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
@@ -60,7 +71,13 @@ function ClientWorkspace({ initData, client, onBack }: { initData: string; clien
   );
 }
 
-export function CoachShell({ initData }: { initData: string }) {
+interface CoachShellProps {
+  initData: string;
+  destination: AppDestination;
+  onNavigationContextChange: (context: NavigationContext | null) => void;
+}
+
+export function CoachShell({ initData, destination, onNavigationContextChange }: CoachShellProps) {
   const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
   const [selectedClient, setSelectedClient] = useState<CoachClientListItem | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -79,8 +96,26 @@ export function CoachShell({ initData }: { initData: string }) {
     return () => { cancelled = true; };
   }, [initData]);
 
+  useEffect(() => {
+    if (!selectedClient) {
+      onNavigationContextChange(null);
+      return;
+    }
+
+    onNavigationContextChange({
+      title: displayName(selectedClient),
+      onBack: () => setSelectedClient(null),
+    });
+    return () => onNavigationContextChange(null);
+  }, [selectedClient, onNavigationContextChange]);
+
   if (selectedClient) {
-    return <ClientWorkspace initData={initData} client={selectedClient} onBack={() => setSelectedClient(null)} />;
+    return <ClientWorkspace initData={initData} client={selectedClient} />;
+  }
+
+  if (destination !== 'clients') {
+    const placeholder = coachPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
+    return <GlobalPlaceholder title={placeholder.title} text={placeholder.text} />;
   }
 
   const createInvite = async () => {
