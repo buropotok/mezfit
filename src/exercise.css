@@ -188,9 +188,7 @@
   border: 2px solid var(--color-text-secondary);
   border-radius: 50%;
 }
-.radio-mark.selected {
-  border: 6px solid var(--color-accent);
-}
+.radio-mark.selected { border: 6px solid var(--color-accent); }
 .category-chest { --category-color: #FF4D6D; }
 .category-arms { --category-color: #FF8A3D; }
 .category-back { --category-color: #2F9BFF; }
@@ -201,6 +199,33 @@
 .category-cardio { --category-color: #FF5263; }
 .category-other { --category-color: #7C8A99; }
 
+.exercise-catalog { gap: var(--space-2); }
+.exercise-catalog-header {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.exercise-catalog-header h2 { margin: 0; font-size: 20px; line-height: 24px; }
+.exercise-catalog-search .text-input { width: 100%; height: var(--control-h); }
+.exercise-catalog-surface {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-surface);
+  background: var(--color-surface);
+}
+.exercise-list { display: grid; }
+.exercise-row {
+  min-height: var(--list-row-h);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+}
+.exercise-row:last-child { border-bottom: 0; }
 .exercise-row-main {
   min-width: 0;
   display: grid;
@@ -208,15 +233,29 @@
   align-items: center;
   gap: var(--space-2);
 }
+.exercise-row-copy { min-width: 0; display: grid; gap: 1px; }
 .exercise-row-main strong,
 .exercise-row-main small {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.exercise-row-main strong { font-size: 15px; line-height: 20px; }
+.exercise-row-main small { font-size: 12px; line-height: 16px; }
+.scope-badge {
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.catalogue-status,
+.catalogue-empty { margin: 0; padding: var(--space-4); }
 
 @media (max-width: 380px) {
   .modal-backdrop { padding: var(--space-2); }
   .modal-dialog { width: min(calc(100vw - 16px), 420px); padding: var(--space-3); }
   .exercise-create-first-row { grid-template-columns: 64px 1fr; gap: var(--space-2); }
   .exercise-media-slot { width: 64px; height: 64px; min-height: 64px; }
+  .exercise-catalog-header .primary-button { padding-inline: var(--space-3); }
+  .exercise-row { padding-inline: var(--space-2); }
 }
