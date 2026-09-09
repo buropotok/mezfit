@@ -9,6 +9,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--tg-theme-bg-color, #f4f5f7); }
 button { font: inherit; }
+button:disabled { cursor: wait; opacity: .6; }
 
 .center,
 .app-shell {
@@ -17,19 +18,20 @@ button { font: inherit; }
   padding: 24px 16px 40px;
 }
 
-.center {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-}
+.center { min-height: 100vh; display: grid; place-items: center; }
+.stack { display: grid; gap: 14px; }
 
-.shell-header {
+.shell-header,
+.section-heading,
+.button-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
 }
+.shell-header { margin-bottom: 16px; }
+.section-heading { align-items: flex-start; }
+.button-row { justify-content: flex-start; margin-top: 16px; }
 
 h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 6px; font-size: clamp(28px, 7vw, 38px); line-height: 1.08; }
@@ -56,20 +58,72 @@ p { color: var(--tg-theme-hint-color, #69707a); line-height: 1.55; }
 .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
 .choice,
 .role-switch button,
+.primary-button,
+.secondary-button,
 .error-card button {
   border: 0;
   border-radius: 14px;
-  color: var(--tg-theme-button-text-color, #fff);
-  background: var(--tg-theme-button-color, #2481cc);
   cursor: pointer;
 }
 
+.choice,
+.primary-button,
+.error-card button {
+  color: var(--tg-theme-button-text-color, #fff);
+  background: var(--tg-theme-button-color, #2481cc);
+}
 .choice { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; padding: 18px; text-align: left; }
 .choice span { font-size: 13px; opacity: .85; }
+.primary-button, .secondary-button, .error-card button { padding: 11px 14px; font-weight: 700; }
+.secondary-button { color: var(--tg-theme-text-color, #101114); background: var(--tg-theme-bg-color, #f4f5f7); }
+.full-width { width: 100%; }
+
 .role-switch { display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: var(--tg-theme-secondary-bg-color, #fff); }
 .role-switch button { padding: 8px 10px; color: var(--tg-theme-text-color, #101114); background: transparent; }
 .role-switch button.active { color: var(--tg-theme-button-text-color, #fff); background: var(--tg-theme-button-color, #2481cc); }
-.error-card button { padding: 12px 16px; }
+
+.empty-state { padding: 20px 0 4px; }
+.empty-state strong { display: block; margin-bottom: 6px; }
+
+.client-list { margin: 8px -8px -8px; }
+.client-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--tg-theme-hint-color, #69707a) 16%, transparent);
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.client-row:first-child { border-top: 0; }
+.client-row strong, .client-row small { display: block; }
+.client-row small { margin-top: 3px; color: var(--tg-theme-hint-color, #69707a); }
+.avatar {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--tg-theme-button-text-color, #fff);
+  background: var(--tg-theme-button-color, #2481cc);
+  font-weight: 800;
+}
+
+.link-box {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--tg-theme-bg-color, #f4f5f7);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.inline-message { margin: 0; padding: 0 6px; font-size: 13px; }
 
 .status-row {
   display: flex;
