@@ -22,12 +22,14 @@ function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function signedInitData(botToken: string, authDate: number): Promise<string> {
+async function signedInitData(botToken: string, authDate: number, startParam?: string): Promise<string> {
   const params = new URLSearchParams({
     auth_date: String(authDate),
     query_id: 'AAEAAAE',
     user: JSON.stringify({ id: 100500, first_name: 'Test', username: 'mezfit_test' }),
   });
+  if (startParam) params.set('start_param', startParam);
+
   const dataCheckString = Array.from(params.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => `${key}=${value}`)
@@ -44,6 +46,14 @@ describe('validateTelegramInitData', () => {
     const result = await validateTelegramInitData(initData, '123456:test-token', now);
     expect(result.user.id).toBe(100500);
     expect(result.user.first_name).toBe('Test');
+  });
+
+  it('returns a signed Mini App start parameter', async () => {
+    const now = new Date('2026-09-09T00:00:00Z');
+    const startParam = `invite_${'a'.repeat(36)}`;
+    const initData = await signedInitData('123456:test-token', Math.floor(now.getTime() / 1000), startParam);
+    const result = await validateTelegramInitData(initData, '123456:test-token', now);
+    expect(result.startParam).toBe(startParam);
   });
 
   it('rejects tampered payloads', async () => {

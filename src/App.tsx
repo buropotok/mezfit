@@ -1,5 +1,16 @@
-import { useEffect, useReducer } from 'react';
-import { addRole, getMe, type MeResponse, type Role } from './api';
+import { useEffect, useReducer, useState } from 'react';
+import {
+  acceptCurrentInvite,
+  addRole,
+  createClientInvite,
+  getCoachClients,
+  getCurrentInvite,
+  getMe,
+  type ClientInvitePreview,
+  type CoachClientListItem,
+  type MeResponse,
+  type Role,
+} from './api';
 import { getTelegramWebApp } from './telegram';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -42,6 +53,10 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+function displayName(user: { firstName: string; lastName: string | null }): string {
+  return [user.firstName, user.lastName].filter(Boolean).join(' ');
+}
+
 function ShellHeader({ me, activeRole, onSwitch }: { me: MeResponse; activeRole: Role; onSwitch: (role: Role) => void }) {
   return (
     <header className="shell-header">
@@ -62,26 +77,135 @@ function ShellHeader({ me, activeRole, onSwitch }: { me: MeResponse; activeRole:
   );
 }
 
-function CoachShell({ me }: { me: MeResponse }) {
+function CoachShell({ initData }: { initData: string }) {
+  const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const refreshClients = () => {
+    getCoachClients(initData)
+      .then(({ clients: next }) => setClients(next))
+      .catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'Не удалось загрузить клиентов'));
+  };
+
+  useEffect(refreshClients, [initData]);
+
+  const createInvite = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      const result = await createClientInvite(initData);
+      setInviteUrl(result.telegramUrl);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось создать приглашение');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const copyInvite = async () => {
+    if (!inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setMessage('Ссылка скопирована');
+    } catch {
+      setMessage('Не удалось скопировать автоматически — нажмите и удерживайте ссылку');
+    }
+  };
+
   return (
-    <section className="card">
-      <div className="eyebrow">Coach mode</div>
-      <h2>Клиенты</h2>
-      <p>Telegram-аутентификация и общий backend подключены. Следующий срез — список клиентов и выбранный клиент.</p>
-      <div className="status-row"><span>Backend</span><strong>подключён</strong></div>
-      <div className="status-row"><span>Telegram ID</span><strong>{me.user.telegramUserId}</strong></div>
+    <section className="stack">
+      <section className="card">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">Coach mode</div>
+            <h2>Клиенты</h2>
+          </div>
+          <button className="primary-button" onClick={createInvite} disabled={busy}>{busy ? 'Создаём…' : '+ Клиент'}</button>
+        </div>
+
+        {clients === null ? <p>Загружаем клиентов…</p> : clients.length === 0 ? (
+          <div className="empty-state">
+            <strong>Пока нет клиентов</strong>
+            <p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p>
+          </div>
+        ) : (
+          <div className="client-list">
+            {clients.map(({ relationshipId, user }) => (
+              <button className="client-row" key={relationshipId} type="button">
+                <span className="avatar">{user.firstName.slice(0, 1).toUpperCase()}</span>
+                <span><strong>{displayName(user)}</strong><small>{user.username ? `@${user.username}` : 'Клиент Mezfit'}</small></span>
+                <span aria-hidden="true">›</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {inviteUrl ? (
+        <section className="card invite-card">
+          <div className="eyebrow">Приглашение</div>
+          <h2>Отправьте ссылку клиенту</h2>
+          <p>Ссылка одноразовая и действует 30 дней. После подтверждения клиент автоматически появится в вашем списке.</p>
+          <div className="link-box">{inviteUrl}</div>
+          <div className="button-row">
+            <button className="primary-button" onClick={copyInvite}>Копировать</button>
+            <button className="secondary-button" onClick={() => setInviteUrl(null)}>Закрыть</button>
+          </div>
+        </section>
+      ) : null}
+
+      {message ? <p className="inline-message">{message}</p> : null}
     </section>
   );
 }
 
-function ClientShell({ me }: { me: MeResponse }) {
+function ClientShell({ initData }: { initData: string }) {
+  const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
+  const [accepted, setAccepted] = useState(false);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    getCurrentInvite(initData)
+      .then((result) => setInvite(result.invite))
+      .catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'Не удалось проверить приглашение'));
+  }, [initData]);
+
+  const accept = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      await acceptCurrentInvite(initData);
+      setAccepted(true);
+      setInvite(null);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось принять приглашение');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (invite) {
+    const coachName = [invite.coach.firstName, invite.coach.lastName].filter(Boolean).join(' ');
+    return (
+      <section className="card">
+        <div className="eyebrow">Приглашение</div>
+        <h2>{coachName} приглашает вас в Mezfit</h2>
+        {invite.label ? <p>{invite.label}</p> : <p>После подтверждения тренер сможет назначать вам программу и видеть результаты тренировок.</p>}
+        <button className="primary-button full-width" onClick={accept} disabled={busy}>{busy ? 'Подключаем…' : 'Подключиться к тренеру'}</button>
+        {message ? <p className="inline-message">{message}</p> : null}
+      </section>
+    );
+  }
+
   return (
     <section className="card">
       <div className="eyebrow">Client mode</div>
-      <h2>Сегодня</h2>
-      <p>Telegram-аутентификация и общий backend подключены. Следующий срез — назначенная тренировка и запись результатов.</p>
-      <div className="status-row"><span>Backend</span><strong>подключён</strong></div>
-      <div className="status-row"><span>Telegram ID</span><strong>{me.user.telegramUserId}</strong></div>
+      <h2>{accepted ? 'Готово' : 'Сегодня'}</h2>
+      <p>{accepted ? 'Вы подключены к тренеру. Назначенная программа появится здесь.' : invite === undefined ? 'Проверяем приглашение…' : 'Здесь будет ваша назначенная тренировка.'}</p>
+      {message ? <p className="inline-message">{message}</p> : null}
     </section>
   );
 }
@@ -169,7 +293,7 @@ export function App() {
   return (
     <main className="app-shell">
       <ShellHeader me={state.me} activeRole={state.activeRole} onSwitch={(role) => dispatch({ type: 'switch-role', role })} />
-      {state.activeRole === 'coach' ? <CoachShell me={state.me} /> : <ClientShell me={state.me} />}
+      {state.activeRole === 'coach' ? <CoachShell initData={state.initData} /> : <ClientShell initData={state.initData} />}
     </main>
   );
 }

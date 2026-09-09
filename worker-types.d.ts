@@ -3,4 +3,5 @@ interface Env {
   DB_BINDING: D1Database;
   R2_BINDING_MEZFIT: R2Bucket;
   TELEGRAM_BOT_TOKEN: string;
+  TELEGRAM_BOT_USERNAME: string;
 }

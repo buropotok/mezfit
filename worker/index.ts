@@ -1,3 +1,4 @@
+import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 
 type Role = 'coach' | 'client';
@@ -22,6 +23,33 @@ interface UserView {
   languageCode: string | null;
   photoUrl: string | null;
   isPremium: boolean;
+}
+
+interface AuthContext {
+  row: UserRow;
+  roles: Role[];
+  startParam?: string;
+}
+
+interface InviteRow {
+  id: number;
+  coach_user_id: number;
+  label: string | null;
+  expires_at: string;
+  coach_first_name: string;
+  coach_last_name: string | null;
+  coach_username: string | null;
+}
+
+class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
 }
 
 function json(data: unknown, init: ResponseInit = {}): Response {
@@ -91,11 +119,49 @@ async function getRoles(db: D1Database, userId: number): Promise<Role[]> {
   return result.results.map(({ role }) => role);
 }
 
-async function requireUser(request: Request, env: Env): Promise<{ row: UserRow; roles: Role[] }> {
+async function requireUser(request: Request, env: Env): Promise<AuthContext> {
   const initData = request.headers.get('x-telegram-init-data') ?? '';
   const validated = await validateTelegramInitData(initData, env.TELEGRAM_BOT_TOKEN);
   const row = await upsertUser(env.DB_BINDING, validated.user);
-  return { row, roles: await getRoles(env.DB_BINDING, row.id) };
+  return {
+    row,
+    roles: await getRoles(env.DB_BINDING, row.id),
+    startParam: validated.startParam,
+  };
+}
+
+function requireRole(auth: AuthContext, role: Role): void {
+  if (!auth.roles.includes(role)) {
+    throw new HttpError(403, 'ROLE_REQUIRED', `${role} role is required`);
+  }
+}
+
+function inviteTokenFromStartParam(startParam?: string): string | null {
+  if (!startParam?.startsWith('invite_')) return null;
+  const token = startParam.slice('invite_'.length);
+  return /^[a-f0-9]{36}$/i.test(token) ? token.toLowerCase() : null;
+}
+
+async function findInvite(db: D1Database, token: string): Promise<InviteRow | null> {
+  const tokenHash = await sha256Hex(token);
+  return db
+    .prepare(`
+      SELECT
+        i.id,
+        i.coach_user_id,
+        i.label,
+        i.expires_at,
+        coach.first_name AS coach_first_name,
+        coach.last_name AS coach_last_name,
+        coach.username AS coach_username
+      FROM coach_client_invite i
+      JOIN app_user coach ON coach.id = i.coach_user_id
+      WHERE i.token_hash = ?
+        AND i.accepted_at IS NULL
+        AND i.expires_at > CURRENT_TIMESTAMP
+    `)
+    .bind(tokenHash)
+    .first<InviteRow>();
 }
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
@@ -112,12 +178,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
 
   if (url.pathname === '/api/me' && request.method === 'GET') {
-    const { row, roles } = await requireUser(request, env);
-    return json({ user: userView(row), roles });
+    const auth = await requireUser(request, env);
+    return json({ user: userView(auth.row), roles: auth.roles });
   }
 
   if (url.pathname === '/api/me/roles' && request.method === 'POST') {
-    const { row } = await requireUser(request, env);
+    const auth = await requireUser(request, env);
     let body: { role?: string } = {};
     try {
       body = (await request.json()) as { role?: string };
@@ -126,18 +192,132 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     }
 
     if (body.role !== 'coach' && body.role !== 'client') {
-      return json({ error: { code: 'INVALID_ROLE', message: 'Role must be coach or client' } }, { status: 400 });
+      throw new HttpError(400, 'INVALID_ROLE', 'Role must be coach or client');
     }
 
     await env.DB_BINDING
       .prepare('INSERT OR IGNORE INTO user_role (user_id, role) VALUES (?, ?)')
-      .bind(row.id, body.role)
+      .bind(auth.row.id, body.role)
       .run();
 
-    return json({ user: userView(row), roles: await getRoles(env.DB_BINDING, row.id) });
+    return json({ user: userView(auth.row), roles: await getRoles(env.DB_BINDING, auth.row.id) });
   }
 
-  return json({ error: { code: 'NOT_FOUND', message: 'API route not found' } }, { status: 404 });
+  if (url.pathname === '/api/coach/clients' && request.method === 'GET') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+
+    const result = await env.DB_BINDING
+      .prepare(`
+        SELECT
+          cc.id AS relationship_id,
+          client.id,
+          client.telegram_user_id,
+          client.username,
+          client.first_name,
+          client.last_name,
+          client.language_code,
+          client.photo_url,
+          client.is_premium
+        FROM coach_client cc
+        JOIN app_user client ON client.id = cc.client_user_id
+        WHERE cc.coach_user_id = ? AND cc.status = 'active'
+        ORDER BY COALESCE(client.last_name, ''), client.first_name, client.id
+      `)
+      .bind(auth.row.id)
+      .all<UserRow & { relationship_id: number }>();
+
+    return json({
+      clients: result.results.map((row) => ({ relationshipId: row.relationship_id, user: userView(row) })),
+    });
+  }
+
+  if (url.pathname === '/api/coach/client-invites' && request.method === 'POST') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+
+    let body: { label?: string } = {};
+    try {
+      body = (await request.json()) as { label?: string };
+    } catch {
+      // An empty label is allowed.
+    }
+    const label = body.label?.trim().slice(0, 120) || null;
+    const token = createOpaqueToken();
+    const tokenHash = await sha256Hex(token);
+
+    await env.DB_BINDING
+      .prepare(`
+        INSERT INTO coach_client_invite (coach_user_id, token_hash, label, expires_at)
+        VALUES (?, ?, ?, datetime('now', '+30 days'))
+      `)
+      .bind(auth.row.id, tokenHash, label)
+      .run();
+
+    const startParam = `invite_${token}`;
+    return json({
+      startParam,
+      telegramUrl: `https://t.me/${env.TELEGRAM_BOT_USERNAME}?startapp=${startParam}`,
+      expiresInDays: 30,
+    }, { status: 201 });
+  }
+
+  if (url.pathname === '/api/invite/current' && request.method === 'GET') {
+    const auth = await requireUser(request, env);
+    const token = inviteTokenFromStartParam(auth.startParam);
+    if (!token) return json({ invite: null });
+
+    const invite = await findInvite(env.DB_BINDING, token);
+    if (!invite || invite.coach_user_id === auth.row.id) return json({ invite: null });
+
+    return json({
+      invite: {
+        label: invite.label,
+        expiresAt: invite.expires_at,
+        coach: {
+          firstName: invite.coach_first_name,
+          lastName: invite.coach_last_name,
+          username: invite.coach_username,
+        },
+      },
+    });
+  }
+
+  if (url.pathname === '/api/invite/current/accept' && request.method === 'POST') {
+    const auth = await requireUser(request, env);
+    const token = inviteTokenFromStartParam(auth.startParam);
+    if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
+
+    const invite = await findInvite(env.DB_BINDING, token);
+    if (!invite) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is invalid, expired, or already used');
+    if (invite.coach_user_id === auth.row.id) throw new HttpError(400, 'SELF_LINK', 'Coach cannot accept their own invite');
+
+    await env.DB_BINDING.batch([
+      env.DB_BINDING
+        .prepare(`
+          INSERT INTO coach_client (coach_user_id, client_user_id, invite_id)
+          VALUES (?, ?, ?)
+          ON CONFLICT(coach_user_id, client_user_id) DO UPDATE SET
+            status = 'active',
+            updated_at = CURRENT_TIMESTAMP
+        `)
+        .bind(invite.coach_user_id, auth.row.id, invite.id),
+      env.DB_BINDING
+        .prepare(`
+          UPDATE coach_client_invite
+          SET accepted_by_user_id = ?, accepted_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND accepted_at IS NULL
+        `)
+        .bind(auth.row.id, invite.id),
+      env.DB_BINDING
+        .prepare("INSERT OR IGNORE INTO user_role (user_id, role) VALUES (?, 'client')")
+        .bind(auth.row.id),
+    ]);
+
+    return json({ ok: true, roles: await getRoles(env.DB_BINDING, auth.row.id) });
+  }
+
+  throw new HttpError(404, 'NOT_FOUND', 'API route not found');
 }
 
 export default {
@@ -150,6 +330,9 @@ export default {
     } catch (error) {
       if (error instanceof TelegramAuthError) {
         return json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
+      }
+      if (error instanceof HttpError) {
+        return json({ error: { code: error.code, message: error.message } }, { status: error.status });
       }
 
       console.error('Unhandled API error', error);

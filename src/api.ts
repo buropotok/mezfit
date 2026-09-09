@@ -16,6 +16,21 @@ export interface MeResponse {
   roles: Role[];
 }
 
+export interface CoachClientListItem {
+  relationshipId: number;
+  user: AppUser;
+}
+
+export interface ClientInvitePreview {
+  label: string | null;
+  expiresAt: string;
+  coach: {
+    firstName: string;
+    lastName: string | null;
+    username: string | null;
+  };
+}
+
 interface ApiErrorPayload {
   error?: {
     code?: string;
@@ -66,4 +81,26 @@ export function addRole(initData: string, role: Role): Promise<MeResponse> {
     method: 'POST',
     body: JSON.stringify({ role }),
   });
+}
+
+export function getCoachClients(initData: string): Promise<{ clients: CoachClientListItem[] }> {
+  return apiRequest(initData, '/api/coach/clients');
+}
+
+export function createClientInvite(
+  initData: string,
+  label?: string,
+): Promise<{ startParam: string; telegramUrl: string; expiresInDays: number }> {
+  return apiRequest(initData, '/api/coach/client-invites', {
+    method: 'POST',
+    body: JSON.stringify({ label }),
+  });
+}
+
+export function getCurrentInvite(initData: string): Promise<{ invite: ClientInvitePreview | null }> {
+  return apiRequest(initData, '/api/invite/current');
+}
+
+export function acceptCurrentInvite(initData: string): Promise<{ ok: true; roles: Role[] }> {
+  return apiRequest(initData, '/api/invite/current/accept', { method: 'POST' });
 }
