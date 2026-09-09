@@ -79,14 +79,16 @@ export function NavigationShell({
   const drawerRef = useRef<HTMLElement>(null);
   const items = itemsForRole(activeRole);
 
-  const closeDrawer = (restoreFocus = true) => {
+  const closeDrawer = () => {
     setDrawerOpen(false);
-    if (restoreFocus) window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+    window.requestAnimationFrame(() => menuButtonRef.current?.focus());
   };
 
   useEffect(() => {
     if (!drawerOpen) return;
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const drawer = drawerRef.current;
     const focusable = () => Array.from(
       drawer?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])') ?? [],
@@ -114,7 +116,10 @@ export function NavigationShell({
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [drawerOpen]);
 
   useEffect(() => {
@@ -123,12 +128,12 @@ export function NavigationShell({
 
   const chooseDestination = (next: AppDestination) => {
     onDestinationChange(next);
-    closeDrawer(false);
+    closeDrawer();
   };
 
   const switchRole = (role: Role) => {
     onRoleSwitch(role);
-    closeDrawer(false);
+    closeDrawer();
   };
 
   let previousSection: NavigationItem['section'];
@@ -157,7 +162,7 @@ export function NavigationShell({
 
       {drawerOpen ? (
         <div className="drawer-layer">
-          <button className="drawer-backdrop" type="button" aria-label="Закрыть меню" onClick={() => closeDrawer()} />
+          <button className="drawer-backdrop" type="button" aria-label="Закрыть меню" onClick={closeDrawer} />
           <aside ref={drawerRef} className="navigation-drawer" role="dialog" aria-modal="true" aria-label="Главное меню">
             <header className="drawer-account">
               <div className="drawer-avatar" aria-hidden="true">{me.user.firstName.slice(0, 1).toUpperCase()}</div>
