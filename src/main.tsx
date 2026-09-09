@@ -6,8 +6,13 @@ import './style.css';
 import './exercise.css';
 import './theme.css';
 
-const root = document.getElementById('root');
-if (!root) throw new Error('Root element not found');
+function resolveRoot(): HTMLElement {
+  const element = document.getElementById('root');
+  if (!element) throw new Error('Root element not found');
+  return element;
+}
+
+const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
