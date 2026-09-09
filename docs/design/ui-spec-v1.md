@@ -2,7 +2,23 @@
 
 Status: **canonical for MVP UI implementation**.
 
-This document freezes the visual system selected as **Variant 4** and the `reference-first` UX rule for flows that already exist in Gym Keeper.
+This document freezes the visual system selected as **Variant 4**, the `reference-first` UX rule for flows that already exist in Gym Keeper, and the Telegram platform reuse policy defined in `docs/design/platform-ui-policy.md`.
+
+## 0. Platform UI reference hierarchy
+
+The UI must not be designed as an isolated website inside a Telegram webview. Use the following reference hierarchy:
+
+1. **Telegram platform layer** — theme parameters, viewport/safe-area inputs, native Mini App controls and generic Telegram interaction conventions where they fit the task.
+2. **Gym Keeper reference APK** — product flow, information hierarchy, field/control choice, navigation semantics and approved reference assets for existing fitness flows.
+3. **Mezfit design system** — Variant 4 geometry/density, the five global customer themes and Mezfit-specific product flows.
+
+When these overlap, preserve Mezfit domain invariants first, then Gym Keeper product-flow semantics, then reuse Telegram platform behavior where compatible, then apply Variant 4 visual tokens.
+
+Generic platform UI should not be reinvented without reason. Before creating custom Back navigation, settings/account rows, generic list/section/cell patterns, standard confirmations or platform-edge spacing, check Telegram Mini App capabilities and conventions first.
+
+Telegram-oriented React UI libraries may be used selectively, but no external UI kit is a mandatory dependency. Any dependency must be compatible with the project's React version, accessibility requirements, bundle constraints, Variant 4 geometry and all five global themes.
+
+Telegram theme values and the Mezfit global product theme are separate concepts: Telegram parameters may coordinate host/header/background integration, but they must not create an independent per-user override of the globally selected Mezfit theme.
 
 ## 1. Reference-first UX rule
 
@@ -18,13 +34,15 @@ The implementation **must preserve unless a linked Issue explicitly documents a 
 - navigation sequence;
 - density of the task-oriented screen.
 
-Mezfit may freely change decorative styling: palette, typography family, icon set, borders, small corner radii and other non-behavioral treatment.
+Mezfit may change decorative styling: palette, typography family, borders, small corner radii and other non-behavioral treatment. Where a corresponding approved Gym Keeper UI icon asset exists, use that reference asset rather than inventing an unrelated icon metaphor; this is tracked by the relevant UI/icon issue.
 
 New Mezfit-only concepts may introduce new controls, but they should be appended or integrated without redesigning the reference flow around backend/domain fields.
 
 ### Required review rule
 
 Before implementing a screen with a Gym Keeper analogue, the implementer must inspect the corresponding APK screen/flow. The Issue/PR should state the reference screen and any intentional deviations.
+
+Before implementing generic platform interaction, the implementer should also verify current Telegram Mini App capabilities instead of relying on remembered API details.
 
 ## 2. Base geometry
 
@@ -54,6 +72,20 @@ Do not introduce arbitrary 14/18/22/28 px layout gaps.
 - gap between independent form fields: **12 px**;
 - maximum readable content width on large screens: **720 px**;
 - form/modal content width: **420 px max** where a centered narrow layout is appropriate.
+
+### Telegram safe area and viewport
+
+Variant 4 spacing is component/layout spacing, not a substitute for Telegram platform insets.
+
+Where content touches a protected top/bottom/side edge, final geometry is:
+
+```text
+Variant 4 component geometry
++ Telegram safeAreaInset/contentSafeAreaInset where applicable
+= final screen geometry
+```
+
+The UI must tolerate Telegram viewport changes caused by expansion, fullscreen mode, keyboard or Telegram controls. Do not hard-code notch/home-indicator padding for individual devices.
 
 ## 3. Corner radii
 
@@ -117,8 +149,8 @@ A visible icon may be smaller, but the clickable/tappable wrapper must be at lea
 | compact secondary button | **40 px** visual, **44 px** touch target |
 | textarea | **72 px minimum** |
 | list row | **48 px minimum** |
-| app bar | **52 px** + safe area |
-| bottom navigation | **56 px** + safe area |
+| app bar | **52 px** + applicable Telegram safe area |
+| bottom navigation | **56 px** + applicable Telegram safe area |
 | icon in standard control | **20 px** |
 | toolbar/navigation icon | **22 px** |
 | radio/checkbox visual | **20 px** |
@@ -126,6 +158,12 @@ A visible icon may be smaller, but the clickable/tappable wrapper must be at lea
 Field horizontal padding: **12 px**.
 
 Button horizontal padding: **16 px**.
+
+### Native Telegram controls
+
+Prefer Telegram-native controls when the action is app/platform-level, the native behavior is supported in the target Mini App environment, and using it does not change the established Gym Keeper/Mezfit product flow. Examples include Back navigation, a single dominant bottom action and generic platform confirmations.
+
+Do not force native controls into domain-heavy flows merely for visual similarity.
 
 ## 6. Cards and list density
 
@@ -143,6 +181,7 @@ Rules:
 
 - avoid wrapping each individual label/value pair in its own card;
 - prefer one list/group surface with 48 px rows and 1 px separators;
+- for generic list/settings/account screens, prefer established Telegram-like cell/section behavior rather than inventing a decorative card system;
 - nested cards are prohibited unless the reference flow requires nested visual grouping;
 - a screen should not gain vertical space merely to make a card feel “premium”.
 
@@ -167,7 +206,7 @@ Selected chip uses filled semantic/accent background; unselected chip uses surfa
 ### Dialog modal
 
 - width: `min(calc(100vw - 32px), 420px)`;
-- max height: `calc(100dvh - 32px)`;
+- max height: `calc(100dvh - 32px)` adjusted for applicable Telegram content safe area;
 - outer radius: **10 px**;
 - internal padding: **16 px**;
 - title bottom gap: **16 px**;
@@ -177,9 +216,11 @@ Selected chip uses filled semantic/accent background; unselected chip uses surfa
 - backdrop: `rgba(0, 0, 0, 0.68)`;
 - modal shadow only: `0 8px 24px rgba(0,0,0,.35)`.
 
+For generic confirmations with no custom content requirement, a Telegram-native popup/confirmation may be preferred. For Gym Keeper-equivalent task modals or Mezfit domain forms, preserve the approved product flow.
+
 ### Bottom sheet
 
-- max height: **92dvh**;
+- max height: **92dvh** minus applicable Telegram safe-area constraints;
 - top radius: **10 px**;
 - horizontal padding: **16 px**;
 - top/bottom internal padding: **12 / 16 px**;
@@ -262,6 +303,8 @@ Initial global presets:
 Accent/category semantic colors remain stable unless contrast forces a theme-specific override.
 
 Theme selection is stored as a backend/global application setting. Frontend must not maintain a separate per-user theme source of truth.
+
+Telegram theme parameters may coordinate the surrounding Telegram host/header/background but do not replace this global product-theme contract.
 
 ## 12. Canonical `Новое упражнение` contract
 
@@ -350,22 +393,26 @@ Right-aligned actions, with **8 px** gap:
 
 ## 13. Navigation and new Mezfit screens
 
-Gym Keeper reference rules do not prohibit new Mezfit navigation. New coach/client workspace screens may choose their own hierarchy, but must use these same density tokens.
+Gym Keeper reference rules do not prohibit new Mezfit navigation. New coach/client workspace screens may choose their own hierarchy, but must use these same density tokens and the platform rules from `platform-ui-policy.md`.
+
+Canonical global navigation is defined in `docs/design/navigation-shell.md`.
 
 ### App bar
 
-- height: **52 px** + Telegram/safe-area inset;
+- height: **52 px** + applicable Telegram safe-area inset;
 - left/right horizontal padding: **12 px**;
-- title: **20/24 px, 600** when inside app bar;
+- title: **20/24 px, 600** when inside app bar unless the dedicated navigation-shell spec defines a more specific title token;
 - icon buttons: **44 × 44 px** targets, **22 px** icons.
 
 ### Bottom navigation (when used)
 
-- height: **56 px** + safe-area inset;
+- height: **56 px** + applicable Telegram safe-area inset;
 - icon: **22 px**;
 - label: **11/14 px, 500**;
 - no individual nav-item card backgrounds;
 - active state uses accent color and optionally a **2 px** top/underline indicator, not a large pill.
+
+Bottom navigation is not the current global Mezfit navigation pattern; see `navigation-shell.md`.
 
 ## 14. CSS token baseline
 
@@ -409,17 +456,23 @@ Implementation should centralize these values instead of repeating magic numbers
 }
 ```
 
+Telegram safe-area/content-safe-area values are runtime platform inputs and should not be baked into the static Variant 4 spacing token table.
+
 ## 15. PR review checklist
 
 A UI PR is not ready to merge if any answer below is “no” without an explicit rationale:
 
+- Does the screen respect Telegram safe-area/content-safe-area where applicable?
+- If Telegram viewport height can change, does the layout tolerate those changes?
+- Was a Telegram-native control or established platform pattern considered before inventing a generic custom primitive?
 - If Gym Keeper has this flow, was the corresponding reference screen inspected?
 - Are the same essential fields/actions/control types preserved?
 - Is a selector still a selector rather than a free-text shortcut?
-- Are standard page paddings 16 px and card paddings 12 px?
+- Are standard page paddings 16 px and card paddings 12 px before applicable platform insets?
 - Are normal radii within the specified 6/8/10 px system?
 - Are controls 44 px and list rows 48 px unless the reference requires otherwise?
 - Are chips 28 px with 6 px gaps?
 - Are typography sizes from the frozen scale?
 - Is any new Mezfit-only control integrated without rearranging the reference task unnecessarily?
+- Does the active global theme remain authoritative instead of being replaced by a per-user Telegram theme?
 - Does the PR link and close a concrete Issue?
