@@ -50,6 +50,35 @@ Required close paths: destination selection, backdrop tap, Escape. Keyboard focu
 
 The drawer must tolerate Telegram viewport changes without clipping its last actionable row. When Telegram reports a viewport or safe-area change, the shell recomputes usable geometry instead of assuming a fixed physical screen height.
 
+### Drawer motion
+
+The drawer is not allowed to appear/disappear as an instantaneous conditional render. It remains mounted for the exit transition.
+
+| State | Transform / opacity | Duration | Easing |
+| --- | --- | ---: | --- |
+| opening drawer | `translateX(-100%) → translateX(0)` | 220 ms | `cubic-bezier(0.2, 0, 0, 1)` |
+| opening backdrop | `opacity 0 → 1` | 220 ms | `cubic-bezier(0.2, 0, 0, 1)` |
+| closing drawer | `translateX(0) → translateX(-100%)` | 180 ms | `cubic-bezier(0.4, 0, 1, 1)` |
+| closing backdrop | `opacity 1 → 0` | 180 ms | `cubic-bezier(0.4, 0, 1, 1)` |
+
+Rules:
+
+- no bounce, spring or overshoot;
+- backdrop continues blocking the underlying page until the close transition completes;
+- body scroll remains locked until the drawer is fully unmounted;
+- focus returns to the hamburger only after close completion;
+- `prefers-reduced-motion: reduce` collapses the decorative transition to effectively immediate movement without changing navigation behavior.
+
+### Icon source
+
+Navigation/app-bar icons follow the approved Gym Keeper APK reference assets. Emoji and Unicode symbols are not production navigation icons.
+
+- drawer visual icon: 24 × 24 CSS px;
+- app-bar visual icon: 22 × 22 CSS px inside the 44 × 44 action target;
+- monochrome APK PNGs are rendered as CSS alpha masks so `currentColor` follows the active Mezfit theme;
+- exact semantic/resource mapping is documented in `docs/reference/gym-keeper/ui-icon-map.md`;
+- the reference APK's hamburger is programmatically drawn by its drawer/action-bar stack rather than supplied as a standalone bitmap, so Mezfit keeps a local equivalent 24 dp menu path while all available semantic app icons come directly from the APK.
+
 ## Global destinations
 
 ### Coach
@@ -100,7 +129,9 @@ Mezfit does not use these as its global mobile navigation pattern:
 - permanently visible desktop sidebar;
 - oversized branding header above every screen;
 - duplicating selected-client local sections inside the global drawer;
-- ignoring Telegram safe-area/viewport events and treating the Mini App like a generic fixed browser page.
+- ignoring Telegram safe-area/viewport events and treating the Mini App like a generic fixed browser page;
+- instant drawer mount/unmount with no exit motion;
+- emoji/text glyphs as production navigation icons.
 
 ## Themes
 
