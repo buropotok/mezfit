@@ -1,0 +1,45 @@
+name: Set Mezfit Theme
+
+on:
+  workflow_dispatch:
+    inputs:
+      theme:
+        description: Global Mezfit theme
+        required: true
+        type: choice
+        default: default
+        options:
+          - default
+          - graphite-cobalt
+          - emerald-sand
+          - burgundy-milk
+          - black-terracotta
+
+jobs:
+  set-theme:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      THEME: ${{ inputs.theme }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Resolve D1 database id
+        shell: bash
+        run: |
+          DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name == "mezfit") | .uuid' | head -n1)
+          test -n "$DB_ID" && test "$DB_ID" != "null"
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/" wrangler.jsonc
+      - name: Set global theme
+        shell: bash
+        run: |
+          case "$THEME" in
+            default|graphite-cobalt|emerald-sand|burgundy-milk|black-terracotta) ;;
+            *) echo "Unsupported theme: $THEME" >&2; exit 1 ;;
+          esac
+          npx wrangler d1 execute DB_BINDING --remote --command "INSERT INTO app_setting (key, value, updated_at) VALUES ('theme', '$THEME', CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP;"

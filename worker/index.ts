@@ -1,3 +1,4 @@
+import { getGlobalTheme } from './lib/app-config';
 import {
   createExerciseForClient,
   hasActiveCoachClient,
@@ -259,6 +260,11 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+
+  if (url.pathname === '/api/config' && request.method === 'GET') {
+    return json({ theme: await getGlobalTheme(env.DB_BINDING) });
+  }
+
   const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);
   if (exerciseMatch) return handleExerciseRoute(request, env, Number(exerciseMatch[1]));
 
