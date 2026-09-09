@@ -1,1 +1,0 @@
-PR summary: replace temporary navigation glyphs with APK-derived icons, add drawer enter/exit motion, preserve accessibility behavior, document semantic mapping and asset provenance, and add regression coverage.
