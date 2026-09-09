@@ -1,4 +1,6 @@
 export type Role = 'coach' | 'client';
+export type ExerciseScope = 'global' | 'coach' | 'client';
+export type TrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
 
 export interface AppUser {
   id: number;
@@ -29,6 +31,15 @@ export interface ClientInvitePreview {
     lastName: string | null;
     username: string | null;
   };
+}
+
+export interface ExerciseDefinition {
+  id: number;
+  scope: ExerciseScope;
+  name: string;
+  tracking_type: TrackingType;
+  primary_muscle: string | null;
+  equipment: string | null;
 }
 
 interface ApiErrorPayload {
@@ -103,4 +114,30 @@ export function getCurrentInvite(initData: string): Promise<{ invite: ClientInvi
 
 export function acceptCurrentInvite(initData: string): Promise<{ ok: true; roles: Role[] }> {
   return apiRequest(initData, '/api/invite/current/accept', { method: 'POST' });
+}
+
+export function getClientExercises(
+  initData: string,
+  clientUserId: number,
+  search = '',
+): Promise<{ exercises: ExerciseDefinition[] }> {
+  const query = search ? `?search=${encodeURIComponent(search)}` : '';
+  return apiRequest(initData, `/api/coach/clients/${clientUserId}/exercises${query}`);
+}
+
+export function createClientExercise(
+  initData: string,
+  clientUserId: number,
+  input: {
+    scope: 'coach' | 'client';
+    name: string;
+    trackingType: TrackingType;
+    primaryMuscle?: string;
+    equipment?: string;
+  },
+): Promise<{ exercise: ExerciseDefinition }> {
+  return apiRequest(initData, `/api/coach/clients/${clientUserId}/exercises`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 }
