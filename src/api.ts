@@ -42,7 +42,12 @@ async function apiRequest<T>(initData: string, path: string, init?: RequestInit)
 
   const response = await fetch(path, { ...init, headers });
   if (!response.ok) {
-    const payload = await response.json<ApiErrorPayload>().catch(() => ({}));
+    let payload: ApiErrorPayload = {};
+    try {
+      payload = (await response.json()) as ApiErrorPayload;
+    } catch {
+      // Keep the generic HTTP error below when the server did not return JSON.
+    }
     throw new ApiError(
       response.status,
       payload.error?.message ?? `Request failed with status ${response.status}`,
