@@ -118,7 +118,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/me/roles' && request.method === 'POST') {
     const { row } = await requireUser(request, env);
-    const body = await request.json<{ role?: string }>().catch(() => ({}));
+    let body: { role?: string } = {};
+    try {
+      body = (await request.json()) as { role?: string };
+    } catch {
+      // Validation below returns a stable 400 response.
+    }
+
     if (body.role !== 'coach' && body.role !== 'client') {
       return json({ error: { code: 'INVALID_ROLE', message: 'Role must be coach or client' } }, { status: 400 });
     }
@@ -137,7 +143,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     try {
