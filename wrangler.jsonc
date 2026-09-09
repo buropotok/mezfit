@@ -15,5 +15,11 @@
       "database_name": "mezfit",
       "database_id": "REPLACE_WITH_D1_DATABASE_ID"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2_BINDING_MEZFIT",
+      "bucket_name": "mezfit"
+    }
   ]
 }
