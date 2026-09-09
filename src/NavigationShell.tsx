@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
+import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
 
 export type AppDestination =
   | 'clients'
@@ -20,27 +21,27 @@ export interface NavigationContext {
 interface NavigationItem {
   id: AppDestination;
   label: string;
-  icon: string;
+  icon: GymKeeperIcon;
   section?: 'secondary';
 }
 
 const coachItems: NavigationItem[] = [
-  { id: 'clients', label: 'Клиенты', icon: '👥' },
-  { id: 'programs', label: 'Программы', icon: '▤' },
-  { id: 'exercises', label: 'Упражнения', icon: '◆' },
-  { id: 'calendar', label: 'Календарь', icon: '□' },
-  { id: 'settings', label: 'Настройки', icon: '⚙', section: 'secondary' },
-  { id: 'about', label: 'О приложении', icon: 'ⓘ', section: 'secondary' },
+  { id: 'clients', label: 'Клиенты', icon: 'clients' },
+  { id: 'programs', label: 'Программы', icon: 'programs' },
+  { id: 'exercises', label: 'Упражнения', icon: 'exercises' },
+  { id: 'calendar', label: 'Календарь', icon: 'calendar' },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
+  { id: 'about', label: 'О приложении', icon: 'about', section: 'secondary' },
 ];
 
 const clientItems: NavigationItem[] = [
-  { id: 'today', label: 'Сегодня', icon: '✓' },
-  { id: 'programs', label: 'Программа', icon: '▤' },
-  { id: 'exercises', label: 'Упражнения', icon: '◆' },
-  { id: 'history', label: 'История', icon: '↶' },
-  { id: 'progress', label: 'Прогресс', icon: '↗' },
-  { id: 'settings', label: 'Настройки', icon: '⚙', section: 'secondary' },
-  { id: 'about', label: 'О приложении', icon: 'ⓘ', section: 'secondary' },
+  { id: 'today', label: 'Сегодня', icon: 'today' },
+  { id: 'programs', label: 'Программа', icon: 'programs' },
+  { id: 'exercises', label: 'Упражнения', icon: 'exercises' },
+  { id: 'history', label: 'История', icon: 'history' },
+  { id: 'progress', label: 'Прогресс', icon: 'progress' },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
+  { id: 'about', label: 'О приложении', icon: 'about', section: 'secondary' },
 ];
 
 function itemsForRole(role: Role): NavigationItem[] {
@@ -53,6 +54,10 @@ function roleLabel(role: Role): string {
 
 function destinationTitle(role: Role, destination: AppDestination): string {
   return itemsForRole(role).find((item) => item.id === destination)?.label ?? 'Mezfit';
+}
+
+function iconStyle(icon: GymKeeperIcon): CSSProperties {
+  return { '--navigation-icon': gymKeeperIcons[icon] } as CSSProperties;
 }
 
 interface Props {
@@ -74,18 +79,35 @@ export function NavigationShell({
   onRoleSwitch,
   children,
 }: Props) {
+  const [drawerMounted, setDrawerMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
+  const closeTimerRef = useRef<number | null>(null);
   const items = itemsForRole(activeRole);
+
+  const openDrawer = () => {
+    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+    setDrawerMounted(true);
+    window.requestAnimationFrame(() => setDrawerOpen(true));
+  };
 
   const closeDrawer = () => {
     setDrawerOpen(false);
-    window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(() => {
+      setDrawerMounted(false);
+      closeTimerRef.current = null;
+      menuButtonRef.current?.focus();
+    }, 180);
   };
 
+  useEffect(() => () => {
+    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+  }, []);
+
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (!drawerMounted) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -120,10 +142,11 @@ export function NavigationShell({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [drawerOpen]);
+  }, [drawerMounted]);
 
   useEffect(() => {
     setDrawerOpen(false);
+    setDrawerMounted(false);
   }, [activeRole]);
 
   const chooseDestination = (next: AppDestination) => {
@@ -142,17 +165,21 @@ export function NavigationShell({
     <main className="app-shell navigation-shell">
       <header className="navigation-appbar">
         {context ? (
-          <button className="navigation-icon-button" type="button" onClick={context.onBack} aria-label="Назад">←</button>
+          <button className="navigation-icon-button" type="button" onClick={context.onBack} aria-label="Назад">
+            <span className="navigation-apk-icon" style={iconStyle('back')} aria-hidden="true" />
+          </button>
         ) : (
           <button
             ref={menuButtonRef}
             className="navigation-icon-button"
             type="button"
-            onClick={() => setDrawerOpen(true)}
+            onClick={openDrawer}
             aria-label="Открыть меню"
             aria-haspopup="dialog"
             aria-expanded={drawerOpen}
-          >☰</button>
+          >
+            <span className="navigation-apk-icon" style={iconStyle('menu')} aria-hidden="true" />
+          </button>
         )}
         <h1>{context?.title ?? destinationTitle(activeRole, destination)}</h1>
         <span className="navigation-appbar-spacer" aria-hidden="true" />
@@ -160,8 +187,8 @@ export function NavigationShell({
 
       <section className="navigation-content">{children}</section>
 
-      {drawerOpen ? (
-        <div className="drawer-layer">
+      {drawerMounted ? (
+        <div className={`drawer-layer ${drawerOpen ? 'open' : 'closing'}`}>
           <button className="drawer-backdrop" type="button" aria-label="Закрыть меню" onClick={closeDrawer} />
           <aside ref={drawerRef} className="navigation-drawer" role="dialog" aria-modal="true" aria-label="Главное меню">
             <header className="drawer-account">
@@ -194,7 +221,7 @@ export function NavigationShell({
                       onClick={() => chooseDestination(item.id)}
                       aria-current={destination === item.id ? 'page' : undefined}
                     >
-                      <span className="drawer-row-icon" aria-hidden="true">{item.icon}</span>
+                      <span className="drawer-row-icon navigation-apk-icon" style={iconStyle(item.icon)} aria-hidden="true" />
                       <span>{item.label}</span>
                     </button>
                   </div>
