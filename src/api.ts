@@ -1,6 +1,8 @@
 export type Role = 'coach' | 'client';
 export type ExerciseScope = 'global' | 'coach' | 'client';
 export type TrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
+export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulders' | 'core' | 'full_body' | 'cardio' | 'other';
+export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
 
 export interface AppUser {
   id: number;
@@ -37,9 +39,10 @@ export interface ExerciseDefinition {
   id: number;
   scope: ExerciseScope;
   name: string;
+  description: string | null;
   tracking_type: TrackingType;
-  primary_muscle: string | null;
-  equipment: string | null;
+  category_code: ExerciseCategoryCode | null;
+  equipment_code: ExerciseEquipmentCode | null;
 }
 
 interface ApiErrorPayload {
@@ -131,9 +134,10 @@ export function createClientExercise(
   input: {
     scope: 'coach' | 'client';
     name: string;
+    description?: string;
     trackingType: TrackingType;
-    primaryMuscle?: string;
-    equipment?: string;
+    categoryCode: ExerciseCategoryCode;
+    equipmentCode: ExerciseEquipmentCode;
   },
 ): Promise<{ exercise: ExerciseDefinition }> {
   return apiRequest(initData, `/api/coach/clients/${clientUserId}/exercises`, {

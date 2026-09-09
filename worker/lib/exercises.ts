@@ -1,21 +1,25 @@
 export type ExerciseScope = 'global' | 'coach' | 'client';
 export type TrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
+export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulders' | 'core' | 'full_body' | 'cardio' | 'other';
+export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
 
 export interface ExerciseDefinitionRow {
   id: number;
   scope: ExerciseScope;
   name: string;
+  description: string | null;
   tracking_type: TrackingType;
-  primary_muscle: string | null;
-  equipment: string | null;
+  category_code: ExerciseCategoryCode | null;
+  equipment_code: ExerciseEquipmentCode | null;
 }
 
 export interface CreateExerciseInput {
   scope: 'coach' | 'client';
   name: string;
+  description: string | null;
   trackingType: TrackingType;
-  primaryMuscle: string | null;
-  equipment: string | null;
+  categoryCode: ExerciseCategoryCode;
+  equipmentCode: ExerciseEquipmentCode;
 }
 
 export async function hasActiveCoachClient(
@@ -43,7 +47,7 @@ export async function listExercisesForClient(
   const pattern = `%${search.toLowerCase()}%`;
   const result = await db
     .prepare(`
-      SELECT id, scope, name, tracking_type, primary_muscle, equipment
+      SELECT id, scope, name, description, tracking_type, category_code, equipment_code
       FROM exercise_definition
       WHERE is_archived = 0
         AND (
@@ -87,19 +91,20 @@ export async function createExerciseForClient(
   const result = await db
     .prepare(`
       INSERT INTO exercise_definition (
-        scope, owner_coach_user_id, owner_client_user_id, name, tracking_type,
-        primary_muscle, equipment, created_by_user_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      RETURNING id, scope, name, tracking_type, primary_muscle, equipment
+        scope, owner_coach_user_id, owner_client_user_id, name, description, tracking_type,
+        category_code, equipment_code, created_by_user_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING id, scope, name, description, tracking_type, category_code, equipment_code
     `)
     .bind(
       input.scope,
       coachUserId,
       ownerClientUserId,
       input.name,
+      input.description,
       input.trackingType,
-      input.primaryMuscle,
-      input.equipment,
+      input.categoryCode,
+      input.equipmentCode,
       coachUserId,
     )
     .first<ExerciseDefinitionRow>();
