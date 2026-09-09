@@ -3,6 +3,9 @@
   "name": "mezfit",
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-09",
+  "vars": {
+    "TELEGRAM_BOT_USERNAME": "mezfit_bot"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
