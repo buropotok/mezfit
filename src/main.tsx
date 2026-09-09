@@ -5,6 +5,7 @@ import { loadGlobalTheme } from './theme';
 import './style.css';
 import './exercise.css';
 import './coach.css';
+import './shell.css';
 import './theme.css';
 
 function resolveRoot(): HTMLElement {
