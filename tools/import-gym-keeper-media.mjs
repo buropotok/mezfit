@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { spawn } from 'node:child_process';
 
@@ -7,6 +7,7 @@ const R2_BUCKET = 'mezfit';
 const R2_PREFIX = 'exercise-media/gym_keeper_apk';
 const CONCURRENCY = 4;
 const MAX_BYTES = 8 * 1024 * 1024;
+const EXPECTED_MEDIA_COUNT = 334;
 const dryRun = process.argv.includes('--dry-run');
 const keepFiles = process.argv.includes('--keep-files');
 const tempDir = process.env.GK_MEDIA_TMP || '.tmp/gym-keeper-media';
@@ -16,16 +17,23 @@ export function extractReferenceKeysFromSeedSql(sql) {
     .map((match) => match[1].replaceAll("''", "'"));
 }
 
-async function loadReferenceKeys() {
-  const keys = [];
-  for (let index = 7; index <= 13; index += 1) {
-    const file = `migrations/${String(index).padStart(4, '0')}_gym_keeper_exercise_seed_0${index - 6}.sql`;
-    const sql = await readFile(file, 'utf8');
-    keys.push(...extractReferenceKeysFromSeedSql(sql));
+export async function loadReferenceKeys() {
+  const migrationFiles = (await readdir('migrations'))
+    .filter((file) => /^\d+_.*\.sql$/i.test(file))
+    .sort();
+  const discovered = [];
+
+  for (const file of migrationFiles) {
+    const sql = await readFile(join('migrations', file), 'utf8');
+    discovered.push(...extractReferenceKeysFromSeedSql(sql));
   }
-  const unique = [...new Set(keys)];
-  if (keys.length !== 334 || unique.length !== 334) {
-    throw new Error(`Expected 334 unique Gym Keeper media keys, found ${keys.length} rows / ${unique.length} unique`);
+
+  const unique = [...new Set(discovered)];
+  if (unique.length !== EXPECTED_MEDIA_COUNT) {
+    throw new Error(
+      `Expected ${EXPECTED_MEDIA_COUNT} unique Gym Keeper media keys, found ${unique.length} `
+      + `(${discovered.length} SQL occurrences across ${migrationFiles.length} migrations)`,
+    );
   }
   return unique;
 }
