@@ -4,6 +4,7 @@ import { App } from './App';
 import { loadGlobalTheme } from './theme';
 import './style.css';
 import './exercise.css';
+import './global-exercise.css';
 import './coach.css';
 import './shell.css';
 import './navigation.css';
