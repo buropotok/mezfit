@@ -1,6 +1,8 @@
 const GYM_KEEPER_MEDIA_HOST = '47-1594.s.cdn13.com';
 const GYM_KEEPER_MEDIA_PREFIX = '/img/gifs/180/';
 const MAX_EXERCISE_MEDIA_BYTES = 8 * 1024 * 1024;
+const BIRD_DOG_REFERENCE_KEY = '12411305-Bird-Dog-male_Back_180.gif';
+const BIRD_DOG_GYMVISUAL_PREVIEW = 'https://gymvisual.com/img/p/2/0/8/2/4/20824.gif';
 
 interface ExerciseMediaSourceRow {
   reference_source: string | null;
@@ -82,8 +84,15 @@ export async function handleExerciseMediaRoute(
     });
   }
 
-  const upstream = await fetch(source.reference_media_url, {
-    headers: { accept: 'image/gif,image/*;q=0.8,*/*;q=0.1' },
+  const upstreamUrl = source.reference_key === BIRD_DOG_REFERENCE_KEY
+    ? BIRD_DOG_GYMVISUAL_PREVIEW
+    : source.reference_media_url;
+  const upstream = await fetch(upstreamUrl, {
+    redirect: 'follow',
+    headers: {
+      accept: 'image/gif,image/*;q=0.8,*/*;q=0.1',
+      'user-agent': 'MezfitExerciseMedia/1.0',
+    },
   });
   if (!upstream.ok) return notFound();
 
@@ -94,21 +103,24 @@ export async function handleExerciseMediaRoute(
   if (declaredLength > MAX_EXERCISE_MEDIA_BYTES) return new Response(null, { status: 413 });
 
   const bytes = await upstream.arrayBuffer();
-  if (bytes.byteLength === 0 || bytes.byteLength > MAX_EXERCISE_MEDIA_BYTES) return notFound();
+  if (bytes.byteLength < 6 || bytes.byteLength > MAX_EXERCISE_MEDIA_BYTES) return notFound();
+  const signature = new TextDecoder('ascii').decode(bytes.slice(0, 6));
+  if (signature !== 'GIF87a' && signature !== 'GIF89a') return notFound();
 
   await bucket.put(r2Key, bytes, {
     httpMetadata: {
-      contentType,
+      contentType: 'image/gif',
       cacheControl: 'public, max-age=31536000, immutable',
     },
     customMetadata: {
-      source: 'gym_keeper_apk',
+      source: source.reference_key === BIRD_DOG_REFERENCE_KEY ? 'gymvisual_watermarked_preview' : 'gym_keeper_apk',
+      sourceUrl: upstreamUrl,
       referenceKey: source.reference_key,
     },
   });
 
   return new Response(request.method === 'HEAD' ? null : bytes, {
     status: 200,
-    headers: mediaHeaders(contentType),
+    headers: mediaHeaders('image/gif'),
   });
 }
