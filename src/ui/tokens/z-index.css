@@ -1,0 +1,5 @@
+:root {
+  --ui-z-overlay: 1000;
+  --ui-z-popover: 1010;
+  --ui-z-modal: 1020;
+}

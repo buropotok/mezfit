@@ -1,0 +1,5 @@
+:root {
+  --ui-motion-fast: 150ms;
+  --ui-motion-standard: 200ms;
+  --ui-easing-standard: cubic-bezier(0.2, 0, 0.2, 1);
+}

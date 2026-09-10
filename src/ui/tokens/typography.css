@@ -1,0 +1,9 @@
+:root {
+  --ui-font-family: inherit;
+  --ui-font-size-caption: 0.75rem;
+  --ui-font-size-body: 0.875rem;
+  --ui-font-size-title: 1.25rem;
+  --ui-font-weight-regular: 400;
+  --ui-font-weight-medium: 600;
+  --ui-line-height-body: 1.5;
+}

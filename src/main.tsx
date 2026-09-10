@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadGlobalTheme } from './theme';
+import { UiKitPage } from './ui/UiKitPage';
 import './style.css';
 import './exercise.css';
 import './global-exercise.css';
@@ -11,6 +12,7 @@ import './coach.css';
 import './shell.css';
 import './navigation.css';
 import './theme.css';
+import './ui/tokens/index.css';
 
 function resolveRoot(): HTMLElement {
   const element = document.getElementById('root');
@@ -22,9 +24,10 @@ const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
+  const content = window.location.pathname === '/ui-kit' ? <UiKitPage /> : <App />;
   createRoot(root).render(
     <React.StrictMode>
-      <App />
+      {content}
     </React.StrictMode>,
   );
 }
