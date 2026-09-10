@@ -48,7 +48,7 @@ function parseTracking(value: string | null): TrackingType | '' | null {
 async function readExerciseInput(request: Request): Promise<ExerciseInput | Response> {
   let body: Record<string, unknown>;
   try {
-    body = await request.json<Record<string, unknown>>();
+    body = (await request.json()) as Record<string, unknown>;
   } catch {
     return error(400, 'INVALID_JSON', 'Request body must be valid JSON');
   }
@@ -118,7 +118,7 @@ export async function handleCoachExerciseCatalogueRoute(
     if (request.method !== 'PUT') return error(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
     let body: { favourite?: unknown } = {};
     try {
-      body = await request.json<{ favourite?: unknown }>();
+      body = (await request.json()) as { favourite?: unknown };
     } catch {
       return error(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
