@@ -5,6 +5,7 @@ import { loadGlobalTheme } from './theme';
 import './style.css';
 import './exercise.css';
 import './global-exercise.css';
+import './gym-keeper-exercise-parity.css';
 import './coach.css';
 import './shell.css';
 import './navigation.css';
