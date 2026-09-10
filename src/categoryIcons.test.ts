@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import parityCss from './gym-keeper-exercise-parity.css?raw';
+import parityCss from './gym-keeper-exercise-parity.css?inline';
 
 const expected = [
   ['chest', 'muscles_chest.png'],
