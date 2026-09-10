@@ -1,5 +1,6 @@
 import { getGlobalTheme } from './lib/app-config';
 import { handleCoachExerciseCatalogueRoute } from './lib/coach-exercise-api';
+import { handleExerciseMediaRoute } from './lib/exercise-media';
 import {
   createExerciseForClient,
   hasActiveCoachClient,
@@ -264,6 +265,17 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/config' && request.method === 'GET') {
     return json({ theme: await getGlobalTheme(env.DB_BINDING) });
+  }
+
+  const mediaMatch = url.pathname.match(/^\/api\/exercise-media\/gym_keeper_apk\/([^/]+)$/);
+  if (mediaMatch) {
+    let referenceKey = '';
+    try {
+      referenceKey = decodeURIComponent(mediaMatch[1]);
+    } catch {
+      return new Response(null, { status: 404 });
+    }
+    return handleExerciseMediaRoute(request, env.DB_BINDING, env.R2_BINDING_MEZFIT, referenceKey);
   }
 
   if (url.pathname === '/api/coach/exercises' || /^\/api\/coach\/exercises\/\d+(?:\/favourite)?$/.test(url.pathname)) {

@@ -7,6 +7,7 @@ import {
   type ExerciseEquipmentCode,
   type TrackingType,
 } from '../api';
+import { ExerciseMedia } from '../ExerciseMedia';
 
 const trackingLabels: Record<TrackingType, string> = {
   weight_reps: 'Вес × повторы',
@@ -189,6 +190,7 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
             {exercises.map((exercise) => (
               <div className="exercise-row" role="listitem" key={exercise.id}>
                 <div className="exercise-row-main">
+                  <span className="client-exercise-media"><ExerciseMedia exercise={exercise} /></span>
                   <span
                     className={`category-accent category-${exercise.category_code ?? 'other'}`}
                     aria-hidden="true"
@@ -223,10 +225,9 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
               <button
                 type="button"
                 className="exercise-media-slot"
-                onClick={() => setMediaMessage('Добавление фото и анимации будет подключено в задаче #34.')}
+                onClick={() => setMediaMessage('Собственные фото и анимации для пользовательских упражнений будут добавлены позже.')}
                 aria-label="Добавить изображение или анимацию"
               >
-                <span aria-hidden="true">🏋️</span>
                 <small>Медиа</small>
               </button>
               <div className="exercise-create-text-fields">
