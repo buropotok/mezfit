@@ -4,8 +4,8 @@ import { spawn } from 'node:child_process';
 
 const DATASET_REPO = 'https://github.com/hasaneyldrm/exercises-dataset.git';
 const DATASET_RAW_BASE = 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main';
-const R2_BUCKET = 'mezfit';
-const R2_PREFIX = 'exercise-media/gym_keeper_apk';
+const WORKER_BASE = process.env.MEZFIT_WORKER_BASE || 'https://mezfit.buropotok.workers.dev';
+const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || 'buropotok/mezfit';
 const CONCURRENCY = 4;
 const MAX_BYTES = 8 * 1024 * 1024;
 const EXPECTED_MEDIA_COUNT = 334;
@@ -15,17 +15,13 @@ const tempDir = process.env.GK_MEDIA_TMP || '.tmp/gym-keeper-media';
 const datasetDir = join(tempDir, 'exercises-dataset');
 
 export function extractReferenceKeysFromSeedSql(sql) {
-  return [...sql.matchAll(/'gym_keeper_apk',\s*'((?:''|[^'])+\.gif)'/gi)]
-    .map((match) => match[1].replaceAll("''", "'"));
+  return [...sql.matchAll(/'gym_keeper_apk',\s*'((?:''|[^'])+\.gif)'/gi)].map((match) => match[1].replaceAll("''", "'"));
 }
 
 export async function loadReferenceKeys() {
   const migrationFiles = (await readdir('migrations')).filter((file) => /^\d+_.*\.sql$/i.test(file)).sort();
   const discovered = [];
-  for (const file of migrationFiles) {
-    const sql = await readFile(join('migrations', file), 'utf8');
-    discovered.push(...extractReferenceKeysFromSeedSql(sql));
-  }
+  for (const file of migrationFiles) discovered.push(...extractReferenceKeysFromSeedSql(await readFile(join('migrations', file), 'utf8')));
   const unique = [...new Set(discovered)];
   if (unique.length !== EXPECTED_MEDIA_COUNT) throw new Error(`Expected ${EXPECTED_MEDIA_COUNT} unique Gym Keeper media keys, found ${unique.length}`);
   return unique;
@@ -42,11 +38,9 @@ function run(command, args) {
 function normalize(value) {
   return value.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').replace(/\b(male|female)\b/g, ' ').replace(/\s+/g, ' ').trim();
 }
-
 function apkName(referenceKey) {
   return referenceKey.replace(/^\d+-/, '').replace(/_(?:Back|Cardio|Chest|Forearms|Lower-Arms|Lower-Legs|Neck|Shoulders|Upper-Arms|Upper-Legs|Waist|Hips|Thighs|Calves|Full-Body|Other)_180\.gif$/i, '').replace(/_180\.gif$/i, '').replace(/[-_]+/g, ' ').trim();
 }
-
 function tokenScore(a, b) {
   const aa = new Set(normalize(a).split(' ').filter(Boolean));
   const bb = new Set(normalize(b).split(' ').filter(Boolean));
@@ -55,7 +49,6 @@ function tokenScore(a, b) {
   for (const token of aa) if (bb.has(token)) common += 1;
   return (2 * common) / (aa.size + bb.size);
 }
-
 function buildMatches(referenceKeys, exercises) {
   const byNormalizedName = new Map();
   for (const exercise of exercises) {
@@ -74,8 +67,6 @@ function buildMatches(referenceKeys, exercises) {
   });
 }
 
-function r2Object(referenceKey) { return `${R2_BUCKET}/${R2_PREFIX}/${referenceKey}`; }
-
 async function downloadAndUpload(match, index, total) {
   const url = `${DATASET_RAW_BASE}/${match.exercise.gif_url}`;
   const response = await fetch(url, { headers: { accept: 'image/gif' }, redirect: 'follow' });
@@ -86,7 +77,20 @@ async function downloadAndUpload(match, index, total) {
   if (signature !== 'GIF87a' && signature !== 'GIF89a') throw new Error(`Expected GIF: ${match.referenceKey}`);
   const localPath = join(tempDir, basename(match.referenceKey));
   await writeFile(localPath, bytes);
-  if (!dryRun) await run('npx', ['wrangler', 'r2', 'object', 'put', r2Object(match.referenceKey), '--file', localPath, '--content-type', 'image/gif', '--remote']);
+  if (!dryRun) {
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) throw new Error('GITHUB_TOKEN is required for Worker import');
+    const upload = await fetch(`${WORKER_BASE}/api/exercise-media/gym_keeper_apk/${encodeURIComponent(match.referenceKey)}`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${token}`,
+        'x-github-repository': GITHUB_REPOSITORY,
+        'content-type': 'image/gif',
+      },
+      body: bytes,
+    });
+    if (!upload.ok) throw new Error(`Worker upload failed ${upload.status}: ${await upload.text()}`);
+  }
   console.log(`[${index + 1}/${total}] ${dryRun ? 'verified' : 'uploaded'} ${match.referenceKey} <- ${match.exercise.gif_url} (${match.match})`);
 }
 
@@ -101,9 +105,8 @@ async function main() {
   const accepted = matches.filter((m) => m.exercise);
   const unmatched = matches.filter((m) => !m.exercise);
   await writeFile(join(tempDir, 'match-report.json'), JSON.stringify(matches.map((m) => ({ reference_key: m.referenceKey, apk_name: m.apkName, dataset_id: m.exercise?.id || null, dataset_name: m.exercise?.name || null, gif_url: m.exercise?.gif_url || null, match: m.match, score: Number(m.score.toFixed(3)) })), null, 2));
-  console.log(`Matched ${accepted.length}/${referenceKeys.length}; unmatched ${unmatched.length}. Uploading all confident matches.`);
+  console.log(`Matched ${accepted.length}/${referenceKeys.length}; unmatched ${unmatched.length}. Uploading all confident matches through Worker R2 binding.`);
   if (!accepted.length) throw new Error('No confident exercise media matches found');
-
   let cursor = 0;
   const failures = [];
   const workers = Array.from({ length: CONCURRENCY }, async () => {

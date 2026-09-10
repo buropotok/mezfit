@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - tools/import-gym-keeper-media.mjs
+      - worker/lib/exercise-media.ts
       - .github/workflows/import-exercise-media.yml
 
 jobs:
@@ -13,13 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
-      - name: Import matched exercise GIFs to R2
+      - name: Import matched exercise GIFs through Worker R2 binding
         run: node tools/import-gym-keeper-media.mjs

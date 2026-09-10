@@ -3,6 +3,7 @@ const GYM_KEEPER_MEDIA_PREFIX = '/img/gifs/180/';
 const MAX_EXERCISE_MEDIA_BYTES = 8 * 1024 * 1024;
 const BIRD_DOG_REFERENCE_KEY = '12411305-Bird-Dog-male_Back_180.gif';
 const BIRD_DOG_GYMVISUAL_PREVIEW = 'https://gymvisual.com/img/p/2/0/8/2/4/20824.gif';
+const IMPORT_REPOSITORY = 'buropotok/mezfit';
 
 interface ExerciseMediaSourceRow {
   reference_source: string | null;
@@ -45,19 +46,69 @@ function notFound(): Response {
   return new Response(null, { status: 404, headers: { 'cache-control': 'no-store' } });
 }
 
+function validReferenceKey(referenceKey: string): boolean {
+  return Boolean(referenceKey) && referenceKey.length <= 220 && !referenceKey.includes('/') && referenceKey.toLowerCase().endsWith('.gif');
+}
+
+async function isAuthorizedGithubImport(request: Request): Promise<boolean> {
+  if (request.headers.get('x-github-repository') !== IMPORT_REPOSITORY) return false;
+  const authorization = request.headers.get('authorization') || '';
+  if (!authorization.startsWith('Bearer ')) return false;
+  const response = await fetch(`https://api.github.com/repos/${IMPORT_REPOSITORY}/actions/runs?per_page=1`, {
+    headers: {
+      authorization,
+      accept: 'application/vnd.github+json',
+      'user-agent': 'MezfitExerciseMediaImporter/1.0',
+      'x-github-api-version': '2022-11-28',
+    },
+  });
+  return response.ok;
+}
+
+async function handleGithubImport(request: Request, db: D1Database, bucket: R2Bucket, referenceKey: string): Promise<Response> {
+  if (!(await isAuthorizedGithubImport(request))) return new Response(null, { status: 403 });
+  if (!validReferenceKey(referenceKey)) return notFound();
+
+  const source = await db.prepare(`
+    SELECT reference_source, reference_key, reference_media_url
+    FROM exercise_definition
+    WHERE reference_source = 'gym_keeper_apk' AND reference_key = ? AND is_archived = 0
+    LIMIT 1
+  `).bind(referenceKey).first<ExerciseMediaSourceRow>();
+  if (!source?.reference_source || !source.reference_key) return notFound();
+
+  const declaredLength = Number(request.headers.get('content-length') || '0');
+  if (declaredLength > MAX_EXERCISE_MEDIA_BYTES) return new Response(null, { status: 413 });
+  const bytes = await request.arrayBuffer();
+  if (bytes.byteLength < 6 || bytes.byteLength > MAX_EXERCISE_MEDIA_BYTES) return new Response(null, { status: 400 });
+  const signature = new TextDecoder('ascii').decode(bytes.slice(0, 6));
+  if (signature !== 'GIF87a' && signature !== 'GIF89a') return new Response(null, { status: 415 });
+
+  await bucket.put(exerciseMediaR2Key(source.reference_source, source.reference_key), bytes, {
+    httpMetadata: { contentType: 'image/gif', cacheControl: 'public, max-age=31536000, immutable' },
+    customMetadata: {
+      source: 'github_exercises_dataset',
+      referenceKey: source.reference_key,
+    },
+  });
+  return new Response(JSON.stringify({ ok: true, referenceKey: source.reference_key, bytes: bytes.byteLength }), {
+    status: 201,
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+  });
+}
+
 export async function handleExerciseMediaRoute(
   request: Request,
   db: D1Database,
   bucket: R2Bucket,
   referenceKey: string,
 ): Promise<Response> {
+  if (request.method === 'POST') return handleGithubImport(request, db, bucket, referenceKey);
   if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return new Response(null, { status: 405, headers: { allow: 'GET, HEAD' } });
+    return new Response(null, { status: 405, headers: { allow: 'GET, HEAD, POST' } });
   }
 
-  if (!referenceKey || referenceKey.length > 220 || referenceKey.includes('/') || !referenceKey.toLowerCase().endsWith('.gif')) {
-    return notFound();
-  }
+  if (!validReferenceKey(referenceKey)) return notFound();
 
   const source = await db
     .prepare(`
