@@ -11,13 +11,17 @@ const dryRun = process.argv.includes('--dry-run');
 const keepFiles = process.argv.includes('--keep-files');
 const tempDir = process.env.GK_MEDIA_TMP || '.tmp/gym-keeper-media';
 
+export function extractReferenceKeysFromSeedSql(sql) {
+  return [...sql.matchAll(/'gym_keeper_apk',\s*'((?:''|[^'])+\.gif)'/gi)]
+    .map((match) => match[1].replaceAll("''", "'"));
+}
+
 async function loadReferenceKeys() {
   const keys = [];
   for (let index = 7; index <= 13; index += 1) {
     const file = `migrations/${String(index).padStart(4, '0')}_gym_keeper_exercise_seed_0${index - 6}.sql`;
     const sql = await readFile(file, 'utf8');
-    const matches = [...sql.matchAll(/'gym_keeper_apk',\s*'([^']+\.gif)',\s*\d+\)/gi)];
-    keys.push(...matches.map((match) => match[1].replaceAll("''", "'")));
+    keys.push(...extractReferenceKeysFromSeedSql(sql));
   }
   const unique = [...new Set(keys)];
   if (keys.length !== 334 || unique.length !== 334) {
@@ -93,7 +97,9 @@ async function main() {
   console.log(`Gym Keeper exercise media import complete: ${keys.length}/${keys.length}`);
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.stack || error.message : error);
-  process.exit(1);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.stack || error.message : error);
+    process.exit(1);
+  });
+}
