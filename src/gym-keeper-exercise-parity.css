@@ -43,11 +43,24 @@
   height: 48px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
   color: var(--category-color, var(--color-accent));
-  background: color-mix(in srgb, var(--category-color, var(--color-accent)) 11%, transparent);
 }
-.exercise-category-icon .exercise-action-icon { width: 34px; height: 34px; }
+.exercise-category-icon .exercise-action-icon { display: none; }
+.exercise-category-icon::before {
+  content: '';
+  width: 48px;
+  height: 48px;
+  display: block;
+  background-color: currentColor;
+  -webkit-mask-image: var(--gk-category-icon);
+  mask-image: var(--gk-category-icon);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
 .exercise-category-name { font-size: 20px; line-height: 24px; font-weight: 650; }
 .exercise-category-row small { color: var(--theme-surface-muted); font-size: 13px; }
 
@@ -204,19 +217,47 @@ button.catalog-chip.selected {
 .global-exercise-editor-save-actions { margin-top: 0; }
 .danger-text { color: var(--color-danger); }
 
-.category-chest { --category-color: #58b84d; }
-.category-arms { --category-color: #ef4b45; }
-.category-back { --category-color: #586cff; }
-.category-legs { --category-color: #b4c423; }
-.category-shoulders { --category-color: #00aeea; }
-.category-core { --category-color: #873be8; }
-.category-full_body { --category-color: #e58213; }
-.category-cardio { --category-color: #ff3e74; }
-.category-other { --category-color: #9aa0a6; }
+.category-chest {
+  --category-color: #58b84d;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_chest.png');
+}
+.category-arms {
+  --category-color: #ef4b45;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_arm.png');
+}
+.category-back {
+  --category-color: #586cff;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_back.png');
+}
+.category-legs {
+  --category-color: #b4c423;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_leg.png');
+}
+.category-shoulders {
+  --category-color: #00aeea;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_shoulders.png');
+}
+.category-core {
+  --category-color: #873be8;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_core.png');
+}
+.category-full_body {
+  --category-color: #e58213;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_fullbody.png');
+}
+.category-cardio {
+  --category-color: #ff3e74;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_cardio.png');
+}
+.category-other {
+  --category-color: #9aa0a6;
+  --gk-category-icon: url('/gym-keeper/categories/muscles_other.png');
+}
 
 @media (max-width: 390px) {
   .exercise-category-row { min-height: 82px; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; padding-inline: 12px; }
   .exercise-category-icon { width: 44px; height: 44px; }
+  .exercise-category-icon::before { width: 44px; height: 44px; }
   .exercise-category-name { font-size: 18px; }
   .global-exercise-row { min-height: 88px; }
   .global-exercise-row-main { min-height: 88px; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; }
