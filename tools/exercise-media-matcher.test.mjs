@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{normalizeName,parseApkReference,matchExercise}from'./exercise-media-matcher.mjs';
+test('normalizes aliases and noise',()=>{assert.equal(normalizeName('Dumbbells Curls (male)'),'dumbbell curl')});
+test('parses APK name and body part',()=>{assert.deepEqual(parseApkReference('12411305-Bird-Dog-male_Back_180.gif'),{name:'Bird Dog male',bodyPart:'back'})});
+test('accepts exact normalized name',()=>{const r=matchExercise('00311305-Barbell-Curl_Upper-Arms_180.gif',[{id:'1',name:'barbell curl',body_part:'upper arms',equipment:'barbell'}]);assert.equal(r.exercise.id,'1');assert.equal(r.match,'exact')});
+test('uses body part and equipment to select a close candidate',()=>{const xs=[{id:'a',name:'dumbbell single arm row',body_part:'back',equipment:'dumbbell'},{id:'b',name:'single arm row',body_part:'back',equipment:'cable'}];const r=matchExercise('99991305-Dumbbell-One-Arm-Row_Back_180.gif',xs);assert.equal(r.exercise?.id,'a')});
+test('rejects ambiguous candidates',()=>{const xs=[{id:'a',name:'standing raise',body_part:'shoulders',equipment:'dumbbell'},{id:'b',name:'standing front raise',body_part:'shoulders',equipment:'dumbbell'}];const r=matchExercise('99991305-Dumbbell-Standing-Raise_Shoulders_180.gif',xs);assert.equal(r.exercise,null)});
