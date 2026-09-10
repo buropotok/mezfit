@@ -1,0 +1,41 @@
+:root {
+  /* Semantic aliases over the existing Mezfit theme contract. */
+  --ui-color-canvas: var(--theme-bg);
+  --ui-color-canvas-text: var(--theme-bg-text);
+  --ui-color-canvas-muted: var(--theme-bg-muted);
+  --ui-color-surface: var(--theme-surface);
+  --ui-color-surface-raised: var(--theme-surface-2);
+  --ui-color-surface-input: var(--theme-input);
+  --ui-color-border: var(--theme-border);
+  --ui-color-surface-text: var(--theme-surface-text);
+  --ui-color-surface-muted: var(--theme-surface-muted);
+
+  --ui-font-family: inherit;
+  --ui-font-size-caption: 0.75rem;
+  --ui-font-size-body: 0.875rem;
+  --ui-font-size-title: 1.25rem;
+  --ui-font-weight-regular: 400;
+  --ui-font-weight-medium: 600;
+  --ui-line-height-body: 1.5;
+
+  --ui-space-1: 0.25rem;
+  --ui-space-2: 0.5rem;
+  --ui-space-3: 0.75rem;
+  --ui-space-4: 1rem;
+  --ui-space-6: 1.5rem;
+  --ui-space-8: 2rem;
+
+  --ui-radius-sm: 0.5rem;
+  --ui-radius-md: 0.75rem;
+  --ui-radius-pill: 999px;
+
+  --ui-shadow-raised: 0 0.25rem 0.5rem 0.125rem rgb(0 0 0 / 20%);
+
+  --ui-motion-fast: 150ms;
+  --ui-motion-standard: 200ms;
+  --ui-easing-standard: cubic-bezier(0.2, 0, 0.2, 1);
+
+  --ui-z-overlay: 1000;
+  --ui-z-popover: 1010;
+  --ui-z-modal: 1020;
+}
