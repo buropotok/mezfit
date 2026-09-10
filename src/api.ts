@@ -1,3 +1,5 @@
+import { localizeBundledExerciseName } from './exerciseLocalization';
+
 export type Role = 'coach' | 'client';
 export type ExerciseScope = 'global' | 'coach' | 'client';
 export type TrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
@@ -74,6 +76,21 @@ interface ApiErrorPayload {
   };
 }
 
+const russianApiErrors: Record<string, string> = {
+  EXERCISE_EXISTS: 'Упражнение с таким названием уже существует',
+  EXERCISE_READ_ONLY: 'Базовое упражнение нельзя изменять',
+  EXERCISE_NOT_FOUND: 'Упражнение не найдено',
+  INVALID_NAME: 'Укажите название упражнения',
+  INVALID_TRACKING_TYPE: 'Выбран неподдерживаемый тип учёта результата',
+  INVALID_CATEGORY: 'Выбрана неподдерживаемая категория',
+  INVALID_EQUIPMENT: 'Выбран неподдерживаемый тип оборудования',
+  INVALID_FAVOURITE: 'Не удалось изменить избранное',
+  CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
+  ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
+  UNAUTHORIZED: 'Не удалось подтвердить Telegram-сессию',
+  NOT_FOUND: 'Запрошенный раздел не найден',
+};
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code?: string;
@@ -84,6 +101,13 @@ export class ApiError extends Error {
     this.status = status;
     this.code = code;
   }
+}
+
+function localizeExercise(exercise: ExerciseDefinition): ExerciseDefinition {
+  return {
+    ...exercise,
+    name: localizeBundledExerciseName(exercise.name, exercise.reference_source),
+  };
 }
 
 async function apiRequest<T>(initData: string, path: string, init?: RequestInit): Promise<T> {
@@ -99,10 +123,11 @@ async function apiRequest<T>(initData: string, path: string, init?: RequestInit)
     } catch {
       // Keep the generic HTTP error below when the server did not return JSON.
     }
+    const code = payload.error?.code;
     throw new ApiError(
       response.status,
-      payload.error?.message ?? `Request failed with status ${response.status}`,
-      payload.error?.code,
+      (code && russianApiErrors[code]) ?? payload.error?.message ?? `Ошибка запроса: ${response.status}`,
+      code,
     );
   }
   return response.json<T>();
@@ -141,13 +166,19 @@ export function acceptCurrentInvite(initData: string): Promise<{ ok: true; roles
   return apiRequest(initData, '/api/invite/current/accept', { method: 'POST' });
 }
 
-export function getClientExercises(
+export async function getClientExercises(
   initData: string,
   clientUserId: number,
   search = '',
 ): Promise<{ exercises: ExerciseDefinition[] }> {
-  const query = search ? `?search=${encodeURIComponent(search)}` : '';
-  return apiRequest(initData, `/api/coach/clients/${clientUserId}/exercises${query}`);
+  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/coach/clients/${clientUserId}/exercises`);
+  const needle = search.trim().toLocaleLowerCase('ru-RU');
+  const exercises = result.exercises.map(localizeExercise).filter((exercise, index) => {
+    if (!needle) return true;
+    const sourceName = result.exercises[index]?.name.toLocaleLowerCase('en-US') ?? '';
+    return exercise.name.toLocaleLowerCase('ru-RU').includes(needle) || sourceName.includes(needle);
+  });
+  return { exercises };
 }
 
 export function createClientExercise(
@@ -161,43 +192,54 @@ export function createClientExercise(
   });
 }
 
-export function getCoachExercises(
+export async function getCoachExercises(
   initData: string,
   filters: CoachExerciseFilters = {},
 ): Promise<{ exercises: ExerciseDefinition[] }> {
   const query = new URLSearchParams();
-  if (filters.search) query.set('search', filters.search);
   if (filters.categoryCode) query.set('category', filters.categoryCode);
   if (filters.trackingType) query.set('trackingType', filters.trackingType);
   if (filters.favouritesOnly) query.set('favourites', '1');
   if (filters.sort && filters.sort !== 'alphabetical') query.set('sort', filters.sort);
   const suffix = query.size ? `?${query.toString()}` : '';
-  return apiRequest(initData, `/api/coach/exercises${suffix}`);
+  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/coach/exercises${suffix}`);
+  const needle = filters.search?.trim().toLocaleLowerCase('ru-RU') ?? '';
+  const localized = result.exercises.map(localizeExercise);
+  return {
+    exercises: localized.filter((exercise, index) => {
+      if (!needle) return true;
+      const sourceName = result.exercises[index]?.name.toLocaleLowerCase('en-US') ?? '';
+      return exercise.name.toLocaleLowerCase('ru-RU').includes(needle) || sourceName.includes(needle);
+    }),
+  };
 }
 
-export function getCoachExercise(initData: string, exerciseId: number): Promise<{ exercise: ExerciseDefinition }> {
-  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`);
+export async function getCoachExercise(initData: string, exerciseId: number): Promise<{ exercise: ExerciseDefinition }> {
+  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`);
+  return { exercise: localizeExercise(result.exercise) };
 }
 
-export function createCoachExercise(
+export async function createCoachExercise(
   initData: string,
   input: ExerciseDefinitionInput,
 ): Promise<{ exercise: ExerciseDefinition }> {
-  return apiRequest(initData, '/api/coach/exercises', {
+  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, '/api/coach/exercises', {
     method: 'POST',
     body: JSON.stringify(input),
   });
+  return { exercise: localizeExercise(result.exercise) };
 }
 
-export function updateCoachExercise(
+export async function updateCoachExercise(
   initData: string,
   exerciseId: number,
   input: ExerciseDefinitionInput,
 ): Promise<{ exercise: ExerciseDefinition }> {
-  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`, {
+  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
+  return { exercise: localizeExercise(result.exercise) };
 }
 
 export function archiveCoachExercise(initData: string, exerciseId: number): Promise<{ ok: true }> {
