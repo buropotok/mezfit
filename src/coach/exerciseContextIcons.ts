@@ -1,0 +1,10 @@
+const mask = (value: string) => `url("data:image/png;base64,${value}")`;
+
+// Exact 24x24 monochrome PNG resources from the supplied Gym Keeper APK.
+export const exerciseContextIcons = {
+  more: mask('iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAQAAABKfvVzAAAAQUlEQVQ4y2NgGPqAEauoJkMYAwPDKobrmFJMWDWEMXAzcDOEYZNiItVJzFhFXzGoMfxmWMXwZjSURkNpKIcS7QEA6awTQkUlLjwAAAAASUVORK5CYII='),
+  info: mask('iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAQAAABKfvVzAAABSUlEQVQ4y7XTwUpbQRjF8d+NCi0Ebh9AgpWgkLbeVSCU+ga9IC59kj6BPoVv4CLg2pUuAuIigi5KEAli0U25GAQxmC46udckJojgWc3wnf+Zb5hveG9FY/t5iZpFZfRcOdfWnw6sScVgkNcy+05fBlI/RLpaOjLEqhoqBo7sTwKpdY+ajsearNuw4HCIzOXN/NS36ywPGkZdu5RYcusGSuGqqUjTRZ67YydfX2iKpOYLIBHrTjRT6FhXLPmfDTW0Riy/xpCWipqT4QmL6Mx8r05wBaBsIBsxbNse2WcGykVLkyqZWeiJwgtPUyzSK4ArVGcC1eAKwDkaM4FGcAWgLVNRn2qvq8i0i9F4kvlmxaW/wXLgILcv21Ky58/zWbrx0WeJO9cT6VsWHDkcHT5++2DJF6ue3HsQ+eSrTd+VXh7vN3ygV33R99c/STFVkeMoOjgAAAAASUVORK5CYII='),
+  copy: mask('iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAQAAABKfvVzAAAAl0lEQVQ4y+2UTQrCMBSEv8bgRkJPIeJ1RHKW1hPkLnqhXqG4i+vGRWhDyAuSXRfOJmSYefMe+elYoZAQCDnRAXDFchINC0NOxLq3ilyABsCUlWpQNEJnuwt3jKjzvJjKBEtfKdxjpQQDPFiExt2a3DzD37APQzzpsdUQ9jdDuvUGV1H6uBwycubMUZR/ePJOv8bvJrc38gVCoBSUxhBehQAAAABJRU5ErkJggg=='),
+} as const;
+
+export type ExerciseContextIcon = keyof typeof exerciseContextIcons;
