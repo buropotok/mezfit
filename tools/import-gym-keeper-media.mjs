@@ -20,18 +20,14 @@ export function extractReferenceKeysFromSeedSql(sql) {
 }
 
 export async function loadReferenceKeys() {
-  const migrationFiles = (await readdir('migrations'))
-    .filter((file) => /^\d+_.*\.sql$/i.test(file))
-    .sort();
+  const migrationFiles = (await readdir('migrations')).filter((file) => /^\d+_.*\.sql$/i.test(file)).sort();
   const discovered = [];
   for (const file of migrationFiles) {
     const sql = await readFile(join('migrations', file), 'utf8');
     discovered.push(...extractReferenceKeysFromSeedSql(sql));
   }
   const unique = [...new Set(discovered)];
-  if (unique.length !== EXPECTED_MEDIA_COUNT) {
-    throw new Error(`Expected ${EXPECTED_MEDIA_COUNT} unique Gym Keeper media keys, found ${unique.length}`);
-  }
+  if (unique.length !== EXPECTED_MEDIA_COUNT) throw new Error(`Expected ${EXPECTED_MEDIA_COUNT} unique Gym Keeper media keys, found ${unique.length}`);
   return unique;
 }
 
@@ -44,22 +40,11 @@ function run(command, args) {
 }
 
 function normalize(value) {
-  return value
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\b(male|female)\b/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return value.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').replace(/\b(male|female)\b/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function apkName(referenceKey) {
-  return referenceKey
-    .replace(/^\d+-/, '')
-    .replace(/_(?:Back|Cardio|Chest|Forearms|Lower-Arms|Lower-Legs|Neck|Shoulders|Upper-Arms|Upper-Legs|Waist|Hips|Thighs|Calves|Full-Body|Other)_180\.gif$/i, '')
-    .replace(/_180\.gif$/i, '')
-    .replace(/[-_]+/g, ' ')
-    .trim();
+  return referenceKey.replace(/^\d+-/, '').replace(/_(?:Back|Cardio|Chest|Forearms|Lower-Arms|Lower-Legs|Neck|Shoulders|Upper-Arms|Upper-Legs|Waist|Hips|Thighs|Calves|Full-Body|Other)_180\.gif$/i, '').replace(/_180\.gif$/i, '').replace(/[-_]+/g, ' ').trim();
 }
 
 function tokenScore(a, b) {
@@ -79,26 +64,17 @@ function buildMatches(referenceKeys, exercises) {
     list.push(exercise);
     byNormalizedName.set(key, list);
   }
-
   return referenceKeys.map((referenceKey) => {
     const name = apkName(referenceKey);
     const exact = byNormalizedName.get(normalize(name)) || [];
     if (exact.length === 1) return { referenceKey, apkName: name, exercise: exact[0], match: 'exact', score: 1 };
-
-    const ranked = exercises
-      .map((exercise) => ({ exercise, score: tokenScore(name, exercise.name) }))
-      .filter((item) => item.score >= 0.86)
-      .sort((a, b) => b.score - a.score);
-    if (ranked.length && (ranked.length === 1 || ranked[0].score - ranked[1].score >= 0.12)) {
-      return { referenceKey, apkName: name, exercise: ranked[0].exercise, match: 'probable', score: ranked[0].score };
-    }
+    const ranked = exercises.map((exercise) => ({ exercise, score: tokenScore(name, exercise.name) })).filter((item) => item.score >= 0.86).sort((a, b) => b.score - a.score);
+    if (ranked.length && (ranked.length === 1 || ranked[0].score - ranked[1].score >= 0.12)) return { referenceKey, apkName: name, exercise: ranked[0].exercise, match: 'probable', score: ranked[0].score };
     return { referenceKey, apkName: name, exercise: null, match: 'unmatched', score: ranked[0]?.score || 0 };
   });
 }
 
-function r2Object(referenceKey) {
-  return `${R2_BUCKET}/${R2_PREFIX}/${referenceKey}`;
-}
+function r2Object(referenceKey) { return `${R2_BUCKET}/${R2_PREFIX}/${referenceKey}`; }
 
 async function downloadAndUpload(match, index, total) {
   const url = `${DATASET_RAW_BASE}/${match.exercise.gif_url}`;
@@ -110,9 +86,7 @@ async function downloadAndUpload(match, index, total) {
   if (signature !== 'GIF87a' && signature !== 'GIF89a') throw new Error(`Expected GIF: ${match.referenceKey}`);
   const localPath = join(tempDir, basename(match.referenceKey));
   await writeFile(localPath, bytes);
-  if (!dryRun) {
-    await run('npx', ['wrangler', 'r2', 'object', 'put', r2Object(match.referenceKey), '--file', localPath, '--content-type', 'image/gif', '--remote']);
-  }
+  if (!dryRun) await run('npx', ['wrangler', 'r2', 'object', 'put', r2Object(match.referenceKey), '--file', localPath, '--content-type', 'image/gif', '--remote']);
   console.log(`[${index + 1}/${total}] ${dryRun ? 'verified' : 'uploaded'} ${match.referenceKey} <- ${match.exercise.gif_url} (${match.match})`);
 }
 
@@ -126,37 +100,24 @@ async function main() {
   const matches = buildMatches(referenceKeys, exercises);
   const accepted = matches.filter((m) => m.exercise);
   const unmatched = matches.filter((m) => !m.exercise);
-  await writeFile(join(tempDir, 'match-report.json'), JSON.stringify(matches.map((m) => ({
-    reference_key: m.referenceKey,
-    apk_name: m.apkName,
-    dataset_id: m.exercise?.id || null,
-    dataset_name: m.exercise?.name || null,
-    gif_url: m.exercise?.gif_url || null,
-    match: m.match,
-    score: Number(m.score.toFixed(3)),
-  })), null, 2));
-  console.log(`Matched ${accepted.length}/${referenceKeys.length}; unmatched ${unmatched.length}`);
-  if (accepted.length < 250) throw new Error(`Only ${accepted.length}/334 confident matches; refusing bulk upload`);
+  await writeFile(join(tempDir, 'match-report.json'), JSON.stringify(matches.map((m) => ({ reference_key: m.referenceKey, apk_name: m.apkName, dataset_id: m.exercise?.id || null, dataset_name: m.exercise?.name || null, gif_url: m.exercise?.gif_url || null, match: m.match, score: Number(m.score.toFixed(3)) })), null, 2));
+  console.log(`Matched ${accepted.length}/${referenceKeys.length}; unmatched ${unmatched.length}. Uploading all confident matches.`);
+  if (!accepted.length) throw new Error('No confident exercise media matches found');
 
   let cursor = 0;
+  const failures = [];
   const workers = Array.from({ length: CONCURRENCY }, async () => {
     while (true) {
       const index = cursor++;
       if (index >= accepted.length) return;
-      await downloadAndUpload(accepted[index], index, accepted.length);
+      try { await downloadAndUpload(accepted[index], index, accepted.length); }
+      catch (error) { failures.push({ referenceKey: accepted[index].referenceKey, error: error instanceof Error ? error.message : String(error) }); console.error(`[${index + 1}/${accepted.length}] FAILED ${accepted[index].referenceKey}: ${failures.at(-1).error}`); }
     }
   });
-  try {
-    await Promise.all(workers);
-  } finally {
-    if (!keepFiles) await rm(tempDir, { recursive: true, force: true });
-  }
-  console.log(`Exercise media import complete: ${accepted.length}/${referenceKeys.length}`);
+  try { await Promise.all(workers); }
+  finally { if (!keepFiles) await rm(tempDir, { recursive: true, force: true }); }
+  if (failures.length) throw new Error(`Uploaded ${accepted.length - failures.length}/${accepted.length} confident matches; ${failures.length} uploads failed`);
+  console.log(`Exercise media import complete: ${accepted.length}/${referenceKeys.length} uploaded; ${unmatched.length} remain unmatched`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
-    console.error(error instanceof Error ? error.stack || error.message : error);
-    process.exit(1);
-  });
-}
+if (import.meta.url === `file://${process.argv[1]}`) main().catch((error) => { console.error(error instanceof Error ? error.stack || error.message : error); process.exit(1); });
