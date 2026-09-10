@@ -1,0 +1,29 @@
+import { describe, expect, it } from 'vitest';
+import source from './GlobalExerciseCatalog.tsx?raw';
+
+describe('Gym Keeper global exercise catalogue parity', () => {
+  it('keeps category-first navigation and badge filters', () => {
+    for (const label of ['Грудь', 'Руки', 'Спина', 'Ноги', 'Плечи', 'Корпус', 'Фулбоди', 'Кардио', 'Другое']) {
+      expect(source).toContain(label);
+    }
+    expect(source).toContain('catalog-chip-row');
+    expect(source).toContain('Только избранные');
+    expect(source).toContain('Свой вес');
+    expect(source).toContain('Гантели x2');
+  });
+
+  it('uses the row context menu as the action gateway', () => {
+    for (const action of ['Информация', 'Добавить в избранное', 'Дублировать', 'Редактировать']) {
+      expect(source).toContain(action);
+    }
+    expect(source).toContain('row-menu');
+    expect(source).toContain('ExerciseContextMenu');
+    expect(source).not.toContain('onClick={() => void openExercise(exercise)}');
+  });
+
+  it('reuses one editor flow for create, duplicate and editable exercises', () => {
+    expect(source).toContain('ExerciseEditorDialog');
+    expect(source).toContain("mode: 'create'");
+    expect(source).toContain("mode: 'edit'");
+  });
+});

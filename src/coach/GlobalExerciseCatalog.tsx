@@ -9,19 +9,20 @@ import {
   type ExerciseCategoryCode,
   type ExerciseDefinition,
   type ExerciseEquipmentCode,
-  type ExerciseSort,
   type TrackingType,
 } from '../api';
+import { exerciseDisplayName } from '../exerciseLocalization';
 import type { NavigationContext } from '../NavigationShell';
 import { gymKeeperIcons } from '../gymKeeperIcons';
 import { exerciseActionIcons, type ExerciseActionIcon } from './exerciseActionIcons';
+import { exerciseContextIcons, type ExerciseContextIcon } from './exerciseContextIcons';
 
 const trackingLabels: Record<TrackingType, string> = {
-  weight_reps: 'Вес × повторы',
+  weight_reps: 'Вес и повторения',
   time: 'Время',
-  time_distance: 'Время + дистанция',
-  time_reps: 'Время + повторы',
-  time_weight: 'Время + вес',
+  time_distance: 'Время и дистанция',
+  time_reps: 'Время и повторения',
+  time_weight: 'Время и вес',
 };
 
 const categoryOptions: Array<{ code: ExerciseCategoryCode; label: string }> = [
@@ -42,12 +43,25 @@ const equipmentOptions: Array<{ code: ExerciseEquipmentCode; label: string }> = 
   { code: 'dumbbell_single', label: 'Гантель x1' },
   { code: 'dumbbell_pair', label: 'Гантели x2' },
   { code: 'cable', label: 'Трос' },
-  { code: 'machine', label: 'Тренажер' },
+  { code: 'machine', label: 'Тренажёр' },
   { code: 'other', label: 'Другое' },
 ];
 
 const categoryLabels = Object.fromEntries(categoryOptions.map(({ code, label }) => [code, label])) as Record<ExerciseCategoryCode, string>;
 const equipmentLabels = Object.fromEntries(equipmentOptions.map(({ code, label }) => [code, label])) as Record<ExerciseEquipmentCode, string>;
+
+const categorySubgroups: Partial<Record<ExerciseCategoryCode, Array<{ code: string; label: string }>>> = {
+  chest: [
+    { code: 'middle', label: 'Середина' },
+    { code: 'upper', label: 'Верх' },
+    { code: 'lower', label: 'Низ' },
+  ],
+  arms: [
+    { code: 'biceps', label: 'Бицепс' },
+    { code: 'triceps', label: 'Трицепс' },
+    { code: 'forearm', label: 'Предплечье' },
+  ],
+};
 
 function iconStyle(url: string): CSSProperties {
   return { '--exercise-action-icon': url } as CSSProperties;
@@ -57,8 +71,27 @@ function ActionIcon({ icon }: { icon: ExerciseActionIcon }) {
   return <span className="exercise-action-icon" style={iconStyle(exerciseActionIcons[icon])} aria-hidden="true" />;
 }
 
+function ContextIcon({ icon }: { icon: ExerciseContextIcon }) {
+  return <span className="exercise-action-icon" style={iconStyle(exerciseContextIcons[icon])} aria-hidden="true" />;
+}
+
 function ExerciseIcon() {
   return <span className="exercise-action-icon exercise-media-icon" style={iconStyle(gymKeeperIcons.exercises)} aria-hidden="true" />;
+}
+
+function subgroupFor(exercise: ExerciseDefinition): string {
+  const source = `${exercise.name} ${exercise.reference_key ?? ''}`.toLowerCase();
+  if (exercise.category_code === 'chest') {
+    if (source.includes('incline')) return 'upper';
+    if (source.includes('decline')) return 'lower';
+    return 'middle';
+  }
+  if (exercise.category_code === 'arms') {
+    if (source.includes('triceps') || source.includes('pushdown') || source.includes('extension')) return 'triceps';
+    if (source.includes('forearm') || source.includes('wrist') || source.includes('reverse curl')) return 'forearm';
+    return 'biceps';
+  }
+  return '';
 }
 
 interface ExerciseInput {
@@ -69,20 +102,28 @@ interface ExerciseInput {
   equipmentCode: ExerciseEquipmentCode;
 }
 
+interface EditorState {
+  mode: 'create' | 'edit';
+  seed?: ExerciseDefinition;
+}
+
 interface EditorProps {
-  exercise?: ExerciseDefinition;
+  state: EditorState;
+  defaultCategory?: ExerciseCategoryCode;
   saving: boolean;
   error: string;
   onCancel: () => void;
   onSave: (input: ExerciseInput) => void;
+  onDelete?: () => void;
 }
 
-function ExerciseEditorDialog({ exercise, saving, error, onCancel, onSave }: EditorProps) {
-  const [name, setName] = useState(exercise?.name ?? '');
-  const [description, setDescription] = useState(exercise?.description ?? '');
-  const [trackingType, setTrackingType] = useState<TrackingType>(exercise?.tracking_type ?? 'weight_reps');
-  const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode>(exercise?.category_code ?? 'other');
-  const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode>(exercise?.equipment_code ?? 'other');
+function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel, onSave, onDelete }: EditorProps) {
+  const seed = state.seed;
+  const [name, setName] = useState(seed ? exerciseDisplayName(seed) : '');
+  const [description, setDescription] = useState(seed?.description ?? '');
+  const [trackingType, setTrackingType] = useState<TrackingType>(seed?.tracking_type ?? 'weight_reps');
+  const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode>(seed?.category_code ?? defaultCategory ?? 'other');
+  const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode>(seed?.equipment_code ?? 'other');
 
   const submit = () => {
     const cleanName = name.trim();
@@ -102,23 +143,19 @@ function ExerciseEditorDialog({ exercise, saving, error, onCancel, onSave }: Edi
     }}>
       <section className="modal-dialog global-exercise-editor" role="dialog" aria-modal="true" aria-labelledby="global-exercise-editor-title">
         <header className="global-exercise-editor-header">
-          <div>
-            <div className="eyebrow">Упражнение</div>
-            <h2 id="global-exercise-editor-title">{exercise ? 'Редактировать' : 'Новое упражнение'}</h2>
-          </div>
+          <h2 id="global-exercise-editor-title">{state.mode === 'edit' ? 'Редактирование упражнения' : 'Новое упражнение'}</h2>
         </header>
 
         <div className="global-exercise-editor-top">
           <div className="global-exercise-media-slot" aria-label="Медиа упражнения">
             <ExerciseIcon />
-            <small>Медиа</small>
           </div>
           <div className="global-exercise-editor-copy">
             <label className="compact-field-label">Название
               <input className="text-input" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoFocus />
             </label>
             <label className="compact-field-label">Описание
-              <textarea className="text-input" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={3} />
+              <textarea className="text-input" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={3} placeholder="Описание" />
             </label>
           </div>
         </div>
@@ -146,88 +183,89 @@ function ExerciseEditorDialog({ exercise, saving, error, onCancel, onSave }: Edi
                 role="radio"
                 aria-checked={equipmentCode === option.code}
                 onClick={() => setEquipmentCode(option.code)}
-              >
-                {option.label}
-              </button>
+              >{option.label}</button>
             ))}
           </div>
         </div>
 
-        <div className="field-label">
-          <span>Доступность</span>
-          <div className="global-exercise-scope-note">Всем моим клиентам</div>
-        </div>
-
         {error ? <p className="inline-message error-text">{error}</p> : null}
-        <div className="modal-actions">
-          <button className="text-button" type="button" onClick={onCancel} disabled={saving}>Отмена</button>
-          <button className="positive-button" type="button" onClick={submit} disabled={saving || !name.trim()}>
-            {saving ? 'Сохраняем…' : exercise ? 'Сохранить' : 'Добавить'}
-          </button>
+        <div className="global-exercise-editor-actions">
+          {state.mode === 'edit' && onDelete ? (
+            <button className="text-button danger-text" type="button" onClick={onDelete} disabled={saving}>Удалить</button>
+          ) : <span />}
+          <div className="modal-actions global-exercise-editor-save-actions">
+            <button className="text-button" type="button" onClick={onCancel} disabled={saving}>Отмена</button>
+            <button className="positive-button" type="button" onClick={submit} disabled={saving || !name.trim()}>
+              {saving ? 'Сохраняем…' : state.mode === 'edit' ? 'Сохранить' : 'Добавить'}
+            </button>
+          </div>
         </div>
       </section>
     </div>
   );
 }
 
-interface DetailProps {
+function ExerciseDetail({ exercise, busy, onFavourite, onEdit }: {
   exercise: ExerciseDefinition;
   busy: boolean;
   onFavourite: () => void;
   onEdit: () => void;
-  onArchive: () => void;
-}
-
-function ExerciseDetail({ exercise, busy, onFavourite, onEdit, onArchive }: DetailProps) {
-  const [confirmArchive, setConfirmArchive] = useState(false);
+}) {
   return (
     <section className="global-exercise-detail stack">
       <div className="global-exercise-detail-media">
         <ExerciseIcon />
-        <span>Демонстрация упражнения</span>
+        <span>{exerciseDisplayName(exercise)}</span>
       </div>
-
       <section className="global-exercise-info-card">
         <div className="global-exercise-detail-title-row">
-          <div>
-            <div className="eyebrow">{exercise.scope === 'global' ? 'База Gym Keeper' : 'Моё упражнение'}</div>
-            <h2>{exercise.name}</h2>
+          <div><h2>{exerciseDisplayName(exercise)}</h2></div>
+          <div className="global-exercise-detail-buttons">
+            <button className={`exercise-square-button detail-icon ${exercise.is_favourite ? 'active' : ''}`} type="button" onClick={onFavourite} disabled={busy} aria-label={exercise.is_favourite ? 'Убрать из избранного' : 'Добавить в избранное'}>
+              <ActionIcon icon={exercise.is_favourite ? 'favourite' : 'favouriteEmpty'} />
+            </button>
+            {exercise.can_edit ? (
+              <button className="exercise-square-button detail-icon" type="button" onClick={onEdit} disabled={busy} aria-label="Редактировать упражнение">
+                <ActionIcon icon="edit" />
+              </button>
+            ) : null}
           </div>
-          <button className={`exercise-square-button ${exercise.is_favourite ? 'active' : ''}`} type="button" onClick={onFavourite} disabled={busy} aria-label={exercise.is_favourite ? 'Убрать из избранного' : 'Добавить в избранное'}>
-            <ActionIcon icon={exercise.is_favourite ? 'favourite' : 'favouriteEmpty'} />
-          </button>
         </div>
         {exercise.description ? <p className="global-exercise-description">{exercise.description}</p> : null}
-        <dl className="global-exercise-metadata">
-          <div><dt>Учёт результата</dt><dd>{trackingLabels[exercise.tracking_type]}</dd></div>
-          <div><dt>Категория</dt><dd>{exercise.category_code ? categoryLabels[exercise.category_code] : 'Не указана'}</dd></div>
-          <div><dt>Оборудование</dt><dd>{exercise.equipment_code ? equipmentLabels[exercise.equipment_code] : 'Не указано'}</dd></div>
-        </dl>
+        <div className="global-exercise-detail-badges">
+          {exercise.category_code ? <span className={`catalog-chip category-chip category-${exercise.category_code}`}>{categoryLabels[exercise.category_code]}</span> : null}
+          <span className="catalog-chip">{trackingLabels[exercise.tracking_type]}</span>
+          {exercise.equipment_code ? <span className="catalog-chip">{equipmentLabels[exercise.equipment_code]}</span> : null}
+        </div>
       </section>
-
-      {exercise.can_edit ? (
-        <section className="global-exercise-detail-actions">
-          <button type="button" className="global-exercise-action-row" onClick={onEdit} disabled={busy}>
-            <ActionIcon icon="edit" /><span>Редактировать упражнение</span>
-          </button>
-          {confirmArchive ? (
-            <div className="global-exercise-delete-confirm">
-              <p>Убрать упражнение из каталога? Исторические записи останутся сохранены.</p>
-              <div className="button-row">
-                <button className="secondary-button" type="button" onClick={() => setConfirmArchive(false)} disabled={busy}>Отмена</button>
-                <button className="danger-button" type="button" onClick={onArchive} disabled={busy}>{busy ? 'Удаляем…' : 'Убрать'}</button>
-              </div>
-            </div>
-          ) : (
-            <button type="button" className="global-exercise-action-row danger" onClick={() => setConfirmArchive(true)} disabled={busy}>
-              <ActionIcon icon="delete" /><span>Удалить из каталога</span>
-            </button>
-          )}
-        </section>
-      ) : (
-        <p className="global-exercise-readonly-note">Базовое упражнение доступно всем тренерам и не редактируется в личном каталоге.</p>
-      )}
     </section>
+  );
+}
+
+function ExerciseContextMenu({ exercise, onClose, onInfo, onFavourite, onDuplicate, onEdit }: {
+  exercise: ExerciseDefinition;
+  onClose: () => void;
+  onInfo: () => void;
+  onFavourite: () => void;
+  onDuplicate: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <div className="exercise-context-layer" role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <section className="exercise-context-menu" role="menu" aria-label={`Действия: ${exerciseDisplayName(exercise)}`}>
+        <button type="button" role="menuitem" onClick={onInfo}><ContextIcon icon="info" /><span>Информация</span></button>
+        <button type="button" role="menuitem" onClick={onFavourite}>
+          <ActionIcon icon={exercise.is_favourite ? 'favourite' : 'favouriteEmpty'} />
+          <span>{exercise.is_favourite ? 'Убрать из избранного' : 'Добавить в избранное'}</span>
+        </button>
+        <button type="button" role="menuitem" onClick={onDuplicate}><ContextIcon icon="copy" /><span>Дублировать</span></button>
+        {exercise.can_edit ? (
+          <button type="button" role="menuitem" onClick={onEdit}><ActionIcon icon="edit" /><span>Редактировать</span></button>
+        ) : null}
+      </section>
+    </div>
   );
 }
 
@@ -237,58 +275,91 @@ interface Props {
 }
 
 export function GlobalExerciseCatalog({ initData, onNavigationContextChange }: Props) {
+  const [selectedCategory, setSelectedCategory] = useState<ExerciseCategoryCode | null>(null);
   const [search, setSearch] = useState('');
-  const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode | ''>('');
-  const [trackingType, setTrackingType] = useState<TrackingType | ''>('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode | ''>('');
+  const [subgroup, setSubgroup] = useState('');
   const [favouritesOnly, setFavouritesOnly] = useState(false);
-  const [sort, setSort] = useState<ExerciseSort>('alphabetical');
   const [exercises, setExercises] = useState<ExerciseDefinition[] | null>(null);
-  const [selected, setSelected] = useState<ExerciseDefinition | null>(null);
-  const [editing, setEditing] = useState<ExerciseDefinition | 'new' | null>(null);
+  const [selectedInfo, setSelectedInfo] = useState<ExerciseDefinition | null>(null);
+  const [menuExercise, setMenuExercise] = useState<ExerciseDefinition | null>(null);
+  const [editing, setEditing] = useState<EditorState | null>(null);
   const [error, setError] = useState('');
   const [editorError, setEditorError] = useState('');
   const [busy, setBusy] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
 
-  const filters = useMemo(() => ({ search, categoryCode, trackingType, favouritesOnly, sort }), [search, categoryCode, trackingType, favouritesOnly, sort]);
-
   const load = useCallback(async () => {
     try {
-      const result = await getCoachExercises(initData, filters);
+      const result = await getCoachExercises(initData, {
+        categoryCode: selectedCategory ?? '',
+        sort: 'alphabetical',
+      });
       setExercises(result.exercises);
       setError('');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось загрузить каталог');
     }
-  }, [filters, initData]);
+  }, [initData, selectedCategory]);
 
   useEffect(() => {
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      load().catch(() => undefined);
-    }, 160);
-    return () => {
-      cancelled = true;
-      void cancelled;
-      window.clearTimeout(timer);
-    };
+    setExercises(null);
+    const timer = window.setTimeout(() => { void load(); }, 80);
+    return () => window.clearTimeout(timer);
   }, [load, reloadToken]);
 
   useEffect(() => {
-    if (!selected) {
-      onNavigationContextChange(null);
-      return;
+    if (selectedInfo) {
+      onNavigationContextChange({ title: exerciseDisplayName(selectedInfo), onBack: () => setSelectedInfo(null) });
+      return () => onNavigationContextChange(null);
     }
-    onNavigationContextChange({ title: selected.name, onBack: () => setSelected(null) });
-    return () => onNavigationContextChange(null);
-  }, [onNavigationContextChange, selected]);
+    if (selectedCategory) {
+      onNavigationContextChange({
+        title: categoryLabels[selectedCategory],
+        onBack: () => {
+          setSelectedCategory(null);
+          setSearch('');
+          setSearchOpen(false);
+          setEquipmentCode('');
+          setSubgroup('');
+          setFavouritesOnly(false);
+          setMenuExercise(null);
+        },
+      });
+      return () => onNavigationContextChange(null);
+    }
+    onNavigationContextChange(null);
+    return undefined;
+  }, [onNavigationContextChange, selectedCategory, selectedInfo]);
 
-  const openExercise = async (exercise: ExerciseDefinition) => {
-    setSelected(exercise);
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<ExerciseCategoryCode, number>();
+    for (const item of exercises ?? []) {
+      const code = item.category_code ?? 'other';
+      counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+    return counts;
+  }, [exercises]);
+
+  const visibleExercises = useMemo(() => {
+    const needle = search.trim().toLocaleLowerCase('ru-RU');
+    return (exercises ?? []).filter((exercise) => {
+      if (needle && !exerciseDisplayName(exercise).toLocaleLowerCase('ru-RU').includes(needle)) return false;
+      if (equipmentCode && exercise.equipment_code !== equipmentCode) return false;
+      if (favouritesOnly && !exercise.is_favourite) return false;
+      if (subgroup && subgroupFor(exercise) !== subgroup) return false;
+      return true;
+    });
+  }, [equipmentCode, exercises, favouritesOnly, search, subgroup]);
+
+  const openInfo = async (exercise: ExerciseDefinition) => {
+    setMenuExercise(null);
+    setSelectedInfo(exercise);
     setError('');
     try {
       const full = await getCoachExercise(initData, exercise.id);
-      setSelected(full.exercise);
+      setSelectedInfo(full.exercise);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось открыть упражнение');
     }
@@ -296,12 +367,12 @@ export function GlobalExerciseCatalog({ initData, onNavigationContextChange }: P
 
   const toggleFavourite = async (exercise: ExerciseDefinition) => {
     const next = !exercise.is_favourite;
+    setMenuExercise(null);
     setBusy(true);
     try {
       await setCoachExerciseFavourite(initData, exercise.id, next);
       setExercises((current) => current?.map((item) => item.id === exercise.id ? { ...item, is_favourite: next } : item) ?? current);
-      setSelected((current) => current?.id === exercise.id ? { ...current, is_favourite: next } : current);
-      if (favouritesOnly && !next) setReloadToken((value) => value + 1);
+      setSelectedInfo((current) => current?.id === exercise.id ? { ...current, is_favourite: next } : current);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось обновить избранное');
     } finally {
@@ -310,20 +381,18 @@ export function GlobalExerciseCatalog({ initData, onNavigationContextChange }: P
   };
 
   const saveEditor = async (input: ExerciseInput) => {
+    if (!editing) return;
     setBusy(true);
     setEditorError('');
     try {
-      if (editing === 'new') {
-        const result = await createCoachExercise(initData, input);
-        setEditing(null);
-        setReloadToken((value) => value + 1);
-        setSelected(result.exercise);
-      } else if (editing) {
-        const result = await updateCoachExercise(initData, editing.id, input);
-        setEditing(null);
-        setReloadToken((value) => value + 1);
-        setSelected(result.exercise);
+      if (editing.mode === 'edit' && editing.seed?.can_edit) {
+        const result = await updateCoachExercise(initData, editing.seed.id, input);
+        setSelectedInfo((current) => current?.id === result.exercise.id ? result.exercise : current);
+      } else {
+        await createCoachExercise(initData, input);
       }
+      setEditing(null);
+      setReloadToken((value) => value + 1);
     } catch (reason) {
       setEditorError(reason instanceof Error ? reason.message : 'Не удалось сохранить упражнение');
     } finally {
@@ -331,97 +400,145 @@ export function GlobalExerciseCatalog({ initData, onNavigationContextChange }: P
     }
   };
 
-  const archiveSelected = async () => {
-    if (!selected?.can_edit) return;
+  const deleteEdited = async () => {
+    if (!editing?.seed?.can_edit) return;
+    if (!window.confirm('Убрать упражнение из каталога? Исторические записи сохранятся.')) return;
     setBusy(true);
     try {
-      await archiveCoachExercise(initData, selected.id);
-      setSelected(null);
+      await archiveCoachExercise(initData, editing.seed.id);
+      setEditing(null);
+      setSelectedInfo((current) => current?.id === editing.seed?.id ? null : current);
       setReloadToken((value) => value + 1);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось убрать упражнение');
+      setEditorError(reason instanceof Error ? reason.message : 'Не удалось удалить упражнение');
     } finally {
       setBusy(false);
     }
   };
 
-  if (selected) {
+  const duplicateExercise = (exercise: ExerciseDefinition) => {
+    setMenuExercise(null);
+    setEditorError('');
+    setEditing({ mode: 'create', seed: { ...exercise, name: `${exerciseDisplayName(exercise)} — копия`, can_edit: false } });
+  };
+
+  if (selectedInfo) {
     return (
       <>
+        {error ? <p className="inline-message error-text">{error}</p> : null}
         <ExerciseDetail
-          exercise={selected}
+          exercise={selectedInfo}
           busy={busy}
-          onFavourite={() => void toggleFavourite(selected)}
-          onEdit={() => { setEditorError(''); setEditing(selected); }}
-          onArchive={() => void archiveSelected()}
+          onFavourite={() => void toggleFavourite(selectedInfo)}
+          onEdit={() => { setEditorError(''); setEditing({ mode: 'edit', seed: selectedInfo }); }}
         />
-        {editing && editing !== 'new' ? (
-          <ExerciseEditorDialog exercise={editing} saving={busy} error={editorError} onCancel={() => setEditing(null)} onSave={(input) => void saveEditor(input)} />
+        {editing ? (
+          <ExerciseEditorDialog
+            state={editing}
+            defaultCategory={selectedCategory ?? undefined}
+            saving={busy}
+            error={editorError}
+            onCancel={() => setEditing(null)}
+            onSave={(input) => void saveEditor(input)}
+            onDelete={editing.mode === 'edit' ? () => void deleteEdited() : undefined}
+          />
         ) : null}
       </>
     );
   }
 
-  const hasActiveFilters = Boolean(search || categoryCode || trackingType || favouritesOnly);
+  if (!selectedCategory) {
+    return (
+      <section className="global-exercise-catalog stack">
+        <div className="global-exercise-toolbar category-toolbar">
+          <span className="global-exercise-toolbar-spacer" />
+          <button className="exercise-square-button toolbar-action" type="button" onClick={() => { setEditorError(''); setEditing({ mode: 'create' }); }} aria-label="Добавить упражнение"><ActionIcon icon="add" /></button>
+          <button className={`exercise-square-button toolbar-action ${searchOpen ? 'active' : ''}`} type="button" onClick={() => setSearchOpen((value) => !value)} aria-label="Поиск"><ActionIcon icon="search" /></button>
+        </div>
+
+        {searchOpen ? (
+          <label className="global-exercise-search category-search">
+            <ActionIcon icon="search" />
+            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск упражнения" aria-label="Поиск упражнения" autoFocus />
+          </label>
+        ) : null}
+
+        {error ? <p className="inline-message error-text">{error}</p> : null}
+        <section className="exercise-category-list" aria-label="Категории упражнений">
+          {exercises === null ? <p className="global-exercise-status">Загружаем категории…</p> : categoryOptions.map((category) => (
+            <button
+              className={`exercise-category-row category-${category.code}`}
+              key={category.code}
+              type="button"
+              onClick={() => {
+                setSelectedCategory(category.code);
+                setSearch('');
+                setSearchOpen(false);
+                setEquipmentCode('');
+                setSubgroup('');
+                setFavouritesOnly(false);
+              }}
+            >
+              <span className="exercise-category-icon"><ExerciseIcon /></span>
+              <span className="exercise-category-name">{category.label}</span>
+              <small>{categoryCounts.get(category.code) ?? 0}</small>
+            </button>
+          ))}
+        </section>
+
+        {editing ? (
+          <ExerciseEditorDialog state={editing} saving={busy} error={editorError} onCancel={() => setEditing(null)} onSave={(input) => void saveEditor(input)} />
+        ) : null}
+      </section>
+    );
+  }
+
+  const subgroupOptions = categorySubgroups[selectedCategory] ?? [];
+  const activeFilter = Boolean(search || equipmentCode || subgroup || favouritesOnly);
 
   return (
     <section className="global-exercise-catalog stack">
-      <div className="global-exercise-search-row">
-        <label className="global-exercise-search">
-          <ActionIcon icon="search" />
-          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск упражнения" aria-label="Поиск упражнения" />
-        </label>
-        <button className="exercise-square-button primary" type="button" onClick={() => { setEditorError(''); setEditing('new'); }} aria-label="Добавить упражнение">
-          <ActionIcon icon="add" />
-        </button>
+      <div className="global-exercise-toolbar">
+        <span className="global-exercise-toolbar-spacer" />
+        <button className="exercise-square-button toolbar-action" type="button" onClick={() => { setEditorError(''); setEditing({ mode: 'create' }); }} aria-label="Добавить упражнение"><ActionIcon icon="add" /></button>
+        <button className={`exercise-square-button toolbar-action ${searchOpen ? 'active' : ''}`} type="button" onClick={() => setSearchOpen((value) => !value)} aria-label="Поиск"><ActionIcon icon="search" /></button>
       </div>
 
-      <div className="global-exercise-filter-row" aria-label="Фильтры каталога">
-        <label className="global-exercise-select-wrap">
-          <ActionIcon icon="filter" />
-          <select value={categoryCode} onChange={(event) => setCategoryCode(event.target.value as ExerciseCategoryCode | '')} aria-label="Категория">
-            <option value="">Все категории</option>
-            {categoryOptions.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}
-          </select>
+      {searchOpen ? (
+        <label className="global-exercise-search">
+          <ActionIcon icon="search" />
+          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск упражнения" aria-label="Поиск упражнения" autoFocus />
         </label>
-        <select className="global-exercise-filter-select" value={trackingType} onChange={(event) => setTrackingType(event.target.value as TrackingType | '')} aria-label="Тип учёта результата">
-          <option value="">Все типы</option>
-          {Object.entries(trackingLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
-        <button className={`exercise-square-button ${favouritesOnly ? 'active' : ''}`} type="button" onClick={() => setFavouritesOnly((value) => !value)} aria-pressed={favouritesOnly} aria-label="Только избранные">
+      ) : null}
+
+      <div className="catalog-chip-row" aria-label="Фильтры упражнений">
+        <button className={`catalog-chip star-chip ${favouritesOnly ? 'selected' : ''}`} type="button" onClick={() => setFavouritesOnly((value) => !value)} aria-pressed={favouritesOnly} aria-label="Только избранные">
           <ActionIcon icon={favouritesOnly ? 'favourite' : 'favouriteEmpty'} />
         </button>
-        <button className={`exercise-square-button ${sort === 'reference' ? 'active' : ''}`} type="button" onClick={() => setSort((value) => value === 'alphabetical' ? 'reference' : 'alphabetical')} aria-label={sort === 'alphabetical' ? 'Сортировка: по алфавиту' : 'Сортировка: порядок каталога'}>
-          <ActionIcon icon="sort" />
-        </button>
+        {subgroupOptions.map((option) => (
+          <button key={option.code} className={`catalog-chip subgroup-chip category-${selectedCategory} ${subgroup === option.code ? 'selected' : ''}`} type="button" onClick={() => setSubgroup((value) => value === option.code ? '' : option.code)}>{option.label}</button>
+        ))}
+        {equipmentOptions.map((option) => (
+          <button key={option.code} className={`catalog-chip ${equipmentCode === option.code ? 'selected' : ''}`} type="button" onClick={() => setEquipmentCode((value) => value === option.code ? '' : option.code)}>{option.label}</button>
+        ))}
       </div>
 
       {error ? <p className="inline-message error-text">{error}</p> : null}
-
       <section className="global-exercise-list-surface" aria-live="polite">
         {exercises === null ? (
           <p className="global-exercise-status">Загружаем упражнения…</p>
-        ) : exercises.length === 0 ? (
-          <div className="global-exercise-empty">
-            <strong>{hasActiveFilters ? 'Ничего не найдено' : 'Каталог пока пуст'}</strong>
-            <p>{hasActiveFilters ? 'Измените поиск или фильтры.' : 'Добавьте своё первое упражнение.'}</p>
-          </div>
+        ) : visibleExercises.length === 0 ? (
+          <div className="global-exercise-empty"><strong>Ничего не найдено</strong><p>{activeFilter ? 'Измените поиск или фильтры.' : 'В этой категории пока нет упражнений.'}</p></div>
         ) : (
           <div className="global-exercise-list" role="list">
-            {exercises.map((exercise) => (
-              <div className="global-exercise-row" key={exercise.id} role="listitem">
-                <button className="global-exercise-row-main" type="button" onClick={() => void openExercise(exercise)}>
-                  <span className={`category-accent category-${exercise.category_code ?? 'other'}`} aria-hidden="true" />
-                  <span className="global-exercise-row-copy">
-                    <strong>{exercise.name}</strong>
-                    <small>
-                      {exercise.category_code ? categoryLabels[exercise.category_code] : 'Без категории'}
-                      {' · '}{trackingLabels[exercise.tracking_type]}
-                    </small>
-                  </span>
-                </button>
-                <button className={`exercise-square-button row-favourite ${exercise.is_favourite ? 'active' : ''}`} type="button" onClick={() => void toggleFavourite(exercise)} disabled={busy} aria-label={exercise.is_favourite ? `Убрать ${exercise.name} из избранного` : `Добавить ${exercise.name} в избранное`}>
-                  <ActionIcon icon={exercise.is_favourite ? 'favourite' : 'favouriteEmpty'} />
+            {visibleExercises.map((exercise) => (
+              <div className={`global-exercise-row category-${selectedCategory}`} key={exercise.id} role="listitem">
+                <div className="global-exercise-row-main">
+                  <span className="global-exercise-row-media"><ExerciseIcon /></span>
+                  <span className="global-exercise-row-copy"><strong>{exerciseDisplayName(exercise)}</strong></span>
+                </div>
+                <button className="exercise-square-button row-menu" type="button" onClick={() => setMenuExercise(exercise)} aria-label={`Действия: ${exerciseDisplayName(exercise)}`}>
+                  <ContextIcon icon="more" />
                 </button>
               </div>
             ))}
@@ -429,8 +546,27 @@ export function GlobalExerciseCatalog({ initData, onNavigationContextChange }: P
         )}
       </section>
 
-      {editing === 'new' ? (
-        <ExerciseEditorDialog saving={busy} error={editorError} onCancel={() => setEditing(null)} onSave={(input) => void saveEditor(input)} />
+      {menuExercise ? (
+        <ExerciseContextMenu
+          exercise={menuExercise}
+          onClose={() => setMenuExercise(null)}
+          onInfo={() => void openInfo(menuExercise)}
+          onFavourite={() => void toggleFavourite(menuExercise)}
+          onDuplicate={() => duplicateExercise(menuExercise)}
+          onEdit={() => { setMenuExercise(null); setEditorError(''); setEditing({ mode: 'edit', seed: menuExercise }); }}
+        />
+      ) : null}
+
+      {editing ? (
+        <ExerciseEditorDialog
+          state={editing}
+          defaultCategory={selectedCategory}
+          saving={busy}
+          error={editorError}
+          onCancel={() => setEditing(null)}
+          onSave={(input) => void saveEditor(input)}
+          onDelete={editing.mode === 'edit' ? () => void deleteEdited() : undefined}
+        />
       ) : null}
     </section>
   );
