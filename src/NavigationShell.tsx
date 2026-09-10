@@ -79,27 +79,27 @@ export function NavigationShell({
   onRoleSwitch,
   children,
 }: Props) {
-  const [drawerMounted, setDrawerMounted] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const drawerRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
   const closeTimerRef = useRef<number | null>(null);
   const items = itemsForRole(activeRole);
 
-  const openDrawer = () => {
+  const openMenu = () => {
     if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-    setDrawerMounted(true);
-    window.requestAnimationFrame(() => setDrawerOpen(true));
+    setMenuMounted(true);
+    window.requestAnimationFrame(() => setMenuOpen(true));
   };
 
-  const closeDrawer = () => {
-    setDrawerOpen(false);
+  const closeMenu = () => {
+    setMenuOpen(false);
     if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
     closeTimerRef.current = window.setTimeout(() => {
-      setDrawerMounted(false);
+      setMenuMounted(false);
       closeTimerRef.current = null;
       menuButtonRef.current?.focus();
-    }, 180);
+    }, 200);
   };
 
   useEffect(() => () => {
@@ -107,20 +107,20 @@ export function NavigationShell({
   }, []);
 
   useEffect(() => {
-    if (!drawerMounted) return;
+    if (!menuMounted) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const drawer = drawerRef.current;
+    const menu = menuRef.current;
     const focusable = () => Array.from(
-      drawer?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])') ?? [],
+      menu?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])') ?? [],
     );
     window.requestAnimationFrame(() => focusable()[0]?.focus());
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        closeDrawer();
+        closeMenu();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -142,21 +142,21 @@ export function NavigationShell({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [drawerMounted]);
+  }, [menuMounted]);
 
   useEffect(() => {
-    setDrawerOpen(false);
-    setDrawerMounted(false);
+    setMenuOpen(false);
+    setMenuMounted(false);
   }, [activeRole]);
 
   const chooseDestination = (next: AppDestination) => {
     onDestinationChange(next);
-    closeDrawer();
+    closeMenu();
   };
 
   const switchRole = (role: Role) => {
     onRoleSwitch(role);
-    closeDrawer();
+    closeMenu();
   };
 
   let previousSection: NavigationItem['section'];
@@ -169,68 +169,72 @@ export function NavigationShell({
             <span className="navigation-apk-icon" style={iconStyle('back')} aria-hidden="true" />
           </button>
         ) : (
-          <button
-            ref={menuButtonRef}
-            className="navigation-icon-button"
-            type="button"
-            onClick={openDrawer}
-            aria-label="Открыть меню"
-            aria-haspopup="dialog"
-            aria-expanded={drawerOpen}
-          >
-            <span className="navigation-apk-icon" style={iconStyle('menu')} aria-hidden="true" />
-          </button>
+          <div className="navigation-menu-anchor">
+            <button
+              ref={menuButtonRef}
+              className="navigation-icon-button"
+              type="button"
+              onClick={openMenu}
+              aria-label="Открыть меню"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+            >
+              <span className="navigation-apk-icon" style={iconStyle('menu')} aria-hidden="true" />
+            </button>
+
+            {menuMounted ? (
+              <div className={`drawer-layer ${menuOpen ? 'open' : 'closing'}`}>
+                <button className="drawer-backdrop" type="button" aria-label="Закрыть меню" onClick={closeMenu} />
+                {/* Source-level port: Ajaxy/telegram-tt MainMenuDropdown -> DropdownMenu -> Menu/MenuItem. */}
+                <aside ref={menuRef} className="navigation-drawer" role="menu" aria-label="Главное меню">
+                  <div className="drawer-account" role="presentation">
+                    <div className="drawer-avatar" aria-hidden="true">{me.user.firstName.slice(0, 1).toUpperCase()}</div>
+                    <div className="drawer-account-copy">
+                      <strong>{[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}</strong>
+                      <small>{roleLabel(activeRole)}</small>
+                    </div>
+                  </div>
+
+                  {me.roles.length > 1 ? (
+                    <div className="drawer-role-switch" aria-label="Режим приложения" role="group">
+                      {me.roles.map((role) => (
+                        <button key={role} type="button" role="menuitemradio" aria-checked={role === activeRole} className={role === activeRole ? 'active' : ''} onClick={() => switchRole(role)}>
+                          {roleLabel(role)}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <nav className="drawer-nav" aria-label="Разделы приложения">
+                    {items.map((item) => {
+                      const divider = item.section === 'secondary' && previousSection !== 'secondary';
+                      previousSection = item.section;
+                      return (
+                        <div key={item.id} className={divider ? 'drawer-nav-group drawer-nav-group-secondary' : 'drawer-nav-group'}>
+                          <button
+                            className={`drawer-row ${destination === item.id ? 'active' : ''}`}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => chooseDestination(item.id)}
+                            aria-current={destination === item.id ? 'page' : undefined}
+                          >
+                            <span className="drawer-row-icon navigation-apk-icon" style={iconStyle(item.icon)} aria-hidden="true" />
+                            <span>{item.label}</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </nav>
+                </aside>
+              </div>
+            ) : null}
+          </div>
         )}
         <h1>{context?.title ?? destinationTitle(activeRole, destination)}</h1>
         <span className="navigation-appbar-spacer" aria-hidden="true" />
       </header>
 
       <section className="navigation-content">{children}</section>
-
-      {drawerMounted ? (
-        <div className={`drawer-layer ${drawerOpen ? 'open' : 'closing'}`}>
-          <button className="drawer-backdrop" type="button" aria-label="Закрыть меню" onClick={closeDrawer} />
-          <aside ref={drawerRef} className="navigation-drawer" role="dialog" aria-modal="true" aria-label="Главное меню">
-            <header className="drawer-account">
-              <div className="drawer-avatar" aria-hidden="true">{me.user.firstName.slice(0, 1).toUpperCase()}</div>
-              <div className="drawer-account-copy">
-                <strong>{[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}</strong>
-                <small>{roleLabel(activeRole)}</small>
-              </div>
-            </header>
-
-            {me.roles.length > 1 ? (
-              <div className="drawer-role-switch" aria-label="Режим приложения">
-                {me.roles.map((role) => (
-                  <button key={role} type="button" className={role === activeRole ? 'active' : ''} onClick={() => switchRole(role)}>
-                    {roleLabel(role)}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
-            <nav className="drawer-nav" aria-label="Разделы приложения">
-              {items.map((item) => {
-                const divider = item.section === 'secondary' && previousSection !== 'secondary';
-                previousSection = item.section;
-                return (
-                  <div key={item.id} className={divider ? 'drawer-nav-group drawer-nav-group-secondary' : 'drawer-nav-group'}>
-                    <button
-                      className={`drawer-row ${destination === item.id ? 'active' : ''}`}
-                      type="button"
-                      onClick={() => chooseDestination(item.id)}
-                      aria-current={destination === item.id ? 'page' : undefined}
-                    >
-                      <span className="drawer-row-icon navigation-apk-icon" style={iconStyle(item.icon)} aria-hidden="true" />
-                      <span>{item.label}</span>
-                    </button>
-                  </div>
-                );
-              })}
-            </nav>
-          </aside>
-        </div>
-      ) : null}
     </main>
   );
 }
