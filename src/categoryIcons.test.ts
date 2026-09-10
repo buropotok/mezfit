@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import parityCss from './gym-keeper-exercise-parity.css?inline';
+
+const parityCss = readFileSync(new URL('./gym-keeper-exercise-parity.css', import.meta.url), 'utf8');
 
 const expected = [
   ['chest', 'muscles_chest.png'],
