@@ -36,10 +36,13 @@
   height: 110px;
 }
 
+.exercise-row-main {
+  grid-template-columns: 52px 12px minmax(0, 1fr);
+}
+
 .client-exercise-media {
   width: 52px;
   height: 58px;
-  flex: 0 0 52px;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -51,4 +54,15 @@
 .client-exercise-media .exercise-media-fallback {
   max-width: 100%;
   max-height: 100%;
+}
+
+@media (max-width: 380px) {
+  .exercise-row-main {
+    grid-template-columns: 44px 8px minmax(0, 1fr);
+    gap: 6px;
+  }
+  .client-exercise-media {
+    width: 44px;
+    height: 50px;
+  }
 }
