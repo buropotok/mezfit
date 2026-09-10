@@ -11,6 +11,7 @@ import {
   type ExerciseEquipmentCode,
   type TrackingType,
 } from '../api';
+import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import type { NavigationContext } from '../NavigationShell';
 import { gymKeeperIcons } from '../gymKeeperIcons';
@@ -148,7 +149,7 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
 
         <div className="global-exercise-editor-top">
           <div className="global-exercise-media-slot" aria-label="Медиа упражнения">
-            <ExerciseIcon />
+            {seed ? <ExerciseMedia exercise={seed} variant="editor" /> : <ExerciseIcon />}
           </div>
           <div className="global-exercise-editor-copy">
             <label className="compact-field-label">Название
@@ -214,7 +215,7 @@ function ExerciseDetail({ exercise, busy, onFavourite, onEdit }: {
   return (
     <section className="global-exercise-detail stack">
       <div className="global-exercise-detail-media">
-        <ExerciseIcon />
+        <ExerciseMedia exercise={exercise} variant="detail" decorative={false} />
         <span>{exerciseDisplayName(exercise)}</span>
       </div>
       <section className="global-exercise-info-card">
@@ -534,7 +535,7 @@ export function GlobalExerciseCatalog({ initData, onNavigationContextChange }: P
             {visibleExercises.map((exercise) => (
               <div className={`global-exercise-row category-${selectedCategory}`} key={exercise.id} role="listitem">
                 <div className="global-exercise-row-main">
-                  <span className="global-exercise-row-media"><ExerciseIcon /></span>
+                  <span className="global-exercise-row-media"><ExerciseMedia exercise={exercise} /></span>
                   <span className="global-exercise-row-copy"><strong>{exerciseDisplayName(exercise)}</strong></span>
                 </div>
                 <button className="exercise-square-button row-menu" type="button" onClick={() => setMenuExercise(exercise)} aria-label={`Действия: ${exerciseDisplayName(exercise)}`}>
