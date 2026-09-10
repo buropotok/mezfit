@@ -6,6 +6,8 @@ on:
     branches: [main]
     paths:
       - tools/import-gym-keeper-media.mjs
+      - tools/exercise-media-matcher.mjs
+      - tools/exercise-media-matcher.test.mjs
       - worker/lib/exercise-media.ts
       - .github/workflows/import-exercise-media.yml
 
@@ -24,5 +26,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Test exercise media matcher
+        run: node --test tools/exercise-media-matcher.test.mjs
       - name: Import matched exercise GIFs through Worker R2 binding
         run: node tools/import-gym-keeper-media.mjs
