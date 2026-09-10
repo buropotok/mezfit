@@ -31,13 +31,5 @@ jobs:
           sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/" wrangler.jsonc
       - name: Apply D1 migrations
         run: npx wrangler d1 migrations apply DB_BINDING --remote
-      - name: Import Gym Keeper exercise GIFs into R2
-        shell: bash
-        run: |
-          if git rev-parse HEAD^ >/dev/null 2>&1 && git diff --quiet HEAD^ HEAD -- migrations/0015_gym_keeper_exercise_media.sql tools/import-gym-keeper-media.mjs; then
-            echo "Gym Keeper media import inputs unchanged; skipping R2 backfill."
-            exit 0
-          fi
-          node tools/import-gym-keeper-media.mjs
       - name: Deploy Worker
         run: npx wrangler deploy
