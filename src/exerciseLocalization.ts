@@ -1,5 +1,3 @@
-import type { ExerciseDefinition } from './api';
-
 const cyrillic = /[А-Яа-яЁё]/;
 const latin = /[A-Za-z]/;
 
@@ -45,9 +43,9 @@ const phrases: Array<[RegExp, string]> = [
   [/Rear Delt Row/gi, 'Тяга на заднюю дельту'],
   [/One Arm Row/gi, 'Тяга одной рукой'],
   [/Seated Row/gi, 'Тяга сидя'],
-  [/Row/gi, 'Тяга'],
   [/Lat Pulldown/gi, 'Тяга верхнего блока'],
   [/Pulldown/gi, 'Тяга блока'],
+  [/Row/gi, 'Тяга'],
   [/Pull Up/gi, 'Подтягивания'],
   [/Pull-up/gi, 'Подтягивания'],
   [/Push Up/gi, 'Отжимания'],
@@ -88,15 +86,14 @@ const phrases: Array<[RegExp, string]> = [
 ];
 
 const words: Record<string, string> = {
-  standing: 'стоя', seated: 'сидя', lying: 'лёжа', kneeling: 'на коленях',
-  one: 'одной', arm: 'рукой', single: 'одной', alternating: 'попеременно', alternate: 'попеременно',
-  wide: 'широким', grip: 'хватом', close: 'узким', reverse: 'обратный',
-  rear: 'задний', front: 'передний', lateral: 'боковой', incline: 'наклон', decline: 'обратный наклон',
-  overhead: 'над головой', extension: 'разгибание', press: 'жим', raise: 'подъём',
+  standing: 'стоя', seated: 'сидя', lying: 'лёжа', kneeling: 'на коленях', one: 'одной', arm: 'рукой',
+  single: 'одной', alternating: 'попеременно', alternate: 'попеременно', wide: 'широким', grip: 'хватом',
+  close: 'узким', reverse: 'обратный', rear: 'задний', front: 'передний', lateral: 'боковой', incline: 'наклон',
+  decline: 'обратный наклон', overhead: 'над головой', extension: 'разгибание', press: 'жим', raise: 'подъём',
   calf: 'икр', calves: 'икр', chest: 'грудь', back: 'спина', shoulder: 'плечо', shoulders: 'плечи',
-  biceps: 'бицепс', triceps: 'трицепс', forearm: 'предплечье', forearms: 'предплечья',
-  leg: 'нога', legs: 'ноги', hip: 'бедро', hips: 'бёдра', waist: 'корпус',
-  with: 'с', rope: 'канатом', attachment: 'рукоятью', bench: 'скамья', concentration: 'концентрированное',
+  biceps: 'бицепс', triceps: 'трицепс', forearm: 'предплечье', forearms: 'предплечья', leg: 'нога', legs: 'ноги',
+  hip: 'бедро', hips: 'бёдра', waist: 'корпус', with: 'с', rope: 'канатом', attachment: 'рукоятью', bench: 'скамья',
+  concentration: 'концентрированное',
 };
 
 const translit: Record<string, string> = {
@@ -135,19 +132,14 @@ export function localizeBundledExerciseName(name: string, referenceSource?: stri
 
   value = value.split(/(\s+|[-/])/).map((part) => {
     if (!latin.test(part)) return part;
-    const mapped = words[part.toLowerCase()];
-    return mapped ?? transliterateWord(part);
+    return words[part.toLowerCase()] ?? transliterateWord(part);
   }).join('');
 
-  value = value
-    .replace(/\s+/g, ' ')
-    .replace(/\s+([,.)])/g, '$1')
-    .trim();
-
+  value = value.replace(/\s+/g, ' ').replace(/\s+([,.)])/g, '$1').trim();
   if (!value) value = 'Упражнение';
   return equipment ? `${value} · ${equipment}` : value;
 }
 
-export function exerciseDisplayName(exercise: Pick<ExerciseDefinition, 'name' | 'reference_source'>): string {
+export function exerciseDisplayName(exercise: { name: string; reference_source?: string | null }): string {
   return localizeBundledExerciseName(exercise.name, exercise.reference_source);
 }
