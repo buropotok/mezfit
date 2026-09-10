@@ -8,8 +8,9 @@ interface ExerciseMediaSourceRow {
   reference_media_url: string | null;
 }
 
-export function exerciseMediaPublicUrl(exerciseId: number, hasReferenceMedia: boolean): string | null {
-  return hasReferenceMedia ? `/api/exercise-media/${exerciseId}` : null;
+export function exerciseMediaPublicUrl(referenceSource: string | null, referenceKey: string | null): string | null {
+  if (referenceSource !== 'gym_keeper_apk' || !referenceKey) return null;
+  return `/api/exercise-media/gym_keeper_apk/${encodeURIComponent(referenceKey)}`;
 }
 
 export function exerciseMediaR2Key(referenceSource: string, referenceKey: string): string {
@@ -46,24 +47,30 @@ export async function handleExerciseMediaRoute(
   request: Request,
   db: D1Database,
   bucket: R2Bucket,
-  exerciseId: number,
+  referenceKey: string,
 ): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response(null, { status: 405, headers: { allow: 'GET, HEAD' } });
+  }
+
+  if (!referenceKey || referenceKey.length > 220 || referenceKey.includes('/') || !referenceKey.toLowerCase().endsWith('.gif')) {
+    return notFound();
   }
 
   const source = await db
     .prepare(`
       SELECT reference_source, reference_key, reference_media_url
       FROM exercise_definition
-      WHERE id = ? AND is_archived = 0
+      WHERE reference_source = 'gym_keeper_apk'
+        AND reference_key = ?
+        AND is_archived = 0
       LIMIT 1
     `)
-    .bind(exerciseId)
+    .bind(referenceKey)
     .first<ExerciseMediaSourceRow>();
 
   if (!source?.reference_source || !source.reference_key || !source.reference_media_url) return notFound();
-  if (source.reference_source !== 'gym_keeper_apk' || !isApprovedGymKeeperMediaUrl(source.reference_media_url)) return notFound();
+  if (!isApprovedGymKeeperMediaUrl(source.reference_media_url)) return notFound();
 
   const r2Key = exerciseMediaR2Key(source.reference_source, source.reference_key);
   const cached = await bucket.get(r2Key);
