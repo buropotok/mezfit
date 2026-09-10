@@ -1,6 +1,6 @@
 # Gym Keeper exercise catalogue parity
 
-Status: implementation evidence for Mezfit `Упражнения`. Issue #60 corrects the first #58 implementation after direct screenshot comparison exposed structural drift.
+Status: implementation evidence for Mezfit `Упражнения`. Issue #60 corrects the first #58 implementation after direct screenshot comparison exposed structural drift; #63 completes APK parity for canonical Russian exercise names and category artwork.
 
 ## Evidence priority
 
@@ -27,13 +27,33 @@ The product-owner screenshots are therefore stronger evidence than the flattened
 
 The supplied `com.kg.app.sportdiary_615_rs.apk` contains dedicated catalogue/selection, edit and info resources including `dialog_choose_exercises.xml`, `dialog_choose_exercises_from_day.xml`, `dialog_choose_exercises_from_workout.xml`, `dialog_edit_exercise.xml`, `activity_exercise_info.xml`, `li_exercise_small.xml`, `li_exercise_edit.xml`, `l_exercise_image.xml` and `fam_add_exercises.xml`.
 
-Catalogue/action resources include `ic_exercise`, `ic_search`, `ic_filter`, `ic_sort_abc`, `ic_add`, `ic_edit`, `ic_edit_delete`, `ic_info`, favourite assets and overflow/menu artwork. Category artwork exists as `muscles_chest.png`, `muscles_arm.png`, `muscles_back.png`, `muscles_leg.png`, `muscles_shoulders.png`, `muscles_core.png`, `muscles_fullbody.png`, `muscles_cardio.png` and `muscles_other.png`.
+Catalogue/action resources include `ic_exercise`, `ic_search`, `ic_filter`, `ic_sort_abc`, `ic_add`, `ic_edit`, `ic_edit_delete`, `ic_info`, favourite assets and overflow/menu artwork.
 
-## Bundled catalogue extraction
+## Canonical Russian exercise names
 
-`classes2.dex` contains **334 unique exercise GIF references** under `/img/gifs/180/`. `tools/extract-gym-keeper-catalog.mjs` parses these deterministically. Migrations `0007_gym_keeper_exercise_seed_01.sql` through `0013_gym_keeper_exercise_seed_07.sql` retain stable `reference_source`, exact APK-derived `reference_key` and deterministic `reference_order` for #34 media attachment.
+`classes2.dex` contains the bundled exercise records with the APK-provided Russian display name, technical/source identity and `/img/gifs/180/...` media reference. `tools/extract-gym-keeper-catalog.mjs` now extracts that record mapping directly instead of deriving a display name from the GIF filename.
 
-The source/reference identity remains technical and stable. User-facing bundled names are localized to Russian without changing `reference_key`, so media mapping is not coupled to translated display text.
+For the 334 bundled exercises used by Mezfit the extractor requires complete mapping coverage and fails rather than silently transliterating an English/source name. Migration `0014_gym_keeper_russian_names.sql` updates the already-deployed `gym_keeper_apk` definitions using their stable APK identity/order while preserving `reference_source`, `reference_key`, `reference_order` and the #34 media join.
+
+Example: the APK record associated with `12411305-Bird-Dog-male_Back_180.gif` is shown as `Птица-собака`. Mezfit therefore stores/displays `Птица-собака`; `Бирд Дог мале` and similar generated transliterations are not canonical product data.
+
+**Invariant:** when Gym Keeper supplies a localized Russian exercise name, that exact APK value wins. Do not translate, transliterate or normalize it in the runtime UI. Coach-created names remain user-authored data.
+
+## Gym Keeper category artwork
+
+The category-first screen uses the exact PNG artwork extracted from the approved APK and served from `public/gym-keeper/categories/`:
+
+- `muscles_chest.png` → Грудь
+- `muscles_arm.png` → Руки
+- `muscles_back.png` → Спина
+- `muscles_leg.png` → Ноги
+- `muscles_shoulders.png` → Плечи
+- `muscles_core.png` → Корпус
+- `muscles_fullbody.png` → Фулбоди
+- `muscles_cardio.png` → Кардио
+- `muscles_other.png` → Другое
+
+The artwork is not redrawn and no third-party icon family substitutes it. Mezfit may apply the existing category accent treatment so the same reference assets remain legible across supported themes.
 
 ## Russian product invariant
 
@@ -47,4 +67,4 @@ This domain adaptation does **not** justify changing category-first navigation, 
 
 ## Media boundary
 
-#60 preserves the media slots and reference mapping but does not move the full GIF/image library into the frontend. Actual media extraction/storage/delivery remains #34 and uses R2.
+#63 adds only the lightweight category UI artwork. Full exercise GIF/image extraction, R2 storage and runtime delivery remain #34 and reuse the preserved `reference_key` mapping.
