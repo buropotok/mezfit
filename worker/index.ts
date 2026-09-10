@@ -1,4 +1,5 @@
 import { getGlobalTheme } from './lib/app-config';
+import { handleCoachExerciseCatalogueRoute } from './lib/coach-exercise-api';
 import {
   createExerciseForClient,
   hasActiveCoachClient,
@@ -263,6 +264,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/config' && request.method === 'GET') {
     return json({ theme: await getGlobalTheme(env.DB_BINDING) });
+  }
+
+  if (url.pathname === '/api/coach/exercises' || /^\/api\/coach\/exercises\/\d+(?:\/favourite)?$/.test(url.pathname)) {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    return handleCoachExerciseCatalogueRoute(request, env.DB_BINDING, auth.row.id);
   }
 
   const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);

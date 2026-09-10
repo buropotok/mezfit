@@ -3,6 +3,7 @@ export type ExerciseScope = 'global' | 'coach' | 'client';
 export type TrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
 export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulders' | 'core' | 'full_body' | 'cardio' | 'other';
 export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
+export type ExerciseSort = 'alphabetical' | 'reference';
 
 export interface AppUser {
   id: number;
@@ -43,6 +44,27 @@ export interface ExerciseDefinition {
   tracking_type: TrackingType;
   category_code: ExerciseCategoryCode | null;
   equipment_code: ExerciseEquipmentCode | null;
+  reference_source: string | null;
+  reference_key: string | null;
+  reference_media_url: string | null;
+  is_favourite: boolean;
+  can_edit: boolean;
+}
+
+export interface ExerciseDefinitionInput {
+  name: string;
+  description?: string;
+  trackingType: TrackingType;
+  categoryCode: ExerciseCategoryCode;
+  equipmentCode: ExerciseEquipmentCode;
+}
+
+export interface CoachExerciseFilters {
+  search?: string;
+  categoryCode?: ExerciseCategoryCode | '';
+  trackingType?: TrackingType | '';
+  favouritesOnly?: boolean;
+  sort?: ExerciseSort;
 }
 
 interface ApiErrorPayload {
@@ -131,17 +153,64 @@ export function getClientExercises(
 export function createClientExercise(
   initData: string,
   clientUserId: number,
-  input: {
-    scope: 'coach' | 'client';
-    name: string;
-    description?: string;
-    trackingType: TrackingType;
-    categoryCode: ExerciseCategoryCode;
-    equipmentCode: ExerciseEquipmentCode;
-  },
+  input: ExerciseDefinitionInput & { scope: 'coach' | 'client' },
 ): Promise<{ exercise: ExerciseDefinition }> {
   return apiRequest(initData, `/api/coach/clients/${clientUserId}/exercises`, {
     method: 'POST',
     body: JSON.stringify(input),
+  });
+}
+
+export function getCoachExercises(
+  initData: string,
+  filters: CoachExerciseFilters = {},
+): Promise<{ exercises: ExerciseDefinition[] }> {
+  const query = new URLSearchParams();
+  if (filters.search) query.set('search', filters.search);
+  if (filters.categoryCode) query.set('category', filters.categoryCode);
+  if (filters.trackingType) query.set('trackingType', filters.trackingType);
+  if (filters.favouritesOnly) query.set('favourites', '1');
+  if (filters.sort && filters.sort !== 'alphabetical') query.set('sort', filters.sort);
+  const suffix = query.size ? `?${query.toString()}` : '';
+  return apiRequest(initData, `/api/coach/exercises${suffix}`);
+}
+
+export function getCoachExercise(initData: string, exerciseId: number): Promise<{ exercise: ExerciseDefinition }> {
+  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`);
+}
+
+export function createCoachExercise(
+  initData: string,
+  input: ExerciseDefinitionInput,
+): Promise<{ exercise: ExerciseDefinition }> {
+  return apiRequest(initData, '/api/coach/exercises', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateCoachExercise(
+  initData: string,
+  exerciseId: number,
+  input: ExerciseDefinitionInput,
+): Promise<{ exercise: ExerciseDefinition }> {
+  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function archiveCoachExercise(initData: string, exerciseId: number): Promise<{ ok: true }> {
+  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`, { method: 'DELETE' });
+}
+
+export function setCoachExerciseFavourite(
+  initData: string,
+  exerciseId: number,
+  favourite: boolean,
+): Promise<{ ok: true }> {
+  return apiRequest(initData, `/api/coach/exercises/${exerciseId}/favourite`, {
+    method: 'PUT',
+    body: JSON.stringify({ favourite }),
   });
 }

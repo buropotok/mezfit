@@ -6,6 +6,7 @@ import {
 } from '../api';
 import type { AppDestination, NavigationContext } from '../NavigationShell';
 import { ExerciseCatalog } from './ExerciseCatalog';
+import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 
 type ClientTab = 'overview' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
 
@@ -20,7 +21,6 @@ const tabs: Array<{ id: ClientTab; label: string }> = [
 
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
   programs: { title: 'Программы', text: 'Здесь будет глобальный список программ тренера и быстрый переход к назначению клиенту.' },
-  exercises: { title: 'Упражнения', text: 'Здесь будет глобальный каталог упражнений тренера. История конкретного клиента остаётся внутри карточки клиента.' },
   calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
   settings: { title: 'Настройки', text: 'Системные настройки будут добавляться отдельными задачами.' },
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
@@ -97,8 +97,12 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }, [initData]);
 
   useEffect(() => {
+    if (destination !== 'clients' && selectedClient) setSelectedClient(null);
+  }, [destination, selectedClient]);
+
+  useEffect(() => {
     if (!selectedClient) {
-      onNavigationContextChange(null);
+      if (destination !== 'exercises') onNavigationContextChange(null);
       return;
     }
 
@@ -107,10 +111,14 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       onBack: () => setSelectedClient(null),
     });
     return () => onNavigationContextChange(null);
-  }, [selectedClient, onNavigationContextChange]);
+  }, [destination, selectedClient, onNavigationContextChange]);
 
   if (selectedClient) {
     return <ClientWorkspace initData={initData} client={selectedClient} />;
+  }
+
+  if (destination === 'exercises') {
+    return <GlobalExerciseCatalog initData={initData} onNavigationContextChange={onNavigationContextChange} />;
   }
 
   if (destination !== 'clients') {
