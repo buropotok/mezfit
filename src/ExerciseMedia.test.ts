@@ -3,13 +3,13 @@ import { exerciseMediaUrl } from './ExerciseMedia';
 
 const datasetExercise = {
   reference_source: 'github_exercises_dataset',
-  reference_key: '0001-2gPfomN.gif',
+  reference_key: '0001',
 };
 
 describe('exercise media URL', () => {
   it('uses the stable same-origin media route for the canonical dataset', () => {
     expect(exerciseMediaUrl(datasetExercise))
-      .toBe('/api/exercise-media/gym_keeper_apk/0001-2gPfomN.gif');
+      .toBe('/api/exercise-media/gym_keeper_apk/0001');
   });
 
   it('returns no URL for legacy or custom media sources', () => {
