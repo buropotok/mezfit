@@ -197,21 +197,14 @@ export async function getCoachExercises(
   filters: CoachExerciseFilters = {},
 ): Promise<{ exercises: ExerciseDefinition[] }> {
   const query = new URLSearchParams();
+  if (filters.search?.trim()) query.set('search', filters.search.trim());
   if (filters.categoryCode) query.set('category', filters.categoryCode);
   if (filters.trackingType) query.set('trackingType', filters.trackingType);
   if (filters.favouritesOnly) query.set('favourites', '1');
   if (filters.sort && filters.sort !== 'alphabetical') query.set('sort', filters.sort);
   const suffix = query.size ? `?${query.toString()}` : '';
   const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/coach/exercises${suffix}`);
-  const needle = filters.search?.trim().toLocaleLowerCase('ru-RU') ?? '';
-  const localized = result.exercises.map(localizeExercise);
-  return {
-    exercises: localized.filter((exercise, index) => {
-      if (!needle) return true;
-      const sourceName = result.exercises[index]?.name.toLocaleLowerCase('en-US') ?? '';
-      return exercise.name.toLocaleLowerCase('ru-RU').includes(needle) || sourceName.includes(needle);
-    }),
-  };
+  return { exercises: result.exercises.map(localizeExercise) };
 }
 
 export async function getCoachExercise(initData: string, exerciseId: number): Promise<{ exercise: ExerciseDefinition }> {
