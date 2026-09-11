@@ -6,18 +6,25 @@ The UI Kit is the code-level implementation of Mezfit's design system. It is int
 
 ## Layer model
 
-`tokens -> primitives -> components -> feature UI`
+`Radix behavior -> Mezfit tokens/primitives/components -> feature UI`
 
+- **Radix Primitives** provide mature headless interaction infrastructure for complex widgets: accessibility, focus management, keyboard behavior, portals and overlay mechanics where applicable.
 - **Tokens** define reusable visual decisions and semantic aliases over the existing theme contract.
 - **Primitives** are small accessible React building blocks with no Mezfit domain logic.
-- **Components** compose primitives into reusable interaction patterns such as Menu, ListItem, Modal, BottomSheet and SegmentedControl.
+- **Components** compose primitives and, where appropriate, Radix primitives into reusable interaction patterns such as Menu, ListItem, Modal, BottomSheet and SegmentedControl.
 - **Feature UI** owns product/domain behavior and composes the layers above it.
 
-Dependencies flow only from right to left in that list. `src/ui` must not depend on coach/client feature modules.
+`src/ui` must not depend on coach/client feature modules. Feature code must not import Radix directly when a Mezfit UI Kit abstraction exists.
+
+## Interaction infrastructure rule
+
+Do not reimplement mature interaction infrastructure such as dialog focus traps, nested overlay coordination, Escape handling, scroll locking or screen-reader semantics when Radix provides the corresponding primitive. Mezfit wraps Radix behind its own stable component API.
+
+Radix controls behavior; Telegram Web A is the visual/UX reference; Mezfit tokens map that presentation onto the application theme. This keeps Telegram styling without inheriting or maintaining Telegram's application-specific interaction machinery.
 
 ## Public API
 
-Feature code imports supported UI from `src/ui` rather than reaching into implementation files.
+Feature code imports supported UI from `src/ui` rather than reaching into implementation files or importing the underlying Radix primitive directly.
 
 ## Tokens
 
@@ -42,11 +49,11 @@ Interactive primitives expose visible keyboard focus, native disabled behavior w
 
 ## Telegram-derived contact UI
 
-The contact/client-list building blocks are source-level adaptations of Telegram Web A at commit `9cb10b20797dc09e33fcffee0ba390bb429c66d3`:
+The contact/client-list presentation is adapted from Telegram Web A at commit `9cb10b20797dc09e33fcffee0ba390bb429c66d3`:
 
 - `List` / `ListItem`: `src/components/ui/ListItem.tsx`, `ListItem.scss`, with the contact-list usage in `src/components/left/main/ContactList.tsx`.
 - `FloatingActionButton`: `src/components/ui/FloatingActionButton.tsx` and `.scss`. The upstream positioning (`right: 1rem`, `bottom: 1rem`) and reveal transition are preserved. Mezfit keeps icon content caller-provided so the existing icon source remains canonical.
-- `Modal`: `src/components/ui/Modal.tsx` and `.scss`. The Mezfit React adaptation preserves the centered fixed overlay, 25% black backdrop, Telegram dialog width constraints, header/content geometry, Escape/backdrop close behavior, focus containment, focus restoration and body scroll lock.
+- `Modal`: behavior is backed by Radix Dialog. Telegram Web A `src/components/ui/Modal.scss` remains the visual reference for the centered overlay, 25% black backdrop, dialog width constraints and header/content geometry. Focus trapping, Escape behavior, nested-dialog coordination, accessibility semantics, portal behavior and scroll locking belong to Radix rather than Mezfit application code.
 
 These components contain no coach/client domain behavior. The production client directory will compose them separately: client rows use `ListItem`, add-client uses `FloatingActionButton`, and invitation content uses `Modal`.
 
