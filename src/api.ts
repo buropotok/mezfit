@@ -211,3 +211,41 @@ export async function getCoachExercise(initData: string, exerciseId: number): Pr
   const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`);
   return { exercise: localizeExercise(result.exercise) };
 }
+
+export async function createCoachExercise(
+  initData: string,
+  input: ExerciseDefinitionInput,
+): Promise<{ exercise: ExerciseDefinition }> {
+  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, '/api/coach/exercises', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return { exercise: localizeExercise(result.exercise) };
+}
+
+export async function updateCoachExercise(
+  initData: string,
+  exerciseId: number,
+  input: ExerciseDefinitionInput,
+): Promise<{ exercise: ExerciseDefinition }> {
+  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+  return { exercise: localizeExercise(result.exercise) };
+}
+
+export function archiveCoachExercise(initData: string, exerciseId: number): Promise<{ ok: true }> {
+  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`, { method: 'DELETE' });
+}
+
+export function setCoachExerciseFavourite(
+  initData: string,
+  exerciseId: number,
+  favourite: boolean,
+): Promise<{ ok: true }> {
+  return apiRequest(initData, `/api/coach/exercises/${exerciseId}/favourite`, {
+    method: 'PUT',
+    body: JSON.stringify({ favourite }),
+  });
+}
