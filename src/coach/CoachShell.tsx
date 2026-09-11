@@ -63,7 +63,7 @@ function ClientWorkspace({ initData, client }: { initData: string; client: Coach
   const name = displayName(client);
 
   return (
-    <Tabs className="client-workspace" value={tab} onValueChange={(value) => setTab(value as ClientTab)}>
+    <Tabs className="stack client-workspace" value={tab} onValueChange={(value) => setTab(value as ClientTab)}>
       <TabsList aria-label={`Разделы клиента ${name}`}>
         {tabs.map((item) => <TabsTrigger key={item.id} value={item.id}>{item.label}</TabsTrigger>)}
       </TabsList>
