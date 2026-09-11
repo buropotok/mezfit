@@ -6,32 +6,33 @@ The UI Kit is the code-level implementation of Mezfit's design system. It is int
 
 ## Layer model
 
-`tokens -> primitives -> components -> feature UI`
+`Radix behavior -> Mezfit tokens/primitives/components -> feature UI`
 
+- **Radix Primitives** provide mature headless interaction infrastructure for complex widgets: accessibility, focus management, keyboard behavior, portals and overlay mechanics where applicable.
 - **Tokens** define reusable visual decisions and semantic aliases over the existing theme contract.
 - **Primitives** are small accessible React building blocks with no Mezfit domain logic.
-- **Components** compose primitives into reusable interaction patterns such as Menu, ListItem, Modal, BottomSheet and SegmentedControl.
+- **Components** compose primitives and, where appropriate, Radix primitives into reusable interaction patterns such as Menu, ListItem, Modal, BottomSheet and SegmentedControl.
 - **Feature UI** owns product/domain behavior and composes the layers above it.
 
-Dependencies flow only from right to left in that list. `src/ui` must not depend on coach/client feature modules.
+`src/ui` must not depend on coach/client feature modules. Feature code must not import Radix directly when a Mezfit UI Kit abstraction exists.
+
+## Interaction infrastructure rule
+
+Do not reimplement mature interaction infrastructure such as dialog focus traps, nested overlay coordination, Escape handling, scroll locking or screen-reader semantics when Radix provides the corresponding primitive. Mezfit wraps Radix behind its own stable component API.
+
+Radix controls behavior; Telegram Web A is the visual/UX reference; Mezfit tokens map that presentation onto the application theme. This keeps Telegram styling without inheriting or maintaining Telegram's application-specific interaction machinery.
 
 ## Public API
 
-Feature code imports supported primitives from `src/ui` rather than reaching into primitive implementation files. Internal files may change without becoming application-wide contracts.
+Feature code imports supported UI from `src/ui` rather than reaching into implementation files or importing the underlying Radix primitive directly.
 
 ## Tokens
 
 Tokens live in `src/ui/tokens`. Theme colors are semantic aliases over the canonical `--theme-*` variables in `src/theme.css`; the UI Kit does not create a competing theme system.
 
-A value belongs in tokens when it represents a reusable design decision shared by multiple primitives/components: semantic color roles, spacing steps, typography, radii, elevation, motion or layering.
-
-A value stays component-local when it is intrinsic to that component and has no established cross-component meaning. Do not promote one-off measurements into global tokens pre-emptively.
-
 Feature CSS must not redefine an established UI Kit radius, shadow, control state, typography role or motion value with an arbitrary literal when the corresponding token/component already exists.
 
 ## Foundation primitives
-
-PR 1 establishes:
 
 - `Text`
 - `Button`
@@ -40,24 +41,26 @@ PR 1 establishes:
 - `Divider`
 - `Surface`
 
-Primitives use native HTML semantics by default. Interactive primitives must expose visible keyboard focus, native disabled behavior where applicable, and accessible names for icon-only controls. Reduced-motion preferences are respected.
-
-The existing Mezfit icon source remains canonical; the UI Kit must not introduce a parallel icon library.
+Interactive primitives expose visible keyboard focus, native disabled behavior where applicable, and accessible names for icon-only controls. Reduced-motion preferences are respected. The existing Mezfit icon source remains canonical.
 
 ### Telegram Web A button provenance
 
-`Button` and `IconButton` use Telegram Web A as their interaction and geometry reference. The upstream sources are `Ajaxy/telegram-tt/src/components/ui/Button.scss` and `Ajaxy/telegram-tt/src/styles/_variables.scss`.
+`Button` and `IconButton` use Telegram Web A as their interaction and geometry reference. Upstream: `Ajaxy/telegram-tt/src/components/ui/Button.scss` and `src/styles/_variables.scss`. Telegram color roles map to Mezfit semantic theme tokens.
 
-The port preserves the upstream 3rem standard height, 1rem standard button radius, uppercase label treatment, 0.5rem base padding, fluid horizontal padding of 1.75rem, medium weight, 1.2 line-height, 0.2s color/background/opacity transitions, disabled opacity 0.5, and round 3rem icon-button geometry. Telegram color roles are mapped to Mezfit semantic theme tokens rather than copied as a parallel theme system.
+## Telegram-derived contact UI
+
+The contact/client-list presentation is adapted from Telegram Web A at commit `9cb10b20797dc09e33fcffee0ba390bb429c66d3`:
+
+- `List` / `ListItem`: `src/components/ui/ListItem.tsx`, `ListItem.scss`, with the contact-list usage in `src/components/left/main/ContactList.tsx`.
+- `FloatingActionButton`: `src/components/ui/FloatingActionButton.tsx` and `.scss`. The upstream positioning (`right: 1rem`, `bottom: 1rem`) and reveal transition are preserved. Mezfit keeps icon content caller-provided so the existing icon source remains canonical.
+- `Modal`: behavior is backed by Radix Dialog. Telegram Web A `src/components/ui/Modal.scss` remains the visual reference for the centered overlay, 25% black backdrop, dialog width constraints and header/content geometry. Focus trapping, Escape behavior, nested-dialog coordination, accessibility semantics, portal behavior and scroll locking belong to Radix rather than Mezfit application code.
+
+These components contain no coach/client domain behavior. The production client directory will compose them separately: client rows use `ListItem`, add-client uses `FloatingActionButton`, and invitation content uses `Modal`.
 
 ## Internal catalog
 
-`/ui-kit` is a development/internal visual contract showing supported primitive states. It is intentionally absent from client and coach navigation.
-
-The catalog is not a second application and must contain no domain state. It exists to review component states, theme compatibility and regressions in one place.
+`/ui-kit` is a development/internal visual contract showing supported primitives and components. It is intentionally absent from product navigation and contains no domain state.
 
 ## Migration strategy
 
-Do not mass-refactor existing screens. New UI should prefer the UI Kit. Existing UI moves into it opportunistically when touched by scoped work.
-
-The next planned extraction is the Telegram-derived navigation menu: its presentation and interaction primitives should become reusable `Menu` / `MenuItem` components while `NavigationShell` retains Mezfit routing, account and role behavior.
+Do not mass-refactor existing screens. New UI should prefer the UI Kit. Existing UI moves into it opportunistically when touched by scoped work. The client-list production migration is deliberately separate from this component-foundation change.
