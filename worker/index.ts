@@ -83,23 +83,28 @@ function userView(row: UserRow): UserView {
   };
 }
 
-async function upsertUser(db: D1Database, telegramUser: TelegramInitUser): Promise<UserRow> {
+async function resolveUser(db: D1Database, telegramUser: TelegramInitUser): Promise<UserRow> {
+  const telegramUserId = String(telegramUser.id);
+  const existing = await db
+    .prepare(`
+      SELECT id, telegram_user_id, username, first_name, last_name, language_code, photo_url, is_premium
+      FROM app_user
+      WHERE telegram_user_id = ?
+    `)
+    .bind(telegramUserId)
+    .first<UserRow>();
+
+  if (existing) return existing;
+
   await db
     .prepare(`
       INSERT INTO app_user (
         telegram_user_id, username, first_name, last_name, language_code, photo_url, is_premium
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(telegram_user_id) DO UPDATE SET
-        username = excluded.username,
-        first_name = excluded.first_name,
-        last_name = excluded.last_name,
-        language_code = excluded.language_code,
-        photo_url = excluded.photo_url,
-        is_premium = excluded.is_premium,
-        updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT(telegram_user_id) DO NOTHING
     `)
     .bind(
-      String(telegramUser.id),
+      telegramUserId,
       telegramUser.username ?? null,
       telegramUser.first_name,
       telegramUser.last_name ?? null,
@@ -115,7 +120,7 @@ async function upsertUser(db: D1Database, telegramUser: TelegramInitUser): Promi
       FROM app_user
       WHERE telegram_user_id = ?
     `)
-    .bind(String(telegramUser.id))
+    .bind(telegramUserId)
     .first<UserRow>();
 
   if (!row) throw new Error('Failed to resolve persisted user');
@@ -133,7 +138,7 @@ async function getRoles(db: D1Database, userId: number): Promise<Role[]> {
 async function requireUser(request: Request, env: Env): Promise<AuthContext> {
   const initData = request.headers.get('x-telegram-init-data') ?? '';
   const validated = await validateTelegramInitData(initData, env.TELEGRAM_BOT_TOKEN);
-  const row = await upsertUser(env.DB_BINDING, validated.user);
+  const row = await resolveUser(env.DB_BINDING, validated.user);
   return {
     row,
     roles: await getRoles(env.DB_BINDING, row.id),
