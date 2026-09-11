@@ -1,10 +1,19 @@
 PRAGMA foreign_keys = ON;
 
--- The 1,324-record GitHub dataset is the canonical bundled Mezfit catalogue.
--- Keep legacy rows for historical FK integrity, but remove them from all active
--- catalogue queries. The importer activates only github_exercises_dataset rows.
-UPDATE exercise_definition
-SET is_archived = 1,
-    updated_at = CURRENT_TIMESTAMP
-WHERE scope = 'global'
-  AND COALESCE(reference_source, '') <> 'github_exercises_dataset';
+-- Import into staging first. The active catalogue is not changed until the
+-- importer explicitly finalizes a complete 1,324-record batch.
+CREATE TABLE IF NOT EXISTS exercise_dataset_stage (
+  dataset_id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  tracking_type TEXT NOT NULL,
+  primary_muscle TEXT,
+  equipment TEXT,
+  category_code TEXT,
+  equipment_code TEXT,
+  media_key TEXT NOT NULL,
+  reference_media_url TEXT NOT NULL,
+  reference_order INTEGER NOT NULL,
+  source_metadata_json TEXT NOT NULL,
+  imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
