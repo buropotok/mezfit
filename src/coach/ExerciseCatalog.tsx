@@ -8,6 +8,7 @@ import {
   type TrackingType,
 } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
+import { Button, IconButton } from '../ui';
 
 const trackingLabels: Record<TrackingType, string> = {
   weight_reps: 'Вес × повторы',
@@ -57,7 +58,7 @@ function CategoryDialog({ value, onChange, onClose }: {
       <section className="modal-dialog category-dialog" role="dialog" aria-modal="true" aria-labelledby="category-dialog-title">
         <header className="modal-header">
           <h2 id="category-dialog-title" className="modal-title">Категория</h2>
-          <button className="icon-button" type="button" onClick={onClose} aria-label="Закрыть категории">×</button>
+          <IconButton className="icon-button" onClick={onClose} label="Закрыть категории">×</IconButton>
         </header>
         <div className="category-list" role="radiogroup" aria-label="Категория упражнения">
           {categoryOptions.map((option) => (
@@ -166,7 +167,7 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
           <div className="eyebrow">Упражнения клиента</div>
           <h2>Каталог</h2>
         </div>
-        <button className="primary-button" type="button" onClick={() => setShowCreate(true)}>+ Упражнение</button>
+        <Button className="primary-button" onClick={() => setShowCreate(true)}>+ Упражнение</Button>
       </header>
 
       <div className="exercise-catalog-search">
@@ -218,7 +219,7 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
           <section className="modal-dialog exercise-create-dialog" role="dialog" aria-modal="true" aria-labelledby="exercise-create-title">
             <header className="modal-header">
               <h2 id="exercise-create-title" className="modal-title">Новое упражнение</h2>
-              <button className="icon-button" type="button" onClick={closeCreate} disabled={saving} aria-label="Закрыть">×</button>
+              <IconButton className="icon-button" onClick={closeCreate} disabled={saving} label="Закрыть">×</IconButton>
             </header>
 
             <div className="exercise-create-first-row">

@@ -5,6 +5,7 @@ import {
   type CoachClientListItem,
 } from '../api';
 import type { AppDestination, NavigationContext } from '../NavigationShell';
+import { Avatar, Button } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 
@@ -156,7 +157,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
           <div className="eyebrow">Тренер</div>
           <h2>Клиенты</h2>
         </div>
-        <button className="primary-button" onClick={createInvite} disabled={busy}>{busy ? 'Создаём…' : '+ Клиент'}</button>
+        <Button className="primary-button" onClick={createInvite} disabled={busy}>{busy ? 'Создаём…' : '+ Клиент'}</Button>
       </header>
 
       <section className="client-directory-surface" aria-label="Список клиентов">
@@ -166,7 +167,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
           <div className="client-list compact-client-list">
             {clients.map((client) => (
               <button className="client-row" key={client.relationshipId} type="button" onClick={() => setSelectedClient(client)}>
-                <span className="avatar">{client.user.firstName.slice(0, 1).toUpperCase()}</span>
+                <Avatar className="avatar" name={client.user.firstName} aria-hidden="true" />
                 <span><strong>{displayName(client)}</strong><small>{client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}</small></span>
                 <span className="row-chevron" aria-hidden="true">›</span>
               </button>
@@ -182,8 +183,8 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
           <p>Ссылка одноразовая и действует 30 дней. После подтверждения клиент автоматически появится в вашем списке.</p>
           <div className="link-box">{inviteUrl}</div>
           <div className="button-row">
-            <button className="primary-button" onClick={copyInvite}>Копировать</button>
-            <button className="secondary-button" onClick={() => setInviteUrl(null)}>Закрыть</button>
+            <Button className="primary-button" onClick={copyInvite}>Копировать</Button>
+            <Button variant="secondary" className="secondary-button" onClick={() => setInviteUrl(null)}>Закрыть</Button>
           </div>
         </section>
       ) : null}
