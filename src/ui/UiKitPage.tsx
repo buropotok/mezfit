@@ -1,51 +1,49 @@
-import { Avatar, Button, Divider, IconButton, Surface, Text } from './index';
+import { useState } from 'react';
+import { Avatar, Button, Divider, FloatingActionButton, IconButton, List, ListItem, Modal, Surface, Text } from './index';
 import './catalog.css';
 
 export function UiKitPage() {
+  const [modalOpen, setModalOpen] = useState(false);
   return (
     <main className="ui-kit-page">
       <header className="ui-kit-header">
         <Text variant="caption" tone="muted">Mezfit internal</Text>
         <h1>UI Kit</h1>
-        <Text tone="muted">Foundation primitives and their supported states.</Text>
+        <Text tone="muted">Foundation primitives and Telegram-derived interaction components.</Text>
       </header>
 
       <Surface as="section" className="ui-kit-section">
-        <Text variant="title">Typography</Text>
-        <Divider />
-        <div className="ui-kit-stack">
-          <Text variant="title">Title text</Text>
-          <Text>Body text for normal interface copy.</Text>
-          <Text variant="caption" tone="muted">Muted caption text</Text>
-        </div>
+        <Text variant="title">Typography</Text><Divider />
+        <div className="ui-kit-stack"><Text variant="title">Title text</Text><Text>Body text for normal interface copy.</Text><Text variant="caption" tone="muted">Muted caption text</Text></div>
       </Surface>
 
       <Surface as="section" className="ui-kit-section">
-        <Text variant="title">Buttons</Text>
-        <Divider />
-        <div className="ui-kit-row">
-          <Button>Primary</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="danger">Danger</Button>
-          <Button disabled>Disabled</Button>
-        </div>
+        <Text variant="title">Buttons</Text><Divider />
+        <div className="ui-kit-row"><Button>Primary</Button><Button variant="secondary">Secondary</Button><Button variant="danger">Danger</Button><Button disabled>Disabled</Button></div>
       </Surface>
 
       <Surface as="section" className="ui-kit-section">
-        <Text variant="title">Icon button & avatar</Text>
-        <Divider />
-        <div className="ui-kit-row">
-          <IconButton label="Add item"><span aria-hidden="true">＋</span></IconButton>
-          <IconButton label="Disabled action" disabled><span aria-hidden="true">⋯</span></IconButton>
-          <Avatar name="Mezfit User" />
-        </div>
+        <Text variant="title">Icon button & avatar</Text><Divider />
+        <div className="ui-kit-row"><IconButton label="Add item"><span aria-hidden="true">＋</span></IconButton><IconButton label="Disabled action" disabled><span aria-hidden="true">⋯</span></IconButton><Avatar name="Mezfit User" /></div>
+      </Surface>
+
+      <Surface as="section" className="ui-kit-section" style={{ position: 'relative', minHeight: '15rem' }}>
+        <Text variant="title">Contact list & FAB</Text><Divider />
+        <List>
+          <ListItem leading={<Avatar name="Andrei Sokolov" />} title="Andrei Sokolov" subtitle="@sokolag" />
+          <ListItem leading={<Avatar name="Mezfit Client" />} title="Mezfit Client" subtitle="Клиент" />
+        </List>
+        <FloatingActionButton label="Добавить клиента" onClick={() => setModalOpen(true)}><span aria-hidden="true">＋</span></FloatingActionButton>
       </Surface>
 
       <Surface as="section" elevated className="ui-kit-section">
-        <Text variant="title">Elevated surface</Text>
-        <Divider />
-        <Text tone="muted">Surface, divider and elevation use the shared token layer.</Text>
+        <Text variant="title">Modal</Text><Divider />
+        <Button onClick={() => setModalOpen(true)}>Open modal</Button>
       </Surface>
+
+      <Modal isOpen={modalOpen} title="Пригласить клиента" onClose={() => setModalOpen(false)}>
+        <Text>Здесь будет ссылка-приглашение и действие копирования.</Text>
+      </Modal>
     </main>
   );
 }
