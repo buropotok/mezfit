@@ -197,62 +197,17 @@ export async function getCoachExercises(
   filters: CoachExerciseFilters = {},
 ): Promise<{ exercises: ExerciseDefinition[] }> {
   const query = new URLSearchParams();
+  if (filters.search?.trim()) query.set('search', filters.search.trim());
   if (filters.categoryCode) query.set('category', filters.categoryCode);
   if (filters.trackingType) query.set('trackingType', filters.trackingType);
   if (filters.favouritesOnly) query.set('favourites', '1');
   if (filters.sort && filters.sort !== 'alphabetical') query.set('sort', filters.sort);
   const suffix = query.size ? `?${query.toString()}` : '';
   const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/coach/exercises${suffix}`);
-  const needle = filters.search?.trim().toLocaleLowerCase('ru-RU') ?? '';
-  const localized = result.exercises.map(localizeExercise);
-  return {
-    exercises: localized.filter((exercise, index) => {
-      if (!needle) return true;
-      const sourceName = result.exercises[index]?.name.toLocaleLowerCase('en-US') ?? '';
-      return exercise.name.toLocaleLowerCase('ru-RU').includes(needle) || sourceName.includes(needle);
-    }),
-  };
+  return { exercises: result.exercises.map(localizeExercise) };
 }
 
 export async function getCoachExercise(initData: string, exerciseId: number): Promise<{ exercise: ExerciseDefinition }> {
   const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`);
   return { exercise: localizeExercise(result.exercise) };
-}
-
-export async function createCoachExercise(
-  initData: string,
-  input: ExerciseDefinitionInput,
-): Promise<{ exercise: ExerciseDefinition }> {
-  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, '/api/coach/exercises', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-  return { exercise: localizeExercise(result.exercise) };
-}
-
-export async function updateCoachExercise(
-  initData: string,
-  exerciseId: number,
-  input: ExerciseDefinitionInput,
-): Promise<{ exercise: ExerciseDefinition }> {
-  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
-  return { exercise: localizeExercise(result.exercise) };
-}
-
-export function archiveCoachExercise(initData: string, exerciseId: number): Promise<{ ok: true }> {
-  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`, { method: 'DELETE' });
-}
-
-export function setCoachExerciseFavourite(
-  initData: string,
-  exerciseId: number,
-  favourite: boolean,
-): Promise<{ ok: true }> {
-  return apiRequest(initData, `/api/coach/exercises/${exerciseId}/favourite`, {
-    method: 'PUT',
-    body: JSON.stringify({ favourite }),
-  });
 }
