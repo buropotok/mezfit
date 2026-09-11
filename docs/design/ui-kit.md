@@ -44,6 +44,12 @@ Primitives use native HTML semantics by default. Interactive primitives must exp
 
 The existing Mezfit icon source remains canonical; the UI Kit must not introduce a parallel icon library.
 
+### Telegram Web A button provenance
+
+`Button` and `IconButton` use Telegram Web A as their interaction and geometry reference. The upstream sources are `Ajaxy/telegram-tt/src/components/ui/Button.scss` and `Ajaxy/telegram-tt/src/styles/_variables.scss`.
+
+The port preserves the upstream 3rem standard height, 1rem standard button radius, uppercase label treatment, 0.5rem base padding, fluid horizontal padding of 1.75rem, medium weight, 1.2 line-height, 0.2s color/background/opacity transitions, disabled opacity 0.5, and round 3rem icon-button geometry. Telegram color roles are mapped to Mezfit semantic theme tokens rather than copied as a parallel theme system.
+
 ## Internal catalog
 
 `/ui-kit` is a development/internal visual contract showing supported primitive states. It is intentionally absent from client and coach navigation.

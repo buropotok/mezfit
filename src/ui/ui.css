@@ -4,30 +4,104 @@
 .ui-text--title { font-size: var(--ui-font-size-title); font-weight: var(--ui-font-weight-medium); }
 .ui-text--muted { color: var(--ui-color-surface-muted); }
 
+/*
+ * Button geometry and interaction contract ported from Telegram Web A:
+ * Ajaxy/telegram-tt/src/components/ui/Button.scss
+ * Ajaxy/telegram-tt/src/styles/_variables.scss
+ * Mezfit's default Button maps to Telegram's fluid button geometry because
+ * production actions are content-width controls rather than full-width forms.
+ */
 .ui-button,
 .ui-icon-button {
   appearance: none;
-  border: 1px solid transparent;
-  color: var(--ui-color-surface-text);
-  font: inherit;
   cursor: pointer;
-  transition: background-color var(--ui-motion-fast) var(--ui-easing-standard), opacity var(--ui-motion-fast) var(--ui-easing-standard), transform var(--ui-motion-fast) var(--ui-easing-standard);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  font: inherit;
+  font-weight: var(--ui-font-weight-medium);
+  line-height: 1.2;
+  text-decoration: none;
+  outline: none;
+  transition: background-color 0.2s, color 0.2s, opacity 0.2s;
 }
-.ui-button { min-height: 2.75rem; padding: var(--ui-space-2) var(--ui-space-4); border-radius: var(--ui-radius-md); font-weight: var(--ui-font-weight-medium); }
-.ui-button--primary { background: var(--ui-color-surface-raised); }
-.ui-button--secondary { border-color: var(--ui-color-border); background: var(--ui-color-surface); }
-.ui-button--danger { border-color: var(--ui-color-border); background: var(--ui-color-surface); color: #ff6b6b; }
-.ui-button:hover:not(:disabled), .ui-icon-button:hover:not(:disabled) { filter: brightness(1.08); }
-.ui-button:active:not(:disabled), .ui-icon-button:active:not(:disabled) { transform: scale(.98); }
-.ui-button:focus-visible, .ui-icon-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-.ui-button:disabled, .ui-icon-button:disabled { cursor: not-allowed; opacity: .45; }
 
-.ui-icon-button { display: inline-grid; width: 2.75rem; height: 2.75rem; padding: 0; place-items: center; border-radius: var(--ui-radius-pill); background: transparent; }
+.ui-button {
+  width: auto;
+  height: 3rem;
+  min-height: 3rem;
+  padding: 0.5rem 1.75rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+}
+.ui-button.ui-button--primary {
+  color: var(--ui-color-primary-text);
+  border: 0;
+  background-color: var(--ui-color-primary);
+}
+.ui-button.ui-button--secondary {
+  color: color-mix(in srgb, var(--ui-color-surface-muted) 75%, transparent);
+  border: 0;
+  background-color: var(--ui-color-surface);
+}
+.ui-button.ui-button--danger {
+  color: #ff6b6b;
+  border: 0;
+  background-color: var(--ui-color-surface);
+}
+.ui-button.full-width { width: 100%; }
+.ui-button:disabled,
+.ui-icon-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.ui-button:focus-visible,
+.ui-icon-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.ui-button.ui-button--primary:active:not(:disabled) { opacity: 0.9; }
+.ui-button.ui-button--secondary:active:not(:disabled) {
+  color: var(--ui-color-primary-text);
+  background-color: var(--ui-color-primary);
+}
+.error-card .ui-button.ui-button--primary {
+  color: var(--ui-color-primary-text);
+  border: 0;
+  background-color: var(--ui-color-primary);
+}
+
+.ui-icon-button.ui-icon-button {
+  width: 3rem;
+  height: 3rem;
+  min-height: 3rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ui-color-surface-text);
+  background: transparent;
+}
+.ui-icon-button.ui-icon-button:active:not(:disabled) { background-color: var(--ui-color-surface-raised); }
+
 .ui-avatar { display: inline-grid; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; place-items: center; border-radius: 50%; object-fit: cover; }
 .ui-avatar--fallback { color: var(--ui-color-surface-text); background: var(--ui-color-surface-raised); font-weight: var(--ui-font-weight-medium); }
 .ui-divider { width: 100%; height: 1px; margin: var(--ui-space-2) 0; border: 0; background: var(--ui-color-border); }
 .ui-surface { color: var(--ui-color-surface-text); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-md); background: var(--ui-color-surface); }
 .ui-surface--elevated { box-shadow: var(--ui-shadow-raised); }
+
+@media (hover: hover) {
+  .ui-button.ui-button--primary:hover:not(:disabled) { opacity: 0.9; }
+  .ui-button.ui-button--secondary:hover:not(:disabled) {
+    color: var(--ui-color-primary-text);
+    background-color: var(--ui-color-primary);
+  }
+  .ui-icon-button.ui-icon-button:hover:not(:disabled) { background-color: var(--ui-color-surface-raised); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .ui-button, .ui-icon-button { transition-duration: 1ms; }
