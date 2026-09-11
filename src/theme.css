@@ -74,7 +74,6 @@ body {
 .card,
 .modal-dialog,
 .role-switch,
-.client-directory-surface,
 .exercise-catalog-surface,
 .client-tabs button,
 .link-box,
@@ -93,7 +92,6 @@ body {
 .card,
 .modal-dialog,
 .role-switch,
-.client-directory-surface,
 .exercise-catalog-surface {
   color: var(--theme-surface-text);
   border-color: var(--theme-border);
@@ -104,8 +102,6 @@ body {
 .card .client-row small,
 .card .exercise-row small,
 .card .empty-state p,
-.client-directory-surface p,
-.client-directory-surface .client-row small,
 .exercise-catalog-surface p,
 .exercise-catalog-surface .exercise-row small,
 .modal-dialog .media-note,
