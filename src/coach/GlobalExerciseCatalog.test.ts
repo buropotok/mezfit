@@ -33,4 +33,11 @@ describe('Gym Keeper global exercise catalogue parity', () => {
     expect(source).not.toContain("exerciseDisplayName(exercise).toLocaleLowerCase('ru-RU').includes(needle)");
     expect(apiSource).toContain("query.set('search', filters.search.trim())");
   });
+
+  it('ignores responses from superseded catalogue requests', () => {
+    expect(source).toContain('let cancelled = false');
+    expect(source).toContain('if (!isCurrent()) return; setExercises(result.exercises)');
+    expect(source).toContain('if (!isCurrent()) return; setError(');
+    expect(source).toContain('cancelled = true; window.clearTimeout(timer)');
+  });
 });
