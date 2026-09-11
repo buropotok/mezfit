@@ -1,6 +1,7 @@
-/* Source-level adaptations from Telegram Web A (Ajaxy/telegram-tt):
+/* Source-level visual adaptations from Telegram Web A (Ajaxy/telegram-tt):
  * components/ui/ListItem.scss, FloatingActionButton.scss, Modal.scss.
- * Telegram color roles are mapped to Mezfit semantic tokens.
+ * Interactive modal behavior is delegated to Radix Dialog; Telegram color roles
+ * and presentation are mapped to Mezfit semantic tokens here.
  */
 .ui-list {
   position: relative;
@@ -142,6 +143,7 @@
 .ui-modal__title {
   overflow: hidden;
   flex: 1 1 auto;
+  margin: 0;
   margin-inline-start: 1rem;
   font-size: 1.25rem;
   font-weight: var(--ui-font-weight-medium);
@@ -171,6 +173,17 @@
   flex-grow: 1;
   width: 100%;
   padding: 1rem 1.5rem 1.1875rem;
+}
+.ui-visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 @keyframes ui-modal-enter {
