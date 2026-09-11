@@ -1,0 +1,75 @@
+/* Calendar behavior comes from @daypicker/react. Visual roles are mapped to Mezfit UI tokens. */
+.ui-calendar {
+  --rdp-accent-color: var(--ui-color-primary);
+  --rdp-accent-background-color: var(--ui-color-primary-soft);
+  --rdp-day-height: 2.75rem;
+  --rdp-day-width: 2.75rem;
+  --rdp-day_button-height: 2.5rem;
+  --rdp-day_button-width: 2.5rem;
+  --rdp-day_button-border-radius: 50%;
+  --rdp-nav_button-height: 2.5rem;
+  --rdp-nav_button-width: 2.5rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  color: var(--ui-color-surface-text);
+}
+
+.ui-calendar .rdp-months,
+.ui-calendar .rdp-month,
+.ui-calendar .rdp-month_grid {
+  width: 100%;
+  max-width: 100%;
+}
+
+.ui-calendar .rdp-month_grid {
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.ui-calendar .rdp-weekday {
+  color: var(--ui-color-surface-muted);
+  font-size: .8125rem;
+  font-weight: var(--ui-font-weight-medium);
+}
+
+.ui-calendar .rdp-day {
+  text-align: center;
+}
+
+.ui-calendar .rdp-day_button {
+  margin: auto;
+  color: inherit;
+  font: inherit;
+}
+
+.ui-calendar .rdp-selected .rdp-day_button {
+  color: var(--ui-color-primary-text);
+  background: var(--ui-color-primary);
+  border-color: var(--ui-color-primary);
+}
+
+.ui-calendar .rdp-outside {
+  color: var(--ui-color-surface-muted);
+  opacity: .45;
+}
+
+.app-calendar-modal .ui-modal__dialog {
+  width: calc(100vw - 1rem);
+  max-width: 40rem;
+  margin: .5rem auto;
+}
+
+.app-calendar-modal .ui-modal__content {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 1rem;
+}
+
+@media (max-width: 450px) {
+  .app-calendar-modal .ui-modal__dialog {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+  }
+}
