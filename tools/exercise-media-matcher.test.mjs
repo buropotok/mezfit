@@ -38,6 +38,30 @@ describe('exercise media matcher', () => {
     const xs = [{ id: 'a', name: 'dumbbell single arm row', body_part: 'back', equipment: 'dumbbell' }, { id: 'b', name: 'single arm row', body_part: 'back', equipment: 'cable' }];
     expect(matchExercise('99991305-Dumbbell-One-Arm-Row_Back_180.gif', xs).exercise?.id).toBe('a');
   });
+  it('accepts only explicit conservative semantic aliases', () => {
+    const cases = [
+      ['18591305-Cable-Kneeling-Triceps-Extension-(VERSION-2)_Upper-Arms_180.gif', 'cable kneeling triceps extension'],
+      ['60361305-Cable-Straight-Arm-Pulldown-(VERSION-2)_Back_180.gif', 'cable straight arm pulldown'],
+      ['22851305-Lever-Pullover-(plate-loaded)_Back_180.gif', 'lever pullover'],
+      ['05941305-Lever-Seated-Calf-Raise-(plate-loaded)_Calf_180.gif', 'lever seated calf raise'],
+      ['05931305-Lever-Reverse-Hyperextension-(plate-loaded)_Hips_180.gif', 'lever reverse hyperextension'],
+      ['51191305-Dumbbell-Deadlift-(VERSION-2)-(male)_Hips_180.gif', 'dumbbell deadlift'],
+      ['37131305-Dumbbell-Standing-Single-Leg-Calf-Raise_Calves_180.gif', 'dumbbell single leg calf raise'],
+      ['21921305-Elliptical-Machine-Walk_Cardio_180.gif', 'walk elliptical cross trainer'],
+    ];
+    for (const [key, name] of cases) {
+      const r = matchExercise(key, [{ id: name, name, body_part: 'x', equipment: 'x' }]);
+      expect(r.exercise?.id).toBe(name);
+      expect(r.match).toBe('semantic_alias');
+    }
+  });
+  it('does not force an ambiguous dataset target through the semantic alias path', () => {
+    const xs = [
+      { id: 'a', name: 'lever pullover', body_part: 'back', equipment: 'lever' },
+      { id: 'b', name: 'lever pullover', body_part: 'back', equipment: 'cable' },
+    ];
+    expect(matchExercise('22851305-Lever-Pullover-(plate-loaded)_Back_180.gif', xs).match).not.toBe('semantic_alias');
+  });
   it('rejects genuinely ambiguous candidates', () => {
     const xs = [{ id: 'a', name: 'dumbbell standing front raise', body_part: 'shoulders', equipment: 'dumbbell' }, { id: 'b', name: 'dumbbell standing lateral raise', body_part: 'shoulders', equipment: 'dumbbell' }];
     expect(matchExercise('99991305-Dumbbell-Standing-Raise_Shoulders_180.gif', xs).exercise).toBeNull();
