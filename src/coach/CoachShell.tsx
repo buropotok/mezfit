@@ -167,7 +167,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
           <div className="client-list compact-client-list">
             {clients.map((client) => (
               <button className="client-row" key={client.relationshipId} type="button" onClick={() => setSelectedClient(client)}>
-                <Avatar className="avatar" name={displayName(client)} />
+                <Avatar className="avatar" name={client.user.firstName} />
                 <span><strong>{displayName(client)}</strong><small>{client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}</small></span>
                 <span className="row-chevron" aria-hidden="true">›</span>
               </button>
