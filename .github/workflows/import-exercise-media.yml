@@ -1,40 +1,28 @@
-name: Import Exercise Media to R2
+name: Import Full Exercise Dataset
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - tools/import-gym-keeper-media.mjs
-      - tools/exercise-media-matcher.mjs
-      - tools/exercise-media-matcher.test.mjs
-      - worker/lib/exercise-media.ts
-      - .github/workflows/import-exercise-media.yml
+  workflow_run:
+    workflows: ["Deploy Mezfit"]
+    types: [completed]
+
+concurrency:
+  group: mezfit-full-exercise-dataset-import
+  cancel-in-progress: false
 
 jobs:
   import:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
-      GITHUB_REPOSITORY: ${{ github.repository }}
+      id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - name: Test exercise media matcher
-        run: npx vitest run tools/exercise-media-matcher.test.mjs
-      - name: Build matcher diagnostics
-        run: node tools/import-gym-keeper-media.mjs --dry-run --keep-files
-      - name: Upload matcher diagnostics
-        uses: actions/upload-artifact@v4
-        with:
-          name: exercise-media-match-report
-          path: .tmp/gym-keeper-media/match-report.json
-          if-no-files-found: error
-      - name: Import matched exercise GIFs through Worker R2 binding
-        run: node tools/import-gym-keeper-media.mjs
+      - name: Import, validate and atomically activate all 1324 exercises
+        run: node tools/import-full-exercise-dataset.mjs

@@ -10,7 +10,7 @@ function iconStyle(url: string): CSSProperties {
 }
 
 export function exerciseMediaUrl(exercise: Pick<ExerciseDefinition, 'reference_source' | 'reference_key'>): string | null {
-  if (exercise.reference_source !== 'gym_keeper_apk' || !exercise.reference_key) return null;
+  if (exercise.reference_source !== 'github_exercises_dataset' || !exercise.reference_key) return null;
   return `/api/exercise-media/gym_keeper_apk/${encodeURIComponent(exercise.reference_key)}`;
 }
 
