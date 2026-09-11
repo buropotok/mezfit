@@ -30,8 +30,21 @@ export function ListItem({ leading, title, subtitle, trailing, className = '', t
 
 type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; children: ReactNode };
 
-export function FloatingActionButton({ label, isShown = true, className = '', type = 'button', children, ...props }: FloatingActionButtonProps) {
-  return <button type={type} aria-label={label} tabIndex={isShown ? 0 : -1} className={`ui-fab${isShown ? ' ui-fab--shown' : ''} ${className}`.trim()} {...props}>{children}</button>;
+export function FloatingActionButton({ label, isShown = true, className = '', type = 'button', children, disabled, onClick, ...props }: FloatingActionButtonProps) {
+  return (
+    <button
+      type={type}
+      aria-label={label}
+      aria-hidden={!isShown || undefined}
+      tabIndex={isShown ? 0 : -1}
+      disabled={disabled}
+      onClick={isShown ? onClick : undefined}
+      className={`ui-fab${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
+      {...props}
+    >
+      {children}
+    </button>
+  );
 }
 
 type ModalProps = { isOpen: boolean; title?: ReactNode; children: ReactNode; className?: string; closeLabel?: string; hasCloseButton?: boolean; closeOnBackdrop?: boolean; onClose: () => void };
@@ -41,6 +54,11 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -52,7 +70,7 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
     (firstFocusable ?? dialog)?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
+      if (event.key === 'Escape') { event.preventDefault(); onCloseRef.current(); return; }
       if (event.key !== 'Tab' || !dialog) return;
       const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
       if (!focusable.length) { event.preventDefault(); dialog.focus(); return; }
@@ -68,15 +86,15 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
       document.body.style.overflow = previousOverflow;
       previousFocusRef.current?.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
   return createPortal(
     <div className={`ui-modal ${className}`.trim()} role="presentation">
       <div className="ui-modal__container">
-        <div className="ui-modal__backdrop" onClick={closeOnBackdrop ? onClose : undefined} aria-hidden="true" />
+        <div className="ui-modal__backdrop" onClick={closeOnBackdrop ? () => onCloseRef.current() : undefined} aria-hidden="true" />
         <div ref={dialogRef} className="ui-modal__dialog" role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} tabIndex={-1}>
-          {title || hasCloseButton ? <div className="ui-modal__header">{hasCloseButton ? <button className="ui-modal__close" type="button" aria-label={closeLabel} onClick={onClose}>Ã—</button> : null}{title ? <div id={titleId} className="ui-modal__title">{title}</div> : null}</div> : null}
+          {title || hasCloseButton ? <div className="ui-modal__header">{hasCloseButton ? <button className="ui-modal__close" type="button" aria-label={closeLabel} onClick={() => onCloseRef.current()}>Ã—</button> : null}{title ? <div id={titleId} className="ui-modal__title">{title}</div> : null}</div> : null}
           <div className="ui-modal__content">{children}</div>
         </div>
       </div>
