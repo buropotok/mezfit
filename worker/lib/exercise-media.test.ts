@@ -2,9 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { exerciseMediaPublicUrl, exerciseMediaR2Key, handleExerciseMediaRoute } from './exercise-media';
 
 const datasetId = '0001';
+const importId = '0123456789abcdef0123456789abcdef01234567';
 
 describe('canonical exercise dataset media mapping', () => {
-  it('uses the stable dataset id for the R2 object key', () => {
+  it('uses immutable import-versioned R2 object keys for staged media', () => {
+    expect(exerciseMediaR2Key('github_exercises_dataset', datasetId, importId))
+      .toBe(`exercise-media/github_exercises_dataset/versions/${importId}/${datasetId}.gif`);
+  });
+
+  it('keeps the legacy helper shape when no version is supplied', () => {
     expect(exerciseMediaR2Key('github_exercises_dataset', datasetId))
       .toBe(`exercise-media/github_exercises_dataset/${datasetId}.gif`);
   });
