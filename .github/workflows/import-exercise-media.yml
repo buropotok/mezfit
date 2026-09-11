@@ -2,6 +2,13 @@ name: Import Full Exercise Dataset
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - tools/import-full-exercise-dataset.mjs
+      - worker/lib/exercise-media.ts
+      - migrations/0017_full_exercise_dataset.sql
+      - .github/workflows/import-exercise-media.yml
 
 jobs:
   import:
