@@ -13,20 +13,22 @@ type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title'> & {
   title: ReactNode;
   subtitle?: ReactNode;
   trailing?: ReactNode;
+  interactive?: boolean;
 };
 
-export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, className = '', type = 'button', ...props }: ListItemProps) {
+export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, interactive = true, className = '', type = 'button', ...props }: ListItemProps) {
   const leadingClassName = leadingShape === 'square' ? ' ui-list-item__leading--square' : '';
+  const content = <>
+    {leading ? <span className={`ui-list-item__leading${leadingClassName}`} aria-hidden="true">{leading}</span> : null}
+    <span className="ui-list-item__content">
+      <span className="ui-list-item__title">{title}</span>
+      {subtitle ? <span className="ui-list-item__subtitle">{subtitle}</span> : null}
+    </span>
+    {trailing ? <span className="ui-list-item__trailing">{trailing}</span> : null}
+  </>;
   return (
     <div className="ui-list-item-wrap" role="listitem">
-      <button type={type} className={`ui-list-item ${className}`.trim()} {...props}>
-        {leading ? <span className={`ui-list-item__leading${leadingClassName}`} aria-hidden="true">{leading}</span> : null}
-        <span className="ui-list-item__content">
-          <span className="ui-list-item__title">{title}</span>
-          {subtitle ? <span className="ui-list-item__subtitle">{subtitle}</span> : null}
-        </span>
-        {trailing ? <span className="ui-list-item__trailing">{trailing}</span> : null}
-      </button>
+      {interactive ? <button type={type} className={`ui-list-item ${className}`.trim()} {...props}>{content}</button> : <div className={`ui-list-item ui-list-item--static ${className}`.trim()}>{content}</div>}
     </div>
   );
 }

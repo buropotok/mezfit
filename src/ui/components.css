@@ -6,6 +6,7 @@
  */
 .ui-list { position: relative; width: 100%; }
 .ui-list-item { appearance:none; cursor:pointer; position:relative; overflow:hidden; display:flex; align-items:center; width:100%; min-height:4rem; padding:.5rem; border:0; border-radius:0; color:var(--ui-color-surface-text); font:inherit; text-align:initial; background:transparent; outline:none; }
+.ui-list-item--static { cursor:default; }
 .ui-list-item__leading { display:inline-flex; flex:0 0 auto; margin-inline-end:.5rem; }
 .ui-list-item__leading--square { overflow:hidden; width:3rem; height:3rem; align-items:center; justify-content:center; border-radius:var(--ui-radius-sm); }
 .ui-list-item__leading--square > * { width:100%; height:100%; }
@@ -17,7 +18,7 @@
 .ui-list-item__subtitle { font-size:.875rem; line-height:1.25rem; color:var(--ui-color-surface-muted); }
 .ui-list-item__trailing { display:inline-flex; flex:0 0 auto; align-items:center; margin-inline-start:1rem; color:var(--ui-color-surface-muted); }
 .ui-list-item:disabled { cursor:default; opacity:.5; }
-.ui-list-item:active:not(:disabled),.ui-list-item:focus-visible { background:var(--ui-color-surface-raised); }
+.ui-list-item:not(.ui-list-item--static):active:not(:disabled),.ui-list-item:not(.ui-list-item--static):focus-visible { background:var(--ui-color-surface-raised); }
 
 .ui-fab { appearance:none; cursor:pointer; position:absolute; z-index:2; right:1rem; bottom:1rem; transform:translateY(5rem); display:inline-flex; align-items:center; justify-content:center; width:3.5rem; height:3.5rem; padding:0; border:0; border-radius:50%; color:var(--ui-color-primary-text); background:var(--ui-color-primary); box-shadow:var(--ui-shadow-raised); outline:none; transition:transform .25s cubic-bezier(.34,1.56,.64,1),background-color .15s,color .15s,opacity .15s; }
 .ui-fab--shown{transform:translateY(0)}.ui-fab--hidden{visibility:hidden;pointer-events:none}.ui-fab:disabled{cursor:default;opacity:.5;pointer-events:none}.ui-fab:focus-visible{outline:2px solid currentColor;outline-offset:2px}.ui-fab:active:not(:disabled){opacity:.9}
@@ -26,6 +27,6 @@
 
 .ui-modal{position:relative;z-index:var(--ui-z-modal,1000);color:var(--ui-color-surface-text)}.ui-modal__container{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}.ui-modal__backdrop{position:fixed;inset:0;background:rgba(0,0,0,.25)}.ui-modal__dialog{position:relative;z-index:1;display:inline-flex;flex-direction:column;width:100%;min-width:17.5rem;max-width:35rem;max-height:min(92vh,50rem);margin:2rem auto;border-radius:var(--ui-radius-md);background:var(--ui-color-surface);box-shadow:var(--ui-shadow-raised);outline:none;animation:ui-modal-enter .2s ease both}.ui-modal__header{display:flex;flex-shrink:0;align-items:center;padding:1.3125rem 1.375rem 0}.ui-modal__title{overflow:hidden;flex:1 1 auto;margin:0;margin-inline-start:1rem;font-size:1.25rem;font-weight:var(--ui-font-weight-medium);text-overflow:ellipsis;white-space:nowrap}.ui-modal__close{appearance:none;cursor:pointer;display:inline-grid;width:2.5rem;height:2.5rem;padding:0;border:0;border-radius:50%;place-items:center;color:var(--ui-color-surface-text);font:inherit;font-size:1.75rem;line-height:1;background:transparent}.ui-modal__close:active,.ui-modal__close:focus-visible{background:var(--ui-color-surface-raised);outline:none}.ui-modal__content{overflow-y:auto;flex-grow:1;width:100%;padding:1rem 1.5rem 1.1875rem}.ui-visually-hidden{position:absolute;overflow:hidden;width:1px;height:1px;padding:0;margin:-1px;border:0;clip:rect(0,0,0,0);white-space:nowrap}
 @keyframes ui-modal-enter{from{transform:translate3d(0,-1rem,0);opacity:0}to{transform:translate3d(0,0,0);opacity:1}}
-@media(hover:hover){.ui-list-item:hover:not(:disabled){background:var(--ui-color-surface-raised)}.ui-fab:hover:not(:disabled){opacity:.9}.ui-tabs__trigger:hover:not(:disabled){opacity:.85}.ui-modal__close:hover{background:var(--ui-color-surface-raised)}}
+@media(hover:hover){.ui-list-item:not(.ui-list-item--static):hover:not(:disabled){background:var(--ui-color-surface-raised)}.ui-fab:hover:not(:disabled){opacity:.9}.ui-tabs__trigger:hover:not(:disabled){opacity:.85}.ui-modal__close:hover{background:var(--ui-color-surface-raised)}}
 @media(max-width:450px){.ui-modal__dialog{max-width:calc(100vw - 3rem)}}
 @media(prefers-reduced-motion:reduce){.ui-fab,.ui-tabs__trigger{transition:none}.ui-modal__dialog{animation:none}}
