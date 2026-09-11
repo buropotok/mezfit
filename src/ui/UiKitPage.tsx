@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Avatar, Button, Divider, FloatingActionButton, IconButton, List, ListItem, Modal, Surface, Text } from './index';
+import { Avatar, Button, Divider, FloatingActionButton, IconButton, List, ListItem, Modal, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text } from './index';
 import './catalog.css';
 
 export function UiKitPage() {
@@ -25,6 +25,22 @@ export function UiKitPage() {
       <Surface as="section" className="ui-kit-section">
         <Text variant="title">Icon button & avatar</Text><Divider />
         <div className="ui-kit-row"><IconButton label="Add item"><span aria-hidden="true">＋</span></IconButton><IconButton label="Disabled action" disabled><span aria-hidden="true">⋯</span></IconButton><Avatar name="Mezfit User" /></div>
+      </Surface>
+
+      <Surface as="section" className="ui-kit-section">
+        <Text variant="title">Tabs</Text><Divider />
+        <Tabs defaultValue="overview">
+          <TabsList aria-label="Client sections">
+            <TabsTrigger value="overview">Обзор</TabsTrigger>
+            <TabsTrigger value="program">Программа</TabsTrigger>
+            <TabsTrigger value="exercises">Упражнения</TabsTrigger>
+            <TabsTrigger value="calendar">Календарь</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview"><Text>Обзор клиента</Text></TabsContent>
+          <TabsContent value="program"><Text>Программа клиента</Text></TabsContent>
+          <TabsContent value="exercises"><Text>Упражнения клиента</Text></TabsContent>
+          <TabsContent value="calendar"><Text>Календарь клиента</Text></TabsContent>
+        </Tabs>
       </Surface>
 
       <Surface as="section" className="ui-kit-section" style={{ position: 'relative', minHeight: '15rem' }}>

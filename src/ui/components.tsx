@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import * as RadixTabs from '@radix-ui/react-tabs';
 import './components.css';
 
 export function List({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -45,6 +46,27 @@ export function FloatingActionButton({ label, isShown = true, className = '', ty
       {children}
     </button>
   );
+}
+
+type TabsProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Root>;
+type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List>;
+type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger>;
+type TabsContentProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Content>;
+
+export function Tabs({ className = '', ...props }: TabsProps) {
+  return <RadixTabs.Root className={`ui-tabs ${className}`.trim()} {...props} />;
+}
+
+export function TabsList({ className = '', ...props }: TabsListProps) {
+  return <RadixTabs.List className={`ui-tabs__list ${className}`.trim()} {...props} />;
+}
+
+export function TabsTrigger({ className = '', ...props }: TabsTriggerProps) {
+  return <RadixTabs.Trigger className={`ui-tabs__trigger ${className}`.trim()} {...props} />;
+}
+
+export function TabsContent({ className = '', ...props }: TabsContentProps) {
+  return <RadixTabs.Content className={`ui-tabs__content ${className}`.trim()} {...props} />;
 }
 
 type ModalProps = {
