@@ -93,6 +93,3 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.client-workspace .client-tabs {
-  padding-bottom: var(--space-2);
-}

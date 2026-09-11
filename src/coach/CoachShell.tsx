@@ -5,7 +5,7 @@ import {
   type CoachClientListItem,
 } from '../api';
 import type { AppDestination, NavigationContext } from '../NavigationShell';
-import { Avatar, Button, FloatingActionButton, List, ListItem, Modal } from '../ui';
+import { Avatar, Button, FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 
@@ -63,20 +63,18 @@ function ClientWorkspace({ initData, client }: { initData: string; client: Coach
   const name = displayName(client);
 
   return (
-    <section className="stack client-workspace">
-      <nav className="client-tabs" aria-label={`Разделы клиента ${name}`}>
-        {tabs.map((item) => (
-          <button type="button" key={item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
-        ))}
-      </nav>
+    <Tabs className="stack client-workspace" value={tab} onValueChange={(value) => setTab(value as ClientTab)}>
+      <TabsList aria-label={`Разделы клиента ${name}`}>
+        {tabs.map((item) => <TabsTrigger key={item.id} value={item.id}>{item.label}</TabsTrigger>)}
+      </TabsList>
 
-      {tab === 'overview' ? <Placeholder title="Обзор" text="Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера." /> : null}
-      {tab === 'program' ? <Placeholder title="Программа" text="Редактор назначенной программы будет следующим вертикальным срезом." /> : null}
-      {tab === 'exercises' ? <ExerciseCatalog initData={initData} clientUserId={client.user.id} /> : null}
-      {tab === 'calendar' ? <Placeholder title="Календарь" text="Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence." /> : null}
-      {tab === 'progress' ? <Placeholder title="Прогресс" text="Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра." /> : null}
-      {tab === 'history' ? <Placeholder title="История" text="Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом." /> : null}
-    </section>
+      <TabsContent value="overview"><Placeholder title="Обзор" text="Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера." /></TabsContent>
+      <TabsContent value="program"><Placeholder title="Программа" text="Редактор назначенной программы будет следующим вертикальным срезом." /></TabsContent>
+      <TabsContent value="exercises"><ExerciseCatalog initData={initData} clientUserId={client.user.id} /></TabsContent>
+      <TabsContent value="calendar"><Placeholder title="Календарь" text="Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence." /></TabsContent>
+      <TabsContent value="progress"><Placeholder title="Прогресс" text="Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра." /></TabsContent>
+      <TabsContent value="history"><Placeholder title="История" text="Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом." /></TabsContent>
+    </Tabs>
   );
 }
 
