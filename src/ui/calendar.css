@@ -1,0 +1,29 @@
+/* Calendar mechanics come from React DayPicker. Visual treatment follows the compact
+ * one-month Gym Keeper calendar while staying on Mezfit semantic theme tokens. */
+.ui-calendar-modal .ui-modal__dialog {
+  width: min(44rem, calc(100vw - 1rem));
+  max-width: min(44rem, calc(100vw - 1rem));
+  margin: .5rem auto;
+}
+.ui-calendar-modal .ui-modal__content { padding: .75rem 1rem 1.25rem; }
+.ui-calendar { --rdp-accent-color: var(--ui-color-primary); --rdp-accent-background-color: var(--ui-color-primary-soft); width: 100%; margin: 0; color: var(--ui-color-surface-text); }
+.ui-calendar .rdp-months,
+.ui-calendar .rdp-month { width: 100%; max-width: none; }
+.ui-calendar .rdp-month_grid { width: 100%; border-collapse: separate; border-spacing: 0 .25rem; table-layout: fixed; }
+.ui-calendar .rdp-month_caption { min-height: 3rem; justify-content: center; font-size: 1.05rem; font-weight: 600; }
+.ui-calendar .rdp-nav { height: 3rem; }
+.ui-calendar .rdp-button_previous,
+.ui-calendar .rdp-button_next { width: 2.75rem; height: 2.75rem; border-radius: 50%; color: var(--ui-color-primary); }
+.ui-calendar .rdp-weekday { height: 2.25rem; color: var(--ui-color-surface-muted); font-size: .75rem; font-weight: 600; text-transform: lowercase; }
+.ui-calendar .rdp-day { height: clamp(2.75rem, 12vw, 3.75rem); padding: 0; text-align: center; }
+.ui-calendar .rdp-day_button { width: 2.75rem; height: 2.75rem; margin: auto; border: 0; border-radius: 50%; color: inherit; font: inherit; font-variant-numeric: tabular-nums; background: transparent; }
+.ui-calendar .rdp-selected .rdp-day_button { color: var(--ui-color-primary-text); background: var(--ui-color-primary); }
+.ui-calendar .rdp-today:not(.rdp-selected) .rdp-day_button { color: var(--ui-color-primary); font-weight: 700; }
+.ui-calendar .rdp-outside { color: var(--ui-color-surface-muted); opacity: .45; }
+.ui-calendar .rdp-disabled { opacity: .35; }
+.ui-calendar .rdp-day_button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+@media (max-width: 450px) {
+  .ui-calendar-modal .ui-modal__dialog { width: calc(100vw - .5rem); max-width: calc(100vw - .5rem); }
+  .ui-calendar-modal .ui-modal__content { padding-inline: .5rem; }
+  .ui-calendar .rdp-day_button { width: 2.5rem; height: 2.5rem; }
+}
