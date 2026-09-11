@@ -3,11 +3,36 @@ import { normalizeName, parseApkReference, matchExercise } from './exercise-medi
 
 describe('exercise media matcher', () => {
   it('normalizes aliases and noise', () => expect(normalizeName('Dumbbells Curls (male)')).toBe('dumbbell curl'));
+  it('normalizes version spelling and known dataset typo', () => {
+    expect(normalizeName('Decline Shrug (VERSION 2)')).toBe('decline shrug v 2');
+    expect(normalizeName('wheel rollerout')).toBe('wheel rollout');
+  });
   it('parses APK name and body part', () => expect(parseApkReference('12411305-Bird-Dog-male_Back_180.gif')).toEqual({ name: 'Bird Dog male', bodyPart: 'back' }));
+  it('strips APK media metadata from body part', () => {
+    expect(parseApkReference('03041305-Dumbbell-Decline-Shrug-(VERSION-2)_Back-FIX_180.gif').bodyPart).toBe('back');
+    expect(parseApkReference('05641305-Lateral-Box-Jump_Plyometrics-copy_180.gif').bodyPart).toBe('plyometrics');
+    expect(parseApkReference('10631305-Barbell-sumo-squat_Thighs-AFIX_180.gif').bodyPart).toBe('thighs');
+  });
   it('accepts exact normalized name', () => {
     const r = matchExercise('00311305-Barbell-Curl_Upper-Arms_180.gif', [{ id: '1', name: 'barbell curl', body_part: 'upper arms', equipment: 'barbell' }]);
     expect(r.exercise.id).toBe('1');
     expect(r.match).toBe('exact');
+  });
+  it('accepts duplicate dataset rows only when name, body part and equipment are equivalent', () => {
+    const xs = [
+      { id: 'a', name: 'EZ Barbell Spider Curl', body_part: 'upper arms', equipment: 'barbell' },
+      { id: 'b', name: 'EZ Barbell Spider Curl', body_part: 'upper arms', equipment: 'barbell' },
+    ];
+    const r = matchExercise('04541305-EZ-Barbell-Spider-Curl_Upper-Arms_180.gif', xs);
+    expect(r.exercise?.id).toBe('a');
+    expect(r.match).toBe('equivalent_duplicate');
+  });
+  it('does not collapse gender-distinct duplicate candidates', () => {
+    const xs = [
+      { id: 'a', name: 'jumping jack male', body_part: 'cardio', equipment: 'body weight' },
+      { id: 'b', name: 'jumping jack female', body_part: 'cardio', equipment: 'body weight' },
+    ];
+    expect(matchExercise('99991305-Jumping-Jack_Cardio_180.gif', xs).exercise).toBeNull();
   });
   it('uses body part and equipment to select a close candidate', () => {
     const xs = [{ id: 'a', name: 'dumbbell single arm row', body_part: 'back', equipment: 'dumbbell' }, { id: 'b', name: 'single arm row', body_part: 'back', equipment: 'cable' }];
