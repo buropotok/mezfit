@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
 import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
+import { Calendar, Modal } from './ui';
 
 export type AppDestination =
   | 'clients'
@@ -81,6 +82,8 @@ export function NavigationShell({
 }: Props) {
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => new Date());
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLElement>(null);
   const closeTimerRef = useRef<number | null>(null);
@@ -231,10 +234,16 @@ export function NavigationShell({
           </div>
         )}
         <h1>{context?.title ?? destinationTitle(activeRole, destination)}</h1>
-        <span className="navigation-appbar-spacer" aria-hidden="true" />
+        <button className="navigation-icon-button" type="button" onClick={() => setCalendarOpen(true)} aria-label="Открыть календарь">
+          <span className="navigation-apk-icon" style={iconStyle('calendar')} aria-hidden="true" />
+        </button>
       </header>
 
       <section className="navigation-content">{children}</section>
+
+      <Modal isOpen={calendarOpen} title="Календарь" className="app-calendar-modal" onClose={() => setCalendarOpen(false)}>
+        <Calendar value={selectedDate} onChange={setSelectedDate} />
+      </Modal>
     </main>
   );
 }
