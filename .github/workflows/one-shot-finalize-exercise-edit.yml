@@ -1,0 +1,35 @@
+name: Finalize exercise edit implementation
+on:
+  push:
+    branches: [feat/edit-bundled-exercises]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: feat/edit-bundled-exercises }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Apply implementation and corrected expectations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+          y=Path('.github/workflows/one-shot-edit-exercises-v2.yml').read_text()
+          body=y.split("python3 - <<'PY'\n",1)[1].split('\n          PY',1)[0]
+          exec(textwrap.dedent(body), {'__name__':'__main__'})
+          p=Path('worker/lib/exercises.test.ts'); s=p.read_text().replace("can_edit:false", "can_edit:true", 1); p.write_text(s)
+          PY
+      - run: npm install
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Commit implementation
+        run: |
+          rm -f .github/workflows/one-shot-edit-exercises-v2.yml .github/workflows/one-shot-finalize-exercise-edit.yml .exercise-edit-trigger
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A && git commit -m "feat(exercises): edit bundled exercises with coach overrides" && git push origin HEAD:feat/edit-bundled-exercises
