@@ -15,6 +15,7 @@ import {
   type NavigationContext,
 } from './NavigationShell';
 import { getTelegramWebApp } from './telegram';
+import { Button } from './ui';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 
@@ -104,7 +105,7 @@ function ClientShell({ initData, destination }: { initData: string; destination:
         <div className="eyebrow">Приглашение</div>
         <h2>{coachName} приглашает вас в Mezfit</h2>
         {invite.label ? <p>{invite.label}</p> : <p>После подтверждения тренер сможет назначать вам программу и видеть результаты тренировок.</p>}
-        <button className="primary-button full-width" onClick={accept} disabled={busy}>{busy ? 'Подключаем…' : 'Подключиться к тренеру'}</button>
+        <Button className="primary-button full-width" onClick={accept} disabled={busy}>{busy ? 'Подключаем…' : 'Подключиться к тренеру'}</Button>
         {message ? <p className="inline-message">{message}</p> : null}
       </section>
     );
@@ -183,7 +184,7 @@ export function App() {
           <div className="eyebrow">Ошибка</div>
           <h1>Не удалось открыть Mezfit</h1>
           <p>{state.message}</p>
-          <button onClick={() => window.location.reload()}>Обновить</button>
+          <Button onClick={() => window.location.reload()}>Обновить</Button>
         </section>
       </main>
     );
