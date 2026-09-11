@@ -8,6 +8,8 @@
  * Button geometry and interaction contract ported from Telegram Web A:
  * Ajaxy/telegram-tt/src/components/ui/Button.scss
  * Ajaxy/telegram-tt/src/styles/_variables.scss
+ * Mezfit's default Button maps to Telegram's fluid button geometry because
+ * production actions are content-width controls rather than full-width forms.
  */
 .ui-button,
 .ui-icon-button {
@@ -29,25 +31,29 @@
 }
 
 .ui-button {
-  width: 100%;
+  width: auto;
   height: 3rem;
   min-height: 3rem;
-  padding: 0.5rem;
+  padding: 0.5rem 1.75rem;
   border-radius: 1rem;
   text-transform: uppercase;
 }
-.ui-button--primary {
+.ui-button.ui-button--primary {
   color: var(--ui-color-primary-text);
+  border: 0;
   background-color: var(--ui-color-primary);
 }
-.ui-button--secondary {
+.ui-button.ui-button--secondary {
   color: color-mix(in srgb, var(--ui-color-surface-muted) 75%, transparent);
+  border: 0;
   background-color: var(--ui-color-surface);
 }
-.ui-button--danger {
+.ui-button.ui-button--danger {
   color: #ff6b6b;
+  border: 0;
   background-color: var(--ui-color-surface);
 }
+.ui-button.full-width { width: 100%; }
 .ui-button:disabled,
 .ui-icon-button:disabled {
   cursor: default;
@@ -59,22 +65,28 @@
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
-.ui-button--primary:active:not(:disabled) { opacity: 0.9; }
-.ui-button--secondary:active:not(:disabled) {
+.ui-button.ui-button--primary:active:not(:disabled) { opacity: 0.9; }
+.ui-button.ui-button--secondary:active:not(:disabled) {
   color: var(--ui-color-primary-text);
   background-color: var(--ui-color-primary);
 }
+.error-card .ui-button.ui-button--primary {
+  color: var(--ui-color-primary-text);
+  border: 0;
+  background-color: var(--ui-color-primary);
+}
 
-.ui-icon-button {
+.ui-icon-button.ui-icon-button {
   width: 3rem;
   height: 3rem;
   min-height: 3rem;
   padding: 0.5rem;
+  border: 0;
   border-radius: 50%;
   color: var(--ui-color-surface-text);
   background: transparent;
 }
-.ui-icon-button:active:not(:disabled) { background-color: var(--ui-color-surface-raised); }
+.ui-icon-button.ui-icon-button:active:not(:disabled) { background-color: var(--ui-color-surface-raised); }
 
 .ui-avatar { display: inline-grid; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; place-items: center; border-radius: 50%; object-fit: cover; }
 .ui-avatar--fallback { color: var(--ui-color-surface-text); background: var(--ui-color-surface-raised); font-weight: var(--ui-font-weight-medium); }
@@ -83,12 +95,12 @@
 .ui-surface--elevated { box-shadow: var(--ui-shadow-raised); }
 
 @media (hover: hover) {
-  .ui-button--primary:hover:not(:disabled) { opacity: 0.9; }
-  .ui-button--secondary:hover:not(:disabled) {
+  .ui-button.ui-button--primary:hover:not(:disabled) { opacity: 0.9; }
+  .ui-button.ui-button--secondary:hover:not(:disabled) {
     color: var(--ui-color-primary-text);
     background-color: var(--ui-color-primary);
   }
-  .ui-icon-button:hover:not(:disabled) { background-color: var(--ui-color-surface-raised); }
+  .ui-icon-button.ui-icon-button:hover:not(:disabled) { background-color: var(--ui-color-surface-raised); }
 }
 
 @media (prefers-reduced-motion: reduce) {
