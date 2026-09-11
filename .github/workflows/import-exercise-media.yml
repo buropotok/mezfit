@@ -2,27 +2,23 @@ name: Import Full Exercise Dataset
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - tools/import-full-exercise-dataset.mjs
-      - worker/lib/exercise-media.ts
-      - migrations/0017_full_exercise_dataset.sql
-      - .github/workflows/import-exercise-media.yml
+  workflow_run:
+    workflows: ["Deploy Mezfit"]
+    types: [completed]
 
 jobs:
   import:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for production deploy
-        if: github.event_name == 'push'
-        run: sleep 90
-      - name: Import all 1324 exercise records and GIFs
+      - name: Import, validate and atomically activate all 1324 exercises
         run: node tools/import-full-exercise-dataset.mjs
