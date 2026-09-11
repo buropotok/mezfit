@@ -28,5 +28,13 @@ jobs:
       - run: npm install
       - name: Test exercise media matcher
         run: npx vitest run tools/exercise-media-matcher.test.mjs
+      - name: Build matcher diagnostics
+        run: node tools/import-gym-keeper-media.mjs --dry-run --keep-files
+      - name: Upload matcher diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: exercise-media-match-report
+          path: .tmp/gym-keeper-media/match-report.json
+          if-no-files-found: error
       - name: Import matched exercise GIFs through Worker R2 binding
         run: node tools/import-gym-keeper-media.mjs
