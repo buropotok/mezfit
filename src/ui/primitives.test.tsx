@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Avatar, Button, IconButton, Surface, Text } from './index';
+import { Avatar, Button, FloatingActionButton, IconButton, List, ListItem, Surface, Text } from './index';
 
 describe('UI Kit primitives', () => {
   it('keeps button semantics and disabled state', () => {
@@ -25,5 +25,19 @@ describe('UI Kit primitives', () => {
     const html = renderToStaticMarkup(<Surface as="section"><Text>Content</Text></Surface>);
     expect(html).toContain('<section');
     expect(html).toContain('Content');
+  });
+
+  it('renders contact-list semantics without feature coupling', () => {
+    const html = renderToStaticMarkup(<List><ListItem title="Andrei" subtitle="@sokolag" /></List>);
+    expect(html).toContain('role="list"');
+    expect(html).toContain('role="listitem"');
+    expect(html).toContain('Andrei');
+    expect(html).toContain('@sokolag');
+  });
+
+  it('gives the floating action button an accessible name', () => {
+    const html = renderToStaticMarkup(<FloatingActionButton label="Добавить клиента">+</FloatingActionButton>);
+    expect(html).toContain('aria-label="Добавить клиента"');
+    expect(html).toContain('ui-fab--shown');
   });
 });
