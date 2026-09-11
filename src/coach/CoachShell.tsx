@@ -183,7 +183,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
                 <ListItem
                   key={client.relationshipId}
                   onClick={() => setSelectedClient(client)}
-                  leading={<Avatar name={displayName(client)} />}
+                  leading={<Avatar name={displayName(client)} src={client.user.photoUrl ?? undefined} />}
                   title={displayName(client)}
                   subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
                 />
