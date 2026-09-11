@@ -6,6 +6,10 @@ on:
     workflows: ["Deploy Mezfit"]
     types: [completed]
 
+concurrency:
+  group: mezfit-full-exercise-dataset-import
+  cancel-in-progress: false
+
 jobs:
   import:
     if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
