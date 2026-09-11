@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import source from './GlobalExerciseCatalog.tsx?raw';
+import apiSource from '../api.ts?raw';
 
 describe('Gym Keeper global exercise catalogue parity', () => {
   it('keeps category-first navigation and badge filters', () => {
@@ -25,5 +26,11 @@ describe('Gym Keeper global exercise catalogue parity', () => {
     expect(source).toContain('ExerciseEditorDialog');
     expect(source).toContain("mode: 'create'");
     expect(source).toContain("mode: 'edit'");
+  });
+
+  it('delegates coach catalogue search to the bilingual server search', () => {
+    expect(source).toContain("search,\n      categoryCode: selectedCategory ?? '',");
+    expect(source).not.toContain("exerciseDisplayName(exercise).toLocaleLowerCase('ru-RU').includes(needle)");
+    expect(apiSource).toContain("query.set('search', filters.search.trim())");
   });
 });
