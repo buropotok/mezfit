@@ -9,4 +9,6 @@
   --ui-color-border: var(--theme-border);
   --ui-color-surface-text: var(--theme-surface-text);
   --ui-color-surface-muted: var(--theme-surface-muted);
+  --ui-color-primary: var(--color-accent);
+  --ui-color-primary-text: #fff;
 }
