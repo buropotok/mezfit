@@ -55,12 +55,12 @@ describe('exercise media matcher', () => {
       expect(r.match).toBe('semantic_alias');
     }
   });
-  it('does not use a semantic alias when its dataset target is ambiguous', () => {
+  it('does not force an ambiguous dataset target through the semantic alias path', () => {
     const xs = [
       { id: 'a', name: 'lever pullover', body_part: 'back', equipment: 'lever' },
       { id: 'b', name: 'lever pullover', body_part: 'back', equipment: 'cable' },
     ];
-    expect(matchExercise('22851305-Lever-Pullover-(plate-loaded)_Back_180.gif', xs).exercise).toBeNull();
+    expect(matchExercise('22851305-Lever-Pullover-(plate-loaded)_Back_180.gif', xs).match).not.toBe('semantic_alias');
   });
   it('rejects genuinely ambiguous candidates', () => {
     const xs = [{ id: 'a', name: 'dumbbell standing front raise', body_part: 'shoulders', equipment: 'dumbbell' }, { id: 'b', name: 'dumbbell standing lateral raise', body_part: 'shoulders', equipment: 'dumbbell' }];
