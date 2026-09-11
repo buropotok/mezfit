@@ -33,6 +33,7 @@ type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { lab
 export function FloatingActionButton({ label, isShown = true, className = '', type = 'button', children, disabled, onClick, ...props }: FloatingActionButtonProps) {
   return (
     <button
+      {...props}
       type={type}
       aria-label={label}
       aria-hidden={!isShown || undefined}
@@ -40,7 +41,6 @@ export function FloatingActionButton({ label, isShown = true, className = '', ty
       disabled={disabled}
       onClick={isShown ? onClick : undefined}
       className={`ui-fab${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
-      {...props}
     >
       {children}
     </button>
