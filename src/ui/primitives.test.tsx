@@ -42,7 +42,9 @@ describe('UI Kit primitives', () => {
   });
 
   it('makes a hidden floating action button inaccessible and non-tabbable', () => {
-    const html = renderToStaticMarkup(<FloatingActionButton label="Добавить клиента" isShown={false}>+</FloatingActionButton>);
+    const html = renderToStaticMarkup(
+      <FloatingActionButton label="Добавить клиента" isShown={false} aria-hidden={false} tabIndex={0}>+</FloatingActionButton>,
+    );
     expect(html).toContain('aria-hidden="true"');
     expect(html).toContain('tabindex="-1"');
     expect(html).toContain('ui-fab--hidden');
