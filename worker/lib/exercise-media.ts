@@ -1,52 +1,14 @@
-const MAX_EXERCISE_MEDIA_BYTES = 8 * 1024 * 1024;
-const IMPORT_REPOSITORY = 'buropotok/mezfit';
-const DATASET_SOURCE = 'github_exercises_dataset';
-
-interface ExerciseMediaSourceRow { reference_source: string | null; reference_key: string | null; reference_media_url: string | null; }
-
-export function exerciseMediaPublicUrl(referenceSource: string | null, referenceKey: string | null): string | null {
-  if (!referenceSource || !referenceKey) return null;
-  if (referenceSource !== 'gym_keeper_apk' && referenceSource !== DATASET_SOURCE) return null;
-  return `/api/exercise-media/${encodeURIComponent(referenceSource)}/${encodeURIComponent(referenceKey)}`;
-}
-
-export function exerciseMediaR2Key(referenceSource: string, referenceKey: string): string {
-  const source = referenceSource.replace(/[^a-z0-9_-]+/gi, '-').toLowerCase();
-  return `exercise-media/${source}/${referenceKey}`;
-}
-
-function mediaHeaders(contentType: string, etag?: string): Headers { const h=new Headers();h.set('content-type',contentType);h.set('cache-control','public, max-age=31536000, immutable');h.set('x-content-type-options','nosniff');if(etag)h.set('etag',etag);return h; }
-function notFound(): Response { return new Response(null,{status:404,headers:{'cache-control':'no-store'}}); }
-function validReferenceKey(k:string):boolean{return Boolean(k)&&k.length<=220&&!k.includes('/')&&k.toLowerCase().endsWith('.gif');}
-async function isAuthorizedGithubImport(request:Request):Promise<boolean>{if(request.headers.get('x-github-repository')!==IMPORT_REPOSITORY)return false;const a=request.headers.get('authorization')||'';if(!a.startsWith('Bearer '))return false;const r=await fetch(`https://api.github.com/repos/${IMPORT_REPOSITORY}/actions/runs?per_page=1`,{headers:{authorization:a,accept:'application/vnd.github+json','user-agent':'MezfitExerciseMediaImporter/1.0','x-github-api-version':'2022-11-28'}});return r.ok;}
-function categoryCode(v:string):string{const s=v.toLowerCase();if(s.includes('chest'))return'chest';if(/arm|bicep|tricep|forearm/.test(s))return'arms';if(/back|lat/.test(s))return'back';if(/leg|thigh|calf|glute|hip/.test(s))return'legs';if(/shoulder|delt/.test(s))return'shoulders';if(/waist|abs|core/.test(s))return'core';if(/cardio/.test(s))return'cardio';return'other';}
-function equipmentCode(v:string):string{const s=v.toLowerCase();if(/body weight|bodyweight|none/.test(s))return'bodyweight';if(s.includes('barbell'))return'barbell';if(s.includes('dumbbell'))return'dumbbell_single';if(/cable|pulley/.test(s))return'cable';if(/machine|lever|smith|sled/.test(s))return'machine';return'other';}
-function trackingType(body:string):string{return /cardio/.test(body.toLowerCase())?'time_distance':'weight_reps';}
-
-async function handleGithubImport(request:Request,db:D1Database,bucket:R2Bucket,source:string,referenceKey:string):Promise<Response>{
-  if(!(await isAuthorizedGithubImport(request)))return new Response(null,{status:403});
-  if(!validReferenceKey(referenceKey))return notFound();
-  const bytes=await request.arrayBuffer();if(bytes.byteLength<6||bytes.byteLength>MAX_EXERCISE_MEDIA_BYTES)return new Response(null,{status:400});
-  const sig=new TextDecoder('ascii').decode(bytes.slice(0,6));if(sig!=='GIF87a'&&sig!=='GIF89a')return new Response(null,{status:415});
-  if(source===DATASET_SOURCE){
-    let meta:any;try{meta=JSON.parse(decodeURIComponent(request.headers.get('x-exercise-metadata')||''));}catch{return new Response('invalid metadata',{status:400});}
-    if(!meta?.id||!meta?.name||!meta?.gif_url)return new Response('missing metadata',{status:400});
-    const existing=await db.prepare('SELECT id FROM exercise_definition WHERE reference_source=? AND reference_key=? LIMIT 1').bind(DATASET_SOURCE,String(meta.id)).first<{id:number}>();
-    if(existing){await db.prepare(`UPDATE exercise_definition SET name=?,primary_muscle=?,equipment=?,description=?,category_code=?,equipment_code=?,reference_media_url=?,reference_order=?,source_metadata_json=?,is_archived=0,updated_at=CURRENT_TIMESTAMP WHERE id=?`).bind(String(meta.name),String(meta.body_part||meta.muscle_group||''),String(meta.equipment||''),String(meta.instructions?.ru||meta.instructions?.en||meta.description||'')||null,categoryCode(String(meta.body_part||meta.category||meta.muscle_group||'')),equipmentCode(String(meta.equipment||'')),String(meta.gif_url),Number(meta.id)||null,JSON.stringify(meta),existing.id).run();}
-    else{await db.prepare(`INSERT INTO exercise_definition(scope,name,tracking_type,primary_muscle,equipment,description,category_code,equipment_code,reference_source,reference_key,reference_media_url,reference_order,source_metadata_json) VALUES('global',?,?,?,?,?,?,?,?,?,?,?,?)`).bind(String(meta.name),trackingType(String(meta.body_part||meta.category||'')),String(meta.body_part||meta.muscle_group||''),String(meta.equipment||''),String(meta.instructions?.ru||meta.instructions?.en||meta.description||'')||null,categoryCode(String(meta.body_part||meta.category||meta.muscle_group||'')),equipmentCode(String(meta.equipment||'')),DATASET_SOURCE,String(meta.id),String(meta.gif_url),Number(meta.id)||null,JSON.stringify(meta)).run();}
-  } else if(source==='gym_keeper_apk'){
-    const row=await db.prepare(`SELECT reference_key FROM exercise_definition WHERE reference_source='gym_keeper_apk' AND reference_key=? AND is_archived=0 LIMIT 1`).bind(referenceKey).first();if(!row)return notFound();
-  } else return notFound();
-  await bucket.put(exerciseMediaR2Key(source,referenceKey),bytes,{httpMetadata:{contentType:'image/gif',cacheControl:'public, max-age=31536000, immutable'},customMetadata:{source,referenceKey}});
-  return new Response(JSON.stringify({ok:true,referenceKey,bytes:bytes.byteLength}),{status:201,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
-}
-
-export async function handleExerciseMediaRoute(request:Request,db:D1Database,bucket:R2Bucket,source:string,referenceKey:string):Promise<Response>{
-  if(request.method==='POST')return handleGithubImport(request,db,bucket,source,referenceKey);
-  if(request.method!=='GET'&&request.method!=='HEAD')return new Response(null,{status:405,headers:{allow:'GET, HEAD, POST'}});
-  if(!validReferenceKey(referenceKey))return notFound();
-  const row=await db.prepare(`SELECT reference_source,reference_key,reference_media_url FROM exercise_definition WHERE reference_source=? AND reference_key=? AND is_archived=0 LIMIT 1`).bind(source,referenceKey).first<ExerciseMediaSourceRow>();
-  if(!row?.reference_source||!row.reference_key)return notFound();
-  const cached=await bucket.get(exerciseMediaR2Key(source,referenceKey));if(!cached)return notFound();
-  return new Response(request.method==='HEAD'?null:cached.body,{status:200,headers:mediaHeaders(cached.httpMetadata?.contentType||'image/gif',cached.httpEtag)});
+const MAX_EXERCISE_MEDIA_BYTES=8*1024*1024;const IMPORT_REPOSITORY='buropotok/mezfit';const DATASET_SOURCE='github_exercises_dataset';
+interface ExerciseMediaSourceRow{reference_source:string|null;reference_key:string|null;reference_media_url:string|null}
+export function exerciseMediaPublicUrl(s:string|null,k:string|null):string|null{if(!s||!k||!['gym_keeper_apk',DATASET_SOURCE].includes(s))return null;return `/api/exercise-media/gym_keeper_apk/${encodeURIComponent(k)}`}
+export function exerciseMediaR2Key(s:string,k:string):string{return`exercise-media/${s.replace(/[^a-z0-9_-]+/gi,'-').toLowerCase()}/${k}`}
+function headers(t:string,e?:string){const h=new Headers({'content-type':t,'cache-control':'public, max-age=31536000, immutable','x-content-type-options':'nosniff'});if(e)h.set('etag',e);return h}function nf(){return new Response(null,{status:404})}function valid(k:string){return!!k&&k.length<=220&&!k.includes('/')&&k.toLowerCase().endsWith('.gif')}
+async function auth(r:Request){if(r.headers.get('x-github-repository')!==IMPORT_REPOSITORY)return false;const a=r.headers.get('authorization')||'';if(!a.startsWith('Bearer '))return false;return(await fetch(`https://api.github.com/repos/${IMPORT_REPOSITORY}/actions/runs?per_page=1`,{headers:{authorization:a,accept:'application/vnd.github+json','user-agent':'MezfitExerciseImporter/1.0','x-github-api-version':'2022-11-28'}})).ok}
+function cat(v:string){v=v.toLowerCase();if(v.includes('chest'))return'chest';if(/arm|bicep|tricep|forearm/.test(v))return'arms';if(/back|lat/.test(v))return'back';if(/leg|thigh|calf|glute|hip/.test(v))return'legs';if(/shoulder|delt/.test(v))return'shoulders';if(/waist|abs|core/.test(v))return'core';if(v.includes('cardio'))return'cardio';return'other'}function eq(v:string){v=v.toLowerCase();if(/body weight|bodyweight|none/.test(v))return'bodyweight';if(v.includes('barbell'))return'barbell';if(v.includes('dumbbell'))return'dumbbell_single';if(/cable|pulley/.test(v))return'cable';if(/machine|lever|smith|sled/.test(v))return'machine';return'other'}
+export async function handleExerciseMediaRoute(r:Request,db:D1Database,b:R2Bucket,k:string):Promise<Response>{
+ if(!valid(k))return nf();
+ if(r.method==='POST'){if(!(await auth(r)))return new Response(null,{status:403});let meta:any=null;const raw=r.headers.get('x-exercise-metadata');if(raw){try{meta=JSON.parse(decodeURIComponent(raw))}catch{return new Response('invalid metadata',{status:400})}}const source=meta?DATASET_SOURCE:'gym_keeper_apk';const bytes=await r.arrayBuffer();if(bytes.byteLength<6||bytes.byteLength>MAX_EXERCISE_MEDIA_BYTES)return new Response(null,{status:400});const sig=new TextDecoder('ascii').decode(bytes.slice(0,6));if(!['GIF87a','GIF89a'].includes(sig))return new Response(null,{status:415});if(meta){if(!meta.id||!meta.name||!meta.gif_url)return new Response('missing metadata',{status:400});const key=String(meta.id);const old=await db.prepare('SELECT id FROM exercise_definition WHERE reference_source=? AND reference_key=?').bind(DATASET_SOURCE,key).first<{id:number}>();const desc=Array.isArray(meta.instructions)?meta.instructions.join('\n'):String(meta.description||'')||null;const vals=[String(meta.name),String(meta.body_part||meta.muscle_group||''),String(meta.equipment||''),desc,cat(String(meta.body_part||meta.category||meta.muscle_group||'')),eq(String(meta.equipment||'')),String(meta.gif_url),Number(meta.id)||null,JSON.stringify(meta)];if(old)await db.prepare('UPDATE exercise_definition SET name=?,primary_muscle=?,equipment=?,description=?,category_code=?,equipment_code=?,reference_media_url=?,reference_order=?,source_metadata_json=?,is_archived=0,updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(...vals,old.id).run();else await db.prepare("INSERT INTO exercise_definition(scope,name,tracking_type,primary_muscle,equipment,description,category_code,equipment_code,reference_source,reference_key,reference_media_url,reference_order,source_metadata_json) VALUES('global',?,'weight_reps',?,?,?,?,?,?,?, ?,?,?)").bind(vals[0],vals[1],vals[2],vals[3],vals[4],vals[5],DATASET_SOURCE,key,vals[6],vals[7],vals[8]).run();k=String(meta.gif_url).split('/').pop()||k;}
+ else{const exists=await db.prepare("SELECT 1 ok FROM exercise_definition WHERE reference_source='gym_keeper_apk' AND reference_key=? AND is_archived=0").bind(k).first();if(!exists)return nf()}
+ await b.put(exerciseMediaR2Key(source,k),bytes,{httpMetadata:{contentType:'image/gif',cacheControl:'public, max-age=31536000, immutable'},customMetadata:{source,referenceKey:k}});return new Response(JSON.stringify({ok:true}),{status:201})}
+ if(!['GET','HEAD'].includes(r.method))return new Response(null,{status:405});const row=await db.prepare('SELECT reference_source,reference_key,reference_media_url FROM exercise_definition WHERE is_archived=0 AND (reference_key=? OR reference_media_url LIKE ?) ORDER BY CASE reference_source WHEN ? THEN 0 ELSE 1 END LIMIT 1').bind(k,`%/${k}`,DATASET_SOURCE).first<ExerciseMediaSourceRow>();if(!row?.reference_source)return nf();const object=await b.get(exerciseMediaR2Key(row.reference_source,k));if(!object)return nf();return new Response(r.method==='HEAD'?null:object.body,{status:200,headers:headers(object.httpMetadata?.contentType||'image/gif',object.httpEtag)})
 }
