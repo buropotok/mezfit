@@ -1,7 +1,8 @@
 /* Source-level visual adaptations from Telegram Web A (Ajaxy/telegram-tt):
- * components/ui/ListItem.scss, FloatingActionButton.scss, Modal.scss.
- * Interactive modal behavior is delegated to Radix Dialog; Telegram color roles
- * and presentation are mapped to Mezfit semantic tokens here.
+ * components/ui/ListItem.scss, FloatingActionButton.scss, Modal.scss,
+ * TabList.module.scss.
+ * Interactive modal and tabs behavior is delegated to Radix primitives;
+ * Telegram color roles and presentation are mapped to Mezfit semantic tokens here.
  */
 .ui-list {
   position: relative;
@@ -101,6 +102,54 @@
 .ui-fab:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .ui-fab:active:not(:disabled) { opacity: 0.9; }
 
+.ui-tabs__list {
+  user-select: none;
+  scrollbar-width: none;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow-x: auto;
+  width: 100%;
+  padding: 0.375rem 0.25rem;
+  border-radius: 1.5rem;
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-raised);
+}
+.ui-tabs__list::-webkit-scrollbar { display: none; }
+.ui-tabs__trigger {
+  appearance: none;
+  cursor: pointer;
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 1rem;
+  border: 0;
+  border-radius: 1.25rem;
+  color: var(--ui-color-surface-muted);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: var(--ui-font-weight-medium);
+  line-height: 1.5rem;
+  white-space: nowrap;
+  background: transparent;
+  outline: none;
+  transition: color 0.15s, background-color 0.15s, opacity 0.15s;
+}
+.ui-tabs__trigger[data-state='active'] {
+  color: var(--ui-color-primary);
+  background: var(--ui-color-primary-soft);
+}
+.ui-tabs__trigger:focus-visible {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: -2px;
+}
+.ui-tabs__trigger:disabled { cursor: default; opacity: 0.5; }
+.ui-tabs__content { outline: none; }
+.ui-tabs__content:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+
 .ui-modal {
   position: relative;
   z-index: var(--ui-z-modal, 1000);
@@ -194,12 +243,14 @@
 @media (hover: hover) {
   .ui-list-item:hover:not(:disabled) { background: var(--ui-color-surface-raised); }
   .ui-fab:hover:not(:disabled) { opacity: 0.9; }
+  .ui-tabs__trigger:hover:not(:disabled) { opacity: 0.85; }
   .ui-modal__close:hover { background: var(--ui-color-surface-raised); }
 }
 @media (max-width: 450px) {
   .ui-modal__dialog { max-width: calc(100vw - 3rem); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ui-fab { transition: none; }
+  .ui-fab,
+  .ui-tabs__trigger { transition: none; }
   .ui-modal__dialog { animation: none; }
 }
