@@ -1,30 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import {
-  exerciseMediaPublicUrl,
-  exerciseMediaR2Key,
-  isApprovedGymKeeperMediaUrl,
-} from './exercise-media';
+import { exerciseMediaPublicUrl, exerciseMediaR2Key } from './exercise-media';
 
-const birdDogKey = '12411305-Bird-Dog-male_Back_180.gif';
+const datasetKey = '0001-2gPfomN.gif';
 
-describe('Gym Keeper exercise media mapping', () => {
-  it('uses one stable R2 object key per APK reference key', () => {
-    expect(exerciseMediaR2Key('gym_keeper_apk', birdDogKey))
-      .toBe(`exercise-media/gym_keeper_apk/${birdDogKey}`);
+describe('canonical exercise dataset media mapping', () => {
+  it('uses one stable R2 object key per dataset media key', () => {
+    expect(exerciseMediaR2Key('github_exercises_dataset', datasetKey))
+      .toBe(`exercise-media/github_exercises_dataset/${datasetKey}`);
   });
 
-  it('exposes a same-origin media URL only for the APK source', () => {
-    expect(exerciseMediaPublicUrl('gym_keeper_apk', birdDogKey))
-      .toBe(`/api/exercise-media/gym_keeper_apk/${birdDogKey}`);
-    expect(exerciseMediaPublicUrl(null, birdDogKey)).toBeNull();
-    expect(exerciseMediaPublicUrl('coach', birdDogKey)).toBeNull();
-    expect(exerciseMediaPublicUrl('gym_keeper_apk', null)).toBeNull();
-  });
-
-  it('only accepts the approved Gym Keeper GIF source path', () => {
-    expect(isApprovedGymKeeperMediaUrl(`https://47-1594.s.cdn13.com/img/gifs/180/${birdDogKey}`)).toBe(true);
-    expect(isApprovedGymKeeperMediaUrl(`http://47-1594.s.cdn13.com/img/gifs/180/${birdDogKey}`)).toBe(false);
-    expect(isApprovedGymKeeperMediaUrl(`https://example.com/img/gifs/180/${birdDogKey}`)).toBe(false);
-    expect(isApprovedGymKeeperMediaUrl(`https://47-1594.s.cdn13.com/other/${birdDogKey}`)).toBe(false);
+  it('exposes media only for the canonical dataset source', () => {
+    expect(exerciseMediaPublicUrl('github_exercises_dataset', datasetKey))
+      .toBe(`/api/exercise-media/gym_keeper_apk/${datasetKey}`);
+    expect(exerciseMediaPublicUrl('gym_keeper_apk', datasetKey)).toBeNull();
+    expect(exerciseMediaPublicUrl(null, datasetKey)).toBeNull();
+    expect(exerciseMediaPublicUrl('coach', datasetKey)).toBeNull();
   });
 });
