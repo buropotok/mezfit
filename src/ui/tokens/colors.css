@@ -10,5 +10,6 @@
   --ui-color-surface-text: var(--theme-surface-text);
   --ui-color-surface-muted: var(--theme-surface-muted);
   --ui-color-primary: var(--color-accent);
+  --ui-color-primary-soft: color-mix(in srgb, var(--color-accent) 16%, transparent);
   --ui-color-primary-text: #fff;
 }
