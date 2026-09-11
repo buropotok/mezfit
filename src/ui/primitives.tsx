@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
 import './ui.css';
 
@@ -18,10 +19,15 @@ export function IconButton({ label, className = '', type = 'button', children, .
   return <button type={type} aria-label={label} className={`ui-icon-button ${className}`.trim()} {...props}>{children}</button>;
 }
 
-type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & { name: string; src?: string };
+type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
 
 export function Avatar({ name, src, className = '', ...props }: AvatarProps) {
-  if (src) return <img className={`ui-avatar ${className}`.trim()} src={src} alt="" {...props} />;
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [src]);
+
+  if (src && !imageFailed) {
+    return <img className={`ui-avatar ${className}`.trim()} src={src} alt="" onError={() => setImageFailed(true)} {...props} />;
+  }
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'M';
   return <span className={`ui-avatar ui-avatar--fallback ${className}`.trim()} aria-label={name} role="img">{initials}</span>;
 }
