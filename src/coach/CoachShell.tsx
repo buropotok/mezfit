@@ -90,6 +90,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
   const [selectedClient, setSelectedClient] = useState<CoachClientListItem | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [inviteCopyError, setInviteCopyError] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -135,9 +136,15 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     return <GlobalPlaceholder title={placeholder.title} text={placeholder.text} />;
   }
 
+  const closeInvite = () => {
+    setInviteUrl(null);
+    setInviteCopyError('');
+  };
+
   const createInvite = async () => {
     setBusy(true);
     setMessage('');
+    setInviteCopyError('');
     try {
       const result = await createClientInvite(initData);
       setInviteUrl(result.telegramUrl);
@@ -150,11 +157,12 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
   const copyInvite = async () => {
     if (!inviteUrl) return;
+    setInviteCopyError('');
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      setInviteUrl(null);
+      closeInvite();
     } catch {
-      setMessage('Не удалось скопировать автоматически — нажмите и удерживайте ссылку');
+      setInviteCopyError('Не удалось скопировать автоматически — нажмите и удерживайте ссылку');
     }
   };
 
@@ -168,30 +176,33 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       </header>
 
       <section className="client-directory-surface" aria-label="Список клиентов">
-        {clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
-          <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
-        ) : (
-          <List className="compact-client-list">
-            {clients.map((client) => (
-              <ListItem
-                key={client.relationshipId}
-                onClick={() => setSelectedClient(client)}
-                leading={<Avatar name={displayName(client)} />}
-                title={displayName(client)}
-                subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
-              />
-            ))}
-          </List>
-        )}
+        <div className="client-directory-scroll">
+          {clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
+            <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
+          ) : (
+            <List className="compact-client-list">
+              {clients.map((client) => (
+                <ListItem
+                  key={client.relationshipId}
+                  onClick={() => setSelectedClient(client)}
+                  leading={<Avatar name={displayName(client)} />}
+                  title={displayName(client)}
+                  subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
+                />
+              ))}
+            </List>
+          )}
+        </div>
 
         <FloatingActionButton label="Добавить клиента" onClick={createInvite} disabled={busy}>
           <AddClientIcon />
         </FloatingActionButton>
       </section>
 
-      <Modal isOpen={Boolean(inviteUrl)} title="Пригласить клиента" onClose={() => setInviteUrl(null)}>
+      <Modal isOpen={Boolean(inviteUrl)} title="Пригласить клиента" onClose={closeInvite}>
         <p>Отправьте эту персональную ссылку клиенту в Telegram. Ссылка одноразовая и действует 30 дней.</p>
         <div className="link-box">{inviteUrl}</div>
+        {inviteCopyError ? <p className="inline-message error-text invite-copy-error" role="alert">{inviteCopyError}</p> : null}
         <div className="button-row invite-modal-actions">
           <Button onClick={copyInvite}>Копировать ссылку</Button>
         </div>
