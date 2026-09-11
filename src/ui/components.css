@@ -4,19 +4,20 @@
  * Interactive modal and tabs behavior is delegated to Radix primitives;
  * Telegram color roles and presentation are mapped to Mezfit semantic tokens here.
  */
-.ui-list { position: relative; width: 100%; }
-.ui-list-item { appearance:none; cursor:pointer; position:relative; overflow:hidden; display:flex; align-items:center; width:100%; min-height:4rem; padding:.5rem; border:0; border-radius:0; color:var(--ui-color-surface-text); font:inherit; text-align:initial; background:transparent; outline:none; }
+.ui-list { position: relative; width: 100%; min-width: 0; }
+.ui-list-item-wrap { width: 100%; min-width: 0; }
+.ui-list-item { box-sizing:border-box; appearance:none; cursor:pointer; position:relative; overflow:hidden; display:flex; align-items:center; width:100%; max-width:100%; min-width:0; min-height:4rem; padding:.5rem; border:0; border-radius:0; color:var(--ui-color-surface-text); font:inherit; text-align:initial; background:transparent; outline:none; }
 .ui-list-item--static { cursor:default; }
 .ui-list-item__leading { display:inline-flex; flex:0 0 auto; margin-inline-end:.5rem; }
 .ui-list-item__leading--square { overflow:hidden; width:3rem; height:3rem; align-items:center; justify-content:center; border-radius:var(--ui-radius-sm); }
 .ui-list-item__leading--square > * { width:100%; height:100%; }
 .ui-list-item__leading--square img,
 .ui-list-item__leading--square video { display:block; width:100%; height:100%; object-fit:cover; }
-.ui-list-item__content { overflow:hidden; display:flex; flex:1 1 auto; flex-direction:column; justify-content:center; min-width:0; }
-.ui-list-item__title,.ui-list-item__subtitle { overflow:hidden; display:block; min-width:0; text-overflow:ellipsis; white-space:nowrap; }
+.ui-list-item__content { overflow:hidden; display:flex; flex:1 1 0; flex-direction:column; justify-content:center; min-width:0; }
+.ui-list-item__title,.ui-list-item__subtitle { overflow:hidden; display:block; width:100%; min-width:0; text-overflow:ellipsis; white-space:nowrap; }
 .ui-list-item__title { font-size:1rem; font-weight:600; line-height:1.25rem; }
 .ui-list-item__subtitle { font-size:.875rem; line-height:1.25rem; color:var(--ui-color-surface-muted); }
-.ui-list-item__trailing { display:inline-flex; flex:0 0 auto; align-items:center; margin-inline-start:1rem; color:var(--ui-color-surface-muted); }
+.ui-list-item__trailing { display:inline-flex; flex:0 0 auto; align-items:center; max-width:40%; margin-inline-start:.5rem; color:var(--ui-color-surface-muted); }
 .ui-list-item:disabled { cursor:default; opacity:.5; }
 .ui-list-item:not(.ui-list-item--static):active:not(:disabled),.ui-list-item:not(.ui-list-item--static):focus-visible { background:var(--ui-color-surface-raised); }
 
