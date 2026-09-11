@@ -95,6 +95,7 @@
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s, color 0.15s, opacity 0.15s;
 }
 .ui-fab--shown { transform: translateY(0); }
+.ui-fab--hidden { visibility: hidden; pointer-events: none; }
 .ui-fab:disabled { cursor: default; opacity: 0.5; pointer-events: none; }
 .ui-fab:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .ui-fab:active:not(:disabled) { opacity: 0.9; }
@@ -126,7 +127,7 @@
   max-width: 35rem;
   max-height: min(92vh, 50rem);
   margin: 2rem auto;
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface);
   box-shadow: var(--ui-shadow-raised);
   outline: none;
