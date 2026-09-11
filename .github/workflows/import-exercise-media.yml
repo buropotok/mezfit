@@ -15,10 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
-      GITHUB_REPOSITORY: ${{ github.repository }}
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
