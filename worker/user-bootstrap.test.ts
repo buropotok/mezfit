@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import workerSource from './index.ts?raw';
 
-const source = readFileSync(new URL('./index.ts', import.meta.url), 'utf8');
+const source = workerSource;
 
 describe('user bootstrap', () => {
   it('resolves an existing app_user before attempting a write', () => {
