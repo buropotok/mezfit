@@ -30,7 +30,7 @@
   transition: background-color 0.2s, color 0.2s, opacity 0.2s;
 }
 
-.ui-button {
+.ui-button.ui-button {
   width: auto;
   height: 2.75rem;
   min-height: 2.75rem;
