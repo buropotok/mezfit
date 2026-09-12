@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -8,7 +8,6 @@ import {
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
-  type PointerEvent as DndPointerEvent,
   type UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
@@ -39,7 +38,7 @@ function isInteractive(target: EventTarget | null) {
 class RowPointerSensor extends PointerSensor {
   static activators = [{
     eventName: 'onPointerDown' as const,
-    handler: ({ nativeEvent: event }: DndPointerEvent) => !isInteractive(event.target),
+    handler: ({ nativeEvent: event }: ReactPointerEvent) => !isInteractive(event.target),
   }];
 }
 
