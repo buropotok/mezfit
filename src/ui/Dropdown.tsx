@@ -1,6 +1,7 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Button } from './primitives';
 import { List, ListItem, Modal } from './components';
+import { beginMultiDraft, commitMultiDraft, toggleMultiDraft } from './dropdownState';
 import './Dropdown.css';
 
 export type DropdownOption = {
@@ -52,12 +53,12 @@ export function Dropdown(props: DropdownProps) {
 
   const open = () => {
     if (disabled) return;
-    if (props.mode === 'multi') setDraft(props.value);
+    if (props.mode === 'multi') setDraft(beginMultiDraft(props.value));
     setOpen(true);
   };
 
   const close = () => {
-    if (props.mode === 'multi') props.onChange(draft);
+    if (props.mode === 'multi') props.onChange(commitMultiDraft(draft));
     setOpen(false);
   };
 
@@ -69,7 +70,7 @@ export function Dropdown(props: DropdownProps) {
 
   const toggleMulti = (value: string) => {
     if (props.mode !== 'multi') return;
-    setDraft((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+    setDraft((current) => toggleMultiDraft(current, value));
   };
 
   const activeValues = props.mode === 'multi' ? draft : selectedValues;
