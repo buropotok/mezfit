@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS program_day (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_program_day_position
-  ON program_day(program_phase_id, position);
+  ON program_day(program_phase_id, position)
+  WHERE status = 'active';
 
 CREATE INDEX IF NOT EXISTS idx_program_day_phase_status
   ON program_day(program_phase_id, status, position);
@@ -102,7 +103,8 @@ CREATE TABLE IF NOT EXISTS program_exercise (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_program_exercise_position
-  ON program_exercise(program_day_id, position);
+  ON program_exercise(program_day_id, position)
+  WHERE status = 'active';
 
 CREATE INDEX IF NOT EXISTS idx_program_exercise_day_status
   ON program_exercise(program_day_id, status, position);
@@ -138,7 +140,8 @@ CREATE TABLE IF NOT EXISTS program_set (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_program_set_position
-  ON program_set(program_exercise_id, position);
+  ON program_set(program_exercise_id, position)
+  WHERE status = 'active';
 
 CREATE INDEX IF NOT EXISTS idx_program_set_exercise_status
   ON program_set(program_exercise_id, status, position);
@@ -174,8 +177,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_workout_session_active_user
 CREATE INDEX IF NOT EXISTS idx_workout_session_user_started
   ON workout_session(user_id, started_at DESC);
 
--- Snapshot/factual exercise inside a session. A NULL source means it was
--- added ad-hoc during the workout.
+-- Factual exercise inside a session. A NULL source means it was added ad-hoc.
+-- Exercise identity remains the referenced exercise_definition; mutable display
+-- metadata is intentionally not snapshotted here. tracking_type immutability is
+-- enforced separately (see issue #111) because it defines result semantics.
 CREATE TABLE IF NOT EXISTS session_exercise (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workout_session_id INTEGER NOT NULL,
@@ -221,10 +226,14 @@ CREATE TABLE IF NOT EXISTS session_set (
   actual_distance_meters REAL CHECK (actual_distance_meters IS NULL OR actual_distance_meters >= 0),
   status TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'completed', 'skipped')),
+  created_by_user_id INTEGER NOT NULL,
+  updated_by_user_id INTEGER NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (session_exercise_id) REFERENCES session_exercise(id) ON DELETE RESTRICT,
-  FOREIGN KEY (source_program_set_id) REFERENCES program_set(id) ON DELETE RESTRICT
+  FOREIGN KEY (source_program_set_id) REFERENCES program_set(id) ON DELETE RESTRICT,
+  FOREIGN KEY (created_by_user_id) REFERENCES app_user(id) ON DELETE RESTRICT,
+  FOREIGN KEY (updated_by_user_id) REFERENCES app_user(id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_session_set_position
