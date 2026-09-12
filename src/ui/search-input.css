@@ -1,0 +1,25 @@
+.ui-search-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding-inline-end: 0.1875rem;
+  border: 2px solid var(--ui-color-surface-raised);
+  border-radius: 1.375rem;
+  color: var(--ui-color-surface-muted);
+  background: var(--ui-color-surface-raised);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.ui-search-input--focused { border-color: var(--ui-color-primary); background: var(--ui-color-surface); caret-color: var(--ui-color-primary); }
+.ui-search-input__search-icon { flex: 0 0 1.5rem; width: 1.5rem; height: 1.5rem; margin-inline-start: 0.75rem; color: var(--ui-color-surface-muted); transition: color 150ms ease; }
+.ui-search-input--focused .ui-search-input__search-icon { color: var(--ui-color-primary); }
+.ui-search-input__search-icon svg, .ui-search-input__clear svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ui-search-input__field { min-width: 0; flex: 1 1 auto; height: 2.5rem; margin: 0; padding: calc(0.4375rem - 2px) calc(0.625rem - 2px) calc(0.5rem - 2px) calc(0.75rem - 2px); border: 0; border-radius: 1.375rem; outline: 0; color: var(--ui-color-surface-text); background: transparent; box-shadow: none; font: inherit; font-size: 1rem; line-height: 1.25rem; appearance: none; -webkit-appearance: none; }
+.ui-search-input__field::-webkit-search-cancel-button { display: none; }
+.ui-search-input__field::placeholder { color: var(--ui-color-surface-muted); opacity: 0.65; }
+.ui-search-input__clear { flex: 0 0 2.5rem; width: 2.5rem; height: 2.5rem; display: grid; place-items: center; margin-inline-start: 0.5rem; padding: 0.5rem; border: 0; border-radius: 50%; color: var(--ui-color-surface-muted); background: transparent; opacity: 0; pointer-events: none; transition: opacity 150ms ease, background-color 150ms ease; }
+.ui-search-input__clear--visible { opacity: 1; pointer-events: auto; cursor: pointer; }
+.ui-search-input__clear--visible:active { background: color-mix(in srgb, var(--ui-color-surface-muted) 12%, transparent); }
+.ui-search-input--disabled { opacity: 0.55; }
+@media (max-width: 600px) { .ui-search-input__field { height: 2.5rem; padding-left: calc(0.75rem - 2px); border-radius: 1.25rem; } }
