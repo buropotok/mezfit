@@ -31,14 +31,17 @@ export type SortableListProps = {
   longPressDelay?: number;
 };
 
-function isInteractive(target: EventTarget | null) {
-  return target instanceof Element && Boolean(target.closest('button,a,input,select,textarea,[role="button"],[data-no-dnd]'));
+function blocksDrag(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  if (target.closest('[data-no-dnd],a,input,select,textarea')) return true;
+  const button = target.closest('button,[role="button"]');
+  return Boolean(button && !button.classList.contains('ui-list-item'));
 }
 
 class RowPointerSensor extends PointerSensor {
   static activators = [{
     eventName: 'onPointerDown' as const,
-    handler: ({ nativeEvent: event }: ReactPointerEvent) => !isInteractive(event.target),
+    handler: ({ nativeEvent: event }: ReactPointerEvent) => !blocksDrag(event.target),
   }];
 }
 
