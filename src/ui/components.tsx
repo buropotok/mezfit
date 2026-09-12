@@ -51,18 +51,21 @@ export function Tabs({ className = '', ...props }: TabsProps) { return <RadixTab
 
 export function TabsList({ className = '', children, style, ...props }: TabsListProps) {
   const listRef = useRef<HTMLDivElement>(null);
-  const [clipPath, setClipPath] = useState('');
+  const [clipPath, setClipPath] = useState('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
+  const [isIndicatorReady, setIndicatorReady] = useState(false);
 
   const updateIndicator = useCallback(() => {
     const list = listRef.current;
     const active = list?.querySelector<HTMLElement>(':scope > .ui-tabs__trigger[data-state="active"]');
     if (!list || !active || list.scrollWidth <= 0) {
       setClipPath('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
+      setIndicatorReady(false);
       return;
     }
     const left = active.offsetLeft;
     const right = Math.max(0, list.scrollWidth - active.offsetLeft - active.offsetWidth);
     setClipPath(`inset(.25rem ${right}px .25rem ${left}px round var(--ui-tab-radius))`);
+    setIndicatorReady(true);
   }, []);
 
   useEffect(() => {
@@ -86,7 +89,7 @@ export function TabsList({ className = '', children, style, ...props }: TabsList
   });
 
   return (
-    <RadixTabs.List ref={listRef} className={`ui-tabs__list${clipPath ? ' ui-tabs__list--ready' : ''} ${className}`.trim()} style={style} {...props}>
+    <RadixTabs.List ref={listRef} className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()} style={style} {...props}>
       {children}
       <div className="ui-tabs__active-indicator" style={{ '--ui-tabs-clip-path': clipPath } as CSSProperties} aria-hidden="true">
         {indicatorChildren}
