@@ -22,7 +22,7 @@
   right: 0;
   left: 4rem;
   height: 1px;
-  background: var(--ui-color-divider);
+  background: var(--ui-color-border);
 }
 
 .ui-sortable-list__row--dragging {
