@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Button } from './primitives';
 import { List, ListItem, Modal } from './components';
 import './Dropdown.css';
@@ -16,6 +16,7 @@ type DropdownBaseProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  triggerProps?: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'className' | 'disabled' | 'onClick' | 'type' | 'aria-haspopup' | 'aria-expanded'>;
 };
 
 export type SingleDropdownProps = DropdownBaseProps & {
@@ -38,7 +39,7 @@ function optionText(option: DropdownOption) {
 }
 
 export function Dropdown(props: DropdownProps) {
-  const { options, title = 'Выберите вариант', placeholder = 'Выбрать', disabled = false, className = '' } = props;
+  const { options, title = 'Выберите вариант', placeholder = 'Выбрать', disabled = false, className = '', triggerProps } = props;
   const [isOpen, setOpen] = useState(false);
   const [draft, setDraft] = useState<string[]>([]);
 
@@ -74,7 +75,7 @@ export function Dropdown(props: DropdownProps) {
   const activeValues = props.mode === 'multi' ? draft : selectedValues;
 
   return <>
-    <button type="button" className={`ui-dropdown__trigger ${className}`.trim()} onClick={open} disabled={disabled} aria-haspopup="dialog" aria-expanded={isOpen}>{triggerLabel}</button>
+    <button {...triggerProps} type="button" className={`ui-dropdown__trigger ${className}`.trim()} onClick={open} disabled={disabled} aria-haspopup="dialog" aria-expanded={isOpen}>{triggerLabel}</button>
     <Modal isOpen={isOpen} title={title} onClose={close} className="ui-dropdown__modal">
       <div className="ui-dropdown__options">
         <List>
