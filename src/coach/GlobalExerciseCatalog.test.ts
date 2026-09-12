@@ -13,12 +13,14 @@ describe('Gym Keeper global exercise catalogue parity', () => {
     expect(source).toContain('Гантели x2');
   });
 
-  it('uses the row context menu as the action gateway', () => {
+  it('uses the UI Kit row menu as the action gateway', () => {
     for (const action of ['Информация', 'Добавить в избранное', 'Дублировать', 'Редактировать']) {
       expect(source).toContain(action);
     }
     expect(source).toContain('row-menu');
-    expect(source).toContain('ExerciseContextMenu');
+    expect(source).toContain('Menu, MenuItem');
+    expect(source).toContain('<Menu isOpen={menuExercise?.id === exercise.id}');
+    expect(source).not.toContain('ExerciseContextMenu');
     expect(source).not.toContain('onClick={() => void openExercise(exercise)}');
   });
 
@@ -29,7 +31,7 @@ describe('Gym Keeper global exercise catalogue parity', () => {
   });
 
   it('delegates coach catalogue search to the bilingual server search', () => {
-    expect(source).toContain("search,\n      categoryCode: selectedCategory ?? '',");
+    expect(source).toContain("getCoachExercises(initData, { search, categoryCode: selectedCategory ?? '', sort: 'alphabetical' })");
     expect(source).not.toContain("exerciseDisplayName(exercise).toLocaleLowerCase('ru-RU').includes(needle)");
     expect(apiSource).toContain("query.set('search', filters.search.trim())");
   });
