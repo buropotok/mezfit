@@ -1,0 +1,55 @@
+.ui-sortable-list {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-sortable-list__row {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  min-width: 0;
+  touch-action: none;
+  will-change: transform;
+}
+
+.ui-sortable-list__row + .ui-sortable-list__row::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  left: 4rem;
+  height: 1px;
+  background: var(--ui-color-border);
+}
+
+.ui-sortable-list__row--dragging {
+  opacity: 0;
+}
+
+.ui-sortable-list__overlay {
+  overflow: hidden;
+  width: 100%;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface-raised);
+  box-shadow: var(--ui-shadow-raised);
+  transform: scale(1.015);
+  cursor: grabbing;
+}
+
+.ui-sortable-list__overlay .ui-list-item-wrap,
+.ui-sortable-list__overlay .ui-list-item {
+  border-radius: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-sortable-list__row {
+    transition: none !important;
+  }
+
+  .ui-sortable-list__overlay {
+    transform: none;
+  }
+}
