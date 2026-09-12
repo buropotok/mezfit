@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Dropdown, type DropdownOption } from './Dropdown';
 
 const options: DropdownOption[] = [
@@ -8,6 +8,10 @@ const options: DropdownOption[] = [
   { value: 'cardio', label: 'Кардио' },
   { value: 'disabled', label: 'Недоступно', disabled: true },
 ];
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('Dropdown', () => {
   it('forwards accessible labeling to the trigger', () => {
