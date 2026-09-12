@@ -7,15 +7,15 @@
   padding-inline-end: 0.1875rem;
   border: 2px solid var(--ui-color-surface-raised);
   border-radius: 1.375rem;
-  color: var(--ui-color-text-secondary);
+  color: var(--ui-color-surface-muted);
   background: var(--ui-color-surface-raised);
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .ui-search-input--focused {
-  border-color: var(--ui-color-accent);
+  border-color: var(--ui-color-primary);
   background: var(--ui-color-surface);
-  caret-color: var(--ui-color-accent);
+  caret-color: var(--ui-color-primary);
 }
 
 .ui-search-input__search-icon {
@@ -23,11 +23,11 @@
   width: 1.5rem;
   height: 1.5rem;
   margin-inline-start: 0.75rem;
-  color: var(--ui-color-text-secondary);
+  color: var(--ui-color-surface-muted);
   transition: color 150ms ease;
 }
 
-.ui-search-input--focused .ui-search-input__search-icon { color: var(--ui-color-accent); }
+.ui-search-input--focused .ui-search-input__search-icon { color: var(--ui-color-primary); }
 
 .ui-search-input__search-icon svg,
 .ui-search-input__clear svg {
@@ -50,7 +50,7 @@
   border: 0;
   border-radius: 1.375rem;
   outline: 0;
-  color: var(--ui-color-text);
+  color: var(--ui-color-surface-text);
   background: transparent;
   box-shadow: none;
   font: inherit;
@@ -61,7 +61,7 @@
 }
 
 .ui-search-input__field::-webkit-search-cancel-button { display: none; }
-.ui-search-input__field::placeholder { color: var(--ui-color-text-secondary); opacity: 0.65; }
+.ui-search-input__field::placeholder { color: var(--ui-color-surface-muted); opacity: 0.65; }
 
 .ui-search-input__clear {
   flex: 0 0 2.5rem;
@@ -73,7 +73,7 @@
   padding: 0.5rem;
   border: 0;
   border-radius: 50%;
-  color: var(--ui-color-text-secondary);
+  color: var(--ui-color-surface-muted);
   background: transparent;
   opacity: 0;
   pointer-events: none;
@@ -81,7 +81,7 @@
 }
 
 .ui-search-input__clear--visible { opacity: 1; pointer-events: auto; cursor: pointer; }
-.ui-search-input__clear--visible:active { background: color-mix(in srgb, var(--ui-color-text-secondary) 12%, transparent); }
+.ui-search-input__clear--visible:active { background: color-mix(in srgb, var(--ui-color-surface-muted) 12%, transparent); }
 .ui-search-input--disabled { opacity: 0.55; }
 
 @media (max-width: 600px) {
