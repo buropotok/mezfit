@@ -4,7 +4,7 @@ import './menu.css';
 
 export interface MenuProps {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   children: ReactNode;
   trigger: ReactElement;
   label?: string;
@@ -12,9 +12,9 @@ export interface MenuProps {
   align?: 'start' | 'end';
 }
 
-export function Menu({ isOpen, onClose, children, trigger, label = 'Меню', className = '', align = 'start' }: MenuProps) {
+export function Menu({ isOpen, onOpenChange, children, trigger, label = 'Меню', className = '', align = 'start' }: MenuProps) {
   return (
-    <DropdownMenu.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }} modal>
+    <DropdownMenu.Root open={isOpen} onOpenChange={onOpenChange} modal>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
