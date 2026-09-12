@@ -81,14 +81,15 @@ describe('Dropdown', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('commits the current multi draft on an outside pointer interaction', () => {
+  it('commits the current multi draft when the backdrop is pressed', () => {
     const onChange = vi.fn();
-    render(<div><button type="button">Outside</button><Dropdown mode="multi" options={options} value={['strength']} onChange={onChange} /></div>);
-    const outside = screen.getByRole('button', { name: 'Outside' });
+    render(<Dropdown mode="multi" options={options} value={['strength']} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Силовая' }));
     fireEvent.click(screen.getByRole('button', { name: 'Кардио' }));
-    fireEvent.pointerDown(outside);
+    const backdrop = document.querySelector<HTMLElement>('.ui-modal__backdrop');
+    expect(backdrop).not.toBeNull();
+    fireEvent.pointerDown(backdrop!);
 
     expect(onChange).toHaveBeenLastCalledWith(['strength', 'cardio']);
     expect(screen.queryByRole('dialog')).toBeNull();
