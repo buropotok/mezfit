@@ -9,10 +9,15 @@ describe('SearchInput', () => {
     expect(html).toContain('role="searchbox"');
     expect(html).toContain('aria-label="Поиск упражнения"');
   });
-  it('shows an accessible clear action when value is present', () => {
+  it('shows an accessible clear action when controlled value is present and clear is owned by the caller', () => {
     const html = renderToStaticMarkup(<SearchInput value="жим" onChange={() => undefined} onClear={() => undefined} />);
     expect(html).toContain('ui-search-input__clear--visible');
     expect(html).toContain('aria-label="Очистить поиск"');
+  });
+  it('renders an uncontrolled default value from component-owned state', () => {
+    const html = renderToStaticMarkup(<SearchInput defaultValue="жим" />);
+    expect(html).toContain('value="жим"');
+    expect(html).toContain('ui-search-input__clear--visible');
   });
   it('keeps clear out of the tab order for an empty value', () => {
     const html = renderToStaticMarkup(<SearchInput value="" onChange={() => undefined} />);
