@@ -5,19 +5,19 @@ import { describe, expect, it } from 'vitest';
 const parityCss = readFileSync(new URL('./gym-keeper-exercise-parity.css', import.meta.url), 'utf8');
 
 const expected = [
-  ['chest', 'muscles_chest.png'],
-  ['arms', 'muscles_arm.png'],
-  ['back', 'muscles_back.png'],
-  ['legs', 'muscles_leg.png'],
-  ['shoulders', 'muscles_shoulders.png'],
-  ['core', 'muscles_core.png'],
-  ['full_body', 'muscles_fullbody.png'],
-  ['cardio', 'muscles_cardio.png'],
+  ['chest', 'muscles_chest.svg'],
+  ['arms', 'muscles_arm.svg'],
+  ['back', 'muscles_back.svg'],
+  ['legs', 'muscles_leg.svg'],
+  ['shoulders', 'muscles_shoulders.svg'],
+  ['core', 'muscles_core.svg'],
+  ['full_body', 'muscles_fullbody.svg'],
+  ['cardio', 'muscles_cardio.svg'],
   ['other', 'muscles_other.png'],
 ] as const;
 
-describe('Gym Keeper exercise category icons', () => {
-  it('maps every exercise category to the exact APK category asset', () => {
+describe('exercise category icons', () => {
+  it('maps every exercise category to its category asset', () => {
     for (const [category, file] of expected) {
       expect(parityCss).toContain(`.category-${category}`);
       expect(parityCss).toContain(`/gym-keeper/categories/${file}`);
