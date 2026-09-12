@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
 import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
-import { Calendar, Modal } from './ui';
+import { Calendar, Menu, MenuDivider, MenuItem, Modal } from './ui';
 
 export type AppDestination =
   | 'clients'
@@ -80,89 +80,24 @@ export function NavigationShell({
   onRoleSwitch,
   children,
 }: Props) {
-  const [menuMounted, setMenuMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => new Date());
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLElement>(null);
-  const closeTimerRef = useRef<number | null>(null);
   const items = itemsForRole(activeRole);
 
-  const openMenu = () => {
-    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-    setMenuMounted(true);
-    window.requestAnimationFrame(() => setMenuOpen(true));
-  };
-
-  const closeMenu = () => {
-    setMenuOpen(false);
-    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = window.setTimeout(() => {
-      setMenuMounted(false);
-      closeTimerRef.current = null;
-      menuButtonRef.current?.focus();
-    }, 200);
-  };
-
-  useEffect(() => () => {
-    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-  }, []);
-
-  useEffect(() => {
-    if (!menuMounted) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const menu = menuRef.current;
-    const focusable = () => Array.from(
-      menu?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])') ?? [],
-    );
-    window.requestAnimationFrame(() => focusable()[0]?.focus());
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeMenu();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const nodes = focusable();
-      if (nodes.length === 0) return;
-      const first = nodes[0];
-      const last = nodes[nodes.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [menuMounted]);
-
   useEffect(() => {
     setMenuOpen(false);
-    setMenuMounted(false);
   }, [activeRole]);
 
   const chooseDestination = (next: AppDestination) => {
     onDestinationChange(next);
-    closeMenu();
+    setMenuOpen(false);
   };
 
   const switchRole = (role: Role) => {
     onRoleSwitch(role);
-    closeMenu();
+    setMenuOpen(false);
   };
-
-  let previousSection: NavigationItem['section'];
 
   return (
     <main className="app-shell navigation-shell">
@@ -173,64 +108,59 @@ export function NavigationShell({
           </button>
         ) : (
           <div className="navigation-menu-anchor">
-            <button
-              ref={menuButtonRef}
-              className="navigation-icon-button"
-              type="button"
-              onClick={openMenu}
-              aria-label="Открыть меню"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
+            <Menu
+              isOpen={menuOpen}
+              onOpenChange={setMenuOpen}
+              label="Главное меню"
+              className="navigation-main-menu"
+              trigger={(
+                <button className="navigation-icon-button" type="button" aria-label="Открыть меню">
+                  <span className="navigation-apk-icon" style={iconStyle('menu')} aria-hidden="true" />
+                </button>
+              )}
             >
-              <span className="navigation-apk-icon" style={iconStyle('menu')} aria-hidden="true" />
-            </button>
-
-            {menuMounted ? (
-              <div className={`drawer-layer ${menuOpen ? 'open' : 'closing'}`}>
-                <button className="drawer-backdrop" type="button" aria-label="Закрыть меню" onClick={closeMenu} />
-                {/* Source-level port: Ajaxy/telegram-tt MainMenuDropdown -> DropdownMenu -> Menu/MenuItem. */}
-                <aside ref={menuRef} className="navigation-drawer" role="menu" aria-label="Главное меню">
-                  <div className="drawer-account" role="presentation">
-                    <div className="drawer-avatar" aria-hidden="true">{me.user.firstName.slice(0, 1).toUpperCase()}</div>
-                    <div className="drawer-account-copy">
-                      <strong>{[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}</strong>
-                      <small>{roleLabel(activeRole)}</small>
-                    </div>
-                  </div>
-
-                  {me.roles.length > 1 ? (
-                    <div className="drawer-role-switch" aria-label="Режим приложения" role="group">
-                      {me.roles.map((role) => (
-                        <button key={role} type="button" role="menuitemradio" aria-checked={role === activeRole} className={role === activeRole ? 'active' : ''} onClick={() => switchRole(role)}>
-                          {roleLabel(role)}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <nav className="drawer-nav" aria-label="Разделы приложения">
-                    {items.map((item) => {
-                      const divider = item.section === 'secondary' && previousSection !== 'secondary';
-                      previousSection = item.section;
-                      return (
-                        <div key={item.id} className={divider ? 'drawer-nav-group drawer-nav-group-secondary' : 'drawer-nav-group'}>
-                          <button
-                            className={`drawer-row ${destination === item.id ? 'active' : ''}`}
-                            type="button"
-                            role="menuitem"
-                            onClick={() => chooseDestination(item.id)}
-                            aria-current={destination === item.id ? 'page' : undefined}
-                          >
-                            <span className="drawer-row-icon navigation-apk-icon" style={iconStyle(item.icon)} aria-hidden="true" />
-                            <span>{item.label}</span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </nav>
-                </aside>
+              <div className="drawer-account" role="presentation">
+                <div className="drawer-avatar" aria-hidden="true">{me.user.firstName.slice(0, 1).toUpperCase()}</div>
+                <div className="drawer-account-copy">
+                  <strong>{[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}</strong>
+                  <small>{roleLabel(activeRole)}</small>
+                </div>
               </div>
-            ) : null}
+
+              {me.roles.length > 1 ? (
+                <>
+                  <MenuDivider />
+                  {me.roles.map((role) => (
+                    <MenuItem
+                      key={role}
+                      active={role === activeRole}
+                      onSelect={() => switchRole(role)}
+                      aria-checked={role === activeRole}
+                    >
+                      {roleLabel(role)}
+                    </MenuItem>
+                  ))}
+                  <MenuDivider />
+                </>
+              ) : null}
+
+              {items.map((item, index) => {
+                const divider = item.section === 'secondary' && items[index - 1]?.section !== 'secondary';
+                return (
+                  <div key={item.id} className="navigation-main-menu-item">
+                    {divider ? <MenuDivider /> : null}
+                    <MenuItem
+                      active={destination === item.id}
+                      onSelect={() => chooseDestination(item.id)}
+                      aria-current={destination === item.id ? 'page' : undefined}
+                      leading={<span className="navigation-apk-icon" style={iconStyle(item.icon)} />}
+                    >
+                      {item.label}
+                    </MenuItem>
+                  </div>
+                );
+              })}
+            </Menu>
           </div>
         )}
         <h1>{context?.title ?? destinationTitle(activeRole, destination)}</h1>
