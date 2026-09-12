@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import type { ButtonHTMLAttributes, ReactElement, ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react';
 import './menu.css';
 
 export interface MenuProps {
@@ -31,22 +31,21 @@ export function Menu({ isOpen, onClose, children, trigger, label = 'Меню', c
   );
 }
 
-type MenuItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onSelect'> & {
+type RadixMenuItemProps = ComponentPropsWithoutRef<typeof DropdownMenu.Item>;
+
+type MenuItemProps = Omit<RadixMenuItemProps, 'children' | 'className' | 'onSelect'> & {
   leading?: ReactNode;
   active?: boolean;
   children: ReactNode;
-  onSelect?: () => void;
+  className?: string;
+  onSelect?: RadixMenuItemProps['onSelect'];
 };
 
-export function MenuItem({ leading, active = false, className = '', children, disabled, onSelect, onClick, ...props }: MenuItemProps) {
+export function MenuItem({ leading, active = false, className = '', children, onSelect, ...props }: MenuItemProps) {
   return (
     <DropdownMenu.Item
       className={`ui-menu-item${active ? ' ui-menu-item--active' : ''} ${className}`.trim()}
-      disabled={disabled}
-      onSelect={(event) => {
-        onSelect?.();
-        if (onClick) onClick(event as unknown as React.MouseEvent<HTMLButtonElement>);
-      }}
+      onSelect={onSelect}
       {...props}
     >
       {leading ? <span className="ui-menu-item__leading" aria-hidden="true">{leading}</span> : null}
