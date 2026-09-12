@@ -7,7 +7,7 @@ describe('UI Kit Menu', () => {
     const html = renderToStaticMarkup(
       <Menu
         isOpen={false}
-        onClose={() => {}}
+        onOpenChange={() => {}}
         label="Actions"
         trigger={<button type="button">Actions</button>}
       >
@@ -24,7 +24,7 @@ describe('UI Kit Menu', () => {
     expect(() => renderToStaticMarkup(
       <Menu
         isOpen={false}
-        onClose={() => {}}
+        onOpenChange={() => {}}
         trigger={<button type="button">Actions</button>}
       >
         <MenuItem active leading={<span>i</span>}>Редактировать</MenuItem>
