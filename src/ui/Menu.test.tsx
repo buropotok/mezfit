@@ -1,18 +1,20 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Menu, MenuDivider, MenuItem } from './index';
+import { Menu, MenuItem } from './index';
 
 describe('UI Kit Menu', () => {
-  it('renders menu semantics and item content when open', () => {
-    const html = renderToStaticMarkup(<Menu isOpen onClose={() => {}} label="Actions"><MenuItem leading={<span>i</span>}>Информация</MenuItem><MenuDivider /><MenuItem active>Редактировать</MenuItem></Menu>);
-    expect(html).toContain('role="menu"');
-    expect(html).toContain('aria-label="Actions"');
-    expect(html).toContain('role="menuitem"');
-    expect(html).toContain('role="separator"');
-    expect(html).toContain('ui-menu-item--active');
+  it('renders an accessible Radix trigger', () => {
+    const html = renderToStaticMarkup(<Menu isOpen={false} onClose={() => {}} label="Actions" trigger={<button type="button">Actions</button>}><MenuItem>Информация</MenuItem></Menu>);
+    expect(html).toContain('<button');
+    expect(html).toContain('aria-haspopup="menu"');
+    expect(html).toContain('data-state="closed"');
+    expect(html).toContain('Actions');
   });
 
-  it('does not render when initially closed', () => {
-    expect(renderToStaticMarkup(<Menu isOpen={false} onClose={() => {}}><MenuItem>Hidden</MenuItem></Menu>)).toBe('');
+  it('keeps item presentation in the Mezfit wrapper API', () => {
+    const html = renderToStaticMarkup(<MenuItem active leading={<span>i</span>}>Редактировать</MenuItem>);
+    expect(html).toContain('ui-menu-item--active');
+    expect(html).toContain('ui-menu-item__leading');
+    expect(html).toContain('Редактировать');
   });
 });
