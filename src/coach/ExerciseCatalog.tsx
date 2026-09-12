@@ -8,7 +8,7 @@ import {
   type TrackingType,
 } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
-import { Button, FloatingActionButton, IconButton, List, ListItem } from '../ui';
+import { Button, FloatingActionButton, IconButton, List, ListItem, SearchInput } from '../ui';
 
 const trackingLabels: Record<TrackingType, string> = {
   weight_reps: 'Вес × повторы', time: 'Время', time_distance: 'Время + дистанция', time_reps: 'Время + повторы', time_weight: 'Время + вес',
@@ -36,7 +36,7 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
 
   return <section className="exercise-catalog stack">
     <header className="exercise-catalog-header"><div><div className="eyebrow">Упражнения клиента</div><h2>Каталог</h2></div></header>
-    <div className="exercise-catalog-search"><input className="text-input" type="search" aria-label="Поиск упражнения" placeholder="Поиск упражнения…" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
+    <div className="exercise-catalog-search"><SearchInput aria-label="Поиск упражнения" placeholder="Поиск упражнения…" value={search} onChange={(event) => setSearch(event.currentTarget.value)} onClear={() => setSearch('')} /></div>
     {error && !showCreate ? <p className="inline-message error-text">{error}</p> : null}
     <section className="exercise-catalog-directory" aria-live="polite">
       <div className="exercise-catalog-scroll">{exercises === null ? <p className="catalogue-status">Загружаем каталог…</p> : exercises.length === 0 ? <div className="empty-state catalogue-empty"><strong>Ничего не найдено</strong><p>Измените запрос или создайте своё упражнение.</p></div> : <List className="exercise-list">{exercises.map((exercise) => <ListItem key={exercise.id} interactive={false} leadingShape="square" leading={<ExerciseMedia exercise={exercise} />} title={exercise.name} subtitle={<>{trackingLabels[exercise.tracking_type]}{exercise.category_code ? ` · ${categoryLabels[exercise.category_code]}` : ''}{exercise.equipment_code ? ` · ${equipmentLabels[exercise.equipment_code]}` : ''}</>} trailing={<span className={`scope-badge scope-${exercise.scope}`}>{exercise.scope === 'global' ? 'База' : exercise.scope === 'coach' ? 'Тренер' : 'Клиент'}</span>} />)}</List>}</div>
