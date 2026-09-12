@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
+import { Children, isValidElement, useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import './components.css';
@@ -45,8 +45,59 @@ type TabsProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Root>;
 type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List>;
 type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger>;
 type TabsContentProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Content>;
+type IndicatorChildProps = { children?: ReactNode; className?: string };
+
 export function Tabs({ className = '', ...props }: TabsProps) { return <RadixTabs.Root className={`ui-tabs ${className}`.trim()} {...props} />; }
-export function TabsList({ className = '', ...props }: TabsListProps) { return <RadixTabs.List className={`ui-tabs__list ${className}`.trim()} {...props} />; }
+
+export function TabsList({ className = '', children, style, ...props }: TabsListProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [clipPath, setClipPath] = useState('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
+  const [isIndicatorReady, setIndicatorReady] = useState(false);
+
+  const updateIndicator = useCallback(() => {
+    const list = listRef.current;
+    const active = list?.querySelector<HTMLElement>(':scope > .ui-tabs__trigger[data-state="active"]');
+    if (!list || !active || list.scrollWidth <= 0) {
+      setClipPath('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
+      setIndicatorReady(false);
+      return;
+    }
+    const left = active.offsetLeft;
+    const right = Math.max(0, list.scrollWidth - active.offsetLeft - active.offsetWidth);
+    setClipPath(`inset(.25rem ${right}px .25rem ${left}px round var(--ui-tab-radius))`);
+    setIndicatorReady(true);
+  }, []);
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return undefined;
+    updateIndicator();
+    const observer = new ResizeObserver(updateIndicator);
+    observer.observe(list);
+    const mutationObserver = new MutationObserver(updateIndicator);
+    mutationObserver.observe(list, { subtree: true, attributes: true, attributeFilter: ['data-state'] });
+    return () => {
+      observer.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [children, updateIndicator]);
+
+  const indicatorChildren = Children.map(children, (child) => {
+    if (!isValidElement(child)) return child;
+    const element = child as ReactElement<IndicatorChildProps>;
+    return <div className={`ui-tabs__indicator-tab ${element.props.className ?? ''}`.trim()}>{element.props.children}</div>;
+  });
+
+  return (
+    <RadixTabs.List ref={listRef} className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()} style={style} {...props}>
+      {children}
+      <div className="ui-tabs__active-indicator" style={{ '--ui-tabs-clip-path': clipPath } as CSSProperties} aria-hidden="true">
+        {indicatorChildren}
+      </div>
+    </RadixTabs.List>
+  );
+}
+
 export function TabsTrigger({ className = '', ...props }: TabsTriggerProps) { return <RadixTabs.Trigger className={`ui-tabs__trigger ${className}`.trim()} {...props} />; }
 export function TabsContent({ className = '', ...props }: TabsContentProps) { return <RadixTabs.Content className={`ui-tabs__content ${className}`.trim()} {...props} />; }
 
