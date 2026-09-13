@@ -14,6 +14,10 @@
   max-width: 100%;
   margin: 0;
   color: var(--ui-color-surface-text);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-body);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-body);
 }
 
 .ui-calendar .rdp-months,
@@ -30,8 +34,9 @@
 
 .ui-calendar .rdp-weekday {
   color: var(--ui-color-surface-muted);
-  font-size: .8125rem;
+  font-size: var(--ui-font-size-footnote);
   font-weight: var(--ui-font-weight-medium);
+  line-height: var(--ui-line-height-footnote);
 }
 
 .ui-calendar .rdp-day {
