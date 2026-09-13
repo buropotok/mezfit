@@ -1,4 +1,5 @@
 export { Avatar, Button, Divider, IconButton, Surface, Text } from './primitives';
+export { Badge, type BadgeColor, type BadgeProps } from './Badge';
 export { Calendar, type CalendarProps } from './Calendar';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
 export { FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, type ModalAction } from './components';
