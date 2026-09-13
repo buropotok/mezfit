@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
-
-const PRESS_SPOT_DURATION_MS = 720;
+import { useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 
 type PressSpotState = {
   id: number;
@@ -10,12 +8,7 @@ type PressSpotState = {
 
 export function usePressSpot<T extends HTMLElement>(disabled = false) {
   const [spot, setSpot] = useState<PressSpotState | null>(null);
-  const timeoutRef = useRef<number | null>(null);
   const nextIdRef = useRef(0);
-
-  useEffect(() => () => {
-    if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
-  }, []);
 
   const startPressSpot = (event: PointerEvent<T>) => {
     if (disabled) return;
@@ -27,12 +20,6 @@ export function usePressSpot<T extends HTMLElement>(disabled = false) {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
     });
-
-    if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => {
-      setSpot(null);
-      timeoutRef.current = null;
-    }, PRESS_SPOT_DURATION_MS);
   };
 
   const pressSpot = spot ? (
@@ -40,6 +27,7 @@ export function usePressSpot<T extends HTMLElement>(disabled = false) {
       key={spot.id}
       className="ui-press-spot"
       style={{ '--ui-press-x': `${spot.x}px`, '--ui-press-y': `${spot.y}px` } as CSSProperties}
+      onAnimationEnd={() => setSpot(null)}
       aria-hidden="true"
     />
   ) : null;
