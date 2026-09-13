@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Avatar, Button, Divider, Dropdown, FloatingActionButton, IconButton, List, ListItem, Menu, MenuDivider, MenuItem, Modal, SearchInput, SortableList, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text, type DropdownOption, type SortableListItem } from './index';
+import { ComponentTypographyAdmin, TypographyRoleAdmin } from './TypographyAdmin';
 import './catalog.css';
 
 const initialExercises: SortableListItem[] = [
@@ -7,16 +8,9 @@ const initialExercises: SortableListItem[] = [
   { id: 'row', content: <ListItem leadingShape="square" leading={<span style={{ display: 'grid', placeItems: 'center', background: 'var(--ui-color-surface-raised)' }} aria-hidden="true">💪</span>} title="Тяга гантели" subtitle="4 подхода · Спина" trailing="⋮" /> },
   { id: 'squat', content: <ListItem leadingShape="square" leading={<span style={{ display: 'grid', placeItems: 'center', background: 'var(--ui-color-surface-raised)' }} aria-hidden="true">🦵</span>} title="Приседания" subtitle="4 подхода · Ноги" trailing="⋮" /> },
 ];
-
 const dropdownOptions: DropdownOption[] = [
-  { value: 'strength', label: 'Силовая' },
-  { value: 'hypertrophy', label: 'Гипертрофия' },
-  { value: 'endurance', label: 'Выносливость' },
-  { value: 'mobility', label: 'Мобильность' },
-  { value: 'recovery', label: 'Восстановление' },
-  { value: 'technique', label: 'Техника' },
-  { value: 'cardio', label: 'Кардио' },
-  { value: 'general', label: 'Общая подготовка' },
+  { value: 'strength', label: 'Силовая' }, { value: 'hypertrophy', label: 'Гипертрофия' }, { value: 'endurance', label: 'Выносливость' }, { value: 'mobility', label: 'Мобильность' },
+  { value: 'recovery', label: 'Восстановление' }, { value: 'technique', label: 'Техника' }, { value: 'cardio', label: 'Кардио' }, { value: 'general', label: 'Общая подготовка' },
 ];
 
 type ModalDemo = 'default' | 'info' | 'confirm' | 'destructive' | null;
@@ -32,7 +26,8 @@ export function UiKitPage() {
   return (
     <main className="ui-kit-page">
       <header className="ui-kit-header"><Text variant="caption" tone="muted">Mezfit internal</Text><h1>UI Kit</h1><Text tone="muted">Foundation primitives and Telegram-derived interaction components.</Text></header>
-      <Surface as="section" className="ui-kit-section"><Text variant="title">Typography</Text><Text variant="caption" tone="muted">SF Pro on Apple devices · Golos Text on other platforms</Text><Divider /><div className="ui-kit-stack"><Text variant="large-title">Программа тренировок · 24/28</Text><Text variant="title">Сегодня · 20/24</Text><Text variant="headline">Жим лёжа · 17/22</Text><Text>4 подхода · 8–10 повторений · 15/20</Text><Text variant="footnote" tone="muted">Последняя тренировка вчера · 13/18</Text><Text variant="caption" tone="muted">ОБНОВЛЕНО 12:45 · MEZFIT · 12/16</Text></div></Surface>
+      <Surface as="section" className="ui-kit-section"><Text variant="title">Typography</Text><Text variant="caption" tone="muted">SF Pro on Apple devices · Golos Text on other platforms</Text><Divider /><div className="ui-kit-stack"><div><Text variant="footnote" tone="muted">Large title · Main screen title</Text><Text variant="large-title">Программа тренировок · 24/28</Text></div><div><Text variant="footnote" tone="muted">Title · Large content / section heading</Text><Text variant="title">Сегодня · 20/24</Text></div><div><Text variant="footnote" tone="muted">Headline · Modal / important heading</Text><Text variant="headline">Жим лёжа · 17/22</Text></div><div><Text variant="footnote" tone="muted">Body · Main text / inputs / controls</Text><Text>4 подхода · 8–10 повторений · 15/20</Text></div><div><Text variant="footnote" tone="muted">Footnote · Metadata / field labels</Text><Text variant="footnote" tone="muted">Последняя тренировка вчера · 13/18</Text></div><div><Text variant="footnote" tone="muted">Caption · Small supporting text</Text><Text variant="caption" tone="muted">ОБНОВЛЕНО 12:45 · MEZFIT · 12/16</Text></div></div><Divider /><Text variant="headline">Typography admin</Text><TypographyRoleAdmin /></Surface>
+      <Surface as="section" className="ui-kit-section"><Text variant="title">Component typography admin</Text><Text variant="caption" tone="muted">Настройка типографики элементов UI Kit с CSS, Copy и Reset.</Text><Divider /><ComponentTypographyAdmin /></Surface>
       <Surface as="section" className="ui-kit-section"><Text variant="title">Buttons</Text><Divider /><div className="ui-kit-row"><Button>Primary</Button><Button variant="secondary">Secondary</Button><Button variant="danger">Danger</Button><Button disabled>Disabled</Button></div></Surface>
       <Surface as="section" className="ui-kit-section"><Text variant="title">Search</Text><Divider /><SearchInput aria-label="Поиск" placeholder="Поиск" value={search} onChange={(event) => setSearch(event.currentTarget.value)} onClear={() => setSearch('')} /></Surface>
       <Surface as="section" className="ui-kit-section"><Text variant="title">Icon button & avatar</Text><Divider /><div className="ui-kit-row"><IconButton label="Add item"><span aria-hidden="true">＋</span></IconButton><IconButton label="Disabled action" disabled><span aria-hidden="true">⋯</span></IconButton><Avatar name="Mezfit User" /></div></Surface>
