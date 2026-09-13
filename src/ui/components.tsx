@@ -128,19 +128,23 @@ type ModalProps = {
 
 export function Modal({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton, closeOnBackdrop, variant = 'default', actions, actionsLayout = 'row', onClose }: ModalProps) {
   const isAlert = variant === 'alert';
-  const showCloseButton = hasCloseButton ?? !isAlert;
+  const hasEnabledAction = actions?.some((action) => !action.disabled) ?? false;
+  const hasAlertDismissal = hasEnabledAction || hasCloseButton === true || closeOnBackdrop === true;
+  const showCloseButton = hasCloseButton ?? (isAlert ? !hasAlertDismissal : true);
   const allowBackdropClose = closeOnBackdrop ?? !isAlert;
+  const blockEscape = isAlert && (hasEnabledAction || allowBackdropClose || showCloseButton);
+
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
         <div className={`ui-modal${isAlert ? ' ui-modal--alert' : ''} ${className}`.trim()} role="presentation">
           <div className="ui-modal__container">
             <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowBackdropClose ? undefined : (event) => event.preventDefault()} />
-            <Dialog.Content role={isAlert ? 'alertdialog' : undefined} className="ui-modal__dialog" aria-describedby={undefined} onEscapeKeyDown={isAlert ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
+            <Dialog.Content role={isAlert ? 'alertdialog' : undefined} className="ui-modal__dialog" aria-describedby={isAlert ? undefined : undefined} onEscapeKeyDown={blockEscape ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
               {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
               {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
               <div className="ui-modal__content">
-                {children}
+                {isAlert ? <Dialog.Description asChild><div className="ui-modal__description">{children}</div></Dialog.Description> : children}
                 {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onClick={action.onClick}>{action.label}</button>)}</div> : null}
               </div>
             </Dialog.Content>
