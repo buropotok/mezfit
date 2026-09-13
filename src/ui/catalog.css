@@ -11,7 +11,7 @@
 .ui-kit-admin-heading > div { display: grid; gap: var(--ui-space-1); }
 .ui-kit-admin-editor { display: grid; gap: var(--ui-space-3); }
 .ui-kit-admin-preview { min-height: 64px; display: flex; align-items: center; padding: var(--ui-space-3); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-control); background: var(--ui-color-surface); }
-.ui-kit-admin-preview > span { font: inherit; }
+.ui-kit-admin-preview > span, .ui-kit-admin-preview > .ui-button, .ui-kit-admin-preview > .ui-kit-typography-demo-input { font-family: inherit; font-size: inherit; line-height: inherit; font-weight: inherit; }
 .ui-kit-admin-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ui-space-2); }
 .ui-kit-admin-field { display: grid; gap: var(--ui-space-1); min-width: 0; }
 .ui-kit-admin-field input, .ui-kit-admin-field select, .ui-kit-typography-demo-input { width: 100%; min-width: 0; height: 40px; padding: 0 var(--ui-space-2); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-control); color: var(--ui-color-surface-text); background: var(--ui-color-surface); font-family: var(--ui-font-family); font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); font-weight: var(--ui-font-weight-regular); }
