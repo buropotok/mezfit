@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { List, ListItem } from './components';
 
@@ -35,7 +35,9 @@ describe('ListItem', () => {
     expect(wave?.style.left).toBe('0px');
     expect(wave?.style.top).toBe('-26px');
 
-    vi.advanceTimersByTime(700);
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
     expect(item.querySelector('.ui-ripple__wave')).toBeNull();
   });
 
