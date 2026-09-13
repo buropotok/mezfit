@@ -2,6 +2,8 @@
 
 Mandatory rules for all changes in `buropotok/mezfit`. Working behavior is necessary but not sufficient: changes must preserve domain boundaries, React ownership, typed contracts, backend authorization, D1 integrity, Telegram Mini App compatibility, and testability.
 
+Before any UI work, **read `typography.md` in the repository root and follow it as the authoritative typography contract**. This is mandatory for new UI and for changes to existing screens/components.
+
 ## 1. Preserve architecture before adding behavior
 
 Before editing, identify the owning domain/component, its public inputs/outputs, callers, consumers, lifecycle, API contracts, tests, and persistence effects. Trace the actual runtime path before creating abstractions. Prefer extending the owner over cross-cutting patches. Do not bypass API, authorization, state, or persistence boundaries for convenience.
