@@ -44,4 +44,9 @@
   .ui-button.ui-button--danger:hover:not(:disabled) { opacity: 0.75; }
   .ui-icon-button.ui-icon-button:hover:not(:disabled) { background-color: var(--ui-color-surface-raised); }
 }
-@media (prefers-reduced-motion: reduce) { .ui-button, .ui-icon-button { transition-duration: 1ms; } }
+@media (prefers-reduced-motion: reduce) {
+  .ui-button,
+  .ui-icon-button,
+  .ui-button:active:not(:disabled),
+  .ui-icon-button:active:not(:disabled) { transition-duration: 1ms; }
+}
