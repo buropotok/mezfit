@@ -1,7 +1,7 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Button } from './primitives';
 import { List, ListItem, Modal } from './components';
-import { startPressScale } from './PressScale';
+import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { beginMultiDraft, commitMultiDraft, toggleMultiDraft } from './dropdownState';
 import './Dropdown.css';
 
@@ -42,7 +42,7 @@ function optionText(option: DropdownOption) {
 
 export function Dropdown(props: DropdownProps) {
   const { options, title = 'Выберите вариант', placeholder = 'Выбрать', disabled = false, className = '', triggerProps } = props;
-  const { onPointerDown: onTriggerPointerDown, ...restTriggerProps } = triggerProps ?? {};
+  const { onPointerDown: onTriggerPointerDown, onKeyDown: onTriggerKeyDown, ...restTriggerProps } = triggerProps ?? {};
   const [isOpen, setOpen] = useState(false);
   const [draft, setDraft] = useState<string[]>([]);
 
@@ -78,7 +78,7 @@ export function Dropdown(props: DropdownProps) {
   const activeValues = props.mode === 'multi' ? draft : selectedValues;
 
   return <>
-    <button {...restTriggerProps} type="button" className={`ui-dropdown__trigger ${className}`.trim()} onClick={open} onPointerDown={(event) => { onTriggerPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} disabled={disabled} aria-haspopup="dialog" aria-expanded={isOpen}>{triggerLabel}</button>
+    <button {...restTriggerProps} type="button" className={`ui-dropdown__trigger ${className}`.trim()} onClick={open} onPointerDown={(event) => { onTriggerPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onTriggerKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} disabled={disabled} aria-haspopup="dialog" aria-expanded={isOpen}>{triggerLabel}</button>
     <Modal isOpen={isOpen} title={title} onClose={close} className="ui-dropdown__modal">
       <div className="ui-dropdown__options">
         <List>
