@@ -136,7 +136,7 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = '�
         <div className={`ui-modal${isAlert ? ' ui-modal--alert' : ''} ${className}`.trim()} role="presentation">
           <div className="ui-modal__container">
             <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowBackdropClose ? undefined : (event) => event.preventDefault()} />
-            <Dialog.Content className="ui-modal__dialog" aria-describedby={undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
+            <Dialog.Content role={isAlert ? 'alertdialog' : undefined} className="ui-modal__dialog" aria-describedby={undefined} onEscapeKeyDown={isAlert ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
               {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
               {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
               <div className="ui-modal__content">
