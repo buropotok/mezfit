@@ -1,24 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  getCoachPrograms,
-  type ProgramListItem,
-  type ProgramOwnerGroup,
-  type ProgramStatus,
-} from '../api';
-import {
-  Avatar,
-  Badge,
-  IconButton,
-  List,
-  ListItem,
-  Menu,
-  MenuItem,
-  SearchInput,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  Text,
-} from '../ui';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { getCoachPrograms, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
+import { Avatar, Badge, IconButton, List, ListItem, Menu, MenuItem, SearchInput, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -29,29 +11,19 @@ import './programs.css';
 
 type Filter = ProgramStatus;
 
-type ProgramMenuProps = { program: ProgramListItem };
-
-function ActionIcon({ src }: { src: string }) {
-  return <img className="programs-action-icon" src={src} alt="" />;
+function MaskIcon({ src, className = '' }: { src: string; className?: string }) {
+  const style = { '--programs-icon-url': `url("${src}")` } as CSSProperties;
+  return <span className={`programs-mask-icon ${className}`.trim()} style={style} aria-hidden="true" />;
 }
 
-function ProgramMenu({ program }: ProgramMenuProps) {
+function ProgramMenu({ program }: { program: ProgramListItem }) {
   const [open, setOpen] = useState(false);
   return (
-    <Menu
-      isOpen={open}
-      onOpenChange={setOpen}
-      align="end"
-      label={`Действия с программой ${program.name}`}
-      trigger={
-        <IconButton className="programs-more" label={`Открыть меню программы ${program.name}`} data-no-dnd>
-          <img src={dotsUrl} alt="" />
-        </IconButton>
-      }
-    >
-      <MenuItem leading={<ActionIcon src={pencilUrl} />} disabled>Редактировать</MenuItem>
-      <MenuItem leading={<ActionIcon src={copyUrl} />} disabled>Дублировать</MenuItem>
-      <MenuItem leading={<ActionIcon src={trashUrl} />} disabled>Удалить</MenuItem>
+    <Menu isOpen={open} onOpenChange={setOpen} align="end" label={`Действия с программой ${program.name}`}
+      trigger={<IconButton className="programs-more" label={`Открыть меню программы ${program.name}`} data-no-dnd><MaskIcon src={dotsUrl} /></IconButton>}>
+      <MenuItem leading={<MaskIcon src={pencilUrl} />} disabled>Редактировать</MenuItem>
+      <MenuItem leading={<MaskIcon src={copyUrl} />} disabled>Дублировать</MenuItem>
+      <MenuItem leading={<MaskIcon src={trashUrl} />} disabled>Удалить</MenuItem>
       <MenuItem disabled>Статистика</MenuItem>
     </Menu>
   );
@@ -81,28 +53,20 @@ function programDates(program: ProgramListItem): string | undefined {
 
 function ProgramRows({ programs }: { programs: ProgramListItem[] }) {
   if (programs.length === 0) return null;
-  return (
-    <div className="programs-card">
-      {programs.map((program) => (
-        <div className="programs-row" key={program.id}>
-          <div className="programs-icon" aria-hidden="true"><img src={programIconUrl} alt="" /></div>
-          <div className="programs-copy">
-            <Text className="programs-name">{program.name}</Text>
-            {programDates(program) ? <Text variant="caption" tone="muted">{programDates(program)}</Text> : null}
-          </div>
-          <div className="programs-status">{statusBadge(program.status)}</div>
-          <ProgramMenu program={program} />
-        </div>
-      ))}
-    </div>
-  );
+  return <div className="programs-card">{programs.map((program) => {
+    const dates = programDates(program);
+    return <div className="programs-row" key={program.id}>
+      <div className="programs-icon" aria-hidden="true"><img src={programIconUrl} alt="" /></div>
+      <div className="programs-copy"><Text className="programs-name">{program.name}</Text>{dates ? <Text variant="caption" tone="muted">{dates}</Text> : null}</div>
+      <div className="programs-status">{statusBadge(program.status)}</div>
+      <ProgramMenu program={program} />
+    </div>;
+  })}</div>;
 }
 
-function ownerName(group: ProgramOwnerGroup): string {
-  return [group.owner.firstName, group.owner.lastName].filter(Boolean).join(' ');
-}
+function ownerName(group: ProgramOwnerGroup): string { return [group.owner.firstName, group.owner.lastName].filter(Boolean).join(' '); }
 
-export function ProgramsPage({ initData }: { initData: string }) {
+export function ProgramsPage({ initData, onSelectClient }: { initData: string; onSelectClient?: (userId: number) => void }) {
   const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
   const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
   const [filter, setFilter] = useState<Filter>('active');
@@ -112,70 +76,26 @@ export function ProgramsPage({ initData }: { initData: string }) {
   useEffect(() => {
     let cancelled = false;
     setMessage('');
-    getCoachPrograms(initData)
-      .then((result) => {
-        if (cancelled) return;
-        setPrograms(result.programs);
-        setClientGroups(result.clients);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setPrograms([]);
-          setClientGroups([]);
-          setMessage(error instanceof Error ? error.message : 'Не удалось загрузить программы');
-        }
-      });
+    getCoachPrograms(initData).then((result) => { if (!cancelled) { setPrograms(result.programs); setClientGroups(result.clients); } })
+      .catch((error: unknown) => { if (!cancelled) { setPrograms([]); setClientGroups([]); setMessage(error instanceof Error ? error.message : 'Не удалось загрузить программы'); } });
     return () => { cancelled = true; };
   }, [initData]);
 
   const ownPrograms = useMemo(() => (programs ?? []).filter((program) => program.status === filter), [programs, filter]);
   const visibleClients = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase('ru-RU');
-    return clientGroups
-      .filter((group) => !needle || ownerName(group).toLocaleLowerCase('ru-RU').includes(needle))
+    return clientGroups.filter((group) => !needle || ownerName(group).toLocaleLowerCase('ru-RU').includes(needle))
       .map((group) => ({ ...group, programs: group.programs.filter((program) => program.status === filter) }))
       .filter((group) => group.programs.length > 0);
   }, [clientGroups, filter, search]);
 
-  return (
-    <section className="programs-page" aria-label="Программы">
-      <SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск клиента" aria-label="Поиск клиента" />
-
-      <Tabs className="programs-tabs" value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-        <TabsList aria-label="Статус программы">
-          <TabsTrigger value="active">Активные</TabsTrigger>
-          <TabsTrigger value="finished">Завершённые</TabsTrigger>
-          <TabsTrigger value="draft">Черновики</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {programs === null ? <Text tone="muted">Загружаем программы…</Text> : (
-        <>
-          <section className="programs-section" aria-labelledby="own-programs-title">
-            <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
-            <ProgramRows programs={ownPrograms} />
-            {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
-          </section>
-
-          <section className="programs-section" aria-labelledby="client-programs-title">
-            <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
-            {visibleClients.map((group) => (
-              <div className="programs-client" key={group.owner.id}>
-                <List className="programs-client-list">
-                  <ListItem
-                    leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
-                    title={ownerName(group)}
-                    trailing={<img className="programs-chevron" src={chevronRightUrl} alt="" />}
-                  />
-                </List>
-                <ProgramRows programs={group.programs} />
-              </div>
-            ))}
-            {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
-          </section>
-        </>
-      )}
-      {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
-    </section>
-  );
+  return <section className="programs-page" aria-label="Программы">
+    <SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск клиента" aria-label="Поиск клиента" />
+    <Tabs className="programs-tabs" value={filter} onValueChange={(value) => setFilter(value as Filter)}><TabsList aria-label="Статус программы"><TabsTrigger value="active">Активные</TabsTrigger><TabsTrigger value="finished">Завершённые</TabsTrigger><TabsTrigger value="draft">Черновики</TabsTrigger></TabsList></Tabs>
+    {programs === null ? <Text tone="muted">Загружаем программы…</Text> : <>
+      <section className="programs-section" aria-labelledby="own-programs-title"><Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text><ProgramRows programs={ownPrograms} />{ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}</section>
+      <section className="programs-section" aria-labelledby="client-programs-title"><Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>{visibleClients.map((group) => <div className="programs-client" key={group.owner.id}><List className="programs-client-list"><ListItem onClick={() => onSelectClient?.(group.owner.id)} leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />} title={ownerName(group)} trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />} /></List><ProgramRows programs={group.programs} /></div>)}{visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}</section>
+    </>}
+    {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
+  </section>;
 }
