@@ -1,4 +1,5 @@
 import { useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import './press-spot.css';
 
 type PressSpotState = {
   id: number;

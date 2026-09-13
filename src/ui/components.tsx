@@ -1,6 +1,7 @@
 import { Children, isValidElement, useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
+import { usePressSpot } from './PressSpot';
 import './components.css';
 
 export function List({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -16,9 +17,11 @@ type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title'> & {
   interactive?: boolean;
 };
 
-export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, interactive = true, className = '', type = 'button', ...props }: ListItemProps) {
+export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, interactive = true, className = '', type = 'button', onPointerDown, disabled, ...props }: ListItemProps) {
+  const { pressSpot, startPressSpot } = usePressSpot<HTMLButtonElement>(disabled || !interactive);
   const leadingClassName = leadingShape === 'square' ? ' ui-list-item__leading--square' : '';
   const content = <>
+    {pressSpot}
     {leading ? <span className={`ui-list-item__leading${leadingClassName}`} aria-hidden="true">{leading}</span> : null}
     <span className="ui-list-item__content">
       <span className="ui-list-item__title">{title}</span>
@@ -28,7 +31,7 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
   </>;
   return (
     <div className="ui-list-item-wrap" role="listitem">
-      {interactive ? <button type={type} className={`ui-list-item ${className}`.trim()} {...props}>{content}</button> : <div className={`ui-list-item ui-list-item--static ${className}`.trim()}>{content}</div>}
+      {interactive ? <button type={type} className={`ui-list-item ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) startPressSpot(event); }} {...props}>{content}</button> : <div className={`ui-list-item ui-list-item--static ${className}`.trim()}>{content}</div>}
     </div>
   );
 }

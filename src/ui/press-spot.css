@@ -1,0 +1,3 @@
+.ui-press-spot{pointer-events:none;position:absolute;z-index:0;left:var(--ui-press-x);top:var(--ui-press-y);width:120%;height:180%;border-radius:50%;background:radial-gradient(ellipse at center,rgb(255 255 255 / 24%) 0%,rgb(255 255 255 / 15%) 30%,rgb(255 255 255 / 7%) 52%,rgb(255 255 255 / 0%) 72%);opacity:0;transform:translate(-50%,-50%) scale(.35);animation:ui-press-spot 720ms cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes ui-press-spot{0%{opacity:0;transform:translate(-50%,-50%) scale(.35)}48%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.45)}}
+@media(prefers-reduced-motion:reduce){.ui-press-spot{animation-duration:1ms}}
