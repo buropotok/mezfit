@@ -13,18 +13,21 @@ describe('UI Kit typography admin', () => {
     expect(html.match(/Reset/g)?.length).toBe(6);
   });
 
-  it('offers only shared typography roles for semantic component slots', () => {
+  it('offers only shared roles for semantic slots and renders copyable CSS', () => {
     const slots: TypographySlot[] = [
-      { id: 'title', label: 'Заголовок', defaultRole: 'headline' },
-      { id: 'body', label: 'Основной текст', defaultRole: 'body' },
-      { id: 'buttons', label: 'Кнопки', defaultRole: 'body' },
+      { id: 'title', label: 'Заголовок', defaultRole: 'headline', selector: '.ui-modal__title' },
+      { id: 'body', label: 'Основной текст', defaultRole: 'body', selector: '.ui-modal__content' },
+      { id: 'buttons', label: 'Кнопки', defaultRole: 'body', selector: '.ui-modal__action', weightOverride: 500 },
     ];
     const assignments: TypographyAssignments = { title: 'headline', body: 'body', buttons: 'body' };
-    const html = renderToStaticMarkup(<ComponentTypographySettings slots={slots} assignments={assignments} onChange={() => undefined} />);
+    const html = renderToStaticMarkup(<ComponentTypographySettings slots={slots} assignments={assignments} values={defaultTypographyValues()} onChange={() => undefined} />);
     expect(html).toContain('Typography settings');
     for (const slot of slots) expect(html).toContain(slot.label);
     for (const role of roleDefinitions) expect(html).toContain(`value="${role.role}"`);
     expect(html).not.toContain('type="number"');
+    expect(html).toContain('.ui-modal__title');
+    expect(html).toContain('font-size: 17px');
+    expect(html).toContain('font-weight: 500');
     expect(html).toContain('Copy CSS');
     expect(html).toContain('Reset');
   });
