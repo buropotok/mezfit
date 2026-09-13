@@ -1,0 +1,27 @@
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-body);
+  line-height: var(--ui-line-height-body);
+  font-weight: var(--ui-font-weight-regular);
+  white-space: nowrap;
+}
+
+.ui-badge--green { color: #49df7b; border-color: color-mix(in srgb, #49df7b 28%, transparent); background: color-mix(in srgb, #0b7a35 32%, transparent); }
+.ui-badge--yellow { color: #e7a91b; border-color: color-mix(in srgb, #e7a91b 30%, transparent); background: color-mix(in srgb, #8b6200 30%, transparent); }
+.ui-badge--blue { color: #9fc5e8; border-color: color-mix(in srgb, #9fc5e8 24%, transparent); background: color-mix(in srgb, #355775 28%, transparent); }
+.ui-badge--red { color: #ff6b6b; border-color: color-mix(in srgb, #ff6b6b 28%, transparent); background: color-mix(in srgb, #8f2626 30%, transparent); }
+.ui-badge--orange { color: #ffad5c; border-color: color-mix(in srgb, #ffad5c 28%, transparent); background: color-mix(in srgb, #8a4b0f 30%, transparent); }
+.ui-badge--purple { color: #c7a7ff; border-color: color-mix(in srgb, #c7a7ff 26%, transparent); background: color-mix(in srgb, #5d3a8f 30%, transparent); }
+.ui-badge--cyan { color: #67d9e8; border-color: color-mix(in srgb, #67d9e8 26%, transparent); background: color-mix(in srgb, #176a76 30%, transparent); }
+.ui-badge--gray { color: var(--ui-color-surface-muted); border-color: color-mix(in srgb, var(--ui-color-surface-muted) 24%, transparent); background: color-mix(in srgb, var(--ui-color-surface-muted) 12%, transparent); }
+
+@media (max-width: 430px) {
+  .ui-badge { padding-inline: 8px; }
+}
