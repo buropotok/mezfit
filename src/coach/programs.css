@@ -1,0 +1,132 @@
+.programs-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}
+
+.programs-tabs {
+  margin-block: 0 var(--ui-space-2);
+}
+
+.programs-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  min-width: 0;
+  margin-bottom: var(--ui-space-3);
+}
+
+.programs-section-label {
+  font-weight: var(--ui-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.programs-card {
+  overflow: hidden;
+  width: 100%;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-raised);
+}
+
+.programs-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto 2.75rem;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-height: 4rem;
+  padding: .5rem .25rem .5rem .5rem;
+}
+
+.programs-row + .programs-row::before {
+  content: '';
+  position: absolute;
+  inset: 0 .5rem auto 4rem;
+  height: 1px;
+  background: var(--ui-color-divider);
+}
+
+.programs-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface-raised);
+}
+
+.programs-icon img {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+
+.programs-copy {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.programs-name {
+  overflow: hidden;
+  font-weight: var(--ui-font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.programs-status {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.programs-more {
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--ui-color-surface-muted);
+}
+
+.programs-more img,
+.programs-action-icon,
+.programs-chevron {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.programs-client {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
+.programs-client + .programs-client {
+  margin-top: var(--ui-space-2);
+}
+
+.programs-client-list .ui-list-item {
+  padding-inline: 0;
+}
+
+.programs-chevron {
+  opacity: .72;
+}
+
+.programs-error {
+  color: var(--ui-color-danger);
+}
+
+@media (max-width: 430px) {
+  .programs-row {
+    grid-template-columns: 3rem minmax(0, 1fr) auto 2.5rem;
+    gap: .375rem;
+  }
+
+  .programs-more {
+    width: 2.5rem;
+  }
+}
