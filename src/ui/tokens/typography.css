@@ -1,9 +1,30 @@
+@font-face {
+  font-family: 'Golos Text';
+  src: url('/fonts/GolosText-VariableFont_wght.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
 :root {
-  --ui-font-family: inherit;
+  /* Apple WebViews resolve the system aliases to SF Pro; other platforms fall through to Golos Text. */
+  --ui-font-family: -apple-system, BlinkMacSystemFont, 'Golos Text', sans-serif;
+
   --ui-font-size-caption: 0.75rem;
-  --ui-font-size-body: 0.875rem;
+  --ui-line-height-caption: 1rem;
+  --ui-font-size-footnote: 0.8125rem;
+  --ui-line-height-footnote: 1.125rem;
+  --ui-font-size-body: 0.9375rem;
+  --ui-line-height-body: 1.25rem;
+  --ui-font-size-headline: 1.0625rem;
+  --ui-line-height-headline: 1.375rem;
   --ui-font-size-title: 1.25rem;
+  --ui-line-height-title: 1.5rem;
+  --ui-font-size-large-title: 1.5rem;
+  --ui-line-height-large-title: 1.75rem;
+
   --ui-font-weight-regular: 400;
-  --ui-font-weight-medium: 600;
-  --ui-line-height-body: 1.5;
+  --ui-font-weight-medium: 500;
+  --ui-font-weight-semibold: 600;
+  --ui-font-weight-bold: 700;
 }
