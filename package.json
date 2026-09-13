@@ -27,9 +27,11 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "latest",
+    "@testing-library/react": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
+    "jsdom": "latest",
     "typescript": "latest",
     "vite": "latest",
     "vitest": "latest",
