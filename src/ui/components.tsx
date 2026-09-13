@@ -104,7 +104,49 @@ export function TabsList({ className = '', children, style, ...props }: TabsList
 export function TabsTrigger({ className = '', ...props }: TabsTriggerProps) { return <RadixTabs.Trigger className={`ui-tabs__trigger ${className}`.trim()} {...props} />; }
 export function TabsContent({ className = '', ...props }: TabsContentProps) { return <RadixTabs.Content className={`ui-tabs__content ${className}`.trim()} {...props} />; }
 
-type ModalProps = { isOpen: boolean; title?: ReactNode; children: ReactNode; className?: string; closeLabel?: string; hasCloseButton?: boolean; closeOnBackdrop?: boolean; onClose: () => void; };
-export function Modal({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, onClose }: ModalProps) {
-  return <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}><Dialog.Portal><div className={`ui-modal ${className}`.trim()} role="presentation"><div className="ui-modal__container"><Dialog.Overlay className="ui-modal__backdrop" onPointerDown={closeOnBackdrop ? undefined : (event) => event.preventDefault()} /><Dialog.Content className="ui-modal__dialog" aria-describedby={undefined} onPointerDownOutside={closeOnBackdrop ? undefined : (event) => event.preventDefault()} onInteractOutside={closeOnBackdrop ? undefined : (event) => event.preventDefault()}>{title || hasCloseButton ? <div className="ui-modal__header">{hasCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}{!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}<div className="ui-modal__content">{children}</div></Dialog.Content></div></div></Dialog.Portal></Dialog.Root>;
+export type ModalAction = {
+  id: string;
+  label: ReactNode;
+  onClick: () => void;
+  tone?: 'primary' | 'danger';
+  disabled?: boolean;
+};
+
+type ModalProps = {
+  isOpen: boolean;
+  title?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  closeLabel?: string;
+  hasCloseButton?: boolean;
+  closeOnBackdrop?: boolean;
+  variant?: 'default' | 'alert';
+  actions?: readonly ModalAction[];
+  actionsLayout?: 'row' | 'column';
+  onClose: () => void;
+};
+
+export function Modal({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton, closeOnBackdrop, variant = 'default', actions, actionsLayout = 'row', onClose }: ModalProps) {
+  const isAlert = variant === 'alert';
+  const showCloseButton = hasCloseButton ?? !isAlert;
+  const allowBackdropClose = closeOnBackdrop ?? !isAlert;
+  return (
+    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <Dialog.Portal>
+        <div className={`ui-modal${isAlert ? ' ui-modal--alert' : ''} ${className}`.trim()} role="presentation">
+          <div className="ui-modal__container">
+            <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowBackdropClose ? undefined : (event) => event.preventDefault()} />
+            <Dialog.Content className="ui-modal__dialog" aria-describedby={undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
+              {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
+              {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
+              <div className="ui-modal__content">
+                {children}
+                {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onClick={action.onClick}>{action.label}</button>)}</div> : null}
+              </div>
+            </Dialog.Content>
+          </div>
+        </div>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
 }
