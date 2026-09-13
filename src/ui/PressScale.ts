@@ -1,3 +1,5 @@
+import './ui.css';
+
 const PRESS_SCALE_CLASS = 'ui-press-scale--running';
 
 /** Starts a complete press/release cycle that survives a quick pointer-up. */
