@@ -1,6 +1,7 @@
 .ui-button,
 .ui-icon-button {
   appearance: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -12,7 +13,8 @@
   font-family: var(--ui-font-family);
   text-decoration: none;
   outline: none;
-  transition: background-color 0.2s, color 0.2s, opacity 0.2s;
+  scale: 1;
+  transition: scale 410ms cubic-bezier(.2, 1.30, .3, 1), background-color 0.2s, color 0.2s, opacity 0.2s;
 }
 .ui-button { font-size: var(--ui-font-size-body); font-weight: var(--ui-font-weight-medium); line-height: var(--ui-line-height-body); }
 .ui-button.ui-button { width: auto; height: 2.75rem; min-height: 2.75rem; padding: 0.5rem 1.5rem; border-radius: 1.375rem; text-transform: none; }
@@ -24,13 +26,11 @@
 .ui-icon-button:disabled { cursor: default; opacity: 0.5; pointer-events: none; }
 .ui-button:focus-visible,
 .ui-icon-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-.ui-button.ui-button--primary:active:not(:disabled) { opacity: 0.9; }
-.ui-button.ui-button--secondary:active:not(:disabled),
-.ui-button.ui-button--danger:active:not(:disabled) { opacity: 0.75; }
+.ui-button:active:not(:disabled),
+.ui-icon-button:active:not(:disabled) { scale: .93; transition-duration: 120ms; transition-timing-function: ease-out; }
 .error-card .ui-button.ui-button--primary { color: var(--ui-color-primary-text); border: 0; background-color: var(--ui-color-primary); }
 
 .ui-icon-button.ui-icon-button { width: 3rem; height: 3rem; min-height: 3rem; padding: 0.5rem; border: 0; border-radius: 50%; color: var(--ui-color-surface-text); background: transparent; }
-.ui-icon-button.ui-icon-button:active:not(:disabled) { background-color: var(--ui-color-surface-raised); }
 
 .ui-avatar { display: inline-grid; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; place-items: center; border-radius: 50%; object-fit: cover; }
 .ui-avatar--fallback { color: var(--ui-color-surface-text); background: var(--ui-color-surface-raised); font-family: var(--ui-font-family); font-size: var(--ui-font-size-footnote); font-weight: var(--ui-font-weight-semibold); line-height: var(--ui-line-height-footnote); }
