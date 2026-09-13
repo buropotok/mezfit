@@ -18,11 +18,11 @@ interface CoachShellProps{initData:string;destination:AppDestination;onNavigatio
 export function CoachShell({initData,destination,onNavigationContextChange}:CoachShellProps){
   const[clients,setClients]=useState<CoachClientListItem[]|null>(null);const[selectedClient,setSelectedClient]=useState<CoachClientListItem|null>(null);const[inviteUrl,setInviteUrl]=useState<string|null>(null);const[inviteCopyError,setInviteCopyError]=useState('');const[message,setMessage]=useState('');const[busy,setBusy]=useState(false);
   useEffect(()=>{let cancelled=false;getCoachClients(initData).then(({clients:next})=>{if(!cancelled)setClients(next);}).catch((error:unknown)=>{if(!cancelled)setMessage(error instanceof Error?error.message:'Не удалось загрузить клиентов');});return()=>{cancelled=true;};},[initData]);
-  useEffect(()=>{if(destination!=='clients'&&selectedClient)setSelectedClient(null);},[destination,selectedClient]);
+  useEffect(()=>{if(destination!=='clients'&&destination!=='programs'&&selectedClient)setSelectedClient(null);},[destination,selectedClient]);
   useEffect(()=>{if(!selectedClient){if(destination!=='exercises')onNavigationContextChange(null);return;}onNavigationContextChange({title:displayName(selectedClient),onBack:()=>setSelectedClient(null)});return()=>onNavigationContextChange(null);},[destination,selectedClient,onNavigationContextChange]);
   if(selectedClient)return <ClientWorkspace initData={initData} client={selectedClient} />;
   if(destination==='exercises')return <GlobalExerciseCatalog initData={initData} onNavigationContextChange={onNavigationContextChange} />;
-  if(destination==='programs')return <ProgramsPage initData={initData} />;
+  if(destination==='programs')return <ProgramsPage initData={initData} onSelectClient={(userId)=>{const client=clients?.find(item=>item.user.id===userId);if(client)setSelectedClient(client);}} />;
   if(destination!=='clients'){const placeholder=coachPlaceholderCopy[destination]??{title:'Раздел',text:'Этот раздел будет реализован отдельной задачей.'};return <GlobalPlaceholder title={placeholder.title} text={placeholder.text} />;}
   const closeInvite=()=>{setInviteUrl(null);setInviteCopyError('');};
   const createInvite=async()=>{setBusy(true);setMessage('');setInviteCopyError('');try{const result=await createClientInvite(initData);setInviteUrl(result.telegramUrl);}catch(error){setMessage(error instanceof Error?error.message:'Не удалось создать приглашение');}finally{setBusy(false);}};
