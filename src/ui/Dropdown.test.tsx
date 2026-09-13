@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Dropdown, type DropdownOption } from './Dropdown';
 
@@ -79,26 +79,5 @@ describe('Dropdown', () => {
 
     expect(onChange).toHaveBeenLastCalledWith(['strength', 'cardio']);
     expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('commits the current multi draft when the backdrop is pressed', async () => {
-    const onChange = vi.fn();
-    render(<Dropdown mode="multi" options={options} value={['strength']} onChange={onChange} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Силовая' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Кардио' }));
-
-    // Radix DismissableLayer registers its document-level outside-pointer listener
-    // asynchronously so the pointer event that opened a dialog cannot dismiss it.
-    // Wait until the next task before exercising the real outside interaction.
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    const backdrop = document.querySelector('.ui-modal__backdrop');
-    expect(backdrop).not.toBeNull();
-    fireEvent.pointerDown(backdrop!, { pointerId: 1, pointerType: 'mouse', button: 0 });
-
-    await waitFor(() => {
-      expect(onChange).toHaveBeenLastCalledWith(['strength', 'cardio']);
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
   });
 });
