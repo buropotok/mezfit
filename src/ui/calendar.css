@@ -19,79 +19,16 @@
   font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-body);
 }
-
-.ui-calendar button {
-  -webkit-tap-highlight-color: transparent;
-  scale: 1;
-  transition: scale 410ms cubic-bezier(.2, 1.30, .3, 1);
-}
-
-.ui-calendar button:active:not(:disabled) {
-  scale: .93;
-  transition-duration: 120ms;
-  transition-timing-function: ease-out;
-}
-
+.ui-calendar button { -webkit-tap-highlight-color: transparent; }
 .ui-calendar .rdp-months,
 .ui-calendar .rdp-month,
-.ui-calendar .rdp-month_grid {
-  width: 100%;
-  max-width: 100%;
-}
-
-.ui-calendar .rdp-month_grid {
-  table-layout: fixed;
-  border-collapse: collapse;
-}
-
-.ui-calendar .rdp-weekday {
-  color: var(--ui-color-surface-muted);
-  font-size: var(--ui-font-size-footnote);
-  font-weight: var(--ui-font-weight-medium);
-  line-height: var(--ui-line-height-footnote);
-}
-
-.ui-calendar .rdp-day {
-  text-align: center;
-}
-
-.ui-calendar .rdp-day_button {
-  margin: auto;
-  color: inherit;
-  font: inherit;
-}
-
-.ui-calendar .rdp-selected .rdp-day_button {
-  color: var(--ui-color-primary-text);
-  background: var(--ui-color-primary);
-  border-color: var(--ui-color-primary);
-}
-
-.ui-calendar .rdp-outside {
-  color: var(--ui-color-surface-muted);
-  opacity: .45;
-}
-
-.app-calendar-modal .ui-modal__dialog {
-  width: calc(100vw - 1rem);
-  max-width: 40rem;
-  margin: .5rem auto;
-}
-
-.app-calendar-modal .ui-modal__content {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 1rem;
-}
-
-@media (max-width: 450px) {
-  .app-calendar-modal .ui-modal__dialog {
-    width: calc(100vw - 1rem);
-    max-width: calc(100vw - 1rem);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-calendar button,
-  .ui-calendar button:active:not(:disabled) { transition-duration: 1ms; }
-}
+.ui-calendar .rdp-month_grid { width: 100%; max-width: 100%; }
+.ui-calendar .rdp-month_grid { table-layout: fixed; border-collapse: collapse; }
+.ui-calendar .rdp-weekday { color: var(--ui-color-surface-muted); font-size: var(--ui-font-size-footnote); font-weight: var(--ui-font-weight-medium); line-height: var(--ui-line-height-footnote); }
+.ui-calendar .rdp-day { text-align: center; }
+.ui-calendar .rdp-day_button { margin: auto; color: inherit; font: inherit; }
+.ui-calendar .rdp-selected .rdp-day_button { color: var(--ui-color-primary-text); background: var(--ui-color-primary); border-color: var(--ui-color-primary); }
+.ui-calendar .rdp-outside { color: var(--ui-color-surface-muted); opacity: .45; }
+.app-calendar-modal .ui-modal__dialog { width: calc(100vw - 1rem); max-width: 40rem; margin: .5rem auto; }
+.app-calendar-modal .ui-modal__content { box-sizing: border-box; width: 100%; padding: 1rem; }
+@media (max-width: 450px) { .app-calendar-modal .ui-modal__dialog { width: calc(100vw - 1rem); max-width: calc(100vw - 1rem); } }
