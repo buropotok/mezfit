@@ -18,6 +18,7 @@ type DropdownBaseProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  modalClassName?: string;
   triggerProps?: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'className' | 'disabled' | 'onClick' | 'type' | 'aria-haspopup' | 'aria-expanded'>;
 };
 
@@ -41,7 +42,7 @@ function optionText(option: DropdownOption) {
 }
 
 export function Dropdown(props: DropdownProps) {
-  const { options, title = 'Выберите вариант', placeholder = 'Выбрать', disabled = false, className = '', triggerProps } = props;
+  const { options, title = 'Выберите вариант', placeholder = 'Выбрать', disabled = false, className = '', modalClassName = '', triggerProps } = props;
   const { onPointerDown: onTriggerPointerDown, onKeyDown: onTriggerKeyDown, ...restTriggerProps } = triggerProps ?? {};
   const [isOpen, setOpen] = useState(false);
   const [draft, setDraft] = useState<string[]>([]);
@@ -79,7 +80,7 @@ export function Dropdown(props: DropdownProps) {
 
   return <>
     <button {...restTriggerProps} type="button" className={`ui-dropdown__trigger ${className}`.trim()} onClick={open} onPointerDown={(event) => { onTriggerPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onTriggerKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} disabled={disabled} aria-haspopup="dialog" aria-expanded={isOpen}>{triggerLabel}</button>
-    <Modal isOpen={isOpen} title={title} onClose={close} className="ui-dropdown__modal">
+    <Modal isOpen={isOpen} title={title} onClose={close} className={`ui-dropdown__modal ${modalClassName}`.trim()}>
       <div className="ui-dropdown__options">
         <List>
           {options.map((option) => {
