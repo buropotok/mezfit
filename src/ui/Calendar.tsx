@@ -1,5 +1,6 @@
-import { DayPicker } from '@daypicker/react';
+import { DayPicker, type RootProps } from '@daypicker/react';
 import { ru } from '@daypicker/react/locale';
+import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import '@daypicker/react/style.css';
 import './calendar.css';
 
@@ -7,6 +8,20 @@ export interface CalendarProps {
   value?: Date;
   onChange?: (date: Date | undefined) => void;
   className?: string;
+}
+
+function PressScaleCalendarRoot({ rootRef, onPointerDownCapture, onKeyDownCapture, ...props }: RootProps) {
+  return <div {...props} ref={rootRef} onPointerDownCapture={(event) => {
+    onPointerDownCapture?.(event);
+    if (event.defaultPrevented) return;
+    const target = event.target instanceof Element ? event.target.closest('button') : null;
+    if (target instanceof HTMLButtonElement && !target.disabled) startPressScale(target);
+  }} onKeyDownCapture={(event) => {
+    onKeyDownCapture?.(event);
+    if (event.defaultPrevented || !isPressScaleActivationKey(event.key)) return;
+    const target = event.target instanceof Element ? event.target.closest('button') : null;
+    if (target instanceof HTMLButtonElement && !target.disabled) startPressScale(target);
+  }} />;
 }
 
 export function Calendar({ value, onChange, className = '' }: CalendarProps) {
@@ -18,6 +33,7 @@ export function Calendar({ value, onChange, className = '' }: CalendarProps) {
       selected={value}
       onSelect={onChange}
       showOutsideDays
+      components={{ Root: PressScaleCalendarRoot }}
     />
   );
 }

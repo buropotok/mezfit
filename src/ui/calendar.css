@@ -22,14 +22,6 @@
 
 .ui-calendar button {
   -webkit-tap-highlight-color: transparent;
-  scale: 1;
-  transition: scale 410ms cubic-bezier(.2, 1.30, .3, 1);
-}
-
-.ui-calendar button:active:not(:disabled) {
-  scale: .93;
-  transition-duration: 120ms;
-  transition-timing-function: ease-out;
 }
 
 .ui-calendar .rdp-months,
@@ -89,9 +81,4 @@
     width: calc(100vw - 1rem);
     max-width: calc(100vw - 1rem);
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-calendar button,
-  .ui-calendar button:active:not(:disabled) { transition-duration: 1ms; }
 }
