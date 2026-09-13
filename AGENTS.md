@@ -161,15 +161,23 @@ Test public behavior and important boundaries: domain transformations, API contr
 
 Do not freeze accidental implementation details. For meaningful async/integration work, test malformed input, forbidden access, missing records, network/API failure, stale completion, duplicate actions, and navigation away where relevant.
 
+Before opening a PR, review the test code itself. Confirm that tests remain current and relevant to the latest implementation and do not depend on obsolete or deprecated functionality. This is a source/code review requirement and must be performed before PR creation so stale tests or dependencies are identified before CI.
+
+Do not modify tests merely to make new code pass. Tests may be corrected only when they fail because deprecated functionality was explicitly removed by business logic. Before changing such tests, explain the problem in simple business terms and wait for the user's decision.
+
 ## 25. Required verification
 
-For normal code changes run:
+For normal code changes, the repository verification commands are:
 
 ```bash
 npm run typecheck
 npm test
 npm run build
 ```
+
+The PR workflow is configured to run these commands automatically after a PR is created. Therefore, these command executions are not blockers for creating the PR. Creating a PR does not itself modify the code; it starts the configured CI verification workflow.
+
+`Never claim a check passed unless it actually ran` means exactly that: do not report typecheck, tests, or build as passed unless the corresponding command actually executed successfully. It does not prohibit creating a PR before those CI checks run. A PR with pending or unexecuted required checks must not be represented as ready to merge.
 
 For Worker/D1 changes also verify relevant Wrangler/local migration flows where feasible. Never claim a check passed unless it actually ran; document environmental limitations.
 
@@ -191,9 +199,13 @@ However, if implementation/review reveals a well-founded defect that directly vi
 
 ## 29. Repository workflow
 
-Do not push feature work directly to `main` unless explicitly instructed. Normal flow: branch from current `main`, implement one coherent change, run verification, review the complete diff, open a PR to `main`, and merge only after review.
+Do not push feature work directly to `main` unless explicitly instructed. Normal flow: branch from current `main`, implement one coherent change, review the complete diff, open a PR to `main`, let the configured PR workflow run the required verification, review the resulting checks, and merge only after review and successful required verification.
 
-PR descriptions should state what changed, why, architectural decisions, migration implications, and verification performed.
+After committing and before creating a PR, perform code review against this `AGENTS.md`, the original task, the complete diff, and obvious regressions/errors. If review finds a discrepancy or defect, fix it, commit the correction, and repeat the review cycle. Open the PR only after this pre-PR code review passes.
+
+Before PR creation, also inspect the relevant tests for currency, relevance to the latest code, and obsolete dependencies as required by §24. This pre-PR test review is distinct from executing `npm run typecheck`, `npm test`, and `npm run build`; those commands run automatically in CI after PR creation and are not blockers to opening the PR.
+
+PR descriptions should state what changed, why, architectural decisions, migration implications, pre-PR review performed, and verification actually performed. After CI runs, do not consider the PR ready to merge until required checks have passed.
 
 ## 30. PR review is system review
 
