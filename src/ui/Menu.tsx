@@ -1,5 +1,6 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react';
+import { usePressSpot } from './PressSpot';
 import './menu.css';
 
 export interface MenuProps {
@@ -41,14 +42,21 @@ type MenuItemProps = Omit<RadixMenuItemProps, 'children' | 'className' | 'onSele
   onSelect?: RadixMenuItemProps['onSelect'];
 };
 
-export function MenuItem({ leading, active = false, className = '', children, onSelect, disabled, ...props }: MenuItemProps) {
+export function MenuItem({ leading, active = false, className = '', children, onSelect, onPointerDown, disabled, ...props }: MenuItemProps) {
+  const { pressSpot, startPressSpot } = usePressSpot<HTMLDivElement>(disabled);
+
   return (
     <DropdownMenu.Item
       className={`ui-menu-item${active ? ' ui-menu-item--active' : ''} ${className}`.trim()}
       onSelect={onSelect}
+      onPointerDown={(event) => {
+        onPointerDown?.(event);
+        if (!event.defaultPrevented) startPressSpot(event);
+      }}
       disabled={disabled}
       {...props}
     >
+      {pressSpot}
       {leading ? <span className="ui-menu-item__leading" aria-hidden="true">{leading}</span> : null}
       <span className="ui-menu-item__label">{children}</span>
     </DropdownMenu.Item>
