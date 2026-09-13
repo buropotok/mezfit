@@ -1,5 +1,6 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react';
+import { RippleEffect } from './RippleEffect';
 import './menu.css';
 
 export interface MenuProps {
@@ -41,13 +42,15 @@ type MenuItemProps = Omit<RadixMenuItemProps, 'children' | 'className' | 'onSele
   onSelect?: RadixMenuItemProps['onSelect'];
 };
 
-export function MenuItem({ leading, active = false, className = '', children, onSelect, ...props }: MenuItemProps) {
+export function MenuItem({ leading, active = false, className = '', children, onSelect, disabled, ...props }: MenuItemProps) {
   return (
     <DropdownMenu.Item
       className={`ui-menu-item${active ? ' ui-menu-item--active' : ''} ${className}`.trim()}
       onSelect={onSelect}
+      disabled={disabled}
       {...props}
     >
+      {!disabled ? <RippleEffect /> : null}
       {leading ? <span className="ui-menu-item__leading" aria-hidden="true">{leading}</span> : null}
       <span className="ui-menu-item__label">{children}</span>
     </DropdownMenu.Item>
