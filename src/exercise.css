@@ -28,9 +28,9 @@
 }
 .modal-title {
   margin: 0;
-  font-size: 20px;
-  line-height: 24px;
-  font-weight: 600;
+  font-size: var(--ui-font-size-headline);
+  line-height: var(--ui-line-height-headline);
+  font-weight: var(--ui-font-weight-medium);
 }
 .icon-button {
   width: 44px;
@@ -70,15 +70,15 @@
   cursor: pointer;
 }
 .exercise-media-slot > span { font-size: 28px; line-height: 30px; }
-.exercise-media-slot small { font-size: 10px; line-height: 12px; }
+.exercise-media-slot small { font-size: var(--ui-font-size-caption); line-height: var(--ui-line-height-caption); }
 .exercise-create-text-fields { display: grid; gap: var(--space-2); }
 .compact-field-label {
   display: grid;
   gap: var(--space-1);
   color: var(--color-text);
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 600;
+  font-size: var(--ui-font-size-footnote);
+  line-height: var(--ui-line-height-footnote);
+  font-weight: var(--ui-font-weight-semibold);
 }
 .exercise-create-text-fields .text-input { height: 36px; min-height: 36px; }
 .exercise-create-text-fields textarea.text-input {
@@ -90,8 +90,8 @@
 .media-note {
   margin: var(--space-2) 0 0;
   color: var(--color-text-secondary);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--ui-font-size-footnote);
+  line-height: var(--ui-line-height-footnote);
 }
 
 .selector-button {
@@ -106,6 +106,9 @@
   border-radius: var(--radius-control);
   color: var(--color-text);
   background: var(--color-input);
+  font-size: var(--ui-font-size-body);
+  line-height: var(--ui-line-height-body);
+  font-weight: var(--ui-font-weight-medium);
   text-align: left;
   cursor: pointer;
 }
@@ -124,9 +127,9 @@
   border-radius: var(--radius-surface);
   color: var(--color-text-secondary);
   background: var(--color-surface-2);
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
+  font-size: var(--ui-font-size-caption);
+  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-font-weight-medium);
   cursor: pointer;
 }
 .selection-chip.selected {
@@ -148,9 +151,9 @@
   padding: 0 var(--space-4);
   border: 0;
   border-radius: var(--radius-control);
-  font-size: 15px;
-  line-height: 20px;
-  font-weight: 500;
+  font-size: var(--ui-font-size-body);
+  line-height: var(--ui-line-height-body);
+  font-weight: var(--ui-font-weight-medium);
   cursor: pointer;
 }
 .text-button { color: var(--color-text-secondary); background: transparent; }
@@ -173,6 +176,8 @@
   border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
   color: var(--color-text);
   background: transparent;
+  font-size: var(--ui-font-size-body);
+  line-height: var(--ui-line-height-body);
   text-align: left;
   cursor: pointer;
 }
@@ -207,7 +212,7 @@
   justify-content: space-between;
   gap: var(--space-3);
 }
-.exercise-catalog-header h2 { margin: 0; font-size: 20px; line-height: 24px; }
+.exercise-catalog-header h2 { margin: 0; font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); font-weight: var(--ui-font-weight-regular); }
 .exercise-catalog-search .text-input { width: 100%; height: var(--control-h); }
 .exercise-catalog-directory {
   position: relative;
@@ -253,8 +258,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.exercise-row-main strong { font-size: 14px; line-height: 18px; }
-.exercise-row-main small { color: var(--color-text-secondary); font-size: 11px; line-height: 14px; }
+.exercise-row-main strong { font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); font-weight: var(--ui-font-weight-semibold); }
+.exercise-row-main small { color: var(--color-text-secondary); font-size: var(--ui-font-size-footnote); line-height: var(--ui-line-height-footnote); }
 .scope-badge {
   min-width: 44px;
   height: var(--chip-h);
@@ -266,9 +271,9 @@
   border-radius: var(--radius-surface);
   color: var(--color-text-secondary);
   background: var(--color-surface-2);
-  font-size: 10px;
-  line-height: 12px;
-  font-weight: 600;
+  font-size: var(--ui-font-size-caption);
+  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-font-weight-medium);
 }
 .scope-global { color: #A9B8C8; }
 .scope-coach { color: #B6A7FF; }
