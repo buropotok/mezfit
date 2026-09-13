@@ -13,3 +13,7 @@ export function startPressScale(element: HTMLElement) {
   );
   pressScaleAnimations.set(element, animation);
 }
+
+export function isPressScaleActivationKey(key: string) {
+  return key === 'Enter' || key === ' ';
+}
