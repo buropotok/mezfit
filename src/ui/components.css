@@ -32,4 +32,4 @@
 @keyframes ui-modal-enter{from{transform:translate3d(0,-1rem,0);opacity:0}to{transform:translate3d(0,0,0);opacity:1}}
 @media(hover:hover){.ui-list-item:not(.ui-list-item--static):hover:not(:disabled){background:var(--ui-color-surface-raised)}.ui-fab:hover:not(:disabled){opacity:.9}.ui-tabs__trigger:hover:not(:disabled){opacity:.85}.ui-modal__close:hover{background:var(--ui-color-surface-raised)}}
 @media(max-width:450px){.ui-modal__dialog{max-width:calc(100vw - 3rem)}}
-@media(prefers-reduced-motion:reduce){.ui-fab,.ui-tabs__trigger,.ui-modal__close{transition-duration:1ms}.ui-tabs__active-indicator{transition:none}.ui-modal__dialog{animation:none}}
+@media(prefers-reduced-motion:reduce){.ui-fab,.ui-fab:active:not(:disabled),.ui-tabs__trigger,.ui-tabs__trigger:active:not(:disabled),.ui-modal__close,.ui-modal__close:active{transition-duration:1ms}.ui-tabs__active-indicator{transition:none}.ui-modal__dialog{animation:none}}
