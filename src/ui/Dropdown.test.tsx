@@ -83,7 +83,7 @@ describe('Dropdown', () => {
 
   it('commits the current multi draft when the backdrop is pressed', async () => {
     const onChange = vi.fn();
-    const { container } = render(<Dropdown mode="multi" options={options} value={['strength']} onChange={onChange} />);
+    render(<Dropdown mode="multi" options={options} value={['strength']} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Силовая' }));
     fireEvent.click(screen.getByRole('button', { name: 'Кардио' }));
@@ -100,7 +100,5 @@ describe('Dropdown', () => {
       expect(onChange).toHaveBeenLastCalledWith(['strength', 'cardio']);
       expect(screen.queryByRole('dialog')).toBeNull();
     });
-
-    expect(container).toBeDefined();
   });
 });
