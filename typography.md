@@ -16,9 +16,9 @@ font-family: var(--ui-font-family);
 
 | Role | Token | Size / line-height | Default weight | Intended use |
 | --- | --- | --- | --- | --- |
-| Large title | `--ui-font-size-large-title` / `--ui-line-height-large-title` | 24 / 28 px | 600 | Primary screen title |
-| Title | `--ui-font-size-title` / `--ui-line-height-title` | 20 / 24 px | 600 | Large content or section heading |
-| Headline | `--ui-font-size-headline` / `--ui-line-height-headline` | 17 / 22 px | 600 | Important heading, including every modal title |
+| Large title | `--ui-font-size-large-title` / `--ui-line-height-large-title` | 24 / 28 px | 400 | Primary screen title |
+| Title | `--ui-font-size-title` / `--ui-line-height-title` | 20 / 24 px | 400 | Large content or section heading |
+| Headline | `--ui-font-size-headline` / `--ui-line-height-headline` | 17 / 22 px | 500 | Important heading, including every modal title |
 | Body | `--ui-font-size-body` / `--ui-line-height-body` | 15 / 20 px | 400 | Normal UI text, inputs, selects, textareas |
 | Footnote | `--ui-font-size-footnote` / `--ui-line-height-footnote` | 13 / 18 px | 400 | Secondary text, metadata, field labels |
 | Caption | `--ui-font-size-caption` / `--ui-line-height-caption` | 12 / 16 px | 400 | Small service/supporting information |
@@ -40,10 +40,10 @@ All text-bearing UI must map to the shared type scale. The standard mapping is:
 
 | UI element | Typography |
 | --- | --- |
-| Main screen title | Large title — 24/28, semibold 600 |
-| Large content / section heading | Title — 20/24, semibold 600 |
-| Modal title | Headline — 17/22, semibold 600 |
-| Important compact heading / app-bar heading | Headline — 17/22, semibold 600 |
+| Main screen title | Large title — 24/28, regular 400 |
+| Large content / section heading | Title — 20/24, regular 400 |
+| Modal title | Headline — 17/22, medium 500 |
+| Important compact heading / app-bar heading | Headline — 17/22, medium 500 |
 | Main text | Body — 15/20, regular 400 |
 | Input / textarea / select / search text | Body — 15/20, regular 400 |
 | Button / interactive text | Body — 15/20, medium 500 |
@@ -54,13 +54,13 @@ All text-bearing UI must map to the shared type scale. The standard mapping is:
 
 ### Modal rule
 
-A modal title is always **Headline — 17/22, semibold 600**, not Title 20/24.
+A modal title is always **Headline — 17/22, medium 500**, not Title 20/24.
 
 Inside a normal modal, use this hierarchy:
 
 | Modal element | Typography |
 | --- | --- |
-| Title | Headline — 17/22, 600 |
+| Title | Headline — 17/22, 500 |
 | Main content | Body — 15/20, 400 |
 | Field/control text | Body — 15/20, 400 |
 | Buttons | Body — 15/20, 500 |
