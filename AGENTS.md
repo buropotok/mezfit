@@ -2,6 +2,8 @@
 
 Mandatory rules for all changes in `buropotok/mezfit`. Working behavior is necessary but not sufficient: changes must preserve domain boundaries, React ownership, typed contracts, backend authorization, D1 integrity, Telegram Mini App compatibility, and testability.
 
+Before any UI work, **read `typography.md` in the repository root and follow it as the authoritative typography contract**. This is mandatory for new UI and for changes to existing screens/components.
+
 ## 1. Preserve architecture before adding behavior
 
 Before editing, identify the owning domain/component, its public inputs/outputs, callers, consumers, lifecycle, API contracts, tests, and persistence effects. Trace the actual runtime path before creating abstractions. Prefer extending the owner over cross-cutting patches. Do not bypass API, authorization, state, or persistence boundaries for convenience.
@@ -132,6 +134,8 @@ Drag state, ordering, and persistence need explicit ownership. Visual and persis
 Use existing primitives/patterns before parallel implementations. Radix UI, dnd-kit, DayPicker, and other libraries are implementation tools, not domain owners. Do not couple domain logic to third-party private DOM.
 
 CSS must have clear component/surface ownership. Do not use incidental selectors or CSS classes as cross-component control/state channels. Verify Mini App widths, safe areas, and keyboard-sensitive layouts.
+
+Typography is governed by root `typography.md`. New text-bearing UI must use that shared system. When working on a screen/component, inspect its existing typography; if affected elements use legacy/custom typography, migrate those affected elements to the semantic roles in `typography.md` as part of the same change unless the correct role requires an explicit product/design decision.
 
 ## 20. Import-time code and globals
 
