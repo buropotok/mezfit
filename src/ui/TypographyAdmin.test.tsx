@@ -1,10 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ComponentTypographyAdmin, TypographyRoleAdmin } from './TypographyAdmin';
+import { ComponentTypographySettings, TypographyRoleAdmin, defaultTypographyValues, roleDefinitions, type TypographyAssignments, type TypographySlot } from './TypographyAdmin';
 
 describe('UI Kit typography admin', () => {
   it('labels every shared typography role and exposes copy/reset controls', () => {
-    const html = renderToStaticMarkup(<TypographyRoleAdmin />);
+    const values = defaultTypographyValues();
+    const html = renderToStaticMarkup(<TypographyRoleAdmin values={values} onChange={() => undefined} />);
     for (const label of ['Large title', 'Title', 'Headline', 'Body', 'Footnote', 'Caption']) expect(html).toContain(label);
     expect(html).toContain('Main screen title');
     expect(html).toContain('Modal title / important compact heading');
@@ -12,10 +13,22 @@ describe('UI Kit typography admin', () => {
     expect(html.match(/Reset/g)?.length).toBe(6);
   });
 
-  it('offers per-element typography editing', () => {
-    const html = renderToStaticMarkup(<ComponentTypographyAdmin />);
-    for (const label of ['Button', 'Search input', 'Tab', 'Menu item', 'List primary', 'List secondary', 'Modal title', 'Section title']) expect(html).toContain(label);
-    expect(html).toContain('Current semantic role: body');
+  it('offers only shared roles for semantic slots and renders effective copyable CSS', () => {
+    const slots: TypographySlot[] = [
+      { id: 'title', label: 'Заголовок', defaultRole: 'headline', selector: '.ui-modal__title' },
+      { id: 'body', label: 'Основной текст', defaultRole: 'body', selector: '.ui-modal__content .ui-text' },
+      { id: 'buttons', label: 'Кнопки', defaultRole: 'body', selector: '.ui-modal__action', weightOverride: 500 },
+    ];
+    const assignments: TypographyAssignments = { title: 'headline', body: 'body', buttons: 'body' };
+    const html = renderToStaticMarkup(<ComponentTypographySettings slots={slots} assignments={assignments} values={defaultTypographyValues()} onChange={() => undefined} />);
+    expect(html).toContain('Typography settings');
+    for (const slot of slots) expect(html).toContain(slot.label);
+    for (const role of roleDefinitions) expect(html).toContain(`value="${role.role}"`);
+    expect(html).not.toContain('type="number"');
+    expect(html).toContain('.ui-modal__title');
+    expect(html).toContain('.ui-modal__content .ui-text');
+    expect(html).toContain('font-size: 17px');
+    expect(html).toContain('font-weight: 500');
     expect(html).toContain('Copy CSS');
     expect(html).toContain('Reset');
   });
