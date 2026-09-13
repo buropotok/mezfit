@@ -1,6 +1,6 @@
 .navigation-shell { width: min(720px, 100%); min-height: 100dvh; padding-top: 0; }
 .navigation-appbar { height: var(--appbar-h); min-height: var(--appbar-h); display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: var(--space-1); margin: 0 calc(var(--page-pad-x) * -1) var(--space-3); padding: 0 var(--page-pad-x); color: var(--theme-bg-text); background: var(--theme-bg); border-bottom: 1px solid color-mix(in srgb, var(--theme-bg-muted) 22%, transparent); }
-.navigation-appbar h1 { margin: 0; overflow: hidden; color: inherit; font-size: 16px; line-height: 20px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.navigation-appbar h1 { margin: 0; overflow: hidden; color: inherit; font-size: var(--ui-font-size-headline); line-height: var(--ui-line-height-headline); font-weight: var(--ui-font-weight-medium); text-overflow: ellipsis; white-space: nowrap; }
 .navigation-icon-button { width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--radius-control); color: var(--theme-bg-text); background: transparent; cursor: pointer; }
 .navigation-icon-button:active { background: color-mix(in srgb, var(--theme-bg-text) 10%, transparent); }
 .navigation-appbar-spacer { width: 44px; height: 44px; }
@@ -9,11 +9,11 @@
 .navigation-icon-button .navigation-apk-icon { width: 22px; height: 22px; flex-basis: 22px; }
 .navigation-menu-anchor { width: 44px; height: 44px; }
 .navigation-main-menu .drawer-account { display: flex; align-items: center; width: 100%; min-height: 48px; padding: 0.5rem 1rem; color: var(--ui-color-text); }
-.navigation-main-menu .drawer-avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; margin-inline: 0.375rem 1.125rem; border-radius: 50%; color: #fff; background: var(--color-accent); font-size: 14px; font-weight: 600; }
+.navigation-main-menu .drawer-avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; margin-inline: 0.375rem 1.125rem; border-radius: 50%; color: #fff; background: var(--color-accent); font-size: var(--ui-font-size-footnote); line-height: var(--ui-line-height-footnote); font-weight: var(--ui-font-weight-semibold); }
 .navigation-main-menu .drawer-account-copy { min-width: 0; display: grid; }
 .navigation-main-menu .drawer-account-copy strong, .navigation-main-menu .drawer-account-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.navigation-main-menu .drawer-account-copy strong { margin: 0; padding-top: 0.1875rem; font-size: 14px; line-height: 1; font-weight: 600; }
-.navigation-main-menu .drawer-account-copy small { margin-top: 4px; color: var(--ui-color-text-muted); font-size: 12px; line-height: 16px; }
+.navigation-main-menu .drawer-account-copy strong { margin: 0; padding-top: 0.1875rem; font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); font-weight: var(--ui-font-weight-semibold); }
+.navigation-main-menu .drawer-account-copy small { margin-top: 4px; color: var(--ui-color-text-muted); font-size: var(--ui-font-size-footnote); line-height: var(--ui-line-height-footnote); }
 .navigation-main-menu-item { display: contents; }
 .global-placeholder { width: 100%; padding: var(--surface-pad); border: 1px solid var(--theme-border); border-radius: var(--radius-surface); color: var(--theme-surface-text); background: var(--theme-surface); }
 .global-placeholder h2 { margin-bottom: var(--space-2); }
