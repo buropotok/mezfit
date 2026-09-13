@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Modal } from './components';
 
 describe('Modal alert variant', () => {
-  it('renders Telegram-style actions without the generic close button by default', () => {
+  it('renders alert semantics and Telegram-style actions without the generic close button', () => {
     const onClose = vi.fn();
     const onConfirm = vi.fn();
     render(
@@ -19,10 +19,18 @@ describe('Modal alert variant', () => {
       </Modal>
     );
 
-    expect(screen.getByText('Удалить тренировку?')).toBeTruthy();
+    expect(screen.getByRole('alertdialog', { name: 'Удалить тренировку?' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Закрыть' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Удалить' }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('does not dismiss an alert dialog with Escape', () => {
+    const onClose = vi.fn();
+    render(<Modal isOpen variant="alert" title="Подтверждение" onClose={onClose}>Проверьте данные.</Modal>);
+
+    fireEvent.keyDown(screen.getByRole('alertdialog'), { key: 'Escape' });
     expect(onClose).not.toHaveBeenCalled();
   });
 
