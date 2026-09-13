@@ -14,9 +14,10 @@
 .ui-kit-admin-preview > span, .ui-kit-admin-preview > .ui-button, .ui-kit-admin-preview > .ui-kit-typography-demo-input { font-family: inherit; font-size: inherit; line-height: inherit; font-weight: inherit; }
 .ui-kit-admin-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ui-space-2); }
 .ui-kit-admin-field { display: grid; gap: var(--ui-space-1); min-width: 0; }
+.ui-kit-admin-field-label { font-weight: var(--ui-font-weight-semibold); }
 .ui-kit-admin-field input, .ui-kit-admin-field select, .ui-kit-typography-demo-input { width: 100%; min-width: 0; height: 40px; padding: 0 var(--ui-space-2); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-control); color: var(--ui-color-surface-text); background: var(--ui-color-surface); font-family: var(--ui-font-family); font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); font-weight: var(--ui-font-weight-regular); }
 .ui-kit-admin-element-select { max-width: 20rem; }
-.ui-kit-admin-code { overflow-x: auto; margin: 0; padding: var(--ui-space-3); border-radius: var(--ui-radius-control); background: var(--ui-color-canvas); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--ui-font-size-caption); line-height: var(--ui-line-height-caption); }
+.ui-kit-admin-code { overflow-x: auto; margin: 0; padding: var(--ui-space-3); border-radius: var(--ui-radius-control); background: var(--ui-color-canvas); font-family: var(--ui-font-family); font-size: var(--ui-font-size-caption); line-height: var(--ui-line-height-caption); }
 .ui-kit-admin-actions { display: flex; flex-wrap: wrap; gap: var(--ui-space-2); }
 .ui-kit-typography-demo-control { border: 0; color: inherit; background: transparent; font: inherit; }
 @media (max-width: 520px) { .ui-kit-admin-fields { grid-template-columns: 1fr; } }
