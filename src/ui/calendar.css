@@ -92,5 +92,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-calendar button { transition-duration: 1ms; }
+  .ui-calendar button,
+  .ui-calendar button:active:not(:disabled) { transition-duration: 1ms; }
 }
