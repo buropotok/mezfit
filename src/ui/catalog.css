@@ -1,6 +1,6 @@
-.ui-kit-page { width: min(48rem, 100%); margin: 0 auto; padding: var(--ui-space-6); color: var(--ui-color-canvas-text); font-family: var(--ui-font-family); }
+.ui-kit-page { width: min(48rem, 100%); margin: 0 auto; padding: var(--ui-space-6); color: var(--ui-color-canvas-text); font-family: var(--ui-font-family); font-size: var(--ui-font-size-body); font-weight: var(--ui-font-weight-regular); line-height: var(--ui-line-height-body); }
 .ui-kit-header { display: grid; gap: var(--ui-space-2); margin-bottom: var(--ui-space-6); }
-.ui-kit-header h1 { margin: 0; font-family: inherit; }
+.ui-kit-header h1 { margin: 0; font-family: inherit; font-size: var(--ui-font-size-large-title); font-weight: var(--ui-font-weight-semibold); line-height: var(--ui-line-height-large-title); }
 .ui-kit-section { padding: var(--ui-space-4); margin-bottom: var(--ui-space-4); }
 .ui-kit-stack { display: grid; gap: var(--ui-space-2); }
 .ui-kit-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-3); }
