@@ -2,7 +2,7 @@ import { Children, isValidElement, useCallback, useEffect, useRef, useState, typ
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import { usePressSpot } from './PressSpot';
-import { startPressScale } from './PressScale';
+import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import './components.css';
 
 export function List({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -39,9 +39,9 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
 
 type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; children: ReactNode };
 
-export function FloatingActionButton({ label, isShown = true, className = '', type = 'button', children, disabled, onClick, onPointerDown, ...props }: FloatingActionButtonProps) {
+export function FloatingActionButton({ label, isShown = true, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   return (
-    <button {...props} type={type} aria-label={label} aria-hidden={!isShown || undefined} tabIndex={isShown ? 0 : -1} disabled={disabled} onClick={isShown ? onClick : undefined} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }} className={`ui-fab${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}>{children}</button>
+    <button {...props} type={type} aria-label={label} aria-hidden={!isShown || undefined} tabIndex={isShown ? 0 : -1} disabled={disabled} onClick={isShown ? onClick : undefined} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} className={`ui-fab${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}>{children}</button>
   );
 }
 
@@ -102,7 +102,7 @@ export function TabsList({ className = '', children, style, ...props }: TabsList
   );
 }
 
-export function TabsTrigger({ className = '', onPointerDown, disabled, ...props }: TabsTriggerProps) { return <RadixTabs.Trigger className={`ui-tabs__trigger ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} {...props} />; }
+export function TabsTrigger({ className = '', onPointerDown, onKeyDown, disabled, ...props }: TabsTriggerProps) { return <RadixTabs.Trigger className={`ui-tabs__trigger ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />; }
 export function TabsContent({ className = '', ...props }: TabsContentProps) { return <RadixTabs.Content className={`ui-tabs__content ${className}`.trim()} {...props} />; }
 
 export type ModalAction = {
@@ -134,6 +134,9 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = '�
   const showCloseButton = hasCloseButton ?? (isAlert ? !hasAlertDismissal : true);
   const allowBackdropClose = closeOnBackdrop ?? !isAlert;
   const blockEscape = isAlert && (hasEnabledAction || allowBackdropClose || showCloseButton);
+  const startKeyboardScale = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget);
+  };
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -142,11 +145,11 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = '�
           <div className="ui-modal__container">
             <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowBackdropClose ? undefined : (event) => event.preventDefault()} />
             <Dialog.Content role={isAlert ? 'alertdialog' : undefined} className="ui-modal__dialog" aria-describedby={undefined} onEscapeKeyDown={blockEscape ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
-              {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
+              {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
               {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
               <div className="ui-modal__content">
                 {isAlert ? <Dialog.Description asChild><div className="ui-modal__description">{children}</div></Dialog.Description> : children}
-                {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onPointerDown={(event) => { if (!action.disabled) startPressScale(event.currentTarget); }} onClick={action.onClick}>{action.label}</button>)}</div> : null}
+                {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onPointerDown={(event) => { if (!action.disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { if (!action.disabled) startKeyboardScale(event); }} onClick={action.onClick}>{action.label}</button>)}</div> : null}
               </div>
             </Dialog.Content>
           </div>
