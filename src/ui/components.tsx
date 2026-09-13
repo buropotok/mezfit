@@ -1,6 +1,7 @@
 import { Children, isValidElement, useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
+import { RippleEffect } from './RippleEffect';
 import './components.css';
 
 export function List({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -19,6 +20,7 @@ type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title'> & {
 export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, interactive = true, className = '', type = 'button', ...props }: ListItemProps) {
   const leadingClassName = leadingShape === 'square' ? ' ui-list-item__leading--square' : '';
   const content = <>
+    {interactive && !props.disabled ? <RippleEffect /> : null}
     {leading ? <span className={`ui-list-item__leading${leadingClassName}`} aria-hidden="true">{leading}</span> : null}
     <span className="ui-list-item__content">
       <span className="ui-list-item__title">{title}</span>
