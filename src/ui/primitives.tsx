@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
 import './ui.css';
+import './typography.css';
 
-type TextVariant = 'body' | 'caption' | 'title';
+type TextVariant = 'body' | 'caption' | 'footnote' | 'headline' | 'title' | 'large-title';
 type TextTone = 'default' | 'muted';
 
 export function Text({ variant = 'body', tone = 'default', className = '', children, ...props }: HTMLAttributes<HTMLSpanElement> & { variant?: TextVariant; tone?: TextTone }) {

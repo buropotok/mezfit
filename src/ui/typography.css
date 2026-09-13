@@ -1,0 +1,7 @@
+.ui-text { font-family: var(--ui-font-family); font-weight: var(--ui-font-weight-regular); }
+.ui-text--caption { font-size: var(--ui-font-size-caption); line-height: var(--ui-line-height-caption); }
+.ui-text--footnote { font-size: var(--ui-font-size-footnote); line-height: var(--ui-line-height-footnote); }
+.ui-text--body { font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); }
+.ui-text--headline { font-size: var(--ui-font-size-headline); line-height: var(--ui-line-height-headline); font-weight: var(--ui-font-weight-semibold); }
+.ui-text--title { font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); font-weight: var(--ui-font-weight-semibold); }
+.ui-text--large-title { font-size: var(--ui-font-size-large-title); line-height: var(--ui-line-height-large-title); font-weight: var(--ui-font-weight-semibold); }

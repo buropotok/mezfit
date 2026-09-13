@@ -1,6 +1,6 @@
-.ui-kit-page { width: min(48rem, 100%); margin: 0 auto; padding: var(--ui-space-6); color: var(--ui-color-canvas-text); }
+.ui-kit-page { width: min(48rem, 100%); margin: 0 auto; padding: var(--ui-space-6); color: var(--ui-color-canvas-text); font-family: var(--ui-font-family); }
 .ui-kit-header { display: grid; gap: var(--ui-space-2); margin-bottom: var(--ui-space-6); }
-.ui-kit-header h1 { margin: 0; }
+.ui-kit-header h1 { margin: 0; font-family: inherit; }
 .ui-kit-section { padding: var(--ui-space-4); margin-bottom: var(--ui-space-4); }
 .ui-kit-stack { display: grid; gap: var(--ui-space-2); }
 .ui-kit-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-3); }
