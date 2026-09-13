@@ -24,5 +24,5 @@ export function typographyValueStyle(role: TypographyRole, values: TypographyVal
 export function TypographySpecimen({ kind, slots, values, children }: { kind: Kind; slots: readonly TypographySlot[]; values: TypographyValues; children: ReactNode }) {
   const defaults = Object.fromEntries(slots.map((slot) => [slot.id, slot.defaultRole])) as TypographyAssignments;
   const [assignments, setAssignments] = useState<TypographyAssignments>(defaults);
-  return <div className={`ui-kit-type-scope ui-kit-type-scope--${kind}`} style={typographyVariables(slots, assignments, values)}>{children}<ComponentTypographySettings slots={slots} assignments={assignments} values={values} onChange={setAssignments} /></div>;
+  return <div className="ui-kit-type-scope"><div className={`ui-kit-type-specimen ui-kit-type-specimen--${kind}`} style={typographyVariables(slots, assignments, values)}>{children}</div><ComponentTypographySettings slots={slots} assignments={assignments} values={values} onChange={setAssignments} /></div>;
 }
