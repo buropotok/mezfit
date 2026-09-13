@@ -33,19 +33,32 @@ function roleDefaults(role: Role, weight?: number): TypographyValue {
   return { size: definition.size, lineHeight: definition.lineHeight, weight: weight ?? definition.weight };
 }
 function cssFor(value: TypographyValue) { return `font-family: var(--ui-font-family);\nfont-size: ${value.size}px;\nline-height: ${value.lineHeight}px;\nfont-weight: ${value.weight};`; }
-async function copyText(value: string) { await navigator.clipboard.writeText(value); }
 
 function NumberField({ label, value, onChange, min, max }: { label: string; value: number; onChange: (value: number) => void; min: number; max: number }) {
-  return <label className="ui-kit-admin-field"><Text variant="footnote">{label}</Text><input type="number" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.currentTarget.value))} /></label>;
+  return <label className="ui-kit-admin-field"><Text variant="footnote" className="ui-kit-admin-field-label">{label}</Text><input type="number" min={min} max={max} value={value} onChange={(event) => {
+    const next = event.currentTarget.valueAsNumber;
+    if (!Number.isFinite(next)) return;
+    onChange(Math.min(max, Math.max(min, next)));
+  }} /></label>;
 }
 function Editor({ value, onChange, onReset, children }: { value: TypographyValue; onChange: (value: TypographyValue) => void; onReset: () => void; children: ReactNode }) {
   const css = cssFor(value);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const style = { fontFamily: 'var(--ui-font-family)', fontSize: `${value.size}px`, lineHeight: `${value.lineHeight}px`, fontWeight: value.weight } satisfies CSSProperties;
+  async function handleCopy() {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(css);
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('error');
+    }
+  }
   return <div className="ui-kit-admin-editor"><div className="ui-kit-admin-preview" style={style}>{children}</div><div className="ui-kit-admin-fields">
     <NumberField label="Size" value={value.size} min={12} max={48} onChange={(size) => onChange({ ...value, size })} />
     <NumberField label="Line height" value={value.lineHeight} min={12} max={56} onChange={(lineHeight) => onChange({ ...value, lineHeight })} />
-    <label className="ui-kit-admin-field"><Text variant="footnote">Weight</Text><select value={value.weight} onChange={(event) => onChange({ ...value, weight: Number(event.currentTarget.value) })}><option value="400">Regular · 400</option><option value="500">Medium · 500</option><option value="600">Semibold · 600</option><option value="700">Bold · 700</option></select></label>
-  </div><pre className="ui-kit-admin-code"><code>{css}</code></pre><div className="ui-kit-admin-actions"><Button variant="secondary" onClick={() => void copyText(css)}>Copy CSS</Button><Button variant="secondary" onClick={onReset}>Reset</Button></div></div>;
+    <label className="ui-kit-admin-field"><Text variant="footnote" className="ui-kit-admin-field-label">Weight</Text><select value={value.weight} onChange={(event) => onChange({ ...value, weight: Number(event.currentTarget.value) })}><option value="400">Regular · 400</option><option value="500">Medium · 500</option><option value="600">Semibold · 600</option><option value="700">Bold · 700</option></select></label>
+  </div><pre className="ui-kit-admin-code"><code>{css}</code></pre><div className="ui-kit-admin-actions"><Button variant="secondary" onClick={() => void handleCopy()}>Copy CSS</Button><Button variant="secondary" onClick={() => { setCopyStatus('idle'); onReset(); }}>Reset</Button></div>{copyStatus !== 'idle' && <Text variant="caption" tone={copyStatus === 'error' ? 'default' : 'muted'} role="status">{copyStatus === 'copied' ? 'CSS copied.' : 'Could not copy CSS. Select the CSS above and copy it manually.'}</Text>}</div>;
 }
 
 export function TypographyRoleAdmin() {
@@ -60,5 +73,5 @@ export function ComponentTypographyAdmin() {
   const defaults = roleDefaults(selected.role, selected.weight);
   const [overrides, setOverrides] = useState<Partial<Record<(typeof elementDefinitions)[number]['id'], TypographyValue>>>({});
   const value = overrides[selected.id] ?? defaults;
-  return <div className="ui-kit-admin-card"><label className="ui-kit-admin-field ui-kit-admin-element-select"><Text variant="footnote">UI Kit element</Text><select value={selectedId} onChange={(event) => setSelectedId(event.currentTarget.value as typeof selectedId)}>{elementDefinitions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label><Text variant="caption" tone="muted">Current semantic role: {selected.role}</Text><Editor value={value} onChange={(next) => setOverrides((current) => ({ ...current, [selected.id]: next }))} onReset={() => setOverrides((current) => { const next = { ...current }; delete next[selected.id]; return next; })}>{selected.preview}</Editor></div>;
+  return <div className="ui-kit-admin-card"><label className="ui-kit-admin-field ui-kit-admin-element-select"><Text variant="footnote" className="ui-kit-admin-field-label">UI Kit element</Text><select value={selectedId} onChange={(event) => setSelectedId(event.currentTarget.value as typeof selectedId)}>{elementDefinitions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label><Text variant="caption" tone="muted">Current semantic role: {selected.role}</Text><Editor value={value} onChange={(next) => setOverrides((current) => ({ ...current, [selected.id]: next }))} onReset={() => setOverrides((current) => { const next = { ...current }; delete next[selected.id]; return next; })}>{selected.preview}</Editor></div>;
 }
