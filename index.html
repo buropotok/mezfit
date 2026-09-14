@@ -20,11 +20,36 @@
         background: #101114;
         color: #f5f5f5;
         font-family: var(--ui-font-family, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+        word-break: break-word;
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__title {
+        margin: 0 0 12px;
+        font-size: var(--ui-font-size-large-title, 24px);
+        line-height: var(--ui-line-height-large-title, 28px);
+        font-weight: var(--ui-font-weight-regular, 400);
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__summary {
+        margin: 0 0 12px;
         font-size: var(--ui-font-size-body, 15px);
         line-height: var(--ui-line-height-body, 20px);
         font-weight: var(--ui-font-weight-regular, 400);
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__meta {
+        margin: 0;
+        font-size: var(--ui-font-size-footnote, 13px);
+        line-height: var(--ui-line-height-footnote, 18px);
+        font-weight: var(--ui-font-weight-regular, 400);
         white-space: pre-wrap;
-        word-break: break-word;
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__hint {
+        margin: 16px 0 0;
+        font-size: var(--ui-font-size-caption, 12px);
+        line-height: var(--ui-line-height-caption, 16px);
+        font-weight: var(--ui-font-weight-regular, 400);
       }
 
       #mezfit-boot-diagnostics button {
@@ -36,7 +61,9 @@
         border-radius: 8px;
         background: #f5f5f5;
         color: #101114;
-        font: inherit;
+        font-family: inherit;
+        font-size: var(--ui-font-size-body, 15px);
+        line-height: var(--ui-line-height-body, 20px);
         font-weight: var(--ui-font-weight-medium, 500);
       }
     </style>
@@ -100,23 +127,42 @@
             panel.setAttribute('role', 'alert');
             document.documentElement.appendChild(panel);
           }
+          while (panel.firstChild) panel.removeChild(panel.firstChild);
 
           var telegram = telegramSnapshot();
           var safeDetails = sanitizeDetails(details) || {};
-          var detailText = safeDetails.errorName ? '\nОшибка: ' + safeDetails.errorName : '';
-          if (typeof safeDetails.timeoutMs === 'number') detailText += '\nТаймаут: ' + safeDetails.timeoutMs + ' мс';
-          if (typeof safeDetails.httpStatus === 'number') detailText += '\nHTTP: ' + safeDetails.httpStatus;
-          panel.textContent =
-            'Mezfit: диагностика запуска\n\n' +
-            'Последний этап: ' + observedStage + '\n' +
-            'Прошло: ' + (Date.now() - startedAt) + ' мс\n' +
-            'Telegram SDK: ' + (telegram.available ? 'да' : 'нет') + '\n' +
-            'Telegram platform: ' + (telegram.platform || 'не определена') + '\n' +
-            'Telegram version: ' + (telegram.version || 'не определена') + '\n' +
-            'Online: ' + (typeof navigator.onLine === 'boolean' ? String(navigator.onLine) : 'неизвестно') + '\n' +
-            'Browser: ' + (bounded(navigator.userAgent, 180) || 'не определён') +
-            detailText +
-            '\n\nСделайте скриншот этого экрана и приложите его к сообщению об ошибке.';
+          var metaLines = [
+            'Последний этап: ' + observedStage,
+            'Прошло: ' + (Date.now() - startedAt) + ' мс',
+            'Telegram SDK: ' + (telegram.available ? 'да' : 'нет'),
+            'Telegram platform: ' + (telegram.platform || 'не определена'),
+            'Telegram version: ' + (telegram.version || 'не определена'),
+            'Online: ' + (typeof navigator.onLine === 'boolean' ? String(navigator.onLine) : 'неизвестно'),
+            'Browser: ' + (bounded(navigator.userAgent, 180) || 'не определён')
+          ];
+          if (safeDetails.errorName) metaLines.push('Ошибка: ' + safeDetails.errorName);
+          if (typeof safeDetails.timeoutMs === 'number') metaLines.push('Таймаут: ' + safeDetails.timeoutMs + ' мс');
+          if (typeof safeDetails.httpStatus === 'number') metaLines.push('HTTP: ' + safeDetails.httpStatus);
+
+          var title = document.createElement('h1');
+          title.className = 'mezfit-boot-diagnostics__title';
+          title.textContent = 'Диагностика запуска';
+          panel.appendChild(title);
+
+          var summary = document.createElement('p');
+          summary.className = 'mezfit-boot-diagnostics__summary';
+          summary.textContent = 'Запуск Mezfit не завершился. Ниже технические данные, которые помогут найти причину.';
+          panel.appendChild(summary);
+
+          var metadata = document.createElement('p');
+          metadata.className = 'mezfit-boot-diagnostics__meta';
+          metadata.textContent = metaLines.join('\n');
+          panel.appendChild(metadata);
+
+          var hint = document.createElement('p');
+          hint.className = 'mezfit-boot-diagnostics__hint';
+          hint.textContent = 'Сделайте скриншот этого экрана и приложите его к сообщению об ошибке.';
+          panel.appendChild(hint);
 
           var closeButton = document.createElement('button');
           closeButton.type = 'button';
