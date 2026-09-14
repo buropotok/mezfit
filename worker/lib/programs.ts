@@ -7,6 +7,7 @@ export interface ProgramListItem {
   status: ProgramStatus;
   startedAt: string | null;
   finishedAt: string | null;
+  position: number;
 }
 
 export interface ProgramOwner {
@@ -29,6 +30,7 @@ interface ProgramRow {
   status: ProgramStatus;
   started_at: string | null;
   finished_at: string | null;
+  position: number;
 }
 
 interface CoachProgramRow extends ProgramRow {
@@ -43,6 +45,7 @@ const programProjection = `
     tp.id,
     tp.user_id,
     tp.name,
+    tp.position,
     CASE
       WHEN EXISTS (
         SELECT 1 FROM program_phase active_phase
@@ -87,12 +90,13 @@ function mapProgram(row: ProgramRow): ProgramListItem {
     status: row.status,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
+    position: row.position,
   };
 }
 
 export async function listProgramsForUser(db: D1Database, userId: number): Promise<ProgramListItem[]> {
   const result = await db
-    .prepare(`${programProjection} WHERE tp.user_id = ? ORDER BY tp.updated_at DESC, tp.id DESC`)
+    .prepare(`${programProjection} WHERE tp.user_id = ? ORDER BY tp.position, tp.id`)
     .bind(userId)
     .all<ProgramRow>();
   return result.results.map(mapProgram);
@@ -108,7 +112,7 @@ export async function listClientProgramsForCoach(db: D1Database, coachUserId: nu
        AND cc.coach_user_id = ?
        AND cc.status = 'active'
       JOIN app_user client ON client.id = programs.user_id
-      ORDER BY COALESCE(client.last_name, ''), client.first_name, client.id, programs.id DESC
+      ORDER BY COALESCE(client.last_name, ''), client.first_name, client.id, programs.position, programs.id
     `)
     .bind(coachUserId)
     .all<CoachProgramRow>();

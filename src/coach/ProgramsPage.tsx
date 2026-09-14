@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { getCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
-import { Avatar, Badge, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, Tabs, TabsList, TabsTrigger, Text, TextInput } from '../ui';
+import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
+import { Avatar, Badge, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text, TextInput } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -9,7 +9,7 @@ import pencilUrl from '../ui/icons/pencil.svg';
 import trashUrl from '../ui/icons/trash.svg';
 import './programs.css';
 
-type Filter = ProgramStatus;
+type Filter = 'all' | ProgramStatus;
 export type ProgramCreationOwner = { type: 'self' } | { type: 'client'; client: CoachClientListItem } | null;
 export interface ProgramCreationDraft {
   name: string;
@@ -29,7 +29,7 @@ function AddIcon() {
   );
 }
 
-function ProgramMenu({ program }: { program: ProgramListItem }) {
+function ProgramMenu({ program, onDuplicate, busy }: { program: ProgramListItem; onDuplicate: (program: ProgramListItem) => void; busy: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <Menu
@@ -44,7 +44,14 @@ function ProgramMenu({ program }: { program: ProgramListItem }) {
       )}
     >
       <MenuItem leading={<MaskIcon src={pencilUrl} />} disabled>Редактировать</MenuItem>
-      <MenuItem leading={<MaskIcon src={copyUrl} />} disabled>Дублировать</MenuItem>
+      <MenuItem
+        leading={<MaskIcon src={copyUrl} />}
+        disabled={busy}
+        onSelect={() => {
+          setOpen(false);
+          onDuplicate(program);
+        }}
+      >Дублировать</MenuItem>
       <MenuItem leading={<MaskIcon src={trashUrl} />} disabled>Удалить</MenuItem>
       <MenuItem disabled>Статистика</MenuItem>
     </Menu>
@@ -73,27 +80,54 @@ function programDates(program: ProgramListItem): string | undefined {
   return finish ? `${start} — ${finish}` : start;
 }
 
-function ProgramRows({ programs }: { programs: ProgramListItem[] }) {
-  if (programs.length === 0) return null;
-
+function ProgramRow({ program, onDuplicate, mutationBusy }: { program: ProgramListItem; onDuplicate: (program: ProgramListItem) => void; mutationBusy: boolean }) {
+  const dates = programDates(program);
   return (
-    <div className="programs-card">
-      {programs.map((program) => {
-        const dates = programDates(program);
-        return (
-          <div className="programs-row" key={program.id}>
-            <div className="programs-icon" aria-hidden="true"><img src={programIconUrl} alt="" /></div>
-            <div className="programs-copy">
-              <Text className="programs-name">{program.name}</Text>
-              {dates ? <Text variant="caption" tone="muted">{dates}</Text> : null}
-            </div>
-            <div className="programs-status">{statusBadge(program.status)}</div>
-            <ProgramMenu program={program} />
-          </div>
-        );
-      })}
+    <div className="programs-row">
+      <div className="programs-icon" data-dnd-handle aria-hidden="true"><img src={programIconUrl} alt="" /></div>
+      <div className="programs-copy">
+        <Text className="programs-name">{program.name}</Text>
+        {dates ? <Text variant="caption" tone="muted">{dates}</Text> : null}
+      </div>
+      <div className="programs-status">{statusBadge(program.status)}</div>
+      <ProgramMenu program={program} onDuplicate={onDuplicate} busy={mutationBusy} />
     </div>
   );
+}
+
+function ProgramRows({
+  programs,
+  sortable,
+  onDuplicate,
+  mutationBusy,
+  onReorder,
+}: {
+  programs: ProgramListItem[];
+  sortable: boolean;
+  onDuplicate: (program: ProgramListItem) => void;
+  mutationBusy: boolean;
+  onReorder: (programs: ProgramListItem[]) => void;
+}) {
+  if (programs.length === 0) return null;
+  const rows = programs.map((program) => ({
+    id: program.id,
+    content: <ProgramRow program={program} onDuplicate={onDuplicate} mutationBusy={mutationBusy} />,
+  }));
+
+  if (sortable) {
+    return (
+      <SortableList
+        className="programs-card"
+        items={rows}
+        onReorder={(items) => {
+          const byId = new Map(programs.map((program) => [program.id, program]));
+          onReorder(items.map((item) => byId.get(Number(item.id))).filter((program): program is ProgramListItem => Boolean(program)));
+        }}
+      />
+    );
+  }
+
+  return <div className="programs-card">{rows.map((row) => <div key={row.id}>{row.content}</div>)}</div>;
 }
 
 function ownerName(group: ProgramOwnerGroup): string {
@@ -133,9 +167,13 @@ export function ProgramsPage({
 }: ProgramsPageProps) {
   const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
   const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
-  const [filter, setFilter] = useState<Filter>('active');
+  const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [duplicateProgramId, setDuplicateProgramId] = useState<number | null>(null);
+  const [reorderBusy, setReorderBusy] = useState(false);
+  const mutationBusy = duplicateProgramId !== null || reorderBusy;
 
   useEffect(() => {
     let cancelled = false;
@@ -155,10 +193,10 @@ export function ProgramsPage({
         }
       });
     return () => { cancelled = true; };
-  }, [initData, refreshKey]);
+  }, [initData, refreshKey, reloadKey]);
 
   const ownPrograms = useMemo(
-    () => (programs ?? []).filter((program) => program.status === filter),
+    () => (programs ?? []).filter((program) => filter === 'all' || program.status === filter),
     [programs, filter],
   );
 
@@ -166,7 +204,7 @@ export function ProgramsPage({
     const needle = search.trim().toLocaleLowerCase('ru-RU');
     return clientGroups
       .filter((group) => !needle || ownerName(group).toLocaleLowerCase('ru-RU').includes(needle))
-      .map((group) => ({ ...group, programs: group.programs.filter((program) => program.status === filter) }))
+      .map((group) => ({ ...group, programs: group.programs.filter((program) => filter === 'all' || program.status === filter) }))
       .filter((group) => group.programs.length > 0);
   }, [clientGroups, filter, search]);
 
@@ -177,6 +215,54 @@ export function ProgramsPage({
       await onSelectClient(userId);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось открыть карточку клиента');
+    }
+  };
+
+  const duplicateProgram = async (program: ProgramListItem) => {
+    if (mutationBusy) return;
+    setDuplicateProgramId(program.id);
+    setMessage('');
+    try {
+      await duplicateCoachProgram(initData, program.id);
+      setReloadKey((value) => value + 1);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось дублировать программу');
+    } finally {
+      setDuplicateProgramId(null);
+    }
+  };
+
+  const reorderOwnPrograms = async (next: ProgramListItem[]) => {
+    if (!programs || mutationBusy) return;
+    const previous = programs;
+    setReorderBusy(true);
+    setPrograms(next);
+    setMessage('');
+    try {
+      await reorderCoachPrograms(initData, next.map((program) => program.id));
+    } catch (error) {
+      setPrograms(previous);
+      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ');
+    } finally {
+      setReorderBusy(false);
+    }
+  };
+
+  const reorderClientPrograms = async (ownerUserId: number, next: ProgramListItem[]) => {
+    if (mutationBusy) return;
+    const previous = clientGroups;
+    setReorderBusy(true);
+    setClientGroups((groups) => groups.map((group) => (
+      group.owner.id === ownerUserId ? { ...group, programs: next } : group
+    )));
+    setMessage('');
+    try {
+      await reorderCoachPrograms(initData, next.map((program) => program.id));
+    } catch (error) {
+      setClientGroups(previous);
+      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ');
+    } finally {
+      setReorderBusy(false);
     }
   };
 
@@ -195,6 +281,7 @@ export function ProgramsPage({
 
       <Tabs className="programs-tabs" value={filter} onValueChange={(value) => setFilter(value as Filter)}>
         <TabsList aria-label="Статус программы">
+          <TabsTrigger value="all">Все</TabsTrigger>
           <TabsTrigger value="active">Активные</TabsTrigger>
           <TabsTrigger value="finished">Завершённые</TabsTrigger>
           <TabsTrigger value="draft">Черновики</TabsTrigger>
@@ -205,7 +292,13 @@ export function ProgramsPage({
         <>
           <section className="programs-section" aria-labelledby="own-programs-title">
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
-            <ProgramRows programs={ownPrograms} />
+            <ProgramRows
+              programs={ownPrograms}
+              sortable={filter === 'all' && !mutationBusy}
+              onDuplicate={(program) => { void duplicateProgram(program); }}
+              mutationBusy={mutationBusy}
+              onReorder={(next) => { void reorderOwnPrograms(next); }}
+            />
             {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
           </section>
 
@@ -221,7 +314,13 @@ export function ProgramsPage({
                     trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
                   />
                 </List>
-                <ProgramRows programs={group.programs} />
+                <ProgramRows
+                  programs={group.programs}
+                  sortable={filter === 'all' && !mutationBusy}
+                  onDuplicate={(program) => { void duplicateProgram(program); }}
+                  mutationBusy={mutationBusy}
+                  onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
+                />
               </div>
             ))}
             {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}

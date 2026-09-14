@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { createProgramForUser } from './program-create';
 
 describe('createProgramForUser', () => {
-  it('persists the owner and creator and returns a draft program', async () => {
-    const first = vi.fn().mockResolvedValue({ id: 42 });
+  it('persists the owner and creator, appends the program and returns a draft', async () => {
+    const first = vi.fn().mockResolvedValue({ id: 42, position: 4 });
     const bind = vi.fn().mockReturnValue({ first });
     const prepare = vi.fn().mockReturnValue({ bind });
     const db = { prepare } as unknown as D1Database;
@@ -15,7 +15,8 @@ describe('createProgramForUser', () => {
       status: 'draft',
       startedAt: null,
       finishedAt: null,
+      position: 4,
     });
-    expect(bind).toHaveBeenCalledWith(7, 'Силовая', 3);
+    expect(bind).toHaveBeenCalledWith(7, 'Силовая', 3, 7);
   });
 });

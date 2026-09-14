@@ -191,6 +191,17 @@ export function createCoachProgram(
   });
 }
 
+export function duplicateCoachProgram(initData: string, programId: number): Promise<{ program: ProgramListItem }> {
+  return apiRequest(initData, `/api/coach/programs/${programId}/duplicate`, { method: 'POST' });
+}
+
+export function reorderCoachPrograms(initData: string, programIds: number[]): Promise<{ ok: true }> {
+  return apiRequest(initData, '/api/coach/programs/reorder', {
+    method: 'PUT',
+    body: JSON.stringify({ programIds }),
+  });
+}
+
 export function getClientPrograms(initData: string): Promise<{ programs: ProgramListItem[] }> {
   return apiRequest(initData, '/api/client/programs');
 }

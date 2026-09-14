@@ -38,10 +38,18 @@ function blocksDrag(target: EventTarget | null) {
   return Boolean(button && !button.classList.contains('ui-list-item'));
 }
 
+function isDragHandle(target: EventTarget | null) {
+  return target instanceof Element && Boolean(target.closest('[data-dnd-handle]'));
+}
+
 class RowPointerSensor extends PointerSensor {
   static activators = [{
     eventName: 'onPointerDown' as const,
-    handler: ({ nativeEvent: event }: ReactPointerEvent) => !blocksDrag(event.target),
+    handler: ({ nativeEvent: event }: ReactPointerEvent) => {
+      const row = event.currentTarget;
+      const hasDedicatedHandle = row instanceof Element && Boolean(row.querySelector('[data-dnd-handle]'));
+      return hasDedicatedHandle ? isDragHandle(event.target) : !blocksDrag(event.target);
+    },
   }];
 }
 

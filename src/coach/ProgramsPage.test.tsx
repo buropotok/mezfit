@@ -20,6 +20,7 @@ describe('ProgramsPage', () => {
     );
 
     expect(html).toContain('Поиск клиента');
+    expect(html).toContain('Все');
     expect(html).toContain('Активные');
     expect(html).toContain('Завершённые');
     expect(html).toContain('Черновики');
