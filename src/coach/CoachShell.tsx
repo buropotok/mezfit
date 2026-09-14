@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createClientInvite,
   getCoachClients,
@@ -91,6 +91,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const [inviteCopyError, setInviteCopyError] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const programClientRequestRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +106,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }, [initData]);
 
   useEffect(() => {
+    programClientRequestRef.current += 1;
     if (destination !== 'clients' && destination !== 'programs' && selectedClient) setSelectedClient(null);
   }, [destination, selectedClient]);
 
@@ -131,13 +133,16 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
   if (destination === 'programs') {
     const selectProgramClient = async (userId: number) => {
+      const requestId = programClientRequestRef.current + 1;
+      programClientRequestRef.current = requestId;
       const cached = clients?.find((item) => item.user.id === userId);
       if (cached) {
-        setSelectedClient(cached);
+        if (programClientRequestRef.current === requestId) setSelectedClient(cached);
         return;
       }
 
       const { clients: refreshedClients } = await getCoachClients(initData);
+      if (programClientRequestRef.current !== requestId) return;
       setClients(refreshedClients);
       const client = refreshedClients.find((item) => item.user.id === userId);
       if (!client) throw new Error('Клиент больше не связан с тренером');
