@@ -1,0 +1,111 @@
+.ui-text-input {
+  position: relative;
+  width: 100%;
+  font-family: var(--ui-font-family);
+}
+
+.ui-text-input__field {
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px 11px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: 10px;
+  outline: none;
+  color: var(--ui-color-surface-text);
+  background: var(--ui-color-surface);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-body);
+  line-height: var(--ui-line-height-body);
+  font-weight: var(--ui-font-weight-regular);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.ui-text-input__field::placeholder { color: var(--ui-color-surface-muted); }
+
+.ui-text-input__label {
+  pointer-events: none;
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  padding: 0 4px;
+  color: var(--ui-color-surface-muted);
+  background: var(--ui-color-surface);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-caption);
+  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-font-weight-regular);
+  transition: transform 150ms ease, color 150ms ease;
+}
+
+.ui-text-input--filled .ui-text-input__label,
+.ui-text-input--has-placeholder .ui-text-input__label,
+.ui-text-input__field:not(:placeholder-shown) + .ui-text-input__label,
+.ui-text-input__field:focus + .ui-text-input__label {
+  transform: translateY(-24px);
+}
+
+.ui-text-input__feedback {
+  display: block;
+  margin: 4px 12px 0;
+  color: var(--ui-color-surface-muted);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-caption);
+  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-font-weight-regular);
+}
+
+.ui-text-input__field:hover { border-color: var(--ui-color-primary); }
+.ui-text-input__field:focus {
+  border-color: var(--ui-color-primary);
+  box-shadow: inset 0 0 0 1px var(--ui-color-primary);
+  caret-color: var(--ui-color-primary);
+}
+.ui-text-input__field:focus + .ui-text-input__label { color: var(--ui-color-primary); }
+.ui-text-input__field:disabled { opacity: .5; cursor: default; }
+.ui-text-input__field:disabled + .ui-text-input__label { opacity: .5; }
+.ui-text-input--error .ui-text-input__field { border-color: #e5484d; box-shadow: inset 0 0 0 1px #e5484d; }
+.ui-text-input--error .ui-text-input__label,
+.ui-text-input--error .ui-text-input__feedback { color: #e5484d; }
+.ui-text-input--success .ui-text-input__field { border-color: #49b96e; box-shadow: inset 0 0 0 1px #49b96e; }
+.ui-text-input--success .ui-text-input__label,
+.ui-text-input--success .ui-text-input__feedback { color: #49b96e; }
+
+.ui-choice {
+  cursor: pointer;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--ui-font-family);
+}
+.ui-choice input { position: absolute; opacity: 0; pointer-events: none; }
+.ui-choice__control {
+  display: grid;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 2px solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+  transition: border-color 100ms ease, background-color 100ms ease, box-shadow 100ms ease;
+}
+.ui-choice__label {
+  color: var(--ui-color-surface-text);
+  font-size: var(--ui-font-size-body);
+  line-height: var(--ui-line-height-body);
+  font-weight: var(--ui-font-weight-regular);
+}
+.ui-choice input:focus-visible + .ui-choice__control { box-shadow: 0 0 0 3px var(--ui-color-primary-soft); }
+.ui-choice input:disabled + .ui-choice__control,
+.ui-choice input:disabled ~ .ui-choice__label { opacity: .5; }
+.ui-choice:has(input:disabled) { cursor: default; }
+
+.ui-checkbox .ui-choice__control { border-radius: 4px; }
+.ui-checkbox__check { transform: translateY(-1px); color: var(--ui-color-primary-text); font-size: 14px; line-height: 1; opacity: 0; }
+.ui-checkbox input:checked + .ui-choice__control { border-color: var(--ui-color-primary); background: var(--ui-color-primary); }
+.ui-checkbox input:checked + .ui-choice__control .ui-checkbox__check { opacity: 1; }
+
+.ui-radio .ui-choice__control { border-radius: 50%; }
+.ui-radio__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ui-color-primary-text); opacity: 0; }
+.ui-radio input:checked + .ui-choice__control { border-color: var(--ui-color-primary); background: var(--ui-color-primary); }
+.ui-radio input:checked + .ui-choice__control .ui-radio__dot { opacity: 1; }
