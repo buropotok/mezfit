@@ -142,6 +142,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteCopyError, setInviteCopyError] = useState('');
   const [message, setMessage] = useState('');
+  const [inviteError, setInviteError] = useState('');
   const [busy, setBusy] = useState(false);
   const [programDraft, setProgramDraft] = useState<ProgramCreationDraft | null>(null);
   const [selectingProgramClient, setSelectingProgramClient] = useState(false);
@@ -293,13 +294,13 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
   const createInvite = async () => {
     setBusy(true);
-    setMessage('');
+    setInviteError('');
     setInviteCopyError('');
     try {
       const result = await createClientInvite(initData);
       setInviteUrl(result.telegramUrl);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось создать приглашение');
+      setInviteError(error instanceof Error ? error.message : 'Не удалось создать приглашение');
     } finally {
       setBusy(false);
     }
@@ -342,6 +343,8 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
           <Button onClick={copyInvite}>Копировать ссылку</Button>
         </div>
       </Modal>
+
+      {inviteError ? <p className="inline-message" role="alert">{inviteError}</p> : null}
     </section>
   );
 }
