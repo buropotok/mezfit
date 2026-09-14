@@ -4,7 +4,7 @@ import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import type { NavigationContext } from '../NavigationShell';
 import { gymKeeperIcons } from '../gymKeeperIcons';
-import { List, ListItem, Menu, MenuItem } from '../ui';
+import { Button, Dropdown, List, ListItem, Menu, MenuItem, Modal, Surface, Text, TextArea, TextInput } from '../ui';
 import { exerciseActionIcons, type ExerciseActionIcon } from './exerciseActionIcons';
 import { exerciseContextIcons, type ExerciseContextIcon } from './exerciseContextIcons';
 
@@ -13,6 +13,9 @@ const categoryOptions: Array<{ code: ExerciseCategoryCode; label: string }> = [{
 const equipmentOptions: Array<{ code: ExerciseEquipmentCode; label: string }> = [{ code: 'bodyweight', label: 'Свой вес' }, { code: 'barbell', label: 'Штанга' }, { code: 'dumbbell_single', label: 'Гантель x1' }, { code: 'dumbbell_pair', label: 'Гантели x2' }, { code: 'cable', label: 'Трос' }, { code: 'machine', label: 'Тренажёр' }, { code: 'other', label: 'Другое' }];
 const categoryLabels = Object.fromEntries(categoryOptions.map(({ code, label }) => [code, label])) as Record<ExerciseCategoryCode, string>;
 const equipmentLabels = Object.fromEntries(equipmentOptions.map(({ code, label }) => [code, label])) as Record<ExerciseEquipmentCode, string>;
+const trackingDropdownOptions = Object.entries(trackingLabels).map(([value, label]) => ({ value, label }));
+const categoryDropdownOptions = categoryOptions.map(({ code, label }) => ({ value: code, label }));
+const equipmentDropdownOptions = equipmentOptions.map(({ code, label }) => ({ value: code, label }));
 const categorySubgroups: Partial<Record<ExerciseCategoryCode, Array<{ code: string; label: string }>>> = { chest: [{ code: 'middle', label: 'Середина' }, { code: 'upper', label: 'Верх' }, { code: 'lower', label: 'Низ' }], arms: [{ code: 'biceps', label: 'Бицепс' }, { code: 'triceps', label: 'Трицепс' }, { code: 'forearm', label: 'Предплечье' }] };
 
 function iconStyle(url: string): CSSProperties { return { '--exercise-action-icon': url } as CSSProperties; }
@@ -26,9 +29,58 @@ interface EditorState { mode: 'create' | 'edit'; seed?: ExerciseDefinition; }
 interface EditorProps { state: EditorState; defaultCategory?: ExerciseCategoryCode; saving: boolean; error: string; onCancel: () => void; onSave: (input: ExerciseInput) => void; onDelete?: () => void; }
 
 function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel, onSave, onDelete }: EditorProps) {
-  const seed = state.seed; const [name, setName] = useState(seed ? exerciseDisplayName(seed) : ''); const [description, setDescription] = useState(seed?.description ?? ''); const [trackingType, setTrackingType] = useState<TrackingType>(seed?.tracking_type ?? 'weight_reps'); const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode>(seed?.category_code ?? defaultCategory ?? 'other'); const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode>(seed?.equipment_code ?? 'other');
+  const seed = state.seed;
+  const [name, setName] = useState(seed ? exerciseDisplayName(seed) : '');
+  const [description, setDescription] = useState(seed?.description ?? '');
+  const [trackingType, setTrackingType] = useState<TrackingType>(seed?.tracking_type ?? 'weight_reps');
+  const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode>(seed?.category_code ?? defaultCategory ?? 'other');
+  const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode>(seed?.equipment_code ?? 'other');
   const submit = () => { const cleanName = name.trim(); if (!cleanName) return; onSave({ name: cleanName, description: description.trim() || undefined, trackingType, categoryCode, equipmentCode }); };
-  return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) onCancel(); }}><section className="modal-dialog global-exercise-editor" role="dialog" aria-modal="true" aria-labelledby="global-exercise-editor-title"><header className="global-exercise-editor-header"><h2 id="global-exercise-editor-title">{state.mode === 'edit' ? 'Редактирование упражнения' : 'Новое упражнение'}</h2></header><div className="global-exercise-editor-top"><div className="global-exercise-media-slot" aria-label="Медиа упражнения">{seed ? <ExerciseMedia exercise={seed} variant="editor" /> : <ExerciseIcon />}</div><div className="global-exercise-editor-copy"><label className="compact-field-label">Название<input className="text-input" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoFocus /></label><label className="compact-field-label">Описание<textarea className="text-input" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={3} placeholder="Описание" /></label></div></div><label className="field-label">Учёт результата<select className="text-input" value={trackingType} onChange={(event) => setTrackingType(event.target.value as TrackingType)}>{Object.entries(trackingLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="field-label">Категория<select className="text-input" value={categoryCode} onChange={(event) => setCategoryCode(event.target.value as ExerciseCategoryCode)}>{categoryOptions.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}</select></label><div className="field-label"><span>Оборудование</span><div className="chip-group" role="radiogroup" aria-label="Оборудование">{equipmentOptions.map((option) => <button key={option.code} type="button" className={`selection-chip ${equipmentCode === option.code ? 'selected' : ''}`} role="radio" aria-checked={equipmentCode === option.code} onClick={() => setEquipmentCode(option.code)}>{option.label}</button>)}</div></div>{error ? <p className="inline-message error-text">{error}</p> : null}<div className="global-exercise-editor-actions">{state.mode === 'edit' && onDelete ? <button className="text-button danger-text" type="button" onClick={onDelete} disabled={saving}>Удалить</button> : <span />}<div className="modal-actions global-exercise-editor-save-actions"><button className="text-button" type="button" onClick={onCancel} disabled={saving}>Отмена</button><button className="positive-button" type="button" onClick={submit} disabled={saving || !name.trim()}>{saving ? 'Сохраняем…' : state.mode === 'edit' ? 'Сохранить' : 'Добавить'}</button></div></div></section></div>;
+  const close = () => { if (!saving) onCancel(); };
+
+  return (
+    <Modal
+      isOpen
+      title={state.mode === 'edit' ? 'Редактирование упражнения' : 'Новое упражнение'}
+      onClose={close}
+      closeOnBackdrop={!saving}
+      className="global-exercise-editor"
+    >
+      <div className="global-exercise-editor-top">
+        <Surface className="global-exercise-media-slot" aria-label="Медиа упражнения">
+          {seed ? <ExerciseMedia exercise={seed} variant="editor" /> : <ExerciseIcon />}
+        </Surface>
+        <div className="global-exercise-editor-copy">
+          <TextInput label="Название" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoFocus disabled={saving} />
+          <TextArea label="Описание" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={3} disabled={saving} />
+        </div>
+      </div>
+
+      <div className="global-exercise-editor-fields">
+        <div className="global-exercise-editor-field">
+          <Text variant="footnote" className="global-exercise-editor-field-label">Учёт результата</Text>
+          <Dropdown mode="single" variant="field" title="Учёт результата" options={trackingDropdownOptions} value={trackingType} onChange={(value) => setTrackingType(value as TrackingType)} disabled={saving} triggerProps={{ 'aria-label': 'Учёт результата' }} />
+        </div>
+        <div className="global-exercise-editor-field">
+          <Text variant="footnote" className="global-exercise-editor-field-label">Категория</Text>
+          <Dropdown mode="single" variant="field" title="Категория" options={categoryDropdownOptions} value={categoryCode} onChange={(value) => setCategoryCode(value as ExerciseCategoryCode)} disabled={saving} triggerProps={{ 'aria-label': 'Категория' }} />
+        </div>
+        <div className="global-exercise-editor-field">
+          <Text variant="footnote" className="global-exercise-editor-field-label">Оборудование</Text>
+          <Dropdown mode="single" variant="field" title="Оборудование" options={equipmentDropdownOptions} value={equipmentCode} onChange={(value) => setEquipmentCode(value as ExerciseEquipmentCode)} disabled={saving} triggerProps={{ 'aria-label': 'Оборудование' }} />
+        </div>
+      </div>
+
+      {error ? <Text variant="footnote" className="global-exercise-editor-error" role="alert">{error}</Text> : null}
+      <div className="global-exercise-editor-actions">
+        {state.mode === 'edit' && onDelete ? <Button variant="danger" onClick={onDelete} disabled={saving}>Удалить</Button> : <span />}
+        <div className="global-exercise-editor-save-actions">
+          <Button variant="secondary" onClick={close} disabled={saving}>Отмена</Button>
+          <Button onClick={submit} disabled={saving || !name.trim()}>{saving ? 'Сохраняем…' : state.mode === 'edit' ? 'Сохранить' : 'Добавить'}</Button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 function ExerciseDetail({ exercise, busy, onFavourite, onEdit }: { exercise: ExerciseDefinition; busy: boolean; onFavourite: () => void; onEdit: () => void; }) {
