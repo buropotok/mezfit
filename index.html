@@ -27,7 +27,6 @@
     <script>
       (function () {
         var startedAt = Date.now();
-        var sessionId = 'boot-' + startedAt.toString(36) + '-' + Math.random().toString(36).slice(2, 10);
         var lastStage = 'html-start';
         var finished = false;
         var panel = null;
@@ -59,28 +58,6 @@
           if (typeof stage === 'string') lastStage = stage.slice(0, 64);
         }
 
-        function report(stage, details) {
-          try {
-            var request = new XMLHttpRequest();
-            request.open('POST', '/api/diagnostics/boot', true);
-            request.setRequestHeader('content-type', 'application/json');
-            request.timeout = 4000;
-            request.send(JSON.stringify({
-              sessionId: sessionId,
-              stage: stage,
-              lastStage: lastStage,
-              elapsedMs: Date.now() - startedAt,
-              path: window.location.pathname.slice(0, 120),
-              userAgent: bounded(navigator.userAgent, 400) || '',
-              online: typeof navigator.onLine === 'boolean' ? navigator.onLine : null,
-              telegram: telegramSnapshot(),
-              details: sanitizeDetails(details)
-            }));
-          } catch (_) {
-            // Diagnostics must never become a startup dependency.
-          }
-        }
-
         function renderPanel(observedStage, details) {
           if (finished) return;
           var webApp = window.Telegram && window.Telegram.WebApp;
@@ -100,7 +77,10 @@
           }
 
           var telegram = telegramSnapshot();
-          var detailText = details && details.errorName ? '\nОшибка: ' + details.errorName : '';
+          var safeDetails = sanitizeDetails(details) || {};
+          var detailText = safeDetails.errorName ? '\nОшибка: ' + safeDetails.errorName : '';
+          if (typeof safeDetails.timeoutMs === 'number') detailText += '\nТаймаут: ' + safeDetails.timeoutMs + ' мс';
+          if (typeof safeDetails.httpStatus === 'number') detailText += '\nHTTP: ' + safeDetails.httpStatus;
           panel.textContent =
             'Mezfit: диагностика запуска\n\n' +
             'Последний этап: ' + observedStage + '\n' +
@@ -108,15 +88,22 @@
             'Telegram SDK: ' + (telegram.available ? 'да' : 'нет') + '\n' +
             'Telegram platform: ' + (telegram.platform || 'не определена') + '\n' +
             'Telegram version: ' + (telegram.version || 'не определена') + '\n' +
-            'Online: ' + (typeof navigator.onLine === 'boolean' ? String(navigator.onLine) : 'неизвестно') +
+            'Online: ' + (typeof navigator.onLine === 'boolean' ? String(navigator.onLine) : 'неизвестно') + '\n' +
+            'Browser: ' + (bounded(navigator.userAgent, 180) || 'не определён') +
             detailText +
             '\n\nСделайте скриншот этого экрана и приложите его к сообщению об ошибке.';
         }
 
-        function fail(stage, details) {
+        function report(stage, details) {
           mark(stage);
-          report(stage, details);
+          if (window.console && typeof window.console.warn === 'function') {
+            window.console.warn('[mezfit boot]', stage, sanitizeDetails(details) || '');
+          }
           renderPanel(stage, details);
+        }
+
+        function fail(stage, details) {
+          report(stage, details);
         }
 
         function finish() {
@@ -147,8 +134,11 @@
         window.setTimeout(function () {
           if (finished) return;
           var observedStage = lastStage;
-          report('startup-stalled', { reason: observedStage });
-          renderPanel(observedStage);
+          if (observedStage === 'theme-applied') {
+            finish();
+            return;
+          }
+          renderPanel(observedStage, { reason: 'watchdog' });
         }, 8000);
       }());
     </script>
@@ -161,6 +151,11 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script>window.__MEZFIT_BOOT__.mark('main-module-requested');</script>
+    <script
+      type="module"
+      src="/src/main.tsx"
+      onerror="window.__MEZFIT_BOOT__.fail('main-module-error', { reason: 'load-error' })"
+    ></script>
   </body>
 </html>
