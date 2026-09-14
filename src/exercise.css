@@ -47,31 +47,6 @@
   cursor: pointer;
 }
 .icon-button:active { background: var(--color-surface-2); }
-
-.exercise-create-first-row {
-  display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: var(--space-3);
-  align-items: start;
-}
-.exercise-media-slot {
-  width: 72px;
-  height: 72px;
-  min-height: 72px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 2px;
-  padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-surface);
-  color: var(--color-text-secondary);
-  background: var(--color-input);
-  cursor: pointer;
-}
-.exercise-media-slot > span { font-size: 28px; line-height: 30px; }
-.exercise-media-slot small { font-size: var(--ui-font-size-caption); line-height: var(--ui-line-height-caption); }
-.exercise-create-text-fields { display: grid; gap: var(--space-2); }
 .compact-field-label {
   display: grid;
   gap: var(--space-1);
@@ -80,44 +55,7 @@
   line-height: var(--ui-line-height-footnote);
   font-weight: var(--ui-font-weight-semibold);
 }
-.exercise-create-text-fields .text-input { height: 36px; min-height: 36px; }
-.exercise-create-text-fields textarea.text-input {
-  min-height: 52px;
-  max-height: 96px;
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-.media-note {
-  margin: var(--space-2) 0 0;
-  color: var(--color-text-secondary);
-  font-size: var(--ui-font-size-footnote);
-  line-height: var(--ui-line-height-footnote);
-}
-
-.selector-button {
-  width: 100%;
-  height: var(--control-h);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  color: var(--color-text);
-  background: var(--color-input);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-medium);
-  text-align: left;
-  cursor: pointer;
-}
-
-.chip-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+.chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
 .selection-chip {
   min-width: 44px;
   height: var(--chip-h);
@@ -132,18 +70,8 @@
   font-weight: var(--ui-font-weight-medium);
   cursor: pointer;
 }
-.selection-chip.selected {
-  color: #fff;
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-}
+.selection-chip.selected { color: #fff; border-color: var(--color-accent); background: var(--color-accent); }
+.modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
 .text-button,
 .positive-button {
   height: 44px;
@@ -159,41 +87,32 @@
 .text-button { color: var(--color-text-secondary); background: transparent; }
 .positive-button { color: #07150b; background: var(--color-positive); }
 
-.category-dialog { padding-bottom: var(--space-3); }
-.category-list {
-  margin: 0 calc(var(--modal-pad) * -1);
-  border-top: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
-}
-.category-row {
-  width: 100%;
-  min-height: var(--list-row-h);
+.exercise-create-modal .ui-modal__dialog { max-width: 32rem; }
+.exercise-create-first-row {
   display: grid;
-  grid-template-columns: 18px 1fr 20px;
-  align-items: center;
+  grid-template-columns: 72px minmax(0, 1fr);
   gap: var(--space-3);
-  padding: 0 var(--space-3);
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
-  color: var(--color-text);
-  background: transparent;
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  text-align: left;
-  cursor: pointer;
+  align-items: start;
 }
-.category-accent {
-  width: 12px;
-  height: 18px;
-  border-radius: 3px;
-  background: var(--category-color, #7C8A99);
+.ui-button.ui-button.exercise-media-slot {
+  width: 72px;
+  height: 72px;
+  min-height: 72px;
+  padding: 0;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  color: var(--ui-color-surface-muted);
+  background: var(--ui-color-surface);
 }
-.radio-mark {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-text-secondary);
-  border-radius: 50%;
-}
-.radio-mark.selected { border: 6px solid var(--color-accent); }
+.exercise-create-text-fields { display: grid; gap: var(--space-3); min-width: 0; }
+.exercise-create-fields { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+.exercise-create-field { display: grid; gap: var(--space-1); }
+.exercise-create-field-label { font-weight: var(--ui-font-weight-semibold); }
+.exercise-create-note,
+.exercise-create-error { display: block; margin-top: var(--space-2); }
+.exercise-create-error { color: var(--color-danger); }
+.exercise-create-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
+
 .category-chest { --category-color: #FF4D6D; }
 .category-arms { --category-color: #FF8A3D; }
 .category-back { --category-color: #2F9BFF; }
@@ -253,11 +172,7 @@
 }
 .exercise-row-copy { min-width: 0; display: grid; gap: 1px; }
 .exercise-row-main strong,
-.exercise-row-main small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.exercise-row-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .exercise-row-main strong { font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); font-weight: var(--ui-font-weight-semibold); }
 .exercise-row-main small { color: var(--color-text-secondary); font-size: var(--ui-font-size-footnote); line-height: var(--ui-line-height-footnote); }
 .scope-badge {
@@ -284,6 +199,6 @@
 @media (max-width: 380px) {
   .modal-backdrop { padding: var(--space-2); }
   .modal-dialog { width: min(calc(100vw - 16px), 420px); padding: var(--space-3); }
-  .exercise-create-first-row { grid-template-columns: 64px 1fr; gap: var(--space-2); }
-  .exercise-media-slot { width: 64px; height: 64px; min-height: 64px; }
+  .exercise-create-first-row { grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-2); }
+  .ui-button.ui-button.exercise-media-slot { width: 64px; height: 64px; min-height: 64px; }
 }

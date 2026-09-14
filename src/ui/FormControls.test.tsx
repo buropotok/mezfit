@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Checkbox, Radio, TextInput } from './FormControls';
+import { Checkbox, Radio, TextArea, TextInput } from './FormControls';
 
 describe('TextInput', () => {
   it('connects the floating label to the native input', () => {
@@ -14,6 +14,18 @@ describe('TextInput', () => {
     const html = renderToStaticMarkup(<TextInput label="Имя" error="Обязательное поле" />);
     expect(html).toContain('aria-invalid="true"');
     expect(html).toContain('Обязательное поле');
+  });
+});
+
+describe('TextArea', () => {
+  it('keeps the shared floating-label and feedback contract for multiline input', () => {
+    const html = renderToStaticMarkup(<TextArea id="description" label="Описание" defaultValue="Техника выполнения" error="Проверьте описание" />);
+    expect(html).toContain('<textarea');
+    expect(html).toContain('id="description"');
+    expect(html).toContain('for="description"');
+    expect(html).toContain('ui-text-area__field');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('Проверьте описание');
   });
 });
 

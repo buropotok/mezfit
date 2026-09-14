@@ -1,10 +1,10 @@
-import { Checkbox, Divider, Radio, Surface, Text, TextInput } from './index';
+import { Checkbox, Divider, Radio, Surface, Text, TextArea, TextInput } from './index';
 
 export function FormControlsCatalog() {
   return (
     <Surface as="section" className="ui-kit-section">
       <Text variant="title">Form controls</Text>
-      <Text variant="caption" tone="muted">TextInput uses Body for field content and Caption for its floating label and feedback.</Text>
+      <Text variant="caption" tone="muted">TextInput and TextArea use Body for field content and Caption for their floating label and feedback.</Text>
       <Divider />
       <div className="ui-kit-stack">
         <TextInput label="Имя" />
@@ -13,6 +13,7 @@ export function FormControlsCatalog() {
         <TextInput label="Имя" defaultValue="Андрей" disabled />
         <TextInput label="Имя" error="Обязательное поле" />
         <TextInput label="Имя" defaultValue="Андрей" success="Данные корректны" />
+        <TextArea label="Описание" defaultValue="Многострочный текст" rows={3} />
       </div>
       <Divider />
       <div className="ui-kit-stack">

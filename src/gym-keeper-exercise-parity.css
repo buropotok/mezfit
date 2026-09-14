@@ -48,4 +48,5 @@ button.catalog-chip.selected { color: var(--theme-surface-text); background: col
 .category-full_body { --category-color: #e58213; --gk-category-icon: url('/gym-keeper/categories/muscles_fullbody.svg'); }
 .category-cardio { --category-color: #ff3e74; --gk-category-icon: url('/gym-keeper/categories/muscles_cardio.svg'); }
 .category-other { --category-color: #9aa0a6; --gk-category-icon: url('/gym-keeper/categories/muscles_other.png'); }
+@media (max-width: 450px) { .global-exercise-editor-actions { display: flex; align-items: stretch; flex-direction: column; } .global-exercise-editor-save-actions { width: 100%; } .global-exercise-editor-save-actions > .ui-button { flex: 1 1 0; min-width: 0; } }
 @media (max-width: 390px) { .exercise-category-icon, .exercise-category-icon::before { width: 44px; height: 44px; } }

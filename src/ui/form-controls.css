@@ -20,6 +20,12 @@
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
+.ui-text-area__field {
+  height: auto;
+  min-height: 88px;
+  resize: vertical;
+}
+
 .ui-text-input__field::placeholder { color: var(--ui-color-surface-muted); }
 
 .ui-text-input__label {
