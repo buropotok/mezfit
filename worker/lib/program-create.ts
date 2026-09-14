@@ -6,20 +6,36 @@ export async function createProgramForUser(
   createdByUserId: number,
   name: string,
 ): Promise<ProgramListItem> {
-  const row = await db
-    .prepare('INSERT INTO training_plan (user_id, name, created_by_user_id) VALUES (?, ?, ?) RETURNING id, position')
+  const inserted = await db
+    .prepare('INSERT INTO training_plan (user_id, name, created_by_user_id) VALUES (?, ?, ?) RETURNING id')
     .bind(userId, name, createdByUserId)
-    .first<{ id: number; position: number }>();
+    .first<{ id: number }>();
 
-  if (!row) throw new Error('Failed to create training program');
+  if (!inserted) throw new Error('Failed to create training program');
+
+  const positioned = await db
+    .prepare(`
+      UPDATE training_plan
+      SET position = (
+        SELECT COALESCE(MAX(position), -1) + 1
+        FROM training_plan
+        WHERE user_id = ? AND id != ?
+      )
+      WHERE id = ?
+      RETURNING position
+    `)
+    .bind(userId, inserted.id, inserted.id)
+    .first<{ position: number }>();
+
+  if (!positioned) throw new Error('Failed to position training program');
 
   return {
-    id: row.id,
+    id: inserted.id,
     userId,
     name,
     status: 'draft',
     startedAt: null,
     finishedAt: null,
-    position: row.position,
+    position: positioned.position,
   };
 }
