@@ -80,17 +80,17 @@ function programDates(program: ProgramListItem): string | undefined {
   return finish ? `${start} — ${finish}` : start;
 }
 
-function ProgramRow({ program, onDuplicate, duplicateBusy }: { program: ProgramListItem; onDuplicate: (program: ProgramListItem) => void; duplicateBusy: boolean }) {
+function ProgramRow({ program, onDuplicate, mutationBusy }: { program: ProgramListItem; onDuplicate: (program: ProgramListItem) => void; mutationBusy: boolean }) {
   const dates = programDates(program);
   return (
     <div className="programs-row">
-      <div className="programs-icon" aria-hidden="true"><img src={programIconUrl} alt="" /></div>
+      <div className="programs-icon" data-dnd-handle aria-hidden="true"><img src={programIconUrl} alt="" /></div>
       <div className="programs-copy">
         <Text className="programs-name">{program.name}</Text>
         {dates ? <Text variant="caption" tone="muted">{dates}</Text> : null}
       </div>
       <div className="programs-status">{statusBadge(program.status)}</div>
-      <ProgramMenu program={program} onDuplicate={onDuplicate} busy={duplicateBusy} />
+      <ProgramMenu program={program} onDuplicate={onDuplicate} busy={mutationBusy} />
     </div>
   );
 }
@@ -99,19 +99,19 @@ function ProgramRows({
   programs,
   sortable,
   onDuplicate,
-  duplicateProgramId,
+  mutationBusy,
   onReorder,
 }: {
   programs: ProgramListItem[];
   sortable: boolean;
   onDuplicate: (program: ProgramListItem) => void;
-  duplicateProgramId: number | null;
+  mutationBusy: boolean;
   onReorder: (programs: ProgramListItem[]) => void;
 }) {
   if (programs.length === 0) return null;
   const rows = programs.map((program) => ({
     id: program.id,
-    content: <ProgramRow program={program} onDuplicate={onDuplicate} duplicateBusy={duplicateProgramId === program.id} />,
+    content: <ProgramRow program={program} onDuplicate={onDuplicate} mutationBusy={mutationBusy} />,
   }));
 
   if (sortable) {
@@ -173,6 +173,7 @@ export function ProgramsPage({
   const [reloadKey, setReloadKey] = useState(0);
   const [duplicateProgramId, setDuplicateProgramId] = useState<number | null>(null);
   const [reorderBusy, setReorderBusy] = useState(false);
+  const mutationBusy = duplicateProgramId !== null || reorderBusy;
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +219,7 @@ export function ProgramsPage({
   };
 
   const duplicateProgram = async (program: ProgramListItem) => {
+    if (mutationBusy) return;
     setDuplicateProgramId(program.id);
     setMessage('');
     try {
@@ -231,7 +233,7 @@ export function ProgramsPage({
   };
 
   const reorderOwnPrograms = async (next: ProgramListItem[]) => {
-    if (!programs || reorderBusy) return;
+    if (!programs || mutationBusy) return;
     const previous = programs;
     setReorderBusy(true);
     setPrograms(next);
@@ -247,7 +249,7 @@ export function ProgramsPage({
   };
 
   const reorderClientPrograms = async (ownerUserId: number, next: ProgramListItem[]) => {
-    if (reorderBusy) return;
+    if (mutationBusy) return;
     const previous = clientGroups;
     setReorderBusy(true);
     setClientGroups((groups) => groups.map((group) => (
@@ -292,9 +294,9 @@ export function ProgramsPage({
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
             <ProgramRows
               programs={ownPrograms}
-              sortable={filter === 'all' && !reorderBusy}
+              sortable={filter === 'all' && !mutationBusy}
               onDuplicate={(program) => { void duplicateProgram(program); }}
-              duplicateProgramId={duplicateProgramId}
+              mutationBusy={mutationBusy}
               onReorder={(next) => { void reorderOwnPrograms(next); }}
             />
             {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
@@ -314,9 +316,9 @@ export function ProgramsPage({
                 </List>
                 <ProgramRows
                   programs={group.programs}
-                  sortable={filter === 'all' && !reorderBusy}
+                  sortable={filter === 'all' && !mutationBusy}
                   onDuplicate={(program) => { void duplicateProgram(program); }}
-                  duplicateProgramId={duplicateProgramId}
+                  mutationBusy={mutationBusy}
                   onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
                 />
               </div>
