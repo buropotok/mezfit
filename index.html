@@ -5,10 +5,228 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#101114" />
     <title>Mezfit</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      #mezfit-boot-diagnostics {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        bottom: 16px;
+        left: 16px;
+        z-index: 2147483647;
+        overflow: auto;
+        box-sizing: border-box;
+        padding: 16px;
+        border-radius: 12px;
+        background: #101114;
+        color: #f5f5f5;
+        font-family: var(--ui-font-family);
+        word-break: break-word;
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__title {
+        margin: 0 0 12px;
+        font-size: var(--ui-font-size-large-title, 24px);
+        line-height: var(--ui-line-height-large-title, 28px);
+        font-weight: var(--ui-font-weight-regular, 400);
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__summary {
+        margin: 0 0 12px;
+        font-size: var(--ui-font-size-body, 15px);
+        line-height: var(--ui-line-height-body, 20px);
+        font-weight: var(--ui-font-weight-regular, 400);
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__meta {
+        margin: 0;
+        font-size: var(--ui-font-size-footnote, 13px);
+        line-height: var(--ui-line-height-footnote, 18px);
+        font-weight: var(--ui-font-weight-regular, 400);
+        white-space: pre-wrap;
+      }
+
+      #mezfit-boot-diagnostics .mezfit-boot-diagnostics__hint {
+        margin: 16px 0 0;
+        font-size: var(--ui-font-size-caption, 12px);
+        line-height: var(--ui-line-height-caption, 16px);
+        font-weight: var(--ui-font-weight-regular, 400);
+      }
+
+      #mezfit-boot-diagnostics button {
+        display: block;
+        width: 100%;
+        margin-top: 16px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #f5f5f5;
+        color: #101114;
+        font-family: inherit;
+        font-size: var(--ui-font-size-body, 15px);
+        line-height: var(--ui-line-height-body, 20px);
+        font-weight: var(--ui-font-weight-medium, 500);
+      }
+    </style>
+    <script>
+      (function () {
+        var startedAt = Date.now();
+        var lastStage = 'html-start';
+        var finished = false;
+        var failed = false;
+        var panel = null;
+
+        function bounded(value, maxLength) {
+          return typeof value === 'string' ? value.slice(0, maxLength) : null;
+        }
+
+        function telegramSnapshot() {
+          var webApp = window.Telegram && window.Telegram.WebApp;
+          return {
+            available: Boolean(webApp),
+            version: webApp ? bounded(webApp.version, 32) : null,
+            platform: webApp ? bounded(webApp.platform, 32) : null
+          };
+        }
+
+        function sanitizeDetails(details) {
+          if (!details || typeof details !== 'object') return undefined;
+          var safe = {};
+          if (typeof details.timeoutMs === 'number') safe.timeoutMs = details.timeoutMs;
+          if (typeof details.httpStatus === 'number') safe.httpStatus = details.httpStatus;
+          if (typeof details.reason === 'string') safe.reason = details.reason.slice(0, 64);
+          if (typeof details.errorName === 'string') safe.errorName = details.errorName.slice(0, 64);
+          return safe;
+        }
+
+        function mark(stage) {
+          if (typeof stage === 'string') lastStage = stage.slice(0, 64);
+        }
+
+        function finish() {
+          if (finished) return;
+          finished = true;
+          lastStage = 'app-ready';
+          if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+          panel = null;
+        }
+
+        function renderPanel(observedStage, details) {
+          if (finished) return;
+          var webApp = window.Telegram && window.Telegram.WebApp;
+          if (webApp && typeof webApp.ready === 'function') {
+            try {
+              webApp.ready();
+            } catch (_) {
+              // The diagnostic panel still works in a normal browser surface.
+            }
+          }
+
+          if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'mezfit-boot-diagnostics';
+            panel.setAttribute('role', 'alert');
+            document.documentElement.appendChild(panel);
+          }
+          while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+          var telegram = telegramSnapshot();
+          var safeDetails = sanitizeDetails(details) || {};
+          var metaLines = [
+            'Последний этап: ' + observedStage,
+            'Прошло: ' + (Date.now() - startedAt) + ' мс',
+            'Telegram SDK: ' + (telegram.available ? 'да' : 'нет'),
+            'Telegram platform: ' + (telegram.platform || 'не определена'),
+            'Telegram version: ' + (telegram.version || 'не определена'),
+            'Online: ' + (typeof navigator.onLine === 'boolean' ? String(navigator.onLine) : 'неизвестно'),
+            'Browser: ' + (bounded(navigator.userAgent, 180) || 'не определён')
+          ];
+          if (safeDetails.errorName) metaLines.push('Ошибка: ' + safeDetails.errorName);
+          if (typeof safeDetails.timeoutMs === 'number') metaLines.push('Таймаут: ' + safeDetails.timeoutMs + ' мс');
+          if (typeof safeDetails.httpStatus === 'number') metaLines.push('HTTP: ' + safeDetails.httpStatus);
+
+          var title = document.createElement('h1');
+          title.className = 'mezfit-boot-diagnostics__title';
+          title.textContent = 'Диагностика запуска';
+          panel.appendChild(title);
+
+          var summary = document.createElement('p');
+          summary.className = 'mezfit-boot-diagnostics__summary';
+          summary.textContent = 'Запуск Mezfit не завершился. Ниже технические данные, которые помогут найти причину.';
+          panel.appendChild(summary);
+
+          var metadata = document.createElement('p');
+          metadata.className = 'mezfit-boot-diagnostics__meta';
+          metadata.textContent = metaLines.join('\n');
+          panel.appendChild(metadata);
+
+          var hint = document.createElement('p');
+          hint.className = 'mezfit-boot-diagnostics__hint';
+          hint.textContent = 'Сделайте скриншот этого экрана и приложите его к сообщению об ошибке.';
+          panel.appendChild(hint);
+
+          var closeButton = document.createElement('button');
+          closeButton.type = 'button';
+          closeButton.textContent = 'Закрыть диагностику';
+          closeButton.addEventListener('click', finish);
+          panel.appendChild(closeButton);
+        }
+
+        function report(stage, details) {
+          failed = true;
+          mark(stage);
+          if (window.console && typeof window.console.warn === 'function') {
+            window.console.warn('[mezfit boot]', stage, sanitizeDetails(details) || '');
+          }
+          renderPanel(stage, details);
+        }
+
+        function fail(stage, details) {
+          report(stage, details);
+        }
+
+        window.__MEZFIT_BOOT__ = {
+          mark: mark,
+          report: report,
+          finish: finish,
+          fail: fail
+        };
+
+        mark('html-start');
+        window.addEventListener('error', function (event) {
+          var errorName = event && event.error && event.error.name ? String(event.error.name) : 'Error';
+          fail('window-error', { errorName: errorName });
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event && event.reason;
+          var errorName = reason && reason.name ? String(reason.name) : 'UnhandledRejection';
+          fail('unhandled-rejection', { errorName: errorName });
+        });
+        window.setTimeout(function () {
+          if (finished) return;
+          var observedStage = lastStage;
+          if (observedStage === 'theme-applied' && !failed) {
+            finish();
+            return;
+          }
+          if (failed && panel) return;
+          renderPanel(observedStage, { reason: 'watchdog' });
+        }, 8000);
+      }());
+    </script>
+    <script>window.__MEZFIT_BOOT__.mark('telegram-sdk-start');</script>
+    <script
+      src="https://telegram.org/js/telegram-web-app.js"
+      onload="window.__MEZFIT_BOOT__.mark('telegram-sdk-loaded')"
+      onerror="window.__MEZFIT_BOOT__.fail('telegram-sdk-error', { reason: 'load-error' })"
+    ></script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script>window.__MEZFIT_BOOT__.mark('main-module-requested');</script>
+    <script
+      type="module"
+      src="/src/main.tsx"
+      onerror="window.__MEZFIT_BOOT__.fail('main-module-error', { reason: 'load-error' })"
+    ></script>
   </body>
 </html>
