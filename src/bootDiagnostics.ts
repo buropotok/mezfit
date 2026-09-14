@@ -1,25 +1,10 @@
 export type BootStage =
-  | 'main-module-start'
   | 'theme-request-start'
   | 'theme-request-success'
   | 'theme-request-http-error'
   | 'theme-request-error'
   | 'theme-request-timeout'
-  | 'theme-applied'
-  | 'react-render-start'
-  | 'react-rendered'
-  | 'bootstrap-error'
-  | 'app-mounted'
-  | 'telegram-missing'
-  | 'telegram-initdata-missing'
-  | 'telegram-ready-called'
-  | 'telegram-ready-missing'
-  | 'telegram-ready-error'
-  | 'telegram-expand-error'
-  | 'me-request-start'
-  | 'me-request-success'
-  | 'me-request-error'
-  | 'me-request-timeout';
+  | 'theme-applied';
 
 export interface BootDetails {
   timeoutMs?: number;
@@ -31,8 +16,6 @@ export interface BootDetails {
 interface BootRuntime {
   mark(stage: string, details?: BootDetails): void;
   report(stage: string, details?: BootDetails): void;
-  finish(): void;
-  fail(stage: string, details?: BootDetails): void;
 }
 
 function getBootRuntime(): BootRuntime | undefined {
@@ -49,17 +32,7 @@ export function markBoot(stage: BootStage, details?: BootDetails): void {
 }
 
 export function reportBoot(stage: BootStage, details?: BootDetails): void {
-  const bootRuntime = getBootRuntime();
-  bootRuntime?.mark(stage, details);
-  bootRuntime?.report(stage, details);
-}
-
-export function finishBoot(): void {
-  getBootRuntime()?.finish();
-}
-
-export function failBoot(stage: BootStage, error: unknown): void {
-  getBootRuntime()?.fail(stage, { errorName: errorName(error) });
+  getBootRuntime()?.report(stage, details);
 }
 
 export class BootTimeoutError extends Error {
