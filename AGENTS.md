@@ -255,3 +255,5 @@ compare_commits(base=main, head=working_branch)
         ↓
 verify that the diff contains only intended changes
 ```
+
+For multiple sequential edits to the same file, repeat the read-modify-write cycle. Never assume that a SHA remains current after a successful write.

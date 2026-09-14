@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { getCoachPrograms, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
-import { Avatar, Badge, IconButton, List, ListItem, Menu, MenuItem, SearchInput, Tabs, TabsList, TabsTrigger, Text } from '../ui';
+import { getCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
+import { Avatar, Badge, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, Tabs, TabsList, TabsTrigger, Text, TextInput } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -10,10 +10,23 @@ import trashUrl from '../ui/icons/trash.svg';
 import './programs.css';
 
 type Filter = ProgramStatus;
+export type ProgramCreationOwner = { type: 'self' } | { type: 'client'; client: CoachClientListItem } | null;
+export interface ProgramCreationDraft {
+  name: string;
+  owner: ProgramCreationOwner;
+}
 
 function MaskIcon({ src, className = '' }: { src: string; className?: string }) {
   const style = { '--programs-icon-url': `url("${src}")` } as CSSProperties;
   return <span className={`programs-mask-icon ${className}`.trim()} style={style} aria-hidden="true" />;
+}
+
+function AddIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor" />
+    </svg>
+  );
 }
 
 function ProgramMenu({ program }: { program: ProgramListItem }) {
@@ -87,12 +100,37 @@ function ownerName(group: ProgramOwnerGroup): string {
   return [group.owner.firstName, group.owner.lastName].filter(Boolean).join(' ');
 }
 
+function clientName(client: CoachClientListItem): string {
+  return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
+}
+
 interface ProgramsPageProps {
   initData: string;
   onSelectClient?: (userId: number) => Promise<void>;
+  creationDraft?: ProgramCreationDraft | null;
+  creationBusy?: boolean;
+  creationError?: string;
+  refreshKey?: number;
+  onOpenCreation?: () => void;
+  onCancelCreation?: () => void;
+  onDraftChange?: (draft: ProgramCreationDraft) => void;
+  onRequestClientSelection?: () => void;
+  onSaveCreation?: () => void;
 }
 
-export function ProgramsPage({ initData, onSelectClient }: ProgramsPageProps) {
+export function ProgramsPage({
+  initData,
+  onSelectClient,
+  creationDraft = null,
+  creationBusy = false,
+  creationError = '',
+  refreshKey = 0,
+  onOpenCreation,
+  onCancelCreation,
+  onDraftChange,
+  onRequestClientSelection,
+  onSaveCreation,
+}: ProgramsPageProps) {
   const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
   const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
   const [filter, setFilter] = useState<Filter>('active');
@@ -117,7 +155,7 @@ export function ProgramsPage({ initData, onSelectClient }: ProgramsPageProps) {
         }
       });
     return () => { cancelled = true; };
-  }, [initData]);
+  }, [initData, refreshKey]);
 
   const ownPrograms = useMemo(
     () => (programs ?? []).filter((program) => program.status === filter),
@@ -142,8 +180,12 @@ export function ProgramsPage({ initData, onSelectClient }: ProgramsPageProps) {
     }
   };
 
+  const canSave = Boolean(creationDraft?.name.trim() && creationDraft.owner && !creationBusy);
+  const selectedClient = creationDraft?.owner?.type === 'client' ? creationDraft.owner.client : null;
+
   return (
     <section className="programs-page" aria-label="Программы">
+      <div className="programs-scroll">
       <SearchInput
         value={search}
         onChange={(event) => setSearch(event.target.value)}
@@ -188,6 +230,49 @@ export function ProgramsPage({ initData, onSelectClient }: ProgramsPageProps) {
       )}
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
+      </div>
+
+      {onOpenCreation ? (
+        <FloatingActionButton label="Создать программу" onClick={onOpenCreation}>
+          <AddIcon />
+        </FloatingActionButton>
+      ) : null}
+
+      <Modal
+        isOpen={creationDraft !== null}
+        title={<span className="program-create-title"><img src={programIconUrl} alt="" aria-hidden="true" />Создать программу</span>}
+        hasCloseButton={false}
+        onClose={() => onCancelCreation?.()}
+        actions={[
+          { id: 'cancel', label: 'Отмена', onClick: () => onCancelCreation?.(), disabled: creationBusy },
+          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', onClick: () => onSaveCreation?.(), disabled: !canSave },
+        ]}
+      >
+        {creationDraft ? (
+          <div className="program-create-content">
+            <TextInput
+              label="Название"
+              value={creationDraft.name}
+              maxLength={120}
+              onChange={(event) => onDraftChange?.({ ...creationDraft, name: event.target.value })}
+            />
+            <List>
+              <ListItem
+                onClick={() => onRequestClientSelection?.()}
+                leading={selectedClient ? <Avatar name={clientName(selectedClient)} src={selectedClient.user.photoUrl ?? undefined} /> : undefined}
+                title="Выбрать клиента"
+                subtitle={selectedClient ? clientName(selectedClient) : undefined}
+              />
+              <ListItem
+                onClick={() => onDraftChange?.({ ...creationDraft, owner: { type: 'self' } })}
+                title="Моя программа"
+                subtitle={creationDraft.owner?.type === 'self' ? 'Выбрано' : undefined}
+              />
+            </List>
+            {creationError ? <Text variant="footnote" className="programs-error" role="alert">{creationError}</Text> : null}
+          </div>
+        ) : null}
+      </Modal>
     </section>
   );
 }
