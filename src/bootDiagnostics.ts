@@ -58,10 +58,11 @@ export function withBootTimeout<T>(
       settled = true;
       try {
         onTimeout?.();
-      } finally {
-        reportBoot(timeoutStage, { timeoutMs });
-        reject(new BootTimeoutError(timeoutStage, timeoutMs));
+      } catch {
+        // Cancellation is best-effort; the timeout result remains authoritative.
       }
+      reportBoot(timeoutStage, { timeoutMs });
+      reject(new BootTimeoutError(timeoutStage, timeoutMs));
     }, timeoutMs);
 
     promise.then(
