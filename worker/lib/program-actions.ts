@@ -20,84 +20,80 @@ export async function duplicateProgram(
   if (!source) throw new Error('PROGRAM_NOT_FOUND');
 
   const copyName = `${source.name.slice(0, 112)} (копия)`;
-  const created = await db
-    .prepare(`
+  const targetPlanIdSql = '(SELECT id FROM training_plan WHERE user_id = ? ORDER BY id DESC LIMIT 1)';
+  const results = await db.batch([
+    db.prepare(`
       INSERT INTO training_plan (user_id, name, created_by_user_id, position)
       VALUES (?, ?, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM training_plan WHERE user_id = ?))
       RETURNING id, position
-    `)
-    .bind(source.user_id, copyName, actorUserId, source.user_id)
-    .first<{ id: number; position: number }>();
-  if (!created) throw new Error('Failed to duplicate training program');
+    `).bind(source.user_id, copyName, actorUserId, source.user_id),
+    db.prepare(`
+      INSERT INTO program_phase (
+        training_plan_id, name, position, status, planned_start_date, planned_end_date,
+        started_at, finished_at, created_by_user_id
+      )
+      SELECT ${targetPlanIdSql}, name, position, 'pending', planned_start_date, planned_end_date, NULL, NULL, ?
+      FROM program_phase
+      WHERE training_plan_id = ?
+      ORDER BY position
+    `).bind(source.user_id, actorUserId, source.id),
+    db.prepare(`
+      INSERT INTO program_day (program_phase_id, name, position, created_by_user_id, status)
+      SELECT target_phase.id, source_day.name, source_day.position, ?, 'active'
+      FROM program_day source_day
+      JOIN program_phase source_phase ON source_phase.id = source_day.program_phase_id
+      JOIN program_phase target_phase
+        ON target_phase.training_plan_id = ${targetPlanIdSql} AND target_phase.position = source_phase.position
+      WHERE source_phase.training_plan_id = ? AND source_day.status = 'active'
+      ORDER BY source_phase.position, source_day.position
+    `).bind(actorUserId, source.user_id, source.id),
+    db.prepare(`
+      INSERT INTO program_exercise (
+        program_day_id, exercise_definition_id, position, created_by_user_id, status, notes
+      )
+      SELECT target_day.id, source_exercise.exercise_definition_id, source_exercise.position, ?, 'active', source_exercise.notes
+      FROM program_exercise source_exercise
+      JOIN program_day source_day ON source_day.id = source_exercise.program_day_id
+      JOIN program_phase source_phase ON source_phase.id = source_day.program_phase_id
+      JOIN program_phase target_phase
+        ON target_phase.training_plan_id = ${targetPlanIdSql} AND target_phase.position = source_phase.position
+      JOIN program_day target_day
+        ON target_day.program_phase_id = target_phase.id AND target_day.position = source_day.position AND target_day.status = 'active'
+      WHERE source_phase.training_plan_id = ?
+        AND source_day.status = 'active'
+        AND source_exercise.status = 'active'
+      ORDER BY source_phase.position, source_day.position, source_exercise.position
+    `).bind(actorUserId, source.user_id, source.id),
+    db.prepare(`
+      INSERT INTO program_set (
+        program_exercise_id, position, reps, weight, duration_seconds, distance_meters,
+        created_by_user_id, status
+      )
+      SELECT target_exercise.id, source_set.position, source_set.reps, source_set.weight,
+        source_set.duration_seconds, source_set.distance_meters, ?, 'active'
+      FROM program_set source_set
+      JOIN program_exercise source_exercise ON source_exercise.id = source_set.program_exercise_id
+      JOIN program_day source_day ON source_day.id = source_exercise.program_day_id
+      JOIN program_phase source_phase ON source_phase.id = source_day.program_phase_id
+      JOIN program_phase target_phase
+        ON target_phase.training_plan_id = ${targetPlanIdSql} AND target_phase.position = source_phase.position
+      JOIN program_day target_day
+        ON target_day.program_phase_id = target_phase.id AND target_day.position = source_day.position AND target_day.status = 'active'
+      JOIN program_exercise target_exercise
+        ON target_exercise.program_day_id = target_day.id
+       AND target_exercise.position = source_exercise.position
+       AND target_exercise.status = 'active'
+      WHERE source_phase.training_plan_id = ?
+        AND source_day.status = 'active'
+        AND source_exercise.status = 'active'
+        AND source_set.status = 'active'
+      ORDER BY source_phase.position, source_day.position, source_exercise.position, source_set.position
+    `).bind(actorUserId, source.user_id, source.id),
+  ]);
 
-  try {
-    await db.batch([
-      db.prepare(`
-        INSERT INTO program_phase (
-          training_plan_id, name, position, status, planned_start_date, planned_end_date,
-          started_at, finished_at, created_by_user_id
-        )
-        SELECT ?, name, position, 'pending', planned_start_date, planned_end_date, NULL, NULL, ?
-        FROM program_phase
-        WHERE training_plan_id = ?
-        ORDER BY position
-      `).bind(created.id, actorUserId, source.id),
-      db.prepare(`
-        INSERT INTO program_day (program_phase_id, name, position, created_by_user_id, status)
-        SELECT target_phase.id, source_day.name, source_day.position, ?, 'active'
-        FROM program_day source_day
-        JOIN program_phase source_phase ON source_phase.id = source_day.program_phase_id
-        JOIN program_phase target_phase
-          ON target_phase.training_plan_id = ? AND target_phase.position = source_phase.position
-        WHERE source_phase.training_plan_id = ? AND source_day.status = 'active'
-        ORDER BY source_phase.position, source_day.position
-      `).bind(actorUserId, created.id, source.id),
-      db.prepare(`
-        INSERT INTO program_exercise (
-          program_day_id, exercise_definition_id, position, created_by_user_id, status, notes
-        )
-        SELECT target_day.id, source_exercise.exercise_definition_id, source_exercise.position, ?, 'active', source_exercise.notes
-        FROM program_exercise source_exercise
-        JOIN program_day source_day ON source_day.id = source_exercise.program_day_id
-        JOIN program_phase source_phase ON source_phase.id = source_day.program_phase_id
-        JOIN program_phase target_phase
-          ON target_phase.training_plan_id = ? AND target_phase.position = source_phase.position
-        JOIN program_day target_day
-          ON target_day.program_phase_id = target_phase.id AND target_day.position = source_day.position AND target_day.status = 'active'
-        WHERE source_phase.training_plan_id = ?
-          AND source_day.status = 'active'
-          AND source_exercise.status = 'active'
-        ORDER BY source_phase.position, source_day.position, source_exercise.position
-      `).bind(actorUserId, created.id, source.id),
-      db.prepare(`
-        INSERT INTO program_set (
-          program_exercise_id, position, reps, weight, duration_seconds, distance_meters,
-          created_by_user_id, status
-        )
-        SELECT target_exercise.id, source_set.position, source_set.reps, source_set.weight,
-          source_set.duration_seconds, source_set.distance_meters, ?, 'active'
-        FROM program_set source_set
-        JOIN program_exercise source_exercise ON source_exercise.id = source_set.program_exercise_id
-        JOIN program_day source_day ON source_day.id = source_exercise.program_day_id
-        JOIN program_phase source_phase ON source_phase.id = source_day.program_phase_id
-        JOIN program_phase target_phase
-          ON target_phase.training_plan_id = ? AND target_phase.position = source_phase.position
-        JOIN program_day target_day
-          ON target_day.program_phase_id = target_phase.id AND target_day.position = source_day.position AND target_day.status = 'active'
-        JOIN program_exercise target_exercise
-          ON target_exercise.program_day_id = target_day.id
-         AND target_exercise.position = source_exercise.position
-         AND target_exercise.status = 'active'
-        WHERE source_phase.training_plan_id = ?
-          AND source_day.status = 'active'
-          AND source_exercise.status = 'active'
-          AND source_set.status = 'active'
-        ORDER BY source_phase.position, source_day.position, source_exercise.position, source_set.position
-      `).bind(actorUserId, created.id, source.id),
-    ]);
-  } catch (error) {
-    await db.prepare('DELETE FROM training_plan WHERE id = ?').bind(created.id).run();
-    throw error;
+  const created = results[0]?.results[0] as { id?: unknown; position?: unknown } | undefined;
+  if (!created || typeof created.id !== 'number' || typeof created.position !== 'number') {
+    throw new Error('Failed to duplicate training program');
   }
 
   return {
