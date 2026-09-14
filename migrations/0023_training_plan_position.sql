@@ -11,4 +11,4 @@ SET position = (
     )
 );
 
-CREATE UNIQUE INDEX uq_training_plan_user_position ON training_plan(user_id, position);
+CREATE INDEX idx_training_plan_user_position ON training_plan(user_id, position);
