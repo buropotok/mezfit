@@ -9,6 +9,7 @@ import {
   type ExerciseEquipmentCode,
   type TrackingType,
 } from './lib/exercises';
+import { createProgramForUser } from './lib/program-create';
 import { listClientProgramsForCoach, listProgramsForUser } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
@@ -301,6 +302,37 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       listClientProgramsForCoach(env.DB_BINDING, auth.row.id),
     ]);
     return json({ programs, clients });
+  }
+
+  if (url.pathname === '/api/coach/programs' && request.method === 'POST') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    let body: { name?: unknown; owner?: unknown } = {};
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
+    }
+
+    const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
+    if (!name) throw new HttpError(400, 'INVALID_PROGRAM_NAME', 'Program name is required');
+
+    const owner = body.owner;
+    let ownerUserId: number;
+    if (typeof owner === 'object' && owner !== null && 'type' in owner && owner.type === 'self') {
+      ownerUserId = auth.row.id;
+    } else if (
+      typeof owner === 'object' && owner !== null && 'type' in owner && owner.type === 'client'
+      && 'clientUserId' in owner && Number.isInteger(owner.clientUserId) && Number(owner.clientUserId) > 0
+    ) {
+      ownerUserId = Number(owner.clientUserId);
+      await requireCoachClient(env.DB_BINDING, auth.row.id, ownerUserId);
+    } else {
+      throw new HttpError(400, 'INVALID_PROGRAM_OWNER', 'Program owner is required');
+    }
+
+    const program = await createProgramForUser(env.DB_BINDING, ownerUserId, auth.row.id, name);
+    return json({ program }, { status: 201 });
   }
 
   if (url.pathname === '/api/client/programs' && request.method === 'GET') {
