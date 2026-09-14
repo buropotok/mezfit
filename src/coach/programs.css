@@ -17,4 +17,8 @@
 .programs-client-list .ui-list-item { padding-inline:0; }
 .programs-chevron { opacity:.72; }
 .programs-error { color:var(--ui-color-surface-text); }
+.programs-create-header { margin-bottom:var(--ui-space-3); }
+.programs-create-header .ui-list-item__title { font-size:var(--ui-font-size-headline); line-height:var(--ui-line-height-headline); font-weight:var(--ui-font-weight-medium); }
+.programs-create-icon { width:2rem; height:2rem; object-fit:contain; }
+.programs-owner-list { margin-top:var(--ui-space-3); max-height:15rem; overflow:auto; }
 @media (max-width:430px) { .programs-row { grid-template-columns:3rem minmax(0,1fr) auto 2.5rem; gap:.375rem; } .programs-more { width:2.5rem; } }
