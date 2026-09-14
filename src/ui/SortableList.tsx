@@ -29,7 +29,6 @@ export type SortableListProps = {
   onReorder: (items: SortableListItem[]) => void;
   className?: string;
   longPressDelay?: number;
-  handleOnly?: boolean;
 };
 
 function blocksDrag(target: EventTarget | null) {
@@ -47,19 +46,19 @@ class RowPointerSensor extends PointerSensor {
   static activators = [{
     eventName: 'onPointerDown' as const,
     handler: ({ nativeEvent: event }: ReactPointerEvent) => {
-      const row = event.currentTarget as HTMLElement;
-      return row.dataset.dndHandleOnly === 'true' ? isDragHandle(event.target) : !blocksDrag(event.target);
+      const row = event.currentTarget;
+      const hasDedicatedHandle = row instanceof Element && Boolean(row.querySelector('[data-dnd-handle]'));
+      return hasDedicatedHandle ? isDragHandle(event.target) : !blocksDrag(event.target);
     },
   }];
 }
 
-function SortableRow({ item, handleOnly }: { item: SortableListItem; handleOnly: boolean }) {
+function SortableRow({ item }: { item: SortableListItem }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   return (
     <div
       ref={setNodeRef}
-      className={`ui-sortable-list__row${handleOnly ? ' ui-sortable-list__row--handle-only' : ''}${isDragging ? ' ui-sortable-list__row--dragging' : ''}`}
-      data-dnd-handle-only={handleOnly ? 'true' : undefined}
+      className={`ui-sortable-list__row${isDragging ? ' ui-sortable-list__row--dragging' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
@@ -69,7 +68,7 @@ function SortableRow({ item, handleOnly }: { item: SortableListItem; handleOnly:
   );
 }
 
-export function SortableList({ items, onReorder, className = '', longPressDelay = 300, handleOnly = false }: SortableListProps) {
+export function SortableList({ items, onReorder, className = '', longPressDelay = 300 }: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const sensors = useSensors(useSensor(RowPointerSensor, {
     activationConstraint: { delay: longPressDelay, tolerance: 8 },
@@ -94,7 +93,7 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragCancel={() => setActiveId(null)} onDragEnd={handleDragEnd}>
       <div className={`ui-sortable-list ${className}`.trim()} role="list">
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          {items.map((item) => <SortableRow key={item.id} item={item} handleOnly={handleOnly} />)}
+          {items.map((item) => <SortableRow key={item.id} item={item} />)}
         </SortableContext>
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
