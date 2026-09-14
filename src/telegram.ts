@@ -1,8 +1,6 @@
 export interface TelegramWebApp {
   initData: string;
   colorScheme: 'light' | 'dark';
-  version?: string;
-  platform?: string;
   ready(): void;
   expand(): void;
 }
