@@ -7,7 +7,7 @@ afterEach(() => {
 
 describe('withBootTimeout', () => {
   it('returns the startup result when it resolves in time', async () => {
-    await expect(withBootTimeout(Promise.resolve('ready'), 1000, 'me-request-timeout')).resolves.toBe('ready');
+    await expect(withBootTimeout(Promise.resolve('ready'), 1000, 'theme-request-timeout')).resolves.toBe('ready');
   });
 
   it('rejects a startup step that never settles', async () => {
