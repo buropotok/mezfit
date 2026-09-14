@@ -49,14 +49,19 @@ export function withBootTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
   timeoutStage: BootStage,
+  onTimeout?: () => void,
 ): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let settled = false;
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
-      reportBoot(timeoutStage, { timeoutMs });
-      reject(new BootTimeoutError(timeoutStage, timeoutMs));
+      try {
+        onTimeout?.();
+      } finally {
+        reportBoot(timeoutStage, { timeoutMs });
+        reject(new BootTimeoutError(timeoutStage, timeoutMs));
+      }
     }, timeoutMs);
 
     promise.then(
