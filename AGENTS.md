@@ -254,3 +254,4 @@ update_file(
 compare_commits(base=main, head=working_branch)
         ↓
 verify that the diff contains only intended changes
+```
