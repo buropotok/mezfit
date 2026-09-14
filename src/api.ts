@@ -7,6 +7,7 @@ export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulde
 export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
 export type ExerciseSort = 'alphabetical' | 'reference';
 export type ProgramStatus = 'active' | 'draft' | 'finished';
+export type CreateCoachProgramOwner = { type: 'self' } | { type: 'client'; clientUserId: number };
 
 export interface AppUser {
   id: number;
@@ -108,6 +109,8 @@ const russianApiErrors: Record<string, string> = {
   INVALID_CATEGORY: 'Выбрана неподдерживаемая категория',
   INVALID_EQUIPMENT: 'Выбран неподдерживаемый тип оборудования',
   INVALID_FAVOURITE: 'Не удалось изменить избранное',
+  INVALID_PROGRAM_NAME: 'Укажите название программы',
+  INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
   UNAUTHORIZED: 'Не удалось подтвердить Telegram-сессию',
@@ -175,6 +178,17 @@ export function getCoachPrograms(
   initData: string,
 ): Promise<{ programs: ProgramListItem[]; clients: ProgramOwnerGroup[] }> {
   return apiRequest(initData, '/api/coach/programs');
+}
+
+export function createCoachProgram(
+  initData: string,
+  name: string,
+  owner: CreateCoachProgramOwner,
+): Promise<{ program: ProgramListItem }> {
+  return apiRequest(initData, '/api/coach/programs', {
+    method: 'POST',
+    body: JSON.stringify({ name, owner }),
+  });
 }
 
 export function getClientPrograms(initData: string): Promise<{ programs: ProgramListItem[] }> {
