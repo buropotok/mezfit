@@ -9,6 +9,7 @@ import {
   type ExerciseEquipmentCode,
   type TrackingType,
 } from './lib/exercises';
+import { duplicateProgram, getProgramOwnerUserId, reorderPrograms } from './lib/program-actions';
 import { createProgramForUser } from './lib/program-create';
 import { listClientProgramsForCoach, listProgramsForUser } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
@@ -158,6 +159,13 @@ async function requireCoachClient(db: D1Database, coachUserId: number, clientUse
   if (!(await hasActiveCoachClient(db, coachUserId, clientUserId))) {
     throw new HttpError(404, 'CLIENT_NOT_FOUND', 'Client is not linked to this coach');
   }
+}
+
+async function requireProgramOwner(db: D1Database, coachUserId: number, programId: number): Promise<number> {
+  const ownerUserId = await getProgramOwnerUserId(db, programId);
+  if (ownerUserId === null) throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
+  if (ownerUserId !== coachUserId) await requireCoachClient(db, coachUserId, ownerUserId);
+  return ownerUserId;
 }
 
 function inviteTokenFromStartParam(startParam?: string): string | null {
@@ -343,6 +351,44 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
     const program = await createProgramForUser(env.DB_BINDING, ownerUserId, auth.row.id, name);
     return json({ program }, { status: 201 });
+  }
+
+  const duplicateProgramMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/duplicate$/);
+  if (duplicateProgramMatch && request.method === 'POST') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    const programId = Number(duplicateProgramMatch[1]);
+    await requireProgramOwner(env.DB_BINDING, auth.row.id, programId);
+    const program = await duplicateProgram(env.DB_BINDING, programId, auth.row.id);
+    return json({ program }, { status: 201 });
+  }
+
+  if (url.pathname === '/api/coach/programs/reorder' && request.method === 'PUT') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    let parsedBody: unknown;
+    try {
+      parsedBody = await request.json();
+    } catch {
+      throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
+    }
+    if (typeof parsedBody !== 'object' || parsedBody === null || Array.isArray(parsedBody) || !('programIds' in parsedBody)) {
+      throw new HttpError(400, 'INVALID_PROGRAM_ORDER', 'Program order is required');
+    }
+    const programIds = parsedBody.programIds;
+    if (!Array.isArray(programIds) || programIds.length === 0 || !programIds.every((id) => Number.isInteger(id) && id > 0)) {
+      throw new HttpError(400, 'INVALID_PROGRAM_ORDER', 'Program order is invalid');
+    }
+    const ownerUserId = await requireProgramOwner(env.DB_BINDING, auth.row.id, programIds[0]);
+    try {
+      await reorderPrograms(env.DB_BINDING, ownerUserId, programIds);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_PROGRAM_ORDER') {
+        throw new HttpError(400, 'INVALID_PROGRAM_ORDER', 'Program order is invalid');
+      }
+      throw error;
+    }
+    return json({ ok: true });
   }
 
   if (url.pathname === '/api/client/programs' && request.method === 'GET') {
