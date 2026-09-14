@@ -1,4 +1,4 @@
-ALTER TABLE training_plan ADD COLUMN position INTEGER NOT NULL DEFAULT 0 CHECK (position >= 0);
+ALTER TABLE training_plan ADD COLUMN position INTEGER NOT NULL DEFAULT 2147483647 CHECK (position >= 0);
 
 UPDATE training_plan AS current
 SET position = (
