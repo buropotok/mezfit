@@ -103,7 +103,7 @@ const russianApiErrors: Record<string, string> = {
   EXERCISE_EXISTS: 'Упражнение с таким названием уже существует',
   EXERCISE_READ_ONLY: 'Базовое упражнение нельзя изменять',
   EXERCISE_NOT_FOUND: 'Упражнение не найдено',
-  INVALID_NAME: 'Укажите название упражнения',
+  INVALID_NAME: 'Укажите название',
   INVALID_TRACKING_TYPE: 'Выбран неподдерживаемый тип учёта результата',
   INVALID_CATEGORY: 'Выбрана неподдерживаемая категория',
   INVALID_EQUIPMENT: 'Выбран неподдерживаемый тип оборудования',
@@ -175,6 +175,13 @@ export function getCoachPrograms(
   initData: string,
 ): Promise<{ programs: ProgramListItem[]; clients: ProgramOwnerGroup[] }> {
   return apiRequest(initData, '/api/coach/programs');
+}
+
+export function createCoachProgram(initData: string, name: string): Promise<{ program: ProgramListItem }> {
+  return apiRequest(initData, '/api/coach/programs', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
 }
 
 export function getClientPrograms(initData: string): Promise<{ programs: ProgramListItem[] }> {
