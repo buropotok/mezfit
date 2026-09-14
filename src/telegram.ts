@@ -3,8 +3,8 @@ export interface TelegramWebApp {
   colorScheme: 'light' | 'dark';
   version?: string;
   platform?: string;
-  ready?: () => void;
-  expand?: () => void;
+  ready(): void;
+  expand(): void;
 }
 
 export function getTelegramWebApp(): TelegramWebApp | null {
