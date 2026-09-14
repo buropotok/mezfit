@@ -186,50 +186,50 @@ export function ProgramsPage({
   return (
     <section className="programs-page" aria-label="Программы">
       <div className="programs-scroll">
-        <SearchInput
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Поиск клиента"
-          aria-label="Поиск клиента"
-        />
+      <SearchInput
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Поиск клиента"
+        aria-label="Поиск клиента"
+      />
 
-        <Tabs className="programs-tabs" value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-          <TabsList aria-label="Статус программы">
-            <TabsTrigger value="active">Активные</TabsTrigger>
-            <TabsTrigger value="finished">Завершённые</TabsTrigger>
-            <TabsTrigger value="draft">Черновики</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <Tabs className="programs-tabs" value={filter} onValueChange={(value) => setFilter(value as Filter)}>
+        <TabsList aria-label="Статус программы">
+          <TabsTrigger value="active">Активные</TabsTrigger>
+          <TabsTrigger value="finished">Завершённые</TabsTrigger>
+          <TabsTrigger value="draft">Черновики</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-        {programs === null ? <Text tone="muted">Загружаем программы…</Text> : (
-          <>
-            <section className="programs-section" aria-labelledby="own-programs-title">
-              <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
-              <ProgramRows programs={ownPrograms} />
-              {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
-            </section>
+      {programs === null ? <Text tone="muted">Загружаем программы…</Text> : (
+        <>
+          <section className="programs-section" aria-labelledby="own-programs-title">
+            <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
+            <ProgramRows programs={ownPrograms} />
+            {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
+          </section>
 
-            <section className="programs-section" aria-labelledby="client-programs-title">
-              <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
-              {visibleClients.map((group) => (
-                <div className="programs-client" key={group.owner.id}>
-                  <List className="programs-client-list">
-                    <ListItem
-                      onClick={() => { void selectClient(group.owner.id); }}
-                      leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
-                      title={ownerName(group)}
-                      trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
-                    />
-                  </List>
-                  <ProgramRows programs={group.programs} />
-                </div>
-              ))}
-              {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
-            </section>
-          </>
-        )}
+          <section className="programs-section" aria-labelledby="client-programs-title">
+            <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+            {visibleClients.map((group) => (
+              <div className="programs-client" key={group.owner.id}>
+                <List className="programs-client-list">
+                  <ListItem
+                    onClick={() => { void selectClient(group.owner.id); }}
+                    leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
+                    title={ownerName(group)}
+                    trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
+                  />
+                </List>
+                <ProgramRows programs={group.programs} />
+              </div>
+            ))}
+            {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
+          </section>
+        </>
+      )}
 
-        {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
+      {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
       </div>
 
       {onOpenCreation ? (
