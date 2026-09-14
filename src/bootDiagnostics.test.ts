@@ -10,12 +10,19 @@ describe('withBootTimeout', () => {
     await expect(withBootTimeout(Promise.resolve('ready'), 1000, 'theme-request-timeout')).resolves.toBe('ready');
   });
 
-  it('rejects a startup step that never settles', async () => {
+  it('rejects and cancels a startup step that never settles', async () => {
     vi.useFakeTimers();
-    const pending = withBootTimeout(new Promise<never>(() => undefined), 5000, 'theme-request-timeout');
+    const cancel = vi.fn();
+    const pending = withBootTimeout(
+      new Promise<never>(() => undefined),
+      5000,
+      'theme-request-timeout',
+      cancel,
+    );
     const expectation = expect(pending).rejects.toBeInstanceOf(BootTimeoutError);
 
     await vi.advanceTimersByTimeAsync(5000);
     await expectation;
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 });
