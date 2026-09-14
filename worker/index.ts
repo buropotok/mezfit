@@ -322,10 +322,16 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     if (typeof owner === 'object' && owner !== null && 'type' in owner && owner.type === 'self') {
       ownerUserId = auth.row.id;
     } else if (
-      typeof owner === 'object' && owner !== null && 'type' in owner && owner.type === 'client'
-      && 'clientUserId' in owner && Number.isInteger(owner.clientUserId) && Number(owner.clientUserId) > 0
+      typeof owner === 'object'
+      && owner !== null
+      && 'type' in owner
+      && owner.type === 'client'
+      && 'clientUserId' in owner
+      && typeof owner.clientUserId === 'number'
+      && Number.isInteger(owner.clientUserId)
+      && owner.clientUserId > 0
     ) {
-      ownerUserId = Number(owner.clientUserId);
+      ownerUserId = owner.clientUserId;
       await requireCoachClient(env.DB_BINDING, auth.row.id, ownerUserId);
     } else {
       throw new HttpError(400, 'INVALID_PROGRAM_OWNER', 'Program owner is required');
