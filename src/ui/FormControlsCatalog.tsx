@@ -13,7 +13,14 @@ export function FormControlsCatalog() {
         <TextInput label="Имя" defaultValue="Андрей" disabled />
         <TextInput label="Имя" error="Обязательное поле" />
         <TextInput label="Имя" defaultValue="Андрей" success="Данные корректны" />
-        <TextArea label="Описание" defaultValue="Многострочный текст" rows={3} />
+      </div>
+      <Divider />
+      <Text variant="headline">TextArea</Text>
+      <div className="ui-kit-stack">
+        <TextArea label="Описание" rows={3} />
+        <TextArea label="Описание" defaultValue={'Первая строка\nВторая строка'} rows={3} />
+        <TextArea label="Описание" defaultValue="Недоступное описание" rows={3} disabled />
+        <TextArea label="Описание" error="Добавьте описание" rows={3} />
       </div>
       <Divider />
       <div className="ui-kit-stack">
