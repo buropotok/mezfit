@@ -94,7 +94,6 @@ async function bootstrap(): Promise<void> {
 
   await trackStartupStep('Настройки темы', () => theme.loadGlobalTheme());
   logStartup('React: запуск интерфейса');
-  stopBootstrapLog();
   reactDom.createRoot(root).render(
     React.createElement(
       React.StrictMode,
@@ -102,6 +101,8 @@ async function bootstrap(): Promise<void> {
       React.createElement(Screen),
     ),
   );
+  logStartup('React: render вызван', 'success');
+  stopBootstrapLog();
 }
 
 void bootstrap().catch((error: unknown) => {
