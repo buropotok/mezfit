@@ -1,14 +1,14 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import './form-controls.css';
 
-type TextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
+export type TextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
   label?: string;
   error?: string;
   success?: string;
 };
 
 export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput(
-  { id, label, error, success, className = '', value, defaultValue, ...props },
+  { id, label, error, success, className = '', value, defaultValue, placeholder, ...props },
   ref,
 ) {
   const generatedId = useId();
@@ -18,7 +18,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
 
   return (
     <div className={`ui-text-input${hasValue ? ' ui-text-input--filled' : ''}${stateClass} ${className}`.trim()}>
-      <input ref={ref} id={inputId} className="ui-text-input__field" value={value} defaultValue={defaultValue} aria-invalid={error ? true : undefined} {...props} />
+      <input ref={ref} id={inputId} className="ui-text-input__field" value={value} defaultValue={defaultValue} placeholder={placeholder ?? (label ? ' ' : undefined)} aria-invalid={error ? true : undefined} {...props} />
       {label ? <label className="ui-text-input__label" htmlFor={inputId}>{error || success || label}</label> : null}
     </div>
   );
