@@ -218,3 +218,39 @@ Reject a PR that solves a local symptom by violating a system boundary. Review c
 ## 31. Definition of Done
 
 A change is done only when all applicable conditions hold: requested behavior works; ownership is correct; Client/Coach boundaries remain valid; types/contracts are coherent; API boundaries are respected; backend authorization is enforced; persistence/migrations preserve integrity; failure paths are handled; Telegram/mobile compatibility was considered; obsolete paths are removed; tests are updated; relevant verification passes or limitations are documented; and the complete diff has been reviewed for regressions.
+
+## 32. Safe existing-file updates through the GitHub connector
+
+When an existing UTF-8 text file is changed through the GitHub connector, treat `update_file` as an optimistic-concurrency full-file replacement. The connector receives the complete replacement content, not a patch. Therefore, the replacement content must always be derived from a fresh read of the exact file on the exact working branch.
+
+Mandatory procedure:
+
+1. Immediately before editing, call `fetch_file` for the target path with `ref` set to the working branch. Use the returned file content and blob SHA as the only source of truth for that write.
+2. Build the replacement from that exact fetched content. Change only the text required by the task. Preserve all untouched lines, line endings, indentation, quotes, import ordering, whitespace, and formatting unless changing them is intentionally part of the task.
+3. Call `update_file` for the same path and the same working branch. Pass the complete resulting file as `content` and the blob SHA returned by the fresh `fetch_file` as `sha`.
+4. Never use a blob SHA taken from `main`, another branch, an earlier version of the working branch, memory, or a stale tool result when updating the file.
+5. Never run concurrent `update_file` or `delete_file` operations for the same path. After every successful write, the previous blob SHA is stale. Before another modification of that path, fetch the file again or use the newly returned `content_sha` only when it unambiguously represents the immediately preceding write to that same path and branch.
+6. Do not reconstruct or regenerate an entire existing file from memory when a minimal modification is intended. A logically equivalent regenerated file can introduce line-ending, whitespace, formatting, or ordering churn and turn a small functional change into a whole-file replacement.
+7. After each logical group of writes, compare the working branch with its base, normally `main`, using `compare_commits`. Inspect per-file additions/deletions and the actual diff when necessary. The observed diff must be proportionate to the intended functional change.
+8. If a file shows unexpected formatting churn, broad rewrites, or substantially more changed lines than the task requires, stop. Do not continue building on that diff and do not open a PR. Re-fetch the authoritative version, reconstruct the intended change while preserving untouched text exactly, write it again with the current SHA, and re-check the diff.
+9. `apply_patch` is not required for a minimal Git diff. A full-file `update_file` produces a normal minimal Git diff when its content is based on the fresh branch blob and all unrelated text is preserved exactly.
+
+Canonical sequence:
+
+```text
+fetch_file(path, ref=working_branch)
+        ↓
+exact content + current blob SHA
+        ↓
+minimal textual modification of exact content
+        ↓
+update_file(
+  path=same_path,
+  branch=same_working_branch,
+  sha=current_blob_sha,
+  content=complete_modified_content
+)
+        ↓
+compare_commits(base=main, head=working_branch)
+        ↓
+verify that the diff contains only intended changes
