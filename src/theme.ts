@@ -34,7 +34,7 @@ export async function loadGlobalTheme(): Promise<ThemeName> {
       theme = normalizeThemeName(payload.theme);
       markBoot('theme-request-success', { httpStatus: response.status });
     } else {
-      markBoot('theme-request-http-error', { httpStatus: response.status });
+      reportBoot('theme-request-http-error', { httpStatus: response.status });
     }
   } catch (error) {
     if (!(error instanceof BootTimeoutError)) {
