@@ -23,14 +23,22 @@ export function applyTheme(theme: ThemeName): void {
 export async function loadGlobalTheme(): Promise<ThemeName> {
   let theme: ThemeName = 'default';
   markBoot('theme-request-start');
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
   try {
-    const response = await withBootTimeout(
-      fetch('/api/config', { cache: 'no-store' }),
+    const { response, payload } = await withBootTimeout(
+      (async () => {
+        const response = await fetch('/api/config', {
+          cache: 'no-store',
+          ...(controller ? { signal: controller.signal } : {}),
+        });
+        const payload = response.ok ? (await response.json()) as { theme?: unknown } : null;
+        return { response, payload };
+      })(),
       5000,
       'theme-request-timeout',
+      () => controller?.abort(),
     );
-    if (response.ok) {
-      const payload = (await response.json()) as { theme?: unknown };
+    if (response.ok && payload) {
       theme = normalizeThemeName(payload.theme);
       markBoot('theme-request-success', { httpStatus: response.status });
     } else {
