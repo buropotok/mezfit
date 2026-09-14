@@ -307,12 +307,16 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (url.pathname === '/api/coach/programs' && request.method === 'POST') {
     const auth = await requireUser(request, env);
     requireRole(auth, 'coach');
-    let body: { name?: unknown; owner?: unknown } = {};
+    let parsedBody: unknown;
     try {
-      body = (await request.json()) as typeof body;
+      parsedBody = await request.json();
     } catch {
       throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
+    if (typeof parsedBody !== 'object' || parsedBody === null || Array.isArray(parsedBody)) {
+      throw new HttpError(400, 'INVALID_JSON', 'Request body must be a JSON object');
+    }
+    const body = parsedBody as { name?: unknown; owner?: unknown };
 
     const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
     if (!name) throw new HttpError(400, 'INVALID_PROGRAM_NAME', 'Program name is required');
