@@ -20,6 +20,12 @@ describe('Dropdown', () => {
     expect(screen.getByRole('button', { name: 'Тип тренировки' }).getAttribute('aria-haspopup')).toBe('dialog');
   });
 
+  it('supports the form-field presentation without changing dropdown behavior', () => {
+    render(<Dropdown mode="single" variant="field" options={options} value="strength" onChange={() => {}} triggerProps={{ 'aria-label': 'Тип тренировки' }} />);
+
+    expect(screen.getByRole('button', { name: 'Тип тренировки' }).classList.contains('ui-dropdown__trigger--field')).toBe(true);
+  });
+
   it('selects a single option and closes immediately', () => {
     const onChange = vi.fn();
     render(<Dropdown mode="single" options={options} value="strength" onChange={onChange} triggerProps={{ 'aria-label': 'Тип тренировки' }} />);
