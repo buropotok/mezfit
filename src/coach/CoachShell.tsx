@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -82,11 +82,15 @@ function ClientWorkspace({ initData, client }: { initData: string; client: Coach
 
 function ClientDirectory({
   clients,
+  error = '',
+  onRetry,
   onSelect,
   onAdd,
   busy = false,
 }: {
   clients: CoachClientListItem[] | null;
+  error?: string;
+  onRetry?: () => void;
   onSelect: (client: CoachClientListItem) => void;
   onAdd?: () => void;
   busy?: boolean;
@@ -94,7 +98,13 @@ function ClientDirectory({
   return (
     <section className="client-directory-surface" aria-label="Список клиентов">
       <div className="client-directory-scroll">
-        {clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
+        {error ? (
+          <div className="empty-state directory-empty" role="alert">
+            <strong>Не удалось загрузить клиентов</strong>
+            <p>{error}</p>
+            {onRetry ? <Button onClick={onRetry}>Повторить</Button> : null}
+          </div>
+        ) : clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
           <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
         ) : (
           <List className="compact-client-list">
@@ -140,17 +150,20 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const [programRefreshKey, setProgramRefreshKey] = useState(0);
   const programClientRequestRef = useRef(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    getCoachClients(initData)
-      .then(({ clients: next }) => {
-        if (!cancelled) setClients(next);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) setMessage(error instanceof Error ? error.message : 'Не удалось загрузить клиентов');
-      });
-    return () => { cancelled = true; };
+  const loadClients = useCallback(async () => {
+    setClients(null);
+    setMessage('');
+    try {
+      const { clients: next } = await getCoachClients(initData);
+      setClients(next);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось загрузить клиентов');
+    }
   }, [initData]);
+
+  useEffect(() => {
+    void loadClients();
+  }, [loadClients]);
 
   useEffect(() => {
     programClientRequestRef.current += 1;
@@ -194,6 +207,8 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         <section className="coach-directory">
           <ClientDirectory
             clients={clients}
+            error={message}
+            onRetry={() => { void loadClients(); }}
             onSelect={(client) => {
               setProgramDraft((draft) => draft ? { ...draft, owner: { type: 'client', client } } : draft);
               setSelectingProgramClient(false);
@@ -310,7 +325,14 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         </div>
       </header>
 
-      <ClientDirectory clients={clients} onSelect={setSelectedClient} onAdd={() => { void createInvite(); }} busy={busy} />
+      <ClientDirectory
+        clients={clients}
+        error={message}
+        onRetry={() => { void loadClients(); }}
+        onSelect={setSelectedClient}
+        onAdd={() => { void createInvite(); }}
+        busy={busy}
+      />
 
       <Modal isOpen={Boolean(inviteUrl)} title="Пригласить клиента" onClose={closeInvite}>
         <p>Отправьте эту персональную ссылку клиенту в Telegram. Ссылка одноразовая и действует 30 дней.</p>
@@ -320,8 +342,6 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
           <Button onClick={copyInvite}>Копировать ссылку</Button>
         </div>
       </Modal>
-
-      {message ? <p className="inline-message">{message}</p> : null}
     </section>
   );
 }
