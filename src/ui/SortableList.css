@@ -9,11 +9,15 @@
   z-index: 0;
   width: 100%;
   min-width: 0;
-  touch-action: pan-y;
+  touch-action: none;
   will-change: transform;
 }
 
-.ui-sortable-list__row [data-dnd-handle] {
+.ui-sortable-list__row--handle-only {
+  touch-action: pan-y;
+}
+
+.ui-sortable-list__row--handle-only [data-dnd-handle] {
   touch-action: none;
 }
 
