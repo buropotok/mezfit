@@ -6,6 +6,7 @@ export type TrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps
 export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulders' | 'core' | 'full_body' | 'cardio' | 'other';
 export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
 export type ExerciseSort = 'alphabetical' | 'reference';
+export type ProgramStatus = 'active' | 'draft' | 'finished';
 
 export interface AppUser {
   id: number;
@@ -36,6 +37,28 @@ export interface ClientInvitePreview {
     lastName: string | null;
     username: string | null;
   };
+}
+
+export interface ProgramListItem {
+  id: number;
+  userId: number;
+  name: string;
+  status: ProgramStatus;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+export interface ProgramOwner {
+  id: number;
+  firstName: string;
+  lastName: string | null;
+  username: string | null;
+  photoUrl: string | null;
+}
+
+export interface ProgramOwnerGroup {
+  owner: ProgramOwner;
+  programs: ProgramListItem[];
 }
 
 export interface ExerciseDefinition {
@@ -146,6 +169,16 @@ export function addRole(initData: string, role: Role): Promise<MeResponse> {
 
 export function getCoachClients(initData: string): Promise<{ clients: CoachClientListItem[] }> {
   return apiRequest(initData, '/api/coach/clients');
+}
+
+export function getCoachPrograms(
+  initData: string,
+): Promise<{ programs: ProgramListItem[]; clients: ProgramOwnerGroup[] }> {
+  return apiRequest(initData, '/api/coach/programs');
+}
+
+export function getClientPrograms(initData: string): Promise<{ programs: ProgramListItem[] }> {
+  return apiRequest(initData, '/api/client/programs');
 }
 
 export function createClientInvite(

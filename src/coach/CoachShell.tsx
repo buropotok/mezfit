@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createClientInvite,
   getCoachClients,
@@ -8,6 +8,7 @@ import type { AppDestination, NavigationContext } from '../NavigationShell';
 import { Avatar, Button, FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
+import { ProgramsPage } from './ProgramsPage';
 
 type ClientTab = 'overview' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
 
@@ -21,7 +22,6 @@ const tabs: Array<{ id: ClientTab; label: string }> = [
 ];
 
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
-  programs: { title: 'Программы', text: 'Здесь будет глобальный список программ тренера и быстрый переход к назначению клиенту.' },
   calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
   settings: { title: 'Настройки', text: 'Системные настройки будут добавляться отдельными задачами.' },
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
@@ -91,6 +91,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const [inviteCopyError, setInviteCopyError] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const programClientRequestRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,7 +106,8 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }, [initData]);
 
   useEffect(() => {
-    if (destination !== 'clients' && selectedClient) setSelectedClient(null);
+    programClientRequestRef.current += 1;
+    if (destination !== 'clients' && destination !== 'programs' && selectedClient) setSelectedClient(null);
   }, [destination, selectedClient]);
 
   useEffect(() => {
@@ -127,6 +129,27 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
   if (destination === 'exercises') {
     return <GlobalExerciseCatalog initData={initData} onNavigationContextChange={onNavigationContextChange} />;
+  }
+
+  if (destination === 'programs') {
+    const selectProgramClient = async (userId: number) => {
+      const requestId = programClientRequestRef.current + 1;
+      programClientRequestRef.current = requestId;
+      const cached = clients?.find((item) => item.user.id === userId);
+      if (cached) {
+        if (programClientRequestRef.current === requestId) setSelectedClient(cached);
+        return;
+      }
+
+      const { clients: refreshedClients } = await getCoachClients(initData);
+      if (programClientRequestRef.current !== requestId) return;
+      setClients(refreshedClients);
+      const client = refreshedClients.find((item) => item.user.id === userId);
+      if (!client) throw new Error('Клиент больше не связан с тренером');
+      setSelectedClient(client);
+    };
+
+    return <ProgramsPage initData={initData} onSelectClient={selectProgramClient} />;
   }
 
   if (destination !== 'clients') {

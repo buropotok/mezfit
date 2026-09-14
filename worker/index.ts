@@ -9,6 +9,7 @@ import {
   type ExerciseEquipmentCode,
   type TrackingType,
 } from './lib/exercises';
+import { listClientProgramsForCoach, listProgramsForUser } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 
@@ -291,6 +292,22 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);
   if (exerciseMatch) return handleExerciseRoute(request, env, Number(exerciseMatch[1]));
+
+  if (url.pathname === '/api/coach/programs' && request.method === 'GET') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    const [programs, clients] = await Promise.all([
+      listProgramsForUser(env.DB_BINDING, auth.row.id),
+      listClientProgramsForCoach(env.DB_BINDING, auth.row.id),
+    ]);
+    return json({ programs, clients });
+  }
+
+  if (url.pathname === '/api/client/programs' && request.method === 'GET') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'client');
+    return json({ programs: await listProgramsForUser(env.DB_BINDING, auth.row.id) });
+  }
 
   if (url.pathname === '/api/health' && request.method === 'GET') {
     const result = await env.DB_BINDING.prepare('SELECT 1 AS ok').first<{ ok: number }>();
