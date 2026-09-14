@@ -19,7 +19,7 @@ export async function duplicateProgram(
     .first<{ id: number; user_id: number; name: string }>();
   if (!source) throw new Error('PROGRAM_NOT_FOUND');
 
-  const copyName = `${source.name} (копия)`.slice(0, 120);
+  const copyName = `${source.name.slice(0, 112)} (копия)`;
   const created = await db
     .prepare(`
       INSERT INTO training_plan (user_id, name, created_by_user_id, position)
