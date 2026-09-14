@@ -13,14 +13,6 @@
   will-change: transform;
 }
 
-.ui-sortable-list__row--handle-only {
-  touch-action: pan-y;
-}
-
-.ui-sortable-list__row--handle-only [data-dnd-handle] {
-  touch-action: none;
-}
-
 .ui-sortable-list__row + .ui-sortable-list__row::before {
   content: '';
   pointer-events: none;
