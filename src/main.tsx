@@ -43,8 +43,9 @@ function renderBootstrapSplash(root: HTMLElement): () => void {
   return subscribeStartupLog(renderLog);
 }
 
-function signalTelegramReady(): void {
-  const webApp = window.Telegram?.WebApp;
+async function signalTelegramReady(): Promise<void> {
+  const telegram = await trackStartupStep('Модуль Telegram', () => import('./telegram'));
+  const webApp = telegram.getTelegramWebApp();
   if (!webApp) {
     logStartup('Telegram WebApp: API не найден', 'error');
     return;
@@ -64,7 +65,7 @@ const root = resolveRoot();
 async function bootstrap(): Promise<void> {
   logStartup('Загрузчик: запущен', 'success');
   const stopBootstrapLog = renderBootstrapSplash(root);
-  signalTelegramReady();
+  await signalTelegramReady();
 
   const reactPromise = trackStartupStep('Модуль React', () => import('react'));
   const reactDomPromise = trackStartupStep('Модуль React DOM', () => import('react-dom/client'));
@@ -78,7 +79,6 @@ async function bootstrap(): Promise<void> {
     ? []
     : [
         trackStartupStep('Модуль API', () => import('./api')),
-        trackStartupStep('Модуль Telegram', () => import('./telegram')),
         trackStartupStep('Модуль навигации', () => import('./NavigationShell')),
         trackStartupStep('Модуль тренера', () => import('./coach/CoachShell')),
         trackStartupStep('UI-модуль', () => import('./ui')),
