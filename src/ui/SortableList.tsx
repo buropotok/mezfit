@@ -43,7 +43,7 @@ function isDragHandle(target: EventTarget | null) {
   return target instanceof Element && Boolean(target.closest('[data-dnd-handle]'));
 }
 
-function canStartRowDrag(currentTarget: EventTarget, target: EventTarget | null) {
+function canStartRowDrag(currentTarget: EventTarget | null, target: EventTarget | null) {
   const hasDedicatedHandle = currentTarget instanceof Element && Boolean(currentTarget.querySelector('[data-dnd-handle]'));
   return hasDedicatedHandle ? isDragHandle(target) : !blocksDrag(target);
 }
