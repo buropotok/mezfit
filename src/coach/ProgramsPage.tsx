@@ -172,6 +172,7 @@ export function ProgramsPage({
   const [message, setMessage] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
   const [duplicateProgramId, setDuplicateProgramId] = useState<number | null>(null);
+  const [reorderBusy, setReorderBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -230,8 +231,9 @@ export function ProgramsPage({
   };
 
   const reorderOwnPrograms = async (next: ProgramListItem[]) => {
-    if (!programs) return;
+    if (!programs || reorderBusy) return;
     const previous = programs;
+    setReorderBusy(true);
     setPrograms(next);
     setMessage('');
     try {
@@ -239,11 +241,15 @@ export function ProgramsPage({
     } catch (error) {
       setPrograms(previous);
       setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ');
+    } finally {
+      setReorderBusy(false);
     }
   };
 
   const reorderClientPrograms = async (ownerUserId: number, next: ProgramListItem[]) => {
+    if (reorderBusy) return;
     const previous = clientGroups;
+    setReorderBusy(true);
     setClientGroups((groups) => groups.map((group) => (
       group.owner.id === ownerUserId ? { ...group, programs: next } : group
     )));
@@ -253,6 +259,8 @@ export function ProgramsPage({
     } catch (error) {
       setClientGroups(previous);
       setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ');
+    } finally {
+      setReorderBusy(false);
     }
   };
 
@@ -284,7 +292,7 @@ export function ProgramsPage({
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
             <ProgramRows
               programs={ownPrograms}
-              sortable={filter === 'all'}
+              sortable={filter === 'all' && !reorderBusy}
               onDuplicate={(program) => { void duplicateProgram(program); }}
               duplicateProgramId={duplicateProgramId}
               onReorder={(next) => { void reorderOwnPrograms(next); }}
@@ -306,7 +314,7 @@ export function ProgramsPage({
                 </List>
                 <ProgramRows
                   programs={group.programs}
-                  sortable={filter === 'all'}
+                  sortable={filter === 'all' && !reorderBusy}
                   onDuplicate={(program) => { void duplicateProgram(program); }}
                   duplicateProgramId={duplicateProgramId}
                   onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
