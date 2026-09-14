@@ -9,8 +9,12 @@
   z-index: 0;
   width: 100%;
   min-width: 0;
-  touch-action: none;
+  touch-action: pan-y;
   will-change: transform;
+}
+
+.ui-sortable-list__row [data-dnd-handle] {
+  touch-action: none;
 }
 
 .ui-sortable-list__row + .ui-sortable-list__row::before {
