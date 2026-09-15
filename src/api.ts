@@ -160,7 +160,7 @@ const russianApiErrors: Record<string, string> = {
   INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
   INVALID_PHASE_NAME: 'Укажите название фазы',
   INVALID_PROGRAM: 'Выбранная программа недоступна',
-  PROGRAM_NOT_FOUND: 'Активная программа не найдена',
+  PROGRAM_NOT_FOUND: 'Программа не найдена',
   PROGRAM_SELECTION_REQUIRED: 'Выберите программу для тренировки',
   PROGRAM_DAY_INVALID: 'Выбранный день программы больше недоступен',
   INVALID_WORKOUT_TYPE: 'Выберите тип тренировки',
