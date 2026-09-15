@@ -28,6 +28,6 @@
 .ui-kit-type-specimen--list .ui-list-item__subtitle, .ui-kit-type-specimen--sortable-list .ui-list-item__subtitle { font-size: var(--ui-kit-slot-secondary-size); line-height: var(--ui-kit-slot-secondary-line); font-weight: var(--ui-kit-slot-secondary-weight); }
 .ui-kit-type-specimen--list .ui-list-item__trailing, .ui-kit-type-specimen--sortable-list .ui-list-item__trailing { font-size: var(--ui-kit-slot-trailing-size); line-height: var(--ui-kit-slot-trailing-line); font-weight: var(--ui-kit-slot-trailing-weight); }
 .ui-kit-type-specimen--list .ui-nested-badges .ui-badge { font-size: var(--ui-kit-slot-badge-size); line-height: var(--ui-kit-slot-badge-line); font-weight: var(--ui-kit-slot-badge-weight); }
-.ui-kit-type-specimen--list .ui-nested-badges__info { font-size: var(--ui-kit-slot-info-size); line-height: var(--ui-kit-slot-info-line); font-weight: var(--ui-kit-slot-info-weight); }
+.ui-kit-type-specimen--list .ui-nested-badges .ui-nested-badges__info { font-size: var(--ui-kit-slot-info-size); line-height: var(--ui-kit-slot-info-line); font-weight: var(--ui-kit-slot-info-weight); }
 
 @media (max-width: 520px) { .ui-kit-admin-fields { grid-template-columns: 1fr; } }
