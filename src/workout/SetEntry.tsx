@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Badge, Button, Divider, IconButton, Surface, Text, TextArea, type BadgeColor } from '../ui';
+import { Badge, Button, Divider, IconButton, Modal, Surface, Text, TextArea, TextInput, type BadgeColor } from '../ui';
 import {
   createSetEntryDraft,
   type ResistanceBandCode,
@@ -76,36 +76,8 @@ function getErrorMessage(error: unknown): string {
   return 'Не удалось сохранить подход';
 }
 
-// Tabler Outline: ripple.
-function RippleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 7c3 -2 6 -2 9 0s6 2 9 0" />
-      <path d="M3 17c3 -2 6 -2 9 0s6 2 9 0" />
-      <path d="M3 12c3 -2 6 -2 9 0s6 2 9 0" />
-    </svg>
-  );
-}
-
-// Tabler Outline: library.
-function LibraryIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 5.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666" />
-      <path d="M4.012 7.26a2.005 2.005 0 0 0 -1.012 1.737v10c0 1.1 .9 2 2 2h10c.75 0 1.158 -.385 1.5 -1" />
-      <path d="M11 7h5" />
-      <path d="M11 10h6" />
-      <path d="M11 13h3" />
-    </svg>
-  );
-}
-
-function MinusIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14" /></svg>;
-}
-
-function PlusIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>;
+function SharedIcon({ name }: { name: 'ripple' | 'library' | 'minus' | 'plus' }) {
+  return <span className={`set-entry__icon set-entry__icon--${name}`} aria-hidden="true" />;
 }
 
 // Telegram brand mark used only as the visual label for the external chat action.
@@ -153,22 +125,21 @@ function MetricField({ label, unit, value, plan, previous, step, precision, suff
       </div>
 
       <div className="set-entry__metric-control">
-        <fieldset className="set-entry__value-field">
-          <legend>{unit}</legend>
-          <input
-            className="set-entry__number-input"
-            type="number"
-            inputMode={precision === 0 ? 'numeric' : 'decimal'}
-            min="0"
-            step={step}
-            value={value ?? ''}
-            aria-label={`${label}, ${unit}`}
-            onChange={(event) => onChange(parseNonNegativeNumber(event.currentTarget.value))}
-          />
-        </fieldset>
+        <TextInput
+          className="set-entry__number-field"
+          type="number"
+          inputMode={precision === 0 ? 'numeric' : 'decimal'}
+          min="0"
+          step={step}
+          value={value ?? ''}
+          label={unit}
+          placeholder=" "
+          aria-label={`${label}, ${unit}`}
+          onChange={(event) => onChange(parseNonNegativeNumber(event.currentTarget.value))}
+        />
         <div className="set-entry__stepper">
-          <IconButton className="set-entry__stepper-button" label={`Уменьшить: ${label}`} onClick={() => adjust(-1)}><MinusIcon /></IconButton>
-          <IconButton className="set-entry__stepper-button" label={`Увеличить: ${label}`} onClick={() => adjust(1)}><PlusIcon /></IconButton>
+          <IconButton className="set-entry__stepper-button" label={`Уменьшить: ${label}`} onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
+          <IconButton className="set-entry__stepper-button" label={`Увеличить: ${label}`} onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
         </div>
       </div>
     </div>
@@ -212,18 +183,33 @@ function DurationField({ value, plan, previous, onChange }: DurationFieldProps) 
 
       <div className="set-entry__metric-control">
         <div className="set-entry__duration-fields">
-          <fieldset className="set-entry__value-field">
-            <legend>МИН</legend>
-            <input className="set-entry__number-input" type="number" inputMode="numeric" min="0" value={minutes} aria-label="Время, минуты" onChange={(event) => updatePart('minutes', event.currentTarget.value)} />
-          </fieldset>
-          <fieldset className="set-entry__value-field">
-            <legend>СЕК</legend>
-            <input className="set-entry__number-input" type="number" inputMode="numeric" min="0" max="59" value={seconds} aria-label="Время, секунды" onChange={(event) => updatePart('seconds', event.currentTarget.value)} />
-          </fieldset>
+          <TextInput
+            className="set-entry__number-field"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            value={minutes}
+            label="МИН"
+            placeholder=" "
+            aria-label="Время, минуты"
+            onChange={(event) => updatePart('minutes', event.currentTarget.value)}
+          />
+          <TextInput
+            className="set-entry__number-field"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            max="59"
+            value={seconds}
+            label="СЕК"
+            placeholder=" "
+            aria-label="Время, секунды"
+            onChange={(event) => updatePart('seconds', event.currentTarget.value)}
+          />
         </div>
         <div className="set-entry__stepper">
-          <IconButton className="set-entry__stepper-button" label="Уменьшить время на 30 секунд" onClick={() => adjust(-1)}><MinusIcon /></IconButton>
-          <IconButton className="set-entry__stepper-button" label="Увеличить время на 30 секунд" onClick={() => adjust(1)}><PlusIcon /></IconButton>
+          <IconButton className="set-entry__stepper-button" label="Уменьшить время на 30 секунд" onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
+          <IconButton className="set-entry__stepper-button" label="Увеличить время на 30 секунд" onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
         </div>
       </div>
     </div>
@@ -245,10 +231,11 @@ function setEntryIdentityKey(data: SetEntryProps['data']): string {
 }
 
 export function SetEntry(props: SetEntryProps) {
-  return <SetEntryEditor key={setEntryIdentityKey(props.data)} {...props} />;
+  const lifecycleKey = `${setEntryIdentityKey(props.data)}:${props.isOpen ? 'open' : 'closed'}`;
+  return <SetEntryEditor key={lifecycleKey} {...props} />;
 }
 
-function SetEntryEditor({ data, onSave, onOpenHistory, onOpenChat }: SetEntryProps) {
+function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenChat }: SetEntryProps) {
   const bandsId = useId();
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(data));
   const [bandsOpen, setBandsOpen] = useState(false);
@@ -296,168 +283,177 @@ function SetEntryEditor({ data, onSave, onOpenHistory, onOpenChat }: SetEntryPro
   const previousDistanceKm = metersToKilometers(metricValue(data.previous?.metrics ?? null, 'distanceMeters'));
 
   return (
-    <Surface as="section" elevated className="set-entry" aria-label={`Подход ${data.identity.setNumber}: ${data.identity.exerciseName}`}>
-      <div className="set-entry__header">
-        <div className="set-entry__heading">
-          <Text variant="title">Подход {data.identity.setNumber}</Text>
-          <Text variant="headline" className="set-entry__exercise-name">{data.identity.exerciseName}</Text>
-          <Text variant="footnote" tone="muted">{data.identity.programName} · {formatWorkoutDate(data.identity.workoutDate)}</Text>
-        </div>
+    <Modal
+      isOpen={isOpen}
+      className="set-entry-modal"
+      title={`Подход ${data.identity.setNumber}`}
+      closeOnBackdrop={!saving}
+      onClose={onClose}
+      actions={[{
+        id: 'save',
+        label: saving ? 'Сохраняем…' : 'Сохранить',
+        disabled: saving,
+        onClick: handleSave,
+      }]}
+    >
+      <div className="set-entry">
+        <div className="set-entry__header">
+          <div className="set-entry__heading">
+            <Text variant="headline" className="set-entry__exercise-name">{data.identity.exerciseName}</Text>
+            <Text variant="footnote" tone="muted">{data.identity.programName} · {formatWorkoutDate(data.identity.workoutDate)}</Text>
+          </div>
 
-        <div className="set-entry__tools">
-          <IconButton
-            label="Фитнес-ленты"
-            aria-expanded={bandsOpen}
-            aria-controls={bandsId}
-            className={draft.bands.length > 0 || bandsOpen ? 'set-entry__tool--active' : ''}
-            onClick={() => setBandsOpen((open) => !open)}
-          >
-            <RippleIcon />
-          </IconButton>
-          <IconButton label="История упражнения" onClick={onOpenHistory}><LibraryIcon /></IconButton>
-        </div>
-
-        {bandsOpen ? (
-          <Surface elevated className="set-entry__bands" id={bandsId} role="dialog" aria-label="Выбор фитнес-лент">
-            <div className="set-entry__bands-heading">
-              <Text variant="headline">Фитнес-ленты</Text>
-              <Text variant="footnote" tone="muted">{draft.bands.length > 0 ? `Выбрано: ${draft.bands.length}` : 'Можно выбрать несколько'}</Text>
-            </div>
-            <div className="set-entry__bands-grid" role="group" aria-label="Цвета лент">
-              {bandOptions.map((band) => (
-                <button
-                  key={band.value}
-                  className={`set-entry__band-option set-entry__band-option--${band.value}`}
-                  type="button"
-                  aria-pressed={draft.bands.includes(band.value)}
-                  onClick={() => toggleBand(band.value)}
-                >
-                  <span className="set-entry__band-swatch" aria-hidden="true" />
-                  <span>{band.label}</span>
-                </button>
-              ))}
-            </div>
-            <div className="set-entry__bands-actions">
-              <Button variant="secondary" onClick={() => setDraft((current) => ({ ...current, bands: [] }))}>Без лент</Button>
-              <Button className="full-width" onClick={() => setBandsOpen(false)}>Готово</Button>
-            </div>
-          </Surface>
-        ) : null}
-      </div>
-
-      <Divider />
-
-      <div className="set-entry__metrics">
-        {showWeight ? (
-          <MetricField
-            label="Вес"
-            unit="КГ"
-            value={draft.metrics.weightKg}
-            plan={metricValue(data.plan, 'weightKg')}
-            previous={metricValue(data.previous?.metrics ?? null, 'weightKg')}
-            step={2.5}
-            precision={1}
-            suffix=" кг"
-            onChange={(value) => updateMetric('weightKg', value)}
-          />
-        ) : null}
-
-        {showTime ? (
-          <DurationField
-            value={draft.metrics.durationSeconds}
-            plan={metricValue(data.plan, 'durationSeconds')}
-            previous={metricValue(data.previous?.metrics ?? null, 'durationSeconds')}
-            onChange={(value) => updateMetric('durationSeconds', value)}
-          />
-        ) : null}
-
-        {showDistance ? (
-          <MetricField
-            label="Дистанция"
-            unit="КМ"
-            value={metersToKilometers(draft.metrics.distanceMeters)}
-            plan={planDistanceKm}
-            previous={previousDistanceKm}
-            step={0.1}
-            precision={2}
-            suffix=" км"
-            onChange={(value) => updateMetric('distanceMeters', value === null ? null : value * 1000)}
-          />
-        ) : null}
-
-        {showReps ? (
-          <MetricField
-            label="Повторения"
-            unit="ПОВТ."
-            value={draft.metrics.reps}
-            plan={metricValue(data.plan, 'reps')}
-            previous={metricValue(data.previous?.metrics ?? null, 'reps')}
-            step={1}
-            precision={0}
-            suffix=""
-            onChange={(value) => updateMetric('reps', value === null ? null : Math.round(value))}
-          />
-        ) : null}
-      </div>
-
-      <div className="set-entry__section">
-        <div className="set-entry__section-heading">
-          <Text variant="footnote" className="set-entry__section-label">Оценка подхода</Text>
-          <Text variant="caption" tone="muted">необязательно</Text>
-        </div>
-        <div className="set-entry__label-row" role="group" aria-label="Оценка подхода">
-          {setLabelOptions.map((option) => (
-            <button
-              key={option.value}
-              className="set-entry__badge-button"
-              type="button"
-              aria-pressed={draft.setLabel === option.value}
-              onClick={() => setDraft((current) => ({ ...current, setLabel: current.setLabel === option.value ? null : option.value }))}
+          <div className="set-entry__tools">
+            <IconButton
+              label="Фитнес-ленты"
+              aria-expanded={bandsOpen}
+              aria-controls={bandsId}
+              className={draft.bands.length > 0 || bandsOpen ? 'set-entry__tool--active' : ''}
+              onClick={() => setBandsOpen((open) => !open)}
             >
-              <Badge color={option.color}>{option.label}</Badge>
-            </button>
-          ))}
+              <SharedIcon name="ripple" />
+            </IconButton>
+            <IconButton label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton>
+          </div>
+
+          {bandsOpen ? (
+            <Surface elevated className="set-entry__bands" id={bandsId} role="dialog" aria-label="Выбор фитнес-лент">
+              <div className="set-entry__bands-heading">
+                <Text variant="headline">Фитнес-ленты</Text>
+                <Text variant="footnote" tone="muted">{draft.bands.length > 0 ? `Выбрано: ${draft.bands.length}` : 'Можно выбрать несколько'}</Text>
+              </div>
+              <div className="set-entry__bands-grid" role="group" aria-label="Цвета лент">
+                {bandOptions.map((band) => (
+                  <button
+                    key={band.value}
+                    className={`set-entry__band-option set-entry__band-option--${band.value}`}
+                    type="button"
+                    aria-pressed={draft.bands.includes(band.value)}
+                    onClick={() => toggleBand(band.value)}
+                  >
+                    <span className="set-entry__band-swatch" aria-hidden="true" />
+                    <span>{band.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="set-entry__bands-actions">
+                <Button variant="secondary" onClick={() => setDraft((current) => ({ ...current, bands: [] }))}>Без лент</Button>
+                <Button className="full-width" onClick={() => setBandsOpen(false)}>Готово</Button>
+              </div>
+            </Surface>
+          ) : null}
         </div>
+
+        <Divider />
+
+        <div className="set-entry__metrics">
+          {showWeight ? (
+            <MetricField
+              label="Вес"
+              unit="КГ"
+              value={draft.metrics.weightKg}
+              plan={metricValue(data.plan, 'weightKg')}
+              previous={metricValue(data.previous?.metrics ?? null, 'weightKg')}
+              step={2.5}
+              precision={1}
+              suffix=" кг"
+              onChange={(value) => updateMetric('weightKg', value)}
+            />
+          ) : null}
+
+          {showTime ? (
+            <DurationField
+              value={draft.metrics.durationSeconds}
+              plan={metricValue(data.plan, 'durationSeconds')}
+              previous={metricValue(data.previous?.metrics ?? null, 'durationSeconds')}
+              onChange={(value) => updateMetric('durationSeconds', value)}
+            />
+          ) : null}
+
+          {showDistance ? (
+            <MetricField
+              label="Дистанция"
+              unit="КМ"
+              value={metersToKilometers(draft.metrics.distanceMeters)}
+              plan={planDistanceKm}
+              previous={previousDistanceKm}
+              step={0.1}
+              precision={2}
+              suffix=" км"
+              onChange={(value) => updateMetric('distanceMeters', value === null ? null : value * 1000)}
+            />
+          ) : null}
+
+          {showReps ? (
+            <MetricField
+              label="Повторения"
+              unit="ПОВТ."
+              value={draft.metrics.reps}
+              plan={metricValue(data.plan, 'reps')}
+              previous={metricValue(data.previous?.metrics ?? null, 'reps')}
+              step={1}
+              precision={0}
+              suffix=""
+              onChange={(value) => updateMetric('reps', value === null ? null : Math.round(value))}
+            />
+          ) : null}
+        </div>
+
+        <div className="set-entry__section">
+          <div className="set-entry__section-heading">
+            <Text variant="footnote" className="set-entry__section-label">Оценка подхода</Text>
+            <Text variant="caption" tone="muted">необязательно</Text>
+          </div>
+          <div className="set-entry__label-row" role="group" aria-label="Оценка подхода">
+            {setLabelOptions.map((option) => (
+              <button
+                key={option.value}
+                className="set-entry__badge-button"
+                type="button"
+                aria-pressed={draft.setLabel === option.value}
+                onClick={() => setDraft((current) => ({ ...current, setLabel: current.setLabel === option.value ? null : option.value }))}
+              >
+                <Badge color={option.color}>{option.label}</Badge>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="set-entry__section">
+          <div className="set-entry__section-heading">
+            <Text variant="footnote" className="set-entry__section-label">RPE</Text>
+            <Text variant="caption" tone="muted">необязательно</Text>
+          </div>
+          <div className="set-entry__rpe-row" role="group" aria-label="RPE">
+            {[6, 7, 8, 9, 10].map((rpe) => (
+              <Button
+                key={rpe}
+                variant="secondary"
+                className={`set-entry__rpe-button ${draft.rpe === rpe ? 'set-entry__rpe-button--active' : ''}`}
+                aria-pressed={draft.rpe === rpe}
+                onClick={() => setDraft((current) => ({ ...current, rpe: current.rpe === rpe ? null : rpe }))}
+              >
+                {rpe}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <TextArea
+          className="set-entry__comment"
+          label="Комментарий"
+          rows={3}
+          value={draft.comment ?? ''}
+          onChange={(event) => setDraft((current) => ({ ...current, comment: event.currentTarget.value || null }))}
+        />
+
+        <Button className="full-width set-entry__chat-button" onClick={onOpenChat}>
+          <TelegramIcon />
+          <span>Открыть чат</span>
+        </Button>
+
+        {saveError ? <Text variant="footnote" className="set-entry__save-error" role="alert">{saveError}</Text> : null}
       </div>
-
-      <div className="set-entry__section">
-        <div className="set-entry__section-heading">
-          <Text variant="footnote" className="set-entry__section-label">RPE</Text>
-          <Text variant="caption" tone="muted">необязательно</Text>
-        </div>
-        <div className="set-entry__rpe-row" role="group" aria-label="RPE">
-          {[6, 7, 8, 9, 10].map((rpe) => (
-            <Button
-              key={rpe}
-              variant="secondary"
-              className={`set-entry__rpe-button ${draft.rpe === rpe ? 'set-entry__rpe-button--active' : ''}`}
-              aria-pressed={draft.rpe === rpe}
-              onClick={() => setDraft((current) => ({ ...current, rpe: current.rpe === rpe ? null : rpe }))}
-            >
-              {rpe}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <TextArea
-        className="set-entry__comment"
-        label="Комментарий"
-        rows={3}
-        value={draft.comment ?? ''}
-        onChange={(event) => setDraft((current) => ({ ...current, comment: event.currentTarget.value || null }))}
-      />
-
-      <Button className="full-width set-entry__chat-button" onClick={onOpenChat}>
-        <TelegramIcon />
-        <span>Открыть чат</span>
-      </Button>
-
-      {saveError ? <Text variant="footnote" className="set-entry__save-error" role="alert">{saveError}</Text> : null}
-
-      <Button className="full-width set-entry__save-button" disabled={saving} onClick={handleSave}>
-        {saving ? 'Сохраняем…' : 'Сохранить подход'}
-      </Button>
-    </Surface>
+    </Modal>
   );
 }
