@@ -24,7 +24,8 @@ export function IconButton({ label, className = '', type = 'button', children, o
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
 
 export function Avatar({ name, src, className = '', ...props }: AvatarProps) {
-  const [imageFailed, setImageFailed(false), [src]);
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [src]);
 
   if (src && !imageFailed) {
     return <img className={`ui-avatar ${className}`.trim()} src={src} alt="" onError={() => setImageFailed(true)} {...props} />;
