@@ -113,7 +113,7 @@ function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType): R
 
   return (
     <span className="session-exercise__set-context">
-      {plan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
+      {plan ? <span className="session-exercise__set-plan">План: {plan}</span> : null}
       {previous ? <Text variant="caption" tone="muted">Пред.: {previous}</Text> : null}
     </span>
   );
