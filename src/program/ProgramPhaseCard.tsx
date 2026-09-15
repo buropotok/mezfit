@@ -75,7 +75,7 @@ export function ProgramPhaseCard({
           <ListItem
             className="program-phase-card__header-toggle"
             leadingShape="square"
-            leading={<span className="program-phase-card__phase-index">{phase.position + 1}</span>}
+            leading={<span className="program-phase-card__phase-index"><Text variant="headline">{phase.position + 1}</Text></span>}
             title={phase.name}
             subtitle={phaseMeta(phase)}
             trailing={<Badge color="blue">{phase.completedExerciseCount} / {phase.exerciseCount}</Badge>}
