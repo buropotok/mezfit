@@ -69,14 +69,14 @@ describe('ProgramDetailsPage phase creation', () => {
 
     const addButton = await screen.findByRole('button', { name: 'Добавить фазу' });
     fireEvent.click(addButton);
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(screen.getByText('Добавить фазу')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Добавить фазу' })).toBeTruthy();
+    expect(screen.getByLabelText('Название')).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Базовая фаза' } });
     fireEvent.click(screen.getByRole('button', { name: 'Добавить' }));
 
     await waitFor(() => expect(screen.getByText('Базовая фаза')).toBeTruthy());
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Добавить фазу' })).toBeNull());
   });
 });
