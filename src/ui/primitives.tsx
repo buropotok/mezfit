@@ -24,8 +24,7 @@ export function IconButton({ label, className = '', type = 'button', children, o
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
 
 export function Avatar({ name, src, className = '', ...props }: AvatarProps) {
-  const [imageFailed, setImageFailed] = useState(false);
-  useEffect(() => setImageFailed(false), [src]);
+  const [imageFailed, setImageFailed(false), [src]);
 
   if (src && !imageFailed) {
     return <img className={`ui-avatar ${className}`.trim()} src={src} alt="" onError={() => setImageFailed(true)} {...props} />;
@@ -38,8 +37,8 @@ export function Divider({ className = '', ...props }: HTMLAttributes<HTMLHREleme
   return <hr className={`ui-divider ${className}`.trim()} {...props} />;
 }
 
-type SurfaceProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; elevated?: boolean; style?: CSSProperties };
+type SurfaceProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; border?: boolean; elevated?: boolean; style?: CSSProperties };
 
-export function Surface({ as: Component = 'div', elevated = false, className = '', ...props }: SurfaceProps) {
-  return <Component className={`ui-surface${elevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
+export function Surface({ as: Component = 'div', border = true, elevated = false, className = '', ...props }: SurfaceProps) {
+  return <Component className={`ui-surface${!border ? ' ui-surface--borderless' : ''}${elevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
 }
