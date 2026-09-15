@@ -21,7 +21,7 @@ Opening `SetEntry` must not trigger a GET request. The parent passes a complete 
 
 The initialization object contains:
 
-- program ID and display name;
+- optional program ID and display name (`null` / `null` for an own workout outside a program);
 - exercise definition ID and display name;
 - tracking type;
 - set number;
@@ -30,6 +30,8 @@ The initialization object contains:
 - the analogous set from the previous workout;
 - existing FACT for the current set when it has already been recorded;
 - stable plan/session set identifiers needed by the parent for persistence.
+
+Program identity is an all-or-nothing pair: both `programId` and `programName` are populated, or both are `null`. When there is no program, the metadata line displays only the workout date.
 
 ## Previous-set invariant
 
@@ -41,7 +43,7 @@ The parent/backend projection resolves this meaning before rendering `SetEntry`.
 
 ## PLAN / PREVIOUS / FACT
 
-`plan` is the coach prescription for this exact set and is read-only in `SetEntry`.
+`plan` is the coach prescription for this exact set and is read-only in `SetEntry`. It may be `null` for an own/ad-hoc workout.
 
 `previous` is read-only comparison context.
 
@@ -116,8 +118,10 @@ PLAN, PREVIOUS and display strings are not user input and must not be sent back 
 
 ## Adjacent modules
 
+`SessionExercise` is the direct UI parent for live workout use. It opens `SetEntry` from a `session_set` row and maps the already-projected session PLAN / PREVIOUS / FACT into `SetEntryData`.
+
 Exercise history is a separate React module with its own data/API contract. `SetEntry` only emits `onOpenHistory`.
 
 Telegram chat is owned by the Telegram/navigation integration. `SetEntry` only emits `onOpenChat`.
 
-Workout start/resume/snapshot behavior is backend domain behavior triggered by the parent save operation. It is not an extra REST API owned by `SetEntry`.
+Workout start/resume/snapshot behavior belongs to the workout owner/backend and is not an extra REST API owned by `SetEntry`.
