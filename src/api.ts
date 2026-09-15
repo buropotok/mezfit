@@ -7,6 +7,7 @@ export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulde
 export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
 export type ExerciseSort = 'alphabetical' | 'reference';
 export type ProgramStatus = 'active' | 'draft' | 'finished';
+export type ProgramPhaseStatus = 'pending' | 'active' | 'finished';
 export type CreateCoachProgramOwner = { type: 'self' } | { type: 'client'; clientUserId: number };
 
 export interface AppUser {
@@ -67,6 +68,45 @@ export interface ProgramOwnerGroup {
   programs: ProgramListItem[];
 }
 
+export interface ProgramPhaseExerciseDetails {
+  programExerciseId: number;
+  dayId: number;
+  dayName: string;
+  dayPosition: number;
+  position: number;
+  setCount: number;
+  completed: boolean;
+  notes: string | null;
+  exercise: ExerciseDefinition;
+}
+
+export interface ProgramPhaseDetails {
+  id: number;
+  name: string;
+  position: number;
+  status: ProgramPhaseStatus;
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  completedExerciseCount: number;
+  exerciseCount: number;
+  progressPercent: number;
+  exercises: ProgramPhaseExerciseDetails[];
+}
+
+export interface CoachProgramDetails {
+  program: ProgramListItem;
+  owner: ProgramOwner;
+  ownerType: 'self' | 'client';
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
+  completedExerciseCount: number;
+  exerciseCount: number;
+  progressPercent: number;
+  phases: ProgramPhaseDetails[];
+}
+
 export interface ExerciseDefinition {
   id: number;
   scope: ExerciseScope;
@@ -116,6 +156,7 @@ const russianApiErrors: Record<string, string> = {
   INVALID_FAVOURITE: 'Не удалось изменить избранное',
   INVALID_PROGRAM_NAME: 'Укажите название программы',
   INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
+  PROGRAM_NOT_FOUND: 'Программа не найдена',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
@@ -188,6 +229,13 @@ export function getCoachPrograms(
   initData: string,
 ): Promise<{ programs: ProgramListItem[]; clients: ProgramOwnerGroup[] }> {
   return apiRequest(initData, '/api/coach/programs');
+}
+
+export function getCoachProgramDetails(
+  initData: string,
+  programId: number,
+): Promise<{ details: CoachProgramDetails }> {
+  return apiRequest(initData, `/api/coach/programs/${programId}`);
 }
 
 export function createCoachProgram(
