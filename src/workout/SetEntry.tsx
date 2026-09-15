@@ -450,7 +450,10 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
           label="Комментарий"
           rows={3}
           value={draft.comment ?? ''}
-          onChange={(event) => setDraft((current) => ({ ...current, comment: event.currentTarget.value || null }))}
+          onChange={(event) => {
+            const comment = event.currentTarget.value || null;
+            setDraft((current) => ({ ...current, comment }));
+          }}
         />
 
         <Button className="full-width set-entry__chat-button" onClick={onOpenChat}>
