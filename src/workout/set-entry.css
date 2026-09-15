@@ -1,8 +1,10 @@
+.set-entry-modal .ui-modal__dialog {
+  max-width: 27rem;
+}
+
 .set-entry {
   position: relative;
   width: 100%;
-  padding: var(--ui-space-4);
-  border-radius: var(--ui-radius-md);
   font-family: var(--ui-font-family);
 }
 
@@ -31,11 +33,20 @@
   margin: calc(var(--ui-space-2) * -1) calc(var(--ui-space-2) * -1) 0 0;
 }
 
-.set-entry__tools svg,
-.set-entry__stepper-button svg {
+.set-entry__icon {
+  display: block;
   width: 20px;
   height: 20px;
+  background: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
 }
+
+.set-entry__icon--ripple { mask-image: url('../ui/icons/ripple.svg'); }
+.set-entry__icon--library { mask-image: url('../ui/icons/library.svg'); }
+.set-entry__icon--minus { mask-image: url('../ui/icons/minus.svg'); }
+.set-entry__icon--plus { mask-image: url('../ui/icons/plus.svg'); }
 
 .ui-icon-button.set-entry__tool--active {
   color: var(--ui-color-primary);
@@ -202,51 +213,16 @@
   gap: var(--ui-space-2);
 }
 
-.set-entry__value-field {
-  min-width: 0;
+.set-entry__number-field .ui-text-input__field {
   height: 56px;
-  margin: 0;
-  padding: 0 10px 4px;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-
-.set-entry__value-field:focus-within {
-  border-color: var(--ui-color-primary);
-  box-shadow: inset 0 0 0 1px var(--ui-color-primary);
-}
-
-.set-entry__value-field legend {
-  padding: 0 5px;
-  color: var(--ui-color-surface-muted);
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
-  font-weight: var(--ui-font-weight-medium);
-}
-
-.set-entry__number-input {
-  appearance: textfield;
-  width: 100%;
-  height: 34px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  color: var(--ui-color-surface-text);
-  background: transparent;
+  padding-inline: 10px;
   text-align: center;
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-regular);
   font-variant-numeric: tabular-nums;
+  appearance: textfield;
 }
 
-.set-entry__number-input::-webkit-inner-spin-button,
-.set-entry__number-input::-webkit-outer-spin-button {
+.set-entry__number-field .ui-text-input__field::-webkit-inner-spin-button,
+.set-entry__number-field .ui-text-input__field::-webkit-outer-spin-button {
   margin: 0;
   appearance: none;
 }
@@ -346,8 +322,7 @@
   margin-top: var(--ui-space-4);
 }
 
-.set-entry__chat-button,
-.set-entry__save-button {
+.set-entry__chat-button {
   gap: var(--ui-space-2);
   margin-top: var(--ui-space-3);
 }
@@ -382,8 +357,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .set-entry__band-option,
-  .set-entry__band-option .ui-badge,
-  .set-entry__value-field {
+  .set-entry__band-option .ui-badge {
     transition-duration: 1ms;
   }
 }
