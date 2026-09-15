@@ -425,7 +425,7 @@ export async function startWorkoutSession(
         SELECT pd.id, pd.program_phase_id AS phase_id
         FROM program_day pd
         JOIN program_phase pp ON pp.id = pd.program_phase_id AND pp.status = 'active'
-        JOIN training_plan tp ON tp.id = pp.training_plan_id AND tp.user_id = ?
+        JOIN training_plan tp ON tp.id = pp.training_plan_id AND tp.user_id = ? AND tp.status = 'active'
         WHERE pd.id = ?
           AND pd.status = 'active'
           AND pd.program_phase_id = ?
