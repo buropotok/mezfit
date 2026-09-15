@@ -17,6 +17,7 @@ describe('createProgramForUser', () => {
       finishedAt: null,
       position: 4,
     });
-    expect(bind).toHaveBeenCalledWith(7, 'Силовая', 3, 7);
+    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('owner_coach_user_id'));
+    expect(bind).toHaveBeenCalledWith(7, 3, 'Силовая', 3, 7, 3);
   });
 });

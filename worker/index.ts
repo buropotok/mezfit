@@ -9,9 +9,9 @@ import {
   type ExerciseEquipmentCode,
   type TrackingType,
 } from './lib/exercises';
-import { duplicateProgram, getProgramOwnerUserId, reorderPrograms } from './lib/program-actions';
+import { duplicateProgram, getProgramOwnerIds, reorderPrograms } from './lib/program-actions';
 import { createProgramForUser } from './lib/program-create';
-import { listClientProgramsForCoach, listProgramsForUser } from './lib/programs';
+import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 
@@ -161,11 +161,19 @@ async function requireCoachClient(db: D1Database, coachUserId: number, clientUse
   }
 }
 
+async function requireClientCoach(db: D1Database, clientUserId: number, coachUserId: number): Promise<void> {
+  if (!(await hasActiveCoachClient(db, coachUserId, clientUserId))) {
+    throw new HttpError(404, 'COACH_NOT_FOUND', 'Coach is not linked to this client');
+  }
+}
+
 async function requireProgramOwner(db: D1Database, coachUserId: number, programId: number): Promise<number> {
-  const ownerUserId = await getProgramOwnerUserId(db, programId);
-  if (ownerUserId === null) throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
-  if (ownerUserId !== coachUserId) await requireCoachClient(db, coachUserId, ownerUserId);
-  return ownerUserId;
+  const owner = await getProgramOwnerIds(db, programId);
+  if (!owner || owner.coachUserId !== coachUserId) {
+    throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
+  }
+  if (owner.userId !== coachUserId) await requireCoachClient(db, coachUserId, owner.userId);
+  return owner.userId;
 }
 
 function inviteTokenFromStartParam(startParam?: string): string | null {
@@ -306,7 +314,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const auth = await requireUser(request, env);
     requireRole(auth, 'coach');
     const [programs, clients] = await Promise.all([
-      listProgramsForUser(env.DB_BINDING, auth.row.id),
+      listProgramsForUserByCoach(env.DB_BINDING, auth.row.id, auth.row.id),
       listClientProgramsForCoach(env.DB_BINDING, auth.row.id),
     ]);
     return json({ programs, clients });
@@ -381,7 +389,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     const ownerUserId = await requireProgramOwner(env.DB_BINDING, auth.row.id, programIds[0]);
     try {
-      await reorderPrograms(env.DB_BINDING, ownerUserId, programIds);
+      await reorderPrograms(env.DB_BINDING, ownerUserId, auth.row.id, programIds);
     } catch (error) {
       if (error instanceof Error && error.message === 'INVALID_PROGRAM_ORDER') {
         throw new HttpError(400, 'INVALID_PROGRAM_ORDER', 'Program order is invalid');
@@ -391,10 +399,44 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ ok: true });
   }
 
+  if (url.pathname === '/api/client/coaches' && request.method === 'GET') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'client');
+
+    const result = await env.DB_BINDING
+      .prepare(`
+        SELECT
+          cc.id AS relationship_id,
+          coach.id,
+          coach.telegram_user_id,
+          coach.username,
+          coach.first_name,
+          coach.last_name,
+          coach.language_code,
+          coach.photo_url,
+          coach.is_premium
+        FROM coach_client cc
+        JOIN app_user coach ON coach.id = cc.coach_user_id
+        WHERE cc.client_user_id = ? AND cc.status = 'active'
+        ORDER BY COALESCE(coach.last_name, ''), coach.first_name, coach.id
+      `)
+      .bind(auth.row.id)
+      .all<UserRow & { relationship_id: number }>();
+
+    return json({
+      coaches: result.results.map((row) => ({ relationshipId: row.relationship_id, user: userView(row) })),
+    });
+  }
+
   if (url.pathname === '/api/client/programs' && request.method === 'GET') {
     const auth = await requireUser(request, env);
     requireRole(auth, 'client');
-    return json({ programs: await listProgramsForUser(env.DB_BINDING, auth.row.id) });
+    const coachUserId = Number(url.searchParams.get('coachUserId'));
+    if (!Number.isInteger(coachUserId) || coachUserId <= 0) {
+      throw new HttpError(400, 'COACH_NOT_FOUND', 'Coach is required');
+    }
+    await requireClientCoach(env.DB_BINDING, auth.row.id, coachUserId);
+    return json({ programs: await listProgramsForUserByCoach(env.DB_BINDING, auth.row.id, coachUserId) });
   }
 
   if (url.pathname === '/api/health' && request.method === 'GET') {

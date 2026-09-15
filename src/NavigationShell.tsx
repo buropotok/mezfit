@@ -1,7 +1,9 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
+import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
 import { Calendar, Menu, MenuDivider, MenuItem, Modal } from './ui';
+import userIconUrl from './ui/icons/user.svg';
 
 export type AppDestination =
   | 'clients'
@@ -61,6 +63,10 @@ function iconStyle(icon: GymKeeperIcon): CSSProperties {
   return { '--navigation-icon': gymKeeperIcons[icon] } as CSSProperties;
 }
 
+function urlIconStyle(url: string): CSSProperties {
+  return { '--navigation-icon': `url("${url}")` } as CSSProperties;
+}
+
 interface Props {
   me: MeResponse;
   activeRole: Role;
@@ -81,12 +87,14 @@ export function NavigationShell({
   children,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => new Date());
   const items = itemsForRole(activeRole);
 
   useEffect(() => {
     setMenuOpen(false);
+    setCoachSelectorOpen(false);
   }, [activeRole]);
 
   const chooseDestination = (next: AppDestination) => {
@@ -144,6 +152,18 @@ export function NavigationShell({
                 </>
               ) : null}
 
+              {activeRole === 'client' ? (
+                <MenuItem
+                  leading={<span className="navigation-apk-icon" style={urlIconStyle(userIconUrl)} />}
+                  onSelect={() => {
+                    setMenuOpen(false);
+                    setCoachSelectorOpen(true);
+                  }}
+                >
+                  Тренер
+                </MenuItem>
+              ) : null}
+
               {items.map((item, index) => {
                 const divider = item.section === 'secondary' && items[index - 1]?.section !== 'secondary';
                 return (
@@ -170,6 +190,8 @@ export function NavigationShell({
       </header>
 
       <section className="navigation-content">{children}</section>
+
+      <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
 
       <Modal isOpen={calendarOpen} title="Календарь" className="app-calendar-modal" onClose={() => setCalendarOpen(false)}>
         <Calendar value={selectedDate} onChange={setSelectedDate} />

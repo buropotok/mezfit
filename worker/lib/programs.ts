@@ -26,6 +26,8 @@ export interface ProgramOwnerGroup {
 interface ProgramRow {
   id: number;
   user_id: number;
+  owner_coach_user_id: number | null;
+  created_by_user_id: number;
   name: string;
   status: ProgramStatus;
   started_at: string | null;
@@ -44,6 +46,8 @@ const programProjection = `
   SELECT
     tp.id,
     tp.user_id,
+    tp.owner_coach_user_id,
+    tp.created_by_user_id,
     tp.name,
     tp.position,
     CASE
@@ -94,10 +98,14 @@ function mapProgram(row: ProgramRow): ProgramListItem {
   };
 }
 
-export async function listProgramsForUser(db: D1Database, userId: number): Promise<ProgramListItem[]> {
+export async function listProgramsForUserByCoach(
+  db: D1Database,
+  userId: number,
+  coachUserId: number,
+): Promise<ProgramListItem[]> {
   const result = await db
-    .prepare(`${programProjection} WHERE tp.user_id = ? ORDER BY tp.position, tp.id`)
-    .bind(userId)
+    .prepare(`${programProjection} WHERE tp.user_id = ? AND COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) = ? ORDER BY tp.position, tp.id`)
+    .bind(userId, coachUserId)
     .all<ProgramRow>();
   return result.results.map(mapProgram);
 }
@@ -109,6 +117,7 @@ export async function listClientProgramsForCoach(db: D1Database, coachUserId: nu
       FROM (${programProjection}) programs
       JOIN coach_client cc
         ON cc.client_user_id = programs.user_id
+       AND cc.coach_user_id = COALESCE(programs.owner_coach_user_id, programs.created_by_user_id)
        AND cc.coach_user_id = ?
        AND cc.status = 'active'
       JOIN app_user client ON client.id = programs.user_id

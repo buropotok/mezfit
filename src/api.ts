@@ -30,6 +30,11 @@ export interface CoachClientListItem {
   user: AppUser;
 }
 
+export interface ClientCoachListItem {
+  relationshipId: number;
+  user: AppUser;
+}
+
 export interface ClientInvitePreview {
   label: string | null;
   expiresAt: string;
@@ -112,6 +117,7 @@ const russianApiErrors: Record<string, string> = {
   INVALID_PROGRAM_NAME: 'Укажите название программы',
   INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
+  COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
   UNAUTHORIZED: 'Не удалось подтвердить Telegram-сессию',
   NOT_FOUND: 'Запрошенный раздел не найден',
@@ -174,6 +180,10 @@ export function getCoachClients(initData: string): Promise<{ clients: CoachClien
   return apiRequest(initData, '/api/coach/clients');
 }
 
+export function getClientCoaches(initData: string): Promise<{ coaches: ClientCoachListItem[] }> {
+  return apiRequest(initData, '/api/client/coaches');
+}
+
 export function getCoachPrograms(
   initData: string,
 ): Promise<{ programs: ProgramListItem[]; clients: ProgramOwnerGroup[] }> {
@@ -202,8 +212,9 @@ export function reorderCoachPrograms(initData: string, programIds: number[]): Pr
   });
 }
 
-export function getClientPrograms(initData: string): Promise<{ programs: ProgramListItem[] }> {
-  return apiRequest(initData, '/api/client/programs');
+export function getClientPrograms(initData: string, coachUserId: number): Promise<{ programs: ProgramListItem[] }> {
+  const query = new URLSearchParams({ coachUserId: String(coachUserId) });
+  return apiRequest(initData, `/api/client/programs?${query.toString()}`);
 }
 
 export function createClientInvite(
