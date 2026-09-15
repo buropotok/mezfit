@@ -1,4 +1,5 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+// @vitest-environment jsdom
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SetEntry } from './SetEntry';
 import { createSetEntryDraft, type SetEntryData } from './setEntryTypes';
@@ -33,15 +34,24 @@ const baseData: SetEntryData = {
   fact: null,
 };
 
-function renderSetEntry(data: SetEntryData): string {
-  return renderToStaticMarkup(
+function renderSetEntry(data: SetEntryData = baseData) {
+  const onClose = vi.fn();
+  const onSave = vi.fn(async () => undefined);
+  const onOpenHistory = vi.fn();
+  const onOpenChat = vi.fn();
+
+  render(
     <SetEntry
+      isOpen
       data={data}
-      onSave={vi.fn(async () => undefined)}
-      onOpenHistory={vi.fn()}
-      onOpenChat={vi.fn()}
+      onClose={onClose}
+      onSave={onSave}
+      onOpenHistory={onOpenHistory}
+      onOpenChat={onOpenChat}
     />,
   );
+
+  return { onClose, onSave, onOpenHistory, onOpenChat };
 }
 
 describe('SetEntry contract', () => {
@@ -82,30 +92,44 @@ describe('SetEntry contract', () => {
 });
 
 describe('SetEntry rendering', () => {
-  it('renders metadata, PLAN and the analogous set from the previous workout', () => {
-    const html = renderSetEntry(baseData);
+  it('renders the UI kit dialog with metadata, PLAN and the analogous set from the previous workout', () => {
+    renderSetEntry();
 
-    expect(html).toContain('Подход 3');
-    expect(html).toContain('Жим лёжа');
-    expect(html).toContain('Силовой блок');
-    expect(html).toContain('15 сентября 2026');
-    expect(html).toContain('План: 80 кг');
-    expect(html).toContain('Предыдущая тренировка: 77,5 кг');
-    expect(html).toContain('План: 10');
-    expect(html).toContain('Предыдущая тренировка: 10');
+    const dialog = screen.getByRole('dialog', { name: 'Подход 3' });
+    expect(dialog.textContent).toContain('Жим лёжа');
+    expect(dialog.textContent).toContain('Силовой блок');
+    expect(dialog.textContent).toContain('15 сентября 2026');
+    expect(dialog.textContent).toContain('План: 80 кг');
+    expect(dialog.textContent).toContain('Предыдущая тренировка: 77,5 кг');
+    expect(dialog.textContent).toContain('План: 10');
+    expect(dialog.textContent).toContain('Предыдущая тренировка: 10');
   });
 
-  it('uses the approved typography roles for the set title, exercise and metric labels', () => {
-    const html = renderSetEntry(baseData);
+  it('reuses UI kit TextInput for numeric fields and Modal actions for save', () => {
+    renderSetEntry();
 
-    expect(html).toContain('ui-text--title ui-text--default">Подход 3');
-    expect(html).toContain('ui-text--headline ui-text--default set-entry__exercise-name">Жим лёжа');
-    expect(html).toContain('ui-text--headline ui-text--default set-entry__metric-label">Вес');
-    expect(html).toContain('ui-text--headline ui-text--default set-entry__metric-label">Повторения');
+    const weight = screen.getByLabelText('Вес, КГ');
+    const reps = screen.getByLabelText('Повторения, ПОВТ.');
+    expect(weight.className).toContain('ui-text-input__field');
+    expect(reps.className).toContain('ui-text-input__field');
+    expect(weight.closest('.ui-text-input')).not.toBeNull();
+    expect(reps.closest('.ui-text-input')).not.toBeNull();
+
+    const save = screen.getByRole('button', { name: 'Сохранить' });
+    expect(save.closest('.ui-modal__actions')).not.toBeNull();
+  });
+
+  it('uses the approved hierarchy for the modal, exercise and metric labels', () => {
+    renderSetEntry();
+
+    expect(screen.getByText('Подход 3').className).toContain('ui-modal__title');
+    expect(screen.getByText('Жим лёжа').className).toContain('ui-text--headline');
+    expect(screen.getByText('Вес').className).toContain('ui-text--headline');
+    expect(screen.getByText('Повторения').className).toContain('ui-text--headline');
   });
 
   it('renders only the inputs required by the tracking type', () => {
-    const html = renderSetEntry({
+    renderSetEntry({
       ...baseData,
       trackingType: 'time_distance',
       plan: {
@@ -125,18 +149,46 @@ describe('SetEntry rendering', () => {
       },
     });
 
-    expect(html).toContain('Время');
-    expect(html).toContain('Дистанция');
-    expect(html).toContain('aria-label="Время, минуты"');
-    expect(html).toContain('aria-label="Время, секунды"');
-    expect(html).toContain('aria-label="Дистанция, КМ"');
-    expect(html).not.toContain('aria-label="Вес, КГ"');
-    expect(html).not.toContain('aria-label="Повторения, ПОВТ."');
+    expect(screen.getByText('Время')).toBeTruthy();
+    expect(screen.getByText('Дистанция')).toBeTruthy();
+    expect(screen.getByLabelText('Время, минуты')).toBeTruthy();
+    expect(screen.getByLabelText('Время, секунды')).toBeTruthy();
+    expect(screen.getByLabelText('Дистанция, КМ')).toBeTruthy();
+    expect(screen.queryByLabelText('Вес, КГ')).toBeNull();
+    expect(screen.queryByLabelText('Повторения, ПОВТ.')).toBeNull();
   });
 
   it('keeps history and chat as external module actions', () => {
-    const html = renderSetEntry(baseData);
-    expect(html).toContain('aria-label="История упражнения"');
-    expect(html).toContain('Открыть чат');
+    const { onOpenHistory, onOpenChat } = renderSetEntry();
+
+    fireEvent.click(screen.getByRole('button', { name: 'История упражнения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }));
+
+    expect(onOpenHistory).toHaveBeenCalledTimes(1);
+    expect(onOpenChat).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes the complete editable FACT through the modal save action', async () => {
+    const { onSave } = renderSetEntry();
+
+    fireEvent.change(screen.getByLabelText('Вес, КГ'), { target: { value: '82.5' } });
+    fireEvent.change(screen.getByLabelText('Комментарий'), { target: { value: 'Хороший подход' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Тяжело' }));
+    fireEvent.click(screen.getByRole('button', { name: '8' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(onSave).toHaveBeenCalledWith({
+      metrics: {
+        weightKg: 82.5,
+        reps: 10,
+        durationSeconds: null,
+        distanceMeters: null,
+      },
+      setLabel: 'hard',
+      rpe: 8,
+      comment: 'Хороший подход',
+      bands: [],
+    });
   });
 });
