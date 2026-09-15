@@ -148,10 +148,10 @@ describe('getCoachProgramDetails', () => {
     expect(details?.plannedStartDate).toBe('2026-09-01');
     expect(details?.plannedEndDate).toBe('2026-10-05');
     expect(details?.exerciseCount).toBe(3);
-    expect(details?.completedExerciseCount).toBe(2);
-    expect(details?.progressPercent).toBe(67);
+    expect(details?.completedExerciseCount).toBe(1);
+    expect(details?.progressPercent).toBe(33);
     expect(details?.phases).toHaveLength(2);
-    expect(details?.phases[0]).toMatchObject({ completedExerciseCount: 1, exerciseCount: 1, progressPercent: 100 });
+    expect(details?.phases[0]).toMatchObject({ completedExerciseCount: 0, exerciseCount: 1, progressPercent: 0 });
     expect(details?.phases[1]).toMatchObject({ completedExerciseCount: 1, exerciseCount: 2, progressPercent: 50 });
     expect(details?.phases[1].exercises[0]).toMatchObject({
       dayName: 'День A',
@@ -159,6 +159,7 @@ describe('getCoachProgramDetails', () => {
       completed: true,
       exercise: { id: 202, name: 'Жим лёжа', is_favourite: true },
     });
+    expect(prepare.mock.calls.some(([sql]) => sql.includes('tp.owner_coach_user_id = ?'))).toBe(true);
     expect(prepare.mock.calls.some(([sql]) => sql.includes('exercise_definition_override'))).toBe(true);
     expect(prepare.mock.calls.some(([sql]) => sql.includes('source_program_exercise_id'))).toBe(true);
   });
