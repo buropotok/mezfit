@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ProgramStatus } from '../api';
+import { getCoachProgramDetails, type CoachProgramDetails, type ProgramStatus } from '../api';
 import { ProgramPhaseCard } from '../program/ProgramPhaseCard';
-import { getCoachProgramDetails, type CoachProgramDetails } from '../program/programDetailsApi';
 import { Avatar, Badge, Button, List, ListItem, Surface, Text } from '../ui';
 import './program-details.css';
 
@@ -51,7 +50,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
     setDetails(null);
     setError('');
     getCoachProgramDetails(initData, programId)
-      .then((result) => {
+      .then(({ details: result }) => {
         if (!cancelled) setDetails(result);
       })
       .catch((loadError: unknown) => {
