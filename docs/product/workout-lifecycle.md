@@ -38,7 +38,7 @@ IN_PROGRESS
       COMPLETED
 ```
 
-`DRAFT` is intentionally minimal. It establishes a stable `workout_session.id` before the workout type is chosen, but it contains no session exercises, PLAN, PREVIOUS, or FACT.
+`DRAFT` is intentionally minimal. It establishes a stable `workout_session.id` before the workout type is chosen, but it contains no session exercises, PLAN, PREVIOUS, or FACT. Program/phase/day returned during initialization are launch metadata only; source program provenance is not persisted on the draft and is written to `workout_session` only by a successful program Start.
 
 Additional occurrence outcomes include skipped/cancelled/rescheduled semantics.
 
@@ -82,7 +82,7 @@ While the session is `DRAFT`:
 
 The second request is the Start boundary.
 
-For a program workout, `POST /api/workout-sessions/:id/start` receives the selected `programDayId`. The backend fresh-reads the current program prescription at that moment, validates that the day still belongs to the resolved active phase, then atomically:
+For a program workout, `POST /api/workout-sessions/:id/start` receives the selected `programDayId`. The backend fresh-reads the current program prescription at that moment, validates that the selected day still belongs to one of the client's active programs and its active phase, then atomically:
 
 1. records source program provenance on the existing draft session;
 2. copies/materializes active `program_exercise` rows into `session_exercise`;
