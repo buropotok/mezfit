@@ -1,4 +1,5 @@
 .program-details-page {
+  position: relative;
   overflow: hidden;
   height: calc(100dvh - var(--appbar-h) - 2rem);
   min-height: 12rem;
@@ -12,7 +13,7 @@
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-bottom: var(--ui-space-4);
+  padding-bottom: 4.5rem;
   scrollbar-width: thin;
 }
 
@@ -85,4 +86,9 @@
   align-items: flex-start;
   gap: var(--ui-space-3);
   padding: var(--ui-space-4);
+}
+
+.program-details-page > .ui-fab svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
