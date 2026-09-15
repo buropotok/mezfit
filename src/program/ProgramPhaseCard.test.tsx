@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import type { ProgramPhaseDetails } from './programDetailsApi';
+import type { ProgramPhaseDetails } from '../api';
 import { ProgramPhaseCard } from './ProgramPhaseCard';
 
 const phase: ProgramPhaseDetails = {
