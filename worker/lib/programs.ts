@@ -110,6 +110,18 @@ export async function listProgramsForUserByCoach(
   return result.results.map(mapProgram);
 }
 
+export async function getProgramByIdForCoach(
+  db: D1Database,
+  programId: number,
+  coachUserId: number,
+): Promise<ProgramListItem | null> {
+  const row = await db
+    .prepare(`${programProjection} WHERE tp.id = ? AND COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) = ? LIMIT 1`)
+    .bind(programId, coachUserId)
+    .first<ProgramRow>();
+  return row ? mapProgram(row) : null;
+}
+
 export async function listClientProgramsForCoach(db: D1Database, coachUserId: number): Promise<ProgramOwnerGroup[]> {
   const result = await db
     .prepare(`
