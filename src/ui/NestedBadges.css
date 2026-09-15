@@ -33,6 +33,7 @@
   height: 16px;
   flex: 0 0 16px;
   background: currentColor;
+  -webkit-mask: url('./icons/chevron-down.svg') center / contain no-repeat;
   mask: url('./icons/chevron-down.svg') center / contain no-repeat;
   transform: rotate(-90deg);
   transition: transform 180ms ease;
@@ -62,4 +63,10 @@
   gap: var(--ui-space-2);
   min-height: 0;
   overflow: hidden;
+}
+
+@media (max-width: 360px) {
+  .ui-nested-badges {
+    --ui-nested-badges-indent: var(--ui-space-4);
+  }
 }
