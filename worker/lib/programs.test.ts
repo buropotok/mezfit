@@ -10,7 +10,7 @@ describe('program ownership queries', () => {
 
     await expect(listProgramsForUserByCoach(db, 7, 3)).resolves.toEqual([]);
 
-    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('tp.owner_coach_user_id = ?'));
+    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) = ?'));
     expect(bind).toHaveBeenCalledWith(7, 3);
   });
 
@@ -20,6 +20,7 @@ describe('program ownership queries', () => {
         id: 9,
         user_id: 7,
         owner_coach_user_id: 3,
+        created_by_user_id: 3,
         name: 'Силовая',
         status: 'draft',
         started_at: null,
@@ -37,7 +38,7 @@ describe('program ownership queries', () => {
 
     const groups = await listClientProgramsForCoach(db, 3);
 
-    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('cc.coach_user_id = programs.owner_coach_user_id'));
+    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('COALESCE(programs.owner_coach_user_id, programs.created_by_user_id)'));
     expect(bind).toHaveBeenCalledWith(3);
     expect(groups).toEqual([{
       owner: {
