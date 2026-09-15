@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Badge, Button, Divider, IconButton, Modal, Surface, Text, TextArea, TextInput, type BadgeColor } from '../ui';
 import {
   createSetEntryDraft,
@@ -98,10 +98,11 @@ type MetricFieldProps = {
   step: number;
   precision: number;
   suffix: string;
+  disabled: boolean;
   onChange: (value: number | null) => void;
 };
 
-function MetricField({ label, unit, value, plan, previous, step, precision, suffix, onChange }: MetricFieldProps) {
+function MetricField({ label, unit, value, plan, previous, step, precision, suffix, disabled, onChange }: MetricFieldProps) {
   const delta = value !== null && previous !== null ? roundTo(value - previous, precision) : null;
 
   const adjust = (direction: -1 | 1) => {
@@ -134,12 +135,13 @@ function MetricField({ label, unit, value, plan, previous, step, precision, suff
           value={value ?? ''}
           label={unit}
           placeholder=" "
+          disabled={disabled}
           aria-label={`${label}, ${unit}`}
           onChange={(event) => onChange(parseNonNegativeNumber(event.currentTarget.value))}
         />
         <div className="set-entry__stepper">
-          <IconButton className="set-entry__stepper-button" label={`Уменьшить: ${label}`} onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
-          <IconButton className="set-entry__stepper-button" label={`Увеличить: ${label}`} onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
+          <IconButton disabled={disabled} className="set-entry__stepper-button" label={`Уменьшить: ${label}`} onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
+          <IconButton disabled={disabled} className="set-entry__stepper-button" label={`Увеличить: ${label}`} onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
         </div>
       </div>
     </div>
@@ -150,10 +152,11 @@ type DurationFieldProps = {
   value: number | null;
   plan: number | null;
   previous: number | null;
+  disabled: boolean;
   onChange: (value: number | null) => void;
 };
 
-function DurationField({ value, plan, previous, onChange }: DurationFieldProps) {
+function DurationField({ value, plan, previous, disabled, onChange }: DurationFieldProps) {
   const minutes = value === null ? '' : String(Math.floor(value / 60));
   const seconds = value === null ? '' : String(Math.floor(value % 60));
 
@@ -191,6 +194,7 @@ function DurationField({ value, plan, previous, onChange }: DurationFieldProps) 
             value={minutes}
             label="МИН"
             placeholder=" "
+            disabled={disabled}
             aria-label="Время, минуты"
             onChange={(event) => updatePart('minutes', event.currentTarget.value)}
           />
@@ -203,13 +207,14 @@ function DurationField({ value, plan, previous, onChange }: DurationFieldProps) 
             value={seconds}
             label="СЕК"
             placeholder=" "
+            disabled={disabled}
             aria-label="Время, секунды"
             onChange={(event) => updatePart('seconds', event.currentTarget.value)}
           />
         </div>
         <div className="set-entry__stepper">
-          <IconButton className="set-entry__stepper-button" label="Уменьшить время на 30 секунд" onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
-          <IconButton className="set-entry__stepper-button" label="Увеличить время на 30 секунд" onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
+          <IconButton disabled={disabled} className="set-entry__stepper-button" label="Уменьшить время на 30 секунд" onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
+          <IconButton disabled={disabled} className="set-entry__stepper-button" label="Увеличить время на 30 секунд" onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
         </div>
       </div>
     </div>
@@ -237,6 +242,7 @@ export function SetEntry(props: SetEntryProps) {
 
 function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenChat }: SetEntryProps) {
   const bandsId = useId();
+  const savingRef = useRef(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(data));
   const [bandsOpen, setBandsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -259,12 +265,14 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
   };
 
   const requestClose = () => {
-    if (!saving) onClose();
+    if (!savingRef.current) onClose();
   };
 
   const handleSave = async () => {
-    if (saving) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
+    setBandsOpen(false);
     setSaveError('');
     try {
       await onSave({
@@ -272,9 +280,11 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
         metrics: { ...draft.metrics },
         bands: [...draft.bands],
       });
+      savingRef.current = false;
       setSaving(false);
       onClose();
     } catch (error) {
+      savingRef.current = false;
       setSaveError(getErrorMessage(error));
       setSaving(false);
     }
@@ -291,7 +301,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
     <Modal
       isOpen={isOpen}
       className="set-entry-modal"
-      title={`Подход ${data.identity.setNumber}`}
+      title={<Text variant="title">Подход {data.identity.setNumber}</Text>}
       hasCloseButton={!saving}
       closeOnBackdrop={!saving}
       onClose={requestClose}
@@ -311,6 +321,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
 
           <div className="set-entry__tools">
             <IconButton
+              disabled={saving}
               label="Фитнес-ленты"
               aria-expanded={bandsOpen}
               aria-controls={bandsId}
@@ -319,7 +330,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
             >
               <SharedIcon name="ripple" />
             </IconButton>
-            <IconButton label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton>
+            <IconButton disabled={saving} label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton>
           </div>
 
           {bandsOpen ? (
@@ -334,6 +345,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
                     key={band.value}
                     className={`set-entry__band-option set-entry__band-option--${band.value}`}
                     type="button"
+                    disabled={saving}
                     aria-pressed={draft.bands.includes(band.value)}
                     onClick={() => toggleBand(band.value)}
                   >
@@ -343,8 +355,8 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
                 ))}
               </div>
               <div className="set-entry__bands-actions">
-                <Button variant="secondary" onClick={() => setDraft((current) => ({ ...current, bands: [] }))}>Без лент</Button>
-                <Button className="full-width" onClick={() => setBandsOpen(false)}>Готово</Button>
+                <Button disabled={saving} variant="secondary" onClick={() => setDraft((current) => ({ ...current, bands: [] }))}>Без лент</Button>
+                <Button disabled={saving} className="full-width" onClick={() => setBandsOpen(false)}>Готово</Button>
               </div>
             </Surface>
           ) : null}
@@ -363,6 +375,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               step={2.5}
               precision={1}
               suffix=" кг"
+              disabled={saving}
               onChange={(value) => updateMetric('weightKg', value)}
             />
           ) : null}
@@ -372,6 +385,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               value={draft.metrics.durationSeconds}
               plan={metricValue(data.plan, 'durationSeconds')}
               previous={metricValue(data.previous?.metrics ?? null, 'durationSeconds')}
+              disabled={saving}
               onChange={(value) => updateMetric('durationSeconds', value)}
             />
           ) : null}
@@ -386,6 +400,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               step={0.1}
               precision={2}
               suffix=" км"
+              disabled={saving}
               onChange={(value) => updateMetric('distanceMeters', value === null ? null : value * 1000)}
             />
           ) : null}
@@ -400,6 +415,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               step={1}
               precision={0}
               suffix=""
+              disabled={saving}
               onChange={(value) => updateMetric('reps', value === null ? null : Math.round(value))}
             />
           ) : null}
@@ -416,6 +432,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
                 key={option.value}
                 className="set-entry__badge-button"
                 type="button"
+                disabled={saving}
                 aria-pressed={draft.setLabel === option.value}
                 onClick={() => setDraft((current) => ({ ...current, setLabel: current.setLabel === option.value ? null : option.value }))}
               >
@@ -434,6 +451,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
             {[6, 7, 8, 9, 10].map((rpe) => (
               <Button
                 key={rpe}
+                disabled={saving}
                 variant="secondary"
                 className={`set-entry__rpe-button ${draft.rpe === rpe ? 'set-entry__rpe-button--active' : ''}`}
                 aria-pressed={draft.rpe === rpe}
@@ -450,13 +468,14 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
           label="Комментарий"
           rows={3}
           value={draft.comment ?? ''}
+          disabled={saving}
           onChange={(event) => {
             const comment = event.currentTarget.value || null;
             setDraft((current) => ({ ...current, comment }));
           }}
         />
 
-        <Button className="full-width set-entry__chat-button" onClick={onOpenChat}>
+        <Button disabled={saving} className="full-width set-entry__chat-button" onClick={onOpenChat}>
           <TelegramIcon />
           <span>Открыть чат</span>
         </Button>
