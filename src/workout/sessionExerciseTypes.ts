@@ -44,7 +44,9 @@ export interface SaveSessionSetInput {
 export interface SessionExerciseProps {
   context: SessionExerciseContext;
   data: SessionExerciseData;
+  collapsed?: boolean;
   defaultCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
   onSaveSet: (input: SaveSessionSetInput) => Promise<void>;
   onOpenExerciseMenu: (sessionExerciseId: number) => void;
   onOpenHistory: (exerciseDefinitionId: number) => void;
