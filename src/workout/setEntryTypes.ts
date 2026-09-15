@@ -52,7 +52,9 @@ export interface SetEntryFactDraft {
 }
 
 export interface SetEntryProps {
+  isOpen: boolean;
   data: SetEntryData;
+  onClose: () => void;
   onSave: (fact: SetEntryFactDraft) => Promise<void>;
   onOpenHistory: () => void;
   onOpenChat: () => void;
