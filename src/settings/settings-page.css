@@ -1,0 +1,24 @@
+.settings-page {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+.settings-page__section,
+.modules-gallery__example {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-page__section > .ui-button {
+  justify-self: start;
+}
+
+.modules-gallery__intro {
+  display: grid;
+  gap: 4px;
+}
+
+.modules-gallery__example {
+  min-width: 0;
+}
