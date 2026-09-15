@@ -22,17 +22,20 @@ Telegram is the communication layer. Text, voice, video, video notes, and photos
 3. **Coach mode is client-contextual.** The selected client is the primary workspace.
 4. **Analytics should lead directly to action.** Future-plan editing should be reachable directly from relevant analysis.
 5. **Exercise history is a first-class client view.** `Exercises` is directly reachable and includes every exercise ever actually performed by that client, independently of the current program.
-6. **A workout plan becomes immutable when that specific workout starts.** Start is the first persisted actual result. Only that `WorkoutOccurrence` is locked; other future occurrences remain editable.
+6. **A workout plan becomes immutable when that specific workout explicitly starts.** Final Start confirmation creates the `WorkoutSession` and freezes/materializes its PLAN. Only that started workout is locked; other future occurrences remain editable.
 7. **No in-workout plan overrides.** Differences between prescription and execution are PLAN versus FACT, not a rewritten plan.
 8. **Program edits never rewrite workout history.** Started/completed sessions keep the plan snapshot used for that session.
 9. **Historical FACT may be explicitly corrected.** Authorized corrections are separate from program edits and must remain auditable.
-10. **Start/finish controls are not required for correctness.** First result starts a session. Explicit Finish is optional; inactivity may auto-complete it.
+10. **Normal live execution requires explicit Start; explicit Finish is optional.** The first result does not start a session. Inactivity may auto-complete an already-started session.
 11. **Actual workout time is editable.** Client or coach may manually enter `started_at` and `completed_at`, including post-fact entry. `created_at/updated_at` remain technical timestamps.
 12. **Offline/post-fact entry accepts a known plan-version risk.** MVP does not reconstruct which plan the client physically saw while offline.
 13. **Backend state is the source of truth.** WebSockets are not required for MVP; state refreshes on load/resume/navigation/manual refresh/mutations.
 14. **Reliability beats complexity in ambiguous MVP cases.** Prefer a deterministic restriction or reversible simplification over fragile behavior.
 15. **Gym Keeper is a UX/feature reference only.** Its code, branding, proprietary media, built-in programs, and Diary-centric product model are not Mezfit requirements.
 16. **Gym Keeper built-in workout programs are excluded.** Client-facing Program means the prescription assigned by the client's coach.
+17. **Workout launch is a global Client Mode action.** A shell-owned FAB exposes `Начать тренировку` when no session is active and `Продолжить тренировку` when one is active; it is hidden only on the current active workout screen.
+18. **A scheduled workout is the default, not a trap.** An unambiguous scheduled day may be preselected and skip the day chooser, but before final Start the client can always use `Сменить день` or `Своя тренировка`.
+19. **Own workouts do not mutate the program.** `Своя тренировка` creates a session without a source program day; exercises and sets added there belong to the session only.
 
 ## Core domain translation from Gym Keeper
 
