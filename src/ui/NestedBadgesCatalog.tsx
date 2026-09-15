@@ -32,7 +32,7 @@ export function NestedBadgesCatalog({ values }: { values: TypographyValues }) {
       <Text variant="title">Nested badges</Text>
       <Text variant="caption" tone="muted">Иерархическая группа существующих Badge без собственной бизнес-семантики.</Text>
       <Divider />
-      <TypographySpecimen kind="nested-badges" slots={nestedBadgeSlots} values={values}>
+      <TypographySpecimen kind="list" slots={nestedBadgeSlots} values={values}>
         <NestedBadges items={demoItems} />
       </TypographySpecimen>
     </Surface>
