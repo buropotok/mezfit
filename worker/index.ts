@@ -407,6 +407,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const programId = Number(programPhaseDeleteMatch[1]);
     const phaseId = Number(programPhaseDeleteMatch[2]);
     await requireProgramOwner(env.DB_BINDING, auth.row.id, programId);
+    if (!(await getCoachProgramDetails(env.DB_BINDING, programId, auth.row.id))) {
+      throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
+    }
 
     const result = await deleteProgramPhase(env.DB_BINDING, programId, phaseId);
     if (result === 'not_found') throw new HttpError(404, 'PHASE_NOT_FOUND', 'Phase not found');
