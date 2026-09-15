@@ -11,7 +11,7 @@ export async function createProgramForUser(
       INSERT INTO training_plan (user_id, owner_coach_user_id, name, created_by_user_id, position)
       SELECT ?, ?, ?, ?, COALESCE(MAX(position), -1) + 1
       FROM training_plan
-      WHERE user_id = ? AND owner_coach_user_id = ?
+      WHERE user_id = ? AND COALESCE(owner_coach_user_id, created_by_user_id) = ?
       RETURNING id, position
     `)
     .bind(userId, createdByUserId, name, createdByUserId, userId, createdByUserId)
