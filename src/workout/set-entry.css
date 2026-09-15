@@ -37,9 +37,9 @@
   height: 20px;
 }
 
-.set-entry__tool--active {
-  color: var(--ui-color-primary) !important;
-  background: var(--ui-color-primary-soft) !important;
+.ui-icon-button.set-entry__tool--active {
+  color: var(--ui-color-primary);
+  background: var(--ui-color-primary-soft);
 }
 
 .set-entry__bands {
