@@ -1,8 +1,8 @@
 import { useId, useState } from 'react';
 import { ExerciseMedia } from '../ExerciseMedia';
+import type { ProgramPhaseDetails, ProgramPhaseExerciseDetails, ProgramPhaseStatus } from '../api';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import { Badge, IconButton, List, ListItem, Text } from '../ui';
-import type { ProgramPhaseDetails, ProgramPhaseExerciseDetails, ProgramPhaseStatus } from './programDetailsApi';
 import './program-phase-card.css';
 
 function SharedIcon({ name }: { name: 'check' | 'chevron-down' }) {
