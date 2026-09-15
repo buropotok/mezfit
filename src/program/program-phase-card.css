@@ -31,10 +31,6 @@
   place-items: center;
   color: var(--ui-color-primary);
   background: var(--ui-color-primary-soft);
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-headline);
-  font-weight: var(--ui-font-weight-medium);
-  line-height: var(--ui-line-height-headline);
 }
 
 .program-phase-card__collapse {
