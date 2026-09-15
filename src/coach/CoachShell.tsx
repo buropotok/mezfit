@@ -5,11 +5,13 @@ import {
   getCoachClients,
   type CoachClientListItem,
   type CreateCoachProgramOwner,
+  type ProgramListItem,
 } from '../api';
 import type { AppDestination, NavigationContext } from '../NavigationShell';
 import { Avatar, Button, FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
+import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
 
 type ClientTab = 'overview' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
@@ -139,6 +141,7 @@ interface CoachShellProps {
 export function CoachShell({ initData, destination, onNavigationContextChange }: CoachShellProps) {
   const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
   const [selectedClient, setSelectedClient] = useState<CoachClientListItem | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteCopyError, setInviteCopyError] = useState('');
   const [message, setMessage] = useState('');
@@ -170,6 +173,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     programClientRequestRef.current += 1;
     if (destination !== 'clients' && destination !== 'programs' && selectedClient) setSelectedClient(null);
     if (destination !== 'programs') {
+      setSelectedProgram(null);
       setProgramDraft(null);
       setSelectingProgramClient(false);
       setProgramCreateError('');
@@ -179,6 +183,11 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   useEffect(() => {
     if (selectingProgramClient && destination === 'programs') {
       onNavigationContextChange({ title: 'Клиенты', onBack: () => setSelectingProgramClient(false) });
+      return () => onNavigationContextChange(null);
+    }
+
+    if (selectedProgram && destination === 'programs') {
+      onNavigationContextChange({ title: 'Детали программы', onBack: () => setSelectedProgram(null) });
       return () => onNavigationContextChange(null);
     }
 
@@ -192,7 +201,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       onBack: () => setSelectedClient(null),
     });
     return () => onNavigationContextChange(null);
-  }, [destination, selectedClient, selectingProgramClient, onNavigationContextChange]);
+  }, [destination, selectedClient, selectedProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
     return <ClientWorkspace initData={initData} client={selectedClient} />;
@@ -203,6 +212,10 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }
 
   if (destination === 'programs') {
+    if (selectedProgram) {
+      return <ProgramDetailsPage initData={initData} programId={selectedProgram.id} />;
+    }
+
     if (selectingProgramClient) {
       return (
         <section className="coach-directory">
@@ -258,6 +271,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       <ProgramsPage
         initData={initData}
         onSelectClient={selectProgramClient}
+        onOpenProgram={setSelectedProgram}
         creationDraft={programDraft}
         creationBusy={programCreateBusy}
         creationError={programCreateError}

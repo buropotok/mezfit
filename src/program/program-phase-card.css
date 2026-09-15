@@ -1,0 +1,125 @@
+.program-phase-card {
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  border-radius: var(--ui-radius-md);
+  color: var(--ui-color-surface-text);
+  background: var(--ui-color-surface);
+}
+
+.program-phase-card__header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-phase-card__header-list {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.program-phase-card__header-list .ui-list-item-wrap,
+.program-phase-card__header-toggle {
+  min-width: 0;
+}
+
+.program-phase-card__phase-index {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--ui-color-primary);
+  background: var(--ui-color-primary-soft);
+}
+
+.program-phase-card__collapse {
+  flex: 0 0 auto;
+  margin-inline-end: var(--ui-space-1);
+}
+
+.program-phase-card__collapse .program-phase-card__icon {
+  transition: transform .15s ease;
+}
+
+.program-phase-card__collapse--collapsed .program-phase-card__icon {
+  transform: rotate(-90deg);
+}
+
+.program-phase-card__icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+}
+
+.program-phase-card__icon--check { mask-image: url('../ui/icons/check.svg'); }
+.program-phase-card__icon--chevron-down { mask-image: url('../ui/icons/chevron-down.svg'); }
+
+.program-phase-card__body,
+.program-phase-card__exercises {
+  width: 100%;
+  min-width: 0;
+}
+
+.program-phase-card__exercises .ui-list-item-wrap {
+  position: relative;
+}
+
+.program-phase-card__exercises .ui-list-item-wrap + .ui-list-item-wrap::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  left: 4rem;
+  height: 1px;
+  background: var(--ui-color-border);
+}
+
+.program-phase-card__completed {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  place-items: center;
+  color: var(--ui-color-primary);
+  background: var(--ui-color-primary-soft);
+}
+
+.program-phase-card__empty {
+  display: block;
+  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-3) 4rem;
+}
+
+.program-phase-card__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-3);
+}
+
+.program-phase-card__progress {
+  overflow: hidden;
+  flex: 1 1 0;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ui-color-surface-raised);
+}
+
+.program-phase-card__progress-value {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .program-phase-card__collapse .program-phase-card__icon {
+    transition: none;
+  }
+}
