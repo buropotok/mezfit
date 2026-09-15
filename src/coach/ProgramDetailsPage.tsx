@@ -1,7 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { createCoachProgramPhase, getCoachProgramDetails, type CoachProgramDetails, type ProgramStatus } from '../api';
+import {
+  createCoachProgramPhase,
+  deleteCoachProgramPhase,
+  getCoachExercises,
+  getCoachProgramDetails,
+  type CoachProgramDetails,
+  type ExerciseDefinition,
+  type ProgramPhaseDetails,
+  type ProgramStatus,
+} from '../api';
 import { ProgramPhaseCard } from '../program/ProgramPhaseCard';
 import { Avatar, Badge, Button, FloatingActionButton, List, ListItem, Modal, Surface, Text, TextInput } from '../ui';
+import { SessionExercise } from '../workout/SessionExercise';
+import type { SessionExerciseData } from '../workout/sessionExerciseTypes';
 import './program-details.css';
 
 function AddIcon() {
@@ -48,6 +59,35 @@ function exerciseProgressLabel(details: CoachProgramDetails): string {
   return `${details.completedExerciseCount} из ${details.exerciseCount} упражнений`;
 }
 
+function previewSessionExercise(
+  phase: ProgramPhaseDetails,
+  fallbackExercise: ExerciseDefinition | null,
+): SessionExerciseData | null {
+  const source = phase.exercises[0] ?? null;
+  const exercise = source?.exercise ?? fallbackExercise;
+  if (!exercise) return null;
+  const setCount = source ? source.setCount : 3;
+
+  return {
+    sessionExerciseId: source?.programExerciseId ?? -phase.id,
+    workoutSessionId: 0,
+    sourceProgramExerciseId: source?.programExerciseId ?? null,
+    position: source?.position ?? 0,
+    status: 'planned',
+    notes: source?.notes ?? null,
+    exercise,
+    sets: Array.from({ length: setCount }, (_, position) => ({
+      sessionSetId: -((phase.id * 1000) + position + 1),
+      sourceProgramSetId: null,
+      position,
+      status: 'pending',
+      plan: null,
+      previous: null,
+      fact: null,
+    })),
+  };
+}
+
 export function ProgramDetailsPage({ initData, programId }: { initData: string; programId: number }) {
   const [details, setDetails] = useState<CoachProgramDetails | null>(null);
   const [error, setError] = useState('');
@@ -56,6 +96,10 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   const [phaseName, setPhaseName] = useState('');
   const [phaseCreateBusy, setPhaseCreateBusy] = useState(false);
   const [phaseCreateError, setPhaseCreateError] = useState('');
+  const [exercisePreviewPhaseId, setExercisePreviewPhaseId] = useState<number | null>(null);
+  const [exercisePreviewFallback, setExercisePreviewFallback] = useState<ExerciseDefinition | null>(null);
+  const [exercisePreviewLoading, setExercisePreviewLoading] = useState(false);
+  const [exercisePreviewError, setExercisePreviewError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +114,33 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
       });
     return () => { cancelled = true; };
   }, [initData, programId, reloadKey]);
+
+  useEffect(() => {
+    const phase = details?.phases.find((candidate) => candidate.id === exercisePreviewPhaseId) ?? null;
+    if (!phase || phase.exercises.length > 0) {
+      setExercisePreviewFallback(null);
+      setExercisePreviewLoading(false);
+      setExercisePreviewError('');
+      return undefined;
+    }
+
+    let cancelled = false;
+    setExercisePreviewFallback(null);
+    setExercisePreviewLoading(true);
+    setExercisePreviewError('');
+    getCoachExercises(initData, { sort: 'reference' })
+      .then(({ exercises }) => {
+        if (!cancelled) setExercisePreviewFallback(exercises[0] ?? null);
+      })
+      .catch((previewError: unknown) => {
+        if (!cancelled) setExercisePreviewError(previewError instanceof Error ? previewError.message : 'Не удалось загрузить упражнение');
+      })
+      .finally(() => {
+        if (!cancelled) setExercisePreviewLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [details, exercisePreviewPhaseId, initData]);
 
   const hasActivePhase = useMemo(
     () => details?.phases.some((phase) => phase.status === 'active') ?? false,
@@ -112,6 +183,22 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
     }
   };
 
+  const deletePhase = async (phaseId: number) => {
+    const { details: nextDetails } = await deleteCoachProgramPhase(initData, programId, phaseId);
+    setDetails(nextDetails);
+  };
+
+  const openExercisePreview = (phase: ProgramPhaseDetails) => {
+    setExercisePreviewPhaseId(phase.id);
+  };
+
+  const closeExercisePreview = () => {
+    setExercisePreviewPhaseId(null);
+    setExercisePreviewFallback(null);
+    setExercisePreviewLoading(false);
+    setExercisePreviewError('');
+  };
+
   if (!details) {
     return (
       <section className="program-details-page" aria-label="Детали программы">
@@ -128,6 +215,10 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
 
   const name = ownerName(details);
   const canCreatePhase = Boolean(phaseName.trim() && !phaseCreateBusy);
+  const exercisePreviewPhase = details.phases.find((phase) => phase.id === exercisePreviewPhaseId) ?? null;
+  const exercisePreviewData = exercisePreviewPhase
+    ? previewSessionExercise(exercisePreviewPhase, exercisePreviewFallback)
+    : null;
 
   return (
     <section className="program-details-page" aria-label={`Программа ${details.program.name}`}>
@@ -178,6 +269,8 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
                   key={phase.id}
                   phase={phase}
                   defaultCollapsed={phase.status !== 'active' && (hasActivePhase || index !== 0)}
+                  onDelete={deletePhase}
+                  onAddExercise={openExercisePreview}
                 />
               ))}
             </div>
@@ -214,6 +307,31 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
             if (event.key === 'Enter' && canCreatePhase) void savePhase();
           }}
         />
+      </Modal>
+
+      <Modal
+        isOpen={exercisePreviewPhase !== null}
+        title="Добавить упражнение"
+        onClose={closeExercisePreview}
+      >
+        {exercisePreviewPhase && exercisePreviewData ? (
+          <SessionExercise
+            context={{
+              workoutSessionId: 0,
+              workoutDate: exercisePreviewPhase.plannedStartDate ?? details.program.startedAt?.slice(0, 10) ?? '',
+              program: { id: details.program.id, name: details.program.name },
+            }}
+            data={exercisePreviewData}
+            onSaveSet={async () => {}}
+            onOpenExerciseMenu={() => {}}
+            onOpenHistory={() => {}}
+            onOpenChat={() => {}}
+          />
+        ) : exercisePreviewLoading ? (
+          <Text tone="muted">Загружаем упражнение…</Text>
+        ) : (
+          <Text tone="muted">{exercisePreviewError || 'Нет доступных упражнений для предпросмотра'}</Text>
+        )}
       </Modal>
     </section>
   );
