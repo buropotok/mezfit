@@ -1,8 +1,9 @@
-import { useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type TouchEvent as ReactTouchEvent } from 'react';
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors,
@@ -41,7 +42,14 @@ function blocksDrag(target: EventTarget | null) {
 class RowPointerSensor extends PointerSensor {
   static activators = [{
     eventName: 'onPointerDown' as const,
-    handler: ({ nativeEvent: event }: ReactPointerEvent) => !blocksDrag(event.target),
+    handler: ({ nativeEvent: event }: ReactPointerEvent) => event.pointerType !== 'touch' && !blocksDrag(event.target),
+  }];
+}
+
+class RowTouchSensor extends TouchSensor {
+  static activators = [{
+    eventName: 'onTouchStart' as const,
+    handler: ({ nativeEvent: event }: ReactTouchEvent) => !blocksDrag(event.target),
   }];
 }
 
@@ -62,9 +70,14 @@ function SortableRow({ item }: { item: SortableListItem }) {
 
 export function SortableList({ items, onReorder, className = '', longPressDelay = 300 }: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const sensors = useSensors(useSensor(RowPointerSensor, {
-    activationConstraint: { delay: longPressDelay, tolerance: 8 },
-  }));
+  const sensors = useSensors(
+    useSensor(RowPointerSensor, {
+      activationConstraint: { delay: longPressDelay, tolerance: 8 },
+    }),
+    useSensor(RowTouchSensor, {
+      activationConstraint: { delay: longPressDelay, tolerance: 8 },
+    }),
+  );
   const ids = useMemo(() => items.map((item) => item.id), [items]);
   const activeItem = activeId == null ? null : items.find((item) => item.id === activeId) ?? null;
 
