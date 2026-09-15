@@ -10,6 +10,19 @@ export type ProgramStatus = 'active' | 'draft' | 'finished';
 export type ProgramPhaseStatus = 'pending' | 'active' | 'finished';
 export type CreateCoachProgramOwner = { type: 'self' } | { type: 'client'; clientUserId: number };
 
+export interface PlannedSetInput {
+  weightKg: number | null;
+  reps: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
+}
+
+export interface PlannedSet extends PlannedSetInput {
+  id: number;
+  programExerciseId: number;
+  position: number;
+}
+
 export interface AppUser {
   id: number;
   telegramUserId: string;
@@ -157,7 +170,9 @@ const russianApiErrors: Record<string, string> = {
   INVALID_PROGRAM_NAME: 'Укажите название программы',
   INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
   INVALID_PHASE_NAME: 'Укажите название фазы',
+  INVALID_SET: 'Проверьте параметры подхода',
   PROGRAM_NOT_FOUND: 'Программа не найдена',
+  PROGRAM_EXERCISE_NOT_FOUND: 'Упражнение программы не найдено',
   PHASE_NOT_FOUND: 'Фаза не найдена',
   PHASE_IN_USE: 'Фазу с историей тренировок нельзя удалить',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
@@ -249,6 +264,17 @@ export function createCoachProgramPhase(
   return apiRequest(initData, `/api/coach/programs/${programId}/phases`, {
     method: 'POST',
     body: JSON.stringify({ name }),
+  });
+}
+
+export function createCoachProgramSet(
+  initData: string,
+  programExerciseId: number,
+  input: PlannedSetInput,
+): Promise<{ set: PlannedSet }> {
+  return apiRequest(initData, `/api/coach/program-exercises/${programExerciseId}/sets`, {
+    method: 'POST',
+    body: JSON.stringify(input),
   });
 }
 
