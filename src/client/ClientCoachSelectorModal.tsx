@@ -1,4 +1,4 @@
-import { List, ListItem, Modal } from '../ui';
+import { Avatar, List, ListItem, Modal } from '../ui';
 import { useClientCoach } from './ClientCoachContext';
 
 interface ClientCoachSelectorModalProps {
@@ -27,6 +27,7 @@ export function ClientCoachSelectorModal({ isOpen, onClose }: ClientCoachSelecto
           return (
             <ListItem
               key={coach.relationshipId}
+              leading={<Avatar name={name} src={coach.user.photoUrl ?? undefined} />}
               title={name}
               subtitle={coach.user.username ? `@${coach.user.username}` : undefined}
               trailing={selected ? 'Выбран' : undefined}
