@@ -304,7 +304,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
     <Modal
       isOpen={isOpen}
       className="set-entry-modal"
-      title={<Text variant="title">Подход {data.identity.setNumber}</Text>}
+      title={`Подход ${data.identity.setNumber}`}
       hasCloseButton={!saving}
       closeOnBackdrop={!saving}
       onClose={requestClose}
