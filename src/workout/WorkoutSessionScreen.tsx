@@ -43,6 +43,12 @@ function reorderExerciseData(session: ActiveWorkoutSession, ids: number[]): Acti
   return { ...session, exercises };
 }
 
+function exerciseOrder(session: WorkoutSessionState): number[] {
+  return session.status === 'draft'
+    ? []
+    : session.exercises.map((exercise) => exercise.sessionExerciseId);
+}
+
 export function WorkoutSessionScreen({
   initData,
   trainingPlanId = null,
@@ -66,6 +72,7 @@ export function WorkoutSessionScreen({
   const lifecycleCallbackRef = useRef(onSessionLifecycleChange);
   const reorderQueueRef = useRef<Promise<void>>(Promise.resolve());
   const reorderVersionRef = useRef(0);
+  const acknowledgedExerciseOrderRef = useRef<number[]>([]);
 
   useEffect(() => {
     lifecycleCallbackRef.current = onSessionLifecycleChange;
@@ -79,6 +86,7 @@ export function WorkoutSessionScreen({
     initializeWorkoutSession(initData, trainingPlanId)
       .then(({ session: nextSession }) => {
         if (cancelled) return;
+        acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
         setSession(nextSession);
         setMessage(null);
         if (nextSession.status === 'draft') {
@@ -106,6 +114,7 @@ export function WorkoutSessionScreen({
     setMessage(null);
     try {
       const { session: nextSession } = await startWorkoutSession(initData, draftSession.sessionId, input);
+      acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
       setSession(nextSession);
       setDayPickerOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
@@ -129,13 +138,13 @@ export function WorkoutSessionScreen({
       input.sessionSetId,
       input.fact,
     );
+    acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
     setSession(nextSession);
   }
 
   function handleReorder(items: SortableListItem[]) {
     if (!activeSession || activeSession.status !== 'active') return;
     const ids = items.map((item) => Number(item.id));
-    const previousSession = activeSession;
     const version = reorderVersionRef.current + 1;
     reorderVersionRef.current = version;
     setSession(reorderExerciseData(activeSession, ids));
@@ -146,10 +155,15 @@ export function WorkoutSessionScreen({
       .then(async () => {
         try {
           const { session: nextSession } = await reorderWorkoutSessionExercises(initData, activeSession.sessionId, ids);
+          acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
           if (version === reorderVersionRef.current) setSession(nextSession);
         } catch (error) {
           if (version === reorderVersionRef.current) {
-            setSession(previousSession);
+            const acknowledgedIds = acknowledgedExerciseOrderRef.current;
+            setSession((currentSession) => {
+              if (!currentSession || currentSession.status === 'draft') return currentSession;
+              return reorderExerciseData(currentSession, acknowledgedIds);
+            });
             setMessage(errorMessage(error, 'Не удалось сохранить порядок упражнений'));
           }
         }
@@ -162,6 +176,7 @@ export function WorkoutSessionScreen({
     setMessage(null);
     try {
       const { session: nextSession } = await completeWorkoutSession(initData, activeSession.sessionId);
+      acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
       setSession(nextSession);
       setCompleteConfirmOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
