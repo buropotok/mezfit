@@ -1,0 +1,88 @@
+.program-details-page {
+  overflow: hidden;
+  height: calc(100dvh - var(--appbar-h) - 2rem);
+  min-height: 12rem;
+  min-width: 0;
+}
+
+.program-details-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--ui-space-4);
+  scrollbar-width: thin;
+}
+
+.program-details-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}
+
+.program-details-heading .ui-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.program-details-summary {
+  overflow: hidden;
+}
+
+.program-details-summary .ui-list-item-wrap {
+  position: relative;
+}
+
+.program-details-summary .ui-list-item-wrap + .ui-list-item-wrap::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: var(--ui-space-2);
+  left: var(--ui-space-2);
+  height: 1px;
+  background: var(--ui-color-border);
+}
+
+.program-details-progress {
+  overflow: hidden;
+  height: 4px;
+  margin: 0 var(--ui-space-3) var(--ui-space-3);
+  border-radius: 999px;
+  background: var(--ui-color-surface-raised);
+}
+
+.program-details-progress-value {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-color-primary);
+}
+
+.program-details-phases,
+.program-details-phase-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.program-details-phases {
+  gap: var(--ui-space-3);
+}
+
+.program-details-phase-list {
+  gap: var(--ui-space-3);
+}
+
+.program-details-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+}
