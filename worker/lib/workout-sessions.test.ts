@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  getWorkoutSessionProjection,
   initializeWorkoutSession,
   resolveWorkoutProgram,
   startWorkoutSession,
@@ -13,7 +14,7 @@ describe('resolveWorkoutProgram', () => {
         { program_id: 20, program_name: 'Программа B', phase_id: 200, phase_name: 'Фаза B', coach_user_id: 2 },
       ],
     });
-    const prepare = vi.fn().mockReturnValue({ bind: vi.fn().mockReturnValue({ all }) });
+    const prepare = vi.fn((sql: string) => ({ bind: vi.fn().mockReturnValue({ all }) }));
     const db = { prepare } as unknown as D1Database;
 
     await expect(resolveWorkoutProgram(db, 7, null)).resolves.toEqual({
@@ -23,6 +24,7 @@ describe('resolveWorkoutProgram', () => {
         { id: 20, name: 'Программа B' },
       ],
     });
+    expect(prepare.mock.calls[0]?.[0]).not.toContain('tp.status');
   });
 });
 
@@ -300,10 +302,54 @@ describe('startWorkoutSession', () => {
       session: { sessionId: 501, status: 'active' },
     });
 
+    const daySql = prepare.mock.calls.find(([sql]) => sql.includes('SELECT pd.id, pd.program_phase_id AS phase_id'))?.[0];
+    expect(daySql).toBeDefined();
+    expect(daySql).not.toContain('tp.status');
     expect(batch).toHaveBeenCalledOnce();
     expect(batchStatements).toHaveLength(3);
     expect(batchStatements[0]?.sql).toContain("pending.status = 'draft'");
     expect(batchStatements[1]?.sql).toContain("pending.status = 'draft'");
     expect(batchStatements[2]?.sql).toContain("WHERE id = ? AND user_id = ? AND status = 'draft'");
+  });
+});
+
+describe('getWorkoutSessionProjection', () => {
+  it('resolves PREVIOUS only from a completed matching set', async () => {
+    const headerFirst = vi.fn().mockResolvedValue({
+      id: 501,
+      status: 'active',
+      workout_date: '2026-09-15',
+      program_id: 20,
+      program_name: 'Силовой блок',
+      phase_id: 30,
+      phase_name: 'Фаза 1',
+      day_id: 40,
+      day_name: 'День B',
+      day_position: 1,
+      coach_user_id: 9,
+    });
+    const exercisesAll = vi.fn().mockResolvedValue({ results: [] });
+    let projectionSql = '';
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes('FROM workout_session ws')) {
+        return { bind: vi.fn().mockReturnValue({ first: headerFirst }) };
+      }
+      if (sql.includes('FROM session_exercise se')) {
+        projectionSql = sql;
+        return { bind: vi.fn().mockReturnValue({ all: exercisesAll }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const db = { prepare } as unknown as D1Database;
+
+    await expect(getWorkoutSessionProjection(db, 7, 501)).resolves.toMatchObject({
+      sessionId: 501,
+      status: 'active',
+      exercises: [],
+    });
+
+    expect(projectionSql).toContain('JOIN session_set candidate_set');
+    expect(projectionSql).toContain("candidate_set.status = 'completed'");
+    expect(projectionSql).not.toContain('LEFT JOIN session_set candidate_set');
   });
 });
