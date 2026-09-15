@@ -37,7 +37,9 @@ The options and collapse `IconButton`s are siblings of the header `ListItem`, no
 
 ## Collapse and DnD
 
-A short press on the header `ListItem` toggles expanded/collapsed state. The explicit chevron `IconButton` performs the same action. Collapse is local presentation state and is not persisted.
+A short press on the header `ListItem` toggles expanded/collapsed state. The explicit chevron `IconButton` performs the same action. Collapse is presentation state and is not persisted.
+
+`SessionExercise` supports uncontrolled collapse through `defaultCollapsed`, but the sortable workout owner must use the controlled `collapsed` + `onCollapsedChange` contract. `SortableList` renders the active item a second time inside `DragOverlay`; sharing collapse state through the owner keeps the source card and drag preview synchronized and prevents a size jump after the user collapses or expands a card.
 
 DnD remains entirely owned by the shared `SortableList`. A long press may start exercise reorder from the card surface, including the expanded set area. Explicit controls that must perform their own action, such as the options and collapse `IconButton`s, keep `data-no-dnd` and do not initiate reorder.
 
@@ -65,7 +67,9 @@ The component never reads PLAN back from `program_set` after the session snapsho
 interface SessionExerciseProps {
   context: SessionExerciseContext;
   data: SessionExerciseData;
+  collapsed?: boolean;
   defaultCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
   onSaveSet: (input: SaveSessionSetInput) => Promise<void>;
   onOpenExerciseMenu: (sessionExerciseId: number) => void;
   onOpenHistory: (exerciseDefinitionId: number) => void;
@@ -180,7 +184,7 @@ Other external actions:
 - SetEntry history -> `onOpenHistory(exerciseDefinitionId)` -> history/navigation owner;
 - SetEntry chat -> `onOpenChat()` -> Telegram/navigation owner.
 
-Collapse state, selected set state, and SetEntry open/close state are local presentation state and are not emitted.
+Selected set state and SetEntry open/close state remain local presentation state. Collapse may be local for standalone rendering or controlled by the workout owner for sortable rendering; neither form is persisted.
 
 ## Persistence note
 
