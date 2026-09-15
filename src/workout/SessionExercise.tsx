@@ -122,14 +122,17 @@ function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType): R
 export function SessionExercise({
   context,
   data,
+  collapsed: controlledCollapsed,
   defaultCollapsed = false,
+  onCollapsedChange,
   onSaveSet,
   onOpenExerciseMenu,
   onOpenHistory,
   onOpenChat,
 }: SessionExerciseProps) {
   const bodyId = useId();
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
+  const collapsed = controlledCollapsed ?? internalCollapsed;
   const [selectedSessionSetId, setSelectedSessionSetId] = useState<number | null>(null);
   const completedSets = data.sets.filter((set) => set.status === 'completed').length;
   const totalSets = data.sets.length;
@@ -141,7 +144,11 @@ export function SessionExercise({
   const programIdentity: SetEntryProgramIdentity = context.program
     ? { programId: context.program.id, programName: context.program.name }
     : { programId: null, programName: null };
-  const toggleCollapsed = () => setCollapsed((current) => !current);
+  const toggleCollapsed = () => {
+    const nextCollapsed = !collapsed;
+    if (controlledCollapsed === undefined) setInternalCollapsed(nextCollapsed);
+    onCollapsedChange?.(nextCollapsed);
+  };
 
   return (
     <article className="session-exercise" data-session-exercise-id={data.sessionExerciseId}>
