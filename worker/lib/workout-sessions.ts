@@ -357,7 +357,7 @@ export async function initializeWorkoutSession(
     return { kind: 'ok', session };
   }
 
-  await db
+  const updateResult = await db
     .prepare(`
       UPDATE workout_session
       SET source_program_phase_id = ?, source_program_day_id = ?, updated_at = CURRENT_TIMESTAMP
@@ -365,6 +365,16 @@ export async function initializeWorkoutSession(
     `)
     .bind(phase?.id ?? null, suggested?.id ?? null, draft.id, userId)
     .run();
+
+  if ((updateResult.meta?.changes ?? 1) === 0) {
+    const current = await workoutRowForUser(db, userId, draft.id);
+    if (!current) throw new Error('INITIALIZED_WORKOUT_SESSION_MISSING');
+    if (current.status !== 'draft') {
+      const canonical = await getWorkoutSessionProjection(db, userId, current.id);
+      if (!canonical) throw new Error('OPEN_WORKOUT_PROJECTION_MISSING');
+      return { kind: 'ok', session: canonical };
+    }
+  }
 
   return {
     kind: 'ok',
