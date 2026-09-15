@@ -258,6 +258,10 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
     }));
   };
 
+  const requestClose = () => {
+    if (!saving) onClose();
+  };
+
   const handleSave = async () => {
     if (saving) return;
     setSaving(true);
@@ -268,9 +272,10 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
         metrics: { ...draft.metrics },
         bands: [...draft.bands],
       });
+      setSaving(false);
+      onClose();
     } catch (error) {
       setSaveError(getErrorMessage(error));
-    } finally {
       setSaving(false);
     }
   };
@@ -287,8 +292,9 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
       isOpen={isOpen}
       className="set-entry-modal"
       title={`Подход ${data.identity.setNumber}`}
+      hasCloseButton={!saving}
       closeOnBackdrop={!saving}
-      onClose={onClose}
+      onClose={requestClose}
       actions={[{
         id: 'save',
         label: saving ? 'Сохраняем…' : 'Сохранить',
@@ -317,7 +323,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
           </div>
 
           {bandsOpen ? (
-            <Surface elevated className="set-entry__bands" id={bandsId} role="dialog" aria-label="Выбор фитнес-лент">
+            <Surface elevated className="set-entry__bands" id={bandsId} role="group" aria-label="Выбор фитнес-лент">
               <div className="set-entry__bands-heading">
                 <Text variant="headline">Фитнес-ленты</Text>
                 <Text variant="footnote" tone="muted">{draft.bands.length > 0 ? `Выбрано: ${draft.bands.length}` : 'Можно выбрать несколько'}</Text>
