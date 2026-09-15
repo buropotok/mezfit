@@ -179,7 +179,7 @@ export function SessionExercise({
         </IconButton>
       </div>
 
-      <div id={bodyId} className="session-exercise__body" data-no-dnd hidden={collapsed}>
+      <div id={bodyId} className="session-exercise__body" hidden={collapsed}>
         {data.notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{data.notes}</Text> : null}
 
         <List className="session-exercise__sets">
