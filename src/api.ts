@@ -158,6 +158,8 @@ const russianApiErrors: Record<string, string> = {
   INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
   INVALID_PHASE_NAME: 'Укажите название фазы',
   PROGRAM_NOT_FOUND: 'Программа не найдена',
+  PHASE_NOT_FOUND: 'Фаза не найдена',
+  PHASE_IN_USE: 'Фазу с историей тренировок нельзя удалить',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
@@ -248,6 +250,14 @@ export function createCoachProgramPhase(
     method: 'POST',
     body: JSON.stringify({ name }),
   });
+}
+
+export function deleteCoachProgramPhase(
+  initData: string,
+  programId: number,
+  phaseId: number,
+): Promise<{ details: CoachProgramDetails }> {
+  return apiRequest(initData, `/api/coach/programs/${programId}/phases/${phaseId}`, { method: 'DELETE' });
 }
 
 export function createCoachProgram(
