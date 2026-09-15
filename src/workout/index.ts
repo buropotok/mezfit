@@ -9,6 +9,7 @@ export {
   type SetEntryData,
   type SetEntryFactDraft,
   type SetEntryIdentity,
+  type SetEntryProgramIdentity,
   type SetEntryProps,
   type SetLabel,
   type SetMetrics,
