@@ -27,7 +27,6 @@
 
 .ui-sortable-list__row--dragging {
   opacity: 0;
-  touch-action: none;
 }
 
 .ui-sortable-list__overlay {

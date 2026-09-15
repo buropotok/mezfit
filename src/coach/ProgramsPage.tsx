@@ -84,7 +84,7 @@ function ProgramRow({ program, onDuplicate, mutationBusy }: { program: ProgramLi
   const dates = programDates(program);
   return (
     <div className="programs-row">
-      <div className="programs-icon" data-dnd-handle aria-hidden="true"><img src={programIconUrl} alt="" /></div>
+      <div className="programs-icon" aria-hidden="true"><img src={programIconUrl} alt="" /></div>
       <div className="programs-copy">
         <Text className="programs-name">{program.name}</Text>
         {dates ? <Text variant="caption" tone="muted">{dates}</Text> : null}
