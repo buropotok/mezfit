@@ -96,7 +96,13 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
     setPhaseCreateError('');
     try {
       const { phase } = await createCoachProgramPhase(initData, programId, name);
-      setDetails((current) => current ? { ...current, phases: [...current.phases, phase] } : current);
+      setDetails((current) => current ? {
+        ...current,
+        program: current.program.status === 'finished'
+          ? { ...current.program, status: 'draft', finishedAt: null }
+          : current.program,
+        phases: [...current.phases, phase],
+      } : current);
       setPhaseCreateOpen(false);
       setPhaseName('');
     } catch (createError) {
