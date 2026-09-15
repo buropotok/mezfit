@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { ExerciseMedia } from '../ExerciseMedia';
 import type { ProgramPhaseDetails, ProgramPhaseExerciseDetails, ProgramPhaseStatus } from '../api';
 import { exerciseDisplayName } from '../exerciseLocalization';
-import { Badge, IconButton, List, ListItem, Text } from '../ui';
+import { Badge, Button, IconButton, List, ListItem, Modal, Text } from '../ui';
 import './program-phase-card.css';
 
 function SharedIcon({ name }: { name: 'check' | 'chevron-down' }) {
@@ -60,13 +60,38 @@ function exerciseMeta(item: ProgramPhaseExerciseDetails): string {
 export function ProgramPhaseCard({
   phase,
   defaultCollapsed = false,
+  onDelete,
+  onAddExercise,
 }: {
   phase: ProgramPhaseDetails;
   defaultCollapsed?: boolean;
+  onDelete?: (phaseId: number) => Promise<void>;
+  onAddExercise?: (phase: ProgramPhaseDetails) => void;
 }) {
   const bodyId = useId();
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const toggleCollapsed = () => setCollapsed((value) => !value);
+  const closeDelete = () => {
+    if (deleteBusy) return;
+    setDeleteOpen(false);
+    setDeleteError('');
+  };
+  const confirmDelete = async () => {
+    if (!onDelete || deleteBusy) return;
+    setDeleteBusy(true);
+    setDeleteError('');
+    try {
+      await onDelete(phase.id);
+      setDeleteOpen(false);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Не удалось удалить фазу');
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
 
   return (
     <article className="program-phase-card" data-program-phase-id={phase.id}>
@@ -132,7 +157,34 @@ export function ProgramPhaseCard({
           </div>
           <Text variant="caption" tone="muted">{phase.progressPercent}% выполнено</Text>
         </div>
+
+        {onDelete || onAddExercise ? (
+          <div className="program-phase-card__actions">
+            {onDelete ? <Button variant="danger" onClick={() => setDeleteOpen(true)}>Удалить</Button> : null}
+            {onAddExercise ? <Button variant="secondary" onClick={() => onAddExercise(phase)}>+ упражнение</Button> : null}
+          </div>
+        ) : null}
       </div>
+
+      {onDelete ? (
+        <Modal
+          isOpen={deleteOpen}
+          title="Удалить фазу?"
+          variant="alert"
+          hasCloseButton={false}
+          closeOnBackdrop={!deleteBusy}
+          onClose={closeDelete}
+          actions={[
+            { id: 'cancel', label: 'Отмена', onClick: closeDelete, disabled: deleteBusy },
+            { id: 'delete', label: deleteBusy ? 'Удаление…' : 'Удалить', onClick: () => { void confirmDelete(); }, tone: 'danger', disabled: deleteBusy },
+          ]}
+        >
+          <div className="program-phase-card__delete-copy">
+            <Text>Фаза «{phase.name}» и все её запланированные упражнения и подходы будут удалены.</Text>
+            {deleteError ? <Text variant="footnote" tone="muted">{deleteError}</Text> : null}
+          </div>
+        </Modal>
+      ) : null}
     </article>
   );
 }
