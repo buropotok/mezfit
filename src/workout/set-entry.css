@@ -126,6 +126,15 @@
   background: var(--ui-color-primary-soft);
 }
 
+.set-entry__band-option:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
+.set-entry__band-option:disabled:active {
+  transform: none;
+}
+
 .set-entry__band-swatch {
   width: 34px;
   height: 24px;
@@ -294,6 +303,15 @@
 .set-entry__badge-button[aria-pressed='true'] .ui-badge {
   box-shadow: 0 0 0 2px var(--ui-color-surface), 0 0 0 4px currentColor;
   filter: saturate(1.08) brightness(1.05);
+}
+
+.set-entry__badge-button:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
+.set-entry__badge-button:disabled:active .ui-badge {
+  transform: none;
 }
 
 .set-entry__rpe-row {
