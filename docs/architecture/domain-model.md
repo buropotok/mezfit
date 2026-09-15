@@ -29,6 +29,8 @@ ExerciseDefinition
 └── CLIENT
 ```
 
+A `WorkoutSession` may originate from a scheduled/program workout or from `Своя тренировка`. An own workout has no source program day/occurrence and must not mutate the assigned program.
+
 ## Fundamental invariants
 
 ### Plan versus fact
@@ -37,7 +39,13 @@ Planned workout data and actual workout results are different entities. A record
 
 ### Workout start and snapshot
 
-The first persisted actual result is the system-known start of a workout. In the same logical operation Mezfit creates/resolves `WorkoutSession`, freezes the effective plan into immutable `plan_snapshot`, marks the occurrence `IN_PROGRESS`, and stores the result.
+Normal live workout execution starts explicitly. Final Start confirmation creates the `WorkoutSession`; the first persisted actual result is not the start event.
+
+For a program-based workout, Start freezes/materializes the selected workout prescription into session-owned PLAN data and marks the session/occurrence `IN_PROGRESS`. From that point the session reads PLAN from its frozen/materialized session data rather than from the mutable program.
+
+For `Своя тренировка`, Start creates an `IN_PROGRESS` session without a source program day and without program PLAN.
+
+Opening the workout launcher, preselecting a scheduled day or choosing a different day must not create an empty session before final Start confirmation.
 
 ### No active-session plan override
 
@@ -52,6 +60,8 @@ The current assigned program remains mutable for practical coach work between se
 ### Scheduling and execution are separate
 
 `WorkoutOccurrence` represents that a workout is expected/scheduled. `WorkoutSession` represents known actual execution. Empty sessions are not pre-created months into the future.
+
+A scheduled workout selects the default Start context but is not an irreversible choice: before Start the client may choose another day from the current phase or start `Своя тренировка`.
 
 Candidate scheduling policies:
 
