@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useId, useState } from 'react';
 import { Badge, Button, Divider, IconButton, Surface, Text, TextArea, type BadgeColor } from '../ui';
 import {
   createSetEntryDraft,
@@ -51,7 +51,7 @@ function formatNumber(value: number | null, suffix = ''): string {
 function formatDuration(value: number | null): string {
   if (value === null) return '—';
   const minutes = Math.floor(value / 60);
-  const seconds = Math.round(value % 60);
+  const seconds = Math.floor(value % 60);
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
@@ -67,11 +67,16 @@ function roundTo(value: number, precision: number): number {
   return Math.round(value * multiplier) / multiplier;
 }
 
+function metersToKilometers(value: number | null): number | null {
+  return value === null ? null : value / 1000;
+}
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) return error.message;
   return 'Не удалось сохранить подход';
 }
 
+// Tabler Outline: ripple.
 function RippleIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -82,6 +87,7 @@ function RippleIcon() {
   );
 }
 
+// Tabler Outline: library.
 function LibraryIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -102,9 +108,10 @@ function PlusIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>;
 }
 
+// Telegram brand mark used only as the visual label for the external chat action.
 function TelegramIcon() {
   return (
-    <svg className="set-entry__telegram-icon" role="img" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="set-entry__telegram-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
     </svg>
   );
@@ -180,16 +187,17 @@ function DurationField({ value, plan, previous, onChange }: DurationFieldProps) 
   const seconds = value === null ? '' : String(Math.floor(value % 60));
 
   const updatePart = (part: 'minutes' | 'seconds', rawValue: string) => {
-    if (rawValue.trim() === '' && value === null) return;
-    const parsed = parseNonNegativeNumber(rawValue);
-    if (parsed === null && rawValue.trim() === '') {
-      onChange(null);
-      return;
-    }
     const currentMinutes = value === null ? 0 : Math.floor(value / 60);
     const currentSeconds = value === null ? 0 : Math.floor(value % 60);
-    if (part === 'minutes') onChange(Math.floor(parsed ?? 0) * 60 + currentSeconds);
-    else onChange(currentMinutes * 60 + Math.min(59, Math.floor(parsed ?? 0)));
+    if (rawValue.trim() === '') {
+      const remaining = part === 'minutes' ? currentSeconds : currentMinutes * 60;
+      onChange(remaining === 0 ? null : remaining);
+      return;
+    }
+
+    const parsed = parseNonNegativeNumber(rawValue) ?? 0;
+    if (part === 'minutes') onChange(Math.floor(parsed) * 60 + currentSeconds);
+    else onChange(currentMinutes * 60 + Math.min(59, Math.floor(parsed)));
   };
 
   const adjust = (direction: -1 | 1) => onChange(Math.max(0, (value ?? 0) + (30 * direction)));
@@ -226,33 +234,27 @@ function metricValue(metrics: SetMetrics | null, key: keyof SetMetrics): number 
   return metrics?.[key] ?? null;
 }
 
-export function SetEntry({ data, onSave, onOpenHistory, onOpenChat }: SetEntryProps) {
-  const identityKey = useMemo(() => [
+function setEntryIdentityKey(data: SetEntryProps['data']): string {
+  return [
     data.identity.programId,
     data.identity.exerciseDefinitionId,
     data.identity.setNumber,
     data.identity.workoutDate,
     data.identity.sourceProgramSetId ?? 'extra',
     data.identity.sessionSetId ?? 'new',
-  ].join(':'), [
-    data.identity.exerciseDefinitionId,
-    data.identity.programId,
-    data.identity.sessionSetId,
-    data.identity.setNumber,
-    data.identity.sourceProgramSetId,
-    data.identity.workoutDate,
-  ]);
+  ].join(':');
+}
 
+export function SetEntry(props: SetEntryProps) {
+  return <SetEntryEditor key={setEntryIdentityKey(props.data)} {...props} />;
+}
+
+function SetEntryEditor({ data, onSave, onOpenHistory, onOpenChat }: SetEntryProps) {
+  const bandsId = useId();
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(data));
   const [bandsOpen, setBandsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-
-  useEffect(() => {
-    setDraft(createSetEntryDraft(data));
-    setBandsOpen(false);
-    setSaveError('');
-  }, [data, identityKey]);
 
   const updateMetric = (key: keyof SetMetrics, value: number | null) => {
     setDraft((current) => ({
@@ -291,6 +293,8 @@ export function SetEntry({ data, onSave, onOpenHistory, onOpenChat }: SetEntryPr
   const showReps = data.trackingType === 'weight_reps' || data.trackingType === 'time_reps';
   const showTime = data.trackingType === 'time' || data.trackingType === 'time_distance' || data.trackingType === 'time_reps' || data.trackingType === 'time_weight';
   const showDistance = data.trackingType === 'time_distance';
+  const planDistanceKm = metersToKilometers(metricValue(data.plan, 'distanceMeters'));
+  const previousDistanceKm = metersToKilometers(metricValue(data.previous?.metrics ?? null, 'distanceMeters'));
 
   return (
     <Surface as="section" elevated className="set-entry" aria-label={`Подход ${data.identity.setNumber}: ${data.identity.exerciseName}`}>
@@ -305,7 +309,7 @@ export function SetEntry({ data, onSave, onOpenHistory, onOpenChat }: SetEntryPr
           <IconButton
             label="Фитнес-ленты"
             aria-expanded={bandsOpen}
-            aria-controls="set-entry-bands"
+            aria-controls={bandsId}
             className={draft.bands.length > 0 || bandsOpen ? 'set-entry__tool--active' : ''}
             onClick={() => setBandsOpen((open) => !open)}
           >
@@ -315,7 +319,7 @@ export function SetEntry({ data, onSave, onOpenHistory, onOpenChat }: SetEntryPr
         </div>
 
         {bandsOpen ? (
-          <Surface elevated className="set-entry__bands" id="set-entry-bands" role="dialog" aria-label="Выбор фитнес-лент">
+          <Surface elevated className="set-entry__bands" id={bandsId} role="dialog" aria-label="Выбор фитнес-лент">
             <div className="set-entry__bands-heading">
               <Text variant="headline">Фитнес-ленты</Text>
               <Text variant="footnote" tone="muted">{draft.bands.length > 0 ? `Выбрано: ${draft.bands.length}` : 'Можно выбрать несколько'}</Text>
@@ -372,9 +376,9 @@ export function SetEntry({ data, onSave, onOpenHistory, onOpenChat }: SetEntryPr
           <MetricField
             label="Дистанция"
             unit="КМ"
-            value={draft.metrics.distanceMeters === null ? null : draft.metrics.distanceMeters / 1000}
-            plan={metricValue(data.plan, 'distanceMeters') === null ? null : (metricValue(data.plan, 'distanceMeters') as number) / 1000}
-            previous={metricValue(data.previous?.metrics ?? null, 'distanceMeters') === null ? null : (metricValue(data.previous?.metrics ?? null, 'distanceMeters') as number) / 1000}
+            value={metersToKilometers(draft.metrics.distanceMeters)}
+            plan={planDistanceKm}
+            previous={previousDistanceKm}
             step={0.1}
             precision={2}
             suffix=" км"
@@ -422,7 +426,7 @@ export function SetEntry({ data, onSave, onOpenHistory, onOpenChat }: SetEntryPr
           <Text variant="footnote" className="set-entry__section-label">RPE</Text>
           <Text variant="caption" tone="muted">необязательно</Text>
         </div>
-        <div className="set-entry__rpe-row" role="radiogroup" aria-label="RPE">
+        <div className="set-entry__rpe-row" role="group" aria-label="RPE">
           {[6, 7, 8, 9, 10].map((rpe) => (
             <Button
               key={rpe}
