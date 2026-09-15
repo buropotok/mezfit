@@ -42,15 +42,19 @@ Client Mode has one canonical global workout FAB owned by the application/naviga
 
 Normal live workout execution requires explicit Start. The first saved set is not the workout-start event.
 
-Before creating the session, the launcher resolves the source workout:
+Entering the workout launch flow immediately creates or reuses one minimal `WorkoutSession` draft and returns its generated session ID. Initialization is idempotent and does not materialize exercises or return PLAN/PREVIOUS/FACT.
+
+The outer launch workflow resolves program ambiguity before the session module: when multiple programs are active, the user must explicitly choose one; the workout session component must not silently select an active program.
+
+For a resolved program context:
 
 - one unambiguous scheduled `program_day` → preselect it and skip the separate day chooser;
-- `Сменить день` → choose another day from the current phase;
+- `Сменить день` → choose another active day from the resolved current phase;
 - `Своя тренировка` → start outside the program;
-- no unambiguous scheduled day → show current-phase day choices plus `Своя тренировка`.
+- without an explicit schedule override, the default is the next unfinished active day.
 
-A scheduled day is only the default. Even when the chooser is skipped, `Сменить день` and `Своя тренировка` remain available before final Start confirmation.
+A scheduled day is only the default. Even when the chooser is skipped, `Сменить день` and `Своя тренировка` remain available while the session is still `draft`.
 
-Only final Start creates the `WorkoutSession`. For a program workout, the selected day is materialized into session-owned exercises/sets and its PLAN is frozen there. From that point the active session reads PLAN from session data, not from the mutable program.
+Final Start promotes the existing draft to an active session. For a program workout, the backend fresh-reads the selected day at Start, materializes session-owned exercises/sets, resolves PREVIOUS and freezes PLAN there. From that point the active session reads PLAN from session data, not from the mutable program.
 
-`Своя тренировка` creates a session without a source program day and must not mutate the assigned program.
+`Своя тренировка` promotes the draft without a source program day and without PLAN/PREVIOUS children, and must not mutate the assigned program.
