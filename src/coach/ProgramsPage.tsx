@@ -84,7 +84,7 @@ function ProgramRow({ program, onDuplicate, mutationBusy }: { program: ProgramLi
   const dates = programDates(program);
   return (
     <div className="programs-row">
-      <div className="programs-icon" data-dnd-handle aria-hidden="true"><img src={programIconUrl} alt="" /></div>
+      <div className="programs-icon" aria-hidden="true"><img src={programIconUrl} alt="" /></div>
       <div className="programs-copy">
         <Text className="programs-name">{program.name}</Text>
         {dates ? <Text variant="caption" tone="muted">{dates}</Text> : null}
@@ -95,48 +95,20 @@ function ProgramRow({ program, onDuplicate, mutationBusy }: { program: ProgramLi
   );
 }
 
-function ProgramRows({
-  programs,
-  sortable,
-  onDuplicate,
-  mutationBusy,
-  onReorder,
-}: {
-  programs: ProgramListItem[];
-  sortable: boolean;
-  onDuplicate: (program: ProgramListItem) => void;
-  mutationBusy: boolean;
-  onReorder: (programs: ProgramListItem[]) => void;
-}) {
+function ProgramRows({ programs, sortable, onDuplicate, mutationBusy, onReorder }: { programs: ProgramListItem[]; sortable: boolean; onDuplicate: (program: ProgramListItem) => void; mutationBusy: boolean; onReorder: (programs: ProgramListItem[]) => void }) {
   if (programs.length === 0) return null;
-  const rows = programs.map((program) => ({
-    id: program.id,
-    content: <ProgramRow program={program} onDuplicate={onDuplicate} mutationBusy={mutationBusy} />,
-  }));
-
+  const rows = programs.map((program) => ({ id: program.id, content: <ProgramRow program={program} onDuplicate={onDuplicate} mutationBusy={mutationBusy} /> }));
   if (sortable) {
-    return (
-      <SortableList
-        className="programs-card"
-        items={rows}
-        onReorder={(items) => {
-          const byId = new Map(programs.map((program) => [program.id, program]));
-          onReorder(items.map((item) => byId.get(Number(item.id))).filter((program): program is ProgramListItem => Boolean(program)));
-        }}
-      />
-    );
+    return <SortableList className="programs-card" items={rows} onReorder={(items) => {
+      const byId = new Map(programs.map((program) => [program.id, program]));
+      onReorder(items.map((item) => byId.get(Number(item.id))).filter((program): program is ProgramListItem => Boolean(program)));
+    }} />;
   }
-
   return <div className="programs-card">{rows.map((row) => <div key={row.id}>{row.content}</div>)}</div>;
 }
 
-function ownerName(group: ProgramOwnerGroup): string {
-  return [group.owner.firstName, group.owner.lastName].filter(Boolean).join(' ');
-}
-
-function clientName(client: CoachClientListItem): string {
-  return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
-}
+function ownerName(group: ProgramOwnerGroup): string { return [group.owner.firstName, group.owner.lastName].filter(Boolean).join(' '); }
+function clientName(client: CoachClientListItem): string { return [client.user.firstName, client.user.lastName].filter(Boolean).join(' '); }
 
 interface ProgramsPageProps {
   initData: string;
@@ -152,19 +124,7 @@ interface ProgramsPageProps {
   onSaveCreation?: () => void;
 }
 
-export function ProgramsPage({
-  initData,
-  onSelectClient,
-  creationDraft = null,
-  creationBusy = false,
-  creationError = '',
-  refreshKey = 0,
-  onOpenCreation,
-  onCancelCreation,
-  onDraftChange,
-  onRequestClientSelection,
-  onSaveCreation,
-}: ProgramsPageProps) {
+export function ProgramsPage({ initData, onSelectClient, creationDraft = null, creationBusy = false, creationError = '', refreshKey = 0, onOpenCreation, onCancelCreation, onDraftChange, onRequestClientSelection, onSaveCreation }: ProgramsPageProps) {
   const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
   const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
@@ -178,92 +138,50 @@ export function ProgramsPage({
   useEffect(() => {
     let cancelled = false;
     setMessage('');
-    getCoachPrograms(initData)
-      .then((result) => {
-        if (!cancelled) {
-          setPrograms(result.programs);
-          setClientGroups(result.clients);
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setPrograms([]);
-          setClientGroups([]);
-          setMessage(error instanceof Error ? error.message : 'Не удалось загрузить программы');
-        }
-      });
+    getCoachPrograms(initData).then((result) => {
+      if (!cancelled) { setPrograms(result.programs); setClientGroups(result.clients); }
+    }).catch((error: unknown) => {
+      if (!cancelled) { setPrograms([]); setClientGroups([]); setMessage(error instanceof Error ? error.message : 'Не удалось загрузить программы'); }
+    });
     return () => { cancelled = true; };
   }, [initData, refreshKey, reloadKey]);
 
-  const ownPrograms = useMemo(
-    () => (programs ?? []).filter((program) => filter === 'all' || program.status === filter),
-    [programs, filter],
-  );
-
+  const ownPrograms = useMemo(() => (programs ?? []).filter((program) => filter === 'all' || program.status === filter), [programs, filter]);
   const visibleClients = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase('ru-RU');
-    return clientGroups
-      .filter((group) => !needle || ownerName(group).toLocaleLowerCase('ru-RU').includes(needle))
-      .map((group) => ({ ...group, programs: group.programs.filter((program) => filter === 'all' || program.status === filter) }))
-      .filter((group) => group.programs.length > 0);
+    return clientGroups.filter((group) => !needle || ownerName(group).toLocaleLowerCase('ru-RU').includes(needle)).map((group) => ({ ...group, programs: group.programs.filter((program) => filter === 'all' || program.status === filter) })).filter((group) => group.programs.length > 0);
   }, [clientGroups, filter, search]);
 
   const selectClient = async (userId: number) => {
     if (!onSelectClient) return;
     setMessage('');
-    try {
-      await onSelectClient(userId);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось открыть карточку клиента');
-    }
+    try { await onSelectClient(userId); } catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось открыть карточку клиента'); }
   };
 
   const duplicateProgram = async (program: ProgramListItem) => {
     if (mutationBusy) return;
-    setDuplicateProgramId(program.id);
-    setMessage('');
-    try {
-      await duplicateCoachProgram(initData, program.id);
-      setReloadKey((value) => value + 1);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось дублировать программу');
-    } finally {
-      setDuplicateProgramId(null);
-    }
+    setDuplicateProgramId(program.id); setMessage('');
+    try { await duplicateCoachProgram(initData, program.id); setReloadKey((value) => value + 1); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось дублировать программу'); }
+    finally { setDuplicateProgramId(null); }
   };
 
   const reorderOwnPrograms = async (next: ProgramListItem[]) => {
     if (!programs || mutationBusy) return;
-    const previous = programs;
-    setReorderBusy(true);
-    setPrograms(next);
-    setMessage('');
-    try {
-      await reorderCoachPrograms(initData, next.map((program) => program.id));
-    } catch (error) {
-      setPrograms(previous);
-      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ');
-    } finally {
-      setReorderBusy(false);
-    }
+    const previous = programs; setReorderBusy(true); setPrograms(next); setMessage('');
+    try { await reorderCoachPrograms(initData, next.map((program) => program.id)); }
+    catch (error) { setPrograms(previous); setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ'); }
+    finally { setReorderBusy(false); }
   };
 
   const reorderClientPrograms = async (ownerUserId: number, next: ProgramListItem[]) => {
     if (mutationBusy) return;
-    const previous = clientGroups;
-    setReorderBusy(true);
-    setClientGroups((groups) => groups.map((group) => (
-      group.owner.id === ownerUserId ? { ...group, programs: next } : group
-    )));
+    const previous = clientGroups; setReorderBusy(true);
+    setClientGroups((groups) => groups.map((group) => group.owner.id === ownerUserId ? { ...group, programs: next } : group));
     setMessage('');
-    try {
-      await reorderCoachPrograms(initData, next.map((program) => program.id));
-    } catch (error) {
-      setClientGroups(previous);
-      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ');
-    } finally {
-      setReorderBusy(false);
-    }
+    try { await reorderCoachPrograms(initData, next.map((program) => program.id)); }
+    catch (error) { setClientGroups(previous); setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ'); }
+    finally { setReorderBusy(false); }
   };
 
   const canSave = Boolean(creationDraft?.name.trim() && creationDraft.owner && !creationBusy);
@@ -272,105 +190,39 @@ export function ProgramsPage({
   return (
     <section className="programs-page" aria-label="Программы">
       <div className="programs-scroll">
-      <SearchInput
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Поиск клиента"
-        aria-label="Поиск клиента"
-      />
-
-      <Tabs className="programs-tabs" value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-        <TabsList aria-label="Статус программы">
-          <TabsTrigger value="all">Все</TabsTrigger>
-          <TabsTrigger value="active">Активные</TabsTrigger>
-          <TabsTrigger value="finished">Завершённые</TabsTrigger>
-          <TabsTrigger value="draft">Черновики</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {programs === null ? <Text tone="muted">Загружаем программы…</Text> : (
-        <>
+        <SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск клиента" aria-label="Поиск клиента" />
+        <Tabs className="programs-tabs" value={filter} onValueChange={(value) => setFilter(value as Filter)}>
+          <TabsList aria-label="Статус программы">
+            <TabsTrigger value="all">Все</TabsTrigger><TabsTrigger value="active">Активные</TabsTrigger><TabsTrigger value="finished">Завершённые</TabsTrigger><TabsTrigger value="draft">Черновики</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {programs === null ? <Text tone="muted">Загружаем программы…</Text> : <>
           <section className="programs-section" aria-labelledby="own-programs-title">
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
-            <ProgramRows
-              programs={ownPrograms}
-              sortable={filter === 'all' && !mutationBusy}
-              onDuplicate={(program) => { void duplicateProgram(program); }}
-              mutationBusy={mutationBusy}
-              onReorder={(next) => { void reorderOwnPrograms(next); }}
-            />
+            <ProgramRows programs={ownPrograms} sortable={filter === 'all' && !mutationBusy} onDuplicate={(program) => { void duplicateProgram(program); }} mutationBusy={mutationBusy} onReorder={(next) => { void reorderOwnPrograms(next); }} />
             {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
           </section>
-
           <section className="programs-section" aria-labelledby="client-programs-title">
             <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
-            {visibleClients.map((group) => (
-              <div className="programs-client" key={group.owner.id}>
-                <List className="programs-client-list">
-                  <ListItem
-                    onClick={() => { void selectClient(group.owner.id); }}
-                    leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
-                    title={ownerName(group)}
-                    trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
-                  />
-                </List>
-                <ProgramRows
-                  programs={group.programs}
-                  sortable={filter === 'all' && !mutationBusy}
-                  onDuplicate={(program) => { void duplicateProgram(program); }}
-                  mutationBusy={mutationBusy}
-                  onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
-                />
-              </div>
-            ))}
+            {visibleClients.map((group) => <div className="programs-client" key={group.owner.id}>
+              <List className="programs-client-list"><ListItem onClick={() => { void selectClient(group.owner.id); }} leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />} title={ownerName(group)} trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />} /></List>
+              <ProgramRows programs={group.programs} sortable={filter === 'all' && !mutationBusy} onDuplicate={(program) => { void duplicateProgram(program); }} mutationBusy={mutationBusy} onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }} />
+            </div>)}
             {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
           </section>
-        </>
-      )}
-
-      {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
+        </>}
+        {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
       </div>
-
-      {onOpenCreation ? (
-        <FloatingActionButton label="Создать программу" onClick={onOpenCreation}>
-          <AddIcon />
-        </FloatingActionButton>
-      ) : null}
-
-      <Modal
-        isOpen={creationDraft !== null}
-        title={<span className="program-create-title"><img src={programIconUrl} alt="" aria-hidden="true" />Создать программу</span>}
-        hasCloseButton={false}
-        onClose={() => onCancelCreation?.()}
-        actions={[
-          { id: 'cancel', label: 'Отмена', onClick: () => onCancelCreation?.(), disabled: creationBusy },
-          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', onClick: () => onSaveCreation?.(), disabled: !canSave },
-        ]}
-      >
-        {creationDraft ? (
-          <div className="program-create-content">
-            <TextInput
-              label="Название"
-              value={creationDraft.name}
-              maxLength={120}
-              onChange={(event) => onDraftChange?.({ ...creationDraft, name: event.target.value })}
-            />
-            <List>
-              <ListItem
-                onClick={() => onRequestClientSelection?.()}
-                leading={selectedClient ? <Avatar name={clientName(selectedClient)} src={selectedClient.user.photoUrl ?? undefined} /> : undefined}
-                title="Выбрать клиента"
-                subtitle={selectedClient ? clientName(selectedClient) : undefined}
-              />
-              <ListItem
-                onClick={() => onDraftChange?.({ ...creationDraft, owner: { type: 'self' } })}
-                title="Моя программа"
-                subtitle={creationDraft.owner?.type === 'self' ? 'Выбрано' : undefined}
-              />
-            </List>
-            {creationError ? <Text variant="footnote" className="programs-error" role="alert">{creationError}</Text> : null}
-          </div>
-        ) : null}
+      {onOpenCreation ? <FloatingActionButton label="Создать программу" onClick={onOpenCreation}><AddIcon /></FloatingActionButton> : null}
+      <Modal isOpen={creationDraft !== null} title={<span className="program-create-title"><img src={programIconUrl} alt="" aria-hidden="true" />Создать программу</span>} hasCloseButton={false} onClose={() => onCancelCreation?.()} actions={[{ id: 'cancel', label: 'Отмена', onClick: () => onCancelCreation?.(), disabled: creationBusy }, { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', onClick: () => onSaveCreation?.(), disabled: !canSave }]}>
+        {creationDraft ? <div className="program-create-content">
+          <TextInput label="Название" value={creationDraft.name} maxLength={120} onChange={(event) => onDraftChange?.({ ...creationDraft, name: event.target.value })} />
+          <List>
+            <ListItem onClick={() => onRequestClientSelection?.()} leading={selectedClient ? <Avatar name={clientName(selectedClient)} src={selectedClient.user.photoUrl ?? undefined} /> : undefined} title="Выбрать клиента" subtitle={selectedClient ? clientName(selectedClient) : undefined} />
+            <ListItem onClick={() => onDraftChange?.({ ...creationDraft, owner: { type: 'self' } })} title="Моя программа" subtitle={creationDraft.owner?.type === 'self' ? 'Выбрано' : undefined} />
+          </List>
+          {creationError ? <Text variant="footnote" className="programs-error" role="alert">{creationError}</Text> : null}
+        </div> : null}
       </Modal>
     </section>
   );
