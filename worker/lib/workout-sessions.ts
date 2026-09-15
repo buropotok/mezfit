@@ -235,6 +235,7 @@ export async function resolveWorkoutProgram(
     FROM training_plan tp
     JOIN program_phase pp ON pp.training_plan_id = tp.id AND pp.status = 'active'
     WHERE tp.user_id = ?
+      AND tp.status = 'active'
   `;
 
   if (requestedTrainingPlanId !== null) {
