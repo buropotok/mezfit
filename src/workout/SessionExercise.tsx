@@ -237,6 +237,7 @@ export function SessionExercise({
 
       {selectedSet ? (
         <SetEntry
+          mode="workout"
           isOpen
           data={{
             identity: {
