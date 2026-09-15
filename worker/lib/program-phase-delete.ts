@@ -1,25 +1,17 @@
 export type DeleteProgramPhaseResult = 'deleted' | 'not_found' | 'in_use';
 
-interface ProgramPhaseDeleteRow {
-  position: number;
-}
-
 interface ProgramPhaseUsageRow {
   in_use: number;
 }
+
+const COMPACTION_OFFSET = 1_000_000_000;
+const TARGET_OFFSET = COMPACTION_OFFSET * 2;
 
 export async function deleteProgramPhase(
   db: D1Database,
   programId: number,
   phaseId: number,
 ): Promise<DeleteProgramPhaseResult> {
-  const phase = await db.prepare(`
-    SELECT position
-    FROM program_phase
-    WHERE id = ? AND training_plan_id = ?
-  `).bind(phaseId, programId).first<ProgramPhaseDeleteRow>();
-  if (!phase) return 'not_found';
-
   const usage = await db.prepare(`
     SELECT CASE WHEN
       EXISTS (
@@ -53,8 +45,36 @@ export async function deleteProgramPhase(
   `).bind(phaseId, phaseId, phaseId, phaseId).first<ProgramPhaseUsageRow>();
   if (usage?.in_use === 1) return 'in_use';
 
-  const shiftedPositionFloor = phase.position + 1 + 1_000_000;
-  await db.batch([
+  const results = await db.batch([
+    // Move the target out of the normal position range first. Later statements
+    // derive its current position from this row inside the same atomic batch,
+    // so concurrent deletes cannot compact using a stale pre-batch position.
+    db.prepare(`
+      UPDATE program_phase
+      SET position = position + ?
+      WHERE id = ? AND training_plan_id = ?
+    `).bind(TARGET_OFFSET, phaseId, programId),
+    db.prepare(`
+      UPDATE program_phase
+      SET position = position + ?
+      WHERE training_plan_id = ?
+        AND id != ?
+        AND position < ?
+        AND position > (
+          SELECT position - ?
+          FROM program_phase
+          WHERE id = ? AND training_plan_id = ? AND position >= ?
+        )
+    `).bind(
+      COMPACTION_OFFSET,
+      programId,
+      phaseId,
+      COMPACTION_OFFSET,
+      TARGET_OFFSET,
+      phaseId,
+      programId,
+      TARGET_OFFSET,
+    ),
     db.prepare(`
       DELETE FROM program_set
       WHERE program_exercise_id IN (
@@ -74,16 +94,14 @@ export async function deleteProgramPhase(
     db.prepare('DELETE FROM program_phase WHERE id = ? AND training_plan_id = ?').bind(phaseId, programId),
     db.prepare(`
       UPDATE program_phase
-      SET position = position + 1000000
-      WHERE training_plan_id = ? AND position > ?
-    `).bind(programId, phase.position),
-    db.prepare(`
-      UPDATE program_phase
-      SET position = position - 1000001, updated_at = CURRENT_TIMESTAMP
-      WHERE training_plan_id = ? AND position >= ?
-    `).bind(programId, shiftedPositionFloor),
+      SET position = position - ?, updated_at = CURRENT_TIMESTAMP
+      WHERE training_plan_id = ?
+        AND position >= ?
+        AND position < ?
+    `).bind(COMPACTION_OFFSET + 1, programId, COMPACTION_OFFSET, TARGET_OFFSET),
     db.prepare('UPDATE training_plan SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(programId),
   ]);
 
-  return 'deleted';
+  const targetWasMarked = (results[0]?.meta?.changes ?? 0) > 0;
+  return targetWasMarked ? 'deleted' : 'not_found';
 }
