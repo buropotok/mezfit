@@ -138,6 +138,7 @@ export function SessionExercise({
   const selectedSet = selectedSessionSetId === null
     ? null
     : data.sets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
+  const toggleCollapsed = () => setCollapsed((current) => !current);
 
   return (
     <article className="session-exercise" data-session-exercise-id={data.sessionExerciseId}>
@@ -149,17 +150,10 @@ export function SessionExercise({
             leading={<ExerciseMedia exercise={data.exercise} variant="thumbnail" />}
             title={exerciseName}
             subtitle={exerciseMeta(data)}
-            trailing={(
-              <span className="session-exercise__header-trailing">
-                <Badge color="blue">{completedSets} / {totalSets}</Badge>
-                <span className={`session-exercise__collapse-icon${collapsed ? ' session-exercise__collapse-icon--collapsed' : ''}`}>
-                  <SharedIcon name="chevron-down" />
-                </span>
-              </span>
-            )}
+            trailing={<Badge color="blue">{completedSets} / {totalSets}</Badge>}
             aria-expanded={!collapsed}
             aria-controls={bodyId}
-            onClick={() => setCollapsed((current) => !current)}
+            onClick={toggleCollapsed}
           />
         </List>
         <IconButton
@@ -169,6 +163,16 @@ export function SessionExercise({
           onClick={() => onOpenExerciseMenu(data.sessionExerciseId)}
         >
           <SharedIcon name="dots-vertical" />
+        </IconButton>
+        <IconButton
+          className={`session-exercise__collapse${collapsed ? ' session-exercise__collapse--collapsed' : ''}`}
+          data-no-dnd
+          label={collapsed ? 'Развернуть упражнение' : 'Свернуть упражнение'}
+          aria-expanded={!collapsed}
+          aria-controls={bodyId}
+          onClick={toggleCollapsed}
+        >
+          <SharedIcon name="chevron-down" />
         </IconButton>
       </div>
 
