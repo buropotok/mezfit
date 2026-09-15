@@ -241,7 +241,6 @@ function setEntryIdentityKey(data: SetEntryProps['data']): string {
     data.identity.setNumber,
     data.identity.workoutDate,
     data.identity.sourceProgramSetId ?? 'extra',
-    data.identity.sessionSetId ?? 'new',
   ].join(':');
 }
 
