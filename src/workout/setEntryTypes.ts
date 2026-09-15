@@ -1,6 +1,7 @@
 import type { TrackingType } from '../api';
 
 export type SetLabel = 'warmup' | 'easy' | 'normal' | 'hard' | 'drop';
+export type SetEntryMode = 'workout' | 'plan';
 
 export type ResistanceBandCode = 'yellow' | 'red' | 'green' | 'blue' | 'purple' | 'black';
 
@@ -53,14 +54,25 @@ export interface SetEntryFactDraft {
   bands: ResistanceBandCode[];
 }
 
-export interface SetEntryProps {
+interface SetEntryBaseProps {
   isOpen: boolean;
   data: SetEntryData;
   onClose: () => void;
-  onSave: (fact: SetEntryFactDraft) => Promise<void>;
   onOpenHistory: () => void;
   onOpenChat: () => void;
 }
+
+export type SetEntryProps =
+  | (SetEntryBaseProps & {
+      mode: 'workout';
+      onSave: (fact: SetEntryFactDraft) => Promise<void>;
+    })
+  | (SetEntryBaseProps & {
+      mode: 'plan';
+      initData: string;
+      programExerciseId: number;
+      onSaved?: () => void;
+    });
 
 export function emptySetMetrics(): SetMetrics {
   return {
@@ -71,11 +83,11 @@ export function emptySetMetrics(): SetMetrics {
   };
 }
 
-export function createSetEntryDraft(data: SetEntryData): SetEntryFactDraft {
+export function createSetEntryDraft(data: SetEntryData, mode: SetEntryMode = 'workout'): SetEntryFactDraft {
   return {
-    metrics: { ...(data.fact?.metrics ?? data.plan ?? emptySetMetrics()) },
-    setLabel: data.fact?.setLabel ?? null,
-    rpe: data.fact?.rpe ?? null,
+    metrics: { ...(mode === 'plan' ? data.plan ?? emptySetMetrics() : data.fact?.metrics ?? data.plan ?? emptySetMetrics()) },
+    setLabel: mode === 'plan' ? null : data.fact?.setLabel ?? null,
+    rpe: mode === 'plan' ? null : data.fact?.rpe ?? null,
     comment: data.fact?.comment ?? null,
     bands: [...(data.fact?.bands ?? [])],
   };
