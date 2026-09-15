@@ -1,18 +1,18 @@
 .ui-nested-badges {
-  --ui-nested-badges-indent: 16px;
+  --ui-nested-badges-indent: var(--ui-space-4);
   display: grid;
-  gap: 8px;
+  gap: var(--ui-space-2);
 }
 
 .ui-nested-badges__branch {
   display: grid;
-  gap: 8px;
+  gap: var(--ui-space-2);
 }
 
 .ui-nested-badges__row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-space-2);
   min-width: 0;
 }
 
