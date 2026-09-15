@@ -235,7 +235,6 @@ export async function resolveWorkoutProgram(
     FROM training_plan tp
     JOIN program_phase pp ON pp.training_plan_id = tp.id AND pp.status = 'active'
     WHERE tp.user_id = ?
-      AND tp.status = 'active'
   `;
 
   if (requestedTrainingPlanId !== null) {
@@ -435,7 +434,7 @@ export async function startWorkoutSession(
         SELECT pd.id, pd.program_phase_id AS phase_id
         FROM program_day pd
         JOIN program_phase pp ON pp.id = pd.program_phase_id AND pp.status = 'active'
-        JOIN training_plan tp ON tp.id = pp.training_plan_id AND tp.user_id = ? AND tp.status = 'active'
+        JOIN training_plan tp ON tp.id = pp.training_plan_id AND tp.user_id = ?
         WHERE pd.id = ?
           AND pd.status = 'active'
         LIMIT 1
@@ -731,9 +730,10 @@ export async function getWorkoutSessionProjection(
         JOIN session_exercise candidate_exercise
           ON candidate_exercise.workout_session_id = candidate_workout.id
           AND candidate_exercise.exercise_definition_id = se.exercise_definition_id
-        LEFT JOIN session_set candidate_set
+        JOIN session_set candidate_set
           ON candidate_set.session_exercise_id = candidate_exercise.id
           AND candidate_set.position = ss.position
+          AND candidate_set.status = 'completed'
         WHERE candidate_workout.user_id = current_ws.user_id
           AND candidate_workout.id <> current_ws.id
           AND candidate_workout.status = 'completed'
