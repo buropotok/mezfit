@@ -46,15 +46,16 @@ function renderSetEntry(data: SetEntryData): string {
 
 describe('SetEntry contract', () => {
   it('uses existing FACT before PLAN when creating the editable draft', () => {
+    const factMetrics = {
+      weightKg: 82.5,
+      reps: 8,
+      durationSeconds: null,
+      distanceMeters: null,
+    };
     const draft = createSetEntryDraft({
       ...baseData,
       fact: {
-        metrics: {
-          weightKg: 82.5,
-          reps: 8,
-          durationSeconds: null,
-          distanceMeters: null,
-        },
+        metrics: factMetrics,
         setLabel: 'hard',
         rpe: 9,
         comment: 'Последний повтор тяжёлый',
@@ -64,15 +65,17 @@ describe('SetEntry contract', () => {
 
     expect(draft.metrics.weightKg).toBe(82.5);
     expect(draft.metrics.reps).toBe(8);
+    expect(draft.metrics).not.toBe(factMetrics);
     expect(draft.setLabel).toBe('hard');
     expect(draft.rpe).toBe(9);
     expect(draft.bands).toEqual(['red']);
   });
 
-  it('uses PLAN as the initial metrics when FACT does not exist', () => {
+  it('uses PLAN as the initial metrics when FACT does not exist without aliasing the read-only plan', () => {
     const draft = createSetEntryDraft(baseData);
     expect(draft.metrics.weightKg).toBe(80);
     expect(draft.metrics.reps).toBe(10);
+    expect(draft.metrics).not.toBe(baseData.plan);
     expect(draft.setLabel).toBeNull();
     expect(draft.rpe).toBeNull();
   });
@@ -90,6 +93,15 @@ describe('SetEntry rendering', () => {
     expect(html).toContain('Предыдущая тренировка: 77,5 кг');
     expect(html).toContain('План: 10');
     expect(html).toContain('Предыдущая тренировка: 10');
+  });
+
+  it('uses the approved typography roles for the set title, exercise and metric labels', () => {
+    const html = renderSetEntry(baseData);
+
+    expect(html).toContain('ui-text--title ui-text--default">Подход 3');
+    expect(html).toContain('ui-text--headline ui-text--default set-entry__exercise-name">Жим лёжа');
+    expect(html).toContain('ui-text--headline ui-text--default set-entry__metric-label">Вес');
+    expect(html).toContain('ui-text--headline ui-text--default set-entry__metric-label">Повторения');
   });
 
   it('renders only the inputs required by the tracking type', () => {
