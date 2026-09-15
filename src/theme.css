@@ -1,9 +1,9 @@
 :root,
 :root[data-theme='default'] {
-  --theme-bg: #0B1118;
+  --theme-bg: #151E27;
   --theme-bg-text: #F5F7FA;
   --theme-bg-muted: #9BAABA;
-  --theme-surface: #111A24;
+  --theme-surface: #1D2733;
   --theme-surface-2: #162230;
   --theme-input: #192635;
   --theme-border: #2A3948;
