@@ -118,6 +118,19 @@
   background: var(--ui-color-primary);
 }
 
+.program-phase-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-1);
+  justify-content: flex-end;
+  padding: 0 var(--ui-space-2) var(--ui-space-2);
+}
+
+.program-phase-card__delete-copy {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .program-phase-card__collapse .program-phase-card__icon {
     transition: none;
