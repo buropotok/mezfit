@@ -11,6 +11,7 @@ import {
 } from './lib/exercises';
 import { duplicateProgram, getProgramOwnerIds, reorderPrograms } from './lib/program-actions';
 import { createProgramForUser } from './lib/program-create';
+import { createProgramPhase } from './lib/program-phase-create';
 import { getCoachProgramDetails } from './lib/program-details';
 import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
@@ -371,6 +372,31 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const details = await getCoachProgramDetails(env.DB_BINDING, programId, auth.row.id);
     if (!details) throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
     return json({ details });
+  }
+
+  const programPhaseCreateMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/phases$/);
+  if (programPhaseCreateMatch && request.method === 'POST') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    const programId = Number(programPhaseCreateMatch[1]);
+    await requireProgramOwner(env.DB_BINDING, auth.row.id, programId);
+
+    let parsedBody: unknown;
+    try {
+      parsedBody = await request.json();
+    } catch {
+      throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
+    }
+    if (typeof parsedBody !== 'object' || parsedBody === null || Array.isArray(parsedBody)) {
+      throw new HttpError(400, 'INVALID_JSON', 'Request body must be a JSON object');
+    }
+    const body = parsedBody as { name?: unknown };
+    const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
+    if (!name) throw new HttpError(400, 'INVALID_PHASE_NAME', 'Phase name is required');
+
+    const phase = await createProgramPhase(env.DB_BINDING, programId, auth.row.id, name);
+    if (!phase) throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
+    return json({ phase }, { status: 201 });
   }
 
   const duplicateProgramMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/duplicate$/);
