@@ -7,10 +7,10 @@ export interface ProgramOwnerIds {
 
 export async function getProgramOwnerIds(db: D1Database, programId: number): Promise<ProgramOwnerIds | null> {
   const row = await db
-    .prepare('SELECT user_id, owner_coach_user_id FROM training_plan WHERE id = ?')
+    .prepare('SELECT user_id, owner_coach_user_id, created_by_user_id FROM training_plan WHERE id = ?')
     .bind(programId)
-    .first<{ user_id: number; owner_coach_user_id: number | null }>();
-  return row ? { userId: row.user_id, coachUserId: row.owner_coach_user_id } : null;
+    .first<{ user_id: number; owner_coach_user_id: number | null; created_by_user_id: number }>();
+  return row ? { userId: row.user_id, coachUserId: row.owner_coach_user_id ?? row.created_by_user_id } : null;
 }
 
 export async function duplicateProgram(
@@ -19,7 +19,11 @@ export async function duplicateProgram(
   actorUserId: number,
 ): Promise<ProgramListItem> {
   const source = await db
-    .prepare('SELECT id, user_id, name FROM training_plan WHERE id = ? AND owner_coach_user_id = ?')
+    .prepare(`
+      SELECT id, user_id, name
+      FROM training_plan
+      WHERE id = ? AND COALESCE(owner_coach_user_id, created_by_user_id) = ?
+    `)
     .bind(programId, actorUserId)
     .first<{ id: number; user_id: number; name: string }>();
   if (!source) throw new Error('PROGRAM_NOT_FOUND');
@@ -32,7 +36,7 @@ export async function duplicateProgram(
       VALUES (?, ?, ?, ?, (
         SELECT COALESCE(MAX(position), -1) + 1
         FROM training_plan
-        WHERE user_id = ? AND owner_coach_user_id = ?
+        WHERE user_id = ? AND COALESCE(owner_coach_user_id, created_by_user_id) = ?
       ))
       RETURNING id, position
     `).bind(source.user_id, actorUserId, copyName, actorUserId, source.user_id, actorUserId),
@@ -128,10 +132,20 @@ export async function reorderPrograms(
 
   const placeholders = programIds.map(() => '?').join(', ');
   const [selected, total] = await Promise.all([
-    db.prepare(`SELECT id FROM training_plan WHERE user_id = ? AND owner_coach_user_id = ? AND id IN (${placeholders})`)
+    db.prepare(`
+      SELECT id
+      FROM training_plan
+      WHERE user_id = ?
+        AND COALESCE(owner_coach_user_id, created_by_user_id) = ?
+        AND id IN (${placeholders})
+    `)
       .bind(ownerUserId, coachUserId, ...programIds)
       .all<{ id: number }>(),
-    db.prepare('SELECT COUNT(*) AS count FROM training_plan WHERE user_id = ? AND owner_coach_user_id = ?')
+    db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM training_plan
+      WHERE user_id = ? AND COALESCE(owner_coach_user_id, created_by_user_id) = ?
+    `)
       .bind(ownerUserId, coachUserId)
       .first<{ count: number }>(),
   ]);
@@ -140,13 +154,18 @@ export async function reorderPrograms(
   }
 
   await db.batch([
-    db.prepare('UPDATE training_plan SET position = position + 1000000 WHERE user_id = ? AND owner_coach_user_id = ?')
-      .bind(ownerUserId, coachUserId),
+    db.prepare(`
+      UPDATE training_plan
+      SET position = position + 1000000
+      WHERE user_id = ? AND COALESCE(owner_coach_user_id, created_by_user_id) = ?
+    `).bind(ownerUserId, coachUserId),
     ...programIds.map((id, position) => (
       db.prepare(`
         UPDATE training_plan
         SET position = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND user_id = ? AND owner_coach_user_id = ?
+        WHERE id = ?
+          AND user_id = ?
+          AND COALESCE(owner_coach_user_id, created_by_user_id) = ?
       `).bind(position, id, ownerUserId, coachUserId)
     )),
   ]);
