@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SetEntry } from './SetEntry';
 import { createSetEntryDraft, type SetEntryData } from './setEntryTypes';
 
@@ -33,6 +33,8 @@ const baseData: SetEntryData = {
   },
   fact: null,
 };
+
+afterEach(() => cleanup());
 
 function renderSetEntry(data: SetEntryData = baseData) {
   const onClose = vi.fn();
@@ -92,17 +94,19 @@ describe('SetEntry contract', () => {
 });
 
 describe('SetEntry rendering', () => {
-  it('renders the UI kit dialog with metadata, PLAN and the analogous set from the previous workout', () => {
+  it('renders the UI kit modal with metadata, PLAN and the analogous set from the previous workout', () => {
     renderSetEntry();
 
-    const dialog = screen.getByRole('dialog', { name: 'Подход 3' });
-    expect(dialog.textContent).toContain('Жим лёжа');
-    expect(dialog.textContent).toContain('Силовой блок');
-    expect(dialog.textContent).toContain('15 сентября 2026');
-    expect(dialog.textContent).toContain('План: 80 кг');
-    expect(dialog.textContent).toContain('Предыдущая тренировка: 77,5 кг');
-    expect(dialog.textContent).toContain('План: 10');
-    expect(dialog.textContent).toContain('Предыдущая тренировка: 10');
+    const title = screen.getByRole('heading', { name: 'Подход 3' });
+    const modal = title.closest('.ui-modal__dialog');
+    expect(modal).not.toBeNull();
+    expect(modal?.textContent).toContain('Жим лёжа');
+    expect(modal?.textContent).toContain('Силовой блок');
+    expect(modal?.textContent).toContain('15 сентября 2026');
+    expect(modal?.textContent).toContain('План: 80 кг');
+    expect(modal?.textContent).toContain('Предыдущая тренировка: 77,5 кг');
+    expect(modal?.textContent).toContain('План: 10');
+    expect(modal?.textContent).toContain('Предыдущая тренировка: 10');
   });
 
   it('reuses UI kit TextInput for numeric fields and Modal actions for save', () => {
@@ -122,7 +126,7 @@ describe('SetEntry rendering', () => {
   it('uses the approved hierarchy for the modal, exercise and metric labels', () => {
     renderSetEntry();
 
-    expect(screen.getByText('Подход 3').className).toContain('ui-modal__title');
+    expect(screen.getByRole('heading', { name: 'Подход 3' }).className).toContain('ui-modal__title');
     expect(screen.getByText('Жим лёжа').className).toContain('ui-text--headline');
     expect(screen.getByText('Вес').className).toContain('ui-text--headline');
     expect(screen.getByText('Повторения').className).toContain('ui-text--headline');
@@ -168,8 +172,8 @@ describe('SetEntry rendering', () => {
     expect(onOpenChat).toHaveBeenCalledTimes(1);
   });
 
-  it('passes the complete editable FACT through the modal save action', async () => {
-    const { onSave } = renderSetEntry();
+  it('passes the complete editable FACT through the modal save action and closes after success', async () => {
+    const { onClose, onSave } = renderSetEntry();
 
     fireEvent.change(screen.getByLabelText('Вес, КГ'), { target: { value: '82.5' } });
     fireEvent.change(screen.getByLabelText('Комментарий'), { target: { value: 'Хороший подход' } });
@@ -190,5 +194,6 @@ describe('SetEntry rendering', () => {
       comment: 'Хороший подход',
       bands: [],
     });
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 });
