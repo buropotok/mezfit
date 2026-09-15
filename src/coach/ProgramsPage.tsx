@@ -80,11 +80,13 @@ function programDates(program: ProgramListItem): string | undefined {
   return finish ? `${start} — ${finish}` : start;
 }
 
-function ProgramRow({ program, onDuplicate, mutationBusy }: { program: ProgramListItem; onDuplicate: (program: ProgramListItem) => void; mutationBusy: boolean }) {
+function ProgramRow({ program, onOpen, onDuplicate, mutationBusy }: { program: ProgramListItem; onOpen?: (program: ProgramListItem) => void; onDuplicate: (program: ProgramListItem) => void; mutationBusy: boolean }) {
   const dates = programDates(program);
   return (
     <div className="programs-row">
       <ListItem
+        interactive={Boolean(onOpen)}
+        onClick={onOpen ? () => onOpen(program) : undefined}
         leadingShape="square"
         leading={<span className="programs-icon" aria-hidden="true"><img src={programIconUrl} alt="" /></span>}
         title={program.name}
@@ -99,12 +101,14 @@ function ProgramRow({ program, onDuplicate, mutationBusy }: { program: ProgramLi
 function ProgramRows({
   programs,
   sortable,
+  onOpen,
   onDuplicate,
   mutationBusy,
   onReorder,
 }: {
   programs: ProgramListItem[];
   sortable: boolean;
+  onOpen?: (program: ProgramListItem) => void;
   onDuplicate: (program: ProgramListItem) => void;
   mutationBusy: boolean;
   onReorder: (programs: ProgramListItem[]) => void;
@@ -112,7 +116,7 @@ function ProgramRows({
   if (programs.length === 0) return null;
   const rows = programs.map((program) => ({
     id: program.id,
-    content: <ProgramRow program={program} onDuplicate={onDuplicate} mutationBusy={mutationBusy} />,
+    content: <ProgramRow program={program} onOpen={onOpen} onDuplicate={onDuplicate} mutationBusy={mutationBusy} />,
   }));
 
   if (sortable) {
@@ -142,6 +146,7 @@ function clientName(client: CoachClientListItem): string {
 interface ProgramsPageProps {
   initData: string;
   onSelectClient?: (userId: number) => Promise<void>;
+  onOpenProgram?: (program: ProgramListItem) => void;
   creationDraft?: ProgramCreationDraft | null;
   creationBusy?: boolean;
   creationError?: string;
@@ -156,6 +161,7 @@ interface ProgramsPageProps {
 export function ProgramsPage({
   initData,
   onSelectClient,
+  onOpenProgram,
   creationDraft = null,
   creationBusy = false,
   creationError = '',
@@ -296,6 +302,7 @@ export function ProgramsPage({
             <ProgramRows
               programs={ownPrograms}
               sortable={filter === 'all' && !mutationBusy}
+              onOpen={onOpenProgram}
               onDuplicate={(program) => { void duplicateProgram(program); }}
               mutationBusy={mutationBusy}
               onReorder={(next) => { void reorderOwnPrograms(next); }}
@@ -318,6 +325,7 @@ export function ProgramsPage({
                 <ProgramRows
                   programs={group.programs}
                   sortable={filter === 'all' && !mutationBusy}
+                  onOpen={onOpenProgram}
                   onDuplicate={(program) => { void duplicateProgram(program); }}
                   mutationBusy={mutationBusy}
                   onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
