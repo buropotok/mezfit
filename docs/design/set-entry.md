@@ -2,14 +2,14 @@
 
 ## Scope
 
-`SetEntry` is the React module for viewing and editing one actual workout set. It is a child of the workout/exercise surface and does not load its own server state.
+`SetEntry` is the controlled React modal for viewing and editing one actual workout set. It is opened by the workout/exercise surface and does not load its own server state.
 
-The module owns presentation and a local editable FACT draft. The parent/workout owner owns server state, API mutations and reconciliation.
+The module owns modal presentation and a local editable FACT draft. The parent/workout owner owns server state, API mutations, open/close state and reconciliation.
 
 ```text
 Workout owner
   -> ExerciseCard
-      -> SetEntry(data, callbacks)
+      -> SetEntry(isOpen, data, callbacks)
           -> local FACT draft
           -> onSave(fact)
       <- canonical server state after save
@@ -59,14 +59,30 @@ existing FACT -> PLAN -> empty metrics
 
 ```ts
 interface SetEntryProps {
+  isOpen: boolean;
   data: SetEntryData;
+  onClose: () => void;
   onSave: (fact: SetEntryFactDraft) => Promise<void>;
   onOpenHistory: () => void;
   onOpenChat: () => void;
 }
 ```
 
+The parent controls whether the dialog is open. `SetEntry` uses the shared UI Kit `Modal` and its `actions` contract for the Save action instead of rendering a parallel local confirmation button.
+
 The fitness-band picker is part of `SetEntry` because its selected values are part of the same unsaved FACT draft. Exercise history and Telegram chat are separate modules/integrations and are opened through callbacks.
+
+## UI Kit reuse
+
+The module must prefer shared UI Kit primitives over local equivalents:
+
+- `Modal` owns dialog behavior, close behavior and Save actions;
+- `TextInput` is used for numeric inputs with `type="number"`, including unit labels (`КГ`, `ПОВТ.`, `КМ`, `МИН`, `СЕК`);
+- `TextArea` owns the comment field;
+- `Button`, `IconButton`, `Badge`, `Divider`, `Surface` and `Text` are reused for their corresponding roles;
+- shared icon assets are reused for plus/minus and the Tabler `ripple` / `library` controls.
+
+Custom controls remain only where the UI Kit has no matching interaction contract, notably the multi-select fitness-band color buttons and selectable badge wrappers.
 
 ## Tracking types
 
@@ -84,7 +100,7 @@ The component renders only fields relevant to the supplied tracking type.
 
 `SetEntry` does not call `fetch` and does not know Worker routes, D1 or Telegram authentication.
 
-Pressing Save invokes `onSave` with the complete editable FACT draft:
+Pressing the shared Modal Save action invokes `onSave` with the complete editable FACT draft:
 
 - actual metrics;
 - set label (`warmup`, `easy`, `normal`, `hard`, `drop`);
@@ -94,7 +110,7 @@ Pressing Save invokes `onSave` with the complete editable FACT draft:
 
 The parent/workout owner combines that FACT with stable identity from `SetEntryData`, invokes the typed frontend API client, then reconciles the canonical server response back into workout state.
 
-PLAN, PREVIOUS and display strings are not user input and must not be sent back merely because the card displays them.
+PLAN, PREVIOUS and display strings are not user input and must not be sent back merely because the dialog displays them.
 
 ## Adjacent modules
 
