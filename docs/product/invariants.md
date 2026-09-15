@@ -31,3 +31,26 @@ For exercise catalogue behavior this means category-first navigation, Gym Keeper
 ## 3. Mezfit coach/client adaptations are explicit
 
 Gym Keeper is primarily a single-user diary. When Mezfit adds coach/client targeting, the minimum extra targeting step is added explicitly without changing unrelated Gym Keeper catalogue behavior. For example, assigning an exercise requires explicit client and editable day/workout selection; the global catalogue must not guess either target.
+
+## 4. Workout launch is global, explicit and session-first
+
+Client Mode has one canonical global workout FAB owned by the application/navigation shell.
+
+- no active session → `Начать тренировку`;
+- active session outside its workout screen → `Продолжить тренировку`;
+- current active workout screen → FAB hidden.
+
+Normal live workout execution requires explicit Start. The first saved set is not the workout-start event.
+
+Before creating the session, the launcher resolves the source workout:
+
+- one unambiguous scheduled `program_day` → preselect it and skip the separate day chooser;
+- `Сменить день` → choose another day from the current phase;
+- `Своя тренировка` → start outside the program;
+- no unambiguous scheduled day → show current-phase day choices plus `Своя тренировка`.
+
+A scheduled day is only the default. Even when the chooser is skipped, `Сменить день` and `Своя тренировка` remain available before final Start confirmation.
+
+Only final Start creates the `WorkoutSession`. For a program workout, the selected day is materialized into session-owned exercises/sets and its PLAN is frozen there. From that point the active session reads PLAN from session data, not from the mutable program.
+
+`Своя тренировка` creates a session without a source program day and must not mutate the assigned program.
