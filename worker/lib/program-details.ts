@@ -81,8 +81,7 @@ interface PhaseExerciseRow {
   completed: number;
 }
 
-function progressPercent(completed: number, total: number, finished: boolean): number {
-  if (finished) return 100;
+function progressPercent(completed: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((completed / total) * 100);
 }
@@ -243,9 +242,8 @@ export async function getCoachProgramDetails(
   let exerciseCount = 0;
   for (const phase of phases) {
     phase.exerciseCount = phase.exercises.length;
-    const actualCompleted = phase.exercises.filter((exercise) => exercise.completed).length;
-    phase.completedExerciseCount = phase.status === 'finished' ? phase.exerciseCount : actualCompleted;
-    phase.progressPercent = progressPercent(phase.completedExerciseCount, phase.exerciseCount, phase.status === 'finished');
+    phase.completedExerciseCount = phase.exercises.filter((exercise) => exercise.completed).length;
+    phase.progressPercent = progressPercent(phase.completedExerciseCount, phase.exerciseCount);
     completedExerciseCount += phase.completedExerciseCount;
     exerciseCount += phase.exerciseCount;
   }
@@ -261,7 +259,7 @@ export async function getCoachProgramDetails(
     plannedEndDate: plannedEnds.length > 0 ? plannedEnds.reduce((latest, value) => value > latest ? value : latest) : null,
     completedExerciseCount,
     exerciseCount,
-    progressPercent: progressPercent(completedExerciseCount, exerciseCount, program.status === 'finished'),
+    progressPercent: progressPercent(completedExerciseCount, exerciseCount),
     phases,
   };
 }
