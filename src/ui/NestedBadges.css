@@ -1,0 +1,25 @@
+.ui-nested-badges {
+  --ui-nested-badges-indent: var(--ui-space-4);
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.ui-nested-badges__branch {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.ui-nested-badges__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
+.ui-nested-badges__info {
+  color: var(--ui-color-surface-muted);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-caption);
+  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-font-weight-regular);
+}
