@@ -11,9 +11,9 @@ export interface ProgramSetView extends ProgramSetInput {
   position: number;
 }
 
-interface ProgramExerciseOwnerRow {
+export interface ProgramExerciseOwnerRow {
   program_exercise_id: number;
-  program_id: number;
+  training_plan_id: number;
   program_user_id: number;
   coach_user_id: number;
 }
@@ -35,13 +35,13 @@ export async function getProgramExerciseOwner(
   return db.prepare(`
     SELECT
       pe.id AS program_exercise_id,
-      p.id AS program_id,
+      p.id AS training_plan_id,
       p.user_id AS program_user_id,
       p.coach_user_id
     FROM program_exercise pe
     JOIN program_day pd ON pd.id = pe.program_day_id
     JOIN program_phase pp ON pp.id = pd.program_phase_id
-    JOIN training_program p ON p.id = pp.program_id
+    JOIN training_plan p ON p.id = pp.training_plan_id
     WHERE pe.id = ? AND pe.status = 'active'
   `).bind(programExerciseId).first<ProgramExerciseOwnerRow>();
 }
