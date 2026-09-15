@@ -19,6 +19,15 @@ describe('NestedBadges', () => {
     expect(html).toContain('Инф.');
     expect(html).toContain('ui-badge--blue');
     expect(html).toContain('ui-badge--green');
-    expect(html).toContain('calc(1 * var(--ui-nested-badges-indent))');
+    expect(html).toContain('padding-inline-start:var(--ui-nested-badges-indent)');
+  });
+
+  it('renders zero-valued supporting info', () => {
+    const html = renderToStaticMarkup(
+      <NestedBadges items={[{ id: 'zero', label: 'Счётчик', info: 0 }]} />,
+    );
+
+    expect(html).toContain('ui-nested-badges__info');
+    expect(html).toContain('>0</span>');
   });
 });
