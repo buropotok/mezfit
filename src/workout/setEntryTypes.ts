@@ -24,16 +24,18 @@ export interface ExistingSetFact {
   bands: ResistanceBandCode[];
 }
 
-export interface SetEntryIdentity {
-  programId: number;
-  programName: string;
+export type SetEntryProgramIdentity =
+  | { programId: number; programName: string }
+  | { programId: null; programName: null };
+
+export type SetEntryIdentity = SetEntryProgramIdentity & {
   exerciseDefinitionId: number;
   exerciseName: string;
   setNumber: number;
   workoutDate: string;
   sourceProgramSetId: number | null;
   sessionSetId: number | null;
-}
+};
 
 export interface SetEntryData {
   identity: SetEntryIdentity;

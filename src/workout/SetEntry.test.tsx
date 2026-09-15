@@ -109,6 +109,21 @@ describe('SetEntry rendering', () => {
     expect(modal?.textContent).toContain('Предыдущая тренировка: 10');
   });
 
+  it('renders only the workout date when there is no program', () => {
+    renderSetEntry({
+      ...baseData,
+      identity: {
+        ...baseData.identity,
+        programId: null,
+        programName: null,
+      },
+      plan: null,
+    });
+
+    expect(screen.getByText(/15 сентября 2026/)).toBeTruthy();
+    expect(screen.queryByText(/Силовой блок/)).toBeNull();
+  });
+
   it('reuses UI kit TextInput for numeric fields and Modal actions for save', () => {
     renderSetEntry();
 

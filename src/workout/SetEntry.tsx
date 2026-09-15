@@ -227,7 +227,7 @@ function metricValue(metrics: SetMetrics | null, key: keyof SetMetrics): number 
 
 function setEntryIdentityKey(data: SetEntryProps['data']): string {
   return [
-    data.identity.programId,
+    data.identity.programId ?? 'own',
     data.identity.exerciseDefinitionId,
     data.identity.setNumber,
     data.identity.workoutDate,
@@ -296,12 +296,15 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
   const showDistance = data.trackingType === 'time_distance';
   const planDistanceKm = metersToKilometers(metricValue(data.plan, 'distanceMeters'));
   const previousDistanceKm = metersToKilometers(metricValue(data.previous?.metrics ?? null, 'distanceMeters'));
+  const workoutContextLabel = data.identity.programName
+    ? `${data.identity.programName} · ${formatWorkoutDate(data.identity.workoutDate)}`
+    : formatWorkoutDate(data.identity.workoutDate);
 
   return (
     <Modal
       isOpen={isOpen}
       className="set-entry-modal"
-      title={<Text variant="title">Подход {data.identity.setNumber}</Text>}
+      title={`Подход ${data.identity.setNumber}`}
       hasCloseButton={!saving}
       closeOnBackdrop={!saving}
       onClose={requestClose}
@@ -316,7 +319,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
         <div className="set-entry__header">
           <div className="set-entry__heading">
             <Text variant="headline" className="set-entry__exercise-name">{data.identity.exerciseName}</Text>
-            <Text variant="footnote" tone="muted">{data.identity.programName} · {formatWorkoutDate(data.identity.workoutDate)}</Text>
+            <Text variant="footnote" tone="muted">{workoutContextLabel}</Text>
           </div>
 
           <div className="set-entry__tools">

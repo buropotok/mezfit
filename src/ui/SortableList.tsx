@@ -29,6 +29,7 @@ export type SortableListProps = {
   onReorder: (items: SortableListItem[]) => void;
   className?: string;
   longPressDelay?: number;
+  showSeparators?: boolean;
 };
 
 function blocksDrag(target: EventTarget | null) {
@@ -60,7 +61,7 @@ function SortableRow({ item }: { item: SortableListItem }) {
   );
 }
 
-export function SortableList({ items, onReorder, className = '', longPressDelay = 300 }: SortableListProps) {
+export function SortableList({ items, onReorder, className = '', longPressDelay = 300, showSeparators = true }: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const sensors = useSensors(useSensor(RowPointerSensor, {
     activationConstraint: { delay: longPressDelay, tolerance: 8 },
@@ -83,7 +84,7 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragCancel={() => setActiveId(null)} onDragEnd={handleDragEnd}>
-      <div className={`ui-sortable-list ${className}`.trim()} role="list">
+      <div className={`ui-sortable-list${showSeparators ? '' : ' ui-sortable-list--no-separators'} ${className}`.trim()} role="list">
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           {items.map((item) => <SortableRow key={item.id} item={item} />)}
         </SortableContext>
