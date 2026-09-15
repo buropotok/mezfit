@@ -9,7 +9,7 @@
   z-index: 0;
   width: 100%;
   min-width: 0;
-  touch-action: pan-y;
+  touch-action: none;
   will-change: transform;
 }
 
@@ -27,7 +27,6 @@
 
 .ui-sortable-list__row--dragging {
   opacity: 0;
-  touch-action: none;
 }
 
 .ui-sortable-list__overlay {
