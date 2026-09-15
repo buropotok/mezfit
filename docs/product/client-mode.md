@@ -33,24 +33,24 @@ The FAB is a single global entry point into the workout flow. Screen-specific mo
 
 ## Start workout flow
 
-Starting a workout is explicit. Workout execution cannot begin until the user confirms Start and the backend has created the `WorkoutSession` and materialized its session plan.
+Starting a workout is explicit. Pressing the global FAB opens the workout screen immediately. The screen shows a blocking loader while the backend initializes or resumes the workout context.
 
-The launcher resolves the current program phase and available `program_day` choices before session creation.
+The first request creates/reuses a minimal `WorkoutSession` draft and returns its generated session ID. The draft contains no materialized exercise children and no PLAN/PREVIOUS/FACT.
 
-If exactly one workout day is unambiguously scheduled for the current date, the launcher preselects that day and skips the separate day-selection step. The user still has access to:
+Program ambiguity belongs to the outer launch workflow. If multiple programs are active, the user explicitly chooses one before `WorkoutSessionScreen` receives its resolved program context; the session module does not silently pick a program.
 
-- `Сменить день` — choose another day from the current phase;
+For a resolved program, initialization returns the current phase and day choices. If exactly one workout day is unambiguously scheduled for the current date, it is preselected and the separate day-selection step may be skipped. Without a schedule override, the default is the next unfinished active day. The user still has access to:
+
+- `Сменить день` — choose another active day from the resolved current phase;
 - `Своя тренировка` — start a session outside the program.
 
-If no single scheduled day can be resolved, the launcher shows the available days from the current phase and also offers `Своя тренировка`.
-
-Only final Start confirmation creates the session. Opening the launcher or changing the selected day must not create an empty `WorkoutSession`.
+Final Start is the second request. A program Start fresh-reads the selected day from the backend, materializes `session_exercise` / `session_set`, freezes PLAN and resolves PREVIOUS. An own-workout Start only activates the existing draft and does not request PLAN/PREVIOUS startup data.
 
 ## Program workout versus own workout
 
-A program-based workout starts from a selected `program_day`. The backend snapshots/materializes its current prescription into the session domain before execution begins.
+A program-based workout starts from a selected `program_day`. The backend snapshots/materializes its current prescription into the session domain at Start, immediately before execution begins.
 
-A `Своя тренировка` is intentionally outside the program. It creates an active `WorkoutSession` without a source program day. Exercises and sets are then added directly to the session and do not mutate the client's program.
+A `Своя тренировка` is intentionally outside the program. It promotes the draft to an active `WorkoutSession` without a source program day. Exercises and sets are then added directly to the session and do not mutate the client's program.
 
 Starting an own workout must remain possible even when the system has a scheduled program workout for the current date.
 
@@ -62,7 +62,7 @@ Today shows the relevant planned workout context when available. During executio
 
 Actual `SetResult` values never overwrite planned sets.
 
-Once a workout has started, execution reads PLAN from the session snapshot/materialized session data rather than from the mutable program.
+Once a program workout has started, execution reads PLAN from the session snapshot/materialized session data rather than from the mutable program.
 
 ## No mandatory Finish button
 

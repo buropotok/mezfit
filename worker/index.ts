@@ -12,11 +12,11 @@ import {
 import { duplicateProgram, getProgramOwnerIds, reorderPrograms } from './lib/program-actions';
 import { createProgramForUser } from './lib/program-create';
 import { createProgramPhase } from './lib/program-phase-create';
-import { deleteProgramPhase } from './lib/program-phase-delete';
 import { getCoachProgramDetails } from './lib/program-details';
 import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
+import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 
 type Role = 'coach' | 'client';
 
@@ -293,6 +293,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ theme: await getGlobalTheme(env.DB_BINDING) });
   }
 
+  if (url.pathname.startsWith('/api/workout-sessions')) {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'client');
+    return handleWorkoutSessionRoute(request, env.DB_BINDING, auth.row.id);
+  }
+
   const mediaMatch = url.pathname.match(/^\/api\/exercise-media\/gym_keeper_apk\/([^/]+)$/);
   if (mediaMatch) {
     let referenceKey = '';
@@ -398,26 +404,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const phase = await createProgramPhase(env.DB_BINDING, programId, auth.row.id, name);
     if (!phase) throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
     return json({ phase }, { status: 201 });
-  }
-
-  const programPhaseDeleteMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/phases\/(\d+)$/);
-  if (programPhaseDeleteMatch && request.method === 'DELETE') {
-    const auth = await requireUser(request, env);
-    requireRole(auth, 'coach');
-    const programId = Number(programPhaseDeleteMatch[1]);
-    const phaseId = Number(programPhaseDeleteMatch[2]);
-    await requireProgramOwner(env.DB_BINDING, auth.row.id, programId);
-    if (!(await getCoachProgramDetails(env.DB_BINDING, programId, auth.row.id))) {
-      throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
-    }
-
-    const result = await deleteProgramPhase(env.DB_BINDING, programId, phaseId);
-    if (result === 'not_found') throw new HttpError(404, 'PHASE_NOT_FOUND', 'Phase not found');
-    if (result === 'in_use') throw new HttpError(409, 'PHASE_IN_USE', 'Phase has workout history and cannot be deleted');
-
-    const details = await getCoachProgramDetails(env.DB_BINDING, programId, auth.row.id);
-    if (!details) throw new HttpError(404, 'PROGRAM_NOT_FOUND', 'Program not found');
-    return json({ details });
   }
 
   const duplicateProgramMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/duplicate$/);

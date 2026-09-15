@@ -1,5 +1,6 @@
 export { SetEntry } from './SetEntry';
 export { SessionExercise, formatSessionSetMetrics } from './SessionExercise';
+export { WorkoutSessionScreen } from './WorkoutSessionScreen';
 export {
   createSetEntryDraft,
   emptySetMetrics,
@@ -23,3 +24,15 @@ export {
   type SessionExerciseStatus,
   type SessionSetStatus,
 } from './sessionExerciseTypes';
+export {
+  type ActiveWorkoutSession,
+  type DraftWorkoutSession,
+  type SuggestedWorkoutDay,
+  type WorkoutDayOption,
+  type WorkoutDaySummary,
+  type WorkoutPhaseSummary,
+  type WorkoutProgramSummary,
+  type WorkoutSessionScreenProps,
+  type WorkoutSessionState,
+  type WorkoutStartInput,
+} from './workoutSessionTypes';
