@@ -170,9 +170,12 @@
   gap: 3px;
 }
 
-.set-entry__metric-label,
-.set-entry__section-label {
+.set-entry__metric-label {
   font-weight: var(--ui-font-weight-medium);
+}
+
+.set-entry__section-label {
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .set-entry__previous-line {
