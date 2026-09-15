@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getCoachProgramDetails, type CoachProgramDetails, type ProgramStatus } from '../api';
+import { createCoachProgramPhase, getCoachProgramDetails, type CoachProgramDetails, type ProgramStatus } from '../api';
 import { ProgramPhaseCard } from '../program/ProgramPhaseCard';
-import { Avatar, Badge, Button, List, ListItem, Surface, Text } from '../ui';
+import { Avatar, Badge, Button, FloatingActionButton, List, ListItem, Modal, Surface, Text, TextInput } from '../ui';
 import './program-details.css';
+
+function AddIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor" />
+    </svg>
+  );
+}
 
 function ownerName(details: CoachProgramDetails): string {
   return [details.owner.firstName, details.owner.lastName].filter(Boolean).join(' ');
@@ -44,6 +52,10 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   const [details, setDetails] = useState<CoachProgramDetails | null>(null);
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [phaseCreateOpen, setPhaseCreateOpen] = useState(false);
+  const [phaseName, setPhaseName] = useState('');
+  const [phaseCreateBusy, setPhaseCreateBusy] = useState(false);
+  const [phaseCreateError, setPhaseCreateError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +76,42 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
     [details],
   );
 
+  const openPhaseCreation = () => {
+    setPhaseName('');
+    setPhaseCreateError('');
+    setPhaseCreateOpen(true);
+  };
+
+  const closePhaseCreation = () => {
+    if (phaseCreateBusy) return;
+    setPhaseCreateOpen(false);
+    setPhaseName('');
+    setPhaseCreateError('');
+  };
+
+  const savePhase = async () => {
+    const name = phaseName.trim();
+    if (!name || phaseCreateBusy) return;
+    setPhaseCreateBusy(true);
+    setPhaseCreateError('');
+    try {
+      const { phase } = await createCoachProgramPhase(initData, programId, name);
+      setDetails((current) => current ? {
+        ...current,
+        program: current.program.status === 'finished'
+          ? { ...current.program, status: 'draft', finishedAt: null }
+          : current.program,
+        phases: [...current.phases, phase],
+      } : current);
+      setPhaseCreateOpen(false);
+      setPhaseName('');
+    } catch (createError) {
+      setPhaseCreateError(createError instanceof Error ? createError.message : 'Не удалось добавить фазу');
+    } finally {
+      setPhaseCreateBusy(false);
+    }
+  };
+
   if (!details) {
     return (
       <section className="program-details-page" aria-label="Детали программы">
@@ -79,6 +127,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   }
 
   const name = ownerName(details);
+  const canCreatePhase = Boolean(phaseName.trim() && !phaseCreateBusy);
 
   return (
     <section className="program-details-page" aria-label={`Программа ${details.program.name}`}>
@@ -137,6 +186,35 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
           )}
         </section>
       </div>
+
+      <FloatingActionButton label="Добавить фазу" onClick={openPhaseCreation}>
+        <AddIcon />
+      </FloatingActionButton>
+
+      <Modal
+        isOpen={phaseCreateOpen}
+        title="Добавить фазу"
+        hasCloseButton={false}
+        onClose={closePhaseCreation}
+        actions={[
+          { id: 'cancel', label: 'Отмена', onClick: closePhaseCreation, disabled: phaseCreateBusy },
+          { id: 'save', label: phaseCreateBusy ? 'Добавление…' : 'Добавить', onClick: () => { void savePhase(); }, disabled: !canCreatePhase },
+        ]}
+      >
+        <TextInput
+          label="Название"
+          value={phaseName}
+          maxLength={120}
+          error={phaseCreateError || undefined}
+          onChange={(event) => {
+            setPhaseName(event.target.value);
+            if (phaseCreateError) setPhaseCreateError('');
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && canCreatePhase) void savePhase();
+          }}
+        />
+      </Modal>
     </section>
   );
 }

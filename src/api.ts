@@ -156,6 +156,7 @@ const russianApiErrors: Record<string, string> = {
   INVALID_FAVOURITE: 'Не удалось изменить избранное',
   INVALID_PROGRAM_NAME: 'Укажите название программы',
   INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
+  INVALID_PHASE_NAME: 'Укажите название фазы',
   PROGRAM_NOT_FOUND: 'Программа не найдена',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
@@ -236,6 +237,17 @@ export function getCoachProgramDetails(
   programId: number,
 ): Promise<{ details: CoachProgramDetails }> {
   return apiRequest(initData, `/api/coach/programs/${programId}`);
+}
+
+export function createCoachProgramPhase(
+  initData: string,
+  programId: number,
+  name: string,
+): Promise<{ phase: ProgramPhaseDetails }> {
+  return apiRequest(initData, `/api/coach/programs/${programId}/phases`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
 }
 
 export function createCoachProgram(
