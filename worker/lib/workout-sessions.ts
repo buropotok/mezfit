@@ -718,15 +718,17 @@ export async function getWorkoutSessionProjection(
       LEFT JOIN session_set ss ON ss.session_exercise_id = se.id
       LEFT JOIN session_set prev_ss ON prev_ss.id = (
         SELECT candidate_set.id
-        FROM session_set candidate_set
-        JOIN session_exercise candidate_exercise ON candidate_exercise.id = candidate_set.session_exercise_id
-        JOIN workout_session candidate_workout ON candidate_workout.id = candidate_exercise.workout_session_id
+        FROM workout_session candidate_workout
+        JOIN session_exercise candidate_exercise
+          ON candidate_exercise.workout_session_id = candidate_workout.id
+          AND candidate_exercise.exercise_definition_id = se.exercise_definition_id
+        LEFT JOIN session_set candidate_set
+          ON candidate_set.session_exercise_id = candidate_exercise.id
+          AND candidate_set.position = ss.position
         WHERE candidate_workout.user_id = current_ws.user_id
           AND candidate_workout.id <> current_ws.id
           AND candidate_workout.status = 'completed'
-          AND candidate_exercise.exercise_definition_id = se.exercise_definition_id
-          AND candidate_set.position = ss.position
-          AND candidate_set.status = 'completed'
+          AND candidate_workout.completed_at < current_ws.started_at
         ORDER BY candidate_workout.completed_at DESC, candidate_workout.id DESC
         LIMIT 1
       )
