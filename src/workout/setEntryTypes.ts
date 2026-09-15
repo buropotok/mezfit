@@ -69,7 +69,7 @@ export function emptySetMetrics(): SetMetrics {
 
 export function createSetEntryDraft(data: SetEntryData): SetEntryFactDraft {
   return {
-    metrics: data.fact?.metrics ?? data.plan ?? emptySetMetrics(),
+    metrics: { ...(data.fact?.metrics ?? data.plan ?? emptySetMetrics()) },
     setLabel: data.fact?.setLabel ?? null,
     rpe: data.fact?.rpe ?? null,
     comment: data.fact?.comment ?? null,
