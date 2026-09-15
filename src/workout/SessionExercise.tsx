@@ -138,6 +138,9 @@ export function SessionExercise({
   const selectedSet = selectedSessionSetId === null
     ? null
     : data.sets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
+  const programIdentity = context.program
+    ? { programId: context.program.id, programName: context.program.name }
+    : { programId: null, programName: null };
   const toggleCollapsed = () => setCollapsed((current) => !current);
 
   return (
@@ -230,8 +233,7 @@ export function SessionExercise({
           isOpen
           data={{
             identity: {
-              programId: context.program?.id ?? null,
-              programName: context.program?.name ?? null,
+              ...programIdentity,
               exerciseDefinitionId: data.exercise.id,
               exerciseName,
               setNumber: selectedSet.position + 1,
