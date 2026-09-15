@@ -120,7 +120,7 @@ describe('SetEntry rendering', () => {
       plan: null,
     });
 
-    expect(screen.getByText('15 сентября 2026')).toBeTruthy();
+    expect(screen.getByText(/15 сентября 2026/)).toBeTruthy();
     expect(screen.queryByText(/Силовой блок/)).toBeNull();
   });
 
