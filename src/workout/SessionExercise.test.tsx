@@ -143,7 +143,7 @@ describe('SessionExercise and SetEntry boundary', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
     expect(screen.getByRole('heading', { name: 'Подход 2' })).toBeTruthy();
-    expect(screen.getByText('Силовой блок · 15 сентября 2026')).toBeTruthy();
+    expect(screen.getByText(/Силовой блок · 15 сентября 2026/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Вес, КГ'), { target: { value: '87.5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
@@ -187,7 +187,7 @@ describe('SessionExercise and SetEntry boundary', () => {
     renderExercise({ context: ownContext, data: ownData });
     expect(screen.queryByText(/^План:/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
-    expect(screen.getByText('15 сентября 2026')).toBeTruthy();
+    expect(screen.getByText(/15 сентября 2026/)).toBeTruthy();
     expect(screen.queryByText(/Своя тренировка/)).toBeNull();
   });
 
