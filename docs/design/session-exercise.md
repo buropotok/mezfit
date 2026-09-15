@@ -19,29 +19,40 @@ WorkoutSession owner
 
 ## UI composition
 
-The approved visual is a flat card differentiated from the page canvas only by `--ui-color-surface`. The resting card has no border and no shadow. The existing `SortableList` overlay owns the raised drag presentation.
+The approved visual is a flat card differentiated from the page canvas only by `--ui-color-surface`. The resting card has no border and no shadow. The shared sortable overlay is expected to own the raised drag presentation once the list primitive supports the approved card activation behavior.
 
 Reuse existing UI Kit primitives without changing their mechanics or visuals:
 
-- outer workout exercise order: `SortableList`;
 - header content: `List` + `ListItem`;
 - exercise media: existing `ExerciseMedia`;
 - progress and RPE: `Badge`;
-- exercise options: `IconButton`;
+- exercise options and explicit collapse affordance: `IconButton`;
 - sets: `List` + `ListItem`;
 - notes and progress text: `Text`.
 
 Feature-owned elements exist only where the UI Kit has no suitable primitive: the borderless card wrapper, compact set-status circle, compact in-card set separator, and progress bar.
 
-The options `IconButton` is a sibling of the header `ListItem`, not a nested button.
+The options and collapse `IconButton`s are siblings of the header `ListItem`, not nested buttons. The main header `ListItem` remains the short-press collapse target.
 
 ## Collapse and DnD
 
-A short press on the header `ListItem` toggles expanded/collapsed state. Collapse is local presentation state and is not persisted.
+A short press on the header `ListItem` toggles expanded/collapsed state. The explicit chevron `IconButton` performs the same action. Collapse is local presentation state and is not persisted.
 
-DnD mechanics remain entirely owned by the existing `SortableList`. No drag handle and no custom long-press implementation are added. `SortableList` uses its existing delayed pointer activation. The header `ListItem` can initiate drag; the menu and expanded body use `data-no-dnd` so sets and nested controls cannot reorder the exercise.
+The approved DnD interaction remains: long press on the header starts exercise reorder, while the expanded set body, options button and collapse button must not initiate drag.
 
-Reorder is not emitted by `SessionExercise`. The outer workout owner receives the reordered `SortableList` item IDs and persists `session_exercise.position`.
+`SessionExercise` deliberately does not implement a custom pointer/long-press system. DnD must remain owned by the shared sortable primitive.
+
+### Current UI Kit integration blocker
+
+The current `SortableList` is not yet sufficient for the approved expanded exercise-card use case and must be extended before this module is wired into the workout screen:
+
+- listeners and `touch-action: none` currently live on the whole sortable row, so an expanded card can block vertical touch scrolling even when its body uses `data-no-dnd`;
+- the primitive has no supported activation-region setting that would let only the header act as the long-press drag surface without displaying a drag handle;
+- the primitive currently renders a fixed separator between rows, while the approved exercise cards are separate contrast-only cards with spacing and no list divider between them.
+
+Do not work around these constraints with feature-owned DnD, DOM interception, CSS overrides of the shared primitive, or a visible drag handle. The UI Kit should be expanded with an explicit supported configuration while preserving its existing default behavior for current consumers.
+
+When that primitive support exists, the outer workout owner will receive reordered item IDs and persist `session_exercise.position`. Reorder is not an output of `SessionExercise` itself.
 
 ## Data sources
 
