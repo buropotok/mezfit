@@ -116,8 +116,8 @@ export async function getProgramByIdForCoach(
   coachUserId: number,
 ): Promise<ProgramListItem | null> {
   const row = await db
-    .prepare(`${programProjection} WHERE tp.id = ? AND COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) = ? LIMIT 1`)
-    .bind(programId, coachUserId)
+    .prepare(`${programProjection} WHERE tp.id = ? AND (tp.user_id = ? OR tp.owner_coach_user_id = ?) LIMIT 1`)
+    .bind(programId, coachUserId, coachUserId)
     .first<ProgramRow>();
   return row ? mapProgram(row) : null;
 }
