@@ -24,7 +24,7 @@ export interface ExistingSetFact {
   bands: ResistanceBandCode[];
 }
 
-type SetEntryProgramIdentity =
+export type SetEntryProgramIdentity =
   | { programId: number; programName: string }
   | { programId: null; programName: null };
 
