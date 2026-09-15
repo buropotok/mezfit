@@ -1,9 +1,8 @@
-import { useMemo, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type TouchEvent as ReactTouchEvent } from 'react';
+import { useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import {
   DndContext,
   DragOverlay,
-  MouseSensor,
-  TouchSensor,
+  PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
@@ -39,26 +38,10 @@ function blocksDrag(target: EventTarget | null) {
   return Boolean(button && !button.classList.contains('ui-list-item'));
 }
 
-function isDragHandle(target: EventTarget | null) {
-  return target instanceof Element && Boolean(target.closest('[data-dnd-handle]'));
-}
-
-function canStartRowDrag(currentTarget: EventTarget | null, target: EventTarget | null) {
-  const hasDedicatedHandle = currentTarget instanceof Element && Boolean(currentTarget.querySelector('[data-dnd-handle]'));
-  return hasDedicatedHandle ? isDragHandle(target) : !blocksDrag(target);
-}
-
-class RowTouchSensor extends TouchSensor {
+class RowPointerSensor extends PointerSensor {
   static activators = [{
-    eventName: 'onTouchStart' as const,
-    handler: ({ nativeEvent: event }: ReactTouchEvent) => canStartRowDrag(event.currentTarget, event.target),
-  }];
-}
-
-class RowMouseSensor extends MouseSensor {
-  static activators = [{
-    eventName: 'onMouseDown' as const,
-    handler: ({ nativeEvent: event }: ReactMouseEvent) => event.button === 0 && canStartRowDrag(event.currentTarget, event.target),
+    eventName: 'onPointerDown' as const,
+    handler: ({ nativeEvent: event }: ReactPointerEvent) => !blocksDrag(event.target),
   }];
 }
 
@@ -79,10 +62,9 @@ function SortableRow({ item }: { item: SortableListItem }) {
 
 export function SortableList({ items, onReorder, className = '', longPressDelay = 300 }: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const sensors = useSensors(
-    useSensor(RowTouchSensor, { activationConstraint: { delay: longPressDelay, tolerance: 8 } }),
-    useSensor(RowMouseSensor, { activationConstraint: { distance: 4 } }),
-  );
+  const sensors = useSensors(useSensor(RowPointerSensor, {
+    activationConstraint: { delay: longPressDelay, tolerance: 8 },
+  }));
   const ids = useMemo(() => items.map((item) => item.id), [items]);
   const activeItem = activeId == null ? null : items.find((item) => item.id === activeId) ?? null;
 
