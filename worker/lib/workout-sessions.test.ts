@@ -111,6 +111,76 @@ describe('initializeWorkoutSession', () => {
     expect(openFirst).toHaveBeenCalledTimes(2);
     expect(batch).not.toHaveBeenCalled();
   });
+
+  it('returns the canonical active session when start wins a race with draft initialization', async () => {
+    const draftRow = {
+      id: 501,
+      user_id: 7,
+      source_program_phase_id: null,
+      source_program_day_id: null,
+      status: 'draft',
+      started_at: null,
+      created_at: '2026-09-15 18:00:00',
+    };
+    const activeRow = {
+      ...draftRow,
+      status: 'active',
+      started_at: '2026-09-15 18:01:00',
+    };
+    const openFirst = vi.fn().mockResolvedValue(draftRow);
+    const programsAll = vi.fn().mockResolvedValue({ results: [] });
+    const updateRun = vi.fn().mockResolvedValue({ meta: { changes: 0 } });
+    const currentFirst = vi.fn().mockResolvedValue(activeRow);
+    const headerFirst = vi.fn().mockResolvedValue({
+      id: 501,
+      status: 'active',
+      workout_date: '2026-09-15',
+      program_id: null,
+      program_name: null,
+      phase_id: null,
+      phase_name: null,
+      day_id: null,
+      day_name: null,
+      day_position: null,
+      coach_user_id: null,
+    });
+    const exercisesAll = vi.fn().mockResolvedValue({ results: [] });
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes("WHERE user_id = ? AND status IN ('draft', 'active')")) {
+        return { bind: vi.fn().mockReturnValue({ first: openFirst }) };
+      }
+      if (sql.includes('FROM training_plan tp')) {
+        return { bind: vi.fn().mockReturnValue({ all: programsAll }) };
+      }
+      if (sql.includes('UPDATE workout_session')) {
+        return { bind: vi.fn().mockReturnValue({ run: updateRun }) };
+      }
+      if (sql.includes('FROM workout_session') && sql.includes('WHERE id = ? AND user_id = ?')) {
+        return { bind: vi.fn().mockReturnValue({ first: currentFirst }) };
+      }
+      if (sql.includes('FROM workout_session ws')) {
+        return { bind: vi.fn().mockReturnValue({ first: headerFirst }) };
+      }
+      if (sql.includes('FROM session_exercise se')) {
+        return { bind: vi.fn().mockReturnValue({ all: exercisesAll }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const db = { prepare } as unknown as D1Database;
+
+    await expect(initializeWorkoutSession(db, 7, null)).resolves.toEqual({
+      kind: 'ok',
+      session: {
+        sessionId: 501,
+        status: 'active',
+        workoutDate: '2026-09-15',
+        program: null,
+        phase: null,
+        day: null,
+        exercises: [],
+      },
+    });
+  });
 });
 
 describe('startWorkoutSession', () => {
