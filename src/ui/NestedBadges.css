@@ -1,5 +1,5 @@
 .ui-nested-badges {
-  --ui-nested-badges-indent: var(--ui-space-4);
+  --ui-nested-badges-indent: calc(var(--ui-space-4) * 2);
   display: grid;
   gap: var(--ui-space-2);
 }
@@ -16,10 +16,50 @@
   min-width: 0;
 }
 
-.ui-nested-badges__info {
-  color: var(--ui-color-surface-muted);
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
-  font-weight: var(--ui-font-weight-regular);
+.ui-nested-badges__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ui-nested-badges__chevron {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  background: currentColor;
+  mask: url('./icons/chevron-down.svg') center / contain no-repeat;
+  transform: rotate(-90deg);
+  transition: transform 180ms ease;
+}
+
+.ui-nested-badges__chevron--expanded {
+  transform: rotate(0deg);
+}
+
+.ui-nested-badges__children {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 180ms ease, opacity 180ms ease, visibility 0s linear 180ms;
+}
+
+.ui-nested-badges__children--expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows 180ms ease, opacity 180ms ease;
+}
+
+.ui-nested-badges__children-inner {
+  display: grid;
+  gap: var(--ui-space-2);
+  min-height: 0;
+  overflow: hidden;
 }
