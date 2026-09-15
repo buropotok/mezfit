@@ -14,7 +14,7 @@ describe('createProgramPhase', () => {
       finished_at: null,
     });
     const bind = vi.fn(() => ({ first }));
-    const prepare = vi.fn(() => ({ bind }));
+    const prepare = vi.fn((_sql: string) => ({ bind }));
     const db = { prepare } as unknown as D1Database;
 
     const phase = await createProgramPhase(db, 5, 3, 'Базовая фаза');
