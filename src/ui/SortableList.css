@@ -13,7 +13,7 @@
   will-change: transform;
 }
 
-.ui-sortable-list__row + .ui-sortable-list__row::before {
+.ui-sortable-list:not(.ui-sortable-list--no-separators) .ui-sortable-list__row + .ui-sortable-list__row::before {
   content: '';
   pointer-events: none;
   position: absolute;
