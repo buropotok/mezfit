@@ -108,6 +108,8 @@ Pressing the shared Modal Save action invokes `onSave` with the complete editabl
 - comment;
 - selected fitness bands.
 
+While that promise is pending, the modal blocks closing, duplicate Save and edits to the submitted draft. On success the modal closes. Reopening creates a fresh draft from the parent's canonical `FACT -> PLAN -> empty` data, so a normalized server FACT cannot be overwritten later by the stale pre-save draft. On failure the modal stays open, re-enables editing and shows the error.
+
 The parent/workout owner combines that FACT with stable identity from `SetEntryData`, invokes the typed frontend API client, then reconciles the canonical server response back into workout state.
 
 PLAN, PREVIOUS and display strings are not user input and must not be sent back merely because the dialog displays them.
