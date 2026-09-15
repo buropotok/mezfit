@@ -71,6 +71,46 @@ describe('initializeWorkoutSession', () => {
     });
     expect(batch).not.toHaveBeenCalled();
   });
+
+  it('reuses the same draft on repeated initialization instead of inserting another open session', async () => {
+    const draftRow = {
+      id: 501,
+      user_id: 7,
+      source_program_phase_id: null,
+      source_program_day_id: null,
+      status: 'draft',
+      started_at: null,
+      created_at: '2026-09-15 18:00:00',
+    };
+    const openFirst = vi.fn().mockResolvedValue(draftRow);
+    const programsAll = vi.fn().mockResolvedValue({ results: [] });
+    const updateRun = vi.fn().mockResolvedValue({ success: true });
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes("WHERE user_id = ? AND status IN ('draft', 'active')")) {
+        return { bind: vi.fn().mockReturnValue({ first: openFirst }) };
+      }
+      if (sql.includes('FROM training_plan tp')) {
+        return { bind: vi.fn().mockReturnValue({ all: programsAll }) };
+      }
+      if (sql.includes('INSERT OR IGNORE INTO workout_session')) {
+        throw new Error('Repeated initialization must not insert a second draft');
+      }
+      if (sql.includes('UPDATE workout_session')) {
+        return { bind: vi.fn().mockReturnValue({ run: updateRun }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const batch = vi.fn();
+    const db = { prepare, batch } as unknown as D1Database;
+
+    const first = await initializeWorkoutSession(db, 7, null);
+    const second = await initializeWorkoutSession(db, 7, null);
+
+    expect(first).toMatchObject({ kind: 'ok', session: { sessionId: 501, status: 'draft' } });
+    expect(second).toMatchObject({ kind: 'ok', session: { sessionId: 501, status: 'draft' } });
+    expect(openFirst).toHaveBeenCalledTimes(2);
+    expect(batch).not.toHaveBeenCalled();
+  });
 });
 
 describe('startWorkoutSession', () => {
