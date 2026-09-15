@@ -14,18 +14,18 @@ export type NestedBadgesProps = {
   items: NestedBadgeItem[];
 };
 
-function NestedBadgeBranch({ item, depth }: { item: NestedBadgeItem; depth: number }) {
+function NestedBadgeBranch({ item, nested = false }: { item: NestedBadgeItem; nested?: boolean }) {
   return (
-    <div className="ui-nested-badges__branch" style={{ paddingInlineStart: `calc(${depth} * var(--ui-nested-badges-indent))` }}>
+    <div className="ui-nested-badges__branch" style={nested ? { paddingInlineStart: 'var(--ui-nested-badges-indent)' } : undefined}>
       <div className="ui-nested-badges__row">
         <Badge color={item.color}>{item.label}</Badge>
-        {item.info ? <span className="ui-nested-badges__info">{item.info}</span> : null}
+        {item.info !== null && item.info !== undefined ? <span className="ui-nested-badges__info">{item.info}</span> : null}
       </div>
-      {item.children?.map((child) => <NestedBadgeBranch key={child.id} item={child} depth={depth + 1} />)}
+      {item.children?.map((child) => <NestedBadgeBranch key={child.id} item={child} nested />)}
     </div>
   );
 }
 
 export function NestedBadges({ items }: NestedBadgesProps) {
-  return <div className="ui-nested-badges">{items.map((item) => <NestedBadgeBranch key={item.id} item={item} depth={0} />)}</div>;
+  return <div className="ui-nested-badges">{items.map((item) => <NestedBadgeBranch key={item.id} item={item} />)}</div>;
 }
