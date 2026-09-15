@@ -8,6 +8,8 @@ import {
   type MeResponse,
   type Role,
 } from './api';
+import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
 import {
   NavigationShell,
@@ -58,7 +60,6 @@ function reducer(state: State, action: Action): State {
 }
 
 const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
-  programs: { title: 'Программа', text: 'Здесь будет назначенная тренером программа.' },
   exercises: { title: 'Упражнения', text: 'Здесь будет доступ к упражнениям и истории результатов по ним.' },
   history: { title: 'История', text: 'Здесь появятся завершённые тренировки и фактические результаты.' },
   progress: { title: 'Прогресс', text: 'Здесь появятся замеры и производные показатели прогресса.' },
@@ -67,6 +68,7 @@ const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; tex
 };
 
 function ClientShell({ initData, destination }: { initData: string; destination: AppDestination }) {
+  const { refreshCoaches } = useClientCoach();
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
   const [accepted, setAccepted] = useState(false);
   const [message, setMessage] = useState('');
@@ -91,6 +93,7 @@ function ClientShell({ initData, destination }: { initData: string; destination:
       await acceptCurrentInvite(initData);
       setAccepted(true);
       setInvite(null);
+      refreshCoaches();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось принять приглашение');
     } finally {
@@ -110,6 +113,8 @@ function ClientShell({ initData, destination }: { initData: string; destination:
       </section>
     );
   }
+
+  if (destination === 'programs') return <ClientProgramsPage initData={initData} />;
 
   if (destination !== 'today') {
     const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
@@ -228,23 +233,29 @@ export function App() {
   };
 
   return (
-    <NavigationShell
-      me={state.me}
-      activeRole={state.activeRole}
-      destination={destination}
-      context={navigationContext}
-      onDestinationChange={changeDestination}
-      onRoleSwitch={switchRole}
+    <ClientCoachProvider
+      initData={state.initData}
+      clientUserId={state.me.user.id}
+      enabled={state.activeRole === 'client'}
     >
-      {state.activeRole === 'coach' ? (
-        <CoachShell
-          initData={state.initData}
-          destination={coachDestination}
-          onNavigationContextChange={handleNavigationContextChange}
-        />
-      ) : (
-        <ClientShell initData={state.initData} destination={clientDestination} />
-      )}
-    </NavigationShell>
+      <NavigationShell
+        me={state.me}
+        activeRole={state.activeRole}
+        destination={destination}
+        context={navigationContext}
+        onDestinationChange={changeDestination}
+        onRoleSwitch={switchRole}
+      >
+        {state.activeRole === 'coach' ? (
+          <CoachShell
+            initData={state.initData}
+            destination={coachDestination}
+            onNavigationContextChange={handleNavigationContextChange}
+          />
+        ) : (
+          <ClientShell initData={state.initData} destination={clientDestination} />
+        )}
+      </NavigationShell>
+    </ClientCoachProvider>
   );
 }
