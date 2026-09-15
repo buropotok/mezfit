@@ -27,6 +27,13 @@ describe('UI Kit primitives', () => {
     expect(html).toContain('Content');
   });
 
+  it('supports a borderless surface while keeping the bordered default', () => {
+    const borderedHtml = renderToStaticMarkup(<Surface>Bordered</Surface>);
+    const borderlessHtml = renderToStaticMarkup(<Surface border={false}>Borderless</Surface>);
+    expect(borderedHtml).not.toContain('ui-surface--borderless');
+    expect(borderlessHtml).toContain('ui-surface--borderless');
+  });
+
   it('renders contact-list semantics without feature coupling', () => {
     const html = renderToStaticMarkup(<List><ListItem title="Andrei" subtitle="@sokolag" /></List>);
     expect(html).toContain('role="list"');

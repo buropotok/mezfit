@@ -38,8 +38,8 @@ export function Divider({ className = '', ...props }: HTMLAttributes<HTMLHREleme
   return <hr className={`ui-divider ${className}`.trim()} {...props} />;
 }
 
-type SurfaceProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; elevated?: boolean; style?: CSSProperties };
+type SurfaceProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; border?: boolean; elevated?: boolean; style?: CSSProperties };
 
-export function Surface({ as: Component = 'div', elevated = false, className = '', ...props }: SurfaceProps) {
-  return <Component className={`ui-surface${elevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
+export function Surface({ as: Component = 'div', border = true, elevated = false, className = '', ...props }: SurfaceProps) {
+  return <Component className={`ui-surface${!border ? ' ui-surface--borderless' : ''}${elevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
 }
