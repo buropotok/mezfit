@@ -4,7 +4,7 @@
 
 Client mode minimizes friction between opening Mezfit and recording the workout. The primary workflow is:
 
-`open Mini App → Today → record sets → leave`.
+`open Mini App → global workout FAB → start/continue workout → record sets → leave`.
 
 Mezfit priority: **M**.
 
@@ -21,19 +21,48 @@ History
 
 Today is primary; the exact MVP navigation may expose fewer destinations initially.
 
+## Global workout FAB
+
+The most important client action is a global workout FAB owned by the application/navigation shell rather than by an individual screen.
+
+When there is no active `WorkoutSession`, the FAB is labelled `Начать тренировку` and is available across Client Mode destinations.
+
+When an active `WorkoutSession` exists, the FAB is labelled `Продолжить тренировку` and navigates back to that session. It remains available across Client Mode except while the user is already on the current workout screen, where it is hidden.
+
+The FAB is a single global entry point into the workout flow. Screen-specific modules must not create competing Start/Continue controls with independent state.
+
+## Start workout flow
+
+Starting a workout is explicit. Workout execution cannot begin until the user confirms Start and the backend has created the `WorkoutSession` and materialized its session plan.
+
+The launcher resolves the current program phase and available `program_day` choices before session creation.
+
+If exactly one workout day is unambiguously scheduled for the current date, the launcher preselects that day and skips the separate day-selection step. The user still has access to:
+
+- `Сменить день` — choose another day from the current phase;
+- `Своя тренировка` — start a session outside the program.
+
+If no single scheduled day can be resolved, the launcher shows the available days from the current phase and also offers `Своя тренировка`.
+
+Only final Start confirmation creates the session. Opening the launcher or changing the selected day must not create an empty `WorkoutSession`.
+
+## Program workout versus own workout
+
+A program-based workout starts from a selected `program_day`. The backend snapshots/materializes its current prescription into the session domain before execution begins.
+
+A `Своя тренировка` is intentionally outside the program. It creates an active `WorkoutSession` without a source program day. Exercises and sets are then added directly to the session and do not mutate the client's program.
+
+Starting an own workout must remain possible even when the system has a scheduled program workout for the current date.
+
 ## Today and execution
 
-Today shows the relevant `WorkoutOccurrence`. During execution the primary representation is:
+Today shows the relevant planned workout context when available. During execution the primary representation is:
 
 `Previous | Plan | Today`
 
 Actual `SetResult` values never overwrite planned sets.
 
-## No mandatory Start button
-
-The first persisted actual result is the system-known workout start. The backend atomically creates/resolves `WorkoutSession`, freezes the occurrence plan snapshot, transitions to `IN_PROGRESS`, persists the result and sets automatic `started_at` if needed.
-
-Both client and coach can trigger this by recording FACT.
+Once a workout has started, execution reads PLAN from the session snapshot/materialized session data rather than from the mutable program.
 
 ## No mandatory Finish button
 
@@ -59,7 +88,7 @@ completion_source = EXPLICIT | TIMEOUT | MANUAL
 
 ## Post-fact entry
 
-A completed workout may be entered later without forcing a visible Start → Finish ritual. MVP accepts that a coach may have changed the server-side plan while the client was physically training offline; Mezfit does not attempt to reconstruct which plan version the client physically saw.
+A completed workout may be entered later without forcing a visible live Start → Finish ritual. Historical/manual entry is a separate flow from the normal live-workout FAB lifecycle.
 
 ## Shared coach/client FACT
 
