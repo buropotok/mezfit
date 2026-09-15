@@ -345,7 +345,7 @@ export async function initializeWorkoutSession(
         ) VALUES (?, ?, ?, ?, 'draft', NULL, NULL)
         RETURNING id, user_id, source_program_phase_id, source_program_day_id, status, started_at, created_at
       `)
-      .bind(userId, phase?.id ?? null, suggested?.id ?? null, userId)
+      .bind(userId, null, null, userId)
       .first<WorkoutSessionRow>();
     draft = inserted ?? await openSession(db, userId);
   }
@@ -360,10 +360,10 @@ export async function initializeWorkoutSession(
   const updateResult = await db
     .prepare(`
       UPDATE workout_session
-      SET source_program_phase_id = ?, source_program_day_id = ?, updated_at = CURRENT_TIMESTAMP
+      SET updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND user_id = ? AND status = 'draft'
     `)
-    .bind(phase?.id ?? null, suggested?.id ?? null, draft.id, userId)
+    .bind(draft.id, userId)
     .run();
 
   if ((updateResult.meta?.changes ?? 1) === 0) {
@@ -438,10 +438,9 @@ export async function startWorkoutSession(
         JOIN training_plan tp ON tp.id = pp.training_plan_id AND tp.user_id = ? AND tp.status = 'active'
         WHERE pd.id = ?
           AND pd.status = 'active'
-          AND pd.program_phase_id = ?
         LIMIT 1
       `)
-      .bind(userId, input.programDayId, workout.source_program_phase_id)
+      .bind(userId, input.programDayId)
       .first<{ id: number; phase_id: number }>();
     if (!day) return { kind: 'invalid_program_day' };
 
