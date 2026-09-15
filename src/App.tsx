@@ -16,6 +16,7 @@ import {
   type AppDestination,
   type NavigationContext,
 } from './NavigationShell';
+import { SettingsPage } from './settings/SettingsPage';
 import { getTelegramWebApp } from './telegram';
 import { Button } from './ui';
 
@@ -246,7 +247,9 @@ export function App() {
         onDestinationChange={changeDestination}
         onRoleSwitch={switchRole}
       >
-        {state.activeRole === 'coach' ? (
+        {destination === 'settings' ? (
+          <SettingsPage onNavigationContextChange={handleNavigationContextChange} />
+        ) : state.activeRole === 'coach' ? (
           <CoachShell
             initData={state.initData}
             destination={coachDestination}
