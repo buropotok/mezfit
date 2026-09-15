@@ -4,7 +4,7 @@ import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import { Badge, IconButton, List, ListItem, Text } from '../ui';
 import { SetEntry } from './SetEntry';
-import type { SetMetrics } from './setEntryTypes';
+import type { SetEntryProgramIdentity, SetMetrics } from './setEntryTypes';
 import type { SessionExerciseProps, SessionExerciseSetData } from './sessionExerciseTypes';
 import './session-exercise.css';
 
@@ -138,7 +138,7 @@ export function SessionExercise({
   const selectedSet = selectedSessionSetId === null
     ? null
     : data.sets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
-  const programIdentity = context.program
+  const programIdentity: SetEntryProgramIdentity = context.program
     ? { programId: context.program.id, programName: context.program.name }
     : { programId: null, programName: null };
   const toggleCollapsed = () => setCollapsed((current) => !current);
