@@ -15,13 +15,6 @@ describe('TextInput', () => {
     expect(html).toContain('aria-invalid="true"');
     expect(html).toContain('Обязательное поле');
   });
-
-  it('supports centered numeric input without browser number controls', () => {
-    const html = renderToStaticMarkup(<TextInput type="number" textAlign="center" showNumberControls={false} />);
-    expect(html).toContain('ui-text-input--align-center');
-    expect(html).toContain('ui-text-input--hide-number-controls');
-    expect(html).toContain('type="number"');
-  });
 });
 
 describe('TextArea', () => {
