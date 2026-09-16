@@ -78,7 +78,7 @@ A saved `program_set` remains mutable program prescription until workout start. 
 ```ts
 type SetEntryProps =
   | {
-      mode: 'workout';
+      mode?: 'workout';
       isOpen: boolean;
       data: SetEntryData;
       onClose: () => void;
@@ -97,7 +97,7 @@ type SetEntryProps =
     };
 ```
 
-The discriminant is mandatory. Existing live-workout usage must pass `mode="workout"`; this mode preserves the pre-existing SetEntry behavior and parent-owned save callback. Coach program authoring passes `mode="plan"` plus the planned exercise parent ID.
+`plan` is always explicit. The workout variant keeps omission as a backward-compatible default so existing direct consumers cannot silently break; production live-workout ownership is nevertheless explicit and `SessionExercise` passes `mode="workout"`. Coach program authoring passes `mode="plan"` plus the planned exercise parent ID.
 
 The parent controls whether the dialog is open. `SetEntry` uses the shared UI Kit `Modal` and its `actions` contract for the Save action instead of rendering a parallel local confirmation button.
 
@@ -107,11 +107,11 @@ The module must prefer shared UI Kit primitives over local equivalents:
 
 - `Modal` owns dialog behavior, close behavior and Save actions;
 - `TextInput` is used for numeric inputs with `type="number"`, including unit labels (`КГ`, `ПОВТ.`, `КМ`, `МИН`, `СЕК`);
-- `TextArea` owns the workout comment field;
+- `TextArea` owns the existing comment field;
 - `Button`, `IconButton`, `Badge`, `Divider`, `Surface` and `Text` are reused for their corresponding roles;
 - shared icon assets are reused for plus/minus and the Tabler `ripple` / `library` controls.
 
-Custom controls remain only where the UI Kit has no matching interaction contract, notably the workout fitness-band color buttons and selectable badge wrappers. Plan mode does not introduce alternate UI Kit mechanics or visual variants.
+Custom controls remain only where the UI Kit has no matching interaction contract, notably the existing fitness-band color buttons and selectable badge wrappers. Plan mode does not introduce alternate UI Kit mechanics or visual variants.
 
 ## Tracking types
 
@@ -139,7 +139,7 @@ This is the existing workout contract and must not change as a side effect of pl
 
 Pressing Save calls the typed frontend planned-set API from `SetEntry` itself. The component supplies the `programExerciseId` parent identity and the authored metric values. The Worker authenticates the Telegram user, requires the coach role, verifies program ownership / active coach-client relationship, validates the payload and persists a new active `program_set` row.
 
-The frontend never treats a supplied `programExerciseId` as authorization. D1 remains authoritative. `setNumber` is the one-based UI number and maps to zero-based `program_set.position`.
+The frontend never treats a supplied `programExerciseId` as authorization. D1 remains authoritative. `setNumber` is the one-based UI number and maps to zero-based `program_set.position`. Existing auxiliary controls are not part of the planned-set POST; only the tracking metrics become PLAN.
 
 While either save is pending, the modal blocks closing, duplicate Save and edits to the submitted draft. On success the modal closes. On failure it stays open, re-enables editing and shows the error.
 
