@@ -8,6 +8,7 @@ import {
   type MeResponse,
   type Role,
 } from './api';
+import workoutFabIconUrl from './assets/workout-fab.jpg';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
@@ -19,7 +20,6 @@ import {
 import { SettingsPage } from './settings/SettingsPage';
 import { getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, FloatingActionButton } from './ui';
-import workoutFabIconUrl from './ui/icons/1789370174232.png';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -265,7 +265,12 @@ export function App() {
             isShown={!workoutOpen}
             onClick={() => setWorkoutOpen(true)}
           >
-            <img src={workoutFabIconUrl} width="32" height="32" alt="" aria-hidden="true" />
+            <img
+              src={workoutFabIconUrl}
+              alt=""
+              aria-hidden="true"
+              style={{ display: 'block', width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', pointerEvents: 'none' }}
+            />
           </FloatingActionButton>
         )}
       >

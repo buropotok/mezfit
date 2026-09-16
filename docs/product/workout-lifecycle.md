@@ -44,21 +44,21 @@ Additional occurrence outcomes include skipped/cancelled/rescheduled semantics.
 
 ## Global Start / Continue entry point
 
-Client Mode exposes one global workout FAB through the application/navigation shell.
+Mezfit exposes one global personal workout FAB through the application/navigation shell. It is available to any authenticated app user in both Client and Coach contexts; the active UI role does not change access to the user's own workout.
 
 - without an active session: `Начать тренировку`;
 - with an active session: `Продолжить тренировку`;
 - while already viewing the current active workout: the FAB is hidden.
 
-The global launcher is the canonical entry point. Individual client screens must not own competing workout-start state.
+The global launcher is the canonical entry point. Individual screens must not own competing workout-start state.
 
-If the client has multiple active programs, the external launch workflow must show that ambiguity and let the user choose a program. `WorkoutSessionScreen` receives an already resolved program context and does not decide between multiple active programs itself.
+If the workout owner has multiple active programs, the external launch workflow must show that ambiguity and let the user choose a program. `WorkoutSessionScreen` receives an already resolved program context and does not decide between multiple active programs itself.
 
 ## Initialize semantics
 
 Opening the workout flow immediately opens `WorkoutSessionScreen`, which owns the first workout-domain backend request. The screen shows a blocking loader while `POST /api/workout-sessions/initialize` runs.
 
-The backend establishes the client from trusted Telegram authentication; arbitrary frontend `user_id` values are not accepted as identity.
+The backend establishes the workout owner from trusted Telegram authentication. Workout routes require an authenticated app user, but do not require a `client` or `coach` role; the session is always scoped to the server-resolved authenticated user ID. Active UI role and arbitrary frontend `user_id` values are not accepted as workout identity.
 
 Initialization is idempotent:
 
@@ -82,7 +82,7 @@ While the session is `DRAFT`:
 
 The second request is the Start boundary.
 
-For a program workout, `POST /api/workout-sessions/:id/start` receives the selected `programDayId`. The backend fresh-reads the current program prescription at that moment, validates that the selected day still belongs to one of the client's active programs and its active phase, then atomically:
+For a program workout, `POST /api/workout-sessions/:id/start` receives the selected `programDayId`. The backend fresh-reads the current program prescription at that moment, validates that the selected day still belongs to one of the authenticated user's active programs and its active phase, then atomically:
 
 1. records source program provenance on the existing draft session;
 2. copies/materializes active `program_exercise` rows into `session_exercise`;
@@ -138,7 +138,7 @@ Backend enforcement is mandatory. A stale program-plan save after the client sta
 - no PLAN or PREVIOUS payload is required to initialize the own-workout screen;
 - exercises may be added directly to the session;
 - session exercises/sets may therefore have no source program exercise/set IDs;
-- creating or editing the own workout does not mutate the client's assigned program.
+- creating or editing the own workout does not mutate the user's assigned program.
 
 Historical context may be introduced later for a specific exercise after the user adds it, but it is not part of the `Своя тренировка` Start response.
 

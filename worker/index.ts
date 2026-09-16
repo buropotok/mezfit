@@ -297,7 +297,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname.startsWith('/api/workout-sessions')) {
     const auth = await requireUser(request, env);
-    requireRole(auth, 'client');
     return handleWorkoutSessionRoute(request, env.DB_BINDING, auth.row.id);
   }
 
