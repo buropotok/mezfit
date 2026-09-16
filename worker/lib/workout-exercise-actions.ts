@@ -105,25 +105,22 @@ export async function addWorkoutExercise(
   if (workout.status !== 'active') return { kind: 'invalid_state' };
   if (!(await exerciseIsAvailable(db, userId, exerciseDefinitionId))) return { kind: 'exercise_not_found' };
 
-  const inserted = await db.prepare(`
-    INSERT INTO session_exercise (
-      workout_session_id,
-      exercise_definition_id,
-      source_program_exercise_id,
-      position,
-      status,
-      added_by_user_id,
-      notes
-    )
-    SELECT ?, ?, NULL, COALESCE(MAX(position), -1) + 1, 'active', ?, NULL
-    FROM session_exercise
-    WHERE workout_session_id = ?
-    RETURNING id
-  `).bind(workoutSessionId, exerciseDefinitionId, userId, workoutSessionId).first<{ id: number }>();
-  if (!inserted) throw new Error('FAILED_TO_ADD_WORKOUT_EXERCISE');
-
-  try {
-    await db.prepare(`
+  await db.batch([
+    db.prepare(`
+      INSERT INTO session_exercise (
+        workout_session_id,
+        exercise_definition_id,
+        source_program_exercise_id,
+        position,
+        status,
+        added_by_user_id,
+        notes
+      )
+      SELECT ?, ?, NULL, COALESCE(MAX(position), -1) + 1, 'active', ?, NULL
+      FROM session_exercise
+      WHERE workout_session_id = ?
+    `).bind(workoutSessionId, exerciseDefinitionId, userId, workoutSessionId),
+    db.prepare(`
       INSERT INTO session_set (
         session_exercise_id,
         source_program_set_id,
@@ -143,15 +140,14 @@ export async function addWorkoutExercise(
         status,
         created_by_user_id,
         updated_by_user_id
-      ) VALUES (?, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', ?, ?)
-    `).bind(inserted.id, userId, userId).run();
-  } catch (error) {
-    await db.prepare(`
-      DELETE FROM session_exercise
-      WHERE id = ? AND workout_session_id = ? AND added_by_user_id = ?
-    `).bind(inserted.id, workoutSessionId, userId).run();
-    throw error;
-  }
+      )
+      SELECT se.id, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', ?, ?
+      FROM session_exercise se
+      WHERE se.workout_session_id = ?
+      ORDER BY se.position DESC, se.id DESC
+      LIMIT 1
+    `).bind(userId, userId, workoutSessionId),
+  ]);
 
   const session = await getWorkoutSessionProjection(db, userId, workoutSessionId);
   if (!session) throw new Error('WORKOUT_PROJECTION_MISSING_AFTER_EXERCISE_ADD');
