@@ -1,4 +1,9 @@
-import { createProgramSet, getProgramExerciseOwner, type ProgramSetInput } from './program-set-create';
+import {
+  createProgramSet,
+  getProgramExerciseOwner,
+  type ProgramSetInput,
+  type ProgramSetTrackingType,
+} from './program-set-create';
 
 function json(data: unknown, init: ResponseInit = {}): Response {
   const headers = new Headers(init.headers);
@@ -21,6 +26,21 @@ function integerMetric(value: unknown): number | null | undefined {
   const parsed = metric(value);
   if (parsed === undefined || parsed === null) return parsed;
   return Number.isInteger(parsed) ? parsed : undefined;
+}
+
+function metricsMatchTrackingType(input: ProgramSetInput, trackingType: ProgramSetTrackingType): boolean {
+  switch (trackingType) {
+    case 'weight_reps':
+      return input.durationSeconds === null && input.distanceMeters === null;
+    case 'time':
+      return input.weightKg === null && input.reps === null && input.distanceMeters === null;
+    case 'time_distance':
+      return input.weightKg === null && input.reps === null;
+    case 'time_reps':
+      return input.weightKg === null && input.distanceMeters === null;
+    case 'time_weight':
+      return input.reps === null && input.distanceMeters === null;
+  }
 }
 
 export async function handleCoachProgramSetRoute(
@@ -75,6 +95,10 @@ export async function handleCoachProgramSetRoute(
     durationSeconds,
     distanceMeters,
   };
+  if (!metricsMatchTrackingType(input, owner.tracking_type)) {
+    return error(400, 'INVALID_SET_METRICS', 'Set metrics do not match the exercise tracking type');
+  }
+
   const set = await createProgramSet(db, programExerciseId, coachUserId, input);
   if (!set) return error(409, 'PROGRAM_SET_EXISTS', 'A set with this number already exists');
   return json({ set }, { status: 201 });
