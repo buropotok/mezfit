@@ -13,13 +13,35 @@
   font-family: var(--ui-font-family);
   text-decoration: none;
   outline: none;
-  transition: background-color 0.2s, color 0.2s, opacity 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.12s, opacity 0.2s;
 }
 .ui-button { font-size: var(--ui-font-size-body); font-weight: var(--ui-font-weight-medium); line-height: var(--ui-line-height-body); }
 .ui-button.ui-button { width: auto; height: 2.75rem; min-height: 2.75rem; padding: 0.5rem 1.5rem; border-radius: 1.375rem; text-transform: none; }
+.ui-button.ui-button--compact { height: 28px; min-height: 28px; padding: 4px 10px; border-radius: var(--ui-radius-pill); }
 .ui-button.ui-button--primary { color: var(--ui-color-primary-text); border: 0; background-color: var(--ui-color-primary); }
 .ui-button.ui-button--secondary { color: var(--ui-color-surface-muted); border: 0; background: transparent; }
 .ui-button.ui-button--danger { color: #ff6b6b; border: 0; background: transparent; }
+.ui-button--color-green, .ui-icon-button--color-green { --ui-control-color: #49df7b; --ui-control-text: #111; }
+.ui-button--color-yellow, .ui-icon-button--color-yellow { --ui-control-color: #e7a91b; --ui-control-text: #111; }
+.ui-button--color-blue, .ui-icon-button--color-blue { --ui-control-color: #9fc5e8; --ui-control-text: #111; }
+.ui-button--color-red, .ui-icon-button--color-red { --ui-control-color: #ff6b6b; --ui-control-text: #111; }
+.ui-button--color-orange, .ui-icon-button--color-orange { --ui-control-color: #ffad5c; --ui-control-text: #111; }
+.ui-button--color-purple, .ui-icon-button--color-purple { --ui-control-color: #c7a7ff; --ui-control-text: #111; }
+.ui-button--color-cyan, .ui-icon-button--color-cyan { --ui-control-color: #67d9e8; --ui-control-text: #111; }
+.ui-button--color-gray, .ui-icon-button--color-gray { --ui-control-color: var(--ui-color-surface-muted); --ui-control-text: #111; }
+.ui-button.ui-button--secondary[class*='ui-button--color-'] { color: var(--ui-control-color); }
+.ui-button.ui-button--primary[class*='ui-button--color-'] { background-color: var(--ui-control-color); }
+.ui-icon-button[class*='ui-icon-button--color-']:not(.ui-icon-button--selected) { color: var(--ui-control-color); }
+.ui-button.ui-button--selected,
+.ui-icon-button.ui-icon-button--selected {
+  color: var(--ui-control-text, var(--ui-color-primary-text));
+  border: 1px solid var(--ui-control-color, var(--ui-color-primary));
+  background: var(--ui-control-color, var(--ui-color-primary));
+}
+.ui-button--shadow,
+.ui-icon-button--shadow { box-shadow: var(--ui-shadow-raised); }
+.ui-button--shadow:active:not(:disabled),
+.ui-icon-button--shadow:active:not(:disabled) { box-shadow: none; }
 .ui-button.full-width { width: 100%; }
 .ui-button:disabled,
 .ui-icon-button:disabled { cursor: default; opacity: 0.5; pointer-events: none; }
@@ -28,6 +50,7 @@
 .error-card .ui-button.ui-button--primary { color: var(--ui-color-primary-text); border: 0; background-color: var(--ui-color-primary); }
 
 .ui-icon-button.ui-icon-button { width: 3rem; height: 3rem; min-height: 3rem; padding: 0.5rem; border: 0; border-radius: 50%; color: var(--ui-color-surface-text); background: transparent; }
+.ui-icon-button.ui-icon-button--selected { color: var(--ui-control-text, var(--ui-color-primary-text)); border: 1px solid var(--ui-control-color, var(--ui-color-primary)); background: var(--ui-control-color, var(--ui-color-primary)); }
 
 .ui-avatar { display: inline-grid; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; place-items: center; border-radius: 50%; object-fit: cover; }
 .ui-avatar--fallback { color: var(--ui-color-surface-text); background: var(--ui-color-surface-raised); font-family: var(--ui-font-family); font-size: var(--ui-font-size-footnote); font-weight: var(--ui-font-weight-semibold); line-height: var(--ui-line-height-footnote); }
@@ -40,7 +63,7 @@
   .ui-button.ui-button--primary:hover:not(:disabled) { opacity: 0.9; }
   .ui-button.ui-button--secondary:hover:not(:disabled),
   .ui-button.ui-button--danger:hover:not(:disabled) { opacity: 0.75; }
-  .ui-icon-button.ui-icon-button:hover:not(:disabled) { background-color: var(--ui-color-surface-raised); }
+  .ui-icon-button.ui-icon-button:hover:not(:disabled):not(.ui-icon-button--selected) { background-color: var(--ui-color-surface-raised); }
 }
 @media (prefers-reduced-motion: reduce) {
   .ui-button,

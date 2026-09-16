@@ -12,13 +12,34 @@ export function Text({ variant = 'body', tone = 'default', className = '', child
 }
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
+export type ButtonColor = 'green' | 'yellow' | 'blue' | 'red' | 'orange' | 'purple' | 'cyan' | 'gray';
+type ButtonSize = 'default' | 'compact';
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant;
+  color?: ButtonColor;
+  size?: ButtonSize;
+  selected?: boolean;
+  shadow?: boolean;
+};
 
-export function Button({ variant = 'primary', className = '', type = 'button', onPointerDown, onKeyDown, disabled, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
-  return <button type={type} className={`ui-button ui-button--${variant} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />;
+export function Button({ variant = 'primary', color, size = 'default', selected: selectedProp, shadow = false, className = '', type = 'button', onPointerDown, onKeyDown, disabled, ...props }: ButtonProps) {
+  const selected = selectedProp === true;
+  const colorClass = color ? ` ui-button--color-${color}` : '';
+  return <button type={type} className={`ui-button ui-button--${variant} ui-button--${size}${colorClass}${selected ? ' ui-button--selected' : ''}${shadow ? ' ui-button--shadow' : ''} ${className}`.trim()} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />;
 }
 
-export function IconButton({ label, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode }) {
-  return <button type={type} aria-label={label} className={`ui-icon-button ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{children}</button>;
+type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  label: string;
+  children: ReactNode;
+  color?: ButtonColor;
+  selected?: boolean;
+  shadow?: boolean;
+};
+
+export function IconButton({ label, color, selected: selectedProp, shadow = false, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: IconButtonProps) {
+  const selected = selectedProp === true;
+  const colorClass = color ? ` ui-icon-button--color-${color}` : '';
+  return <button type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} className={`ui-icon-button${colorClass}${selected ? ' ui-icon-button--selected' : ''}${shadow ? ' ui-icon-button--shadow' : ''} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{children}</button>;
 }
 
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };

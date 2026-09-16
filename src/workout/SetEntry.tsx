@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { createCoachProgramSet } from '../api';
 import { getTelegramWebApp } from '../telegram';
-import { Badge, Button, Divider, IconButton, Modal, Surface, Text, TextArea, TextInput, type BadgeColor } from '../ui';
+import { Button, Divider, IconButton, Modal, Surface, Text, TextArea, TextInput, type ButtonColor } from '../ui';
 import {
   createSetEntryDraft,
   type ResistanceBandCode,
@@ -20,7 +20,7 @@ const workoutDateFormatter = new Intl.DateTimeFormat('ru-RU', {
   timeZone: 'UTC',
 });
 
-const setLabelOptions: Array<{ value: SetLabel; label: string; color: BadgeColor }> = [
+const setLabelOptions: Array<{ value: SetLabel; label: string; color: ButtonColor }> = [
   { value: 'warmup', label: 'Размин', color: 'blue' },
   { value: 'easy', label: 'Легко', color: 'green' },
   { value: 'normal', label: 'Нормально', color: 'gray' },
@@ -28,13 +28,13 @@ const setLabelOptions: Array<{ value: SetLabel; label: string; color: BadgeColor
   { value: 'drop', label: 'Дроп', color: 'purple' },
 ];
 
-const bandOptions: Array<{ value: ResistanceBandCode; label: string }> = [
-  { value: 'yellow', label: 'Жёлтая' },
-  { value: 'red', label: 'Красная' },
-  { value: 'green', label: 'Зелёная' },
-  { value: 'blue', label: 'Синяя' },
-  { value: 'purple', label: 'Фиолетовая' },
-  { value: 'black', label: 'Чёрная' },
+const bandOptions: Array<{ value: ResistanceBandCode; label: string; color: ButtonColor }> = [
+  { value: 'yellow', label: 'Жёлтая', color: 'yellow' },
+  { value: 'red', label: 'Красная', color: 'red' },
+  { value: 'green', label: 'Зелёная', color: 'green' },
+  { value: 'blue', label: 'Синяя', color: 'blue' },
+  { value: 'purple', label: 'Фиолетовая', color: 'purple' },
+  { value: 'black', label: 'Чёрная', color: 'gray' },
 ];
 
 function formatWorkoutDate(value: string): string {
@@ -130,8 +130,9 @@ function MetricField({ label, unit, value, plan, previous, showPlan, step, preci
 
       <div className="set-entry__metric-control">
         <TextInput
-          className="set-entry__number-field"
           type="number"
+          textAlign="center"
+          showNumberControls={false}
           inputMode={precision === 0 ? 'numeric' : 'decimal'}
           min="0"
           step={step}
@@ -143,8 +144,8 @@ function MetricField({ label, unit, value, plan, previous, showPlan, step, preci
           onChange={(event) => onChange(parseNonNegativeNumber(event.currentTarget.value))}
         />
         <div className="set-entry__stepper">
-          <IconButton disabled={disabled} className="set-entry__stepper-button" label={`Уменьшить: ${label}`} onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
-          <IconButton disabled={disabled} className="set-entry__stepper-button" label={`Увеличить: ${label}`} onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
+          <IconButton disabled={disabled} shadow label={`Уменьшить: ${label}`} onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
+          <IconButton disabled={disabled} shadow label={`Увеличить: ${label}`} onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
         </div>
       </div>
     </div>
@@ -191,8 +192,9 @@ function DurationField({ value, plan, previous, showPlan, disabled, onChange }: 
       <div className="set-entry__metric-control">
         <div className="set-entry__duration-fields">
           <TextInput
-            className="set-entry__number-field"
             type="number"
+            textAlign="center"
+            showNumberControls={false}
             inputMode="numeric"
             min="0"
             value={minutes}
@@ -203,8 +205,9 @@ function DurationField({ value, plan, previous, showPlan, disabled, onChange }: 
             onChange={(event) => updatePart('minutes', event.currentTarget.value)}
           />
           <TextInput
-            className="set-entry__number-field"
             type="number"
+            textAlign="center"
+            showNumberControls={false}
             inputMode="numeric"
             min="0"
             max="59"
@@ -217,8 +220,8 @@ function DurationField({ value, plan, previous, showPlan, disabled, onChange }: 
           />
         </div>
         <div className="set-entry__stepper">
-          <IconButton disabled={disabled} className="set-entry__stepper-button" label="Уменьшить время на 30 секунд" onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
-          <IconButton disabled={disabled} className="set-entry__stepper-button" label="Увеличить время на 30 секунд" onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
+          <IconButton disabled={disabled} shadow label="Уменьшить время на 30 секунд" onClick={() => adjust(-1)}><SharedIcon name="minus" /></IconButton>
+          <IconButton disabled={disabled} shadow label="Увеличить время на 30 секунд" onClick={() => adjust(1)}><SharedIcon name="plus" /></IconButton>
         </div>
       </div>
     </div>
@@ -319,7 +322,6 @@ function SetEntryEditor(props: SetEntryProps) {
   return (
     <Modal
       isOpen={isOpen}
-      className="set-entry-modal"
       title={`Подход ${data.identity.setNumber}`}
       hasCloseButton={!saving}
       closeOnBackdrop={!saving}
@@ -345,13 +347,13 @@ function SetEntryEditor(props: SetEntryProps) {
                 label="Фитнес-ленты"
                 aria-expanded={bandsOpen}
                 aria-controls={bandsId}
-                className={draft.bands.length > 0 || bandsOpen ? 'set-entry__tool--active' : ''}
+                selected={draft.bands.length > 0 || bandsOpen}
                 onClick={() => setBandsOpen((open) => !open)}
               >
                 <SharedIcon name="ripple" />
               </IconButton>
             ) : null}
-            {onOpenHistory ? <IconButton disabled={saving} label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton> : null}
+            <IconButton disabled={saving} label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton>
           </div>
 
           {!isPlan && bandsOpen ? (
@@ -362,17 +364,18 @@ function SetEntryEditor(props: SetEntryProps) {
               </div>
               <div className="set-entry__bands-grid" role="group" aria-label="Цвета лент">
                 {bandOptions.map((band) => (
-                  <button
+                  <Button
                     key={band.value}
-                    className={`set-entry__band-option set-entry__band-option--${band.value}`}
-                    type="button"
+                    variant="secondary"
+                    color={band.color}
+                    selected={draft.bands.includes(band.value)}
+                    shadow
                     disabled={saving}
-                    aria-pressed={draft.bands.includes(band.value)}
                     onClick={() => toggleBand(band.value)}
                   >
-                    <span className="set-entry__band-swatch" aria-hidden="true" />
+                    <span className={`set-entry__band-swatch set-entry__band-swatch--${band.value}`} aria-hidden="true" />
                     <span>{band.label}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
               <div className="set-entry__bands-actions">
@@ -455,16 +458,18 @@ function SetEntryEditor(props: SetEntryProps) {
               </div>
               <div className="set-entry__label-row" role="group" aria-label="Оценка подхода">
                 {setLabelOptions.map((option) => (
-                  <button
+                  <Button
                     key={option.value}
-                    className="set-entry__badge-button"
-                    type="button"
+                    variant="secondary"
+                    size="compact"
+                    color={option.color}
+                    selected={draft.setLabel === option.value}
+                    shadow
                     disabled={saving}
-                    aria-pressed={draft.setLabel === option.value}
                     onClick={() => setDraft((current) => ({ ...current, setLabel: current.setLabel === option.value ? null : option.value }))}
                   >
-                    <Badge color={option.color}>{option.label}</Badge>
-                  </button>
+                    {option.label}
+                  </Button>
                 ))}
               </div>
             </div>
@@ -480,8 +485,9 @@ function SetEntryEditor(props: SetEntryProps) {
                     key={rpe}
                     disabled={saving}
                     variant="secondary"
-                    className={`set-entry__rpe-button ${draft.rpe === rpe ? 'set-entry__rpe-button--active' : ''}`}
-                    aria-pressed={draft.rpe === rpe}
+                    size="compact"
+                    selected={draft.rpe === rpe}
+                    shadow
                     onClick={() => setDraft((current) => ({ ...current, rpe: current.rpe === rpe ? null : rpe }))}
                   >
                     {rpe}
@@ -504,12 +510,10 @@ function SetEntryEditor(props: SetEntryProps) {
           </>
         ) : null}
 
-        {onOpenChat ? (
-          <Button disabled={saving} className="full-width set-entry__chat-button" onClick={onOpenChat}>
-            <TelegramIcon />
-            <span>Открыть чат</span>
-          </Button>
-        ) : null}
+        <Button disabled={saving} className="full-width set-entry__chat-button" onClick={onOpenChat}>
+          <TelegramIcon />
+          <span>Открыть чат</span>
+        </Button>
 
         {saveError ? <Text variant="footnote" className="set-entry__save-error" role="alert">{saveError}</Text> : null}
       </div>
