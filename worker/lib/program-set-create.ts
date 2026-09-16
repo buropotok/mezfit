@@ -41,6 +41,7 @@ export async function getProgramExerciseOwner(
       AND pe.status = 'active'
       AND pd.status = 'active'
       AND pp.status IN ('pending', 'active')
+      AND tp.status IN ('draft', 'active')
   `).bind(programExerciseId).first<ProgramExerciseOwnerRow>();
 }
 
