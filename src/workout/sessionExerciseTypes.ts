@@ -41,24 +41,16 @@ export interface SaveSessionSetInput {
   fact: SetEntryFactDraft;
 }
 
-interface SessionExerciseSharedProps {
+export interface SessionExerciseProps {
   context: SessionExerciseContext;
   data: SessionExerciseData;
+  mode?: 'workout' | 'plan';
+  programExerciseId?: number;
   collapsed?: boolean;
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  onSaveSet: (input: SaveSessionSetInput) => Promise<void>;
   onOpenExerciseMenu: (sessionExerciseId: number) => void;
   onOpenHistory: (exerciseDefinitionId: number) => void;
   onOpenChat: () => void;
 }
-
-export type SessionExerciseProps =
-  | (SessionExerciseSharedProps & {
-      mode?: 'workout';
-      onSaveSet: (input: SaveSessionSetInput) => Promise<void>;
-    })
-  | (SessionExerciseSharedProps & {
-      mode: 'plan';
-      programExerciseId: number;
-      onSaveSet?: never;
-    });
