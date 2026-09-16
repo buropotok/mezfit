@@ -1,4 +1,4 @@
-export { Avatar, Button, Divider, IconButton, Surface, Text } from './primitives';
+export { Avatar, Button, Divider, IconButton, Surface, Text, type ButtonColor } from './primitives';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge';
 export { Calendar, type CalendarProps } from './Calendar';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
