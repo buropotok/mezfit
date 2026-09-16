@@ -119,17 +119,17 @@ function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType): R
   );
 }
 
-export function SessionExercise({
-  context,
-  data,
-  collapsed: controlledCollapsed,
-  defaultCollapsed = false,
-  onCollapsedChange,
-  onSaveSet,
-  onOpenExerciseMenu,
-  onOpenHistory,
-  onOpenChat,
-}: SessionExerciseProps) {
+export function SessionExercise(props: SessionExerciseProps) {
+  const {
+    context,
+    data,
+    collapsed: controlledCollapsed,
+    defaultCollapsed = false,
+    onCollapsedChange,
+    onOpenExerciseMenu,
+    onOpenHistory,
+    onOpenChat,
+  } = props;
   const bodyId = useId();
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const collapsed = controlledCollapsed ?? internalCollapsed;
@@ -236,34 +236,60 @@ export function SessionExercise({
       </div>
 
       {selectedSet ? (
-        <SetEntry
-          mode="workout"
-          isOpen
-          data={{
-            identity: {
-              ...programIdentity,
-              exerciseDefinitionId: data.exercise.id,
-              exerciseName,
-              setNumber: selectedSet.position + 1,
-              workoutDate: context.workoutDate,
-              sourceProgramSetId: selectedSet.sourceProgramSetId,
+        props.mode === 'plan' ? (
+          <SetEntry
+            mode="plan"
+            programExerciseId={props.programExerciseId}
+            isOpen
+            data={{
+              identity: {
+                ...programIdentity,
+                exerciseDefinitionId: data.exercise.id,
+                exerciseName,
+                setNumber: selectedSet.position + 1,
+                workoutDate: context.workoutDate,
+                sourceProgramSetId: selectedSet.sourceProgramSetId,
+                sessionSetId: selectedSet.sessionSetId,
+              },
+              trackingType: data.exercise.tracking_type,
+              plan: selectedSet.plan,
+              previous: selectedSet.previous,
+              fact: selectedSet.fact,
+            }}
+            onClose={() => setSelectedSessionSetId(null)}
+            onOpenHistory={() => onOpenHistory(data.exercise.id)}
+            onOpenChat={onOpenChat}
+          />
+        ) : (
+          <SetEntry
+            mode="workout"
+            isOpen
+            data={{
+              identity: {
+                ...programIdentity,
+                exerciseDefinitionId: data.exercise.id,
+                exerciseName,
+                setNumber: selectedSet.position + 1,
+                workoutDate: context.workoutDate,
+                sourceProgramSetId: selectedSet.sourceProgramSetId,
+                sessionSetId: selectedSet.sessionSetId,
+              },
+              trackingType: data.exercise.tracking_type,
+              plan: selectedSet.plan,
+              previous: selectedSet.previous,
+              fact: selectedSet.fact,
+            }}
+            onClose={() => setSelectedSessionSetId(null)}
+            onSave={(fact) => props.onSaveSet({
+              workoutSessionId: context.workoutSessionId,
+              sessionExerciseId: data.sessionExerciseId,
               sessionSetId: selectedSet.sessionSetId,
-            },
-            trackingType: data.exercise.tracking_type,
-            plan: selectedSet.plan,
-            previous: selectedSet.previous,
-            fact: selectedSet.fact,
-          }}
-          onClose={() => setSelectedSessionSetId(null)}
-          onSave={(fact) => onSaveSet({
-            workoutSessionId: context.workoutSessionId,
-            sessionExerciseId: data.sessionExerciseId,
-            sessionSetId: selectedSet.sessionSetId,
-            fact,
-          })}
-          onOpenHistory={() => onOpenHistory(data.exercise.id)}
-          onOpenChat={onOpenChat}
-        />
+              fact,
+            })}
+            onOpenHistory={() => onOpenHistory(data.exercise.id)}
+            onOpenChat={onOpenChat}
+          />
+        )
       ) : null}
     </article>
   );
