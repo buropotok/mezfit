@@ -20,7 +20,7 @@ interface ProgramExerciseOwnerRow {
 interface ProgramSetRow {
   id: number;
   program_exercise_id: number;
-  set_number: number;
+  position: number;
   reps: number | null;
   weight: number | null;
   duration_seconds: number | null;
@@ -32,44 +32,51 @@ export async function getProgramExerciseOwner(
   programExerciseId: number,
 ): Promise<ProgramExerciseOwnerRow | null> {
   return db.prepare(`
-    SELECT p.id AS program_id, p.coach_user_id, p.user_id
+    SELECT tp.id AS program_id, tp.owner_coach_user_id AS coach_user_id, tp.user_id
     FROM program_exercise pe
     JOIN program_day pd ON pd.id = pe.program_day_id
     JOIN program_phase pp ON pp.id = pd.program_phase_id
-    JOIN program p ON p.id = pp.program_id
+    JOIN training_plan tp ON tp.id = pp.training_plan_id
     WHERE pe.id = ?
+      AND pe.status = 'active'
+      AND pd.status = 'active'
+      AND pp.status IN ('pending', 'active')
   `).bind(programExerciseId).first<ProgramExerciseOwnerRow>();
 }
 
 export async function createProgramSet(
   db: D1Database,
   programExerciseId: number,
+  createdByUserId: number,
   input: ProgramSetInput,
-): Promise<ProgramSetView> {
+): Promise<ProgramSetView | null> {
+  const position = input.setNumber - 1;
   const result = await db.prepare(`
-    INSERT INTO program_set (
+    INSERT OR IGNORE INTO program_set (
       program_exercise_id,
-      set_number,
+      position,
       reps,
       weight,
       duration_seconds,
-      distance_meters
-    ) VALUES (?, ?, ?, ?, ?, ?)
-    RETURNING id, program_exercise_id, set_number, reps, weight, duration_seconds, distance_meters
+      distance_meters,
+      created_by_user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    RETURNING id, program_exercise_id, position, reps, weight, duration_seconds, distance_meters
   `).bind(
     programExerciseId,
-    input.setNumber,
+    position,
     input.reps,
     input.weightKg,
     input.durationSeconds,
     input.distanceMeters,
+    createdByUserId,
   ).first<ProgramSetRow>();
 
-  if (!result) throw new Error('Failed to create program set');
+  if (!result) return null;
   return {
     id: result.id,
     programExerciseId: result.program_exercise_id,
-    setNumber: result.set_number,
+    setNumber: result.position + 1,
     reps: result.reps,
     weightKg: result.weight,
     durationSeconds: result.duration_seconds,
