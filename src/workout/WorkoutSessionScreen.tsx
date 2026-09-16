@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ApiError,
+  addWorkoutSessionExercise,
   completeWorkoutSession,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
-import { Button, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
+import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
+import { WorkoutExercisePicker } from './WorkoutExercisePicker';
 import type {
   ActiveWorkoutSession,
   DraftWorkoutSession,
@@ -32,6 +34,14 @@ function draftMeta(session: DraftWorkoutSession): string {
   return [session.program?.name, session.phase?.name].filter(Boolean).join(' · ');
 }
 
+function AddIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 function reorderExerciseData(session: ActiveWorkoutSession, ids: number[]): ActiveWorkoutSession {
   const byId = new Map(session.exercises.map((exercise) => [exercise.sessionExerciseId, exercise]));
   const exercises = ids
@@ -50,7 +60,6 @@ export function WorkoutSessionScreen({
   onOpenExerciseMenu,
   onOpenHistory,
   onOpenChat,
-  onAddExercise,
   onSessionLifecycleChange,
 }: WorkoutSessionScreenProps) {
   const [session, setSession] = useState<WorkoutSessionState | null>(null);
@@ -61,6 +70,9 @@ export function WorkoutSessionScreen({
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
+  const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
+  const [addingExerciseId, setAddingExerciseId] = useState<number | null>(null);
+  const [exercisePickerError, setExercisePickerError] = useState('');
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
   const lifecycleCallbackRef = useRef(onSessionLifecycleChange);
@@ -206,6 +218,36 @@ export function WorkoutSessionScreen({
       });
   }
 
+  function openExercisePicker() {
+    if (!activeSession || activeSession.status !== 'active') return;
+    setExercisePickerError('');
+    setExercisePickerOpen(true);
+  }
+
+  async function handleAddExercise(exerciseDefinitionId: number) {
+    if (!activeSession || activeSession.status !== 'active') return;
+    const sessionId = activeSession.sessionId;
+    const intent = nextMutationIntent();
+    setAddingExerciseId(exerciseDefinitionId);
+    setExercisePickerError('');
+    try {
+      const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionExercise(
+        initData,
+        sessionId,
+        exerciseDefinitionId,
+      ));
+      if (!isCurrentGeneration(intent)) return;
+      acknowledgedSessionRef.current = nextSession;
+      if (!isCurrentIntent(intent)) return;
+      setSession(nextSession);
+      setExercisePickerOpen(false);
+    } catch (error) {
+      if (isCurrentIntent(intent)) setExercisePickerError(errorMessage(error, 'Не удалось добавить упражнение'));
+    } finally {
+      if (isCurrentGeneration(intent)) setAddingExerciseId(null);
+    }
+  }
+
   async function handleComplete() {
     if (!activeSession || activeSession.status !== 'active') return;
     const sessionId = activeSession.sessionId;
@@ -218,6 +260,7 @@ export function WorkoutSessionScreen({
       acknowledgedSessionRef.current = nextSession;
       if (!isCurrentIntent(intent)) return;
       setSession(nextSession);
+      setExercisePickerOpen(false);
       setCompleteConfirmOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
       onClose();
@@ -324,17 +367,33 @@ export function WorkoutSessionScreen({
           ) : (
             <div className="workout-session-screen__empty">
               <Text tone="muted">Упражнений пока нет.</Text>
-              {onAddExercise ? <Button variant="secondary" onClick={() => onAddExercise(activeSession.sessionId)}>Добавить упражнение</Button> : null}
             </div>
           )}
           <div className="workout-session-screen__footer">
-            {onAddExercise && sortableItems.length > 0 ? (
-              <Button variant="secondary" onClick={() => onAddExercise(activeSession.sessionId)}>Добавить упражнение</Button>
-            ) : null}
             <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
           </div>
+          <FloatingActionButton
+            placement="right"
+            label="Добавить упражнение"
+            onClick={openExercisePicker}
+          >
+            <AddIcon />
+          </FloatingActionButton>
         </>
       ) : null}
+
+      <WorkoutExercisePicker
+        initData={initData}
+        isOpen={exercisePickerOpen}
+        addingExerciseId={addingExerciseId}
+        actionError={exercisePickerError}
+        onAdd={(exerciseDefinitionId) => void handleAddExercise(exerciseDefinitionId)}
+        onClose={() => {
+          if (addingExerciseId !== null) return;
+          setExercisePickerOpen(false);
+          setExercisePickerError('');
+        }}
+      />
 
       <Modal
         isOpen={loading || busyLabel !== null}
