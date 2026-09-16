@@ -62,11 +62,13 @@ export function ProgramPhaseCard({
   defaultCollapsed = false,
   onDelete,
   onAddExercise,
+  onOpenExercise,
 }: {
   phase: ProgramPhaseDetails;
   defaultCollapsed?: boolean;
   onDelete?: (phaseId: number) => Promise<void>;
   onAddExercise?: (phase: ProgramPhaseDetails) => void;
+  onOpenExercise?: (phase: ProgramPhaseDetails, exercise: ProgramPhaseExerciseDetails) => void;
 }) {
   const bodyId = useId();
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
@@ -127,7 +129,7 @@ export function ProgramPhaseCard({
               <ListItem
                 key={item.programExerciseId}
                 className="program-phase-card__exercise-row"
-                interactive={false}
+                interactive={Boolean(onOpenExercise)}
                 leadingShape="square"
                 leading={<ExerciseMedia exercise={item.exercise} variant="thumbnail" />}
                 title={exerciseDisplayName(item.exercise)}
@@ -137,6 +139,7 @@ export function ProgramPhaseCard({
                     <SharedIcon name="check" />
                   </span>
                 ) : undefined}
+                onClick={onOpenExercise ? () => onOpenExercise(phase, item) : undefined}
               />
             ))}
           </List>
