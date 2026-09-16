@@ -53,14 +53,24 @@ export interface SetEntryFactDraft {
   bands: ResistanceBandCode[];
 }
 
-export interface SetEntryProps {
+interface SetEntrySharedProps {
   isOpen: boolean;
   data: SetEntryData;
   onClose: () => void;
-  onSave: (fact: SetEntryFactDraft) => Promise<void>;
   onOpenHistory: () => void;
   onOpenChat: () => void;
 }
+
+export type SetEntryProps =
+  | (SetEntrySharedProps & {
+      mode: 'workout';
+      onSave: (fact: SetEntryFactDraft) => Promise<void>;
+    })
+  | (SetEntrySharedProps & {
+      mode: 'plan';
+      programExerciseId: number;
+      onSave?: never;
+    });
 
 export function emptySetMetrics(): SetMetrics {
   return {
