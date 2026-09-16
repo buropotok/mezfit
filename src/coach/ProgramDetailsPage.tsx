@@ -67,40 +67,45 @@ function previewSessionExercise(
   const exercise = source?.exercise ?? fallbackExercise;
   if (!exercise) return null;
 
-  const sets = source ? source.sets.map((set) => ({
-    sessionSetId: set.id,
-    sourceProgramSetId: set.id,
-    position: set.setNumber - 1,
-    status: 'pending' as const,
-    plan: {
-      weightKg: set.weightKg,
-      reps: set.reps,
-      durationSeconds: set.durationSeconds,
-      distanceMeters: set.distanceMeters,
-    },
-    previous: null,
-    fact: null,
-  })) : Array.from({ length: 3 }, (_, position) => ({
-    sessionSetId: -((phase.id * 1000) + position + 1),
-    sourceProgramSetId: null,
-    position,
-    status: 'pending' as const,
-    plan: null,
-    previous: null,
-    fact: null,
-  }));
-
+  let sets: SessionExerciseData['sets'];
   if (source) {
-    const nextPosition = sets.reduce((maximum, set) => Math.max(maximum, set.position), -1) + 1;
-    sets.push({
-      sessionSetId: -((phase.id * 1000) + nextPosition + 1),
+    const persistedSets: SessionExerciseData['sets'] = (source.sets ?? []).map((set) => ({
+      sessionSetId: set.id,
+      sourceProgramSetId: set.id,
+      position: set.setNumber - 1,
+      status: 'pending',
+      plan: {
+        weightKg: set.weightKg,
+        reps: set.reps,
+        durationSeconds: set.durationSeconds,
+        distanceMeters: set.distanceMeters,
+      },
+      previous: null,
+      fact: null,
+    }));
+    const nextPosition = persistedSets.reduce((maximum, set) => Math.max(maximum, set.position), -1) + 1;
+    sets = [
+      ...persistedSets,
+      {
+        sessionSetId: -((phase.id * 1000) + nextPosition + 1),
+        sourceProgramSetId: null,
+        position: nextPosition,
+        status: 'pending',
+        plan: null,
+        previous: null,
+        fact: null,
+      },
+    ];
+  } else {
+    sets = Array.from({ length: 3 }, (_, position) => ({
+      sessionSetId: -((phase.id * 1000) + position + 1),
       sourceProgramSetId: null,
-      position: nextPosition,
+      position,
       status: 'pending',
       plan: null,
       previous: null,
       fact: null,
-    });
+    }));
   }
 
   return {
