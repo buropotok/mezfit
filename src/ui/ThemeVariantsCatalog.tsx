@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Divider, IconButton, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text } from './index';
 import barbellFilledIconUrl from './icons/barbell-filled.svg';
 import barbellIconUrl from './icons/barbell.svg';
@@ -59,7 +59,7 @@ function TextTabs({ theme = 'default' }: { theme?: 'default' | 'glass' }) {
   );
 }
 
-function GlassStage({ children }: { children: React.ReactNode }) {
+function GlassStage({ children }: { children: ReactNode }) {
   return (
     <div className="ui-kit-glass-stage">
       <div className="ui-kit-glass-stage__backdrop" aria-hidden="true">
@@ -73,7 +73,7 @@ function GlassStage({ children }: { children: React.ReactNode }) {
 
 export function ThemeVariantsCatalog() {
   return (
-    <>
+    <div className="ui-kit-page ui-kit-page--theme-variants">
       <Surface as="section" className="ui-kit-section">
         <Text variant="title">Surface themes</Text>
         <Text variant="caption" tone="muted">theme omitted = current default. Glass owns its border; the border prop belongs only to default Surface.</Text>
@@ -104,6 +104,6 @@ export function ThemeVariantsCatalog() {
           <div><Text variant="footnote" tone="muted">Glass · icon</Text><GlassStage><IconTabs theme="glass" /></GlassStage></div>
         </div>
       </Surface>
-    </>
+    </div>
   );
 }
