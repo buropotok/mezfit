@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
+import type { UiComponentTheme } from './componentTheme';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import './ui.css';
 import './typography.css';
@@ -17,15 +18,16 @@ export function Button({ variant = 'primary', className = '', type = 'button', o
   return <button type={type} className={`ui-button ui-button--${variant} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />;
 }
 
-export function IconButton({ label, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode }) {
-  return <button type={type} aria-label={label} className={`ui-icon-button ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{children}</button>;
+export type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode; theme?: UiComponentTheme };
+
+export function IconButton({ label, theme = 'default', className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: IconButtonProps) {
+  return <button type={type} aria-label={label} data-ui-theme={theme} className={`ui-icon-button ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{children}</button>;
 }
 
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
 
 export function Avatar({ name, src, className = '', ...props }: AvatarProps) {
-  const [imageFailed, setImageFailed] = useState(false);
-  useEffect(() => setImageFailed(false), [src]);
+  const [imageFailed, setImageFailed(false), [src]);
 
   if (src && !imageFailed) {
     return <img className={`ui-avatar ${className}`.trim()} src={src} alt="" onError={() => setImageFailed(true)} {...props} />;
@@ -38,8 +40,12 @@ export function Divider({ className = '', ...props }: HTMLAttributes<HTMLHREleme
   return <hr className={`ui-divider ${className}`.trim()} {...props} />;
 }
 
-type SurfaceProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; border?: boolean; elevated?: boolean; style?: CSSProperties };
+type SurfaceBaseProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; elevated?: boolean; style?: CSSProperties };
+type SurfaceDefaultProps = SurfaceBaseProps & { theme?: 'default'; border?: boolean };
+type SurfaceGlassProps = SurfaceBaseProps & { theme: 'glass'; border?: never };
+export type SurfaceProps = SurfaceDefaultProps | SurfaceGlassProps;
 
-export function Surface({ as: Component = 'div', border = true, elevated = false, className = '', ...props }: SurfaceProps) {
-  return <Component className={`ui-surface${!border ? ' ui-surface--borderless' : ''}${elevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
+export function Surface({ as: Component = 'div', theme = 'default', border = true, elevated = false, className = '', ...props }: SurfaceProps) {
+  const isBorderless = theme === 'default' && !border;
+  return <Component data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${elevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
 }
