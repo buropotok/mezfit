@@ -57,8 +57,8 @@ interface SetEntrySharedProps {
   isOpen: boolean;
   data: SetEntryData;
   onClose: () => void;
-  onOpenHistory: () => void;
-  onOpenChat: () => void;
+  onOpenHistory?: () => void;
+  onOpenChat?: () => void;
 }
 
 export type SetEntryProps =
