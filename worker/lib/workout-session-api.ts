@@ -1,3 +1,4 @@
+import { addWorkoutExercise, listWorkoutExerciseOptions } from './workout-exercise-actions';
 import {
   completeWorkoutSession,
   initializeWorkoutSession,
@@ -99,6 +100,12 @@ function parseStartInput(body: Record<string, unknown>): WorkoutStartInput | nul
 export async function handleWorkoutSessionRoute(request: Request, db: D1Database, userId: number): Promise<Response> {
   const url = new URL(request.url);
 
+  if (url.pathname === '/api/workout-sessions/exercises') {
+    if (request.method !== 'GET') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+    const exercises = await listWorkoutExerciseOptions(db, userId, url.searchParams.get('search') ?? '');
+    return jsonResponse({ exercises });
+  }
+
   if (url.pathname === '/api/workout-sessions/initialize') {
     if (request.method !== 'POST') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
     const body = await readJsonObject(request);
@@ -129,6 +136,21 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
     if (result.kind === 'invalid_state') return errorResponse(409, 'WORKOUT_STATE_INVALID', 'Workout session cannot be started');
     if (result.kind === 'invalid_program_day') return errorResponse(409, 'PROGRAM_DAY_INVALID', 'Program day is no longer available');
     return jsonResponse({ session: result.session });
+  }
+
+  const addExerciseMatch = url.pathname.match(/^\/api\/workout-sessions\/(\d+)\/exercises$/);
+  if (addExerciseMatch) {
+    if (request.method !== 'POST') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+    const body = await readJsonObject(request);
+    if (!body || !isPositiveInteger(body.exerciseDefinitionId)) {
+      return errorResponse(400, 'INVALID_EXERCISE', 'Exercise id is invalid');
+    }
+
+    const result = await addWorkoutExercise(db, userId, Number(addExerciseMatch[1]), body.exerciseDefinitionId);
+    if (result.kind === 'not_found') return errorResponse(404, 'WORKOUT_NOT_FOUND', 'Workout session not found');
+    if (result.kind === 'invalid_state') return errorResponse(409, 'WORKOUT_STATE_INVALID', 'Workout is not active');
+    if (result.kind === 'exercise_not_found') return errorResponse(404, 'EXERCISE_NOT_FOUND', 'Exercise is not available');
+    return jsonResponse({ session: result.session }, { status: 201 });
   }
 
   const setMatch = url.pathname.match(/^\/api\/workout-sessions\/(\d+)\/sets\/(\d+)$/);
