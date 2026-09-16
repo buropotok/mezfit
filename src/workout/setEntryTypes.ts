@@ -63,7 +63,7 @@ interface SetEntrySharedProps {
 
 export type SetEntryProps =
   | (SetEntrySharedProps & {
-      mode: 'workout';
+      mode?: 'workout';
       onSave: (fact: SetEntryFactDraft) => Promise<void>;
     })
   | (SetEntrySharedProps & {
