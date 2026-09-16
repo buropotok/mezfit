@@ -31,19 +31,37 @@ export function Button({ variant = 'primary', color, size = 'default', selected:
   return <button type={type} className={`ui-button ui-button--${variant} ui-button--${size}${colorClass}${selected ? ' ui-button--selected' : ''}${shadow ? ' ui-button--shadow' : ''} ${className}`.trim()} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />;
 }
 
-export type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type IconButtonBaseProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> & {
   label: string;
   children?: ReactNode;
-  theme?: UiComponentTheme;
   icon?: UiIconPair;
+};
+type IconButtonDefaultProps = IconButtonBaseProps & {
+  theme?: 'default';
   color?: ButtonColor;
   selected?: boolean;
   shadow?: boolean;
 };
+type IconButtonGlassIdleProps = IconButtonBaseProps & {
+  theme: 'glass';
+  color?: never;
+  selected?: undefined;
+  shadow?: never;
+};
+type IconButtonGlassSelectableProps = IconButtonBaseProps & {
+  theme: 'glass';
+  color?: never;
+  selected: boolean;
+  shadow?: never;
+  icon: UiIconPair;
+};
+export type IconButtonProps = IconButtonDefaultProps | IconButtonGlassIdleProps | IconButtonGlassSelectableProps;
 
 export function IconButton({ label, theme = 'default', icon, color, selected: selectedProp, shadow = false, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: IconButtonProps) {
   const selected = selectedProp === true;
-  const colorClass = color ? ` ui-icon-button--color-${color}` : '';
+  const colorClass = theme === 'default' && color ? ` ui-icon-button--color-${color}` : '';
+  const selectedClass = theme === 'default' && selected ? ' ui-icon-button--selected' : '';
+  const shadowClass = theme === 'default' && shadow ? ' ui-icon-button--shadow' : '';
   const artworkRef = useRef<HTMLSpanElement>(null);
   const previousSelectedRef = useRef(selected);
 
@@ -59,7 +77,7 @@ export function IconButton({ label, theme = 'default', icon, color, selected: se
     </span>
   ) : children;
 
-  return <button type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${colorClass}${selected ? ' ui-icon-button--selected' : ''}${shadow ? ' ui-icon-button--shadow' : ''} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</button>;
+  return <button type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</button>;
 }
 
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
@@ -79,12 +97,13 @@ export function Divider({ className = '', ...props }: HTMLAttributes<HTMLHREleme
   return <hr className={`ui-divider ${className}`.trim()} {...props} />;
 }
 
-type SurfaceBaseProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; elevated?: boolean; style?: CSSProperties };
-type SurfaceDefaultProps = SurfaceBaseProps & { theme?: 'default'; border?: boolean };
-type SurfaceGlassProps = SurfaceBaseProps & { theme: 'glass'; border?: never };
+type SurfaceBaseProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; style?: CSSProperties };
+type SurfaceDefaultProps = SurfaceBaseProps & { theme?: 'default'; border?: boolean; elevated?: boolean };
+type SurfaceGlassProps = SurfaceBaseProps & { theme: 'glass'; border?: never; elevated?: never };
 export type SurfaceProps = SurfaceDefaultProps | SurfaceGlassProps;
 
 export function Surface({ as: Component = 'div', theme = 'default', border = true, elevated = false, className = '', ...props }: SurfaceProps) {
   const isBorderless = theme === 'default' && !border;
-  return <Component data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${elevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
+  const isElevated = theme === 'default' && elevated;
+  return <Component data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${isElevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
 }
