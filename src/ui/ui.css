@@ -28,6 +28,7 @@
 .error-card .ui-button.ui-button--primary { color: var(--ui-color-primary-text); border: 0; background-color: var(--ui-color-primary); }
 
 .ui-icon-button.ui-icon-button { width: 3rem; height: 3rem; min-height: 3rem; padding: 0.5rem; border: 0; border-radius: 50%; color: var(--ui-color-surface-text); background: transparent; }
+.ui-icon-button.ui-icon-button[data-ui-theme='glass'] { box-sizing: border-box; border: var(--ui-glass-border-width) solid var(--ui-glass-border-color); background: var(--ui-glass-background); box-shadow: var(--ui-glass-shadow); -webkit-backdrop-filter: blur(var(--ui-glass-blur)) saturate(var(--ui-glass-saturation)); backdrop-filter: blur(var(--ui-glass-blur)) saturate(var(--ui-glass-saturation)); }
 
 .ui-avatar { display: inline-grid; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; place-items: center; border-radius: 50%; object-fit: cover; }
 .ui-avatar--fallback { color: var(--ui-color-surface-text); background: var(--ui-color-surface-raised); font-family: var(--ui-font-family); font-size: var(--ui-font-size-footnote); font-weight: var(--ui-font-weight-semibold); line-height: var(--ui-line-height-footnote); }
@@ -35,12 +36,14 @@
 .ui-surface { color: var(--ui-color-surface-text); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-md); background: var(--ui-color-surface); }
 .ui-surface--borderless { border: 0; }
 .ui-surface--elevated { box-shadow: var(--ui-shadow-raised); }
+.ui-surface[data-ui-theme='glass'] { border: var(--ui-glass-border-width) solid var(--ui-glass-border-color); background: var(--ui-glass-background); box-shadow: var(--ui-glass-shadow); -webkit-backdrop-filter: blur(var(--ui-glass-blur)) saturate(var(--ui-glass-saturation)); backdrop-filter: blur(var(--ui-glass-blur)) saturate(var(--ui-glass-saturation)); }
 
 @media (hover: hover) {
   .ui-button.ui-button--primary:hover:not(:disabled) { opacity: 0.9; }
   .ui-button.ui-button--secondary:hover:not(:disabled),
   .ui-button.ui-button--danger:hover:not(:disabled) { opacity: 0.75; }
   .ui-icon-button.ui-icon-button:hover:not(:disabled) { background-color: var(--ui-color-surface-raised); }
+  .ui-icon-button.ui-icon-button[data-ui-theme='glass']:hover:not(:disabled) { background: var(--ui-glass-background); }
 }
 @media (prefers-reduced-motion: reduce) {
   .ui-button,
