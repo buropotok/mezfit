@@ -7,4 +7,6 @@ Public UI Kit imports should come from `src/ui/index.ts`.
 - `components.tsx` — composed interaction components; use mature Radix primitives for behavior when available and map Telegram Web A source-level visuals onto Mezfit semantic tokens
 - `UiKitPage.tsx` — internal `/ui-kit` visual catalog
 
+`List` owns row-divider presentation through its public `divider` prop: `none` (default), `inset`, or `full`. Feature CSS must not target `ListItem` internal wrappers such as `.ui-list-item-wrap` to draw separators.
+
 Feature/domain modules must not be imported into this directory. Feature code should consume the Mezfit wrappers rather than importing Radix directly when a wrapper exists.
