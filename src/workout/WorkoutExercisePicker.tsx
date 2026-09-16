@@ -8,11 +8,12 @@ interface Props {
   initData: string;
   isOpen: boolean;
   addingExerciseId: number | null;
+  actionError?: string;
   onAdd: (exerciseDefinitionId: number) => void;
   onClose: () => void;
 }
 
-export function WorkoutExercisePicker({ initData, isOpen, addingExerciseId, onAdd, onClose }: Props) {
+export function WorkoutExercisePicker({ initData, isOpen, addingExerciseId, actionError = '', onAdd, onClose }: Props) {
   const [search, setSearch] = useState('');
   const [exercises, setExercises] = useState<ExerciseDefinition[] | null>(null);
   const [error, setError] = useState('');
@@ -49,7 +50,13 @@ export function WorkoutExercisePicker({ initData, isOpen, addingExerciseId, onAd
   }, [isOpen]);
 
   return (
-    <Modal isOpen={isOpen} title="Добавить упражнение" onClose={onClose} closeOnBackdrop={addingExerciseId === null}>
+    <Modal
+      isOpen={isOpen}
+      title="Добавить упражнение"
+      hasCloseButton={addingExerciseId === null}
+      closeOnBackdrop={addingExerciseId === null}
+      onClose={onClose}
+    >
       <SearchInput
         aria-label="Поиск упражнения"
         placeholder="Поиск упражнения"
@@ -58,6 +65,7 @@ export function WorkoutExercisePicker({ initData, isOpen, addingExerciseId, onAd
         onClear={() => setSearch('')}
         disabled={addingExerciseId !== null}
       />
+      {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
       {error ? <Text variant="footnote" tone="muted" role="alert">{error}</Text> : null}
       {exercises === null && !error ? <Text variant="footnote" tone="muted">Загружаем упражнения…</Text> : null}
       {exercises?.length === 0 && !error ? <Text variant="footnote" tone="muted">Ничего не найдено.</Text> : null}
