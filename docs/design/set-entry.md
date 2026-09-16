@@ -2,34 +2,45 @@
 
 ## Scope
 
-`SetEntry` is the controlled React modal for viewing and editing one actual workout set. It is opened by the workout/exercise surface and does not load its own server state.
+`SetEntry` is the shared controlled React modal for one set and has two explicit domain modes:
 
-The module owns modal presentation and a local editable FACT draft. The parent/workout owner owns server state, API mutations, open/close state and reconciliation.
+- `workout` edits FACT for a live workout session;
+- `plan` lets a coach author a planned set for a program exercise.
+
+Opening `SetEntry` never triggers a read request. The parent supplies the complete rendering context, including the previous analogous set. Persistence is mode-specific.
 
 ```text
+workout
 Workout owner
-  -> ExerciseCard
-      -> SetEntry(isOpen, data, callbacks)
+  -> SessionExercise
+      -> SetEntry(mode="workout", data, onSave)
           -> local FACT draft
           -> onSave(fact)
-      <- canonical server state after save
+      <- canonical session state after save
+
+plan
+Coach program authoring
+  -> SetEntry(mode="plan", programExerciseId, data)
+      -> local planned-metrics draft
+      -> typed POST /api/coach/program-exercises/:programExerciseId/sets
+      <- persisted PlannedSet
 ```
 
 ## No read REST endpoint
 
 Opening `SetEntry` must not trigger a GET request. The parent passes a complete initialization object.
 
-The initialization object contains:
+The initialization object contains the applicable subset of:
 
 - optional program ID and display name (`null` / `null` for an own workout outside a program);
 - exercise definition ID and display name;
 - tracking type;
 - set number;
-- workout date;
+- workout date/context;
 - planned metrics for this exact set;
 - the analogous set from the previous workout;
 - existing FACT for the current set when it has already been recorded;
-- stable plan/session set identifiers needed by the parent for persistence.
+- stable plan/session identifiers needed by the active mode.
 
 Program identity is an all-or-nothing pair: both `programId` and `programName` are populated, or both are `null`. When there is no program, the metadata line displays only the workout date.
 
@@ -41,38 +52,54 @@ For example, when editing Bench Press set 3 today, `previous` is Bench Press set
 
 The parent/backend projection resolves this meaning before rendering `SetEntry`. The component never queries history to derive it.
 
+The line `Предыдущая тренировка: ...` is rendered in both `workout` and `plan` modes. Previous values are comparison context only and are never persisted as the new plan or FACT.
+
 ## PLAN / PREVIOUS / FACT
 
-`plan` is the coach prescription for this exact set and is read-only in `SetEntry`. It may be `null` for an own/ad-hoc workout.
+In `workout` mode:
 
-`previous` is read-only comparison context.
+- PLAN is the frozen session prescription and is read-only;
+- PREVIOUS is read-only comparison context;
+- FACT is the editable/persisted result;
+- initial editable metrics follow `existing FACT -> PLAN -> empty metrics`;
+- the visible `План: ...` line, set assessment, RPE, comment and fitness-band controls retain their existing workout behavior.
 
-`fact` is the current persisted result when the set is reopened.
+In `plan` mode:
 
-Initial editable metrics follow this precedence:
+- the values being entered are PLAN, so there is no separate `План: ...` line;
+- PREVIOUS remains visible as read-only context;
+- set assessment and RPE are not rendered because they are workout FACT fields;
+- plan persistence writes only the planned metric columns supported by `program_set`.
 
-```text
-existing FACT -> PLAN -> empty metrics
-```
-
-`previous` never replaces PLAN automatically.
+A saved `program_set` remains mutable program prescription until workout start. When the client starts the corresponding program day, backend materialization copies the active `program_set` metrics into session-owned `session_set.planned_*` columns. From that point the workout reads the frozen session PLAN and later FACT changes do not rewrite the program prescription.
 
 ## Public React API
 
 ```ts
-interface SetEntryProps {
-  isOpen: boolean;
-  data: SetEntryData;
-  onClose: () => void;
-  onSave: (fact: SetEntryFactDraft) => Promise<void>;
-  onOpenHistory: () => void;
-  onOpenChat: () => void;
-}
+type SetEntryProps =
+  | {
+      mode: 'workout';
+      isOpen: boolean;
+      data: SetEntryData;
+      onClose: () => void;
+      onSave: (fact: SetEntryFactDraft) => Promise<void>;
+      onOpenHistory: () => void;
+      onOpenChat: () => void;
+    }
+  | {
+      mode: 'plan';
+      isOpen: boolean;
+      data: SetEntryData;
+      programExerciseId: number;
+      onClose: () => void;
+      onOpenHistory: () => void;
+      onOpenChat: () => void;
+    };
 ```
 
-The parent controls whether the dialog is open. `SetEntry` uses the shared UI Kit `Modal` and its `actions` contract for the Save action instead of rendering a parallel local confirmation button.
+The discriminant is mandatory. Existing live-workout usage must pass `mode="workout"`; this mode preserves the pre-existing SetEntry behavior and parent-owned save callback. Coach program authoring passes `mode="plan"` plus the planned exercise parent ID.
 
-The fitness-band picker is part of `SetEntry` because its selected values are part of the same unsaved FACT draft. Exercise history and Telegram chat are separate modules/integrations and are opened through callbacks.
+The parent controls whether the dialog is open. `SetEntry` uses the shared UI Kit `Modal` and its `actions` contract for the Save action instead of rendering a parallel local confirmation button.
 
 ## UI Kit reuse
 
@@ -80,11 +107,11 @@ The module must prefer shared UI Kit primitives over local equivalents:
 
 - `Modal` owns dialog behavior, close behavior and Save actions;
 - `TextInput` is used for numeric inputs with `type="number"`, including unit labels (`КГ`, `ПОВТ.`, `КМ`, `МИН`, `СЕК`);
-- `TextArea` owns the comment field;
+- `TextArea` owns the workout comment field;
 - `Button`, `IconButton`, `Badge`, `Divider`, `Surface` and `Text` are reused for their corresponding roles;
 - shared icon assets are reused for plus/minus and the Tabler `ripple` / `library` controls.
 
-Custom controls remain only where the UI Kit has no matching interaction contract, notably the multi-select fitness-band color buttons and selectable badge wrappers.
+Custom controls remain only where the UI Kit has no matching interaction contract, notably the workout fitness-band color buttons and selectable badge wrappers. Plan mode does not introduce alternate UI Kit mechanics or visual variants.
 
 ## Tracking types
 
@@ -100,28 +127,30 @@ The component renders only fields relevant to the supplied tracking type.
 
 ## Save boundary
 
-`SetEntry` does not call `fetch` and does not know Worker routes, D1 or Telegram authentication.
+`SetEntry` does not use ad hoc `fetch`. Both modes use established typed boundaries.
 
-Pressing the shared Modal Save action invokes `onSave` with the complete editable FACT draft:
+### Workout mode
 
-- actual metrics;
-- set label (`warmup`, `easy`, `normal`, `hard`, `drop`);
-- RPE;
-- comment;
-- selected fitness bands.
+Pressing Save invokes the parent `onSave` with the complete editable FACT draft: actual metrics, set label, RPE, comment and selected fitness bands. The parent combines that FACT with stable session identity, calls the typed workout API and reconciles canonical session state.
 
-While that promise is pending, the modal blocks closing, duplicate Save and edits to the submitted draft. On success the modal closes. Reopening creates a fresh draft from the parent's canonical `FACT -> PLAN -> empty` data, so a normalized server FACT cannot be overwritten later by the stale pre-save draft. On failure the modal stays open, re-enables editing and shows the error.
+This is the existing workout contract and must not change as a side effect of plan-mode work.
 
-The parent/workout owner combines that FACT with stable identity from `SetEntryData`, invokes the typed frontend API client, then reconciles the canonical server response back into workout state.
+### Plan mode
 
-PLAN, PREVIOUS and display strings are not user input and must not be sent back merely because the dialog displays them.
+Pressing Save calls the typed frontend planned-set API from `SetEntry` itself. The component supplies the `programExerciseId` parent identity and the authored metric values. The Worker authenticates the Telegram user, requires the coach role, verifies program ownership / active coach-client relationship, validates the payload and persists a new active `program_set` row.
+
+The frontend never treats a supplied `programExerciseId` as authorization. D1 remains authoritative. `setNumber` is the one-based UI number and maps to zero-based `program_set.position`.
+
+While either save is pending, the modal blocks closing, duplicate Save and edits to the submitted draft. On success the modal closes. On failure it stays open, re-enables editing and shows the error.
 
 ## Adjacent modules
 
-`SessionExercise` is the direct UI parent for live workout use. It opens `SetEntry` from a `session_set` row and maps the already-projected session PLAN / PREVIOUS / FACT into `SetEntryData`.
+`SessionExercise` is the direct UI parent for live workout use and always opens `SetEntry` in `workout` mode. It maps the already-projected session PLAN / PREVIOUS / FACT into `SetEntryData`.
+
+Coach program authoring owns when a `plan` SetEntry is opened and supplies the planned exercise ID and already-resolved display/previous context.
 
 Exercise history is a separate React module with its own data/API contract. `SetEntry` only emits `onOpenHistory`.
 
 Telegram chat is owned by the Telegram/navigation integration. `SetEntry` only emits `onOpenChat`.
 
-Workout start/resume/snapshot behavior belongs to the workout owner/backend and is not an extra REST API owned by `SetEntry`.
+Workout start/resume/snapshot behavior belongs to the workout owner/backend. Plan-mode persistence must not mutate started session snapshots or live workout FACT.
