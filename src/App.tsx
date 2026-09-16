@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import {
   acceptCurrentInvite,
   addRole,
@@ -18,7 +18,9 @@ import {
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
 import { getTelegramWebApp, prepareTelegramWebApp } from './telegram';
-import { Button } from './ui';
+import { Button, FloatingActionButton } from './ui';
+import workoutFabIconUrl from './ui/icons/1789370174232.png';
+import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 
@@ -142,10 +144,17 @@ export function App() {
   const [coachDestination, setCoachDestination] = useState<AppDestination>('clients');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
+  const [workoutOpen, setWorkoutOpen] = useState(false);
+  const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
   }, []);
+  const closeWorkout = useCallback(() => setWorkoutOpen(false), []);
+  const workoutNavigationContext = useMemo<NavigationContext>(() => ({
+    title: 'Тренировка',
+    onBack: closeWorkout,
+  }), [closeWorkout]);
 
   useEffect(() => {
     const webApp = getTelegramWebApp();
@@ -223,14 +232,18 @@ export function App() {
 
   const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
   const changeDestination = (next: AppDestination) => {
+    setWorkoutOpen(false);
     setNavigationContext(null);
     if (state.activeRole === 'coach') setCoachDestination(next);
     else setClientDestination(next);
   };
   const switchRole = (role: Role) => {
+    setWorkoutOpen(false);
     setNavigationContext(null);
     dispatch({ type: 'switch-role', role });
   };
+  const shellContext = workoutOpen ? workoutNavigationContext : navigationContext;
+  const workoutFabLabel = workoutStatus === 'active' ? 'Продолжить тренировку' : 'Открыть тренировку';
 
   return (
     <ClientCoachProvider
@@ -242,11 +255,27 @@ export function App() {
         me={state.me}
         activeRole={state.activeRole}
         destination={destination}
-        context={navigationContext}
+        context={shellContext}
         onDestinationChange={changeDestination}
         onRoleSwitch={switchRole}
+        floatingAction={(
+          <FloatingActionButton
+            placement="left"
+            label={workoutFabLabel}
+            isShown={!workoutOpen}
+            onClick={() => setWorkoutOpen(true)}
+          >
+            <img src={workoutFabIconUrl} width="32" height="32" alt="" aria-hidden="true" />
+          </FloatingActionButton>
+        )}
       >
-        {destination === 'settings' ? (
+        {workoutOpen ? (
+          <WorkoutSessionScreen
+            initData={state.initData}
+            onClose={closeWorkout}
+            onSessionLifecycleChange={({ status }) => setWorkoutStatus(status)}
+          />
+        ) : destination === 'settings' ? (
           <SettingsPage onNavigationContextChange={handleNavigationContextChange} />
         ) : state.activeRole === 'coach' ? (
           <CoachShell

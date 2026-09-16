@@ -43,12 +43,6 @@ function reorderExerciseData(session: ActiveWorkoutSession, ids: number[]): Acti
   return { ...session, exercises };
 }
 
-function exerciseOrder(session: WorkoutSessionState): number[] {
-  return session.status === 'draft'
-    ? []
-    : session.exercises.map((exercise) => exercise.sessionExerciseId);
-}
-
 export function WorkoutSessionScreen({
   initData,
   trainingPlanId = null,
@@ -70,23 +64,37 @@ export function WorkoutSessionScreen({
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
   const lifecycleCallbackRef = useRef(onSessionLifecycleChange);
-  const reorderQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const reorderVersionRef = useRef(0);
-  const acknowledgedExerciseOrderRef = useRef<number[]>([]);
+  const mountedRef = useRef(true);
+  const sessionGenerationRef = useRef(0);
+  const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const mutationIntentVersionRef = useRef(0);
+  const acknowledgedSessionRef = useRef<WorkoutSessionState | null>(null);
 
   useEffect(() => {
     lifecycleCallbackRef.current = onSessionLifecycleChange;
   }, [onSessionLifecycleChange]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      sessionGenerationRef.current += 1;
+      mutationIntentVersionRef.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
+    const generation = sessionGenerationRef.current + 1;
+    sessionGenerationRef.current = generation;
+    mutationIntentVersionRef.current += 1;
     let cancelled = false;
     setLoading(true);
     setInitializationError(null);
 
     initializeWorkoutSession(initData, trainingPlanId)
       .then(({ session: nextSession }) => {
-        if (cancelled) return;
-        acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
+        if (cancelled || !mountedRef.current || generation !== sessionGenerationRef.current) return;
+        acknowledgedSessionRef.current = nextSession;
         setSession(nextSession);
         setMessage(null);
         if (nextSession.status === 'draft') {
@@ -95,11 +103,11 @@ export function WorkoutSessionScreen({
         lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
       })
       .catch((error: unknown) => {
-        if (cancelled) return;
+        if (cancelled || !mountedRef.current || generation !== sessionGenerationRef.current) return;
         setInitializationError(errorMessage(error, 'Не удалось подготовить тренировку'));
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && mountedRef.current && generation === sessionGenerationRef.current) setLoading(false);
       });
 
     return () => { cancelled = true; };
@@ -108,17 +116,46 @@ export function WorkoutSessionScreen({
   const activeSession = session?.status === 'active' || session?.status === 'completed' ? session : null;
   const draftSession = session?.status === 'draft' ? session : null;
 
+  function nextMutationIntent() {
+    mutationIntentVersionRef.current += 1;
+    return {
+      generation: sessionGenerationRef.current,
+      version: mutationIntentVersionRef.current,
+    };
+  }
+
+  function isCurrentGeneration(intent: { generation: number }) {
+    return mountedRef.current && intent.generation === sessionGenerationRef.current;
+  }
+
+  function isCurrentIntent(intent: { generation: number; version: number }) {
+    return isCurrentGeneration(intent) && intent.version === mutationIntentVersionRef.current;
+  }
+
+  function enqueueMutation<T>(operation: () => Promise<T>): Promise<T> {
+    const queued = mutationQueueRef.current
+      .catch(() => undefined)
+      .then(operation);
+    mutationQueueRef.current = queued.then(() => undefined, () => undefined);
+    return queued;
+  }
+
   async function startDraft(input: { type: 'own' } | { type: 'program'; programDayId: number }) {
     if (!draftSession) return;
+    const sessionId = draftSession.sessionId;
+    const intent = nextMutationIntent();
     setBusyLabel(input.type === 'own' ? 'Начинаем свою тренировку…' : 'Загружаем свежий план…');
     setMessage(null);
     try {
-      const { session: nextSession } = await startWorkoutSession(initData, draftSession.sessionId, input);
-      acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
+      const { session: nextSession } = await enqueueMutation(() => startWorkoutSession(initData, sessionId, input));
+      if (!isCurrentGeneration(intent)) return;
+      acknowledgedSessionRef.current = nextSession;
+      if (!isCurrentIntent(intent)) return;
       setSession(nextSession);
       setDayPickerOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
     } catch (error) {
+      if (!isCurrentIntent(intent)) return;
       if (error instanceof ApiError && error.code === 'PROGRAM_DAY_INVALID') {
         setMessage('План изменился. Обновляем доступные дни…');
         setRetryVersion((version) => version + 1);
@@ -126,65 +163,68 @@ export function WorkoutSessionScreen({
         setMessage(errorMessage(error, 'Не удалось начать тренировку'));
       }
     } finally {
-      setBusyLabel(null);
+      if (isCurrentGeneration(intent)) setBusyLabel(null);
     }
   }
 
   async function handleSaveSet(input: SaveSessionSetInput) {
     if (!activeSession || activeSession.status !== 'active') throw new Error('Тренировка не активна');
-    const { session: nextSession } = await saveWorkoutSessionSet(
+    const sessionId = activeSession.sessionId;
+    const intent = nextMutationIntent();
+    const { session: nextSession } = await enqueueMutation(() => saveWorkoutSessionSet(
       initData,
-      activeSession.sessionId,
+      sessionId,
       input.sessionSetId,
       input.fact,
-    );
-    acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
-    setSession(nextSession);
+    ));
+    if (!isCurrentGeneration(intent)) return;
+    acknowledgedSessionRef.current = nextSession;
+    if (isCurrentIntent(intent)) setSession(nextSession);
   }
 
   function handleReorder(items: SortableListItem[]) {
     if (!activeSession || activeSession.status !== 'active') return;
+    const sessionId = activeSession.sessionId;
     const ids = items.map((item) => Number(item.id));
-    const version = reorderVersionRef.current + 1;
-    reorderVersionRef.current = version;
-    setSession(reorderExerciseData(activeSession, ids));
+    const intent = nextMutationIntent();
+    setSession((currentSession) => {
+      if (!currentSession || currentSession.status !== 'active' || currentSession.sessionId !== sessionId) return currentSession;
+      return reorderExerciseData(currentSession, ids);
+    });
     setMessage(null);
 
-    reorderQueueRef.current = reorderQueueRef.current
-      .catch(() => undefined)
-      .then(async () => {
-        try {
-          const { session: nextSession } = await reorderWorkoutSessionExercises(initData, activeSession.sessionId, ids);
-          acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
-          if (version === reorderVersionRef.current) setSession(nextSession);
-        } catch (error) {
-          if (version === reorderVersionRef.current) {
-            const acknowledgedIds = acknowledgedExerciseOrderRef.current;
-            setSession((currentSession) => {
-              if (!currentSession || currentSession.status === 'draft') return currentSession;
-              return reorderExerciseData(currentSession, acknowledgedIds);
-            });
-            setMessage(errorMessage(error, 'Не удалось сохранить порядок упражнений'));
-          }
-        }
+    void enqueueMutation(() => reorderWorkoutSessionExercises(initData, sessionId, ids))
+      .then(({ session: nextSession }) => {
+        if (!isCurrentGeneration(intent)) return;
+        acknowledgedSessionRef.current = nextSession;
+        if (isCurrentIntent(intent)) setSession(nextSession);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrentIntent(intent)) return;
+        setSession(acknowledgedSessionRef.current);
+        setMessage(errorMessage(error, 'Не удалось сохранить порядок упражнений'));
       });
   }
 
   async function handleComplete() {
     if (!activeSession || activeSession.status !== 'active') return;
+    const sessionId = activeSession.sessionId;
+    const intent = nextMutationIntent();
     setBusyLabel('Завершаем тренировку…');
     setMessage(null);
     try {
-      const { session: nextSession } = await completeWorkoutSession(initData, activeSession.sessionId);
-      acknowledgedExerciseOrderRef.current = exerciseOrder(nextSession);
+      const { session: nextSession } = await enqueueMutation(() => completeWorkoutSession(initData, sessionId));
+      if (!isCurrentGeneration(intent)) return;
+      acknowledgedSessionRef.current = nextSession;
+      if (!isCurrentIntent(intent)) return;
       setSession(nextSession);
       setCompleteConfirmOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
       onClose();
     } catch (error) {
-      setMessage(errorMessage(error, 'Не удалось завершить тренировку'));
+      if (isCurrentIntent(intent)) setMessage(errorMessage(error, 'Не удалось завершить тренировку'));
     } finally {
-      setBusyLabel(null);
+      if (isCurrentGeneration(intent)) setBusyLabel(null);
     }
   }
 

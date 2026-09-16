@@ -167,14 +167,16 @@ export function SessionExercise(props: SessionExerciseProps) {
             onClick={toggleCollapsed}
           />
         </List>
-        <IconButton
-          className="session-exercise__menu"
-          data-no-dnd
-          label="Опции упражнения"
-          onClick={() => onOpenExerciseMenu(data.sessionExerciseId)}
-        >
-          <SharedIcon name="dots-vertical" />
-        </IconButton>
+        {onOpenExerciseMenu ? (
+          <IconButton
+            className="session-exercise__menu"
+            data-no-dnd
+            label="Опции упражнения"
+            onClick={() => onOpenExerciseMenu(data.sessionExerciseId)}
+          >
+            <SharedIcon name="dots-vertical" />
+          </IconButton>
+        ) : null}
         <IconButton
           className={`session-exercise__collapse${collapsed ? ' session-exercise__collapse--collapsed' : ''}`}
           data-no-dnd
@@ -264,7 +266,7 @@ export function SessionExercise(props: SessionExerciseProps) {
             }}
             onClose={() => setSelectedSessionSetId(null)}
             onPlanSaved={() => props.onPlanSetSaved()}
-            onOpenHistory={() => onOpenHistory(data.exercise.id)}
+            onOpenHistory={onOpenHistory ? () => onOpenHistory(data.exercise.id) : undefined}
             onOpenChat={onOpenChat}
           />
         ) : (
@@ -293,7 +295,7 @@ export function SessionExercise(props: SessionExerciseProps) {
               sessionSetId: selectedSet.sessionSetId,
               fact,
             })}
-            onOpenHistory={() => onOpenHistory(data.exercise.id)}
+            onOpenHistory={onOpenHistory ? () => onOpenHistory(data.exercise.id) : undefined}
             onOpenChat={onOpenChat}
           />
         )

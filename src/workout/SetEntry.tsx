@@ -351,7 +351,7 @@ function SetEntryEditor(props: SetEntryProps) {
                 <SharedIcon name="ripple" />
               </IconButton>
             ) : null}
-            <IconButton disabled={saving} label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton>
+            {onOpenHistory ? <IconButton disabled={saving} label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton> : null}
           </div>
 
           {!isPlan && bandsOpen ? (
@@ -504,10 +504,12 @@ function SetEntryEditor(props: SetEntryProps) {
           </>
         ) : null}
 
-        <Button disabled={saving} className="full-width set-entry__chat-button" onClick={onOpenChat}>
-          <TelegramIcon />
-          <span>Открыть чат</span>
-        </Button>
+        {onOpenChat ? (
+          <Button disabled={saving} className="full-width set-entry__chat-button" onClick={onOpenChat}>
+            <TelegramIcon />
+            <span>Открыть чат</span>
+          </Button>
+        ) : null}
 
         {saveError ? <Text variant="footnote" className="set-entry__save-error" role="alert">{saveError}</Text> : null}
       </div>
