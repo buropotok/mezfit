@@ -87,9 +87,17 @@ const initialSession: ActiveWorkoutSession = {
   exercises: [exerciseData(1, 0, true), exerciseData(2, 1, false)],
 };
 
-const savedSession: ActiveWorkoutSession = {
+const reorderedSession: ActiveWorkoutSession = {
   ...initialSession,
-  exercises: initialSession.exercises.map((exercise) => exercise.sessionExerciseId === 1 ? {
+  exercises: [
+    { ...initialSession.exercises[1], position: 0 },
+    { ...initialSession.exercises[0], position: 1 },
+  ],
+};
+
+const finalSession: ActiveWorkoutSession = {
+  ...reorderedSession,
+  exercises: reorderedSession.exercises.map((exercise) => exercise.sessionExerciseId === 1 ? {
     ...exercise,
     sets: exercise.sets.map((set) => ({
       ...set,
@@ -105,14 +113,6 @@ const savedSession: ActiveWorkoutSession = {
   } : exercise),
 };
 
-const finalSession: ActiveWorkoutSession = {
-  ...savedSession,
-  exercises: [
-    { ...savedSession.exercises[1], position: 0 },
-    { ...savedSession.exercises[0], position: 1 },
-  ],
-};
-
 beforeEach(() => {
   initializeMock.mockReset();
   saveSetMock.mockReset();
@@ -124,7 +124,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('WorkoutSessionScreen mutation reconciliation', () => {
-  it('does not let an earlier save response overwrite a newer optimistic exercise order', async () => {
+  it('serializes a set save behind an in-flight reorder and preserves the canonical order', async () => {
     initializeMock.mockResolvedValue({ session: initialSession });
     let resolveSave: (value: { session: ActiveWorkoutSession }) => void = () => undefined;
     let resolveReorder: (value: { session: ActiveWorkoutSession }) => void = () => undefined;
@@ -139,19 +139,20 @@ describe('WorkoutSessionScreen mutation reconciliation', () => {
     );
 
     expect((await screen.findByTestId('sortable-order')).textContent).toBe('1,2');
-    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
-    await waitFor(() => expect(saveSetMock).toHaveBeenCalledTimes(1));
-
     fireEvent.click(screen.getByRole('button', { name: 'Reverse exercises' }));
     expect(screen.getByTestId('sortable-order').textContent).toBe('2,1');
-    expect(reorderMock).not.toHaveBeenCalled();
-
-    await act(async () => resolveSave({ session: savedSession }));
     await waitFor(() => expect(reorderMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    expect(saveSetMock).not.toHaveBeenCalled();
+
+    await act(async () => resolveReorder({ session: reorderedSession }));
+    await waitFor(() => expect(saveSetMock).toHaveBeenCalledTimes(1));
     expect(screen.getByTestId('sortable-order').textContent).toBe('2,1');
 
-    await act(async () => resolveReorder({ session: finalSession }));
-    await waitFor(() => expect(screen.getByTestId('sortable-order').textContent).toBe('2,1'));
+    await act(async () => resolveSave({ session: finalSession }));
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Подход 1' })).toBeNull());
+    expect(screen.getByTestId('sortable-order').textContent).toBe('2,1');
   });
 });
