@@ -9,3 +9,9 @@ export interface TelegramWebApp {
 export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
 }
+
+export function prepareTelegramWebApp(webApp: TelegramWebApp): void {
+  webApp.ready();
+  webApp.expand();
+  webApp.disableVerticalSwipes?.();
+}
