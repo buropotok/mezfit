@@ -2,7 +2,7 @@ import '../api';
 
 declare module '../api' {
   interface ProgramPhaseExerciseDetails {
-    sets: Array<{
+    sets?: Array<{
       id: number;
       setNumber: number;
       reps: number | null;
