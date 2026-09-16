@@ -14,6 +14,7 @@ import { createProgramForUser } from './lib/program-create';
 import { createProgramPhase } from './lib/program-phase-create';
 import { deleteProgramPhase } from './lib/program-phase-delete';
 import { getCoachProgramDetails } from './lib/program-details';
+import { handleCoachProgramSetRoute } from './lib/program-set-api';
 import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
@@ -319,6 +320,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);
   if (exerciseMatch) return handleExerciseRoute(request, env, Number(exerciseMatch[1]));
+
+  const programSetMatch = url.pathname.match(/^\/api\/coach\/program-exercises\/(\d+)\/sets$/);
+  if (programSetMatch) {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    return handleCoachProgramSetRoute(request, env.DB_BINDING, auth.row.id, Number(programSetMatch[1]));
+  }
 
   if (url.pathname === '/api/coach/programs' && request.method === 'GET') {
     const auth = await requireUser(request, env);
