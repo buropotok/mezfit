@@ -3,6 +3,7 @@ export interface TelegramWebApp {
   colorScheme: 'light' | 'dark';
   ready(): void;
   expand(): void;
+  disableVerticalSwipes?(): void;
 }
 
 export function getTelegramWebApp(): TelegramWebApp | null {
