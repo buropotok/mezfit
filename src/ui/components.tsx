@@ -1,8 +1,10 @@
-import { Children, isValidElement, useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
+import type { UiComponentTheme } from './componentTheme';
 import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
+import { startSpringScale } from './SpringScale';
 import './components.css';
 
 export function List({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -45,17 +47,38 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
   );
 }
 
-type TabsProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Root>;
+export type TabsMode = 'default' | 'icon';
+export type TabsIconPair = { outline: ReactElement; filled: ReactElement };
+export type TabsProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Root> & { theme?: UiComponentTheme; mode?: TabsMode };
 type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List>;
-type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger>;
+export type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger> & { icon?: TabsIconPair };
 type TabsContentProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Content>;
 type IndicatorChildProps = { children?: ReactNode; className?: string };
+type TabsContextValue = { theme: UiComponentTheme; mode: TabsMode; activeValue?: string };
 
-export function Tabs({ className = '', ...props }: TabsProps) { return <RadixTabs.Root className={`ui-tabs ${className}`.trim()} {...props} />; }
+const TabsContext = createContext<TabsContextValue>({ theme: 'default', mode: 'default' });
+
+export function Tabs({ theme = 'default', mode = 'default', className = '', value, defaultValue, onValueChange, ...props }: TabsProps) {
+  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
+  const activeValue = value ?? uncontrolledValue;
+  const handleValueChange = useCallback((nextValue: string) => {
+    if (value === undefined) setUncontrolledValue(nextValue);
+    onValueChange?.(nextValue);
+  }, [onValueChange, value]);
+
+  return (
+    <TabsContext.Provider value={{ theme, mode, activeValue }}>
+      <RadixTabs.Root {...props} value={value} defaultValue={defaultValue} onValueChange={handleValueChange} data-ui-theme={theme} data-ui-mode={mode} className={`ui-tabs ${className}`.trim()} />
+    </TabsContext.Provider>
+  );
+}
 
 export function TabsList({ className = '', children, style, ...props }: TabsListProps) {
+  const { theme, mode } = useContext(TabsContext);
+  const hasMovingIndicator = theme === 'glass' || mode === 'icon';
   const listRef = useRef<HTMLDivElement>(null);
   const [clipPath, setClipPath] = useState('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
+  const [indicatorGeometry, setIndicatorGeometry] = useState({ left: 0, width: 0 });
   const [isIndicatorReady, setIndicatorReady] = useState(false);
 
   const updateIndicator = useCallback(() => {
@@ -63,12 +86,14 @@ export function TabsList({ className = '', children, style, ...props }: TabsList
     const active = list?.querySelector<HTMLElement>(':scope > .ui-tabs__trigger[data-state="active"]');
     if (!list || !active || list.scrollWidth <= 0) {
       setClipPath('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
+      setIndicatorGeometry({ left: 0, width: 0 });
       setIndicatorReady(false);
       return;
     }
     const left = active.offsetLeft;
     const right = Math.max(0, list.scrollWidth - active.offsetLeft - active.offsetWidth);
     setClipPath(`inset(.25rem ${right}px .25rem ${left}px round var(--ui-tab-radius))`);
+    setIndicatorGeometry({ left, width: active.offsetWidth });
     setIndicatorReady(true);
   }, []);
 
@@ -86,23 +111,50 @@ export function TabsList({ className = '', children, style, ...props }: TabsList
     };
   }, [children, updateIndicator]);
 
-  const indicatorChildren = Children.map(children, (child) => {
+  const indicatorChildren = hasMovingIndicator ? null : Children.map(children, (child) => {
     if (!isValidElement(child)) return child;
     const element = child as ReactElement<IndicatorChildProps>;
     return <div className={`ui-tabs__indicator-tab ${element.props.className ?? ''}`.trim()}>{element.props.children}</div>;
   });
+  const indicatorStyle = hasMovingIndicator
+    ? { '--ui-tabs-indicator-left': `${indicatorGeometry.left}px`, '--ui-tabs-indicator-width': `${indicatorGeometry.width}px` } as CSSProperties
+    : { '--ui-tabs-clip-path': clipPath } as CSSProperties;
 
   return (
     <RadixTabs.List ref={listRef} className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()} style={style} {...props}>
       {children}
-      <div className="ui-tabs__active-indicator" style={{ '--ui-tabs-clip-path': clipPath } as CSSProperties} aria-hidden="true">
+      <div className={`ui-tabs__active-indicator${hasMovingIndicator ? ' ui-tabs__active-indicator--moving' : ''}`} style={indicatorStyle} aria-hidden="true">
         {indicatorChildren}
       </div>
     </RadixTabs.List>
   );
 }
 
-export function TabsTrigger({ className = '', onPointerDown, onKeyDown, disabled, ...props }: TabsTriggerProps) { return <RadixTabs.Trigger className={`ui-tabs__trigger ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />; }
+export function TabsTrigger({ icon, className = '', children, onPointerDown, onKeyDown, disabled, value, ...props }: TabsTriggerProps) {
+  const { mode, activeValue } = useContext(TabsContext);
+  const iconRef = useRef<HTMLSpanElement>(null);
+  const isActive = activeValue === value;
+  const wasActiveRef = useRef(isActive);
+
+  if (mode === 'icon' && !icon) {
+    throw new Error('TabsTrigger requires both outline and filled icons when Tabs mode="icon".');
+  }
+
+  useEffect(() => {
+    if (mode === 'icon' && isActive && !wasActiveRef.current && iconRef.current) startSpringScale(iconRef.current);
+    wasActiveRef.current = isActive;
+  }, [isActive, mode]);
+
+  const content = mode === 'icon' ? <>
+    <span ref={iconRef} className="ui-tabs__icon" aria-hidden="true">
+      <span className="ui-tabs__icon-outline">{icon?.outline}</span>
+      <span className="ui-tabs__icon-filled">{icon?.filled}</span>
+    </span>
+    <span className="ui-tabs__label">{children}</span>
+  </> : children;
+
+  return <RadixTabs.Trigger value={value} className={`ui-tabs__trigger ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</RadixTabs.Trigger>;
+}
 export function TabsContent({ className = '', ...props }: TabsContentProps) { return <RadixTabs.Content className={`ui-tabs__content ${className}`.trim()} {...props} />; }
 
 export type ModalAction = {
