@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
-import type { UiComponentTheme } from './componentTheme';
 import type { UiIconPair } from './iconPair';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
