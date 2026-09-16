@@ -3,7 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getMe } from './api';
 import { App } from './App';
-import workoutFabIconUrl from './assets/workout-fab.jpg';
+import workoutFabIconUrl from './assets/strong.png';
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>();
