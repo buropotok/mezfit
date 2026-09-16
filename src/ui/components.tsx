@@ -37,11 +37,11 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
   );
 }
 
-type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; children: ReactNode };
+type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; children: ReactNode };
 
-export function FloatingActionButton({ label, isShown = true, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   return (
-    <button {...props} type={type} aria-label={label} aria-hidden={!isShown || undefined} tabIndex={isShown ? 0 : -1} disabled={disabled} onClick={isShown ? onClick : undefined} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} className={`ui-fab${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}>{children}</button>
+    <button {...props} type={type} aria-label={label} aria-hidden={!isShown || undefined} tabIndex={isShown ? 0 : -1} disabled={disabled} onClick={isShown ? onClick : undefined} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}>{children}</button>
   );
 }
 
