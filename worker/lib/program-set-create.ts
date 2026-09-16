@@ -1,3 +1,5 @@
+export type ProgramSetTrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
+
 export interface ProgramSetInput {
   setNumber: number;
   weightKg: number | null;
@@ -11,10 +13,11 @@ export interface ProgramSetView extends ProgramSetInput {
   programExerciseId: number;
 }
 
-interface ProgramExerciseOwnerRow {
+export interface ProgramExerciseOwnerRow {
   program_id: number;
   coach_user_id: number;
   user_id: number;
+  tracking_type: ProgramSetTrackingType;
 }
 
 interface ProgramSetRow {
@@ -32,8 +35,13 @@ export async function getProgramExerciseOwner(
   programExerciseId: number,
 ): Promise<ProgramExerciseOwnerRow | null> {
   return db.prepare(`
-    SELECT tp.id AS program_id, COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) AS coach_user_id, tp.user_id
+    SELECT
+      tp.id AS program_id,
+      COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) AS coach_user_id,
+      tp.user_id,
+      ed.tracking_type
     FROM program_exercise pe
+    JOIN exercise_definition ed ON ed.id = pe.exercise_definition_id
     JOIN program_day pd ON pd.id = pe.program_day_id
     JOIN program_phase pp ON pp.id = pd.program_phase_id
     JOIN training_plan tp ON tp.id = pp.training_plan_id
