@@ -1,5 +1,6 @@
 export { Avatar, Button, Divider, IconButton, Surface, Text, type IconButtonProps, type SurfaceProps } from './primitives';
 export type { UiComponentTheme } from './componentTheme';
+export type { UiIconPair } from './iconPair';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge';
 export { Calendar, type CalendarProps } from './Calendar';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
