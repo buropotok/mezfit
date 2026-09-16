@@ -4,6 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell } from './NavigationShell';
 import type { TelegramBackButton } from './telegram';
 
+vi.mock('./client/ClientCoachSelectorModal', () => ({
+  ClientCoachSelectorModal: () => null,
+}));
+
 let telegramBackHandler: (() => void) | null = null;
 let backButton: TelegramBackButton;
 
