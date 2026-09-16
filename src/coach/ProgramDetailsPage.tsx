@@ -66,7 +66,42 @@ function previewSessionExercise(
   const source = phase.exercises[0] ?? null;
   const exercise = source?.exercise ?? fallbackExercise;
   if (!exercise) return null;
-  const setCount = source ? source.setCount : 3;
+
+  const sets = source ? source.sets.map((set) => ({
+    sessionSetId: set.id,
+    sourceProgramSetId: set.id,
+    position: set.setNumber - 1,
+    status: 'pending' as const,
+    plan: {
+      weightKg: set.weightKg,
+      reps: set.reps,
+      durationSeconds: set.durationSeconds,
+      distanceMeters: set.distanceMeters,
+    },
+    previous: null,
+    fact: null,
+  })) : Array.from({ length: 3 }, (_, position) => ({
+    sessionSetId: -((phase.id * 1000) + position + 1),
+    sourceProgramSetId: null,
+    position,
+    status: 'pending' as const,
+    plan: null,
+    previous: null,
+    fact: null,
+  }));
+
+  if (source) {
+    const nextPosition = sets.reduce((maximum, set) => Math.max(maximum, set.position), -1) + 1;
+    sets.push({
+      sessionSetId: -((phase.id * 1000) + nextPosition + 1),
+      sourceProgramSetId: null,
+      position: nextPosition,
+      status: 'pending',
+      plan: null,
+      previous: null,
+      fact: null,
+    });
+  }
 
   return {
     sessionExerciseId: source?.programExerciseId ?? -phase.id,
@@ -76,15 +111,7 @@ function previewSessionExercise(
     status: 'planned',
     notes: source?.notes ?? null,
     exercise,
-    sets: Array.from({ length: setCount }, (_, position) => ({
-      sessionSetId: -((phase.id * 1000) + position + 1),
-      sourceProgramSetId: null,
-      position,
-      status: 'pending',
-      plan: null,
-      previous: null,
-      fact: null,
-    })),
+    sets,
   };
 }
 
@@ -325,6 +352,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
                 program: { id: details.program.id, name: details.program.name },
               }}
               data={exercisePreviewData}
+              onPlanReconcile={() => setReloadKey((value) => value + 1)}
               onOpenExerciseMenu={() => {}}
               onOpenHistory={() => {}}
               onOpenChat={() => {}}
