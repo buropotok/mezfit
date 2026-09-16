@@ -8,7 +8,7 @@ import {
   type MeResponse,
   type Role,
 } from './api';
-import workoutFabIconUrl from './assets/workout-fab.jpg';
+import workoutFabIconUrl from './assets/strong.png';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
