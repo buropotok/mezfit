@@ -7,10 +7,13 @@ type FormFeedbackProps = {
   success?: string;
 };
 
-export type TextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & FormFeedbackProps;
+export type TextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & FormFeedbackProps & {
+  textAlign?: 'left' | 'center' | 'right';
+  showNumberControls?: boolean;
+};
 
 export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput(
-  { id, label, error, success, className = '', value, defaultValue, placeholder, 'aria-describedby': ariaDescribedBy, ...props },
+  { id, label, error, success, textAlign = 'left', showNumberControls = true, className = '', value, defaultValue, placeholder, 'aria-describedby': ariaDescribedBy, ...props },
   ref,
 ) {
   const generatedId = useId();
@@ -21,9 +24,10 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
   const hasValue = value !== undefined ? String(value).length > 0 : defaultValue !== undefined && String(defaultValue).length > 0;
   const stateClass = error ? ' ui-text-input--error' : success ? ' ui-text-input--success' : '';
   const placeholderClass = label && placeholder ? ' ui-text-input--has-placeholder' : '';
+  const numberControlsClass = props.type === 'number' && !showNumberControls ? ' ui-text-input--hide-number-controls' : '';
 
   return (
-    <div className={`ui-text-input${hasValue ? ' ui-text-input--filled' : ''}${placeholderClass}${stateClass} ${className}`.trim()}>
+    <div className={`ui-text-input ui-text-input--align-${textAlign}${hasValue ? ' ui-text-input--filled' : ''}${placeholderClass}${stateClass}${numberControlsClass} ${className}`.trim()}>
       <input
         ref={ref}
         id={inputId}
