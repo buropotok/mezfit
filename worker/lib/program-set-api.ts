@@ -17,6 +17,12 @@ function metric(value: unknown): number | null | undefined {
   return value;
 }
 
+function integerMetric(value: unknown): number | null | undefined {
+  const parsed = metric(value);
+  if (parsed === undefined || parsed === null) return parsed;
+  return Number.isInteger(parsed) ? parsed : undefined;
+}
+
 export async function handleCoachProgramSetRoute(
   request: Request,
   db: D1Database,
@@ -38,34 +44,38 @@ export async function handleCoachProgramSetRoute(
     if (!relationship) return error(404, 'PROGRAM_EXERCISE_NOT_FOUND', 'Program exercise not found');
   }
 
-  let body: Record<string, unknown>;
+  let parsedBody: unknown;
   try {
-    body = (await request.json()) as Record<string, unknown>;
+    parsedBody = await request.json();
   } catch {
     return error(400, 'INVALID_JSON', 'Request body must be valid JSON');
   }
+  if (typeof parsedBody !== 'object' || parsedBody === null || Array.isArray(parsedBody)) {
+    return error(400, 'INVALID_JSON', 'Request body must be a JSON object');
+  }
+  const body = parsedBody as Record<string, unknown>;
 
   const setNumber = body.setNumber;
   if (!Number.isInteger(setNumber) || (setNumber as number) <= 0) {
     return error(400, 'INVALID_SET_NUMBER', 'Set number must be a positive integer');
   }
 
-  const input: ProgramSetInput = {
-    setNumber: setNumber as number,
-    weightKg: metric(body.weightKg) ?? null,
-    reps: metric(body.reps) ?? null,
-    durationSeconds: metric(body.durationSeconds) ?? null,
-    distanceMeters: metric(body.distanceMeters) ?? null,
-  };
-  if (
-    metric(body.weightKg) === undefined
-    || metric(body.reps) === undefined
-    || metric(body.durationSeconds) === undefined
-    || metric(body.distanceMeters) === undefined
-  ) {
-    return error(400, 'INVALID_SET_METRICS', 'Set metrics must be non-negative numbers or null');
+  const weightKg = metric(body.weightKg);
+  const reps = integerMetric(body.reps);
+  const durationSeconds = integerMetric(body.durationSeconds);
+  const distanceMeters = metric(body.distanceMeters);
+  if (weightKg === undefined || reps === undefined || durationSeconds === undefined || distanceMeters === undefined) {
+    return error(400, 'INVALID_SET_METRICS', 'Set metrics must be non-negative values or null');
   }
 
-  const set = await createProgramSet(db, programExerciseId, input);
+  const input: ProgramSetInput = {
+    setNumber: setNumber as number,
+    weightKg,
+    reps,
+    durationSeconds,
+    distanceMeters,
+  };
+  const set = await createProgramSet(db, programExerciseId, coachUserId, input);
+  if (!set) return error(409, 'PROGRAM_SET_EXISTS', 'A set with this number already exists');
   return json({ set }, { status: 201 });
 }
