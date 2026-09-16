@@ -86,6 +86,7 @@ const planPreviewExercise: SessionExerciseData = {
   sessionExerciseId: -2,
   sourceProgramExerciseId: -2,
   status: 'planned',
+  exercise: { ...previewExercise.exercise, id: -2, name: 'Приседания со штангой', category_code: 'legs' },
   notes: 'Демонстрация плана тренера: сохранённые подходы и отдельная строка добавления.',
   sets: previewExercise.sets.slice(0, 2).map((set) => ({
     ...set,
@@ -138,9 +139,9 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
       </div>
 
       <section className="modules-gallery__example" aria-labelledby="module-session-exercise-title">
-        <Text id="module-session-exercise-title" variant="headline">Карточка упражнения и подходов · workout</Text>
+        <Text id="module-session-exercise-title" variant="headline">Карточка упражнения и подходов</Text>
         <Text variant="footnote" tone="muted">
-          Нажатие на строку подхода открывает настоящий модуль ввода результата подхода.
+          Режим workout. Нажатие на строку подхода открывает настоящий модуль ввода результата подхода.
         </Text>
         <SessionExercise
           mode="workout"
