@@ -264,7 +264,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   const exercisePreviewData = exercisePreviewPhase
     ? previewSessionExercise(exercisePreviewPhase, selectedExercise, exercisePreviewFallback)
     : null;
-  const createSet = exercisePreviewPhase && exercisePreviewData?.sourceProgramExerciseId !== null
+  const createSet = exercisePreviewPhase && exercisePreviewData && exercisePreviewData.sourceProgramExerciseId !== null
     ? nextPlanSet(exercisePreviewPhase.id, exercisePreviewData)
     : null;
 
