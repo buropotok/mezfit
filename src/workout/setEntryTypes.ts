@@ -1,4 +1,4 @@
-import type { TrackingType } from '../api';
+import type { PlannedSet, TrackingType } from '../api';
 
 export type SetLabel = 'warmup' | 'easy' | 'normal' | 'hard' | 'drop';
 
@@ -53,14 +53,25 @@ export interface SetEntryFactDraft {
   bands: ResistanceBandCode[];
 }
 
-export interface SetEntryProps {
+interface SetEntrySharedProps {
   isOpen: boolean;
   data: SetEntryData;
   onClose: () => void;
-  onSave: (fact: SetEntryFactDraft) => Promise<void>;
   onOpenHistory: () => void;
   onOpenChat: () => void;
 }
+
+export type SetEntryProps =
+  | (SetEntrySharedProps & {
+      mode?: 'workout';
+      onSave: (fact: SetEntryFactDraft) => Promise<void>;
+    })
+  | (SetEntrySharedProps & {
+      mode: 'plan';
+      programExerciseId: number;
+      onPlanSaved?: (set: PlannedSet) => void;
+      onSave?: never;
+    });
 
 export function emptySetMetrics(): SetMetrics {
   return {

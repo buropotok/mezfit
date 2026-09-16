@@ -106,41 +106,42 @@ function SetStatus({ set }: { set: SessionExerciseSetData }) {
   return <span className="session-exercise__set-status">{set.position + 1}</span>;
 }
 
-function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType): ReactNode | undefined {
+function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, planMode: boolean): ReactNode | undefined {
   const plan = formatSessionSetMetrics(set.plan, trackingType);
   const previous = formatSessionSetMetrics(set.previous?.metrics ?? null, trackingType);
-  if (!plan && !previous) return undefined;
+  if ((!plan || planMode) && !previous) return undefined;
 
   return (
     <span className="session-exercise__set-context">
-      {plan ? <span className="session-exercise__set-plan">План: {plan}</span> : null}
+      {!planMode && plan ? <span className="session-exercise__set-plan">План: {plan}</span> : null}
       {previous ? <Text variant="caption" tone="muted">Пред.: {previous}</Text> : null}
     </span>
   );
 }
 
-export function SessionExercise({
-  context,
-  data,
-  collapsed: controlledCollapsed,
-  defaultCollapsed = false,
-  onCollapsedChange,
-  onSaveSet,
-  onOpenExerciseMenu,
-  onOpenHistory,
-  onOpenChat,
-}: SessionExerciseProps) {
+export function SessionExercise(props: SessionExerciseProps) {
+  const {
+    context,
+    data,
+    collapsed: controlledCollapsed,
+    defaultCollapsed = false,
+    onCollapsedChange,
+    onOpenExerciseMenu,
+    onOpenHistory,
+    onOpenChat,
+  } = props;
   const bodyId = useId();
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const collapsed = controlledCollapsed ?? internalCollapsed;
   const [selectedSessionSetId, setSelectedSessionSetId] = useState<number | null>(null);
+  const renderedSets = props.mode === 'plan' ? [...data.sets, props.createSet] : data.sets;
   const completedSets = data.sets.filter((set) => set.status === 'completed').length;
   const totalSets = data.sets.length;
   const progress = totalSets === 0 ? 0 : Math.round((completedSets / totalSets) * 100);
   const exerciseName = exerciseDisplayName(data.exercise);
   const selectedSet = selectedSessionSetId === null
     ? null
-    : data.sets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
+    : renderedSets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
   const programIdentity: SetEntryProgramIdentity = context.program
     ? { programId: context.program.id, programName: context.program.name }
     : { programId: null, programName: null };
@@ -190,9 +191,14 @@ export function SessionExercise({
         {data.notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{data.notes}</Text> : null}
 
         <List className="session-exercise__sets">
-          {data.sets.map((set) => {
+          {renderedSets.map((set) => {
             const setNumber = set.position + 1;
-            const fact = formatSessionSetMetrics(set.fact?.metrics ?? null, data.exercise.tracking_type);
+            const planMode = props.mode === 'plan';
+            const metrics = formatSessionSetMetrics(
+              planMode ? set.plan : set.fact?.metrics ?? null,
+              data.exercise.tracking_type,
+            );
+            const canOpenSet = !planMode || set.sourceProgramSetId === null;
             return (
               <ListItem
                 key={set.sessionSetId}
@@ -201,20 +207,20 @@ export function SessionExercise({
                 title={(
                   <span className="session-exercise__set-title">
                     <span>Подход {setNumber}</span>
-                    <span className={`session-exercise__set-fact${fact ? '' : ' session-exercise__set-fact--empty'}`}>
-                      {fact ?? 'ввести факт'}
+                    <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
+                      {metrics ?? (planMode ? 'ввести план' : 'ввести факт')}
                     </span>
                   </span>
                 )}
-                subtitle={setSubtitle(set, data.exercise.tracking_type)}
+                subtitle={setSubtitle(set, data.exercise.tracking_type, planMode)}
                 trailing={(
                   <span className="session-exercise__set-trailing">
-                    {set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
-                    <SharedIcon name="chevron-right" />
+                    {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
+                    {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
                   </span>
                 )}
-                aria-label={`Открыть подход ${setNumber}`}
-                onClick={() => setSelectedSessionSetId(set.sessionSetId)}
+                aria-label={canOpenSet ? `Открыть подход ${setNumber}` : undefined}
+                onClick={canOpenSet ? () => setSelectedSessionSetId(set.sessionSetId) : undefined}
               />
             );
           })}
@@ -236,33 +242,61 @@ export function SessionExercise({
       </div>
 
       {selectedSet ? (
-        <SetEntry
-          isOpen
-          data={{
-            identity: {
-              ...programIdentity,
-              exerciseDefinitionId: data.exercise.id,
-              exerciseName,
-              setNumber: selectedSet.position + 1,
-              workoutDate: context.workoutDate,
-              sourceProgramSetId: selectedSet.sourceProgramSetId,
+        props.mode === 'plan' ? (
+          <SetEntry
+            mode="plan"
+            programExerciseId={props.programExerciseId}
+            isOpen
+            data={{
+              identity: {
+                ...programIdentity,
+                exerciseDefinitionId: data.exercise.id,
+                exerciseName,
+                setNumber: selectedSet.position + 1,
+                workoutDate: context.workoutDate,
+                sourceProgramSetId: selectedSet.sourceProgramSetId,
+                sessionSetId: selectedSet.sessionSetId,
+              },
+              trackingType: data.exercise.tracking_type,
+              plan: selectedSet.plan,
+              previous: selectedSet.previous,
+              fact: selectedSet.fact,
+            }}
+            onClose={() => setSelectedSessionSetId(null)}
+            onPlanSaved={() => props.onPlanSetSaved()}
+            onOpenHistory={() => onOpenHistory(data.exercise.id)}
+            onOpenChat={onOpenChat}
+          />
+        ) : (
+          <SetEntry
+            mode="workout"
+            isOpen
+            data={{
+              identity: {
+                ...programIdentity,
+                exerciseDefinitionId: data.exercise.id,
+                exerciseName,
+                setNumber: selectedSet.position + 1,
+                workoutDate: context.workoutDate,
+                sourceProgramSetId: selectedSet.sourceProgramSetId,
+                sessionSetId: selectedSet.sessionSetId,
+              },
+              trackingType: data.exercise.tracking_type,
+              plan: selectedSet.plan,
+              previous: selectedSet.previous,
+              fact: selectedSet.fact,
+            }}
+            onClose={() => setSelectedSessionSetId(null)}
+            onSave={(fact) => props.onSaveSet({
+              workoutSessionId: context.workoutSessionId,
+              sessionExerciseId: data.sessionExerciseId,
               sessionSetId: selectedSet.sessionSetId,
-            },
-            trackingType: data.exercise.tracking_type,
-            plan: selectedSet.plan,
-            previous: selectedSet.previous,
-            fact: selectedSet.fact,
-          }}
-          onClose={() => setSelectedSessionSetId(null)}
-          onSave={(fact) => onSaveSet({
-            workoutSessionId: context.workoutSessionId,
-            sessionExerciseId: data.sessionExerciseId,
-            sessionSetId: selectedSet.sessionSetId,
-            fact,
-          })}
-          onOpenHistory={() => onOpenHistory(data.exercise.id)}
-          onOpenChat={onOpenChat}
-        />
+              fact,
+            })}
+            onOpenHistory={() => onOpenHistory(data.exercise.id)}
+            onOpenChat={onOpenChat}
+          />
+        )
       ) : null}
     </article>
   );

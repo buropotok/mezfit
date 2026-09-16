@@ -7,12 +7,13 @@ import {
   type CoachProgramDetails,
   type ExerciseDefinition,
   type ProgramPhaseDetails,
+  type ProgramPhaseExerciseDetails,
   type ProgramStatus,
 } from '../api';
 import { ProgramPhaseCard } from '../program/ProgramPhaseCard';
 import { Avatar, Badge, Button, FloatingActionButton, List, ListItem, Modal, Surface, Text, TextInput } from '../ui';
 import { SessionExercise } from '../workout/SessionExercise';
-import type { SessionExerciseData } from '../workout/sessionExerciseTypes';
+import type { SessionExerciseData, SessionExerciseSetData } from '../workout/sessionExerciseTypes';
 import './program-details.css';
 
 function AddIcon() {
@@ -61,12 +62,40 @@ function exerciseProgressLabel(details: CoachProgramDetails): string {
 
 function previewSessionExercise(
   phase: ProgramPhaseDetails,
+  selectedExercise: ProgramPhaseExerciseDetails | null,
   fallbackExercise: ExerciseDefinition | null,
 ): SessionExerciseData | null {
-  const source = phase.exercises[0] ?? null;
+  const source = selectedExercise ?? phase.exercises[0] ?? null;
   const exercise = source?.exercise ?? fallbackExercise;
   if (!exercise) return null;
-  const setCount = source ? source.setCount : 3;
+
+  let sets: SessionExerciseData['sets'];
+  if (source) {
+    sets = (source.sets ?? []).map((set) => ({
+      sessionSetId: set.id,
+      sourceProgramSetId: set.id,
+      position: set.setNumber - 1,
+      status: 'pending',
+      plan: {
+        weightKg: set.weightKg,
+        reps: set.reps,
+        durationSeconds: set.durationSeconds,
+        distanceMeters: set.distanceMeters,
+      },
+      previous: null,
+      fact: null,
+    }));
+  } else {
+    sets = Array.from({ length: 3 }, (_, position) => ({
+      sessionSetId: -((phase.id * 1000) + position + 1),
+      sourceProgramSetId: null,
+      position,
+      status: 'pending',
+      plan: null,
+      previous: null,
+      fact: null,
+    }));
+  }
 
   return {
     sessionExerciseId: source?.programExerciseId ?? -phase.id,
@@ -76,15 +105,20 @@ function previewSessionExercise(
     status: 'planned',
     notes: source?.notes ?? null,
     exercise,
-    sets: Array.from({ length: setCount }, (_, position) => ({
-      sessionSetId: -((phase.id * 1000) + position + 1),
-      sourceProgramSetId: null,
-      position,
-      status: 'pending',
-      plan: null,
-      previous: null,
-      fact: null,
-    })),
+    sets,
+  };
+}
+
+function nextPlanSet(phaseId: number, data: SessionExerciseData): SessionExerciseSetData {
+  const nextPosition = data.sets.reduce((maximum, set) => Math.max(maximum, set.position), -1) + 1;
+  return {
+    sessionSetId: -((phaseId * 1000) + nextPosition + 1),
+    sourceProgramSetId: null,
+    position: nextPosition,
+    status: 'pending',
+    plan: null,
+    previous: null,
+    fact: null,
   };
 }
 
@@ -97,6 +131,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   const [phaseCreateBusy, setPhaseCreateBusy] = useState(false);
   const [phaseCreateError, setPhaseCreateError] = useState('');
   const [exercisePreviewPhaseId, setExercisePreviewPhaseId] = useState<number | null>(null);
+  const [exercisePreviewProgramExerciseId, setExercisePreviewProgramExerciseId] = useState<number | null>(null);
   const [exercisePreviewFallback, setExercisePreviewFallback] = useState<ExerciseDefinition | null>(null);
   const [exercisePreviewLoading, setExercisePreviewLoading] = useState(false);
   const [exercisePreviewError, setExercisePreviewError] = useState('');
@@ -189,11 +224,18 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   };
 
   const openExercisePreview = (phase: ProgramPhaseDetails) => {
+    setExercisePreviewProgramExerciseId(null);
+    setExercisePreviewPhaseId(phase.id);
+  };
+
+  const openExistingExercise = (phase: ProgramPhaseDetails, exercise: ProgramPhaseExerciseDetails) => {
+    setExercisePreviewProgramExerciseId(exercise.programExerciseId);
     setExercisePreviewPhaseId(phase.id);
   };
 
   const closeExercisePreview = () => {
     setExercisePreviewPhaseId(null);
+    setExercisePreviewProgramExerciseId(null);
     setExercisePreviewFallback(null);
     setExercisePreviewLoading(false);
     setExercisePreviewError('');
@@ -216,8 +258,14 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   const name = ownerName(details);
   const canCreatePhase = Boolean(phaseName.trim() && !phaseCreateBusy);
   const exercisePreviewPhase = details.phases.find((phase) => phase.id === exercisePreviewPhaseId) ?? null;
+  const selectedExercise = exercisePreviewPhase?.exercises.find(
+    (exercise) => exercise.programExerciseId === exercisePreviewProgramExerciseId,
+  ) ?? null;
   const exercisePreviewData = exercisePreviewPhase
-    ? previewSessionExercise(exercisePreviewPhase, exercisePreviewFallback)
+    ? previewSessionExercise(exercisePreviewPhase, selectedExercise, exercisePreviewFallback)
+    : null;
+  const createSet = exercisePreviewPhase && exercisePreviewData && exercisePreviewData.sourceProgramExerciseId !== null
+    ? nextPlanSet(exercisePreviewPhase.id, exercisePreviewData)
     : null;
 
   return (
@@ -271,6 +319,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
                   defaultCollapsed={phase.status !== 'active' && (hasActivePhase || index !== 0)}
                   onDelete={deletePhase}
                   onAddExercise={openExercisePreview}
+                  onOpenExercise={openExistingExercise}
                 />
               ))}
             </div>
@@ -315,18 +364,37 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
         onClose={closeExercisePreview}
       >
         {exercisePreviewPhase && exercisePreviewData ? (
-          <SessionExercise
-            context={{
-              workoutSessionId: 0,
-              workoutDate: exercisePreviewPhase.plannedStartDate ?? details.program.startedAt?.slice(0, 10) ?? '',
-              program: { id: details.program.id, name: details.program.name },
-            }}
-            data={exercisePreviewData}
-            onSaveSet={async () => {}}
-            onOpenExerciseMenu={() => {}}
-            onOpenHistory={() => {}}
-            onOpenChat={() => {}}
-          />
+          exercisePreviewData.sourceProgramExerciseId !== null && createSet ? (
+            <SessionExercise
+              mode="plan"
+              programExerciseId={exercisePreviewData.sourceProgramExerciseId}
+              createSet={createSet}
+              context={{
+                workoutSessionId: 0,
+                workoutDate: exercisePreviewPhase.plannedStartDate ?? details.program.startedAt?.slice(0, 10) ?? '',
+                program: { id: details.program.id, name: details.program.name },
+              }}
+              data={exercisePreviewData}
+              onPlanSetSaved={() => setReloadKey((value) => value + 1)}
+              onOpenExerciseMenu={() => {}}
+              onOpenHistory={() => {}}
+              onOpenChat={() => {}}
+            />
+          ) : (
+            <SessionExercise
+              mode="workout"
+              context={{
+                workoutSessionId: 0,
+                workoutDate: exercisePreviewPhase.plannedStartDate ?? details.program.startedAt?.slice(0, 10) ?? '',
+                program: { id: details.program.id, name: details.program.name },
+              }}
+              data={exercisePreviewData}
+              onSaveSet={async () => {}}
+              onOpenExerciseMenu={() => {}}
+              onOpenHistory={() => {}}
+              onOpenChat={() => {}}
+            />
+          )
         ) : exercisePreviewLoading ? (
           <Text tone="muted">Загружаем упражнение…</Text>
         ) : (
