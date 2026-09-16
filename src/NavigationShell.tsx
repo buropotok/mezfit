@@ -1,7 +1,8 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
+import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
 import { Calendar, Menu, MenuDivider, MenuItem, Modal } from './ui';
 import userIconUrl from './ui/icons/user.svg';
 
@@ -27,6 +28,8 @@ interface NavigationItem {
   icon: GymKeeperIcon;
   section?: 'secondary';
 }
+
+const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
 const coachItems: NavigationItem[] = [
   { id: 'clients', label: 'Клиенты', icon: 'clients' },
@@ -67,6 +70,17 @@ function urlIconStyle(url: string): CSSProperties {
   return { '--navigation-icon': `url("${url}")` } as CSSProperties;
 }
 
+function historyStateRecord(): Record<string, unknown> {
+  const state = window.history.state;
+  return typeof state === 'object' && state !== null && !Array.isArray(state)
+    ? state as Record<string, unknown>
+    : {};
+}
+
+function historyHasToken(token: string): boolean {
+  return historyStateRecord()[HISTORY_TOKEN_KEY] === token;
+}
+
 interface Props {
   me: MeResponse;
   activeRole: Role;
@@ -74,6 +88,7 @@ interface Props {
   context: NavigationContext | null;
   onDestinationChange: (destination: AppDestination) => void;
   onRoleSwitch: (role: Role) => void;
+  floatingAction?: ReactNode;
   children: ReactNode;
 }
 
@@ -84,18 +99,80 @@ export function NavigationShell({
   context,
   onDestinationChange,
   onRoleSwitch,
+  floatingAction,
   children,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => new Date());
+  const contextRef = useRef(context);
+  const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
+  const historySequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
 
   useEffect(() => {
     setMenuOpen(false);
     setCoachSelectorOpen(false);
   }, [activeRole]);
+
+  useEffect(() => {
+    contextRef.current = context;
+  }, [context]);
+
+  const requestBack = useCallback(() => {
+    const currentContext = contextRef.current;
+    if (!currentContext) return;
+    const historyEntry = historyEntryRef.current;
+    if (historyEntry && historyHasToken(historyEntry.token)) {
+      window.history.back();
+      return;
+    }
+    historyEntryRef.current = null;
+    currentContext.onBack();
+  }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const currentContext = contextRef.current;
+      if (!currentContext) return;
+      historyEntryRef.current = null;
+      currentContext.onBack();
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  useEffect(() => {
+    const existingEntry = historyEntryRef.current;
+    if (!context) {
+      if (!existingEntry) return;
+      historyEntryRef.current = null;
+      if (historyHasToken(existingEntry.token)) window.history.back();
+      return;
+    }
+
+    if (existingEntry?.context === context) return;
+    historySequenceRef.current += 1;
+    const token = `mezfit-${historySequenceRef.current}`;
+    const nextState = { ...historyStateRecord(), [HISTORY_TOKEN_KEY]: token };
+    if (existingEntry && historyHasToken(existingEntry.token)) {
+      window.history.replaceState(nextState, '');
+    } else {
+      window.history.pushState(nextState, '');
+    }
+    historyEntryRef.current = { context, token };
+  }, [context]);
+
+  useEffect(() => bindTelegramBackButton(getTelegramWebApp(), context !== null, requestBack), [context, requestBack]);
+
+  useEffect(() => () => {
+    const existingEntry = historyEntryRef.current;
+    if (!existingEntry || !historyHasToken(existingEntry.token)) return;
+    const nextState = { ...historyStateRecord() };
+    delete nextState[HISTORY_TOKEN_KEY];
+    window.history.replaceState(nextState, '');
+  }, []);
 
   const chooseDestination = (next: AppDestination) => {
     onDestinationChange(next);
@@ -111,7 +188,7 @@ export function NavigationShell({
     <main className="app-shell navigation-shell">
       <header className="navigation-appbar">
         {context ? (
-          <button className="navigation-icon-button" type="button" onClick={context.onBack} aria-label="Назад">
+          <button className="navigation-icon-button" type="button" onClick={requestBack} aria-label="Назад">
             <span className="navigation-apk-icon" style={iconStyle('back')} aria-hidden="true" />
           </button>
         ) : (
@@ -189,7 +266,10 @@ export function NavigationShell({
         </button>
       </header>
 
-      <section className="navigation-content">{children}</section>
+      <section className="navigation-content">
+        {children}
+        {floatingAction}
+      </section>
 
       <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
 
