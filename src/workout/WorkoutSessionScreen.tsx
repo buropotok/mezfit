@@ -34,6 +34,14 @@ function draftMeta(session: DraftWorkoutSession): string {
   return [session.program?.name, session.phase?.name].filter(Boolean).join(' · ');
 }
 
+function AddIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 function reorderExerciseData(session: ActiveWorkoutSession, ids: number[]): ActiveWorkoutSession {
   const byId = new Map(session.exercises.map((exercise) => [exercise.sessionExerciseId, exercise]));
   const exercises = ids
@@ -52,7 +60,6 @@ export function WorkoutSessionScreen({
   onOpenExerciseMenu,
   onOpenHistory,
   onOpenChat,
-  onAddExercise,
   onSessionLifecycleChange,
 }: WorkoutSessionScreenProps) {
   const [session, setSession] = useState<WorkoutSessionState | null>(null);
@@ -213,10 +220,6 @@ export function WorkoutSessionScreen({
 
   function openExercisePicker() {
     if (!activeSession || activeSession.status !== 'active') return;
-    if (onAddExercise) {
-      onAddExercise(activeSession.sessionId);
-      return;
-    }
     setExercisePickerError('');
     setExercisePickerOpen(true);
   }
@@ -374,7 +377,7 @@ export function WorkoutSessionScreen({
             label="Добавить упражнение"
             onClick={openExercisePicker}
           >
-            <span aria-hidden="true">＋</span>
+            <AddIcon />
           </FloatingActionButton>
         </>
       ) : null}
