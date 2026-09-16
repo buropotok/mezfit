@@ -339,20 +339,22 @@ function SetEntryEditor(props: SetEntryProps) {
           </div>
 
           <div className="set-entry__tools">
-            <IconButton
-              disabled={saving}
-              label="Фитнес-ленты"
-              aria-expanded={bandsOpen}
-              aria-controls={bandsId}
-              className={draft.bands.length > 0 || bandsOpen ? 'set-entry__tool--active' : ''}
-              onClick={() => setBandsOpen((open) => !open)}
-            >
-              <SharedIcon name="ripple" />
-            </IconButton>
+            {!isPlan ? (
+              <IconButton
+                disabled={saving}
+                label="Фитнес-ленты"
+                aria-expanded={bandsOpen}
+                aria-controls={bandsId}
+                className={draft.bands.length > 0 || bandsOpen ? 'set-entry__tool--active' : ''}
+                onClick={() => setBandsOpen((open) => !open)}
+              >
+                <SharedIcon name="ripple" />
+              </IconButton>
+            ) : null}
             <IconButton disabled={saving} label="История упражнения" onClick={onOpenHistory}><SharedIcon name="library" /></IconButton>
           </div>
 
-          {bandsOpen ? (
+          {!isPlan && bandsOpen ? (
             <Surface elevated className="set-entry__bands" id={bandsId} role="group" aria-label="Выбор фитнес-лент">
               <div className="set-entry__bands-heading">
                 <Text variant="headline">Фитнес-ленты</Text>
@@ -487,20 +489,20 @@ function SetEntryEditor(props: SetEntryProps) {
                 ))}
               </div>
             </div>
+
+            <TextArea
+              className="set-entry__comment"
+              label="Комментарий"
+              rows={3}
+              value={draft.comment ?? ''}
+              disabled={saving}
+              onChange={(event) => {
+                const comment = event.currentTarget.value || null;
+                setDraft((current) => ({ ...current, comment }));
+              }}
+            />
           </>
         ) : null}
-
-        <TextArea
-          className="set-entry__comment"
-          label="Комментарий"
-          rows={3}
-          value={draft.comment ?? ''}
-          disabled={saving}
-          onChange={(event) => {
-            const comment = event.currentTarget.value || null;
-            setDraft((current) => ({ ...current, comment }));
-          }}
-        />
 
         <Button disabled={saving} className="full-width set-entry__chat-button" onClick={onOpenChat}>
           <TelegramIcon />
