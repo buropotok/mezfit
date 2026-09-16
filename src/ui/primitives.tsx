@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
 import type { UiComponentTheme } from './componentTheme';
+import type { UiIconPair } from './iconPair';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
+import { startSpringScale } from './SpringScale';
 import './ui.css';
 import './typography.css';
 
@@ -18,10 +20,35 @@ export function Button({ variant = 'primary', className = '', type = 'button', o
   return <button type={type} className={`ui-button ui-button--${variant} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />;
 }
 
-export type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode; theme?: UiComponentTheme };
+export type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  label: string;
+  children?: ReactNode;
+  theme?: UiComponentTheme;
+  icon?: UiIconPair;
+  selected?: boolean;
+};
 
-export function IconButton({ label, theme = 'default', className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: IconButtonProps) {
-  return <button type={type} aria-label={label} data-ui-theme={theme} className={`ui-icon-button ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{children}</button>;
+export function IconButton({ label, theme = 'default', icon, selected, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: IconButtonProps) {
+  const artworkRef = useRef<HTMLSpanElement>(null);
+  const previousSelectedRef = useRef(selected);
+
+  useEffect(() => {
+    if (icon && previousSelectedRef.current !== selected && artworkRef.current) startSpringScale(artworkRef.current);
+    previousSelectedRef.current = selected;
+  }, [icon, selected]);
+
+  if (selected !== undefined && !icon) {
+    throw new Error('IconButton requires outline and filled icons when selected state is used.');
+  }
+
+  const content = icon ? (
+    <span ref={artworkRef} className="ui-icon-button__artwork" aria-hidden="true">
+      <span className="ui-icon-button__icon-outline">{icon.outline}</span>
+      <span className="ui-icon-button__icon-filled">{icon.filled}</span>
+    </span>
+  ) : children;
+
+  return <button type={type} aria-label={label} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</button>;
 }
 
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
