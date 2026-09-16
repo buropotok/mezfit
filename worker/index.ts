@@ -14,6 +14,7 @@ import { createProgramForUser } from './lib/program-create';
 import { createProgramPhase } from './lib/program-phase-create';
 import { deleteProgramPhase } from './lib/program-phase-delete';
 import { getCoachProgramDetails } from './lib/program-details';
+import { createProgramSet, getProgramExerciseOwner } from './lib/program-set-create';
 import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
@@ -286,6 +287,56 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
   throw new HttpError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
 }
 
+function parseOptionalMetric(value: unknown): number | null | undefined {
+  if (value === null) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return undefined;
+  return value;
+}
+
+async function handleProgramSetCreateRoute(request: Request, env: Env, programExerciseId: number): Promise<Response> {
+  if (request.method !== 'POST') throw new HttpError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+  const auth = await requireUser(request, env);
+  requireRole(auth, 'coach');
+  const owner = await getProgramExerciseOwner(env.DB_BINDING, programExerciseId);
+  if (!owner || owner.coach_user_id !== auth.row.id) {
+    throw new HttpError(404, 'PROGRAM_EXERCISE_NOT_FOUND', 'Program exercise not found');
+  }
+  if (owner.user_id !== auth.row.id) await requireCoachClient(env.DB_BINDING, auth.row.id, owner.user_id);
+
+  let parsedBody: unknown;
+  try {
+    parsedBody = await request.json();
+  } catch {
+    throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
+  }
+  if (typeof parsedBody !== 'object' || parsedBody === null || Array.isArray(parsedBody)) {
+    throw new HttpError(400, 'INVALID_JSON', 'Request body must be a JSON object');
+  }
+  const body = parsedBody as Record<string, unknown>;
+  if (!Number.isInteger(body.setNumber) || (body.setNumber as number) <= 0) {
+    throw new HttpError(400, 'INVALID_SET_NUMBER', 'Set number must be a positive integer');
+  }
+  const weightKg = parseOptionalMetric(body.weightKg);
+  const reps = parseOptionalMetric(body.reps);
+  const durationSeconds = parseOptionalMetric(body.durationSeconds);
+  const distanceMeters = parseOptionalMetric(body.distanceMeters);
+  if (weightKg === undefined || reps === undefined || durationSeconds === undefined || distanceMeters === undefined) {
+    throw new HttpError(400, 'INVALID_SET_METRICS', 'Set metrics must be non-negative numbers or null');
+  }
+  if (reps !== null && !Number.isInteger(reps)) {
+    throw new HttpError(400, 'INVALID_SET_METRICS', 'Repetitions must be an integer or null');
+  }
+
+  const set = await createProgramSet(env.DB_BINDING, programExerciseId, {
+    setNumber: body.setNumber as number,
+    weightKg,
+    reps,
+    durationSeconds,
+    distanceMeters,
+  });
+  return json({ set }, { status: 201 });
+}
+
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
 
@@ -312,6 +363,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);
   if (exerciseMatch) return handleExerciseRoute(request, env, Number(exerciseMatch[1]));
+
+  const programSetCreateMatch = url.pathname.match(/^\/api\/coach\/program-exercises\/(\d+)\/sets$/);
+  if (programSetCreateMatch) return handleProgramSetCreateRoute(request, env, Number(programSetCreateMatch[1]));
 
   if (url.pathname === '/api/coach/programs' && request.method === 'GET') {
     const auth = await requireUser(request, env);
