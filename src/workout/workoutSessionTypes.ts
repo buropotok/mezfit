@@ -56,6 +56,5 @@ export interface WorkoutSessionScreenProps {
   onOpenExerciseMenu?: (sessionExerciseId: number) => void;
   onOpenHistory?: (exerciseDefinitionId: number) => void;
   onOpenChat?: () => void;
-  onAddExercise?: (workoutSessionId: number) => void;
   onSessionLifecycleChange?: (session: Pick<WorkoutSessionState, 'sessionId' | 'status'>) => void;
 }
