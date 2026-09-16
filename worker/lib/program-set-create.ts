@@ -39,12 +39,18 @@ export async function getProgramExerciseOwner(
       tp.id AS program_id,
       COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) AS coach_user_id,
       tp.user_id,
-      ed.tracking_type
+      CASE
+        WHEN edo.exercise_definition_id IS NULL THEN ed.tracking_type
+        ELSE edo.tracking_type
+      END AS tracking_type
     FROM program_exercise pe
     JOIN exercise_definition ed ON ed.id = pe.exercise_definition_id
     JOIN program_day pd ON pd.id = pe.program_day_id
     JOIN program_phase pp ON pp.id = pd.program_phase_id
     JOIN training_plan tp ON tp.id = pp.training_plan_id
+    LEFT JOIN exercise_definition_override edo
+      ON edo.exercise_definition_id = ed.id
+      AND edo.coach_user_id = COALESCE(tp.owner_coach_user_id, tp.created_by_user_id)
     WHERE pe.id = ?
       AND pe.status = 'active'
       AND pd.status = 'active'
