@@ -3,6 +3,15 @@ import { getProgramByIdForCoach, type ProgramListItem, type ProgramOwner } from 
 
 export type ProgramPhaseStatus = 'pending' | 'active' | 'finished';
 
+export interface ProgramSetDetails {
+  id: number;
+  setNumber: number;
+  reps: number | null;
+  weightKg: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
+}
+
 export interface ProgramPhaseExerciseDetails {
   programExerciseId: number;
   dayId: number;
@@ -10,6 +19,7 @@ export interface ProgramPhaseExerciseDetails {
   dayPosition: number;
   position: number;
   setCount: number;
+  sets: ProgramSetDetails[];
   completed: boolean;
   notes: string | null;
   exercise: ExerciseDefinitionRow;
@@ -81,6 +91,16 @@ interface PhaseExerciseRow {
   completed: number;
 }
 
+interface ProgramSetDetailsRow {
+  id: number;
+  program_exercise_id: number;
+  position: number;
+  reps: number | null;
+  weight: number | null;
+  duration_seconds: number | null;
+  distance_meters: number | null;
+}
+
 function progressPercent(completed: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((completed / total) * 100);
@@ -128,7 +148,7 @@ export async function getCoachProgramDetails(
   const program = await getProgramByIdForCoach(db, programId, coachUserId);
   if (!program) return null;
 
-  const [owner, phaseResult] = await Promise.all([
+  const [owner, phaseResult, setResult] = await Promise.all([
     db.prepare(`
       SELECT id, first_name, last_name, username, photo_url
       FROM app_user
@@ -190,8 +210,41 @@ export async function getCoachProgramDetails(
       WHERE phase.training_plan_id = ?
       ORDER BY phase.position, phase.id, day.position, day.id, program_exercise.position, program_exercise.id
     `).bind(coachUserId, coachUserId, coachUserId, programId).all<PhaseExerciseRow>(),
+    db.prepare(`
+      SELECT
+        program_set.id,
+        program_set.program_exercise_id,
+        program_set.position,
+        program_set.reps,
+        program_set.weight,
+        program_set.duration_seconds,
+        program_set.distance_meters
+      FROM program_set
+      JOIN program_exercise ON program_exercise.id = program_set.program_exercise_id
+      JOIN program_day ON program_day.id = program_exercise.program_day_id
+      JOIN program_phase ON program_phase.id = program_day.program_phase_id
+      WHERE program_phase.training_plan_id = ?
+        AND program_set.status = 'active'
+        AND program_exercise.status = 'active'
+        AND program_day.status = 'active'
+      ORDER BY program_set.program_exercise_id, program_set.position, program_set.id
+    `).bind(programId).all<ProgramSetDetailsRow>(),
   ]);
   if (!owner) return null;
+
+  const setsByExercise = new Map<number, ProgramSetDetails[]>();
+  for (const row of setResult.results) {
+    const sets = setsByExercise.get(row.program_exercise_id) ?? [];
+    sets.push({
+      id: row.id,
+      setNumber: row.position + 1,
+      reps: row.reps,
+      weightKg: row.weight,
+      durationSeconds: row.duration_seconds,
+      distanceMeters: row.distance_meters,
+    });
+    setsByExercise.set(row.program_exercise_id, sets);
+  }
 
   const phaseMap = new Map<number, ProgramPhaseDetails>();
   for (const row of phaseResult.results) {
@@ -224,13 +277,15 @@ export async function getCoachProgramDetails(
       || row.exercise_position === null
     ) continue;
 
+    const sets = setsByExercise.get(row.program_exercise_id) ?? [];
     phase.exercises.push({
       programExerciseId: row.program_exercise_id,
       dayId: row.day_id,
       dayName: row.day_name,
       dayPosition: row.day_position,
       position: row.exercise_position,
-      setCount: row.set_count,
+      setCount: sets.length,
+      sets,
       completed: row.completed === 1,
       notes: row.exercise_notes,
       exercise,
