@@ -1,0 +1,13 @@
+:root {
+  --ui-glass-background: rgba(0, 0, 0, 0);
+  --ui-glass-border-width: .8px;
+  --ui-glass-border-color: rgba(255, 255, 255, .32);
+  --ui-glass-blur: 3.25px;
+  --ui-glass-saturation: 70%;
+  --ui-glass-shadow: 0 7px 20px rgba(0, 0, 0, .49);
+
+  --ui-tabs-glass-radius: 35px;
+  --ui-tabs-glass-indicator-background: rgba(255, 255, 255, .19);
+  --ui-tabs-glass-indicator-radius: 44px;
+  --ui-tabs-glass-indicator-blur: 11.75px;
+}

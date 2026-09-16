@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadGlobalTheme } from './theme';
+import { ThemeVariantsCatalog } from './ui/ThemeVariantsCatalog';
 import { UiKitPage } from './ui/UiKitPage';
 import './style.css';
 import './exercise.css';
@@ -25,7 +26,7 @@ const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
-  const content = window.location.pathname === '/ui-kit' ? <UiKitPage /> : <App />;
+  const content = window.location.pathname === '/ui-kit' ? <><UiKitPage /><ThemeVariantsCatalog /></> : <App />;
   createRoot(root).render(
     <React.StrictMode>
       {content}

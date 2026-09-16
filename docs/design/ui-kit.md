@@ -32,6 +32,8 @@ Tokens live in `src/ui/tokens`. Theme colors are semantic aliases over the canon
 
 Feature CSS must not redefine an established UI Kit radius, shadow, control state, typography role or motion value with an arbitrary literal when the corresponding token/component already exists.
 
+Glass is a shared UI Kit material defined by semantic effect tokens in `src/ui/tokens/effects.css`. Components expose `theme="glass"`; consumers do not configure blur, border, opacity or shadow values per instance. Component geometry remains component-owned even when the material is shared.
+
 ## Foundation primitives
 
 - `Text`
@@ -43,9 +45,26 @@ Feature CSS must not redefine an established UI Kit radius, shadow, control stat
 
 Interactive primitives expose visible keyboard focus, native disabled behavior where applicable, and accessible names for icon-only controls. Reduced-motion preferences are respected. The existing Mezfit icon source remains canonical.
 
+`IconButton` and `Surface` support `theme="default" | "glass"`; omitted theme means the existing default presentation. Glass is an owning material rather than an additive visual modifier: its border, background, blur and shadow are fixed by UI Kit tokens and must not be silently overridden by instance props.
+
+For `Surface`, `border` and `elevated` belong only to the default theme. `Surface theme="glass"` therefore rejects both props at the TypeScript contract level because glass already owns its border and shadow.
+
+For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unchanged under `theme="default"`. Under `theme="glass"`, `color` and `shadow` are not valid because they would conflict with the glass material. A controlled `selected` state is supported only together with an explicit `{ outline, filled }` icon pair; selection swaps outline to filled artwork and runs the shared spring motion while the glass border/background/shadow remain unchanged.
+
 ### Telegram Web A button provenance
 
 `Button` and `IconButton` use Telegram Web A as their interaction and geometry reference. Upstream: `Ajaxy/telegram-tt/src/components/ui/Button.scss` and `src/styles/_variables.scss`. Telegram color roles map to Mezfit semantic theme tokens.
+
+## Tabs variants
+
+`Tabs` remains backed by Radix Tabs and has two independent variant axes:
+
+- `theme?: "default" | "glass"` controls the visual material. Omitted means the current default Tabs presentation.
+- `mode?: "default" | "icon"` controls trigger composition. Omitted means the current text-only trigger. Icon mode makes the trigger taller and places a 24px icon above the existing Body 15/20 medium label.
+
+When `mode="icon"`, every `TabsTrigger` requires an explicit `{ outline, filled }` pair. Inactive triggers show outline artwork. The selected trigger shows filled artwork and runs the shared icon spring when selection changes. Radix remains the state/accessibility owner and the existing Tabs trigger press-scale remains unchanged.
+
+Theme and mode compose freely, including `theme="glass" mode="icon"`. The internal `/ui-kit` catalog shows default/text, glass/text, default/icon and glass/icon specimens.
 
 ## Telegram-derived contact UI
 
