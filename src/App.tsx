@@ -17,7 +17,7 @@ import {
   type NavigationContext,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
-import { getTelegramWebApp } from './telegram';
+import { getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button } from './ui';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -154,9 +154,7 @@ export function App() {
       return;
     }
 
-    webApp.ready();
-    webApp.expand();
-    webApp.disableVerticalSwipes?.();
+    prepareTelegramWebApp(webApp);
 
     let cancelled = false;
     getMe(webApp.initData)
