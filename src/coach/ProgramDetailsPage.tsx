@@ -314,15 +314,16 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
         title="Добавить упражнение"
         onClose={closeExercisePreview}
       >
-        {exercisePreviewPhase && exercisePreviewData ? (
+        {exercisePreviewPhase && exercisePreviewData && exercisePreviewData.sourceProgramExerciseId !== null ? (
           <SessionExercise
+            mode="plan"
+            programExerciseId={exercisePreviewData.sourceProgramExerciseId}
             context={{
               workoutSessionId: 0,
               workoutDate: exercisePreviewPhase.plannedStartDate ?? details.program.startedAt?.slice(0, 10) ?? '',
               program: { id: details.program.id, name: details.program.name },
             }}
             data={exercisePreviewData}
-            onSaveSet={async () => {}}
             onOpenExerciseMenu={() => {}}
             onOpenHistory={() => {}}
             onOpenChat={() => {}}
@@ -330,7 +331,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
         ) : exercisePreviewLoading ? (
           <Text tone="muted">Загружаем упражнение…</Text>
         ) : (
-          <Text tone="muted">{exercisePreviewError || 'Нет доступных упражнений для предпросмотра'}</Text>
+          <Text tone="muted">{exercisePreviewError || 'Сначала добавьте упражнение в программу'}</Text>
         )}
       </Modal>
     </section>
