@@ -219,11 +219,11 @@ export async function getCoachProgramDetails(
         program_set.weight,
         program_set.duration_seconds,
         program_set.distance_meters
-      FROM program_set
-      JOIN program_exercise ON program_exercise.id = program_set.program_exercise_id
-      JOIN program_day ON program_day.id = program_exercise.program_day_id
-      JOIN program_phase ON program_phase.id = program_day.program_phase_id
-      WHERE program_phase.training_plan_id = ?
+      FROM program_phase phase
+      JOIN program_day ON program_day.program_phase_id = phase.id
+      JOIN program_exercise ON program_exercise.program_day_id = program_day.id
+      JOIN program_set ON program_set.program_exercise_id = program_exercise.id
+      WHERE phase.training_plan_id = ?
         AND program_set.status = 'active'
         AND program_exercise.status = 'active'
         AND program_day.status = 'active'
@@ -234,6 +234,7 @@ export async function getCoachProgramDetails(
 
   const setsByExercise = new Map<number, ProgramSetDetails[]>();
   for (const row of setResult.results) {
+    if (!Number.isInteger(row.id) || !Number.isInteger(row.program_exercise_id) || !Number.isInteger(row.position)) continue;
     const sets = setsByExercise.get(row.program_exercise_id) ?? [];
     sets.push({
       id: row.id,
@@ -277,15 +278,14 @@ export async function getCoachProgramDetails(
       || row.exercise_position === null
     ) continue;
 
-    const sets = setsByExercise.get(row.program_exercise_id) ?? [];
     phase.exercises.push({
       programExerciseId: row.program_exercise_id,
       dayId: row.day_id,
       dayName: row.day_name,
       dayPosition: row.day_position,
       position: row.exercise_position,
-      setCount: sets.length,
-      sets,
+      setCount: row.set_count,
+      sets: setsByExercise.get(row.program_exercise_id) ?? [],
       completed: row.completed === 1,
       notes: row.exercise_notes,
       exercise,
