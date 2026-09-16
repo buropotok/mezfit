@@ -211,7 +211,7 @@ describe('WorkoutSessionScreen', () => {
     await waitFor(() => {
       expect(addExerciseMock).toHaveBeenCalledWith('telegram-init', 501, 42);
     });
-    expect(await screen.findByTestId('sortable-order')).toHaveTextContent('42');
+    expect((await screen.findByTestId('sortable-order')).textContent).toBe('42');
   });
 
   it('resumes an already active session without calling start again', async () => {
