@@ -5,8 +5,12 @@ import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import './components.css';
 
-export function List({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={`ui-list ${className}`.trim()} role="list" {...props} />;
+type ListDivider = 'none' | 'inset' | 'full';
+type ListProps = HTMLAttributes<HTMLDivElement> & { divider?: ListDivider };
+
+export function List({ divider = 'none', className = '', ...props }: ListProps) {
+  const dividerClassName = divider === 'none' ? '' : ` ui-list--divider-${divider}`;
+  return <div className={`ui-list${dividerClassName} ${className}`.trim()} role="list" {...props} />;
 }
 
 type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title'> & {

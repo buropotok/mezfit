@@ -113,8 +113,8 @@ function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, pl
 
   return (
     <span className="session-exercise__set-context">
-      {!planMode && plan ? <span className="session-exercise__set-plan">План: {plan}</span> : null}
-      {previous ? <Text variant="caption" tone="muted">Пред.: {previous}</Text> : null}
+      {!planMode && plan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
+      {previous ? <Text variant="caption" tone="muted" className="session-exercise__set-previous">Пред.: {previous}</Text> : null}
     </span>
   );
 }
@@ -192,7 +192,7 @@ export function SessionExercise(props: SessionExerciseProps) {
       <div id={bodyId} className="session-exercise__body" hidden={collapsed}>
         {data.notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{data.notes}</Text> : null}
 
-        <List className="session-exercise__sets">
+        <List className="session-exercise__sets" divider="inset">
           {renderedSets.map((set) => {
             const setNumber = set.position + 1;
             const planMode = props.mode === 'plan';
