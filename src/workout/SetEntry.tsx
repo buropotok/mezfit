@@ -1,4 +1,6 @@
 import { useId, useRef, useState } from 'react';
+import { createCoachProgramSet } from '../api';
+import { getTelegramWebApp } from '../telegram';
 import { Badge, Button, Divider, IconButton, Modal, Surface, Text, TextArea, TextInput, type BadgeColor } from '../ui';
 import {
   createSetEntryDraft,
@@ -95,6 +97,7 @@ type MetricFieldProps = {
   value: number | null;
   plan: number | null;
   previous: number | null;
+  showPlan: boolean;
   step: number;
   precision: number;
   suffix: string;
@@ -102,7 +105,7 @@ type MetricFieldProps = {
   onChange: (value: number | null) => void;
 };
 
-function MetricField({ label, unit, value, plan, previous, step, precision, suffix, disabled, onChange }: MetricFieldProps) {
+function MetricField({ label, unit, value, plan, previous, showPlan, step, precision, suffix, disabled, onChange }: MetricFieldProps) {
   const delta = value !== null && previous !== null ? roundTo(value - previous, precision) : null;
 
   const adjust = (direction: -1 | 1) => {
@@ -114,7 +117,7 @@ function MetricField({ label, unit, value, plan, previous, step, precision, suff
     <div className="set-entry__metric">
       <div className="set-entry__metric-meta">
         <Text variant="headline" className="set-entry__metric-label">{label}</Text>
-        <Text variant="footnote" tone="muted">План: {formatNumber(plan, suffix)}</Text>
+        {showPlan ? <Text variant="footnote" tone="muted">План: {formatNumber(plan, suffix)}</Text> : null}
         <span className="set-entry__previous-line">
           <Text variant="caption" tone="muted">Предыдущая тренировка: {formatNumber(previous, suffix)}</Text>
           {delta !== null && delta !== 0 ? (
@@ -152,11 +155,12 @@ type DurationFieldProps = {
   value: number | null;
   plan: number | null;
   previous: number | null;
+  showPlan: boolean;
   disabled: boolean;
   onChange: (value: number | null) => void;
 };
 
-function DurationField({ value, plan, previous, disabled, onChange }: DurationFieldProps) {
+function DurationField({ value, plan, previous, showPlan, disabled, onChange }: DurationFieldProps) {
   const minutes = value === null ? '' : String(Math.floor(value / 60));
   const seconds = value === null ? '' : String(Math.floor(value % 60));
 
@@ -180,7 +184,7 @@ function DurationField({ value, plan, previous, disabled, onChange }: DurationFi
     <div className="set-entry__metric">
       <div className="set-entry__metric-meta">
         <Text variant="headline" className="set-entry__metric-label">Время</Text>
-        <Text variant="footnote" tone="muted">План: {formatDuration(plan)}</Text>
+        {showPlan ? <Text variant="footnote" tone="muted">План: {formatDuration(plan)}</Text> : null}
         <Text variant="caption" tone="muted">Предыдущая тренировка: {formatDuration(previous)}</Text>
       </div>
 
@@ -236,11 +240,13 @@ function setEntryIdentityKey(data: SetEntryProps['data']): string {
 }
 
 export function SetEntry(props: SetEntryProps) {
-  const lifecycleKey = `${setEntryIdentityKey(props.data)}:${props.isOpen ? 'open' : 'closed'}`;
+  const lifecycleKey = `${props.mode}:${setEntryIdentityKey(props.data)}:${props.isOpen ? 'open' : 'closed'}`;
   return <SetEntryEditor key={lifecycleKey} {...props} />;
 }
 
-function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenChat }: SetEntryProps) {
+function SetEntryEditor(props: SetEntryProps) {
+  const { isOpen, data, onClose, onOpenHistory, onOpenChat } = props;
+  const isPlan = props.mode === 'plan';
   const bandsId = useId();
   const savingRef = useRef(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(data));
@@ -275,11 +281,21 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
     setBandsOpen(false);
     setSaveError('');
     try {
-      await onSave({
-        ...draft,
-        metrics: { ...draft.metrics },
-        bands: [...draft.bands],
-      });
+      if (props.mode === 'plan') {
+        await createCoachProgramSet(getTelegramWebApp()?.initData ?? '', props.programExerciseId, {
+          setNumber: data.identity.setNumber,
+          weightKg: draft.metrics.weightKg,
+          reps: draft.metrics.reps,
+          durationSeconds: draft.metrics.durationSeconds,
+          distanceMeters: draft.metrics.distanceMeters,
+        });
+      } else {
+        await props.onSave({
+          ...draft,
+          metrics: { ...draft.metrics },
+          bands: [...draft.bands],
+        });
+      }
       savingRef.current = false;
       setSaving(false);
       onClose();
@@ -375,6 +391,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               value={draft.metrics.weightKg}
               plan={metricValue(data.plan, 'weightKg')}
               previous={metricValue(data.previous?.metrics ?? null, 'weightKg')}
+              showPlan={!isPlan}
               step={2.5}
               precision={1}
               suffix=" кг"
@@ -388,6 +405,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               value={draft.metrics.durationSeconds}
               plan={metricValue(data.plan, 'durationSeconds')}
               previous={metricValue(data.previous?.metrics ?? null, 'durationSeconds')}
+              showPlan={!isPlan}
               disabled={saving}
               onChange={(value) => updateMetric('durationSeconds', value)}
             />
@@ -400,6 +418,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               value={metersToKilometers(draft.metrics.distanceMeters)}
               plan={planDistanceKm}
               previous={previousDistanceKm}
+              showPlan={!isPlan}
               step={0.1}
               precision={2}
               suffix=" км"
@@ -415,6 +434,7 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
               value={draft.metrics.reps}
               plan={metricValue(data.plan, 'reps')}
               previous={metricValue(data.previous?.metrics ?? null, 'reps')}
+              showPlan={!isPlan}
               step={1}
               precision={0}
               suffix=""
@@ -424,47 +444,51 @@ function SetEntryEditor({ isOpen, data, onClose, onSave, onOpenHistory, onOpenCh
           ) : null}
         </div>
 
-        <div className="set-entry__section">
-          <div className="set-entry__section-heading">
-            <Text variant="footnote" className="set-entry__section-label">Оценка подхода</Text>
-            <Text variant="caption" tone="muted">необязательно</Text>
-          </div>
-          <div className="set-entry__label-row" role="group" aria-label="Оценка подхода">
-            {setLabelOptions.map((option) => (
-              <button
-                key={option.value}
-                className="set-entry__badge-button"
-                type="button"
-                disabled={saving}
-                aria-pressed={draft.setLabel === option.value}
-                onClick={() => setDraft((current) => ({ ...current, setLabel: current.setLabel === option.value ? null : option.value }))}
-              >
-                <Badge color={option.color}>{option.label}</Badge>
-              </button>
-            ))}
-          </div>
-        </div>
+        {!isPlan ? (
+          <>
+            <div className="set-entry__section">
+              <div className="set-entry__section-heading">
+                <Text variant="footnote" className="set-entry__section-label">Оценка подхода</Text>
+                <Text variant="caption" tone="muted">необязательно</Text>
+              </div>
+              <div className="set-entry__label-row" role="group" aria-label="Оценка подхода">
+                {setLabelOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className="set-entry__badge-button"
+                    type="button"
+                    disabled={saving}
+                    aria-pressed={draft.setLabel === option.value}
+                    onClick={() => setDraft((current) => ({ ...current, setLabel: current.setLabel === option.value ? null : option.value }))}
+                  >
+                    <Badge color={option.color}>{option.label}</Badge>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div className="set-entry__section">
-          <div className="set-entry__section-heading">
-            <Text variant="footnote" className="set-entry__section-label">RPE</Text>
-            <Text variant="caption" tone="muted">необязательно</Text>
-          </div>
-          <div className="set-entry__rpe-row" role="group" aria-label="RPE">
-            {[6, 7, 8, 9, 10].map((rpe) => (
-              <Button
-                key={rpe}
-                disabled={saving}
-                variant="secondary"
-                className={`set-entry__rpe-button ${draft.rpe === rpe ? 'set-entry__rpe-button--active' : ''}`}
-                aria-pressed={draft.rpe === rpe}
-                onClick={() => setDraft((current) => ({ ...current, rpe: current.rpe === rpe ? null : rpe }))}
-              >
-                {rpe}
-              </Button>
-            ))}
-          </div>
-        </div>
+            <div className="set-entry__section">
+              <div className="set-entry__section-heading">
+                <Text variant="footnote" className="set-entry__section-label">RPE</Text>
+                <Text variant="caption" tone="muted">необязательно</Text>
+              </div>
+              <div className="set-entry__rpe-row" role="group" aria-label="RPE">
+                {[6, 7, 8, 9, 10].map((rpe) => (
+                  <Button
+                    key={rpe}
+                    disabled={saving}
+                    variant="secondary"
+                    className={`set-entry__rpe-button ${draft.rpe === rpe ? 'set-entry__rpe-button--active' : ''}`}
+                    aria-pressed={draft.rpe === rpe}
+                    onClick={() => setDraft((current) => ({ ...current, rpe: current.rpe === rpe ? null : rpe }))}
+                  >
+                    {rpe}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : null}
 
         <TextArea
           className="set-entry__comment"
