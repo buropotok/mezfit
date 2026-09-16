@@ -156,6 +156,7 @@ export function App() {
 
     webApp.ready();
     webApp.expand();
+    webApp.disableVerticalSwipes?.();
 
     let cancelled = false;
     getMe(webApp.initData)
