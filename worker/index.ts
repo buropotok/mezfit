@@ -297,7 +297,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname.startsWith('/api/workout-sessions')) {
     const auth = await requireUser(request, env);
-    requireRole(auth, 'client');
     return handleWorkoutSessionRoute(request, env.DB_BINDING, auth.row.id);
   }
 
@@ -343,7 +342,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     requireRole(auth, 'coach');
     let parsedBody: unknown;
     try {
-      parsedBody = await request.json();
+      parsedBody = (await request.json()) as unknown;
     } catch {
       throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
@@ -399,7 +398,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
     let parsedBody: unknown;
     try {
-      parsedBody = await request.json();
+      parsedBody = (await request.json()) as unknown;
     } catch {
       throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
@@ -450,7 +449,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     requireRole(auth, 'coach');
     let parsedBody: unknown;
     try {
-      parsedBody = await request.json();
+      parsedBody = (await request.json()) as unknown;
     } catch {
       throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
