@@ -105,13 +105,6 @@ export async function addWorkoutExercise(
   if (workout.status !== 'active') return { kind: 'invalid_state' };
   if (!(await exerciseIsAvailable(db, userId, exerciseDefinitionId))) return { kind: 'exercise_not_found' };
 
-  const positionRow = await db.prepare(`
-    SELECT COALESCE(MAX(position), -1) + 1 AS position
-    FROM session_exercise
-    WHERE workout_session_id = ?
-  `).bind(workoutSessionId).first<{ position: number }>();
-  const position = positionRow?.position ?? 0;
-
   const inserted = await db.prepare(`
     INSERT INTO session_exercise (
       workout_session_id,
@@ -121,33 +114,44 @@ export async function addWorkoutExercise(
       status,
       added_by_user_id,
       notes
-    ) VALUES (?, ?, NULL, ?, 'active', ?, NULL)
+    )
+    SELECT ?, ?, NULL, COALESCE(MAX(position), -1) + 1, 'active', ?, NULL
+    FROM session_exercise
+    WHERE workout_session_id = ?
     RETURNING id
-  `).bind(workoutSessionId, exerciseDefinitionId, position, userId).first<{ id: number }>();
+  `).bind(workoutSessionId, exerciseDefinitionId, userId, workoutSessionId).first<{ id: number }>();
   if (!inserted) throw new Error('FAILED_TO_ADD_WORKOUT_EXERCISE');
 
-  await db.prepare(`
-    INSERT INTO session_set (
-      session_exercise_id,
-      source_program_set_id,
-      position,
-      planned_reps,
-      planned_weight,
-      planned_duration_seconds,
-      planned_distance_meters,
-      actual_reps,
-      actual_weight,
-      actual_duration_seconds,
-      actual_distance_meters,
-      set_label,
-      rpe,
-      comment,
-      bands_json,
-      status,
-      created_by_user_id,
-      updated_by_user_id
-    ) VALUES (?, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', ?, ?)
-  `).bind(inserted.id, userId, userId).run();
+  try {
+    await db.prepare(`
+      INSERT INTO session_set (
+        session_exercise_id,
+        source_program_set_id,
+        position,
+        planned_reps,
+        planned_weight,
+        planned_duration_seconds,
+        planned_distance_meters,
+        actual_reps,
+        actual_weight,
+        actual_duration_seconds,
+        actual_distance_meters,
+        set_label,
+        rpe,
+        comment,
+        bands_json,
+        status,
+        created_by_user_id,
+        updated_by_user_id
+      ) VALUES (?, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', ?, ?)
+    `).bind(inserted.id, userId, userId).run();
+  } catch (error) {
+    await db.prepare(`
+      DELETE FROM session_exercise
+      WHERE id = ? AND workout_session_id = ? AND added_by_user_id = ?
+    `).bind(inserted.id, workoutSessionId, userId).run();
+    throw error;
+  }
 
   const session = await getWorkoutSessionProjection(db, userId, workoutSessionId);
   if (!session) throw new Error('WORKOUT_PROJECTION_MISSING_AFTER_EXERCISE_ADD');
