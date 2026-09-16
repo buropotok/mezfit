@@ -1,0 +1,41 @@
+name: Bootstrap dependency lockfile
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+      - .github/workflows/bootstrap-lockfile.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Show resolved direct dependencies
+        run: |
+          node -e "const l=require('./package-lock.json'); console.log(JSON.stringify(l.packages[''], null, 2))"
+
+      - name: Upload generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-package-lock
+          path: package-lock.json
+          if-no-files-found: error
