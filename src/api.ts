@@ -1,4 +1,6 @@
 import { localizeBundledExerciseName } from './exerciseLocalization';
+import type { SetEntryFactDraft } from './workout/setEntryTypes';
+import type { ActiveWorkoutSession, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
 
 export type Role = 'coach' | 'client';
 export type ExerciseScope = 'global' | 'coach' | 'client';
@@ -157,9 +159,18 @@ const russianApiErrors: Record<string, string> = {
   INVALID_PROGRAM_NAME: 'Укажите название программы',
   INVALID_PROGRAM_OWNER: 'Выберите владельца программы',
   INVALID_PHASE_NAME: 'Укажите название фазы',
+  INVALID_PROGRAM: 'Выбранная программа недоступна',
   PROGRAM_NOT_FOUND: 'Программа не найдена',
   PHASE_NOT_FOUND: 'Фаза не найдена',
   PHASE_IN_USE: 'Фазу с историей тренировок нельзя удалить',
+  PROGRAM_SELECTION_REQUIRED: 'Выберите программу для тренировки',
+  PROGRAM_DAY_INVALID: 'Выбранный день программы больше недоступен',
+  INVALID_WORKOUT_TYPE: 'Выберите тип тренировки',
+  WORKOUT_NOT_FOUND: 'Тренировка не найдена',
+  WORKOUT_STATE_INVALID: 'Тренировка находится в неподходящем состоянии',
+  SET_NOT_FOUND: 'Подход не найден',
+  INVALID_SET_FACT: 'Не удалось сохранить данные подхода',
+  INVALID_EXERCISE_ORDER: 'Не удалось сохранить порядок упражнений',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
@@ -183,6 +194,16 @@ function localizeExercise(exercise: ExerciseDefinition): ExerciseDefinition {
   return {
     ...exercise,
     name: localizeBundledExerciseName(exercise.name, exercise.reference_source),
+  };
+}
+
+function localizeWorkoutSession(session: ActiveWorkoutSession): ActiveWorkoutSession {
+  return {
+    ...session,
+    exercises: session.exercises.map((sessionExercise) => ({
+      ...sessionExercise,
+      exercise: localizeExercise(sessionExercise.exercise),
+    })),
   };
 }
 
@@ -387,4 +408,65 @@ export function setCoachExerciseFavourite(
     method: 'PUT',
     body: JSON.stringify({ favourite }),
   });
+}
+
+export async function initializeWorkoutSession(
+  initData: string,
+  trainingPlanId: number | null = null,
+): Promise<{ session: WorkoutSessionState }> {
+  const result = await apiRequest<{ session: WorkoutSessionState }>(initData, '/api/workout-sessions/initialize', {
+    method: 'POST',
+    body: JSON.stringify(trainingPlanId === null ? {} : { trainingPlanId }),
+  });
+  return {
+    session: result.session.status === 'draft' ? result.session : localizeWorkoutSession(result.session),
+  };
+}
+
+export async function startWorkoutSession(
+  initData: string,
+  workoutSessionId: number,
+  input: WorkoutStartInput,
+): Promise<{ session: ActiveWorkoutSession }> {
+  const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/start`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return { session: localizeWorkoutSession(result.session) };
+}
+
+export async function saveWorkoutSessionSet(
+  initData: string,
+  workoutSessionId: number,
+  sessionSetId: number,
+  fact: SetEntryFactDraft,
+): Promise<{ session: ActiveWorkoutSession }> {
+  const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/sets/${sessionSetId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ fact }),
+  });
+  return { session: localizeWorkoutSession(result.session) };
+}
+
+export async function reorderWorkoutSessionExercises(
+  initData: string,
+  workoutSessionId: number,
+  sessionExerciseIds: number[],
+): Promise<{ session: ActiveWorkoutSession }> {
+  const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/exercises/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ sessionExerciseIds }),
+  });
+  return { session: localizeWorkoutSession(result.session) };
+}
+
+export async function completeWorkoutSession(
+  initData: string,
+  workoutSessionId: number,
+): Promise<{ session: ActiveWorkoutSession }> {
+  const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/complete`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return { session: localizeWorkoutSession(result.session) };
 }

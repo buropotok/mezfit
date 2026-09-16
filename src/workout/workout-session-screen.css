@@ -1,0 +1,64 @@
+.workout-session-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+}
+
+.workout-session-screen__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 2px 4px;
+}
+
+.workout-session-screen__draft,
+.workout-session-screen__empty {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workout-session-screen__actions,
+.workout-session-screen__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workout-session-screen__footer {
+  padding-top: 4px;
+}
+
+.workout-session-screen__message {
+  display: block;
+  padding: 2px;
+}
+
+.workout-session-screen__loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.workout-session-screen__spinner {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border: 2px solid var(--ui-color-border);
+  border-top-color: var(--ui-color-primary);
+  border-radius: 50%;
+  animation: workout-session-spin 0.8s linear infinite;
+}
+
+@keyframes workout-session-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workout-session-screen__spinner {
+    animation-duration: 1.8s;
+  }
+}

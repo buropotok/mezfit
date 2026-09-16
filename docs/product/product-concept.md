@@ -22,7 +22,7 @@ Telegram is the communication layer. Text, voice, video, video notes, and photos
 3. **Coach mode is client-contextual.** The selected client is the primary workspace.
 4. **Analytics should lead directly to action.** Future-plan editing should be reachable directly from relevant analysis.
 5. **Exercise history is a first-class client view.** `Exercises` is directly reachable and includes every exercise ever actually performed by that client, independently of the current program.
-6. **A workout plan becomes immutable when that specific workout explicitly starts.** Final Start confirmation creates the `WorkoutSession` and freezes/materializes its PLAN. Only that started workout is locked; other future occurrences remain editable.
+6. **A workout plan becomes immutable when that specific workout explicitly starts.** Entering the launch flow creates/reuses a minimal draft `WorkoutSession` ID, but PLAN is not materialized until final Start. Program Start fresh-reads and freezes/materializes PLAN for that session. Only that started workout is locked; other future occurrences remain editable.
 7. **No in-workout plan overrides.** Differences between prescription and execution are PLAN versus FACT, not a rewritten plan.
 8. **Program edits never rewrite workout history.** Started/completed sessions keep the plan snapshot used for that session.
 9. **Historical FACT may be explicitly corrected.** Authorized corrections are separate from program edits and must remain auditable.
@@ -34,8 +34,8 @@ Telegram is the communication layer. Text, voice, video, video notes, and photos
 15. **Gym Keeper is a UX/feature reference only.** Its code, branding, proprietary media, built-in programs, and Diary-centric product model are not Mezfit requirements.
 16. **Gym Keeper built-in workout programs are excluded.** Client-facing Program means the prescription assigned by the client's coach.
 17. **Workout launch is a global Client Mode action.** A shell-owned FAB exposes `Начать тренировку` when no session is active and `Продолжить тренировку` when one is active; it is hidden only on the current active workout screen.
-18. **A scheduled workout is the default, not a trap.** An unambiguous scheduled day may be preselected and skip the day chooser, but before final Start the client can always use `Сменить день` or `Своя тренировка`.
-19. **Own workouts do not mutate the program.** `Своя тренировка` creates a session without a source program day; exercises and sets added there belong to the session only.
+18. **A scheduled workout is the default, not a trap.** An unambiguous scheduled day may be preselected and skip the day chooser, but while the session is still `draft` the client can always use `Сменить день` or `Своя тренировка`. Multiple active programs are resolved explicitly by the outer launch workflow rather than guessed inside the session module.
+19. **Own workouts do not mutate the program.** `Своя тренировка` promotes the draft without a source program day and without PLAN/PREVIOUS startup data; exercises and sets added there belong to the session only.
 
 ## Core domain translation from Gym Keeper
 
