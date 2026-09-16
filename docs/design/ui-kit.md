@@ -45,9 +45,11 @@ Glass is a shared UI Kit material defined by semantic effect tokens in `src/ui/t
 
 Interactive primitives expose visible keyboard focus, native disabled behavior where applicable, and accessible names for icon-only controls. Reduced-motion preferences are respected. The existing Mezfit icon source remains canonical.
 
-`IconButton` and `Surface` support `theme="default" | "glass"`; omitted theme means the existing default presentation. `Surface.border` belongs only to the default theme. Glass owns its own border as part of the material contract, so `border` is not a valid option for `Surface theme="glass"`.
+`IconButton` and `Surface` support `theme="default" | "glass"`; omitted theme means the existing default presentation. Glass is an owning material rather than an additive visual modifier: its border, background, blur and shadow are fixed by UI Kit tokens and must not be silently overridden by instance props.
 
-`IconButton` can also receive an explicit `{ outline, filled }` icon pair with a controlled `selected` state. A selected-state transition swaps outline to filled artwork and runs the shared spring motion on the icon while preserving the button's existing press interaction.
+For `Surface`, `border` and `elevated` belong only to the default theme. `Surface theme="glass"` therefore rejects both props at the TypeScript contract level because glass already owns its border and shadow.
+
+For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unchanged under `theme="default"`. Under `theme="glass"`, `color` and `shadow` are not valid because they would conflict with the glass material. A controlled `selected` state is supported only together with an explicit `{ outline, filled }` icon pair; selection swaps outline to filled artwork and runs the shared spring motion while the glass border/background/shadow remain unchanged.
 
 ### Telegram Web A button provenance
 
