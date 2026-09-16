@@ -106,14 +106,14 @@ function SetStatus({ set }: { set: SessionExerciseSetData }) {
   return <span className="session-exercise__set-status">{set.position + 1}</span>;
 }
 
-function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType): ReactNode | undefined {
+function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, planMode: boolean): ReactNode | undefined {
   const plan = formatSessionSetMetrics(set.plan, trackingType);
   const previous = formatSessionSetMetrics(set.previous?.metrics ?? null, trackingType);
-  if (!plan && !previous) return undefined;
+  if ((!plan || planMode) && !previous) return undefined;
 
   return (
     <span className="session-exercise__set-context">
-      {plan ? <span className="session-exercise__set-plan">План: {plan}</span> : null}
+      {!planMode && plan ? <span className="session-exercise__set-plan">План: {plan}</span> : null}
       {previous ? <Text variant="caption" tone="muted">Пред.: {previous}</Text> : null}
     </span>
   );
@@ -192,7 +192,12 @@ export function SessionExercise(props: SessionExerciseProps) {
         <List className="session-exercise__sets">
           {data.sets.map((set) => {
             const setNumber = set.position + 1;
-            const fact = formatSessionSetMetrics(set.fact?.metrics ?? null, data.exercise.tracking_type);
+            const planMode = props.mode === 'plan';
+            const metrics = formatSessionSetMetrics(
+              planMode ? set.plan : set.fact?.metrics ?? null,
+              data.exercise.tracking_type,
+            );
+            const canOpenSet = !planMode || set.sourceProgramSetId === null;
             return (
               <ListItem
                 key={set.sessionSetId}
@@ -201,20 +206,20 @@ export function SessionExercise(props: SessionExerciseProps) {
                 title={(
                   <span className="session-exercise__set-title">
                     <span>Подход {setNumber}</span>
-                    <span className={`session-exercise__set-fact${fact ? '' : ' session-exercise__set-fact--empty'}`}>
-                      {fact ?? 'ввести факт'}
+                    <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
+                      {metrics ?? (planMode ? 'ввести план' : 'ввести факт')}
                     </span>
                   </span>
                 )}
-                subtitle={setSubtitle(set, data.exercise.tracking_type)}
+                subtitle={setSubtitle(set, data.exercise.tracking_type, planMode)}
                 trailing={(
                   <span className="session-exercise__set-trailing">
-                    {set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
-                    <SharedIcon name="chevron-right" />
+                    {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
+                    {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
                   </span>
                 )}
-                aria-label={`Открыть подход ${setNumber}`}
-                onClick={() => setSelectedSessionSetId(set.sessionSetId)}
+                aria-label={canOpenSet ? `Открыть подход ${setNumber}` : undefined}
+                onClick={canOpenSet ? () => setSelectedSessionSetId(set.sessionSetId) : undefined}
               />
             );
           })}
@@ -256,7 +261,10 @@ export function SessionExercise(props: SessionExerciseProps) {
               previous: selectedSet.previous,
               fact: selectedSet.fact,
             }}
-            onClose={() => setSelectedSessionSetId(null)}
+            onClose={() => {
+              setSelectedSessionSetId(null);
+              props.onPlanReconcile();
+            }}
             onOpenHistory={() => onOpenHistory(data.exercise.id)}
             onOpenChat={onOpenChat}
           />
