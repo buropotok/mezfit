@@ -69,6 +69,7 @@ export type SetEntryProps =
   | (SetEntrySharedProps & {
       mode: 'plan';
       programExerciseId: number;
+      previewOnly?: boolean;
       onPlanSaved?: (set: PlannedSet) => void;
       onSave?: never;
     });
