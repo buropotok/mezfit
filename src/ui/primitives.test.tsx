@@ -42,6 +42,16 @@ describe('UI Kit primitives', () => {
     expect(html).toContain('@sokolag');
   });
 
+  it('exposes divider presentation through the List public API', () => {
+    const plainHtml = renderToStaticMarkup(<List><ListItem title="Plain" /></List>);
+    const insetHtml = renderToStaticMarkup(<List divider="inset"><ListItem title="Inset" /></List>);
+    const fullHtml = renderToStaticMarkup(<List divider="full"><ListItem title="Full" /></List>);
+
+    expect(plainHtml).not.toContain('ui-list--divider-');
+    expect(insetHtml).toContain('ui-list--divider-inset');
+    expect(fullHtml).toContain('ui-list--divider-full');
+  });
+
   it('gives the floating action button an accessible name', () => {
     const html = renderToStaticMarkup(<FloatingActionButton label="Добавить клиента">+</FloatingActionButton>);
     expect(html).toContain('aria-label="Добавить клиента"');
