@@ -7,7 +7,7 @@ import {
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
-import { Button, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
+import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import type {
@@ -324,15 +324,20 @@ export function WorkoutSessionScreen({
           ) : (
             <div className="workout-session-screen__empty">
               <Text tone="muted">Упражнений пока нет.</Text>
-              {onAddExercise ? <Button variant="secondary" onClick={() => onAddExercise(activeSession.sessionId)}>Добавить упражнение</Button> : null}
             </div>
           )}
           <div className="workout-session-screen__footer">
-            {onAddExercise && sortableItems.length > 0 ? (
-              <Button variant="secondary" onClick={() => onAddExercise(activeSession.sessionId)}>Добавить упражнение</Button>
-            ) : null}
             <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
           </div>
+          {onAddExercise ? (
+            <FloatingActionButton
+              placement="right"
+              label="Добавить упражнение"
+              onClick={() => onAddExercise(activeSession.sessionId)}
+            >
+              <span aria-hidden="true">＋</span>
+            </FloatingActionButton>
+          ) : null}
         </>
       ) : null}
 
