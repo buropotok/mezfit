@@ -1,4 +1,4 @@
-import type { TrackingType } from '../api';
+import type { PlannedSet, TrackingType } from '../api';
 
 export type SetLabel = 'warmup' | 'easy' | 'normal' | 'hard' | 'drop';
 
@@ -69,6 +69,7 @@ export type SetEntryProps =
   | (SetEntrySharedProps & {
       mode: 'plan';
       programExerciseId: number;
+      onPlanSaved: (set: PlannedSet) => void;
       onSave?: never;
     });
 
