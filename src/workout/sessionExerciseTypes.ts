@@ -60,6 +60,7 @@ export type SessionExerciseProps =
   | (SessionExerciseSharedProps & {
       mode: 'plan';
       programExerciseId: number;
-      onPlanReconcile: () => void;
+      createSet: SessionExerciseSetData;
+      onPlanSetSaved: () => void;
       onSaveSet?: never;
     });
