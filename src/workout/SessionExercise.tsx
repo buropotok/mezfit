@@ -134,13 +134,14 @@ export function SessionExercise(props: SessionExerciseProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const collapsed = controlledCollapsed ?? internalCollapsed;
   const [selectedSessionSetId, setSelectedSessionSetId] = useState<number | null>(null);
+  const renderedSets = props.mode === 'plan' ? [...data.sets, props.createSet] : data.sets;
   const completedSets = data.sets.filter((set) => set.status === 'completed').length;
   const totalSets = data.sets.length;
   const progress = totalSets === 0 ? 0 : Math.round((completedSets / totalSets) * 100);
   const exerciseName = exerciseDisplayName(data.exercise);
   const selectedSet = selectedSessionSetId === null
     ? null
-    : data.sets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
+    : renderedSets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
   const programIdentity: SetEntryProgramIdentity = context.program
     ? { programId: context.program.id, programName: context.program.name }
     : { programId: null, programName: null };
@@ -190,7 +191,7 @@ export function SessionExercise(props: SessionExerciseProps) {
         {data.notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{data.notes}</Text> : null}
 
         <List className="session-exercise__sets">
-          {data.sets.map((set) => {
+          {renderedSets.map((set) => {
             const setNumber = set.position + 1;
             const planMode = props.mode === 'plan';
             const metrics = formatSessionSetMetrics(
@@ -261,10 +262,8 @@ export function SessionExercise(props: SessionExerciseProps) {
               previous: selectedSet.previous,
               fact: selectedSet.fact,
             }}
-            onClose={() => {
-              setSelectedSessionSetId(null);
-              props.onPlanReconcile();
-            }}
+            onClose={() => setSelectedSessionSetId(null)}
+            onPlanSaved={() => props.onPlanSetSaved()}
             onOpenHistory={() => onOpenHistory(data.exercise.id)}
             onOpenChat={onOpenChat}
           />
