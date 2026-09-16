@@ -1,6 +1,6 @@
 # Third-party icon assets
 
-The SVG icon set in this directory is based on Tabler Icons outline assets.
+The SVG icon set in this directory is based on Tabler Icons outline and filled assets.
 
 Tabler Icons is licensed under the MIT License.
 
