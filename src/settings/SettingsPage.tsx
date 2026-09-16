@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import { Button, Surface, Text } from '../ui';
-import { SessionExercise, type SessionExerciseData } from '../workout';
+import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
 const previewExercise: SessionExerciseData = {
@@ -68,6 +68,35 @@ const previewExercise: SessionExerciseData = {
   ],
 };
 
+const planCreateSet: SessionExerciseSetData = {
+  sessionSetId: -204,
+  sourceProgramSetId: null,
+  position: 2,
+  status: 'pending',
+  plan: null,
+  previous: {
+    workoutDate: '2026-09-09',
+    metrics: { weightKg: 77.5, reps: 7, durationSeconds: null, distanceMeters: null },
+  },
+  fact: null,
+};
+
+const planPreviewExercise: SessionExerciseData = {
+  ...previewExercise,
+  sessionExerciseId: -2,
+  sourceProgramExerciseId: -2,
+  status: 'planned',
+  exercise: { ...previewExercise.exercise, id: -2, name: 'Приседания со штангой', category_code: 'legs' },
+  notes: 'Демонстрация плана тренера: сохранённые подходы и отдельная строка добавления.',
+  sets: previewExercise.sets.slice(0, 2).map((set) => ({
+    ...set,
+    sessionSetId: set.sessionSetId - 100,
+    sourceProgramSetId: set.sessionSetId - 100,
+    status: 'pending',
+    fact: null,
+  })),
+};
+
 interface SettingsPageProps {
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
@@ -112,12 +141,31 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
       <section className="modules-gallery__example" aria-labelledby="module-session-exercise-title">
         <Text id="module-session-exercise-title" variant="headline">Карточка упражнения и подходов</Text>
         <Text variant="footnote" tone="muted">
-          Нажатие на строку подхода открывает настоящий модуль ввода результата подхода.
+          Режим workout. Нажатие на строку подхода открывает настоящий модуль ввода результата подхода.
         </Text>
         <SessionExercise
+          mode="workout"
           context={{ workoutSessionId: -1, workoutDate: '2026-09-16', program: { id: -1, name: 'Пример программы' } }}
           data={previewExercise}
           onSaveSet={async () => {}}
+          onOpenExerciseMenu={() => {}}
+          onOpenHistory={() => {}}
+          onOpenChat={() => {}}
+        />
+      </section>
+
+      <section className="modules-gallery__example" aria-labelledby="module-plan-exercise-title">
+        <Text id="module-plan-exercise-title" variant="headline">Карточка упражнения и подходов · plan</Text>
+        <Text variant="footnote" tone="muted">
+          Откройте «Подход 3», чтобы посмотреть ввод плана с предыдущей тренировкой без оценки и RPE. Данные вымышленные: сохранение в этом примере недоступно.
+        </Text>
+        <SessionExercise
+          mode="plan"
+          programExerciseId={-2}
+          createSet={planCreateSet}
+          context={{ workoutSessionId: -1, workoutDate: '2026-09-16', program: { id: -1, name: 'Пример программы' } }}
+          data={planPreviewExercise}
+          onPlanSetSaved={() => {}}
           onOpenExerciseMenu={() => {}}
           onOpenHistory={() => {}}
           onOpenChat={() => {}}
