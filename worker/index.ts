@@ -342,7 +342,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     requireRole(auth, 'coach');
     let parsedBody: unknown;
     try {
-      parsedBody = (await request.json()) as unknown;
+      parsedBody = await request.json();
     } catch {
       throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
@@ -398,7 +398,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
     let parsedBody: unknown;
     try {
-      parsedBody = (await request.json()) as unknown;
+      parsedBody = await request.json();
     } catch {
       throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
@@ -449,7 +449,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     requireRole(auth, 'coach');
     let parsedBody: unknown;
     try {
-      parsedBody = (await request.json()) as unknown;
+      parsedBody = await request.json();
     } catch {
       throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
     }
