@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Divider, IconButton, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text } from './index';
 import barbellFilledIconUrl from './icons/barbell-filled.svg';
 import barbellIconUrl from './icons/barbell.svg';
@@ -8,6 +8,7 @@ import clipboardFilledIconUrl from './icons/clipboard-text-filled.svg';
 import clipboardIconUrl from './icons/clipboard-text.svg';
 import homeFilledIconUrl from './icons/home-filled.svg';
 import homeIconUrl from './icons/home.svg';
+import settingsFilledIconUrl from './icons/settings-filled.svg';
 import settingsIconUrl from './icons/settings.svg';
 
 type MaskIconProps = { src: string };
@@ -22,6 +23,20 @@ const tabs = [
   { value: 'exercises', label: 'Упражнения', outline: barbellIconUrl, filled: barbellFilledIconUrl },
   { value: 'calendar', label: 'Календарь', outline: calendarIconUrl, filled: calendarFilledIconUrl },
 ] as const;
+
+function SelectableSettingsButton({ theme = 'default' }: { theme?: 'default' | 'glass' }) {
+  const [selected, setSelected] = useState(false);
+  return (
+    <IconButton
+      label={`Settings ${theme}`}
+      theme={theme}
+      selected={selected}
+      aria-pressed={selected}
+      icon={{ outline: <MaskIcon src={settingsIconUrl} />, filled: <MaskIcon src={settingsFilledIconUrl} /> }}
+      onClick={() => setSelected((value) => !value)}
+    />
+  );
+}
 
 function IconTabs({ theme = 'default' }: { theme?: 'default' | 'glass' }) {
   return (
@@ -85,11 +100,12 @@ export function ThemeVariantsCatalog() {
       </Surface>
 
       <Surface as="section" className="ui-kit-section">
-        <Text variant="title">IconButton themes</Text>
+        <Text variant="title">IconButton themes + selected state</Text>
+        <Text variant="caption" tone="muted">Click a settings button: outline changes to filled and the icon uses the shared spring motion.</Text>
         <Divider />
         <div className="ui-kit-row">
-          <IconButton label="Default settings"><MaskIcon src={settingsIconUrl} /></IconButton>
-          <GlassStage><IconButton label="Glass settings" theme="glass"><MaskIcon src={settingsIconUrl} /></IconButton></GlassStage>
+          <SelectableSettingsButton />
+          <GlassStage><SelectableSettingsButton theme="glass" /></GlassStage>
         </div>
       </Surface>
 
