@@ -20,6 +20,13 @@
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
+.ui-text-input--align-left .ui-text-input__field { text-align: left; }
+.ui-text-input--align-center .ui-text-input__field { text-align: center; }
+.ui-text-input--align-right .ui-text-input__field { text-align: right; }
+.ui-text-input--hide-number-controls .ui-text-input__field { appearance: textfield; }
+.ui-text-input--hide-number-controls .ui-text-input__field::-webkit-inner-spin-button,
+.ui-text-input--hide-number-controls .ui-text-input__field::-webkit-outer-spin-button { margin: 0; appearance: none; }
+
 .ui-text-area__field {
   height: auto;
   min-height: 88px;
