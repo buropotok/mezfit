@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ApiError,
-  addWorkoutSessionExercise,
+  addWorkoutSessionExercises,
   completeWorkoutSession,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
@@ -9,6 +9,7 @@ import {
   startWorkoutSession,
 } from '../api';
 import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
+import plusIconUrl from '../ui/icons/plus.svg';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import { WorkoutExercisePicker } from './WorkoutExercisePicker';
@@ -32,14 +33,6 @@ function sessionMeta(session: ActiveWorkoutSession): string {
 
 function draftMeta(session: DraftWorkoutSession): string {
   return [session.program?.name, session.phase?.name].filter(Boolean).join(' · ');
-}
-
-function AddIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor" />
-    </svg>
-  );
 }
 
 function reorderExerciseData(session: ActiveWorkoutSession, ids: number[]): ActiveWorkoutSession {
@@ -71,7 +64,7 @@ export function WorkoutSessionScreen({
   const [message, setMessage] = useState<string | null>(null);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
   const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
-  const [addingExerciseId, setAddingExerciseId] = useState<number | null>(null);
+  const [addingExercises, setAddingExercises] = useState(false);
   const [exercisePickerError, setExercisePickerError] = useState('');
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
@@ -224,17 +217,17 @@ export function WorkoutSessionScreen({
     setExercisePickerOpen(true);
   }
 
-  async function handleAddExercise(exerciseDefinitionId: number) {
-    if (!activeSession || activeSession.status !== 'active') return;
+  async function handleAddExercises(exerciseDefinitionIds: number[]) {
+    if (!activeSession || activeSession.status !== 'active' || exerciseDefinitionIds.length === 0) return;
     const sessionId = activeSession.sessionId;
     const intent = nextMutationIntent();
-    setAddingExerciseId(exerciseDefinitionId);
+    setAddingExercises(true);
     setExercisePickerError('');
     try {
-      const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionExercise(
+      const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionExercises(
         initData,
         sessionId,
-        exerciseDefinitionId,
+        exerciseDefinitionIds,
       ));
       if (!isCurrentGeneration(intent)) return;
       acknowledgedSessionRef.current = nextSession;
@@ -242,9 +235,9 @@ export function WorkoutSessionScreen({
       setSession(nextSession);
       setExercisePickerOpen(false);
     } catch (error) {
-      if (isCurrentIntent(intent)) setExercisePickerError(errorMessage(error, 'Не удалось добавить упражнение'));
+      if (isCurrentIntent(intent)) setExercisePickerError(errorMessage(error, 'Не удалось добавить упражнения'));
     } finally {
-      if (isCurrentGeneration(intent)) setAddingExerciseId(null);
+      if (isCurrentGeneration(intent)) setAddingExercises(false);
     }
   }
 
@@ -377,7 +370,7 @@ export function WorkoutSessionScreen({
             label="Добавить упражнение"
             onClick={openExercisePicker}
           >
-            <AddIcon />
+            <img src={plusIconUrl} alt="" aria-hidden="true" width={24} height={24} />
           </FloatingActionButton>
         </>
       ) : null}
@@ -385,11 +378,11 @@ export function WorkoutSessionScreen({
       <WorkoutExercisePicker
         initData={initData}
         isOpen={exercisePickerOpen}
-        addingExerciseId={addingExerciseId}
+        saving={addingExercises}
         actionError={exercisePickerError}
-        onAdd={(exerciseDefinitionId) => void handleAddExercise(exerciseDefinitionId)}
+        onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
         onClose={() => {
-          if (addingExerciseId !== null) return;
+          if (addingExercises) return;
           setExercisePickerOpen(false);
           setExercisePickerError('');
         }}
