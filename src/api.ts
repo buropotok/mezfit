@@ -164,7 +164,7 @@ const russianApiErrors: Record<string, string> = {
   EXERCISE_EXISTS: 'Упражнение с таким названием уже существует',
   EXERCISE_READ_ONLY: 'Базовое упражнение нельзя изменять',
   EXERCISE_NOT_FOUND: 'Упражнение не найдено',
-  INVALID_EXERCISE: 'Выберите упражнение',
+  INVALID_EXERCISE: 'Выберите хотя бы одно упражнение',
   INVALID_NAME: 'Укажите название упражнения',
   INVALID_TRACKING_TYPE: 'Выбран неподдерживаемый тип учёта результата',
   INVALID_CATEGORY: 'Выбрана неподдерживаемая категория',
@@ -440,23 +440,23 @@ export function setCoachExerciseFavourite(
 
 export async function getWorkoutExerciseOptions(
   initData: string,
+  categoryCode: ExerciseCategoryCode,
   search = '',
 ): Promise<{ exercises: ExerciseDefinition[] }> {
-  const query = new URLSearchParams();
+  const query = new URLSearchParams({ category: categoryCode });
   if (search.trim()) query.set('search', search.trim());
-  const suffix = query.size ? `?${query.toString()}` : '';
-  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/workout-sessions/exercises${suffix}`);
+  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/workout-sessions/exercises?${query.toString()}`);
   return { exercises: result.exercises.map(localizeExercise) };
 }
 
-export async function addWorkoutSessionExercise(
+export async function addWorkoutSessionExercises(
   initData: string,
   workoutSessionId: number,
-  exerciseDefinitionId: number,
+  exerciseDefinitionIds: number[],
 ): Promise<{ session: ActiveWorkoutSession }> {
   const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/exercises`, {
     method: 'POST',
-    body: JSON.stringify({ exerciseDefinitionId }),
+    body: JSON.stringify({ exerciseDefinitionIds }),
   });
   return { session: localizeWorkoutSession(result.session) };
 }
