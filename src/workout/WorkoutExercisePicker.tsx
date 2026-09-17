@@ -1,28 +1,44 @@
-import { useEffect, useState } from 'react';
-import { getWorkoutExerciseOptions, type ExerciseDefinition } from '../api';
+import { useEffect, useMemo, useState } from 'react';
+import { getWorkoutExerciseOptions, type ExerciseCategoryCode, type ExerciseDefinition } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
-import { List, ListItem, Modal, SearchInput, Text } from '../ui';
+import { Button, FloatingActionButton, List, ListItem, Modal, SearchInput, Text } from '../ui';
+import './workout-exercise-picker.css';
+
+const categoryOptions: Array<{ code: ExerciseCategoryCode; label: string }> = [
+  { code: 'chest', label: 'Грудь' },
+  { code: 'arms', label: 'Руки' },
+  { code: 'back', label: 'Спина' },
+  { code: 'legs', label: 'Ноги' },
+  { code: 'shoulders', label: 'Плечи' },
+  { code: 'core', label: 'Корпус' },
+  { code: 'full_body', label: 'Фулбоди' },
+  { code: 'cardio', label: 'Кардио' },
+  { code: 'other', label: 'Другое' },
+];
 
 interface Props {
   initData: string;
   isOpen: boolean;
-  addingExerciseId: number | null;
+  saving: boolean;
   actionError?: string;
-  onAdd: (exerciseDefinitionId: number) => void;
+  onConfirm: (exerciseDefinitionIds: number[]) => void;
   onClose: () => void;
 }
 
-export function WorkoutExercisePicker({ initData, isOpen, addingExerciseId, actionError = '', onAdd, onClose }: Props) {
+export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = '', onConfirm, onClose }: Props) {
+  const [selectedCategory, setSelectedCategory] = useState<ExerciseCategoryCode | null>(null);
   const [search, setSearch] = useState('');
   const [exercises, setExercises] = useState<ExerciseDefinition[] | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!isOpen || selectedCategory === null) return undefined;
     let cancelled = false;
+    setExercises(null);
     const timer = window.setTimeout(() => {
-      getWorkoutExerciseOptions(initData, search)
+      getWorkoutExerciseOptions(initData, selectedCategory, search)
         .then(({ exercises: nextExercises }) => {
           if (cancelled) return;
           setExercises(nextExercises);
@@ -39,51 +55,121 @@ export function WorkoutExercisePicker({ initData, isOpen, addingExerciseId, acti
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [initData, isOpen, search]);
+  }, [initData, isOpen, search, selectedCategory]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setSearch('');
-      setExercises(null);
-      setError('');
-    }
+    if (isOpen) return;
+    setSelectedCategory(null);
+    setSearch('');
+    setExercises(null);
+    setSelectedIds(new Set());
+    setError('');
   }, [isOpen]);
+
+  const selectedCount = selectedIds.size;
+  const selectedCategoryLabel = useMemo(
+    () => categoryOptions.find((category) => category.code === selectedCategory)?.label ?? 'Упражнения',
+    [selectedCategory],
+  );
+
+  const toggleExercise = (exerciseDefinitionId: number) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(exerciseDefinitionId)) next.delete(exerciseDefinitionId);
+      else next.add(exerciseDefinitionId);
+      return next;
+    });
+  };
+
+  const close = () => {
+    if (!saving) onClose();
+  };
 
   return (
     <Modal
       isOpen={isOpen}
-      title="Добавить упражнение"
-      hasCloseButton={addingExerciseId === null}
-      closeOnBackdrop={addingExerciseId === null}
-      onClose={onClose}
+      title={selectedCategory === null ? 'Упражнения' : selectedCategoryLabel}
+      hasCloseButton={!saving}
+      closeOnBackdrop={!saving}
+      onClose={close}
     >
-      <SearchInput
-        aria-label="Поиск упражнения"
-        placeholder="Поиск упражнения"
-        value={search}
-        onChange={(event) => setSearch(event.currentTarget.value)}
-        onClear={() => setSearch('')}
-        disabled={addingExerciseId !== null}
-      />
-      {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
-      {error ? <Text variant="footnote" tone="muted" role="alert">{error}</Text> : null}
-      {exercises === null && !error ? <Text variant="footnote" tone="muted">Загружаем упражнения…</Text> : null}
-      {exercises?.length === 0 && !error ? <Text variant="footnote" tone="muted">Ничего не найдено.</Text> : null}
-      {exercises && exercises.length > 0 ? (
-        <List divider="inset">
-          {exercises.map((exercise) => (
-            <ListItem
-              key={exercise.id}
-              leadingShape="square"
-              leading={<ExerciseMedia exercise={exercise} variant="thumbnail" />}
-              title={exerciseDisplayName(exercise)}
-              subtitle={exercise.description ?? undefined}
-              disabled={addingExerciseId !== null}
-              onClick={() => onAdd(exercise.id)}
+      <div className="workout-exercise-picker">
+        {selectedCategory === null ? (
+          <>
+            {selectedCount > 0 ? <Text variant="footnote" tone="muted">Выбрано: {selectedCount}</Text> : null}
+            <List divider="inset">
+              {categoryOptions.map((category) => (
+                <ListItem
+                  key={category.code}
+                  title={category.label}
+                  disabled={saving}
+                  onClick={() => {
+                    setSelectedCategory(category.code);
+                    setSearch('');
+                    setError('');
+                  }}
+                />
+              ))}
+            </List>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="secondary"
+              disabled={saving}
+              onClick={() => {
+                setSelectedCategory(null);
+                setSearch('');
+                setExercises(null);
+                setError('');
+              }}
+            >
+              Назад к категориям
+            </Button>
+            <SearchInput
+              aria-label="Поиск упражнения"
+              placeholder="Поиск упражнения"
+              value={search}
+              onChange={(event) => setSearch(event.currentTarget.value)}
+              onClear={() => setSearch('')}
+              disabled={saving}
             />
-          ))}
-        </List>
-      ) : null}
+            {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
+            {error ? <Text variant="footnote" tone="muted" role="alert">{error}</Text> : null}
+            {exercises === null && !error ? <Text variant="footnote" tone="muted">Загружаем упражнения…</Text> : null}
+            {exercises?.length === 0 && !error ? <Text variant="footnote" tone="muted">Ничего не найдено.</Text> : null}
+            {exercises && exercises.length > 0 ? (
+              <List divider="inset">
+                {exercises.map((exercise) => {
+                  const selected = selectedIds.has(exercise.id);
+                  return (
+                    <ListItem
+                      key={exercise.id}
+                      leadingShape="square"
+                      leading={<ExerciseMedia exercise={exercise} variant="thumbnail" />}
+                      title={exerciseDisplayName(exercise)}
+                      subtitle={exercise.description ?? undefined}
+                      trailing={selected ? <span className="workout-exercise-picker__selected-dot" aria-hidden="true" /> : undefined}
+                      aria-pressed={selected}
+                      disabled={saving}
+                      onClick={() => toggleExercise(exercise.id)}
+                    />
+                  );
+                })}
+              </List>
+            ) : null}
+          </>
+        )}
+        <FloatingActionButton
+          placement="right"
+          label="Добавить выбранные упражнения"
+          isShown={selectedCount > 0}
+          disabled={saving}
+          onClick={() => onConfirm([...selectedIds])}
+        >
+          <Text variant="body">ОК</Text>
+        </FloatingActionButton>
+      </div>
     </Modal>
   );
 }
