@@ -41,6 +41,7 @@ function exerciseVisibilitySql(): string {
 export async function listWorkoutExerciseOptions(
   db: D1Database,
   userId: number,
+  categoryCode: ExerciseCategoryCode,
   search: string,
 ): Promise<WorkoutExerciseOption[]> {
   const needle = `%${search.trim().slice(0, 100)}%`;
@@ -59,10 +60,11 @@ export async function listWorkoutExerciseOptions(
     FROM exercise_definition e
     WHERE e.is_archived = 0
       AND ${exerciseVisibilitySql()}
+      AND COALESCE(e.category_code, 'other') = ?
       AND (? = '%%' OR e.name LIKE ? COLLATE NOCASE OR COALESCE(e.name_en, '') LIKE ? COLLATE NOCASE)
     ORDER BY e.name COLLATE NOCASE, e.id
     LIMIT 250
-  `).bind(userId, userId, userId, needle, needle, needle).all<ExerciseOptionRow>();
+  `).bind(userId, userId, userId, categoryCode, needle, needle, needle).all<ExerciseOptionRow>();
 
   return result.results.map((row) => ({
     ...row,
@@ -71,42 +73,58 @@ export async function listWorkoutExerciseOptions(
   }));
 }
 
-async function exerciseIsAvailable(db: D1Database, userId: number, exerciseDefinitionId: number): Promise<boolean> {
-  const row = await db.prepare(`
-    SELECT e.id
-    FROM exercise_definition e
-    WHERE e.id = ?
-      AND e.is_archived = 0
-      AND ${exerciseVisibilitySql()}
-    LIMIT 1
-  `).bind(exerciseDefinitionId, userId, userId, userId).first<{ id: number }>();
-  return Boolean(row);
+function selectedValuesSql(count: number): string {
+  return Array.from({ length: count }, (_, index) => `(?, ${index})`).join(', ');
 }
 
-export type AddWorkoutExerciseResult =
+async function countAvailableExercises(db: D1Database, userId: number, exerciseDefinitionIds: number[]): Promise<number> {
+  const placeholders = exerciseDefinitionIds.map(() => '?').join(', ');
+  const row = await db.prepare(`
+    SELECT COUNT(DISTINCT e.id) AS count
+    FROM exercise_definition e
+    WHERE e.id IN (${placeholders})
+      AND e.is_archived = 0
+      AND ${exerciseVisibilitySql()}
+  `).bind(...exerciseDefinitionIds, userId, userId, userId).first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+export type AddWorkoutExercisesResult =
   | { kind: 'ok'; session: ActiveWorkoutSession }
   | { kind: 'not_found' }
   | { kind: 'invalid_state' }
   | { kind: 'exercise_not_found' };
 
-export async function addWorkoutExercise(
+export async function addWorkoutExercises(
   db: D1Database,
   userId: number,
   workoutSessionId: number,
-  exerciseDefinitionId: number,
-): Promise<AddWorkoutExerciseResult> {
-  const workout = await db.prepare(`
-    SELECT id, status
-    FROM workout_session
-    WHERE id = ? AND user_id = ?
-    LIMIT 1
-  `).bind(workoutSessionId, userId).first<{ id: number; status: string }>();
-  if (!workout) return { kind: 'not_found' };
-  if (workout.status !== 'active') return { kind: 'invalid_state' };
-  if (!(await exerciseIsAvailable(db, userId, exerciseDefinitionId))) return { kind: 'exercise_not_found' };
-
-  await db.batch([
+  exerciseDefinitionIds: number[],
+): Promise<AddWorkoutExercisesResult> {
+  const expectedCount = exerciseDefinitionIds.length;
+  const selectedValues = selectedValuesSql(expectedCount);
+  const batchResults = await db.batch([
     db.prepare(`
+      WITH selected(exercise_definition_id, ordinal) AS (
+        VALUES ${selectedValues}
+      ),
+      eligible AS (
+        SELECT selected.exercise_definition_id, selected.ordinal
+        FROM selected
+        JOIN exercise_definition e ON e.id = selected.exercise_definition_id
+        WHERE e.is_archived = 0
+          AND ${exerciseVisibilitySql()}
+      ),
+      active_workout AS (
+        SELECT id
+        FROM workout_session
+        WHERE id = ? AND user_id = ? AND status = 'active'
+      ),
+      base_position AS (
+        SELECT COALESCE(MAX(position), -1) + 1 AS value
+        FROM session_exercise
+        WHERE workout_session_id = ?
+      )
       INSERT INTO session_exercise (
         workout_session_id,
         exercise_definition_id,
@@ -116,10 +134,30 @@ export async function addWorkoutExercise(
         added_by_user_id,
         notes
       )
-      SELECT ?, ?, NULL, COALESCE(MAX(position), -1) + 1, 'active', ?, NULL
-      FROM session_exercise
-      WHERE workout_session_id = ?
-    `).bind(workoutSessionId, exerciseDefinitionId, userId, workoutSessionId),
+      SELECT
+        active_workout.id,
+        eligible.exercise_definition_id,
+        NULL,
+        base_position.value + eligible.ordinal,
+        'active',
+        ?,
+        NULL
+      FROM active_workout
+      CROSS JOIN base_position
+      CROSS JOIN eligible
+      WHERE (SELECT COUNT(*) FROM eligible) = ?
+      ORDER BY eligible.ordinal
+    `).bind(
+      ...exerciseDefinitionIds,
+      userId,
+      userId,
+      userId,
+      workoutSessionId,
+      userId,
+      workoutSessionId,
+      userId,
+      expectedCount,
+    ),
     db.prepare(`
       INSERT INTO session_set (
         session_exercise_id,
@@ -141,15 +179,57 @@ export async function addWorkoutExercise(
         created_by_user_id,
         updated_by_user_id
       )
-      SELECT se.id, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', ?, ?
-      FROM session_exercise se
-      WHERE se.workout_session_id = ?
-      ORDER BY se.position DESC, se.id DESC
-      LIMIT 1
-    `).bind(userId, userId, workoutSessionId),
+      SELECT
+        created.id,
+        NULL,
+        0,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        'pending',
+        ?,
+        ?
+      FROM (
+        SELECT se.id
+        FROM session_exercise se
+        WHERE se.workout_session_id = ?
+        ORDER BY se.position DESC, se.id DESC
+        LIMIT ?
+      ) created
+      WHERE changes() = ?
+    `).bind(userId, userId, workoutSessionId, expectedCount, expectedCount),
   ]);
 
-  const session = await getWorkoutSessionProjection(db, userId, workoutSessionId);
-  if (!session) throw new Error('WORKOUT_PROJECTION_MISSING_AFTER_EXERCISE_ADD');
-  return { kind: 'ok', session };
+  const insertedCount = Number(batchResults[0]?.meta?.changes ?? 0);
+  if (insertedCount === expectedCount) {
+    const session = await getWorkoutSessionProjection(db, userId, workoutSessionId);
+    if (!session) throw new Error('WORKOUT_PROJECTION_MISSING_AFTER_EXERCISE_ADD');
+    return { kind: 'ok', session };
+  }
+  if (insertedCount !== 0) {
+    throw new Error('WORKOUT_EXERCISE_BATCH_PARTIAL_INSERT');
+  }
+
+  const workout = await db.prepare(`
+    SELECT status
+    FROM workout_session
+    WHERE id = ? AND user_id = ?
+    LIMIT 1
+  `).bind(workoutSessionId, userId).first<{ status: string }>();
+  if (!workout) return { kind: 'not_found' };
+  if (workout.status !== 'active') return { kind: 'invalid_state' };
+  if (await countAvailableExercises(db, userId, exerciseDefinitionIds) !== expectedCount) {
+    return { kind: 'exercise_not_found' };
+  }
+
+  throw new Error('WORKOUT_EXERCISE_GUARDED_INSERT_REJECTED');
 }
