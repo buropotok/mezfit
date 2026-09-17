@@ -94,6 +94,7 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
       onClose={close}
     >
       <div className="workout-exercise-picker">
+        {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
         {selectedCategory === null ? (
           <>
             {selectedCount > 0 ? <Text variant="footnote" tone="muted">Выбрано: {selectedCount}</Text> : null}
@@ -134,7 +135,6 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
               onClear={() => setSearch('')}
               disabled={saving}
             />
-            {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
             {error ? <Text variant="footnote" tone="muted" role="alert">{error}</Text> : null}
             {exercises === null && !error ? <Text variant="footnote" tone="muted">Загружаем упражнения…</Text> : null}
             {exercises?.length === 0 && !error ? <Text variant="footnote" tone="muted">Ничего не найдено.</Text> : null}
