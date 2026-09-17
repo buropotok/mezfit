@@ -167,7 +167,7 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
           disabled={saving}
           onClick={() => onConfirm([...selectedIds])}
         >
-          <Text variant="body">ОК</Text>
+          <Text variant="body" className="workout-exercise-picker__confirm-label">ОК</Text>
         </FloatingActionButton>
       </div>
     </Modal>
