@@ -159,6 +159,23 @@ export async function addWorkoutExercises(
       expectedCount,
     ),
     db.prepare(`
+      WITH selected(exercise_definition_id, ordinal) AS (
+        VALUES ${selectedValues}
+      ),
+      last_position AS (
+        SELECT MAX(position) AS value
+        FROM session_exercise
+        WHERE workout_session_id = ?
+      ),
+      created AS (
+        SELECT se.id
+        FROM selected
+        CROSS JOIN last_position
+        JOIN session_exercise se
+          ON se.workout_session_id = ?
+          AND se.exercise_definition_id = selected.exercise_definition_id
+          AND se.position = last_position.value - (? - 1) + selected.ordinal
+      )
       INSERT INTO session_set (
         session_exercise_id,
         source_program_set_id,
@@ -198,24 +215,29 @@ export async function addWorkoutExercises(
         'pending',
         ?,
         ?
-      FROM (
-        SELECT se.id
-        FROM session_exercise se
-        WHERE se.workout_session_id = ?
-        ORDER BY se.position DESC, se.id DESC
-        LIMIT ?
-      ) created
+      FROM created
       WHERE changes() = ?
-    `).bind(userId, userId, workoutSessionId, expectedCount, expectedCount),
+        AND (SELECT COUNT(*) FROM created) = ?
+    `).bind(
+      ...exerciseDefinitionIds,
+      workoutSessionId,
+      workoutSessionId,
+      expectedCount,
+      userId,
+      userId,
+      expectedCount,
+      expectedCount,
+    ),
   ]);
 
   const insertedCount = Number(batchResults[0]?.meta?.changes ?? 0);
-  if (insertedCount === expectedCount) {
+  const setCount = Number(batchResults[1]?.meta?.changes ?? 0);
+  if (insertedCount === expectedCount && setCount === expectedCount) {
     const session = await getWorkoutSessionProjection(db, userId, workoutSessionId);
     if (!session) throw new Error('WORKOUT_PROJECTION_MISSING_AFTER_EXERCISE_ADD');
     return { kind: 'ok', session };
   }
-  if (insertedCount !== 0) {
+  if (insertedCount !== 0 || setCount !== 0) {
     throw new Error('WORKOUT_EXERCISE_BATCH_PARTIAL_INSERT');
   }
 
