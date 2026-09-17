@@ -1,4 +1,5 @@
-import { addWorkoutExercise, listWorkoutExerciseOptions } from './workout-exercise-actions';
+import { addWorkoutExercises, listWorkoutExerciseOptions } from './workout-exercise-actions';
+import type { ExerciseCategoryCode } from './exercises';
 import {
   completeWorkoutSession,
   initializeWorkoutSession,
@@ -62,6 +63,7 @@ function parseMetrics(value: unknown): WorkoutMetrics | null {
 
 const setLabels = new Set<WorkoutSetLabel>(['warmup', 'easy', 'normal', 'hard', 'drop']);
 const bandCodes = new Set<ResistanceBandCode>(['yellow', 'red', 'green', 'blue', 'purple', 'black']);
+const exerciseCategoryCodes = new Set<ExerciseCategoryCode>(['chest', 'arms', 'back', 'legs', 'shoulders', 'core', 'full_body', 'cardio', 'other']);
 
 function parseFact(value: unknown): WorkoutSetFactInput | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
@@ -97,12 +99,28 @@ function parseStartInput(body: Record<string, unknown>): WorkoutStartInput | nul
   return null;
 }
 
+function parseExerciseDefinitionIds(value: unknown): number[] | null {
+  if (!Array.isArray(value) || value.length === 0 || !value.every(isPositiveInteger)) return null;
+  const ids = value as number[];
+  if (new Set(ids).size !== ids.length) return null;
+  return ids;
+}
+
 export async function handleWorkoutSessionRoute(request: Request, db: D1Database, userId: number): Promise<Response> {
   const url = new URL(request.url);
 
   if (url.pathname === '/api/workout-sessions/exercises') {
     if (request.method !== 'GET') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
-    const exercises = await listWorkoutExerciseOptions(db, userId, url.searchParams.get('search') ?? '');
+    const category = url.searchParams.get('category');
+    if (!category || !exerciseCategoryCodes.has(category as ExerciseCategoryCode)) {
+      return errorResponse(400, 'INVALID_CATEGORY', 'Exercise category is invalid');
+    }
+    const exercises = await listWorkoutExerciseOptions(
+      db,
+      userId,
+      category as ExerciseCategoryCode,
+      url.searchParams.get('search') ?? '',
+    );
     return jsonResponse({ exercises });
   }
 
@@ -142,11 +160,12 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
   if (addExerciseMatch) {
     if (request.method !== 'POST') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
     const body = await readJsonObject(request);
-    if (!body || !isPositiveInteger(body.exerciseDefinitionId)) {
-      return errorResponse(400, 'INVALID_EXERCISE', 'Exercise id is invalid');
+    const exerciseDefinitionIds = body ? parseExerciseDefinitionIds(body.exerciseDefinitionIds) : null;
+    if (!exerciseDefinitionIds) {
+      return errorResponse(400, 'INVALID_EXERCISE', 'Exercise ids are invalid');
     }
 
-    const result = await addWorkoutExercise(db, userId, Number(addExerciseMatch[1]), body.exerciseDefinitionId);
+    const result = await addWorkoutExercises(db, userId, Number(addExerciseMatch[1]), exerciseDefinitionIds);
     if (result.kind === 'not_found') return errorResponse(404, 'WORKOUT_NOT_FOUND', 'Workout session not found');
     if (result.kind === 'invalid_state') return errorResponse(409, 'WORKOUT_STATE_INVALID', 'Workout is not active');
     if (result.kind === 'exercise_not_found') return errorResponse(404, 'EXERCISE_NOT_FOUND', 'Exercise is not available');
