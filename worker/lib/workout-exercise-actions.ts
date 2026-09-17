@@ -16,7 +16,7 @@ export interface WorkoutExerciseOption {
   can_edit: boolean;
 }
 
-type ExerciseOptionRow = Omit<WorkoutExerciseOption, 'is_favourite' | 'can_edit'>;
+type ExerciseOptionRow = Omit<WorkoutExerciseOption, 'is_favourite' | 'can_edit'> & { name_en: string | null };
 
 function exerciseVisibilitySql(): string {
   return `(
@@ -38,18 +38,28 @@ function exerciseVisibilitySql(): string {
   )`;
 }
 
+function normalizeSearch(value: string): string {
+  return value.normalize('NFKC').toLocaleLowerCase('ru-RU');
+}
+
+function matchesSearch(row: ExerciseOptionRow, search: string): boolean {
+  const needle = normalizeSearch(search.trim());
+  if (!needle) return true;
+  return normalizeSearch(row.name).includes(needle) || normalizeSearch(row.name_en ?? '').includes(needle);
+}
+
 export async function listWorkoutExerciseOptions(
   db: D1Database,
   userId: number,
   categoryCode: ExerciseCategoryCode,
   search: string,
 ): Promise<WorkoutExerciseOption[]> {
-  const needle = `%${search.trim().slice(0, 100)}%`;
   const result = await db.prepare(`
     SELECT
       e.id,
       e.scope,
       e.name,
+      e.name_en,
       e.description,
       e.tracking_type,
       e.category_code,
@@ -61,31 +71,41 @@ export async function listWorkoutExerciseOptions(
     WHERE e.is_archived = 0
       AND ${exerciseVisibilitySql()}
       AND COALESCE(e.category_code, 'other') = ?
-      AND (? = '%%' OR e.name LIKE ? COLLATE NOCASE OR COALESCE(e.name_en, '') LIKE ? COLLATE NOCASE)
     ORDER BY e.name COLLATE NOCASE, e.id
-    LIMIT 250
-  `).bind(userId, userId, userId, categoryCode, needle, needle, needle).all<ExerciseOptionRow>();
+  `).bind(userId, userId, userId, categoryCode).all<ExerciseOptionRow>();
 
-  return result.results.map((row) => ({
-    ...row,
+  return result.results.filter((row) => matchesSearch(row, search)).map((row) => ({
+    id: row.id,
+    scope: row.scope,
+    name: row.name,
+    description: row.description,
+    tracking_type: row.tracking_type,
+    category_code: row.category_code,
+    equipment_code: row.equipment_code,
+    reference_source: row.reference_source,
+    reference_key: row.reference_key,
+    reference_media_url: row.reference_media_url,
     is_favourite: false,
     can_edit: false,
   }));
 }
 
-function selectedValuesSql(count: number): string {
-  return Array.from({ length: count }, (_, index) => `(?, ${index})`).join(', ');
+function selectedJson(exerciseDefinitionIds: number[]): string {
+  return JSON.stringify(exerciseDefinitionIds);
 }
 
 async function countAvailableExercises(db: D1Database, userId: number, exerciseDefinitionIds: number[]): Promise<number> {
-  const placeholders = exerciseDefinitionIds.map(() => '?').join(', ');
   const row = await db.prepare(`
+    WITH selected(exercise_definition_id) AS (
+      SELECT CAST(value AS INTEGER)
+      FROM json_each(?)
+    )
     SELECT COUNT(DISTINCT e.id) AS count
-    FROM exercise_definition e
-    WHERE e.id IN (${placeholders})
-      AND e.is_archived = 0
+    FROM selected
+    JOIN exercise_definition e ON e.id = selected.exercise_definition_id
+    WHERE e.is_archived = 0
       AND ${exerciseVisibilitySql()}
-  `).bind(...exerciseDefinitionIds, userId, userId, userId).first<{ count: number }>();
+  `).bind(selectedJson(exerciseDefinitionIds), userId, userId, userId).first<{ count: number }>();
   return row?.count ?? 0;
 }
 
@@ -102,11 +122,12 @@ export async function addWorkoutExercises(
   exerciseDefinitionIds: number[],
 ): Promise<AddWorkoutExercisesResult> {
   const expectedCount = exerciseDefinitionIds.length;
-  const selectedValues = selectedValuesSql(expectedCount);
+  const selectionJson = selectedJson(exerciseDefinitionIds);
   const batchResults = await db.batch([
     db.prepare(`
       WITH selected(exercise_definition_id, ordinal) AS (
-        VALUES ${selectedValues}
+        SELECT CAST(value AS INTEGER), CAST(key AS INTEGER)
+        FROM json_each(?)
       ),
       eligible AS (
         SELECT selected.exercise_definition_id, selected.ordinal
@@ -148,7 +169,7 @@ export async function addWorkoutExercises(
       WHERE (SELECT COUNT(*) FROM eligible) = ?
       ORDER BY eligible.ordinal
     `).bind(
-      ...exerciseDefinitionIds,
+      selectionJson,
       userId,
       userId,
       userId,
@@ -160,7 +181,8 @@ export async function addWorkoutExercises(
     ),
     db.prepare(`
       WITH selected(exercise_definition_id, ordinal) AS (
-        VALUES ${selectedValues}
+        SELECT CAST(value AS INTEGER), CAST(key AS INTEGER)
+        FROM json_each(?)
       ),
       last_position AS (
         SELECT MAX(position) AS value
@@ -219,7 +241,7 @@ export async function addWorkoutExercises(
       WHERE changes() = ?
         AND (SELECT COUNT(*) FROM created) = ?
     `).bind(
-      ...exerciseDefinitionIds,
+      selectionJson,
       workoutSessionId,
       workoutSessionId,
       expectedCount,
