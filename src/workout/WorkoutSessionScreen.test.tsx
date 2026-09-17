@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  addWorkoutSessionExercise,
+  addWorkoutSessionExercises,
   completeWorkoutSession,
   getWorkoutExerciseOptions,
   initializeWorkoutSession,
@@ -15,7 +15,7 @@ import type { SessionExerciseData } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession, DraftWorkoutSession } from './workoutSessionTypes';
 
 vi.mock('../api', () => ({
-  addWorkoutSessionExercise: vi.fn(),
+  addWorkoutSessionExercises: vi.fn(),
   completeWorkoutSession: vi.fn(),
   getWorkoutExerciseOptions: vi.fn(),
   initializeWorkoutSession: vi.fn(),
@@ -49,7 +49,7 @@ vi.mock('../ui', async (importOriginal) => {
   return { ...actual, SortableList: TestSortableList };
 });
 
-const addExerciseMock = vi.mocked(addWorkoutSessionExercise);
+const addExercisesMock = vi.mocked(addWorkoutSessionExercises);
 const getExerciseOptionsMock = vi.mocked(getWorkoutExerciseOptions);
 const initializeMock = vi.mocked(initializeWorkoutSession);
 const startMock = vi.mocked(startWorkoutSession);
@@ -138,7 +138,7 @@ function renderScreen(overrides: Partial<React.ComponentProps<typeof WorkoutSess
 }
 
 beforeEach(() => {
-  addExerciseMock.mockReset();
+  addExercisesMock.mockReset();
   getExerciseOptionsMock.mockReset();
   initializeMock.mockReset();
   startMock.mockReset();
@@ -192,24 +192,28 @@ describe('WorkoutSessionScreen', () => {
     expect(screen.getByText('Упражнений пока нет.')).toBeTruthy();
   });
 
-  it('adds an exercise from the workout FAB and reconciles the returned session', async () => {
+  it('adds selected exercises from the workout FAB only after explicit OK confirmation', async () => {
     const nextSession: ActiveWorkoutSession = {
       ...ownSession,
       exercises: [exerciseData(42, 0, 'Жим лёжа')],
     };
     initializeMock.mockResolvedValue({ session: ownSession });
     getExerciseOptionsMock.mockResolvedValue({ exercises: [nextSession.exercises[0].exercise] });
-    addExerciseMock.mockResolvedValue({ session: nextSession });
+    addExercisesMock.mockResolvedValue({ session: nextSession });
 
     renderScreen();
     await screen.findByText('Своя тренировка');
     fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
 
+    fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
     expect(await screen.findByText('Жим лёжа')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    expect(addExercisesMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
 
     await waitFor(() => {
-      expect(addExerciseMock).toHaveBeenCalledWith('telegram-init', 501, 42);
+      expect(addExercisesMock).toHaveBeenCalledWith('telegram-init', 501, [42]);
     });
     expect((await screen.findByTestId('sortable-order')).textContent).toBe('42');
   });
