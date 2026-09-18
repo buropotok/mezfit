@@ -1,3 +1,4 @@
+import type { NavigationContext } from '../NavigationShell';
 import type { SessionExerciseData } from './sessionExerciseTypes';
 
 export interface WorkoutProgramSummary {
@@ -57,4 +58,5 @@ export interface WorkoutSessionScreenProps {
   onOpenHistory?: (exerciseDefinitionId: number) => void;
   onOpenChat?: () => void;
   onSessionLifecycleChange?: (session: Pick<WorkoutSessionState, 'sessionId' | 'status'>) => void;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
