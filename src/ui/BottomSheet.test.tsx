@@ -29,6 +29,22 @@ describe('BottomSheet', () => {
     expect(dialog.closest('.ui-bottom-sheet')?.className).not.toContain('ui-bottom-sheet--modal-color');
   });
 
+  it('renders a caller-owned leading header action without changing dialog semantics', () => {
+    render(
+      <BottomSheet
+        isOpen
+        title="Грудь"
+        headerLeading={<button type="button" aria-label="Назад">←</button>}
+        onClose={vi.fn()}
+      >
+        <div>Контент</div>
+      </BottomSheet>,
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Грудь' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Назад' })).toBeTruthy();
+  });
+
   it('closes through its public close control', () => {
     const onClose = vi.fn();
 
