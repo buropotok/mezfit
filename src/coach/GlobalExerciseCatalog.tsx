@@ -121,7 +121,7 @@ export function GlobalExerciseCatalog({
       setError('');
     } catch (reason) {
       if (!isCurrent()) return;
-      setExercises([]);
+      if (mode === 'select') setExercises([]);
       setError(reason instanceof Error ? reason.message : 'Не удалось загрузить каталог');
     }
   }, [initData, mode, search, selectedCategory]);
