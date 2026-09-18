@@ -42,6 +42,19 @@ describe('liquidGlass tabs physics', () => {
     expect(liquidGlassSameTabProgress(closeStart + half * .5, travel, false, reached, closeStart)).toBe(0);
   });
 
+  it('keeps the approved inside-only selector spring preset', () => {
+    expect(LIQUID_GLASS_TABS_PRESET.selectorSpring).toEqual({
+      durationMs: 1360,
+      firstHeightShrinkPercent: 16,
+      firstWidthToHeightPercent: 100,
+      secondWidthShrinkPercent: 11,
+      secondHeightShrinkPercent: 3,
+      firstSquashPointPercent: 18,
+      firstReturnPointPercent: 52,
+      secondSquashPointPercent: 64,
+    });
+  });
+
   it('keeps default text lenses wide enough for their actual selector', () => {
     const size = liquidGlassFullLensSize(48, 120, 'default');
     expect(size.height).toBe(60);
