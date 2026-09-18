@@ -405,10 +405,10 @@ export function useLiquidGlassTabsController({
     startContainerSpring();
     const target = phase.kind === 'different' ? phase.toTrigger : phase.trigger;
     if (iconSpringTimerRef.current !== null) window.clearTimeout(iconSpringTimerRef.current);
-    iconSpringTimerRef.current = window.setTimeout(
-      () => startIconSpring(target),
-      LIQUID_GLASS_TABS_PRESET.iconSpring.delayAfterImpactMs,
-    );
+    iconSpringTimerRef.current = window.setTimeout(() => {
+      iconSpringTimerRef.current = null;
+      startIconSpring(target);
+    }, LIQUID_GLASS_TABS_PRESET.iconSpring.delayAfterImpactMs);
   }, [startContainerSpring, startIconSpring]);
 
   const renderFrame = useCallback((now: number) => {
@@ -461,6 +461,12 @@ export function useLiquidGlassTabsController({
     const root = rootRef.current;
     const lens = lensRef.current;
     const surface = indicatorSurfaceRef.current;
+    if (iconSpringTimerRef.current !== null) {
+      window.clearTimeout(iconSpringTimerRef.current);
+      iconSpringTimerRef.current = null;
+    }
+    iconAnimationsRef.current.forEach((animation) => animation.cancel());
+    iconAnimationsRef.current.clear();
     selectorAnimationRef.current?.cancel();
     selectorAnimationRef.current = null;
     if (surface) surface.style.transform = 'scale(1, 1)';
@@ -533,6 +539,10 @@ export function useLiquidGlassTabsController({
   const abortPhaseForSwipe = useCallback(() => {
     interactionTokenRef.current += 1;
     phaseRef.current = null;
+    if (iconSpringTimerRef.current !== null) {
+      window.clearTimeout(iconSpringTimerRef.current);
+      iconSpringTimerRef.current = null;
+    }
     const root = rootRef.current;
     const lens = lensRef.current;
     const surface = indicatorSurfaceRef.current;
