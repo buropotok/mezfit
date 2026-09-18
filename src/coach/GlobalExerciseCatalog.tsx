@@ -148,8 +148,77 @@ export function GlobalExerciseCatalog({
 
   if (selectedInfo) return <>{error ? <p className="inline-message error-text">{error}</p> : null}<ExerciseDetail exercise={selectedInfo} busy={mode === 'select' ? selectionDisabled : busy} onFavourite={mode === 'browse' ? () => void toggleFavourite(selectedInfo) : undefined} onEdit={mode === 'browse' ? () => { setEditorError(''); setEditing({ mode: 'edit', seed: selectedInfo }); } : undefined} />{mode === 'browse' && editing ? <ExerciseEditorDialog state={editing} defaultCategory={selectedCategory ?? undefined} saving={busy} error={editorError} onCancel={() => setEditing(null)} onSave={(input) => void saveEditor(input)} onDelete={editing.mode === 'edit' && editing.seed?.scope === 'coach' ? () => void deleteEdited() : undefined} /> : null}</>;
 
+  if (!selectedCategory && mode === 'select') return (
+    <section className="global-exercise-catalog stack">
+      {error ? <p className="inline-message error-text">{error}</p> : null}
+      <List className="exercise-category-list" aria-label="Категории упражнений">
+        {categoryOptions.map((category) => (
+          <ListItem
+            className={`exercise-category-item category-${category.code}`}
+            key={category.code}
+            leadingShape="square"
+            leading={<span className="exercise-category-icon"><ExerciseIcon /></span>}
+            title={category.label}
+            disabled={selectionDisabled}
+            onClick={() => {
+              setSelectedCategory(category.code);
+              setSearch('');
+              setSearchOpen(false);
+              setEquipmentCode('');
+              setSubgroup('');
+              setFavouritesOnly(false);
+            }}
+          />
+        ))}
+      </List>
+    </section>
+  );
   if (!selectedCategory) return <section className="global-exercise-catalog stack"><div className="global-exercise-toolbar category-toolbar"><span className="global-exercise-toolbar-spacer" /><button className="exercise-square-button toolbar-action" type="button" onClick={() => { setEditorError(''); setEditing({ mode: 'create' }); }} aria-label="Добавить упражнение"><ActionIcon icon="add" /></button><button className={`exercise-square-button toolbar-action ${searchOpen ? 'active' : ''}`} type="button" onClick={() => setSearchOpen((value) => !value)} aria-label="Поиск"><ActionIcon icon="search" /></button></div>{searchOpen ? <label className="global-exercise-search category-search"><ActionIcon icon="search" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск упражнения" aria-label="Поиск упражнения" autoFocus /></label> : null}{error ? <p className="inline-message error-text">{error}</p> : null}{exercises === null ? <p className="global-exercise-status">Загружаем категории…</p> : <List className="exercise-category-list" aria-label="Категории упражнений">{categoryOptions.map((category) => <ListItem className={`exercise-category-item category-${category.code}`} key={category.code} leadingShape="square" leading={<span className="exercise-category-icon"><ExerciseIcon /></span>} title={category.label} trailing={<small>{categoryCounts.get(category.code) ?? 0}</small>} onClick={() => { setSelectedCategory(category.code); setSearch(''); setSearchOpen(false); setEquipmentCode(''); setSubgroup(''); setFavouritesOnly(false); }} />)}</List>}{editing ? <ExerciseEditorDialog state={editing} saving={busy} error={editorError} onCancel={() => setEditing(null)} onSave={(input) => void saveEditor(input)} /> : null}</section>;
 
   const subgroupOptions = categorySubgroups[selectedCategory] ?? []; const activeFilter = Boolean(search || equipmentCode || subgroup || favouritesOnly);
+  if (mode === 'select') return (
+    <section className="global-exercise-catalog stack">
+      <div className="catalog-chip-row" aria-label="Фильтры упражнений">
+        <button className={`catalog-chip star-chip ${favouritesOnly ? 'selected' : ''}`} type="button" onClick={() => setFavouritesOnly((value) => !value)} aria-pressed={favouritesOnly} aria-label="Только избранные" disabled={selectionDisabled}><ActionIcon icon={favouritesOnly ? 'favourite' : 'favouriteEmpty'} /></button>
+        {subgroupOptions.map((option) => <button key={option.code} className={`catalog-chip subgroup-chip category-${selectedCategory} ${subgroup === option.code ? 'selected' : ''}`} type="button" onClick={() => setSubgroup((value) => value === option.code ? '' : option.code)} disabled={selectionDisabled}>{option.label}</button>)}
+        {equipmentOptions.map((option) => <button key={option.code} className={`catalog-chip ${equipmentCode === option.code ? 'selected' : ''}`} type="button" onClick={() => setEquipmentCode((value) => value === option.code ? '' : option.code)} disabled={selectionDisabled}>{option.label}</button>)}
+      </div>
+      {error ? <p className="inline-message error-text">{error}</p> : null}
+      <section className="global-exercise-list-surface" aria-live="polite">
+        {exercises === null ? <p className="global-exercise-status">Загружаем упражнения…</p> : visibleExercises.length === 0 ? <div className="global-exercise-empty"><strong>Ничего не найдено</strong><p>{activeFilter ? 'Измените фильтры.' : 'В этой категории пока нет упражнений.'}</p></div> : (
+          <List className="global-exercise-list">
+            {visibleExercises.map((exercise) => {
+              const selected = selectedExerciseIds.has(exercise.id);
+              return (
+                <ListItem
+                  className={`global-exercise-item category-${selectedCategory}`}
+                  key={exercise.id}
+                  leadingShape="square"
+                  leading={<ExerciseMedia exercise={exercise} />}
+                  title={exerciseDisplayName(exercise)}
+                  trailing={selected ? <span className="global-exercise-selection-dot" aria-hidden="true" /> : null}
+                  trailingAction={(
+                    <Menu
+                      isOpen={menuExercise?.id === exercise.id}
+                      onOpenChange={(open) => setMenuExercise(open ? exercise : null)}
+                      align="end"
+                      label={`Действия: ${exerciseDisplayName(exercise)}`}
+                      trigger={<IconButton label={`Действия: ${exerciseDisplayName(exercise)}`} disabled={selectionDisabled}><ContextIcon icon="more" /></IconButton>}
+                    >
+                      <MenuItem leading={<ContextIcon icon="info" />} onSelect={() => void openInfo(exercise)}>Информация</MenuItem>
+                      <MenuItem onSelect={() => onToggleExercise?.(exercise.id)}>{selected ? 'Снять выбор' : 'Выбрать'}</MenuItem>
+                    </Menu>
+                  )}
+                  aria-pressed={selected}
+                  disabled={selectionDisabled}
+                  onClick={() => onToggleExercise?.(exercise.id)}
+                />
+              );
+            })}
+          </List>
+        )}
+      </section>
+    </section>
+  );
   return <section className="global-exercise-catalog stack"><div className="global-exercise-toolbar"><span className="global-exercise-toolbar-spacer" /><button className="exercise-square-button toolbar-action" type="button" onClick={() => { setEditorError(''); setEditing({ mode: 'create' }); }} aria-label="Добавить упражнение"><ActionIcon icon="add" /></button><button className={`exercise-square-button toolbar-action ${searchOpen ? 'active' : ''}`} type="button" onClick={() => setSearchOpen((value) => !value)} aria-label="Поиск"><ActionIcon icon="search" /></button></div>{searchOpen ? <label className="global-exercise-search"><ActionIcon icon="search" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск упражнения" aria-label="Поиск упражнения" autoFocus /></label> : null}<div className="catalog-chip-row" aria-label="Фильтры упражнений"><button className={`catalog-chip star-chip ${favouritesOnly ? 'selected' : ''}`} type="button" onClick={() => setFavouritesOnly((value) => !value)} aria-pressed={favouritesOnly} aria-label="Только избранные"><ActionIcon icon={favouritesOnly ? 'favourite' : 'favouriteEmpty'} /></button>{subgroupOptions.map((option) => <button key={option.code} className={`catalog-chip subgroup-chip category-${selectedCategory} ${subgroup === option.code ? 'selected' : ''}`} type="button" onClick={() => setSubgroup((value) => value === option.code ? '' : option.code)}>{option.label}</button>)}{equipmentOptions.map((option) => <button key={option.code} className={`catalog-chip ${equipmentCode === option.code ? 'selected' : ''}`} type="button" onClick={() => setEquipmentCode((value) => value === option.code ? '' : option.code)}>{option.label}</button>)}</div>{error ? <p className="inline-message error-text">{error}</p> : null}<section className="global-exercise-list-surface" aria-live="polite">{exercises === null ? <p className="global-exercise-status">Загружаем упражнения…</p> : visibleExercises.length === 0 ? <div className="global-exercise-empty"><strong>Ничего не найдено</strong><p>{activeFilter ? 'Измените поиск или фильтры.' : 'В этой категории пока нет упражнений.'}</p></div> : <List className="global-exercise-list">{visibleExercises.map((exercise) => <ListItem className={`global-exercise-item category-${selectedCategory}`} key={exercise.id} interactive={false} leadingShape="square" leading={<ExerciseMedia exercise={exercise} />} title={exerciseDisplayName(exercise)} trailing={<Menu isOpen={menuExercise?.id === exercise.id} onOpenChange={(open) => setMenuExercise(open ? exercise : null)} align="end" label={`Действия: ${exerciseDisplayName(exercise)}`} trigger={<button className="exercise-square-button row-menu" type="button" aria-label={`Действия: ${exerciseDisplayName(exercise)}`}><ContextIcon icon="more" /></button>}><MenuItem leading={<ContextIcon icon="info" />} onSelect={() => void openInfo(exercise)}>Информация</MenuItem><MenuItem leading={<ActionIcon icon={exercise.is_favourite ? 'favourite' : 'favouriteEmpty'} />} onSelect={() => void toggleFavourite(exercise)}>{exercise.is_favourite ? 'Убрать из избранного' : 'Добавить в избранное'}</MenuItem><MenuItem leading={<ContextIcon icon="copy" />} onSelect={() => duplicateExercise(exercise)}>Дублировать</MenuItem><MenuItem leading={<ActionIcon icon="edit" />} onSelect={() => { setMenuExercise(null); setEditorError(''); setEditing({ mode: 'edit', seed: exercise }); }}>Редактировать</MenuItem></Menu>} />)}</List>}</section>{editing ? <ExerciseEditorDialog state={editing} defaultCategory={selectedCategory} saving={busy} error={editorError} onCancel={() => setEditing(null)} onSave={(input) => void saveEditor(input)} onDelete={editing.mode === 'edit' && editing.seed?.scope === 'coach' ? () => void deleteEdited() : undefined} /> : null}</section>;
 }
