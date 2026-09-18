@@ -1,1 +1,1 @@
-export type UiComponentTheme = 'default' | 'glass';
+export type UiComponentTheme = 'default' | 'glass' | 'liquidGlass';
