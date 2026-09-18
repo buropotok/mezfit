@@ -1,8 +1,9 @@
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
 import type { UiIconPair } from './iconPair';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
+import { LiquidGlassIconButtonFilter, LiquidGlassOpticalFilter, useLiquidGlassFilterId, type LiquidGlassGeometry } from './liquidGlass';
 import './ui.css';
 import './typography.css';
 
@@ -41,14 +42,15 @@ type IconButtonDefaultProps = IconButtonBaseProps & {
   selected?: boolean;
   shadow?: boolean;
 };
+type IconButtonGlassTheme = 'glass' | 'liquidGlass';
 type IconButtonGlassIdleProps = IconButtonBaseProps & {
-  theme: 'glass';
+  theme: IconButtonGlassTheme;
   color?: never;
   selected?: undefined;
   shadow?: never;
 };
 type IconButtonGlassSelectableProps = IconButtonBaseProps & {
-  theme: 'glass';
+  theme: IconButtonGlassTheme;
   color?: never;
   selected: boolean;
   shadow?: never;
@@ -56,13 +58,17 @@ type IconButtonGlassSelectableProps = IconButtonBaseProps & {
 };
 export type IconButtonProps = IconButtonDefaultProps | IconButtonGlassIdleProps | IconButtonGlassSelectableProps;
 
-export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton({ label, theme = 'default', icon, color, selected: selectedProp, shadow = false, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }, ref) {
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton({ label, theme = 'default', icon, color, selected: selectedProp, shadow = false, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, style, ...props }, ref) {
   const selected = selectedProp === true;
   const colorClass = theme === 'default' && color ? ` ui-icon-button--color-${color}` : '';
   const selectedClass = theme === 'default' && selected ? ' ui-icon-button--selected' : '';
   const shadowClass = theme === 'default' && shadow ? ' ui-icon-button--shadow' : '';
   const artworkRef = useRef<HTMLSpanElement>(null);
   const previousSelectedRef = useRef(selected);
+  const liquidGlassFilterId = useLiquidGlassFilterId('icon-button');
+  const liquidStyle = theme === 'liquidGlass'
+    ? { ...style, '--ui-liquid-glass-filter': `url(#${liquidGlassFilterId})` } as CSSProperties
+    : style;
 
   useEffect(() => {
     if (icon && previousSelectedRef.current !== selected && artworkRef.current) startSpringScale(artworkRef.current);
@@ -76,9 +82,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     </span>
   ) : children;
 
-  return <button ref={ref} type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</button>;
+  return <button ref={ref} type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} style={liquidStyle} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{theme === 'liquidGlass' ? <LiquidGlassIconButtonFilter id={liquidGlassFilterId} /> : null}{content}</button>;
 });
-
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
 
 export function Avatar({ name, src, className = '', ...props }: AvatarProps) {
@@ -98,11 +103,46 @@ export function Divider({ className = '', ...props }: HTMLAttributes<HTMLHREleme
 
 type SurfaceBaseProps = HTMLAttributes<HTMLElement> & { as?: 'section' | 'div' | 'article'; style?: CSSProperties };
 type SurfaceDefaultProps = SurfaceBaseProps & { theme?: 'default'; border?: boolean; elevated?: boolean };
-type SurfaceGlassProps = SurfaceBaseProps & { theme: 'glass'; border?: never; elevated?: never };
+type SurfaceGlassProps = SurfaceBaseProps & { theme: 'glass' | 'liquidGlass'; border?: never; elevated?: never };
 export type SurfaceProps = SurfaceDefaultProps | SurfaceGlassProps;
 
-export function Surface({ as: Component = 'div', theme = 'default', border = true, elevated = false, className = '', ...props }: SurfaceProps) {
+export function Surface({ as: Component = 'div', theme = 'default', border = true, elevated = false, className = '', style, children, ...props }: SurfaceProps) {
   const isBorderless = theme === 'default' && !border;
   const isElevated = theme === 'default' && elevated;
-  return <Component data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${isElevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} {...props} />;
+  const surfaceRef = useRef<HTMLElement>(null);
+  const liquidGlassFilterId = useLiquidGlassFilterId('surface');
+  const [liquidGeometry, setLiquidGeometry] = useState<LiquidGlassGeometry>({ width: 1, height: 1, radiusX: 1, radiusY: 1 });
+
+  useLayoutEffect(() => {
+    if (theme !== 'liquidGlass') return undefined;
+    const element = surfaceRef.current;
+    if (!element) return undefined;
+
+    const measure = () => {
+      const rect = element.getBoundingClientRect();
+      const radius = Number.parseFloat(getComputedStyle(element).borderTopLeftRadius) || Math.min(rect.width, rect.height) / 2;
+      setLiquidGeometry({
+        width: Math.max(1, rect.width),
+        height: Math.max(1, rect.height),
+        radiusX: radius,
+        radiusY: radius,
+      });
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [theme]);
+
+  const liquidStyle = theme === 'liquidGlass'
+    ? { ...style, '--ui-liquid-glass-filter': `url(#${liquidGlassFilterId})` } as CSSProperties
+    : style;
+
+  return (
+    <Component ref={(node: HTMLElement | null) => { surfaceRef.current = node; }} data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${isElevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} style={liquidStyle} {...props}>
+      {theme === 'liquidGlass' ? <LiquidGlassOpticalFilter id={liquidGlassFilterId} geometry={liquidGeometry} /> : null}
+      {children}
+    </Component>
+  );
 }

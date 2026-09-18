@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { Divider, IconButton, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text } from './index';
+import { Divider, IconButton, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text, type UiComponentTheme } from './index';
 import barbellFilledIconUrl from './icons/barbell-filled.svg';
 import barbellIconUrl from './icons/barbell.svg';
 import calendarFilledIconUrl from './icons/calendar-filled.svg';
@@ -24,21 +24,23 @@ const tabs = [
   { value: 'calendar', label: 'Календарь', outline: calendarIconUrl, filled: calendarFilledIconUrl },
 ] as const;
 
-function SelectableSettingsButton({ theme = 'default' }: { theme?: 'default' | 'glass' }) {
+function SelectableSettingsButton({ theme = 'default' }: { theme?: UiComponentTheme }) {
   const [selected, setSelected] = useState(false);
-  return (
-    <IconButton
-      label={`Settings ${theme}`}
-      theme={theme}
-      selected={selected}
-      aria-pressed={selected}
-      icon={{ outline: <MaskIcon src={settingsIconUrl} />, filled: <MaskIcon src={settingsFilledIconUrl} /> }}
-      onClick={() => setSelected((value) => !value)}
-    />
-  );
+  const icon = { outline: <MaskIcon src={settingsIconUrl} />, filled: <MaskIcon src={settingsFilledIconUrl} /> };
+  const common = {
+    label: `Settings ${theme}`,
+    selected,
+    'aria-pressed': selected,
+    icon,
+    onClick: () => setSelected((value: boolean) => !value),
+  };
+
+  return theme === 'default'
+    ? <IconButton {...common} theme="default" />
+    : <IconButton {...common} theme={theme} />;
 }
 
-function IconTabs({ theme = 'default' }: { theme?: 'default' | 'glass' }) {
+function IconTabs({ theme = 'default' }: { theme?: UiComponentTheme }) {
   return (
     <Tabs defaultValue="overview" mode="icon" theme={theme}>
       <TabsList aria-label={`Icon tabs ${theme}`}>
@@ -59,7 +61,7 @@ function IconTabs({ theme = 'default' }: { theme?: 'default' | 'glass' }) {
   );
 }
 
-function TextTabs({ theme = 'default' }: { theme?: 'default' | 'glass' }) {
+function TextTabs({ theme = 'default' }: { theme?: UiComponentTheme }) {
   return (
     <Tabs defaultValue="overview" theme={theme}>
       <TabsList aria-label={`Text tabs ${theme}`}>
@@ -96,6 +98,7 @@ export function ThemeVariantsCatalog() {
         <div className="ui-kit-stack">
           <Surface style={{ padding: 'var(--ui-space-3)' }}><Text>Default Surface</Text></Surface>
           <GlassStage><Surface theme="glass" style={{ padding: 'var(--ui-space-3)' }}><Text>Glass Surface</Text></Surface></GlassStage>
+          <GlassStage><Surface theme="liquidGlass" style={{ padding: 'var(--ui-space-3)' }}><Text>Liquid Glass Surface</Text></Surface></GlassStage>
         </div>
       </Surface>
 
@@ -106,6 +109,7 @@ export function ThemeVariantsCatalog() {
         <div className="ui-kit-row">
           <SelectableSettingsButton />
           <GlassStage><SelectableSettingsButton theme="glass" /></GlassStage>
+          <GlassStage><SelectableSettingsButton theme="liquidGlass" /></GlassStage>
         </div>
       </Surface>
 
@@ -116,8 +120,10 @@ export function ThemeVariantsCatalog() {
         <div className="ui-kit-stack">
           <div><Text variant="footnote" tone="muted">Default · text</Text><TextTabs /></div>
           <div><Text variant="footnote" tone="muted">Glass · text</Text><GlassStage><TextTabs theme="glass" /></GlassStage></div>
+          <div><Text variant="footnote" tone="muted">Liquid Glass · text</Text><GlassStage><TextTabs theme="liquidGlass" /></GlassStage></div>
           <div><Text variant="footnote" tone="muted">Default · icon</Text><IconTabs /></div>
           <div><Text variant="footnote" tone="muted">Glass · icon</Text><GlassStage><IconTabs theme="glass" /></GlassStage></div>
+          <div><Text variant="footnote" tone="muted">Liquid Glass · icon</Text><GlassStage><IconTabs theme="liquidGlass" /></GlassStage></div>
         </div>
       </Surface>
     </div>

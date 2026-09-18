@@ -34,6 +34,8 @@ Feature CSS must not redefine an established UI Kit radius, shadow, control stat
 
 Glass is a shared UI Kit material defined by semantic effect tokens in `src/ui/tokens/effects.css`. Components expose `theme="glass"`; consumers do not configure blur, border, opacity or shadow values per instance. Component geometry remains component-owned even when the material is shared.
 
+`liquidGlass` is a separate UI Kit visual theme for approved glass/refraction interactions. Its SVG displacement, blur/fallback behavior and motion presets are component-owned implementation details. Consumers select the theme but do not retune its optics or spring physics per screen.
+
 ## Foundation primitives
 
 - `Text`
@@ -45,11 +47,11 @@ Glass is a shared UI Kit material defined by semantic effect tokens in `src/ui/t
 
 Interactive primitives expose visible keyboard focus, native disabled behavior where applicable, and accessible names for icon-only controls. Reduced-motion preferences are respected. The existing Mezfit icon source remains canonical.
 
-`IconButton` and `Surface` support `theme="default" | "glass"`; omitted theme means the existing default presentation. Glass is an owning material rather than an additive visual modifier: its border, background, blur and shadow are fixed by UI Kit tokens and must not be silently overridden by instance props.
+`IconButton` and `Surface` support `theme="default" | "glass" | "liquidGlass"`; omitted theme means the existing default presentation. Glass and liquidGlass are owning materials rather than additive visual modifiers: their border, background, blur/refraction and shadow are fixed by UI Kit and must not be silently overridden by instance props.
 
-For `Surface`, `border` and `elevated` belong only to the default theme. `Surface theme="glass"` therefore rejects both props at the TypeScript contract level because glass already owns its border and shadow.
+For `Surface`, `border` and `elevated` belong only to the default theme. `Surface theme="glass"` and `Surface theme="liquidGlass"` therefore reject both props at the TypeScript contract level because the selected material already owns its border and shadow.
 
-For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unchanged under `theme="default"`. Under `theme="glass"`, `color` and `shadow` are not valid because they would conflict with the glass material. A controlled `selected` state is supported only together with an explicit `{ outline, filled }` icon pair; selection swaps outline to filled artwork and runs the shared spring motion while the glass border/background/shadow remain unchanged.
+For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unchanged under `theme="default"`. Under `theme="glass"` or `theme="liquidGlass"`, `color` and `shadow` are not valid because they would conflict with the material. A controlled `selected` state is supported only together with an explicit `{ outline, filled }` icon pair; selection swaps outline to filled artwork and runs the shared spring motion while the material presentation remains component-owned.
 
 ### Telegram Web A button provenance
 
@@ -59,12 +61,16 @@ For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unc
 
 `Tabs` remains backed by Radix Tabs and has two independent variant axes:
 
-- `theme?: "default" | "glass"` controls the visual material. Omitted means the current default Tabs presentation.
+- `theme?: "default" | "glass" | "liquidGlass"` controls the visual material. Omitted means the current default Tabs presentation.
 - `mode?: "default" | "icon"` controls trigger composition. Omitted means the current text-only trigger. Icon mode makes the trigger taller and places a 24px icon above the existing Body 15/20 medium label.
 
-When `mode="icon"`, every `TabsTrigger` requires an explicit `{ outline, filled }` pair. Inactive triggers show outline artwork. The selected trigger shows filled artwork and runs the shared icon spring when selection changes. Radix remains the state/accessibility owner and the existing Tabs trigger press-scale remains unchanged.
+When `mode="icon"`, every `TabsTrigger` requires an explicit `{ outline, filled }` pair. Inactive triggers show outline artwork. The selected trigger shows filled artwork. Radix remains the state/accessibility owner. Default/glass keep the existing press/spring behavior; liquidGlass owns its approved lens/container/icon motion sequence inside the UI Kit.
 
-Theme and mode compose freely, including `theme="glass" mode="icon"`. The internal `/ui-kit` catalog shows default/text, glass/text, default/icon and glass/icon specimens.
+For `theme="liquidGlass"`, the springing/scaling target is the UI-Kit-owned visual layer around `TabsList` and its external press lens. `TabsContent` is explicitly outside that visual layer and must never participate in container expansion or spring transforms.
+
+The product integration contract is separate from the primitive mechanics: when liquidGlass Tabs are used as Mezfit's app-wide quick navigation, they are mounted by the application/navigation shell as a persistent overlay above page content, alongside other shell-owned controls such as FABs. The Tabs primitive itself does not portal or choose global positioning; shell code owns safe-area placement, stacking and route persistence.
+
+Theme and mode compose freely, including `theme="glass" mode="icon"` and `theme="liquidGlass" mode="icon"`. The internal `/ui-kit` catalog shows default, glass and liquidGlass specimens for both text/default and icon modes.
 
 ## Telegram-derived contact UI
 

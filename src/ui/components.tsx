@@ -6,6 +6,7 @@ import type { UiIconPair } from './iconPair';
 import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
+import { useLiquidGlassTabsController } from './LiquidGlassTabs';
 import './components.css';
 
 type ListDivider = 'none' | 'inset' | 'full';
@@ -81,13 +82,26 @@ export function Tabs({ theme = 'default', mode = 'default', className = '', valu
   );
 }
 
-export function TabsList({ className = '', children, style, ...props }: TabsListProps) {
-  const { theme, mode } = useContext(TabsContext);
-  const hasMovingIndicator = theme === 'glass' || mode === 'icon';
+export function TabsList({ className = '', children, style, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture, ...props }: TabsListProps) {
+  const { theme, mode, activeValue } = useContext(TabsContext);
+  const hasMovingIndicator = theme === 'glass' || theme === 'liquidGlass' || mode === 'icon';
+  const isLiquidGlass = theme === 'liquidGlass';
+  const visualLayerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const indicatorSurfaceRef = useRef<HTMLDivElement>(null);
   const [clipPath, setClipPath] = useState('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
   const [indicatorGeometry, setIndicatorGeometry] = useState({ left: 0, width: 0 });
   const [isIndicatorReady, setIndicatorReady] = useState(false);
+  const liquidGlass = useLiquidGlassTabsController({
+    enabled: isLiquidGlass,
+    mode,
+    activeValue,
+    visualLayerRef,
+    listRef,
+    indicatorRef,
+    indicatorSurfaceRef,
+  });
 
   const updateIndicator = useCallback(() => {
     const list = listRef.current;
@@ -127,19 +141,45 @@ export function TabsList({ className = '', children, style, ...props }: TabsList
   const indicatorStyle = hasMovingIndicator
     ? { '--ui-tabs-indicator-left': `${indicatorGeometry.left}px`, '--ui-tabs-indicator-width': `${indicatorGeometry.width}px` } as CSSProperties
     : { '--ui-tabs-clip-path': clipPath } as CSSProperties;
+  const listStyle = isLiquidGlass
+    ? { ...style, ...liquidGlass.listStyle } as CSSProperties
+    : style;
 
-  return (
-    <RadixTabs.List ref={listRef} className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()} style={style} {...props}>
+  const list = (
+    <RadixTabs.List
+      ref={listRef}
+      className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()}
+      style={listStyle}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerDown(event); }}
+      onPointerMove={(event) => { onPointerMove?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerMove(event); }}
+      onPointerUp={(event) => { onPointerUp?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerUp(event); }}
+      onPointerCancel={(event) => { onPointerCancel?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerCancel(event); }}
+      onClickCapture={(event) => { onClickCapture?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onClickCapture(event); }}
+      {...props}
+    >
       {children}
-      <div className={`ui-tabs__active-indicator${hasMovingIndicator ? ' ui-tabs__active-indicator--moving' : ''}`} style={indicatorStyle} aria-hidden="true">
-        {indicatorChildren}
+      <div ref={indicatorRef} className={`ui-tabs__active-indicator${hasMovingIndicator ? ' ui-tabs__active-indicator--moving' : ''}`} style={indicatorStyle} aria-hidden="true">
+        {isLiquidGlass ? <div ref={indicatorSurfaceRef} className="ui-tabs__active-indicator-surface" /> : indicatorChildren}
       </div>
     </RadixTabs.List>
+  );
+
+  if (!isLiquidGlass) return list;
+
+  return (
+    <>
+      {liquidGlass.containerFilter}
+      {liquidGlass.lensFilter}
+      <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
+        {list}
+        <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" style={liquidGlass.lensStyle} aria-hidden="true" />
+      </div>
+    </>
   );
 }
 
 export function TabsTrigger({ icon, className = '', children, onPointerDown, onKeyDown, disabled, value, ...props }: TabsTriggerProps) {
-  const { mode, activeValue } = useContext(TabsContext);
+  const { theme, mode, activeValue } = useContext(TabsContext);
   const iconRef = useRef<HTMLSpanElement>(null);
   const isActive = activeValue === value;
   const wasActiveRef = useRef(isActive);
@@ -149,9 +189,9 @@ export function TabsTrigger({ icon, className = '', children, onPointerDown, onK
   }
 
   useEffect(() => {
-    if (mode === 'icon' && isActive && !wasActiveRef.current && iconRef.current) startSpringScale(iconRef.current);
+    if (theme !== 'liquidGlass' && mode === 'icon' && isActive && !wasActiveRef.current && iconRef.current) startSpringScale(iconRef.current);
     wasActiveRef.current = isActive;
-  }, [isActive, mode]);
+  }, [isActive, mode, theme]);
 
   const content = mode === 'icon' ? <>
     <span ref={iconRef} className="ui-tabs__icon" aria-hidden="true">
@@ -161,7 +201,7 @@ export function TabsTrigger({ icon, className = '', children, onPointerDown, onK
     <span className="ui-tabs__label">{children}</span>
   </> : children;
 
-  return <RadixTabs.Trigger value={value} className={`ui-tabs__trigger ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</RadixTabs.Trigger>;
+  return <RadixTabs.Trigger value={value} data-ui-tab-value={value} className={`ui-tabs__trigger ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && theme !== 'liquidGlass') startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && theme !== 'liquidGlass' && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</RadixTabs.Trigger>;
 }
 export function TabsContent({ className = '', ...props }: TabsContentProps) { return <RadixTabs.Content className={`ui-tabs__content ${className}`.trim()} {...props} />; }
 
