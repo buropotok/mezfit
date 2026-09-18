@@ -447,6 +447,7 @@ export function useLiquidGlassTabsController({
   const startContainerSpring = useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
+    const currentScale = Number.parseFloat(getComputedStyle(root).scale) || 1;
     rootAnimationRef.current?.cancel();
 
     if (shouldReduceMotion()) {
@@ -458,7 +459,6 @@ export function useLiquidGlassTabsController({
     const travel = (LIQUID_GLASS_TABS_PRESET.containerMaxScalePercent - 100) / 100;
     const overshoot = 1 - travel * preset.overshootPercent / 100;
     const recoil = 1 + travel * preset.recoilPercent / 100;
-    const currentScale = Number.parseFloat(getComputedStyle(root).scale) || 1;
 
     rootAnimationRef.current = root.animate(
       [
@@ -699,7 +699,7 @@ export function useLiquidGlassTabsController({
       halfMs: LIQUID_GLASS_TABS_PRESET.selectorTravelDurationMs / 2,
       pressed,
       progressAtRelease,
-      closeStartAt: pressed ? null : startTime + LIQUID_GLASS_TABS_PRESET.releaseDelayMs,
+      closeStartAt: pressed ? null : LIQUID_GLASS_TABS_PRESET.releaseDelayMs,
       impactStarted: false,
     };
     ensureRaf();
