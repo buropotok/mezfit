@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ApiError,
+  addWorkoutSessionExercises,
   completeWorkoutSession,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
-import { Button, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
+import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
+import plusIconUrl from '../ui/icons/plus.svg';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
+import { WorkoutExercisePicker } from './WorkoutExercisePicker';
 import type {
   ActiveWorkoutSession,
   DraftWorkoutSession,
@@ -50,7 +53,6 @@ export function WorkoutSessionScreen({
   onOpenExerciseMenu,
   onOpenHistory,
   onOpenChat,
-  onAddExercise,
   onSessionLifecycleChange,
 }: WorkoutSessionScreenProps) {
   const [session, setSession] = useState<WorkoutSessionState | null>(null);
@@ -61,6 +63,9 @@ export function WorkoutSessionScreen({
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
+  const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
+  const [addingExercises, setAddingExercises] = useState(false);
+  const [exercisePickerError, setExercisePickerError] = useState('');
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
   const lifecycleCallbackRef = useRef(onSessionLifecycleChange);
@@ -206,6 +211,36 @@ export function WorkoutSessionScreen({
       });
   }
 
+  function openExercisePicker() {
+    if (!activeSession || activeSession.status !== 'active') return;
+    setExercisePickerError('');
+    setExercisePickerOpen(true);
+  }
+
+  async function handleAddExercises(exerciseDefinitionIds: number[]) {
+    if (!activeSession || activeSession.status !== 'active' || exerciseDefinitionIds.length === 0) return;
+    const sessionId = activeSession.sessionId;
+    const intent = nextMutationIntent();
+    setAddingExercises(true);
+    setExercisePickerError('');
+    try {
+      const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionExercises(
+        initData,
+        sessionId,
+        exerciseDefinitionIds,
+      ));
+      if (!isCurrentGeneration(intent)) return;
+      acknowledgedSessionRef.current = nextSession;
+      if (!isCurrentIntent(intent)) return;
+      setSession(nextSession);
+      setExercisePickerOpen(false);
+    } catch (error) {
+      if (isCurrentIntent(intent)) setExercisePickerError(errorMessage(error, 'Не удалось добавить упражнения'));
+    } finally {
+      if (isCurrentGeneration(intent)) setAddingExercises(false);
+    }
+  }
+
   async function handleComplete() {
     if (!activeSession || activeSession.status !== 'active') return;
     const sessionId = activeSession.sessionId;
@@ -218,6 +253,7 @@ export function WorkoutSessionScreen({
       acknowledgedSessionRef.current = nextSession;
       if (!isCurrentIntent(intent)) return;
       setSession(nextSession);
+      setExercisePickerOpen(false);
       setCompleteConfirmOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
       onClose();
@@ -324,17 +360,33 @@ export function WorkoutSessionScreen({
           ) : (
             <div className="workout-session-screen__empty">
               <Text tone="muted">Упражнений пока нет.</Text>
-              {onAddExercise ? <Button variant="secondary" onClick={() => onAddExercise(activeSession.sessionId)}>Добавить упражнение</Button> : null}
             </div>
           )}
           <div className="workout-session-screen__footer">
-            {onAddExercise && sortableItems.length > 0 ? (
-              <Button variant="secondary" onClick={() => onAddExercise(activeSession.sessionId)}>Добавить упражнение</Button>
-            ) : null}
             <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
           </div>
+          <FloatingActionButton
+            placement="right"
+            label="Добавить упражнение"
+            onClick={openExercisePicker}
+          >
+            <img src={plusIconUrl} alt="" aria-hidden="true" width={24} height={24} />
+          </FloatingActionButton>
         </>
       ) : null}
+
+      <WorkoutExercisePicker
+        initData={initData}
+        isOpen={exercisePickerOpen}
+        saving={addingExercises}
+        actionError={exercisePickerError}
+        onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
+        onClose={() => {
+          if (addingExercises) return;
+          setExercisePickerOpen(false);
+          setExercisePickerError('');
+        }}
+      />
 
       <Modal
         isOpen={loading || busyLabel !== null}

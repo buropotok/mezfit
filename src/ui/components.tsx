@@ -16,16 +16,17 @@ export function List({ divider = 'none', className = '', ...props }: ListProps) 
   return <div className={`ui-list${dividerClassName} ${className}`.trim()} role="list" {...props} />;
 }
 
-type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title'> & {
+export type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title'> & {
   leading?: ReactNode;
   leadingShape?: 'default' | 'square';
   title: ReactNode;
   subtitle?: ReactNode;
   trailing?: ReactNode;
+  trailingAction?: ReactNode;
   interactive?: boolean;
 };
 
-export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, interactive = true, className = '', type = 'button', onPointerDown, disabled, ...props }: ListItemProps) {
+export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, trailingAction, interactive = true, className = '', type = 'button', onPointerDown, disabled, ...props }: ListItemProps) {
   const { pressSpot, startPressSpot } = usePressSpot<HTMLButtonElement>(disabled || !interactive);
   const leadingClassName = leadingShape === 'square' ? ' ui-list-item__leading--square' : '';
   const content = <>
@@ -37,9 +38,11 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
     </span>
     {trailing ? <span className="ui-list-item__trailing">{trailing}</span> : null}
   </>;
+  const actionClassName = trailingAction ? ' ui-list-item-wrap--with-action' : '';
   return (
-    <div className="ui-list-item-wrap" role="listitem">
+    <div className={`ui-list-item-wrap${actionClassName}`} role="listitem">
       {interactive ? <button type={type} className={`ui-list-item ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) startPressSpot(event); }} {...props}>{content}</button> : <div className={`ui-list-item ui-list-item--static ${className}`.trim()}>{content}</div>}
+      {trailingAction ? <span className="ui-list-item__trailing-action">{trailingAction}</span> : null}
     </div>
   );
 }

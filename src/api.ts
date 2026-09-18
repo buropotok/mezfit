@@ -164,6 +164,7 @@ const russianApiErrors: Record<string, string> = {
   EXERCISE_EXISTS: 'Упражнение с таким названием уже существует',
   EXERCISE_READ_ONLY: 'Базовое упражнение нельзя изменять',
   EXERCISE_NOT_FOUND: 'Упражнение не найдено',
+  INVALID_EXERCISE: 'Выберите хотя бы одно упражнение',
   INVALID_NAME: 'Укажите название упражнения',
   INVALID_TRACKING_TYPE: 'Выбран неподдерживаемый тип учёта результата',
   INVALID_CATEGORY: 'Выбрана неподдерживаемая категория',
@@ -435,6 +436,27 @@ export function setCoachExerciseFavourite(
     method: 'PUT',
     body: JSON.stringify({ favourite }),
   });
+}
+
+export async function getWorkoutExerciseOptions(
+  initData: string,
+  categoryCode: ExerciseCategoryCode,
+): Promise<{ exercises: ExerciseDefinition[] }> {
+  const query = new URLSearchParams({ category: categoryCode });
+  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/workout-sessions/exercises?${query.toString()}`);
+  return { exercises: result.exercises.map(localizeExercise) };
+}
+
+export async function addWorkoutSessionExercises(
+  initData: string,
+  workoutSessionId: number,
+  exerciseDefinitionIds: number[],
+): Promise<{ session: ActiveWorkoutSession }> {
+  const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/exercises`, {
+    method: 'POST',
+    body: JSON.stringify({ exerciseDefinitionIds }),
+  });
+  return { session: localizeWorkoutSession(result.session) };
 }
 
 export async function initializeWorkoutSession(
