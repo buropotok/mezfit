@@ -8,6 +8,7 @@ import {
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
+import type { NavigationContext } from '../NavigationShell';
 import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
 import plusIconUrl from '../ui/icons/plus.svg';
 import { SessionExercise } from './SessionExercise';
@@ -46,6 +47,10 @@ function reorderExerciseData(session: ActiveWorkoutSession, ids: number[]): Acti
   return { ...session, exercises };
 }
 
+type WorkoutSessionScreenViewProps = WorkoutSessionScreenProps & {
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+};
+
 export function WorkoutSessionScreen({
   initData,
   trainingPlanId = null,
@@ -54,7 +59,8 @@ export function WorkoutSessionScreen({
   onOpenHistory,
   onOpenChat,
   onSessionLifecycleChange,
-}: WorkoutSessionScreenProps) {
+  onNavigationContextChange,
+}: WorkoutSessionScreenViewProps) {
   const [session, setSession] = useState<WorkoutSessionState | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
   const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Record<number, boolean>>({});
@@ -380,6 +386,7 @@ export function WorkoutSessionScreen({
           initData={initData}
           saving={addingExercises}
           actionError={exerciseSelectionError}
+          onNavigationContextChange={onNavigationContextChange}
           onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
           onClose={() => {
             if (addingExercises) return;
