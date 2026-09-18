@@ -19,17 +19,17 @@ beforeEach(() => {
 describe('workout exercise routes', () => {
   it('lists exercises for the authenticated workout user inside an explicit category', async () => {
     listMock.mockResolvedValue([]);
-    const request = new Request('https://mezfit.test/api/workout-sessions/exercises?category=chest&search=press');
+    const request = new Request('https://mezfit.test/api/workout-sessions/exercises?category=chest');
 
     const response = await handleWorkoutSessionRoute(request, db, 7);
 
     expect(response.status).toBe(200);
-    expect(listMock).toHaveBeenCalledWith(db, 7, 'chest', 'press');
+    expect(listMock).toHaveBeenCalledWith(db, 7, 'chest');
     await expect(response.json()).resolves.toEqual({ exercises: [] });
   });
 
   it('rejects a catalogue request without a supported category', async () => {
-    const request = new Request('https://mezfit.test/api/workout-sessions/exercises?search=press');
+    const request = new Request('https://mezfit.test/api/workout-sessions/exercises');
 
     const response = await handleWorkoutSessionRoute(request, db, 7);
 
