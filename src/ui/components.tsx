@@ -52,6 +52,7 @@ export type BottomSheetProps = {
   title?: ReactNode;
   children: ReactNode;
   className?: string;
+  headerLeading?: ReactNode;
   closeLabel?: string;
   hasCloseButton?: boolean;
   closeOnBackdrop?: boolean;
@@ -59,7 +60,7 @@ export type BottomSheetProps = {
   onClose: () => void;
 };
 
-export function BottomSheet({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, modalColor = true, onClose }: BottomSheetProps) {
+export function BottomSheet({ isOpen, title, children, className = '', headerLeading, closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, modalColor = true, onClose }: BottomSheetProps) {
   const blockEscape = !hasCloseButton && !closeOnBackdrop;
   const startKeyboardScale = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget);
@@ -77,8 +78,9 @@ export function BottomSheet({ isOpen, title, children, className = '', closeLabe
             onPointerDownOutside={closeOnBackdrop ? undefined : (event) => event.preventDefault()}
             onInteractOutside={closeOnBackdrop ? undefined : (event) => event.preventDefault()}
           >
-            {title || hasCloseButton ? (
+            {title || hasCloseButton || headerLeading ? (
               <div className="ui-bottom-sheet__header">
+                {headerLeading ? <span className="ui-bottom-sheet__header-leading">{headerLeading}</span> : null}
                 {hasCloseButton ? <Dialog.Close asChild><button className="ui-bottom-sheet__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}
                 {title ? <Dialog.Title className="ui-bottom-sheet__title">{title}</Dialog.Title> : null}
               </div>
