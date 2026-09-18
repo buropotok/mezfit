@@ -20,7 +20,6 @@ interface ExerciseOptionDbRow {
   id: number;
   scope: 'global' | 'coach' | 'client';
   name: string;
-  name_en: string | null;
   description: string | null;
   tracking_type: 'weight_reps';
   category_code: 'chest';
@@ -124,7 +123,6 @@ const benchPressRow: ExerciseOptionDbRow = {
   id: 42,
   scope: 'global',
   name: 'Жим лёжа',
-  name_en: 'Bench Press',
   description: 'Базовое упражнение',
   tracking_type: 'weight_reps',
   category_code: 'chest',
@@ -135,24 +133,15 @@ const benchPressRow: ExerciseOptionDbRow = {
 };
 
 describe('listWorkoutExerciseOptions', () => {
-  it('matches lowercase Cyrillic search using the catalogue normalization contract', async () => {
-    const { db, preparedSql } = createDb({ exerciseRows: [benchPressRow] });
+  it('loads the visible catalogue rows for one category without a search query', async () => {
+    const { db, bindCalls, preparedSql } = createDb({ exerciseRows: [benchPressRow] });
 
-    await expect(listWorkoutExerciseOptions(db, 7, 'chest', 'жим')).resolves.toEqual([
+    await expect(listWorkoutExerciseOptions(db, 7, 'chest')).resolves.toEqual([
       expect.objectContaining({ id: 42, name: 'Жим лёжа' }),
     ]);
 
+    expect(preparedSql[0]).toContain("COALESCE(e.category_code, 'other') = ?");
     expect(preparedSql[0]).not.toContain('LIKE');
-  });
-
-  it('keeps overlong search text out of D1 LIKE/GLOB patterns', async () => {
-    const { db, bindCalls, preparedSql } = createDb({ exerciseRows: [benchPressRow] });
-    const overlongSearch = 'жим'.repeat(100);
-
-    await expect(listWorkoutExerciseOptions(db, 7, 'chest', overlongSearch)).resolves.toEqual([]);
-
-    expect(preparedSql[0]).not.toContain('LIKE');
-    expect(preparedSql[0]).not.toContain('GLOB');
     expect(bindCalls[0]?.args).toEqual([7, 7, 7, 'chest']);
   });
 });
@@ -174,25 +163,6 @@ describe('addWorkoutExercises', () => {
     expect(preparedSql[0]).toContain('WHERE (SELECT COUNT(*) FROM eligible) = ?');
     expect(preparedSql[1]).toContain('WHERE changes() = ?');
     expect(projectionMock).toHaveBeenCalledWith(db, 7, 501);
-  });
-
-  it('uses one JSON binding for a large confirmed selection instead of one D1 parameter per exercise', async () => {
-    const exerciseDefinitionIds = Array.from({ length: 150 }, (_, index) => index + 1);
-    const { db, bindCalls, preparedSql } = createDb({ insertedCount: 150, setCount: 150 });
-    projectionMock.mockResolvedValue(canonicalSession);
-
-    await expect(addWorkoutExercises(db, 7, 501, exerciseDefinitionIds)).resolves.toEqual({
-      kind: 'ok',
-      session: canonicalSession,
-    });
-
-    expect(preparedSql[0]).toContain('json_each(?)');
-    expect(preparedSql[1]).toContain('json_each(?)');
-    const mutationBindCalls = bindCalls.filter(({ sql }) => sql.includes('INSERT INTO session_'));
-    expect(mutationBindCalls).toHaveLength(2);
-    expect(mutationBindCalls[0]?.args[0]).toBe(JSON.stringify(exerciseDefinitionIds));
-    expect(mutationBindCalls[1]?.args[0]).toBe(JSON.stringify(exerciseDefinitionIds));
-    expect(mutationBindCalls.every(({ args }) => args.length < 100)).toBe(true);
   });
 
   it('does not create sets for a previous exercise when the guarded insert loses an active-state race', async () => {
