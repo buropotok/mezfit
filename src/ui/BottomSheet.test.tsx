@@ -60,6 +60,7 @@ describe('BottomSheet', () => {
     const action = screen.getByRole('button', { name: 'ОК' });
     expect(action.closest('.ui-bottom-sheet__floating-action')).toBeTruthy();
     expect(action.closest('.ui-bottom-sheet__content')).toBeNull();
+    expect(screen.getByText('Контент').closest('.ui-bottom-sheet__content')?.className).toContain('ui-bottom-sheet__content--with-floating-action');
   });
   it('closes through its public close control', () => {
     const onClose = vi.fn();
