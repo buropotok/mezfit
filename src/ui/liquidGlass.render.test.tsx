@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { IconButton, Surface, Tabs, TabsList, TabsTrigger } from './index';
+import { IconButton, Surface, Tabs, TabsContent, TabsList, TabsTrigger } from './index';
 
 describe('liquidGlass UI Kit variants', () => {
   it('exposes liquidGlass as an IconButton theme without changing button semantics', () => {
@@ -37,4 +37,25 @@ describe('liquidGlass UI Kit variants', () => {
     expect(html).toContain('ui-tabs__press-lens');
     expect(html).toContain('data-ui-tab-value="overview"');
   });
+  it('keeps TabsContent outside the springing liquid visual layer', () => {
+    const html = renderToStaticMarkup(
+      <Tabs theme="liquidGlass" defaultValue="overview">
+        <TabsList aria-label="Sections">
+          <TabsTrigger value="overview">Обзор</TabsTrigger>
+          <TabsTrigger value="program">Программа</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">Persistent page content</TabsContent>
+      </Tabs>,
+    );
+
+    const layerStart = html.indexOf('class="ui-tabs__liquid-layer"');
+    const lensStart = html.indexOf('class="ui-tabs__press-lens"');
+    const contentStart = html.indexOf('class="ui-tabs__content"');
+
+    expect(layerStart).toBeGreaterThan(-1);
+    expect(lensStart).toBeGreaterThan(layerStart);
+    expect(contentStart).toBeGreaterThan(lensStart);
+    expect(html.slice(lensStart, contentStart)).toContain('</div></div>');
+  });
+
 });
