@@ -47,6 +47,51 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
   );
 }
 
+export type BottomSheetProps = {
+  isOpen: boolean;
+  title?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  closeLabel?: string;
+  hasCloseButton?: boolean;
+  closeOnBackdrop?: boolean;
+  modalColor?: boolean;
+  onClose: () => void;
+};
+
+export function BottomSheet({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, modalColor = true, onClose }: BottomSheetProps) {
+  const blockEscape = !hasCloseButton && !closeOnBackdrop;
+  const startKeyboardScale = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget);
+  };
+
+  return (
+    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <Dialog.Portal>
+        <div className={`ui-bottom-sheet${modalColor ? ' ui-bottom-sheet--modal-color' : ''} ${className}`.trim()} role="presentation">
+          <Dialog.Overlay className="ui-bottom-sheet__backdrop" onPointerDown={closeOnBackdrop ? undefined : (event) => event.preventDefault()} />
+          <Dialog.Content
+            className="ui-bottom-sheet__panel"
+            aria-describedby={undefined}
+            onEscapeKeyDown={blockEscape ? (event) => event.preventDefault() : undefined}
+            onPointerDownOutside={closeOnBackdrop ? undefined : (event) => event.preventDefault()}
+            onInteractOutside={closeOnBackdrop ? undefined : (event) => event.preventDefault()}
+          >
+            {title || hasCloseButton ? (
+              <div className="ui-bottom-sheet__header">
+                {hasCloseButton ? <Dialog.Close asChild><button className="ui-bottom-sheet__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}
+                {title ? <Dialog.Title className="ui-bottom-sheet__title">{title}</Dialog.Title> : null}
+              </div>
+            ) : null}
+            {!title ? <Dialog.Title className="ui-visually-hidden">Панель</Dialog.Title> : null}
+            <div className="ui-bottom-sheet__content">{children}</div>
+          </Dialog.Content>
+        </div>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; children: ReactNode };
 
 export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
