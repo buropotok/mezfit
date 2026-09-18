@@ -119,7 +119,6 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
       db,
       userId,
       category as ExerciseCategoryCode,
-      url.searchParams.get('search') ?? '',
     );
     return jsonResponse({ exercises });
   }
