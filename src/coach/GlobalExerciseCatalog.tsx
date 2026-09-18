@@ -116,13 +116,11 @@ export function GlobalExerciseCatalog({
           ? { exercises: [] }
           : await getWorkoutExerciseOptions(initData, selectedCategory)
         : await getCoachExercises(initData, { search, categoryCode: selectedCategory ?? '', sort: 'alphabetical' });
-      if (!isCurrent()) return;
-      setExercises(result.exercises);
+      if (!isCurrent()) return; setExercises(result.exercises);
       setError('');
     } catch (reason) {
-      if (!isCurrent()) return;
+      if (!isCurrent()) return; setError(reason instanceof Error ? reason.message : 'Не удалось загрузить каталог');
       if (mode === 'select') setExercises([]);
-      setError(reason instanceof Error ? reason.message : 'Не удалось загрузить каталог');
     }
   }, [initData, mode, search, selectedCategory]);
   useEffect(() => { let cancelled = false; setExercises(null); const timer = window.setTimeout(() => { void load(() => !cancelled); }, 80); return () => { cancelled = true; window.clearTimeout(timer); }; }, [load, reloadToken]);
