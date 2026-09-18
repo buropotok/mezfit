@@ -87,7 +87,7 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
               </div>
             ) : null}
             {!title ? <Dialog.Title className="ui-visually-hidden">Панель</Dialog.Title> : null}
-            <div className="ui-bottom-sheet__content">{children}</div>
+            <div className={`ui-bottom-sheet__content${floatingAction ? ' ui-bottom-sheet__content--with-floating-action' : ''}`}>{children}</div>
             {floatingAction ? <div className="ui-bottom-sheet__floating-action">{floatingAction}</div> : null}
           </Dialog.Content>
         </div>
