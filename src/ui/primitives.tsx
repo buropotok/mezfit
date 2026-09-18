@@ -140,7 +140,7 @@ export function Surface({ as: Component = 'div', theme = 'default', border = tru
     : style;
 
   return (
-    <Component ref={surfaceRef} data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${isElevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} style={liquidStyle} {...props}>
+    <Component ref={(node: HTMLElement | null) => { surfaceRef.current = node; }} data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${isElevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} style={liquidStyle} {...props}>
       {theme === 'liquidGlass' ? <LiquidGlassOpticalFilter id={liquidGlassFilterId} geometry={liquidGeometry} region="container" /> : null}
       {children}
     </Component>
