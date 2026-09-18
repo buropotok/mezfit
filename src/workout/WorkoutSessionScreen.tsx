@@ -12,7 +12,7 @@ import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text
 import plusIconUrl from '../ui/icons/plus.svg';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
-import { WorkoutExercisePicker } from './WorkoutExercisePicker';
+import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 import type {
   ActiveWorkoutSession,
   DraftWorkoutSession,
@@ -63,9 +63,9 @@ export function WorkoutSessionScreen({
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
-  const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
+  const [exerciseSelectionOpen, setExerciseSelectionOpen] = useState(false);
   const [addingExercises, setAddingExercises] = useState(false);
-  const [exercisePickerError, setExercisePickerError] = useState('');
+  const [exerciseSelectionError, setExerciseSelectionError] = useState('');
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
   const lifecycleCallbackRef = useRef(onSessionLifecycleChange);
@@ -211,10 +211,10 @@ export function WorkoutSessionScreen({
       });
   }
 
-  function openExercisePicker() {
+  function openExerciseSelection() {
     if (!activeSession || activeSession.status !== 'active') return;
-    setExercisePickerError('');
-    setExercisePickerOpen(true);
+    setExerciseSelectionError('');
+    setExerciseSelectionOpen(true);
   }
 
   async function handleAddExercises(exerciseDefinitionIds: number[]) {
@@ -222,7 +222,7 @@ export function WorkoutSessionScreen({
     const sessionId = activeSession.sessionId;
     const intent = nextMutationIntent();
     setAddingExercises(true);
-    setExercisePickerError('');
+    setExerciseSelectionError('');
     try {
       const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionExercises(
         initData,
@@ -233,9 +233,9 @@ export function WorkoutSessionScreen({
       acknowledgedSessionRef.current = nextSession;
       if (!isCurrentIntent(intent)) return;
       setSession(nextSession);
-      setExercisePickerOpen(false);
+      setExerciseSelectionOpen(false);
     } catch (error) {
-      if (isCurrentIntent(intent)) setExercisePickerError(errorMessage(error, 'Не удалось добавить упражнения'));
+      if (isCurrentIntent(intent)) setExerciseSelectionError(errorMessage(error, 'Не удалось добавить упражнения'));
     } finally {
       if (isCurrentGeneration(intent)) setAddingExercises(false);
     }
@@ -253,7 +253,7 @@ export function WorkoutSessionScreen({
       acknowledgedSessionRef.current = nextSession;
       if (!isCurrentIntent(intent)) return;
       setSession(nextSession);
-      setExercisePickerOpen(false);
+      setExerciseSelectionOpen(false);
       setCompleteConfirmOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
       onClose();
@@ -368,25 +368,26 @@ export function WorkoutSessionScreen({
           <FloatingActionButton
             placement="right"
             label="Добавить упражнение"
-            onClick={openExercisePicker}
+            onClick={openExerciseSelection}
           >
             <img src={plusIconUrl} alt="" aria-hidden="true" width={24} height={24} />
           </FloatingActionButton>
         </>
       ) : null}
 
-      <WorkoutExercisePicker
-        initData={initData}
-        isOpen={exercisePickerOpen}
-        saving={addingExercises}
-        actionError={exercisePickerError}
-        onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
-        onClose={() => {
-          if (addingExercises) return;
-          setExercisePickerOpen(false);
-          setExercisePickerError('');
-        }}
-      />
+      {exerciseSelectionOpen ? (
+        <WorkoutExerciseSelectionSheet
+          initData={initData}
+          saving={addingExercises}
+          actionError={exerciseSelectionError}
+          onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
+          onClose={() => {
+            if (addingExercises) return;
+            setExerciseSelectionOpen(false);
+            setExerciseSelectionError('');
+          }}
+        />
+      ) : null}
 
       <Modal
         isOpen={loading || busyLabel !== null}
