@@ -6,7 +6,7 @@ import type { UiIconPair } from './iconPair';
 import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
-import { useLiquidGlassTabsController } from './liquidGlass';
+import { useLiquidGlassTabsController } from './LiquidGlassTabs';
 import './components.css';
 
 type ListDivider = 'none' | 'inset' | 'full';
