@@ -26,16 +26,18 @@ const tabs = [
 
 function SelectableSettingsButton({ theme = 'default' }: { theme?: UiComponentTheme }) {
   const [selected, setSelected] = useState(false);
-  return (
-    <IconButton
-      label={`Settings ${theme}`}
-      theme={theme}
-      selected={selected}
-      aria-pressed={selected}
-      icon={{ outline: <MaskIcon src={settingsIconUrl} />, filled: <MaskIcon src={settingsFilledIconUrl} /> }}
-      onClick={() => setSelected((value) => !value)}
-    />
-  );
+  const icon = { outline: <MaskIcon src={settingsIconUrl} />, filled: <MaskIcon src={settingsFilledIconUrl} /> };
+  const common = {
+    label: `Settings ${theme}`,
+    selected,
+    'aria-pressed': selected,
+    icon,
+    onClick: () => setSelected((value: boolean) => !value),
+  };
+
+  return theme === 'default'
+    ? <IconButton {...common} theme="default" />
+    : <IconButton {...common} theme={theme} />;
 }
 
 function IconTabs({ theme = 'default' }: { theme?: UiComponentTheme }) {
