@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getWorkoutExerciseOptions, type ExerciseCategoryCode, type ExerciseDefinition } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
-import { Button, FloatingActionButton, List, ListItem, Modal, SearchInput, Text } from '../ui';
+import { Button, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, Text } from '../ui';
 import './workout-exercise-picker.css';
 
 const categoryOptions: Array<{ code: ExerciseCategoryCode; label: string }> = [
@@ -28,41 +28,39 @@ interface Props {
 
 export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = '', onConfirm, onClose }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<ExerciseCategoryCode | null>(null);
-  const [search, setSearch] = useState('');
   const [exercises, setExercises] = useState<ExerciseDefinition[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [menuExerciseId, setMenuExerciseId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!isOpen || selectedCategory === null) return undefined;
     let cancelled = false;
     setExercises(null);
-    const timer = window.setTimeout(() => {
-      getWorkoutExerciseOptions(initData, selectedCategory, search)
-        .then(({ exercises: nextExercises }) => {
-          if (cancelled) return;
-          setExercises(nextExercises);
-          setError('');
-        })
-        .catch((reason: unknown) => {
-          if (cancelled) return;
-          setExercises([]);
-          setError(reason instanceof Error ? reason.message : 'Не удалось загрузить упражнения');
-        });
-    }, 150);
+
+    getWorkoutExerciseOptions(initData, selectedCategory)
+      .then(({ exercises: nextExercises }) => {
+        if (cancelled) return;
+        setExercises(nextExercises);
+        setError('');
+      })
+      .catch((reason: unknown) => {
+        if (cancelled) return;
+        setExercises([]);
+        setError(reason instanceof Error ? reason.message : 'Не удалось загрузить упражнения');
+      });
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
     };
-  }, [initData, isOpen, search, selectedCategory]);
+  }, [initData, isOpen, selectedCategory]);
 
   useEffect(() => {
     if (isOpen) return;
     setSelectedCategory(null);
-    setSearch('');
     setExercises(null);
     setSelectedIds(new Set());
+    setMenuExerciseId(null);
     setError('');
   }, [isOpen]);
 
@@ -106,7 +104,7 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
                   disabled={saving}
                   onClick={() => {
                     setSelectedCategory(category.code);
-                    setSearch('');
+                    setMenuExerciseId(null);
                     setError('');
                   }}
                 />
@@ -120,36 +118,46 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
               disabled={saving}
               onClick={() => {
                 setSelectedCategory(null);
-                setSearch('');
                 setExercises(null);
+                setMenuExerciseId(null);
                 setError('');
               }}
             >
               Назад к категориям
             </Button>
-            <SearchInput
-              aria-label="Поиск упражнения"
-              placeholder="Поиск упражнения"
-              value={search}
-              onChange={(event) => setSearch(event.currentTarget.value)}
-              onClear={() => setSearch('')}
-              disabled={saving}
-            />
             {error ? <Text variant="footnote" tone="muted" role="alert">{error}</Text> : null}
             {exercises === null && !error ? <Text variant="footnote" tone="muted">Загружаем упражнения…</Text> : null}
-            {exercises?.length === 0 && !error ? <Text variant="footnote" tone="muted">Ничего не найдено.</Text> : null}
+            {exercises?.length === 0 && !error ? <Text variant="footnote" tone="muted">В этой категории пока нет упражнений.</Text> : null}
             {exercises && exercises.length > 0 ? (
               <List divider="inset">
                 {exercises.map((exercise) => {
                   const selected = selectedIds.has(exercise.id);
+                  const displayName = exerciseDisplayName(exercise);
                   return (
                     <ListItem
                       key={exercise.id}
                       leadingShape="square"
                       leading={<ExerciseMedia exercise={exercise} variant="thumbnail" />}
-                      title={exerciseDisplayName(exercise)}
+                      title={displayName}
                       subtitle={exercise.description ?? undefined}
                       trailing={selected ? <span className="workout-exercise-picker__selected-dot" aria-hidden="true" /> : undefined}
+                      trailingAction={(
+                        <Menu
+                          isOpen={menuExerciseId === exercise.id}
+                          onOpenChange={(open) => setMenuExerciseId(open ? exercise.id : null)}
+                          align="end"
+                          label={`Действия: ${displayName}`}
+                          trigger={(
+                            <IconButton label={`Действия: ${displayName}`} disabled={saving}>
+                              <span aria-hidden="true">⋮</span>
+                            </IconButton>
+                          )}
+                        >
+                          <MenuItem onSelect={() => toggleExercise(exercise.id)}>
+                            {selected ? 'Снять выбор' : 'Выбрать'}
+                          </MenuItem>
+                        </Menu>
+                      )}
                       aria-pressed={selected}
                       disabled={saving}
                       onClick={() => toggleExercise(exercise.id)}
@@ -167,7 +175,7 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
           disabled={saving}
           onClick={() => onConfirm([...selectedIds])}
         >
-          <Text variant="body" className="workout-exercise-picker__confirm-label">ОК</Text>
+          ОК
         </FloatingActionButton>
       </div>
     </Modal>
