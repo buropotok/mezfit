@@ -3,6 +3,7 @@ import { getWorkoutExerciseOptions, type ExerciseCategoryCode, type ExerciseDefi
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import { Button, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, Text } from '../ui';
+import dotsVerticalIconUrl from '../ui/icons/dots-vertical.svg';
 import './workout-exercise-picker.css';
 
 const categoryOptions: Array<{ code: ExerciseCategoryCode; label: string }> = [
@@ -149,7 +150,7 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
                           label={`Действия: ${displayName}`}
                           trigger={(
                             <IconButton label={`Действия: ${displayName}`} disabled={saving}>
-                              <span aria-hidden="true">⋮</span>
+                              <img src={dotsVerticalIconUrl} alt="" aria-hidden="true" width={24} height={24} />
                             </IconButton>
                           )}
                         >
