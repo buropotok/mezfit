@@ -42,6 +42,7 @@
 .ui-bottom-sheet__close:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .ui-bottom-sheet__title{overflow:hidden;flex:1 1 auto;margin:0;font-size:var(--ui-font-size-headline);font-weight:var(--ui-font-weight-medium);line-height:var(--ui-line-height-headline);text-overflow:ellipsis;white-space:nowrap}
 .ui-bottom-sheet__content{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1 1 auto;min-height:0;padding-bottom:env(safe-area-inset-bottom)}
+.ui-bottom-sheet__content--with-floating-action{padding-bottom:calc(env(safe-area-inset-bottom) + 5.5rem)}
 .ui-bottom-sheet__floating-action{pointer-events:none;position:absolute;z-index:2;inset:0 0 env(safe-area-inset-bottom) 0}
 .ui-bottom-sheet__floating-action>*{pointer-events:auto}
 .ui-bottom-sheet__backdrop[data-state='open']{animation:ui-bottom-sheet-backdrop-enter .2s ease both}
