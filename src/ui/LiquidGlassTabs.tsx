@@ -671,8 +671,8 @@ export function useLiquidGlassTabsController({
     lensRef,
     listStyle,
     lensStyle,
-    containerFilter: enabled ? <LiquidGlassOpticalFilter id={containerFilterId} geometry={containerGeometry} region="container" /> : null,
-    lensFilter: enabled ? <LiquidGlassOpticalFilter id={lensFilterId} geometry={lensGeometry} region="lens" /> : null,
+    containerFilter: enabled ? <LiquidGlassOpticalFilter id={containerFilterId} geometry={containerGeometry} /> : null,
+    lensFilter: enabled ? <LiquidGlassOpticalFilter id={lensFilterId} geometry={lensGeometry} /> : null,
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture },
   };
 }
