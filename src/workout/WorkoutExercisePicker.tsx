@@ -154,7 +154,7 @@ export function WorkoutExercisePicker({ initData, isOpen, saving, actionError = 
                             </IconButton>
                           )}
                         >
-                          <MenuItem onSelect={() => toggleExercise(exercise.id)}>
+                          <MenuItem disabled={saving} onSelect={() => toggleExercise(exercise.id)}>
                             {selected ? 'Снять выбор' : 'Выбрать'}
                           </MenuItem>
                         </Menu>
