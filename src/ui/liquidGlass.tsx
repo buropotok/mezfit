@@ -124,10 +124,9 @@ function dataUri(svg: string) {
 type OpticalFilterProps = {
   id: string;
   geometry: LiquidGlassGeometry;
-  region?: 'lens' | 'container';
 };
 
-export function LiquidGlassOpticalFilter({ id, geometry, region = 'lens' }: OpticalFilterProps) {
+export function LiquidGlassOpticalFilter({ id, geometry }: OpticalFilterProps) {
   const width = Math.max(1, Math.round(geometry.width));
   const height = Math.max(1, Math.round(geometry.height));
   const radiusX = Math.max(1, geometry.radiusX);
