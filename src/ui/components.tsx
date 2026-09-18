@@ -84,7 +84,7 @@ export function Tabs({ theme = 'default', mode = 'default', className = '', valu
 }
 
 export function TabsList({ className = '', children, style, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture, ...props }: TabsListProps) {
-  const { theme, mode, rootRef } = useContext(TabsContext);
+  const { theme, mode, activeValue, rootRef } = useContext(TabsContext);
   const hasMovingIndicator = theme === 'glass' || theme === 'liquidGlass' || mode === 'icon';
   const isLiquidGlass = theme === 'liquidGlass';
   const fallbackRootRef = useRef<HTMLDivElement>(null);
@@ -98,7 +98,7 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
   const liquidGlass = useLiquidGlassTabsController({
     enabled: isLiquidGlass,
     mode,
-    activeValue: useContext(TabsContext).activeValue,
+    activeValue,
     rootRef: resolvedRootRef,
     listRef,
     indicatorRef,
