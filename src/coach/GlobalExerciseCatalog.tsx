@@ -176,7 +176,7 @@ export function GlobalExerciseCatalog({
   const subgroupOptions = categorySubgroups[selectedCategory] ?? []; const activeFilter = Boolean(search || equipmentCode || subgroup || favouritesOnly);
   const filterControls = (
     <div className="catalog-chip-row" aria-label="Фильтры упражнений">
-      <button className={`catalog-chip star-chip ${favouritesOnly ? 'selected' : ''}`} type="button" onClick={() => setFavouritesOnly((value) => !value)} aria-pressed={favouritesOnly} aria-label="Только избранные" disabled={mode === 'select' && selectionDisabled}><ActionIcon icon={favouritesOnly ? 'favourite' : 'favouriteEmpty'} /></button>
+      {mode === 'browse' ? <button className={`catalog-chip star-chip ${favouritesOnly ? 'selected' : ''}`} type="button" onClick={() => setFavouritesOnly((value) => !value)} aria-pressed={favouritesOnly} aria-label="Только избранные"><ActionIcon icon={favouritesOnly ? 'favourite' : 'favouriteEmpty'} /></button> : null}
       {subgroupOptions.map((option) => <button key={option.code} className={`catalog-chip subgroup-chip category-${selectedCategory} ${subgroup === option.code ? 'selected' : ''}`} type="button" onClick={() => setSubgroup((value) => value === option.code ? '' : option.code)} disabled={mode === 'select' && selectionDisabled}>{option.label}</button>)}
       {equipmentOptions.map((option) => <button key={option.code} className={`catalog-chip ${equipmentCode === option.code ? 'selected' : ''}`} type="button" onClick={() => setEquipmentCode((value) => value === option.code ? '' : option.code)} disabled={mode === 'select' && selectionDisabled}>{option.label}</button>)}
     </div>
