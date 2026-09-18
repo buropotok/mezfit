@@ -207,7 +207,7 @@ describe('WorkoutSessionScreen', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
     expect(await screen.findByText('Жим лёжа')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Жим лёжа/ }));
     expect(addExercisesMock).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
