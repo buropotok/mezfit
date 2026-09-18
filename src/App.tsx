@@ -146,12 +146,16 @@ export function App() {
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [workoutOpen, setWorkoutOpen] = useState(false);
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
+  const [workoutNestedNavigationContext, setWorkoutNestedNavigationContext] = useState<NavigationContext | null>(null);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
   }, []);
-  const closeWorkout = useCallback(() => setWorkoutOpen(false), []);
-  const workoutNavigationContext = useMemo<NavigationContext>(() => ({
+  const closeWorkout = useCallback(() => {
+    setWorkoutOpen(false);
+    setWorkoutNestedNavigationContext(null);
+  }, []);
+  const workoutRootNavigationContext = useMemo<NavigationContext>(() => ({
     title: 'Тренировка',
     onBack: closeWorkout,
   }), [closeWorkout]);
@@ -242,7 +246,7 @@ export function App() {
     setNavigationContext(null);
     dispatch({ type: 'switch-role', role });
   };
-  const shellContext = workoutOpen ? workoutNavigationContext : navigationContext;
+  const shellContext = workoutOpen ? workoutNestedNavigationContext ?? workoutRootNavigationContext : navigationContext;
   const workoutFabLabel = workoutStatus === 'active' ? 'Продолжить тренировку' : 'Открыть тренировку';
 
   return (
@@ -278,6 +282,7 @@ export function App() {
           <WorkoutSessionScreen
             initData={state.initData}
             onClose={closeWorkout}
+            onNavigationContextChange={setWorkoutNestedNavigationContext}
             onSessionLifecycleChange={({ status }) => setWorkoutStatus(status)}
           />
         ) : destination === 'settings' ? (
