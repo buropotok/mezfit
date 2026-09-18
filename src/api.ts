@@ -441,10 +441,8 @@ export function setCoachExerciseFavourite(
 export async function getWorkoutExerciseOptions(
   initData: string,
   categoryCode: ExerciseCategoryCode,
-  search = '',
 ): Promise<{ exercises: ExerciseDefinition[] }> {
   const query = new URLSearchParams({ category: categoryCode });
-  if (search.trim()) query.set('search', search.trim());
   const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/workout-sessions/exercises?${query.toString()}`);
   return { exercises: result.exercises.map(localizeExercise) };
 }
