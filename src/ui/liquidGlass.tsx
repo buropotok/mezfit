@@ -30,6 +30,16 @@ export const LIQUID_GLASS_TABS_PRESET = {
     overshootPercent: 38,
     recoilPercent: 22,
   },
+  selectorSpring: {
+    durationMs: 1360,
+    firstHeightShrinkPercent: 16,
+    firstWidthToHeightPercent: 100,
+    secondWidthShrinkPercent: 11,
+    secondHeightShrinkPercent: 3,
+    firstSquashPointPercent: 18,
+    firstReturnPointPercent: 52,
+    secondSquashPointPercent: 64,
+  },
 } as const;
 
 export function useLiquidGlassFilterId(prefix: string) {
@@ -75,20 +85,22 @@ export function liquidGlassSameTabProgress(
 function opticalMapSvg({ width, height, radiusX, radiusY }: LiquidGlassGeometry) {
   const sx = width / 420;
   const sy = height / 280;
-  const edgeInsetX = Math.max(.6, 6 * sx);
-  const edgeInsetY = Math.max(.6, 6 * sy);
-  const blurOuter = Math.max(.2, 2 * sy);
-  const blurInner = Math.max(.45, 6 * sy);
-  const innerRx = Math.max(1, radiusX - edgeInsetX);
-  const innerRy = Math.max(1, radiusY - edgeInsetY);
+  const insetX = Math.max(.5, 10 * sx);
+  const insetY = Math.max(.5, 10 * sy);
+  const blurOuter = Math.max(.15, 2 * sy);
+  const blurInner = Math.max(.5, 10 * sy);
+  const innerWidth = Math.max(1, width - insetX * 2);
+  const innerHeight = Math.max(1, height - insetY * 2);
+  const innerRx = Math.max(1, radiusX - insetX);
+  const innerRy = Math.max(1, radiusY - insetY);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
-    <linearGradient id="Y" x1="0" x2="0" y1="7%" y2="93%">
+    <linearGradient id="Y" x1="0" x2="0" y1="6%" y2="94%">
       <stop offset="0%" stop-color="#00ff00"/>
       <stop offset="100%" stop-color="#000000"/>
     </linearGradient>
-    <linearGradient id="X" x1="5%" x2="95%" y1="0" y2="0">
+    <linearGradient id="X" x1="4%" x2="96%" y1="0" y2="0">
       <stop offset="0%" stop-color="#ff0000"/>
       <stop offset="100%" stop-color="#000000"/>
     </linearGradient>
@@ -100,7 +112,7 @@ function opticalMapSvg({ width, height, radiusX, radiusY }: LiquidGlassGeometry)
     <rect width="${width}" height="${height}" fill="#000080"/>
     <rect width="${width}" height="${height}" fill="url(#Y)" style="mix-blend-mode:screen"/>
     <rect width="${width}" height="${height}" fill="url(#X)" style="mix-blend-mode:screen"/>
-    <ellipse cx="${width / 2}" cy="${height / 2}" rx="${innerRx}" ry="${innerRy}" fill="#808080" filter="url(#I)"/>
+    <rect x="${insetX}" y="${insetY}" width="${innerWidth}" height="${innerHeight}" rx="${innerRx}" ry="${innerRy}" fill="#808080" filter="url(#I)"/>
   </g>
 </svg>`;
 }
@@ -121,9 +133,7 @@ export function LiquidGlassOpticalFilter({ id, geometry, region = 'lens' }: Opti
   const radiusX = Math.max(1, geometry.radiusX);
   const radiusY = Math.max(1, geometry.radiusY);
   const scale = height / 280;
-  const extent = region === 'lens'
-    ? { x: '-25%', y: '-25%', width: '150%', height: '150%' }
-    : { x: '-15%', y: '-30%', width: '130%', height: '160%' };
+  const extent = { x: '0', y: '0', width: '100%', height: '100%' };
 
   return (
     <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }} aria-hidden="true">
@@ -136,11 +146,11 @@ export function LiquidGlassOpticalFilter({ id, geometry, region = 'lens' }: Opti
           href={dataUri(opticalMapSvg({ width, height, radiusX, radiusY }))}
           result="displacementMap"
         />
-        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale={125 * scale} xChannelSelector="R" yChannelSelector="G" />
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale={74 * scale} xChannelSelector="R" yChannelSelector="G" />
         <feColorMatrix type="matrix" result="displacedR" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
-        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale={123 * scale} xChannelSelector="R" yChannelSelector="G" />
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale={72 * scale} xChannelSelector="R" yChannelSelector="G" />
         <feColorMatrix type="matrix" result="displacedG" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" />
-        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale={121 * scale} xChannelSelector="R" yChannelSelector="G" />
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale={70 * scale} xChannelSelector="R" yChannelSelector="G" />
         <feColorMatrix type="matrix" result="displacedB" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" />
         <feBlend in="displacedR" in2="displacedG" mode="screen" result="rg" />
         <feBlend in="rg" in2="displacedB" mode="screen" />
