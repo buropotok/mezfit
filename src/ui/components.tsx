@@ -53,6 +53,7 @@ export type BottomSheetProps = {
   children: ReactNode;
   className?: string;
   headerLeading?: ReactNode;
+  floatingAction?: ReactNode;
   closeLabel?: string;
   hasCloseButton?: boolean;
   closeOnBackdrop?: boolean;
@@ -60,7 +61,7 @@ export type BottomSheetProps = {
   onClose: () => void;
 };
 
-export function BottomSheet({ isOpen, title, children, className = '', headerLeading, closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, modalColor = true, onClose }: BottomSheetProps) {
+export function BottomSheet({ isOpen, title, children, className = '', headerLeading, floatingAction, closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, modalColor = true, onClose }: BottomSheetProps) {
   const blockEscape = !hasCloseButton && !closeOnBackdrop;
   const startKeyboardScale = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget);
@@ -87,6 +88,7 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
             ) : null}
             {!title ? <Dialog.Title className="ui-visually-hidden">Панель</Dialog.Title> : null}
             <div className="ui-bottom-sheet__content">{children}</div>
+            {floatingAction ? <div className="ui-bottom-sheet__floating-action">{floatingAction}</div> : null}
           </Dialog.Content>
         </div>
       </Dialog.Portal>
