@@ -141,7 +141,7 @@ export function Surface({ as: Component = 'div', theme = 'default', border = tru
 
   return (
     <Component ref={(node: HTMLElement | null) => { surfaceRef.current = node; }} data-ui-theme={theme} className={`ui-surface${isBorderless ? ' ui-surface--borderless' : ''}${isElevated ? ' ui-surface--elevated' : ''} ${className}`.trim()} style={liquidStyle} {...props}>
-      {theme === 'liquidGlass' ? <LiquidGlassOpticalFilter id={liquidGlassFilterId} geometry={liquidGeometry} region="container" /> : null}
+      {theme === 'liquidGlass' ? <LiquidGlassOpticalFilter id={liquidGlassFilterId} geometry={liquidGeometry} /> : null}
       {children}
     </Component>
   );
