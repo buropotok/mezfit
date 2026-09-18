@@ -237,12 +237,14 @@ export function App() {
   const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
   const changeDestination = (next: AppDestination) => {
     setWorkoutOpen(false);
+    setWorkoutNestedNavigationContext(null);
     setNavigationContext(null);
     if (state.activeRole === 'coach') setCoachDestination(next);
     else setClientDestination(next);
   };
   const switchRole = (role: Role) => {
     setWorkoutOpen(false);
+    setWorkoutNestedNavigationContext(null);
     setNavigationContext(null);
     dispatch({ type: 'switch-role', role });
   };
