@@ -13,7 +13,7 @@ type LiquidGlassTabsControllerArgs = {
   enabled: boolean;
   mode: 'default' | 'icon';
   activeValue?: string;
-  rootRef: RefObject<HTMLDivElement | null>;
+  visualLayerRef: RefObject<HTMLDivElement | null>;
   listRef: RefObject<HTMLDivElement | null>;
   indicatorRef: RefObject<HTMLDivElement | null>;
   indicatorSurfaceRef: RefObject<HTMLDivElement | null>;
@@ -74,7 +74,7 @@ export function useLiquidGlassTabsController({
   enabled,
   mode,
   activeValue,
-  rootRef,
+  visualLayerRef,
   listRef,
   indicatorRef,
   indicatorSurfaceRef,
@@ -87,7 +87,7 @@ export function useLiquidGlassTabsController({
   const iconSpringTimerRef = useRef<number | null>(null);
   const suppressClickUntilRef = useRef(0);
   const interactionTokenRef = useRef(0);
-  const rootAnimationRef = useRef<Animation | null>(null);
+  const visualLayerAnimationRef = useRef<Animation | null>(null);
   const selectorAnimationRef = useRef<Animation | null>(null);
   const iconAnimationsRef = useRef(new Map<HTMLElement, Animation>());
   const activeValueRef = useRef(activeValue);
@@ -241,21 +241,21 @@ export function useLiquidGlassTabsController({
     return list.scrollLeft;
   }, [getFullLensSize, getTriggerContentCenter, getTriggers, listRef]);
 
-  const startRootExpansion = useCallback(() => {
-    const root = rootRef.current;
+  const startVisualLayerExpansion = useCallback(() => {
+    const root = visualLayerRef.current;
     if (!root || shouldReduceMotion()) return;
-    rootAnimationRef.current?.cancel();
-    rootAnimationRef.current = root.animate(
+    visualLayerAnimationRef.current?.cancel();
+    visualLayerAnimationRef.current = root.animate(
       [{ scale: '1' }, { scale: String(LIQUID_GLASS_TABS_PRESET.containerMaxScalePercent / 100) }],
       { duration: 180, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' },
     );
-  }, [rootRef]);
+  }, [visualLayerRef]);
 
   const startContainerSpring = useCallback(() => {
-    const root = rootRef.current;
+    const root = visualLayerRef.current;
     if (!root) return;
     const currentScale = Number.parseFloat(getComputedStyle(root).scale) || 1;
-    rootAnimationRef.current?.cancel();
+    visualLayerAnimationRef.current?.cancel();
 
     if (shouldReduceMotion()) {
       root.style.scale = '1';
@@ -267,7 +267,7 @@ export function useLiquidGlassTabsController({
     const overshoot = 1 - travel * preset.overshootPercent / 100;
     const recoil = 1 + travel * preset.recoilPercent / 100;
 
-    rootAnimationRef.current = root.animate(
+    visualLayerAnimationRef.current = root.animate(
       [
         { scale: String(currentScale), offset: 0 },
         { scale: String(overshoot), offset: .42, easing: 'cubic-bezier(.18,.89,.32,1.16)' },
@@ -276,12 +276,12 @@ export function useLiquidGlassTabsController({
       ],
       { duration: preset.durationMs, easing: 'linear', fill: 'forwards' },
     );
-    rootAnimationRef.current.onfinish = () => {
+    visualLayerAnimationRef.current.onfinish = () => {
       root.style.scale = '1';
-      rootAnimationRef.current?.cancel();
-      rootAnimationRef.current = null;
+      visualLayerAnimationRef.current?.cancel();
+      visualLayerAnimationRef.current = null;
     };
-  }, [rootRef]);
+  }, [visualLayerRef]);
 
   const startIconSpring = useCallback((trigger: HTMLButtonElement) => {
     if (mode !== 'icon' || shouldReduceMotion()) return;
@@ -362,7 +362,7 @@ export function useLiquidGlassTabsController({
   }, []);
 
   const finishPhase = useCallback((target: HTMLButtonElement) => {
-    const root = rootRef.current;
+    const root = visualLayerRef.current;
     const lens = lensRef.current;
     const surface = indicatorSurfaceRef.current;
     const token = interactionTokenRef.current;
@@ -372,7 +372,7 @@ export function useLiquidGlassTabsController({
     if (surface) surface.style.transform = 'scale(1, 1)';
     if (root) root.dataset.liquidGlassActive = 'false';
     if (lens) lens.removeAttribute('data-liquid-glass-visible');
-    if (root && !rootAnimationRef.current) root.style.scale = '1';
+    if (root && !visualLayerAnimationRef.current) root.style.scale = '1';
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -382,7 +382,7 @@ export function useLiquidGlassTabsController({
     });
 
     stopRafIfIdle();
-  }, [indicatorSurfaceRef, rootRef, snapIndicatorTo, startSelectorSpring, stopRafIfIdle]);
+  }, [indicatorSurfaceRef, visualLayerRef, snapIndicatorTo, startSelectorSpring, stopRafIfIdle]);
 
   const phaseProgress = useCallback((phase: LiquidGlassPhase, now: number) => {
     const elapsed = now - phase.startTime;
@@ -458,7 +458,7 @@ export function useLiquidGlassTabsController({
   }, [renderFrame]);
 
   const beginPhaseVisuals = useCallback((target: HTMLButtonElement) => {
-    const root = rootRef.current;
+    const root = visualLayerRef.current;
     const lens = lensRef.current;
     const surface = indicatorSurfaceRef.current;
     if (iconSpringTimerRef.current !== null) {
@@ -473,8 +473,8 @@ export function useLiquidGlassTabsController({
     prepareLensOptics(target.offsetWidth);
     if (root) root.dataset.liquidGlassActive = 'true';
     if (lens) lens.dataset.liquidGlassVisible = 'true';
-    startRootExpansion();
-  }, [indicatorSurfaceRef, prepareLensOptics, rootRef, startRootExpansion]);
+    startVisualLayerExpansion();
+  }, [indicatorSurfaceRef, prepareLensOptics, visualLayerRef, startVisualLayerExpansion]);
 
   const startDifferentPhase = useCallback((fromTrigger: HTMLButtonElement, toTrigger: HTMLButtonElement, pressed: boolean, startTime: number) => {
     const list = listRef.current;
@@ -543,7 +543,7 @@ export function useLiquidGlassTabsController({
       window.clearTimeout(iconSpringTimerRef.current);
       iconSpringTimerRef.current = null;
     }
-    const root = rootRef.current;
+    const root = visualLayerRef.current;
     const lens = lensRef.current;
     const surface = indicatorSurfaceRef.current;
     if (root) {
@@ -552,14 +552,14 @@ export function useLiquidGlassTabsController({
     }
     if (lens) lens.removeAttribute('data-liquid-glass-visible');
     if (surface) surface.style.transform = 'scale(1, 1)';
-    rootAnimationRef.current?.cancel();
-    rootAnimationRef.current = null;
+    visualLayerAnimationRef.current?.cancel();
+    visualLayerAnimationRef.current = null;
     selectorAnimationRef.current?.cancel();
     selectorAnimationRef.current = null;
     snapIndicatorTo(getActiveTrigger());
     suppressClickUntilRef.current = performance.now() + 450;
     stopRafIfIdle();
-  }, [getActiveTrigger, indicatorSurfaceRef, rootRef, snapIndicatorTo, stopRafIfIdle]);
+  }, [getActiveTrigger, indicatorSurfaceRef, visualLayerRef, snapIndicatorTo, stopRafIfIdle]);
 
   const findTriggerFromEvent = useCallback((eventTarget: EventTarget | null) => {
     const list = listRef.current;
@@ -664,7 +664,7 @@ export function useLiquidGlassTabsController({
     clearPressIntent();
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     if (iconSpringTimerRef.current !== null) window.clearTimeout(iconSpringTimerRef.current);
-    rootAnimationRef.current?.cancel();
+    visualLayerAnimationRef.current?.cancel();
     selectorAnimationRef.current?.cancel();
     iconAnimationsRef.current.forEach((animation) => animation.cancel());
     iconAnimationsRef.current.clear();
