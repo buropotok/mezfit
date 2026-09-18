@@ -97,7 +97,7 @@ describe('WorkoutExercisePicker', () => {
     fireEvent.click(row);
     expect(row.getAttribute('aria-pressed')).toBe('true');
 
-    fireEvent.click(action);
+    fireEvent.pointerDown(action, { button: 0, ctrlKey: false });
     const menuItem = await screen.findByRole('menuitem', { name: 'Снять выбор' });
     fireEvent.click(menuItem);
 
