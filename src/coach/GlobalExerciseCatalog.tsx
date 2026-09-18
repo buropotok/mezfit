@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { archiveCoachExercise, createCoachExercise, getCoachExercise, getCoachExercises, setCoachExerciseFavourite, updateCoachExercise, type ExerciseCategoryCode, type ExerciseDefinition, type ExerciseEquipmentCode, type TrackingType } from '../api';
+import { archiveCoachExercise, createCoachExercise, getCoachExercise, getCoachExercises, getWorkoutExerciseOptions, setCoachExerciseFavourite, updateCoachExercise, type ExerciseCategoryCode, type ExerciseDefinition, type ExerciseEquipmentCode, type TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import type { NavigationContext } from '../NavigationShell';
 import { gymKeeperIcons } from '../gymKeeperIcons';
-import { Button, Dropdown, List, ListItem, Menu, MenuItem, Modal, Surface, Text, TextArea, TextInput } from '../ui';
+import { Button, Dropdown, IconButton, List, ListItem, Menu, MenuItem, Modal, Surface, Text, TextArea, TextInput } from '../ui';
 import { exerciseActionIcons, type ExerciseActionIcon } from './exerciseActionIcons';
 import { exerciseContextIcons, type ExerciseContextIcon } from './exerciseContextIcons';
 
@@ -87,8 +87,27 @@ function ExerciseDetail({ exercise, busy, onFavourite, onEdit }: { exercise: Exe
   return <section className="global-exercise-detail stack"><div className="global-exercise-detail-media"><ExerciseMedia exercise={exercise} variant="detail" decorative={false} /><span>{exerciseDisplayName(exercise)}</span></div><section className="global-exercise-info-card"><div className="global-exercise-detail-title-row"><div><h2>{exerciseDisplayName(exercise)}</h2></div><div className="global-exercise-detail-buttons"><button className={`exercise-square-button detail-icon ${exercise.is_favourite ? 'active' : ''}`} type="button" onClick={onFavourite} disabled={busy} aria-label={exercise.is_favourite ? 'Убрать из избранного' : 'Добавить в избранное'}><ActionIcon icon={exercise.is_favourite ? 'favourite' : 'favouriteEmpty'} /></button><button className="exercise-square-button detail-icon" type="button" onClick={onEdit} disabled={busy} aria-label="Редактировать упражнение"><ActionIcon icon="edit" /></button></div></div>{exercise.description ? <p className="global-exercise-description">{exercise.description}</p> : null}<div className="global-exercise-detail-badges">{exercise.category_code ? <span className={`catalog-chip category-chip category-${exercise.category_code}`}>{categoryLabels[exercise.category_code]}</span> : null}<span className="catalog-chip">{trackingLabels[exercise.tracking_type]}</span>{exercise.equipment_code ? <span className="catalog-chip">{equipmentLabels[exercise.equipment_code]}</span> : null}</div></section></section>;
 }
 
-interface Props { initData: string; onNavigationContextChange: (context: NavigationContext | null) => void; }
-export function GlobalExerciseCatalog({ initData, onNavigationContextChange }: Props) {
+export type GlobalExerciseCatalogMode = 'browse' | 'select';
+
+interface Props {
+  initData: string;
+  onNavigationContextChange: (context: NavigationContext | null) => void;
+  mode?: GlobalExerciseCatalogMode;
+  selectedExerciseIds?: ReadonlySet<number>;
+  selectionDisabled?: boolean;
+  onToggleExercise?: (exerciseDefinitionId: number) => void;
+}
+
+const emptyExerciseSelection: ReadonlySet<number> = new Set<number>();
+
+export function GlobalExerciseCatalog({
+  initData,
+  onNavigationContextChange,
+  mode = 'browse',
+  selectedExerciseIds = emptyExerciseSelection,
+  selectionDisabled = false,
+  onToggleExercise,
+}: Props) {
   const [selectedCategory, setSelectedCategory] = useState<ExerciseCategoryCode | null>(null); const [search, setSearch] = useState(''); const [searchOpen, setSearchOpen] = useState(false); const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode | ''>(''); const [subgroup, setSubgroup] = useState(''); const [favouritesOnly, setFavouritesOnly] = useState(false); const [exercises, setExercises] = useState<ExerciseDefinition[] | null>(null); const [selectedInfo, setSelectedInfo] = useState<ExerciseDefinition | null>(null); const [menuExercise, setMenuExercise] = useState<ExerciseDefinition | null>(null); const [editing, setEditing] = useState<EditorState | null>(null); const [error, setError] = useState(''); const [editorError, setEditorError] = useState(''); const [busy, setBusy] = useState(false); const [reloadToken, setReloadToken] = useState(0);
   const load = useCallback(async (isCurrent: () => boolean) => { try { const result = await getCoachExercises(initData, { search, categoryCode: selectedCategory ?? '', sort: 'alphabetical' }); if (!isCurrent()) return; setExercises(result.exercises); setError(''); } catch (reason) { if (!isCurrent()) return; setError(reason instanceof Error ? reason.message : 'Не удалось загрузить каталог'); } }, [initData, search, selectedCategory]);
   useEffect(() => { let cancelled = false; setExercises(null); const timer = window.setTimeout(() => { void load(() => !cancelled); }, 80); return () => { cancelled = true; window.clearTimeout(timer); }; }, [load, reloadToken]);
