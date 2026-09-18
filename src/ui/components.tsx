@@ -1,4 +1,4 @@
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode, type RefObject } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import type { UiComponentTheme } from './componentTheme';
@@ -63,32 +63,30 @@ type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List>;
 export type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger> & { icon?: TabsIconPair };
 type TabsContentProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Content>;
 type IndicatorChildProps = { children?: ReactNode; className?: string };
-type TabsContextValue = { theme: UiComponentTheme; mode: TabsMode; activeValue?: string; rootRef?: RefObject<HTMLDivElement | null> };
+type TabsContextValue = { theme: UiComponentTheme; mode: TabsMode; activeValue?: string };
 
 const TabsContext = createContext<TabsContextValue>({ theme: 'default', mode: 'default' });
 
 export function Tabs({ theme = 'default', mode = 'default', className = '', value, defaultValue, onValueChange, ...props }: TabsProps) {
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
   const activeValue = value ?? uncontrolledValue;
-  const rootRef = useRef<HTMLDivElement>(null);
   const handleValueChange = useCallback((nextValue: string) => {
     if (value === undefined) setUncontrolledValue(nextValue);
     onValueChange?.(nextValue);
   }, [onValueChange, value]);
 
   return (
-    <TabsContext.Provider value={{ theme, mode, activeValue, rootRef }}>
-      <RadixTabs.Root ref={rootRef} {...props} value={value} defaultValue={defaultValue} onValueChange={handleValueChange} data-ui-theme={theme} data-ui-mode={mode} className={`ui-tabs ${className}`.trim()} />
+    <TabsContext.Provider value={{ theme, mode, activeValue }}>
+      <RadixTabs.Root {...props} value={value} defaultValue={defaultValue} onValueChange={handleValueChange} data-ui-theme={theme} data-ui-mode={mode} className={`ui-tabs ${className}`.trim()} />
     </TabsContext.Provider>
   );
 }
 
 export function TabsList({ className = '', children, style, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture, ...props }: TabsListProps) {
-  const { theme, mode, activeValue, rootRef } = useContext(TabsContext);
+  const { theme, mode, activeValue } = useContext(TabsContext);
   const hasMovingIndicator = theme === 'glass' || theme === 'liquidGlass' || mode === 'icon';
   const isLiquidGlass = theme === 'liquidGlass';
-  const fallbackRootRef = useRef<HTMLDivElement>(null);
-  const resolvedRootRef = rootRef ?? fallbackRootRef;
+  const visualLayerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const indicatorSurfaceRef = useRef<HTMLDivElement>(null);
@@ -99,7 +97,7 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
     enabled: isLiquidGlass,
     mode,
     activeValue,
-    rootRef: resolvedRootRef,
+    visualLayerRef,
     listRef,
     indicatorRef,
     indicatorSurfaceRef,
@@ -147,27 +145,35 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
     ? { ...style, ...liquidGlass.listStyle } as CSSProperties
     : style;
 
+  const list = (
+    <RadixTabs.List
+      ref={listRef}
+      className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()}
+      style={listStyle}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerDown(event); }}
+      onPointerMove={(event) => { onPointerMove?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerMove(event); }}
+      onPointerUp={(event) => { onPointerUp?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerUp(event); }}
+      onPointerCancel={(event) => { onPointerCancel?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerCancel(event); }}
+      onClickCapture={(event) => { onClickCapture?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onClickCapture(event); }}
+      {...props}
+    >
+      {children}
+      <div ref={indicatorRef} className={`ui-tabs__active-indicator${hasMovingIndicator ? ' ui-tabs__active-indicator--moving' : ''}`} style={indicatorStyle} aria-hidden="true">
+        {isLiquidGlass ? <div ref={indicatorSurfaceRef} className="ui-tabs__active-indicator-surface" /> : indicatorChildren}
+      </div>
+    </RadixTabs.List>
+  );
+
+  if (!isLiquidGlass) return list;
+
   return (
     <>
       {liquidGlass.containerFilter}
       {liquidGlass.lensFilter}
-      <RadixTabs.List
-        ref={listRef}
-        className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()}
-        style={listStyle}
-        onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerDown(event); }}
-        onPointerMove={(event) => { onPointerMove?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerMove(event); }}
-        onPointerUp={(event) => { onPointerUp?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerUp(event); }}
-        onPointerCancel={(event) => { onPointerCancel?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerCancel(event); }}
-        onClickCapture={(event) => { onClickCapture?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onClickCapture(event); }}
-        {...props}
-      >
-        {children}
-        <div ref={indicatorRef} className={`ui-tabs__active-indicator${hasMovingIndicator ? ' ui-tabs__active-indicator--moving' : ''}`} style={indicatorStyle} aria-hidden="true">
-          {isLiquidGlass ? <div ref={indicatorSurfaceRef} className="ui-tabs__active-indicator-surface" /> : indicatorChildren}
-        </div>
-      </RadixTabs.List>
-      {isLiquidGlass ? <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" style={liquidGlass.lensStyle} aria-hidden="true" /> : null}
+      <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
+        {list}
+        <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" style={liquidGlass.lensStyle} aria-hidden="true" />
+      </div>
     </>
   );
 }
