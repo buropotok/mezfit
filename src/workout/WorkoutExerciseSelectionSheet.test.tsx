@@ -63,6 +63,7 @@ describe('WorkoutExerciseSelectionSheet', () => {
 
     expect(screen.getByRole('dialog', { name: 'Упражнения' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Поиск' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Только избранные' })).toBeNull();
     await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
