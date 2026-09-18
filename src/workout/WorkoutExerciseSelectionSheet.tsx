@@ -59,7 +59,7 @@ export function WorkoutExerciseSelectionSheet({
   const floatingAction = selectedIds.size > 0 ? (
     <FloatingActionButton
       placement="right"
-      label="Подтвердить выбор упражнений"
+      label="Добавить выбранные упражнения"
       disabled={saving}
       onClick={() => onConfirm([...selectedIds])}
     >
