@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GlobalExerciseCatalog } from '../coach/GlobalExerciseCatalog';
 import type { NavigationContext } from '../NavigationShell';
 import { BottomSheet, FloatingActionButton, IconButton, Text } from '../ui';
@@ -9,6 +9,7 @@ interface WorkoutExerciseSelectionSheetProps {
   actionError?: string;
   onConfirm: (exerciseDefinitionIds: number[]) => void;
   onClose: () => void;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
 export function WorkoutExerciseSelectionSheet({
@@ -17,6 +18,7 @@ export function WorkoutExerciseSelectionSheet({
   actionError = '',
   onConfirm,
   onClose,
+  onNavigationContextChange,
 }: WorkoutExerciseSelectionSheetProps) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
@@ -31,9 +33,28 @@ export function WorkoutExerciseSelectionSheet({
     });
   };
 
-  const close = () => {
+  const close = useCallback(() => {
     if (!saving) onClose();
-  };
+  }, [onClose, saving]);
+
+  const requestBack = useCallback(() => {
+    if (saving) return;
+    if (navigationContext) navigationContext.onBack();
+    else onClose();
+  }, [navigationContext, onClose, saving]);
+
+  const externalNavigationContext = useMemo<NavigationContext>(() => ({
+    title: navigationContext?.title ?? 'Упражнения',
+    onBack: requestBack,
+  }), [navigationContext?.title, requestBack]);
+
+  useEffect(() => {
+    onNavigationContextChange?.(externalNavigationContext);
+  }, [externalNavigationContext, onNavigationContextChange]);
+
+  useEffect(() => () => {
+    onNavigationContextChange?.(null);
+  }, [onNavigationContextChange]);
 
   const floatingAction = selectedIds.size > 0 ? (
     <FloatingActionButton
