@@ -45,6 +45,22 @@ describe('BottomSheet', () => {
     expect(screen.getByRole('button', { name: 'Назад' })).toBeTruthy();
   });
 
+  it('renders a floating action outside the scroll content', () => {
+    render(
+      <BottomSheet
+        isOpen
+        title="Упражнения"
+        floatingAction={<button type="button">ОК</button>}
+        onClose={vi.fn()}
+      >
+        <div>Контент</div>
+      </BottomSheet>,
+    );
+
+    const action = screen.getByRole('button', { name: 'ОК' });
+    expect(action.closest('.ui-bottom-sheet__floating-action')).toBeTruthy();
+    expect(action.closest('.ui-bottom-sheet__content')).toBeNull();
+  });
   it('closes through its public close control', () => {
     const onClose = vi.fn();
 
