@@ -73,7 +73,7 @@ describe('WorkoutExerciseSelectionSheet', () => {
 
     fireEvent.click(chestRow);
     await waitFor(() => expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true'));
-    expect(screen.getByRole('button', { name: 'Подтвердить выбор упражнений' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Добавить выбранные упражнения' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
     fireEvent.click(screen.getByRole('button', { name: 'Спина' }));
@@ -82,7 +82,7 @@ describe('WorkoutExerciseSelectionSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true'));
-    fireEvent.click(screen.getByRole('button', { name: 'Подтвердить выбор упражнений' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
     expect(onConfirm).toHaveBeenCalledWith([11]);
   });
 
