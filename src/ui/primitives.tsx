@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
 import type { UiIconPair } from './iconPair';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
@@ -56,7 +56,7 @@ type IconButtonGlassSelectableProps = IconButtonBaseProps & {
 };
 export type IconButtonProps = IconButtonDefaultProps | IconButtonGlassIdleProps | IconButtonGlassSelectableProps;
 
-export function IconButton({ label, theme = 'default', icon, color, selected: selectedProp, shadow = false, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }: IconButtonProps) {
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton({ label, theme = 'default', icon, color, selected: selectedProp, shadow = false, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, ...props }, ref) {
   const selected = selectedProp === true;
   const colorClass = theme === 'default' && color ? ` ui-icon-button--color-${color}` : '';
   const selectedClass = theme === 'default' && selected ? ' ui-icon-button--selected' : '';
@@ -76,8 +76,8 @@ export function IconButton({ label, theme = 'default', icon, color, selected: se
     </span>
   ) : children;
 
-  return <button type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</button>;
-}
+  return <button ref={ref} type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</button>;
+});
 
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
 
