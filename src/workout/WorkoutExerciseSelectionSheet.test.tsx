@@ -49,6 +49,7 @@ beforeEach(() => {
 describe('WorkoutExerciseSelectionSheet', () => {
   it('reuses the exercise catalog in select mode and keeps selection across categories', async () => {
     const onConfirm = vi.fn();
+    const onNavigationContextChange = vi.fn();
 
     render(
       <WorkoutExerciseSelectionSheet
@@ -56,14 +57,17 @@ describe('WorkoutExerciseSelectionSheet', () => {
         saving={false}
         onConfirm={onConfirm}
         onClose={vi.fn()}
+        onNavigationContextChange={onNavigationContextChange}
       />,
     );
 
     expect(screen.getByRole('dialog', { name: 'Упражнения' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Поиск' })).toBeNull();
+    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
     await waitFor(() => expect(getWorkoutExerciseOptions).toHaveBeenCalledWith('init-data', 'chest'));
+    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Грудь' })));
     expect(getCoachExercises).not.toHaveBeenCalled();
 
     const chestRow = await screen.findByRole('button', { name: 'Жим лёжа' });
@@ -76,14 +80,17 @@ describe('WorkoutExerciseSelectionSheet', () => {
     expect(screen.getByRole('button', { name: 'Добавить выбранные упражнения' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
     fireEvent.click(screen.getByRole('button', { name: 'Спина' }));
-    await screen.findByRole('button', { name: 'Тяга верхнего блока' });
+    const backRow = await screen.findByRole('button', { name: 'Тяга верхнего блока' });
+    fireEvent.click(backRow);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Тяга верхнего блока' }).getAttribute('aria-pressed')).toBe('true'));
     fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true'));
     fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
-    expect(onConfirm).toHaveBeenCalledWith([11]);
+    expect(onConfirm).toHaveBeenCalledWith([11, 22]);
   });
 
   it('keeps the sheet open with its current selection when confirmation reports an error', async () => {
