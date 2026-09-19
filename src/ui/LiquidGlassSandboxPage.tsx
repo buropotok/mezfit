@@ -1,6 +1,9 @@
-import { useState, type ReactElement } from 'react';
-import { Tabs, TabsList, TabsTrigger, Text } from './index';
+import { useLayoutEffect, useRef, useState, type ReactElement } from 'react';
+import { LiquidGlassContainer } from '@tinymomentum/liquid-glass-react';
+import '@tinymomentum/liquid-glass-react/dist/components/LiquidGlassBase.css';
+import { Text } from './index';
 import type { UiIconPair } from './iconPair';
+import { useLiquidGlassTabsController } from './LiquidGlassTabs';
 import './liquid-glass-sandbox.css';
 
 function svg(paths: ReactElement | ReactElement[], filled = false) {
@@ -60,12 +63,131 @@ const settingsIcon: UiIconPair = {
   filled: svg(<path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.724 .724 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0M12 9a3 3 0 1 0 0 6a3 3 0 0 0 0 -6" />, true),
 };
 
-const iconTabs = [
+type SandboxTab = {
+  value: string;
+  label: string;
+  icon?: UiIconPair;
+};
+
+const iconTabs: SandboxTab[] = [
   { value: 'home', label: 'Главная', icon: homeIcon },
   { value: 'workout', label: 'Тренировки', icon: workoutIcon },
   { value: 'calendar', label: 'Календарь', icon: calendarIcon },
   { value: 'settings', label: 'Настройки', icon: settingsIcon },
 ];
+
+const textTabs: SandboxTab[] = [
+  { value: 'all', label: 'Все' },
+  { value: 'today', label: 'Сегодня' },
+  { value: 'week', label: 'Неделя' },
+  { value: 'month', label: 'Месяц' },
+  { value: 'history', label: 'История' },
+];
+
+function RealLiquidGlassMaterial() {
+  return (
+    <LiquidGlassContainer
+      className="liquid-glass-sandbox__library-material"
+      style={{ width: '100%', height: '100%', borderRadius: 'inherit' }}
+      aria-hidden="true"
+    />
+  );
+}
+
+function SandboxTabs({
+  mode,
+  items,
+  value,
+  onValueChange,
+}: {
+  mode: 'default' | 'icon';
+  items: SandboxTab[];
+  value: string;
+  onValueChange: (value: string) => void;
+}) {
+  const visualLayerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const indicatorSurfaceRef = useRef<HTMLDivElement>(null);
+
+  const liquidGlass = useLiquidGlassTabsController({
+    enabled: true,
+    mode,
+    activeValue: value,
+    visualLayerRef,
+    listRef,
+    indicatorRef,
+    indicatorSurfaceRef,
+  });
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const indicator = indicatorRef.current;
+    if (!list || !indicator) return;
+    const active = Array.from(list.querySelectorAll<HTMLButtonElement>(':scope > .ui-tabs__trigger'))
+      .find((trigger) => trigger.dataset.uiTabValue === value);
+    if (!active) return;
+    indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+    indicator.style.width = `${active.offsetWidth}px`;
+  }, [items, value]);
+
+  return (
+    <div className="ui-tabs liquid-glass-sandbox__experiment-tabs" data-ui-theme="liquidGlass" data-ui-mode={mode}>
+      <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
+        <div className="liquid-glass-sandbox__container-material" aria-hidden="true">
+          <RealLiquidGlassMaterial />
+        </div>
+
+        <div
+          ref={listRef}
+          className="ui-tabs__list ui-tabs__list--ready"
+          role="tablist"
+          onPointerDown={liquidGlass.handlers.onPointerDown}
+          onPointerMove={liquidGlass.handlers.onPointerMove}
+          onPointerUp={liquidGlass.handlers.onPointerUp}
+          onPointerCancel={liquidGlass.handlers.onPointerCancel}
+          onClickCapture={liquidGlass.handlers.onClickCapture}
+        >
+          {items.map((item) => {
+            const active = item.value === value;
+            return (
+              <button
+                key={item.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                data-state={active ? 'active' : 'inactive'}
+                data-ui-tab-value={item.value}
+                className="ui-tabs__trigger"
+                onClick={() => onValueChange(item.value)}
+              >
+                {mode === 'icon' && item.icon ? (
+                  <>
+                    <span className="ui-tabs__icon" aria-hidden="true">
+                      <span className="ui-tabs__icon-outline">{item.icon.outline}</span>
+                      <span className="ui-tabs__icon-filled">{item.icon.filled}</span>
+                    </span>
+                    <span className="ui-tabs__label">{item.label}</span>
+                  </>
+                ) : item.label}
+              </button>
+            );
+          })}
+
+          <div ref={indicatorRef} className="ui-tabs__active-indicator ui-tabs__active-indicator--moving" aria-hidden="true">
+            <div ref={indicatorSurfaceRef} className="ui-tabs__active-indicator-surface">
+              <RealLiquidGlassMaterial />
+            </div>
+          </div>
+        </div>
+
+        <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" aria-hidden="true">
+          <RealLiquidGlassMaterial />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function LiquidGlassSandboxPage() {
   const [iconValue, setIconValue] = useState('workout');
@@ -76,46 +198,37 @@ export function LiquidGlassSandboxPage() {
       <section className="liquid-glass-sandbox__intro">
         <Text variant="large-title">Liquid Glass sandbox</Text>
         <Text tone="muted">
-          Реальный @tinymomentum/liquid-glass-react как material layer. Геометрия, selector, иконки и physics — Mezfit.
+          Постоянная React-песочница. Материал — настоящий @tinymomentum/liquid-glass-react, а физика — текущая Mezfit liquidGlass.
         </Text>
       </section>
 
       <section className="liquid-glass-sandbox__copy">
-        <Text variant="headline">Проверка поведения</Text>
-        <Text>Нажимай вкладки коротко и с удержанием. При переходе на другую вкладку линза раскрывается к T/2 и закрывается на второй половине пути.</Text>
-        <Text>Если нажать уже активный selector, размер зависит от длительности удержания. Свайп не должен активировать линзу.</Text>
-        <Text>Главная · Тренировки · Календарь · Настройки · Главная · Тренировки · Календарь · Настройки.</Text>
-        <Text>0123456789 · ABCDEFGHIJKLMNOPQRSTUVWXYZ · прокручиваемый текст под материалом.</Text>
+        <Text variant="headline">Что здесь можно менять</Text>
+        <Text>
+          Все дальнейшие эксперименты с формой, таймингами и поведением будем делать только здесь. Production UI Kit остаётся нетронутым до визуального утверждения.
+        </Text>
+        <Text>
+          Нажимай вкладки коротко и с удержанием. При переходе на другую вкладку линза раскрывается к T/2 и закрывается на второй половине пути.
+        </Text>
+        <Text>
+          Главная · Тренировки · Календарь · Настройки · 0123456789 · ABCDEFGHIJKLMNOPQRSTUVWXYZ.
+        </Text>
+
         <div className="liquid-glass-sandbox__gradient-card">
           <Text variant="headline">Цветной фон</Text>
-          <Text>Эта область нужна, чтобы видеть distortion готового материала библиотеки.</Text>
+          <Text>Нужен только для оценки реального distortion материала библиотеки.</Text>
         </div>
+
         <div className="liquid-glass-sandbox__spacer" />
       </section>
 
       <section className="liquid-glass-sandbox__text-tabs">
         <Text variant="footnote" tone="muted">mode=&quot;default&quot;</Text>
-        <Tabs theme="liquidGlass" mode="default" value={textValue} onValueChange={setTextValue}>
-          <TabsList aria-label="Период">
-            <TabsTrigger value="all">Все</TabsTrigger>
-            <TabsTrigger value="today">Сегодня</TabsTrigger>
-            <TabsTrigger value="week">Неделя</TabsTrigger>
-            <TabsTrigger value="month">Месяц</TabsTrigger>
-            <TabsTrigger value="history">История</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <SandboxTabs mode="default" items={textTabs} value={textValue} onValueChange={setTextValue} />
       </section>
 
       <section className="liquid-glass-sandbox__bottom-nav">
-        <Tabs theme="liquidGlass" mode="icon" value={iconValue} onValueChange={setIconValue}>
-          <TabsList aria-label="Быстрая навигация">
-            {iconTabs.map((item) => (
-              <TabsTrigger key={item.value} value={item.value} icon={item.icon}>
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <SandboxTabs mode="icon" items={iconTabs} value={iconValue} onValueChange={setIconValue} />
       </section>
     </main>
   );
