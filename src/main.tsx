@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadGlobalTheme } from './theme';
+import { LiquidGlassSandboxPage } from './ui/LiquidGlassSandboxPage';
 import { ThemeVariantsCatalog } from './ui/ThemeVariantsCatalog';
 import { UiKitPage } from './ui/UiKitPage';
 import './style.css';
@@ -26,7 +27,11 @@ const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
-  const content = window.location.pathname === '/ui-kit' ? <><UiKitPage /><ThemeVariantsCatalog /></> : <App />;
+  const content = window.location.pathname === '/ui-kit'
+    ? <><UiKitPage /><ThemeVariantsCatalog /></>
+    : window.location.pathname === '/liquid-glass-sandbox'
+      ? <LiquidGlassSandboxPage />
+      : <App />;
   createRoot(root).render(
     <React.StrictMode>
       {content}
