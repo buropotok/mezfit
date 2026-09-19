@@ -27,9 +27,10 @@ const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
-  const content = window.location.pathname === '/ui-kit'
+  const pathname = window.location.pathname;
+  const content = pathname.endsWith('/ui-kit')
     ? <><UiKitPage /><ThemeVariantsCatalog /></>
-    : window.location.pathname === '/liquid-glass-sandbox'
+    : pathname.endsWith('/liquid-glass-sandbox')
       ? <LiquidGlassSandboxPage />
       : <App />;
   createRoot(root).render(
