@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
 import {
   LIQUID_GLASS_TABS_PRESET,
+  LiquidGlassOpticalFilter,
   liquidGlassDifferentTabProgress,
   liquidGlassFullLensSize,
   liquidGlassSameTabProgress,
+  useLiquidGlassFilterId,
   type LiquidGlassGeometry,
 } from './liquidGlass';
 
@@ -89,6 +91,8 @@ export function useLiquidGlassTabsController({
   const selectorAnimationRef = useRef<Animation | null>(null);
   const iconAnimationsRef = useRef(new Map<HTMLElement, Animation>());
   const activeValueRef = useRef(activeValue);
+  const containerFilterId = useLiquidGlassFilterId('tabs-container');
+  const lensFilterId = useLiquidGlassFilterId('tabs-lens');
   const [containerGeometry, setContainerGeometry] = useState<LiquidGlassGeometry>({ width: 1, height: 1, radiusX: 1, radiusY: 1 });
   const [lensGeometry, setLensGeometry] = useState<LiquidGlassGeometry>({ width: 1, height: 1, radiusX: 1, radiusY: 1 });
 
@@ -666,10 +670,19 @@ export function useLiquidGlassTabsController({
     iconAnimationsRef.current.clear();
   }, [clearPressIntent]);
 
+  const listStyle = enabled
+    ? { '--ui-liquid-glass-filter': `url(#${containerFilterId})` } as CSSProperties
+    : undefined;
+  const lensStyle = enabled
+    ? { '--ui-liquid-glass-filter': `url(#${lensFilterId})` } as CSSProperties
+    : undefined;
+
   return {
     lensRef,
-    containerGeometry,
-    lensGeometry,
+    listStyle,
+    lensStyle,
+    containerFilter: enabled ? <LiquidGlassOpticalFilter id={containerFilterId} geometry={containerGeometry} /> : null,
+    lensFilter: enabled ? <LiquidGlassOpticalFilter id={lensFilterId} geometry={lensGeometry} /> : null,
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture },
   };
 }
