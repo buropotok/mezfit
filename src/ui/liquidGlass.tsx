@@ -15,6 +15,8 @@ export const LIQUID_GLASS_TABS_PRESET = {
   keepInsideMarginPx: 3,
   swipeThresholdPx: 8,
   pressIntentDelayMs: 75,
+  containerBlurPx: 3,
+  lensBlurPx: 0,
   releaseDelayMs: 130,
   impactPointPercent: 39,
   containerSpring: {
