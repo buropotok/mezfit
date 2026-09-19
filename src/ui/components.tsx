@@ -6,6 +6,7 @@ import type { UiIconPair } from './iconPair';
 import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
+import { LiquidGlassMaterial } from './LiquidGlassMaterial';
 import { useLiquidGlassTabsController } from './LiquidGlassTabs';
 import './components.css';
 
@@ -190,9 +191,7 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
   const indicatorStyle = hasMovingIndicator
     ? { '--ui-tabs-indicator-left': `${indicatorGeometry.left}px`, '--ui-tabs-indicator-width': `${indicatorGeometry.width}px` } as CSSProperties
     : { '--ui-tabs-clip-path': clipPath } as CSSProperties;
-  const listStyle = isLiquidGlass
-    ? { ...style, ...liquidGlass.listStyle } as CSSProperties
-    : style;
+  const listStyle = style;
 
   const list = (
     <RadixTabs.List
@@ -208,7 +207,16 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
     >
       {children}
       <div ref={indicatorRef} className={`ui-tabs__active-indicator${hasMovingIndicator ? ' ui-tabs__active-indicator--moving' : ''}`} style={indicatorStyle} aria-hidden="true">
-        {isLiquidGlass ? <div ref={indicatorSurfaceRef} className="ui-tabs__active-indicator-surface" /> : indicatorChildren}
+        {isLiquidGlass ? (
+          <div ref={indicatorSurfaceRef} className="ui-tabs__active-indicator-surface">
+            <LiquidGlassMaterial
+              width={Math.max(1, indicatorGeometry.width)}
+              height={Math.max(1, liquidGlass.containerGeometry.height - 8)}
+              borderRadius={mode === 'icon' ? 30 : 18}
+              className="ui-tabs__liquid-material ui-tabs__liquid-material--selector"
+            />
+          </div>
+        ) : indicatorChildren}
       </div>
     </RadixTabs.List>
   );
@@ -216,14 +224,25 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
   if (!isLiquidGlass) return list;
 
   return (
-    <>
-      {liquidGlass.containerFilter}
-      {liquidGlass.lensFilter}
-      <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
-        {list}
-        <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" style={liquidGlass.lensStyle} aria-hidden="true" />
+    <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
+      <div className="ui-tabs__liquid-container-material" aria-hidden="true">
+        <LiquidGlassMaterial
+          width={liquidGlass.containerGeometry.width}
+          height={liquidGlass.containerGeometry.height}
+          borderRadius={liquidGlass.containerGeometry.radiusX}
+          className="ui-tabs__liquid-material ui-tabs__liquid-material--container"
+        />
       </div>
-    </>
+      {list}
+      <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" aria-hidden="true">
+        <LiquidGlassMaterial
+          width={liquidGlass.lensGeometry.width}
+          height={liquidGlass.lensGeometry.height}
+          borderRadius={Math.min(liquidGlass.lensGeometry.radiusX, liquidGlass.lensGeometry.radiusY)}
+          className="ui-tabs__liquid-material ui-tabs__liquid-material--lens"
+        />
+      </div>
+    </div>
   );
 }
 
