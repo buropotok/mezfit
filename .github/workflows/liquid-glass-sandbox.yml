@@ -1,0 +1,44 @@
+name: Liquid Glass Sandbox
+
+on:
+  push:
+    branches:
+      - feat/liquid-glass-library-material
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: liquid-glass-sandbox-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build -- --base=/mezfit/
+      - name: Add SPA fallback
+        run: cp dist/index.html dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}liquid-glass-sandbox
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy sandbox
+        id: deployment
+        uses: actions/deploy-pages@v4
