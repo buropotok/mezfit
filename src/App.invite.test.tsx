@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   acceptCurrentInvite,
@@ -21,7 +22,7 @@ vi.mock('./api', async (importOriginal) => {
 });
 
 vi.mock('./NavigationShell', () => ({
-  NavigationShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  NavigationShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 const acceptCurrentInviteMock = vi.mocked(acceptCurrentInvite);
