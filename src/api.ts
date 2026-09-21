@@ -347,7 +347,7 @@ export function createClientInvite(
 }
 
 function telegramStartParamHeaders(startParam?: string): HeadersInit | undefined {
-  return startParam ? { 'x-telegram-start-param': startParam } : undefined;
+  return startParam ? { 'x-mezfit-launch-start-param': startParam } : undefined;
 }
 
 export function getCurrentInvite(
