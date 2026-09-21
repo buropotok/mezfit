@@ -7,6 +7,9 @@ export interface TelegramBackButton {
 
 export interface TelegramWebApp {
   initData: string;
+  initDataUnsafe?: {
+    start_param?: string;
+  };
   colorScheme: 'light' | 'dark';
   ready(): void;
   expand(): void;
@@ -16,6 +19,17 @@ export interface TelegramWebApp {
 
 export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
+}
+
+export function getTelegramLaunchStartParam(
+  webApp: TelegramWebApp,
+  search = window.location.search,
+): string | null {
+  const urlStartParam = new URLSearchParams(search).get('tgWebAppStartParam')?.trim();
+  if (urlStartParam) return urlStartParam;
+
+  const initDataStartParam = webApp.initDataUnsafe?.start_param?.trim();
+  return initDataStartParam || null;
 }
 
 export function prepareTelegramWebApp(webApp: TelegramWebApp): void {
