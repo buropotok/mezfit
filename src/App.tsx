@@ -33,6 +33,7 @@ type State =
   | { status: 'loading' }
   | { status: 'outside-telegram' }
   | { status: 'invite'; initData: string; me: MeResponse; invite: ClientInvitePreview; startParam: string }
+  | { status: 'invite-error'; initData: string; me: MeResponse; startParam: string; message: string }
   | { status: 'needs-role'; initData: string; me: MeResponse }
   | { status: 'ready'; initData: string; me: MeResponse; activeRole: Role; inviteAccepted: boolean }
   | { status: 'error'; message: string };
@@ -40,6 +41,7 @@ type State =
 type Action =
   | { type: 'outside-telegram' }
   | { type: 'invite-found'; initData: string; me: MeResponse; invite: ClientInvitePreview; startParam: string }
+  | { type: 'invite-check-failed'; initData: string; me: MeResponse; startParam: string; message: string }
   | { type: 'loaded'; initData: string; me: MeResponse; preferredRole?: Role; inviteAccepted?: boolean }
   | { type: 'switch-role'; role: Role }
   | { type: 'error'; message: string };
@@ -62,6 +64,14 @@ function reducer(state: State, action: Action): State {
         me: action.me,
         invite: action.invite,
         startParam: action.startParam,
+      };
+    case 'invite-check-failed':
+      return {
+        status: 'invite-error',
+        initData: action.initData,
+        me: action.me,
+        startParam: action.startParam,
+        message: action.message,
       };
     case 'loaded': {
       const activeRole = resolveActiveRole(action.me.roles, action.preferredRole);
@@ -127,6 +137,42 @@ function InviteOnboarding({
         {invite.label ? <p>{invite.label}</p> : <p>После подтверждения тренер сможет назначать вам программу и видеть результаты тренировок.</p>}
         <Button className="primary-button full-width" onClick={accept} disabled={busy}>{busy ? 'Подключаем…' : 'Подключиться к тренеру'}</Button>
         {message ? <p className="inline-message">{message}</p> : null}
+      </section>
+    </main>
+  );
+}
+
+function InviteLookupError({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [retryMessage, setRetryMessage] = useState(message);
+
+  const retry = async () => {
+    setBusy(true);
+    setRetryMessage('');
+    try {
+      await onRetry();
+    } catch (error) {
+      setRetryMessage(error instanceof Error ? error.message : 'Не удалось проверить приглашение');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <main className="center">
+      <section className="card">
+        <div className="eyebrow">Приглашение</div>
+        <h2>Не удалось проверить приглашение</h2>
+        <p>{retryMessage || 'Повторите проверку приглашения.'}</p>
+        <Button className="primary-button full-width" onClick={retry} disabled={busy}>
+          {busy ? 'Проверяем…' : 'Повторить'}
+        </Button>
       </section>
     </main>
   );
@@ -200,10 +246,23 @@ export function App() {
         if (cancelled) return;
 
         if (isClientInviteStartParam(startParam)) {
-          const { invite } = await getCurrentInvite(initData, startParam);
-          if (cancelled) return;
-          if (invite) {
-            dispatch({ type: 'invite-found', initData, me, invite, startParam });
+          try {
+            const { invite } = await getCurrentInvite(initData, startParam);
+            if (cancelled) return;
+            if (invite) {
+              dispatch({ type: 'invite-found', initData, me, invite, startParam });
+              return;
+            }
+          } catch (error) {
+            if (!cancelled) {
+              dispatch({
+                type: 'invite-check-failed',
+                initData,
+                me,
+                startParam,
+                message: error instanceof Error ? error.message : 'Не удалось проверить приглашение',
+              });
+            }
             return;
           }
         }
@@ -242,6 +301,25 @@ export function App() {
         </section>
       </main>
     );
+  }
+
+  if (state.status === 'invite-error') {
+    const retryInvite = async () => {
+      const { invite } = await getCurrentInvite(state.initData, state.startParam);
+      if (invite) {
+        dispatch({
+          type: 'invite-found',
+          initData: state.initData,
+          me: state.me,
+          invite,
+          startParam: state.startParam,
+        });
+        return;
+      }
+      dispatch({ type: 'loaded', initData: state.initData, me: state.me });
+    };
+
+    return <InviteLookupError message={state.message} onRetry={retryInvite} />;
   }
 
   if (state.status === 'invite') {
