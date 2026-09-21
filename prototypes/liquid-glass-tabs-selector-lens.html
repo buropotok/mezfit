@@ -106,10 +106,10 @@ body{padding:24px}
 .ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__trigger{z-index:3}
 .ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__trigger[data-state='active']{color:var(--ui-color-primary)}
 .ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__press-lens{
-  pointer-events:none;position:absolute;z-index:4;top:0;left:0;width:1px;height:1px;border-radius:50%;opacity:0;background:rgba(255,255,255,.01);
+  pointer-events:none;position:absolute;z-index:4;top:0;left:0;width:1px;height:1px;border-radius:50%;opacity:0;background:rgba(255,255,255,0);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),inset 1.5px 1.5px 0 rgba(255,255,255,.5),inset 0 0 12px rgba(255,255,255,.2),0 8px 32px rgba(0,0,0,.2);
   -webkit-backdrop-filter:blur(8px) saturate(1.8) brightness(1.15) contrast(1.05);
-  backdrop-filter:blur(0) url(#lens-filter) blur(0) saturate(1.5) brightness(1.1);
+  backdrop-filter:blur(0px) url(#lens-filter) blur(0px) saturate(1.5) brightness(1.1);
   will-change:left,top,width,height,border-radius,opacity
 }
 .ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__press-lens[data-liquid-glass-visible='true']{opacity:1}
@@ -522,16 +522,78 @@ body{padding:24px}
     return filter===lensFilter?'lens':'container';
   }
 
+  let lastLensMapKey='';
+
+  function buildLensDisplacementMap(width,height,radius){
+    const w=Math.max(1,Math.round(width));
+    const h=Math.max(1,Math.round(height));
+    const r=Math.max(1,Math.round(radius));
+    const key=`${w}x${h}r${r}`;
+    if(key===lastLensMapKey)return;
+    lastLensMapKey=key;
+
+    // Exact map construction from the approved 420×280 test.
+    // Only width, height and the rounded-rect radius follow the live lens.
+    const inset=5;
+    const innerW=Math.max(1,w-inset*2);
+    const innerH=Math.max(1,h-inset*2);
+    const innerR=Math.max(0,r-inset);
+
+    const mapSvg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="Y" x1="0" x2="0" y1="4%" y2="96%"><stop offset="0%" stop-color="#0F0"/><stop offset="100%" stop-color="#000"/></linearGradient><linearGradient id="X" x1="3%" x2="97%" y1="0" y2="0"><stop offset="0%" stop-color="#F00"/><stop offset="100%" stop-color="#000"/></linearGradient></defs><rect width="${w}" height="${h}" fill="#808080"/><g filter="blur(2px)"><rect width="${w}" height="${h}" fill="#000080"/><rect width="${w}" height="${h}" fill="url(#Y)" style="mix-blend-mode:screen"/><rect width="${w}" height="${h}" fill="url(#X)" style="mix-blend-mode:screen"/><rect x="${inset}" y="${inset}" width="${innerW}" height="${innerH}" rx="${innerR}" ry="${innerR}" fill="#808080" filter="blur(5px)"/></g></svg>`;
+
+    const image=lensFilter.querySelector('[data-exact-lens-map]');
+    if(!image)return;
+
+    image.setAttribute('x','0');
+    image.setAttribute('y','0');
+    image.setAttribute('width',String(w));
+    image.setAttribute('height',String(h));
+    image.setAttribute('href','data:image/svg+xml;utf8,'+encodeURIComponent(mapSvg));
+  }
+
   function configureFilter(filter, geometry){
     const width=Math.max(1,Math.round(geometry.width));
     const height=Math.max(1,Math.round(geometry.height));
-    const params=opticalState[filterRole(filter)];
 
     filter.setAttribute('x','0%');
     filter.setAttribute('y','0%');
     filter.setAttribute('width','100%');
     filter.setAttribute('height','100%');
     filter.setAttribute('color-interpolation-filters','sRGB');
+
+    if(filter===lensFilter){
+      filter.innerHTML=`
+        <feImage
+          data-exact-lens-map
+          x="0"
+          y="0"
+          width="${width}"
+          height="${height}"
+          preserveAspectRatio="none"
+          result="displacementMap">
+        </feImage>
+
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="220" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+        <feColorMatrix type="matrix" result="displacedR" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"></feColorMatrix>
+
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="218" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+        <feColorMatrix type="matrix" result="displacedG" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"></feColorMatrix>
+
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="216" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+        <feColorMatrix type="matrix" result="displacedB" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"></feColorMatrix>
+
+        <feBlend in="displacedR" in2="displacedG" mode="screen" result="rg"></feBlend>
+        <feBlend in="rg" in2="displacedB" mode="screen"></feBlend>`;
+
+      buildLensDisplacementMap(
+        width,
+        height,
+        geometry.radiusX||geometry.radiusY||Math.min(width,height)/2
+      );
+      return;
+    }
+
+    const params=opticalState[filterRole(filter)];
 
     filter.innerHTML=`
       <feTurbulence
@@ -559,6 +621,9 @@ body{padding:24px}
   }
 
   function applyFilterParams(filter){
+    // The lens now uses the fixed exact map + RGB displacement recipe.
+    if(filter===lensFilter)return;
+
     const params=opticalState[filterRole(filter)];
     const noise=filter.querySelector('[data-optics-node="noise"]');
     const blur=filter.querySelector('[data-optics-node="blur"]');
@@ -645,6 +710,8 @@ body{padding:24px}
     lens.style.width=`${width}px`;
     lens.style.height=`${height}px`;
     lens.style.borderRadius=`${radius}px`;
+
+    buildLensDisplacementMap(width,height,radius);
   }
 
   function differentProgress(elapsed,travel,isPressed,closeStart){
