@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { prepareTelegramWebApp, type TelegramWebApp } from './telegram';
+import { getTelegramStartParam, prepareTelegramWebApp, type TelegramWebApp } from './telegram';
 
 function createWebApp(disableVerticalSwipes?: () => void): TelegramWebApp {
   return {
@@ -29,5 +29,22 @@ describe('prepareTelegramWebApp', () => {
     expect(() => prepareTelegramWebApp(webApp)).not.toThrow();
     expect(webApp.ready).toHaveBeenCalledOnce();
     expect(webApp.expand).toHaveBeenCalledOnce();
+  });
+});
+
+
+describe('getTelegramStartParam', () => {
+  it('prefers the signed start_param from initData', () => {
+    const webApp = createWebApp();
+    webApp.initData = 'auth_date=1&start_param=invite_signed';
+
+    expect(getTelegramStartParam(webApp, '?tgWebAppStartParam=invite_fallback')).toBe('invite_signed');
+  });
+
+  it('falls back to Telegram tgWebAppStartParam when initData has no start_param', () => {
+    const webApp = createWebApp();
+    webApp.initData = 'auth_date=1';
+
+    expect(getTelegramStartParam(webApp, '?tgWebAppStartParam=invite_fallback')).toBe('invite_fallback');
   });
 });
