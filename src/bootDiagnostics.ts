@@ -16,11 +16,16 @@ export interface BootDetails {
 interface BootRuntime {
   mark(stage: string, details?: BootDetails): void;
   report(stage: string, details?: BootDetails): void;
+  getLaunchStartParam?(): string | null;
 }
 
 function getBootRuntime(): BootRuntime | undefined {
   if (typeof window === 'undefined') return undefined;
   return (window as Window & { __MEZFIT_BOOT__?: BootRuntime }).__MEZFIT_BOOT__;
+}
+
+export function getCapturedTelegramLaunchStartParam(): string | null {
+  return getBootRuntime()?.getLaunchStartParam?.() ?? null;
 }
 
 export function errorName(error: unknown): string {
