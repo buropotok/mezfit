@@ -9,7 +9,7 @@ import {
   type Role,
 } from './api';
 import workoutFabIconUrl from './assets/strong.png';
-import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { ClientCoachProvider } from './client/ClientCoachContext';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
 import {
@@ -23,17 +23,25 @@ import { Button, FloatingActionButton } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
+const INVITE_START_PARAM_PATTERN = /^invite_[a-f0-9]{36}$/i;
+
+function hasClientInviteStartParam(initData: string): boolean {
+  const startParam = new URLSearchParams(initData).get('start_param');
+  return startParam !== null && INVITE_START_PARAM_PATTERN.test(startParam);
+}
 
 type State =
   | { status: 'loading' }
   | { status: 'outside-telegram' }
+  | { status: 'invite'; initData: string; me: MeResponse; invite: ClientInvitePreview }
   | { status: 'needs-role'; initData: string; me: MeResponse }
-  | { status: 'ready'; initData: string; me: MeResponse; activeRole: Role }
+  | { status: 'ready'; initData: string; me: MeResponse; activeRole: Role; inviteAccepted: boolean }
   | { status: 'error'; message: string };
 
 type Action =
   | { type: 'outside-telegram' }
-  | { type: 'loaded'; initData: string; me: MeResponse; preferredRole?: Role }
+  | { type: 'invite-found'; initData: string; me: MeResponse; invite: ClientInvitePreview }
+  | { type: 'loaded'; initData: string; me: MeResponse; preferredRole?: Role; inviteAccepted?: boolean }
   | { type: 'switch-role'; role: Role }
   | { type: 'error'; message: string };
 
@@ -48,10 +56,18 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'outside-telegram':
       return { status: 'outside-telegram' };
+    case 'invite-found':
+      return { status: 'invite', initData: action.initData, me: action.me, invite: action.invite };
     case 'loaded': {
       const activeRole = resolveActiveRole(action.me.roles, action.preferredRole);
       if (!activeRole) return { status: 'needs-role', initData: action.initData, me: action.me };
-      return { status: 'ready', initData: action.initData, me: action.me, activeRole };
+      return {
+        status: 'ready',
+        initData: action.initData,
+        me: action.me,
+        activeRole,
+        inviteAccepted: action.inviteAccepted ?? false,
+      };
     }
     case 'switch-role':
       if (state.status !== 'ready' || !state.me.roles.includes(action.role)) return state;
@@ -70,33 +86,25 @@ const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; tex
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
 };
 
-function ClientShell({ initData, destination }: { initData: string; destination: AppDestination }) {
-  const { refreshCoaches } = useClientCoach();
-  const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
-  const [accepted, setAccepted] = useState(false);
+function InviteOnboarding({
+  initData,
+  invite,
+  onAccepted,
+}: {
+  initData: string;
+  invite: ClientInvitePreview;
+  onAccepted: (roles: Role[]) => void;
+}) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    getCurrentInvite(initData)
-      .then((result) => {
-        if (!cancelled) setInvite(result.invite);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) setMessage(error instanceof Error ? error.message : 'Не удалось проверить приглашение');
-      });
-    return () => { cancelled = true; };
-  }, [initData]);
+  const coachName = [invite.coach.firstName, invite.coach.lastName].filter(Boolean).join(' ');
 
   const accept = async () => {
     setBusy(true);
     setMessage('');
     try {
-      await acceptCurrentInvite(initData);
-      setAccepted(true);
-      setInvite(null);
-      refreshCoaches();
+      const result = await acceptCurrentInvite(initData);
+      onAccepted(result.roles);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось принять приглашение');
     } finally {
@@ -104,9 +112,8 @@ function ClientShell({ initData, destination }: { initData: string; destination:
     }
   };
 
-  if (invite) {
-    const coachName = [invite.coach.firstName, invite.coach.lastName].filter(Boolean).join(' ');
-    return (
+  return (
+    <main className="center">
       <section className="card">
         <div className="eyebrow">Приглашение</div>
         <h2>{coachName} приглашает вас в Mezfit</h2>
@@ -114,9 +121,19 @@ function ClientShell({ initData, destination }: { initData: string; destination:
         <Button className="primary-button full-width" onClick={accept} disabled={busy}>{busy ? 'Подключаем…' : 'Подключиться к тренеру'}</Button>
         {message ? <p className="inline-message">{message}</p> : null}
       </section>
-    );
-  }
+    </main>
+  );
+}
 
+function ClientShell({
+  initData,
+  destination,
+  inviteAccepted,
+}: {
+  initData: string;
+  destination: AppDestination;
+  inviteAccepted: boolean;
+}) {
   if (destination === 'programs') return <ClientProgramsPage initData={initData} />;
 
   if (destination !== 'today') {
@@ -132,9 +149,8 @@ function ClientShell({ initData, destination }: { initData: string; destination:
   return (
     <section className="card">
       <div className="eyebrow">Сегодня</div>
-      <h2>{accepted ? 'Готово' : 'Тренировка'}</h2>
-      <p>{accepted ? 'Вы подключены к тренеру. Назначенная программа появится здесь.' : invite === undefined ? 'Проверяем приглашение…' : 'Здесь будет ваша назначенная тренировка.'}</p>
-      {message ? <p className="inline-message">{message}</p> : null}
+      <h2>{inviteAccepted ? 'Готово' : 'Тренировка'}</h2>
+      <p>{inviteAccepted ? 'Вы подключены к тренеру. Назначенная программа появится здесь.' : 'Здесь будет ваша назначенная тренировка.'}</p>
     </section>
   );
 }
@@ -169,10 +185,22 @@ export function App() {
 
     prepareTelegramWebApp(webApp);
 
+    const initData = webApp.initData;
     let cancelled = false;
-    getMe(webApp.initData)
-      .then((me) => {
-        if (!cancelled) dispatch({ type: 'loaded', initData: webApp.initData, me });
+    getMe(initData)
+      .then(async (me) => {
+        if (cancelled) return;
+
+        if (hasClientInviteStartParam(initData)) {
+          const { invite } = await getCurrentInvite(initData);
+          if (cancelled) return;
+          if (invite) {
+            dispatch({ type: 'invite-found', initData, me, invite });
+            return;
+          }
+        }
+
+        dispatch({ type: 'loaded', initData, me });
       })
       .catch((error: unknown) => {
         if (!cancelled) dispatch({ type: 'error', message: error instanceof Error ? error.message : 'Не удалось загрузить профиль' });
@@ -206,6 +234,21 @@ export function App() {
         </section>
       </main>
     );
+  }
+
+  if (state.status === 'invite') {
+    const accepted = (roles: Role[]) => {
+      window.localStorage.setItem(ROLE_STORAGE_KEY, 'client');
+      dispatch({
+        type: 'loaded',
+        initData: state.initData,
+        me: { ...state.me, roles },
+        preferredRole: 'client',
+        inviteAccepted: true,
+      });
+    };
+
+    return <InviteOnboarding initData={state.initData} invite={state.invite} onAccepted={accepted} />;
   }
 
   if (state.status === 'needs-role') {
@@ -296,7 +339,11 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
           />
         ) : (
-          <ClientShell initData={state.initData} destination={clientDestination} />
+          <ClientShell
+            initData={state.initData}
+            destination={clientDestination}
+            inviteAccepted={state.inviteAccepted}
+          />
         )}
       </NavigationShell>
     </ClientCoachProvider>
