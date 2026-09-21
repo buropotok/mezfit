@@ -195,6 +195,8 @@ const russianApiErrors: Record<string, string> = {
   NOT_FOUND: 'Запрошенный раздел не найден',
 };
 
+const INVITE_START_PARAM_HEADER = 'x-mezfit-invite-start-param';
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code?: string;
@@ -346,12 +348,22 @@ export function createClientInvite(
   });
 }
 
-export function getCurrentInvite(initData: string): Promise<{ invite: ClientInvitePreview | null }> {
-  return apiRequest(initData, '/api/invite/current');
+export function getCurrentInvite(
+  initData: string,
+  startParam?: string | null,
+): Promise<{ invite: ClientInvitePreview | null }> {
+  const headers = new Headers();
+  if (startParam) headers.set(INVITE_START_PARAM_HEADER, startParam);
+  return apiRequest(initData, '/api/invite/current', { headers });
 }
 
-export function acceptCurrentInvite(initData: string): Promise<{ ok: true; roles: Role[] }> {
-  return apiRequest(initData, '/api/invite/current/accept', { method: 'POST' });
+export function acceptCurrentInvite(
+  initData: string,
+  startParam?: string | null,
+): Promise<{ ok: true; roles: Role[] }> {
+  const headers = new Headers();
+  if (startParam) headers.set(INVITE_START_PARAM_HEADER, startParam);
+  return apiRequest(initData, '/api/invite/current/accept', { method: 'POST', headers });
 }
 
 export async function getClientExercises(
