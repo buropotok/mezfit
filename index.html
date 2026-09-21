@@ -74,6 +74,24 @@
         var finished = false;
         var failed = false;
         var panel = null;
+        var launchStartParam = captureLaunchStartParam();
+
+        function launchParamFrom(value) {
+          if (!value) return null;
+          try {
+            var params = new URLSearchParams(value.charAt(0) === '#' ? value.slice(1) : value);
+            var candidate = params.get('tgWebAppStartParam');
+            if (!candidate) return null;
+            candidate = candidate.trim();
+            return candidate ? candidate.slice(0, 512) : null;
+          } catch (_) {
+            return null;
+          }
+        }
+
+        function captureLaunchStartParam() {
+          return launchParamFrom(window.location.search) || launchParamFrom(window.location.hash);
+        }
 
         function bounded(value, maxLength) {
           return typeof value === 'string' ? value.slice(0, maxLength) : null;
@@ -188,7 +206,10 @@
           mark: mark,
           report: report,
           finish: finish,
-          fail: fail
+          fail: fail,
+          getLaunchStartParam: function () {
+            return launchStartParam;
+          }
         };
 
         mark('html-start');

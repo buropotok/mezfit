@@ -1,5 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getTelegramLaunchStartParam, prepareTelegramWebApp, type TelegramWebApp } from './telegram';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function createWebApp(disableVerticalSwipes?: () => void): TelegramWebApp {
   return {
@@ -33,6 +37,23 @@ describe('prepareTelegramWebApp', () => {
 });
 
 describe('getTelegramLaunchStartParam', () => {
+  it('prefers the pre-SDK launch capture over later URL and initData values', () => {
+    const capturedStartParam = `invite_${'c'.repeat(36)}`;
+    vi.stubGlobal('window', {
+      __MEZFIT_BOOT__: {
+        getLaunchStartParam: () => capturedStartParam,
+      },
+    });
+    const webApp = createWebApp();
+    webApp.initDataUnsafe = { start_param: `invite_${'a'.repeat(36)}` };
+
+    expect(getTelegramLaunchStartParam(
+      webApp,
+      `?tgWebAppStartParam=invite_${'b'.repeat(36)}`,
+      '',
+    )).toBe(capturedStartParam);
+  });
+
   it('prefers the current URL launch parameter over stale initData launch context', () => {
     const webApp = createWebApp();
     webApp.initDataUnsafe = { start_param: `invite_${'a'.repeat(36)}` };
@@ -47,6 +68,16 @@ describe('getTelegramLaunchStartParam', () => {
     const webApp = createWebApp();
     webApp.initDataUnsafe = { start_param: `invite_${'a'.repeat(36)}` };
 
-    expect(getTelegramLaunchStartParam(webApp, '')).toBe(`invite_${'a'.repeat(36)}`);
+    expect(getTelegramLaunchStartParam(webApp, '', '')).toBe(`invite_${'a'.repeat(36)}`);
+  });
+
+  it('reads the launch parameter from the Telegram URL fragment', () => {
+    const webApp = createWebApp();
+
+    expect(getTelegramLaunchStartParam(
+      webApp,
+      '',
+      `#tgWebAppStartParam=invite_${'d'.repeat(36)}&tgWebAppVersion=8.0`,
+    )).toBe(`invite_${'d'.repeat(36)}`);
   });
 });
