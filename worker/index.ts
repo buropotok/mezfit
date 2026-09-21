@@ -16,6 +16,7 @@ import { deleteProgramPhase } from './lib/program-phase-delete';
 import { getCoachProgramDetails } from './lib/program-details';
 import { handleCoachProgramSetRoute } from './lib/program-set-api';
 import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
+import { resolveInviteToken } from './lib/invite-start-param';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
@@ -179,12 +180,6 @@ async function requireProgramOwner(db: D1Database, coachUserId: number, programI
   }
   if (owner.userId !== coachUserId) await requireCoachClient(db, coachUserId, owner.userId);
   return owner.userId;
-}
-
-function inviteTokenFromStartParam(startParam?: string): string | null {
-  if (!startParam?.startsWith('invite_')) return null;
-  const token = startParam.slice('invite_'.length);
-  return /^[a-f0-9]{36}$/i.test(token) ? token.toLowerCase() : null;
 }
 
 async function findInvite(db: D1Database, token: string): Promise<InviteRow | null> {
@@ -609,7 +604,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/invite/current' && request.method === 'GET') {
     const auth = await requireUser(request, env);
-    const token = inviteTokenFromStartParam(auth.startParam);
+    const token = resolveInviteToken(auth.startParam, request.headers.get('x-telegram-start-param'));
     if (!token) return json({ invite: null });
 
     const invite = await findInvite(env.DB_BINDING, token);
@@ -630,7 +625,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/invite/current/accept' && request.method === 'POST') {
     const auth = await requireUser(request, env);
-    const token = inviteTokenFromStartParam(auth.startParam);
+    const token = resolveInviteToken(auth.startParam, request.headers.get('x-telegram-start-param'));
     if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
 
     const invite = await findInvite(env.DB_BINDING, token);
