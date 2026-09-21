@@ -41,10 +41,19 @@ describe('getTelegramStartParam', () => {
     expect(getTelegramStartParam(webApp, '?tgWebAppStartParam=invite_fallback')).toBe('invite_signed');
   });
 
-  it('falls back to Telegram tgWebAppStartParam when initData has no start_param', () => {
+  it('falls back to Telegram tgWebAppStartParam from the query string', () => {
     const webApp = createWebApp();
     webApp.initData = 'auth_date=1';
 
-    expect(getTelegramStartParam(webApp, '?tgWebAppStartParam=invite_fallback')).toBe('invite_fallback');
+    expect(getTelegramStartParam(webApp, '?tgWebAppStartParam=invite_fallback', '')).toBe('invite_fallback');
+  });
+
+  it('falls back to Telegram tgWebAppStartParam from the WebView hash', () => {
+    const webApp = createWebApp();
+    webApp.initData = 'auth_date=1';
+
+    expect(
+      getTelegramStartParam(webApp, '', '#tgWebAppData=old&tgWebAppStartParam=invite_hash'),
+    ).toBe('invite_hash');
   });
 });
