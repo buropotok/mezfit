@@ -18,7 +18,7 @@ import {
   type NavigationContext,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
-import { getTelegramWebApp, prepareTelegramWebApp } from './telegram';
+import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, FloatingActionButton } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
@@ -27,13 +27,13 @@ const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 type State =
   | { status: 'loading' }
   | { status: 'outside-telegram' }
-  | { status: 'needs-role'; initData: string; me: MeResponse }
-  | { status: 'ready'; initData: string; me: MeResponse; activeRole: Role }
+  | { status: 'needs-role'; initData: string; startParam: string | null; me: MeResponse }
+  | { status: 'ready'; initData: string; startParam: string | null; me: MeResponse; activeRole: Role }
   | { status: 'error'; message: string };
 
 type Action =
   | { type: 'outside-telegram' }
-  | { type: 'loaded'; initData: string; me: MeResponse; preferredRole?: Role }
+  | { type: 'loaded'; initData: string; startParam: string | null; me: MeResponse; preferredRole?: Role }
   | { type: 'switch-role'; role: Role }
   | { type: 'error'; message: string };
 
@@ -50,8 +50,19 @@ function reducer(state: State, action: Action): State {
       return { status: 'outside-telegram' };
     case 'loaded': {
       const activeRole = resolveActiveRole(action.me.roles, action.preferredRole);
-      if (!activeRole) return { status: 'needs-role', initData: action.initData, me: action.me };
-      return { status: 'ready', initData: action.initData, me: action.me, activeRole };
+      if (!activeRole) return {
+        status: 'needs-role',
+        initData: action.initData,
+        startParam: action.startParam,
+        me: action.me,
+      };
+      return {
+        status: 'ready',
+        initData: action.initData,
+        startParam: action.startParam,
+        me: action.me,
+        activeRole,
+      };
     }
     case 'switch-role':
       if (state.status !== 'ready' || !state.me.roles.includes(action.role)) return state;
@@ -70,7 +81,15 @@ const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; tex
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
 };
 
-function ClientShell({ initData, destination }: { initData: string; destination: AppDestination }) {
+function ClientShell({
+  initData,
+  startParam,
+  destination,
+}: {
+  initData: string;
+  startParam: string | null;
+  destination: AppDestination;
+}) {
   const { refreshCoaches } = useClientCoach();
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
   const [accepted, setAccepted] = useState(false);
@@ -79,7 +98,7 @@ function ClientShell({ initData, destination }: { initData: string; destination:
 
   useEffect(() => {
     let cancelled = false;
-    getCurrentInvite(initData)
+    getCurrentInvite(initData, startParam)
       .then((result) => {
         if (!cancelled) setInvite(result.invite);
       })
@@ -87,13 +106,13 @@ function ClientShell({ initData, destination }: { initData: string; destination:
         if (!cancelled) setMessage(error instanceof Error ? error.message : 'Не удалось проверить приглашение');
       });
     return () => { cancelled = true; };
-  }, [initData]);
+  }, [initData, startParam]);
 
   const accept = async () => {
     setBusy(true);
     setMessage('');
     try {
-      await acceptCurrentInvite(initData);
+      await acceptCurrentInvite(initData, startParam);
       setAccepted(true);
       setInvite(null);
       refreshCoaches();
@@ -168,11 +187,17 @@ export function App() {
     }
 
     prepareTelegramWebApp(webApp);
+    const startParam = getTelegramLaunchStartParam(webApp);
 
     let cancelled = false;
     getMe(webApp.initData)
       .then((me) => {
-        if (!cancelled) dispatch({ type: 'loaded', initData: webApp.initData, me });
+        if (!cancelled) dispatch({
+          type: 'loaded',
+          initData: webApp.initData,
+          startParam,
+          me,
+        });
       })
       .catch((error: unknown) => {
         if (!cancelled) dispatch({ type: 'error', message: error instanceof Error ? error.message : 'Не удалось загрузить профиль' });
@@ -213,7 +238,13 @@ export function App() {
       try {
         const me = await addRole(state.initData, role);
         window.localStorage.setItem(ROLE_STORAGE_KEY, role);
-        dispatch({ type: 'loaded', initData: state.initData, me, preferredRole: role });
+        dispatch({
+          type: 'loaded',
+          initData: state.initData,
+          startParam: state.startParam,
+          me,
+          preferredRole: role,
+        });
       } catch (error) {
         dispatch({ type: 'error', message: error instanceof Error ? error.message : 'Не удалось сохранить режим' });
       }
@@ -296,7 +327,11 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
           />
         ) : (
-          <ClientShell initData={state.initData} destination={clientDestination} />
+          <ClientShell
+            initData={state.initData}
+            startParam={state.startParam}
+            destination={clientDestination}
+          />
         )}
       </NavigationShell>
     </ClientCoachProvider>
