@@ -18,29 +18,28 @@ import {
   type NavigationContext,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
-import { getTelegramWebApp, prepareTelegramWebApp } from './telegram';
+import { getTelegramStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, FloatingActionButton } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 const INVITE_START_PARAM_PATTERN = /^invite_[a-f0-9]{36}$/i;
 
-function hasClientInviteStartParam(initData: string): boolean {
-  const startParam = new URLSearchParams(initData).get('start_param');
-  return startParam !== null && INVITE_START_PARAM_PATTERN.test(startParam);
+function isClientInviteStartParam(startParam?: string): startParam is string {
+  return startParam !== undefined && INVITE_START_PARAM_PATTERN.test(startParam);
 }
 
 type State =
   | { status: 'loading' }
   | { status: 'outside-telegram' }
-  | { status: 'invite'; initData: string; me: MeResponse; invite: ClientInvitePreview }
+  | { status: 'invite'; initData: string; me: MeResponse; invite: ClientInvitePreview; startParam: string }
   | { status: 'needs-role'; initData: string; me: MeResponse }
   | { status: 'ready'; initData: string; me: MeResponse; activeRole: Role; inviteAccepted: boolean }
   | { status: 'error'; message: string };
 
 type Action =
   | { type: 'outside-telegram' }
-  | { type: 'invite-found'; initData: string; me: MeResponse; invite: ClientInvitePreview }
+  | { type: 'invite-found'; initData: string; me: MeResponse; invite: ClientInvitePreview; startParam: string }
   | { type: 'loaded'; initData: string; me: MeResponse; preferredRole?: Role; inviteAccepted?: boolean }
   | { type: 'switch-role'; role: Role }
   | { type: 'error'; message: string };
@@ -57,7 +56,13 @@ function reducer(state: State, action: Action): State {
     case 'outside-telegram':
       return { status: 'outside-telegram' };
     case 'invite-found':
-      return { status: 'invite', initData: action.initData, me: action.me, invite: action.invite };
+      return {
+        status: 'invite',
+        initData: action.initData,
+        me: action.me,
+        invite: action.invite,
+        startParam: action.startParam,
+      };
     case 'loaded': {
       const activeRole = resolveActiveRole(action.me.roles, action.preferredRole);
       if (!activeRole) return { status: 'needs-role', initData: action.initData, me: action.me };
@@ -89,10 +94,12 @@ const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; tex
 function InviteOnboarding({
   initData,
   invite,
+  startParam,
   onAccepted,
 }: {
   initData: string;
   invite: ClientInvitePreview;
+  startParam: string;
   onAccepted: (roles: Role[]) => void;
 }) {
   const [message, setMessage] = useState('');
@@ -103,7 +110,7 @@ function InviteOnboarding({
     setBusy(true);
     setMessage('');
     try {
-      const result = await acceptCurrentInvite(initData);
+      const result = await acceptCurrentInvite(initData, startParam);
       onAccepted(result.roles);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось принять приглашение');
@@ -186,16 +193,17 @@ export function App() {
     prepareTelegramWebApp(webApp);
 
     const initData = webApp.initData;
+    const startParam = getTelegramStartParam(webApp);
     let cancelled = false;
     getMe(initData)
       .then(async (me) => {
         if (cancelled) return;
 
-        if (hasClientInviteStartParam(initData)) {
-          const { invite } = await getCurrentInvite(initData);
+        if (isClientInviteStartParam(startParam)) {
+          const { invite } = await getCurrentInvite(initData, startParam);
           if (cancelled) return;
           if (invite) {
-            dispatch({ type: 'invite-found', initData, me, invite });
+            dispatch({ type: 'invite-found', initData, me, invite, startParam });
             return;
           }
         }
@@ -248,7 +256,14 @@ export function App() {
       });
     };
 
-    return <InviteOnboarding initData={state.initData} invite={state.invite} onAccepted={accepted} />;
+    return (
+      <InviteOnboarding
+        initData={state.initData}
+        invite={state.invite}
+        startParam={state.startParam}
+        onAccepted={accepted}
+      />
+    );
   }
 
   if (state.status === 'needs-role') {
