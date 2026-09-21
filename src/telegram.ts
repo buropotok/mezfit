@@ -18,14 +18,22 @@ export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
 }
 
+function launchParamFromUrlPart(value: string): string | undefined {
+  const withoutPrefix = value.replace(/^[?#]/, '');
+  const queryIndex = withoutPrefix.indexOf('?');
+  const query = queryIndex >= 0 ? withoutPrefix.slice(queryIndex + 1) : withoutPrefix;
+  return new URLSearchParams(query).get('tgWebAppStartParam') ?? undefined;
+}
+
 export function getTelegramStartParam(
   webApp: TelegramWebApp,
   locationSearch = window.location.search,
+  locationHash = window.location.hash,
 ): string | undefined {
   const signedStartParam = new URLSearchParams(webApp.initData).get('start_param');
   if (signedStartParam) return signedStartParam;
 
-  return new URLSearchParams(locationSearch).get('tgWebAppStartParam') ?? undefined;
+  return launchParamFromUrlPart(locationSearch) ?? launchParamFromUrlPart(locationHash);
 }
 
 export function prepareTelegramWebApp(webApp: TelegramWebApp): void {
