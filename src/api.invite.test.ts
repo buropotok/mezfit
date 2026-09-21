@@ -20,7 +20,7 @@ describe('invite API launch parameter transport', () => {
     const [, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(requestInit.headers);
     expect(headers.get('x-telegram-init-data')).toBe('signed-init-data');
-    expect(headers.get('x-telegram-start-param')).toBe('invite_fallback');
+    expect(headers.get('x-mezfit-launch-start-param')).toBe('invite_fallback');
   });
 
   it('forwards the same launch parameter when accepting an invite', async () => {
@@ -37,6 +37,6 @@ describe('invite API launch parameter transport', () => {
     const [, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(requestInit.headers);
     expect(requestInit.method).toBe('POST');
-    expect(headers.get('x-telegram-start-param')).toBe('invite_fallback');
+    expect(headers.get('x-mezfit-launch-start-param')).toBe('invite_fallback');
   });
 });
