@@ -131,6 +131,27 @@ describe('client invite launch routing', () => {
     expect(getCurrentInvite).not.toHaveBeenCalled();
   });
 
+  it('keeps an invite-specific retry state when preview loading fails', async () => {
+    const initData = 'auth_date=1';
+    const startParam = `invite_${'d'.repeat(36)}`;
+    window.localStorage.setItem('mezfit.activeRole', 'client');
+    launch(initData, startParam);
+    vi.mocked(getMe).mockResolvedValue(existingClientMe);
+    vi.mocked(getCurrentInvite)
+      .mockRejectedValueOnce(new Error('Временная ошибка'))
+      .mockResolvedValueOnce({ invite });
+
+    render(<App />);
+
+    expect(await screen.findByText('Не удалось проверить приглашение')).toBeTruthy();
+    expect(screen.queryByText('Не удалось открыть Mezfit')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+
+    expect(await screen.findByText('Анна Иванова приглашает вас в Mezfit')).toBeTruthy();
+    expect(getCurrentInvite).toHaveBeenCalledTimes(2);
+  });
+
   it('accepts the second-coach invite with the same launch parameter and returns to client mode', async () => {
     const initData = 'auth_date=1';
     const startParam = `invite_${'c'.repeat(36)}`;
