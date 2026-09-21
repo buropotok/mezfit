@@ -18,6 +18,16 @@ export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
 }
 
+export function getTelegramStartParam(
+  webApp: TelegramWebApp,
+  locationSearch = window.location.search,
+): string | undefined {
+  const signedStartParam = new URLSearchParams(webApp.initData).get('start_param');
+  if (signedStartParam) return signedStartParam;
+
+  return new URLSearchParams(locationSearch).get('tgWebAppStartParam') ?? undefined;
+}
+
 export function prepareTelegramWebApp(webApp: TelegramWebApp): void {
   webApp.ready();
   webApp.expand();
