@@ -15,6 +15,7 @@ vi.mock('./api', async (importOriginal) => {
 });
 
 vi.mock('./telegram', () => ({
+  getTelegramStartParam: vi.fn(),
   getTelegramWebApp: vi.fn(),
   prepareTelegramWebApp: vi.fn(),
 }));
@@ -58,7 +59,7 @@ import {
   type MeResponse,
 } from './api';
 import { App } from './App';
-import { getTelegramWebApp } from './telegram';
+import { getTelegramStartParam, getTelegramWebApp } from './telegram';
 
 const invite: ClientInvitePreview = {
   label: null,
@@ -70,7 +71,7 @@ const invite: ClientInvitePreview = {
   },
 };
 
-const dualRoleMe: MeResponse = {
+const existingClientMe: MeResponse = {
   user: {
     id: 7,
     telegramUserId: '100500',
@@ -81,16 +82,17 @@ const dualRoleMe: MeResponse = {
     photoUrl: null,
     isPremium: false,
   },
-  roles: ['coach', 'client'],
+  roles: ['client'],
 };
 
-function launch(initData: string) {
+function launch(initData: string, startParam?: string) {
   vi.mocked(getTelegramWebApp).mockReturnValue({
     initData,
     colorScheme: 'dark',
     ready: vi.fn(),
     expand: vi.fn(),
   });
+  vi.mocked(getTelegramStartParam).mockReturnValue(startParam);
 }
 
 beforeEach(() => {
@@ -101,49 +103,51 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('client invite launch routing', () => {
-  it('shows a valid client invite before a previously selected coach role', async () => {
-    const initData = `auth_date=1&start_param=invite_${'a'.repeat(36)}`;
-    window.localStorage.setItem('mezfit.activeRole', 'coach');
-    launch(initData);
-    vi.mocked(getMe).mockResolvedValue(dualRoleMe);
+  it('shows an invite for a second coach when signed initData has no start_param', async () => {
+    const initData = 'auth_date=1';
+    const startParam = `invite_${'a'.repeat(36)}`;
+    window.localStorage.setItem('mezfit.activeRole', 'client');
+    launch(initData, startParam);
+    vi.mocked(getMe).mockResolvedValue(existingClientMe);
     vi.mocked(getCurrentInvite).mockResolvedValue({ invite });
 
     render(<App />);
 
     expect(await screen.findByText('Анна Иванова приглашает вас в Mezfit')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Подключиться к тренеру' })).toBeTruthy();
-    expect(screen.queryByText('coach-shell')).toBeNull();
-    expect(getCurrentInvite).toHaveBeenCalledWith(initData);
+    expect(screen.queryByText('Тренировка')).toBeNull();
+    expect(getCurrentInvite).toHaveBeenCalledWith(initData, startParam);
   });
 
-  it('shows a valid client invite before the first-run role picker', async () => {
-    const initData = `auth_date=1&start_param=invite_${'b'.repeat(36)}`;
+  it('does not replace the current client screen when there is no invite launch parameter', async () => {
+    const initData = 'auth_date=1';
+    window.localStorage.setItem('mezfit.activeRole', 'client');
     launch(initData);
-    vi.mocked(getMe).mockResolvedValue({ ...dualRoleMe, roles: [] });
-    vi.mocked(getCurrentInvite).mockResolvedValue({ invite });
+    vi.mocked(getMe).mockResolvedValue(existingClientMe);
 
     render(<App />);
 
-    expect(await screen.findByRole('button', { name: 'Подключиться к тренеру' })).toBeTruthy();
-    expect(screen.queryByText('Как вы будете использовать Mezfit?')).toBeNull();
+    expect(await screen.findByText('Тренировка')).toBeTruthy();
+    expect(getCurrentInvite).not.toHaveBeenCalled();
   });
 
-  it('switches to client mode only after the backend accepts the invite', async () => {
-    const initData = `auth_date=1&start_param=invite_${'c'.repeat(36)}`;
-    window.localStorage.setItem('mezfit.activeRole', 'coach');
-    launch(initData);
-    vi.mocked(getMe).mockResolvedValue(dualRoleMe);
+  it('accepts the second-coach invite with the same launch parameter and returns to client mode', async () => {
+    const initData = 'auth_date=1';
+    const startParam = `invite_${'c'.repeat(36)}`;
+    window.localStorage.setItem('mezfit.activeRole', 'client');
+    launch(initData, startParam);
+    vi.mocked(getMe).mockResolvedValue(existingClientMe);
     vi.mocked(getCurrentInvite).mockResolvedValue({ invite });
-    vi.mocked(acceptCurrentInvite).mockResolvedValue({ ok: true, roles: ['coach', 'client'] });
+    vi.mocked(acceptCurrentInvite).mockResolvedValue({ ok: true, roles: ['client'] });
 
     render(<App />);
 
     fireEvent.click(await screen.findByRole('button', { name: 'Подключиться к тренеру' }));
 
     await waitFor(() => {
+      expect(acceptCurrentInvite).toHaveBeenCalledWith(initData, startParam);
       expect(screen.getByTestId('navigation-shell').getAttribute('data-role')).toBe('client');
     });
     expect(screen.getByText('Вы подключены к тренеру. Назначенная программа появится здесь.')).toBeTruthy();
-    expect(window.localStorage.getItem('mezfit.activeRole')).toBe('client');
   });
 });
