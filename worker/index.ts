@@ -604,7 +604,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/invite/current' && request.method === 'GET') {
     const auth = await requireUser(request, env);
-    const token = resolveInviteToken(auth.startParam, request.headers.get('x-telegram-start-param'));
+    const token = resolveInviteToken(auth.startParam, request.headers.get('x-mezfit-launch-start-param'));
     if (!token) return json({ invite: null });
 
     const invite = await findInvite(env.DB_BINDING, token);
@@ -625,7 +625,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/invite/current/accept' && request.method === 'POST') {
     const auth = await requireUser(request, env);
-    const token = resolveInviteToken(auth.startParam, request.headers.get('x-telegram-start-param'));
+    const token = resolveInviteToken(auth.startParam, request.headers.get('x-mezfit-launch-start-param'));
     if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
 
     const invite = await findInvite(env.DB_BINDING, token);
