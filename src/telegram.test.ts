@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { prepareTelegramWebApp, type TelegramWebApp } from './telegram';
+import { getTelegramLaunchStartParam, prepareTelegramWebApp, type TelegramWebApp } from './telegram';
 
 function createWebApp(disableVerticalSwipes?: () => void): TelegramWebApp {
   return {
@@ -29,5 +29,24 @@ describe('prepareTelegramWebApp', () => {
     expect(() => prepareTelegramWebApp(webApp)).not.toThrow();
     expect(webApp.ready).toHaveBeenCalledOnce();
     expect(webApp.expand).toHaveBeenCalledOnce();
+  });
+});
+
+describe('getTelegramLaunchStartParam', () => {
+  it('prefers the current URL launch parameter over stale initData launch context', () => {
+    const webApp = createWebApp();
+    webApp.initDataUnsafe = { start_param: `invite_${'a'.repeat(36)}` };
+
+    expect(getTelegramLaunchStartParam(
+      webApp,
+      `?tgWebAppStartParam=invite_${'b'.repeat(36)}`,
+    )).toBe(`invite_${'b'.repeat(36)}`);
+  });
+
+  it('falls back to Telegram initDataUnsafe when the URL has no launch parameter', () => {
+    const webApp = createWebApp();
+    webApp.initDataUnsafe = { start_param: `invite_${'a'.repeat(36)}` };
+
+    expect(getTelegramLaunchStartParam(webApp, '')).toBe(`invite_${'a'.repeat(36)}`);
   });
 });
