@@ -1,49 +1,1096 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="default">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Mezfit Liquid Glass Tabs — canonical prototype</title>
+<title>Mezfit Liquid Glass Tabs — synchronized timeline prototype</title>
 <style>
-:root{--bg:#151e27;--surface:#1d2733;--muted:#9baaba;--text:#f5f7fa;--border:#2a3948;--accent:#2f9bff;--font:-apple-system,BlinkMacSystemFont,'Golos Text',sans-serif}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font)}body{padding:16px 16px 110px}.page{width:min(760px,100%);margin:auto}.head{margin-bottom:12px}.head h1{margin:0;font-size:17px;line-height:22px;font-weight:500}.head p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:16px}.tuner{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.control{display:grid;gap:5px}.control span{font-size:12px;line-height:16px;color:var(--muted)}.control output{font-size:12px;color:var(--text)}input[type=range]{width:100%;accent-color:var(--accent)}.stage{position:relative;height:62vh;min-height:380px;overflow:auto;border-radius:12px;padding:20px 12px 120px;background:var(--bg);scrollbar-width:thin}.stage h2{margin:22px 0 8px;font-size:20px;line-height:24px;font-weight:400}.stage p{margin:0 0 12px;font-size:15px;line-height:20px}.alphabet{font-size:24px!important;line-height:32px!important;letter-spacing:.02em}.dock{position:fixed;z-index:100;left:50%;bottom:max(12px,env(safe-area-inset-bottom));width:min(calc(100vw - 32px),760px);transform:translateX(-50%);pointer-events:none}.tabs{position:relative;overflow:visible;pointer-events:auto}.list{position:relative;isolation:isolate;display:flex;overflow-x:auto;width:100%;padding:2px 4px;border:.8px solid rgba(255,255,255,.15);border-radius:30px;background:rgba(255,255,255,.01);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),inset 1.5px 1.5px 0 rgba(255,255,255,.5),inset 0 0 12px rgba(255,255,255,.2),0 8px 32px rgba(0,0,0,.2);backdrop-filter:blur(3px) url(#containerFilter) blur(2px) saturate(1.5) brightness(1.1);scrollbar-width:none}.list::-webkit-scrollbar{display:none}.tab{position:relative;z-index:3;flex:0 0 auto;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:3px 16px;border:0;border-radius:28px;background:transparent;color:var(--muted);font:500 15px/20px var(--font);white-space:nowrap;cursor:pointer}.tab.active{color:var(--accent)}.icon{display:block;width:24px;height:24px}.icon svg{display:block;width:24px;height:24px}.selector{pointer-events:none;position:absolute;z-index:2;top:4px;left:0;height:52px;border-radius:30px;overflow:hidden;background:rgba(255,255,255,.19);backdrop-filter:blur(11.75px);transition:opacity .06s linear}.tabs.lens-active .selector{opacity:0}.lens{pointer-events:none;position:absolute;z-index:4;left:0;top:0;width:1px;height:1px;opacity:0;border:.8px solid rgba(255,255,255,.15);border-radius:30px;background:rgba(255,255,255,.01);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),inset 1.5px 1.5px 0 rgba(255,255,255,.5),inset 0 0 12px rgba(255,255,255,.2),0 8px 32px rgba(0,0,0,.2);backdrop-filter:blur(0) url(#lensFilter) blur(0) saturate(1.5) brightness(1.1);will-change:left,top,width,height,border-radius,opacity}.lens.visible{opacity:1}@media(max-width:620px){.tuner{grid-template-columns:repeat(2,minmax(0,1fr))}}
+:root{
+  --theme-bg:#151E27;--theme-bg-text:#F5F7FA;--theme-bg-muted:#9BAABA;
+  --theme-surface:#1D2733;--theme-surface-2:#162230;--theme-border:#2A3948;
+  --theme-surface-text:#F5F7FA;--theme-surface-muted:#9BAABA;
+  --color-accent:#2F9BFF;
+  --ui-color-canvas:var(--theme-bg);--ui-color-canvas-text:var(--theme-bg-text);
+  --ui-color-surface:var(--theme-surface);--ui-color-surface-raised:var(--theme-surface-2);
+  --ui-color-border:var(--theme-border);--ui-color-surface-text:var(--theme-surface-text);
+  --ui-color-surface-muted:var(--theme-surface-muted);--ui-color-primary:var(--color-accent);
+  --ui-color-primary-soft:color-mix(in srgb,var(--color-accent) 16%,transparent);
+  --ui-shadow-raised:0 .25rem .5rem .125rem rgb(0 0 0 / 20%);
+  --ui-radius-md:.75rem;
+  --ui-space-1:.25rem;--ui-space-2:.5rem;--ui-space-3:.75rem;
+  --ui-font-family:-apple-system,BlinkMacSystemFont,'Golos Text',sans-serif;
+  --ui-font-size-caption:.75rem;--ui-line-height-caption:1rem;
+  --ui-font-size-footnote:.8125rem;--ui-line-height-footnote:1.125rem;
+  --ui-font-size-body:.9375rem;--ui-line-height-body:1.25rem;
+  --ui-font-size-headline:1.0625rem;--ui-line-height-headline:1.375rem;
+  --ui-font-weight-regular:400;--ui-font-weight-medium:500;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;color:var(--theme-bg-text);background:var(--theme-bg);font-family:var(--ui-font-family)}
+body{padding:24px}
+.prototype{width:min(48rem,100%);margin:0 auto;padding-bottom:112px}
+.prototype__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.prototype__copy{display:grid;gap:4px}
+.prototype__title{margin:0;font-size:var(--ui-font-size-headline);line-height:var(--ui-line-height-headline);font-weight:var(--ui-font-weight-medium)}
+.prototype__note{margin:0;color:var(--theme-bg-muted);font-size:var(--ui-font-size-caption);line-height:var(--ui-line-height-caption)}
+.prototype__debug{display:flex;gap:8px;align-items:center;flex:0 0 auto}
+.prototype__debug span,.prototype__debug button{height:30px;padding:5px 10px;border:1px solid var(--theme-border);border-radius:999px;color:var(--theme-bg-text);background:var(--theme-surface);font:500 12px/16px var(--ui-font-family)}
+.prototype__debug button{cursor:pointer}
+.prototype__debug button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* Exact GlassStage geometry from the UI Kit catalog. */
+.ui-kit-glass-stage{position:relative;isolation:isolate;overflow:hidden;width:100%;height:min(72dvh,680px);min-height:420px;padding:0;border-radius:var(--ui-radius-md);background:var(--ui-color-canvas)}
+.ui-kit-glass-stage__backdrop{position:absolute;z-index:0;inset:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:var(--ui-space-4) var(--ui-space-3) 8rem;opacity:.82;scrollbar-width:thin}
+.ui-kit-glass-stage__backdrop strong{display:block;margin:0 0 var(--ui-space-2);font-size:var(--ui-font-size-headline);line-height:var(--ui-line-height-headline);font-weight:var(--ui-font-weight-medium)}
+.ui-kit-glass-stage__backdrop span{display:block;color:var(--ui-color-surface-muted);font-size:var(--ui-font-size-body);line-height:var(--ui-line-height-body)}
+.ui-kit-glass-stage__backdrop p{margin:0 0 var(--ui-space-3);color:var(--ui-color-canvas-text);font-size:var(--ui-font-size-body);line-height:var(--ui-line-height-body);font-weight:var(--ui-font-weight-regular)}
+.ui-kit-glass-stage__backdrop h2{margin:var(--ui-space-6) 0 var(--ui-space-2);color:var(--ui-color-canvas-text);font-size:var(--ui-font-size-title);line-height:var(--ui-line-height-title);font-weight:var(--ui-font-weight-regular)}
+.ui-kit-glass-stage__foreground{position:fixed;z-index:100;left:50%;right:auto;bottom:max(12px,env(safe-area-inset-bottom));width:min(calc(100vw - 32px),48rem);display:grid;align-content:center;min-width:0;max-width:none;min-height:60px;pointer-events:none;transform:translateX(-50%)}
+.ui-kit-glass-stage__foreground .ui-tabs{pointer-events:auto;width:100%;min-width:0}
+.fixed-preview-spacer{height:0}
+
+/* Exact relevant Tabs geometry from current src/ui/components.css. */
+.ui-tabs{width:100%;min-width:0;max-width:100%}
+.ui-tabs[data-ui-theme='liquidGlass']{overflow:visible}
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__liquid-layer{position:relative;width:100%;min-width:0;max-width:100%;overflow:visible;transform-origin:50% 50%;will-change:scale}
+.ui-tabs__list{
+  --ui-tab-radius:1.125rem;
+  user-select:none;scrollbar-width:none;position:relative;isolation:isolate;display:flex;flex-shrink:0;flex-wrap:nowrap;align-items:center;
+  overflow-x:auto;width:100%;min-width:0;max-width:100%;padding:.25rem;border-radius:1.375rem;background:var(--ui-color-surface);box-shadow:var(--ui-shadow-raised);-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain
+}
+.ui-tabs__list::-webkit-scrollbar{display:none}
+.ui-tabs__trigger{
+  box-sizing:border-box;flex:0 0 auto;display:inline-flex;gap:.25rem;align-items:center;justify-content:center;min-height:36px;padding:.25rem 1rem;
+  border-radius:var(--ui-tab-radius);font-family:var(--ui-font-family);font-size:var(--ui-font-size-body);font-weight:var(--ui-font-weight-medium);line-height:var(--ui-line-height-body);white-space:nowrap
+}
+.ui-tabs__trigger{
+  appearance:none;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;cursor:pointer;position:relative;z-index:1;border:0;
+  color:var(--ui-color-surface-muted);background:transparent;outline:none;transition:opacity .15s
+}
+.ui-tabs__trigger[data-state='active']{color:var(--ui-color-surface-muted);background:transparent}
+.ui-tabs__active-indicator{
+  pointer-events:none;visibility:hidden;position:absolute;z-index:0;top:0;left:0;display:flex;align-items:center;width:max-content;min-width:100%;padding:.25rem;overflow:hidden
+}
+.ui-tabs__list--ready>.ui-tabs__active-indicator{visibility:visible}
+.ui-tabs__active-indicator--moving{
+  will-change:transform,width;top:.25rem;bottom:.25rem;display:block;width:var(--ui-tabs-indicator-width);min-width:0;padding:0;border-radius:var(--ui-tab-radius);
+  overflow:hidden;clip-path:none;transform:translateX(var(--ui-tabs-indicator-left));transition:transform .25s ease,width .25s ease
+}
+.ui-tabs[data-ui-mode='icon'] .ui-tabs__list{--ui-tab-radius:28px;align-items:stretch;padding:2px 4px;border-radius:30px}
+.ui-tabs[data-ui-mode='icon'] .ui-tabs__trigger{flex-direction:column;gap:2px;min-height:56px;padding:3px 16px}
+.ui-tabs[data-ui-mode='icon'] .ui-tabs__trigger[data-state='active']{color:var(--ui-color-primary)}
+.ui-tabs[data-ui-mode='icon'] .ui-tabs__active-indicator--moving{top:2px;bottom:2px;border-radius:28px}
+.ui-tabs__icon{position:relative;display:block;width:24px;height:24px;flex:0 0 24px;transform-origin:50% 50%;will-change:transform;pointer-events:none}
+.ui-tabs__icon-outline,.ui-tabs__icon-filled{position:absolute;inset:0;display:grid;width:24px;height:24px;place-items:center}
+.ui-tabs__icon-outline>svg,.ui-tabs__icon-filled>svg{display:block;width:24px;height:24px}
+.ui-tabs__icon-filled{display:none}
+.ui-tabs__trigger[data-state='active'] .ui-tabs__icon-outline{display:none}
+.ui-tabs__trigger[data-state='active'] .ui-tabs__icon-filled{display:grid}
+.ui-tabs__label{display:block}
+
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__list{
+  touch-action:pan-x;border:.8px solid rgba(255,255,255,.15);background:rgba(255,255,255,.01);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),inset 1.5px 1.5px 0 rgba(255,255,255,.5),inset 0 0 12px rgba(255,255,255,.2),0 8px 32px rgba(0,0,0,.2);
+  -webkit-backdrop-filter:blur(8px) saturate(1.8) brightness(1.15) contrast(1.05);
+  backdrop-filter:blur(3px) url(#container-filter) blur(2px) saturate(1.5) brightness(1.1)
+}
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__active-indicator--moving{
+  z-index:2;overflow:visible;border:0;background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;transition:none
+}
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__active-indicator-surface{
+  position:absolute;inset:0;border-radius:inherit;overflow:hidden;transform:scale(1,1);transform-origin:50% 50%;will-change:transform;
+  background:rgba(255,255,255,.19);-webkit-backdrop-filter:blur(11.75px);backdrop-filter:blur(11.75px)
+}
+/* Current behavior: selector disappears while press lens is active. */
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__liquid-layer[data-liquid-glass-active='true'] .ui-tabs__active-indicator--moving{opacity:0}
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__trigger{z-index:3}
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__trigger[data-state='active']{color:var(--ui-color-primary)}
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__press-lens{
+  pointer-events:none;position:absolute;z-index:4;top:0;left:0;width:1px;height:1px;border-radius:50%;opacity:0;background:rgba(255,255,255,.01);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),inset 1.5px 1.5px 0 rgba(255,255,255,.5),inset 0 0 12px rgba(255,255,255,.2),0 8px 32px rgba(0,0,0,.2);
+  -webkit-backdrop-filter:blur(8px) saturate(1.8) brightness(1.15) contrast(1.05);
+  backdrop-filter:blur(0) url(#lens-filter) blur(0) saturate(1.5) brightness(1.1);
+  will-change:left,top,width,height,border-radius,opacity
+}
+.ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__press-lens[data-liquid-glass-visible='true']{opacity:1}
+.ui-tabs[data-ui-theme='liquidGlass'][data-ui-mode='icon'] .ui-tabs__list{--ui-tab-radius:30px;border-radius:30px}
+.ui-tabs[data-ui-theme='liquidGlass'][data-ui-mode='icon'] .ui-tabs__active-indicator--moving{top:4px;bottom:4px;border-radius:30px}
+
+.no-optics .ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__list{
+  -webkit-backdrop-filter:none;backdrop-filter:none
+}
+.no-optics .ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__press-lens,
+.no-optics .ui-tabs[data-ui-theme='liquidGlass'] .ui-tabs__active-indicator-surface{
+  -webkit-backdrop-filter:none;backdrop-filter:none
+}
+
+.optics-tuner{
+  margin:0 0 var(--ui-space-3);
+  border:1px solid var(--theme-border);
+  border-radius:var(--ui-radius-md);
+  color:var(--theme-surface-text);
+  background:var(--theme-surface);
+}
+.optics-tuner>summary{
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--ui-space-2);
+  padding:var(--ui-space-3);
+  list-style:none;
+  font-size:var(--ui-font-size-body);
+  line-height:var(--ui-line-height-body);
+  font-weight:var(--ui-font-weight-medium);
+}
+.optics-tuner>summary::-webkit-details-marker{display:none}
+.optics-tuner__summary-note{
+  color:var(--theme-surface-muted);
+  font-size:var(--ui-font-size-caption);
+  line-height:var(--ui-line-height-caption);
+  font-weight:var(--ui-font-weight-regular);
+}
+.optics-tuner__body{
+  display:grid;
+  gap:var(--ui-space-3);
+  padding:0 var(--ui-space-3) var(--ui-space-3);
+  border-top:1px solid var(--theme-border);
+}
+.optics-tuner__toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:end;
+  gap:var(--ui-space-2);
+  padding-top:var(--ui-space-3);
+}
+.optics-tuner__select-wrap{
+  display:grid;
+  gap:var(--ui-space-1);
+  min-width:10rem;
+}
+.optics-tuner__label{
+  color:var(--theme-surface-muted);
+  font-size:var(--ui-font-size-caption);
+  line-height:var(--ui-line-height-caption);
+}
+.optics-tuner select,
+.optics-tuner button{
+  min-height:36px;
+  border:1px solid var(--theme-border);
+  border-radius:.5rem;
+  color:var(--theme-surface-text);
+  background:var(--theme-input,#192635);
+  font-family:var(--ui-font-family);
+  font-size:var(--ui-font-size-body);
+  line-height:var(--ui-line-height-body);
+}
+.optics-tuner select{padding:0 .625rem}
+.optics-tuner button{cursor:pointer;padding:.375rem .75rem;font-weight:var(--ui-font-weight-medium)}
+.optics-tuner button:focus-visible,.optics-tuner select:focus-visible,.optics-tuner input:focus-visible{outline:2px solid var(--ui-color-primary);outline-offset:2px}
+.optics-tuner__grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:var(--ui-space-3);
+}
+.optics-control{
+  display:grid;
+  grid-template-columns:minmax(8.5rem,1fr) minmax(8rem,1.5fr) 4.75rem;
+  gap:var(--ui-space-2);
+  align-items:center;
+  min-width:0;
+}
+.optics-control__name{
+  min-width:0;
+  font-size:var(--ui-font-size-footnote);
+  line-height:var(--ui-line-height-footnote);
+  font-weight:var(--ui-font-weight-medium);
+}
+.optics-control__hint{
+  display:block;
+  margin-top:2px;
+  color:var(--theme-surface-muted);
+  font-size:var(--ui-font-size-caption);
+  line-height:var(--ui-line-height-caption);
+  font-weight:var(--ui-font-weight-regular);
+}
+.optics-control input[type="range"]{width:100%;min-width:0;accent-color:var(--ui-color-primary)}
+.optics-control output{
+  display:block;
+  min-width:0;
+  color:var(--theme-surface-muted);
+  font-size:var(--ui-font-size-footnote);
+  line-height:var(--ui-line-height-footnote);
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+}
+.optics-tuner__readout{
+  margin:0;
+  padding:var(--ui-space-2);
+  overflow-x:auto;
+  border-radius:.5rem;
+  color:var(--theme-surface-muted);
+  background:var(--ui-color-canvas);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:var(--ui-font-size-caption);
+  line-height:var(--ui-line-height-caption);
+  white-space:pre-wrap;
+}
+@media(max-width:720px){
+  .optics-tuner__grid{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  body{padding:16px}
+  .prototype__head{align-items:flex-start;flex-direction:column}
+  .optics-control{grid-template-columns:1fr 1fr 4rem}
+  .optics-control__name{grid-column:1/-1}
+}
+
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="head"><h1>Liquid Glass Tabs — canonical prototype</h1><p>Зафиксированная модель: selector → скрывается; icons/text → остаются; lens → движется поверх. После цикла lens исчезает, selector появляется на новой позиции.</p></div>
-  <div class="tuner">
-    <label class="control"><span>Strength</span><input id="strength" type="range" min="0" max="120" value="42"><output>42</output></label>
-    <label class="control"><span>Frequency X</span><input id="fx" type="range" min="0.001" max="0.03" step="0.001" value="0.005"><output>0.005</output></label>
-    <label class="control"><span>Frequency Y</span><input id="fy" type="range" min="0.001" max="0.03" step="0.001" value="0.004"><output>0.004</output></label>
-    <label class="control"><span>Noise blur</span><input id="noiseBlur" type="range" min="0" max="8" step="0.25" value="4"><output>4.00</output></label>
-    <label class="control"><span>Octaves</span><input id="octaves" type="range" min="1" max="4" value="2"><output>2</output></label>
-    <label class="control"><span>Seed</span><input id="seed" type="range" min="1" max="100" value="24"><output>24</output></label>
-  </div>
-  <div class="stage">
-    <h2>Тренировка сегодня</h2><p>Жим лёжа · тяга блока · приседания · 18 подходов</p>
-    <h2>Проверка оптики</h2><p>Прокручивайте текст под навигацией и переключайте вкладки. Во время перехода обычный selector скрыт, а увеличенная optical lens движется поверх иконок и текста.</p>
-    <p class="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ · 0123456789 · абвгдеёжзийклмнопрстуфхцчшщъыьэюя.</p>
-    <p>Тонкие вертикальные штрихи: Н П Ш Ц Щ H I M N. Круглые формы: О С Ф O C Q. Диагонали: А Л М У A V W X Y.</p>
-    <h2>Дополнительный фон</h2><p>Этот текст нужен только для визуальной проверки преломления и поведения линзы. Он специально расположен под фиксированным Tabs.</p><p>Selector остаётся обычным состоянием покоя. Lens существует только во время transition cycle и исчезает после его завершения.</p>
-    <h2>Ещё ниже</h2><p>Прокрутите вниз и обратно вверх. Навигация остаётся на месте, а фон движется непосредственно под стеклом.</p><p class="alphabet">Liquid Glass · selector · icons · lens</p>
-  </div>
-</div>
-<div class="dock">
-  <div class="tabs" id="tabs">
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="containerFilter" x="0" y="0" width="100%" height="100%"></filter><filter id="lensFilter" x="0" y="0" width="100%" height="100%"></filter></svg>
-    <div class="list" id="list" role="tablist">
-      <button class="tab active" data-value="overview"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.7 2.3l9 9c.63.63.18 1.7-.7 1.7h-1v6a3 3 0 0 1-3 3h-1v-7a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3v7h-1a3 3 0 0 1-3-3v-6h-1c-.9 0-1.34-1.08-.71-1.7l9-9a1 1 0 0 1 1.41 0z"/></svg></span><span>Обзор</span></button>
-      <button class="tab" data-value="program"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 4.2A3 3 0 0 1 20 7v12a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 2-2.8A4 4 0 0 0 10 8h4a4 4 0 0 0 4-3.8zM15 15H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2zm0-4H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2z"/></svg></span><span>Программа</span></button>
-      <button class="tab" data-value="exercises"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 7a1 1 0 0 1 1 1v8a1 1 0 0 1-2 0v-3H2a1 1 0 0 1 0-2h1V8a1 1 0 0 1 1-1zm16 0a1 1 0 0 1 1 1v3h1a1 1 0 0 1 0 2h-1v3a1 1 0 0 1-2 0V8a1 1 0 0 1 1-1zm-4-2a2 2 0 0 1 2 2v10a2 2 0 1 1-4 0v-4h-4v4a2 2 0 1 1-4 0V7a2 2 0 1 1 4 0v4h4V7a2 2 0 0 1 2-2z"/></svg></span><span>Упражнения</span></button>
-      <button class="tab" data-value="calendar"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 2a1 1 0 0 1 1 1v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 2 0v1h6V3a1 1 0 0 1 1-1zm3 7H5v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9z"/></svg></span><span>Календарь</span></button>
-      <div class="selector" id="selector"></div>
+<div class="prototype" id="prototype">
+  <div class="prototype__head">
+    <div class="prototype__copy">
+      <h1 class="prototype__title">Liquid Glass · icon</h1>
+      <p class="prototype__note">Геометрия и тайминги из текущего UI Kit. Tabs зафиксирован внизу. Линза остаётся овальной на всей анимации: искажение настраивается, но переход в квадратную форму убран.</p>
     </div>
-    <div class="lens" id="lens"></div>
+    <div class="prototype__debug">
+      <span id="fps">— fps</span>
+      <button id="opticsToggle" type="button">Optics: ON</button>
+    </div>
+  </div>
+
+  <details class="optics-tuner" open>
+    <summary>
+      <span>Тюнер искажений</span>
+      <span class="optics-tuner__summary-note">Selector → icons → lens</span>
+    </summary>
+    <div class="optics-tuner__body">
+      <div class="optics-tuner__toolbar">
+        <label class="optics-tuner__select-wrap">
+          <span class="optics-tuner__label">Что настраиваем</span>
+          <select id="opticsScope">
+            <option value="lens" selected>Только линзу</option>
+            <option value="container">Только контейнер</option>
+            <option value="both">Линзу + контейнер</option>
+          </select>
+        </label>
+
+        <label class="optics-tuner__select-wrap">
+          <span class="optics-tuner__label">Тип шума</span>
+          <select id="noiseType">
+            <option value="fractalNoise" selected>fractalNoise</option>
+            <option value="turbulence">turbulence</option>
+          </select>
+        </label>
+
+        <button id="resetOptics" type="button">Сбросить LiquidGlass.pro</button>
+      </div>
+
+      <div class="optics-tuner__grid">
+        <label class="optics-control">
+          <span class="optics-control__name">Strength<span class="optics-control__hint">Сила displacement</span></span>
+          <input id="distortionScale" type="range" min="0" max="160" step="1" value="42">
+          <output for="distortionScale">42</output>
+        </label>
+
+        <label class="optics-control">
+          <span class="optics-control__name">Frequency X<span class="optics-control__hint">Размер волн по горизонтали</span></span>
+          <input id="frequencyX" type="range" min="0.001" max="0.030" step="0.001" value="0.005">
+          <output for="frequencyX">0.005</output>
+        </label>
+
+        <label class="optics-control">
+          <span class="optics-control__name">Frequency Y<span class="optics-control__hint">Размер волн по вертикали</span></span>
+          <input id="frequencyY" type="range" min="0.001" max="0.030" step="0.001" value="0.004">
+          <output for="frequencyY">0.004</output>
+        </label>
+
+        <label class="optics-control">
+          <span class="optics-control__name">Noise blur<span class="optics-control__hint">Сглаживание поля искажений</span></span>
+          <input id="noiseBlur" type="range" min="0" max="8" step="0.25" value="4">
+          <output for="noiseBlur">4.00</output>
+        </label>
+
+        <label class="optics-control">
+          <span class="optics-control__name">Octaves<span class="optics-control__hint">Детализация шума</span></span>
+          <input id="noiseOctaves" type="range" min="1" max="4" step="1" value="2">
+          <output for="noiseOctaves">2</output>
+        </label>
+
+        <label class="optics-control">
+          <span class="optics-control__name">Seed<span class="optics-control__hint">Другой рисунок преломления</span></span>
+          <input id="noiseSeed" type="range" min="1" max="100" step="1" value="24">
+          <output for="noiseSeed">24</output>
+        </label>
+      </div>
+
+      <pre class="optics-tuner__readout" id="opticsReadout"></pre>
+    </div>
+  </details>
+
+  <div class="ui-kit-glass-stage">
+    <div class="ui-kit-glass-stage__backdrop" id="scrollBackdrop">
+      <strong>Тренировка сегодня</strong>
+      <span>Жим лёжа · тяга блока · приседания · 18 подходов</span>
+
+      <h2>Разминка</h2>
+      <p>Пять минут лёгкой работы, затем мобилизация плечевого пояса и два разминочных подхода. Двигайтесь спокойно, контролируя траекторию и положение корпуса.</p>
+      <p>Первый подход — пустой гриф. Второй — половина рабочего веса. Перед рабочими подходами проверьте положение лопаток, стоп и дыхание.</p>
+
+      <h2>Жим штанги лёжа</h2>
+      <p>Рабочий вес 80 кг. План: 4 подхода по 8 повторений. Предыдущий результат: 77,5 кг × 8. Пауза между подходами — около двух минут.</p>
+      <p>Опускайте штангу под контролем, без отбива от груди. Лопатки остаются собранными, стопы плотно прижаты к полу. Последние повторения должны оставаться технически чистыми.</p>
+      <p>Подход 1: 80 кг × 8. Подход 2: 80 кг × 8. Подход 3: 80 кг × 7. Подход 4: ориентироваться по самочувствию и качеству движения.</p>
+
+      <h2>Тяга верхнего блока</h2>
+      <p>Сохраняйте нейтральное положение корпуса. Начинайте движение с опускания лопаток, затем ведите локти вниз. Не превращайте последние повторения в раскачку.</p>
+      <p>Три рабочих подхода по 10–12 повторений. Если двенадцатое повторение выполняется уверенно во всех подходах, на следующей тренировке можно увеличить нагрузку.</p>
+
+      <h2>Приседания</h2>
+      <p>Перед первым рабочим подходом сделайте два постепенных подводящих подхода. Колени движутся по направлению носков, корпус сохраняет стабильное положение.</p>
+      <p>Рабочая схема: 3 × 8. Темп ровный, без падения в нижнюю точку. После каждого подхода зафиксируйте фактические повторения и субъективную тяжесть.</p>
+
+      <h2>Завершение</h2>
+      <p>После основной части выполните лёгкую заминку. Отметьте упражнения, где техника начала ухудшаться раньше плана, и сохраните комментарий для следующей тренировки.</p>
+      <p>Этот длинный текст нужен только для проверки оптики: прокручивайте его под стеклянным контейнером и линзой, чтобы оценить характер преломления на буквах и строках.</p>
+
+      <h2>Дополнительный текст для проверки</h2>
+      <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ · 0123456789 · абвгдеёжзийклмнопрстуфхцчшщъыьэюя.</p>
+      <p>Тонкие вертикальные штрихи: Н П Ш Ц Щ H I M N. Круглые формы: О С Ф O C Q. Диагонали: А Л М У A V W X Y. На этих символах особенно хорошо видно, насколько плавно и естественно работает displacement.</p>
+      <p>Прокрутите ещё ниже и обратно вверх. Навигация остаётся на месте, а текст движется непосредственно под стеклом.</p>
+    </div>
+
+    <div class="ui-kit-glass-stage__foreground">
+      <div class="ui-tabs" data-ui-theme="liquidGlass" data-ui-mode="icon">
+        <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
+          <filter id="container-filter" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"></filter>
+          <filter id="lens-filter" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"></filter>
+        </svg>
+
+        <div class="ui-tabs__liquid-layer" id="liquidLayer" data-liquid-glass-active="false">
+          <div class="ui-tabs__list ui-tabs__list--ready" id="tabsList" role="tablist" aria-label="Icon tabs liquidGlass">
+            <button class="ui-tabs__trigger" type="button" role="tab" data-ui-tab-value="overview" data-state="active" aria-selected="true">
+              <span class="ui-tabs__icon" aria-hidden="true">
+                <span class="ui-tabs__icon-outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></svg></span>
+                <span class="ui-tabs__icon-filled"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.707 2.293l9 9c.63 .63 .184 1.707 -.707 1.707h-1v6a3 3 0 0 1 -3 3h-1v-7a3 3 0 0 0 -2.824 -2.995l-.176 -.005h-2a3 3 0 0 0 -3 3v7h-1a3 3 0 0 1 -3 -3v-6h-1c-.89 0 -1.337 -1.077 -.707 -1.707l9 -9a1 1 0 0 1 1.414 0m.293 11.707a1 1 0 0 1 1 1v7h-4v-7a1 1 0 0 1 .883 -.993l.117 -.007z"/></svg></span>
+              </span><span class="ui-tabs__label">Обзор</span>
+            </button>
+
+            <button class="ui-tabs__trigger" type="button" role="tab" data-ui-tab-value="program" data-state="inactive" aria-selected="false">
+              <span class="ui-tabs__icon" aria-hidden="true">
+                <span class="ui-tabs__icon-outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></span>
+                <span class="ui-tabs__icon-filled"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-2.997 10.83h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m0 -4h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m-1 -9a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z"/></svg></span>
+              </span><span class="ui-tabs__label">Программа</span>
+            </button>
+
+            <button class="ui-tabs__trigger" type="button" role="tab" data-ui-tab-value="exercises" data-state="inactive" aria-selected="false">
+              <span class="ui-tabs__icon" aria-hidden="true">
+                <span class="ui-tabs__icon-outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h1"/><path d="M6 8h-2a1 1 0 0 0 -1 1v6a1 1 0 0 0 1 1h2"/><path d="M6 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1"/><path d="M9 12h6"/><path d="M15 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1"/><path d="M18 8h2a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-2"/><path d="M22 12h-1"/></svg></span>
+                <span class="ui-tabs__icon-filled"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 7a1 1 0 0 1 1 1v8a1 1 0 0 1 -2 0v-3h-1a1 1 0 0 1 0 -2h1v-3a1 1 0 0 1 1 -1"/><path d="M20 7a1 1 0 0 1 1 1v3h1a1 1 0 0 1 0 2h-1v3a1 1 0 0 1 -2 0v-8a1 1 0 0 1 1 -1"/><path d="M16 5a2 2 0 0 1 2 2v10a2 2 0 1 1 -4 0v-4h-4v4a2 2 0 1 1 -4 0v-10a2 2 0 1 1 4 0v4h4v-4a2 2 0 0 1 2 -2"/></svg></span>
+              </span><span class="ui-tabs__label">Упражнения</span>
+            </button>
+
+            <button class="ui-tabs__trigger" type="button" role="tab" data-ui-tab-value="calendar" data-state="inactive" aria-selected="false">
+              <span class="ui-tabs__icon" aria-hidden="true">
+                <span class="ui-tabs__icon-outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg></span>
+                <span class="ui-tabs__icon-filled"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 2a1 1 0 0 1 .993 .883l.007 .117v1h1a3 3 0 0 1 2.995 2.824l.005 .176v12a3 3 0 0 1 -2.824 2.995l-.176 .005h-12a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-12a3 3 0 0 1 2.824 -2.995l.176 -.005h1v-1a1 1 0 0 1 1.993 -.117l.007 .117v1h6v-1a1 1 0 0 1 1 -1zm3 7h-14v9.625c0 .705 .386 1.286 .883 1.366l.117 .009h12c.513 0 .936 -.53 .993 -1.215l.007 -.16v-9.625z"/><path d="M12 12a1 1 0 0 1 .993 .883l.007 .117v3a1 1 0 0 1 -1.993 .117l-.007 -.117v-2a1 1 0 0 1 -.117 -1.993l.117 -.007h1z"/></svg></span>
+              </span><span class="ui-tabs__label">Календарь</span>
+            </button>
+
+            <div class="ui-tabs__active-indicator ui-tabs__active-indicator--moving" id="indicator" aria-hidden="true">
+              <div class="ui-tabs__active-indicator-surface" id="indicatorSurface"></div>
+            </div>
+          </div>
+
+          <!-- Important: the lens is a sibling of the list, not a child of its clipped/scrolling contour. -->
+          <div class="ui-tabs__press-lens" id="lens" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
 <script>
-(()=>{const SCALE=1.28,DURATION=440;const tabs=document.getElementById('tabs'),list=document.getElementById('list'),buttons=[...list.querySelectorAll('.tab')],selector=document.getElementById('selector'),lens=document.getElementById('lens'),lensFilter=document.getElementById('lensFilter'),containerFilter=document.getElementById('containerFilter');let active=buttons[0],raf=null,start=0,from=null,to=null;const state={scale:42,fx:.005,fy:.004,blur:4,octaves:2,seed:24};const clamp=v=>Math.max(0,Math.min(1,v));const smooth=t=>t*t*(3-2*t);function build(filter){filter.innerHTML=`<feTurbulence type="fractalNoise" baseFrequency="${state.fx} ${state.fy}" numOctaves="${state.octaves}" seed="${state.seed}" result="noise"/><feGaussianBlur in="noise" stdDeviation="${state.blur}" result="soft"/><feDisplacementMap in="SourceGraphic" in2="soft" scale="${state.scale}" xChannelSelector="R" yChannelSelector="G"/>`}build(lensFilter);build(containerFilter);function pos(btn){return{left:btn.offsetLeft-list.scrollLeft,width:btn.offsetWidth,center:btn.offsetLeft-list.scrollLeft+btn.offsetWidth/2}}function placeSelector(btn){const p=pos(btn);selector.style.left=p.left+'px';selector.style.width=p.width+'px'}function setLens(cx,w,p){const k=1+(SCALE-1)*Math.sin(Math.PI*p),h=52*k,ww=w*k,r=30*k;lens.style.left=(cx-ww/2)+'px';lens.style.top=(30-h/2)+'px';lens.style.width=ww+'px';lens.style.height=h+'px';lens.style.borderRadius=r+'px'}function tick(now){const t=clamp((now-start)/DURATION),e=smooth(t),a=pos(from),b=pos(to),cx=a.center+(b.center-a.center)*e,w=a.width+(b.width-a.width)*e;setLens(cx,w,t);if(t<1){raf=requestAnimationFrame(tick);return}lens.classList.remove('visible');tabs.classList.remove('lens-active');active=to;buttons.forEach(x=>x.classList.toggle('active',x===active));placeSelector(active);raf=null}function go(btn){if(btn===active||raf)return;from=active;to=btn;tabs.classList.add('lens-active');lens.classList.add('visible');start=performance.now();raf=requestAnimationFrame(tick)}buttons.forEach(b=>b.addEventListener('click',()=>go(b)));list.addEventListener('scroll',()=>{if(!raf)placeSelector(active)},{passive:true});new ResizeObserver(()=>placeSelector(active)).observe(list);placeSelector(active);const binds=[['strength','scale',v=>+v],['fx','fx',v=>+v],['fy','fy',v=>+v],['noiseBlur','blur',v=>+v],['octaves','octaves',v=>+v],['seed','seed',v=>+v]];for(const[id,key,parse]of binds){const input=document.getElementById(id),out=input.parentElement.querySelector('output');input.addEventListener('input',()=>{state[key]=parse(input.value);out.value=key==='fx'||key==='fy'?state[key].toFixed(3):key==='blur'?state[key].toFixed(2):String(state[key]);build(lensFilter);build(containerFilter)})}})();
+(() => {
+  const PRESET = {
+    containerMaxScalePercent:105,
+    lensHeightPercent:125,
+    lensAxisRatioHeightToWidth:1.15,
+    selectorTravelDurationMs:440,
+    keepInsideMarginPx:3,
+    swipeThresholdPx:8,
+    pressIntentDelayMs:75,
+    containerBlurPx:3,
+    lensBlurPx:0,
+    releaseDelayMs:130,
+    impactPointPercent:39,
+    containerSpring:{durationMs:360,overshootPercent:40,recoilPercent:27},
+    iconSpring:{delayAfterImpactMs:245,durationMs:1010,overshootPercent:38,recoilPercent:22},
+    selectorSpring:{
+      durationMs:1360,
+      firstHeightShrinkPercent:16,
+      firstWidthToHeightPercent:100,
+      secondWidthShrinkPercent:11,
+      secondHeightShrinkPercent:3,
+      firstSquashPointPercent:18,
+      firstReturnPointPercent:52,
+      secondSquashPointPercent:64
+    }
+  };
+
+  const SELECTOR_LENS_SCALE = 1.28;
+
+  const root = document.querySelector('.ui-tabs');
+  const layer = document.getElementById('liquidLayer');
+  const list = document.getElementById('tabsList');
+  const triggers = [...list.querySelectorAll('.ui-tabs__trigger')];
+  const indicator = document.getElementById('indicator');
+  const indicatorSurface = document.getElementById('indicatorSurface');
+  const lens = document.getElementById('lens');
+  const containerFilter = document.getElementById('container-filter');
+  const lensFilter = document.getElementById('lens-filter');
+  const fpsNode = document.getElementById('fps');
+  const prototype = document.getElementById('prototype');
+  const DEFAULT_OPTICS = Object.freeze({
+    type:'fractalNoise',
+    frequencyX:.005,
+    frequencyY:.004,
+    octaves:2,
+    seed:24,
+    blur:4,
+    scale:42
+  });
+  const opticalState = {
+    lens:{...DEFAULT_OPTICS},
+    container:{...DEFAULT_OPTICS}
+  };
+
+
+  let activeValue = 'overview';
+  let phase = null;
+  let gesture = null;
+  let pressIntentTimer = null;
+  let rafId = null;
+  let interactionToken = 0;
+  let suppressClickUntil = 0;
+
+  let expansion = null;
+  let containerSpring = null;
+  let iconSpring = null;
+  let selectorSpring = null;
+  let pendingSelectorSpring = null;
+
+  let frames = 0;
+  let fpsStart = performance.now();
+
+  const clamp = (v,a=0,b=1) => Math.max(a,Math.min(b,v));
+  const lerp = (a,b,p) => a+(b-a)*p;
+  const smoothstep = p => p*p*(3-2*p);
+
+  function cubicBezier(x1,y1,x2,y2){
+    const sampleX=t=>((1-3*x2+3*x1)*t+(3*x2-6*x1))*t*t+3*x1*t;
+    const sampleY=t=>((1-3*y2+3*y1)*t+(3*y2-6*y1))*t*t+3*y1*t;
+    const sampleDX=t=>(3*(1-3*x2+3*x1)*t+2*(3*x2-6*x1))*t+3*x1;
+    return x=>{
+      x=clamp(x); let t=x;
+      for(let i=0;i<6;i++){const dx=sampleDX(t);if(Math.abs(dx)<1e-6)break;t-= (sampleX(t)-x)/dx;t=clamp(t)}
+      return sampleY(t);
+    };
+  }
+  const easeOut=cubicBezier(0,0,.58,1);
+  const expansionEase=cubicBezier(.2,.8,.2,1);
+  const containerBounce=cubicBezier(.18,.89,.32,1.16);
+  const iconBounce=cubicBezier(.18,.89,.32,1.28);
+  const selectorA=cubicBezier(.30,0,.25,1);
+  const selectorB=cubicBezier(.18,.89,.32,1.12);
+  const selectorC=cubicBezier(.16,1,.30,1);
+
+  function keyframes(points,t){
+    t=clamp(t);
+    for(let i=0;i<points.length-1;i++){
+      const a=points[i],b=points[i+1];
+      if(t<=b.offset){
+        const local=clamp((t-a.offset)/(b.offset-a.offset));
+        return lerp(a.value,b.value,(a.ease||((x)=>x))(local));
+      }
+    }
+    return points[points.length-1].value;
+  }
+
+  function filterRole(filter){
+    return filter===lensFilter?'lens':'container';
+  }
+
+  function configureFilter(filter, geometry){
+    const width=Math.max(1,Math.round(geometry.width));
+    const height=Math.max(1,Math.round(geometry.height));
+    const params=opticalState[filterRole(filter)];
+
+    filter.setAttribute('x','0%');
+    filter.setAttribute('y','0%');
+    filter.setAttribute('width','100%');
+    filter.setAttribute('height','100%');
+    filter.setAttribute('color-interpolation-filters','sRGB');
+
+    filter.innerHTML=`
+      <feTurbulence
+        data-optics-node="noise"
+        type="${params.type}"
+        baseFrequency="${params.frequencyX} ${params.frequencyY}"
+        numOctaves="${params.octaves}"
+        seed="${params.seed}"
+        result="noise">
+      </feTurbulence>
+      <feGaussianBlur
+        data-optics-node="blur"
+        in="noise"
+        stdDeviation="${params.blur}"
+        result="blurred">
+      </feGaussianBlur>
+      <feDisplacementMap
+        data-optics-node="displacement"
+        in="SourceGraphic"
+        in2="blurred"
+        scale="${params.scale}"
+        xChannelSelector="R"
+        yChannelSelector="G">
+      </feDisplacementMap>`;
+  }
+
+  function applyFilterParams(filter){
+    const params=opticalState[filterRole(filter)];
+    const noise=filter.querySelector('[data-optics-node="noise"]');
+    const blur=filter.querySelector('[data-optics-node="blur"]');
+    const displacement=filter.querySelector('[data-optics-node="displacement"]');
+    if(!noise||!blur||!displacement)return;
+
+    noise.setAttribute('type',params.type);
+    noise.setAttribute('baseFrequency',`${params.frequencyX} ${params.frequencyY}`);
+    noise.setAttribute('numOctaves',String(params.octaves));
+    noise.setAttribute('seed',String(params.seed));
+    blur.setAttribute('stdDeviation',String(params.blur));
+    displacement.setAttribute('scale',String(params.scale));
+  }
+
+  function getTriggers(){ return triggers; }
+  function getActiveTrigger(){
+    return triggers.find(t=>t.dataset.uiTabValue===activeValue)
+      || triggers.find(t=>t.dataset.state==='active')
+      || null;
+  }
+  function getModeRadius(){ return 30; }
+  function getModeInset(){ return 4; }
+  function getBaseHeight(){ return Math.max(1,list.offsetHeight-getModeInset()*2); }
+  function getFullLensSize(selectorWidth){
+    const baseHeight=getBaseHeight();
+    return {
+      width:selectorWidth*SELECTOR_LENS_SCALE,
+      height:baseHeight*SELECTOR_LENS_SCALE
+    };
+  }
+  function getTriggerContentCenter(trigger){ return trigger.offsetLeft+trigger.offsetWidth/2; }
+  function getVisibleCenter(contentCenter){ return list.offsetLeft+contentCenter-list.scrollLeft; }
+
+  function updateContainerOptics(){
+    const rect=list.getBoundingClientRect();
+    const computedRadius=Number.parseFloat(getComputedStyle(list).borderTopLeftRadius);
+    const radius=Number.isFinite(computedRadius)&&computedRadius>0?computedRadius:Math.min(rect.width,rect.height)/2;
+    configureFilter(containerFilter,{width:Math.max(1,rect.width),height:Math.max(1,rect.height),radiusX:radius,radiusY:radius});
+  }
+  function prepareLensOptics(selectorWidth){
+    const size=getFullLensSize(selectorWidth);
+    const radius=getModeRadius()*SELECTOR_LENS_SCALE;
+    configureFilter(lensFilter,{
+      width:Math.max(1,size.width),
+      height:Math.max(1,size.height),
+      radiusX:radius,
+      radiusY:radius
+    });
+  }
+
+  function updateIndicator(){
+    const active=getActiveTrigger();
+    if(!active)return;
+    indicator.style.transform=`translateX(${active.offsetLeft}px)`;
+    indicator.style.width=`${active.offsetWidth}px`;
+  }
+  function snapIndicatorTo(trigger){
+    if(!trigger)return;
+    indicator.style.transform=`translateX(${trigger.offsetLeft}px)`;
+    indicator.style.width=`${trigger.offsetWidth}px`;
+  }
+  function targetScrollFor(trigger){
+    const maxScroll=Math.max(0,list.scrollWidth-list.clientWidth);
+    const items=getTriggers(), index=items.indexOf(trigger);
+    if(index===0)return 0;
+    if(index===items.length-1)return maxScroll;
+    const full=getFullLensSize(trigger.offsetWidth);
+    const requiredHalf=Math.max(trigger.offsetWidth,full.width)/2+PRESET.keepInsideMarginPx;
+    const center=getTriggerContentCenter(trigger), visible=center-list.scrollLeft;
+    if(visible<requiredHalf)return clamp(center-requiredHalf,0,maxScroll);
+    if(visible>list.clientWidth-requiredHalf)return clamp(center-(list.clientWidth-requiredHalf),0,maxScroll);
+    return list.scrollLeft;
+  }
+
+  function renderLensGeometry(centerX,baseWidth,progress){
+    const p=clamp(progress);
+    const baseHeight=getBaseHeight();
+    const scale=lerp(1,SELECTOR_LENS_SCALE,p);
+    const width=baseWidth*scale;
+    const height=baseHeight*scale;
+    const radius=getModeRadius()*scale;
+    lens.style.left=`${centerX-width/2}px`;
+    lens.style.top=`${list.offsetTop+list.offsetHeight/2-height/2}px`;
+    lens.style.width=`${width}px`;
+    lens.style.height=`${height}px`;
+    lens.style.borderRadius=`${radius}px`;
+  }
+
+  function differentProgress(elapsed,travel,isPressed,closeStart){
+    const half=travel/2;
+    if(elapsed<half)return clamp(elapsed/half);
+    if(isPressed)return 1;
+    if(closeStart===null||elapsed<closeStart)return 1;
+    return clamp(1-(elapsed-closeStart)/half);
+  }
+  function sameProgress(elapsed,travel,isPressed,progressAtRelease,closeStart){
+    const half=travel/2;
+    if(isPressed)return clamp(elapsed/half);
+    if(closeStart===null||elapsed<closeStart)return progressAtRelease;
+    return clamp(progressAtRelease-(elapsed-closeStart)/half);
+  }
+  function phaseProgress(p,now){
+    const elapsed=now-p.startTime;
+    return p.kind==='different'
+      ? differentProgress(elapsed,p.travelMs,p.pressed,p.closeStartAt)
+      : sameProgress(elapsed,p.travelMs,p.pressed,p.progressAtRelease,p.closeStartAt);
+  }
+
+  function expansionScaleAt(now){
+    if(!expansion)return null;
+    const t=clamp((now-expansion.startTime)/180);
+    return lerp(1,PRESET.containerMaxScalePercent/100,expansionEase(t));
+  }
+
+  function beginPhaseVisuals(target){
+    interactionToken++;
+    iconSpring=null;
+    selectorSpring=null;
+    pendingSelectorSpring=null;
+    indicatorSurface.style.transform='scale(1,1)';
+    containerSpring=null;
+    expansion={startTime:performance.now()};
+    prepareLensOptics(target.offsetWidth);
+    layer.dataset.liquidGlassActive='true';
+    lens.dataset.liquidGlassVisible='true';
+  }
+
+  function startDifferentPhase(fromTrigger,toTrigger,pressed,startTime){
+    beginPhaseVisuals(toTrigger);
+    phase={
+      kind:'different',fromTrigger,toTrigger,startTime,
+      travelMs:PRESET.selectorTravelDurationMs,halfMs:PRESET.selectorTravelDurationMs/2,
+      fromCenter:getTriggerContentCenter(fromTrigger),toCenter:getTriggerContentCenter(toTrigger),
+      fromWidth:fromTrigger.offsetWidth,toWidth:toTrigger.offsetWidth,
+      startScroll:list.scrollLeft,endScroll:targetScrollFor(toTrigger),
+      pressed,closeStartAt:pressed?null:PRESET.selectorTravelDurationMs/2,impactStarted:false
+    };
+    ensureRaf();
+  }
+  function startSamePhase(trigger,startTime,pressed,progressAtRelease=0){
+    beginPhaseVisuals(trigger);
+    phase={
+      kind:'same',trigger,startTime,
+      travelMs:PRESET.selectorTravelDurationMs,halfMs:PRESET.selectorTravelDurationMs/2,
+      pressed,progressAtRelease,closeStartAt:pressed?null:PRESET.releaseDelayMs,impactStarted:false
+    };
+    ensureRaf();
+  }
+  function releasePhase(now){
+    const p=phase;if(!p)return;p.pressed=false;
+    if(p.kind==='different'){
+      const elapsed=now-p.startTime;
+      p.closeStartAt=elapsed<p.halfMs?p.halfMs:elapsed+PRESET.releaseDelayMs;
+      return;
+    }
+    const elapsed=now-p.startTime;
+    p.progressAtRelease=clamp(elapsed/p.halfMs);
+    p.closeStartAt=elapsed+PRESET.releaseDelayMs;
+  }
+
+  function startContainerSpringAt(startTime){
+    const currentScale=expansionScaleAt(startTime) ?? 1;
+    expansion=null;
+    const travel=(PRESET.containerMaxScalePercent-100)/100;
+    containerSpring={
+      startTime,fromScale:currentScale,
+      overshoot:1-travel*PRESET.containerSpring.overshootPercent/100,
+      recoil:1+travel*PRESET.containerSpring.recoilPercent/100
+    };
+  }
+  function containerScaleAt(now){
+    if(containerSpring){
+      const p=PRESET.containerSpring;
+      const t=clamp((now-containerSpring.startTime)/p.durationMs);
+      const value=keyframes([
+        {offset:0,value:containerSpring.fromScale},
+        {offset:.42,value:containerSpring.overshoot,ease:containerBounce},
+        {offset:.70,value:containerSpring.recoil,ease:easeOut},
+        {offset:1,value:1,ease:easeOut}
+      ],t);
+      if(t>=1)containerSpring=null;
+      return value;
+    }
+    const exp=expansionScaleAt(now);
+    return exp===null?1:exp;
+  }
+
+  function scheduleIconSpring(target,startTime){
+    iconSpring={target,startTime};
+  }
+  function renderIconSpring(now){
+    for(const trigger of triggers){
+      if(!iconSpring||trigger!==iconSpring.target)trigger.querySelector('.ui-tabs__icon').style.transform='scale(1)';
+    }
+    if(!iconSpring||now<iconSpring.startTime)return;
+    const p=PRESET.iconSpring;
+    const t=clamp((now-iconSpring.startTime)/p.durationMs);
+    const up=1+p.overshootPercent/100;
+    const down=Math.max(.7,1-p.recoilPercent/100);
+    const value=keyframes([
+      {offset:0,value:1},
+      {offset:.24,value:up,ease:iconBounce},
+      {offset:.50,value:down,ease:easeOut},
+      {offset:.72,value:1+p.overshootPercent/100*.30,ease:easeOut},
+      {offset:.88,value:1-p.recoilPercent/100*.18,ease:easeOut},
+      {offset:1,value:1}
+    ],t);
+    iconSpring.target.querySelector('.ui-tabs__icon').style.transform=`scale(${value})`;
+    if(t>=1)iconSpring=null;
+  }
+
+  function startSelectorSpringAt(startTime){
+    const p=PRESET.selectorSpring;
+    const width=Math.max(1,indicator.offsetWidth),height=Math.max(1,indicator.offsetHeight);
+    selectorSpring={
+      startTime,
+      firstScaleY:Math.max(.45,1-p.firstHeightShrinkPercent/100),
+      firstScaleX:Math.max(.20,Math.min(1,(height*p.firstWidthToHeightPercent/100)/width)),
+      secondScaleX:Math.max(.55,1-p.secondWidthShrinkPercent/100),
+      secondScaleY:Math.max(.60,1-p.secondHeightShrinkPercent/100),
+      firstPoint:clamp(p.firstSquashPointPercent/100,.05,.40),
+      returnPoint:clamp(p.firstReturnPointPercent/100,p.firstSquashPointPercent/100+.08,.72),
+      secondPoint:clamp(p.secondSquashPointPercent/100,p.firstReturnPointPercent/100+.08,.94)
+    };
+  }
+  function renderSelectorSpring(now){
+    if(!selectorSpring)return;
+    const s=selectorSpring,p=PRESET.selectorSpring;
+    const t=clamp((now-s.startTime)/p.durationMs);
+    const sx=keyframes([
+      {offset:0,value:1,ease:selectorA},
+      {offset:s.firstPoint,value:s.firstScaleX,ease:selectorB},
+      {offset:s.returnPoint,value:1,ease:selectorC},
+      {offset:s.secondPoint,value:s.secondScaleX,ease:easeOut},
+      {offset:1,value:1,ease:easeOut}
+    ],t);
+    const sy=keyframes([
+      {offset:0,value:1,ease:selectorA},
+      {offset:s.firstPoint,value:s.firstScaleY,ease:selectorB},
+      {offset:s.returnPoint,value:1,ease:selectorC},
+      {offset:s.secondPoint,value:s.secondScaleY,ease:easeOut},
+      {offset:1,value:1,ease:easeOut}
+    ],t);
+    indicatorSurface.style.transform=`scale(${sx},${sy})`;
+    if(t>=1){indicatorSurface.style.transform='scale(1,1)';selectorSpring=null}
+  }
+
+  function renderImpact(p,now){
+    if(p.pressed||p.closeStartAt===null||p.impactStarted)return;
+    const closeDuration=p.kind==='same'?Math.max(1,p.progressAtRelease*p.halfMs):p.halfMs;
+    const impactAt=p.closeStartAt+closeDuration*PRESET.impactPointPercent/100;
+    const impactTime=p.startTime+impactAt;
+    if(now<impactTime)return;
+    p.impactStarted=true;
+    startContainerSpringAt(impactTime);
+    const target=p.kind==='different'?p.toTrigger:p.trigger;
+    scheduleIconSpring(target,impactTime+PRESET.iconSpring.delayAfterImpactMs);
+  }
+
+  function finishPhase(target){
+    const token=interactionToken;
+    phase=null;
+    snapIndicatorTo(target);
+    indicatorSurface.style.transform='scale(1,1)';
+    layer.dataset.liquidGlassActive='false';
+    lens.removeAttribute('data-liquid-glass-visible');
+    if(!containerSpring&&!expansion)layer.style.scale='1';
+    pendingSelectorSpring={frames:2,token};
+  }
+
+  function renderPhase(now){
+    const p=phase;if(!p)return;
+    const progress=phaseProgress(p,now);
+    if(p.kind==='different'){
+      const elapsed=now-p.startTime;
+      const rawTravel=clamp(elapsed/p.travelMs);
+      const travel=smoothstep(rawTravel);
+      list.scrollLeft=lerp(p.startScroll,p.endScroll,travel);
+      const left=lerp(p.fromTrigger.offsetLeft,p.toTrigger.offsetLeft,travel);
+      const width=lerp(p.fromWidth,p.toWidth,travel);
+      indicator.style.transform=`translateX(${left}px)`;
+      indicator.style.width=`${width}px`;
+      const contentCenter=lerp(p.fromCenter,p.toCenter,travel);
+      renderLensGeometry(getVisibleCenter(contentCenter),width,progress);
+      renderImpact(p,now);
+      if(rawTravel>=1&&progress<=.0001)finishPhase(p.toTrigger);
+      return;
+    }
+    const center=getVisibleCenter(getTriggerContentCenter(p.trigger));
+    snapIndicatorTo(p.trigger);
+    renderLensGeometry(center,p.trigger.offsetWidth,progress);
+    renderImpact(p,now);
+    if(!p.pressed&&p.closeStartAt!==null&&now>=p.startTime+p.closeStartAt&&progress<=.0001)finishPhase(p.trigger);
+  }
+
+  function setActive(trigger){
+    activeValue=trigger.dataset.uiTabValue;
+    triggers.forEach(t=>{
+      const selected=t===trigger;
+      t.dataset.state=selected?'active':'inactive';
+      t.setAttribute('aria-selected',selected?'true':'false');
+    });
+  }
+
+  function clearPressIntent(){
+    if(pressIntentTimer!==null){clearTimeout(pressIntentTimer);pressIntentTimer=null}
+  }
+  function findTrigger(target){
+    if(!(target instanceof Element))return null;
+    const trigger=target.closest('.ui-tabs__trigger');
+    return trigger&&list.contains(trigger)&&!trigger.disabled?trigger:null;
+  }
+  function abortPhaseForSwipe(){
+    interactionToken++;
+    phase=null;iconSpring=null;selectorSpring=null;pendingSelectorSpring=null;
+    expansion=null;containerSpring=null;
+    layer.dataset.liquidGlassActive='false';layer.style.scale='1';
+    lens.removeAttribute('data-liquid-glass-visible');
+    indicatorSurface.style.transform='scale(1,1)';
+    for(const t of triggers)t.querySelector('.ui-tabs__icon').style.transform='scale(1)';
+    snapIndicatorTo(getActiveTrigger());
+    suppressClickUntil=performance.now()+450;
+  }
+
+  list.addEventListener('pointerdown',event=>{
+    if(event.pointerType==='mouse'&&event.button!==0)return;
+    const target=findTrigger(event.target),active=getActiveTrigger();
+    if(!target||!active)return;
+    clearPressIntent();
+    const g={pointerId:event.pointerId,target,downAt:performance.now(),x:event.clientX,y:event.clientY,swipe:false,started:false,same:target===active};
+    gesture=g;
+    pressIntentTimer=setTimeout(()=>{
+      if(gesture!==g||g.swipe)return;
+      g.started=true;
+      if(g.same)startSamePhase(g.target,g.downAt,true); // exact current same-tab phase start
+      else startDifferentPhase(active,g.target,true,performance.now());
+    },PRESET.pressIntentDelayMs);
+  });
+
+  list.addEventListener('pointermove',event=>{
+    const g=gesture;if(!g||g.pointerId!==event.pointerId||g.swipe)return;
+    const dx=event.clientX-g.x,dy=event.clientY-g.y;
+    if(Math.abs(dx)<PRESET.swipeThresholdPx||Math.abs(dx)<=Math.abs(dy))return;
+    g.swipe=true;clearPressIntent();
+    if(g.started)abortPhaseForSwipe();else suppressClickUntil=performance.now()+450;
+  });
+
+  list.addEventListener('pointerup',event=>{
+    const g=gesture;if(!g||g.pointerId!==event.pointerId)return;
+    clearPressIntent();
+    if(g.swipe){gesture=null;return}
+    const now=performance.now();
+    if(!g.started){
+      const active=getActiveTrigger();
+      if(!active){gesture=null;return}
+      if(g.target===active){
+        const progress=clamp((now-g.downAt)/(PRESET.selectorTravelDurationMs/2));
+        startSamePhase(g.target,now,false,progress);
+      }else{
+        startDifferentPhase(active,g.target,false,now);
+      }
+    }else{
+      releasePhase(now);
+    }
+    setActive(g.target); // mirrors value change on the click released here
+    gesture=null;ensureRaf();
+  });
+
+  list.addEventListener('pointercancel',event=>{
+    const g=gesture;if(!g||g.pointerId!==event.pointerId)return;
+    clearPressIntent();
+    if(g.started&&!g.swipe)releasePhase(performance.now());
+    else if(g.started)abortPhaseForSwipe();
+    gesture=null;ensureRaf();
+  });
+
+  list.addEventListener('click',event=>{
+    if(performance.now()<suppressClickUntil){event.preventDefault();event.stopPropagation()}
+  },true);
+
+  function updateFps(now){
+    frames++;
+    const elapsed=now-fpsStart;
+    if(elapsed>=500){
+      fpsNode.textContent=`${Math.round(frames*1000/elapsed)} fps`;
+      frames=0;fpsStart=now;
+    }
+  }
+
+  function tick(now){
+    rafId=null;
+    updateFps(now);
+    renderPhase(now);
+
+    const scale=containerScaleAt(now);
+    layer.style.scale=String(scale);
+
+    if(pendingSelectorSpring){
+      if(pendingSelectorSpring.token!==interactionToken||phase){pendingSelectorSpring=null}
+      else if(--pendingSelectorSpring.frames<=0){
+        startSelectorSpringAt(now);
+        pendingSelectorSpring=null;
+      }
+    }
+    renderSelectorSpring(now);
+    renderIconSpring(now);
+
+    if(phase||expansion||containerSpring||iconSpring||selectorSpring||pendingSelectorSpring)ensureRaf();
+  }
+  function ensureRaf(){ if(rafId===null)rafId=requestAnimationFrame(tick); }
+
+
+  const tuner = {
+    scope:document.getElementById('opticsScope'),
+    type:document.getElementById('noiseType'),
+    scale:document.getElementById('distortionScale'),
+    frequencyX:document.getElementById('frequencyX'),
+    frequencyY:document.getElementById('frequencyY'),
+    blur:document.getElementById('noiseBlur'),
+    octaves:document.getElementById('noiseOctaves'),
+    seed:document.getElementById('noiseSeed'),
+    reset:document.getElementById('resetOptics'),
+    readout:document.getElementById('opticsReadout')
+  };
+
+  function targetsForScope(){
+    if(tuner.scope.value==='both')return ['lens','container'];
+    return [tuner.scope.value];
+  }
+
+  function sourceForScope(){
+    return opticalState[tuner.scope.value==='container'?'container':'lens'];
+  }
+
+  function formatValue(key,value){
+    if(key==='frequencyX'||key==='frequencyY')return Number(value).toFixed(3);
+    if(key==='blur')return Number(value).toFixed(2);
+    return String(value);
+  }
+
+  function setControlValue(input,key,value){
+    input.value=String(value);
+    const output=input.parentElement.querySelector('output');
+    if(output)output.value=formatValue(key,value);
+  }
+
+  function syncTunerFromState(){
+    const state=sourceForScope();
+    tuner.type.value=state.type;
+    setControlValue(tuner.scale,'scale',state.scale);
+    setControlValue(tuner.frequencyX,'frequencyX',state.frequencyX);
+    setControlValue(tuner.frequencyY,'frequencyY',state.frequencyY);
+    setControlValue(tuner.blur,'blur',state.blur);
+    setControlValue(tuner.octaves,'octaves',state.octaves);
+    setControlValue(tuner.seed,'seed',state.seed);
+    renderReadout();
+  }
+
+  function renderReadout(){
+    const lensState=opticalState.lens;
+    const containerState=opticalState.container;
+    tuner.readout.textContent=
+`lens = ${JSON.stringify(lensState)}
+container = ${JSON.stringify(containerState)}`;
+  }
+
+  let pendingOpticsUpdate=false;
+  function scheduleOpticsUpdate(){
+    if(pendingOpticsUpdate)return;
+    pendingOpticsUpdate=true;
+    requestAnimationFrame(()=>{
+      pendingOpticsUpdate=false;
+      for(const role of targetsForScope()){
+        applyFilterParams(role==='lens'?lensFilter:containerFilter);
+      }
+      renderReadout();
+    });
+  }
+
+  function updateParam(key,value){
+    for(const role of targetsForScope()){
+      opticalState[role][key]=value;
+    }
+    scheduleOpticsUpdate();
+  }
+
+  tuner.scope.addEventListener('change',syncTunerFromState);
+  tuner.type.addEventListener('change',()=>updateParam('type',tuner.type.value));
+
+  const rangeBindings=[
+    [tuner.scale,'scale',Number],
+    [tuner.frequencyX,'frequencyX',Number],
+    [tuner.frequencyY,'frequencyY',Number],
+    [tuner.blur,'blur',Number],
+    [tuner.octaves,'octaves',Number],
+    [tuner.seed,'seed',Number]
+  ];
+  for(const [input,key,parse] of rangeBindings){
+    input.addEventListener('input',()=>{
+      const value=parse(input.value);
+      const output=input.parentElement.querySelector('output');
+      if(output)output.value=formatValue(key,value);
+      updateParam(key,value);
+    });
+  }
+
+  tuner.reset.addEventListener('click',()=>{
+    for(const role of targetsForScope()){
+      opticalState[role]={...DEFAULT_OPTICS};
+      applyFilterParams(role==='lens'?lensFilter:containerFilter);
+    }
+    syncTunerFromState();
+  });
+
+  new ResizeObserver(()=>{
+    updateContainerOptics();
+    if(!phase){
+      const active=getActiveTrigger();
+      if(active){prepareLensOptics(active.offsetWidth);snapIndicatorTo(active)}
+    }
+  }).observe(list);
+
+  document.getElementById('opticsToggle').addEventListener('click',event=>{
+    prototype.classList.toggle('no-optics');
+    event.currentTarget.textContent=`Optics: ${prototype.classList.contains('no-optics')?'OFF':'ON'}`;
+  });
+
+  updateContainerOptics();
+  const initial=getActiveTrigger();
+  if(initial){prepareLensOptics(initial.offsetWidth);updateIndicator()}
+  syncTunerFromState();
+})();
 </script>
 </body>
 </html>
