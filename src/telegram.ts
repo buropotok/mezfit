@@ -1,3 +1,5 @@
+import { getCapturedTelegramLaunchStartParam } from './bootDiagnostics';
+
 export interface TelegramBackButton {
   show(): void;
   hide(): void;
@@ -23,10 +25,19 @@ export function getTelegramWebApp(): TelegramWebApp | null {
 
 export function getTelegramLaunchStartParam(
   webApp: TelegramWebApp,
-  search = window.location.search,
+  search = typeof window === 'undefined' ? '' : window.location.search,
+  hash = typeof window === 'undefined' ? '' : window.location.hash,
 ): string | null {
-  const urlStartParam = new URLSearchParams(search).get('tgWebAppStartParam')?.trim();
-  if (urlStartParam) return urlStartParam;
+  const capturedStartParam = getCapturedTelegramLaunchStartParam()?.trim();
+  if (capturedStartParam) return capturedStartParam;
+
+  const searchStartParam = new URLSearchParams(search).get('tgWebAppStartParam')?.trim();
+  if (searchStartParam) return searchStartParam;
+
+  const hashStartParam = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash)
+    .get('tgWebAppStartParam')
+    ?.trim();
+  if (hashStartParam) return hashStartParam;
 
   const initDataStartParam = webApp.initDataUnsafe?.start_param?.trim();
   return initDataStartParam || null;
