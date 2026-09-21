@@ -27,13 +27,15 @@ function launchParamFromUrlPart(value: string): string | undefined {
 
 export function getTelegramStartParam(
   webApp: TelegramWebApp,
-  locationSearch = window.location.search,
-  locationHash = window.location.hash,
+  locationSearch?: string,
+  locationHash?: string,
 ): string | undefined {
   const signedStartParam = new URLSearchParams(webApp.initData).get('start_param');
   if (signedStartParam) return signedStartParam;
 
-  return launchParamFromUrlPart(locationSearch) ?? launchParamFromUrlPart(locationHash);
+  const search = locationSearch ?? (typeof window === 'undefined' ? '' : window.location.search);
+  const hash = locationHash ?? (typeof window === 'undefined' ? '' : window.location.hash);
+  return launchParamFromUrlPart(search) ?? launchParamFromUrlPart(hash);
 }
 
 export function prepareTelegramWebApp(webApp: TelegramWebApp): void {
