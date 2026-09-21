@@ -346,12 +346,27 @@ export function createClientInvite(
   });
 }
 
-export function getCurrentInvite(initData: string): Promise<{ invite: ClientInvitePreview | null }> {
-  return apiRequest(initData, '/api/invite/current');
+function telegramStartParamHeaders(startParam?: string): HeadersInit | undefined {
+  return startParam ? { 'x-telegram-start-param': startParam } : undefined;
 }
 
-export function acceptCurrentInvite(initData: string): Promise<{ ok: true; roles: Role[] }> {
-  return apiRequest(initData, '/api/invite/current/accept', { method: 'POST' });
+export function getCurrentInvite(
+  initData: string,
+  startParam?: string,
+): Promise<{ invite: ClientInvitePreview | null }> {
+  return apiRequest(initData, '/api/invite/current', {
+    headers: telegramStartParamHeaders(startParam),
+  });
+}
+
+export function acceptCurrentInvite(
+  initData: string,
+  startParam?: string,
+): Promise<{ ok: true; roles: Role[] }> {
+  return apiRequest(initData, '/api/invite/current/accept', {
+    method: 'POST',
+    headers: telegramStartParamHeaders(startParam),
+  });
 }
 
 export async function getClientExercises(
