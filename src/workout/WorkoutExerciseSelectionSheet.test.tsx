@@ -61,7 +61,9 @@ describe('WorkoutExerciseSelectionSheet', () => {
       />,
     );
 
-    expect(screen.getByRole('dialog', { name: 'Упражнения' })).toBeTruthy();
+    const dialog = screen.getByRole('dialog', { name: 'Упражнения' });
+    expect(dialog).toBeTruthy();
+    expect(dialog.closest('.ui-bottom-sheet')?.className).toContain('ui-bottom-sheet--inset');
     expect(screen.queryByRole('button', { name: 'Поиск' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Только избранные' })).toBeNull();
     await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
