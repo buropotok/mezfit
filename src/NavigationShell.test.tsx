@@ -57,4 +57,25 @@ describe('NavigationShell nested back context', () => {
     expect(nestedBack).toHaveBeenCalledTimes(1);
     expect(outerBack).not.toHaveBeenCalled();
   });
+  it('keeps existing behavior when no separate back context is provided', () => {
+    const visibleBack = vi.fn();
+    const visibleContext: NavigationContext = { title: 'Тренировка', onBack: visibleBack };
+
+    render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={visibleContext}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Контент</div>
+      </NavigationShell>,
+    );
+
+    fireEvent.popState(window);
+
+    expect(visibleBack).toHaveBeenCalledTimes(1);
+  });
 });
