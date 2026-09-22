@@ -279,7 +279,8 @@ export function App() {
     setNavigationContext(null);
     dispatch({ type: 'switch-role', role });
   };
-  const shellContext = workoutOpen ? workoutNestedNavigationContext ?? workoutRootNavigationContext : navigationContext;
+  const shellContext = workoutOpen ? workoutRootNavigationContext : navigationContext;
+  const shellBackContext = workoutOpen ? workoutNestedNavigationContext ?? workoutRootNavigationContext : navigationContext;
   const workoutFabLabel = workoutStatus === 'active' ? 'Продолжить тренировку' : 'Открыть тренировку';
 
   return (
@@ -293,6 +294,7 @@ export function App() {
         activeRole={state.activeRole}
         destination={destination}
         context={shellContext}
+        backContext={shellBackContext}
         onDestinationChange={changeDestination}
         onRoleSwitch={switchRole}
         floatingAction={(
