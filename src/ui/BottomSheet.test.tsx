@@ -29,6 +29,26 @@ describe('BottomSheet', () => {
     expect(dialog.closest('.ui-bottom-sheet')?.className).not.toContain('ui-bottom-sheet--modal-color');
   });
 
+  it('supports an inset surface without changing the default edge-to-edge contract', () => {
+    const { rerender } = render(
+      <BottomSheet isOpen title="Упражнения" onClose={vi.fn()}>
+        <div>Контент</div>
+      </BottomSheet>,
+    );
+
+    let root = screen.getByRole('dialog', { name: 'Упражнения' }).closest('.ui-bottom-sheet');
+    expect(root?.className).not.toContain('ui-bottom-sheet--inset');
+
+    rerender(
+      <BottomSheet isOpen title="Упражнения" inset onClose={vi.fn()}>
+        <div>Контент</div>
+      </BottomSheet>,
+    );
+
+    root = screen.getByRole('dialog', { name: 'Упражнения' }).closest('.ui-bottom-sheet');
+    expect(root?.className).toContain('ui-bottom-sheet--inset');
+  });
+
   it('renders a caller-owned leading header action without changing dialog semantics', () => {
     render(
       <BottomSheet
