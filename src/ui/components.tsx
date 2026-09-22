@@ -59,10 +59,11 @@ export type BottomSheetProps = {
   hasCloseButton?: boolean;
   closeOnBackdrop?: boolean;
   modalColor?: boolean;
+  inset?: boolean;
   onClose: () => void;
 };
 
-export function BottomSheet({ isOpen, title, children, className = '', headerLeading, floatingAction, closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, modalColor = true, onClose }: BottomSheetProps) {
+export function BottomSheet({ isOpen, title, children, className = '', headerLeading, floatingAction, closeLabel = 'Закрыть', hasCloseButton = true, closeOnBackdrop = true, modalColor = true, inset = false, onClose }: BottomSheetProps) {
   const blockEscape = !hasCloseButton && !closeOnBackdrop;
   const startKeyboardScale = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget);
@@ -71,7 +72,7 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
-        <div className={`ui-bottom-sheet${modalColor ? ' ui-bottom-sheet--modal-color' : ''} ${className}`.trim()} role="presentation">
+        <div className={`ui-bottom-sheet${modalColor ? ' ui-bottom-sheet--modal-color' : ''}${inset ? ' ui-bottom-sheet--inset' : ''} ${className}`.trim()} role="presentation">
           <Dialog.Overlay className="ui-bottom-sheet__backdrop" onPointerDown={closeOnBackdrop ? undefined : (event) => event.preventDefault()} />
           <Dialog.Content
             className="ui-bottom-sheet__panel"
