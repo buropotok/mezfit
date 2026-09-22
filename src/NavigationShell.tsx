@@ -86,6 +86,7 @@ interface Props {
   activeRole: Role;
   destination: AppDestination;
   context: NavigationContext | null;
+  backContext?: NavigationContext | null;
   onDestinationChange: (destination: AppDestination) => void;
   onRoleSwitch: (role: Role) => void;
   floatingAction?: ReactNode;
@@ -97,6 +98,7 @@ export function NavigationShell({
   activeRole,
   destination,
   context,
+  backContext,
   onDestinationChange,
   onRoleSwitch,
   floatingAction,
@@ -106,7 +108,8 @@ export function NavigationShell({
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => new Date());
-  const contextRef = useRef(context);
+  const effectiveBackContext = backContext === undefined ? context : backContext;
+  const backContextRef = useRef(effectiveBackContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
@@ -117,11 +120,11 @@ export function NavigationShell({
   }, [activeRole]);
 
   useEffect(() => {
-    contextRef.current = context;
-  }, [context]);
+    backContextRef.current = effectiveBackContext;
+  }, [effectiveBackContext]);
 
   const requestBack = useCallback(() => {
-    const currentContext = contextRef.current;
+    const currentContext = backContextRef.current;
     if (!currentContext) return;
     const historyEntry = historyEntryRef.current;
     if (historyEntry && historyHasToken(historyEntry.token)) {
@@ -134,7 +137,7 @@ export function NavigationShell({
 
   useEffect(() => {
     const onPopState = () => {
-      const currentContext = contextRef.current;
+      const currentContext = backContextRef.current;
       if (!currentContext) return;
       historyEntryRef.current = null;
       currentContext.onBack();
@@ -145,14 +148,14 @@ export function NavigationShell({
 
   useEffect(() => {
     const existingEntry = historyEntryRef.current;
-    if (!context) {
+    if (!effectiveBackContext) {
       if (!existingEntry) return;
       historyEntryRef.current = null;
       if (historyHasToken(existingEntry.token)) window.history.back();
       return;
     }
 
-    if (existingEntry?.context === context) return;
+    if (existingEntry?.context === effectiveBackContext) return;
     historySequenceRef.current += 1;
     const token = `mezfit-${historySequenceRef.current}`;
     const nextState = { ...historyStateRecord(), [HISTORY_TOKEN_KEY]: token };
@@ -161,10 +164,10 @@ export function NavigationShell({
     } else {
       window.history.pushState(nextState, '');
     }
-    historyEntryRef.current = { context, token };
-  }, [context]);
+    historyEntryRef.current = { context: effectiveBackContext, token };
+  }, [effectiveBackContext]);
 
-  useEffect(() => bindTelegramBackButton(getTelegramWebApp(), context !== null, requestBack), [context, requestBack]);
+  useEffect(() => bindTelegramBackButton(getTelegramWebApp(), effectiveBackContext !== null, requestBack), [effectiveBackContext, requestBack]);
 
   useEffect(() => () => {
     const existingEntry = historyEntryRef.current;
