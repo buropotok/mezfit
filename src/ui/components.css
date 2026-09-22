@@ -34,7 +34,8 @@
 
 .ui-bottom-sheet{position:relative;z-index:var(--ui-z-modal,1000);color:var(--ui-color-surface-text);font-family:var(--ui-font-family)}
 .ui-bottom-sheet__backdrop{position:fixed;inset:0;background:rgba(0,0,0,.32)}
-.ui-bottom-sheet__panel{position:fixed;z-index:1;left:50%;bottom:0;overflow:hidden;display:flex;flex-direction:column;width:min(100%,48rem);height:min(88vh,52rem);height:min(88dvh,52rem);max-height:calc(100dvh - 3.5rem - env(safe-area-inset-top));border:0;border-radius:var(--ui-radius-md) var(--ui-radius-md) 0 0;color:var(--ui-color-surface-text);background:var(--ui-color-surface);box-shadow:var(--ui-shadow-raised);outline:none;transform:translate(-50%,100%)}
+.ui-bottom-sheet__panel{--ui-bottom-sheet-hidden-offset:100%;position:fixed;z-index:1;left:50%;bottom:0;overflow:hidden;display:flex;flex-direction:column;width:min(100%,48rem);height:min(88vh,52rem);height:min(88dvh,52rem);max-height:calc(100dvh - 3.5rem - env(safe-area-inset-top));border:0;border-radius:var(--ui-radius-md) var(--ui-radius-md) 0 0;color:var(--ui-color-surface-text);background:var(--ui-color-surface);box-shadow:var(--ui-shadow-raised);outline:none;transform:translate(-50%,var(--ui-bottom-sheet-hidden-offset))}
+.ui-bottom-sheet--inset .ui-bottom-sheet__panel{--ui-bottom-sheet-hidden-offset:calc(100% + env(safe-area-inset-bottom) + var(--ui-space-4));bottom:calc(env(safe-area-inset-bottom) + var(--ui-space-4));width:min(calc(100% - var(--ui-space-8)),48rem);max-height:calc(100dvh - 3.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--ui-space-4));border-radius:var(--ui-radius-md)}
 .ui-bottom-sheet--modal-color .ui-bottom-sheet__panel{background:var(--ui-color-modal)}
 .ui-bottom-sheet__header{display:flex;flex:0 0 auto;align-items:center;gap:1rem;padding:1rem 1.5rem .75rem}
 .ui-bottom-sheet__header-leading{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center}
@@ -44,6 +45,9 @@
 .ui-bottom-sheet__content{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1 1 auto;min-height:0;padding-bottom:env(safe-area-inset-bottom)}
 .ui-bottom-sheet__content--with-floating-action{padding-bottom:calc(env(safe-area-inset-bottom) + 5.5rem)}
 .ui-bottom-sheet__floating-action{pointer-events:none;position:absolute;z-index:2;inset:0 0 env(safe-area-inset-bottom) 0}
+.ui-bottom-sheet--inset .ui-bottom-sheet__content{padding-bottom:0}
+.ui-bottom-sheet--inset .ui-bottom-sheet__content--with-floating-action{padding-bottom:5.5rem}
+.ui-bottom-sheet--inset .ui-bottom-sheet__floating-action{inset:0}
 .ui-bottom-sheet__floating-action>*{pointer-events:auto}
 .ui-bottom-sheet__backdrop[data-state='open']{animation:ui-bottom-sheet-backdrop-enter .2s ease both}
 .ui-bottom-sheet__backdrop[data-state='closed']{animation:ui-bottom-sheet-backdrop-exit .16s ease both}
@@ -64,8 +68,8 @@
 @keyframes ui-modal-enter{from{transform:translate3d(0,-1rem,0);opacity:0}to{transform:translate3d(0,0,0);opacity:1}}
 @keyframes ui-bottom-sheet-backdrop-enter{from{opacity:0}to{opacity:1}}
 @keyframes ui-bottom-sheet-backdrop-exit{from{opacity:1}to{opacity:0}}
-@keyframes ui-bottom-sheet-enter{from{transform:translate(-50%,100%)}to{transform:translate(-50%,0)}}
-@keyframes ui-bottom-sheet-exit{from{transform:translate(-50%,0)}to{transform:translate(-50%,100%)}}
+@keyframes ui-bottom-sheet-enter{from{transform:translate(-50%,var(--ui-bottom-sheet-hidden-offset))}to{transform:translate(-50%,0)}}
+@keyframes ui-bottom-sheet-exit{from{transform:translate(-50%,0)}to{transform:translate(-50%,var(--ui-bottom-sheet-hidden-offset))}}
 @media(hover:hover){.ui-list-item:not(.ui-list-item--static):hover:not(:disabled){background:var(--ui-color-surface-raised)}.ui-bottom-sheet__close:hover{background:var(--ui-color-surface-raised)}.ui-fab:hover:not(:disabled){opacity:.9}.ui-tabs__trigger:hover:not(:disabled){opacity:.85}.ui-modal__close:hover{background:var(--ui-color-surface-raised)}.ui-modal__action:hover:not(:disabled){opacity:.85}}
 @media(max-width:450px){.ui-modal__dialog{max-width:calc(100vw - 3rem)}}
 @media(prefers-reduced-motion:reduce){.ui-fab,.ui-tabs__trigger,.ui-modal__close,.ui-bottom-sheet__close{transition-duration:1ms}.ui-bottom-sheet__panel,.ui-bottom-sheet__backdrop{animation:none!important}.ui-bottom-sheet__panel{transform:translate(-50%,0)}.ui-tabs__active-indicator{transition:none}.ui-modal__dialog{animation:none}}
