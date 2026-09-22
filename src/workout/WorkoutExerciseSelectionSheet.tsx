@@ -80,6 +80,7 @@ export function WorkoutExerciseSelectionSheet({
       hasCloseButton={!saving && navigationContext === null}
       closeOnBackdrop={!saving}
       modalColor
+      inset
       onClose={close}
     >
       <div style={{ padding: '0 1.5rem 1.5rem' }}>
