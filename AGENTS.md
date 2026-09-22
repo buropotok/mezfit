@@ -131,7 +131,13 @@ Drag state, ordering, and persistence need explicit ownership. Visual and persis
 
 ## 19. UI libraries and CSS
 
-Use existing primitives/patterns before parallel implementations. Radix UI, dnd-kit, DayPicker, and other libraries are implementation tools, not domain owners. Do not couple domain logic to third-party private DOM.
+**Konsta UI v5 (`konsta/react`) is the canonical Mezfit UI kit for new and modified product UI.** When Konsta provides a suitable primitive, use that primitive directly instead of creating a parallel implementation.
+
+Konsta primitives own their mechanics and visual representation. Do not restyle, reskin, fork, or recreate a Konsta primitive through project CSS, wrapper-only visual overrides, private DOM selectors, or copied library markup. Use only the public configuration exposed by the Konsta component API. In particular, project CSS must not target Konsta's internal `.k-*` classes to alter a primitive.
+
+If the available Konsta primitive or its documented configuration is insufficient for a product requirement, stop and report the missing capability instead of locally modifying the primitive. The UI kit can then be deliberately extended or the product decision can be revised. App-owned composition, spacing, and layout around Konsta primitives may use Mezfit CSS as long as it does not change the primitive itself.
+
+Existing pre-Konsta shared primitives may remain while their owning surfaces are intentionally migrated, but do not add new parallel primitives when Konsta already covers the need. Radix UI, dnd-kit, DayPicker, and other libraries remain implementation tools for capabilities not supplied by the canonical UI kit; they are not domain owners. Do not couple domain logic to third-party private DOM.
 
 CSS must have clear component/surface ownership. Do not use incidental selectors or CSS classes as cross-component control/state channels. Verify Mini App widths, safe areas, and keyboard-sensitive layouts.
 
