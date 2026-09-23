@@ -139,6 +139,8 @@ Konsta must use the shared Mezfit platform font stack through the supported Tail
 
 Konsta primitives own their mechanics and visual representation. Do not restyle, reskin, fork, or recreate a Konsta primitive through project CSS, wrapper-only visual overrides, private DOM selectors, or copied library markup. Use only the public configuration exposed by the Konsta component API. In particular, project CSS must not target Konsta's internal `.k-*` classes to alter a primitive.
 
+Tailwind Preflight is part of the canonical Konsta CSS baseline and must remain enabled in the lower `base` cascade layer. During migration, legacy compatibility rules may remain in the higher `legacy-base` layer, but they must not target or visually override Konsta primitives.
+
 If the available Konsta primitive or its documented configuration is insufficient for a product requirement, stop and report the missing capability instead of locally modifying the primitive. The UI kit can then be deliberately extended or the product decision can be revised. App-owned composition, spacing, and layout around Konsta primitives may use Mezfit CSS as long as it does not change the primitive itself.
 
 Existing pre-Konsta shared primitives may remain while their owning surfaces are intentionally migrated, but do not add new parallel primitives when Konsta already covers the need. Radix UI, dnd-kit, DayPicker, and other libraries remain implementation tools for capabilities not supplied by the canonical UI kit; they are not domain owners. Do not couple domain logic to third-party private DOM.

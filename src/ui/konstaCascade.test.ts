@@ -24,13 +24,9 @@ describe('Konsta cascade ownership', () => {
     expect(layerEnd).toBeGreaterThan(layerStart);
 
     const legacyBase = legacyStyles.slice(layerStart, layerEnd);
-    expect(legacyBase).toContain(
-      'button, input, select, textarea { font: inherit; }',
-    );
-    expect(legacyBase).toContain('button { min-height: var(--control-h); }');
-    expect(legacyBase).toContain(
-      'button:disabled { cursor: wait; opacity: .55; }',
-    );
+    expect(legacyBase).not.toContain('button { min-height:');
+    expect(legacyBase).not.toContain('button:disabled');
+    expect(legacyBase).not.toContain('button, input, select, textarea');
   });
 
   it('uses the shared Mezfit platform font stack for Konsta iOS', () => {
@@ -39,7 +35,9 @@ describe('Konsta cascade ownership', () => {
     );
   });
 
-  it('does not enable Tailwind Preflight for the legacy application', () => {
-    expect(konstaStyles).not.toContain("@import 'tailwindcss';");
+  it('enables Tailwind Preflight below the legacy base layer', () => {
+    expect(konstaStyles).toContain(
+      "@import 'tailwindcss/preflight.css' layer(base);",
+    );
   });
 });

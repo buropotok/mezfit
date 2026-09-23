@@ -7,6 +7,7 @@
 .exercise-action-icon { width: 24px; height: 24px; display: block; flex: 0 0 24px; background-color: currentColor; -webkit-mask-image: var(--exercise-action-icon); mask-image: var(--exercise-action-icon); -webkit-mask-position: center; mask-position: center; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-size: contain; mask-size: contain; }
 .exercise-square-button { width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid var(--theme-border); border-radius: var(--radius-control); color: var(--theme-surface-muted); background: var(--theme-surface-2); cursor: pointer; }
 .exercise-square-button.primary, .exercise-square-button.active { color: #fff; border-color: var(--color-accent); background: var(--color-accent); }
+.exercise-square-button:disabled { cursor: default; opacity: .55; }
 .exercise-square-button:focus-visible, .global-exercise-row-main:focus-visible, .global-exercise-action-row:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .global-exercise-filter-row { display: grid; grid-template-columns: minmax(132px, 1.25fr) minmax(116px, 1fr) 44px 44px; gap: var(--space-2); align-items: center; }
 .global-exercise-select-wrap { height: 44px; display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: var(--space-1); padding: 0 4px 0 var(--space-2); border: 1px solid var(--theme-border); border-radius: var(--radius-control); color: var(--theme-surface-muted); background: var(--theme-surface-2); }

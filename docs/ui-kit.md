@@ -12,7 +12,7 @@ Konsta UI v5 is the canonical UI kit for Mezfit product UI.
 - Global provider: `KonstaProvider` in `src/main.tsx`
 - Canonical Konsta theme: iOS + dark
 - Canonical Konsta font source: shared `--ui-font-family` via the supported `@theme --font-ios` token
-- Tailwind Preflight: currently disabled globally; enabling it is tracked as a separate migration so Konsta can run in its intended CSS baseline without project-owned visual overrides
+- Tailwind Preflight: enabled through `tailwindcss/preflight.css` in the `base` cascade layer, below Mezfit's `legacy-base` compatibility layer
 
 ## Usage contract
 
@@ -23,6 +23,8 @@ Do not change a Konsta primitive's mechanics or visual representation with proje
 If the public Konsta API cannot express a required interaction or appearance, report the missing capability instead of locally modifying the primitive. The UI kit must then be deliberately extended or the product requirement revised.
 
 Mezfit-owned CSS may control composition, page layout, spacing around primitives, and app-owned content. The Mezfit typography system applies to app-owned text; typography inside a Konsta primitive remains library-owned.
+
+Tailwind Preflight is part of the canonical Konsta runtime baseline. Keep it in the lower `base` layer; legacy compatibility styles may live in the higher `legacy-base` layer while migration is incomplete, but must not target Konsta internals or restyle Konsta primitives.
 
 The canonical Konsta theme for Mezfit is iOS + dark. It is applied globally through `KonstaProvider theme="ios" dark` and the required public root classes `k-ios dark`. Do not substitute a different Konsta theme on individual product surfaces unless the product decision is explicitly changed.
 
