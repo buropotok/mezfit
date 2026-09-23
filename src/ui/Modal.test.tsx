@@ -83,6 +83,7 @@ describe('Modal alert variant', () => {
 
     const closedDialog = document.querySelector('[role="dialog"]');
     expect(closedDialog).not.toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Добавить фазу' })).toBeNull();
 
     rerender(
       <Modal
@@ -96,6 +97,7 @@ describe('Modal alert variant', () => {
     );
 
     expect(document.querySelector('[role="dialog"]')).toBe(closedDialog);
+    expect(screen.getByRole('dialog', { name: 'Добавить фазу' })).toBe(closedDialog);
   });
 
   it('keeps a confirm dismissible when all supplied actions are disabled', () => {
