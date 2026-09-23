@@ -44,6 +44,7 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
       title={state.mode === 'edit' ? 'Редактирование упражнения' : 'Новое упражнение'}
       onClose={close}
       closeOnBackdrop={!saving}
+      className="global-exercise-editor"
     >
       <div className="global-exercise-editor-top">
         <Surface className="global-exercise-media-slot" aria-label="Медиа упражнения">

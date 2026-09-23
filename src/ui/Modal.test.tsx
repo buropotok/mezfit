@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { Modal } from './components';
-
-afterEach(() => cleanup());
 
 describe('Modal alert variant', () => {
   it('renders alert semantics and Telegram-style actions without the generic close button', () => {

@@ -87,6 +87,7 @@
 .text-button { color: var(--color-text-secondary); background: transparent; }
 .positive-button { color: #07150b; background: var(--color-positive); }
 
+.exercise-create-modal .ui-modal__dialog { max-width: 32rem; }
 .exercise-create-first-row {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);

@@ -75,7 +75,7 @@ describe('Dropdown', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('keeps the multi draft open when Escape is pressed', () => {
+  it('commits the current multi draft on Escape', () => {
     const onChange = vi.fn();
     render(<Dropdown mode="multi" options={options} value={['strength']} onChange={onChange} />);
 
@@ -83,7 +83,7 @@ describe('Dropdown', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Кардио' }));
     fireEvent.keyDown(document, { key: 'Escape' });
 
-    expect(onChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(onChange).toHaveBeenLastCalledWith(['strength', 'cardio']);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
