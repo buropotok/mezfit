@@ -39,9 +39,6 @@
   height: 1.5rem;
   display: block;
 }
-.invite-modal-actions {
-  margin-top: var(--space-4);
-}
 .invite-copy-error {
   margin-top: var(--space-2);
   margin-bottom: 0;
