@@ -139,7 +139,7 @@ describe('SetEntry rendering', () => {
   it('uses the approved hierarchy for the modal, exercise and metric labels', () => {
     renderSetEntry();
 
-    expect(screen.getByRole('heading', { name: 'Подход 3' }).tagName).toBe('H2');
+    expect(screen.getByRole('heading', { name: 'Подход 3' }).getAttribute('aria-level')).toBe('2');
     expect(screen.getByText('Жим лёжа').className).toContain('ui-text--headline');
     expect(screen.getByText('Вес').className).toContain('ui-text--headline');
     expect(screen.getByText('Повторения').className).toContain('ui-text--headline');
