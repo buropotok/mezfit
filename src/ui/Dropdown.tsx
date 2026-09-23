@@ -1,5 +1,4 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { Button } from './primitives';
 import { List, ListItem, Modal } from './components';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { beginMultiDraft, commitMultiDraft, toggleMultiDraft } from './dropdownState';
@@ -81,7 +80,14 @@ export function Dropdown(props: DropdownProps) {
 
   return <>
     <button {...restTriggerProps} type="button" className={`ui-dropdown__trigger ui-dropdown__trigger--${variant} ${className}`.trim()} onClick={open} onPointerDown={(event) => { onTriggerPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onTriggerKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} disabled={disabled} aria-haspopup="dialog" aria-expanded={isOpen}>{triggerLabel}</button>
-    <Modal isOpen={isOpen} title={title} onClose={close} className={`ui-dropdown__modal ${modalClassName}`.trim()}>
+    <Modal
+      isOpen={isOpen}
+      title={title}
+      onClose={close}
+      hasCloseButton={false}
+      className={`ui-dropdown__modal ${modalClassName}`.trim()}
+      actions={props.mode === 'multi' ? [{ id: 'confirm', label: props.confirmLabel ?? 'OK', tone: 'primary', onClick: close }] : undefined}
+    >
       <div className="ui-dropdown__options">
         <List>
           {options.map((option) => {
@@ -94,7 +100,6 @@ export function Dropdown(props: DropdownProps) {
           })}
         </List>
       </div>
-      {props.mode === 'multi' ? <div className="ui-dropdown__footer"><Button className="ui-dropdown__confirm" onClick={close}>{props.confirmLabel ?? 'OK'}</Button></div> : null}
     </Modal>
   </>;
 }
