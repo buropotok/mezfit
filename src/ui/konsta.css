@@ -4,5 +4,5 @@
 @import 'konsta/react/theme.css';
 
 @theme {
-  --font-ios: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ios: var(--ui-font-family);
 }
