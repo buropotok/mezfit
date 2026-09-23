@@ -315,6 +315,8 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
   const showCloseButton = hasCloseButton ?? true;
   const allowBackdropClose = closeOnBackdrop ?? true;
 
+  if (!isOpen) return null;
+
   return (
     <Popup
       opened={isOpen}
@@ -327,7 +329,7 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
       <Page>
         {title || showCloseButton ? (
           <Navbar
-            title={title ? <span id={titleId}>{title}</span> : undefined}
+            title={title ? <h2 id={titleId}>{title}</h2> : undefined}
             right={showCloseButton ? (
               <KonstaButton type="button" clear rounded small inline onClick={onClose} aria-label={closeLabel}>
                 {closeLabel}
