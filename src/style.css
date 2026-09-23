@@ -40,22 +40,24 @@
   --color-focus: #44ADFF;
 }
 
-* { box-sizing: border-box; }
-html { background: var(--color-bg); }
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-bg);
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-regular);
+@layer legacy-base {
+  * { box-sizing: border-box; }
+  html { background: var(--color-bg); }
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    color: var(--color-text);
+    background: var(--color-bg);
+    font-family: var(--ui-font-family);
+    font-size: var(--ui-font-size-body);
+    line-height: var(--ui-line-height-body);
+    font-weight: var(--ui-font-weight-regular);
+  }
+  button, input, select, textarea { font: inherit; }
+  button { min-height: var(--control-h); }
+  button:disabled { cursor: wait; opacity: .55; }
 }
-button, input, select, textarea { font: inherit; }
-button { min-height: var(--control-h); }
-button:disabled { cursor: wait; opacity: .55; }
 
 .center,
 .app-shell {
@@ -81,10 +83,12 @@ button:disabled { cursor: wait; opacity: .55; }
 .client-workspace-header { justify-content: flex-start; align-items: center; min-height: var(--appbar-h); }
 .client-workspace-header h2 { margin-bottom: 0; }
 
-h1, h2, p { margin-top: 0; }
-h1 { margin-bottom: var(--space-1); font-size: var(--ui-font-size-large-title); line-height: var(--ui-line-height-large-title); font-weight: var(--ui-font-weight-regular); }
-h2 { margin-bottom: var(--space-2); font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); font-weight: var(--ui-font-weight-regular); }
-p { margin-bottom: var(--space-3); color: var(--color-text-secondary); font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); }
+@layer legacy-base {
+  h1, h2, p { margin-top: 0; }
+  h1 { margin-bottom: var(--space-1); font-size: var(--ui-font-size-large-title); line-height: var(--ui-line-height-large-title); font-weight: var(--ui-font-weight-regular); }
+  h2 { margin-bottom: var(--space-2); font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); font-weight: var(--ui-font-weight-regular); }
+  p { margin-bottom: var(--space-3); color: var(--color-text-secondary); font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); }
+}
 
 .eyebrow {
   margin-bottom: var(--space-1);
