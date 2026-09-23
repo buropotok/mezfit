@@ -68,13 +68,14 @@ describe('Modal alert variant', () => {
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 
-  it('supports disabled alert actions', () => {
+  it('keeps a confirm dismissible when all supplied actions are disabled', () => {
+    const onClose = vi.fn();
     render(
       <Modal
         isOpen
         variant="alert"
         title="Подтверждение"
-        onClose={() => undefined}
+        onClose={onClose}
         actions={[{ id: 'confirm', label: 'Продолжить', disabled: true, onClick: () => undefined }]}
       >
         Проверьте данные.
@@ -82,5 +83,7 @@ describe('Modal alert variant', () => {
     );
 
     expect((screen.getByRole('button', { name: 'Продолжить' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
