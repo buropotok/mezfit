@@ -45,6 +45,11 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
       onClose={close}
       closeOnBackdrop={!saving}
       className="global-exercise-editor"
+      hasCloseButton={false}
+      actions={[
+        { id: 'cancel', label: 'Отмена', onClick: close, disabled: saving },
+        { id: 'save', label: saving ? 'Сохраняем…' : state.mode === 'edit' ? 'Сохранить' : 'Добавить', tone: 'primary', onClick: submit, disabled: saving || !name.trim() },
+      ]}
     >
       <div className="global-exercise-editor-top">
         <Surface className="global-exercise-media-slot" aria-label="Медиа упражнения">
@@ -72,13 +77,7 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
       </div>
 
       {error ? <Text variant="footnote" className="global-exercise-editor-error" role="alert">{error}</Text> : null}
-      <div className="global-exercise-editor-actions">
-        {state.mode === 'edit' && onDelete ? <Button variant="danger" onClick={onDelete} disabled={saving}>Удалить</Button> : <span />}
-        <div className="global-exercise-editor-save-actions">
-          <Button variant="secondary" onClick={close} disabled={saving}>Отмена</Button>
-          <Button onClick={submit} disabled={saving || !name.trim()}>{saving ? 'Сохраняем…' : state.mode === 'edit' ? 'Сохранить' : 'Добавить'}</Button>
-        </div>
-      </div>
+      {state.mode === 'edit' && onDelete ? <div className="global-exercise-editor-actions"><Button variant="danger" onClick={onDelete} disabled={saving}>Удалить</Button></div> : null}
     </Modal>
   );
 }
