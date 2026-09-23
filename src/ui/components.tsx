@@ -294,7 +294,7 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
     return (
       <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
         <Dialog.Portal>
-          <div className="ui-modal ui-modal--alert" role="presentation">
+          <div className={`ui-modal ui-modal--alert ${className}`.trim()} role="presentation">
             <div className="ui-modal__container">
               <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowAlertBackdropClose ? undefined : (event) => event.preventDefault()} />
               <Dialog.Content role="alertdialog" className="ui-modal__dialog" aria-describedby={undefined} onEscapeKeyDown={blockAlertEscape ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowAlertBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowAlertBackdropClose ? undefined : (event) => event.preventDefault()}>
