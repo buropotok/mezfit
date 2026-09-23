@@ -28,3 +28,11 @@ The canonical Konsta theme for Mezfit is iOS + dark. It is applied globally thro
 Konsta uses the shared Mezfit platform font stack through Konsta/Tailwind's supported `@theme` token `--font-ios: var(--ui-font-family)`. This keeps the native Apple system font (SF Pro) on Apple platforms and uses bundled Golos Text on other platforms. Do not override component internals or `.k-*` selectors to force a font.
 
 Existing pre-Konsta components under `src/ui` are migration-era components. They may remain until their owning surfaces are intentionally migrated, but they must not be expanded as a parallel UI kit when Konsta already covers the requirement.
+
+## Modal / confirm contract
+
+The shared Mezfit `Modal` uses Konsta `Dialog` and `DialogButton`; it must not be implemented with Konsta `Popup` on phone surfaces.
+
+For ordinary dialogs, the primary action such as Save/Add/Confirm uses `DialogButton strong`, while Cancel is tonal. For destructive confirms, emphasis is intentionally reversed: Cancel uses `strong`, while the destructive Delete action is tonal. The legacy `variant="alert"` value remains accepted only as a compatibility alias; new product code uses `variant="confirm"`.
+
+Dialog glass, sizing, backdrop, typography, and button visuals are owned by Konsta. Project CSS must not restyle the Dialog or DialogButton primitives.
