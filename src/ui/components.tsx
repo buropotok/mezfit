@@ -303,8 +303,6 @@ export function Modal({
     const showAutomaticClose = hasCloseButton ?? (isConfirm ? !hasExplicitDismissal : !actions?.length);
     const allowBackdropClose = closeOnBackdrop ?? !isConfirm;
 
-    if (!isOpen) return null;
-
     const fallbackCloseAction: ModalAction = { id: 'close', label: closeLabel, onClick: onClose };
     const effectiveActions: readonly ModalAction[] = actions?.length
       ? showAutomaticClose
@@ -332,12 +330,13 @@ export function Modal({
 
     return (
       <KonstaDialog
-        opened
+        opened={isOpen}
         title={title ? <span id={titleId} role="heading" aria-level={2}>{title}</span> : undefined}
         buttons={buttons}
         onBackdropClick={allowBackdropClose ? onClose : undefined}
         role={isConfirm ? 'alertdialog' : 'dialog'}
         aria-modal="true"
+        aria-hidden={!isOpen}
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : 'Диалог'}
       >

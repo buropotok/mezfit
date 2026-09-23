@@ -68,6 +68,38 @@ describe('Modal alert variant', () => {
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps Konsta Dialog mounted while its opened state changes', () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <Modal
+        isOpen={false}
+        presentation="dialog"
+        title="Добавить фазу"
+        onClose={onClose}
+      >
+        Контент
+      </Modal>
+    );
+
+    const closedDialog = document.querySelector('[role="dialog"]');
+    expect(closedDialog).not.toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Добавить фазу' })).toBeNull();
+
+    rerender(
+      <Modal
+        isOpen
+        presentation="dialog"
+        title="Добавить фазу"
+        onClose={onClose}
+      >
+        Контент
+      </Modal>
+    );
+
+    expect(document.querySelector('[role="dialog"]')).toBe(closedDialog);
+    expect(screen.getByRole('dialog', { name: 'Добавить фазу' })).toBe(closedDialog);
+  });
+
   it('keeps a confirm dismissible when all supplied actions are disabled', () => {
     const onClose = vi.fn();
     render(
