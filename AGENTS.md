@@ -135,7 +135,7 @@ Drag state, ordering, and persistence need explicit ownership. Visual and persis
 
 The canonical Konsta theme is **iOS + dark**. Keep `KonstaProvider theme="ios" dark` and the required public `k-ios dark` theme-root classes at the application root unless the user explicitly changes the product-wide theme decision.
 
-The canonical Konsta iOS font is **Golos Text**, configured through the supported Tailwind/Konsta `@theme` token `--font-ios`. Do not enforce the font through `.k-*` selectors or component-internal overrides.
+Konsta must use the shared Mezfit platform font stack through the supported Tailwind/Konsta `@theme` token `--font-ios: var(--ui-font-family)`. This preserves the native Apple system font (SF Pro) on Apple platforms and Golos Text on other platforms. Do not enforce fonts through `.k-*` selectors or component-internal overrides.
 
 Konsta primitives own their mechanics and visual representation. Do not restyle, reskin, fork, or recreate a Konsta primitive through project CSS, wrapper-only visual overrides, private DOM selectors, or copied library markup. Use only the public configuration exposed by the Konsta component API. In particular, project CSS must not target Konsta's internal `.k-*` classes to alter a primitive.
 
