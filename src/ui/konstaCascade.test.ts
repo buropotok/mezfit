@@ -33,6 +33,12 @@ describe('Konsta cascade ownership', () => {
     );
   });
 
+  it('uses Golos Text for the Konsta iOS font token', () => {
+    expect(konstaStyles).toContain(
+      "--font-ios: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif;",
+    );
+  });
+
   it('does not enable Tailwind Preflight for the legacy application', () => {
     expect(konstaStyles).not.toContain("@import 'tailwindcss';");
   });
