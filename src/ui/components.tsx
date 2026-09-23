@@ -272,7 +272,7 @@ type ModalProps = {
   closeLabel?: string;
   hasCloseButton?: boolean;
   closeOnBackdrop?: boolean;
-  variant?: 'default' | 'alert';
+  variant?: 'default' | 'alert' | 'confirm';
   actions?: readonly ModalAction[];
   actionsLayout?: 'row' | 'column';
   onClose: () => void;
@@ -280,7 +280,7 @@ type ModalProps = {
 
 export function Modal({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton, closeOnBackdrop, variant = 'default', actions, onClose }: ModalProps) {
   const titleId = useId();
-  const isConfirm = variant === 'alert';
+  const isConfirm = variant === 'alert' || variant === 'confirm';
   const hasEnabledAction = actions?.some((action) => !action.disabled) ?? false;
   const hasExplicitDismissal = hasEnabledAction || hasCloseButton === true || closeOnBackdrop === true;
   const showAutomaticClose = hasCloseButton ?? (isConfirm ? !hasExplicitDismissal : !actions?.length);
