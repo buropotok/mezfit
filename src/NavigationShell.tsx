@@ -273,7 +273,7 @@ export function NavigationShell({
 
       <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
 
-      <Modal isOpen={calendarOpen} title="Календарь" className="app-calendar-modal" onClose={() => setCalendarOpen(false)}>
+      <Modal isOpen={calendarOpen} title="Календарь" onClose={() => setCalendarOpen(false)}>
         <Calendar value={selectedDate} onChange={setSelectedDate} />
       </Modal>
     </main>
