@@ -349,13 +349,19 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         busy={busy}
       />
 
-      <Modal isOpen={Boolean(inviteUrl)} title="Пригласить клиента" onClose={closeInvite}>
+      <Modal
+        isOpen={Boolean(inviteUrl)}
+        title="Пригласить клиента"
+        onClose={closeInvite}
+        hasCloseButton={false}
+        actions={[
+          { id: 'cancel', label: 'Закрыть', onClick: closeInvite },
+          { id: 'copy', label: 'Копировать', tone: 'primary', onClick: copyInvite },
+        ]}
+      >
         <p>Отправьте эту персональную ссылку клиенту в Telegram. Ссылка одноразовая и действует 30 дней.</p>
         <div className="link-box">{inviteUrl}</div>
         {inviteCopyError ? <p className="inline-message error-text invite-copy-error" role="alert">{inviteCopyError}</p> : null}
-        <div className="button-row invite-modal-actions">
-          <Button onClick={copyInvite}>Копировать ссылку</Button>
-        </div>
       </Modal>
 
       {inviteError ? <p className="inline-message" role="alert">{inviteError}</p> : null}
