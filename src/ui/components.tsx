@@ -1,6 +1,7 @@
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
+import { Block, Button as KonstaButton, Navbar, Page, Popup } from 'konsta/react';
 import type { UiComponentTheme } from './componentTheme';
 import type { UiIconPair } from './iconPair';
 import { usePressSpot } from './PressSpot';
@@ -278,33 +279,80 @@ type ModalProps = {
 };
 
 export function Modal({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton, closeOnBackdrop, variant = 'default', actions, actionsLayout = 'row', onClose }: ModalProps) {
+  const titleId = useId();
   const isAlert = variant === 'alert';
   const hasEnabledAction = actions?.some((action) => !action.disabled) ?? false;
   const hasAlertDismissal = hasEnabledAction || hasCloseButton === true || closeOnBackdrop === true;
-  const showCloseButton = hasCloseButton ?? (isAlert ? !hasAlertDismissal : true);
-  const allowBackdropClose = closeOnBackdrop ?? !isAlert;
-  const blockEscape = isAlert && (hasEnabledAction || allowBackdropClose || showCloseButton);
+  const showAlertCloseButton = hasCloseButton ?? !hasAlertDismissal;
+  const allowAlertBackdropClose = closeOnBackdrop ?? false;
+  const blockAlertEscape = hasEnabledAction || allowAlertBackdropClose || showAlertCloseButton;
   const startKeyboardScale = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget);
   };
 
-  return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <Dialog.Portal>
-        <div className={`ui-modal${isAlert ? ' ui-modal--alert' : ''} ${className}`.trim()} role="presentation">
-          <div className="ui-modal__container">
-            <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowBackdropClose ? undefined : (event) => event.preventDefault()} />
-            <Dialog.Content role={isAlert ? 'alertdialog' : undefined} className="ui-modal__dialog" aria-describedby={undefined} onEscapeKeyDown={blockEscape ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
-              {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
-              {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
-              <div className="ui-modal__content">
-                {isAlert ? <Dialog.Description asChild><div className="ui-modal__description">{children}</div></Dialog.Description> : children}
-                {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onPointerDown={(event) => { if (!action.disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { if (!action.disabled) startKeyboardScale(event); }} onClick={action.onClick}>{action.label}</button>)}</div> : null}
-              </div>
-            </Dialog.Content>
+  if (isAlert) {
+    return (
+      <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+        <Dialog.Portal>
+          <div className={`ui-modal ui-modal--alert ${className}`.trim()} role="presentation">
+            <div className="ui-modal__container">
+              <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowAlertBackdropClose ? undefined : (event) => event.preventDefault()} />
+              <Dialog.Content role="alertdialog" className="ui-modal__dialog" aria-describedby={undefined} onEscapeKeyDown={blockAlertEscape ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowAlertBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowAlertBackdropClose ? undefined : (event) => event.preventDefault()}>
+                {title || showAlertCloseButton ? <div className="ui-modal__header">{showAlertCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
+                {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
+                <div className="ui-modal__content">
+                  <Dialog.Description asChild><div className="ui-modal__description">{children}</div></Dialog.Description>
+                  {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onPointerDown={(event) => { if (!action.disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { if (!action.disabled) startKeyboardScale(event); }} onClick={action.onClick}>{action.label}</button>)}</div> : null}
+                </div>
+              </Dialog.Content>
+            </div>
           </div>
-        </div>
-      </Dialog.Portal>
-    </Dialog.Root>
+        </Dialog.Portal>
+      </Dialog.Root>
+    );
+  }
+
+  const showCloseButton = hasCloseButton ?? true;
+  const allowBackdropClose = closeOnBackdrop ?? true;
+
+  if (!isOpen) return null;
+
+  return (
+    <Popup
+      opened={isOpen}
+      onBackdropClick={allowBackdropClose ? onClose : undefined}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? titleId : undefined}
+      aria-label={title ? undefined : 'Диалог'}
+    >
+      <Page>
+        {title || showCloseButton ? (
+          <Navbar
+            title={title ? <span id={titleId} role="heading" aria-level={2}>{title}</span> : undefined}
+            right={showCloseButton ? (
+              <KonstaButton type="button" clear rounded small inline onClick={onClose} aria-label={closeLabel}>
+                {closeLabel}
+              </KonstaButton>
+            ) : undefined}
+          />
+        ) : null}
+        <Block strong inset>
+          <div className={className || undefined}>
+            {children}
+            {actions?.length ? (
+              <div className={`ui-konsta-popup-actions ui-konsta-popup-actions--${actionsLayout}`}>
+                {actions.map((action) => (
+                  <KonstaButton key={action.id} type="button" clear rounded disabled={action.disabled} onClick={action.onClick}>
+                    {action.label}
+                  </KonstaButton>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </Block>
+      </Page>
+    </Popup>
   );
 }
+

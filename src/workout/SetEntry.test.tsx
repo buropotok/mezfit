@@ -97,16 +97,14 @@ describe('SetEntry rendering', () => {
   it('renders the UI kit modal with metadata, PLAN and the analogous set from the previous workout', () => {
     renderSetEntry();
 
-    const title = screen.getByRole('heading', { name: 'Подход 3' });
-    const modal = title.closest('.ui-modal__dialog');
-    expect(modal).not.toBeNull();
-    expect(modal?.textContent).toContain('Жим лёжа');
-    expect(modal?.textContent).toContain('Силовой блок');
-    expect(modal?.textContent).toContain('15 сентября 2026');
-    expect(modal?.textContent).toContain('План: 80 кг');
-    expect(modal?.textContent).toContain('Предыдущая тренировка: 77,5 кг');
-    expect(modal?.textContent).toContain('План: 10');
-    expect(modal?.textContent).toContain('Предыдущая тренировка: 10');
+    const modal = screen.getByRole('dialog', { name: 'Подход 3' });
+    expect(modal.textContent).toContain('Жим лёжа');
+    expect(modal.textContent).toContain('Силовой блок');
+    expect(modal.textContent).toContain('15 сентября 2026');
+    expect(modal.textContent).toContain('План: 80 кг');
+    expect(modal.textContent).toContain('Предыдущая тренировка: 77,5 кг');
+    expect(modal.textContent).toContain('План: 10');
+    expect(modal.textContent).toContain('Предыдущая тренировка: 10');
   });
 
   it('renders only the workout date when there is no program', () => {
@@ -135,13 +133,13 @@ describe('SetEntry rendering', () => {
     expect(reps.closest('.ui-text-input')).not.toBeNull();
 
     const save = screen.getByRole('button', { name: 'Сохранить' });
-    expect(save.closest('.ui-modal__actions')).not.toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Подход 3' }).contains(save)).toBe(true);
   });
 
   it('uses the approved hierarchy for the modal, exercise and metric labels', () => {
     renderSetEntry();
 
-    expect(screen.getByRole('heading', { name: 'Подход 3' }).className).toContain('ui-modal__title');
+    expect(screen.getByRole('heading', { name: 'Подход 3' }).getAttribute('aria-level')).toBe('2');
     expect(screen.getByText('Жим лёжа').className).toContain('ui-text--headline');
     expect(screen.getByText('Вес').className).toContain('ui-text--headline');
     expect(screen.getByText('Повторения').className).toContain('ui-text--headline');
