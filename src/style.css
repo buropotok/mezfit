@@ -54,9 +54,6 @@
     line-height: var(--ui-line-height-body);
     font-weight: var(--ui-font-weight-regular);
   }
-  button, input, select, textarea { font: inherit; }
-  button { min-height: var(--control-h); }
-  button:disabled { cursor: wait; opacity: .55; }
 }
 
 .center,
