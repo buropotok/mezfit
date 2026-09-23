@@ -1,4 +1,4 @@
-@layer theme, base, components, utilities;
+@layer theme, base, legacy-base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import 'konsta/react/theme.css';
