@@ -336,6 +336,7 @@ export function Modal({
         onBackdropClick={allowBackdropClose ? onClose : undefined}
         role={isConfirm ? 'alertdialog' : 'dialog'}
         aria-modal="true"
+        aria-hidden={!isOpen}
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : 'Диалог'}
       >
