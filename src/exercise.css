@@ -110,7 +110,6 @@
 .exercise-create-note,
 .exercise-create-error { display: block; margin-top: var(--space-2); }
 .exercise-create-error { color: var(--color-danger); }
-.exercise-create-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
 
 .category-chest { --category-color: #FF4D6D; }
 .category-arms { --category-color: #FF8A3D; }
