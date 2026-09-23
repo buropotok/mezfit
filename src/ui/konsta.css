@@ -2,3 +2,7 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import 'konsta/react/theme.css';
+
+@theme {
+  --font-ios: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif;
+}
