@@ -340,7 +340,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
         onClose={closePhaseCreation}
         actions={[
           { id: 'cancel', label: 'Отмена', onClick: closePhaseCreation, disabled: phaseCreateBusy },
-          { id: 'save', label: phaseCreateBusy ? 'Добавление…' : 'Добавить', onClick: () => { void savePhase(); }, disabled: !canCreatePhase },
+          { id: 'save', label: phaseCreateBusy ? 'Добавление…' : 'Добавить', tone: 'primary', onClick: () => { void savePhase(); }, disabled: !canCreatePhase },
         ]}
       >
         <TextInput
