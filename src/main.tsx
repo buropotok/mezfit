@@ -1,3 +1,4 @@
+import { KonstaProvider } from 'konsta/react';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
@@ -27,10 +28,13 @@ const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
+  root.classList.add('k-ios', 'dark');
   const content = window.location.pathname === '/ui-kit' ? <><UiKitPage /><ThemeVariantsCatalog /></> : <App />;
   createRoot(root).render(
     <React.StrictMode>
-      {content}
+      <KonstaProvider theme="ios" dark>
+        {content}
+      </KonstaProvider>
     </React.StrictMode>,
   );
 }
