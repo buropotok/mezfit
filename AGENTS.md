@@ -145,7 +145,9 @@ Existing pre-Konsta shared primitives may remain while their owning surfaces are
 
 Compact modal/confirm surfaces use Konsta `Dialog` + `DialogButton`; do not use Konsta `Popup` as a phone modal. Long working forms may remain on the legacy Modal until their owning screens are redesigned. For ordinary compact dialogs, Save/Add/Copy stays tonal and Cancel/Close uses `strong`; for confirm dialogs, Cancel stays tonal and the confirming action (Delete/Finish/etc.) uses `strong`.
 
-CSS must have clear component/surface ownership. Do not use incidental selectors or CSS classes as cross-component control/state channels. Verify Mini App widths, safe areas, and keyboard-sensitive layouts.
+Mezfit is a mobile-only Telegram Mini App with touch interaction as the supported product target. Desktop/hardware-keyboard navigation is out of scope: do not add or preserve Tab focus-trapping, Escape-to-dismiss, keyboard-only focus restoration, or similar desktop modal mechanics unless the user explicitly changes this product decision. Mobile text-input focus, the on-screen keyboard, viewport resizing, safe areas, and touch accessibility remain in scope.
+
+CSS must have clear component/surface ownership. Do not use incidental selectors or CSS classes as cross-component control/state channels. Verify Mini App widths, safe areas, and mobile virtual-keyboard-sensitive layouts.
 
 ## 20. Import-time code and globals
 
