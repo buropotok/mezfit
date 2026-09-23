@@ -348,7 +348,6 @@ export function ProgramsPage({
 
       <Modal
         isOpen={creationDraft !== null}
-        presentation="dialog"
         title={<span className="program-create-title"><img src={programIconUrl} alt="" aria-hidden="true" />Создать программу</span>}
         hasCloseButton={false}
         onClose={() => onCancelCreation?.()}
