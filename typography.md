@@ -74,7 +74,7 @@ Normal textual content must not use sizes below Caption 12/16. Smaller dimension
 
 Every newly created app-owned text-bearing element in the application must use this typography system. Prefer existing shared primitives and semantic typography roles. When component-owned CSS is appropriate, reference the shared typography tokens directly instead of duplicating literal font sizes or line-heights.
 
-Konsta UI primitives are the exception at the primitive boundary: their internal typography is part of the library-owned visual representation and must not be overridden to force Mezfit typography tokens onto the primitive. Do not target Konsta internal `.k-*` selectors or otherwise restyle a Konsta primitive's text. Mezfit typography tokens still apply to app-owned text and composition outside the primitive itself.
+Konsta UI primitives are the exception at the primitive boundary: their internal typography is part of the library-owned visual representation and must not be overridden to force Mezfit typography tokens onto the primitive. The one product-level font choice is configured through Konsta's supported Tailwind theme API: the iOS token `--font-ios` is set to **Golos Text** in `src/ui/konsta.css`. Do not target Konsta internal `.k-*` selectors or otherwise restyle a Konsta primitive's text. Mezfit typography tokens still apply to app-owned text and composition outside the primitive itself.
 
 Do not create parallel component-specific typography systems. A component may choose an existing semantic role, but it must not invent its own type scale.
 
