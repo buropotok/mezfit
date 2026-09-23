@@ -86,7 +86,10 @@ export function Dropdown(props: DropdownProps) {
       onClose={close}
       hasCloseButton={false}
       className={`ui-dropdown__modal ${modalClassName}`.trim()}
-      actions={props.mode === 'multi' ? [{ id: 'confirm', label: props.confirmLabel ?? 'OK', tone: 'primary', onClick: close }] : undefined}
+      actions={props.mode === 'multi' ? [
+        { id: 'cancel', label: 'Закрыть', onClick: close },
+        { id: 'confirm', label: props.confirmLabel ?? 'OK', tone: 'primary', onClick: close },
+      ] : undefined}
     >
       <div className="ui-dropdown__options">
         <List>
