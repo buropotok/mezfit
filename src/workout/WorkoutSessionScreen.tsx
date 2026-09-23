@@ -427,7 +427,7 @@ export function WorkoutSessionScreen({
 
       <Modal
         isOpen={completeConfirmOpen}
-        variant="alert"
+        variant="confirm"
         title="Завершить тренировку?"
         closeOnBackdrop={false}
         actions={[
