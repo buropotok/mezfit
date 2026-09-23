@@ -329,7 +329,7 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
       <Page>
         {title || showCloseButton ? (
           <Navbar
-            title={title ? <h2 id={titleId}>{title}</h2> : undefined}
+            title={title ? <span id={titleId} role="heading" aria-level={2}>{title}</span> : undefined}
             right={showCloseButton ? (
               <KonstaButton type="button" clear rounded small inline onClick={onClose} aria-label={closeLabel}>
                 {closeLabel}
