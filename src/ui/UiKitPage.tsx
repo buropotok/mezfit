@@ -78,6 +78,6 @@ export function UiKitPage() {
     <Modal isOpen={modalDemo === 'default'} title="Пригласить клиента" onClose={closeModal} className="ui-kit-modal-demo"><Text>Здесь будет ссылка-приглашение и действие копирования.</Text></Modal>
     <Modal isOpen={modalDemo === 'info'} variant="alert" title="Готово" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'ok', label: 'OK', tone: 'primary', onClick: closeModal }]}><Text>Изменения сохранены.</Text></Modal>
     <Modal isOpen={modalDemo === 'confirm'} variant="alert" title="Завершить тренировку?" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'cancel', label: 'Отмена', onClick: closeModal }, { id: 'confirm', label: 'Завершить', tone: 'primary', onClick: closeModal }]}><Text>После завершения результаты будут сохранены.</Text></Modal>
-    <Modal isOpen={modalDemo === 'destructive'} variant="alert" title="Удалить тренировку?" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'delete', label: 'Удалить', tone: 'danger', onClick: closeModal }, { id: 'cancel', label: 'Отмена', onClick: closeModal }]}><Text>Это действие нельзя отменить.</Text></Modal>
+    <Modal isOpen={modalDemo === 'destructive'} variant="alert" title="Удалить тренировку?" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'cancel', label: 'Отмена', onClick: closeModal }, { id: 'delete', label: 'Удалить', tone: 'danger', onClick: closeModal }]}><Text>Это действие нельзя отменить.</Text></Modal>
   </main>;
 }
