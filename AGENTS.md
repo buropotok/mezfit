@@ -147,6 +147,8 @@ Compact modal/confirm surfaces use Konsta `Dialog` + `DialogButton`; do not use 
 
 Mezfit is a mobile-only Telegram Mini App with touch interaction as the supported product target. Desktop/hardware-keyboard navigation is out of scope: do not add or preserve Tab focus-trapping, Escape-to-dismiss, keyboard-only focus restoration, or similar desktop modal mechanics unless the user explicitly changes this product decision. Mobile text-input focus, the on-screen keyboard, viewport resizing, safe areas, and touch accessibility remain in scope.
 
+For compact Konsta `Dialog` surfaces, background scroll locking is also not a product requirement. Do not add custom touch-move suppression, body scroll locks, Radix wrappers, or other mechanics around Konsta solely to prevent the page behind a Dialog from moving during a backdrop swipe. Native Konsta behavior is accepted unless the user explicitly changes this decision.
+
 CSS must have clear component/surface ownership. Do not use incidental selectors or CSS classes as cross-component control/state channels. Verify Mini App widths, safe areas, and mobile virtual-keyboard-sensitive layouts.
 
 ## 20. Import-time code and globals
