@@ -348,12 +348,13 @@ export function ProgramsPage({
 
       <Modal
         isOpen={creationDraft !== null}
+        presentation="dialog"
         title={<span className="program-create-title"><img src={programIconUrl} alt="" aria-hidden="true" />Создать программу</span>}
         hasCloseButton={false}
         onClose={() => onCancelCreation?.()}
         actions={[
           { id: 'cancel', label: 'Отмена', onClick: () => onCancelCreation?.(), disabled: creationBusy },
-          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', onClick: () => onSaveCreation?.(), disabled: !canSave },
+          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', tone: 'primary', onClick: () => onSaveCreation?.(), disabled: !canSave },
         ]}
       >
         {creationDraft ? (

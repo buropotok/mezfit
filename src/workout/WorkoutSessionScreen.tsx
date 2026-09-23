@@ -427,11 +427,11 @@ export function WorkoutSessionScreen({
 
       <Modal
         isOpen={completeConfirmOpen}
-        variant="alert"
+        variant="confirm"
         title="Завершить тренировку?"
         closeOnBackdrop={false}
         actions={[
-          { id: 'cancel', label: 'Продолжить', onClick: () => setCompleteConfirmOpen(false) },
+          { id: 'cancel', label: 'Отмена', onClick: () => setCompleteConfirmOpen(false) },
           { id: 'complete', label: 'Завершить', tone: 'primary', onClick: () => void handleComplete() },
         ]}
         onClose={() => setCompleteConfirmOpen(false)}

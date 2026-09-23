@@ -34,18 +34,11 @@ const listSlots: TypographySlot[] = [
   { id: 'secondary', label: 'Вспомогательная', defaultRole: 'footnote', selector: '.ui-list-item__subtitle' },
   { id: 'trailing', label: 'Правая подпись', defaultRole: 'footnote', selector: '.ui-list-item__trailing' },
 ];
-const modalSlots: TypographySlot[] = [
-  { id: 'modal-title', label: 'Заголовок', defaultRole: 'headline', selector: '.ui-modal__title' },
-  { id: 'modal-body', label: 'Основной текст', defaultRole: 'body', selector: '.ui-modal__content .ui-text' },
-  { id: 'modal-buttons', label: 'Кнопки', defaultRole: 'body', selector: '.ui-modal__action', weightOverride: 500 },
-];
-
 type ModalDemo = 'default' | 'info' | 'confirm' | 'destructive' | null;
 type BottomSheetDemo = 'modal' | 'surface' | 'inset' | null;
 
 export function UiKitPage() {
   const [typography, setTypography] = useState(defaultTypographyValues);
-  const [modalTypography, setModalTypography] = useState<TypographyAssignments>({ 'modal-title': 'headline', 'modal-body': 'body', 'modal-buttons': 'body' });
   const [menuTypography, setMenuTypography] = useState<TypographyAssignments>({ labels: 'body' });
   const [dropdownTypography, setDropdownTypography] = useState<TypographyAssignments>({ trigger: 'body', title: 'headline', options: 'body', buttons: 'body' });
   const [modalDemo, setModalDemo] = useState<ModalDemo>(null);
@@ -64,9 +57,6 @@ export function UiKitPage() {
     styleRule('.ui-kit-dropdown-demo .ui-modal__title', dropdownTypography.title),
     styleRule('.ui-kit-dropdown-demo .ui-dropdown__options .ui-list-item__title', dropdownTypography.options, 600),
     styleRule('.ui-kit-dropdown-demo .ui-dropdown__confirm', dropdownTypography.buttons, 500),
-    styleRule('.ui-kit-modal-demo .ui-modal__title', modalTypography['modal-title']),
-    styleRule('.ui-kit-modal-demo .ui-modal__content .ui-text', modalTypography['modal-body']),
-    styleRule('.ui-kit-modal-demo .ui-modal__action', modalTypography['modal-buttons'], 500),
   ].join('\n');
 
   return <main className="ui-kit-page">
@@ -88,10 +78,10 @@ export function UiKitPage() {
     <Surface as="section" className="ui-kit-section"><Text variant="title">Sortable Telegram list</Text><Text variant="caption" tone="muted">Удерживайте строку и перетащите её. Разделители включены по умолчанию и отключаются через showSeparators.</Text><Divider /><TypographySpecimen kind="sortable-list" slots={listSlots} values={typography}><div className="ui-kit-stack"><div><Text variant="footnote" tone="muted">С разделителями · default</Text><SortableList items={exercises} onReorder={setExercises} /></div><div><Text variant="footnote" tone="muted">Без разделителей · showSeparators=false</Text><SortableList items={plainExercises} onReorder={setPlainExercises} showSeparators={false} /></div></div></TypographySpecimen></Surface>
     <Surface as="section" className="ui-kit-section"><Text variant="title">Bottom sheet</Text><Text variant="caption" tone="muted">Большая overlay-поверхность снизу. По умолчанию modalColor=true использует --ui-color-modal; modalColor=false оставляет обычный surface. inset=true добавляет UI Kit-owned отступы от краёв и полное скругление.</Text><Divider /><div className="ui-kit-row"><Button onClick={() => setBottomSheetDemo('modal')}>modalColor=true</Button><Button variant="secondary" onClick={() => setBottomSheetDemo('surface')}>modalColor=false</Button><Button variant="secondary" onClick={() => setBottomSheetDemo('inset')}>inset=true</Button></div></Surface>
     <BottomSheet isOpen={bottomSheetDemo !== null} title="Упражнения" modalColor={bottomSheetDemo !== 'surface'} inset={bottomSheetDemo === 'inset'} onClose={() => setBottomSheetDemo(null)}><div style={{ padding: '0 1.5rem 1.5rem' }}><Text tone="muted">Пример полноразмерного рабочего пространства внутри тренировки.</Text><List divider="inset"><ListItem title="Грудь" trailing="12" /><ListItem title="Спина" trailing="15" /><ListItem title="Ноги" trailing="18" /></List></div></BottomSheet>
-    <Surface as="section" elevated className="ui-kit-section"><Text variant="title">Modal</Text><Text variant="caption" tone="muted">Content modal и Telegram Web A alert/confirm варианты на общей Radix-основе.</Text><Divider /><div className="ui-kit-row"><Button onClick={() => setModalDemo('default')}>Content</Button><Button variant="secondary" onClick={() => setModalDemo('info')}>Info</Button><Button variant="secondary" onClick={() => setModalDemo('confirm')}>Confirm</Button><Button variant="danger" onClick={() => setModalDemo('destructive')}>Delete</Button></div><ComponentTypographySettings slots={modalSlots} assignments={modalTypography} values={typography} onChange={setModalTypography} /></Surface>
-    <Modal isOpen={modalDemo === 'default'} title="Пригласить клиента" onClose={closeModal} className="ui-kit-modal-demo"><Text>Здесь будет ссылка-приглашение и действие копирования.</Text></Modal>
-    <Modal isOpen={modalDemo === 'info'} variant="alert" title="Готово" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'ok', label: 'OK', onClick: closeModal }]}><Text>Изменения сохранены.</Text></Modal>
-    <Modal isOpen={modalDemo === 'confirm'} variant="alert" title="Завершить тренировку?" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'confirm', label: 'Завершить', onClick: closeModal }, { id: 'cancel', label: 'Отмена', onClick: closeModal }]}><Text>После завершения результаты будут сохранены.</Text></Modal>
-    <Modal isOpen={modalDemo === 'destructive'} variant="alert" title="Удалить тренировку?" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'delete', label: 'Удалить', tone: 'danger', onClick: closeModal }, { id: 'cancel', label: 'Отмена', onClick: closeModal }]}><Text>Это действие нельзя отменить.</Text></Modal>
+    <Surface as="section" elevated className="ui-kit-section"><Text variant="title">Modal</Text><Text variant="caption" tone="muted">Компактные modal/confirm используют Konsta Dialog с iOS glass и штатными DialogButton. Длинные рабочие формы пока остаются legacy.</Text><Divider /><div className="ui-kit-row"><Button onClick={() => setModalDemo('default')}>Content</Button><Button variant="secondary" onClick={() => setModalDemo('info')}>Info</Button><Button variant="secondary" onClick={() => setModalDemo('confirm')}>Confirm</Button><Button variant="danger" onClick={() => setModalDemo('destructive')}>Delete</Button></div></Surface>
+    <Modal isOpen={modalDemo === 'default'} presentation="dialog" title="Пригласить клиента" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'cancel', label: 'Закрыть', onClick: closeModal }, { id: 'copy', label: 'Копировать', tone: 'primary', onClick: closeModal }]}><Text>Здесь будет ссылка-приглашение и действие копирования.</Text></Modal>
+    <Modal isOpen={modalDemo === 'info'} variant="confirm" title="Готово" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'ok', label: 'OK', tone: 'primary', onClick: closeModal }]}><Text>Изменения сохранены.</Text></Modal>
+    <Modal isOpen={modalDemo === 'confirm'} variant="confirm" title="Завершить тренировку?" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'cancel', label: 'Отмена', onClick: closeModal }, { id: 'confirm', label: 'Завершить', tone: 'primary', onClick: closeModal }]}><Text>После завершения результаты будут сохранены.</Text></Modal>
+    <Modal isOpen={modalDemo === 'destructive'} variant="confirm" title="Удалить тренировку?" onClose={closeModal} className="ui-kit-modal-demo" actions={[{ id: 'cancel', label: 'Отмена', onClick: closeModal }, { id: 'delete', label: 'Удалить', tone: 'danger', onClick: closeModal }]}><Text>Это действие нельзя отменить.</Text></Modal>
   </main>;
 }
