@@ -1,13 +1,13 @@
+// @ts-expect-error Vitest runs this test in Node; production tsconfig intentionally omits Node globals.
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const legacyStyles = readFileSync(
-  fileURLToPath(new URL('../style.css', import.meta.url)),
+  new URL('../style.css', import.meta.url),
   'utf8',
 );
 const konstaStyles = readFileSync(
-  fileURLToPath(new URL('./konsta.css', import.meta.url)),
+  new URL('./konsta.css', import.meta.url),
   'utf8',
 );
 
