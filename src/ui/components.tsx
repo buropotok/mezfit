@@ -315,7 +315,7 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = 'Ð
   return (
     <KonstaDialog
       opened
-      title={title ? <span id={titleId}>{title}</span> : undefined}
+      title={title ? <span id={titleId} role="heading" aria-level={2}>{title}</span> : undefined}
       buttons={buttons}
       onBackdropClick={allowBackdropClose ? onClose : undefined}
       role={isConfirm ? 'alertdialog' : 'dialog'}
