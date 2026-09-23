@@ -315,9 +315,8 @@ export function Modal({
         : [];
 
     const buttons = effectiveActions.length ? effectiveActions.map((action) => {
-      const isDismissAction = action.id === 'cancel' || action.id === 'close';
       const isConfirmAction = action.tone === 'primary' || action.tone === 'danger';
-      const strong = isConfirm ? isConfirmAction : isDismissAction;
+      const strong = isConfirmAction;
 
       return (
         <DialogButton
