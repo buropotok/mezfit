@@ -38,3 +38,5 @@ The shared migration adapter uses `presentation="dialog"` for compact ordinary d
 For ordinary dialogs, the primary action such as Save/Add/Copy is the regular tonal `DialogButton`, while Cancel/Close uses `DialogButton strong`. For confirmation dialogs, the rule is reversed: Cancel is regular tonal and the confirming action (for example Delete or Finish) uses `DialogButton strong`.
 
 Dialog glass, sizing, backdrop, typography, and button visuals are owned by Konsta. Project CSS must not restyle the Dialog or DialogButton primitives.
+
+For the mobile-only Mini App, compact Konsta Dialogs intentionally use Konsta's native backdrop behavior without custom background scroll locking. A swipe on the backdrop may move the underlying page; this is an accepted product behavior and must not be patched with custom Dialog mechanics.
