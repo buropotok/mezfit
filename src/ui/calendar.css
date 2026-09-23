@@ -64,21 +64,3 @@
   opacity: .45;
 }
 
-.app-calendar-modal .ui-modal__dialog {
-  width: calc(100vw - 1rem);
-  max-width: 40rem;
-  margin: .5rem auto;
-}
-
-.app-calendar-modal .ui-modal__content {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 1rem;
-}
-
-@media (max-width: 450px) {
-  .app-calendar-modal .ui-modal__dialog {
-    width: calc(100vw - 1rem);
-    max-width: calc(100vw - 1rem);
-  }
-}
