@@ -305,10 +305,13 @@ export function Modal({
 
     if (!isOpen) return null;
 
+    const fallbackCloseAction: ModalAction = { id: 'close', label: closeLabel, tone: 'primary', onClick: onClose };
     const effectiveActions: readonly ModalAction[] = actions?.length
-      ? actions
+      ? showAutomaticClose
+        ? [...actions, fallbackCloseAction]
+        : actions
       : showAutomaticClose
-        ? [{ id: 'close', label: closeLabel, tone: 'primary', onClick: onClose }]
+        ? [fallbackCloseAction]
         : [];
 
     const buttons = effectiveActions.length ? effectiveActions.map((action) => {
