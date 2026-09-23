@@ -1,6 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import legacyStyles from '../style.css?raw';
-import konstaStyles from './konsta.css?raw';
+
+const legacyStyles = readFileSync(
+  fileURLToPath(new URL('../style.css', import.meta.url)),
+  'utf8',
+);
+const konstaStyles = readFileSync(
+  fileURLToPath(new URL('./konsta.css', import.meta.url)),
+  'utf8',
+);
 
 describe('Konsta cascade ownership', () => {
   it('keeps legacy global element styles below Konsta utilities', () => {
