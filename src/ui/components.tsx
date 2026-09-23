@@ -305,7 +305,7 @@ export function Modal({
 
     if (!isOpen) return null;
 
-    const fallbackCloseAction: ModalAction = { id: 'close', label: closeLabel, tone: 'primary', onClick: onClose };
+    const fallbackCloseAction: ModalAction = { id: 'close', label: closeLabel, onClick: onClose };
     const effectiveActions: readonly ModalAction[] = actions?.length
       ? showAutomaticClose
         ? [...actions, fallbackCloseAction]
@@ -317,8 +317,7 @@ export function Modal({
     const buttons = effectiveActions.length ? effectiveActions.map((action) => {
       const isDismissAction = action.id === 'cancel' || action.id === 'close';
       const isConfirmAction = action.tone === 'primary' || action.tone === 'danger';
-      const strong = effectiveActions.length === 1
-        || (isConfirm ? isConfirmAction : isDismissAction);
+      const strong = isConfirm ? isConfirmAction : isDismissAction;
 
       return (
         <DialogButton
