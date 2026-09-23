@@ -160,7 +160,18 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
       <FloatingActionButton label="Добавить упражнение" onClick={() => setShowCreate(true)}>+</FloatingActionButton>
     </section>
 
-    <Modal isOpen={showCreate} title="Новое упражнение" onClose={closeCreate} closeOnBackdrop={!saving} className="exercise-create-modal">
+    <Modal
+      isOpen={showCreate}
+      title="Новое упражнение"
+      onClose={closeCreate}
+      closeOnBackdrop={!saving}
+      hasCloseButton={false}
+      className="exercise-create-modal"
+      actions={[
+        { id: 'cancel', label: 'Отмена', onClick: closeCreate, disabled: saving },
+        { id: 'save', label: saving ? 'Добавляем…' : 'Добавить', tone: 'primary', onClick: () => { void save(); }, disabled: saving || !canSave },
+      ]}
+    >
       <div className="exercise-create-first-row">
         <Button
           variant="secondary"
@@ -236,10 +247,6 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
       </div>
 
       {error ? <Text variant="footnote" className="exercise-create-error" role="alert">{error}</Text> : null}
-      <div className="exercise-create-actions">
-        <Button variant="secondary" disabled={saving} onClick={closeCreate}>Отмена</Button>
-        <Button disabled={saving || !canSave} onClick={() => void save()}>{saving ? 'Добавляем…' : 'Добавить'}</Button>
-      </div>
     </Modal>
   </section>;
 }
