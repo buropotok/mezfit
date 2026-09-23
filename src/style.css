@@ -57,31 +57,33 @@
   button, input, select, textarea { font: inherit; }
   button { min-height: var(--control-h); }
   button:disabled { cursor: wait; opacity: .55; }
+}
 
-  .center,
-  .app-shell {
-    width: min(720px, 100%);
-    margin: 0 auto;
-    padding: var(--space-3) var(--page-pad-x) var(--space-4);
-  }
-  .center { min-height: 100vh; display: grid; place-items: center; }
-  .stack { display: grid; gap: var(--space-2); }
+.center,
+.app-shell {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: var(--space-3) var(--page-pad-x) var(--space-4);
+}
+.center { min-height: 100vh; display: grid; place-items: center; }
+.stack { display: grid; gap: var(--space-2); }
 
-  .shell-header,
-  .section-heading,
-  .button-row,
-  .client-workspace-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-  }
-  .shell-header { min-height: var(--appbar-h); margin-bottom: var(--space-3); }
-  .section-heading { align-items: flex-start; }
-  .button-row { justify-content: flex-end; margin-top: var(--space-4); gap: var(--space-2); }
-  .client-workspace-header { justify-content: flex-start; align-items: center; min-height: var(--appbar-h); }
-  .client-workspace-header h2 { margin-bottom: 0; }
+.shell-header,
+.section-heading,
+.button-row,
+.client-workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.shell-header { min-height: var(--appbar-h); margin-bottom: var(--space-3); }
+.section-heading { align-items: flex-start; }
+.button-row { justify-content: flex-end; margin-top: var(--space-4); gap: var(--space-2); }
+.client-workspace-header { justify-content: flex-start; align-items: center; min-height: var(--appbar-h); }
+.client-workspace-header h2 { margin-bottom: 0; }
 
+@layer legacy-base {
   h1, h2, p { margin-top: 0; }
   h1 { margin-bottom: var(--space-1); font-size: var(--ui-font-size-large-title); line-height: var(--ui-line-height-large-title); font-weight: var(--ui-font-weight-regular); }
   h2 { margin-bottom: var(--space-2); font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); font-weight: var(--ui-font-weight-regular); }
