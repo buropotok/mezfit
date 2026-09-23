@@ -33,9 +33,9 @@ describe('Konsta cascade ownership', () => {
     );
   });
 
-  it('uses Golos Text for the Konsta iOS font token', () => {
+  it('uses the shared Mezfit platform font stack for Konsta iOS', () => {
     expect(konstaStyles).toContain(
-      "--font-ios: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif;",
+      '--font-ios: var(--ui-font-family);',
     );
   });
 
