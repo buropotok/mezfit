@@ -353,7 +353,7 @@ export function ProgramsPage({
         onClose={() => onCancelCreation?.()}
         actions={[
           { id: 'cancel', label: 'Отмена', onClick: () => onCancelCreation?.(), disabled: creationBusy },
-          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', onClick: () => onSaveCreation?.(), disabled: !canSave },
+          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', tone: 'primary', onClick: () => onSaveCreation?.(), disabled: !canSave },
         ]}
       >
         {creationDraft ? (

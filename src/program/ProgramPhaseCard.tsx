@@ -173,7 +173,7 @@ export function ProgramPhaseCard({
         <Modal
           isOpen={deleteOpen}
           title="Удалить фазу?"
-          variant="alert"
+          variant="confirm"
           hasCloseButton={false}
           closeOnBackdrop={!deleteBusy}
           onClose={closeDelete}

@@ -1,6 +1,7 @@
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
+import { Dialog as KonstaDialog, DialogButton } from 'konsta/react';
 import type { UiComponentTheme } from './componentTheme';
 import type { UiIconPair } from './iconPair';
 import { usePressSpot } from './PressSpot';
@@ -271,19 +272,83 @@ type ModalProps = {
   closeLabel?: string;
   hasCloseButton?: boolean;
   closeOnBackdrop?: boolean;
-  variant?: 'default' | 'alert';
+  variant?: 'default' | 'alert' | 'confirm';
+  presentation?: 'legacy' | 'dialog';
   actions?: readonly ModalAction[];
   actionsLayout?: 'row' | 'column';
   onClose: () => void;
 };
 
-export function Modal({ isOpen, title, children, className = '', closeLabel = 'Закрыть', hasCloseButton, closeOnBackdrop, variant = 'default', actions, actionsLayout = 'row', onClose }: ModalProps) {
-  const isAlert = variant === 'alert';
-  const hasEnabledAction = actions?.some((action) => !action.disabled) ?? false;
-  const hasAlertDismissal = hasEnabledAction || hasCloseButton === true || closeOnBackdrop === true;
-  const showCloseButton = hasCloseButton ?? (isAlert ? !hasAlertDismissal : true);
-  const allowBackdropClose = closeOnBackdrop ?? !isAlert;
-  const blockEscape = isAlert && (hasEnabledAction || allowBackdropClose || showCloseButton);
+export function Modal({
+  isOpen,
+  title,
+  children,
+  className = '',
+  closeLabel = 'Закрыть',
+  hasCloseButton,
+  closeOnBackdrop,
+  variant = 'default',
+  presentation = 'legacy',
+  actions,
+  actionsLayout = 'row',
+  onClose,
+}: ModalProps) {
+  const titleId = useId();
+  const isConfirm = variant === 'alert' || variant === 'confirm';
+  const useKonstaDialog = isConfirm || presentation === 'dialog';
+
+  if (useKonstaDialog) {
+    const hasEnabledAction = actions?.some((action) => !action.disabled) ?? false;
+    const hasExplicitDismissal = hasEnabledAction || hasCloseButton === true || closeOnBackdrop === true;
+    const showAutomaticClose = hasCloseButton ?? (isConfirm ? !hasExplicitDismissal : !actions?.length);
+    const allowBackdropClose = closeOnBackdrop ?? !isConfirm;
+
+    if (!isOpen) return null;
+
+    const fallbackCloseAction: ModalAction = { id: 'close', label: closeLabel, onClick: onClose };
+    const effectiveActions: readonly ModalAction[] = actions?.length
+      ? showAutomaticClose
+        ? [...actions, fallbackCloseAction]
+        : actions
+      : showAutomaticClose
+        ? [fallbackCloseAction]
+        : [];
+
+    const buttons = effectiveActions.length ? effectiveActions.map((action) => {
+      const isDismissAction = action.id === 'cancel' || action.id === 'close';
+      const isConfirmAction = action.tone === 'primary' || action.tone === 'danger';
+      const strong = isConfirm ? isConfirmAction : isDismissAction;
+
+      return (
+        <DialogButton
+          key={action.id}
+          strong={strong}
+          disabled={action.disabled}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </DialogButton>
+      );
+    }) : undefined;
+
+    return (
+      <KonstaDialog
+        opened
+        title={title ? <span id={titleId} role="heading" aria-level={2}>{title}</span> : undefined}
+        buttons={buttons}
+        onBackdropClick={allowBackdropClose ? onClose : undefined}
+        role={isConfirm ? 'alertdialog' : 'dialog'}
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : 'Диалог'}
+      >
+        {className ? <div className={className}>{children}</div> : children}
+      </KonstaDialog>
+    );
+  }
+
+  const showCloseButton = hasCloseButton ?? true;
+  const allowBackdropClose = closeOnBackdrop ?? true;
   const startKeyboardScale = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget);
   };
@@ -291,14 +356,14 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = '�
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
-        <div className={`ui-modal${isAlert ? ' ui-modal--alert' : ''} ${className}`.trim()} role="presentation">
+        <div className={`ui-modal ${className}`.trim()} role="presentation">
           <div className="ui-modal__container">
             <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowBackdropClose ? undefined : (event) => event.preventDefault()} />
-            <Dialog.Content role={isAlert ? 'alertdialog' : undefined} className="ui-modal__dialog" aria-describedby={undefined} onEscapeKeyDown={blockEscape ? (event) => event.preventDefault() : undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
+            <Dialog.Content className="ui-modal__dialog" aria-describedby={undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
               {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
               {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
               <div className="ui-modal__content">
-                {isAlert ? <Dialog.Description asChild><div className="ui-modal__description">{children}</div></Dialog.Description> : children}
+                {children}
                 {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onPointerDown={(event) => { if (!action.disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { if (!action.disabled) startKeyboardScale(event); }} onClick={action.onClick}>{action.label}</button>)}</div> : null}
               </div>
             </Dialog.Content>
@@ -308,3 +373,4 @@ export function Modal({ isOpen, title, children, className = '', closeLabel = '�
     </Dialog.Root>
   );
 }
+

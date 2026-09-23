@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Modal } from './components';
+
+afterEach(() => cleanup());
 
 describe('Modal alert variant', () => {
   it('renders alert semantics and Telegram-style actions without the generic close button', () => {
@@ -42,13 +44,38 @@ describe('Modal alert variant', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('supports disabled alert actions', () => {
+  it('renders an explicitly migrated compact modal with Konsta Dialog semantics', () => {
+    const onClose = vi.fn();
+    const onSave = vi.fn();
+    render(
+      <Modal
+        isOpen
+        presentation="dialog"
+        title="Добавить фазу"
+        onClose={onClose}
+        actions={[
+          { id: 'cancel', label: 'Отмена', onClick: onClose },
+          { id: 'save', label: 'Добавить', tone: 'primary', onClick: onSave },
+        ]}
+      >
+        Контент
+      </Modal>
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Добавить фазу' })).toBeTruthy();
+    expect(document.querySelector('.ui-modal__dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить' }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a confirm dismissible when all supplied actions are disabled', () => {
+    const onClose = vi.fn();
     render(
       <Modal
         isOpen
         variant="alert"
         title="Подтверждение"
-        onClose={() => undefined}
+        onClose={onClose}
         actions={[{ id: 'confirm', label: 'Продолжить', disabled: true, onClick: () => undefined }]}
       >
         Проверьте данные.
@@ -56,5 +83,7 @@ describe('Modal alert variant', () => {
     );
 
     expect((screen.getByRole('button', { name: 'Продолжить' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
