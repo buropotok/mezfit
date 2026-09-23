@@ -33,6 +33,12 @@ describe('Konsta cascade ownership', () => {
     );
   });
 
+  it('uses the shared Mezfit platform font stack for Konsta iOS', () => {
+    expect(konstaStyles).toContain(
+      '--font-ios: var(--ui-font-family);',
+    );
+  });
+
   it('does not enable Tailwind Preflight for the legacy application', () => {
     expect(konstaStyles).not.toContain("@import 'tailwindcss';");
   });

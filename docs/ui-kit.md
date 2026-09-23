@@ -11,6 +11,7 @@ Konsta UI v5 is the canonical UI kit for Mezfit product UI.
 - Konsta/Tailwind stylesheet entry: `src/ui/konsta.css`
 - Global provider: `KonstaProvider` in `src/main.tsx`
 - Canonical Konsta theme: iOS + dark
+- Canonical Konsta font source: shared `--ui-font-family` via the supported `@theme --font-ios` token
 
 ## Usage contract
 
@@ -23,5 +24,7 @@ If the public Konsta API cannot express a required interaction or appearance, re
 Mezfit-owned CSS may control composition, page layout, spacing around primitives, and app-owned content. The Mezfit typography system applies to app-owned text; typography inside a Konsta primitive remains library-owned.
 
 The canonical Konsta theme for Mezfit is iOS + dark. It is applied globally through `KonstaProvider theme="ios" dark` and the required public root classes `k-ios dark`. Do not substitute a different Konsta theme on individual product surfaces unless the product decision is explicitly changed.
+
+Konsta uses the shared Mezfit platform font stack through Konsta/Tailwind's supported `@theme` token `--font-ios: var(--ui-font-family)`. This keeps the native Apple system font (SF Pro) on Apple platforms and uses bundled Golos Text on other platforms. Do not override component internals or `.k-*` selectors to force a font.
 
 Existing pre-Konsta components under `src/ui` are migration-era components. They may remain until their owning surfaces are intentionally migrated, but they must not be expanded as a parallel UI kit when Konsta already covers the requirement.
