@@ -323,15 +323,13 @@ function SetEntryEditor(props: SetEntryProps) {
     <Modal
       isOpen={isOpen}
       title={`Подход ${data.identity.setNumber}`}
-      hasCloseButton={!saving}
+      hasCloseButton={false}
       closeOnBackdrop={!saving}
       onClose={requestClose}
-      actions={[{
-        id: 'save',
-        label: saving ? 'Сохраняем…' : 'Сохранить',
-        disabled: saving,
-        onClick: handleSave,
-      }]}
+      actions={[
+        { id: 'cancel', label: 'Отмена', disabled: saving, onClick: requestClose },
+        { id: 'save', label: saving ? 'Сохраняем…' : 'Сохранить', tone: 'primary', disabled: saving, onClick: handleSave },
+      ]}
     >
       <div className="set-entry">
         <div className="set-entry__header">
