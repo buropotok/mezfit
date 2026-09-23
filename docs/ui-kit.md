@@ -12,6 +12,7 @@ Konsta UI v5 is the canonical UI kit for Mezfit product UI.
 - Global provider: `KonstaProvider` in `src/main.tsx`
 - Canonical Konsta theme: iOS + dark
 - Canonical Konsta font source: shared `--ui-font-family` via the supported `@theme --font-ios` token
+- Tailwind Preflight: currently disabled globally; enabling it is tracked as a separate migration so Konsta can run in its intended CSS baseline without project-owned visual overrides
 
 ## Usage contract
 
@@ -35,7 +36,7 @@ Compact Mezfit modals use Konsta `Dialog` and `DialogButton`; they must not be i
 
 The shared migration adapter uses `presentation="dialog"` for compact ordinary dialogs. Confirmation dialogs use `variant="confirm"`; the legacy `variant="alert"` value remains accepted only as a compatibility alias.
 
-For ordinary dialogs, the primary action such as Save/Add/Copy is the regular tonal `DialogButton`, while Cancel/Close uses `DialogButton strong`. For confirmation dialogs, the rule is reversed: Cancel is regular tonal and the confirming action (for example Delete or Finish) uses `DialogButton strong`.
+Primary actions such as Save/Add/Copy/Delete/Finish use `DialogButton strong`; Cancel/Close uses the regular tonal `DialogButton`.
 
 Dialog glass, sizing, backdrop, typography, and button visuals are owned by Konsta. Project CSS must not restyle the Dialog or DialogButton primitives.
 

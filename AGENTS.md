@@ -143,7 +143,7 @@ If the available Konsta primitive or its documented configuration is insufficien
 
 Existing pre-Konsta shared primitives may remain while their owning surfaces are intentionally migrated, but do not add new parallel primitives when Konsta already covers the need. Radix UI, dnd-kit, DayPicker, and other libraries remain implementation tools for capabilities not supplied by the canonical UI kit; they are not domain owners. Do not couple domain logic to third-party private DOM.
 
-Compact modal/confirm surfaces use Konsta `Dialog` + `DialogButton`; do not use Konsta `Popup` as a phone modal. Long working forms may remain on the legacy Modal until their owning screens are redesigned. For ordinary compact dialogs, Save/Add/Copy stays tonal and Cancel/Close uses `strong`; for confirm dialogs, Cancel stays tonal and the confirming action (Delete/Finish/etc.) uses `strong`.
+Compact modal/confirm surfaces use Konsta `Dialog` + `DialogButton`; do not use Konsta `Popup` as a phone modal. Long working forms may remain on the legacy Modal until their owning screens are redesigned. Primary actions such as Save/Add/Copy/Delete/Finish use `strong`; Cancel/Close stays tonal.
 
 Mezfit is a mobile-only Telegram Mini App with touch interaction as the supported product target. Desktop/hardware-keyboard navigation is out of scope: do not add or preserve Tab focus-trapping, Escape-to-dismiss, keyboard-only focus restoration, or similar desktop modal mechanics unless the user explicitly changes this product decision. Mobile text-input focus, the on-screen keyboard, viewport resizing, safe areas, and touch accessibility remain in scope.
 
