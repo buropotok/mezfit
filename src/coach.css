@@ -22,6 +22,9 @@
   padding-bottom: 4.5rem;
   scrollbar-width: thin;
 }
+.compact-client-list {
+  margin: 0;
+}
 .directory-message {
   margin: 0;
   padding: var(--space-3) 0;
