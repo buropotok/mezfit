@@ -1341,7 +1341,7 @@
       }
     }
 
-    /* Mezfit typography.md — standalone prototype tokens.
+    /* Mezfit typography.md — inherit the shared typography tokens.
        Tab labels are interactive text => Body 15/20, medium 500. */
     body,
     button,
