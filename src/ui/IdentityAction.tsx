@@ -24,17 +24,21 @@ export function IdentityAction({
 }: IdentityActionProps) {
   return (
     <Glass
-      component="button"
-      type={type}
-      disabled={disabled}
-      aria-label={ariaLabel ?? title}
-      className={`ui-identity-action ${className}`.trim()}
-      {...props}
+      highlight={!disabled}
+      className={`ui-identity-action${disabled ? ' ui-identity-action--disabled' : ''} ${className}`.trim()}
     >
-      <span aria-hidden="true">
-        <Avatar className="ui-identity-action__avatar" name={avatar.name} src={avatar.src} />
-      </span>
-      <span className="ui-identity-action__title">{title}</span>
+      <button
+        type={type}
+        disabled={disabled}
+        aria-label={ariaLabel ?? title}
+        className="ui-identity-action__button"
+        {...props}
+      >
+        <span aria-hidden="true">
+          <Avatar className="ui-identity-action__avatar" name={avatar.name} src={avatar.src} />
+        </span>
+        <span className="ui-identity-action__title">{title}</span>
+      </button>
     </Glass>
   );
 }
