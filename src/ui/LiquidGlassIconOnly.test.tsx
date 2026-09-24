@@ -49,7 +49,7 @@ describe('LiquidGlassIconOnly', () => {
       <LiquidGlassIconOnly tabs={fiveTabs} value="programs" onValueChange={() => {}} hidden={false} />,
     );
 
-    const root = container.querySelector('.ui-liquid-glass-icon-only');
+    const root = container.querySelector('.ui-liquid-glass-icon-only__shell');
     const tabs = [...container.querySelectorAll<HTMLElement>('.ui-liquid-glass-icon-only__tab')];
 
     expect(root).not.toBeNull();
@@ -76,16 +76,16 @@ describe('LiquidGlassIconOnly', () => {
     const { container, rerender } = render(
       <LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden />,
     );
-    const root = container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only');
+    const root = container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only__shell');
 
-    expect(root?.dataset.phase).toBe('hidden');
+    expect(root?.dataset.startupState).toBe('hidden');
     expect(root?.getAttribute('aria-hidden')).toBe('true');
 
     rerender(<LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden={false} />);
-    expect(root?.dataset.phase).toBe('revealing');
+    expect(root?.dataset.startupState).toBe('revealing');
 
     rerender(<LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden />);
-    expect(root?.dataset.phase).toBe('hidden');
+    expect(root?.dataset.startupState).toBe('hidden');
   });
 
   it('mounts directly in the final state when hidden=false', () => {
@@ -93,7 +93,7 @@ describe('LiquidGlassIconOnly', () => {
       <LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden={false} />,
     );
 
-    expect(container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only')?.dataset.phase).toBe('visible');
+    expect(container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only__shell')?.dataset.startupState).toBe('visible');
   });
 
   it('emits the supplied value when a tab is selected', () => {
