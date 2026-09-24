@@ -543,7 +543,7 @@ export function useLiquidGlassIconOnlyInteraction({
     }
   };
 
-  const quickTap = (clientX: number) => {
+  const quickTap = (clientX: number, springTravel: boolean) => {
     const targetIndex = nearestTabIndex(clientX);
     const currentIndex = activeIndexRef.current;
 
@@ -551,7 +551,7 @@ export function useLiquidGlassIconOnlyInteraction({
     beginLensExpansion();
 
     if (targetIndex !== currentIndex) {
-      armSpringBeforeArrival();
+      if (springTravel) armSpringBeforeArrival();
       activateIndex(targetIndex);
     }
 
@@ -605,7 +605,7 @@ export function useLiquidGlassIconOnlyInteraction({
     const dy = event.clientY - pointerStartYRef.current;
 
     if (gestureRef.current === 'pending') {
-      if (Math.abs(dx) > 4 && Math.abs(dx) >= Math.abs(dy)) {
+      if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) {
         gestureRef.current = 'cancelled';
         clearTimer(pressIntentTimerRef);
       }
@@ -640,13 +640,16 @@ export function useLiquidGlassIconOnlyInteraction({
       return;
     }
 
-    if (
-      gesture !== 'cancelled'
-      && elapsed < LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs
-      && dx <= 6
-      && dy <= 10
-    ) {
-      quickTap(event.clientX);
+    if (gesture === 'cancelled') {
+      quickTap(
+        event.clientX,
+        elapsed < LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs && dx <= 6 && dy <= 10,
+      );
+      return;
+    }
+
+    if (elapsed < LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs) {
+      quickTap(event.clientX, dx <= 6 && dy <= 10);
     }
   };
 
