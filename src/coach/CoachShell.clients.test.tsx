@@ -16,6 +16,19 @@ describe('CoachShell client contacts', () => {
         return new Response(JSON.stringify({
           clients: [
             {
+              relationshipId: 4,
+              user: {
+                id: 104,
+                telegramUserId: '104',
+                username: 'li',
+                firstName: '李',
+                lastName: '',
+                languageCode: 'zh',
+                photoUrl: null,
+                isPremium: false,
+              },
+            },
+            {
               relationshipId: 3,
               user: {
                 id: 103,
@@ -78,8 +91,10 @@ describe('CoachShell client contacts', () => {
     const andrei = await screen.findByRole('button', { name: 'Открыть клиента Андрей Соколов' });
     const anna = screen.getByRole('button', { name: 'Открыть клиента Анна Иванова' });
     const boris = screen.getByRole('button', { name: 'Открыть клиента Борис Петров' });
+    const li = screen.getByRole('button', { name: 'Открыть клиента 李' });
     const groupA = screen.getByText('А', { selector: 'li' });
     const groupB = screen.getByText('Б', { selector: 'li' });
+    const groupLi = screen.getByText('李', { selector: 'li' });
 
     expect(screen.getByText('@sokolag')).toBeTruthy();
     expect(document.querySelector('img[src="https://example.com/andrei.jpg"]')).not.toBeNull();
@@ -87,6 +102,8 @@ describe('CoachShell client contacts', () => {
     expect(andrei.compareDocumentPosition(anna) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(anna.compareDocumentPosition(groupB) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(groupB.compareDocumentPosition(boris) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(groupLi.compareDocumentPosition(li) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText('#', { selector: 'li' })).toBeNull();
 
     fireEvent.click(andrei);
     await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({
