@@ -132,7 +132,7 @@ describe('Liquid Glass iconOnly startup state', () => {
     fireEvent.pointerDown(list, {
       pointerId: 2,
       pointerType: 'touch',
-      clientX: 25,
+      clientX: 175,
       clientY: 32,
     });
     fireEvent.pointerUp(list, {
