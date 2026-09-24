@@ -44,6 +44,7 @@ export const LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET = {
 type IconOnlyInteractionArgs = {
   enabled: boolean;
   activeValue?: string;
+  itemCount: number;
   listRef: RefObject<HTMLDivElement | null>;
   indicatorRef: RefObject<HTMLDivElement | null>;
   indicatorSurfaceRef: RefObject<HTMLDivElement | null>;
@@ -126,6 +127,7 @@ function roundedRectSdf(x: number, y: number, halfWidth: number, halfHeight: num
 export function useStandaloneLiquidGlassIconOnlyRuntime({
   enabled,
   activeValue,
+  itemCount,
   listRef,
   indicatorRef,
   indicatorSurfaceRef,
@@ -746,7 +748,7 @@ export function useStandaloneLiquidGlassIconOnlyRuntime({
     });
     observer.observe(list);
     return () => observer.disconnect();
-  }, [enabled, listRef]);
+  }, [enabled, itemCount, listRef]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -766,7 +768,7 @@ export function useStandaloneLiquidGlassIconOnlyRuntime({
       positionSelector(nextIndex, false);
       positionLensTrack(nextIndex, false);
     }
-  }, [activeValue, enabled]);
+  }, [activeValue, enabled, itemCount]);
 
   useLayoutEffect(() => {
     if (!enabled) return undefined;
@@ -870,7 +872,7 @@ export function useStandaloneLiquidGlassIconOnlyRuntime({
       if (secondRaf !== null) cancelAnimationFrame(secondRaf);
       observer.disconnect();
     };
-  }, [enabled, listRef]);
+  }, [enabled, itemCount, listRef]);
 
   useLayoutEffect(() => {
     if (!enabled) return undefined;
@@ -908,7 +910,7 @@ export function useStandaloneLiquidGlassIconOnlyRuntime({
       if (mappingRafRef.current !== null) cancelAnimationFrame(mappingRafRef.current);
       mappingRafRef.current = null;
     };
-  }, [enabled, listRef]);
+  }, [enabled, itemCount, listRef]);
 
   useEffect(() => () => {
     clearTimer(pressIntentTimerRef);
