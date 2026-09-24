@@ -77,6 +77,7 @@ describe('CoachShell client contacts', () => {
     const groupB = screen.getByText('Б', { selector: 'li' });
 
     expect(screen.getByText('@sokolag')).toBeTruthy();
+    expect(document.querySelector('img[src="https://example.com/andrei.jpg"]')).not.toBeNull();
     expect(groupA.compareDocumentPosition(andrei) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(andrei.compareDocumentPosition(anna) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(anna.compareDocumentPosition(groupB) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
