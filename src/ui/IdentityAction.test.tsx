@@ -25,6 +25,14 @@ describe('IdentityAction', () => {
     expect(html).toContain('ui-identity-action__title">Andrei Sokolov</span>');
   });
 
+  it('preserves native disabled button semantics', () => {
+    const html = renderIdentityAction(
+      <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" disabled />,
+    );
+
+    expect(html).toContain('disabled');
+  });
+
   it('accepts an explicit accessible label without changing the visible title', () => {
     const html = renderIdentityAction(
       <IdentityAction
