@@ -32,7 +32,7 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', vi.fn());
   Object.defineProperty(Element.prototype, 'animate', {
     configurable: true,
-    value: vi.fn(() => ({ cancel: vi.fn() })),
+    value: vi.fn(() => ({ cancel: vi.fn(), addEventListener: vi.fn() })),
   });
   Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
     configurable: true,
