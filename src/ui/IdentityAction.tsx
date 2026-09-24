@@ -1,4 +1,3 @@
-import type { ButtonHTMLAttributes } from 'react';
 import { Fab as KonstaFab } from 'konsta/react';
 import { Avatar } from './primitives';
 import './identity-action.css';
@@ -8,9 +7,12 @@ export type IdentityActionAvatar = {
   src?: string;
 };
 
-export type IdentityActionProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'className' | 'style'> & {
+export type IdentityActionProps = {
   avatar: IdentityActionAvatar;
   title: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  'aria-label'?: string;
 };
 
 const identityFabColors = {
@@ -22,22 +24,19 @@ const identityFabColors = {
 export function IdentityAction({
   avatar,
   title,
-  type = 'button',
+  onClick,
   disabled,
   'aria-label': ariaLabel,
-  ...props
 }: IdentityActionProps) {
-  const buttonProps: ButtonHTMLAttributes<HTMLButtonElement> = {
-    type,
-    disabled,
-    ...props,
-  };
+  const nativeButtonProps = { disabled };
 
   return (
     <KonstaFab
       component="button"
+      type="button"
       colors={identityFabColors}
       aria-label={ariaLabel ?? title}
+      onClick={onClick}
       text={
         <span className="ui-identity-action__content">
           <span aria-hidden="true">
@@ -46,7 +45,7 @@ export function IdentityAction({
           <span className="ui-identity-action__title">{title}</span>
         </span>
       }
-      {...buttonProps}
+      {...nativeButtonProps}
     />
   );
 }
