@@ -354,6 +354,7 @@ export function useLiquidGlassIconOnlyStartup({
       const mapUrl = buildZoomMap(fullWidth, visibleWidth, clamped);
       if (mapUrl) {
         image.setAttribute('href', mapUrl);
+        image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', mapUrl);
         image.setAttribute('width', String(Math.round(fullWidth)));
         image.setAttribute('height', String(STARTUP_HEIGHT_PX));
       }
