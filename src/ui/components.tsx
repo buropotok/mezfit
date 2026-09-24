@@ -263,7 +263,11 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
       {liquidGlass.lensFilter}
       {iconOnlyInteraction.filter}
       {isLiquidGlassIconOnly ? (
-        <div className="ui-tabs__icon-only-shell" data-startup-state={iconOnlyStartup.state}>
+        <div
+          className="ui-tabs__icon-only-shell"
+          data-startup-state={iconOnlyStartup.state}
+          aria-hidden={iconOnlyStartup.state === 'visible' ? undefined : true}
+        >
           {liquidLayer}
           {iconOnlyStartup.overlay}
         </div>
