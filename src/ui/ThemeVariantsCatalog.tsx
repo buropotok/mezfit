@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { Button, Divider, IconButton, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text, type UiComponentTheme } from './index';
+import { Divider, IconButton, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text, type UiComponentTheme } from './index';
 import barbellFilledIconUrl from './icons/barbell-filled.svg';
 import barbellIconUrl from './icons/barbell.svg';
 import calendarFilledIconUrl from './icons/calendar-filled.svg';
@@ -76,27 +76,6 @@ function TextTabs({ theme = 'default' }: { theme?: UiComponentTheme }) {
   );
 }
 
-function LiquidGlassIconOnlyTabs({ hidden }: { hidden: boolean }) {
-  return (
-    <Tabs defaultValue="overview" mode="iconOnly" theme="liquidGlass" hidden={hidden}>
-      <TabsList aria-label="Liquid Glass icon only">
-        {tabs.map((tab) => (
-          <TabsTrigger
-            key={tab.value}
-            value={tab.value}
-            icon={{
-              outline: <MaskIcon src={tab.outline} />,
-              filled: <MaskIcon src={tab.filled} />,
-            }}
-          >
-            {tab.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
-  );
-}
-
 function GlassStage({ children }: { children: ReactNode }) {
   return (
     <div className="ui-kit-glass-stage">
@@ -110,8 +89,6 @@ function GlassStage({ children }: { children: ReactNode }) {
 }
 
 export function ThemeVariantsCatalog() {
-  const [iconOnlyHidden, setIconOnlyHidden] = useState(true);
-
   return (
     <div className="ui-kit-page ui-kit-page--theme-variants">
       <Surface as="section" className="ui-kit-section">
@@ -147,15 +124,6 @@ export function ThemeVariantsCatalog() {
           <div><Text variant="footnote" tone="muted">Default · icon</Text><IconTabs /></div>
           <div><Text variant="footnote" tone="muted">Glass · icon</Text><GlassStage><IconTabs theme="glass" /></GlassStage></div>
           <div><Text variant="footnote" tone="muted">Liquid Glass · icon</Text><GlassStage><IconTabs theme="liquidGlass" /></GlassStage></div>
-          <div>
-            <Text variant="footnote" tone="muted">Liquid Glass · icon only · hidden={String(iconOnlyHidden)}</Text>
-            <div className="ui-kit-row" style={{ margin: 'var(--ui-space-2) 0' }}>
-              <Button variant="secondary" onClick={() => setIconOnlyHidden((value) => !value)}>
-                {iconOnlyHidden ? 'Показать' : 'Скрыть'}
-              </Button>
-            </div>
-            <GlassStage><LiquidGlassIconOnlyTabs hidden={iconOnlyHidden} /></GlassStage>
-          </div>
         </div>
       </Surface>
     </div>
