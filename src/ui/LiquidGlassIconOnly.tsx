@@ -1,4 +1,4 @@
-import { useLayoutEffect, useReducer, useRef, useState, type ReactElement } from 'react';
+import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
 import { mountPrototype, type PrototypeController } from './liquid-glass-icon-only/prototypeRuntime';
 import prototypeCss from './liquid-glass-icon-only/prototype.css?inline';
@@ -14,6 +14,13 @@ export type LiquidGlassIconOnlyProps = {
   onValueChange: (value: string) => void;
   hidden: boolean;
 };
+
+const PROTOTYPE_LENS_STYLE = {
+  '--sl-glass-tint': '.17',
+  '--sl-backdrop-blur': '0px',
+  '--sl-glass-brightness': '1.02',
+  '--sl-bezel-opacity': '.86',
+} as CSSProperties;
 
 function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnlyProps, 'hidden'> & { entrance: boolean }) {
   const host = useRef<HTMLDivElement>(null);
@@ -69,7 +76,7 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
                   <span className="selector-track" id="selector-track" aria-hidden="true"><span className="selector" id="selector" /></span>
                 </div>
               </div>
-              <span className="selector-track extracted-lens-demo" id="lens-track" aria-hidden="true"><span className="lens optical-working-lens" id="lens" /></span>
+              <span className="selector-track extracted-lens-demo" id="lens-track" aria-hidden="true"><span className="lens optical-working-lens" id="lens" style={PROTOTYPE_LENS_STYLE} /></span>
             </div>
           </div>
         </div></div>
