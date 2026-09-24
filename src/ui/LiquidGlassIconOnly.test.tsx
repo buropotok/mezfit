@@ -52,6 +52,12 @@ describe('direct prototype adapter',()=>{
     const count=cancels.length;view.rerender(ui(false,'2'));expect(cancels).toHaveLength(count);
     expect(button(root,2).getAttribute('aria-selected')).toBe('true');
   });
+  it('still plays the required true -> false reveal when reduced motion is preferred',()=>{
+    vi.stubGlobal('matchMedia',()=>({matches:true}));
+    const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
+    expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
+    act(()=>vi.advanceTimersByTime(900));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+  });
   it('cancels all animation work on hide and can show again',()=>{
     const view=render(ui(true));view.rerender(ui(false));act(()=>vi.advanceTimersByTime(100));
     view.rerender(ui(true));expect(vi.getTimerCount()).toBe(0);expect(cancels.every(cancel=>cancel.mock.calls.length>0)).toBe(true);
