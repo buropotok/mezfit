@@ -9,6 +9,7 @@ import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
 import { useLiquidGlassTabsController } from './LiquidGlassTabs';
 import { useLiquidGlassIconOnlyStartup, type LiquidGlassIconOnlyStartupItem } from './LiquidGlassIconOnly';
+import { useLiquidGlassIconOnlyInteraction } from './LiquidGlassIconOnlyInteraction';
 import './components.css';
 
 type ListDivider = 'none' | 'inset' | 'full';
@@ -162,10 +163,17 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
     listRef,
   });
   const liquidGlass = useLiquidGlassTabsController({
-    enabled: isLiquidGlass,
+    enabled: isLiquidGlass && !isLiquidGlassIconOnly,
     mode: isIconMode ? 'icon' : 'default',
     activeValue,
     visualLayerRef,
+    listRef,
+    indicatorRef,
+    indicatorSurfaceRef,
+  });
+  const iconOnlyInteraction = useLiquidGlassIconOnlyInteraction({
+    enabled: isLiquidGlassIconOnly && !hidden && iconOnlyStartup.state === 'visible',
+    activeValue,
     listRef,
     indicatorRef,
     indicatorSurfaceRef,
@@ -209,20 +217,21 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
   const indicatorStyle = hasMovingIndicator
     ? { '--ui-tabs-indicator-left': `${indicatorGeometry.left}px`, '--ui-tabs-indicator-width': `${indicatorGeometry.width}px` } as CSSProperties
     : { '--ui-tabs-clip-path': clipPath } as CSSProperties;
-  const listStyle = isLiquidGlass
+  const listStyle = isLiquidGlass && !isLiquidGlassIconOnly
     ? { ...style, ...liquidGlass.listStyle } as CSSProperties
     : style;
+  const interactionHandlers = isLiquidGlassIconOnly ? iconOnlyInteraction.handlers : liquidGlass.handlers;
 
   const list = (
     <RadixTabs.List
       ref={listRef}
       className={`ui-tabs__list${isIndicatorReady ? ' ui-tabs__list--ready' : ''} ${className}`.trim()}
       style={listStyle}
-      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerDown(event); }}
-      onPointerMove={(event) => { onPointerMove?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerMove(event); }}
-      onPointerUp={(event) => { onPointerUp?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerUp(event); }}
-      onPointerCancel={(event) => { onPointerCancel?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onPointerCancel(event); }}
-      onClickCapture={(event) => { onClickCapture?.(event); if (!event.defaultPrevented) liquidGlass.handlers.onClickCapture(event); }}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) interactionHandlers.onPointerDown(event); }}
+      onPointerMove={(event) => { onPointerMove?.(event); if (!event.defaultPrevented) interactionHandlers.onPointerMove(event); }}
+      onPointerUp={(event) => { onPointerUp?.(event); if (!event.defaultPrevented) interactionHandlers.onPointerUp(event); }}
+      onPointerCancel={(event) => { onPointerCancel?.(event); if (!event.defaultPrevented) interactionHandlers.onPointerCancel(event); }}
+      onClickCapture={(event) => { onClickCapture?.(event); if (!event.defaultPrevented) interactionHandlers.onClickCapture(event); }}
       {...props}
     >
       {children}
@@ -234,7 +243,14 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
 
   if (!isLiquidGlass) return list;
 
-  const liquidLayer = (
+  const liquidLayer = isLiquidGlassIconOnly ? (
+    <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
+      {list}
+      <span ref={iconOnlyInteraction.lensTrackRef} className="ui-tabs__icon-only-lens-track" aria-hidden="true">
+        <span ref={iconOnlyInteraction.lensRef} className="ui-tabs__icon-only-lens" style={iconOnlyInteraction.lensStyle} />
+      </span>
+    </div>
+  ) : (
     <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
       {list}
       <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" style={liquidGlass.lensStyle} aria-hidden="true" />
@@ -245,6 +261,7 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
     <>
       {liquidGlass.containerFilter}
       {liquidGlass.lensFilter}
+      {iconOnlyInteraction.filter}
       {isLiquidGlassIconOnly ? (
         <div className="ui-tabs__icon-only-shell" data-startup-state={iconOnlyStartup.state}>
           {liquidLayer}
