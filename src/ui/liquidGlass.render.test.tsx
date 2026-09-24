@@ -57,5 +57,26 @@ describe('liquidGlass UI Kit variants', () => {
     expect(contentStart).toBeGreaterThan(lensStart);
     expect(html.slice(lensStart, contentStart)).toContain('</div></div>');
   });
+  it('renders the liquidGlass iconOnly startup shell with hidden state', () => {
+    const iconPair = {
+      outline: <span data-icon="outline" />,
+      filled: <span data-icon="filled" />,
+    };
+    const html = renderToStaticMarkup(
+      <Tabs theme="liquidGlass" mode="iconOnly" hidden defaultValue="overview">
+        <TabsList aria-label="Sections">
+          <TabsTrigger value="overview" icon={iconPair}>Обзор</TabsTrigger>
+          <TabsTrigger value="program" icon={iconPair}>Программа</TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+
+    expect(html).toContain('data-ui-mode="iconOnly"');
+    expect(html).toContain('data-startup-state="hidden"');
+    expect(html).toContain('ui-tabs__icon-only-startup');
+    expect(html).toContain('Обзор');
+  });
+
+
 
 });
