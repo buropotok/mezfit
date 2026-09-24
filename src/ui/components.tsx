@@ -110,7 +110,10 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
 
 export type TabsMode = 'default' | 'icon' | 'iconOnly';
 export type TabsIconPair = UiIconPair;
-export type TabsProps = Omit<React.ComponentPropsWithoutRef<typeof RadixTabs.Root>, 'hidden'> & { theme?: UiComponentTheme; mode?: TabsMode; hidden?: boolean };
+type TabsRootProps = Omit<React.ComponentPropsWithoutRef<typeof RadixTabs.Root>, 'hidden'>;
+type StandardTabsProps = TabsRootProps & { theme?: UiComponentTheme; mode?: Exclude<TabsMode, 'iconOnly'>; hidden?: never };
+type LiquidGlassIconOnlyTabsProps = TabsRootProps & { theme: 'liquidGlass'; mode: 'iconOnly'; hidden: boolean };
+export type TabsProps = StandardTabsProps | LiquidGlassIconOnlyTabsProps;
 type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List>;
 export type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger> & { icon?: TabsIconPair };
 type TabsContentProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Content>;
