@@ -24,6 +24,16 @@ const STARTUP_INITIAL_HEIGHT_PERCENT = 80;
 const STARTUP_LOW_PX = 19;
 const STARTUP_SPRING_MS = 230;
 
+export const LIQUID_GLASS_ICON_ONLY_STARTUP_PRESET = Object.freeze({
+  durationMs: STARTUP_DURATION_MS,
+  curveDurationMs: STARTUP_CURVE_DURATION_MS,
+  openFraction: STARTUP_OPEN_FRACTION,
+  lowFraction: STARTUP_LOW_FRACTION,
+  initialHeightPercent: STARTUP_INITIAL_HEIGHT_PERCENT,
+  lowPx: STARTUP_LOW_PX,
+  springMs: STARTUP_SPRING_MS,
+});
+
 const STARTUP_ZOOM = Object.freeze({
   width: 132,
   strengthX: 12,
