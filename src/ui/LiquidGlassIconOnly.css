@@ -1,4 +1,4 @@
-.ui-liquid-glass-icon-only {
+.ui-liquid-glass-icon-only__shell {
   --lgio-primary: #007aff;
   --lgio-hover-highlight: rgba(255, 255, 255, .3);
   --lgio-dark-glass-shadow:
@@ -28,18 +28,18 @@
   isolation: isolate;
 }
 
-.ui-liquid-glass-icon-only[data-phase='hidden'] {
+.ui-liquid-glass-icon-only__shell[data-startup-state='hidden'] {
   visibility: hidden;
   pointer-events: none;
 }
 
-.ui-liquid-glass-icon-only[data-phase='revealing'] > .ui-liquid-glass-icon-only__final {
+.ui-liquid-glass-icon-only__shell[data-startup-state='revealing'] > .ui-liquid-glass-icon-only__visual-layer {
   visibility: hidden;
   pointer-events: none;
 }
 
-.ui-liquid-glass-icon-only[data-phase='visible'] > .ui-liquid-glass-icon-only__startup,
-.ui-liquid-glass-icon-only[data-phase='hidden'] > .ui-liquid-glass-icon-only__startup {
+.ui-liquid-glass-icon-only__shell[data-startup-state='visible'] > .ui-liquid-glass-icon-only__startup,
+.ui-liquid-glass-icon-only__shell[data-startup-state='hidden'] > .ui-liquid-glass-icon-only__startup {
   visibility: hidden;
   pointer-events: none;
 }
@@ -113,7 +113,7 @@
   -webkit-filter: var(--lgio-startup-filter);
 }
 
-.ui-liquid-glass-icon-only__startup-tab {
+.ui-liquid-glass-icon-only__startup-item {
   position: relative;
   z-index: 10;
   display: grid;
@@ -124,27 +124,21 @@
   color: #fff;
 }
 
-.ui-liquid-glass-icon-only__startup-tab.is-active {
+.ui-liquid-glass-icon-only__startup-item.is-active {
   color: var(--lgio-primary);
-}
-
-.ui-liquid-glass-icon-only__startup-selector-track {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  top: 0;
-  height: 64px;
-  border-radius: 9999px;
 }
 
 .ui-liquid-glass-icon-only__startup-selector {
   position: absolute;
-  inset: 4px;
-  border-radius: inherit;
+  z-index: 1;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 30px;
   background: rgba(255, 255, 255, .15);
 }
 
-.ui-liquid-glass-icon-only__final {
+.ui-liquid-glass-icon-only__visual-layer {
   position: absolute;
   inset: 0;
   overflow: visible;
@@ -211,7 +205,7 @@
   transition-duration: 300ms;
 }
 
-.ui-liquid-glass-icon-only__tab.is-active {
+.ui-liquid-glass-icon-only__tab[data-state='active'] {
   color: var(--lgio-primary);
 }
 
@@ -256,14 +250,14 @@
   transform: scale(.82);
 }
 
-.ui-liquid-glass-icon-only__tab.is-active .ui-liquid-glass-icon-only__icon--outline,
-.ui-liquid-glass-icon-only__startup-tab.is-active .ui-liquid-glass-icon-only__icon--outline {
+.ui-liquid-glass-icon-only__tab[data-state='active'] .ui-liquid-glass-icon-only__icon--outline,
+.ui-liquid-glass-icon-only__startup-item.is-active .ui-liquid-glass-icon-only__startup-icon--outline {
   opacity: 0;
   transform: scale(.84);
 }
 
-.ui-liquid-glass-icon-only__tab.is-active .ui-liquid-glass-icon-only__icon--filled,
-.ui-liquid-glass-icon-only__startup-tab.is-active .ui-liquid-glass-icon-only__icon--filled {
+.ui-liquid-glass-icon-only__tab[data-state='active'] .ui-liquid-glass-icon-only__icon--filled,
+.ui-liquid-glass-icon-only__startup-item.is-active .ui-liquid-glass-icon-only__startup-icon--filled {
   opacity: 1;
   transform: scale(1);
 }
@@ -371,6 +365,54 @@
 }
 
 .ui-liquid-glass-icon-only__visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.ui-liquid-glass-icon-only__startup-icon {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: currentColor;
+}
+
+.ui-liquid-glass-icon-only__startup-icon > *,
+.ui-liquid-glass-icon-only__startup-icon svg,
+.ui-liquid-glass-icon-only__startup-icon img {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+
+.ui-liquid-glass-icon-only__startup-icon--outline {
+  opacity: 1;
+}
+
+.ui-liquid-glass-icon-only__startup-icon--filled {
+  opacity: 0;
+}
+
+.ui-liquid-glass-icon-only__startup-item.is-active .ui-liquid-glass-icon-only__startup-icon--outline {
+  opacity: 0;
+}
+
+.ui-liquid-glass-icon-only__startup-item.is-active .ui-liquid-glass-icon-only__startup-icon--filled {
+  opacity: 1;
+}
+
+.ui-liquid-glass-icon-only__pane > .ui-liquid-glass-icon-only__tab {
+  flex: 0 0 auto;
+}
+
+.ui-liquid-glass-icon-only__label {
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;
