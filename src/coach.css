@@ -10,8 +10,6 @@
   justify-content: space-between;
   gap: var(--space-3);
 }
-.coach-directory-header h2 { margin-bottom: 0; }
-
 .client-directory-surface {
   overflow: hidden;
   height: calc(100dvh - var(--appbar-h) - 7rem);
@@ -23,9 +21,6 @@
   overscroll-behavior: contain;
   padding-bottom: 4.5rem;
   scrollbar-width: thin;
-}
-.compact-client-list {
-  margin: 0;
 }
 .directory-message {
   margin: 0;
