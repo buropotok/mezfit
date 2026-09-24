@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   type CSSProperties,
@@ -7,7 +8,6 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
-import { useLiquidGlassFilterId } from './liquidGlass';
 
 export const LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET = {
   holdDelayMs: 140,
@@ -137,7 +137,7 @@ export function useStandaloneLiquidGlassIconOnlyRuntime({
   const displacementRRef = useRef<SVGFEDisplacementMapElement>(null);
   const displacementGRef = useRef<SVGFEDisplacementMapElement>(null);
   const displacementBRef = useRef<SVGFEDisplacementMapElement>(null);
-  const filterId = useLiquidGlassFilterId('icon-only-lens');
+  const filterId = `lgio-lens-${useId().replace(/:/g, '')}`;
 
   const activeValueRef = useRef(activeValue);
   const activeIndexRef = useRef(0);
