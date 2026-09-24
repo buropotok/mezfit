@@ -321,7 +321,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, .20);
   pointer-events: none;
   backdrop-filter: blur(0) var(--lgio-lens-filter) saturate(1.05) brightness(1.02);
-  -webkit-backdrop-filter: blur(0) var(--lgio-lens-filter) saturate(1.05) brightness(1.02);
+  -webkit-backdrop-filter: blur(0) saturate(1.05) brightness(1.02);
   transition-duration: 300ms;
   transition-property: all;
 }
