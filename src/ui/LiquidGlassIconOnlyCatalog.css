@@ -1,7 +1,8 @@
 .ui-kit-liquid-glass-icon-only {
   box-sizing: border-box;
   width: 100%;
-  min-height: 24rem;
+  min-height: 100vh;
+  min-height: 100dvh;
   padding-block: var(--ui-space-6) calc(var(--ui-space-6) + env(safe-area-inset-bottom));
   padding-inline: 0;
   overflow: visible;
