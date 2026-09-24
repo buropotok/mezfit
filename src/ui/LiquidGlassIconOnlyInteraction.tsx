@@ -755,7 +755,7 @@ export function useLiquidGlassIconOnlyInteraction({
 
       displacementR.setAttribute('scale', String(optics.refraction + optics.rgbSpread));
       displacementG.setAttribute('scale', String(optics.refraction));
-      displacementB.setAttribute('scale', String(Math.max(0, optics.refraction - optics.rgbSpread));
+      displacementB.setAttribute('scale', String(Math.max(0, optics.refraction - optics.rgbSpread)));
       filter.setAttribute('x', `${-optics.padding}%`);
       filter.setAttribute('y', `${-optics.padding}%`);
       filter.setAttribute('width', `${100 + optics.padding * 2}%`);
