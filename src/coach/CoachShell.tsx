@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { List as KonstaList, ListGroup, ListItem as KonstaListItem } from 'konsta/react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -8,7 +9,7 @@ import {
   type ProgramListItem,
 } from '../api';
 import type { AppDestination, NavigationContext } from '../NavigationShell';
-import { Avatar, Button, FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger } from '../ui';
+import { Avatar, Button, FloatingActionButton, Modal, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
@@ -33,6 +34,42 @@ const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text
 
 function displayName(client: CoachClientListItem): string {
   return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
+}
+
+const clientNameCollator = new Intl.Collator(['ru-RU', 'en-US'], {
+  sensitivity: 'base',
+  numeric: true,
+});
+
+function clientSortName(client: CoachClientListItem): string {
+  return displayName(client).trim() || client.user.username?.trim() || 'Клиент Mezfit';
+}
+
+function clientGroupTitle(client: CoachClientListItem): string {
+  const [firstCharacter = ''] = Array.from(clientSortName(client).normalize('NFC'));
+  if (!firstCharacter) return '#';
+
+  const [upperCharacter = '#'] = Array.from(firstCharacter.toLocaleUpperCase('ru-RU'));
+  const lowerCharacter = firstCharacter.toLocaleLowerCase('ru-RU');
+  return upperCharacter === lowerCharacter ? '#' : upperCharacter;
+}
+
+function groupClientsForContacts(clients: CoachClientListItem[]): Array<{ title: string; clients: CoachClientListItem[] }> {
+  const groups = new Map<string, CoachClientListItem[]>();
+
+  for (const client of [...clients].sort((left, right) => clientNameCollator.compare(clientSortName(left), clientSortName(right)))) {
+    const title = clientGroupTitle(client);
+    const group = groups.get(title);
+    if (group) group.push(client);
+    else groups.set(title, [client]);
+  }
+
+  return Array.from(groups, ([title, groupedClients]) => ({ title, clients: groupedClients }))
+    .sort((left, right) => {
+      if (left.title === '#') return 1;
+      if (right.title === '#') return -1;
+      return clientNameCollator.compare(left.title, right.title);
+    });
 }
 
 function AddClientIcon() {
@@ -97,6 +134,8 @@ function ClientDirectory({
   onAdd?: () => void;
   busy?: boolean;
 }) {
+  const contactGroups = clients ? groupClientsForContacts(clients) : [];
+
   return (
     <section className="client-directory-surface" aria-label="Список клиентов">
       <div className="client-directory-scroll">
@@ -109,17 +148,37 @@ function ClientDirectory({
         ) : clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
           <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
         ) : (
-          <List className="compact-client-list">
-            {clients.map((client) => (
-              <ListItem
-                key={client.relationshipId}
-                onClick={() => onSelect(client)}
-                leading={<Avatar name={displayName(client)} src={client.user.photoUrl ?? undefined} />}
-                title={displayName(client)}
-                subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
-              />
+          <KonstaList strongIos>
+            {contactGroups.map((group) => (
+              <ListGroup key={group.title} dividers={false}>
+                <KonstaListItem
+                  title={group.title}
+                  groupTitle
+                  className="sticky top-0"
+                />
+                {group.clients.map((client) => {
+                  const name = displayName(client);
+                  return (
+                    <KonstaListItem
+                      key={client.relationshipId}
+                      contacts
+                      link
+                      chevron={false}
+                      media={<Avatar name={name} src={client.user.photoUrl ?? undefined} />}
+                      title={name}
+                      subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
+                      linkComponent="button"
+                      linkProps={{
+                        type: 'button',
+                        'aria-label': `Открыть клиента ${name}`,
+                        onClick: () => onSelect(client),
+                      }}
+                    />
+                  );
+                })}
+              </ListGroup>
             ))}
-          </List>
+          </KonstaList>
         )}
       </div>
 
@@ -336,7 +395,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       <header className="coach-directory-header">
         <div>
           <div className="eyebrow">Тренер</div>
-          <h2>Клиенты</h2>
+          <Text variant="large-title">Клиенты</Text>
         </div>
       </header>
 
