@@ -15,37 +15,40 @@ export type IdentityActionProps = {
   'aria-label'?: string;
 };
 
-const identityFabColors = {
+const enabledFabColors = {
   bgIos: 'bg-ios-light-glass dark:bg-ios-dark-glass',
   activeBgIos: 'active:bg-black/10 dark:active:bg-white/10',
   textIos: 'text-black dark:text-white',
+};
+
+const disabledFabColors = {
+  bgIos: 'bg-black/5 dark:bg-white/5',
+  activeBgIos: '',
+  textIos: 'text-black/30 dark:text-white/30',
 };
 
 export function IdentityAction({
   avatar,
   title,
   onClick,
-  disabled,
+  disabled = false,
   'aria-label': ariaLabel,
 }: IdentityActionProps) {
-  const nativeButtonProps = { disabled };
-
   return (
     <KonstaFab
       component="button"
       type="button"
-      colors={identityFabColors}
+      colors={disabled ? disabledFabColors : enabledFabColors}
       aria-label={ariaLabel ?? title}
       onClick={onClick}
       text={
-        <span className="ui-identity-action__content">
-          <span aria-hidden="true">
-            <Avatar name={avatar.name} src={avatar.src} />
-          </span>
-          <span className="ui-identity-action__title">{title}</span>
+        <span aria-hidden="true">
+          <Avatar name={avatar.name} src={avatar.src} />
         </span>
       }
-      {...nativeButtonProps}
-    />
+      disabled={disabled}
+    >
+      <span className="ui-identity-action__title">{title}</span>
+    </KonstaFab>
   );
 }
