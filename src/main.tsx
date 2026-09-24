@@ -3,8 +3,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadGlobalTheme } from './theme';
-import { ThemeVariantsCatalog } from './ui/ThemeVariantsCatalog';
-import { UiKitPage } from './ui/UiKitPage';
 import './ui/konsta.css';
 import './style.css';
 import './exercise.css';
@@ -29,7 +27,13 @@ const root = resolveRoot();
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
   root.classList.add('k-ios', 'dark');
-  const content = window.location.pathname === '/ui-kit' ? <><UiKitPage /><ThemeVariantsCatalog /></> : <App />;
+  let content = <App />;
+  if (window.location.pathname === '/ui-kit') {
+    const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }] = await Promise.all([
+      import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'),
+    ]);
+    content = <><UiKitPage /><ThemeVariantsCatalog /><LiquidGlassIconOnlyCatalog /></>;
+  }
   createRoot(root).render(
     <React.StrictMode>
       <KonstaProvider theme="ios" dark>

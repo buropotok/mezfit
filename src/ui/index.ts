@@ -11,3 +11,5 @@ export { Menu, MenuDivider, MenuItem, type MenuProps } from './Menu';
 export { NestedBadges, type NestedBadgeItem, type NestedBadgesProps } from './NestedBadges';
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
+
+export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
