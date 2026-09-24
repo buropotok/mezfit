@@ -158,6 +158,8 @@ export function useLiquidGlassIconOnlyInteraction({
   const springFallbackTimerRef = useRef<number | null>(null);
   const springAnimationRef = useRef<Animation | null>(null);
   const paneResetTimerRef = useRef<number | null>(null);
+  const tapTravelScaleActiveRef = useRef(false);
+  const glassHighlightActiveRef = useRef(false);
   const highlightRemovalTimerRef = useRef<number | null>(null);
   const highlightFirstRafRef = useRef<number | null>(null);
   const highlightSecondRafRef = useRef<number | null>(null);
@@ -353,7 +355,8 @@ export function useLiquidGlassIconOnlyInteraction({
   const removeGlassHighlight = () => {
     const list = listRef.current;
     const wrap = highlightWrapRef.current;
-    if (list) {
+    if (list && glassHighlightActiveRef.current) {
+      glassHighlightActiveRef.current = false;
       list.style.scale = '';
       list.style.transitionDuration = '300ms';
       list.style.transitionTimingFunction = 'ease-in-out';
@@ -395,6 +398,7 @@ export function useLiquidGlassIconOnlyInteraction({
     highlightLightRef.current = light;
     setHighlightPosition(clientX, clientY);
 
+    glassHighlightActiveRef.current = true;
     list.style.scale = String(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.containerScale);
     list.style.transitionDuration = '300ms';
     list.style.transitionTimingFunction = 'ease-in-out';
@@ -414,6 +418,7 @@ export function useLiquidGlassIconOnlyInteraction({
   const expandContainerForTapTravel = () => {
     const list = listRef.current;
     if (!list) return;
+    tapTravelScaleActiveRef.current = true;
     list.style.transitionDuration = '300ms';
     list.style.transitionTimingFunction = 'ease-in-out';
     list.style.scale = String(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.containerScale);
@@ -423,7 +428,8 @@ export function useLiquidGlassIconOnlyInteraction({
   const restoreContainerWithSelector = () => {
     const list = listRef.current;
     const selector = indicatorSurfaceRef.current;
-    if (!list || !selector) return;
+    if (!list || !selector || !tapTravelScaleActiveRef.current) return;
+    tapTravelScaleActiveRef.current = false;
     selector.classList.remove('tap-spring-hidden');
     list.style.transitionDuration = '300ms';
     list.style.transitionTimingFunction = 'ease-in-out';
@@ -716,6 +722,8 @@ export function useLiquidGlassIconOnlyInteraction({
     lensRef.current?.classList.remove('pressed', 'tap-spring-active');
     lensReleasePendingRef.current = false;
     lensFullyExpandedRef.current = false;
+    tapTravelScaleActiveRef.current = false;
+    glassHighlightActiveRef.current = false;
     internalActivationIndexRef.current = null;
   }, [enabled, indicatorSurfaceRef, listRef]);
 
