@@ -398,6 +398,10 @@ export function useLiquidGlassIconOnlyInteraction({
     highlightLightRef.current = light;
     setHighlightPosition(clientX, clientY);
 
+    if (paneResetTimerRef.current !== null) {
+      window.clearTimeout(paneResetTimerRef.current);
+      paneResetTimerRef.current = null;
+    }
     glassHighlightActiveRef.current = true;
     list.style.scale = String(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.containerScale);
     list.style.transitionDuration = '300ms';
@@ -418,6 +422,10 @@ export function useLiquidGlassIconOnlyInteraction({
   const expandContainerForTapTravel = () => {
     const list = listRef.current;
     if (!list) return;
+    if (paneResetTimerRef.current !== null) {
+      window.clearTimeout(paneResetTimerRef.current);
+      paneResetTimerRef.current = null;
+    }
     tapTravelScaleActiveRef.current = true;
     list.style.transitionDuration = '300ms';
     list.style.transitionTimingFunction = 'ease-in-out';
