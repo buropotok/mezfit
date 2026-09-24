@@ -170,7 +170,7 @@ export function useLiquidGlassIconOnlyInteraction({
     activeValueRef.current = activeValue;
   }, [activeValue]);
 
-  const clearTimer = (ref: RefObject<number | null>) => {
+  const clearTimer = (ref: { current: number | null }) => {
     if (ref.current !== null) window.clearTimeout(ref.current);
     ref.current = null;
   };
@@ -641,10 +641,13 @@ export function useLiquidGlassIconOnlyInteraction({
     }
 
     if (gesture === 'cancelled') {
-      quickTap(
-        event.clientX,
-        elapsed < LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs && dx <= 6 && dy <= 10,
-      );
+      if (
+        elapsed < LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs
+        && dx <= 4
+        && dy <= 10
+      ) {
+        quickTap(event.clientX, dx <= 6);
+      }
       return;
     }
 
