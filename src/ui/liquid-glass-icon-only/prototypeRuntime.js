@@ -2124,7 +2124,7 @@ function renderIconsAt(ms,st){
     lastWidth=root.host.clientWidth;
     if(!running)settle();
   });resize.observe(root.host);
-  if(playEntrance && !(owner.defaultView.matchMedia?.('(prefers-reduced-motion: reduce)').matches))play();else settle();
+  if(playEntrance)play();else settle();
   return {
     setValue(index){selectIndex(index)},
     dispose(){
