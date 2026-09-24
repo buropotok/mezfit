@@ -655,13 +655,10 @@ export function useLiquidGlassIconOnlyInteraction({
     }
 
     if (gesture === 'cancelled') {
-      if (
-        elapsed < LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs
-        && dx <= 4
-        && dy <= 10
-      ) {
-        quickTap(event.clientX, dx <= 6);
-      }
+      quickTap(
+        event.clientX,
+        elapsed < LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs && dx <= 6 && dy <= 10,
+      );
       return;
     }
 
