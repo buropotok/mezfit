@@ -104,7 +104,9 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   align-items: stretch;
   height: 64px;
   transform: translate(-50%, -50%);
@@ -392,20 +394,16 @@
   height: 36px;
 }
 
-.ui-liquid-glass-icon-only__startup-icon--outline {
-  opacity: 1;
-}
-
 .ui-liquid-glass-icon-only__startup-icon--filled {
-  opacity: 0;
+  display: none;
 }
 
 .ui-liquid-glass-icon-only__startup-item.is-active .ui-liquid-glass-icon-only__startup-icon--outline {
-  opacity: 0;
+  display: none;
 }
 
 .ui-liquid-glass-icon-only__startup-item.is-active .ui-liquid-glass-icon-only__startup-icon--filled {
-  opacity: 1;
+  display: grid;
 }
 
 .ui-liquid-glass-icon-only__pane > .ui-liquid-glass-icon-only__tab {
