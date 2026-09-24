@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { UiIconPair } from './iconPair';
 import { useLiquidGlassFilterId } from './liquidGlass';
 
@@ -403,7 +403,7 @@ export function useLiquidGlassIconOnlyStartup({
             <div
               ref={stripRef}
               className="ui-tabs__icon-only-startup-strip"
-              style={{ '--ui-icon-only-startup-filter': `url(#${filterId})` } as React.CSSProperties}
+              style={{ '--ui-icon-only-startup-filter': `url(#${filterId})` } as CSSProperties}
             >
               {items.map((item, index) => (
                 <span
