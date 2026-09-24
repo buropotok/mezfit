@@ -44,13 +44,6 @@
   pointer-events: none;
 }
 
-.ui-liquid-glass-icon-only__filters {
-  position: absolute;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
 .ui-liquid-glass-icon-only__startup {
   position: absolute;
   inset: 0;
@@ -161,28 +154,6 @@
   -webkit-backdrop-filter: blur(16px);
   touch-action: pan-x;
   transition-property: scale;
-}
-
-.ui-liquid-glass-icon-only__strip {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  overscroll-behavior-x: contain;
-  scroll-behavior: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: none;
-}
-
-.ui-liquid-glass-icon-only__strip::-webkit-scrollbar {
-  display: none;
 }
 
 .ui-liquid-glass-icon-only__tab {
@@ -366,17 +337,6 @@
   );
 }
 
-.ui-liquid-glass-icon-only__visually-hidden {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
-}
 .ui-liquid-glass-icon-only__startup-icon {
   position: absolute;
   width: 36px;
