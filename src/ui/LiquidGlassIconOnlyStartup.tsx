@@ -1,9 +1,8 @@
-import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
-import type { UiIconPair } from './iconPair';
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode, type RefObject } from 'react';
 
 export type StandaloneLiquidGlassIconOnlyStartupItem = {
   value: string;
-  icon: UiIconPair;
+  icon: { outline: ReactElement; filled: ReactElement };
 };
 
 export type LiquidGlassIconOnlyStartupState = 'hidden' | 'revealing' | 'visible';
