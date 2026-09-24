@@ -78,5 +78,25 @@ describe('liquidGlass UI Kit variants', () => {
   });
 
 
+  it('keeps iconOnly on its own approved interaction surface', () => {
+    const iconPair = {
+      outline: <span data-icon="outline" />,
+      filled: <span data-icon="filled" />,
+    };
+    const html = renderToStaticMarkup(
+      <Tabs theme="liquidGlass" mode="iconOnly" hidden={false} defaultValue="overview">
+        <TabsList aria-label="Sections">
+          <TabsTrigger value="overview" icon={iconPair}>Обзор</TabsTrigger>
+          <TabsTrigger value="program" icon={iconPair}>Программа</TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+
+    expect(html).toContain('ui-tabs__icon-only-lens-track');
+    expect(html).toContain('ui-tabs__icon-only-lens');
+    expect(html).not.toContain('ui-tabs__press-lens');
+  });
+
+
 
 });
