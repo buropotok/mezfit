@@ -6,7 +6,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-2);
-  padding: 0.375rem 0.875rem 0.375rem 0.375rem;
+  padding: 0.125rem 0.875rem 0.125rem 0.125rem;
   overflow: hidden;
   border-radius: var(--ui-radius-pill);
   color: var(--ui-color-surface-text);
@@ -18,15 +18,24 @@
   cursor: pointer;
 }
 
+.ui-identity-action--avatar-only {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  max-width: 2.75rem;
+  justify-content: center;
+  gap: 0;
+  padding: 0.125rem;
+}
+
 .ui-identity-action--disabled {
   opacity: 0.5;
   cursor: default;
 }
 
 .ui-identity-action__avatar {
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
 }
 
 .ui-identity-action__title {
