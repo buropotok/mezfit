@@ -354,7 +354,6 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
         >
           <KonstaList nested>
             <ListInput
-              outline
               floatingLabel
               inputId="program-phase-name"
               label={<label htmlFor="program-phase-name">Название</label>}
