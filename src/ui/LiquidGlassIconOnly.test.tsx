@@ -1,28 +1,24 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Tabs, TabsList, TabsTrigger } from './index';
-import { LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET } from './LiquidGlassIconOnlyInteraction';
+import { LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 
-const iconPair = {
-  outline: <span data-icon="outline" />,
-  filled: <span data-icon="filled" />,
-};
+const icon = (name: string) => ({
+  outline: <span data-icon={`${name}-outline`} />,
+  filled: <span data-icon={`${name}-filled`} />,
+});
+
+const fiveTabs: LiquidGlassIconOnlyTab[] = [
+  { value: 'today', label: 'Сегодня', icon: icon('today') },
+  { value: 'clients', label: 'Клиенты', icon: icon('clients') },
+  { value: 'programs', label: 'Программы', icon: icon('programs') },
+  { value: 'analytics', label: 'Аналитика', icon: icon('analytics') },
+  { value: 'settings', label: 'Настройки', icon: icon('settings') },
+];
 
 class ResizeObserverMock {
   observe() {}
   disconnect() {}
-}
-
-function Example({ hidden }: { hidden: boolean }) {
-  return (
-    <Tabs defaultValue="one" mode="iconOnly" theme="liquidGlass" hidden={hidden}>
-      <TabsList aria-label="Navigation">
-        <TabsTrigger value="one" icon={iconPair}>One</TabsTrigger>
-        <TabsTrigger value="two" icon={iconPair}>Two</TabsTrigger>
-      </TabsList>
-    </Tabs>
-  );
 }
 
 beforeEach(() => {
@@ -47,104 +43,93 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function setLayout(container: HTMLElement) {
-  const list = container.querySelector<HTMLElement>('.ui-tabs__list');
-  const triggers = [...container.querySelectorAll<HTMLElement>('.ui-tabs__trigger')];
-  if (!list) throw new Error('Tabs list is missing');
+describe('LiquidGlassIconOnly', () => {
+  it('is an independent primitive with exactly the supplied tabs and equal slots', () => {
+    const { container } = render(
+      <LiquidGlassIconOnly tabs={fiveTabs} value="programs" onValueChange={() => {}} hidden={false} />,
+    );
 
-  Object.defineProperties(list, {
-    clientWidth: { configurable: true, value: 200 },
-    scrollWidth: { configurable: true, value: 200 },
-    offsetWidth: { configurable: true, value: 200 },
-  });
-  list.getBoundingClientRect = () => ({
-    x: 0,
-    y: 0,
-    left: 0,
-    top: 0,
-    right: 200,
-    bottom: 64,
-    width: 200,
-    height: 64,
-    toJSON: () => ({}),
+    const root = container.querySelector('.ui-liquid-glass-icon-only__shell');
+    const tabs = [...container.querySelectorAll<HTMLElement>('.ui-liquid-glass-icon-only__tab')];
+
+    expect(root).not.toBeNull();
+    expect(container.querySelector('.ui-tabs')).toBeNull();
+    expect(tabs).toHaveLength(5);
+    expect(tabs.every((tab) => tab.style.width === '20%' && tab.style.flexBasis === '20%')).toBe(true);
+    expect(tabs.map((tab) => tab.getAttribute('aria-label'))).toEqual([
+      'Сегодня', 'Клиенты', 'Программы', 'Аналитика', 'Настройки',
+    ]);
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
   });
 
-  triggers.forEach((trigger, index) => {
-    Object.defineProperties(trigger, {
-      offsetLeft: { configurable: true, value: index * 100 },
-      offsetWidth: { configurable: true, value: 100 },
+  it('derives slot width from tabs.length instead of a fixed tab count', () => {
+    const { container } = render(
+      <LiquidGlassIconOnly tabs={fiveTabs.slice(0, 4)} value="today" onValueChange={() => {}} hidden={false} />,
+    );
+
+    const tabs = [...container.querySelectorAll<HTMLElement>('.ui-liquid-glass-icon-only__tab')];
+    expect(tabs).toHaveLength(4);
+    expect(tabs.every((tab) => tab.style.width === '25%' && tab.style.flexBasis === '25%')).toBe(true);
+  });
+
+  it('is fully hidden while hidden=true and only starts reveal on true to false', () => {
+    const { container, rerender } = render(
+      <LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden />,
+    );
+    const root = container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only__shell');
+
+    expect(root?.dataset.startupState).toBe('hidden');
+    expect(root?.getAttribute('aria-hidden')).toBe('true');
+
+    rerender(<LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden={false} />);
+    expect(root?.dataset.startupState).toBe('revealing');
+
+    rerender(<LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden />);
+    expect(root?.dataset.startupState).toBe('hidden');
+  });
+
+  it('mounts directly in the final state when hidden=false', () => {
+    const { container } = render(
+      <LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden={false} />,
+    );
+
+    expect(container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only__shell')?.dataset.startupState).toBe('visible');
+  });
+
+  it('emits the supplied value when a tab is selected', () => {
+    const onValueChange = vi.fn();
+    const { container } = render(
+      <LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={onValueChange} hidden={false} />,
+    );
+
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('.ui-liquid-glass-icon-only__tab')];
+    fireEvent.click(tabs[3]);
+
+    expect(onValueChange).toHaveBeenCalledWith('analytics');
+  });
+
+  it('activates the prototype hold lens, glass highlight and 1.05 container scale after 140ms', () => {
+    const { container } = render(
+      <LiquidGlassIconOnly tabs={fiveTabs} value="today" onValueChange={() => {}} hidden={false} />,
+    );
+    const pane = container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only__pane');
+    const lens = container.querySelector<HTMLElement>('.ui-liquid-glass-icon-only__lens');
+    if (!pane) throw new Error('pane missing');
+
+    pane.getBoundingClientRect = () => ({
+      x: 0, y: 0, left: 0, top: 0, right: 354, bottom: 64, width: 354, height: 64, toJSON: () => ({}),
     });
-  });
 
-  return list;
-}
-
-describe('Liquid Glass iconOnly startup state', () => {
-  it('stays hidden until hidden changes from true to false, then enters reveal state', () => {
-    const { container, rerender } = render(<Example hidden />);
-
-    const shell = container.querySelector<HTMLElement>('.ui-tabs__icon-only-shell');
-    expect(shell?.dataset.startupState).toBe('hidden');
-
-    rerender(<Example hidden={false} />);
-    expect(shell?.dataset.startupState).toBe('revealing');
-
-    rerender(<Example hidden />);
-    expect(shell?.dataset.startupState).toBe('hidden');
-  });
-
-  it('is immediately visible when mounted with hidden=false', () => {
-    const { container } = render(<Example hidden={false} />);
-
-    expect(container.querySelector<HTMLElement>('.ui-tabs__icon-only-shell')?.dataset.startupState).toBe('visible');
-    expect(Element.prototype.animate).not.toHaveBeenCalled();
-  });
-  it('keeps the approved interaction timings from the prototype', () => {
-    expect(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.holdDelayMs).toBe(140);
-    expect(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.lensTravelMs).toBe(300);
-    expect(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.containerScale).toBe(1.05);
-    expect(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.spring.durationMs).toBe(600);
-    expect(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET.spring.leadMs).toBe(90);
-  });
-
-  it('shows the lens, glass highlight and enlarged container after a long hold', () => {
-    const { container } = render(<Example hidden={false} />);
-    const list = setLayout(container);
-    const lens = container.querySelector<HTMLElement>('.ui-tabs__icon-only-lens');
-
-    fireEvent.pointerDown(list, {
-      pointerId: 1,
+    fireEvent.pointerDown(pane, {
+      pointerId: 7,
       pointerType: 'touch',
-      clientX: 25,
+      clientX: 35,
       clientY: 32,
     });
     vi.advanceTimersByTime(140);
 
     expect(lens?.classList.contains('pressed')).toBe(true);
-    expect(list.style.scale).toBe('1.05');
-    expect(list.querySelector('.ui-tabs__icon-only-glass-light-wrap')).not.toBeNull();
+    expect(pane.style.scale).toBe('1.05');
+    expect(pane.querySelector('.ui-liquid-glass-icon-only__glass-light-wrap')).not.toBeNull();
   });
-
-  it('enlarges the container immediately while the lens travels to another tab', () => {
-    const { container } = render(<Example hidden={false} />);
-    const list = setLayout(container);
-
-    fireEvent.pointerDown(list, {
-      pointerId: 2,
-      pointerType: 'touch',
-      clientX: 175,
-      clientY: 32,
-    });
-    fireEvent.pointerUp(list, {
-      pointerId: 2,
-      pointerType: 'touch',
-      clientX: 175,
-      clientY: 32,
-    });
-
-    expect(list.style.scale).toBe('1.05');
-    expect(container.querySelector('.ui-tabs__icon-only-lens.tap-spring-active')).not.toBeNull();
-    expect(container.querySelector('.ui-tabs__active-indicator-surface.tap-spring-hidden')).not.toBeNull();
-  });
-
 });
