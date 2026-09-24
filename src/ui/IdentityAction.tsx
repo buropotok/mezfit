@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { Glass } from 'konsta/react';
 import { Avatar } from './primitives';
+import { startPressScale } from './PressScale';
 import './identity-action.css';
 
 export type IdentityActionAvatar = {
@@ -20,25 +20,25 @@ export function IdentityAction({
   type = 'button',
   disabled,
   'aria-label': ariaLabel,
+  onPointerDown,
   ...props
 }: IdentityActionProps) {
   return (
-    <Glass
-      highlight={!disabled}
-      className={`ui-identity-action${disabled ? ' ui-identity-action--disabled' : ''} ${className}`.trim()}
+    <button
+      type={type}
+      disabled={disabled}
+      aria-label={ariaLabel ?? title}
+      className={`ui-identity-action ${className}`.trim()}
+      onPointerDown={(event) => {
+        onPointerDown?.(event);
+        if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget);
+      }}
+      {...props}
     >
-      <button
-        type={type}
-        disabled={disabled}
-        aria-label={ariaLabel ?? title}
-        className="ui-identity-action__button"
-        {...props}
-      >
-        <span aria-hidden="true">
-          <Avatar className="ui-identity-action__avatar" name={avatar.name} src={avatar.src} />
-        </span>
-        <span className="ui-identity-action__title">{title}</span>
-      </button>
-    </Glass>
+      <span aria-hidden="true">
+        <Avatar className="ui-identity-action__avatar" name={avatar.name} src={avatar.src} />
+      </span>
+      <span className="ui-identity-action__title">{title}</span>
+    </button>
   );
 }

@@ -1,14 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { KonstaProvider } from 'konsta/react';
 import { describe, expect, it } from 'vitest';
 import { IdentityAction } from './IdentityAction';
 
 describe('IdentityAction', () => {
   it('renders avatar and title as one semantic action', () => {
     const html = renderToStaticMarkup(
-      <KonstaProvider theme="ios" dark>
-        <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" />
-      </KonstaProvider>,
+      <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" />,
     );
 
     expect(html).toContain('<button');
@@ -22,9 +19,7 @@ describe('IdentityAction', () => {
 
   it('preserves native disabled button semantics', () => {
     const html = renderToStaticMarkup(
-      <KonstaProvider theme="ios" dark>
-        <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" disabled />
-      </KonstaProvider>,
+      <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" disabled />,
     );
 
     expect(html).toContain('disabled');
@@ -32,13 +27,11 @@ describe('IdentityAction', () => {
 
   it('accepts an explicit accessible label without changing the visible title', () => {
     const html = renderToStaticMarkup(
-      <KonstaProvider theme="ios" dark>
-        <IdentityAction
-          avatar={{ name: 'Andrei Sokolov' }}
-          title="Andrei Sokolov"
-          aria-label="Открыть клиента Андрей Соколов"
-        />
-      </KonstaProvider>,
+      <IdentityAction
+        avatar={{ name: 'Andrei Sokolov' }}
+        title="Andrei Sokolov"
+        aria-label="Открыть клиента Андрей Соколов"
+      />,
     );
 
     expect(html).toContain('aria-label="Открыть клиента Андрей Соколов"');
