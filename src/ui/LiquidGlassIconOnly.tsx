@@ -235,7 +235,6 @@ export function useLiquidGlassIconOnlyStartup({
   const rafRef = useRef<number | null>(null);
   const widthAnimationsRef = useRef<Animation[]>([]);
   const motionRef = useRef<HTMLDivElement>(null);
-  const scaleRef = useRef<HTMLDivElement>(null);
   const shapeRef = useRef<HTMLDivElement>(null);
   const maskRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
@@ -281,7 +280,6 @@ export function useLiquidGlassIconOnlyStartup({
 
     const list = listRef.current;
     const motion = motionRef.current;
-    const scale = scaleRef.current;
     const shape = shapeRef.current;
     const mask = maskRef.current;
     const strip = stripRef.current;
@@ -289,7 +287,7 @@ export function useLiquidGlassIconOnlyStartup({
     const image = imageRef.current;
     const displacement = displacementRef.current;
 
-    if (!list || !motion || !scale || !shape || !mask || !strip || !filter || !image || !displacement) {
+    if (!list || !motion || !shape || !mask || !strip || !filter || !image || !displacement) {
       setState('visible');
       return cancel;
     }
@@ -335,7 +333,8 @@ export function useLiquidGlassIconOnlyStartup({
         scaleY = springScale;
       }
 
-      scale.style.transform = `scale(${scaleX}, ${scaleY})`;
+      shape.style.transform = `translate(-50%,-50%) scale(${scaleX}, ${scaleY})`;
+      mask.style.transform = `translate(-50%,-50%) scale(${scaleX}, ${scaleY})`;
 
       if (clamped <= STARTUP_DURATION_MS) {
         const lowTime = Math.max(1, STARTUP_DURATION_MS * STARTUP_LOW_FRACTION);
@@ -398,7 +397,7 @@ export function useLiquidGlassIconOnlyStartup({
         </filter>
       </svg>
       <div ref={motionRef} className="ui-tabs__icon-only-startup-motion">
-        <div ref={scaleRef} className="ui-tabs__icon-only-startup-scale">
+        <div className="ui-tabs__icon-only-startup-scale">
           <div ref={shapeRef} className="ui-tabs__icon-only-startup-shape" />
           <div ref={maskRef} className="ui-tabs__icon-only-startup-mask">
             <div
