@@ -45,6 +45,13 @@ describe('direct prototype adapter',()=>{
     expect(button(root,2).getAttribute('aria-label')).toBe('Программы');expect(root.querySelector('[data-art="2-filled"]')).not.toBeNull();
     expect(button(root,0).style.width).toBe('20%');
   });
+  it('restores the approved prototype optical lens variables',()=>{
+    const view=render(ui());const lens=element(getScene(view.container),'lens');
+    expect(lens.style.getPropertyValue('--sl-glass-tint')).toBe('.17');
+    expect(lens.style.getPropertyValue('--sl-backdrop-blur')).toBe('0px');
+    expect(lens.style.getPropertyValue('--sl-glass-brightness')).toBe('1.02');
+    expect(lens.style.getPropertyValue('--sl-bezel-opacity')).toBe('.86');
+  });
   it('plays once for true -> false, settles, and does not replay on selection/parent renders',()=>{
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
     expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
