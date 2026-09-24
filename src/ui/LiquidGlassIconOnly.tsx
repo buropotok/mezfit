@@ -48,6 +48,7 @@ export function LiquidGlassIconOnly({
   const runtime = useStandaloneLiquidGlassIconOnlyRuntime({
     enabled: !hidden && startup.state === 'visible',
     activeValue: value,
+    itemCount: tabs.length,
     listRef,
     indicatorRef,
     indicatorSurfaceRef,
