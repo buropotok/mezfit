@@ -54,7 +54,6 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
         <div className="global-exercise-editor-copy">
           <KonstaList nested>
             <ListInput
-              outline
               floatingLabel
               inputId="global-exercise-name"
               label={<label htmlFor="global-exercise-name">Название</label>}
@@ -65,7 +64,6 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
               disabled={saving}
             />
             <ListInput
-              outline
               floatingLabel
               inputId="global-exercise-description"
               label={<label htmlFor="global-exercise-description">Описание</label>}

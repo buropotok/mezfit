@@ -175,7 +175,6 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
         <div className="exercise-create-text-fields">
           <KonstaList nested>
             <ListInput
-              outline
               floatingLabel
               inputId="exercise-create-name"
               label={<label htmlFor="exercise-create-name">Название</label>}
@@ -186,7 +185,6 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
               disabled={saving}
             />
             <ListInput
-              outline
               floatingLabel
               inputId="exercise-create-description"
               label={<label htmlFor="exercise-create-description">Описание</label>}

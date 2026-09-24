@@ -361,7 +361,6 @@ export function ProgramsPage({
           <div className="program-create-content">
             <KonstaList nested>
               <ListInput
-                outline
                 floatingLabel
                 inputId="program-create-name"
                 label={<label htmlFor="program-create-name">Название</label>}
