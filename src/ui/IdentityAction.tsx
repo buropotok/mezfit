@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes } from 'react';
-import { Button as KonstaButton } from 'konsta/react';
+import type { ComponentProps } from 'react';
+import { Fab as KonstaFab } from 'konsta/react';
 import { Avatar } from './primitives';
 import './identity-action.css';
 
@@ -8,43 +8,41 @@ export type IdentityActionAvatar = {
   src?: string;
 };
 
-export type IdentityActionProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'className' | 'style'> & {
+export type IdentityActionProps = Omit<
+  ComponentProps<typeof KonstaFab>,
+  'children' | 'className' | 'colors' | 'component' | 'href' | 'icon' | 'text' | 'textPosition'
+> & {
   avatar: IdentityActionAvatar;
   title: string;
 };
 
-const identityButtonColors = {
-  tonalBgIos: 'bg-black/10 dark:bg-white/10 active:bg-black/15 dark:active:bg-white/15',
-  tonalTextIos: 'text-black dark:text-white',
+const identityFabColors = {
+  bgIos: 'bg-ios-light-glass dark:bg-ios-dark-glass',
+  activeBgIos: 'active:bg-black/10 dark:active:bg-white/10',
+  textIos: 'text-black dark:text-white',
 };
 
 export function IdentityAction({
   avatar,
   title,
-  type = 'button',
-  disabled,
   'aria-label': ariaLabel,
   ...props
 }: IdentityActionProps) {
   return (
-    <KonstaButton
-      inline
-      rounded
-      raised
-      tonal
-      large
-      colors={identityButtonColors}
-      type={type}
-      disabled={disabled}
+    <KonstaFab
+      component="button"
+      type="button"
+      colors={identityFabColors}
       aria-label={ariaLabel ?? title}
-      {...props}
-    >
-      <span className="ui-identity-action__content">
-        <span aria-hidden="true">
-          <Avatar name={avatar.name} src={avatar.src} />
+      text={
+        <span className="ui-identity-action__content">
+          <span aria-hidden="true">
+            <Avatar name={avatar.name} src={avatar.src} />
+          </span>
+          <span className="ui-identity-action__title">{title}</span>
         </span>
-        <span className="ui-identity-action__title">{title}</span>
-      </span>
-    </KonstaButton>
+      }
+      {...props}
+    />
   );
 }
