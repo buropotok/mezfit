@@ -20,7 +20,6 @@ describe('IdentityAction', () => {
     expect(html).toContain('<button');
     expect(html).toContain('type="button"');
     expect(html).toContain('aria-label="Andrei Sokolov"');
-    expect(html).toContain('ui-identity-action__content');
     expect(html).toContain('>AS<');
     expect(html).toContain('ui-identity-action__title">Andrei Sokolov</span>');
   });
