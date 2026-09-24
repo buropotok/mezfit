@@ -18,6 +18,15 @@
   cursor: pointer;
 }
 
+.ui-identity-action--avatar-only {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  max-width: 2.75rem;
+  justify-content: center;
+  gap: 0;
+  padding: 0.125rem;
+}
+
 .ui-identity-action--disabled {
   opacity: 0.5;
   cursor: default;
