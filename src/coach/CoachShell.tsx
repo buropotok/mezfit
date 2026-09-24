@@ -150,9 +150,9 @@ function ClientDirectory({
         ) : clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
           <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
         ) : presentation === 'contacts' ? (
-          <KonstaList strongIos>
+          <KonstaList strongIos dividers={false}>
             {contactGroups.map((group) => (
-              <ListGroup key={group.title} dividers={false}>
+              <ListGroup key={group.title}>
                 <KonstaListItem
                   title={group.title}
                   groupTitle
