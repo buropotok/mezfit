@@ -1,0 +1,1411 @@
+
+    :host {
+      --color-primary: #007aff;
+      --color-ios-light-surface: #efeff4;
+      --color-ios-dark-surface: #000;
+      --color-ios-hover-highlight: rgba(255, 255, 255, 0.5);
+      --k-rtl-reverse: 1;
+
+      /* Konsta src/styles/glass.css */
+      --shadow-ios-light-glass:
+        inset -1px -1px 0px -0.5px rgba(255, 255, 255, 1),
+        inset 1px 1px 0px -0.5px rgba(255, 255, 255, 1),
+        inset 3px 3px 10px -3px #ddd,
+        inset -3px -3px 10px -3px #ddd,
+        inset 0 0 5px 1px #fff,
+        inset 0 0 0 0.5px rgba(0, 0, 0, 0.25),
+        inset 0 0 24px 0 rgba(0, 0, 0, 0.1),
+        0 0 25px 0 rgba(0, 0, 0, 0.2);
+
+      --shadow-ios-light-glass-thumb:
+        inset -3px -3px 0px -3.5px rgba(255, 255, 255, 1),
+        inset 3px 3px 0px -3.5px rgba(255, 255, 255, 1),
+        inset 0px 0px 0px 0.5px rgba(255, 255, 255, 0.5),
+        inset 3px 3px 10px -2px #eee,
+        inset -3px -3px 10px -2px #eee,
+        inset 0 0 5px 1px #fff;
+
+      --shadow-ios-dark-glass:
+        inset -2px -2px 0.5px -2.5px rgba(255, 255, 255, 0.4),
+        inset 3px 3px 0.5px -3.5px rgba(255, 255, 255, 0.4),
+        inset 2px 2px 0.5px -2px #262626,
+        inset -2px -2px 0.5px -2px #262626,
+        inset 0 0 5px 1px #141414,
+        inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+        inset 0 0 10px 0 rgba(255, 255, 255, 0.075),
+        inset 0 0 24px 0 rgba(255, 255, 255, 0.05),
+        0 0 25px 0 rgba(0, 0, 0, 0.15);
+
+      --shadow-ios-dark-glass-thumb:
+        inset 3px 3px 0px -3.5px rgba(255, 255, 255, 1),
+        inset -3px -3px 0px -3.5px rgba(255, 255, 255, 1),
+        inset -0.5px -0.5px 0px rgba(255, 255, 255, 0.5),
+        inset 0.5px 0.5px 0px rgba(255, 255, 255, 0.1),
+        inset -3px 3px 0px -3.5px rgba(255, 255, 255, 0.25),
+        inset 0px -5px 0px -3.5px rgba(255, 255, 255, 0.25),
+        inset 0px -5px 5px rgba(255, 255, 255, 0.25);
+    }
+
+    .dark {
+      --color-ios-hover-highlight: rgba(255, 255, 255, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #dfe6ef;
+      color: #000;
+      font-family:
+        -apple-system, "SF Pro Text", "SF UI Text", system-ui,
+        "Helvetica Neue", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      transition: background-color 220ms ease, color 220ms ease;
+    }
+
+    .phone,
+    .content,
+    .card,
+    .toolbar-bg,
+    .toolbar-pane,
+    .tab-link {
+      transition:
+        background-color 220ms ease,
+        color 220ms ease,
+        box-shadow 220ms ease,
+        border-color 220ms ease;
+    }
+
+    .dark body {
+      background: #11151b;
+      color: #fff;
+    }
+
+    .phone {
+      width: min(390px, 100%);
+      height: min(760px, calc(100vh - 48px));
+      height: min(760px, calc(100dvh - 48px));
+      min-height: 600px;
+      background: var(--color-ios-light-surface);
+      border-radius: 36px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 22px 70px rgba(0,0,0,.24);
+    }
+
+    .dark .phone {
+      background: var(--color-ios-dark-surface);
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+    }
+
+    .content {
+      position: absolute;
+      inset: 0;
+      padding: 54px 20px 220px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(0,122,255,.20), transparent 34%),
+        radial-gradient(circle at 80% 48%, rgba(255,45,85,.15), transparent 30%),
+        linear-gradient(180deg, #f9fbff 0%, var(--color-ios-light-surface) 72%);
+    }
+
+    .dark .content {
+      background:
+        radial-gradient(circle at 20% 15%, rgba(10,132,255,.22), transparent 34%),
+        radial-gradient(circle at 80% 48%, rgba(255,55,95,.16), transparent 30%),
+        linear-gradient(180deg, #141416 0%, var(--color-ios-dark-surface) 72%);
+    }
+
+    .demo-title {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.05;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .demo-copy {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.45;
+      color: rgba(0,0,0,.58);
+      max-width: 300px;
+    }
+
+    .dark .demo-copy {
+      color: rgba(255,255,255,.58);
+    }
+
+    .card {
+      margin-top: 26px;
+      min-height: 230px;
+      padding: 22px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(255,255,255,.9);
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dark .card {
+      background: rgba(28,28,29,.72);
+      border-color: rgba(255,255,255,.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+    }
+
+    .card-kicker {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .card-value {
+      margin-top: 10px;
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -.04em;
+    }
+
+    .card-line {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.07);
+      margin-top: 18px;
+    }
+
+    .dark .card-line {
+      background: rgba(255,255,255,.10);
+    }
+    .card-line:nth-child(4) { width: 78%; }
+    .card-line:nth-child(5) { width: 54%; }
+
+    .feed {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .feed-item {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.62);
+      border: 1px solid rgba(255,255,255,.75);
+      box-shadow: 0 8px 24px rgba(0,0,0,.045);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .dark .feed-item {
+      background: rgba(28,28,29,.68);
+      border-color: rgba(255,255,255,.08);
+      box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    }
+
+    .feed-item h2 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      line-height: 22px;
+      font-weight: 600;
+    }
+
+    .feed-item p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 20px;
+      color: rgba(0,0,0,.70);
+    }
+
+    .dark .feed-item p {
+      color: rgba(255,255,255,.72);
+    }
+
+    .color-strip {
+      height: 44px;
+      border-radius: 14px;
+      margin-top: 12px;
+      background:
+        linear-gradient(90deg,
+          rgba(0,122,255,.9),
+          rgba(90,200,250,.9) 34%,
+          rgba(255,45,85,.88) 68%,
+          rgba(255,149,0,.88));
+    }
+
+    .color-strip.alt {
+      background:
+        linear-gradient(90deg,
+          rgba(52,199,89,.9),
+          rgba(0,122,255,.85) 45%,
+          rgba(175,82,222,.88));
+    }
+
+    .scroll-hint {
+      margin: 22px 0 4px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 18px;
+      color: rgba(0,0,0,.45);
+    }
+
+    .dark .scroll-hint {
+      color: rgba(255,255,255,.45);
+    }
+
+    /* Konsta Toolbar iOS bottom background, equivalent to:
+       backdrop-blur-[2px] + gradient from ios-light-surface to transparent */
+    .toolbar {
+      position: absolute;
+      z-index: 20;
+      left: max(18px, env(safe-area-inset-left));
+      right: max(18px, env(safe-area-inset-right));
+      bottom: calc(max(28px, env(safe-area-inset-bottom)) + 66px);
+      width: auto;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .toolbar-bg-blur,
+    .toolbar-bg {
+      display: none;
+    }
+
+    .toolbar-inner {
+      height: 64px; /* Konsta: h-16 when icons + labels */
+      width: 100%;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      gap: 16px; /* Konsta: gap-4 */
+      pointer-events: auto;
+    }
+
+    /* ToolbarPane -> Glass, iOS */
+    .toolbar-pane {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 9999px;
+      background: rgba(255,255,255,.75);
+      box-shadow: var(--shadow-ios-light-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      touch-action: pan-x;
+      transition-property: scale;
+      overflow: visible;
+    }
+
+    .dark .toolbar-pane {
+      background: rgba(50,50,50,.50);
+      box-shadow: var(--shadow-ios-dark-glass);
+    }
+
+    .tab-strip {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: stretch;
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      overscroll-behavior-x: contain;
+      scroll-behavior: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: none;
+    }
+
+    .tab-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* TabbarLink */
+    .tab-link {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      flex: 0 0 92px;
+      width: 92px;
+      height: 100%;
+      padding: 0 8px;
+      position: relative;
+      z-index: 10;
+      cursor: pointer;
+      user-select: none;
+      color: #000;
+      transition-property: color;
+      transition-duration: 300ms;
+      font: inherit;
+    }
+
+    .dark .tab-link {
+      color: #fff;
+    }
+
+    .tab-link.active {
+      color: var(--color-primary);
+    }
+
+    .tab-content {
+      height: 100%;
+      padding: 4px 0; /* Konsta: py-1 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tab-icon-wrap {
+      width: 28px;
+      height: 28px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tab-icon {
+      position: absolute;
+      inset: 0;
+      width: 28px;
+      height: 28px;
+      display: block;
+      color: currentColor;
+      transform-origin: 50% 50%;
+      transition:
+        opacity 110ms ease,
+        transform 160ms cubic-bezier(.2,.8,.2,1);
+      pointer-events: none;
+    }
+
+    .tab-icon-outline {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .tab-icon-filled {
+      opacity: 0;
+      transform: scale(.82);
+    }
+
+    .tab-link.active .tab-icon-outline {
+      opacity: 0;
+      transform: scale(.84);
+    }
+
+    .tab-link.active .tab-icon-filled {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .tab-label {
+      font-family: var(--ui-font-family);
+      font-size: var(--ui-font-size-body);
+      line-height: var(--ui-line-height-body);
+      font-weight: var(--ui-font-weight-medium);
+      white-space: nowrap;
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Two public visual modes for the local Konsta fork prototype.
+       Icons = existing approved version.
+       Text = same mechanics/optics/settings, labels only. */
+    .optical-tabs-playground[data-tab-mode="text"] .tab-icon-wrap {
+      display: none;
+    }
+
+    .optical-tabs-playground[data-tab-mode="text"] .tab-content {
+      /* Same label room as Icons mode. */
+      padding: 4px 0;
+    }
+
+    /* Konsta v5.4.0: icons+labels = 64px, text-only = 48px.
+       Typography remains IDENTICAL to Icons:
+       .tab-label = 12px / 16px / 500. */
+    .optical-tabs-playground[data-tab-mode="text"] > .optical-toolbar-pane {
+      top: 20px;
+      height: 48px;
+    }
+
+    .optical-tabs-playground[data-tab-mode="text"] .extracted-lens-demo {
+      top: 20px;
+      height: 48px;
+    }
+
+    .optical-tabs-playground[data-tab-mode="text"] .tab-label {
+      max-width: none;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    /* Text optical lens base height = full 48px container.
+       Scale 1.25 => rendered height exactly 60px. */
+    .optical-tabs-playground[data-tab-mode="text"]
+      .extracted-lens-demo .optical-working-lens {
+      top: 0;
+      bottom: 0;
+    }
+
+    .tabs-mode-switcher {
+      position: absolute;
+      z-index: 50;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 9999px;
+      background: rgba(118,118,128,.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .tabs-mode-button {
+      appearance: none;
+      border: 0;
+      min-width: 72px;
+      height: 30px;
+      padding: 0 14px;
+      border-radius: 9999px;
+      background: transparent;
+      color: inherit;
+      font-family: var(--ui-font-family, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif);
+      font-size: 13px;
+      line-height: 18px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .tabs-mode-button.is-active {
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 1px 5px rgba(0,0,0,.12);
+    }
+
+    .dark .tabs-mode-switcher {
+      background: rgba(118,118,128,.30);
+    }
+
+    .dark .tabs-mode-button.is-active {
+      background: rgba(60,60,67,.90);
+    }
+
+    /*
+      Selector is rendered inside .tab-strip so native/manual horizontal
+      scrolling moves it in the same scroll layer as tab content. That removes
+      the one-frame JS catch-up that caused visible jitter.
+
+      Lens remains in a separate overlay because it is allowed to grow above
+      and below the glass container.
+    */
+    .lens-viewport {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      overflow: visible;
+      clip-path: inset(-20px 0 -20px 0);
+    }
+
+    .selector-track {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      border-radius: inherit;
+      pointer-events: none;
+      transition-duration: 300ms;
+      transition-property: all;
+    }
+
+    .selector {
+      position: absolute;
+      inset: 4px;
+      border-radius: inherit;
+      background: rgba(0,0,0,.10);
+      pointer-events: none;
+      transition-duration: 300ms;
+      transition-property: all;
+    }
+
+    .dark .selector {
+      background: rgba(255,255,255,.15);
+    }
+
+    .lens {
+      position: absolute;
+      inset: 4px;
+      border-radius: inherit;
+      opacity: 0;
+      background: rgba(0,0,0,.05);
+      box-shadow: var(--shadow-ios-light-glass-thumb);
+      pointer-events: none;
+      transition-duration: 300ms;
+      transition-property: all;
+    }
+
+    .dark .lens {
+      background: rgba(255,255,255,.10);
+      box-shadow: var(--shadow-ios-dark-glass-thumb);
+    }
+
+    /* Konsta pressed classes */
+    .selector.pressed {
+      opacity: 0;
+      scale: 1.4;
+    }
+
+    .lens.pressed {
+      opacity: 1;
+      scale: 1.4;
+    }
+
+    /* Tap-spring visual hold.
+       v6 can remove .pressed when its 300ms lifecycle completes; this temporary
+       class keeps the optical lens visible at the same base scale until the
+       spring itself is finished. */
+    .optical-tabs-playground .optical-working-lens.tap-spring-active {
+      opacity: 1 !important;
+      scale: var(--optical-pressed-scale, 1.25) !important;
+      transform-origin: 50% 50%;
+    }
+
+    .optical-tabs-playground #selector.tap-spring-hidden {
+      opacity: 0 !important;
+    }
+
+    /* Glass useIosHighlight(), separate from tabbar pressed lens */
+    .glass-light-wrap {
+      position: absolute;
+      left: 1px;
+      top: 1px;
+      right: 1px;
+      bottom: 1px;
+      border-radius: inherit;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+      transition-duration: 300ms;
+      z-index: 30;
+    }
+
+    .glass-light {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      z-index: 10;
+      background-image: radial-gradient(
+        circle at center,
+        color-mix(in oklab, var(--color-ios-hover-highlight) 100%, transparent),
+        transparent 50%
+      );
+    }
+
+    .theme-switch {
+      position: absolute;
+      z-index: 40;
+      top: 14px;
+      right: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 36px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,.72);
+      box-shadow: 0 2px 12px rgba(0,0,0,.10);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #111;
+      font: 500 13px/1 -apple-system, "SF Pro Text", system-ui, sans-serif;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .theme-switch svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dark .theme-switch {
+      background: rgba(50,50,50,.55);
+      box-shadow: var(--shadow-ios-dark-glass);
+      color: #fff;
+    }
+
+
+    .hold-delay-tuner {
+      position: absolute;
+      z-index: 50;
+      left: 14px;
+      top: 14px;
+      width: 180px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.78);
+      box-shadow: 0 4px 18px rgba(0,0,0,.12);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #111;
+      font: 500 12px/16px -apple-system, "SF Pro Text", system-ui, sans-serif;
+    }
+
+    .dark .hold-delay-tuner {
+      background: rgba(50,50,50,.62);
+      color: #fff;
+      box-shadow: var(--shadow-ios-dark-glass);
+    }
+
+    .hold-delay-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .hold-delay-value {
+      font: 600 12px/16px ui-monospace, SFMono-Regular, Menlo, monospace;
+      opacity: .72;
+    }
+
+    .hold-delay-tuner input[type="range"] {
+      width: 100%;
+      margin: 0;
+      accent-color: var(--color-primary);
+    }
+
+    /* Standalone lens demo only. Tabs component selectors are untouched. */
+    .extracted-lens-demo {
+      position: absolute;
+      z-index: 19;
+      left: 50%;
+      bottom: calc(max(28px, env(safe-area-inset-bottom)) + 158px);
+      width: 92px;
+      height: 64px;
+      border-radius: 9999px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      isolation: isolate;
+    }
+
+    .extracted-lens-demo .lens {
+      z-index: 1;
+      opacity: 1;
+      scale: var(--sl-lens-scale, 1.16);
+      transform-origin: 50% 50%;
+      background: rgba(20,20,20,var(--sl-glass-tint,.12));
+      box-shadow: 0 8px 24px rgba(0,0,0,.14);
+      -webkit-backdrop-filter:
+        blur(var(--sl-backdrop-blur,0px))
+        saturate(1.05)
+        brightness(var(--sl-glass-brightness,1.02));
+      backdrop-filter:
+        blur(var(--sl-backdrop-blur,0px))
+        url(#standalone-lens-filter)
+        saturate(1.05)
+        brightness(var(--sl-glass-brightness,1.02));
+    }
+
+    .dark .extracted-lens-demo .lens {
+      background: rgba(20,20,20,var(--sl-glass-tint,.12));
+      box-shadow: 0 8px 24px rgba(0,0,0,.20);
+    }
+
+    .extracted-lens-demo .lens::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      box-shadow: var(--shadow-ios-light-glass-thumb);
+      opacity: var(--sl-bezel-opacity,.78);
+    }
+
+    .dark .extracted-lens-demo .lens::after {
+      box-shadow: var(--shadow-ios-dark-glass-thumb);
+    }
+
+    .standalone-map-preview {
+      position: absolute;
+      z-index: 2;
+      inset: 4px;
+      border-radius: inherit;
+      scale: var(--sl-lens-scale, 1.18);
+      transform-origin: 50% 50%;
+      background-repeat: no-repeat;
+      background-position: 50% 50%;
+      background-size: 100% 100%;
+      opacity: .62;
+      pointer-events: none;
+    }
+
+    .standalone-map-preview.is-hidden { opacity: 0; }
+
+
+    /* Standalone optics playground. This is a passive copy only; the real
+       v6 Tabs below remains untouched. */
+    .standalone-lens-playground {
+      position: absolute;
+      z-index: 19;
+      left: max(18px, env(safe-area-inset-left));
+      right: max(18px, env(safe-area-inset-right));
+      bottom: calc(max(28px, env(safe-area-inset-bottom)) + 158px);
+      height: 88px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: grab;
+      overflow: visible;
+    }
+
+    .standalone-lens-playground.is-dragging {
+      cursor: grabbing;
+    }
+
+    .standalone-container-copy {
+      position: absolute;
+      z-index: 0;
+      left: 0;
+      right: 0;
+      top: 12px;
+      height: 64px;
+      border-radius: 9999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.75);
+      box-shadow: var(--shadow-ios-light-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      pointer-events: none;
+    }
+
+    .dark .standalone-container-copy {
+      background: rgba(50,50,50,.50);
+      box-shadow: var(--shadow-ios-dark-glass);
+    }
+
+    .standalone-tab-strip-copy {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .standalone-copy-tab {
+      flex: 0 0 92px;
+      width: 92px;
+      height: 100%;
+      padding: 0 8px;
+      position: relative;
+      color: #000;
+      font: inherit;
+      pointer-events: none;
+    }
+
+    .dark .standalone-copy-tab {
+      color: #fff;
+    }
+
+    /* The standalone lens is now positioned inside the playground instead of
+       being independently anchored to the phone. */
+    .standalone-lens-playground .extracted-lens-demo {
+      position: absolute;
+      z-index: 2;
+      left: 0;
+      top: 12px;
+      bottom: auto;
+      width: 92px;
+      height: 64px;
+      border-radius: 9999px;
+      transform: none;
+      pointer-events: none;
+      isolation: isolate;
+      will-change: left;
+    }
+
+    /* ---------------------------------------------------------------
+       Interactive optical Tabs:
+       exact working standalone structure + original v6 mechanics.
+       --------------------------------------------------------------- */
+    .optical-tabs-playground > .optical-toolbar-pane {
+      position: absolute;
+      z-index: 0;
+      left: 0;
+      right: 0;
+      top: 12px;
+      width: auto;
+      height: 64px;
+      overflow: visible;
+      pointer-events: auto;
+    }
+
+    .optical-tabs-playground > .optical-toolbar-pane > .tab-strip {
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+    }
+
+    .optical-tabs-playground .extracted-lens-demo {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* The old v6 lens mechanics still toggle .pressed.
+       Only its visual skin is replaced with Variant 7 optics. */
+    .optical-tabs-playground .extracted-lens-demo .optical-working-lens {
+      opacity: 0;
+      scale: 1;
+      transition-duration: 300ms;
+      transition-property: all;
+    }
+
+    .optical-tabs-playground .extracted-lens-demo .optical-working-lens.pressed {
+      opacity: 1;
+      /* Variant 7 base scale (1.25) multiplied by the live container scale.
+         When the container grows to 1.05 on hold, the lens target becomes
+         1.3125, so both surfaces expand proportionally. */
+      scale: var(--optical-pressed-scale, 1.25);
+    }
+
+    .dark .optical-tabs-playground .extracted-lens-demo .optical-working-lens {
+      background: rgba(20,20,20,.17);
+    }
+
+    /* Regular document-flow tuner. Not fixed, absolute, modal, or popup. */
+    .standalone-tuner-dom {
+      width: min(390px, 100%);
+      margin: 16px auto 56px;
+      border: 1px solid rgba(0,0,0,.10);
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(255,255,255,.92);
+      color: #111;
+      box-shadow: 0 12px 34px rgba(0,0,0,.12);
+      font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+    }
+
+    .dark .standalone-tuner-dom {
+      border-color: rgba(255,255,255,.09);
+      background: #1d1d1f;
+      color: #fff;
+    }
+
+    .standalone-tuner-head {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    .dark .standalone-tuner-head { border-bottom-color: rgba(255,255,255,.08); }
+    .standalone-tuner-head h2 { margin: 0; font-size: 17px; line-height: 22px; font-weight: 600; }
+    .standalone-tuner-head p { margin: 4px 0 0; opacity: .58; font-size: 12px; line-height: 16px; }
+    .standalone-tuner-body { padding: 14px 16px 22px; }
+
+    .standalone-group {
+      margin: 0 0 16px;
+      padding: 0 0 16px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    .dark .standalone-group { border-bottom-color: rgba(255,255,255,.08); }
+    .standalone-group:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+    .standalone-group h3 { margin: 0 0 10px; font-size: 13px; line-height: 18px; font-weight: 600; }
+
+    .standalone-control {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto;
+      gap: 5px 10px;
+      margin: 0 0 13px;
+    }
+    .standalone-control:last-child { margin-bottom: 0; }
+    .standalone-control label { min-width: 0; font-size: 13px; line-height: 18px; }
+    .standalone-control small { grid-column: 1/-1; margin-top: -3px; opacity: .58; font-size: 12px; line-height: 16px; }
+    .standalone-control output { min-width: 58px; opacity: .58; font-size: 13px; line-height: 18px; text-align: right; font-variant-numeric: tabular-nums; }
+    .standalone-control input { grid-column: 1/-1; width: 100%; margin: 1px 0 0; accent-color: var(--color-primary); }
+
+    .standalone-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .standalone-buttons button {
+      min-height: 36px;
+      padding: 7px 10px;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(0,0,0,.07);
+      color: inherit;
+      font: 500 13px/18px -apple-system, "SF Pro Text", system-ui, sans-serif;
+    }
+    .dark .standalone-buttons button { background: rgba(255,255,255,.10); }
+
+    .standalone-position-readout {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 14px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(0,0,0,.05);
+      font: 500 12px/16px var(--ui-font-family);
+    }
+
+    .dark .standalone-position-readout {
+      background: rgba(255,255,255,.06);
+    }
+
+    .standalone-position-readout output {
+      font-variant-numeric: tabular-nums;
+      opacity: .66;
+    }
+
+    .standalone-copy-status {
+      min-height: 16px;
+      margin-top: 8px;
+      opacity: .58;
+      font: 11px/16px var(--ui-font-family);
+    }
+
+    .standalone-map-wrap { overflow: hidden; border-radius: 10px; background: #101821; }
+    #sl-map-canvas { display: block; width: 100%; height: auto; image-rendering: auto; }
+    .standalone-readout {
+      margin: 8px 0 0;
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(0,0,0,.05);
+      opacity: .72;
+      font: 11px/15px ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: pre-wrap;
+    }
+    .dark .standalone-readout { background: rgba(255,255,255,.06); }
+
+    @media (max-width: 520px) {
+      .standalone-tuner-dom {
+        width: 100vw;
+        margin: 0;
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+      }
+    }
+
+
+    .spring-graph-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .spring-graph-title h3 {
+      margin: 0;
+    }
+
+    .spring-graph-title span {
+      opacity: .56;
+      font: 11px/15px ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: nowrap;
+    }
+
+    .spring-graph-wrap {
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.09);
+      background: rgba(0,0,0,.025);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .dark .spring-graph-wrap {
+      border-color: rgba(255,255,255,.10);
+      background: rgba(255,255,255,.035);
+    }
+
+    .spring-graph {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+      overflow: visible;
+    }
+
+    .spring-grid-line {
+      stroke: currentColor;
+      stroke-opacity: .08;
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .spring-baseline {
+      stroke: currentColor;
+      stroke-opacity: .24;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .spring-curve {
+      fill: none;
+      stroke: var(--color-primary);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .spring-tangent {
+      stroke: currentColor;
+      stroke-opacity: .28;
+      stroke-width: 1.5;
+      stroke-dasharray: 4 4;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .spring-arrival {
+      stroke: var(--color-primary);
+      stroke-opacity: .48;
+      stroke-width: 1.5;
+      stroke-dasharray: 6 5;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .spring-duration-line {
+      stroke: currentColor;
+      stroke-opacity: .34;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .spring-point,
+    .spring-bend,
+    .spring-time-handle {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .spring-point:active,
+    .spring-bend:active,
+    .spring-time-handle:active {
+      cursor: grabbing;
+    }
+
+    .spring-point {
+      fill: var(--color-primary);
+      stroke: rgba(255,255,255,.95);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .spring-bend {
+      fill: rgba(255,255,255,.96);
+      stroke: var(--color-primary);
+      stroke-width: 2.5;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .dark .spring-bend {
+      fill: #1d1d1f;
+    }
+
+    .spring-end-handle {
+      fill: currentColor;
+      fill-opacity: .78;
+    }
+
+    .spring-arrival-handle {
+      fill: var(--color-primary);
+    }
+
+    .spring-axis-label,
+    .spring-point-label,
+    .spring-time-label {
+      fill: currentColor;
+      pointer-events: none;
+      font-family: var(--ui-font-family, -apple-system, system-ui, sans-serif);
+    }
+
+    .spring-axis-label {
+      opacity: .44;
+      font-size: 12px;
+    }
+
+    .spring-point-label {
+      opacity: .68;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .spring-time-label {
+      opacity: .64;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .spring-graph-legend {
+      display: grid;
+      gap: 7px;
+      font-size: 12px;
+      line-height: 16px;
+      opacity: .72;
+    }
+
+    .spring-graph-legend > div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spring-legend-dot {
+      display: inline-block;
+      flex: 0 0 auto;
+      width: 10px;
+      height: 10px;
+    }
+
+    .spring-legend-point {
+      border-radius: 50%;
+      background: var(--color-primary);
+    }
+
+    .spring-legend-bend {
+      border: 2px solid var(--color-primary);
+      transform: rotate(45deg) scale(.72);
+      background: transparent;
+    }
+
+    .spring-legend-line,
+    .spring-legend-end {
+      display: inline-block;
+      flex: 0 0 auto;
+      width: 18px;
+      height: 0;
+      border-top: 1.5px dashed var(--color-primary);
+    }
+
+    .spring-legend-end {
+      border-top-style: solid;
+      border-top-color: currentColor;
+      opacity: .55;
+    }
+
+    .baseline-note {
+      position: fixed;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: rgba(0,0,0,.5);
+      white-space: nowrap;
+    }
+
+    .dark .baseline-note {
+      color: rgba(255,255,255,.45);
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 0; background: var(--color-ios-light-surface); }
+      .dark body { background: var(--color-ios-dark-surface); }
+      .phone {
+        width: 100vw;
+        height: 100vh;
+        min-height: 100vh;
+        height: 100dvh;
+        min-height: 100dvh;
+        height: var(--app-viewport-height, 100dvh);
+        min-height: var(--app-viewport-height, 100dvh);
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .baseline-note { display: none; }
+    }
+
+
+    /* Step 7 workbench layout: preview + tuner are simultaneously visible.
+       This changes only the prototype page shell, never the Tabs component. */
+    .prototype-workbench {
+      width: min(798px, 100%);
+      height: min(760px, calc(100dvh - 48px));
+      display: grid;
+      grid-template-columns: minmax(320px, 390px) minmax(320px, 390px);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .prototype-workbench > .phone {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      margin: 0;
+    }
+
+    .prototype-workbench > .standalone-tuner-dom {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      margin: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        min-height: 100dvh;
+        height: 100dvh;
+        padding: 0;
+        display: block;
+        overflow: hidden;
+        background: var(--color-ios-light-surface);
+      }
+
+      .dark body {
+        background: var(--color-ios-dark-surface);
+      }
+
+      .prototype-workbench {
+        width: 100vw;
+        height: 100dvh;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: 46dvh 54dvh;
+        gap: 0;
+      }
+
+      .prototype-workbench > .phone {
+        width: 100vw !important;
+        height: 46dvh !important;
+        min-height: 0 !important;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .prototype-workbench > .standalone-tuner-dom {
+        width: 100vw;
+        height: 54dvh;
+        min-height: 0;
+        margin: 0;
+        overflow-y: auto;
+        border-left: 0;
+        border-right: 0;
+        border-bottom: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .standalone-tuner-head {
+        position: sticky;
+        z-index: 3;
+        top: 0;
+        background: rgba(255,255,255,.96);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .dark .standalone-tuner-head {
+        background: rgba(29,29,31,.96);
+      }
+    }
+
+    /* Mezfit typography.md — standalone prototype tokens.
+       Tab labels are interactive text => Body 15/20, medium 500. */
+    :host {
+      --ui-font-family: "Golos Text", sans-serif;
+      --ui-font-size-body: 15px;
+      --ui-line-height-body: 20px;
+      --ui-font-weight-medium: 500;
+    }
+
+    body,
+    button,
+    input,
+    output,
+    label,
+    pre {
+      font-family: var(--ui-font-family);
+    }
+
+
+:host { display:block; width:367px; height:64px; font-family:var(--ui-font-family); }
+.donor-root { position:relative; width:100%; height:64px; }
+.optical-tabs-playground { position:relative; inset:auto; width:100%; height:64px; margin:0; }
+.optical-tabs-playground > .optical-toolbar-pane,
+.optical-tabs-playground .extracted-lens-demo { top:0; }
+#iconLayer[startup] .optical-toolbar-pane { background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+
+/* Five equal icon-only slots. Geometry belongs to the responsive container. */
+.tab-link { box-sizing:border-box; min-width:0; flex:0 0 20%; width:20%; padding:0; }
+.tab-label { display:none!important; }
+.tab-content { padding:0; justify-content:center; }
+.tab-icon-wrap, .tab-icon { width:36px; height:36px; }
+.tab-icon-outline, .tab-icon-outline * { stroke-width:1!important; }
+
+
+
+.motion{position:absolute;left:50%;bottom:56px;width:0;height:0}
+.scale{position:absolute;width:0;height:0;transform-origin:0 0}
+.shape{position:absolute;width:64px;height:64px;transform:translate(-50%,-50%);border:2px solid var(--ink);border-radius:32px}
+.shape{z-index:2;pointer-events:none}
+.icon-mask{
+ position:absolute;left:50%;top:50%;width:64px;height:64px;
+ transform:translate(-50%,-50%);border-radius:32px;
+ overflow:hidden;z-index:1;pointer-events:none;
+}
+.shape{z-index:2!important}
+.shape{
+  border:0!important;
+  background:rgba(50,50,50,.50)!important;
+  box-shadow:var(--shadow-ios-dark-glass)!important;
+  backdrop-filter:blur(16px)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+  border-radius:9999px!important;
+  overflow:visible!important;
+}
+.shape{z-index:0!important;}
+.icon-mask{z-index:2!important;}
+#iconLayer{ position:absolute; left:50%; top:50%; width:var(--runtime-tabs-width); height:64px; transform:translate(-50%,-50%); overflow:visible; filter:url(#icon-displacement-filter); -webkit-filter:url(#icon-displacement-filter); }
+#iconMask{ pointer-events:none; }
+#iconMask.tabs-interactive{ overflow:visible; pointer-events:auto; }
+#iconMask.tabs-interactive #iconLayer{ filter:none; -webkit-filter:none; }
+#shape.tabs-replaced{ visibility:hidden; }
+:host { display:block; width:100%; height:64px; font-family:var(--ui-font-family); }
+.motion { top:32px; bottom:auto; }
+#iconLayer { display:block; }
+.tab-icon > * { display:block; width:36px; height:36px; }
+.tab-icon-outline svg, .tab-icon-outline svg * { stroke-width:1; }
+.optical-toolbar-pane, .tab-link, .tab-strip { touch-action:none; }
+#iconMask:not(.tabs-interactive) .tab-link { pointer-events:none; }
