@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react';
+import { Button as KonstaButton } from 'konsta/react';
 import { Avatar } from './primitives';
-import { startPressScale } from './PressScale';
 import './identity-action.css';
 
 export type IdentityActionAvatar = {
@@ -8,37 +8,43 @@ export type IdentityActionAvatar = {
   src?: string;
 };
 
-export type IdentityActionProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+export type IdentityActionProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'className' | 'style'> & {
   avatar: IdentityActionAvatar;
   title: string;
+};
+
+const identityButtonColors = {
+  tonalBgIos: 'bg-black/10 dark:bg-white/10 active:bg-black/15 dark:active:bg-white/15',
+  tonalTextIos: 'text-black dark:text-white',
 };
 
 export function IdentityAction({
   avatar,
   title,
-  className = '',
   type = 'button',
   disabled,
   'aria-label': ariaLabel,
-  onPointerDown,
   ...props
 }: IdentityActionProps) {
   return (
-    <button
+    <KonstaButton
+      inline
+      rounded
+      raised
+      tonal
+      large
+      colors={identityButtonColors}
       type={type}
       disabled={disabled}
       aria-label={ariaLabel ?? title}
-      className={`ui-identity-action ${className}`.trim()}
-      onPointerDown={(event) => {
-        onPointerDown?.(event);
-        if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget);
-      }}
       {...props}
     >
-      <span aria-hidden="true">
-        <Avatar className="ui-identity-action__avatar" name={avatar.name} src={avatar.src} />
+      <span className="ui-identity-action__content">
+        <span aria-hidden="true">
+          <Avatar name={avatar.name} src={avatar.src} />
+        </span>
+        <span className="ui-identity-action__title">{title}</span>
       </span>
-      <span className="ui-identity-action__title">{title}</span>
-    </button>
+    </KonstaButton>
   );
 }
