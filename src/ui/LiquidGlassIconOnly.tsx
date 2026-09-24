@@ -1,4 +1,4 @@
-import { useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useRef, type CSSProperties, type ReactElement } from 'react';
 import {
   useStandaloneLiquidGlassIconOnlyStartup,
   type StandaloneLiquidGlassIconOnlyStartupItem,
@@ -10,8 +10,8 @@ export type LiquidGlassIconOnlyTab = {
   value: string;
   label: string;
   icon: {
-    outline: ReactNode;
-    filled: ReactNode;
+    outline: ReactElement;
+    filled: ReactElement;
   };
 };
 
