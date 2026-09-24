@@ -141,6 +141,7 @@ export function useLiquidGlassIconOnlyInteraction({
 
   const activeValueRef = useRef(activeValue);
   const activeIndexRef = useRef(0);
+  const internalActivationIndexRef = useRef<number | null>(null);
   const gestureRef = useRef<GestureState>('idle');
   const pointerIdRef = useRef<number | null>(null);
   const pointerDownAtRef = useRef(0);
@@ -522,6 +523,7 @@ export function useLiquidGlassIconOnlyInteraction({
     const previous = activeIndexRef.current;
     activeIndexRef.current = index;
     if (previous !== index) {
+      internalActivationIndexRef.current = index;
       trigger.click();
       suppressNativeClickUntilRef.current = performance.now() + 450;
       playActiveIconSpring(index);
@@ -669,7 +671,27 @@ export function useLiquidGlassIconOnlyInteraction({
     });
     observer.observe(list);
     return () => observer.disconnect();
-  }, [enabled, activeValue, listRef]);
+  }, [enabled, listRef]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const nextIndex = indexForActiveValue();
+    activeIndexRef.current = nextIndex;
+
+    if (internalActivationIndexRef.current === nextIndex) {
+      internalActivationIndexRef.current = null;
+      return;
+    }
+
+    if (
+      gestureRef.current === 'idle'
+      && springAnimationRef.current === null
+      && springStartTimerRef.current === null
+    ) {
+      positionSelector(nextIndex, false);
+      positionLensTrack(nextIndex, false);
+    }
+  }, [activeValue, enabled]);
 
   useLayoutEffect(() => {
     if (!enabled) return undefined;
