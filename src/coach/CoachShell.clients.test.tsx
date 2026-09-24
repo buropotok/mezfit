@@ -60,6 +60,11 @@ describe('CoachShell client contacts', () => {
       throw new Error(`Unexpected fetch: ${url}`);
     });
     vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('ResizeObserver', class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    });
     const onNavigationContextChange = vi.fn();
 
     render(
