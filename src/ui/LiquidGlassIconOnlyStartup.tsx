@@ -1,6 +1,5 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { UiIconPair } from './iconPair';
-import { useLiquidGlassFilterId } from './liquidGlass';
 
 export type StandaloneLiquidGlassIconOnlyStartupItem = {
   value: string;
@@ -237,7 +236,7 @@ export function useStandaloneLiquidGlassIconOnlyStartup({
   const filterRef = useRef<SVGFilterElement>(null);
   const imageRef = useRef<SVGFEImageElement>(null);
   const displacementRef = useRef<SVGFEDisplacementMapElement>(null);
-  const filterId = useLiquidGlassFilterId('icon-only-startup');
+  const filterId = `lgio-startup-${useId().replace(/:/g, '')}`;
 
   useLayoutEffect(() => {
     const previousHidden = previousHiddenRef.current;
