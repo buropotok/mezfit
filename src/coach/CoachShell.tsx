@@ -47,11 +47,10 @@ function clientSortName(client: CoachClientListItem): string {
 
 function clientGroupTitle(client: CoachClientListItem): string {
   const [firstCharacter = ''] = Array.from(clientSortName(client).normalize('NFC'));
-  if (!firstCharacter) return '#';
+  if (!firstCharacter || !/^\p{L}$/u.test(firstCharacter)) return '#';
 
-  const [upperCharacter = '#'] = Array.from(firstCharacter.toLocaleUpperCase('ru-RU'));
-  const lowerCharacter = firstCharacter.toLocaleLowerCase('ru-RU');
-  return upperCharacter === lowerCharacter ? '#' : upperCharacter;
+  const [upperCharacter = firstCharacter] = Array.from(firstCharacter.toLocaleUpperCase('ru-RU'));
+  return upperCharacter;
 }
 
 function groupClientsForContacts(clients: CoachClientListItem[]): Array<{ title: string; clients: CoachClientListItem[] }> {
