@@ -10,20 +10,17 @@ export function FormControlsCatalog() {
       <Text variant="headline">ListInput</Text>
       <KonstaList nested>
         <ListInput
-          outline
           floatingLabel
           inputId="ui-kit-form-name"
           label={<label htmlFor="ui-kit-form-name">Имя</label>}
         />
         <ListInput
-          outline
           floatingLabel
           inputId="ui-kit-form-name-filled"
           label={<label htmlFor="ui-kit-form-name-filled">Имя</label>}
           defaultValue="Андрей"
         />
         <ListInput
-          outline
           floatingLabel
           inputId="ui-kit-form-name-disabled"
           label={<label htmlFor="ui-kit-form-name-disabled">Имя</label>}
@@ -31,7 +28,6 @@ export function FormControlsCatalog() {
           disabled
         />
         <ListInput
-          outline
           floatingLabel
           inputId="ui-kit-form-name-error"
           label={<label htmlFor="ui-kit-form-name-error">Имя</label>}
@@ -42,7 +38,6 @@ export function FormControlsCatalog() {
       <Text variant="headline">Textarea</Text>
       <KonstaList nested>
         <ListInput
-          outline
           floatingLabel
           inputId="ui-kit-form-description"
           label={<label htmlFor="ui-kit-form-description">Описание</label>}
@@ -50,7 +45,6 @@ export function FormControlsCatalog() {
           inputClassName="!h-20 resize-none"
         />
         <ListInput
-          outline
           floatingLabel
           inputId="ui-kit-form-description-filled"
           label={<label htmlFor="ui-kit-form-description-filled">Описание</label>}
@@ -59,7 +53,6 @@ export function FormControlsCatalog() {
           defaultValue={'Первая строка\nВторая строка'}
         />
         <ListInput
-          outline
           floatingLabel
           inputId="ui-kit-form-description-disabled"
           label={<label htmlFor="ui-kit-form-description-disabled">Описание</label>}
