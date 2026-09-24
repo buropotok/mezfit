@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { List as KonstaList, ListInput } from 'konsta/react';
 import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
-import { Avatar, Badge, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text, TextInput } from '../ui';
+import { Avatar, Badge, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -358,12 +359,17 @@ export function ProgramsPage({
       >
         {creationDraft ? (
           <div className="program-create-content">
-            <TextInput
-              label="Название"
-              value={creationDraft.name}
-              maxLength={120}
-              onChange={(event) => onDraftChange?.({ ...creationDraft, name: event.target.value })}
-            />
+            <KonstaList nested>
+              <ListInput
+                outline
+                floatingLabel
+                inputId="program-create-name"
+                label={<label htmlFor="program-create-name">Название</label>}
+                value={creationDraft.name}
+                maxLength={120}
+                onChange={(event) => onDraftChange?.({ ...creationDraft, name: event.target.value })}
+              />
+            </KonstaList>
             <List>
               <ListItem
                 onClick={() => onRequestClientSelection?.()}

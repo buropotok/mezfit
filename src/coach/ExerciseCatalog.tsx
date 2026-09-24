@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { List as KonstaList, ListInput } from 'konsta/react';
 import {
   createClientExercise,
   getClientExercises,
@@ -8,7 +9,7 @@ import {
   type TrackingType,
 } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
-import { Button, Dropdown, FloatingActionButton, List, ListItem, Modal, Text, TextArea, TextInput } from '../ui';
+import { Button, Dropdown, FloatingActionButton, List, ListItem, Modal, Text } from '../ui';
 
 const trackingLabels: Record<TrackingType, string> = {
   weight_reps: 'Вес × повторы',
@@ -171,10 +172,31 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
         >
           <Text variant="caption">Медиа</Text>
         </Button>
-        <div className="exercise-create-text-fields">
-          <TextInput label="Название" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoFocus disabled={saving} />
-          <TextArea label="Описание" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={2} disabled={saving} />
-        </div>
+        <KonstaList nested className="exercise-create-text-fields">
+          <ListInput
+            outline
+            floatingLabel
+            inputId="exercise-create-name"
+            label={<label htmlFor="exercise-create-name">Название</label>}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={120}
+            autoFocus
+            disabled={saving}
+          />
+          <ListInput
+            outline
+            floatingLabel
+            inputId="exercise-create-description"
+            label={<label htmlFor="exercise-create-description">Описание</label>}
+            type="textarea"
+            inputClassName="!h-20 resize-none"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            maxLength={500}
+            disabled={saving}
+          />
+        </KonstaList>
       </div>
       {mediaMessage ? <Text variant="footnote" tone="muted" className="exercise-create-note">{mediaMessage}</Text> : null}
 

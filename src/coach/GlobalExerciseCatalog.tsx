@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { List as KonstaList, ListInput } from 'konsta/react';
 import { archiveCoachExercise, createCoachExercise, getCoachExercise, getCoachExercises, getWorkoutExerciseOptions, setCoachExerciseFavourite, updateCoachExercise, type ExerciseCategoryCode, type ExerciseDefinition, type ExerciseEquipmentCode, type TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import type { NavigationContext } from '../NavigationShell';
 import { gymKeeperIcons } from '../gymKeeperIcons';
-import { Button, Dropdown, IconButton, List, ListItem, Menu, MenuItem, Modal, Surface, Text, TextArea, TextInput } from '../ui';
+import { Button, Dropdown, IconButton, List, ListItem, Menu, MenuItem, Modal, Surface, Text } from '../ui';
 import { exerciseActionIcons, type ExerciseActionIcon } from './exerciseActionIcons';
 import { exerciseContextIcons, type ExerciseContextIcon } from './exerciseContextIcons';
 
@@ -50,10 +51,31 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
         <Surface className="global-exercise-media-slot" aria-label="Медиа упражнения">
           {seed ? <ExerciseMedia exercise={seed} variant="editor" /> : <ExerciseIcon />}
         </Surface>
-        <div className="global-exercise-editor-copy">
-          <TextInput label="Название" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoFocus disabled={saving} />
-          <TextArea label="Описание" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={3} disabled={saving} />
-        </div>
+        <KonstaList nested className="global-exercise-editor-copy">
+          <ListInput
+            outline
+            floatingLabel
+            inputId="global-exercise-name"
+            label={<label htmlFor="global-exercise-name">Название</label>}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={120}
+            autoFocus
+            disabled={saving}
+          />
+          <ListInput
+            outline
+            floatingLabel
+            inputId="global-exercise-description"
+            label={<label htmlFor="global-exercise-description">Описание</label>}
+            type="textarea"
+            inputClassName="!h-20 resize-none"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            maxLength={500}
+            disabled={saving}
+          />
+        </KonstaList>
       </div>
 
       <div className="global-exercise-editor-fields">

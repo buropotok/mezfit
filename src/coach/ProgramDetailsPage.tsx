@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { List as KonstaList, ListInput } from 'konsta/react';
 import {
   createCoachProgramPhase,
   deleteCoachProgramPhase,
@@ -11,7 +12,7 @@ import {
   type ProgramStatus,
 } from '../api';
 import { ProgramPhaseCard } from '../program/ProgramPhaseCard';
-import { Avatar, Badge, Button, FloatingActionButton, List, ListItem, Modal, Surface, Text, TextInput } from '../ui';
+import { Avatar, Badge, Button, FloatingActionButton, List, ListItem, Modal, Surface, Text } from '../ui';
 import { SessionExercise } from '../workout/SessionExercise';
 import type { SessionExerciseData, SessionExerciseSetData } from '../workout/sessionExerciseTypes';
 import './program-details.css';
@@ -344,19 +345,21 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
           { id: 'save', label: phaseCreateBusy ? 'Добавление…' : 'Добавить', tone: 'primary', onClick: () => { void savePhase(); }, disabled: !canCreatePhase },
         ]}
       >
-        <TextInput
-          label="Название"
-          value={phaseName}
-          maxLength={120}
-          error={phaseCreateError || undefined}
-          onChange={(event) => {
-            setPhaseName(event.target.value);
-            if (phaseCreateError) setPhaseCreateError('');
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && canCreatePhase) void savePhase();
-          }}
-        />
+        <KonstaList nested>
+          <ListInput
+            outline
+            floatingLabel
+            inputId="program-phase-name"
+            label={<label htmlFor="program-phase-name">Название</label>}
+            value={phaseName}
+            maxLength={120}
+            onChange={(event) => {
+              setPhaseName(event.target.value);
+              if (phaseCreateError) setPhaseCreateError('');
+            }}
+          />
+        </KonstaList>
+        {phaseCreateError ? <Text variant="footnote" role="alert">{phaseCreateError}</Text> : null}
       </Modal>
 
       <Modal
