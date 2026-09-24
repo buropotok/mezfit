@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+import { LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET } from './LiquidGlassIconOnlyRuntime';
+import { LIQUID_GLASS_ICON_ONLY_STARTUP_PRESET } from './LiquidGlassIconOnlyStartup';
 
 const icon = (name: string) => ({
   outline: <span data-icon={`${name}-outline`} />,
@@ -44,6 +46,35 @@ afterEach(() => {
 });
 
 describe('LiquidGlassIconOnly', () => {
+
+  it('locks the approved prototype startup and interaction presets', () => {
+    expect(LIQUID_GLASS_ICON_ONLY_STARTUP_PRESET).toMatchObject({
+      durationMs: 580,
+      curveDurationMs: 1200,
+      openFraction: .21,
+      lowFraction: .75,
+      initialHeightPercent: 80,
+      lowPx: 19,
+      springMs: 230,
+    });
+    expect(LIQUID_GLASS_ICON_ONLY_INTERACTION_PRESET).toMatchObject({
+      holdDelayMs: 140,
+      lensExpandMs: 300,
+      lensTravelMs: 300,
+      containerScale: 1.05,
+      lensScale: 1.25,
+      optics: {
+        neutralEdge: 1.7,
+        rimWidth: 8,
+        rimStrength: .67,
+        trenchWidth: 1,
+        trenchStrength: .09,
+        refraction: 8,
+        rgbSpread: .1,
+        padding: 51,
+      },
+    });
+  });
   it('is an independent primitive with exactly the supplied tabs and equal slots', () => {
     const { container } = render(
       <LiquidGlassIconOnly tabs={fiveTabs} value="programs" onValueChange={() => {}} hidden={false} />,
