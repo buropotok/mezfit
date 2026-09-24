@@ -9,7 +9,7 @@ import {
   type ProgramListItem,
 } from '../api';
 import type { AppDestination, NavigationContext } from '../NavigationShell';
-import { Avatar, Button, FloatingActionButton, Modal, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
+import { Avatar, Button, FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
@@ -126,6 +126,7 @@ function ClientDirectory({
   onSelect,
   onAdd,
   busy = false,
+  presentation = 'selection',
 }: {
   clients: CoachClientListItem[] | null;
   error?: string;
@@ -133,8 +134,9 @@ function ClientDirectory({
   onSelect: (client: CoachClientListItem) => void;
   onAdd?: () => void;
   busy?: boolean;
+  presentation?: 'selection' | 'contacts';
 }) {
-  const contactGroups = clients ? groupClientsForContacts(clients) : [];
+  const contactGroups = presentation === 'contacts' && clients ? groupClientsForContacts(clients) : [];
 
   return (
     <section className="client-directory-surface" aria-label="Список клиентов">
@@ -147,7 +149,7 @@ function ClientDirectory({
           </div>
         ) : clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
           <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
-        ) : (
+        ) : presentation === 'contacts' ? (
           <KonstaList strongIos>
             {contactGroups.map((group) => (
               <ListGroup key={group.title} dividers={false}>
@@ -179,6 +181,18 @@ function ClientDirectory({
               </ListGroup>
             ))}
           </KonstaList>
+        ) : (
+          <List className="compact-client-list">
+            {clients.map((client) => (
+              <ListItem
+                key={client.relationshipId}
+                onClick={() => onSelect(client)}
+                leading={<Avatar name={displayName(client)} src={client.user.photoUrl ?? undefined} />}
+                title={displayName(client)}
+                subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
+              />
+            ))}
+          </List>
         )}
       </div>
 
@@ -406,6 +420,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         onSelect={setSelectedClient}
         onAdd={() => { void createInvite(); }}
         busy={busy}
+        presentation="contacts"
       />
 
       <Modal
