@@ -657,6 +657,44 @@ export function useLiquidGlassIconOnlyInteraction({
     }
   };
 
+  useEffect(() => {
+    if (enabled) return;
+
+    pointerIdRef.current = null;
+    gestureRef.current = 'idle';
+    clearTimer(pressIntentTimerRef);
+    clearTimer(lensTimerRef);
+    clearTimer(springStartTimerRef);
+    clearTimer(springFallbackTimerRef);
+    clearTimer(paneResetTimerRef);
+
+    if (lensMoveRafRef.current !== null) cancelAnimationFrame(lensMoveRafRef.current);
+    lensMoveRafRef.current = null;
+    if (mappingRafRef.current !== null) cancelAnimationFrame(mappingRafRef.current);
+    mappingRafRef.current = null;
+
+    springAnimationRef.current?.cancel();
+    springAnimationRef.current = null;
+    iconAnimationsRef.current.forEach((animation) => animation.cancel());
+    iconAnimationsRef.current.clear();
+
+    const list = listRef.current;
+    if (list) {
+      list.style.scale = '';
+      list.style.transitionDuration = '';
+      list.style.transitionTimingFunction = '';
+    }
+
+    highlightWrapRef.current?.remove();
+    highlightWrapRef.current = null;
+    highlightLightRef.current = null;
+    indicatorSurfaceRef.current?.classList.remove('pressed', 'tap-spring-hidden');
+    lensRef.current?.classList.remove('pressed', 'tap-spring-active');
+    lensReleasePendingRef.current = false;
+    lensFullyExpandedRef.current = false;
+    internalActivationIndexRef.current = null;
+  }, [enabled, indicatorSurfaceRef, listRef]);
+
   useLayoutEffect(() => {
     if (!enabled) return undefined;
     activeIndexRef.current = indexForActiveValue();
