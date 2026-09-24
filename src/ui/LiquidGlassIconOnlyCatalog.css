@@ -1,0 +1,42 @@
+.ui-kit-liquid-glass-icon-only {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 24rem;
+  padding-block: var(--ui-space-6) calc(var(--ui-space-6) + env(safe-area-inset-bottom));
+  padding-inline: max(18px, env(safe-area-inset-left)) max(18px, env(safe-area-inset-right));
+  overflow: visible;
+  color: #fff;
+  background: #000;
+  font-family: var(--ui-font-family);
+}
+
+.ui-kit-liquid-glass-icon-only__header {
+  display: grid;
+  gap: var(--ui-space-2);
+  justify-items: start;
+  width: 100%;
+  margin: 0 0 var(--ui-space-6);
+}
+
+.ui-kit-liquid-glass-icon-only__stage {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  min-height: 12rem;
+  overflow: visible;
+}
+
+.ui-kit-liquid-glass-icon-only__icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: currentColor;
+  -webkit-mask-image: var(--ui-kit-liquid-glass-icon-only-icon);
+  mask-image: var(--ui-kit-liquid-glass-icon-only-icon);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
