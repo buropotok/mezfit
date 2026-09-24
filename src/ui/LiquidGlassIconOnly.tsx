@@ -126,10 +126,6 @@ function profileSample(x: number) {
   return catmull(a.y, b.y, c.y, d.y, clamp((normalized - b.x) / span, 0, 1));
 }
 
-function shouldReduceMotion() {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-}
-
 function startupTimelineDuration() {
   return STARTUP_DURATION_MS + Math.max(STARTUP_ZOOM.exitMs, STARTUP_SPRING_MS);
 }
@@ -268,12 +264,6 @@ export function useLiquidGlassIconOnlyStartup({
     }
 
     if (!previousHidden) {
-      setState('visible');
-      return cancel;
-    }
-
-    if (shouldReduceMotion()) {
-      cancel();
       setState('visible');
       return cancel;
     }
