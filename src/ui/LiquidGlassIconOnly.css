@@ -218,8 +218,8 @@
 .ui-liquid-glass-icon-only__icon-wrap {
   position: relative;
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   place-items: center;
   transform-origin: 50% 50%;
   pointer-events: none;
@@ -229,8 +229,8 @@
   position: absolute;
   inset: 0;
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   place-items: center;
   color: currentColor;
   transform-origin: 50% 50%;
@@ -242,8 +242,8 @@
 .ui-liquid-glass-icon-only__icon svg,
 .ui-liquid-glass-icon-only__icon img {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
 }
 
 .ui-liquid-glass-icon-only__icon--outline {
