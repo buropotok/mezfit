@@ -156,7 +156,7 @@ function ClientDirectory({
                 <KonstaListItem
                   title={group.title}
                   groupTitle
-                  className="sticky top-0"
+                  contacts
                 />
                 {group.clients.map((client) => {
                   const name = displayName(client);
