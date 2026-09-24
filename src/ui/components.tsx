@@ -8,6 +8,7 @@ import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
 import { useLiquidGlassTabsController } from './LiquidGlassTabs';
+import { useLiquidGlassIconOnlyStartup, type LiquidGlassIconOnlyStartupItem } from './LiquidGlassIconOnly';
 import './components.css';
 
 type ListDivider = 'none' | 'inset' | 'full';
@@ -107,18 +108,18 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
   );
 }
 
-export type TabsMode = 'default' | 'icon';
+export type TabsMode = 'default' | 'icon' | 'iconOnly';
 export type TabsIconPair = UiIconPair;
-export type TabsProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Root> & { theme?: UiComponentTheme; mode?: TabsMode };
+export type TabsProps = Omit<React.ComponentPropsWithoutRef<typeof RadixTabs.Root>, 'hidden'> & { theme?: UiComponentTheme; mode?: TabsMode; hidden?: boolean };
 type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List>;
 export type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger> & { icon?: TabsIconPair };
 type TabsContentProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Content>;
 type IndicatorChildProps = { children?: ReactNode; className?: string };
-type TabsContextValue = { theme: UiComponentTheme; mode: TabsMode; activeValue?: string };
+type TabsContextValue = { theme: UiComponentTheme; mode: TabsMode; activeValue?: string; hidden: boolean };
 
-const TabsContext = createContext<TabsContextValue>({ theme: 'default', mode: 'default' });
+const TabsContext = createContext<TabsContextValue>({ theme: 'default', mode: 'default', hidden: false });
 
-export function Tabs({ theme = 'default', mode = 'default', className = '', value, defaultValue, onValueChange, ...props }: TabsProps) {
+export function Tabs({ theme = 'default', mode = 'default', hidden = false, className = '', value, defaultValue, onValueChange, ...props }: TabsProps) {
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
   const activeValue = value ?? uncontrolledValue;
   const handleValueChange = useCallback((nextValue: string) => {
@@ -127,16 +128,18 @@ export function Tabs({ theme = 'default', mode = 'default', className = '', valu
   }, [onValueChange, value]);
 
   return (
-    <TabsContext.Provider value={{ theme, mode, activeValue }}>
+    <TabsContext.Provider value={{ theme, mode, activeValue, hidden }}>
       <RadixTabs.Root {...props} value={value} defaultValue={defaultValue} onValueChange={handleValueChange} data-ui-theme={theme} data-ui-mode={mode} className={`ui-tabs ${className}`.trim()} />
     </TabsContext.Provider>
   );
 }
 
 export function TabsList({ className = '', children, style, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture, ...props }: TabsListProps) {
-  const { theme, mode, activeValue } = useContext(TabsContext);
-  const hasMovingIndicator = theme === 'glass' || theme === 'liquidGlass' || mode === 'icon';
+  const { theme, mode, activeValue, hidden } = useContext(TabsContext);
+  const isIconMode = mode === 'icon' || mode === 'iconOnly';
+  const hasMovingIndicator = theme === 'glass' || theme === 'liquidGlass' || isIconMode;
   const isLiquidGlass = theme === 'liquidGlass';
+  const isLiquidGlassIconOnly = isLiquidGlass && mode === 'iconOnly';
   const visualLayerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
@@ -144,9 +147,20 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
   const [clipPath, setClipPath] = useState('inset(.25rem 100% .25rem 0 round var(--ui-tab-radius))');
   const [indicatorGeometry, setIndicatorGeometry] = useState({ left: 0, width: 0 });
   const [isIndicatorReady, setIndicatorReady] = useState(false);
+  const iconOnlyItems = Children.toArray(children).flatMap((child) => {
+    if (!isValidElement<TabsTriggerProps>(child) || !child.props.icon || typeof child.props.value !== 'string') return [];
+    return [{ value: child.props.value, icon: child.props.icon } satisfies LiquidGlassIconOnlyStartupItem];
+  });
+  const iconOnlyStartup = useLiquidGlassIconOnlyStartup({
+    enabled: isLiquidGlassIconOnly,
+    hidden,
+    items: iconOnlyItems,
+    activeValue,
+    listRef,
+  });
   const liquidGlass = useLiquidGlassTabsController({
     enabled: isLiquidGlass,
-    mode,
+    mode: isIconMode ? 'icon' : 'default',
     activeValue,
     visualLayerRef,
     listRef,
@@ -217,14 +231,23 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
 
   if (!isLiquidGlass) return list;
 
+  const liquidLayer = (
+    <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
+      {list}
+      <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" style={liquidGlass.lensStyle} aria-hidden="true" />
+    </div>
+  );
+
   return (
     <>
       {liquidGlass.containerFilter}
       {liquidGlass.lensFilter}
-      <div ref={visualLayerRef} className="ui-tabs__liquid-layer">
-        {list}
-        <div ref={liquidGlass.lensRef} className="ui-tabs__press-lens" style={liquidGlass.lensStyle} aria-hidden="true" />
-      </div>
+      {isLiquidGlassIconOnly ? (
+        <div className="ui-tabs__icon-only-shell" data-startup-state={iconOnlyStartup.state}>
+          {liquidLayer}
+          {iconOnlyStartup.overlay}
+        </div>
+      ) : liquidLayer}
     </>
   );
 }
@@ -235,16 +258,18 @@ export function TabsTrigger({ icon, className = '', children, onPointerDown, onK
   const isActive = activeValue === value;
   const wasActiveRef = useRef(isActive);
 
-  if (mode === 'icon' && !icon) {
-    throw new Error('TabsTrigger requires both outline and filled icons when Tabs mode="icon".');
+  const isIconMode = mode === 'icon' || mode === 'iconOnly';
+
+  if (isIconMode && !icon) {
+    throw new Error('TabsTrigger requires both outline and filled icons when Tabs mode="icon" or mode="iconOnly".');
   }
 
   useEffect(() => {
-    if (theme !== 'liquidGlass' && mode === 'icon' && isActive && !wasActiveRef.current && iconRef.current) startSpringScale(iconRef.current);
+    if (theme !== 'liquidGlass' && isIconMode && isActive && !wasActiveRef.current && iconRef.current) startSpringScale(iconRef.current);
     wasActiveRef.current = isActive;
-  }, [isActive, mode, theme]);
+  }, [isActive, isIconMode, theme]);
 
-  const content = mode === 'icon' ? <>
+  const content = isIconMode ? <>
     <span ref={iconRef} className="ui-tabs__icon" aria-hidden="true">
       <span className="ui-tabs__icon-outline">{icon?.outline}</span>
       <span className="ui-tabs__icon-filled">{icon?.filled}</span>
