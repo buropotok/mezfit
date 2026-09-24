@@ -80,6 +80,11 @@
   gap: var(--ui-space-3);
 }
 
+.program-details-phase-create-form {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
 .program-details-error {
   display: flex;
   flex-direction: column;

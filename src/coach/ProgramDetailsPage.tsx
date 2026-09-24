@@ -345,21 +345,30 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
           { id: 'save', label: phaseCreateBusy ? 'Добавление…' : 'Добавить', tone: 'primary', onClick: () => { void savePhase(); }, disabled: !canCreatePhase },
         ]}
       >
-        <KonstaList nested>
-          <ListInput
-            outline
-            floatingLabel
-            inputId="program-phase-name"
-            label={<label htmlFor="program-phase-name">Название</label>}
-            value={phaseName}
-            maxLength={120}
-            onChange={(event) => {
-              setPhaseName(event.target.value);
-              if (phaseCreateError) setPhaseCreateError('');
-            }}
-          />
-        </KonstaList>
-        {phaseCreateError ? <Text variant="footnote" role="alert">{phaseCreateError}</Text> : null}
+        <form
+          className="program-details-phase-create-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (canCreatePhase) void savePhase();
+          }}
+        >
+          <KonstaList nested>
+            <ListInput
+              outline
+              floatingLabel
+              inputId="program-phase-name"
+              label={<label htmlFor="program-phase-name">Название</label>}
+              value={phaseName}
+              maxLength={120}
+              onChange={(event) => {
+                setPhaseName(event.target.value);
+                if (phaseCreateError) setPhaseCreateError('');
+              }}
+            />
+          </KonstaList>
+          {phaseCreateError ? <Text variant="footnote" role="alert">{phaseCreateError}</Text> : null}
+          <button type="submit" hidden aria-hidden="true" />
+        </form>
       </Modal>
 
       <Modal

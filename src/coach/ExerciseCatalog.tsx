@@ -172,8 +172,9 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
         >
           <Text variant="caption">Медиа</Text>
         </Button>
-        <KonstaList nested className="exercise-create-text-fields">
-          <ListInput
+        <div className="exercise-create-text-fields">
+          <KonstaList nested>
+            <ListInput
             outline
             floatingLabel
             inputId="exercise-create-name"
@@ -194,9 +195,10 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             maxLength={500}
-            disabled={saving}
-          />
-        </KonstaList>
+              disabled={saving}
+            />
+          </KonstaList>
+        </div>
       </div>
       {mediaMessage ? <Text variant="footnote" tone="muted" className="exercise-create-note">{mediaMessage}</Text> : null}
 

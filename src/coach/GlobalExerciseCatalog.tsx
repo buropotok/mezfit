@@ -51,8 +51,9 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
         <Surface className="global-exercise-media-slot" aria-label="Медиа упражнения">
           {seed ? <ExerciseMedia exercise={seed} variant="editor" /> : <ExerciseIcon />}
         </Surface>
-        <KonstaList nested className="global-exercise-editor-copy">
-          <ListInput
+        <div className="global-exercise-editor-copy">
+          <KonstaList nested>
+            <ListInput
             outline
             floatingLabel
             inputId="global-exercise-name"
@@ -73,9 +74,10 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             maxLength={500}
-            disabled={saving}
-          />
-        </KonstaList>
+              disabled={saving}
+            />
+          </KonstaList>
+        </div>
       </div>
 
       <div className="global-exercise-editor-fields">
