@@ -657,7 +657,7 @@ export function useLiquidGlassIconOnlyInteraction({
     }
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (enabled) return;
 
     pointerIdRef.current = null;
