@@ -1343,13 +1343,6 @@
 
     /* Mezfit typography.md — standalone prototype tokens.
        Tab labels are interactive text => Body 15/20, medium 500. */
-    :host {
-      --ui-font-family: "Golos Text", sans-serif;
-      --ui-font-size-body: 15px;
-      --ui-line-height-body: 20px;
-      --ui-font-weight-medium: 500;
-    }
-
     body,
     button,
     input,
