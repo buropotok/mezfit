@@ -20,10 +20,12 @@
 }
 
 .ui-kit-liquid-glass-icon-only__stage {
+  box-sizing: border-box;
   display: grid;
   align-items: center;
   width: 100%;
   min-height: 12rem;
+  padding-inline: max(18px, env(safe-area-inset-left)) max(18px, env(safe-area-inset-right));
   overflow: visible;
 }
 
