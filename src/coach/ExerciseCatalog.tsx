@@ -175,26 +175,26 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
         <div className="exercise-create-text-fields">
           <KonstaList nested>
             <ListInput
-            outline
-            floatingLabel
-            inputId="exercise-create-name"
-            label={<label htmlFor="exercise-create-name">Название</label>}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            maxLength={120}
-            autoFocus
-            disabled={saving}
-          />
-          <ListInput
-            outline
-            floatingLabel
-            inputId="exercise-create-description"
-            label={<label htmlFor="exercise-create-description">Описание</label>}
-            type="textarea"
-            inputClassName="!h-20 resize-none"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            maxLength={500}
+              outline
+              floatingLabel
+              inputId="exercise-create-name"
+              label={<label htmlFor="exercise-create-name">Название</label>}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={120}
+              autoFocus
+              disabled={saving}
+            />
+            <ListInput
+              outline
+              floatingLabel
+              inputId="exercise-create-description"
+              label={<label htmlFor="exercise-create-description">Описание</label>}
+              type="textarea"
+              inputClassName="!h-20 resize-none"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              maxLength={500}
               disabled={saving}
             />
           </KonstaList>

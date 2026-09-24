@@ -54,26 +54,26 @@ function ExerciseEditorDialog({ state, defaultCategory, saving, error, onCancel,
         <div className="global-exercise-editor-copy">
           <KonstaList nested>
             <ListInput
-            outline
-            floatingLabel
-            inputId="global-exercise-name"
-            label={<label htmlFor="global-exercise-name">Название</label>}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            maxLength={120}
-            autoFocus
-            disabled={saving}
-          />
-          <ListInput
-            outline
-            floatingLabel
-            inputId="global-exercise-description"
-            label={<label htmlFor="global-exercise-description">Описание</label>}
-            type="textarea"
-            inputClassName="!h-20 resize-none"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            maxLength={500}
+              outline
+              floatingLabel
+              inputId="global-exercise-name"
+              label={<label htmlFor="global-exercise-name">Название</label>}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={120}
+              autoFocus
+              disabled={saving}
+            />
+            <ListInput
+              outline
+              floatingLabel
+              inputId="global-exercise-description"
+              label={<label htmlFor="global-exercise-description">Описание</label>}
+              type="textarea"
+              inputClassName="!h-20 resize-none"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              maxLength={500}
               disabled={saving}
             />
           </KonstaList>
