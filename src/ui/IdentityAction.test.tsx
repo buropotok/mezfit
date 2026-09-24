@@ -12,7 +12,7 @@ function renderIdentityAction(node: React.ReactNode) {
 }
 
 describe('IdentityAction', () => {
-  it('renders avatar and case-preserving title as one semantic action', () => {
+  it('renders avatar and title as one semantic action', () => {
     const html = renderIdentityAction(
       <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" />,
     );
@@ -25,7 +25,7 @@ describe('IdentityAction', () => {
     expect(html).toContain('ui-identity-action__title">Andrei Sokolov</span>');
   });
 
-  it('preserves native disabled button semantics', () => {
+  it('preserves Konsta disabled button semantics', () => {
     const html = renderIdentityAction(
       <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" disabled />,
     );
