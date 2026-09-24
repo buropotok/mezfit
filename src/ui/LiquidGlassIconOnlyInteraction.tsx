@@ -158,6 +158,9 @@ export function useLiquidGlassIconOnlyInteraction({
   const springFallbackTimerRef = useRef<number | null>(null);
   const springAnimationRef = useRef<Animation | null>(null);
   const paneResetTimerRef = useRef<number | null>(null);
+  const highlightRemovalTimerRef = useRef<number | null>(null);
+  const highlightFirstRafRef = useRef<number | null>(null);
+  const highlightSecondRafRef = useRef<number | null>(null);
   const suppressNativeClickUntilRef = useRef(0);
   const highlightWrapRef = useRef<HTMLSpanElement | null>(null);
   const highlightLightRef = useRef<HTMLSpanElement | null>(null);
@@ -363,7 +366,11 @@ export function useLiquidGlassIconOnlyInteraction({
     }
     if (wrap) {
       wrap.style.opacity = '0';
-      window.setTimeout(() => wrap.remove(), 320);
+      clearTimer(highlightRemovalTimerRef);
+      highlightRemovalTimerRef.current = window.setTimeout(() => {
+        wrap.remove();
+        highlightRemovalTimerRef.current = null;
+      }, 320);
     }
     highlightWrapRef.current = null;
     highlightLightRef.current = null;
@@ -393,9 +400,15 @@ export function useLiquidGlassIconOnlyInteraction({
     list.style.transitionTimingFunction = 'ease-in-out';
     syncLensScaleWithContainer();
 
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (wrap.isConnected) wrap.style.opacity = '1';
-    }));
+    if (highlightFirstRafRef.current !== null) cancelAnimationFrame(highlightFirstRafRef.current);
+    if (highlightSecondRafRef.current !== null) cancelAnimationFrame(highlightSecondRafRef.current);
+    highlightFirstRafRef.current = requestAnimationFrame(() => {
+      highlightFirstRafRef.current = null;
+      highlightSecondRafRef.current = requestAnimationFrame(() => {
+        highlightSecondRafRef.current = null;
+        if (wrap.isConnected) wrap.style.opacity = '1';
+      });
+    });
   };
 
   const expandContainerForTapTravel = () => {
@@ -667,6 +680,11 @@ export function useLiquidGlassIconOnlyInteraction({
     clearTimer(springStartTimerRef);
     clearTimer(springFallbackTimerRef);
     clearTimer(paneResetTimerRef);
+    clearTimer(highlightRemovalTimerRef);
+    if (highlightFirstRafRef.current !== null) cancelAnimationFrame(highlightFirstRafRef.current);
+    highlightFirstRafRef.current = null;
+    if (highlightSecondRafRef.current !== null) cancelAnimationFrame(highlightSecondRafRef.current);
+    highlightSecondRafRef.current = null;
 
     if (lensMoveRafRef.current !== null) cancelAnimationFrame(lensMoveRafRef.current);
     lensMoveRafRef.current = null;
@@ -824,9 +842,13 @@ export function useLiquidGlassIconOnlyInteraction({
 
     const observer = new ResizeObserver(buildVectorMap);
     observer.observe(lens);
-    const first = requestAnimationFrame(() => requestAnimationFrame(buildVectorMap));
+    let secondRaf: number | null = null;
+    const firstRaf = requestAnimationFrame(() => {
+      secondRaf = requestAnimationFrame(buildVectorMap);
+    });
     return () => {
-      cancelAnimationFrame(first);
+      cancelAnimationFrame(firstRaf);
+      if (secondRaf !== null) cancelAnimationFrame(secondRaf);
       observer.disconnect();
     };
   }, [enabled, listRef]);
@@ -875,6 +897,9 @@ export function useLiquidGlassIconOnlyInteraction({
     clearTimer(springStartTimerRef);
     clearTimer(springFallbackTimerRef);
     clearTimer(paneResetTimerRef);
+    clearTimer(highlightRemovalTimerRef);
+    if (highlightFirstRafRef.current !== null) cancelAnimationFrame(highlightFirstRafRef.current);
+    if (highlightSecondRafRef.current !== null) cancelAnimationFrame(highlightSecondRafRef.current);
     if (lensMoveRafRef.current !== null) cancelAnimationFrame(lensMoveRafRef.current);
     if (mappingRafRef.current !== null) cancelAnimationFrame(mappingRafRef.current);
     springAnimationRef.current?.cancel();
