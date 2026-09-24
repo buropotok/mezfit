@@ -29,8 +29,8 @@ export function LiquidGlassIconOnly({
   hidden,
 }: LiquidGlassIconOnlyProps) {
   const listRef = useRef<HTMLDivElement>(null);
-  const indicatorRef = useRef<HTMLSpanElement>(null);
-  const indicatorSurfaceRef = useRef<HTMLSpanElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const indicatorSurfaceRef = useRef<HTMLDivElement>(null);
 
   const startupItems = useMemo<readonly StandaloneLiquidGlassIconOnlyStartupItem[]>(
     () => tabs.map((tab) => ({ value: tab.value, icon: tab.icon })),
@@ -109,16 +109,16 @@ export function LiquidGlassIconOnly({
               </button>
             );
           })}
-          <span
+          <div
             ref={indicatorRef}
             className="ui-liquid-glass-icon-only__selector-track"
             aria-hidden="true"
           >
-            <span
+            <div
               ref={indicatorSurfaceRef}
               className="ui-liquid-glass-icon-only__selector"
             />
-          </span>
+          </div>
         </div>
 
         <span
