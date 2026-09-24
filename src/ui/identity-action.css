@@ -1,20 +1,12 @@
-.ui-identity-action__content {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  color: inherit;
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-medium);
-  text-transform: none;
-}
-
 .ui-identity-action__title {
   min-width: 0;
   max-width: 12rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: inherit;
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-body);
+  line-height: var(--ui-line-height-body);
+  font-weight: var(--ui-font-weight-medium);
 }
