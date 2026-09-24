@@ -24,6 +24,21 @@ describe('IdentityAction', () => {
     expect(html).toContain('ui-identity-action__title">Andrei Sokolov</span>');
   });
 
+  it('renders avatar-only variant as an accessible action without visible title', () => {
+    const html = renderIdentityAction(
+      <IdentityAction
+        avatar={{ name: 'Andrei Sokolov' }}
+        title="Andrei Sokolov"
+        variant="avatar-only"
+      />,
+    );
+
+    expect(html).toContain('aria-label="Andrei Sokolov"');
+    expect(html).toContain('ui-identity-action--avatar-only');
+    expect(html).toContain('>AS<');
+    expect(html).not.toContain('ui-identity-action__title');
+  });
+
   it('preserves Konsta disabled button semantics', () => {
     const html = renderIdentityAction(
       <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" disabled />,

@@ -11,6 +11,7 @@ export type IdentityActionAvatar = {
 export type IdentityActionProps = {
   avatar: IdentityActionAvatar;
   title: string;
+  variant?: 'default' | 'avatar-only';
   onClick?: () => void;
   disabled?: boolean;
   'aria-label'?: string;
@@ -33,6 +34,7 @@ IdentityGlassButton.displayName = 'IdentityGlassButton';
 export function IdentityAction({
   avatar,
   title,
+  variant = 'default',
   onClick,
   disabled = false,
   'aria-label': ariaLabel,
@@ -41,7 +43,7 @@ export function IdentityAction({
     <KonstaGlass
       component={IdentityGlassButton}
       highlight={!disabled}
-      className={`ui-identity-action${disabled ? ' ui-identity-action--disabled' : ''}`}
+      className={`ui-identity-action${variant === 'avatar-only' ? ' ui-identity-action--avatar-only' : ''}${disabled ? ' ui-identity-action--disabled' : ''}`}
       aria-label={ariaLabel ?? title}
       aria-disabled={disabled || undefined}
       onClick={onClick}
@@ -53,7 +55,7 @@ export function IdentityAction({
           src={avatar.src}
         />
       </span>
-      <span className="ui-identity-action__title">{title}</span>
+      {variant === 'default' && <span className="ui-identity-action__title">{title}</span>}
     </KonstaGlass>
   );
 }
