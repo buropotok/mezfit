@@ -409,7 +409,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       <header className="coach-directory-header">
         <div>
           <div className="eyebrow">Тренер</div>
-          <Text variant="large-title">Клиенты</Text>
+          <Text variant="large-title" role="heading" aria-level={2}>Клиенты</Text>
         </div>
       </header>
 
