@@ -275,3 +275,48 @@ verify that the diff contains only intended changes
 ```
 
 For multiple sequential edits to the same file, repeat the read-modify-write cycle. Never assume that a SHA remains current after a successful write.
+
+
+## 33. Model routing, task pre-estimation, and token discipline
+
+Before starting substantive implementation, perform a brief engineering pre-estimation of the task. Identify the likely scope, architectural uncertainty, number of affected areas/files, expected iteration/review cycles, and whether the task is likely to require unusually large model context or repeated reasoning. Use this estimate to choose an execution strategy before spending significant tokens.
+
+If the current agent is running on **Astra**, its default responsibility is limited to high-value discovery and architecture work rather than routine implementation. Unless the user explicitly instructs otherwise, Astra should:
+
+- inspect only the repository context necessary to understand the problem;
+- determine the owning architecture, boundaries, invariants, integration points, and likely failure modes;
+- resolve architectural ambiguity and choose the implementation direction;
+- produce a concrete, self-contained implementation brief for the implementation agent;
+- avoid routine coding, broad mechanical edits, iterative cleanup, test-fix loops, CI chasing, and ordinary PR maintenance when those can be delegated to a less expensive implementation model such as Sol.
+
+An Astra implementation brief should be actionable without requiring the implementation agent to rediscover the architecture. Where applicable, include: the intended owner/component or layer, files or areas expected to change, required data/control flow, contracts and invariants to preserve, sequencing of changes, acceptance criteria, important edge cases, explicit non-goals, and approaches that should not be used.
+
+Astra may implement code when the user explicitly requests Astra implementation or when implementation itself is inseparable from resolving the architectural problem. Even then, prefer the smallest high-value implementation slice needed to remove uncertainty, then hand off routine completion to the normal implementation workflow.
+
+If any agent determines before or during a task that the requested approach is likely to consume a large amount of tokens or context relative to the value of doing it in the current model/session, **stop before entering the expensive phase and tell the user in chat**. Explain in practical terms what is driving the cost and propose a more efficient execution strategy. Do not silently consume a large token budget merely because the task is technically possible.
+
+Preferred strategy for expensive or architecturally uncertain work:
+
+```text
+task pre-estimation
+        ↓
+targeted discovery / architecture
+        ↓
+implementation brief
+        ↓
+implementation with the appropriate lower-cost agent when feasible
+        ↓
+GitHub Actions verification
+        ↓
+independent Codex review
+        ↓
+implementation-agent corrections
+        ↓
+repeat verification/review as needed
+```
+
+Treat this as an SDLC routing decision, not merely a model preference. The goal is to spend the most capable/expensive reasoning where architectural uncertainty is highest, while keeping routine implementation, CI response, and mechanical follow-up on the most cost-effective capable agent.
+
+Do not read the entire repository by default. Expand context only when the task's dependency graph requires it. If a narrow set of files is enough to make the architectural decision, keep the discovery scope narrow.
+
+Do not sacrifice correctness, security, architectural integrity, required review, or required verification merely to save tokens. Token efficiency changes how work is staged and routed; it does not lower the Definition of Done.
