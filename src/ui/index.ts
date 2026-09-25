@@ -13,4 +13,4 @@ export { NestedBadges, type NestedBadgeItem, type NestedBadgesProps } from './Ne
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
-export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+export { LiquidGlassIconOnly, type LiquidGlassIconOnlyProps, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
