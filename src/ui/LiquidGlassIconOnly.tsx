@@ -1,12 +1,14 @@
-import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties, type ReactElement } from 'react';
+import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
+import { resolveUiIconPair } from './Icon';
+import type { UiIconSource } from './iconPair';
 import { mountPrototype, type PrototypeController } from './liquid-glass-icon-only/prototypeRuntime';
 import prototypeCss from './liquid-glass-icon-only/prototype.css?inline';
 
 export type LiquidGlassIconOnlyTab = {
   value: string;
   label: string;
-  icon: { outline: ReactElement; filled: ReactElement };
+  icon: UiIconSource;
 };
 export type LiquidGlassIconOnlyProps = {
   tabs: readonly LiquidGlassIconOnlyTab[];
@@ -67,12 +69,15 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
             <div className="standalone-lens-playground optical-tabs-playground" data-tab-mode="icons">
               <div className="toolbar-pane optical-toolbar-pane" id="toolbar-pane">
                 <div className="tab-strip" id="tab-strip" role="tablist" aria-label="Навигация">
-                  {tabs.map((tab, index) => <button className={`tab-link${tab.value === value ? ' active' : ''}`} type="button" key={tab.value} data-index={index} role="tab" aria-label={tab.label} aria-selected={tab.value === value} title={tab.label}>
-                    <span className="tab-content"><span className="tab-icon-wrap" aria-hidden="true">
-                      <span className="tab-icon tab-icon-outline">{tab.icon.outline}</span>
-                      <span className="tab-icon tab-icon-filled">{tab.icon.filled}</span>
-                    </span><span className="tab-label">{tab.label}</span></span>
-                  </button>)}
+                  {tabs.map((tab, index) => {
+                    const icon = resolveUiIconPair(tab.icon);
+                    return <button className={`tab-link${tab.value === value ? ' active' : ''}`} type="button" key={tab.value} data-index={index} role="tab" aria-label={tab.label} aria-selected={tab.value === value} title={tab.label}>
+                      <span className="tab-content"><span className="tab-icon-wrap" aria-hidden="true">
+                        <span className="tab-icon tab-icon-outline">{icon.outline}</span>
+                        <span className="tab-icon tab-icon-filled">{icon.filled}</span>
+                      </span><span className="tab-label">{tab.label}</span></span>
+                    </button>;
+                  })}
                   <span className="selector-track" id="selector-track" aria-hidden="true"><span className="selector" id="selector" /></span>
                 </div>
               </div>
