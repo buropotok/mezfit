@@ -59,7 +59,7 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
           <feImage id="zoom-vector-image" x="0" y="0" width="64" height="64" preserveAspectRatio="none" result="zoomMap" />
           <feDisplacementMap id="zoom-displacement" in="SourceGraphic" in2="zoomMap" scale="64" xChannelSelector="R" yChannelSelector="G" />
         </filter>
-        <filter id="standalone-lens-filter" />
+        <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
       </svg>
       <div className="motion" id="motion"><div className="scale" id="scale" />
         <div className="icon-mask" id="iconMask"><div id="iconLayer">
