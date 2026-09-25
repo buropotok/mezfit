@@ -126,12 +126,14 @@ export function DatePicker({
   const yearTrigger = (
     <Glass
       component="button"
-      type="button"
       ref={yearTargetRef}
       className="ui-date-picker__year-trigger"
       aria-label={`Выбрать год, сейчас ${visibleYear}`}
       aria-expanded={yearPopoverOpened}
-      onClick={() => setYearPopoverOpened((current) => !current)}
+      onClick={(event) => {
+        event.preventDefault();
+        setYearPopoverOpened((current) => !current);
+      }}
     >
       {visibleYear}
     </Glass>
@@ -140,11 +142,11 @@ export function DatePicker({
   const closeAction = (
     <Link
       component="button"
-      type="button"
       iconOnly
-      disabled={yearPopoverOpened}
+      linkProps={{ type: 'button', disabled: yearPopoverOpened }}
+      aria-disabled={yearPopoverOpened}
       aria-label="Закрыть календарь"
-      onClick={onClose}
+      onClick={yearPopoverOpened ? undefined : onClose}
     >
       <CloseIcon />
     </Link>
@@ -185,24 +187,25 @@ export function DatePicker({
                 </div>
                 <div className="ui-date-picker__days">
                   {buildMonthGrid(visibleYear, monthIndex).map((cell, cellIndex) => {
-                    if (cell.day === null) {
+                    const day = cell.day;
+                    if (day === null) {
                       return <span className="ui-date-picker__empty-day" aria-hidden="true" key={`empty-${cellIndex}`} />;
                     }
 
                     const isSelected = selectedDate.year === visibleYear
                       && selectedDate.month === monthIndex + 1
-                      && selectedDate.day === cell.day;
+                      && selectedDate.day === day;
 
                     return (
                       <button
                         type="button"
                         className={`ui-date-picker__day${isSelected ? ' ui-date-picker__day--selected' : ''}`}
-                        aria-label={formatDayLabel(visibleYear, monthIndex, cell.day, locale)}
+                        aria-label={formatDayLabel(visibleYear, monthIndex, day, locale)}
                         aria-current={isSelected ? 'date' : undefined}
-                        onClick={() => chooseDate(monthIndex, cell.day)}
-                        key={cell.day}
+                        onClick={() => chooseDate(monthIndex, day)}
+                        key={day}
                       >
-                        <span className="ui-date-picker__day-label">{cell.day}</span>
+                        <span className="ui-date-picker__day-label">{day}</span>
                       </button>
                     );
                   })}
