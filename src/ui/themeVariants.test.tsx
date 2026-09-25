@@ -36,6 +36,15 @@ describe('UI Kit component themes and icon states', () => {
     expect(html).toContain('data-icon="filled"');
   });
 
+  it('resolves a registered IconButton name to both artwork variants', () => {
+    const html = renderToStaticMarkup(<IconButton label="Settings" selected icon="settings" />);
+
+    expect(html).toContain('ui-icon-button__icon-outline');
+    expect(html).toContain('ui-icon-button__icon-filled');
+    expect(html.match(/class="ui-icon"/g)).toHaveLength(2);
+    expect(html).toContain('data:image/svg+xml');
+  });
+
   it('keeps the existing selected IconButton contract without requiring an icon pair', () => {
     const html = renderToStaticMarkup(<IconButton label="Selected" selected>S</IconButton>);
 
@@ -56,6 +65,21 @@ describe('UI Kit component themes and icon states', () => {
     expect(html).toContain('data-ui-mode="icon"');
     expect(html).toContain('ui-tabs__icon-outline');
     expect(html).toContain('ui-tabs__icon-filled');
+  });
+
+  it('resolves a registered Tabs icon name through the shared registry', () => {
+    const html = renderToStaticMarkup(
+      <Tabs defaultValue="one" mode="icon">
+        <TabsList>
+          <TabsTrigger value="one" icon="users">One</TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+
+    expect(html).toContain('ui-tabs__icon-outline');
+    expect(html).toContain('ui-tabs__icon-filled');
+    expect(html.match(/class="ui-icon"/g)).toHaveLength(2);
+    expect(html).toContain('data:image/svg+xml');
   });
 
   it('rejects icon Tabs triggers without an icon pair', () => {

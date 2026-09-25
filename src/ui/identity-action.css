@@ -32,10 +32,22 @@
   cursor: default;
 }
 
-.ui-identity-action__avatar {
+.ui-identity-action__visual {
   width: 2.5rem;
   height: 2.5rem;
   flex: 0 0 2.5rem;
+  display: grid;
+  place-items: center;
+}
+
+.ui-identity-action__avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.ui-identity-action__icon {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .ui-identity-action__title {

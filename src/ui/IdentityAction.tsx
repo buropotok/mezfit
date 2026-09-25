@@ -1,5 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { Glass as KonstaGlass } from 'konsta/react';
+import { Icon, type UiIconName } from './Icon';
 import { Avatar } from './primitives';
 import './identity-action.css';
 
@@ -8,8 +9,11 @@ export type IdentityActionAvatar = {
   src?: string;
 };
 
-export type IdentityActionProps = {
-  avatar: IdentityActionAvatar;
+type IdentityActionVisual =
+  | { avatar: IdentityActionAvatar; icon?: never }
+  | { avatar?: never; icon: UiIconName };
+
+export type IdentityActionProps = IdentityActionVisual & {
   title: string;
   variant?: 'default' | 'avatar-only';
   onClick?: () => void;
@@ -33,6 +37,7 @@ IdentityGlassButton.displayName = 'IdentityGlassButton';
 
 export function IdentityAction({
   avatar,
+  icon,
   title,
   variant = 'default',
   onClick,
@@ -48,12 +53,16 @@ export function IdentityAction({
       aria-disabled={disabled || undefined}
       onClick={onClick}
     >
-      <span aria-hidden="true">
-        <Avatar
-          className="ui-identity-action__avatar"
-          name={avatar.name}
-          src={avatar.src}
-        />
+      <span className="ui-identity-action__visual" aria-hidden="true">
+        {icon ? (
+          <Icon className="ui-identity-action__icon" name={icon} variant="filled" />
+        ) : avatar ? (
+          <Avatar
+            className="ui-identity-action__avatar"
+            name={avatar.name}
+            src={avatar.src}
+          />
+        ) : null}
       </span>
       {variant === 'default' && <span className="ui-identity-action__title">{title}</span>}
     </KonstaGlass>

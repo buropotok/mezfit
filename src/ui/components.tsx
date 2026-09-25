@@ -3,7 +3,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import { Dialog as KonstaDialog, DialogButton } from 'konsta/react';
 import type { UiComponentTheme } from './componentTheme';
-import type { UiIconPair } from './iconPair';
+import { resolveUiIconPair } from './Icon';
+import type { UiIconPair, UiIconSource } from './iconPair';
 import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
@@ -111,7 +112,7 @@ export type TabsMode = 'default' | 'icon';
 export type TabsIconPair = UiIconPair;
 export type TabsProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Root> & { theme?: UiComponentTheme; mode?: TabsMode };
 type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List>;
-export type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger> & { icon?: TabsIconPair };
+export type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger> & { icon?: UiIconSource };
 type TabsContentProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Content>;
 type IndicatorChildProps = { children?: ReactNode; className?: string };
 type TabsContextValue = { theme: UiComponentTheme; mode: TabsMode; activeValue?: string };
@@ -232,6 +233,7 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
 export function TabsTrigger({ icon, className = '', children, onPointerDown, onKeyDown, disabled, value, ...props }: TabsTriggerProps) {
   const { theme, mode, activeValue } = useContext(TabsContext);
   const iconRef = useRef<HTMLSpanElement>(null);
+  const iconPair = icon ? resolveUiIconPair(icon) : undefined;
   const isActive = activeValue === value;
   const wasActiveRef = useRef(isActive);
 
@@ -246,8 +248,8 @@ export function TabsTrigger({ icon, className = '', children, onPointerDown, onK
 
   const content = mode === 'icon' ? <>
     <span ref={iconRef} className="ui-tabs__icon" aria-hidden="true">
-      <span className="ui-tabs__icon-outline">{icon?.outline}</span>
-      <span className="ui-tabs__icon-filled">{icon?.filled}</span>
+      <span className="ui-tabs__icon-outline">{iconPair?.outline}</span>
+      <span className="ui-tabs__icon-filled">{iconPair?.filled}</span>
     </span>
     <span className="ui-tabs__label">{children}</span>
   </> : children;
