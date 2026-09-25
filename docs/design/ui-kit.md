@@ -40,12 +40,19 @@ Glass is a shared UI Kit material defined by semantic effect tokens in `src/ui/t
 
 - `Text`
 - `Button`
+- `Icon`
 - `IconButton`
 - `Avatar`
 - `Divider`
 - `Surface`
 
-Interactive primitives expose visible keyboard focus, native disabled behavior where applicable, and accessible names for icon-only controls. Reduced-motion preferences are respected. The existing Mezfit icon source remains canonical.
+Interactive primitives expose visible keyboard focus, native disabled behavior where applicable, and accessible names for icon-only controls. Reduced-motion preferences are respected.
+
+### Named icon API
+
+Reusable UI artwork is registered inside `src/ui/icons` and consumed through the public `Icon` API by stable name. Consumers pass the icon name and, when needed, `outline` or `filled` variant; they do not import the underlying SVG asset path directly. Components that accept selectable icon artwork, including `IconButton`, `TabsTrigger`, `LiquidGlassIconOnly`, and `IdentityAction`, accept registered icon names and resolve the artwork internally.
+
+The registry is the asset boundary: changing the SVG mapped to a registered name updates every consumer without feature-level import changes. Existing explicit React-element icon pairs remain accepted where required for backwards compatibility, but new product navigation and reusable UI should use registered names.
 
 `IconButton` and `Surface` support `theme="default" | "glass" | "liquidGlass"`; omitted theme means the existing default presentation. Glass and liquidGlass are owning materials rather than additive visual modifiers: their border, background, blur/refraction and shadow are fixed by UI Kit and must not be silently overridden by instance props.
 
