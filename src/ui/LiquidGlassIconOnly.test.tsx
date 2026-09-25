@@ -5,6 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 
 const tabs:LiquidGlassIconOnlyTab[]=['Сегодня','Клиенты','Программы','Аналитика','Настройки'].map((label,i)=>({value:String(i),label,icon:{outline:<svg data-art={`${i}-outline`}/>,filled:<svg data-art={`${i}-filled`}/>}}));
+const namedTabs:LiquidGlassIconOnlyTab[]=[
+  {value:'today',label:'Сегодня',icon:'calendar-event'},
+  {value:'clients',label:'Клиенты',icon:'users'},
+  {value:'programs',label:'Программы',icon:'clipboard-list'},
+  {value:'analytics',label:'Аналитика',icon:'chart-dots-2'},
+  {value:'settings',label:'Настройки',icon:'settings'},
+];
 const changed=vi.fn();
 function ui(hidden=false, value='0', list=tabs){return <LiquidGlassIconOnly hidden={hidden} tabs={list} value={value} onValueChange={changed}/>}
 function getScene(container:HTMLElement):ShadowRoot {
@@ -44,6 +51,12 @@ describe('direct prototype adapter',()=>{
     expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     expect(button(root,2).getAttribute('aria-label')).toBe('Программы');expect(root.querySelector('[data-art="2-filled"]')).not.toBeNull();
     expect(button(root,0).style.width).toBe('20%');
+  });
+  it('resolves registered icon names inside the prototype scene',()=>{
+    const view=render(ui(false,'today',namedTabs));const root=getScene(view.container);
+    expect(root.querySelector('.ui-icon')).not.toBeNull();
+    expect(root.innerHTML).toContain('liquid-glass-calendar-event-outline.svg');
+    expect(root.innerHTML).toContain('liquid-glass-calendar-event-filled.svg');
   });
   it('restores the approved prototype optical lens variables',()=>{
     const view=render(ui());const lens=element(getScene(view.container),'lens');
