@@ -73,7 +73,7 @@ describe('DatePicker', () => {
     renderPicker({ onClose });
 
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' }));
-    const closeButton = screen.getByRole('button', { name: 'Закрыть календарь' });
+    const closeButton = screen.getByRole('link', { name: 'Закрыть календарь' });
 
     expect((closeButton as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(closeButton);
