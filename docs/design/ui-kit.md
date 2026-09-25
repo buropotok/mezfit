@@ -58,7 +58,7 @@ The registry is the asset boundary: changing the SVG mapped to a registered name
 
 For `Surface`, `border` and `elevated` belong only to the default theme. `Surface theme="glass"` and `Surface theme="liquidGlass"` therefore reject both props at the TypeScript contract level because the selected material already owns its border and shadow.
 
-For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unchanged under `theme="default"`. Under `theme="glass"` or `theme="liquidGlass"`, `color` and `shadow` are not valid because they would conflict with the material. A controlled `selected` state is supported only together with an explicit `{ outline, filled }` icon pair; selection swaps outline to filled artwork and runs the shared spring motion while the material presentation remains component-owned.
+For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unchanged under `theme="default"`. Under `theme="glass"` or `theme="liquidGlass"`, `color` and `shadow` are not valid because they would conflict with the material. A controlled `selected` state is supported together with either a registered icon name or a backwards-compatible explicit `{ outline, filled }` icon pair; selection swaps outline to filled artwork and runs the shared spring motion while the material presentation remains component-owned.
 
 ### Telegram Web A button provenance
 
@@ -71,7 +71,7 @@ For `IconButton`, the existing `color`, `selected`, and `shadow` APIs remain unc
 - `theme?: "default" | "glass" | "liquidGlass"` controls the visual material. Omitted means the current default Tabs presentation.
 - `mode?: "default" | "icon"` controls trigger composition. Omitted means the current text-only trigger. Icon mode makes the trigger taller and places a 24px icon above the existing Body 15/20 medium label.
 
-When `mode="icon"`, every `TabsTrigger` requires an explicit `{ outline, filled }` pair. Inactive triggers show outline artwork. The selected trigger shows filled artwork. Radix remains the state/accessibility owner. Default/glass keep the existing press/spring behavior; liquidGlass owns its approved lens/container/icon motion sequence inside the UI Kit.
+When `mode="icon"`, every `TabsTrigger` requires registered icon artwork, normally supplied by icon name; explicit `{ outline, filled }` pairs remain supported for backwards compatibility. Inactive triggers show outline artwork. The selected trigger shows filled artwork. Radix remains the state/accessibility owner. Default/glass keep the existing press/spring behavior; liquidGlass owns its approved lens/container/icon motion sequence inside the UI Kit.
 
 For `theme="liquidGlass"`, the springing/scaling target is the UI-Kit-owned visual layer around `TabsList` and its external press lens. `TabsContent` is explicitly outside that visual layer and must never participate in container expansion or spring transforms.
 
