@@ -56,13 +56,13 @@ export function IdentityAction({
       <span className="ui-identity-action__visual" aria-hidden="true">
         {icon ? (
           <Icon className="ui-identity-action__icon" name={icon} variant="filled" />
-        ) : (
+        ) : avatar ? (
           <Avatar
             className="ui-identity-action__avatar"
             name={avatar.name}
             src={avatar.src}
           />
-        )}
+        ) : null}
       </span>
       {variant === 'default' && <span className="ui-identity-action__title">{title}</span>}
     </KonstaGlass>
