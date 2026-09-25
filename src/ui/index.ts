@@ -2,7 +2,7 @@ export { Avatar, Button, Divider, IconButton, Surface, Text, type ButtonColor, t
 export type { UiComponentTheme } from './componentTheme';
 export type { UiIconPair } from './iconPair';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge';
-export { Calendar, type CalendarProps } from './Calendar';
+export { DatePicker, type DatePickerProps, type LocalDate } from './date-picker/DatePicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
 export { IdentityAction, type IdentityActionAvatar, type IdentityActionProps } from './IdentityAction';
 export { Checkbox, Radio, TextArea, TextInput, type CheckboxProps, type RadioProps, type TextAreaProps, type TextInputProps } from './FormControls';

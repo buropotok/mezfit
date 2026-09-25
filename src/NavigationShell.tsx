@@ -3,7 +3,7 @@ import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
-import { Calendar, Menu, MenuDivider, MenuItem, Modal } from './ui';
+import { DatePicker, Menu, MenuDivider, MenuItem, type LocalDate } from './ui';
 import userIconUrl from './ui/icons/user.svg';
 
 export type AppDestination =
@@ -81,6 +81,14 @@ function historyHasToken(token: string): boolean {
   return historyStateRecord()[HISTORY_TOKEN_KEY] === token;
 }
 
+function todayLocalDate(): LocalDate {
+  const now = new Date();
+  const year = String(now.getFullYear()).padStart(4, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 interface Props {
   me: MeResponse;
   activeRole: Role;
@@ -105,7 +113,7 @@ export function NavigationShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<LocalDate>(todayLocalDate);
   const contextRef = useRef(context);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
@@ -273,9 +281,12 @@ export function NavigationShell({
 
       <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
 
-      <Modal isOpen={calendarOpen} title="Календарь" className="app-calendar-modal" onClose={() => setCalendarOpen(false)}>
-        <Calendar value={selectedDate} onChange={setSelectedDate} />
-      </Modal>
+      <DatePicker
+        opened={calendarOpen}
+        value={selectedDate}
+        onChange={setSelectedDate}
+        onClose={() => setCalendarOpen(false)}
+      />
     </main>
   );
 }
