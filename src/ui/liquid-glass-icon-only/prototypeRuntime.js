@@ -1849,6 +1849,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         listen(window,
           'mezfit-tab-active-change',
           (event) => {
+            if (host.hasAttribute('startup')) return;
             playActiveIconSpring(
               event.detail?.index
             );
