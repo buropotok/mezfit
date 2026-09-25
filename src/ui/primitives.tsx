@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ImgHTMLAttributes, ReactNode } from 'react';
-import type { UiIconPair } from './iconPair';
+import { resolveUiIconPair } from './Icon';
+import type { UiIconSource } from './iconPair';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
 import { LiquidGlassIconButtonFilter, LiquidGlassOpticalFilter, useLiquidGlassFilterId, type LiquidGlassGeometry } from './liquidGlass';
@@ -34,7 +35,7 @@ export function Button({ variant = 'primary', color, size = 'default', selected:
 type IconButtonBaseProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> & {
   label: string;
   children?: ReactNode;
-  icon?: UiIconPair;
+  icon?: UiIconSource;
 };
 type IconButtonDefaultProps = IconButtonBaseProps & {
   theme?: 'default';
@@ -54,12 +55,13 @@ type IconButtonGlassSelectableProps = IconButtonBaseProps & {
   color?: never;
   selected: boolean;
   shadow?: never;
-  icon: UiIconPair;
+  icon: UiIconSource;
 };
 export type IconButtonProps = IconButtonDefaultProps | IconButtonGlassIdleProps | IconButtonGlassSelectableProps;
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton({ label, theme = 'default', icon, color, selected: selectedProp, shadow = false, className = '', type = 'button', children, onPointerDown, onKeyDown, disabled, style, ...props }, ref) {
   const selected = selectedProp === true;
+  const iconPair = icon ? resolveUiIconPair(icon) : undefined;
   const colorClass = theme === 'default' && color ? ` ui-icon-button--color-${color}` : '';
   const selectedClass = theme === 'default' && selected ? ' ui-icon-button--selected' : '';
   const shadowClass = theme === 'default' && shadow ? ' ui-icon-button--shadow' : '';
@@ -71,14 +73,14 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     : style;
 
   useEffect(() => {
-    if (icon && previousSelectedRef.current !== selected && artworkRef.current) startSpringScale(artworkRef.current);
+    if (iconPair && previousSelectedRef.current !== selected && artworkRef.current) startSpringScale(artworkRef.current);
     previousSelectedRef.current = selected;
   }, [icon, selected]);
 
-  const content = icon ? (
+  const content = iconPair ? (
     <span ref={artworkRef} className="ui-icon-button__artwork" aria-hidden="true">
-      <span className="ui-icon-button__icon-outline">{icon.outline}</span>
-      <span className="ui-icon-button__icon-filled">{icon.filled}</span>
+      <span className="ui-icon-button__icon-outline">{iconPair.outline}</span>
+      <span className="ui-icon-button__icon-filled">{iconPair.filled}</span>
     </span>
   ) : children;
 
