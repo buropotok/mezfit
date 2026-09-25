@@ -39,8 +39,10 @@ describe('UI Kit component themes and icon states', () => {
   it('resolves a registered IconButton name to both artwork variants', () => {
     const html = renderToStaticMarkup(<IconButton label="Settings" selected icon="settings" />);
 
-    expect(html).toContain('liquid-glass-settings-outline.svg');
-    expect(html).toContain('liquid-glass-settings-filled.svg');
+    expect(html).toContain('ui-icon-button__icon-outline');
+    expect(html).toContain('ui-icon-button__icon-filled');
+    expect(html.match(/class="ui-icon"/g)).toHaveLength(2);
+    expect(html).toContain('data:image/svg+xml');
   });
 
   it('keeps the existing selected IconButton contract without requiring an icon pair', () => {
@@ -74,8 +76,10 @@ describe('UI Kit component themes and icon states', () => {
       </Tabs>,
     );
 
-    expect(html).toContain('liquid-glass-users-outline.svg');
-    expect(html).toContain('liquid-glass-users-filled.svg');
+    expect(html).toContain('ui-tabs__icon-outline');
+    expect(html).toContain('ui-tabs__icon-filled');
+    expect(html.match(/class="ui-icon"/g)).toHaveLength(2);
+    expect(html).toContain('data:image/svg+xml');
   });
 
   it('rejects icon Tabs triggers without an icon pair', () => {

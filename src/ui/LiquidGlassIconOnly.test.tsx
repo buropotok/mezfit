@@ -54,9 +54,14 @@ describe('direct prototype adapter',()=>{
   });
   it('resolves registered icon names inside the prototype scene',()=>{
     const view=render(ui(false,'today',namedTabs));const root=getScene(view.container);
-    expect(root.querySelector('.ui-icon')).not.toBeNull();
-    expect(root.innerHTML).toContain('liquid-glass-calendar-event-outline.svg');
-    expect(root.innerHTML).toContain('liquid-glass-calendar-event-filled.svg');
+    const outline=root.querySelector<HTMLElement>('.tab-link .tab-icon-outline .ui-icon');
+    const filled=root.querySelector<HTMLElement>('.tab-link .tab-icon-filled .ui-icon');
+    expect(outline).not.toBeNull();expect(filled).not.toBeNull();
+    const outlineMask=outline?.style.getPropertyValue('mask-image')??'';
+    const filledMask=filled?.style.getPropertyValue('mask-image')??'';
+    expect(outlineMask).toContain('data:image/svg+xml');
+    expect(filledMask).toContain('data:image/svg+xml');
+    expect(filledMask).not.toBe(outlineMask);
   });
   it('restores the approved prototype optical lens variables',()=>{
     const view=render(ui());const lens=element(getScene(view.container),'lens');

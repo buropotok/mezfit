@@ -46,7 +46,8 @@ describe('IdentityAction', () => {
 
     expect(html).toContain('aria-label="Клиенты"');
     expect(html).toContain('ui-identity-action__icon');
-    expect(html).toContain('liquid-glass-users-filled.svg');
+    expect(html).toContain('data:image/svg+xml');
+    expect(html).not.toContain('ui-avatar--fallback');
   });
 
   it('preserves Konsta disabled button semantics', () => {
