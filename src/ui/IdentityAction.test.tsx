@@ -39,6 +39,16 @@ describe('IdentityAction', () => {
     expect(html).not.toContain('ui-identity-action__title');
   });
 
+  it('renders a registered filled icon in the identity visual slot', () => {
+    const html = renderIdentityAction(
+      <IdentityAction icon="users" title="Клиенты" />,
+    );
+
+    expect(html).toContain('aria-label="Клиенты"');
+    expect(html).toContain('ui-identity-action__icon');
+    expect(html).toContain('liquid-glass-users-filled.svg');
+  });
+
   it('preserves Konsta disabled button semantics', () => {
     const html = renderIdentityAction(
       <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" disabled />,
