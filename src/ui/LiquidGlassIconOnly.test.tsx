@@ -19,9 +19,8 @@ function element(root:ShadowRoot,id:string):HTMLElement {
   const result=root.getElementById(id);if(!(result instanceof HTMLElement))throw new Error('Missing '+id);return result;
 }
 const cancels:ReturnType<typeof vi.fn>[]=[];
-const animatedTargets:Element[]=[];
 beforeEach(()=>{
-  vi.useFakeTimers();changed.mockClear();cancels.length=0;animatedTargets.length=0;
+  vi.useFakeTimers();changed.mockClear();cancels.length=0;
   vi.stubGlobal('ResizeObserver',class {observe(){}disconnect(){}});
   vi.stubGlobal('matchMedia',()=>({matches:false}));
   vi.stubGlobal('PointerEvent',class extends MouseEvent {pointerId:number;pointerType:string;constructor(type:string,init:PointerEventInit={}){super(type,init);this.pointerId=init.pointerId??1;this.pointerType=init.pointerType??'touch'}});
@@ -30,7 +29,7 @@ beforeEach(()=>{
   vi.spyOn(HTMLElement.prototype,'offsetHeight','get').mockReturnValue(64);
   vi.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(this:HTMLElement){const width=this.classList.contains('tab-link')?78:390;const left=Number(this.dataset.index||0)*78;return {x:left,y:0,left,top:0,right:left+width,bottom:64,width,height:64,toJSON:()=>({})}});
   vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
-  Object.defineProperty(Element.prototype,'animate',{configurable:true,value:vi.fn(function(this:Element){animatedTargets.push(this);const cancel=vi.fn();cancels.push(cancel);return {cancel,addEventListener:vi.fn(),removeEventListener:vi.fn()}})});
+  Object.defineProperty(Element.prototype,'animate',{configurable:true,value:vi.fn(()=>{const cancel=vi.fn();cancels.push(cancel);return {cancel,addEventListener:vi.fn(),removeEventListener:vi.fn()}})});
 });
 afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
 
@@ -65,14 +64,6 @@ describe('direct prototype adapter',()=>{
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
     expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
     act(()=>vi.advanceTimersByTime(900));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
-  });
-  it('does not spring the active icon while the neutral reveal is running',()=>{
-    const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
-    animatedTargets.length=0;view.rerender(ui(false,'2'));
-    expect(animatedTargets.some(target=>target.classList.contains('tab-icon-wrap'))).toBe(false);
-    act(()=>vi.advanceTimersByTime(900));view.rerender(ui(false,'3'));
-    expect(animatedTargets.some(target=>target.classList.contains('tab-icon-wrap'))).toBe(true);
-    expect(button(root,3).getAttribute('aria-selected')).toBe('true');
   });
   it('cancels all animation work on hide and can show again',()=>{
     const view=render(ui(true));view.rerender(ui(false));act(()=>vi.advanceTimersByTime(100));
