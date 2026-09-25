@@ -26,7 +26,7 @@ const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
-  root.classList.add('k-ios', 'dark');
+  root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;
   if (window.location.pathname === '/ui-kit') {
     const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }] = await Promise.all([
