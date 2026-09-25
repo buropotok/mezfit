@@ -97,9 +97,13 @@ export function DatePicker({
         const yearElement = scrollElement?.querySelector<HTMLElement>(`[data-year="${visibleYear}"]`);
         if (!scrollElement || !yearElement) return;
 
+        const scrollRect = scrollElement.getBoundingClientRect();
+        const yearRect = yearElement.getBoundingClientRect();
+        const targetOffset = scrollElement.scrollTop + yearRect.top - scrollRect.top;
+
         scrollElement.scrollTop = calculateCenteredScrollTop({
-          targetOffset: yearElement.offsetTop,
-          targetHeight: yearElement.offsetHeight,
+          targetOffset,
+          targetHeight: yearRect.height || yearElement.offsetHeight,
           viewportHeight: scrollElement.clientHeight,
           scrollHeight: scrollElement.scrollHeight,
         });
@@ -195,7 +199,7 @@ export function DatePicker({
                         className={`ui-date-picker__day${isSelected ? ' ui-date-picker__day--selected' : ''}`}
                         aria-label={formatDayLabel(visibleYear, monthIndex, cell.day, locale)}
                         aria-current={isSelected ? 'date' : undefined}
-                        onClick={() => chooseDate(monthIndex, cell.day as number)}
+                        onClick={() => chooseDate(monthIndex, cell.day)}
                         key={cell.day}
                       >
                         <span className="ui-date-picker__day-label">{cell.day}</span>
