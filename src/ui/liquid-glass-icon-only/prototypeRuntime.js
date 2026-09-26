@@ -1866,255 +1866,289 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     })();
 
   const iconMask=document.getElementById('iconMask');
-  const iconLayer=host, shape=document.getElementById('shape'), motion=document.getElementById('motion'), scaleEl=document.getElementById('scale');
-  const preview=root.host;
-  const zoomVector=document.getElementById('zoom-vector-image'),iconFilter=document.getElementById('icon-displacement-filter'),zoomDisp=document.getElementById('zoom-displacement');
-  const D=1200;
-  let currentScaleX=1,currentScaleY=1,zoomMapRAF=0,lastZoomState='';
-  const mapClamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  function timing(){return {d:580,op:.21,lo:.75,startPct:80,lowPx:19,springMs:230}}
-const ZOOM={
-  visible:true,
-  width:132,
-  strengthX:12,
-  strengthY:17.5,
-  edgeOffset:0,
-  padding:160,
-  exitMs:280,
-  nodes:[
-    {x:0,y:0},
-    {x:.21,y:.88},
-    {x:.47,y:1},
-    {x:.78,y:.88},
-    {x:1,y:0}
-  ]
-};
-const n=[{t:0,s:1.25,f:1},{t:330,s:1.18},{t:779.7970246696906,s:1.0809331587587891},{t:1200,s:1,f:1}],c=[[{t:90,s:1.25},{t:230,s:1.22}],[{t:450,s:1.14},{t:693.8062003295811,s:0.8612479021258022}],[{t:889.7970246696907,s:1.055933158758789},{t:1110,s:1}]],yn=[{t:0,s:1.25,f:1},{t:330,s:1.18},{t:878.825189690977,s:0.8},{t:1200,s:1,f:1}],yc=[[{t:90,s:1.25},{t:230,s:1.22}],[{t:450,s:1.14},{t:738.825189690977,s:0.8300000000000001}],[{t:988.8251896909766,s:0.8},{t:1110,s:1}]];
-function catmull(v0,v1,v2,v3,t){
-  const t2=t*t,t3=t2*t;
-  return .5*((2*v1)+(-v0+v2)*t+(2*v0-5*v1+4*v2-v3)*t2+(-v0+3*v1-3*v2+v3)*t3);
-}
-function profileSample(nodes,x){
-  x=mapClamp(x,0,1);
-  let i=0;while(i<nodes.length-2&&x>nodes[i+1].x)i++;
-  const a=nodes[Math.max(0,i-1)],b=nodes[i],c=nodes[i+1],d=nodes[Math.min(nodes.length-1,i+2)];
-  const span=Math.max(.0001,c.x-b.x),t=mapClamp((x-b.x)/span,0,1);
-  return catmull(a.y,b.y,c.y,d.y,t);
-}
-function fullStripWidth(){
-  const css=getComputedStyle(document.documentElement).getPropertyValue('--runtime-tabs-width').trim();
-  const n=parseFloat(css);
-  return Number.isFinite(n)&&n>0?n:Math.max(64,preview.clientWidth-16);
-}
-function visibleContainerWidth(){
-  const w=parseFloat(getComputedStyle(iconMask).width);
-  return Number.isFinite(w)&&w>0?w:64;
-}
-function zoomCenters(elapsed,mainDuration,lowFraction){
-  const fw=fullStripWidth(),cw=visibleContainerWidth(),halfLens=ZOOM.width/2;
-  const lowTime=mainDuration*lowFraction;
-
-  // Phase 1: while the container is opening, both lenses follow its current edges.
-  if(elapsed<=lowTime){
-    const edge=cw/2;
-    return {
-      left:-edge-ZOOM.edgeOffset,
-      right:edge+ZOOM.edgeOffset,
-      done:false
-    };
-  }
-
-  // Phase 2: from the exact low point onward there is NO pause.
-  // The lenses immediately continue outward at constant speed.
-  // They keep moving through the return Y phase and continue after the main animation.
-  const startLeft=-fw/2-ZOOM.edgeOffset;
-  const startRight=fw/2+ZOOM.edgeOffset;
-  const exitDistance=fw/2+halfLens+16;
-
-  const travelDuration=Math.max(1,(mainDuration-lowTime)+ZOOM.exitMs);
-  const p=mapClamp((elapsed-lowTime)/travelDuration,0,1);
-
-  const left=startLeft+(-exitDistance-startLeft)*p;
-  const right=startRight+(exitDistance-startRight)*p;
-
-  return {
-    left,
-    right,
-    done:p>=1
+  const iconLayer=host, shape=document.getElementById('shape'), motion=document.getElementById('motion');
+  const scene=document.getElementById('startupScene'), vector=document.getElementById('startup-vector');
+  const maskSurface=document.getElementById('startup-mask-surface'), surface=document.getElementById('startup-bezel-surface');
+  const iconsFo=document.getElementById('startup-icons-fo'), materialSurface=document.getElementById('startup-material-surface');
+  const lensBlurNode=document.getElementById('startup-lens-blur'), lensSaturationNode=document.getElementById('startup-lens-saturation');
+  const refraction=document.getElementById('startup-refraction');
+  const SETTINGS={
+    splitSec:.35,
+    revealSec:1.10,
+    handoffSec:.50,
+    speed:210,
+    lensScale:.75,
+    delayMs:0,
+    blurPx:.5,
+    saturation:1.44,
+    frost:.14,
+    speedPoints:[0,.55,.78,.55,0],
   };
-}
-function createNeutralCanvas(width,height){
-  const c=document.createElement('canvas');c.width=width;c.height=height;
-  const ctx=c.getContext('2d',{willReadFrequently:true});
-  if (!ctx) return null;
-  ctx.fillStyle='rgb(128,128,128)';ctx.fillRect(0,0,width,height);
-  return {canvas:c,ctx};
-}
-function rebuildZoomMap(centers){
-  zoomMapRAF=0;
-  const fw=Math.max(64,Math.round(fullStripWidth())),h=64;
-  const state=[fw,centers.left.toFixed(2),centers.right.toFixed(2),ZOOM.width,ZOOM.strengthX,ZOOM.strengthY,
-    ZOOM.nodes.map(p=>p.x.toFixed(3)+':'+p.y.toFixed(3)).join(',')].join('|');
-  if(state===lastZoomState)return;
-  lastZoomState=state;
-
-  const full=createNeutralCanvas(fw,h);
-  if (!full) return;
-  const ctx=full.ctx;
-  const img=ctx.createImageData(fw,h),d=img.data;
-  const cy=h/2,rx=Math.max(1,ZOOM.width/2),ry=h/2;
-  const centersPx=[fw/2+centers.left,fw/2+centers.right];
-
-  // Compose both lenses into ONE displacement field by summing vectors.
-  // This is order-independent and preserves exact left/right symmetry in overlap.
-  for(let y=0;y<h;y++){
-    for(let x=0;x<fw;x++){
-      let dx=0,dy=0;
-      for(const cx of centersPx){
-        const nx=(x+.5-cx)/rx;
-        const ny=(y+.5-cy)/Math.max(1,ry);
-        const r=Math.hypot(nx,ny);
-        if(r>1)continue;
-
-        const amp=profileSample(ZOOM.nodes,r);
-        const ux=r>1e-5?nx/r:0;
-        const uy=r>1e-5?ny/r:0;
-
-        dx+=-ux*amp*ZOOM.strengthX;
-        dy+=-uy*amp*ZOOM.strengthY;
+  const threshold=.46,logThreshold=-Math.log(threshold),nodes=[{x:0,y:0},{x:.21,y:.88},{x:.47,y:1},{x:.78,y:.88},{x:1,y:0}];
+  const mapClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+  let width=0,height=0,baseY=0,sigma=30,ax=0,ay=0,bx=0,by=0,cx=0,cy=0;
+  let timing=null,path=[],breaks=null,running=false,startTime=0,elapsed=0,handoffProgress=0;
+  const mapCanvas=document.createElement('canvas'),mapCtx=mapCanvas.getContext('2d');
+  const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
+  const bezelCanvas=document.createElement('canvas'),bezelCtx=bezelCanvas.getContext('2d');
+  const speedIntegral=new Float32Array(257);
+  function baseSigma(){return Math.max(12,Math.min(40,width/8));}
+  function applyLensSize(){sigma=SETTINGS.lensScale*baseSigma();}
+  const shellRadius=()=>32;
+  const halfSpan=()=>Math.max(1,width/2/1.1-shellRadius());
+  function movingSigma(x){
+    const t=mapClamp(x/halfSpan(),0,1),blend=t*t*(3-2*t),finalSigma=32/Math.sqrt(2*Math.log(2/threshold));
+    return sigma+(finalSigma-sigma)*blend;
+  }
+  function bridgeWeight(x){
+    const a=mapClamp(x/halfSpan(),0,1),smooth=a*a*(3-2*a);
+    return Math.max(smooth,.28*(1-Math.exp(-x*x/(2*movingSigma(x)**2))));
+  }
+  function catmull1D(a,b,c,d,t){
+    const t2=t*t,t3=t2*t;
+    return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);
+  }
+  function speedValueAt(u){
+    if(u<=0||u>=1)return 0;
+    const scaled=u*4,i=Math.min(3,Math.max(0,Math.floor(scaled))),t=scaled-i,p=SETTINGS.speedPoints;
+    return mapClamp(catmull1D(p[Math.max(0,i-1)],p[i],p[i+1],p[Math.min(4,i+2)],t),0,1.15);
+  }
+  function rebuildSpeedIntegral(){
+    let area=0,prev=speedValueAt(0);speedIntegral[0]=0;
+    for(let i=1;i<speedIntegral.length;i++){
+      const u=i/(speedIntegral.length-1),v=speedValueAt(u);
+      area+=(prev+v)/2/(speedIntegral.length-1);speedIntegral[i]=area;prev=v;
+    }
+    if(area<1e-6){for(let i=0;i<speedIntegral.length;i++)speedIntegral[i]=i/(speedIntegral.length-1);return;}
+    for(let i=1;i<speedIntegral.length;i++)speedIntegral[i]/=area;
+  }
+  function speedAreaAt(u){
+    const x=mapClamp(u,0,1)*(speedIntegral.length-1),i=Math.floor(x),q=x-i,a=speedIntegral[i],b=speedIntegral[Math.min(i+1,speedIntegral.length-1)];
+    return a+(b-a)*q;
+  }
+  const curve=u=>({x:halfSpan()/sigma*u*u,y:4.8*(2*u-u*u)});
+  function connected(u){
+    const p=curve(u),extent=Math.ceil(halfSpan()/sigma+3),step=.12,nx=Math.ceil(2*extent/step)+1,ny=85;
+    const weight=bridgeWeight(p.x*sigma),ratio=movingSigma(p.x*sigma)/sigma,md=2*ratio*ratio;
+    const grid=new Uint8Array(nx*ny),queue=new Int32Array(nx*ny);
+    for(let j=0;j<ny;j++){
+      const y=j*step-2,fy=Math.exp(-y*y/2),my=Math.exp(-((y-p.y)**2)/md);
+      for(let i=0;i<nx;i++){
+        const x=i*step-extent,near=mapClamp(x,-p.x,p.x);
+        const pair=(Math.exp(-((x-p.x)**2)/md)+Math.exp(-((x+p.x)**2)/md))*my;
+        const capsule=2*Math.exp(-((x-near)**2)/md)*my;
+        grid[j*nx+i]=Math.exp(-x*x/2)*fy+(1-weight)*pair+weight*capsule>=threshold?1:0;
       }
-
-      const p=(y*fw+x)*4;
-      d[p]=Math.round(mapClamp(128+dx/64*255,0,255));
-      d[p+1]=Math.round(mapClamp(128+dy/64*255,0,255));
-      d[p+2]=128;
-      d[p+3]=255;
+    }
+    const index=(x,y)=>Math.round((y+2)/step)*nx+Math.round((x+extent)/step),from=index(0,0),target=index(p.x,p.y);
+    let head=0,tail=1;queue[0]=from;grid[from]=2;
+    while(head<tail){
+      const n=queue[head++];if(n===target)return true;const col=n%nx;
+      for(const next of [col>0?n-1:-1,col<nx-1?n+1:-1,n-nx,n+nx]){
+        if(next>=0&&next<grid.length&&grid[next]===1){grid[next]=2;queue[tail++]=next;}
+      }
+    }
+    return false;
+  }
+  function calibrate(){
+    let lo=0,hi=1;
+    for(let i=0;i<17;i++){const mid=(lo+hi)/2;if(connected(mid))lo=mid;else hi=mid;}
+    breaks=[(lo+hi)/2];
+  }
+  function buildPath(){
+    calibrate();path=[{s:0,x:0,y:0,u:0}];
+    for(let i=1;i<=600;i++){
+      const u=i/600,p=curve(u),prev=path[path.length-1],x=p.x*sigma,y=p.y*sigma;
+      path.push({s:prev.s+Math.hypot(x-prev.x,y-prev.y),x,y,u});
     }
   }
-  ctx.putImageData(img,0,0);
-
-
-
-  const url=full.canvas.toDataURL('image/png');
-  zoomVector.setAttribute('href',url);
-  zoomVector.setAttributeNS('http://www.w3.org/1999/xlink','href',url);
-  zoomVector.setAttribute('x','0');
-  zoomVector.setAttribute('y','0');
-  zoomVector.setAttribute('width',String(fw));
-  zoomVector.setAttribute('height','64');
-
-  const pad=Math.max(100,ZOOM.padding);
-  iconFilter.setAttribute('x',-pad+'%');
-  iconFilter.setAttribute('y',-pad+'%');
-  iconFilter.setAttribute('width',(100+2*pad)+'%');
-  iconFilter.setAttribute('height',(100+2*pad)+'%');
-  zoomDisp.setAttribute('scale','64');
-}
-function queueZoomMap(centers){
-  if(zoomMapRAF)cancelAnimationFrame(zoomMapRAF);
-  zoomMapRAF=requestAnimationFrame(()=>rebuildZoomMap(centers));
-}
-function bez(a,b,c,d,u){let v=1-u;return v*v*v*a+3*v*v*u*b+3*v*u*u*c+u*u*u*d}
-function sampleScaleY(t){
-  let k=0;while(k<2&&t>yn[k+1].t)k++;
-  let a=yn[k],b=yn[k+1],cc=yc[k],lo=0,hi=1,u=.5;
-  for(let q=0;q<20;q++){u=(lo+hi)/2;if(bez(a.t,cc[0].t,cc[1].t,b.t,u)<t)lo=u;else hi=u}
-  return bez(a.s,cc[0].s,cc[1].s,b.s,u)
-}
-function sampleScale(t){let k=0;while(k<2&&t>n[k+1].t)k++;let a=n[k],b=n[k+1],cc=c[k],lo=0,hi=1,u=.5;for(let q=0;q<20;q++){u=(lo+hi)/2;if(bez(a.t,cc[0].t,cc[1].t,b.t,u)<t)lo=u;else hi=u}return bez(a.s,cc[0].s,cc[1].s,b.s,u)}
-function timelineDuration(){
-  const st=timing();
-  return st.d+Math.max(ZOOM.exitMs,st.springMs);
-}
-function applyDirectScale(sx,sy){
-  currentScaleX=sx;
-  currentScaleY=sy;
-  // The wrapper remains transform-neutral. Scale is applied directly to the
-  // real animated geometry so the glass container cannot be bypassed.
-  scaleEl.style.transform='none';
-  shape.style.transform=`translate(-50%,-50%) scale(${sx},${sy})`;
-  iconMask.style.transform=`translate(-50%,-50%) scale(${sx},${sy})`;
-}
-function renderScaleAt(ms,st){
-  const t=mapClamp(ms,0,timelineDuration());
-
-  if(t<=st.d){
-    const curveT=(t/st.d)*D;
-    applyDirectScale(sampleScale(curveT),sampleScaleY(curveT));
-    return;
+  function arcAt(u){
+    const f=u*600,i=Math.floor(f),a=path[i],b=path[Math.min(i+1,600)];
+    return a.s+(b.s-a.s)*(f-i);
   }
-
-  const sp=mapClamp((t-st.d)/Math.max(1,st.springMs),0,1);
-  let v=1;
-  if(sp<=.5)v=1-(.04*(sp/.5));
-  else v=.96+(.04*((sp-.5)/.5));
-  applyDirectScale(v,v);
-}
-function renderYAt(ms,st){
-  const t=mapClamp(ms,0,timelineDuration());
-
-  if(t<=st.d){
-    const lowTime=Math.max(1,st.d*st.lo);
-    const startY=-(st.startPct/100*64+32);
-
-    if(t<=lowTime){
-      const u=mapClamp(t/lowTime,0,1);
-      const y=startY+(st.lowPx-startY)*u;
-      motion.style.transform=`translateY(${y}px)`;
-    }else{
-      const u=mapClamp((t-lowTime)/Math.max(1,st.d-lowTime),0,1);
-      const y=st.lowPx*(1-u);
-      motion.style.transform=`translateY(${y}px)`;
+  function readTiming(){
+    const speed=SETTINGS.speed,t1=SETTINGS.splitSec,t2=SETTINGS.revealSec,s1=arcAt(breaks[0]),end=path[path.length-1].s;
+    const begin=Math.max(0,t1-1.4*s1/speed),h0=Math.max(.001,t1-begin),h1=Math.max(.001,t2-t1);
+    const times=[begin,t1,t2],dist=[0,s1,end],h=[h0,h1],d=[s1/h0,(end-s1)/h1];
+    const w1=2*h[1]+h[0],w2=h[1]+2*h[0],slopes=[0,(w1+w2)/(w1/d[0]+w2/d[1]),0];
+    timing={t1,t2,times,dist,slopes,delayMs:SETTINGS.delayMs,motionMs:t2*1000,handoffMs:SETTINGS.handoffSec*1000,total:SETTINGS.delayMs+t2*1000+SETTINGS.handoffSec*1000};
+  }
+  function distanceAt(t){
+    const {times,dist,slopes}=timing;
+    if(t<=times[0])return 0;if(t>=times[2])return dist[2];
+    let i=0;while(i<1&&t>times[i+1])i++;
+    const h=times[i+1]-times[i],u=(t-times[i])/h,u2=u*u,u3=u2*u;
+    return (2*u3-3*u2+1)*dist[i]+(u3-2*u2+u)*h*slopes[i]+(-2*u3+3*u2)*dist[i+1]+(u3-u2)*h*slopes[i+1];
+  }
+  function motionSecondsAt(ms){
+    if(ms<=timing.delayMs)return 0;
+    const normalized=mapClamp((ms-timing.delayMs)/Math.max(1,timing.motionMs),0,1);
+    return speedAreaAt(normalized)*timing.t2;
+  }
+  function applyMaterial(){
+    if(lensBlurNode)lensBlurNode.setAttribute('stdDeviation',SETTINGS.blurPx.toFixed(2));
+    if(lensSaturationNode)lensSaturationNode.setAttribute('values',SETTINGS.saturation.toFixed(2));
+    if(materialSurface){
+      const alpha=(SETTINGS.frost*.01+SETTINGS.frost*.99*.22).toFixed(3);
+      materialSurface.setAttribute('fill-opacity',alpha);
+      materialSurface.setAttribute('fill','rgb(185,208,239)');
     }
-    return;
   }
-
-  motion.style.transform='translateY(0px)';
-}
-function renderIconsAt(ms,st){
-  const showAt=st.d*st.op;
-  iconLayer.style.opacity=ms>=showAt?'1':'0';
-  const ready=ms>=timelineDuration();
-  const changed=iconMask.classList.contains('tabs-interactive')!==ready;
-  iconMask.classList.toggle('tabs-interactive',ready);
-  shape.classList.toggle('tabs-replaced',ready);
-  iconLayer.toggleAttribute('startup',!ready);
-  iconLayer.inert=!ready;
-  if(changed && ready) iconLayer.dispatchEvent(new Event('tabs-layout-ready'));
-
-}
-
-  function size() {
-    const width=root.host.clientWidth/1.1;
-    root.host.style.setProperty('--runtime-tabs-width',width+'px');
-    return width;
+  function prepareGeometry(){
+    const nextWidth=Math.round(root.host.clientWidth);
+    if(!nextWidth)return false;
+    width=nextWidth;applyLensSize();buildPath();readTiming();rebuildSpeedIntegral();
+    const finalY=path[path.length-1].y;
+    baseY=Math.max(72,sigma*2.5);
+    height=Math.ceil(baseY+finalY+32);
+    root.host.style.setProperty('--runtime-tabs-width',width/1.1+'px');
+    root.host.style.setProperty('--startup-scene-height',height+'px');
+    scene.setAttribute('viewBox',`0 0 ${width} ${height}`);
+    scene.setAttribute('width',String(width));scene.setAttribute('height',String(height));
+    if(refraction){
+      refraction.setAttribute('filterUnits','userSpaceOnUse');refraction.setAttribute('x','0');refraction.setAttribute('y','0');
+      refraction.setAttribute('width',String(width));refraction.setAttribute('height',String(height));
+    }
+    for(const element of [vector,maskSurface]){
+      if(!element)continue;element.setAttribute('width',String(width));element.setAttribute('height',String(height));
+    }
+    if(materialSurface){materialSurface.setAttribute('width',String(width));materialSurface.setAttribute('height',String(height));}
+    const resolution=Math.max(1.5,Math.sqrt(width*height/180000));
+    mapCanvas.width=maskCanvas.width=Math.ceil(width/resolution);
+    mapCanvas.height=maskCanvas.height=Math.ceil(height/resolution);
+    const runtimeWidth=width/1.1;
+    iconMask.style.width=runtimeWidth+'px';iconMask.style.height='64px';
+    iconLayer.style.width=runtimeWidth+'px';
+    motion.style.transform='none';
+    applyMaterial();
+    return true;
   }
-  function settle() {
-    const width=size();
-    shape.style.width=iconMask.style.width=width+'px';
-    renderScaleAt(timelineDuration(),timing());
-    renderYAt(timelineDuration(),timing());
-    renderIconsAt(timelineDuration(),timing());
+  function profile(x){
+    x=mapClamp(x,0,1);let i=0;while(i<nodes.length-2&&x>nodes[i+1].x)i++;
+    const a=nodes[Math.max(0,i-1)],b=nodes[i],c=nodes[i+1],d=nodes[Math.min(nodes.length-1,i+2)],t=(x-b.x)/(c.x-b.x),t2=t*t,t3=t2*t;
+    return .5*((2*b.y)+(-a.y+c.y)*t+(2*a.y-5*b.y+4*c.y-d.y)*t2+(-a.y+3*b.y-3*c.y+d.y)*t3);
+  }
+  const lookup=new Float32Array(1025);for(let i=0;i<=1024;i++)lookup[i]=profile(i/1024);
+  function syncStartupIcons(){
+    const runtimeWidth=width/1.1;
+    iconsFo.setAttribute('x',String((width-runtimeWidth)/2));
+    iconsFo.setAttribute('y',String(by-32));
+    iconsFo.setAttribute('width',String(runtimeWidth));
+    iconsFo.setAttribute('height','64');
+  }
+  function setInitialState(){
+    handoffProgress=0;
+    scene.style.visibility='visible';scene.style.opacity='1';
+    iconLayer.style.opacity='0';iconLayer.style.willChange='opacity';iconLayer.inert=true;iconLayer.setAttribute('startup','');
+    iconMask.classList.remove('tabs-interactive');iconMask.style.pointerEvents='none';
+    shape.classList.remove('tabs-replaced');
+  }
+  function setFinalState(){
+    const changed=!iconMask.classList.contains('tabs-interactive');
+    handoffProgress=1;
+    scene.style.opacity='0';scene.style.visibility='hidden';
+    iconLayer.style.opacity='1';iconLayer.style.willChange='auto';iconLayer.inert=false;iconLayer.removeAttribute('startup');
+    iconMask.classList.add('tabs-interactive');iconMask.style.pointerEvents='auto';
+    shape.classList.add('tabs-replaced');
+    if(changed)iconLayer.dispatchEvent(new Event('tabs-layout-ready'));
+  }
+  function setHandoffVisuals(progress){
+    const p=mapClamp(progress,0,1);handoffProgress=p;
+    scene.style.visibility='visible';scene.style.opacity=String(1-p);
+    iconLayer.style.opacity=String(p);
+    if(p<1){iconLayer.inert=true;iconMask.style.pointerEvents='none';return;}
+    setFinalState();
+  }
+  function render(){
+    if(!width||!mapCtx||!maskCtx)return;
+    const handoffEase=handoffProgress*handoffProgress*(3-2*handoffProgress),distortionStrength=1-handoffEase;
+    const mw=mapCanvas.width,mh=mapCanvas.height,sx=width/mw,sy=height/mh,map=mapCtx.createImageData(mw,mh),mask=maskCtx.createImageData(mw,mh);
+    const m=map.data,k=mask.data,den=2*sigma*sigma,movingS=movingSigma(Math.abs(cx-ax)),movingDen=2*movingS*movingS,weight=bridgeWeight(Math.abs(cx-ax));
+    const xsA=new Float32Array(mw),xsB=new Float32Array(mw),xsC=new Float32Array(mw);
+    for(let x=0;x<mw;x++){
+      const px=(x+.5)*sx;xsA[x]=Math.exp(-((px-ax)**2)/den);xsB[x]=Math.exp(-((px-bx)**2)/movingDen);xsC[x]=Math.exp(-((px-cx)**2)/movingDen);
+    }
+    for(let y=0;y<mh;y++){
+      const py=(y+.5)*sy,ya=Math.exp(-((py-ay)**2)/den),yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);
+      for(let x=0;x<mw;x++){
+        const p=(y*mw+x)*4,px=(x+.5)*sx,fa=xsA[x]*ya,fb=xsB[x]*yb,fc=xsC[x]*yc,nearest=mapClamp(px,bx,cx);
+        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+(1-weight)*(fb+fc)+weight*capsule;
+        m[p]=128;m[p+1]=128;m[p+2]=128;m[p+3]=255;k[p]=255;k[p+1]=255;k[p+2]=255;k[p+3]=0;
+        if(f<threshold-.025)continue;
+        const gx=-(px-ax)*fa/(sigma*sigma)-((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
+        const gy=-(py-ay)*fa/(sigma*sigma)-((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
+        const g=Math.hypot(gx,gy),safe=Math.sqrt(g*g+.00000625),r=Math.sqrt(Math.max(0,-Math.log(Math.max(f,1e-8)))/logThreshold);
+        const amp=lookup[Math.round(mapClamp(r,0,1)*1024)],distance=(f-threshold)/Math.max(g,.003),edgeT=mapClamp((distance-1.7)/3,0,1),edgeGate=edgeT*edgeT*(3-2*edgeT);
+        const dx=gx/safe*amp*12*distortionStrength*edgeGate,dy=gy/safe*amp*17.5*distortionStrength*edgeGate;
+        m[p]=Math.round(mapClamp(128+dx/64*255,0,255));m[p+1]=Math.round(mapClamp(128+dy/64*255,0,255));
+        k[p+3]=Math.round(mapClamp(distance/sx+.5,0,1)*255);
+      }
+    }
+    mapCtx.putImageData(map,0,0);maskCtx.putImageData(mask,0,0);
+    vector.setAttribute('href',mapCanvas.toDataURL());
+    maskSurface.setAttribute('href',maskCanvas.toDataURL());
+    renderBezel(movingS,weight);
+  }
+  function renderBezel(movingS,weight){
+    if(!bezelCtx)return;
+    const scale=1.6,baseRadius=Math.max(sigma,movingS),supportLevel=Math.max(.001,threshold-.06),overlapPeak=3;
+    const supportRadius=baseRadius*Math.sqrt(-2*Math.log(supportLevel/overlapPeak)),pad=Math.max(12,supportRadius+8);
+    const x0=Math.max(0,Math.floor(Math.min(ax,bx,cx)-pad)),x1=Math.min(width,Math.ceil(Math.max(ax,bx,cx)+pad));
+    const y0=Math.max(0,Math.floor(Math.min(ay,by,cy)-pad)),y1=Math.min(height,Math.ceil(Math.max(ay,by,cy)+pad));
+    const bw=Math.max(1,x1-x0),bh=Math.max(1,y1-y0),cw=Math.max(1,Math.ceil(bw*scale)),ch=Math.max(1,Math.ceil(bh*scale));
+    if(bezelCanvas.width!==cw)bezelCanvas.width=cw;if(bezelCanvas.height!==ch)bezelCanvas.height=ch;
+    const img=bezelCtx.createImageData(cw,ch),d=img.data,den=2*sigma*sigma,movingDen=2*movingS*movingS,sqrt2=Math.SQRT2;
+    const xsA=new Float32Array(cw),xsB=new Float32Array(cw),xsC=new Float32Array(cw);
+    for(let ix=0;ix<cw;ix++){
+      const px=x0+(ix+.5)/scale;xsA[ix]=Math.exp(-((px-ax)**2)/den);xsB[ix]=Math.exp(-((px-bx)**2)/movingDen);xsC[ix]=Math.exp(-((px-cx)**2)/movingDen);
+    }
+    for(let iy=0;iy<ch;iy++){
+      const py=y0+(iy+.5)/scale,ya=Math.exp(-((py-ay)**2)/den),yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);
+      for(let ix=0;ix<cw;ix++){
+        const px=x0+(ix+.5)/scale,p=(iy*cw+ix)*4,fa=xsA[ix]*ya,fb=xsB[ix]*yb,fc=xsC[ix]*yc,nearest=mapClamp(px,bx,cx);
+        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+(1-weight)*(fb+fc)+weight*capsule;
+        if(f<threshold-.06)continue;
+        const gx=-(px-ax)*fa/(sigma*sigma)-((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
+        const gy=-(py-ay)*fa/(sigma*sigma)-((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
+        const g=Math.hypot(gx,gy),safe=Math.max(g,.003),distance=(f-threshold)/safe,coverage=mapClamp(distance*scale+.5,0,1);
+        if(coverage<=0)continue;
+        const nx=-gx/safe,ny=-gy/safe,edge=Math.exp(-((distance-.30)/.48)**2),soft=Math.exp(-((distance-1.10)/1.05)**2);
+        const tl=Math.pow(Math.max(0,(-nx-ny)/sqrt2),11),br=Math.pow(Math.max(0,(nx+ny)/sqrt2),11);
+        const base=coverage*(.014+.055*edge),highlight=coverage*soft*(.46*tl+.36*br),alpha=mapClamp(base+highlight,0,.58),mix=mapClamp((tl+br)*.9,0,1);
+        d[p]=Math.round(205+38*mix);d[p+1]=Math.round(214+34*mix);d[p+2]=Math.round(225+30*mix);d[p+3]=Math.round(alpha*255);
+      }
+    }
+    bezelCtx.putImageData(img,0,0);
+    surface.setAttribute('x',String(x0));surface.setAttribute('y',String(y0));surface.setAttribute('width',String(bw));surface.setAttribute('height',String(bh));
+    surface.setAttribute('href',bezelCanvas.toDataURL());
+  }
+  function pose(ms){
+    const motionEnd=timing.delayMs+timing.motionMs,handoffElapsed=Math.max(0,ms-motionEnd);
+    const handoffP=timing.handoffMs>0?mapClamp(handoffElapsed/timing.handoffMs,0,1):1;
+    const t=motionSecondsAt(Math.min(ms,motionEnd)),s=distanceAt(t);
+    setHandoffVisuals(ms>=motionEnd?handoffP:0);
+    let lo=0,hi=path.length-1;
+    while(hi-lo>1){const mid=(lo+hi)>>1;if(path[mid].s<s)lo=mid;else hi=mid;}
+    const a=path[lo],b=path[hi],q=mapClamp((s-a.s)/Math.max(1e-8,b.s-a.s),0,1),x=a.x+(b.x-a.x)*q,y=a.y+(b.y-a.y)*q;
+    ax=width/2;ay=baseY;bx=ax-x;cx=ax+x;by=cy=baseY+y;
+    syncStartupIcons();
+  }
+  function settle(){
+    if(!prepareGeometry())return;
+    elapsed=timing.total;
+    const final=path[path.length-1];ax=width/2;ay=baseY;bx=ax-final.x;cx=ax+final.x;by=cy=baseY+final.y;
+    syncStartupIcons();setFinalState();
     window.dispatchEvent(new Event('resize'));
   }
-  let running = false;
-  function play() {
-    const st=timing(),fw=size(),rem=st.lo-st.op;
-    const wf=[{offset:0,width:'64px'},{offset:st.op,width:'64px'},
-      {offset:st.op+rem*.30,width:(64+(fw-64)*.22)+'px'},
-      {offset:st.op+rem*.62,width:(64+(fw-64)*.62)+'px'},
-      {offset:st.op+rem*.92,width:(64+(fw-64)*.94)+'px'},
-      {offset:st.lo,width:fw+'px'},{offset:1,width:fw+'px'}];
-    const opening=[animate(shape,wf,{duration:st.d,easing:'linear',fill:'forwards'}),animate(iconMask,wf,{duration:st.d,easing:'linear',fill:'forwards'})];
-    const start=performance.now(),total=timelineDuration();running=true;
+  function play(){
+    if(!prepareGeometry())return;
+    setInitialState();running=true;startTime=performance.now();elapsed=0;
     function frame(now){
-      const elapsed=Math.min(total,now-start);
-      renderScaleAt(elapsed,st);renderYAt(elapsed,st);renderIconsAt(elapsed,st);
-      queueZoomMap(zoomCenters(elapsed,st.d,st.lo));
-      if(elapsed<total)requestAnimationFrame(frame);
-      else { running=false; opening.forEach(a=>a.cancel());settle(); }
+      elapsed=Math.min(timing.total,now-startTime);pose(elapsed);render();
+      if(elapsed<timing.total)requestAnimationFrame(frame);
+      else {running=false;setFinalState();window.dispatchEvent(new Event('resize'));}
     }
-    frame(start);
+    frame(startTime);
   }
   // Pointer lifecycle ends only after all prototype handlers have seen pointerup/cancel.
   listen(document,'pointerup',()=>{pointerId=null});
