@@ -101,7 +101,7 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
         <g mask="url(#startup-reveal-mask)">
           <g filter="url(#startup-refraction)">
             <foreignObject id="startup-icons-fo" x="0" y="0" width="0" height="64">
-              <div xmlns="http://www.w3.org/1999/xhtml" className="startup-icons-layer">
+              <div className="startup-icons-layer">
                 <div className="startup-icons-strip">
                   {tabs.map(tab => {
                     const icon = resolveUiIconPair(tab.icon);
