@@ -87,6 +87,43 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
         </div></div>
         <div className="shape" id="shape" />
       </div>
+      <svg id="startupScene" className="startup-scene" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <filter id="startup-refraction" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+            <feImage id="startup-vector" x="0" y="0" preserveAspectRatio="none" result="rawMap" />
+            <feComponentTransfer in="rawMap" result="map">
+              <feFuncR type="linear" slope="1" intercept="-0.00196078431372549" />
+              <feFuncG type="linear" slope="1" intercept="-0.00196078431372549" />
+            </feComponentTransfer>
+            <feDisplacementMap in="SourceGraphic" in2="map" scale="64" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur id="startup-lens-blur" in="displaced" stdDeviation=".5" result="softened" />
+            <feColorMatrix id="startup-lens-saturation" in="softened" type="saturate" values="1.44" />
+          </filter>
+          <mask id="startup-reveal-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+            <image id="startup-mask-surface" x="0" y="0" preserveAspectRatio="none" />
+          </mask>
+        </defs>
+        <g mask="url(#startup-reveal-mask)">
+          <g filter="url(#startup-refraction)">
+            <foreignObject id="startup-icons-fo" x="0" y="0" width="0" height="64">
+              <div xmlns="http://www.w3.org/1999/xhtml" className="startup-icons-layer">
+                <div className="startup-icons-strip">
+                  {tabs.map(tab => {
+                    const icon = resolveUiIconPair(tab.icon);
+                    return <span className="startup-icon-slot" style={{ width: `${100 / tabs.length}%` }} key={`startup-${tab.value}`}>
+                      <span className="startup-icon" aria-hidden="true">{icon.outline}</span>
+                    </span>;
+                  })}
+                </div>
+              </div>
+            </foreignObject>
+          </g>
+        </g>
+        <g mask="url(#startup-reveal-mask)" pointerEvents="none">
+          <rect id="startup-material-surface" x="0" y="0" width="100%" height="100%" fill="rgb(185,208,239)" fillOpacity=".032" />
+        </g>
+        <image id="startup-bezel-surface" x="0" y="0" preserveAspectRatio="none" pointerEvents="none" />
+      </svg>
     </>, shadow)}
   </div>;
 }
