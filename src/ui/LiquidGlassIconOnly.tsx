@@ -57,13 +57,9 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
     {shadow && createPortal(<>
       <style>{prototypeCss}</style>
       <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
-        <filter id="icon-displacement-filter" colorInterpolationFilters="sRGB" x="-160%" y="-160%" width="420%" height="420%">
-          <feImage id="zoom-vector-image" x="0" y="0" width="64" height="64" preserveAspectRatio="none" result="zoomMap" />
-          <feDisplacementMap id="zoom-displacement" in="SourceGraphic" in2="zoomMap" scale="64" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
         <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
       </svg>
-      <div className="motion" id="motion"><div className="scale" id="scale" />
+      <div className="motion" id="motion">
         <div className="icon-mask" id="iconMask"><div id="iconLayer">
           <div className="donor-root dark">
             <div className="standalone-lens-playground optical-tabs-playground" data-tab-mode="icons">
@@ -85,7 +81,6 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
             </div>
           </div>
         </div></div>
-        <div className="shape" id="shape" />
       </div>
       <svg id="startupScene" className="startup-scene" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
