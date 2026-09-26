@@ -1383,10 +1383,6 @@
   width:0;
   height:0;
 }
-.scale,
-.shape {
-  display:none!important;
-}
 .icon-mask {
   position:absolute;
   left:50%;
