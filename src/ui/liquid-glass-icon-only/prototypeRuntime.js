@@ -2112,7 +2112,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         const gy=-(py-ay)*fa/(sigma*sigma)-((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
         const g=Math.hypot(gx,gy),safe=Math.max(g,.003),distance=(f-threshold)/safe,coverage=mapClamp(distance*scale+.5,0,1);
         if(coverage<=0)continue;
-        const nx=-gx/safe,ny=-gy/safe,edge=Math.exp(-((distance-.30)/.48)**2),soft=Math.exp(-((distance-1.10)/1.05)**2);
+        const nx=-gx/safe,ny=-gy/safe,edge=Math.exp(-(((distance-.30)/.48)**2)),soft=Math.exp(-(((distance-1.10)/1.05)**2));
         const tl=Math.pow(Math.max(0,(-nx-ny)/sqrt2),11),br=Math.pow(Math.max(0,(nx+ny)/sqrt2),11);
         const base=coverage*(.014+.055*edge),highlight=coverage*soft*(.46*tl+.36*br),alpha=mapClamp(base+highlight,0,.58),mix=mapClamp((tl+br)*.9,0,1);
         d[p]=Math.round(205+38*mix);d[p+1]=Math.round(214+34*mix);d[p+2]=Math.round(225+30*mix);d[p+3]=Math.round(alpha*255);
