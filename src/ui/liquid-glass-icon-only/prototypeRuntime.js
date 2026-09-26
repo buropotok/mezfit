@@ -1866,7 +1866,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     })();
 
   const iconMask=document.getElementById('iconMask');
-  const iconLayer=host, shape=document.getElementById('shape'), motion=document.getElementById('motion');
+  const iconLayer=host, motion=document.getElementById('motion');
   const scene=document.getElementById('startupScene'), vector=document.getElementById('startup-vector');
   const maskSurface=document.getElementById('startup-mask-surface'), surface=document.getElementById('startup-bezel-surface');
   const iconsFo=document.getElementById('startup-icons-fo'), materialSurface=document.getElementById('startup-material-surface');
@@ -2041,7 +2041,6 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     scene.style.visibility='visible';scene.style.opacity='1';
     iconLayer.style.opacity='0';iconLayer.style.willChange='opacity';iconLayer.inert=true;iconLayer.setAttribute('startup','');
     iconMask.classList.remove('tabs-interactive');iconMask.style.pointerEvents='none';
-    shape.classList.remove('tabs-replaced');
   }
   function setFinalState(){
     const changed=!iconMask.classList.contains('tabs-interactive');
@@ -2049,7 +2048,6 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     scene.style.opacity='0';scene.style.visibility='hidden';
     iconLayer.style.opacity='1';iconLayer.style.willChange='auto';iconLayer.inert=false;iconLayer.removeAttribute('startup');
     iconMask.classList.add('tabs-interactive');iconMask.style.pointerEvents='auto';
-    shape.classList.add('tabs-replaced');
     if(changed)iconLayer.dispatchEvent(new Event('tabs-layout-ready'));
   }
   function setHandoffVisuals(progress){
@@ -2146,7 +2144,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     function frame(now){
       elapsed=Math.min(timing.total,now-startTime);pose(elapsed);render();
       if(elapsed<timing.total)requestAnimationFrame(frame);
-      else {running=false;setFinalState();window.dispatchEvent(new Event('resize'));}
+      else {running=false;if(Math.round(root.host.clientWidth)!==width)settle();else {setFinalState();window.dispatchEvent(new Event('resize'));}}
     }
     frame(startTime);
   }
