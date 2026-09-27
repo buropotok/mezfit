@@ -113,7 +113,8 @@ export function ThemeVariantsCatalog() {
         </div>
       </Surface>
 
-      <Surface as="section" className="ui-kit-section">
+      {/* Temporarily unmounted to isolate catalog overflow affecting DatePicker. */}
+      {false && <Surface as="section" className="ui-kit-section">
         <Text variant="title">Tabs variants</Text>
         <Text variant="caption" tone="muted">Theme and mode are independent. Icon mode requires outline + filled icon pairs and springs the selected icon.</Text>
         <Divider />
@@ -125,7 +126,7 @@ export function ThemeVariantsCatalog() {
           <div><Text variant="footnote" tone="muted">Glass · icon</Text><GlassStage><IconTabs theme="glass" /></GlassStage></div>
           <div><Text variant="footnote" tone="muted">Liquid Glass · icon</Text><GlassStage><IconTabs theme="liquidGlass" /></GlassStage></div>
         </div>
-      </Surface>
+      </Surface>}
     </div>
   );
 }
