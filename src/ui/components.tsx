@@ -104,8 +104,17 @@ type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { lab
 
 export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   const GlassButton = useCallback(({ children: buttonChildren, ...buttonProps }: ComponentPropsWithRef<'button'>) => (
-    <button {...buttonProps} type={type} disabled={disabled}>{buttonChildren}</button>
-  ), [disabled, type]);
+    <button
+      {...buttonProps}
+      type={type}
+      disabled={disabled}
+      onClick={isShown ? onClick : undefined}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }}
+      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
+    >
+      {buttonChildren}
+    </button>
+  ), [disabled, isShown, onClick, onKeyDown, onPointerDown, type]);
 
   return (
     <KonstaGlass
@@ -115,9 +124,6 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
       aria-label={label}
       aria-hidden={!isShown || undefined}
       tabIndex={isShown ? 0 : -1}
-      onClick={isShown ? onClick : undefined}
-      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }}
-      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
       className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
     >
       {children}
