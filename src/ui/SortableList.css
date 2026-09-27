@@ -33,8 +33,6 @@
   overflow: hidden;
   width: 100%;
   border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
-  box-shadow: var(--ui-shadow-raised);
   transform: scale(1.015);
   cursor: grabbing;
 }
