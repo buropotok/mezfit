@@ -13,7 +13,7 @@ const namedTabs:LiquidGlassIconOnlyTab[]=[
   {value:'settings',label:'Настройки',icon:'settings'},
 ];
 const changed=vi.fn();
-function ui(hidden=false, value='0', list=tabs){return <LiquidGlassIconOnly hidden={hidden} tabs={list} value={value} onValueChange={changed}/>}
+function ui(hidden=false, value='0', list=tabs, withFab=false){return <LiquidGlassIconOnly hidden={hidden} tabs={list} value={value} onValueChange={changed} fab={withFab?<button data-test-fab type="button">＋</button>:undefined}/>}
 function getScene(container:HTMLElement):ShadowRoot {
   const host=container.firstElementChild?.firstElementChild;
   if(!host?.shadowRoot)throw new Error('Visible scene must own a shadow root');
@@ -70,10 +70,24 @@ describe('direct prototype adapter',()=>{
     expect(lens.style.getPropertyValue('--sl-glass-brightness')).toBe('1.02');
     expect(lens.style.getPropertyValue('--sl-bezel-opacity')).toBe('.86');
   });
+  it('uses the tuned startup material and hands off to the FAB with the tabs',()=>{
+    const view=render(ui(true,'0',tabs,true));view.rerender(ui(false,'0',tabs,true));const root=getScene(view.container);
+    const blur=root.getElementById('startup-lens-blur'),saturation=root.getElementById('startup-lens-saturation');
+    const material=root.getElementById('startup-material-surface');
+    const fabSlot=view.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
+    expect(blur?.getAttribute('stdDeviation')).toBe('5.20');
+    expect(saturation?.getAttribute('values')).toBe('1.24');
+    expect(Number(material?.getAttribute('fill-opacity'))).toBeCloseTo(.03,2);
+    expect(fabSlot).not.toBeNull();expect(fabSlot?.style.opacity).toBe('0');expect(fabSlot?.style.pointerEvents).toBe('none');
+    expect(Number.parseFloat(fabSlot?.style.top??'0')).toBeLessThan(0);
+    act(()=>vi.advanceTimersByTime(880));
+    expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    expect(fabSlot?.style.opacity).toBe('1');expect(fabSlot?.style.pointerEvents).toBe('auto');
+  });
   it('plays once for true -> false, settles, and does not replay on selection/parent renders',()=>{
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
     expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
-    act(()=>vi.advanceTimersByTime(900));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    act(()=>vi.advanceTimersByTime(880));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     const count=cancels.length;view.rerender(ui(false,'2'));expect(cancels).toHaveLength(count);
     expect(button(root,2).getAttribute('aria-selected')).toBe('true');
   });
@@ -81,7 +95,7 @@ describe('direct prototype adapter',()=>{
     vi.stubGlobal('matchMedia',()=>({matches:true}));
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
     expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
-    act(()=>vi.advanceTimersByTime(900));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    act(()=>vi.advanceTimersByTime(880));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
   });
   it('cancels all animation work on hide and can show again',()=>{
     const view=render(ui(true));view.rerender(ui(false));act(()=>vi.advanceTimersByTime(100));
