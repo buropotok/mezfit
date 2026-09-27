@@ -104,21 +104,21 @@ type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { lab
 
 export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   return (
-    <KonstaGlass
+    <button
       {...props}
-      component="button"
       type={type}
       aria-label={label}
       aria-hidden={!isShown || undefined}
       tabIndex={isShown ? 0 : -1}
       disabled={disabled}
       onClick={isShown ? onClick : undefined}
-      onPointerDown={isShown ? onPointerDown : undefined}
-      onKeyDown={isShown ? onKeyDown : undefined}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }}
+      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
       className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
     >
+      <KonstaGlass highlight={false} className="ui-fab__glass" aria-hidden="true" />
       {children}
-    </KonstaGlass>
+    </button>
   );
 }
 
