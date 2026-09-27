@@ -75,7 +75,7 @@ describe('direct prototype adapter',()=>{
     const blur=root.getElementById('startup-lens-blur'),saturation=root.getElementById('startup-lens-saturation');
     const material=root.getElementById('startup-material-surface');
     const fabSlot=view.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
-    expect(blur?.getAttribute('stdDeviation')).toBe('5.20');
+    expect(blur?.getAttribute('stdDeviation')).toBe('0.50');
     expect(saturation?.getAttribute('values')).toBe('1.24');
     expect(Number(material?.getAttribute('fill-opacity'))).toBeCloseTo(.03,2);
     expect(fabSlot).not.toBeNull();expect(fabSlot?.style.opacity).toBe('0');expect(fabSlot?.style.pointerEvents).toBe('none');
