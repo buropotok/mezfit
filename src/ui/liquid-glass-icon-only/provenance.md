@@ -1,17 +1,31 @@
-# Direct prototype extraction
+# Liquid Glass Icon Only prototype core
 
-Source: `tabbar-startup-motion-editor-v60-icons-at-open-start.html`, SHA-256 `60658ae22c2bece244ca5e67165653f5c229840fcbcd9489800d61934c003e46` (saved without the rejected rolling zoom).
+The public React boundary remains `LiquidGlassIconOnly`: callers still provide tabs, controlled selection, and `hidden`. The component may additionally receive an optional FAB node; when supplied, the same startup liquid field grows into the tabs container while the detached round lens follows the approved contour trajectory and hands off to the real FAB.
 
-`prototypeRuntime.js` keeps the original three interaction/optics/spring IIFEs and startup sampling functions as JavaScript. The TypeScript declaration describes the adapter boundary; it does not pretend to typecheck the borrowed implementation. No eval, script injection, global monkey-patching, or iframe is used.
+The current startup core is derived from the approved local prototypes used during visual tuning. The settled tab interaction runtime remains isolated in the component ShadowRoot; the entrance layer is temporary and becomes non-interactive after handoff.
 
-Intentional boundary changes:
-- local ShadowRoot IDs, local event hub instead of window events;
-- tracked listeners, observers, RAFs, timeouts and Web Animations with deterministic disposal;
-- controlled selection entry point / callback, reconciled after each request;
-- null canvas-context fallback for environments without Canvas2D;
-- no editor controls, debug maps, theme/mode switch, or extra rolling zoom;
-- pointercancel restores selection without synthesizing a click;
-- slots use the supplied item count; widths follow available screen width / 1.1;
-- hidden unmounts the entire scene; each visible scene owns one runtime.
+## Tuned entrance preset
 
-The CSS remains isolated as in the approved HTML. Outer reveal geometry and donor mechanics share one shadow tree; the donor startup selector is scoped to `#iconLayer[startup]`. React owns markup/icons, while the per-scene controller owns their private animation styles, filters and gesture lifecycle. Tests exercise this boundary and source-level geometry; device visual verification remains necessary.
+- split: 0.25 s
+- reveal: 0.65 s
+- handoff: 0.22 s
+- base speed: 290 px/s
+- initial lens size: 74%
+- start delay: 0 ms
+- FAB Y offset: -26 px
+- lens blur: 5.2 px
+- saturation: 124%
+- frost/material: 13%
+- speed profile control points: 0, 0.186, 0.360, 0.577, 0
+
+The upper lens starts moving 100 ms before split when a FAB target exists. Its X progress uses the tuned smooth curve while Y is derived from the current upper contour of the lower liquid field, preserving a small overlap until handoff.
+
+## Adapter boundaries
+
+- React owns tab identity, labels/icons, controlled value, the optional real FAB node, and mount/unmount through `hidden`.
+- The private runtime owns entrance geometry, displacement/mask/bezel rendering, the liquid-to-real crossfade, and the existing tab gesture optics.
+- The real FAB primitive is not restyled by the runtime. The runtime only positions and fades its app-owned wrapper.
+- Runtime listeners, observers, RAFs, timeouts, and Web Animations are tracked and disposed with the scene.
+- Width remains responsive: the final tabs width is derived from the host width / 1.1 and is shared by both the entrance geometry and the settled tabs.
+- The entrance layer is pointer-inert. Tabs and FAB become interactive only after handoff completes.
+- Hidden scenes unmount completely.
