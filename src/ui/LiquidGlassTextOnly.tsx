@@ -49,7 +49,7 @@ function Scene({ tabs, value, onValueChange }: Omit<LiquidGlassTextOnlyProps, 'h
 
   useLayoutEffect(() => {
     controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
-  }, [value, order, shadow, selectionRequest, tabs]);
+  }, [value, order, shadow, selectionRequest]);
 
   return (
     <div ref={host} style={{ display: 'block', position: 'relative', width: '100%', height: 44, overflow: 'visible' }}>
