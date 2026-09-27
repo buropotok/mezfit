@@ -79,10 +79,12 @@ describe('direct prototype adapter',()=>{
     expect(saturation?.getAttribute('values')).toBe('1.24');
     expect(Number(material?.getAttribute('fill-opacity'))).toBeCloseTo(.03,2);
     expect(fabSlot).not.toBeNull();expect(fabSlot?.style.opacity).toBe('0');expect(fabSlot?.style.pointerEvents).toBe('none');
+    expect(fabSlot?.inert).toBe(true);expect(fabSlot?.getAttribute('aria-hidden')).toBe('true');
     expect(Number.parseFloat(fabSlot?.style.top??'0')).toBeLessThan(0);
     act(()=>vi.advanceTimersByTime(880));
     expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     expect(fabSlot?.style.opacity).toBe('1');expect(fabSlot?.style.pointerEvents).toBe('auto');
+    expect(fabSlot?.inert).toBe(false);expect(fabSlot?.hasAttribute('aria-hidden')).toBe(false);
   });
   it('plays once for true -> false, settles, and does not replay on selection/parent renders',()=>{
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
@@ -90,6 +92,15 @@ describe('direct prototype adapter',()=>{
     act(()=>vi.advanceTimersByTime(880));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     const count=cancels.length;view.rerender(ui(false,'2'));expect(cancels).toHaveLength(count);
     expect(button(root,2).getAttribute('aria-selected')).toBe('true');
+  });
+  it('does not replay the entrance when FAB availability changes after settling',()=>{
+    const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
+    act(()=>vi.advanceTimersByTime(880));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    view.rerender(ui(false,'0',tabs,true));
+    const reboundRoot=getScene(view.container),fabSlot=view.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
+    expect(element(reboundRoot,'iconLayer').hasAttribute('startup')).toBe(false);
+    expect(element(reboundRoot,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    expect(fabSlot?.style.opacity).toBe('1');expect(fabSlot?.inert).toBe(false);
   });
   it('still plays the required true -> false reveal when reduced motion is preferred',()=>{
     vi.stubGlobal('matchMedia',()=>({matches:true}));
