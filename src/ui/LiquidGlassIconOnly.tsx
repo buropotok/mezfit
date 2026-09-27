@@ -44,11 +44,13 @@ function Scene({ tabs, value, onValueChange, entrance, fab }: Omit<LiquidGlassIc
   useLayoutEffect(() => {
     if (!shadow || tabs.length === 0) return;
     const activeIndex = Math.max(0, latest.current.tabs.findIndex(tab => tab.value === latest.current.value));
+    const playEntrance = initialEntrance.current;
+    initialEntrance.current = false;
     controller.current = mountPrototype(shadow, activeIndex, index => {
       const current = latest.current, tab = current.tabs[index];
       if (tab && tab.value !== current.value) current.onValueChange(tab.value);
       reconcileSelection();
-    }, initialEntrance.current, fabHost.current);
+    }, playEntrance, fabHost.current);
     return () => { controller.current?.dispose(); controller.current = null; };
     // The runtime captures only stable IDs/order. Props are read through latest.
   }, [shadow, order, hasFab]);
