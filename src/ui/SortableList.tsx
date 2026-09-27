@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Glass } from 'konsta/react';
+import { LiftedGlass } from './LiftedGlass';
 import './SortableList.css';
 
 export type SortableListItem = {
@@ -101,7 +101,7 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
         </SortableContext>
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
-        {activeItem ? <div className="ui-sortable-list__overlay"><Glass highlight={false}>{activeItem.content}</Glass></div> : null}
+        {activeItem ? <div className="ui-sortable-list__overlay"><LiftedGlass>{activeItem.content}</LiftedGlass></div> : null}
       </DragOverlay>
     </DndContext>
   );
