@@ -30,16 +30,9 @@
 }
 
 .ui-sortable-list__overlay {
-  overflow: hidden;
   width: 100%;
-  border-radius: var(--ui-radius-md);
   transform: scale(1.015);
   cursor: grabbing;
-}
-
-.ui-sortable-list__overlay .ui-list-item-wrap,
-.ui-sortable-list__overlay .ui-list-item {
-  border-radius: inherit;
 }
 
 @media (prefers-reduced-motion: reduce) {
