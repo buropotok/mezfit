@@ -15,3 +15,4 @@ export { LiftedGlass, type LiftedGlassProps } from './LiftedGlass';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
 export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+export { LiquidGlassTextOnly, type LiquidGlassTextOnlyProps, type LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
