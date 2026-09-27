@@ -1,4 +1,4 @@
-import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { resolveUiIconPair } from './Icon';
 import type { UiIconSource } from './iconPair';
@@ -15,6 +15,7 @@ export type LiquidGlassIconOnlyProps = {
   value: string;
   onValueChange: (value: string) => void;
   hidden: boolean;
+  fab?: ReactNode;
 };
 
 const PROTOTYPE_LENS_STYLE = {
@@ -24,9 +25,10 @@ const PROTOTYPE_LENS_STYLE = {
   '--sl-bezel-opacity': '.86',
 } as CSSProperties;
 
-function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnlyProps, 'hidden'> & { entrance: boolean }) {
+function Scene({ tabs, value, onValueChange, entrance, fab }: Omit<LiquidGlassIconOnlyProps, 'hidden'> & { entrance: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const controller = useRef<PrototypeController | null>(null);
+  const fabHost = useRef<HTMLDivElement>(null);
   const latest = useRef({ tabs, value, onValueChange });
   const [selectionRequest, reconcileSelection] = useReducer((revision: number) => revision + 1, 0);
   const initialEntrance = useRef(entrance);
@@ -45,7 +47,7 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
       const current = latest.current, tab = current.tabs[index];
       if (tab && tab.value !== current.value) current.onValueChange(tab.value);
       reconcileSelection();
-    }, initialEntrance.current);
+    }, initialEntrance.current, fabHost.current);
     return () => { controller.current?.dispose(); controller.current = null; };
     // The runtime captures only stable IDs/order. Props are read through latest.
   }, [shadow, order]);
@@ -53,7 +55,8 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
     controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
   }, [value, order, shadow, selectionRequest]);
 
-  return <div ref={host} style={{ display: 'block', position: 'relative', width: '100%', height: 64, overflow: 'visible' }}>
+  return <>
+    <div ref={host} style={{ display: 'block', position: 'relative', width: '100%', height: 64, overflow: 'visible' }}>
     {shadow && createPortal(<>
       <style>{prototypeCss}</style>
       <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
@@ -120,7 +123,22 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassIconOnl
         <image id="startup-bezel-surface" x="0" y="0" preserveAspectRatio="none" pointerEvents="none" />
       </svg>
     </>, shadow)}
-  </div>;
+    </div>
+    {fab ? <div
+      ref={fabHost}
+      data-liquid-glass-fab-slot=""
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: 88,
+        height: 88,
+        zIndex: 4,
+        opacity: entrance ? 0 : 1,
+        pointerEvents: entrance ? 'none' : 'auto',
+      }}
+    >{fab}</div> : null}
+  </>;
 }
 
 /** Owns the approved prototype; has no dependency on Tabs or Konsta private DOM. */
@@ -129,7 +147,7 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
   const entrance = previousHidden.current && !props.hidden;
   useLayoutEffect(() => { previousHidden.current = props.hidden; }, [props.hidden]);
   const order = JSON.stringify(props.tabs.map(tab => tab.value));
-  return <div hidden={props.hidden} aria-hidden={props.hidden || undefined} style={{ width: '100%', overflow: 'visible' }}>
+  return <div hidden={props.hidden} aria-hidden={props.hidden || undefined} style={{ position: 'relative', width: '100%', overflow: 'visible' }}>
     {!props.hidden && props.tabs.length > 0 && <Scene key={order} {...props} entrance={entrance} />}
   </div>;
 }
