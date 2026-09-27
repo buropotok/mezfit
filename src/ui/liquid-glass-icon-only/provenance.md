@@ -13,12 +13,12 @@ The current startup core is derived from the approved local prototypes used duri
 - initial lens size: 74%
 - start delay: 0 ms
 - FAB Y offset: -26 px
-- lens blur: 5.2 px
+- lens blur: 0.5 px
 - saturation: 124%
 - frost/material: 13%
 - speed profile control points: 0, 0.186, 0.360, 0.577, 0
 
-The upper lens starts moving 100 ms before split when a FAB target exists. Its X progress uses the tuned smooth curve while Y is derived from the current upper contour of the lower liquid field, preserving a small overlap until handoff.
+The upper lens starts moving 100 ms before split when a FAB target exists. Its X progress uses the tuned smooth curve while Y is derived from the current upper contour of the lower liquid field, preserving a small overlap until handoff. During handoff the upper lens eases down to the 56 px FAB diameter while optical strength and opacity fade.
 
 ## Adapter boundaries
 
