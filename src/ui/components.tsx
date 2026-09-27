@@ -101,9 +101,16 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
 }
 
 type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; children: ReactNode };
+type FloatingActionButtonBehavior = Pick<FloatingActionButtonProps, 'type' | 'disabled' | 'onClick' | 'onPointerDown' | 'onKeyDown'> & { isShown: boolean };
 
-export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
-  const GlassButton = useCallback(({ children: buttonChildren, ...buttonProps }: ComponentPropsWithRef<'button'>) => (
+const FloatingActionButtonBehaviorContext = createContext<FloatingActionButtonBehavior | null>(null);
+
+function FloatingActionButtonElement({ children, ...buttonProps }: ComponentPropsWithRef<'button'>) {
+  const behavior = useContext(FloatingActionButtonBehaviorContext);
+  if (!behavior) return <button {...buttonProps}>{children}</button>;
+
+  const { type = 'button', disabled, isShown, onClick, onPointerDown, onKeyDown } = behavior;
+  return (
     <button
       {...buttonProps}
       type={type}
@@ -112,22 +119,26 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
       onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }}
       onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
     >
-      {buttonChildren}
-    </button>
-  ), [disabled, isShown, onClick, onKeyDown, onPointerDown, type]);
-
-  return (
-    <KonstaGlass
-      {...props}
-      component={GlassButton}
-      highlight={false}
-      aria-label={label}
-      aria-hidden={!isShown || undefined}
-      tabIndex={isShown ? 0 : -1}
-      className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
-    >
       {children}
-    </KonstaGlass>
+    </button>
+  );
+}
+
+export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+  return (
+    <FloatingActionButtonBehaviorContext.Provider value={{ type, disabled, isShown, onClick, onPointerDown, onKeyDown }}>
+      <KonstaGlass
+        {...props}
+        component={FloatingActionButtonElement}
+        highlight={false}
+        aria-label={label}
+        aria-hidden={!isShown || undefined}
+        tabIndex={isShown ? 0 : -1}
+        className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
+      >
+        {children}
+      </KonstaGlass>
+    </FloatingActionButtonBehaviorContext.Provider>
   );
 }
 
