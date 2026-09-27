@@ -116,7 +116,7 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
       onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
       className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
     >
-      <KonstaGlass highlight={false} className="ui-fab__glass" aria-hidden="true" />
+      <KonstaGlass component="span" highlight={false} className="ui-fab__glass" aria-hidden="true" />
       {children}
     </button>
   );
