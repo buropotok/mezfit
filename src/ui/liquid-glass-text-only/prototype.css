@@ -1,5 +1,5 @@
 :host {
-  --liquid-text-primary: var(--theme-link-color, #0a84ff);
+  --liquid-text-primary: #0a84ff;
   --liquid-text-container-height: 44px;
   --liquid-text-container-radius: 22px;
   --shadow-ios-dark-glass:
