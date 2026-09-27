@@ -3,6 +3,7 @@ import { StrictMode, useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LiquidGlassTextOnly, type LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
+import prototypeCss from './liquid-glass-text-only/prototype.css?inline';
 
 const tabs: LiquidGlassTextOnlyTab[] = [
   { value: 'today', label: 'Сегодня' },
@@ -152,11 +153,12 @@ describe('LiquidGlassTextOnly', () => {
     expect(element(root, 'selector-mask')).not.toBeNull();
     expect(element(root, 'lens-viewport')).not.toBeNull();
     expect(root.getElementById('startupScene')).toBeNull();
-    const css = root.querySelector('style')?.textContent ?? '';
-    expect(css).toContain('font-size: var(--ui-font-size-caption)');
-    expect(css).toContain('.selector-mask');
-    expect(css).toContain('overflow: hidden');
-    expect(css).toContain('.lens-viewport');
+    expect(prototypeCss).toContain('font-size: var(--ui-font-size-caption)');
+    expect(prototypeCss).toContain('line-height: var(--ui-line-height-caption)');
+    expect(prototypeCss).toContain('font-weight: var(--ui-font-weight-medium)');
+    expect(prototypeCss).toContain('.selector-mask');
+    expect(prototypeCss).toContain('overflow: hidden');
+    expect(prototypeCss).toContain('.lens-viewport');
     expect(button(root, 1).offsetWidth).not.toBe(button(root, 2).offsetWidth);
   });
 
