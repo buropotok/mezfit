@@ -35,6 +35,7 @@ function Scene({ tabs, value, onValueChange, entrance, fab }: Omit<LiquidGlassIc
   const [shadow, setShadow] = useState<ShadowRoot | null>(null);
   // Recreate the private scene on changes of order; ordinary label/icon updates use React.
   const order = JSON.stringify(tabs.map(tab => tab.value));
+  const hasFab = fab != null;
   useLayoutEffect(() => {
     const element = host.current;
     if (element) setShadow(element.shadowRoot ?? element.attachShadow({ mode: 'open' }));
@@ -50,7 +51,7 @@ function Scene({ tabs, value, onValueChange, entrance, fab }: Omit<LiquidGlassIc
     }, initialEntrance.current, fabHost.current);
     return () => { controller.current?.dispose(); controller.current = null; };
     // The runtime captures only stable IDs/order. Props are read through latest.
-  }, [shadow, order]);
+  }, [shadow, order, hasFab]);
   useLayoutEffect(() => {
     controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
   }, [value, order, shadow, selectionRequest]);
