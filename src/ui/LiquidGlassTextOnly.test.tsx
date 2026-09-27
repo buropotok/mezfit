@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LiquidGlassTextOnly, type LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
@@ -24,6 +24,20 @@ let animateMock: ReturnType<typeof vi.fn>;
 
 function ui(hidden = false, value = 'today', list = tabs) {
   return <LiquidGlassTextOnly hidden={hidden} tabs={list} value={value} onValueChange={changed} />;
+}
+function Controlled({ initialValue = 'today' }: { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <LiquidGlassTextOnly
+      hidden={false}
+      tabs={tabs}
+      value={value}
+      onValueChange={(next) => {
+        changed(next);
+        setValue(next);
+      }}
+    />
+  );
 }
 function getScene(container: HTMLElement): ShadowRoot {
   const host = container.firstElementChild?.firstElementChild;
@@ -147,7 +161,7 @@ describe('LiquidGlassTextOnly', () => {
   });
 
   it('selects on tap and moves scroll + lens in the same travel window', () => {
-    const view = render(ui());
+    const view = render(<Controlled />);
     const root = getScene(view.container);
     const strip = element(root, 'tab-strip');
     const lensTrack = element(root, 'lens-track');
