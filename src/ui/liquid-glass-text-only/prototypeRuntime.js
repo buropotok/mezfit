@@ -290,8 +290,10 @@ export function mountPrototype(root, initialIndex, onSelect) {
     const target = links[index];
     const from = links[data.activeIndex];
     if (!target || !from) return false;
+    const fromGeometry = data.selectionTravelActive && data.lensAnchorWidth > 0
+      ? { left: data.lensAnchorLeft, width: data.lensAnchorWidth }
+      : geometryFor(from);
     cancelSelectionTravel();
-    const fromGeometry = geometryFor(from);
     const toGeometry = geometryFor(target);
     const startScroll = tabStrip.scrollLeft;
     const endScroll = targetScrollFor(index, startScroll);
