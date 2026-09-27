@@ -1,4 +1,4 @@
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ComponentPropsWithRef, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import { Dialog as KonstaDialog, DialogButton, Glass as KonstaGlass } from 'konsta/react';
@@ -103,22 +103,25 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
 type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; children: ReactNode };
 
 export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+  const GlassButton = useCallback(({ children: buttonChildren, ...buttonProps }: ComponentPropsWithRef<'button'>) => (
+    <button {...buttonProps} type={type} disabled={disabled}>{buttonChildren}</button>
+  ), [disabled, type]);
+
   return (
-    <button
+    <KonstaGlass
       {...props}
-      type={type}
+      component={GlassButton}
+      highlight={false}
       aria-label={label}
       aria-hidden={!isShown || undefined}
       tabIndex={isShown ? 0 : -1}
-      disabled={disabled}
       onClick={isShown ? onClick : undefined}
-      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }}
-      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget as HTMLButtonElement); }}
+      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget as HTMLButtonElement); }}
       className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
     >
-      <KonstaGlass component="span" highlight={false} className="ui-fab__glass" aria-hidden="true" />
       {children}
-    </button>
+    </KonstaGlass>
   );
 }
 
