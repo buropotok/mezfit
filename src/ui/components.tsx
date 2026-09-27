@@ -1,7 +1,7 @@
 import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
-import { Dialog as KonstaDialog, DialogButton } from 'konsta/react';
+import { Dialog as KonstaDialog, DialogButton, Glass as KonstaGlass } from 'konsta/react';
 import type { UiComponentTheme } from './componentTheme';
 import { resolveUiIconPair } from './Icon';
 import type { UiIconPair, UiIconSource } from './iconPair';
@@ -104,7 +104,21 @@ type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { lab
 
 export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   return (
-    <button {...props} type={type} aria-label={label} aria-hidden={!isShown || undefined} tabIndex={isShown ? 0 : -1} disabled={disabled} onClick={isShown ? onClick : undefined} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}>{children}</button>
+    <KonstaGlass
+      {...props}
+      component="button"
+      type={type}
+      aria-label={label}
+      aria-hidden={!isShown || undefined}
+      tabIndex={isShown ? 0 : -1}
+      disabled={disabled}
+      onClick={isShown ? onClick : undefined}
+      onPointerDown={isShown ? onPointerDown : undefined}
+      onKeyDown={isShown ? onKeyDown : undefined}
+      className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
+    >
+      {children}
+    </KonstaGlass>
   );
 }
 
