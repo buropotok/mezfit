@@ -674,6 +674,7 @@ export function mountPrototype(root, initialIndex, onSelect) {
     positionSelector(data.activeIndex, false);
     positionLensTrack(data.activeIndex, false);
   }), tabStrip);
+  links.forEach(link => layoutObserver.observe(link));
 
   const OPTICS = Object.freeze({
     neutralEdge: 1.7,
