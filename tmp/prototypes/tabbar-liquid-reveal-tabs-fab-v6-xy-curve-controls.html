@@ -1,0 +1,2542 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mezfit Liquid Reveal → Tabs + FAB</title>
+<style>
+:root {
+  --runtime-tabs-width: calc(100vw / 1.1);
+  --ui-font-family: "Golos Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --shadow-ios-dark-glass:
+    inset -2px -2px 0.5px -2.5px rgba(255,255,255,.4),
+    inset 3px 3px 0.5px -3.5px rgba(255,255,255,.4),
+    inset 2px 2px 0.5px -2px #262626,
+    inset -2px -2px 0.5px -2px #262626,
+    inset 0 0 5px 1px #141414,
+    inset 0 0 0 1px rgba(255,255,255,.15),
+    inset 0 0 10px 0 rgba(255,255,255,.075),
+    inset 0 0 24px 0 rgba(255,255,255,.05),
+    0 0 25px 0 rgba(0,0,0,.15);
+}
+* { box-sizing:border-box; }
+html, body {
+  margin:0;
+  width:100%;
+  min-height:100%;
+  background:#0b0b0d;
+}
+body {
+  min-height:100vh;
+  min-height:100dvh;
+  overflow:hidden;
+  font-family:var(--ui-font-family);
+}
+.stage {
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+}
+.motion {
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:0;
+  height:0;
+}
+.scale {
+  position:absolute;
+  width:0;
+  height:0;
+  transform-origin:0 0;
+}
+.shape {
+  position:absolute;
+  z-index:0;
+  width:64px;
+  height:64px;
+  transform:translate(-50%,-50%);
+  border:0;
+  border-radius:9999px;
+  overflow:visible;
+  background:rgba(50,50,50,.50);
+  box-shadow:var(--shadow-ios-dark-glass);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  pointer-events:none;
+}
+.icon-mask {
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:2;
+  width:64px;
+  height:64px;
+  transform:translate(-50%,-50%);
+  border-radius:32px;
+  overflow:hidden;
+  pointer-events:none;
+}
+#iconLayer {
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--runtime-tabs-width);
+  height:64px;
+  transform:translate(-50%,-50%);
+  overflow:visible;
+  filter:url(#icon-displacement-filter);
+  -webkit-filter:url(#icon-displacement-filter);
+}
+#iconMask.tabs-interactive {
+  overflow:visible;
+  pointer-events:auto;
+}
+#iconMask.tabs-interactive #iconLayer {
+  filter:none;
+  -webkit-filter:none;
+}
+#shape.tabs-replaced { visibility:hidden; }
+#selectedTabName { display:none; }
+
+/* Liquid startup reveal -> interactive Tabs handoff prototype. */
+:root{
+  --diagnostic-bg:#000000;
+  --diagnostic-grid-minor:rgba(255,255,255,.10);
+  --diagnostic-grid-major:rgba(255,255,255,.18);
+}
+html,body{background:var(--diagnostic-bg)!important}
+.stage{background-color:var(--diagnostic-bg)!important}
+#stage{z-index:1}
+body.diagnostic-grid #stage{
+  background-image:
+    linear-gradient(to right,var(--diagnostic-grid-major) 1px,transparent 1px),
+    linear-gradient(to bottom,var(--diagnostic-grid-major) 1px,transparent 1px),
+    linear-gradient(to right,var(--diagnostic-grid-minor) 1px,transparent 1px),
+    linear-gradient(to bottom,var(--diagnostic-grid-minor) 1px,transparent 1px);
+  background-size:64px 64px,64px 64px,16px 16px,16px 16px;
+  background-position:-1px -1px,-1px -1px,-1px -1px,-1px -1px;
+}
+#scale{opacity:1;will-change:auto}
+#startupLayer{position:fixed;inset:0;z-index:2;overflow:hidden;pointer-events:none;opacity:1;will-change:opacity;background:transparent}
+#startupLayer.is-handoff{opacity:0}
+#startupLayer>.startup-scene{display:block;width:100%;height:100%}
+.fab-glass-preview{position:fixed;z-index:3;left:0;top:0;width:72px;height:72px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(50,50,50,.50);box-shadow:var(--shadow-ios-dark-glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);opacity:0;pointer-events:none;will-change:opacity,left,top;width,height}
+.hud{position:fixed;z-index:4;left:max(20px,env(safe-area-inset-left));top:max(20px,env(safe-area-inset-top));width:min(360px,calc(100% - 40px));max-height:46vh;overflow:auto;pointer-events:auto;text-shadow:0 1px 8px #000;background:#181c24d9;padding:12px 16px;border-radius:14px;color:#f4f4f6}
+.hud h1{display:inline;font-size:18px;font-weight:550;margin:0 0 6px}.hud summary{position:sticky;top:-12px;z-index:20;display:block;cursor:pointer;font-weight:550;margin:-12px -16px 0;padding:12px 16px 10px;background:#181c24f7;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:14px 14px 10px 10px}.hud details[open]>summary{box-shadow:0 1px 0 #ffffff14}.status{display:block;margin-top:8px;font-size:13px;color:#c1d2ea}.clock{font-variant-numeric:tabular-nums;margin-left:10px;color:#f4f4f6}
+.tuner{display:grid;gap:10px;margin-top:14px}.tuner label{display:block;font-size:13px;line-height:1.4}.tuner .row{display:flex;justify-content:space-between;gap:12px}.tuner output{font-variant-numeric:tabular-nums;white-space:nowrap;color:#f4f4f6}.tuner input{display:block;width:100%;height:32px;margin:3px 0 0;accent-color:#b7d9ff;cursor:ew-resize;touch-action:pan-y}.tuner input::-webkit-slider-thumb{width:24px;height:24px}.note{font-size:12px;color:#c1d2ea;line-height:1.4;margin-top:8px}.diagnostic-toggle{display:flex!important;align-items:center;justify-content:space-between;gap:14px;padding:4px 0}.diagnostic-toggle input[type="checkbox"]{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}.diagnostic-switch{position:relative;display:inline-block;flex:0 0 auto;width:44px;height:26px;border-radius:999px;background:#4b5567;box-shadow:inset 0 0 0 1px #697386;transition:background .18s ease}.diagnostic-switch::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#f4f4f6;box-shadow:0 1px 4px #0008;transition:transform .18s ease}.diagnostic-toggle input:checked+.diagnostic-switch{background:#6baef7}.diagnostic-toggle input:checked+.diagnostic-switch::after{transform:translateX(18px)}#bgTone{accent-color:#d7dce4}
+.reset{position:fixed;z-index:4;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#262b34ed;color:#f4f4f6;border:1px solid #596272;border-radius:16px;padding:12px 24px;min-height:48px;font:inherit;cursor:pointer}
+.graph-block{margin-top:14px}.graph-caption{font-size:12px;color:#c1d2ea;margin-bottom:6px}.speed-graph{display:block;width:100%;height:auto;aspect-ratio:2/1;background:linear-gradient(180deg,#222937,#1a1f29);border:1px solid #4b5567;border-radius:12px;touch-action:none}.speed-graph .grid{stroke:#667085;stroke-opacity:.24;stroke-width:1}.speed-graph .axis{stroke:#a6b1c2;stroke-opacity:.42;stroke-width:1}.speed-graph .fill{fill:#9ec5ff;fill-opacity:.12}.speed-graph .curve{fill:none;stroke:#b7d9ff;stroke-width:3;stroke-linecap:round}.speed-graph .point{fill:#f4f4f6;stroke:#181c24;stroke-width:2;cursor:ns-resize}.speed-graph .point.fixed{fill:#97a4ba;cursor:default}.graph-labels{display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:#aeb9cb}.graph-helper{font-size:11px;color:#c1d2ea;line-height:1.35;margin-top:6px}
+.graph-caption-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.graph-readout{font-variant-numeric:tabular-nums;color:#f4f4f6;font-size:11px;white-space:nowrap}.graph-reset{appearance:none;border:1px solid #596272;background:#252b36;color:#dbe7f7;border-radius:9px;padding:4px 8px;font:inherit;font-size:11px;line-height:1;cursor:pointer}.position-graph{display:block;width:100%;height:auto;aspect-ratio:280/170;background:linear-gradient(180deg,#222937,#1a1f29);border:1px solid #4b5567;border-radius:12px;touch-action:none;margin-top:6px}.position-graph .grid{stroke:#667085;stroke-opacity:.22;stroke-width:1}.position-graph .zero-axis{stroke:#b7c7dd;stroke-opacity:.48;stroke-width:1;stroke-dasharray:4 4}.position-graph .curve{fill:none;stroke:#c9e0ff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.position-graph .fill{fill:#9ec5ff;fill-opacity:.08}.position-graph .point{fill:#f4f4f6;stroke:#181c24;stroke-width:2;cursor:ew-resize}.position-graph .point.fixed-time{fill:#97a4ba;cursor:default}.position-graph .point.active{fill:#a9d3ff;stroke:#0f141c;stroke-width:2.5}.position-graph .phase-guide{stroke:#9db5d4;stroke-opacity:.36;stroke-width:1;stroke-dasharray:3 4}.position-graph .phase-label{fill:#9db5d4;font-size:8px;font-family:var(--ui-font-family)}.position-graph .playhead{stroke:#ffffff;stroke-opacity:.62;stroke-width:1}.position-graph .playhead-dot{fill:#ffffff;stroke:#1a1f29;stroke-width:2}.position-scale{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:#8492a8}.position-scale span:nth-child(2){text-align:center}.position-scale span:last-child{text-align:right}.point-slider-bank{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:10px 2px 2px;padding:8px 4px 6px;border-radius:10px;background:#202631;border:1px solid #465164}.point-slider{display:grid;grid-template-rows:auto 118px auto;justify-items:center;gap:4px;min-width:0;font-size:9px;color:#9eabc0}.point-slider input[type=range]{writing-mode:vertical-lr;direction:rtl;width:30px;height:118px;margin:0;padding:0;accent-color:#b7d9ff;touch-action:none;cursor:ns-resize}.point-slider input[type=range]:disabled{opacity:.38;cursor:default}.point-slider output{font-variant-numeric:tabular-nums;color:#e8f1ff;font-size:9px;white-space:nowrap}.point-slider .point-name{font-weight:600;color:#bac8dc}.slider-helper{font-size:10px;color:#98a7bd;line-height:1.35;margin-top:5px}
+#startupLayer .icons-y-layer{width:100%;height:64px;pointer-events:none;overflow:visible}#startupLayer .icons-y-layer .icons-strip{display:flex;width:100%;height:64px;align-items:stretch;justify-content:space-between}#startupLayer .icons-y-layer .tab-link{appearance:none;border:0;background:transparent;flex:0 0 20%;width:20%;height:64px;padding:0;position:relative;color:#f4f4f6;font:inherit;pointer-events:none}#startupLayer .icons-y-layer .tab-link.active{color:#007aff}#startupLayer .icons-y-layer .tab-link.active.initial-neutral{color:#f4f4f6}#startupLayer .icons-y-layer .tab-content{height:100%;display:flex;align-items:center;justify-content:center}#startupLayer .icons-y-layer .tab-icon-wrap{width:36px;height:36px;position:relative;display:flex;align-items:center;justify-content:center}#startupLayer .icons-y-layer .tab-icon{position:absolute;inset:0;width:36px;height:36px;display:block;color:currentColor;pointer-events:none}#startupLayer .icons-y-layer .tab-icon-outline{opacity:1;transform:scale(1)}#startupLayer .icons-y-layer .tab-icon-filled{opacity:0;transform:scale(.82)}#startupLayer .icons-y-layer .tab-link.active .tab-icon-outline{opacity:0;transform:scale(.84)}#startupLayer .icons-y-layer .tab-link.active .tab-icon-filled{opacity:1;transform:scale(1)}#startupLayer .icons-y-layer .tab-link.active.initial-neutral .tab-icon-outline{opacity:1;transform:scale(1)}#startupLayer .icons-y-layer .tab-link.active.initial-neutral .tab-icon-filled{opacity:0;transform:scale(.82)}#startupLayer .icons-y-layer .tab-icon-outline,#startupLayer .icons-y-layer .tab-icon-outline *{stroke-width:1!important}#startupLayer .icons-y-layer .tab-label{display:none!important}
+</style>
+</head>
+<body>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <filter id="icon-displacement-filter" color-interpolation-filters="sRGB" x="-160%" y="-160%" width="420%" height="420%">
+    <feImage id="zoom-vector-image" x="0" y="0" width="64" height="64" preserveAspectRatio="none" result="zoomMap"></feImage>
+    <feDisplacementMap id="zoom-displacement" in="SourceGraphic" in2="zoomMap" scale="64" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+  </filter>
+</svg>
+<div class="stage" id="stage">
+  <div class="motion" id="motion">
+    <div class="scale" id="scale">
+      <div class="icon-mask" id="iconMask"><div id="iconLayer" startup></div></div>
+      <div class="shape" id="shape"></div>
+    </div>
+  </div>
+</div>
+<div id="fabGlass" class="fab-glass-preview" aria-hidden="true"></div>
+<div id="selectedTabName" aria-hidden="true">Сегодня</div>
+<div class="hud"><details open><summary><h1>Тюнер pill-линзы</h1></summary><div class="tuner">
+<label for="t1"><span class="row"><span>1 ↔ 2, 3: разрыв от старта</span><output id="v1" for="t1">0.40 с</output></span><input id="t1" type="range" min="0.20" max="5" step="0.05" value="0.40"></label>
+<label for="t2"><span class="row"><span>Длительность раскрытия</span><output id="v2" for="t2">1.45 с</output></span><input id="t2" type="range" min="0.25" max="6" step="0.05" value="1.45"></label>
+<label for="handoff"><span class="row"><span>Длительность handoff</span><output id="vhandoff" for="handoff">0.60 с</output></span><input id="handoff" type="range" min="0.10" max="1.50" step="0.02" value="0.60"></label>
+<label for="speed"><span class="row"><span>Базовая скорость</span><output id="vs" for="speed">210 px/с</output></span><input id="speed" type="range" min="40" max="600" step="10" value="210"></label>
+<label for="lensSize"><span class="row"><span>Размер исходной линзы</span><output id="vlens" for="lensSize">74%</output></span><input id="lensSize" type="range" min="60" max="140" step="1" value="74"></label>
+<label for="delay"><span class="row"><span>Ожидание до старта движения</span><output id="vdelay" for="delay">40 мс</output></span><input id="delay" type="range" min="0" max="1000" step="10" value="40"></label>
+<label for="lensBlur"><span class="row"><span>Blur линзы</span><output id="vblur" for="lensBlur">1.2 px</output></span><input id="lensBlur" type="range" min="0" max="8" step="0.1" value="1.2"></label>
+<label for="lensSaturation"><span class="row"><span>Сатурация линзы</span><output id="vsaturation" for="lensSaturation">145%</output></span><input id="lensSaturation" type="range" min="100" max="250" step="1" value="145"></label>
+<label for="lensFrost"><span class="row"><span>Frost / материал</span><output id="vfrost" for="lensFrost">14%</output></span><input id="lensFrost" type="range" min="0" max="40" step="1" value="14"></label>
+<label class="diagnostic-toggle" for="gridBg"><span>Диагностическая сетка</span><span><input id="gridBg" type="checkbox"><span class="diagnostic-switch" aria-hidden="true"></span></span></label>
+<label for="bgTone"><span class="row"><span>Цвет фона</span><output id="vbg" for="bgTone">#000000</output></span><input id="bgTone" type="range" min="0" max="100" step="1" value="0"></label>
+</div><div class="graph-block"><div class="graph-caption">График скорости</div><svg id="speedGraph" class="speed-graph" viewBox="0 0 280 140" aria-label="График скорости линзы с тремя контрольными точками" role="img"><path class="grid" d="M18 16H262 M18 43H262 M18 70H262 M18 97H262 M18 124H262 M18 16V124 M79 16V124 M140 16V124 M201 16V124 M262 16V124"></path><path class="axis" d="M18 124H262"></path><path id="speedFill" class="fill"></path><path id="speedPath" class="curve"></path><g id="speedHandles"></g></svg><div class="graph-labels"><span>Старт 0</span><span>Потяни 3 средние точки</span><span>Финиш 0</span></div><div class="graph-helper">Кривая задаёт профиль скорости во время движения. Начало и конец всегда фиксированы в нуле.</div></div>
+<div class="graph-block">
+  <div class="graph-caption-row">
+    <div class="graph-caption">Y первой линзы — до начала handoff</div>
+    <div style="display:flex;align-items:center;gap:6px"><output id="lensYReadout" class="graph-readout">Y 0 px</output><button id="resetLensYCurve" class="graph-reset" type="button">Сбросить</button></div>
+  </div>
+  <svg id="lensYGraph" class="position-graph lens-y-graph" viewBox="0 0 280 170" aria-label="Абсолютная координата Y первой линзы от старта до начала handoff" role="img">
+    <path class="grid" d="M18 18H262 M18 51.5H262 M18 85H262 M18 118.5H262 M18 152H262 M18 18V152 M58.67 18V152 M99.33 18V152 M140 18V152 M180.67 18V152 M221.33 18V152 M262 18V152"></path>
+    <path class="zero-axis" d="M18 85H262"></path>
+    <g id="lensYPhaseGuides"></g>
+    <path id="lensYFill" class="fill"></path><path id="lensYPath" class="curve"></path><g id="lensYHandles"></g>
+    <line id="lensYPlayhead" class="playhead" x1="18" y1="18" x2="18" y2="152"></line>
+    <circle id="lensYPlayheadDot" class="playhead-dot" cx="18" cy="85" r="4.5"></circle>
+  </svg>
+  <div class="position-scale"><span>−160 px ↑</span><span>0 — стартовое положение</span><span>+160 px ↓</span></div>
+  <div class="graph-labels"><span>Старт</span><span>Пальцем — только время точки (X)</span><span>Handoff</span></div>
+  <div id="lensYSliders" class="point-slider-bank" aria-label="Вертикальные ползунки координаты Y контрольных точек"></div>
+  <div class="slider-helper">Вертикальные ползунки меняют только Y каждой точки. На графике палец двигает только время точки. Первая точка фиксирована в Y=0.</div>
+</div>
+<div class="graph-block">
+  <div class="graph-caption-row">
+    <div class="graph-caption">X первой линзы — до начала handoff</div>
+    <div style="display:flex;align-items:center;gap:6px"><output id="lensXReadout" class="graph-readout">X 0 px</output><button id="resetLensXCurve" class="graph-reset" type="button">Сбросить</button></div>
+  </div>
+  <svg id="lensXGraph" class="position-graph lens-x-graph" viewBox="0 0 280 170" aria-label="Абсолютная координата X первой линзы от старта до начала handoff" role="img">
+    <path class="grid" d="M18 18H262 M18 51.5H262 M18 85H262 M18 118.5H262 M18 152H262 M18 18V152 M58.67 18V152 M99.33 18V152 M140 18V152 M180.67 18V152 M221.33 18V152 M262 18V152"></path>
+    <path class="zero-axis" d="M18 85H262"></path>
+    <g id="lensXPhaseGuides"></g>
+    <path id="lensXFill" class="fill"></path><path id="lensXPath" class="curve"></path><g id="lensXHandles"></g>
+    <line id="lensXPlayhead" class="playhead" x1="18" y1="18" x2="18" y2="152"></line>
+    <circle id="lensXPlayheadDot" class="playhead-dot" cx="18" cy="85" r="4.5"></circle>
+  </svg>
+  <div class="position-scale"><span>−180 px ←</span><span>0 — стартовое положение</span><span>+180 px →</span></div>
+  <div class="graph-labels"><span>Старт</span><span>Пальцем — только время точки (X)</span><span>Handoff</span></div>
+  <div id="lensXSliders" class="point-slider-bank" aria-label="Вертикальные ползунки координаты X контрольных точек"></div>
+  <div class="slider-helper">Вертикальные ползунки задают абсолютное смещение линзы по X. Положительное значение — вправо, отрицательное — влево. Последняя точка синхронизирует X FAB.</div>
+</div></div><div class="note" id="note">Графики X/Y задают абсолютную траекторию первой линзы до начала handoff. Конечные X/Y автоматически становятся координатами FAB, поэтому handoff происходит без скачка.</div></details><span class="status" id="status" aria-live="polite">Ожидание</span><span class="clock" id="clock">0.00 с</span></div><div id="startupLayer"><svg id="scene" class="startup-scene" xmlns="http://www.w3.org/2000/svg" aria-label="Жидкая линза раскрывает иконки перед появлением интерактивных вкладок" role="img"><defs>
+<filter id="refraction" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage id="vector" x="0" y="0" preserveAspectRatio="none" result="rawMap"/><feComponentTransfer in="rawMap" result="map"><feFuncR type="linear" slope="1" intercept="-0.00196078431372549"/><feFuncG type="linear" slope="1" intercept="-0.00196078431372549"/></feComponentTransfer><feDisplacementMap in="SourceGraphic" in2="map" scale="64" xChannelSelector="R" yChannelSelector="G" result="displaced"/><feGaussianBlur id="lensBlurNode" in="displaced" stdDeviation="1.2" result="softened"/><feColorMatrix id="lensSaturationNode" in="softened" type="saturate" values="1.45"/></filter><filter id="blobBlur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="32"/></filter><mask id="lensRevealMask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%"><image id="maskSurface" x="0" y="0" preserveAspectRatio="none"/></mask>
+</defs><g id="maskedRefracted" mask="url(#lensRevealMask)"><g id="refractedContent" filter="url(#refraction)"><g id="text"></g><foreignObject id="iconsFo" x="0" y="0" width="0" height="64"><div xmlns="http://www.w3.org/1999/xhtml" class="icons-y-layer" id="iconsYLayer" aria-hidden="true"><div class="icons-strip"><button aria-label="Сегодня" aria-selected="true" class="tab-link active initial-neutral" data-icon="calendar-event" data-index="0" title="Сегодня" type="button"><span class="tab-content"><span aria-hidden="true" class="tab-icon-wrap"><svg aria-hidden="true" class="tab-icon tab-icon-outline" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12"></path>
+<path d="M16 3l0 4"></path>
+<path d="M8 3l0 4"></path>
+<path d="M4 11l16 0"></path>
+<path d="M8 15h2v2h-2l0 -2"></path>
+</svg><svg aria-hidden="true" class="tab-icon tab-icon-filled" fill="currentColor" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M16 2a1 1 0 0 1 .993 .883l.007 .117v1h1a3 3 0 0 1 2.995 2.824l.005 .176v12a3 3 0 0 1 -2.824 2.995l-.176 .005h-12a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-12a3 3 0 0 1 2.824 -2.995l.176 -.005h1v-1a1 1 0 0 1 1.993 -.117l.007 .117v1h6v-1a1 1 0 0 1 1 -1m3 8h-14v8.625c0 .705 .386 1.286 .883 1.366l.117 .009h12c.513 0 .936 -.53 .993 -1.215l.007 -.16zm-9 4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"></path>
+</svg></span><span class="tab-label">Сегодня</span></span></button><button aria-label="Клиенты" aria-selected="false" class="tab-link" data-icon="users" data-index="1" title="Клиенты" type="button"><span class="tab-content"><span aria-hidden="true" class="tab-icon-wrap"><svg aria-hidden="true" class="tab-icon tab-icon-outline" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
+<path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+<path d="M21 21v-2a4 4 0 0 0 -3 -3.85"></path>
+</svg><svg aria-hidden="true" class="tab-icon tab-icon-filled" fill="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><!-- Custom filled counterpart based on Tabler users; not an official Tabler filled icon. --><circle cx="9" cy="7" r="4"></circle><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2z"></path><path d="M16 3.13a4 4 0 0 1 0 7.75zM18 15.15A4 4 0 0 1 21 19v2h-3z"></path></svg></span><span class="tab-label">Клиенты</span></span></button><button aria-label="Программы" aria-selected="false" class="tab-link" data-icon="clipboard-list" data-index="2" title="Программы" type="button"><span class="tab-content"><span aria-hidden="true" class="tab-icon-wrap"><svg aria-hidden="true" class="tab-icon tab-icon-outline" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
+<path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2"></path>
+<path d="M9 12l.01 0"></path>
+<path d="M13 12l2 0"></path>
+<path d="M9 16l.01 0"></path>
+<path d="M13 16l2 0"></path>
+</svg><svg aria-hidden="true" class="tab-icon tab-icon-filled" fill="currentColor" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-8.987 10.83h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m5.99 0h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m-5.99 -4h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m5.99 0h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m-1 -9a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z"></path>
+</svg></span><span class="tab-label">Программы</span></span></button><button aria-label="Аналитика" aria-selected="false" class="tab-link" data-icon="chart-dots-2" data-index="3" title="Аналитика" type="button"><span class="tab-content"><span aria-hidden="true" class="tab-icon-wrap"><svg aria-hidden="true" class="tab-icon tab-icon-outline" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M3 3v18h18"></path>
+<path d="M7 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+<path d="M11 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+<path d="M16 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+<path d="M21 3l-6 1.5"></path>
+<path d="M14.113 6.65l2.771 3.695"></path>
+<path d="M16 12.5l-5 2"></path>
+</svg><svg aria-hidden="true" class="tab-icon tab-icon-filled" fill="currentColor" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M3 2a1 1 0 0 1 1 1v17h17a1 1 0 0 1 .993 .883l.007 .117a1 1 0 0 1 -1 1h-18a1 1 0 0 1 -1 -1v-18a1 1 0 0 1 1 -1m18.97 .757a1 1 0 0 1 -.727 1.213l-5.256 1.314a3 3 0 0 1 -.55 1.465l1.768 2.358a3.003 3.003 0 0 1 3.795 2.893a3 3 0 0 1 -5.436 1.751l-3.57 1.428a3 3 0 0 1 -5.994 -.179l.005 -.176a3 3 0 0 1 5.43 -1.576l3.57 -1.428l.015 -.17c.06 -.518 .253 -.996 .542 -1.4l-1.767 -2.357a3.003 3.003 0 0 1 -3.795 -2.893l.005 -.176a3 3 0 0 1 5.497 -1.48l5.255 -1.314a1 1 0 0 1 1.213 .727"></path>
+</svg></span><span class="tab-label">Аналитика</span></span></button><button aria-label="Настройки" aria-selected="false" class="tab-link" data-icon="settings" data-index="4" title="Настройки" type="button"><span class="tab-content"><span aria-hidden="true" class="tab-icon-wrap"><svg aria-hidden="true" class="tab-icon tab-icon-outline" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065"></path>
+<path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+</svg><svg aria-hidden="true" class="tab-icon tab-icon-filled" fill="currentColor" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6"></path>
+</svg></span><span class="tab-label">Настройки</span></span></button></div></div></foreignObject></g></g><g id="maskedMaterial" mask="url(#lensRevealMask)" pointer-events="none"><rect id="materialSurface" x="0" y="0" width="100%" height="100%" fill="rgb(196,220,255)" fill-opacity="0.14"/></g><image id="surface" x="0" y="0" preserveAspectRatio="none" pointer-events="none"/></svg></div><button class="reset" id="reset" type="button">Повторить</button>
+
+<script>
+// Extracted donor has its own CSS scope and lexical document accessor.
+// Native document methods remain untouched; pointer lifecycle still reaches the page.
+(() => {
+  const host = window.document.getElementById('iconLayer');
+  const shadow = host.attachShadow({mode:'open'});
+  shadow.innerHTML = "<style>\n    :host {\n      --color-primary: #007aff;\n      --color-ios-light-surface: #efeff4;\n      --color-ios-dark-surface: #000;\n      --color-ios-hover-highlight: rgba(255, 255, 255, 0.5);\n      --k-rtl-reverse: 1;\n\n      /* Konsta src/styles/glass.css */\n      --shadow-ios-light-glass:\n        inset -1px -1px 0px -0.5px rgba(255, 255, 255, 1),\n        inset 1px 1px 0px -0.5px rgba(255, 255, 255, 1),\n        inset 3px 3px 10px -3px #ddd,\n        inset -3px -3px 10px -3px #ddd,\n        inset 0 0 5px 1px #fff,\n        inset 0 0 0 0.5px rgba(0, 0, 0, 0.25),\n        inset 0 0 24px 0 rgba(0, 0, 0, 0.1),\n        0 0 25px 0 rgba(0, 0, 0, 0.2);\n\n      --shadow-ios-light-glass-thumb:\n        inset -3px -3px 0px -3.5px rgba(255, 255, 255, 1),\n        inset 3px 3px 0px -3.5px rgba(255, 255, 255, 1),\n        inset 0px 0px 0px 0.5px rgba(255, 255, 255, 0.5),\n        inset 3px 3px 10px -2px #eee,\n        inset -3px -3px 10px -2px #eee,\n        inset 0 0 5px 1px #fff;\n\n      --shadow-ios-dark-glass:\n        inset -2px -2px 0.5px -2.5px rgba(255, 255, 255, 0.4),\n        inset 3px 3px 0.5px -3.5px rgba(255, 255, 255, 0.4),\n        inset 2px 2px 0.5px -2px #262626,\n        inset -2px -2px 0.5px -2px #262626,\n        inset 0 0 5px 1px #141414,\n        inset 0 0 0 1px rgba(255, 255, 255, 0.15),\n        inset 0 0 10px 0 rgba(255, 255, 255, 0.075),\n        inset 0 0 24px 0 rgba(255, 255, 255, 0.05),\n        0 0 25px 0 rgba(0, 0, 0, 0.15);\n\n      --shadow-ios-dark-glass-thumb:\n        inset 3px 3px 0px -3.5px rgba(255, 255, 255, 1),\n        inset -3px -3px 0px -3.5px rgba(255, 255, 255, 1),\n        inset -0.5px -0.5px 0px rgba(255, 255, 255, 0.5),\n        inset 0.5px 0.5px 0px rgba(255, 255, 255, 0.1),\n        inset -3px 3px 0px -3.5px rgba(255, 255, 255, 0.25),\n        inset 0px -5px 0px -3.5px rgba(255, 255, 255, 0.25),\n        inset 0px -5px 5px rgba(255, 255, 255, 0.25);\n    }\n\n    .dark {\n      --color-ios-hover-highlight: rgba(255, 255, 255, 0.3);\n    }\n\n    * {\n      box-sizing: border-box;\n      -webkit-tap-highlight-color: rgba(0,0,0,0);\n      -webkit-text-size-adjust: 100%;\n    }\n\n    html, body {\n      margin: 0;\n      min-height: 100%;\n      background: #dfe6ef;\n      color: #000;\n      font-family:\n        -apple-system, \"SF Pro Text\", \"SF UI Text\", system-ui,\n        \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n      -webkit-font-smoothing: antialiased;\n      -moz-osx-font-smoothing: grayscale;\n    }\n\n    body {\n      min-height: 100vh;\n      display: grid;\n      place-items: center;\n      padding: 24px;\n      transition: background-color 220ms ease, color 220ms ease;\n    }\n\n    .phone,\n    .content,\n    .card,\n    .toolbar-bg,\n    .toolbar-pane,\n    .tab-link {\n      transition:\n        background-color 220ms ease,\n        color 220ms ease,\n        box-shadow 220ms ease,\n        border-color 220ms ease;\n    }\n\n    .dark body {\n      background: #11151b;\n      color: #fff;\n    }\n\n    .phone {\n      width: min(390px, 100%);\n      height: min(760px, calc(100vh - 48px));\n      height: min(760px, calc(100dvh - 48px));\n      min-height: 600px;\n      background: var(--color-ios-light-surface);\n      border-radius: 36px;\n      overflow: hidden;\n      position: relative;\n      box-shadow: 0 22px 70px rgba(0,0,0,.24);\n    }\n\n    .dark .phone {\n      background: var(--color-ios-dark-surface);\n      box-shadow: 0 22px 70px rgba(0,0,0,.55);\n    }\n\n    .content {\n      position: absolute;\n      inset: 0;\n      padding: 54px 20px 220px;\n      overflow-y: auto;\n      overflow-x: hidden;\n      overscroll-behavior: contain;\n      -webkit-overflow-scrolling: touch;\n      background:\n        radial-gradient(circle at 20% 15%, rgba(0,122,255,.20), transparent 34%),\n        radial-gradient(circle at 80% 48%, rgba(255,45,85,.15), transparent 30%),\n        linear-gradient(180deg, #f9fbff 0%, var(--color-ios-light-surface) 72%);\n    }\n\n    .dark .content {\n      background:\n        radial-gradient(circle at 20% 15%, rgba(10,132,255,.22), transparent 34%),\n        radial-gradient(circle at 80% 48%, rgba(255,55,95,.16), transparent 30%),\n        linear-gradient(180deg, #141416 0%, var(--color-ios-dark-surface) 72%);\n    }\n\n    .demo-title {\n      margin: 0 0 8px;\n      font-size: 28px;\n      line-height: 1.05;\n      font-weight: 700;\n      letter-spacing: -0.025em;\n    }\n\n    .demo-copy {\n      margin: 0;\n      font-size: 15px;\n      line-height: 1.45;\n      color: rgba(0,0,0,.58);\n      max-width: 300px;\n    }\n\n    .dark .demo-copy {\n      color: rgba(255,255,255,.58);\n    }\n\n    .card {\n      margin-top: 26px;\n      min-height: 230px;\n      padding: 22px;\n      border-radius: 24px;\n      background: rgba(255,255,255,.72);\n      border: 1px solid rgba(255,255,255,.9);\n      box-shadow: 0 10px 30px rgba(0,0,0,.06);\n      backdrop-filter: blur(18px);\n      -webkit-backdrop-filter: blur(18px);\n    }\n\n    .dark .card {\n      background: rgba(28,28,29,.72);\n      border-color: rgba(255,255,255,.08);\n      box-shadow: 0 10px 30px rgba(0,0,0,.22);\n    }\n\n    .card-kicker {\n      font-size: 12px;\n      font-weight: 600;\n      color: var(--color-primary);\n      text-transform: uppercase;\n      letter-spacing: .08em;\n    }\n\n    .card-value {\n      margin-top: 10px;\n      font-size: 38px;\n      font-weight: 700;\n      letter-spacing: -.04em;\n    }\n\n    .card-line {\n      height: 10px;\n      border-radius: 999px;\n      background: rgba(0,0,0,.07);\n      margin-top: 18px;\n    }\n\n    .dark .card-line {\n      background: rgba(255,255,255,.10);\n    }\n    .card-line:nth-child(4) { width: 78%; }\n    .card-line:nth-child(5) { width: 54%; }\n\n    .feed {\n      display: grid;\n      gap: 14px;\n      margin-top: 18px;\n    }\n\n    .feed-item {\n      padding: 18px;\n      border-radius: 20px;\n      background: rgba(255,255,255,.62);\n      border: 1px solid rgba(255,255,255,.75);\n      box-shadow: 0 8px 24px rgba(0,0,0,.045);\n      backdrop-filter: blur(8px);\n      -webkit-backdrop-filter: blur(8px);\n    }\n\n    .dark .feed-item {\n      background: rgba(28,28,29,.68);\n      border-color: rgba(255,255,255,.08);\n      box-shadow: 0 8px 24px rgba(0,0,0,.22);\n    }\n\n    .feed-item h2 {\n      margin: 0 0 8px;\n      font-size: 17px;\n      line-height: 22px;\n      font-weight: 600;\n    }\n\n    .feed-item p {\n      margin: 0;\n      font-size: 15px;\n      line-height: 20px;\n      color: rgba(0,0,0,.70);\n    }\n\n    .dark .feed-item p {\n      color: rgba(255,255,255,.72);\n    }\n\n    .color-strip {\n      height: 44px;\n      border-radius: 14px;\n      margin-top: 12px;\n      background:\n        linear-gradient(90deg,\n          rgba(0,122,255,.9),\n          rgba(90,200,250,.9) 34%,\n          rgba(255,45,85,.88) 68%,\n          rgba(255,149,0,.88));\n    }\n\n    .color-strip.alt {\n      background:\n        linear-gradient(90deg,\n          rgba(52,199,89,.9),\n          rgba(0,122,255,.85) 45%,\n          rgba(175,82,222,.88));\n    }\n\n    .scroll-hint {\n      margin: 22px 0 4px;\n      text-align: center;\n      font-size: 13px;\n      line-height: 18px;\n      color: rgba(0,0,0,.45);\n    }\n\n    .dark .scroll-hint {\n      color: rgba(255,255,255,.45);\n    }\n\n    /* Konsta Toolbar iOS bottom background, equivalent to:\n       backdrop-blur-[2px] + gradient from ios-light-surface to transparent */\n    .toolbar {\n      position: absolute;\n      z-index: 20;\n      left: max(18px, env(safe-area-inset-left));\n      right: max(18px, env(safe-area-inset-right));\n      bottom: calc(max(28px, env(safe-area-inset-bottom)) + 66px);\n      width: auto;\n      padding: 0;\n      display: flex;\n      justify-content: center;\n      pointer-events: none;\n    }\n\n    .toolbar-bg-blur,\n    .toolbar-bg {\n      display: none;\n    }\n\n    .toolbar-inner {\n      height: 64px; /* Konsta: h-16 when icons + labels */\n      width: 100%;\n      position: relative;\n      display: flex;\n      justify-content: space-between;\n      align-items: stretch;\n      gap: 16px; /* Konsta: gap-4 */\n      pointer-events: auto;\n    }\n\n    /* ToolbarPane -> Glass, iOS */\n    .toolbar-pane {\n      position: relative;\n      width: 100%;\n      height: 100%;\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      border-radius: 9999px;\n      background: rgba(255,255,255,.75);\n      box-shadow: var(--shadow-ios-light-glass);\n      backdrop-filter: blur(16px);\n      -webkit-backdrop-filter: blur(16px);\n      touch-action: pan-x;\n      transition-property: scale;\n      overflow: visible;\n    }\n\n    .dark .toolbar-pane {\n      background: rgba(50,50,50,.50);\n      box-shadow: var(--shadow-ios-dark-glass);\n    }\n\n    .tab-strip {\n      position: relative;\n      z-index: 2;\n      display: flex;\n      align-items: stretch;\n      height: 100%;\n      width: 100%;\n      border-radius: inherit;\n      overflow-x: auto;\n      overflow-y: hidden;\n      scrollbar-width: none;\n      -ms-overflow-style: none;\n      overscroll-behavior-x: contain;\n      scroll-behavior: auto;\n      -webkit-overflow-scrolling: touch;\n      touch-action: none;\n    }\n\n    .tab-strip::-webkit-scrollbar {\n      display: none;\n    }\n\n    /* TabbarLink */\n    .tab-link {\n      appearance: none;\n      border: 0;\n      background: transparent;\n      flex: 0 0 92px;\n      width: 92px;\n      height: 100%;\n      padding: 0 8px;\n      position: relative;\n      z-index: 10;\n      cursor: pointer;\n      user-select: none;\n      color: #000;\n      transition-property: color;\n      transition-duration: 300ms;\n      font: inherit;\n    }\n\n    .dark .tab-link {\n      color: #fff;\n    }\n\n    .tab-link.active {\n      color: var(--color-primary);\n    }\n\n    .tab-content {\n      height: 100%;\n      padding: 4px 0; /* Konsta: py-1 */\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      justify-content: center;\n    }\n\n    .tab-icon-wrap {\n      width: 28px;\n      height: 28px;\n      position: relative;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n    }\n\n    .tab-icon {\n      position: absolute;\n      inset: 0;\n      width: 28px;\n      height: 28px;\n      display: block;\n      color: currentColor;\n      transform-origin: 50% 50%;\n      transition:\n        opacity 110ms ease,\n        transform 160ms cubic-bezier(.2,.8,.2,1);\n      pointer-events: none;\n    }\n\n    .tab-icon-outline {\n      opacity: 1;\n      transform: scale(1);\n    }\n\n    .tab-icon-filled {\n      opacity: 0;\n      transform: scale(.82);\n    }\n\n    .tab-link.active .tab-icon-outline {\n      opacity: 0;\n      transform: scale(.84);\n    }\n\n    .tab-link.active .tab-icon-filled {\n      opacity: 1;\n      transform: scale(1);\n    }\n\n    .tab-link.active.initial-neutral {\n      color: #fff;\n    }\n\n    .tab-link.active.initial-neutral .tab-icon-outline {\n      opacity: 1;\n      transform: scale(1);\n    }\n\n    .tab-link.active.initial-neutral .tab-icon-filled {\n      opacity: 0;\n      transform: scale(.82);\n    }\n\n    .tab-label {\n      font-family: var(--ui-font-family);\n      font-size: var(--ui-font-size-body);\n      line-height: var(--ui-line-height-body);\n      font-weight: var(--ui-font-weight-medium);\n      white-space: nowrap;\n      max-width: 100px;\n      overflow: hidden;\n      text-overflow: ellipsis;\n    }\n\n    /* Two public visual modes for the local Konsta fork prototype.\n       Icons = existing approved version.\n       Text = same mechanics/optics/settings, labels only. */\n    .optical-tabs-playground[data-tab-mode=\"text\"] .tab-icon-wrap {\n      display: none;\n    }\n\n    .optical-tabs-playground[data-tab-mode=\"text\"] .tab-content {\n      /* Same label room as Icons mode. */\n      padding: 4px 0;\n    }\n\n    /* Konsta v5.4.0: icons+labels = 64px, text-only = 48px.\n       Typography remains IDENTICAL to Icons:\n       .tab-label = 12px / 16px / 500. */\n    .optical-tabs-playground[data-tab-mode=\"text\"] > .optical-toolbar-pane {\n      top: 20px;\n      height: 48px;\n    }\n\n    .optical-tabs-playground[data-tab-mode=\"text\"] .extracted-lens-demo {\n      top: 20px;\n      height: 48px;\n    }\n\n    .optical-tabs-playground[data-tab-mode=\"text\"] .tab-label {\n      max-width: none;\n      overflow: visible;\n      text-overflow: clip;\n    }\n\n    /* Text optical lens base height = full 48px container.\n       Scale 1.25 => rendered height exactly 60px. */\n    .optical-tabs-playground[data-tab-mode=\"text\"]\n      .extracted-lens-demo .optical-working-lens {\n      top: 0;\n      bottom: 0;\n    }\n\n    .tabs-mode-switcher {\n      position: absolute;\n      z-index: 50;\n      top: 76px;\n      left: 50%;\n      transform: translateX(-50%);\n      display: inline-grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 2px;\n      padding: 3px;\n      border-radius: 9999px;\n      background: rgba(118,118,128,.18);\n      backdrop-filter: blur(12px);\n      -webkit-backdrop-filter: blur(12px);\n    }\n\n    .tabs-mode-button {\n      appearance: none;\n      border: 0;\n      min-width: 72px;\n      height: 30px;\n      padding: 0 14px;\n      border-radius: 9999px;\n      background: transparent;\n      color: inherit;\n      font-family: var(--ui-font-family, -apple-system, BlinkMacSystemFont, \"SF Pro Text\", sans-serif);\n      font-size: 13px;\n      line-height: 18px;\n      font-weight: 500;\n      cursor: pointer;\n    }\n\n    .tabs-mode-button.is-active {\n      background: rgba(255,255,255,.86);\n      box-shadow: 0 1px 5px rgba(0,0,0,.12);\n    }\n\n    .dark .tabs-mode-switcher {\n      background: rgba(118,118,128,.30);\n    }\n\n    .dark .tabs-mode-button.is-active {\n      background: rgba(60,60,67,.90);\n    }\n\n    /*\n      Selector is rendered inside .tab-strip so native/manual horizontal\n      scrolling moves it in the same scroll layer as tab content. That removes\n      the one-frame JS catch-up that caused visible jitter.\n\n      Lens remains in a separate overlay because it is allowed to grow above\n      and below the glass container.\n    */\n    .lens-viewport {\n      position: absolute;\n      z-index: 1;\n      inset: 0;\n      border-radius: inherit;\n      pointer-events: none;\n      overflow: visible;\n      clip-path: inset(-20px 0 -20px 0);\n    }\n\n    .selector-track {\n      position: absolute;\n      left: 0;\n      top: 0;\n      height: 100%;\n      border-radius: inherit;\n      pointer-events: none;\n      transition-duration: 300ms;\n      transition-property: all;\n    }\n\n    .selector {\n      position: absolute;\n      inset: 4px;\n      border-radius: inherit;\n      background: rgba(0,0,0,.10);\n      pointer-events: none;\n      transition-duration: 300ms;\n      transition-property: all;\n    }\n\n    .dark .selector {\n      background: rgba(255,255,255,.15);\n    }\n\n    .lens {\n      position: absolute;\n      inset: 4px;\n      border-radius: inherit;\n      opacity: 0;\n      background: rgba(0,0,0,.05);\n      box-shadow: var(--shadow-ios-light-glass-thumb);\n      pointer-events: none;\n      transition-duration: 300ms;\n      transition-property: all;\n    }\n\n    .dark .lens {\n      background: rgba(255,255,255,.10);\n      box-shadow: var(--shadow-ios-dark-glass-thumb);\n    }\n\n    /* Konsta pressed classes */\n    .selector.pressed {\n      opacity: 0;\n      scale: 1.4;\n    }\n\n    .lens.pressed {\n      opacity: 1;\n      scale: 1.4;\n    }\n\n    /* Tap-spring visual hold.\n       v6 can remove .pressed when its 300ms lifecycle completes; this temporary\n       class keeps the optical lens visible at the same base scale until the\n       spring itself is finished. */\n    .optical-tabs-playground .optical-working-lens.tap-spring-active {\n      opacity: 1 !important;\n      scale: var(--optical-pressed-scale, 1.25) !important;\n      transform-origin: 50% 50%;\n    }\n\n    .optical-tabs-playground #selector.tap-spring-hidden {\n      opacity: 0 !important;\n    }\n\n    /* Glass useIosHighlight(), separate from tabbar pressed lens */\n    .glass-light-wrap {\n      position: absolute;\n      left: 1px;\n      top: 1px;\n      right: 1px;\n      bottom: 1px;\n      border-radius: inherit;\n      overflow: hidden;\n      pointer-events: none;\n      opacity: 0;\n      transition-duration: 300ms;\n      z-index: 30;\n    }\n\n    .glass-light {\n      position: absolute;\n      pointer-events: none;\n      border-radius: 50%;\n      z-index: 10;\n      background-image: radial-gradient(\n        circle at center,\n        color-mix(in oklab, var(--color-ios-hover-highlight) 100%, transparent),\n        transparent 50%\n      );\n    }\n\n    .theme-switch {\n      position: absolute;\n      z-index: 40;\n      top: 14px;\n      right: 14px;\n      display: inline-flex;\n      align-items: center;\n      gap: 8px;\n      height: 36px;\n      padding: 0 12px;\n      border: 0;\n      border-radius: 999px;\n      background: rgba(255,255,255,.72);\n      box-shadow: 0 2px 12px rgba(0,0,0,.10);\n      backdrop-filter: blur(16px);\n      -webkit-backdrop-filter: blur(16px);\n      color: #111;\n      font: 500 13px/1 -apple-system, \"SF Pro Text\", system-ui, sans-serif;\n      cursor: pointer;\n      user-select: none;\n    }\n\n    .theme-switch svg {\n      width: 17px;\n      height: 17px;\n      fill: none;\n      stroke: currentColor;\n      stroke-width: 1.8;\n      stroke-linecap: round;\n      stroke-linejoin: round;\n    }\n\n    .dark .theme-switch {\n      background: rgba(50,50,50,.55);\n      box-shadow: var(--shadow-ios-dark-glass);\n      color: #fff;\n    }\n\n\n    .hold-delay-tuner {\n      position: absolute;\n      z-index: 50;\n      left: 14px;\n      top: 14px;\n      width: 180px;\n      padding: 10px 12px;\n      border-radius: 16px;\n      background: rgba(255,255,255,.78);\n      box-shadow: 0 4px 18px rgba(0,0,0,.12);\n      backdrop-filter: blur(16px);\n      -webkit-backdrop-filter: blur(16px);\n      color: #111;\n      font: 500 12px/16px -apple-system, \"SF Pro Text\", system-ui, sans-serif;\n    }\n\n    .dark .hold-delay-tuner {\n      background: rgba(50,50,50,.62);\n      color: #fff;\n      box-shadow: var(--shadow-ios-dark-glass);\n    }\n\n    .hold-delay-row {\n      display: flex;\n      align-items: baseline;\n      justify-content: space-between;\n      gap: 8px;\n      margin-bottom: 6px;\n    }\n\n    .hold-delay-value {\n      font: 600 12px/16px ui-monospace, SFMono-Regular, Menlo, monospace;\n      opacity: .72;\n    }\n\n    .hold-delay-tuner input[type=\"range\"] {\n      width: 100%;\n      margin: 0;\n      accent-color: var(--color-primary);\n    }\n\n    /* Standalone lens demo only. Tabs component selectors are untouched. */\n    .extracted-lens-demo {\n      position: absolute;\n      z-index: 19;\n      left: 50%;\n      bottom: calc(max(28px, env(safe-area-inset-bottom)) + 158px);\n      width: 92px;\n      height: 64px;\n      border-radius: 9999px;\n      transform: translateX(-50%);\n      pointer-events: none;\n      isolation: isolate;\n    }\n\n    .extracted-lens-demo .lens {\n      z-index: 1;\n      opacity: 1;\n      scale: var(--sl-lens-scale, 1.16);\n      transform-origin: 50% 50%;\n      background: rgba(20,20,20,var(--sl-glass-tint,.12));\n      box-shadow: 0 8px 24px rgba(0,0,0,.14);\n      -webkit-backdrop-filter:\n        blur(var(--sl-backdrop-blur,0px))\n        saturate(1.05)\n        brightness(var(--sl-glass-brightness,1.02));\n      backdrop-filter:\n        blur(var(--sl-backdrop-blur,0px))\n        url(#standalone-lens-filter)\n        saturate(1.05)\n        brightness(var(--sl-glass-brightness,1.02));\n    }\n\n    .dark .extracted-lens-demo .lens {\n      background: rgba(20,20,20,var(--sl-glass-tint,.12));\n      box-shadow: 0 8px 24px rgba(0,0,0,.20);\n    }\n\n    .extracted-lens-demo .lens::after {\n      content: \"\";\n      position: absolute;\n      inset: 0;\n      border-radius: inherit;\n      pointer-events: none;\n      box-shadow: var(--shadow-ios-light-glass-thumb);\n      opacity: var(--sl-bezel-opacity,.78);\n    }\n\n    .dark .extracted-lens-demo .lens::after {\n      box-shadow: var(--shadow-ios-dark-glass-thumb);\n    }\n\n    .standalone-map-preview {\n      position: absolute;\n      z-index: 2;\n      inset: 4px;\n      border-radius: inherit;\n      scale: var(--sl-lens-scale, 1.18);\n      transform-origin: 50% 50%;\n      background-repeat: no-repeat;\n      background-position: 50% 50%;\n      background-size: 100% 100%;\n      opacity: .62;\n      pointer-events: none;\n    }\n\n    .standalone-map-preview.is-hidden { opacity: 0; }\n\n\n    /* Standalone optics playground. This is a passive copy only; the real\n       v6 Tabs below remains untouched. */\n    .standalone-lens-playground {\n      position: absolute;\n      z-index: 19;\n      left: max(18px, env(safe-area-inset-left));\n      right: max(18px, env(safe-area-inset-right));\n      bottom: calc(max(28px, env(safe-area-inset-bottom)) + 158px);\n      height: 88px;\n      touch-action: none;\n      user-select: none;\n      -webkit-user-select: none;\n      cursor: grab;\n      overflow: visible;\n    }\n\n    .standalone-lens-playground.is-dragging {\n      cursor: grabbing;\n    }\n\n    .standalone-container-copy {\n      position: absolute;\n      z-index: 0;\n      left: 0;\n      right: 0;\n      top: 12px;\n      height: 64px;\n      border-radius: 9999px;\n      overflow: hidden;\n      background: rgba(255,255,255,.75);\n      box-shadow: var(--shadow-ios-light-glass);\n      backdrop-filter: blur(16px);\n      -webkit-backdrop-filter: blur(16px);\n      pointer-events: none;\n    }\n\n    .dark .standalone-container-copy {\n      background: rgba(50,50,50,.50);\n      box-shadow: var(--shadow-ios-dark-glass);\n    }\n\n    .standalone-tab-strip-copy {\n      position: absolute;\n      inset: 0;\n      display: flex;\n      align-items: stretch;\n      overflow: hidden;\n      border-radius: inherit;\n      pointer-events: none;\n    }\n\n    .standalone-copy-tab {\n      flex: 0 0 92px;\n      width: 92px;\n      height: 100%;\n      padding: 0 8px;\n      position: relative;\n      color: #000;\n      font: inherit;\n      pointer-events: none;\n    }\n\n    .dark .standalone-copy-tab {\n      color: #fff;\n    }\n\n    /* The standalone lens is now positioned inside the playground instead of\n       being independently anchored to the phone. */\n    .standalone-lens-playground .extracted-lens-demo {\n      position: absolute;\n      z-index: 2;\n      left: 0;\n      top: 12px;\n      bottom: auto;\n      width: 92px;\n      height: 64px;\n      border-radius: 9999px;\n      transform: none;\n      pointer-events: none;\n      isolation: isolate;\n      will-change: left;\n    }\n\n    /* ---------------------------------------------------------------\n       Interactive optical Tabs:\n       exact working standalone structure + original v6 mechanics.\n       --------------------------------------------------------------- */\n    .optical-tabs-playground > .optical-toolbar-pane {\n      position: absolute;\n      z-index: 0;\n      left: 0;\n      right: 0;\n      top: 12px;\n      width: auto;\n      height: 64px;\n      overflow: visible;\n      pointer-events: auto;\n    }\n\n    .optical-tabs-playground > .optical-toolbar-pane > .tab-strip {\n      width: 100%;\n      height: 100%;\n      pointer-events: auto;\n    }\n\n    .optical-tabs-playground .extracted-lens-demo {\n      z-index: 2;\n      pointer-events: none;\n    }\n\n    /* The old v6 lens mechanics still toggle .pressed.\n       Only its visual skin is replaced with Variant 7 optics. */\n    .optical-tabs-playground .extracted-lens-demo .optical-working-lens {\n      opacity: 0;\n      scale: 1;\n      transition-duration: 300ms;\n      transition-property: all;\n    }\n\n    .optical-tabs-playground .extracted-lens-demo .optical-working-lens.pressed {\n      opacity: 1;\n      /* Variant 7 base scale (1.25) multiplied by the live container scale.\n         When the container grows to 1.05 on hold, the lens target becomes\n         1.3125, so both surfaces expand proportionally. */\n      scale: var(--optical-pressed-scale, 1.25);\n    }\n\n    .dark .optical-tabs-playground .extracted-lens-demo .optical-working-lens {\n      background: rgba(20,20,20,.17);\n    }\n\n    /* Regular document-flow tuner. Not fixed, absolute, modal, or popup. */\n    .standalone-tuner-dom {\n      width: min(390px, 100%);\n      margin: 16px auto 56px;\n      border: 1px solid rgba(0,0,0,.10);\n      border-radius: 20px;\n      overflow: hidden;\n      background: rgba(255,255,255,.92);\n      color: #111;\n      box-shadow: 0 12px 34px rgba(0,0,0,.12);\n      font-family: -apple-system, \"SF Pro Text\", system-ui, sans-serif;\n    }\n\n    .dark .standalone-tuner-dom {\n      border-color: rgba(255,255,255,.09);\n      background: #1d1d1f;\n      color: #fff;\n    }\n\n    .standalone-tuner-head {\n      padding: 14px 16px 12px;\n      border-bottom: 1px solid rgba(0,0,0,.08);\n    }\n    .dark .standalone-tuner-head { border-bottom-color: rgba(255,255,255,.08); }\n    .standalone-tuner-head h2 { margin: 0; font-size: 17px; line-height: 22px; font-weight: 600; }\n    .standalone-tuner-head p { margin: 4px 0 0; opacity: .58; font-size: 12px; line-height: 16px; }\n    .standalone-tuner-body { padding: 14px 16px 22px; }\n\n    .standalone-group {\n      margin: 0 0 16px;\n      padding: 0 0 16px;\n      border-bottom: 1px solid rgba(0,0,0,.08);\n    }\n    .dark .standalone-group { border-bottom-color: rgba(255,255,255,.08); }\n    .standalone-group:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }\n    .standalone-group h3 { margin: 0 0 10px; font-size: 13px; line-height: 18px; font-weight: 600; }\n\n    .standalone-control {\n      display: grid;\n      grid-template-columns: minmax(0,1fr) auto;\n      gap: 5px 10px;\n      margin: 0 0 13px;\n    }\n    .standalone-control:last-child { margin-bottom: 0; }\n    .standalone-control label { min-width: 0; font-size: 13px; line-height: 18px; }\n    .standalone-control small { grid-column: 1/-1; margin-top: -3px; opacity: .58; font-size: 12px; line-height: 16px; }\n    .standalone-control output { min-width: 58px; opacity: .58; font-size: 13px; line-height: 18px; text-align: right; font-variant-numeric: tabular-nums; }\n    .standalone-control input { grid-column: 1/-1; width: 100%; margin: 1px 0 0; accent-color: var(--color-primary); }\n\n    .standalone-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }\n    .standalone-buttons button {\n      min-height: 36px;\n      padding: 7px 10px;\n      border: 0;\n      border-radius: 10px;\n      background: rgba(0,0,0,.07);\n      color: inherit;\n      font: 500 13px/18px -apple-system, \"SF Pro Text\", system-ui, sans-serif;\n    }\n    .dark .standalone-buttons button { background: rgba(255,255,255,.10); }\n\n    .standalone-position-readout {\n      display: flex;\n      align-items: baseline;\n      justify-content: space-between;\n      gap: 12px;\n      margin: 0 0 14px;\n      padding: 8px 10px;\n      border-radius: 10px;\n      background: rgba(0,0,0,.05);\n      font: 500 12px/16px var(--ui-font-family);\n    }\n\n    .dark .standalone-position-readout {\n      background: rgba(255,255,255,.06);\n    }\n\n    .standalone-position-readout output {\n      font-variant-numeric: tabular-nums;\n      opacity: .66;\n    }\n\n    .standalone-copy-status {\n      min-height: 16px;\n      margin-top: 8px;\n      opacity: .58;\n      font: 11px/16px var(--ui-font-family);\n    }\n\n    .standalone-map-wrap { overflow: hidden; border-radius: 10px; background: #101821; }\n    #sl-map-canvas { display: block; width: 100%; height: auto; image-rendering: auto; }\n    .standalone-readout {\n      margin: 8px 0 0;\n      padding: 8px;\n      border-radius: 10px;\n      background: rgba(0,0,0,.05);\n      opacity: .72;\n      font: 11px/15px ui-monospace, SFMono-Regular, Menlo, monospace;\n      white-space: pre-wrap;\n    }\n    .dark .standalone-readout { background: rgba(255,255,255,.06); }\n\n    @media (max-width: 520px) {\n      .standalone-tuner-dom {\n        width: 100vw;\n        margin: 0;\n        border-left: 0;\n        border-right: 0;\n        border-radius: 0;\n      }\n    }\n\n\n    .spring-graph-title {\n      display: flex;\n      align-items: baseline;\n      justify-content: space-between;\n      gap: 12px;\n      margin-bottom: 8px;\n    }\n\n    .spring-graph-title h3 {\n      margin: 0;\n    }\n\n    .spring-graph-title span {\n      opacity: .56;\n      font: 11px/15px ui-monospace, SFMono-Regular, Menlo, monospace;\n      white-space: nowrap;\n    }\n\n    .spring-graph-wrap {\n      overflow: hidden;\n      border-radius: 14px;\n      border: 1px solid rgba(0,0,0,.09);\n      background: rgba(0,0,0,.025);\n      touch-action: none;\n      user-select: none;\n      -webkit-user-select: none;\n    }\n\n    .dark .spring-graph-wrap {\n      border-color: rgba(255,255,255,.10);\n      background: rgba(255,255,255,.035);\n    }\n\n    .spring-graph {\n      display: block;\n      width: 100%;\n      height: auto;\n      touch-action: none;\n      overflow: visible;\n    }\n\n    .spring-grid-line {\n      stroke: currentColor;\n      stroke-opacity: .08;\n      stroke-width: 1;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .spring-baseline {\n      stroke: currentColor;\n      stroke-opacity: .24;\n      stroke-width: 1.5;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .spring-curve {\n      fill: none;\n      stroke: var(--color-primary);\n      stroke-width: 4;\n      stroke-linecap: round;\n      stroke-linejoin: round;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .spring-tangent {\n      stroke: currentColor;\n      stroke-opacity: .28;\n      stroke-width: 1.5;\n      stroke-dasharray: 4 4;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .spring-arrival {\n      stroke: var(--color-primary);\n      stroke-opacity: .48;\n      stroke-width: 1.5;\n      stroke-dasharray: 6 5;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .spring-duration-line {\n      stroke: currentColor;\n      stroke-opacity: .34;\n      stroke-width: 1.5;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .spring-point,\n    .spring-bend,\n    .spring-time-handle {\n      cursor: grab;\n      touch-action: none;\n    }\n\n    .spring-point:active,\n    .spring-bend:active,\n    .spring-time-handle:active {\n      cursor: grabbing;\n    }\n\n    .spring-point {\n      fill: var(--color-primary);\n      stroke: rgba(255,255,255,.95);\n      stroke-width: 3;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .spring-bend {\n      fill: rgba(255,255,255,.96);\n      stroke: var(--color-primary);\n      stroke-width: 2.5;\n      vector-effect: non-scaling-stroke;\n    }\n\n    .dark .spring-bend {\n      fill: #1d1d1f;\n    }\n\n    .spring-end-handle {\n      fill: currentColor;\n      fill-opacity: .78;\n    }\n\n    .spring-arrival-handle {\n      fill: var(--color-primary);\n    }\n\n    .spring-axis-label,\n    .spring-point-label,\n    .spring-time-label {\n      fill: currentColor;\n      pointer-events: none;\n      font-family: var(--ui-font-family, -apple-system, system-ui, sans-serif);\n    }\n\n    .spring-axis-label {\n      opacity: .44;\n      font-size: 12px;\n    }\n\n    .spring-point-label {\n      opacity: .68;\n      font-size: 11px;\n      font-weight: 500;\n    }\n\n    .spring-time-label {\n      opacity: .64;\n      font-size: 11px;\n      font-weight: 600;\n    }\n\n    .spring-graph-legend {\n      display: grid;\n      gap: 7px;\n      font-size: 12px;\n      line-height: 16px;\n      opacity: .72;\n    }\n\n    .spring-graph-legend > div {\n      display: flex;\n      align-items: center;\n      gap: 8px;\n    }\n\n    .spring-legend-dot {\n      display: inline-block;\n      flex: 0 0 auto;\n      width: 10px;\n      height: 10px;\n    }\n\n    .spring-legend-point {\n      border-radius: 50%;\n      background: var(--color-primary);\n    }\n\n    .spring-legend-bend {\n      border: 2px solid var(--color-primary);\n      transform: rotate(45deg) scale(.72);\n      background: transparent;\n    }\n\n    .spring-legend-line,\n    .spring-legend-end {\n      display: inline-block;\n      flex: 0 0 auto;\n      width: 18px;\n      height: 0;\n      border-top: 1.5px dashed var(--color-primary);\n    }\n\n    .spring-legend-end {\n      border-top-style: solid;\n      border-top-color: currentColor;\n      opacity: .55;\n    }\n\n    .baseline-note {\n      position: fixed;\n      left: 50%;\n      bottom: 8px;\n      transform: translateX(-50%);\n      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;\n      color: rgba(0,0,0,.5);\n      white-space: nowrap;\n    }\n\n    .dark .baseline-note {\n      color: rgba(255,255,255,.45);\n    }\n\n    @media (max-width: 520px) {\n      body { padding: 0; background: var(--color-ios-light-surface); }\n      .dark body { background: var(--color-ios-dark-surface); }\n      .phone {\n        width: 100vw;\n        height: 100vh;\n        min-height: 100vh;\n        height: 100dvh;\n        min-height: 100dvh;\n        height: var(--app-viewport-height, 100dvh);\n        min-height: var(--app-viewport-height, 100dvh);\n        border-radius: 0;\n        box-shadow: none;\n      }\n      .baseline-note { display: none; }\n    }\n\n\n    /* Step 7 workbench layout: preview + tuner are simultaneously visible.\n       This changes only the prototype page shell, never the Tabs component. */\n    .prototype-workbench {\n      width: min(798px, 100%);\n      height: min(760px, calc(100dvh - 48px));\n      display: grid;\n      grid-template-columns: minmax(320px, 390px) minmax(320px, 390px);\n      gap: 18px;\n      align-items: stretch;\n    }\n\n    .prototype-workbench > .phone {\n      width: 100%;\n      height: 100%;\n      min-height: 0;\n      margin: 0;\n    }\n\n    .prototype-workbench > .standalone-tuner-dom {\n      width: 100%;\n      height: 100%;\n      min-height: 0;\n      margin: 0;\n      overflow-y: auto;\n      overscroll-behavior: contain;\n      scrollbar-width: thin;\n    }\n\n    @media (max-width: 760px) {\n      body {\n        min-height: 100dvh;\n        height: 100dvh;\n        padding: 0;\n        display: block;\n        overflow: hidden;\n        background: var(--color-ios-light-surface);\n      }\n\n      .dark body {\n        background: var(--color-ios-dark-surface);\n      }\n\n      .prototype-workbench {\n        width: 100vw;\n        height: 100dvh;\n        display: grid;\n        grid-template-columns: 1fr;\n        grid-template-rows: 46dvh 54dvh;\n        gap: 0;\n      }\n\n      .prototype-workbench > .phone {\n        width: 100vw !important;\n        height: 46dvh !important;\n        min-height: 0 !important;\n        border-radius: 0;\n        box-shadow: none;\n      }\n\n      .prototype-workbench > .standalone-tuner-dom {\n        width: 100vw;\n        height: 54dvh;\n        min-height: 0;\n        margin: 0;\n        overflow-y: auto;\n        border-left: 0;\n        border-right: 0;\n        border-bottom: 0;\n        border-radius: 0;\n        box-shadow: none;\n      }\n\n      .standalone-tuner-head {\n        position: sticky;\n        z-index: 3;\n        top: 0;\n        background: rgba(255,255,255,.96);\n        backdrop-filter: blur(12px);\n        -webkit-backdrop-filter: blur(12px);\n      }\n\n      .dark .standalone-tuner-head {\n        background: rgba(29,29,31,.96);\n      }\n    }\n  \n    /* Mezfit typography.md — standalone prototype tokens.\n       Tab labels are interactive text => Body 15/20, medium 500. */\n    :host {\n      --ui-font-family: \"Golos Text\", sans-serif;\n      --ui-font-size-body: 15px;\n      --ui-line-height-body: 20px;\n      --ui-font-weight-medium: 500;\n    }\n\n    body,\n    button,\n    input,\n    output,\n    label,\n    pre {\n      font-family: var(--ui-font-family);\n    }\n\n\n:host { display:block; width:367px; height:64px; font-family:var(--ui-font-family); }\n.donor-root { position:relative; width:100%; height:64px; }\n.optical-tabs-playground { position:relative; inset:auto; width:100%; height:64px; margin:0; }\n.optical-tabs-playground > .optical-toolbar-pane,\n.optical-tabs-playground .extracted-lens-demo { top:0; }\n:host([startup]) .optical-toolbar-pane { background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }\n\n/* Five equal icon-only slots. Geometry belongs to the responsive container. */\n.tab-link { box-sizing:border-box; min-width:0; flex:0 0 20%; width:20%; padding:0; }\n.tab-label { display:none!important; }\n.tab-content { padding:0; justify-content:center; }\n.tab-icon-wrap, .tab-icon { width:36px; height:36px; }\n.tab-icon-outline, .tab-icon-outline * { stroke-width:1!important; }\n\n\n</style><div class=\"donor-root dark\"><svg width=\"0\" height=\"0\" style=\"position:absolute;pointer-events:none\" aria-hidden=\"true\">\n    <filter id=\"standalone-lens-filter\" x=\"-71%\" y=\"-71%\" width=\"242%\" height=\"242%\" color-interpolation-filters=\"sRGB\"></filter>\n  </svg>    <div class=\"standalone-lens-playground optical-tabs-playground\" data-tab-mode=\"icons\" aria-label=\"Optical Tabs\">\n      <div class=\"toolbar-pane optical-toolbar-pane\" id=\"toolbar-pane\">\n        <div class=\"tab-strip\" id=\"tab-strip\">\n          <button class=\"tab-link active initial-neutral\" type=\"button\" data-index=\"0\" aria-selected=\"true\" aria-label=\"Сегодня\" title=\"Сегодня\" data-icon=\"calendar-event\"><span class=\"tab-content\"><span class=\"tab-icon-wrap\" aria-hidden=\"true\"><svg class=\"tab-icon tab-icon-outline\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"1\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12\" />\n  <path d=\"M16 3l0 4\" />\n  <path d=\"M8 3l0 4\" />\n  <path d=\"M4 11l16 0\" />\n  <path d=\"M8 15h2v2h-2l0 -2\" />\n</svg><svg class=\"tab-icon tab-icon-filled\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"currentColor\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M16 2a1 1 0 0 1 .993 .883l.007 .117v1h1a3 3 0 0 1 2.995 2.824l.005 .176v12a3 3 0 0 1 -2.824 2.995l-.176 .005h-12a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-12a3 3 0 0 1 2.824 -2.995l.176 -.005h1v-1a1 1 0 0 1 1.993 -.117l.007 .117v1h6v-1a1 1 0 0 1 1 -1m3 8h-14v8.625c0 .705 .386 1.286 .883 1.366l.117 .009h12c.513 0 .936 -.53 .993 -1.215l.007 -.16zm-9 4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z\" />\n</svg></span><span class=\"tab-label\">Сегодня</span></span></button>\n\n          <button class=\"tab-link\" type=\"button\" data-index=\"1\" aria-selected=\"false\" aria-label=\"Клиенты\" title=\"Клиенты\" data-icon=\"users\"><span class=\"tab-content\"><span class=\"tab-icon-wrap\" aria-hidden=\"true\"><svg class=\"tab-icon tab-icon-outline\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"1\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\" />\n  <path d=\"M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\" />\n  <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />\n  <path d=\"M21 21v-2a4 4 0 0 0 -3 -3.85\" />\n</svg><svg class=\"tab-icon tab-icon-filled\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"><!-- Custom filled counterpart based on Tabler users; not an official Tabler filled icon. --><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2z\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75zM18 15.15A4 4 0 0 1 21 19v2h-3z\"/></svg></span><span class=\"tab-label\">Клиенты</span></span></button>\n\n          <button class=\"tab-link\" type=\"button\" data-index=\"2\" aria-selected=\"false\" aria-label=\"Программы\" title=\"Программы\" data-icon=\"clipboard-list\"><span class=\"tab-content\"><span class=\"tab-icon-wrap\" aria-hidden=\"true\"><svg class=\"tab-icon tab-icon-outline\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"1\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2\" />\n  <path d=\"M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2\" />\n  <path d=\"M9 12l.01 0\" />\n  <path d=\"M13 12l2 0\" />\n  <path d=\"M9 16l.01 0\" />\n  <path d=\"M13 16l2 0\" />\n</svg><svg class=\"tab-icon tab-icon-filled\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"currentColor\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-8.987 10.83h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m5.99 0h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m-5.99 -4h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m5.99 0h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m-1 -9a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n</svg></span><span class=\"tab-label\">Программы</span></span></button>\n\n\n          <button class=\"tab-link\" type=\"button\" data-index=\"3\" aria-selected=\"false\" aria-label=\"Аналитика\" title=\"Аналитика\" data-icon=\"chart-dots-2\"><span class=\"tab-content\"><span class=\"tab-icon-wrap\" aria-hidden=\"true\"><svg class=\"tab-icon tab-icon-outline\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"1\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M3 3v18h18\" />\n  <path d=\"M7 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" />\n  <path d=\"M11 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" />\n  <path d=\"M16 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" />\n  <path d=\"M21 3l-6 1.5\" />\n  <path d=\"M14.113 6.65l2.771 3.695\" />\n  <path d=\"M16 12.5l-5 2\" />\n</svg><svg class=\"tab-icon tab-icon-filled\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"currentColor\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M3 2a1 1 0 0 1 1 1v17h17a1 1 0 0 1 .993 .883l.007 .117a1 1 0 0 1 -1 1h-18a1 1 0 0 1 -1 -1v-18a1 1 0 0 1 1 -1m18.97 .757a1 1 0 0 1 -.727 1.213l-5.256 1.314a3 3 0 0 1 -.55 1.465l1.768 2.358a3.003 3.003 0 0 1 3.795 2.893a3 3 0 0 1 -5.436 1.751l-3.57 1.428a3 3 0 0 1 -5.994 -.179l.005 -.176a3 3 0 0 1 5.43 -1.576l3.57 -1.428l.015 -.17c.06 -.518 .253 -.996 .542 -1.4l-1.767 -2.357a3.003 3.003 0 0 1 -3.795 -2.893l.005 -.176a3 3 0 0 1 5.497 -1.48l5.255 -1.314a1 1 0 0 1 1.213 .727\" />\n</svg></span><span class=\"tab-label\">Аналитика</span></span></button>\n\n          <button class=\"tab-link\" type=\"button\" data-index=\"4\" aria-selected=\"false\" aria-label=\"Настройки\" title=\"Настройки\" data-icon=\"settings\"><span class=\"tab-content\"><span class=\"tab-icon-wrap\" aria-hidden=\"true\"><svg class=\"tab-icon tab-icon-outline\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"1\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065\" />\n  <path d=\"M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\" />\n</svg><svg class=\"tab-icon tab-icon-filled\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"currentColor\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6\" />\n</svg></span><span class=\"tab-label\">Настройки</span></span></button>\n\n            <span class=\"selector-track\" id=\"selector-track\" aria-hidden=\"true\">\n              <span class=\"selector\" id=\"selector\"></span>\n            </span>\n          </div>\n      </div>\n\n      <span class=\"selector-track extracted-lens-demo\" id=\"lens-track\" aria-hidden=\"true\">\n        <span\n          class=\"lens optical-working-lens\"\n          id=\"lens\"\n          style=\"\n            --sl-glass-tint:.17;\n            --sl-backdrop-blur:0px;\n            --sl-glass-brightness:1.02;\n            --sl-bezel-opacity:.86;\n          \">\n        </span>\n      </span>\n    </div>\n\n</div>";
+  const document = new Proxy(window.document, {
+    get(target, key) {
+      if (key === 'getElementById') return id => shadow.getElementById(id);
+      const value = Reflect.get(target, key, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    }
+  });
+
+    (() => {
+      const holdDelayMs = 140;
+      const pane = document.getElementById('toolbar-pane');
+      const tabStrip = document.getElementById('tab-strip');
+      const selectorTrack = document.getElementById('selector-track');
+      const lensTrack = document.getElementById('lens-track');
+      const selector = document.getElementById('selector');
+      const lens = document.getElementById('lens');
+      const links = [...tabStrip.querySelectorAll('.tab-link')];
+
+
+      const data = {
+        activeIndex: 0,
+        newActiveIndex: 0,
+        touched: false,
+        moved: false,
+        setTransform: null,
+        raf: null,
+        suppressNativeClick: false,
+        lensPressedAt: 0,
+        lensReleasePending: false,
+        lensFullyExpanded: false,
+        lensTimer: null,
+        pressIntentTimer: null,
+        gesture: 'idle',
+        touchStartX: 0,
+        touchStartY: 0,
+        touchStartScrollLeft: 0,
+        lastPointerX: 0,
+        holdActivated: false,
+        glass: {}
+      };
+
+      function isTextMode() {
+        return pane.closest('.optical-tabs-playground')?.dataset.tabMode === 'text';
+      }
+
+      const TEXT_SELECTOR_EDGE = 4;       // L
+      const TEXT_SELECTOR_TEXT_PAD = 8;   // padding inside visible selector
+
+      const ICON_CONTENT_MIN = 28;
+      const ICON_SELECTOR_TEXT_PAD = 8; // small reserve around widest content
+      const ICON_SELECTOR_EDGE = 4;     // L: fixed Konsta inner frame
+
+      // Vertical reserve around the ACTUAL icon+label stack.
+      // The label sits visually lower, so bottom reserve is slightly larger.
+      const ICON_SURFACE_PAD_TOP = 6;
+      const ICON_SURFACE_PAD_BOTTOM = 8;
+      const ICON_SURFACE_EDGE_MIN = 2;
+
+      function syncIconSurfaceVerticalGeometry() {
+        // Same base surface for the selector and refracting lens.
+        selector.style.top = lens.style.top = '4px';
+        selector.style.bottom = lens.style.bottom = '4px';
+      }
+
+      function syncSlotWidths() {
+        const share = `${100 / links.length}%`;
+        links.forEach(link => {
+          link.style.width = share;
+          link.style.flexBasis = share;
+        });
+        syncIconSurfaceVerticalGeometry();
+      }
+
+      function visualTrackGeometry(link) {
+        if (!link) return {left:0, width:0};
+        const width = tabStrip.clientWidth / links.length;
+        return {left:links.indexOf(link) * width, width};
+      }
+
+      function positionSelector(index, animate = true) {
+        const link = links[index];
+        if (!link) return;
+
+        const geometry = visualTrackGeometry(link);
+        selectorTrack.style.transitionDuration = animate ? '300ms' : '0ms';
+        selectorTrack.style.width = `${geometry.width}px`;
+        selectorTrack.style.transform = `translateX(${geometry.left}px)`;
+      }
+
+      function positionLensTrack(index, animate = true) {
+        const link = links[index];
+        if (!link) return;
+
+        const geometry = visualTrackGeometry(link);
+        lensTrack.style.transitionDuration = animate ? '300ms' : '0ms';
+        lensTrack.style.width = `${geometry.width}px`;
+        const visualLeft = geometry.left - tabStrip.scrollLeft;
+        lensTrack.style.transform = `translateX(${visualLeft}px)`;
+      }
+
+      function revealTab(index) {
+        const link = links[index];
+        if (!link) return;
+
+        const left = link.offsetLeft;
+        const right = left + link.offsetWidth;
+        const visibleLeft = tabStrip.scrollLeft;
+        const visibleRight = visibleLeft + tabStrip.clientWidth;
+
+        if (left < visibleLeft || right > visibleRight) {
+          const target = left - (tabStrip.clientWidth - link.offsetWidth) / 2;
+          tabStrip.scrollTo({
+            left: Math.max(0, target),
+            behavior: 'smooth'
+          });
+        }
+      }
+
+      function updateActive(index) {
+        const previousIndex = data.activeIndex;
+        data.activeIndex = index;
+        data.newActiveIndex = index;
+        window.document.getElementById('selectedTabName').textContent = links[index].getAttribute('aria-label');
+
+        links.forEach((link, i) => {
+          const active = i === index;
+          link.classList.toggle('active', active);
+          link.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+
+        if (previousIndex !== index) {
+          window.dispatchEvent(
+            new CustomEvent('mezfit-tab-active-change', {
+              detail: { index, previousIndex }
+            })
+          );
+        }
+
+        positionSelector(index);
+        positionLensTrack(index);
+        revealTab(index);
+        requestAnimationFrame(syncIconSurfaceVerticalGeometry);
+
+
+      }
+
+
+
+      let stripScrollStart = 0;
+      let stripDidScroll = false;
+
+      tabStrip.addEventListener('pointerdown', () => {
+        stripScrollStart = tabStrip.scrollLeft;
+        stripDidScroll = false;
+      });
+
+      tabStrip.addEventListener('scroll', () => {
+        if (Math.abs(tabStrip.scrollLeft - stripScrollStart) > 4) {
+          stripDidScroll = true;
+        }
+
+        // Selector is a child of tabStrip and therefore moves with the same
+        // scroll layer. No JS synchronization is needed here.
+        //
+        // Lens is outside the scroller; keep its resting position aligned only
+        // while it is not actively controlled by a press gesture.
+        if (data.gesture !== 'press') {
+          positionLensTrack(data.activeIndex, false);
+        }
+      }, { passive: true });
+
+      links.forEach((link, index) => {
+        link.addEventListener('click', (event) => {
+          if (stripDidScroll) {
+            event.preventDefault();
+            stripDidScroll = false;
+            return;
+          }
+          links.forEach(item => item.classList.remove('initial-neutral'));
+          updateActive(index);
+        });
+      });
+
+      // Konsta useIosTabbarHighlight — translated directly to standalone JS.
+      function startAnimation() {
+        data.raf = requestAnimationFrame(() => {
+          if (!data.setTransform) return;
+          lensTrack.style.transform = data.setTransform;
+          lensTrack.style.transitionTimingFunction = 'ease-out';
+          data.setTransform = null;
+        });
+      }
+
+      function stopAnimation() {
+        cancelAnimationFrame(data.raf);
+      }
+
+      const LENS_EXPAND_MS = 300;
+
+      function beginLensExpansion() {
+        clearTimeout(data.lensTimer);
+
+        data.lensPressedAt = performance.now();
+        data.lensReleasePending = false;
+        data.lensFullyExpanded = false;
+
+        selector.classList.add('pressed');
+        lens.classList.add('pressed');
+
+        data.lensTimer = setTimeout(() => {
+          data.lensFullyExpanded = true;
+
+          // If the finger was already released, the lens is allowed to
+          // shrink only now, after reaching its full 1.4 scale.
+          if (data.lensReleasePending) {
+            endLensExpansion();
+          }
+        }, LENS_EXPAND_MS);
+      }
+
+      function requestLensRelease() {
+        if (data.lensFullyExpanded) {
+          endLensExpansion();
+          return;
+        }
+
+        // Keep the pressed/full-growth target in place. The timer completes
+        // the growth first, then starts the shrink.
+        data.lensReleasePending = true;
+      }
+
+      function endLensExpansion() {
+        clearTimeout(data.lensTimer);
+        data.lensTimer = null;
+        data.lensReleasePending = false;
+        data.lensFullyExpanded = false;
+
+        selector.classList.remove('pressed');
+        lens.classList.remove('pressed');
+      }
+
+      function cancelLensForScroll() {
+        clearTimeout(data.lensTimer);
+        data.lensTimer = null;
+        data.lensReleasePending = false;
+        data.lensFullyExpanded = false;
+
+        selector.classList.remove('pressed');
+        lens.classList.remove('pressed');
+      }
+
+      function setHighlightOnTouch(
+        e,
+        { startLens = true, holdStart = false } = {}
+      ) {
+        const rect = tabStrip.getBoundingClientRect();
+        const contentX = e.clientX - rect.left + tabStrip.scrollLeft;
+
+        const centers = links.map((link) => link.offsetLeft + link.offsetWidth / 2);
+        const closestCenter = centers.reduce((prev, curr) =>
+          Math.abs(curr - contentX) < Math.abs(prev - contentX) ? curr : prev
+        , centers[0]);
+
+        data.newActiveIndex = centers.indexOf(closestCenter);
+        const targetLink = links[data.newActiveIndex];
+        const targetGeometry = visualTrackGeometry(targetLink);
+        const minLeft = 0;
+        const maxLeft = tabStrip.scrollWidth - targetGeometry.width;
+        const rawLeft = contentX - targetGeometry.width / 2;
+        const translateX = Math.max(minLeft, Math.min(rawLeft, maxLeft));
+        const visualTranslateX = translateX - tabStrip.scrollLeft;
+
+        // Width now animates together with X when Text labels have different
+        // lengths. Icons mode still resolves to the fixed 92px slot.
+        lensTrack.style.width = `${targetGeometry.width}px`;
+
+        if (holdStart) {
+          // Long press only:
+          // snap to the nearest TAB CENTER, while using that label's width.
+          const snappedContentX = targetGeometry.left;
+          const snappedVisualX = snappedContentX - tabStrip.scrollLeft;
+
+          lensTrack.style.transitionDuration = '0ms';
+          lensTrack.style.transitionTimingFunction = '';
+          lensTrack.style.transform = `translateX(${snappedVisualX}px)`;
+
+          // Hidden selector follows the exact same content-sized geometry.
+          selectorTrack.style.transitionDuration = '0ms';
+          selectorTrack.style.transitionTimingFunction = '';
+          selectorTrack.style.width = `${targetGeometry.width}px`;
+          selectorTrack.style.transform = `translateX(${snappedContentX}px)`;
+
+          // Make sure snapped geometry is committed before scale/opacity starts.
+          void lensTrack.offsetWidth;
+
+          if (startLens && !lens.classList.contains('pressed')) {
+            beginLensExpansion();
+          }
+
+          // Subsequent hold-drag frames keep the existing continuous behavior.
+          requestAnimationFrame(() => {
+            lensTrack.style.transitionDuration = '300ms';
+          });
+
+          return;
+        }
+
+        if (startLens && !lens.classList.contains('pressed')) {
+          beginLensExpansion();
+        }
+
+        // During an already-active long press, the selector is hidden by the
+        // ORIGINAL selector.pressed state. Keep its track physically together
+        // with the lens while the finger moves.
+        if (data.holdActivated) {
+          selectorTrack.style.transitionDuration = '0ms';
+          selectorTrack.style.transitionTimingFunction = '';
+          selectorTrack.style.width = `${targetGeometry.width}px`;
+          selectorTrack.style.transform = `translateX(${translateX}px)`;
+        }
+
+        // Original lens movement path.
+        data.setTransform = `translateX(${visualTranslateX}px)`;
+        startAnimation();
+      }
+
+      function unsetHighlightOnTouch() {
+        cancelAnimationFrame(data.raf);
+        data.setTransform = null;
+
+        const next = data.newActiveIndex;
+
+        if (data.holdActivated) {
+          // Selector is still hidden by the ORIGINAL .pressed state.
+          // Put it exactly at the destination BEFORE requestLensRelease()
+          // removes .pressed and starts the normal selector fade-in.
+          positionSelector(next, false);
+          selectorTrack.style.transitionTimingFunction = '';
+        }
+
+        // Original lens lifecycle. No extra timers/classes/handoff logic.
+        requestLensRelease();
+
+        if (data.activeIndex !== next) {
+          links[next].click();
+          data.suppressNativeClick = true;
+        }
+
+        // For quick tap this is the original animated selector behavior.
+        // For hold it is already at this exact position, so there is no run.
+        positionSelector(next);
+        positionLensTrack(next);
+        lensTrack.style.transitionTimingFunction = '';
+        revealTab(next);
+      }
+
+
+      function cancelPressIntent() {
+        clearTimeout(data.pressIntentTimer);
+        data.pressIntentTimer = null;
+      }
+
+      function classifyAsScroll() {
+        cancelPressIntent();
+        data.gesture = 'scroll';
+
+        // Scroll can be chosen only while the gesture is still pending.
+        // Once press mode starts, movement belongs to the lens until release.
+        cancelLensForScroll();
+        data.setTransform = null;
+        stopAnimation();
+        positionLensTrack(data.activeIndex, false);
+      }
+
+      function moveManualScroll(clientX) {
+        const dx = clientX - data.touchStartX;
+        const maxScroll = Math.max(0, tabStrip.scrollWidth - tabStrip.clientWidth);
+        tabStrip.scrollLeft = Math.max(
+          0,
+          Math.min(maxScroll, data.touchStartScrollLeft - dx)
+        );
+      }
+
+      function onPointer(e) {
+        if (e.pointerType !== 'touch') return;
+
+        if (e.type === 'pointerdown') {
+          data.rect = tabStrip.getBoundingClientRect();
+          data.touched = true;
+          data.moved = false;
+          data.gesture = 'pending';
+          data.holdActivated = false;
+          data.touchStartX = e.clientX;
+          data.touchStartY = e.clientY;
+          data.touchStartScrollLeft = tabStrip.scrollLeft;
+          data.lastPointerX = e.clientX;
+
+          // Short movement before timeout => scroll.
+          // No movement until timeout => press/lens mode.
+          cancelPressIntent();
+          data.pressIntentTimer = setTimeout(() => {
+            if (!data.touched || data.gesture !== 'pending') return;
+
+            data.holdActivated = true;
+            data.gesture = 'press';
+
+            setHighlightOnTouch(
+              { clientX: data.lastPointerX, clientY: e.clientY },
+              { startLens: true, holdStart: true }
+            );
+          }, holdDelayMs);
+
+          return;
+        }
+
+        if (e.type === 'pointermove') {
+          if (!data.touched) return;
+
+          data.lastPointerX = e.clientX;
+
+          const dx = e.clientX - data.touchStartX;
+          const dy = e.clientY - data.touchStartY;
+
+          if (data.gesture === 'pending') {
+            if (
+              dx !== 0 &&
+              Math.abs(dx) >= Math.abs(dy)
+            ) {
+              classifyAsScroll();
+              moveManualScroll(e.clientX);
+            }
+            return;
+          }
+
+          if (data.gesture === 'scroll') {
+            e.preventDefault();
+            moveManualScroll(e.clientX);
+            return;
+          }
+
+          if (data.gesture === 'press') {
+            // Critical rule: after long-press activation, horizontal movement
+            // controls the lens and can never switch this gesture to scrolling.
+            e.preventDefault();
+            data.moved = true;
+            setHighlightOnTouch(e, { startLens: false });
+          }
+          return;
+        }
+
+        if (e.type === 'pointerup' || e.type === 'pointercancel') {
+          if (!data.touched) return;
+
+          const wasScroll = data.gesture === 'scroll';
+          const wasPress = data.gesture === 'press';
+
+          data.touched = false;
+          data.moved = false;
+          cancelPressIntent();
+
+          // A real finger tap almost always contains 1-3px of horizontal jitter.
+          // Our zero-delay scroller intentionally starts moving on the first
+          // horizontal pixel, so that tiny jitter can temporarily classify the
+          // gesture as "scroll". But the click guard already considers scrolling
+          // real only after >4px. Use the same threshold here.
+          //
+          // Result:
+          //   1-4px micro-jitter -> still a tap -> lens appears;
+          //   >4px movement      -> real scroll -> no lens.
+          const scrollDistance = Math.abs(
+            tabStrip.scrollLeft - data.touchStartScrollLeft
+          );
+          const wasRealScroll = wasScroll && scrollDistance > 4;
+
+          if (wasRealScroll) {
+            // Pure scroll gesture: no lens and no tab selection.
+            data.holdActivated = false;
+            data.gesture = 'idle';
+            positionLensTrack(data.activeIndex, false);
+            stopAnimation();
+            return;
+          }
+
+          if (wasScroll) {
+            // Micro-jitter only. Undo the tiny visual shift and continue through
+            // the unchanged quick-tap path below.
+            tabStrip.scrollLeft = data.touchStartScrollLeft;
+          }
+
+          if (!wasPress) {
+            // Quick tap: preserve the existing v5 lens lifecycle.
+            data.gesture = 'press';
+            setHighlightOnTouch(e, { startLens: true });
+          } else {
+            setHighlightOnTouch(e, { startLens: false });
+          }
+
+          unsetHighlightOnTouch();
+          data.holdActivated = false;
+          data.gesture = 'idle';
+          stopAnimation();
+        }
+      }
+
+      pane.addEventListener('pointerdown', onPointer);
+      document.addEventListener('pointermove', onPointer);
+      document.addEventListener('pointerup', onPointer);
+      document.addEventListener('pointercancel', onPointer);
+
+      pane.addEventListener('click', (e) => {
+        if (data.suppressNativeClick && e.isTrusted) {
+          data.suppressNativeClick = false;
+          e.stopPropagation();
+        }
+      }, true);
+
+      // Konsta Glass/useIosHighlight behavior for the outer ToolbarPane.
+      function nextTick(fn) {
+        requestAnimationFrame(() => requestAnimationFrame(fn));
+      }
+
+      function setGlassLightPosition(e) {
+        const g = data.glass;
+        if (!g.lightEl) return;
+        const offsetX = e.clientX - g.rect.x;
+        const offsetY = e.clientY - g.rect.y;
+        g.lightEl.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
+      }
+
+      function removeGlassHighlight() {
+        const g = data.glass;
+
+        clearTimeout(g.showTimer);
+        g.showTimer = null;
+        g.pending = false;
+
+        if (g.elScale) {
+          g.elScale = false;
+          pane.style.scale = '';
+
+          const onTransitionEnd = () => {
+            pane.style.transitionDuration = '';
+            pane.style.transitionTimingFunction = '';
+            pane.removeEventListener('transitionend', onTransitionEnd);
+          };
+          pane.addEventListener('transitionend', onTransitionEnd);
+        }
+
+        if (g.lightElWrap) {
+          const wrap = g.lightElWrap;
+          if (wrap.style.opacity === '0') {
+            wrap.remove();
+          } else {
+            wrap.addEventListener('transitionend', () => wrap.remove(), { once: true });
+            wrap.style.opacity = 0;
+          }
+        }
+
+        g.lightEl = null;
+        g.lightElWrap = null;
+      }
+
+      pane.addEventListener('pointerenter', (e) => {
+        const g = data.glass;
+        g.rect = pane.getBoundingClientRect();
+
+        const wrap = document.createElement('span');
+        wrap.className = 'glass-light-wrap';
+
+        const light = document.createElement('span');
+        light.className = 'glass-light';
+
+        const { width, height } = g.rect;
+        const radius = Math.sqrt(width ** 2 + height ** 2);
+
+        light.style.width = `${radius * 2}px`;
+        light.style.height = `${radius * 2}px`;
+        light.style.left = `${-radius}px`;
+        light.style.top = `${-radius}px`;
+
+        g.lightEl = light;
+        g.lightElWrap = wrap;
+        g.pointerType = e.pointerType;
+        g.pending = e.pointerType !== 'mouse';
+
+        setGlassLightPosition(e);
+        wrap.appendChild(light);
+
+        const showGlassHighlight = () => {
+          if (!g.lightElWrap || !g.lightEl || !g.pending && e.pointerType !== 'mouse') {
+            return;
+          }
+
+          if (!wrap.isConnected) {
+            pane.appendChild(wrap);
+          }
+
+          if (e.pointerType !== 'mouse') {
+            g.pending = false;
+            g.elScale = true;
+            const scale = (g.rect.width > 60 || g.rect.height > 60) ? 1.05 : 1.25;
+            pane.style.scale = scale;
+            pane.style.transitionDuration = '300ms';
+            pane.style.transitionTimingFunction = 'ease-in-out';
+          }
+
+          nextTick(() => {
+            if (wrap.isConnected) wrap.style.opacity = 1;
+          });
+        };
+
+        if (e.pointerType === 'mouse') {
+          // Preserve desktop hover behavior.
+          showGlassHighlight();
+        } else {
+          // Touch: white light + container scale appear only after the same
+          // delay that activates long-press. A slightly long normal tap no
+          // longer flashes the glass effect.
+          clearTimeout(g.showTimer);
+          g.showTimer = setTimeout(showGlassHighlight, holdDelayMs);
+        }
+      });
+
+      pane.addEventListener('pointermove', setGlassLightPosition);
+      pane.addEventListener('pointerleave', removeGlassHighlight);
+
+      // A touch can end while the pointer is still geometrically over the pane,
+      // so pointerleave is not reliable enough to cancel a pending highlight.
+      document.addEventListener('pointerup', (e) => {
+        if (e.pointerType !== 'mouse') removeGlassHighlight();
+      });
+      document.addEventListener('pointercancel', (e) => {
+        if (e.pointerType !== 'mouse') removeGlassHighlight();
+      });
+
+
+      const modeIcons = {"users": {"outline": "<svg class=\"tab-icon tab-icon-outline\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"1\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\" />\n  <path d=\"M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\" />\n  <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />\n  <path d=\"M21 21v-2a4 4 0 0 0 -3 -3.85\" />\n</svg>", "filled": "<svg class=\"tab-icon tab-icon-filled\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"><!-- Custom filled counterpart based on Tabler users; not an official Tabler filled icon. --><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2z\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75zM18 15.15A4 4 0 0 1 21 19v2h-3z\"/></svg>"}, "barbell": {"outline": "<svg class=\"tab-icon tab-icon-outline\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"1\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M2 12h1\" />\n  <path d=\"M6 8h-2a1 1 0 0 0 -1 1v6a1 1 0 0 0 1 1h2\" />\n  <path d=\"M6 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1\" />\n  <path d=\"M9 12h6\" />\n  <path d=\"M15 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1\" />\n  <path d=\"M18 8h2a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-2\" />\n  <path d=\"M22 12h-1\" />\n</svg>", "filled": "<svg class=\"tab-icon tab-icon-filled\" aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  width=\"24\"\n  height=\"24\"\n  viewBox=\"0 0 24 24\"\n  fill=\"currentColor\"\n \n>\n  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n  <path d=\"M4 7a1 1 0 0 1 1 1v8a1 1 0 0 1 -2 0v-3h-1a1 1 0 0 1 0 -2h1v-3a1 1 0 0 1 1 -1\" />\n  <path d=\"M20 7a1 1 0 0 1 1 1v3h1a1 1 0 0 1 0 2h-1v3a1 1 0 0 1 -2 0v-8a1 1 0 0 1 1 -1\" />\n  <path d=\"M16 5a2 2 0 0 1 2 2v10a2 2 0 1 1 -4 0v-4h-4v4a2 2 0 1 1 -4 0v-10a2 2 0 1 1 4 0v4h4v-4a2 2 0 0 1 2 -2\" />\n</svg>"}};
+      window.document.querySelectorAll('[data-demo-mode]').forEach(button => {
+        button.addEventListener('click', () => {
+          const coach = button.dataset.demoMode === 'coach';
+          const name = coach ? 'users' : 'barbell';
+          const label = coach ? 'Клиенты' : 'Тренировка';
+          const link = links[1];
+          link.querySelector('.tab-icon-wrap').innerHTML = modeIcons[name].outline + modeIcons[name].filled;
+          link.querySelector('.tab-label').textContent = label;
+          link.setAttribute('aria-label', label);
+          link.setAttribute('title', label);
+          link.dataset.icon = name;
+          window.document.querySelectorAll('[data-demo-mode]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+          updateActive(data.activeIndex);
+        });
+      });
+
+      updateActive(0);
+      requestAnimationFrame(() => {
+        syncSlotWidths();
+        positionSelector(0, false);
+        positionLensTrack(0, false);
+      });
+      host.addEventListener('tabs-layout-ready', () => {
+        syncSlotWidths();
+        positionSelector(data.activeIndex, false);
+        positionLensTrack(data.activeIndex, false);
+      });
+      window.addEventListener('resize', () => {
+        syncSlotWidths();
+        positionSelector(data.activeIndex, false);
+        positionLensTrack(data.activeIndex, false);
+      });
+    })();
+  
+
+    (() => {
+      try {
+        const lens = document.getElementById('lens');
+        const pane = document.getElementById('toolbar-pane');
+        const filter = document.getElementById('standalone-lens-filter');
+        if (!lens || !pane || !filter) return;
+
+        const OPTICS = Object.freeze({
+          neutralEdge: 1.7,
+          rimWidth: 8,
+          rimStrength: .67,
+          trenchWidth: 1,
+          trenchStrength: .09,
+          centerStrength: 0,
+          centerRadius: 1.02,
+          bezelOpacity: .86,
+          lensScale: 1.25,
+          glassTint: .17,
+          backdropBlur: 0,
+          glassBrightness: 1.02,
+          refraction: 8,
+          rgbSpread: .1,
+          padding: 51
+        });
+
+        function syncLensScaleWithContainer() {
+          const containerScale =
+            Number.parseFloat(pane.style.scale) || 1;
+
+          const pressedScale =
+            OPTICS.lensScale * containerScale;
+
+          lens.style.setProperty(
+            '--optical-pressed-scale',
+            String(pressedScale)
+          );
+        }
+
+        // The original v6 glass mechanics changes pane.style.scale to 1.05
+        // during a long hold. Observe only that style change and mirror the
+        // factor into the optical lens. No gesture/tap/scroll logic is changed.
+        const paneScaleObserver = new MutationObserver(
+          syncLensScaleWithContainer
+        );
+
+        paneScaleObserver.observe(
+          pane,
+          {
+            attributes: true,
+            attributeFilter: ['style']
+          }
+        );
+
+        syncLensScaleWithContainer();
+
+        filter.innerHTML = `
+          <feImage
+            id="optical-vector-image"
+            x="0"
+            y="0"
+            width="1"
+            height="1"
+            preserveAspectRatio="none"
+            result="vectorMap">
+          </feImage>
+
+          <feDisplacementMap
+            id="optical-disp-r"
+            in="SourceGraphic"
+            in2="vectorMap"
+            scale="8.1"
+            xChannelSelector="R"
+            yChannelSelector="G">
+          </feDisplacementMap>
+          <feColorMatrix
+            type="matrix"
+            result="redPass"
+            values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0">
+          </feColorMatrix>
+
+          <feDisplacementMap
+            id="optical-disp-g"
+            in="SourceGraphic"
+            in2="vectorMap"
+            scale="8"
+            xChannelSelector="R"
+            yChannelSelector="G">
+          </feDisplacementMap>
+          <feColorMatrix
+            type="matrix"
+            result="greenPass"
+            values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0">
+          </feColorMatrix>
+
+          <feDisplacementMap
+            id="optical-disp-b"
+            in="SourceGraphic"
+            in2="vectorMap"
+            scale="7.9"
+            xChannelSelector="R"
+            yChannelSelector="G">
+          </feDisplacementMap>
+          <feColorMatrix
+            type="matrix"
+            result="bluePass"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0">
+          </feColorMatrix>
+
+          <feBlend
+            in="redPass"
+            in2="greenPass"
+            mode="screen"
+            result="rg">
+          </feBlend>
+          <feBlend
+            in="rg"
+            in2="bluePass"
+            mode="screen">
+          </feBlend>
+        `;
+
+        const vectorImage =
+          document.getElementById('optical-vector-image');
+        const dispR =
+          document.getElementById('optical-disp-r');
+        const dispG =
+          document.getElementById('optical-disp-g');
+        const dispB =
+          document.getElementById('optical-disp-b');
+
+        const work = document.createElement('canvas');
+        const ctx = work.getContext(
+          '2d',
+          { willReadFrequently: true }
+        );
+
+        const clamp = (v,a,b) =>
+          Math.max(a,Math.min(b,v));
+
+        function roundedRectSdf(
+          x,y,halfW,halfH,r
+        ) {
+          const qx =
+            Math.abs(x)-(halfW-r);
+          const qy =
+            Math.abs(y)-(halfH-r);
+          const ox = Math.max(qx,0);
+          const oy = Math.max(qy,0);
+
+          return Math.hypot(ox,oy) +
+            Math.min(Math.max(qx,qy),0) - r;
+        }
+
+        function buildVectorMap() {
+          /* Same rule as the successful standalone lens:
+             map uses the untransformed local lens box. */
+          const width =
+            Math.max(1,lens.offsetWidth);
+          const height =
+            Math.max(1,lens.offsetHeight);
+          const radius =
+            Math.min(width,height)/2;
+
+          const sampleScale =
+            Math.max(
+              1.5,
+              Math.min(
+                3,
+                window.devicePixelRatio || 1.5
+              )
+            );
+
+          const w =
+            Math.max(
+              128,
+              Math.round(width*sampleScale)
+            );
+
+          const h =
+            Math.max(
+              72,
+              Math.round(height*sampleScale)
+            );
+
+          work.width = w;
+          work.height = h;
+
+          const sx = w/width;
+          const sy = h/height;
+          const halfW = width/2;
+          const halfH = height/2;
+
+          const image =
+            ctx.createImageData(w,h);
+          const data = image.data;
+          const eps = .35;
+
+          for (let j=0; j<h; j++) {
+            const y =
+              (j+.5)/sy-halfH;
+
+            for (let i=0; i<w; i++) {
+              const x =
+                (i+.5)/sx-halfW;
+
+              const sdf =
+                roundedRectSdf(
+                  x,y,
+                  halfW,halfH,
+                  radius
+                );
+
+              const d = -sdf;
+
+              let vx = 0;
+              let vy = 0;
+
+              if (d > OPTICS.neutralEdge) {
+                const gx =
+                  roundedRectSdf(
+                    x+eps,y,
+                    halfW,halfH,
+                    radius
+                  ) -
+                  roundedRectSdf(
+                    x-eps,y,
+                    halfW,halfH,
+                    radius
+                  );
+
+                const gy =
+                  roundedRectSdf(
+                    x,y+eps,
+                    halfW,halfH,
+                    radius
+                  ) -
+                  roundedRectSdf(
+                    x,y-eps,
+                    halfW,halfH,
+                    radius
+                  );
+
+                const gl =
+                  Math.hypot(gx,gy) || 1;
+
+                const nx = gx/gl;
+                const ny = gy/gl;
+                const local =
+                  d-OPTICS.neutralEdge;
+
+                let magnitude = 0;
+
+                if (
+                  local < OPTICS.rimWidth
+                ) {
+                  const t =
+                    local/OPTICS.rimWidth;
+
+                  magnitude +=
+                    Math.sin(Math.PI*t) *
+                    OPTICS.rimStrength;
+                }
+
+                if (
+                  local >= OPTICS.rimWidth &&
+                  local <
+                    OPTICS.rimWidth +
+                    OPTICS.trenchWidth
+                ) {
+                  const t =
+                    (local-OPTICS.rimWidth) /
+                    Math.max(
+                      .001,
+                      OPTICS.trenchWidth
+                    );
+
+                  magnitude -=
+                    Math.sin(Math.PI*t) *
+                    OPTICS.trenchStrength;
+                }
+
+                vx = nx*magnitude;
+                vy = ny*magnitude;
+              }
+
+              const p = (j*w+i)*4;
+
+              data[p] =
+                Math.round(
+                  clamp(
+                    128+vx*127,
+                    0,255
+                  )
+                );
+
+              data[p+1] =
+                Math.round(
+                  clamp(
+                    128+vy*127,
+                    0,255
+                  )
+                );
+
+              data[p+2] = 128;
+              data[p+3] = 255;
+            }
+          }
+
+          ctx.putImageData(
+            image,
+            0,0
+          );
+
+          vectorImage.setAttribute(
+            'href',
+            work.toDataURL('image/png')
+          );
+
+          vectorImage.setAttribute(
+            'width',
+            String(width)
+          );
+
+          vectorImage.setAttribute(
+            'height',
+            String(height)
+          );
+
+          const scale =
+            OPTICS.refraction;
+
+          const spread =
+            OPTICS.rgbSpread;
+
+          dispR.setAttribute(
+            'scale',
+            String(scale+spread)
+          );
+
+          dispG.setAttribute(
+            'scale',
+            String(scale)
+          );
+
+          dispB.setAttribute(
+            'scale',
+            String(
+              Math.max(
+                0,
+                scale-spread
+              )
+            )
+          );
+
+          const pad = OPTICS.padding;
+
+          filter.setAttribute(
+            'x',
+            `${-pad}%`
+          );
+
+          filter.setAttribute(
+            'y',
+            `${-pad}%`
+          );
+
+          filter.setAttribute(
+            'width',
+            `${100+pad*2}%`
+          );
+
+          filter.setAttribute(
+            'height',
+            `${100+pad*2}%`
+          );
+        }
+
+        requestAnimationFrame(
+          () =>
+            requestAnimationFrame(
+              buildVectorMap
+            )
+        );
+
+        new ResizeObserver(
+          buildVectorMap
+        ).observe(lens);
+
+        window.addEventListener(
+          'resize',
+          buildVectorMap,
+          { passive:true }
+        );
+      } catch (error) {
+        console.error(
+          'Upper optical Tabs init failed:',
+          error
+        );
+      }
+    })();
+  
+
+    (() => {
+      try {
+        const pane = document.getElementById('toolbar-pane');
+        const tabStrip = document.getElementById('tab-strip');
+        const lensTrack = document.getElementById('lens-track');
+        const lens = document.getElementById('lens');
+        const selector = document.getElementById('selector');
+        const holdDelayInput = { value: 140 };
+        const links = [...tabStrip.querySelectorAll(':scope > .tab-link')];
+
+        const playground = pane.closest('.optical-tabs-playground');
+
+        if (!pane || !tabStrip || !lensTrack || !lens || !selector || !playground || !links.length) return;
+
+        const DEFAULTS = Object.freeze({
+          duration: 600,
+          lead: 90,
+          p1Time: 78,
+          p2Time: 479,
+
+          x1: .92,
+          x2: 1.02,
+          y1: 1.09,
+          y2: .99,
+
+          // User-tuned spring curve, current approved values.
+          xBend1: .88,
+          xBend2: 1.03,
+          yBend1: 1.14,
+          yBend2: .98
+        });
+
+        const state = { ...DEFAULTS };
+
+        let pointerId = null;
+        let pointerDownAt = 0;
+        let pointerStartX = 0;
+        let pointerStartY = 0;
+        let startScrollLeft = 0;
+        let armedCleanup = null;
+        let springAnimation = null;
+
+        let tapTravelScaleActive = false;
+        let paneResetCleanup = null;
+        let lensPositionRaf = 0;
+
+        const clamp = (v,a,b) =>
+          Math.max(a,Math.min(b,v));
+
+        function trackTranslateX() {
+          const matrix = getComputedStyle(lensTrack).transform;
+
+          if (!matrix || matrix === 'none') {
+            return 0;
+          }
+
+          try {
+            return new DOMMatrixReadOnly(matrix).m41;
+          } catch (_) {
+            const match = matrix.match(
+              /^matrix\(([^)]+)\)$/
+            );
+
+            if (!match) return 0;
+
+            const parts =
+              match[1]
+              .split(',')
+              .map(Number);
+
+            return parts[4] || 0;
+          }
+        }
+
+        function updateLensHorizontalMapping() {
+
+
+          const rawCenter =
+            trackTranslateX() +
+            lensTrack.offsetWidth/2;
+
+          const width =
+            playground.clientWidth;
+
+          // Selector lives INSIDE the pane, so when pane scales around its
+          // center the extreme slot centers move outward.
+          //
+          // Lens lives in a sibling overlay, therefore its X coordinate must
+          // receive the same scale transform explicitly:
+          //
+          //   visualX = C + (rawX - C) * scale
+          //   correction = (rawX - C) * (scale - 1)
+          //
+          // At the first slot correction is negative, so the lens track is
+          // allowed to move beyond the left edge instead of stopping at x=0.
+          // Right edge is symmetric.
+          const paneRect =
+            pane.getBoundingClientRect();
+
+          const basePaneWidth =
+            Math.max(1, pane.offsetWidth);
+
+          const livePaneScale =
+            paneRect.width / basePaneWidth;
+
+          const paneCenter =
+            basePaneWidth / 2;
+
+          const scaleCorrection =
+            (rawCenter - paneCenter) *
+            (livePaneScale - 1);
+
+          lensTrack.style.left =
+            `${scaleCorrection}px`;
+
+          const visualCenter =
+            rawCenter + scaleCorrection;
+
+          lensPositionRaf =
+            requestAnimationFrame(
+              updateLensHorizontalMapping
+            );
+        }
+
+        function bendHandleTime(point) {
+          const { index } = point;
+          if (index === 1) {
+            const room = state.p2Time-state.p1Time;
+            return state.p1Time +
+              Math.min(46, Math.max(18, room*.34));
+          }
+
+          const room = state.duration-state.p2Time;
+          return state.p2Time +
+            Math.min(46, Math.max(18, room*.42));
+        }
+
+        function tangentAt(axis,index) {
+          const amp =
+            axis === 'x'
+              ? state[`x${index}`]
+              : state[`y${index}`];
+
+          const bend =
+            axis === 'x'
+              ? state[`xBend${index}`]
+              : state[`yBend${index}`];
+
+          const pointTime =
+            index === 1
+              ? state.p1Time
+              : state.p2Time;
+
+          const handleTime =
+            bendHandleTime({ index });
+
+          return (bend-amp) /
+            Math.max(1,handleTime-pointTime);
+        }
+
+        function hermite(
+          time,
+          t0,y0,m0,
+          t1,y1,m1
+        ) {
+          const dt = Math.max(1,t1-t0);
+          const u = clamp(
+            (time-t0)/dt,
+            0,
+            1
+          );
+
+          const u2 = u*u;
+          const u3 = u2*u;
+
+          const h00 = 2*u3-3*u2+1;
+          const h10 = u3-2*u2+u;
+          const h01 = -2*u3+3*u2;
+          const h11 = u3-u2;
+
+          return (
+            h00*y0 +
+            h10*dt*m0 +
+            h01*y1 +
+            h11*dt*m1
+          );
+        }
+
+        function curveValue(axis,time) {
+          const v1 =
+            axis === 'x'
+              ? state.x1
+              : state.y1;
+
+          const v2 =
+            axis === 'x'
+              ? state.x2
+              : state.y2;
+
+          const m1 = tangentAt(axis,1);
+          const m2 = tangentAt(axis,2);
+
+          if (time <= state.p1Time) {
+            return hermite(
+              time,
+              0,1,0,
+              state.p1Time,v1,m1
+            );
+          }
+
+          if (time <= state.p2Time) {
+            return hermite(
+              time,
+              state.p1Time,v1,m1,
+              state.p2Time,v2,m2
+            );
+          }
+
+          return hermite(
+            time,
+            state.p2Time,v2,m2,
+            state.duration,1,0
+          );
+        }
+
+        function clearPaneResetCleanup() {
+          if (paneResetCleanup) {
+            paneResetCleanup();
+            paneResetCleanup = null;
+          }
+        }
+
+        function expandContainerForTapTravel() {
+          clearPaneResetCleanup();
+          tapTravelScaleActive = true;
+
+          // Same container enlargement as the existing long-hold behavior.
+          pane.style.transitionDuration = '300ms';
+          pane.style.transitionTimingFunction = 'ease-in-out';
+          pane.style.scale = '1.05';
+        }
+
+        function restoreContainerWithSelector() {
+          if (!tapTravelScaleActive) return;
+
+          tapTravelScaleActive = false;
+          clearPaneResetCleanup();
+
+          // Selector fade-in and container shrink start in the SAME frame and
+          // both use the existing 300ms visual cadence.
+          pane.style.transitionDuration = '300ms';
+          pane.style.transitionTimingFunction = 'ease-in-out';
+          pane.style.scale = '';
+
+          let done = false;
+
+          const cleanup = () => {
+            if (done) return;
+            done = true;
+            pane.removeEventListener('transitionend', onTransitionEnd);
+            clearTimeout(fallbackTimer);
+            pane.style.transitionDuration = '';
+            pane.style.transitionTimingFunction = '';
+            paneResetCleanup = null;
+          };
+
+          const onTransitionEnd = event => {
+            if (event.target !== pane) return;
+            cleanup();
+          };
+
+          const fallbackTimer = setTimeout(cleanup, 340);
+          pane.addEventListener('transitionend', onTransitionEnd);
+          paneResetCleanup = cleanup;
+        }
+
+        function holdLensForSpring() {
+          lens.classList.add(
+            'tap-spring-active'
+          );
+          selector.classList.add(
+            'tap-spring-hidden'
+          );
+        }
+
+        function releaseLensAfterSpring() {
+          lens.classList.remove(
+            'tap-spring-active'
+          );
+
+          // Same frame: selector starts appearing and the whole container
+          // starts returning from 1.05 to 1.00.
+          selector.classList.remove(
+            'tap-spring-hidden'
+          );
+          restoreContainerWithSelector();
+        }
+
+        function cancelRunningSpring(
+          { release=true }={}
+        ) {
+          if (springAnimation) {
+            springAnimation.cancel();
+            springAnimation = null;
+          }
+
+          if (release) {
+            releaseLensAfterSpring();
+          }
+        }
+
+        function cancelArmedSpring(
+          { release=true }={}
+        ) {
+          if (armedCleanup) {
+            armedCleanup();
+            armedCleanup = null;
+          }
+
+          if (release) {
+            releaseLensAfterSpring();
+          }
+        }
+
+        function sampledSpringKeyframes() {
+          const samples = 64;
+          const frames = [];
+
+          for (
+            let i=0;
+            i<=samples;
+            i++
+          ) {
+            const time =
+              state.duration*
+              (i/samples);
+
+            frames.push({
+              transform:
+                `scale(${curveValue('x',time).toFixed(4)}, ${curveValue('y',time).toFixed(4)})`,
+              offset:
+                i/samples
+            });
+          }
+
+          return frames;
+        }
+
+        function playTapSpring() {
+          cancelRunningSpring({
+            release:false
+          });
+
+          holdLensForSpring();
+
+          springAnimation =
+            lens.animate(
+              sampledSpringKeyframes(),
+              {
+                duration:
+                  state.duration,
+                fill:'none',
+                easing:'linear'
+              }
+            );
+
+          springAnimation.addEventListener(
+            'finish',
+            () => {
+              springAnimation = null;
+              releaseLensAfterSpring();
+            },
+            { once:true }
+          );
+
+          springAnimation.addEventListener(
+            'cancel',
+            () => {
+              springAnimation = null;
+            },
+            { once:true }
+          );
+        }
+
+        function nearestTabIndex(
+          clientX
+        ) {
+          const rect =
+            tabStrip.getBoundingClientRect();
+
+          const contentX =
+            clientX -
+            rect.left +
+            tabStrip.scrollLeft;
+
+          let bestIndex = 0;
+          let bestDistance = Infinity;
+
+          links.forEach(
+            (link,index) => {
+              const center =
+                link.offsetLeft +
+                link.offsetWidth/2;
+
+              const distance =
+                Math.abs(
+                  center-contentX
+                );
+
+              if (
+                distance <
+                bestDistance
+              ) {
+                bestDistance =
+                  distance;
+                bestIndex = index;
+              }
+            }
+          );
+
+          return bestIndex;
+        }
+
+        function transitionDurationMs(
+          element
+        ) {
+          const style =
+            getComputedStyle(element);
+
+          const raw =
+            style.transitionDuration
+            .split(',')[0]
+            .trim();
+
+          if (raw.endsWith('ms')) {
+            return (
+              Number.parseFloat(raw) ||
+              0
+            );
+          }
+
+          if (raw.endsWith('s')) {
+            return (
+              Number.parseFloat(raw) ||
+              0
+            )*1000;
+          }
+
+          return (
+            Number.parseFloat(raw) ||
+            0
+          );
+        }
+
+        function armSpringBeforeArrival() {
+          cancelArmedSpring({
+            release:false
+          });
+
+          // Capture-phase pointerup reaches this before the original v6
+          // pointerup handler starts horizontal movement. Scale the whole
+          // container immediately; the optics observer multiplies the lens
+          // scale by the same 1.05 factor.
+          expandContainerForTapTravel();
+          holdLensForSpring();
+
+          let startTimer = null;
+          let fallbackTimer = null;
+          let rafId = 0;
+          let didRun = false;
+
+          const cleanup = () => {
+            cancelAnimationFrame(rafId);
+            clearTimeout(startTimer);
+            clearTimeout(fallbackTimer);
+          };
+
+          const run = () => {
+            if (didRun) return;
+            didRun = true;
+            cleanup();
+            armedCleanup = null;
+            playTapSpring();
+          };
+
+          rafId =
+            requestAnimationFrame(
+              () => {
+                const travelMs =
+                  transitionDurationMs(
+                    lensTrack
+                  ) || 300;
+
+                const startAfterMs =
+                  Math.max(
+                    0,
+                    travelMs -
+                    state.lead
+                  );
+
+                startTimer =
+                  setTimeout(
+                    run,
+                    startAfterMs
+                  );
+
+                fallbackTimer =
+                  setTimeout(
+                    run,
+                    travelMs+40
+                  );
+              }
+            );
+
+          armedCleanup = cleanup;
+        }
+
+        pane.addEventListener(
+          'pointerdown',
+          event => {
+            if (
+              event.pointerType !==
+              'touch'
+            ) {
+              return;
+            }
+
+            cancelArmedSpring();
+            cancelRunningSpring();
+            restoreContainerWithSelector();
+
+            pointerId =
+              event.pointerId;
+
+            pointerDownAt =
+              performance.now();
+
+            pointerStartX =
+              event.clientX;
+
+            pointerStartY =
+              event.clientY;
+
+            startScrollLeft =
+              tabStrip.scrollLeft;
+          },
+          { capture:true }
+        );
+
+        document.addEventListener(
+          'pointerup',
+          event => {
+            if (
+              event.pointerType !==
+              'touch'
+            ) {
+              return;
+            }
+
+            if (
+              event.pointerId !==
+              pointerId
+            ) {
+              return;
+            }
+
+            const elapsed =
+              performance.now() -
+              pointerDownAt;
+
+            const holdDelay =
+              Number(
+                holdDelayInput?.value ||
+                140
+              );
+
+            const dx =
+              Math.abs(
+                event.clientX -
+                pointerStartX
+              );
+
+            const dy =
+              Math.abs(
+                event.clientY -
+                pointerStartY
+              );
+
+            const scrollDistance =
+              Math.abs(
+                tabStrip.scrollLeft -
+                startScrollLeft
+              );
+
+            pointerId = null;
+
+            const isQuickTap =
+              elapsed < holdDelay &&
+              dx <= 6 &&
+              dy <= 10 &&
+              scrollDistance <= 4;
+
+            if (!isQuickTap) return;
+
+            const currentIndex =
+              links.findIndex(
+                link =>
+                  link.classList.contains(
+                    'active'
+                  )
+              );
+
+            const targetIndex =
+              nearestTabIndex(
+                event.clientX
+              );
+
+            if (
+              targetIndex ===
+              currentIndex
+            ) {
+              return;
+            }
+
+            armSpringBeforeArrival();
+          },
+          { capture:true }
+        );
+
+        document.addEventListener(
+          'pointercancel',
+          event => {
+            if (
+              event.pointerId !==
+              pointerId
+            ) {
+              return;
+            }
+
+            pointerId = null;
+            cancelArmedSpring();
+            cancelRunningSpring();
+            restoreContainerWithSelector();
+          },
+          { capture:true }
+        );
+
+        const iconAnimations = new WeakMap();
+
+        function playActiveIconSpring(index) {
+          const link = links[index];
+          const iconWrap = link?.querySelector('.tab-icon-wrap');
+          if (!iconWrap) return;
+
+          iconAnimations.get(iconWrap)?.cancel();
+
+          const travelMs =
+            transitionDurationMs(lensTrack) || 300;
+
+          const restoreMs = 300;
+
+          // Active class changes at selection time. The container then:
+          // 1) travels until spring start: travel - lead
+          // 2) runs the tuned 600ms spring
+          // 3) returns to base scale during the 300ms selector handoff
+          //
+          // Make the icon spring finish on that same final frame.
+          const totalMs = Math.max(
+            360,
+            (travelMs - state.lead) +
+              state.duration +
+              restoreMs
+          );
+
+          const animation = iconWrap.animate(
+            [
+              {
+                transform: 'scale(1)',
+                offset: 0,
+                easing: 'cubic-bezier(.18,.75,.22,1)'
+              },
+              {
+                transform: 'scale(1.16)',
+                offset: .16,
+                easing: 'cubic-bezier(.16,.9,.22,1)'
+              },
+              {
+                transform: 'scale(.94)',
+                offset: .34,
+                easing: 'cubic-bezier(.20,.82,.26,1)'
+              },
+              {
+                transform: 'scale(1.055)',
+                offset: .53,
+                easing: 'cubic-bezier(.18,.82,.24,1)'
+              },
+              {
+                transform: 'scale(.985)',
+                offset: .72,
+                easing: 'cubic-bezier(.2,.78,.25,1)'
+              },
+              {
+                transform: 'scale(1.012)',
+                offset: .86,
+                easing: 'ease-out'
+              },
+              {
+                transform: 'scale(1)',
+                offset: 1
+              }
+            ],
+            {
+              duration: totalMs,
+              fill: 'none',
+              easing: 'linear'
+            }
+          );
+
+          iconAnimations.set(iconWrap, animation);
+
+          animation.addEventListener(
+            'finish',
+            () => {
+              if (iconAnimations.get(iconWrap) === animation) {
+                iconAnimations.delete(iconWrap);
+              }
+            },
+            { once: true }
+          );
+        }
+
+        window.addEventListener(
+          'mezfit-tab-active-change',
+          (event) => {
+            playActiveIconSpring(
+              event.detail?.index
+            );
+          }
+        );
+
+        updateLensHorizontalMapping();
+      } catch (error) {
+        console.error(
+          'Extracted tabbar spring init failed:',
+          error
+        );
+      }
+    })();
+  
+})();
+</script>
+
+<script>
+
+(()=>{'use strict';
+const $=id=>document.getElementById(id),scene=$('scene'),vector=$('vector'),surface=$('surface'),maskSurface=$('maskSurface'),text=$('text'),status=$('status'),iconsYLayer=$('iconsYLayer'),iconsFo=$('iconsFo'),speedGraph=$('speedGraph'),speedPath=$('speedPath'),speedFill=$('speedFill'),speedHandles=$('speedHandles'),lensYGraph=$('lensYGraph'),lensYPath=$('lensYPath'),lensYFill=$('lensYFill'),lensYHandles=$('lensYHandles'),lensYPlayhead=$('lensYPlayhead'),lensYPlayheadDot=$('lensYPlayheadDot'),lensYReadout=$('lensYReadout'),lensYPhaseGuides=$('lensYPhaseGuides'),lensYSliders=$('lensYSliders'),lensXGraph=$('lensXGraph'),lensXPath=$('lensXPath'),lensXFill=$('lensXFill'),lensXHandles=$('lensXHandles'),lensXPlayhead=$('lensXPlayhead'),lensXPlayheadDot=$('lensXPlayheadDot'),lensXReadout=$('lensXReadout'),lensXPhaseGuides=$('lensXPhaseGuides'),lensXSliders=$('lensXSliders'),startupLayer=$('startupLayer'),motion=$('motion'),scaleEl=$('scale'),shape=$('shape'),iconMask=$('iconMask'),iconLayer=$('iconLayer'),materialSurface=$('materialSurface'),lensBlurNode=$('lensBlurNode'),lensSaturationNode=$('lensSaturationNode'),fabGlass=$('fabGlass');
+const ns='http://www.w3.org/2000/svg',threshold=.46,logThreshold=-Math.log(threshold);
+let handoffStarted=false,handoffCompleted=false,handoffProgress=0;
+let height=0,sigma=36;
+const lensScale=()=>Number($('lensSize').value)/100;
+const baseSigma=()=>Math.max(12,Math.min(40,width/8,(height/2-12)/6.8));
+function applyLensSize(){sigma=lensScale()*baseSigma();}
+const shellRadius=()=>32;
+const halfSpan=()=>Math.max(1,width/2/1.1-shellRadius());
+function movingSigma(x){const t=clamp(x/halfSpan(),0,1),blend=t*t*(3-2*t),finalSigma=32/Math.sqrt(2*Math.log(2/threshold));return sigma+(finalSigma-sigma)*blend;}
+function bridgeWeight(x){const a=clamp(x/halfSpan(),0,1),smooth=a*a*(3-2*a);return Math.max(smooth,.28*(1-Math.exp(-x*x/(2*movingSigma(x)**2))));}
+const nodes=[{x:0,y:0},{x:.21,y:.88},{x:.47,y:1},{x:.78,y:.88},{x:1,y:0}];
+let width=0,ax=0,ay=0,bx=0,by=0,cx=0,cy=0,raf=0,last='',start=0,elapsed=0;
+const mapCanvas=document.createElement('canvas'),mapCtx=mapCanvas.getContext('2d'),maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d'),bezelCanvas=document.createElement('canvas'),bezelCtx=bezelCanvas.getContext('2d');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function lowerFieldAmplitudeAtX(px,bx0,cx0,movingS,weight){
+ const md=2*movingS*movingS,nearest=clamp(px,bx0,cx0);
+ return (1-weight)*(Math.exp(-((px-bx0)**2)/md)+Math.exp(-((px-cx0)**2)/md))+
+   weight*2*Math.exp(-((px-nearest)**2)/md);
+}
+function lowerTopContourY(px,bx0,cx0,by0,movingS,weight){
+ const amplitude=lowerFieldAmplitudeAtX(px,bx0,cx0,movingS,weight);
+ if(amplitude<=threshold)return null;
+ const md=2*movingS*movingS;
+ return by0-Math.sqrt(Math.max(0,-md*Math.log(threshold/amplitude)));
+}
+function supportedContourX(desiredX,baseX,bx0,cx0,movingS,weight){
+ if(lowerFieldAmplitudeAtX(desiredX,bx0,cx0,movingS,weight)>threshold)return desiredX;
+ let lo=baseX,hi=desiredX;
+ for(let i=0;i<18;i++){
+  const mid=(lo+hi)/2;
+  if(lowerFieldAmplitudeAtX(mid,bx0,cx0,movingS,weight)>threshold)lo=mid;else hi=mid;
+ }
+ return lo;
+}
+function finalFabTarget(){
+ const runtimeWidth=width/1.1,baseX=width/2,baseY=height/2,
+   p=path.length?path[path.length-1]:{x:0,y:0},
+   lowerX=p.x,lowerY=p.y,movingS=movingSigma(lowerX),weight=bridgeWeight(lowerX),
+   bx0=baseX-lowerX,cx0=baseX+lowerX,by0=baseY+lowerY,
+   desiredX=(width-runtimeWidth)/2+runtimeWidth*.9,
+   targetX=supportedContourX(desiredX,baseX,bx0,cx0,movingS,weight),
+   topY=lowerTopContourY(targetX,bx0,cx0,by0,movingS,weight),
+   liquidRadius=sigma*Math.sqrt(-2*Math.log(threshold)),
+   overlap=4,
+   liquidY=(topY??(by0-32))-liquidRadius+overlap;
+ return{x:targetX,y:liquidY,liquidRadius};
+}
+function fabGeometry(){
+ const target=finalFabTarget(),diameter=clamp(target.liquidRadius*2,58,82),baseX=width/2,baseY=height/2;
+ return{x:baseX+lensXOffsetAt(1),y:baseY+lensYOffsetAt(1),diameter};
+}
+function syncFabGlassGeometry(){
+ if(!fabGlass||!width)return;const g=fabGeometry();
+ fabGlass.style.left=g.x+'px';fabGlass.style.top=g.y+'px';fabGlass.style.width=g.diameter+'px';fabGlass.style.height=g.diameter+'px';
+}
+function applyLensMaterial(){
+ const blur=Number($('lensBlur')?.value||0),sat=Number($('lensSaturation')?.value||100)/100,frost=Number($('lensFrost')?.value||0)/100;
+ if(lensBlurNode)lensBlurNode.setAttribute('stdDeviation',blur.toFixed(2));
+ if(lensSaturationNode)lensSaturationNode.setAttribute('values',sat.toFixed(2));
+ if(materialSurface){
+  const alpha=(frost*0.01 + frost*0.99*0.22).toFixed(3);
+  materialSurface.setAttribute('fill-opacity',alpha);
+  const blue=Math.round(236 + frost*19);
+  materialSurface.setAttribute('fill',`rgb(${Math.round(182+frost*18)},${Math.round(206+frost*14)},${blue})`);
+ }
+}
+function prepareInteractiveTabs(){
+ if(!width||!motion||!scaleEl||!iconMask||!iconLayer||!shape)return;
+ const fw=width/1.1,finalY=path.length?path[path.length-1].y:0;
+ document.documentElement.style.setProperty('--runtime-tabs-width',fw+'px');
+ motion.style.transform=`translateY(${finalY}px)`;
+ scaleEl.style.transform='none';
+ scaleEl.style.opacity='1';
+ iconMask.style.width=fw+'px';
+ iconMask.style.height='64px';
+ iconMask.style.pointerEvents='none';
+ iconMask.classList.add('tabs-interactive');
+ shape.classList.add('tabs-replaced');
+ iconLayer.removeAttribute('startup');
+ iconLayer.inert=true;
+ iconLayer.style.opacity='0';
+ iconLayer.style.willChange='opacity';
+ syncFabGlassGeometry();
+ if(fabGlass){fabGlass.style.opacity='0';fabGlass.style.visibility='visible';}
+ requestAnimationFrame(()=>iconLayer.dispatchEvent(new Event('tabs-layout-ready')));
+}
+function setHandoffVisuals(progress){
+ const p=clamp(progress,0,1);
+ handoffProgress=p;
+ if(startupLayer){
+  startupLayer.style.visibility='visible';
+  startupLayer.style.opacity=String(1-p);
+ }
+ if(iconLayer)iconLayer.style.opacity=String(p);
+ if(fabGlass)fabGlass.style.opacity=String(p);
+ if(p<1){
+  handoffCompleted=false;
+  if(iconLayer)iconLayer.inert=true;
+  if(iconMask)iconMask.style.pointerEvents='none';
+  return;
+ }
+ if(handoffCompleted)return;
+ handoffCompleted=true;
+ if(startupLayer)startupLayer.style.visibility='hidden';
+ if(iconLayer){iconLayer.style.opacity='1';iconLayer.style.willChange='auto';iconLayer.inert=false;}
+ if(fabGlass)fabGlass.style.opacity='1';
+ if(iconMask)iconMask.style.pointerEvents='auto';
+}
+function hideInteractiveTabs(){
+ handoffStarted=false;handoffCompleted=false;handoffProgress=0;
+ if(startupLayer){startupLayer.style.visibility='visible';startupLayer.style.opacity='1';startupLayer.classList.remove('is-handoff');}
+ if(iconLayer){iconLayer.style.opacity='0';iconLayer.inert=true;iconLayer.style.willChange='opacity';}
+ if(fabGlass){fabGlass.style.opacity='0';fabGlass.style.visibility='visible';}
+ if(iconMask)iconMask.style.pointerEvents='none';
+}
+function beginHandoff(){
+ if(handoffStarted)return;syncFabGlassGeometry();handoffStarted=true;
+}
+function syncIconsFo(){if(!iconsFo||!width)return;const runtimeWidth=width/1.1;iconsFo.setAttribute('x',String((width-runtimeWidth)/2));iconsFo.setAttribute('y',String(by-32));iconsFo.setAttribute('width',String(runtimeWidth));iconsFo.setAttribute('height','64');}
+function profile(x){x=clamp(x,0,1);let i=0;while(i<nodes.length-2&&x>nodes[i+1].x)i++;const a=nodes[Math.max(0,i-1)],b=nodes[i],c=nodes[i+1],d=nodes[Math.min(nodes.length-1,i+2)],t=(x-b.x)/(c.x-b.x),t2=t*t,t3=t2*t;return .5*((2*b.y)+(-a.y+c.y)*t+(2*a.y-5*b.y+4*c.y-d.y)*t2+(-a.y+3*b.y-3*c.y+d.y)*t3);}
+const lookup=new Float32Array(1025);for(let i=0;i<=1024;i++)lookup[i]=profile(i/1024);
+function render(){if(!width)return;const handoffEase=handoffProgress*handoffProgress*(3-2*handoffProgress),distortionStrength=1-Math.pow(clamp(handoffEase/.78,0,1),1.15),lowerOffset=Math.abs(cx-width/2),mw=mapCanvas.width,mh=mapCanvas.height,sx=width/mw,sy=height/mh,map=mapCtx.createImageData(mw,mh),mask=maskCtx.createImageData(mw,mh),m=map.data,k=mask.data,den=2*sigma*sigma,movingS=movingSigma(lowerOffset),movingDen=2*movingS*movingS,weight=bridgeWeight(lowerOffset);
+const xsA=new Float32Array(mw),xsB=new Float32Array(mw),xsC=new Float32Array(mw);for(let x=0;x<mw;x++){const px=(x+.5)*sx;xsA[x]=Math.exp(-((px-ax)**2)/den);xsB[x]=Math.exp(-((px-bx)**2)/movingDen);xsC[x]=Math.exp(-((px-cx)**2)/movingDen);}
+for(let y=0;y<mh;y++){const py=(y+.5)*sy,ya=Math.exp(-((py-ay)**2)/den),yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);for(let x=0;x<mw;x++){const p=(y*mw+x)*4,px=(x+.5)*sx,fa=xsA[x]*ya,fb=xsB[x]*yb,fc=xsC[x]*yc,nearest=clamp(px,bx,cx),capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+(1-weight)*(fb+fc)+weight*capsule;m[p]=128;m[p+1]=128;m[p+2]=128;m[p+3]=255;k[p]=255;k[p+1]=255;k[p+2]=255;k[p+3]=0;if(f<threshold-.025)continue;
+// One scalar field defines BOTH the shell and its displacement directions.
+const gx=-(px-ax)*fa/(sigma*sigma)-((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS),gy=-(py-ay)*fa/(sigma*sigma)-((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS),g=Math.hypot(gx,gy),safe=Math.sqrt(g*g+.00000625),r=Math.sqrt(Math.max(0,-Math.log(Math.max(f,1e-8)))/logThreshold),amp=lookup[Math.round(clamp(r,0,1)*1024)],distance=(f-threshold)/Math.max(g,.003),edgeT=clamp((distance-1.7)/3,0,1),edgeGate=edgeT*edgeT*(3-2*edgeT);
+const dx=gx/safe*amp*12*distortionStrength*edgeGate,dy=gy/safe*amp*17.5*distortionStrength*edgeGate;m[p]=Math.round(clamp(128+dx/64*255,0,255));m[p+1]=Math.round(clamp(128+dy/64*255,0,255));
+const inside=clamp(distance/sx+.5,0,1),reveal=Math.round(inside*255);k[p+3]=reveal;
+}}
+mapCtx.putImageData(map,0,0);maskCtx.putImageData(mask,0,0);vector.setAttribute('href',mapCanvas.toDataURL());const silhouette=maskCanvas.toDataURL();if(maskSurface)maskSurface.setAttribute('href',silhouette);renderBezel(movingS,weight);
+}
+function renderBezel(ms,weight){
+ const scale=1.6,baseRadius=Math.max(sigma,ms),supportLevel=Math.max(.001,threshold-.06),overlapPeak=3,supportRadius=baseRadius*Math.sqrt(-2*Math.log(supportLevel/overlapPeak)),pad=Math.max(12,supportRadius+8),x0=Math.max(0,Math.floor(Math.min(ax,bx,cx)-pad)),x1=Math.min(width,Math.ceil(Math.max(ax,bx,cx)+pad)),y0=Math.max(0,Math.floor(Math.min(ay,by,cy)-pad)),y1=Math.min(height,Math.ceil(Math.max(ay,by,cy)+pad)),bw=Math.max(1,x1-x0),bh=Math.max(1,y1-y0),cw=Math.max(1,Math.ceil(bw*scale)),ch=Math.max(1,Math.ceil(bh*scale));
+ if(bezelCanvas.width!==cw)bezelCanvas.width=cw;if(bezelCanvas.height!==ch)bezelCanvas.height=ch;
+ const img=bezelCtx.createImageData(cw,ch),d=img.data,den=2*sigma*sigma,movingDen=2*ms*ms,sqrt2=Math.SQRT2;
+ const xsA=new Float32Array(cw),xsB=new Float32Array(cw),xsC=new Float32Array(cw);
+ for(let ix=0;ix<cw;ix++){const px=x0+(ix+.5)/scale;xsA[ix]=Math.exp(-((px-ax)**2)/den);xsB[ix]=Math.exp(-((px-bx)**2)/movingDen);xsC[ix]=Math.exp(-((px-cx)**2)/movingDen);}
+ for(let iy=0;iy<ch;iy++){const py=y0+(iy+.5)/scale,ya=Math.exp(-((py-ay)**2)/den),yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);for(let ix=0;ix<cw;ix++){const px=x0+(ix+.5)/scale,p=(iy*cw+ix)*4,fa=xsA[ix]*ya,fb=xsB[ix]*yb,fc=xsC[ix]*yc,nearest=clamp(px,bx,cx),capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+(1-weight)*(fb+fc)+weight*capsule;if(f<threshold-.06)continue;const gx=-(px-ax)*fa/(sigma*sigma)-((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(ms*ms),gy=-(py-ay)*fa/(sigma*sigma)-((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(ms*ms),g=Math.hypot(gx,gy),safe=Math.max(g,.003),distance=(f-threshold)/safe,coverage=clamp(distance*scale+.5,0,1);if(coverage<=0)continue;const nx=-gx/safe,ny=-gy/safe,edge=Math.exp(-1*((distance-.30)/.48)**2),soft=Math.exp(-1*((distance-1.10)/1.05)**2),tl=Math.pow(Math.max(0,(-nx-ny)/sqrt2),11),br=Math.pow(Math.max(0,(nx+ny)/sqrt2),11),base=coverage*(.014+.055*edge),highlight=coverage*soft*(.46*tl+.36*br),alpha=clamp(base+highlight,0,.58),highlightMix=clamp((tl+br)*.9,0,1),r=Math.round(205+38*highlightMix),gcol=Math.round(214+34*highlightMix),b=Math.round(225+30*highlightMix);d[p]=r;d[p+1]=gcol;d[p+2]=b;d[p+3]=Math.round(alpha*255);}}
+ bezelCtx.putImageData(img,0,0);surface.setAttribute('x',String(x0));surface.setAttribute('y',String(y0));surface.setAttribute('width',String(bw));surface.setAttribute('height',String(bh));surface.setAttribute('href',bezelCanvas.toDataURL());
+}
+function background(){text.replaceChildren();}
+
+
+
+let timing=null,path=[],breaks=null;
+const graphBox={w:280,h:140,padX:18,padY:16};
+const speedPoints=[0,.186,.360,.577,0];
+const speedIntegral=new Float32Array(257);
+let activeSpeedPoint=-1,activePointerId=null;
+function graphPoint(i){const x=graphBox.padX+(graphBox.w-2*graphBox.padX)*(i/4),y=graphBox.h-graphBox.padY-speedPoints[i]*(graphBox.h-2*graphBox.padY);return{x,y};}
+function catmull1D(a,b,c,d,t){const t2=t*t,t3=t2*t;return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);}
+function speedValueAt(u){if(u<=0||u>=1)return 0;const scaled=u*4,i=Math.min(3,Math.max(0,Math.floor(scaled))),t=scaled-i;return clamp(catmull1D(speedPoints[Math.max(0,i-1)],speedPoints[i],speedPoints[i+1],speedPoints[Math.min(4,i+2)],t),0,1.15);}
+function rebuildSpeedIntegral(){let area=0,prev=speedValueAt(0);speedIntegral[0]=0;for(let i=1;i<speedIntegral.length;i++){const u=i/(speedIntegral.length-1),v=speedValueAt(u);area+=(prev+v)/2/(speedIntegral.length-1);speedIntegral[i]=area;prev=v;}if(area<1e-6){for(let i=0;i<speedIntegral.length;i++)speedIntegral[i]=i/(speedIntegral.length-1);return;}for(let i=1;i<speedIntegral.length;i++)speedIntegral[i]/=area;}
+function speedAreaAt(u){u=clamp(u,0,1);const last=speedIntegral.length-1,f=u*last,i=Math.floor(f),j=Math.min(last,i+1),t=f-i;return speedIntegral[i]+(speedIntegral[j]-speedIntegral[i])*t;}
+function catmullPath(points){let d=`M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;for(let i=0;i<points.length-1;i++){const p0=points[Math.max(0,i-1)],p1=points[i],p2=points[i+1],p3=points[Math.min(points.length-1,i+2)],cp1x=p1.x+(p2.x-p0.x)/6,cp1y=p1.y+(p2.y-p0.y)/6,cp2x=p2.x-(p3.x-p1.x)/6,cp2y=p2.y-(p3.y-p1.y)/6;d+=` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;}return d;}
+function renderSpeedGraph(){if(!speedGraph)return;const pts=[0,1,2,3,4].map(graphPoint),pathData=catmullPath(pts),baseline=graphBox.h-graphBox.padY;speedPath.setAttribute('d',pathData);speedFill.setAttribute('d',`${pathData} L ${pts[4].x.toFixed(2)} ${baseline} L ${pts[0].x.toFixed(2)} ${baseline} Z`);speedHandles.replaceChildren();for(let i=0;i<pts.length;i++){const c=document.createElementNS(ns,'circle');c.setAttribute('cx',pts[i].x.toFixed(2));c.setAttribute('cy',pts[i].y.toFixed(2));c.setAttribute('r',i===0||i===4?'5.5':'7');c.setAttribute('class',`point${i===0||i===4?' fixed':''}`);if(i>0&&i<4)c.dataset.index=String(i);speedHandles.appendChild(c);}}
+function graphEventToPoint(event){const rect=speedGraph.getBoundingClientRect();return{x:(event.clientX-rect.left)/rect.width*graphBox.w,y:(event.clientY-rect.top)/rect.height*graphBox.h};}
+function updateSpeedPointFromY(y){if(activeSpeedPoint<1||activeSpeedPoint>3)return;const usable=graphBox.h-2*graphBox.padY;speedPoints[activeSpeedPoint]=clamp((graphBox.h-graphBox.padY-y)/usable,0,1);rebuildSpeedIntegral();renderSpeedGraph();}
+function finishSpeedDrag(){if(activeSpeedPoint===-1)return;activeSpeedPoint=-1;activePointerId=null;reset();}
+
+const graphMotionEndMs=()=>timing?timing.delayMs+timing.motionMs:1;
+const defaultPointTimes=[0,.17,.33,.50,.67,.83,1];
+
+const lensYBox={w:280,h:170,padX:18,padY:18,max:160};
+const lensYPoints=defaultPointTimes.map(t=>({t,y:0}));
+let activeLensYPoint=-1,lensYPointerId=null;
+function lensYSlope(i){
+ const p=lensYPoints,n=p.length;
+ if(i<=0)return (p[1].y-p[0].y)/Math.max(.001,p[1].t-p[0].t);
+ if(i>=n-1)return (p[n-1].y-p[n-2].y)/Math.max(.001,p[n-1].t-p[n-2].t);
+ return (p[i+1].y-p[i-1].y)/Math.max(.001,p[i+1].t-p[i-1].t);
+}
+function lensYOffsetAt(u){
+ u=clamp(u,0,1);let i=0;while(i<lensYPoints.length-2&&u>lensYPoints[i+1].t)i++;
+ const a=lensYPoints[i],b=lensYPoints[i+1],h=Math.max(.001,b.t-a.t),q=clamp((u-a.t)/h,0,1),q2=q*q,q3=q2*q,m0=lensYSlope(i),m1=lensYSlope(i+1);
+ return clamp((2*q3-3*q2+1)*a.y+(q3-2*q2+q)*h*m0+(-2*q3+3*q2)*b.y+(q3-q2)*h*m1,-lensYBox.max,lensYBox.max);
+}
+function lensYGraphX(t){return lensYBox.padX+(lensYBox.w-2*lensYBox.padX)*clamp(t,0,1);}
+function lensYGraphY(y){const mid=lensYBox.h/2,half=(lensYBox.h-2*lensYBox.padY)/2;return mid+clamp(y,-lensYBox.max,lensYBox.max)/lensYBox.max*half;}
+function lensYGraphPoint(i){const p=lensYPoints[i];return{x:lensYGraphX(p.t),y:lensYGraphY(p.y)};}
+function lensYPathData(){
+ let d='';
+ for(let i=0;i<lensYPoints.length-1;i++){
+  const a=lensYPoints[i],b=lensYPoints[i+1],h=Math.max(.001,b.t-a.t),m0=lensYSlope(i),m1=lensYSlope(i+1),p0={x:lensYGraphX(a.t),y:lensYGraphY(a.y)},p1={x:lensYGraphX(b.t),y:lensYGraphY(b.y)},c1={x:lensYGraphX(a.t+h/3),y:lensYGraphY(a.y+m0*h/3)},c2={x:lensYGraphX(b.t-h/3),y:lensYGraphY(b.y-m1*h/3)};
+  if(i===0)d=`M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)}`;
+  d+=` C ${c1.x.toFixed(2)} ${c1.y.toFixed(2)}, ${c2.x.toFixed(2)} ${c2.y.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+ }
+ return d;
+}
+function positionPhaseGuides(group,graphX){
+ if(!group||!timing)return;group.replaceChildren();
+ const motionEnd=graphMotionEndMs();
+ let lo=timing.delayMs,hi=motionEnd;
+ for(let i=0;i<22;i++){const mid=(lo+hi)/2;if(motionSecondsAt(mid)<timing.t1)lo=mid;else hi=mid;}
+ const moveStartSec=Math.max(0,timing.t1-.10);let moveLo=timing.delayMs,moveHi=motionEnd;
+ for(let i=0;i<22;i++){const mid=(moveLo+moveHi)/2;if(motionSecondsAt(mid)<moveStartSec)moveLo=mid;else moveHi=mid;}
+ const guides=[{u:((moveLo+moveHi)/2)/motionEnd,label:'move'},{u:((lo+hi)/2)/motionEnd,label:'split'},{u:1,label:'handoff'}];
+ for(const guide of guides){
+  const x=graphX(guide.u),line=document.createElementNS(ns,'line'),label=document.createElementNS(ns,'text');
+  line.setAttribute('x1',x.toFixed(2));line.setAttribute('x2',x.toFixed(2));line.setAttribute('y1','18');line.setAttribute('y2','152');line.setAttribute('class','phase-guide');
+  label.setAttribute('x',(x+(guide.u>.94?-34:3)).toFixed(2));label.setAttribute('y','27');label.setAttribute('class','phase-label');label.textContent=guide.label;
+  group.append(line,label);
+ }
+}
+function ensurePointSliders(container,points,axis,max,onChange,invert=false){
+ if(!container||container.children.length===points.length)return;
+ container.replaceChildren();
+ points.forEach((p,i)=>{
+  const label=document.createElement('label');label.className='point-slider';
+  const name=document.createElement('span');name.className='point-name';name.textContent=`P${i+1}`;
+  const input=document.createElement('input');input.type='range';input.min=String(-max);input.max=String(max);input.step='1';input.dataset.index=String(i);input.disabled=i===0;input.setAttribute('aria-label',`${axis} точки ${i+1}`);
+  const output=document.createElement('output');output.dataset.index=String(i);
+  input.addEventListener('input',()=>onChange(i,invert?-Number(input.value):Number(input.value),false));
+  input.addEventListener('change',()=>onChange(i,invert?-Number(input.value):Number(input.value),true));
+  label.append(name,input,output);container.appendChild(label);
+ });
+}
+function syncPointSliders(container,points,key,invert=false){
+ if(!container)return;
+ [...container.querySelectorAll('input[type="range"]')].forEach(input=>{const i=Number(input.dataset.index),v=points[i][key];input.value=String(invert?-v:v);});
+ [...container.querySelectorAll('output')].forEach(output=>{const i=Number(output.dataset.index),v=points[i][key];output.textContent=`${v>0?'+':''}${Math.round(v)}`;});
+}
+function previewPointTime(t){
+ if(!timing)return;
+ cancelAnimationFrame(raf);raf=0;hideInteractiveTabs();elapsed=t*graphMotionEndMs();pose(elapsed);render();updateLensYPlayhead(elapsed);updateLensXPlayhead(elapsed);
+}
+function setLensYValue(i,value,finish){
+ if(i===0)return;
+ lensYPoints[i].y=clamp(value,-lensYBox.max,lensYBox.max);renderLensYGraph();syncFabGlassGeometry();previewPointTime(lensYPoints[i].t);if(finish)reset();
+}
+function renderLensYGraph(){
+ if(!lensYGraph)return;
+ ensurePointSliders(lensYSliders,lensYPoints,'Y',lensYBox.max,setLensYValue,true);
+ const pathData=lensYPathData(),mid=lensYBox.h/2,first=lensYGraphPoint(0),last=lensYGraphPoint(lensYPoints.length-1);
+ lensYPath.setAttribute('d',pathData);lensYFill.setAttribute('d',`${pathData} L ${last.x.toFixed(2)} ${mid.toFixed(2)} L ${first.x.toFixed(2)} ${mid.toFixed(2)} Z`);
+ lensYHandles.replaceChildren();
+ for(let i=0;i<lensYPoints.length;i++){const p=lensYGraphPoint(i),circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',p.x.toFixed(2));circle.setAttribute('cy',p.y.toFixed(2));circle.setAttribute('r',i===activeLensYPoint?'7.5':'6.5');circle.setAttribute('class',`point${i===activeLensYPoint?' active':''}${i===0||i===lensYPoints.length-1?' fixed-time':''}`);circle.dataset.index=String(i);lensYHandles.appendChild(circle);}
+ positionPhaseGuides(lensYPhaseGuides,lensYGraphX);syncPointSliders(lensYSliders,lensYPoints,'y',true);
+}
+function updateLensYPlayhead(ms){
+ if(!lensYGraph||!timing)return;
+ const motionEnd=graphMotionEndMs(),u=clamp(ms/motionEnd,0,1),y=lensYOffsetAt(u),xPx=lensYGraphX(u),yPx=lensYGraphY(y);
+ lensYPlayhead.setAttribute('x1',xPx.toFixed(2));lensYPlayhead.setAttribute('x2',xPx.toFixed(2));lensYPlayheadDot.setAttribute('cx',xPx.toFixed(2));lensYPlayheadDot.setAttribute('cy',yPx.toFixed(2));
+ if(lensYReadout)lensYReadout.textContent=`Y ${y>=0?'+':''}${y.toFixed(1)} px · ${(Math.min(ms,motionEnd)/1000).toFixed(2)} с`;
+}
+function lensYEventPoint(event){const rect=lensYGraph.getBoundingClientRect();return{x:(event.clientX-rect.left)/rect.width*lensYBox.w,y:(event.clientY-rect.top)/rect.height*lensYBox.h};}
+function updateLensYPointFromGraph(point){
+ if(activeLensYPoint<=0||activeLensYPoint>=lensYPoints.length-1)return;
+ const i=activeLensYPoint,p=lensYPoints[i],usableX=lensYBox.w-2*lensYBox.padX,wanted=(point.x-lensYBox.padX)/usableX,min=lensYPoints[i-1].t+.035,max=lensYPoints[i+1].t-.035;
+ p.t=clamp(wanted,min,max);renderLensYGraph();previewPointTime(p.t);
+}
+function finishLensYDrag(){
+ if(activeLensYPoint===-1)return;
+ if(lensYGraph&&lensYPointerId!==null&&lensYGraph.hasPointerCapture?.(lensYPointerId))lensYGraph.releasePointerCapture(lensYPointerId);
+ activeLensYPoint=-1;lensYPointerId=null;renderLensYGraph();reset();
+}
+function resetLensYCurve(){for(let i=0;i<lensYPoints.length;i++){lensYPoints[i].t=defaultPointTimes[i];lensYPoints[i].y=0;}renderLensYGraph();syncFabGlassGeometry();reset();}
+
+const lensXBox={w:280,h:170,padX:18,padY:18,max:180};
+const lensXPoints=defaultPointTimes.map(t=>({t,x:0}));
+let activeLensXPoint=-1,lensXPointerId=null,lensXInitialized=false;
+function lensXSlope(i){
+ const p=lensXPoints,n=p.length;
+ if(i<=0)return (p[1].x-p[0].x)/Math.max(.001,p[1].t-p[0].t);
+ if(i>=n-1)return (p[n-1].x-p[n-2].x)/Math.max(.001,p[n-1].t-p[n-2].t);
+ return (p[i+1].x-p[i-1].x)/Math.max(.001,p[i+1].t-p[i-1].t);
+}
+function lensXOffsetAt(u){
+ u=clamp(u,0,1);let i=0;while(i<lensXPoints.length-2&&u>lensXPoints[i+1].t)i++;
+ const a=lensXPoints[i],b=lensXPoints[i+1],h=Math.max(.001,b.t-a.t),q=clamp((u-a.t)/h,0,1),q2=q*q,q3=q2*q,m0=lensXSlope(i),m1=lensXSlope(i+1);
+ return clamp((2*q3-3*q2+1)*a.x+(q3-2*q2+q)*h*m0+(-2*q3+3*q2)*b.x+(q3-q2)*h*m1,-lensXBox.max,lensXBox.max);
+}
+function lensXGraphX(t){return lensXBox.padX+(lensXBox.w-2*lensXBox.padX)*clamp(t,0,1);}
+function lensXGraphY(x){const mid=lensXBox.h/2,half=(lensXBox.h-2*lensXBox.padY)/2;return mid-clamp(x,-lensXBox.max,lensXBox.max)/lensXBox.max*half;}
+function lensXGraphPoint(i){const p=lensXPoints[i];return{x:lensXGraphX(p.t),y:lensXGraphY(p.x)};}
+function lensXPathData(){
+ let d='';
+ for(let i=0;i<lensXPoints.length-1;i++){
+  const a=lensXPoints[i],b=lensXPoints[i+1],h=Math.max(.001,b.t-a.t),m0=lensXSlope(i),m1=lensXSlope(i+1),p0={x:lensXGraphX(a.t),y:lensXGraphY(a.x)},p1={x:lensXGraphX(b.t),y:lensXGraphY(b.x)},c1={x:lensXGraphX(a.t+h/3),y:lensXGraphY(a.x+m0*h/3)},c2={x:lensXGraphX(b.t-h/3),y:lensXGraphY(b.x-m1*h/3)};
+  if(i===0)d=`M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)}`;
+  d+=` C ${c1.x.toFixed(2)} ${c1.y.toFixed(2)}, ${c2.x.toFixed(2)} ${c2.y.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+ }
+ return d;
+}
+function legacyLensXAtMs(ms){
+ if(!timing||!path.length)return 0;
+ const motionEnd=graphMotionEndMs(),t=motionSecondsAt(Math.min(ms,motionEnd)),s=distanceAt(t);let lo=0,hi=path.length-1;
+ while(hi-lo>1){const mid=(lo+hi)>>1;if(path[mid].s<s)lo=mid;else hi=mid;}
+ const a=path[lo],b=path[hi],q=clamp((s-a.s)/Math.max(1e-8,b.s-a.s),0,1),lowerX=a.x+(b.x-a.x)*q,lowerY=a.y+(b.y-a.y)*q,baseX=width/2,baseY=height/2,target=finalFabTarget(),moveStart=Math.max(0,timing.t1-.10),moveRaw=clamp((t-moveStart)/Math.max(.001,timing.t2-moveStart),0,1),moveP=moveRaw*moveRaw*moveRaw*(moveRaw*(moveRaw*6-15)+10),bx0=baseX-lowerX,cx0=baseX+lowerX,by0=baseY+lowerY,movingS=movingSigma(Math.abs(cx0-baseX)),weight=bridgeWeight(Math.abs(cx0-baseX)),desiredX=baseX+(target.x-baseX)*moveP,contourX=supportedContourX(desiredX,baseX,bx0,cx0,movingS,weight);
+ return clamp(contourX-baseX,-lensXBox.max,lensXBox.max);
+}
+function setLensXDefaults(){
+ if(!timing||!width)return;
+ const motionEnd=graphMotionEndMs();
+ for(let i=0;i<lensXPoints.length;i++){lensXPoints[i].t=defaultPointTimes[i];lensXPoints[i].x=i===0?0:legacyLensXAtMs(defaultPointTimes[i]*motionEnd);}
+ lensXInitialized=true;
+}
+function setLensXValue(i,value,finish){
+ if(i===0)return;
+ lensXPoints[i].x=clamp(value,-lensXBox.max,lensXBox.max);renderLensXGraph();syncFabGlassGeometry();previewPointTime(lensXPoints[i].t);if(finish)reset();
+}
+function renderLensXGraph(){
+ if(!lensXGraph)return;
+ ensurePointSliders(lensXSliders,lensXPoints,'X',lensXBox.max,setLensXValue,false);
+ const pathData=lensXPathData(),mid=lensXBox.h/2,first=lensXGraphPoint(0),last=lensXGraphPoint(lensXPoints.length-1);
+ lensXPath.setAttribute('d',pathData);lensXFill.setAttribute('d',`${pathData} L ${last.x.toFixed(2)} ${mid.toFixed(2)} L ${first.x.toFixed(2)} ${mid.toFixed(2)} Z`);
+ lensXHandles.replaceChildren();
+ for(let i=0;i<lensXPoints.length;i++){const p=lensXGraphPoint(i),circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',p.x.toFixed(2));circle.setAttribute('cy',p.y.toFixed(2));circle.setAttribute('r',i===activeLensXPoint?'7.5':'6.5');circle.setAttribute('class',`point${i===activeLensXPoint?' active':''}${i===0||i===lensXPoints.length-1?' fixed-time':''}`);circle.dataset.index=String(i);lensXHandles.appendChild(circle);}
+ positionPhaseGuides(lensXPhaseGuides,lensXGraphX);syncPointSliders(lensXSliders,lensXPoints,'x',false);
+}
+function updateLensXPlayhead(ms){
+ if(!lensXGraph||!timing)return;
+ const motionEnd=graphMotionEndMs(),u=clamp(ms/motionEnd,0,1),x=lensXOffsetAt(u),xPx=lensXGraphX(u),yPx=lensXGraphY(x);
+ lensXPlayhead.setAttribute('x1',xPx.toFixed(2));lensXPlayhead.setAttribute('x2',xPx.toFixed(2));lensXPlayheadDot.setAttribute('cx',xPx.toFixed(2));lensXPlayheadDot.setAttribute('cy',yPx.toFixed(2));
+ if(lensXReadout)lensXReadout.textContent=`X ${x>=0?'+':''}${x.toFixed(1)} px · ${(Math.min(ms,motionEnd)/1000).toFixed(2)} с`;
+}
+function lensXEventPoint(event){const rect=lensXGraph.getBoundingClientRect();return{x:(event.clientX-rect.left)/rect.width*lensXBox.w,y:(event.clientY-rect.top)/rect.height*lensXBox.h};}
+function updateLensXPointFromGraph(point){
+ if(activeLensXPoint<=0||activeLensXPoint>=lensXPoints.length-1)return;
+ const i=activeLensXPoint,p=lensXPoints[i],usableX=lensXBox.w-2*lensXBox.padX,wanted=(point.x-lensXBox.padX)/usableX,min=lensXPoints[i-1].t+.035,max=lensXPoints[i+1].t-.035;
+ p.t=clamp(wanted,min,max);renderLensXGraph();previewPointTime(p.t);
+}
+function finishLensXDrag(){
+ if(activeLensXPoint===-1)return;
+ if(lensXGraph&&lensXPointerId!==null&&lensXGraph.hasPointerCapture?.(lensXPointerId))lensXGraph.releasePointerCapture(lensXPointerId);
+ activeLensXPoint=-1;lensXPointerId=null;renderLensXGraph();reset();
+}
+function resetLensXCurve(){setLensXDefaults();renderLensXGraph();syncFabGlassGeometry();reset();}
+const curve=u=>({x:halfSpan()/sigma*u*u,y:4.8*(2*u-u*u)});
+// Classify the connected components of the SAME field used by the lens.
+// Normalized geometry is calibrated once; no per-frame topology scan.
+function connected(u,which){
+ const p=curve(u),extent=Math.ceil(halfSpan()/sigma+3),step=.12,nx=Math.ceil(2*extent/step)+1,ny=85,weight=bridgeWeight(p.x*sigma),ratio=movingSigma(p.x*sigma)/sigma,md=2*ratio*ratio,grid=new Uint8Array(nx*ny),queue=new Int32Array(nx*ny);
+ for(let j=0;j<ny;j++){const y=j*step-2,fy=Math.exp(-y*y/2),my=Math.exp(-((y-p.y)**2)/md);
+  for(let i=0;i<nx;i++){const x=i*step-extent,near=clamp(x,-p.x,p.x),pair=(Math.exp(-((x-p.x)**2)/md)+Math.exp(-((x+p.x)**2)/md))*my,capsule=2*Math.exp(-((x-near)**2)/md)*my;grid[j*nx+i]=Math.exp(-x*x/2)*fy+(1-weight)*pair+weight*capsule>=threshold?1:0;}}
+ const index=(x,y)=>Math.round((y+2)/step)*nx+Math.round((x+extent)/step);
+ const from=which===1?index(0,0):index(-p.x,p.y),target=index(p.x,p.y);
+ let head=0,tail=1;queue[0]=from;grid[from]=2;
+ while(head<tail){const n=queue[head++];if(n===target)return true;const col=n%nx;
+  for(const next of [col>0?n-1:-1,col<nx-1?n+1:-1,n-nx,n+nx])if(next>=0&&next<grid.length&&grid[next]===1){grid[next]=2;queue[tail++]=next;}}
+ return false;
+}
+function calibrate(){if(breaks)return;breaks=[1].map(which=>{let lo=0,hi=1;for(let k=0;k<17;k++){const mid=(lo+hi)/2;if(connected(mid,which))lo=mid;else hi=mid;}return (lo+hi)/2;});}
+function buildPath(){breaks=null;calibrate();path=[{s:0,x:0,y:0,u:0}];for(let i=1;i<=600;i++){const u=i/600,p=curve(u),prev=path[path.length-1],x=p.x*sigma,y=p.y*sigma;path.push({s:prev.s+Math.hypot(x-prev.x,y-prev.y),x,y,u});}
+}
+function arcAt(u){const f=u*600,i=Math.floor(f),a=path[i],b=path[Math.min(i+1,600)];return a.s+(b.s-a.s)*(f-i);}
+function updateLabels(){
+ $('v1').textContent=Number($('t1').value).toFixed(2)+' с';$('v2').textContent=Number($('t2').value).toFixed(2)+' с';$('vhandoff').textContent=Number($('handoff').value).toFixed(2)+' с';$('vs').textContent=$('speed').value+' px/с';$('vlens').textContent=$('lensSize').value+'%';$('vdelay').textContent=$('delay').value+' мс';$('vblur').textContent=Number($('lensBlur').value).toFixed(1)+' px';$('vsaturation').textContent=$('lensSaturation').value+'%';$('vfrost').textContent=$('lensFrost').value+'%';
+}
+function readSettings(){
+ const speed=Number($('speed').value),t1=Number($('t1').value),t2=Number($('t2').value),delayMs=Number($('delay').value),handoffMs=Math.round(Number($('handoff').value)*1000),s1=arcAt(breaks[0]),end=path[path.length-1].s;
+ const begin=Math.max(0,t1-1.4*s1/speed),h0=Math.max(.001,t1-begin),h1=Math.max(.001,t2-t1);
+ const times=[begin,t1,t2],dist=[0,s1,end],h=[h0,h1],d=[s1/h0,(end-s1)/h1];
+ const w1=2*h[1]+h[0],w2=h[1]+2*h[0],slopes=[0,(w1+w2)/(w1/d[0]+w2/d[1]),0];
+ timing={speed,t1,t2,times,dist,slopes,delayMs,motionMs:t2*1000,handoffMs,total:delayMs+t2*1000+handoffMs};
+ applyLensMaterial();
+ if(!lensXInitialized)setLensXDefaults();
+ $('note').textContent='Графики X/Y задают абсолютную траекторию первой линзы от старта до начала handoff. Конечные X/Y автоматически задают позицию FAB.';
+ updateLabels();renderLensYGraph();renderLensXGraph();syncFabGlassGeometry();
+}
+function distanceAt(t){const {times,dist,slopes}=timing;if(t<=times[0])return 0;if(t>=times[2])return dist[2];let i=0;while(i<1&&t>times[i+1])i++;const h=times[i+1]-times[i],u=(t-times[i])/h,u2=u*u,u3=u2*u;return (2*u3-3*u2+1)*dist[i]+(u3-2*u2+u)*h*slopes[i]+(-2*u3+3*u2)*dist[i+1]+(u3-u2)*h*slopes[i+1];}
+function motionSecondsAt(ms){if(ms<=timing.delayMs)return 0;const norm=clamp((ms-timing.delayMs)/Math.max(1,timing.motionMs),0,1);return speedAreaAt(norm)*timing.t2;}
+function pose(ms){const waiting=ms<timing.delayMs,motionEnd=timing.delayMs+timing.motionMs,handoffElapsed=Math.max(0,ms-motionEnd),handoffP=timing.handoffMs>0?clamp(handoffElapsed/timing.handoffMs,0,1):1,t=motionSecondsAt(Math.min(ms,motionEnd)),s=distanceAt(t);if(ms>=motionEnd)beginHandoff();setHandoffVisuals(handoffStarted?handoffP:0);let lo=0,hi=path.length-1;while(hi-lo>1){const mid=(lo+hi)>>1;if(path[mid].s<s)lo=mid;else hi=mid;}const a=path[lo],b=path[hi],q=clamp((s-a.s)/Math.max(1e-8,b.s-a.s),0,1),x=a.x+(b.x-a.x)*q,y=a.y+(b.y-a.y)*q,baseX=width/2,baseY=height/2,moveStart=Math.max(0,timing.t1-.10),positionU=clamp(ms/Math.max(1,motionEnd),0,1);
+ bx=baseX-x;cx=baseX+x;by=cy=baseY+y;
+ ax=baseX+lensXOffsetAt(positionU);ay=baseY+lensYOffsetAt(positionU);
+ syncIconsFo();updateLensYPlayhead(ms);updateLensXPlayhead(ms);
+ const label=waiting?'Ожидание старта':ms<motionEnd?(t<moveStart?'Плавный спуск и расхождение':t<timing.t1?'Первая линза движется по X/Y-графикам до разделения':'Первая линза движется по X/Y-графикам к handoff'):handoffP<1?'Handoff: Tabs + FAB':'Интерактивный tabs + glass FAB готовы';
+ if(label!==last){status.textContent=label;last=label;}$('clock').textContent=(ms/1000).toFixed(2)+' с';
+}
+function frame(now){raf=0;if(!width)return;elapsed=Math.min(timing.total,now-start);pose(elapsed);render();if(elapsed<timing.total)raf=requestAnimationFrame(frame);}
+function reset(){cancelAnimationFrame(raf);prepareInteractiveTabs();hideInteractiveTabs();readSettings();start=performance.now();elapsed=0;last='';pose(0);render();raf=requestAnimationFrame(frame);}
+new ResizeObserver(()=>{
+ const rect=scene.getBoundingClientRect(),nw=Math.round(rect.width),nh=Math.round(rect.height);
+ if(nw===width&&nh===height)return;
+ width=nw;height=nh;
+ // Small landscape screens retain room for the downward split.
+ applyLensSize();
+ syncFabGlassGeometry();
+ scene.setAttribute('viewBox',`0 0 ${width} ${height}`);
+ const filter=$('refraction');filter.setAttribute('filterUnits','userSpaceOnUse');filter.setAttribute('x','0');filter.setAttribute('y','0');filter.setAttribute('width',width);filter.setAttribute('height',height);
+ for(const el of [vector,maskSurface]){if(!el)continue;el.setAttribute('width',String(width));el.setAttribute('height',String(height));}
+ if(materialSurface){materialSurface.setAttribute('width',String(width));materialSurface.setAttribute('height',String(height));}
+ const res=Math.max(1.5,Math.sqrt(width*height/180000));
+ mapCanvas.width=maskCanvas.width=Math.ceil(width/res);mapCanvas.height=maskCanvas.height=Math.ceil(height/res);
+ background();buildPath();reset();
+}).observe(scene);
+$('reset').addEventListener('click',reset);
+function updateDiagnosticBackground(){
+ const level=clamp(Number($('bgTone').value)/100,0,1),channel=Math.round(level*255),hex='#'+channel.toString(16).padStart(2,'0').repeat(3),root=document.documentElement;
+ root.style.setProperty('--diagnostic-bg',hex);
+ const darkLines=level>.56;
+ root.style.setProperty('--diagnostic-grid-minor',darkLines?'rgba(0,0,0,.10)':'rgba(255,255,255,.10)');
+ root.style.setProperty('--diagnostic-grid-major',darkLines?'rgba(0,0,0,.18)':'rgba(255,255,255,.18)');
+ $('vbg').textContent=hex.toUpperCase();
+ document.body.classList.toggle('diagnostic-grid',$('gridBg').checked);
+}
+$('bgTone').addEventListener('input',updateDiagnosticBackground);
+$('gridBg').addEventListener('change',()=>{
+ if($('gridBg').checked&&Number($('bgTone').value)<70)$('bgTone').value='92';
+ updateDiagnosticBackground();
+});
+updateDiagnosticBackground();
+for(const id of ['t1','t2','speed','delay','handoff']){
+ $(id).addEventListener('input',()=>{
+  cancelAnimationFrame(raf);raf=0;hideInteractiveTabs();
+  if(id==='t1'&&Number($('t1').value)>=Number($('t2').value))$('t2').value=(Number($('t1').value)+.05).toFixed(2);
+  if(id==='t2'&&Number($('t2').value)<=Number($('t1').value))$('t1').value=(Number($('t2').value)-.05).toFixed(2);
+  updateLabels();
+ });
+ $(id).addEventListener('change',reset);
+}
+for(const id of ['lensBlur','lensSaturation','lensFrost']){
+ $(id).addEventListener('input',()=>{applyLensMaterial();updateLabels();render();});
+ $(id).addEventListener('change',()=>{applyLensMaterial();updateLabels();render();});
+}
+
+$('lensSize').addEventListener('input',()=>{
+ cancelAnimationFrame(raf);raf=0;hideInteractiveTabs();applyLensSize();syncFabGlassGeometry();updateLabels();pose(0);render();
+});
+$('lensSize').addEventListener('change',()=>{applyLensSize();buildPath();reset();});
+if(speedGraph){
+ renderSpeedGraph();
+ speedGraph.addEventListener('pointerdown',event=>{const p=graphEventToPoint(event);let min=1e9,hit=-1;for(let i=1;i<=3;i++){const c=graphPoint(i),dist=Math.hypot(c.x-p.x,c.y-p.y);if(dist<min){min=dist;hit=i;}}if(min>18)return;activeSpeedPoint=hit;activePointerId=event.pointerId;speedGraph.setPointerCapture(event.pointerId);updateSpeedPointFromY(p.y);event.preventDefault();});
+ speedGraph.addEventListener('pointermove',event=>{if(activeSpeedPoint===-1||event.pointerId!==activePointerId)return;const p=graphEventToPoint(event);updateSpeedPointFromY(p.y);});
+ speedGraph.addEventListener('pointerup',event=>{if(event.pointerId===activePointerId)finishSpeedDrag();});
+ speedGraph.addEventListener('pointercancel',finishSpeedDrag);
+}
+if(lensYGraph){
+ renderLensYGraph();
+ lensYGraph.addEventListener('pointerdown',event=>{
+  const p=lensYEventPoint(event);let min=1e9,hit=-1;
+  for(let i=1;i<lensYPoints.length-1;i++){const c=lensYGraphPoint(i),dist=Math.hypot(c.x-p.x,c.y-p.y);if(dist<min){min=dist;hit=i;}}
+  if(min>22)return;activeLensYPoint=hit;lensYPointerId=event.pointerId;lensYGraph.setPointerCapture(event.pointerId);renderLensYGraph();updateLensYPointFromGraph(p);event.preventDefault();
+ });
+ lensYGraph.addEventListener('pointermove',event=>{if(activeLensYPoint===-1||event.pointerId!==lensYPointerId)return;updateLensYPointFromGraph(lensYEventPoint(event));});
+ lensYGraph.addEventListener('pointerup',event=>{if(event.pointerId===lensYPointerId)finishLensYDrag();});
+ lensYGraph.addEventListener('pointercancel',finishLensYDrag);
+}
+if(lensXGraph){
+ renderLensXGraph();
+ lensXGraph.addEventListener('pointerdown',event=>{
+  const p=lensXEventPoint(event);let min=1e9,hit=-1;
+  for(let i=1;i<lensXPoints.length-1;i++){const c=lensXGraphPoint(i),dist=Math.hypot(c.x-p.x,c.y-p.y);if(dist<min){min=dist;hit=i;}}
+  if(min>22)return;activeLensXPoint=hit;lensXPointerId=event.pointerId;lensXGraph.setPointerCapture(event.pointerId);renderLensXGraph();updateLensXPointFromGraph(p);event.preventDefault();
+ });
+ lensXGraph.addEventListener('pointermove',event=>{if(activeLensXPoint===-1||event.pointerId!==lensXPointerId)return;updateLensXPointFromGraph(lensXEventPoint(event));});
+ lensXGraph.addEventListener('pointerup',event=>{if(event.pointerId===lensXPointerId)finishLensXDrag();});
+ lensXGraph.addEventListener('pointercancel',finishLensXDrag);
+}
+$('resetLensYCurve')?.addEventListener('click',resetLensYCurve);
+$('resetLensXCurve')?.addEventListener('click',resetLensXCurve);
+rebuildSpeedIntegral();renderSpeedGraph();renderLensYGraph();renderLensXGraph();document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;}else if(timing&&elapsed<timing.total){start=performance.now()-elapsed;raf=requestAnimationFrame(frame);}});
+})();
+
+</script>
+</body>
+</html>
