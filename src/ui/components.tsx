@@ -101,18 +101,20 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
 }
 
 type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; children: ReactNode };
-type FloatingActionButtonBehavior = Pick<FloatingActionButtonProps, 'type' | 'disabled' | 'onClick' | 'onPointerDown' | 'onKeyDown'> & { isShown: boolean };
+type FloatingActionButtonBehavior = { buttonProps: ButtonHTMLAttributes<HTMLButtonElement>; isShown: boolean };
 
 const FloatingActionButtonBehaviorContext = createContext<FloatingActionButtonBehavior | null>(null);
 
-function FloatingActionButtonElement({ children, ...buttonProps }: ComponentPropsWithRef<'button'>) {
+function FloatingActionButtonElement({ children, ...glassProps }: ComponentPropsWithRef<'button'>) {
   const behavior = useContext(FloatingActionButtonBehaviorContext);
-  if (!behavior) return <button {...buttonProps}>{children}</button>;
+  if (!behavior) return <button {...glassProps}>{children}</button>;
 
-  const { type = 'button', disabled, isShown, onClick, onPointerDown, onKeyDown } = behavior;
+  const { buttonProps, isShown } = behavior;
+  const { type = 'button', disabled, onClick, onPointerDown, onKeyDown, ...restButtonProps } = buttonProps;
   return (
     <button
-      {...buttonProps}
+      {...glassProps}
+      {...restButtonProps}
       type={type}
       disabled={disabled}
       onClick={isShown ? onClick : undefined}
@@ -125,15 +127,23 @@ function FloatingActionButtonElement({ children, ...buttonProps }: ComponentProp
 }
 
 export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+  const buttonProps: ButtonHTMLAttributes<HTMLButtonElement> = {
+    ...props,
+    type,
+    disabled,
+    onClick,
+    onPointerDown,
+    onKeyDown,
+    'aria-label': label,
+    'aria-hidden': !isShown || undefined,
+    tabIndex: isShown ? 0 : -1,
+  };
+
   return (
-    <FloatingActionButtonBehaviorContext.Provider value={{ type, disabled, isShown, onClick, onPointerDown, onKeyDown }}>
+    <FloatingActionButtonBehaviorContext.Provider value={{ buttonProps, isShown }}>
       <KonstaGlass
-        {...props}
         component={FloatingActionButtonElement}
         highlight={false}
-        aria-label={label}
-        aria-hidden={!isShown || undefined}
-        tabIndex={isShown ? 0 : -1}
         className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
       >
         {children}
