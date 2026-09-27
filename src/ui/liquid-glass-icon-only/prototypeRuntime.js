@@ -1,6 +1,6 @@
 // Direct extraction from the approved HTML, not a rewritten interaction model.
 // See provenance.md for the extraction boundary and intentional lifecycle changes.
-export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
+export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHost) {
   const owner = root.ownerDocument;
   const host = root.getElementById('iconLayer');
   const events = new EventTarget();
@@ -1873,19 +1873,40 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const lensBlurNode=document.getElementById('startup-lens-blur'), lensSaturationNode=document.getElementById('startup-lens-saturation');
   const refraction=document.getElementById('startup-refraction');
   const SETTINGS={
-    splitSec:.35,
-    revealSec:1.10,
-    handoffSec:.50,
-    speed:210,
-    lensScale:.75,
+    splitSec:.25,
+    revealSec:.65,
+    handoffSec:.22,
+    speed:290,
+    lensScale:.74,
     delayMs:0,
-    blurPx:.5,
-    saturation:1.44,
-    frost:.14,
-    speedPoints:[0,.55,.78,.55,0],
+    blurPx:5.2,
+    saturation:1.24,
+    frost:.13,
+    fabYOffset:-26,
+    speedPoints:[0,.186,.360,.577,0],
   };
   const threshold=.46,logThreshold=-Math.log(threshold),nodes=[{x:0,y:0},{x:.21,y:.88},{x:.47,y:1},{x:.78,y:.88},{x:1,y:0}];
   const mapClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+  function lowerFieldAmplitudeAtX(px,bx0,cx0,movingS,weight){
+    const movingDen=2*movingS*movingS,nearest=mapClamp(px,bx0,cx0);
+    return (1-weight)*(Math.exp(-((px-bx0)**2)/movingDen)+Math.exp(-((px-cx0)**2)/movingDen))
+      +weight*2*Math.exp(-((px-nearest)**2)/movingDen);
+  }
+  function lowerTopContourY(px,bx0,cx0,by0,movingS,weight){
+    const amplitude=lowerFieldAmplitudeAtX(px,bx0,cx0,movingS,weight);
+    if(amplitude<=threshold)return null;
+    const movingDen=2*movingS*movingS;
+    return by0-Math.sqrt(Math.max(0,-movingDen*Math.log(threshold/amplitude)));
+  }
+  function supportedContourX(desiredX,baseX,bx0,cx0,movingS,weight){
+    if(lowerFieldAmplitudeAtX(desiredX,bx0,cx0,movingS,weight)>threshold)return desiredX;
+    let lo=baseX,hi=desiredX;
+    for(let i=0;i<18;i++){
+      const mid=(lo+hi)/2;
+      if(lowerFieldAmplitudeAtX(mid,bx0,cx0,movingS,weight)>threshold)lo=mid;else hi=mid;
+    }
+    return lo;
+  }
   let width=0,height=0,baseY=0,sigma=30,ax=0,ay=0,bx=0,by=0,cx=0,cy=0;
   let timing=null,path=[],breaks=null,running=false,startTime=0,elapsed=0,handoffProgress=0;
   const mapCanvas=document.createElement('canvas'),mapCtx=mapCanvas.getContext('2d');
@@ -1903,6 +1924,22 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   function bridgeWeight(x){
     const a=mapClamp(x/halfSpan(),0,1),smooth=a*a*(3-2*a);
     return Math.max(smooth,.28*(1-Math.exp(-x*x/(2*movingSigma(x)**2))));
+  }
+  function finalFabTarget(){
+    const runtimeWidth=width/1.1,baseX=width/2,final=path.length?path[path.length-1]:{x:0,y:0};
+    const lowerX=final.x,lowerY=final.y,movingS=movingSigma(lowerX),weight=bridgeWeight(lowerX);
+    const bx0=baseX-lowerX,cx0=baseX+lowerX,by0=baseY+lowerY;
+    const desiredX=(width-runtimeWidth)/2+runtimeWidth*.9;
+    const targetX=supportedContourX(desiredX,baseX,bx0,cx0,movingS,weight);
+    const topY=lowerTopContourY(targetX,bx0,cx0,by0,movingS,weight);
+    const liquidRadius=sigma*Math.sqrt(-2*Math.log(threshold)),overlap=4;
+    return {x:targetX,y:(topY??(by0-shellRadius()))-liquidRadius+overlap+SETTINGS.fabYOffset,liquidRadius};
+  }
+  function syncFabHostGeometry(){
+    if(!fabHost||!width||!height)return;
+    const target=finalFabTarget(),slotSize=88,hostY=target.y-(height-64);
+    fabHost.style.left=target.x-slotSize/2+'px';
+    fabHost.style.top=hostY-slotSize/2+'px';
   }
   function catmull1D(a,b,c,d,t){
     const t2=t*t,t3=t2*t;
@@ -2021,6 +2058,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     iconLayer.style.width=runtimeWidth+'px';
     motion.style.transform='none';
     applyMaterial();
+    syncFabHostGeometry();
     return true;
   }
   function profile(x){
@@ -2041,6 +2079,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     scene.style.visibility='visible';scene.style.opacity='1';
     iconLayer.style.opacity='0';iconLayer.style.willChange='opacity';iconLayer.inert=true;iconLayer.setAttribute('startup','');
     iconMask.classList.remove('tabs-interactive');iconMask.style.pointerEvents='none';
+    if(fabHost){syncFabHostGeometry();fabHost.style.opacity='0';fabHost.style.pointerEvents='none';fabHost.style.willChange='opacity';}
   }
   function setFinalState(){
     const changed=!iconMask.classList.contains('tabs-interactive');
@@ -2048,12 +2087,14 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     scene.style.opacity='0';scene.style.visibility='hidden';
     iconLayer.style.opacity='1';iconLayer.style.willChange='auto';iconLayer.inert=false;iconLayer.removeAttribute('startup');
     iconMask.classList.add('tabs-interactive');iconMask.style.pointerEvents='auto';
+    if(fabHost){syncFabHostGeometry();fabHost.style.opacity='1';fabHost.style.pointerEvents='auto';fabHost.style.willChange='auto';}
     if(changed)iconLayer.dispatchEvent(new Event('tabs-layout-ready'));
   }
   function setHandoffVisuals(progress){
     const p=mapClamp(progress,0,1);handoffProgress=p;
     scene.style.visibility='visible';scene.style.opacity=String(1-p);
     iconLayer.style.opacity=String(p);
+    if(fabHost){fabHost.style.opacity=String(p);fabHost.style.pointerEvents=p<1?'none':'auto';}
     if(p<1){iconLayer.inert=true;iconMask.style.pointerEvents='none';return;}
     setFinalState();
   }
@@ -2061,7 +2102,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     if(!width||!mapCtx||!maskCtx)return;
     const handoffEase=handoffProgress*handoffProgress*(3-2*handoffProgress),distortionStrength=1-handoffEase;
     const mw=mapCanvas.width,mh=mapCanvas.height,sx=width/mw,sy=height/mh,map=mapCtx.createImageData(mw,mh),mask=maskCtx.createImageData(mw,mh);
-    const m=map.data,k=mask.data,den=2*sigma*sigma,movingS=movingSigma(Math.abs(cx-ax)),movingDen=2*movingS*movingS,weight=bridgeWeight(Math.abs(cx-ax));
+    const lowerOffset=Math.abs(cx-width/2),m=map.data,k=mask.data,den=2*sigma*sigma,movingS=movingSigma(lowerOffset),movingDen=2*movingS*movingS,weight=bridgeWeight(lowerOffset);
     const xsA=new Float32Array(mw),xsB=new Float32Array(mw),xsC=new Float32Array(mw);
     for(let x=0;x<mw;x++){
       const px=(x+.5)*sx;xsA[x]=Math.exp(-((px-ax)**2)/den);xsB[x]=Math.exp(-((px-bx)**2)/movingDen);xsC[x]=Math.exp(-((px-cx)**2)/movingDen);
@@ -2128,7 +2169,22 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     let lo=0,hi=path.length-1;
     while(hi-lo>1){const mid=(lo+hi)>>1;if(path[mid].s<s)lo=mid;else hi=mid;}
     const a=path[lo],b=path[hi],q=mapClamp((s-a.s)/Math.max(1e-8,b.s-a.s),0,1),x=a.x+(b.x-a.x)*q,y=a.y+(b.y-a.y)*q;
-    ax=width/2;ay=baseY;bx=ax-x;cx=ax+x;by=cy=baseY+y;
+    const baseX=width/2;bx=baseX-x;cx=baseX+x;by=cy=baseY+y;
+    if(fabHost){
+      const target=finalFabTarget(),moveStart=Math.max(0,timing.t1-.10);
+      const moveRaw=mapClamp((t-moveStart)/Math.max(.001,timing.t2-moveStart),0,1);
+      const moveP=moveRaw*moveRaw*moveRaw*(moveRaw*(moveRaw*6-15)+10);
+      const movingS=movingSigma(Math.abs(cx-baseX)),weight=bridgeWeight(Math.abs(cx-baseX));
+      const desiredX=baseX+(target.x-baseX)*moveP;
+      const contourX=supportedContourX(desiredX,baseX,bx,cx,movingS,weight);
+      const topY=lowerTopContourY(contourX,bx,cx,by,movingS,weight);
+      const liquidRadius=sigma*Math.sqrt(-2*Math.log(threshold)),overlap=7-3*moveP;
+      const contourY=(topY??baseY)-liquidRadius+overlap+SETTINGS.fabYOffset*moveP;
+      const attachP=mapClamp(moveRaw/.16,0,1),attachEase=attachP*attachP*(3-2*attachP);
+      ax=contourX;ay=baseY+(contourY-baseY)*attachEase;
+    }else{
+      ax=baseX;ay=baseY;
+    }
     syncStartupIcons();
   }
   function settle(){
