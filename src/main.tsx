@@ -1,7 +1,7 @@
-import { KonstaProvider } from 'konsta/react';
+import { App as KonstaApp } from 'konsta/react';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+import { App as MezfitApp } from './App';
 import { loadGlobalTheme } from './theme';
 import './ui/konsta.css';
 import './style.css';
@@ -26,8 +26,7 @@ const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
-  root.classList.add('k-ios', 'dark', 'safe-areas');
-  let content = <App />;
+  let content = <MezfitApp />;
   if (window.location.pathname === '/ui-kit') {
     const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }] = await Promise.all([
       import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'),
@@ -36,9 +35,9 @@ async function bootstrap(): Promise<void> {
   }
   createRoot(root).render(
     <React.StrictMode>
-      <KonstaProvider theme="ios" dark>
+      <KonstaApp theme="ios" dark safeAreas className="dark">
         {content}
-      </KonstaProvider>
+      </KonstaApp>
     </React.StrictMode>,
   );
 }
