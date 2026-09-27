@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, Text } from './primitives';
+import { FloatingActionButton } from './components';
 import { LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 import './LiquidGlassIconOnlyCatalog.css';
 
@@ -41,6 +42,7 @@ export function LiquidGlassIconOnlyCatalog() {
           value={value}
           onValueChange={setValue}
           hidden={hidden}
+          fab={<FloatingActionButton label="Действие">＋</FloatingActionButton>}
         />
       </div>
       <Text>{tabs.find(tab => tab.value === value)?.label}</Text>
