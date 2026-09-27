@@ -29,10 +29,10 @@ async function bootstrap(): Promise<void> {
   root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;
   if (window.location.pathname === '/ui-kit') {
-    const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }] = await Promise.all([
-      import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'),
+    const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }, { LiquidGlassTextOnlyCatalog }] = await Promise.all([
+      import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'), import('./ui/LiquidGlassTextOnlyCatalog'),
     ]);
-    content = <><UiKitPage /><ThemeVariantsCatalog /><LiquidGlassIconOnlyCatalog /></>;
+    content = <><UiKitPage /><ThemeVariantsCatalog /><LiquidGlassIconOnlyCatalog /><LiquidGlassTextOnlyCatalog /></>;
   }
   createRoot(root).render(
     <React.StrictMode>
