@@ -2079,7 +2079,10 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     scene.style.visibility='visible';scene.style.opacity='1';
     iconLayer.style.opacity='0';iconLayer.style.willChange='opacity';iconLayer.inert=true;iconLayer.setAttribute('startup','');
     iconMask.classList.remove('tabs-interactive');iconMask.style.pointerEvents='none';
-    if(fabHost){syncFabHostGeometry();fabHost.style.opacity='0';fabHost.style.pointerEvents='none';fabHost.style.willChange='opacity';}
+    if(fabHost){
+      syncFabHostGeometry();fabHost.style.opacity='0';fabHost.style.pointerEvents='none';fabHost.style.willChange='opacity';
+      fabHost.inert=true;fabHost.setAttribute('aria-hidden','true');
+    }
   }
   function setFinalState(){
     const changed=!iconMask.classList.contains('tabs-interactive');
@@ -2087,14 +2090,21 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     scene.style.opacity='0';scene.style.visibility='hidden';
     iconLayer.style.opacity='1';iconLayer.style.willChange='auto';iconLayer.inert=false;iconLayer.removeAttribute('startup');
     iconMask.classList.add('tabs-interactive');iconMask.style.pointerEvents='auto';
-    if(fabHost){syncFabHostGeometry();fabHost.style.opacity='1';fabHost.style.pointerEvents='auto';fabHost.style.willChange='auto';}
+    if(fabHost){
+      syncFabHostGeometry();fabHost.style.opacity='1';fabHost.style.pointerEvents='auto';fabHost.style.willChange='auto';
+      fabHost.inert=false;fabHost.removeAttribute('aria-hidden');
+    }
     if(changed)iconLayer.dispatchEvent(new Event('tabs-layout-ready'));
   }
   function setHandoffVisuals(progress){
     const p=mapClamp(progress,0,1);handoffProgress=p;
     scene.style.visibility='visible';scene.style.opacity=String(1-p);
     iconLayer.style.opacity=String(p);
-    if(fabHost){fabHost.style.opacity=String(p);fabHost.style.pointerEvents=p<1?'none':'auto';}
+    if(fabHost){
+      fabHost.style.opacity=String(p);fabHost.style.pointerEvents=p<1?'none':'auto';
+      fabHost.inert=p<1;
+      if(p<1)fabHost.setAttribute('aria-hidden','true');else fabHost.removeAttribute('aria-hidden');
+    }
     if(p<1){iconLayer.inert=true;iconMask.style.pointerEvents='none';return;}
     setFinalState();
   }
