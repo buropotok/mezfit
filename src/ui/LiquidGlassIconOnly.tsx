@@ -135,8 +135,6 @@ function Scene({ tabs, value, onValueChange, entrance, fab }: Omit<LiquidGlassIc
         width: 88,
         height: 88,
         zIndex: 4,
-        opacity: entrance ? 0 : 1,
-        pointerEvents: entrance ? 'none' : 'auto',
       }}
     >{fab}</div> : null}
   </>;
