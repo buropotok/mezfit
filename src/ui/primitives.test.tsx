@@ -68,10 +68,11 @@ describe('UI Kit primitives', () => {
     expect(html).toMatch(/<\/button><span class="ui-list-item__trailing-action"><button/);
   });
 
-  it('gives the floating action button an accessible name', () => {
+  it('gives the floating action button an accessible name on the Konsta glass surface', () => {
     const html = renderToStaticMarkup(<FloatingActionButton label="Добавить клиента">+</FloatingActionButton>);
     expect(html).toContain('aria-label="Добавить клиента"');
     expect(html).toContain('ui-fab--shown');
+    expect(html).toMatch(/<button[^>]*class="(?=[^"]*k-glass)(?=[^"]*ui-fab)[^"]*"/);
   });
 
   it('supports canonical textual FAB labels without a nested typography primitive', () => {

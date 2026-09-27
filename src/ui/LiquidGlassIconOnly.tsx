@@ -97,7 +97,7 @@ function Scene({ tabs, value, onValueChange, entrance, fab }: Omit<LiquidGlassIc
               <feFuncG type="linear" slope="1" intercept="-0.00196078431372549" />
             </feComponentTransfer>
             <feDisplacementMap in="SourceGraphic" in2="map" scale="64" xChannelSelector="R" yChannelSelector="G" result="displaced" />
-            <feGaussianBlur id="startup-lens-blur" in="displaced" stdDeviation="5.2" result="softened" />
+            <feGaussianBlur id="startup-lens-blur" in="displaced" stdDeviation=".5" result="softened" />
             <feColorMatrix id="startup-lens-saturation" in="softened" type="saturate" values="1.24" />
           </filter>
           <mask id="startup-reveal-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">

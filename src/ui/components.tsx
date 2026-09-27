@@ -1,7 +1,7 @@
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ComponentPropsWithRef, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
-import { Dialog as KonstaDialog, DialogButton } from 'konsta/react';
+import { Dialog as KonstaDialog, DialogButton, Glass as KonstaGlass } from 'konsta/react';
 import type { UiComponentTheme } from './componentTheme';
 import { resolveUiIconPair } from './Icon';
 import type { UiIconPair, UiIconSource } from './iconPair';
@@ -101,10 +101,54 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
 }
 
 type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; children: ReactNode };
+type FloatingActionButtonBehavior = { buttonProps: ButtonHTMLAttributes<HTMLButtonElement>; isShown: boolean };
+
+const FloatingActionButtonBehaviorContext = createContext<FloatingActionButtonBehavior | null>(null);
+
+function FloatingActionButtonElement({ children, ...glassProps }: ComponentPropsWithRef<'button'>) {
+  const behavior = useContext(FloatingActionButtonBehaviorContext);
+  if (!behavior) return <button {...glassProps}>{children}</button>;
+
+  const { buttonProps, isShown } = behavior;
+  const { type = 'button', disabled, onClick, onPointerDown, onKeyDown, ...restButtonProps } = buttonProps;
+  return (
+    <button
+      {...glassProps}
+      {...restButtonProps}
+      type={type}
+      disabled={disabled}
+      onClick={isShown ? onClick : undefined}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }}
+      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+  const buttonProps: ButtonHTMLAttributes<HTMLButtonElement> = {
+    ...props,
+    type,
+    disabled,
+    onClick,
+    onPointerDown,
+    onKeyDown,
+    'aria-label': label,
+    'aria-hidden': !isShown || undefined,
+    tabIndex: isShown ? 0 : -1,
+  };
+
   return (
-    <button {...props} type={type} aria-label={label} aria-hidden={!isShown || undefined} tabIndex={isShown ? 0 : -1} disabled={disabled} onClick={isShown ? onClick : undefined} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}>{children}</button>
+    <FloatingActionButtonBehaviorContext.Provider value={{ buttonProps, isShown }}>
+      <KonstaGlass
+        component={FloatingActionButtonElement}
+        highlight={false}
+        className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
+      >
+        {children}
+      </KonstaGlass>
+    </FloatingActionButtonBehaviorContext.Provider>
   );
 }
 
