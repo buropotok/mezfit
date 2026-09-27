@@ -101,7 +101,7 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
         </SortableContext>
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
-        {activeItem ? <Glass className="ui-sortable-list__overlay" highlight={false}>{activeItem.content}</Glass> : null}
+        {activeItem ? <div className="ui-sortable-list__overlay"><Glass highlight={false}>{activeItem.content}</Glass></div> : null}
       </DragOverlay>
     </DndContext>
   );
