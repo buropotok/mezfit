@@ -159,6 +159,8 @@ describe('LiquidGlassTextOnly', () => {
     expect(translateX(lensTrack)).not.toBe(initialLensX);
     act(() => vi.advanceTimersByTime(180));
     expect(button(root, 5).getAttribute('aria-selected')).toBe('true');
+    const neighbour = button(root, 6);
+    expect(neighbour.offsetLeft + neighbour.offsetWidth).toBeLessThanOrEqual(strip.scrollLeft + strip.clientWidth + .5);
   });
 
   it('starts the spring only after the 300ms arrival phase, including same-slot taps', () => {
@@ -223,6 +225,8 @@ describe('LiquidGlassTextOnly', () => {
     if (!first || !second) throw new Error('Missing scenes');
     fireEvent.click(button(first, 1));
     expect(button(second, 0).getAttribute('aria-selected')).toBe('true');
+    act(() => vi.advanceTimersByTime(320));
+    expect(animationCancels.length).toBeGreaterThan(0);
     view.unmount();
     expect(animationCancels.every(cancel => cancel.mock.calls.length > 0)).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
