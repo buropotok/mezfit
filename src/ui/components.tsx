@@ -116,8 +116,8 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
       aria-hidden={!isShown || undefined}
       tabIndex={isShown ? 0 : -1}
       onClick={isShown ? onClick : undefined}
-      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget as HTMLButtonElement); }}
-      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget as HTMLButtonElement); }}
+      onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && isShown) startPressScale(event.currentTarget); }}
+      onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isShown && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }}
       className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
     >
       {children}
