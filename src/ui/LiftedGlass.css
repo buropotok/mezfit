@@ -1,0 +1,11 @@
+.ui-lifted-glass {
+  box-sizing: border-box;
+  overflow: hidden;
+  color: var(--ui-color-surface-text);
+  border: var(--ui-glass-border-width) solid var(--ui-glass-border-color);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-glass-background);
+  box-shadow: var(--ui-glass-shadow);
+  -webkit-backdrop-filter: blur(var(--ui-glass-blur)) saturate(var(--ui-glass-saturation));
+  backdrop-filter: blur(var(--ui-glass-blur)) saturate(var(--ui-glass-saturation));
+}
