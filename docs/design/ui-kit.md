@@ -79,6 +79,13 @@ The product integration contract is separate from the primitive mechanics: when 
 
 Theme and mode compose freely, including `theme="glass" mode="icon"` and `theme="liquidGlass" mode="icon"`. The internal `/ui-kit` catalog shows default, glass and liquidGlass specimens for both text/default and icon modes.
 
+
+### Specialized Liquid Glass navigation
+
+`LiquidGlassTextOnly` is the approved variable-width, horizontally scrollable text-navigation component. It is intentionally separate from generic Radix-backed `Tabs` because its interaction contract includes a 10 px swipe-vs-tap threshold, neighbour-aware auto-scroll, synchronized scroll/lens travel, a selector clipped by the 44 px container, and a detached capsule lens whose manual drag is clamped to the centers of the edge slots.
+
+Its labels use the shared Caption typography token at medium weight. Consumers provide only controlled tab identity/labels and visibility; slot measurement, optics, displacement-map geometry, swipe arbitration, spring motion, and capsule sizing are UI-Kit-owned implementation details and are not exposed as per-screen tuning props.
+
 ## Telegram-derived contact UI
 
 The contact/client-list presentation is adapted from Telegram Web A at commit `9cb10b20797dc09e33fcffee0ba390bb429c66d3`:
