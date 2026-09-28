@@ -286,13 +286,15 @@ export function mountPrototype(root, initialIndex, onSelect) {
     if (notify && previous !== index) onSelect(index);
   }
 
-  function animateSelectionTravel(index, animated = true, onComplete = null, notify = true) {
+  function animateSelectionTravel(index, animated = true, onComplete = null, notify = true, fromGeometryOverride = null) {
     const target = links[index];
     const from = links[data.activeIndex];
     if (!target || !from) return false;
-    const fromGeometry = data.selectionTravelActive && data.lensAnchorWidth > 0
-      ? { left: data.lensAnchorLeft, width: data.lensAnchorWidth }
-      : geometryFor(from);
+    const fromGeometry = fromGeometryOverride ?? (
+      data.selectionTravelActive && data.lensAnchorWidth > 0
+        ? { left: data.lensAnchorLeft, width: data.lensAnchorWidth }
+        : geometryFor(from)
+    );
     cancelSelectionTravel();
     const toGeometry = geometryFor(target);
     const startScroll = tabStrip.scrollLeft;
@@ -546,14 +548,10 @@ export function mountPrototype(root, initialIndex, onSelect) {
       return;
     }
 
-    cancelSelectionTravel();
     cancelMomentum();
 
     const targetGeometry = geometryFor(target);
-    const startScroll = tabStrip.scrollLeft;
-    const endScroll = targetScrollFor(next, startScroll);
 
-    setActive(next, true);
     selectorTrack.style.transitionDuration = '0ms';
     selectorTrack.style.width = `${targetGeometry.width}px`;
     selectorTrack.style.transform = `translateX(${targetGeometry.left}px)`;
@@ -562,36 +560,8 @@ export function mountPrototype(root, initialIndex, onSelect) {
     lensTrack.style.transitionDuration = '0ms';
     syncLensTrackToAnchor();
 
-    if (Math.abs(endScroll - startScroll) < .5) {
-      requestLensRelease();
-      return;
-    }
-
-    const startedAt = now();
-    data.selectionTravelActive = true;
+    animateSelectionTravel(next, true, null, true, targetGeometry);
     requestLensRelease();
-
-    const render = time => {
-      const raw = clamp((time - startedAt) / TRAVEL_MS, 0, 1);
-      const progress = travelEase(raw);
-      tabStrip.scrollLeft = startScroll + (endScroll - startScroll) * progress;
-
-      setLensAnchor(targetGeometry.left, targetGeometry.width);
-      syncLensTrackToAnchor();
-
-      if (raw < 1) {
-        data.selectionTravelRaf = frame(render);
-        return;
-      }
-
-      data.selectionTravelRaf = 0;
-      data.selectionTravelActive = false;
-      tabStrip.scrollLeft = endScroll;
-      positionSelector(next, false);
-      positionLensTrack(next, false);
-    };
-
-    data.selectionTravelRaf = frame(render);
   }
 
   function classifyAsScroll() {
