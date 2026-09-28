@@ -1,0 +1,145 @@
+.ui-kit-liquid-glass-surface {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--ui-space-6) max(18px, env(safe-area-inset-right))
+    calc(var(--ui-space-6) + env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+  color: #fff;
+  background: #05070b;
+  font-family: var(--ui-font-family);
+}
+
+.ui-kit-liquid-glass-surface__header {
+  display: grid;
+  gap: var(--ui-space-2);
+  margin-bottom: var(--ui-space-6);
+}
+
+.ui-kit-liquid-glass-surface__preset-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-6);
+  padding: var(--ui-space-4);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(10,132,255,.55), transparent 24%),
+    radial-gradient(circle at 82% 24%, rgba(255,55,95,.42), transparent 24%),
+    radial-gradient(circle at 52% 82%, rgba(48,209,88,.32), transparent 26%),
+    linear-gradient(145deg, #111827, #090b12 58%, #15101b);
+}
+
+.ui-kit-liquid-glass-surface__preset-card {
+  min-height: 92px;
+  padding: var(--ui-space-4);
+}
+
+.ui-kit-liquid-glass-surface__preset-card .ui-liquid-glass-surface__content {
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+.ui-kit-liquid-glass-surface__lab {
+  display: grid;
+  gap: var(--ui-space-5);
+}
+
+.ui-kit-liquid-glass-surface__preview-stage {
+  position: sticky;
+  z-index: 5;
+  top: max(8px, env(safe-area-inset-top));
+  display: grid;
+  place-items: center;
+  min-height: 250px;
+  overflow: hidden;
+  border-radius: 32px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.08), transparent 36%),
+    linear-gradient(160deg, #101726, #05070b 64%, #17101c);
+}
+
+.ui-kit-liquid-glass-surface__grid {
+  position: absolute;
+  inset: 0;
+  opacity: .24;
+  background-image:
+    linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.ui-kit-liquid-glass-surface__orb {
+  position: absolute;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  filter: blur(2px);
+}
+
+.ui-kit-liquid-glass-surface__orb--one {
+  left: -22px;
+  top: 34px;
+  background: linear-gradient(145deg, #0a84ff, #64d2ff);
+}
+
+.ui-kit-liquid-glass-surface__orb--two {
+  right: -18px;
+  bottom: 22px;
+  background: linear-gradient(145deg, #ff375f, #bf5af2);
+}
+
+.ui-kit-liquid-glass-surface__preview {
+  width: min(78vw, 320px);
+  min-height: 138px;
+  padding: var(--ui-space-5);
+}
+
+.ui-kit-liquid-glass-surface__preview .ui-liquid-glass-surface__content {
+  display: grid;
+  align-content: center;
+  gap: var(--ui-space-2);
+  min-height: 98px;
+}
+
+.ui-kit-liquid-glass-surface__tuner {
+  display: grid;
+  gap: var(--ui-space-4);
+  padding-bottom: var(--ui-space-6);
+}
+
+.ui-kit-liquid-glass-surface__section-heading {
+  padding-top: var(--ui-space-2);
+}
+
+.ui-kit-liquid-glass-surface__preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+}
+
+.ui-kit-liquid-glass-surface__control {
+  display: grid;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 18px;
+  background: rgba(255,255,255,.04);
+}
+
+.ui-kit-liquid-glass-surface__control-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+}
+
+@media (min-width: 640px) {
+  .ui-kit-liquid-glass-surface__preset-gallery {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .ui-kit-liquid-glass-surface__lab {
+    grid-template-columns: minmax(280px, .9fr) minmax(320px, 1.1fr);
+    align-items: start;
+  }
+}
