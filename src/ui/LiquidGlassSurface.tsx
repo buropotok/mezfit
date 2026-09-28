@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type HTMLAttributes } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type HTMLAttributes } from 'react';
 import {
   buildLiquidGlassVectorMap,
   resolveLiquidGlassOptics,
@@ -80,15 +80,36 @@ export function LiquidGlassSurface({
     return () => observer.disconnect();
   }, [radius]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const element = rootRef.current;
-    if (!element) return;
+    if (!element) return undefined;
 
-    const canvas = workCanvasRef.current ?? element.ownerDocument.createElement('canvas');
-    workCanvasRef.current = canvas;
-    const ratio = element.ownerDocument.defaultView?.devicePixelRatio ?? 1.5;
-    const vectorMap = buildLiquidGlassVectorMap(canvas, geometry, optics, ratio);
-    setVectorMapHref(vectorMap?.href ?? '');
+    const view = element.ownerDocument.defaultView;
+    let cancelled = false;
+
+    const buildVectorMap = () => {
+      if (cancelled) return;
+      const currentElement = rootRef.current;
+      if (!currentElement) return;
+
+      const canvas = workCanvasRef.current ?? currentElement.ownerDocument.createElement('canvas');
+      workCanvasRef.current = canvas;
+      const vectorMap = buildLiquidGlassVectorMap(canvas, geometry, optics, 1.5);
+      if (!cancelled) setVectorMapHref(vectorMap?.href ?? '');
+    };
+
+    if (!view || typeof view.requestAnimationFrame !== 'function') {
+      buildVectorMap();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const frame = view.requestAnimationFrame(buildVectorMap);
+    return () => {
+      cancelled = true;
+      view.cancelAnimationFrame(frame);
+    };
   }, [
     geometry,
     optics.neutralEdge,
@@ -140,7 +161,7 @@ export function LiquidGlassSurface({
             width={geometry.width}
             height={geometry.height}
             preserveAspectRatio="none"
-            href={vectorMapHref}
+            href={vectorMapHref || undefined}
             result="vectorMap"
           />
           <feDisplacementMap
