@@ -28,7 +28,7 @@ The event card itself is deliberately not owned by `DaySchedule`. `renderEvent` 
 ## Prototype interaction invariants
 
 - Seven week slots always share the full visible Liquid Glass container width.
-- The Liquid Glass optics reuse the approved Text Only private runtime; the schedule does not fork or restyle Konsta primitives.
+- The Liquid Glass optics are owned by DaySchedule through a frozen runtime/CSS snapshot refreshed from the approved Text Only baseline on 2026-09-28; the schedule does not reach into another component's private runtime or restyle Konsta primitives.
 - Swiping the schedule changes one day; selector travel starts in the same 300 ms interval.
 - Swiping the week moves the whole week container.
 - Crossing Sunday/Monday with a day swipe also pages the whole week container.
