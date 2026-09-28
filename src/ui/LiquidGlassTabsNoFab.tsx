@@ -133,6 +133,12 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoF
             </mask>
           </defs>
 
+          <g mask="url(#startup-reveal-mask)" pointerEvents="none">
+            <foreignObject x="0" y="0" width="100%" height="100%">
+              <div className="startup-backdrop-layer" />
+            </foreignObject>
+          </g>
+
           <g mask="url(#startup-reveal-mask)">
             <g filter="url(#startup-refraction-icons)">
               <foreignObject id="startup-icons-fo" x="0" y="0" width="0" height="64">
