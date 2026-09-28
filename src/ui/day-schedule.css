@@ -9,26 +9,15 @@
   font-family: var(--ui-font-family);
 }
 
-.ui-day-schedule__navbar {
-  position: absolute;
-  z-index: 50;
-  inset: 0 0 auto;
-}
-
-.ui-day-schedule__navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-1);
-}
-
 .ui-day-schedule__week-viewport {
   position: absolute;
   z-index: 40;
-  top: calc(max(10px, env(safe-area-inset-top)) + 68px);
-  left: 12px;
-  right: 12px;
-  height: 60px;
-  overflow: visible;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  padding-block: 12px;
+  overflow: hidden;
   touch-action: none;
 }
 
@@ -47,6 +36,8 @@
   flex: 0 0 33.333333%;
   min-width: 0;
   height: 44px;
+  padding-inline: 12px;
+  box-sizing: border-box;
   overflow: visible;
 }
 
@@ -61,7 +52,7 @@
 .ui-day-schedule__day-viewport {
   position: absolute;
   z-index: 1;
-  inset: 0;
+  inset: 68px 0 0;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;

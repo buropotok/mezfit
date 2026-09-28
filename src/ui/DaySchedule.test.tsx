@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DaySchedule, type DayScheduleEvent } from './DaySchedule';
+import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
 import type { LocalDate } from './date-picker/DatePicker';
 
 const changed = vi.fn();
@@ -149,6 +149,52 @@ function withDate(date: LocalDate, onDateChange = changed) {
 }
 
 describe('DaySchedule transition ownership', () => {
+  it('animates from the outgoing day to a tapped nonadjacent day after acceptance', () => {
+    const view = renderSchedule();
+    const friday = view.container.querySelectorAll('.ui-day-schedule__week-scene')[1].shadowRoot!.querySelectorAll('button')[4];
+    fireEvent.click(friday);
+    expect(changed).toHaveBeenCalledWith('2026-10-02');
+    view.rerender(withDate('2026-10-02'));
+    const panels = () => [...view.container.querySelectorAll('.ui-day-schedule__day-panel')].map(panel => panel.getAttribute('data-date'));
+    expect(panels()).toEqual(['2026-09-27', '2026-09-28', '2026-10-02']);
+    act(() => vi.advanceTimersByTime(50));
+    expect(view.container.querySelector('.ui-day-schedule__day-track--animating')).not.toBeNull();
+    act(() => vi.advanceTimersByTime(300));
+    expect(panels()).toEqual(['2026-10-01', '2026-10-02', '2026-10-03']);
+    expect(changed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not cancel a day swipe when implicit capture leaves a child', () => {
+    const view = renderSchedule();
+    const day = viewportFor(view, 'day');
+    const child = day.querySelector('.ui-day-schedule__day-panel')!;
+    fireEvent.pointerDown(child, { pointerId: 1, clientX: 220, clientY: 200 });
+    fireEvent.pointerMove(child, { pointerId: 1, clientX: 100, clientY: 200 });
+    fireEvent.lostPointerCapture(child, { pointerId: 1 });
+    fireEvent.pointerUp(day, { pointerId: 1, clientX: 100, clientY: 200 });
+    act(() => vi.advanceTimersByTime(310));
+    expect(changed.mock.calls).toEqual([['2026-09-29']]);
+  });
+
+  it('cancels a real loss of capture on the owning viewport', () => {
+    const view = renderSchedule();
+    const day = viewportFor(view, 'day');
+    fireEvent.pointerDown(day, { pointerId: 1, clientX: 220, clientY: 200 });
+    fireEvent.pointerMove(day, { pointerId: 1, clientX: 100, clientY: 200 });
+    fireEvent.lostPointerCapture(day, { pointerId: 1 });
+    act(() => vi.advanceTimersByTime(350));
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('exports navbar data without rendering navbar or action controls', () => {
+    const view = renderSchedule();
+    expect(view.queryByText('Сегодня')).toBeNull();
+    expect(view.queryByLabelText('Назад')).toBeNull();
+    expect(view.queryByLabelText('Открыть календарь')).toBeNull();
+    expect(getDayScheduleValue('2026-09-28', '2026-09-28')).toEqual({ date: '2026-09-28', title: 'Сегодня', weekdayIndex: 0, isToday: true });
+    expect(getDayScheduleValue('2026-10-02', '2026-09-28').title).toBe('Пт, 2 октября');
+  });
+
   it('cancels an in-flight request when the caller changes the date', () => {
     const view = renderSchedule();
     swipe(viewportFor(view, 'day'));

@@ -6,7 +6,6 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
-import { Link, Navbar } from 'konsta/react';
 import type { LocalDate } from './date-picker/datePickerDate';
 import { DayPanel, type DayScheduleEventBase, type DayScheduleRenderState, yForMinutes } from './day-schedule/DayPanel';
 import { addDays, currentLocalDate, dayIndex, sameWeek, startOfWeek, titleForDate } from './day-schedule/dateMath';
@@ -36,35 +35,20 @@ export type DayScheduleProps<TEvent extends DayScheduleEvent = DayScheduleEvent>
   eventsByDate: Readonly<Record<LocalDate, readonly TEvent[]>>;
   onDateChange: (date: LocalDate) => void;
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
-  onBack?: () => void;
-  onOpenDatePicker?: () => void;
-  onAddEvent?: () => void;
   today?: LocalDate;
   className?: string;
 };
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  );
-}
+export type DayScheduleValue = {
+  date: LocalDate;
+  title: string;
+  weekdayIndex: number;
+  isToday: boolean;
+};
 
-function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M6 3v3M18 3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" />
-    </svg>
-  );
-}
-
-function AddIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
+/** Derived data for a caller-owned navbar, including the initial controlled date. */
+export function getDayScheduleValue(date: LocalDate, today = currentLocalDate()): DayScheduleValue {
+  return { date, title: titleForDate(date, today), weekdayIndex: dayIndex(date), isToday: date === today };
 }
 
 export function DaySchedule<TEvent extends DayScheduleEvent>({
@@ -72,9 +56,6 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   eventsByDate,
   onDateChange,
   renderEvent,
-  onBack,
-  onOpenDatePicker,
-  onAddEvent,
   today: todayOverride,
   className,
 }: DayScheduleProps<TEvent>) {
@@ -94,12 +75,13 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const suppressDayClickUntil = useRef(0);
   const currentDate = useRef(date);
   const latestChange = useRef(onDateChange);
-  const arrival = useRef<{ date: LocalDate; week: boolean } | null>(null);
+  const arrival = useRef<{ date: LocalDate; week: boolean; from?: LocalDate } | null>(null);
 
   const weekDrag = useRef(0);
   const [weekAnimating, setWeekAnimating] = useState(false);
   const [weekDirection, setWeekDirection] = useState<-1 | 0 | 1>(0);
   const [weekSelectorSuppressed, setWeekSelectorSuppressed] = useState(false);
+  const [dayTransition, setDayTransition] = useState<{ from: LocalDate; to: LocalDate } | null>(null);
   const dayDrag = useRef(0);
   const [dayAnimating, setDayAnimating] = useState(false);
   const [dayDirection, setDayDirection] = useState<-1 | 0 | 1>(0);
@@ -108,8 +90,9 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const selectedIndex = dayIndex(date);
   const previousMonday = addDays(monday, -7);
   const nextMonday = addDays(monday, 7);
-  const previousDate = addDays(date, -1);
-  const nextDate = addDays(date, 1);
+  const displayDate = dayTransition?.from ?? date;
+  const previousDate = dayTransition && dayTransition.to < displayDate ? dayTransition.to : addDays(displayDate, -1);
+  const nextDate = dayTransition && dayTransition.to > displayDate ? dayTransition.to : addDays(displayDate, 1);
 
   // These transforms belong to this component; pointer moves never rerender event cards.
   const setWeekDrag = (pixels: number) => {
@@ -166,6 +149,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     setWeekDirection(0);
     setWeekDrag(0);
     setDayAnimating(false);
+    setDayTransition(null);
     setDayDirection(0);
     setDayDrag(0);
   };
@@ -180,7 +164,17 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     resetPaging();
     busy.current = Boolean(expected?.week);
     setWeekSelectorSuppressed(Boolean(expected?.week));
-    if (expected?.week) {
+    if (expected?.from) {
+      const from = expected.from;
+      // Keep the outgoing panel until its replacement has travelled into view.
+      busy.current = true;
+      setDayTransition({ from: expected.from, to: date });
+      addFrame(() => addFrame(() => {
+        setDayAnimating(true);
+        setDayDirection(date > from ? 1 : -1);
+        addTimer(() => { resetPaging(); busy.current = false; }, TRANSITION_MS);
+      }));
+    } else if (expected?.week) {
       // The new week is committed first; only then run the v26 tap/spring handoff.
       addTimer(() => {
         weekRef.current?.tapIndex(dayIndex(date));
@@ -192,8 +186,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     }
   }, [date]);
 
-  const requestDate = (next: LocalDate, week: boolean) => {
-    arrival.current = { date: next, week };
+  const requestDate = (next: LocalDate, week: boolean, from?: LocalDate) => {
+    arrival.current = { date: next, week, from };
     latestChange.current(next);
     // Controlled callers may decline a request. Restore their value rather than
     // retaining an optimistic selection or leaving paging locked indefinitely.
@@ -212,7 +206,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (busy.current) return;
     const next = addDays(startOfWeek(currentDate.current), index);
     weekRef.current?.tapIndex(index);
-    if (next !== currentDate.current) requestDate(next, false);
+    if (next !== currentDate.current) requestDate(next, false, currentDate.current);
   };
 
   const finishWeekPage = (direction: -1 | 1, targetDate: LocalDate) => {
@@ -301,7 +295,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         setWeekSelectorSuppressed(false);
         if (!cancelled) {
           const rect = event.currentTarget.getBoundingClientRect();
-          if (rect.width > 0) chooseWeekDay(Math.max(0, Math.min(6, Math.floor((event.clientX - rect.left) / (rect.width / 7)))));
+          const contentWidth = rect.width - 24; // 12 px gutter on each week page.
+          if (contentWidth > 0) chooseWeekDay(Math.max(0, Math.min(6, Math.floor((event.clientX - rect.left - 12) / (contentWidth / 7)))));
         }
       }
       return;
@@ -320,7 +315,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       if (target === 'week') {
         setWeekAnimating(true);
         setWeekDirection(0);
-        setWeekDrag(0);
+        weekDrag.current = 0;
         addTimer(() => {
           setWeekAnimating(false);
           setWeekSelectorSuppressed(false);
@@ -329,14 +324,20 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       } else {
         setDayAnimating(true);
         setDayDirection(0);
-        setDayDrag(0);
+        dayDrag.current = 0;
         addTimer(() => { setDayAnimating(false); busy.current = false; }, TRANSITION_MS);
       }
       return;
     }
 
     const direction: -1 | 1 = state.deltaX < 0 ? 1 : -1;
-    if (target === 'week') finishWeekPage(direction, addDays(currentDate.current, direction * 7));
+    if (target === 'week') {
+      const next = addDays(currentDate.current, direction * 7);
+      setDayTransition({ from: currentDate.current, to: next });
+      setDayAnimating(true);
+      setDayDirection(direction);
+      finishWeekPage(direction, next);
+    }
     else startDayCommit(direction);
   };
 
@@ -347,37 +348,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     ? `${-33.333333 + dayDirection * -33.333333}%`
     : `calc(-33.333333% + ${dayDrag.current}px)`;
 
-  const leftAction = onBack ? (
-    <Link component="button" iconOnly aria-label="Назад" onClick={onBack}>
-      <BackIcon />
-    </Link>
-  ) : null;
-  const rightAction = (
-    <div className="ui-day-schedule__navbar-actions">
-      {onOpenDatePicker && (
-        <Link component="button" iconOnly aria-label="Открыть календарь" onClick={onOpenDatePicker}>
-          <CalendarIcon />
-        </Link>
-      )}
-      {onAddEvent && (
-        <Link component="button" iconOnly aria-label="Добавить тренировку" onClick={onAddEvent}>
-          <AddIcon />
-        </Link>
-      )}
-    </div>
-  );
-
   return (
     <section className={['ui-day-schedule', className].filter(Boolean).join(' ')}>
-      <Navbar
-        className="ui-day-schedule__navbar"
-        centerTitle
-        outline={false}
-        title={titleForDate(date, today)}
-        left={leftAction}
-        right={rightAction}
-      />
-
       <div
         className="ui-day-schedule__week-viewport"
         ref={weekViewportRef}
@@ -385,7 +357,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         onPointerMove={event => moveGesture(event, 'week')}
         onPointerUp={event => endGesture(event, 'week')}
         onPointerCancel={event => endGesture(event, 'week', true)}
-        onLostPointerCapture={event => endGesture(event, 'week', true)}
+        onLostPointerCapture={event => { if (event.target === event.currentTarget) endGesture(event, 'week', true); }}
         onClickCapture={event => {
           if (event.detail > 0) { event.preventDefault(); event.stopPropagation(); }
         }}
@@ -420,7 +392,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         onPointerMove={event => moveGesture(event, 'day')}
         onPointerUp={event => endGesture(event, 'day')}
         onPointerCancel={event => endGesture(event, 'day', true)}
-        onLostPointerCapture={event => endGesture(event, 'day', true)}
+        onLostPointerCapture={event => { if (event.target === event.currentTarget) endGesture(event, 'day', true); }}
         onClickCapture={event => {
           if (performance.now() < suppressDayClickUntil.current) { event.preventDefault(); event.stopPropagation(); }
         }}
@@ -431,11 +403,10 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           style={{ transform: `translate3d(${dayTranslate},0,0)` }}
         >
           <DayPanel date={previousDate} events={eventsByDate[previousDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
-          <DayPanel date={date} events={eventsByDate[date] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
+          <DayPanel date={displayDate} events={eventsByDate[displayDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
           <DayPanel date={nextDate} events={eventsByDate[nextDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
         </div>
       </div>
     </section>
   );
 }
-
