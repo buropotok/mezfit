@@ -150,7 +150,7 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoF
 
           <g mask="url(#startup-reveal-mask)" pointerEvents="none">
             <foreignObject x="0" y="0" width="100%" height="100%">
-              <div className="startup-backdrop-layer" />
+              <div id="startup-backdrop-layer" className="startup-backdrop-layer" />
             </foreignObject>
           </g>
 
