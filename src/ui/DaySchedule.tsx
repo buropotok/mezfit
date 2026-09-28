@@ -81,6 +81,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const weekViewportRef = useRef<HTMLDivElement>(null);
   const dayViewportRef = useRef<HTMLDivElement>(null);
   const timers = useRef<Set<number>>(new Set());
+  const frames = useRef<Set<number>>(new Set());
   const weekGesture = useRef<DragState | null>(null);
   const dayGesture = useRef<DragState | null>(null);
   const initialScrollApplied = useRef(false);
@@ -108,9 +109,19 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     timers.current.add(id);
   };
 
+  const addFrame = (callback: () => void) => {
+    const id = window.requestAnimationFrame(() => {
+      frames.current.delete(id);
+      callback();
+    });
+    frames.current.add(id);
+  };
+
   useEffect(() => () => {
     timers.current.forEach(id => window.clearTimeout(id));
     timers.current.clear();
+    frames.current.forEach(id => window.cancelAnimationFrame(id));
+    frames.current.clear();
   }, []);
 
   useLayoutEffect(() => {
@@ -145,7 +156,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
       addTimer(() => {
         weekRef.current?.tapIndex(targetIndex);
-        requestAnimationFrame(() => setWeekSelectorSuppressed(false));
+        addFrame(() => setWeekSelectorSuppressed(false));
       }, POST_WEEK_TAP_DELAY_MS);
     }, TRANSITION_MS);
   };
@@ -191,7 +202,11 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     } else {
       dayGesture.current = state;
     }
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Pointer capture is optional in Telegram WebViews; document listeners are not required here.
+    }
   };
 
   const moveGesture = (event: ReactPointerEvent<HTMLElement>, target: 'week' | 'day') => {
