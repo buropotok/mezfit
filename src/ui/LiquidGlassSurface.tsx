@@ -24,6 +24,7 @@ export type LiquidGlassSurfaceProps = HTMLAttributes<HTMLDivElement> & {
   variant?: LiquidGlassPresetName;
   optics?: LiquidGlassOpticsOverrides;
   radius?: number;
+  contentClassName?: string;
 };
 
 export function LiquidGlassSurface({
@@ -31,6 +32,7 @@ export function LiquidGlassSurface({
   optics: opticsOverrides,
   radius = 28,
   className = '',
+  contentClassName = '',
   style,
   children,
   ...props
@@ -181,7 +183,7 @@ export function LiquidGlassSurface({
           <feBlend in="rg" in2="bluePass" mode="screen" />
         </filter>
       </svg>
-      <div className="ui-liquid-glass-surface__content">{children}</div>
+      <div className={`ui-liquid-glass-surface__content ${contentClassName}`.trim()}>{children}</div>
     </div>
   );
 }
