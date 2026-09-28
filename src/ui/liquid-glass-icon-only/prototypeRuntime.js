@@ -1,7 +1,8 @@
 // Direct extraction from the approved HTML, not a rewritten interaction model.
 // See provenance.md for the extraction boundary and intentional lifecycle changes.
-export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHost) {
+export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHost, entranceVariant = 'icon-only') {
   const owner = root.ownerDocument;
+  const centerSpread = entranceVariant === 'center-spread';
   const host = root.getElementById('iconLayer');
   const events = new EventTarget();
   const timers = new Set(), frames = new Set(), observers = new Set(), animations = new Set(), disposers = [];
@@ -1870,9 +1871,22 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
   const scene=document.getElementById('startupScene'), vector=document.getElementById('startup-vector');
   const maskSurface=document.getElementById('startup-mask-surface'), surface=document.getElementById('startup-bezel-surface');
   const iconsFo=document.getElementById('startup-icons-fo'), materialSurface=document.getElementById('startup-material-surface');
+  const backdropLayer=document.getElementById('startup-backdrop-layer');
   const lensBlurNode=document.getElementById('startup-lens-blur'), lensSaturationNode=document.getElementById('startup-lens-saturation');
   const refraction=document.getElementById('startup-refraction');
-  const SETTINGS={
+  const SETTINGS=centerSpread?{
+    splitSec:.30,
+    revealSec:.75,
+    handoffSec:.16,
+    speed:500,
+    lensScale:1.14,
+    delayMs:0,
+    blurPx:.7,
+    saturation:1.29,
+    frost:.14,
+    fabYOffset:0,
+    speedPoints:[0,.186,.360,.577,0],
+  }:{
     splitSec:.25,
     revealSec:.65,
     handoffSec:.22,
@@ -1907,7 +1921,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     }
     return lo;
   }
-  let width=0,height=0,baseY=0,sigma=30,ax=0,ay=0,bx=0,by=0,cx=0,cy=0;
+  let width=0,height=0,baseY=0,sigma=30,ax=0,ay=0,bx=0,by=0,cx=0,cy=0,spreadGain=1;
   let timing=null,path=[],breaks=null,running=false,startTime=0,elapsed=0,handoffProgress=0;
   const mapCanvas=document.createElement('canvas'),mapCtx=mapCanvas.getContext('2d');
   const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
@@ -2030,6 +2044,11 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
   function applyMaterial(){
     if(lensBlurNode)lensBlurNode.setAttribute('stdDeviation',SETTINGS.blurPx.toFixed(2));
     if(lensSaturationNode)lensSaturationNode.setAttribute('values',SETTINGS.saturation.toFixed(2));
+    if(centerSpread&&backdropLayer){
+      const backdropFilter='blur('+SETTINGS.blurPx.toFixed(1)+'px) saturate('+SETTINGS.saturation.toFixed(2)+')';
+      backdropLayer.style.backdropFilter=backdropFilter;
+      backdropLayer.style.webkitBackdropFilter=backdropFilter;
+    }
     if(materialSurface){
       const alpha=(SETTINGS.frost*.01+SETTINGS.frost*.99*.22).toFixed(3);
       materialSurface.setAttribute('fill-opacity',alpha);
@@ -2041,8 +2060,13 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     if(!nextWidth)return false;
     width=nextWidth;applyLensSize();buildPath();readTiming();rebuildSpeedIntegral();
     const finalY=path[path.length-1].y;
-    baseY=Math.max(72,sigma*2.5);
-    height=Math.ceil(baseY+finalY+32);
+    if(centerSpread){
+      const radius=sigma*Math.sqrt(-2*Math.log(threshold));
+      height=Math.ceil(Math.max(112,radius*2+24));baseY=height/2;
+      scene.style.bottom=-(baseY-32)+'px';
+    }else{
+      baseY=Math.max(72,sigma*2.5);height=Math.ceil(baseY+finalY+32);scene.style.bottom='0px';
+    }
     root.host.style.setProperty('--runtime-tabs-width',width/1.1+'px');
     root.host.style.setProperty('--startup-scene-height',height+'px');
     scene.setAttribute('viewBox',`0 0 ${width} ${height}`);
@@ -2055,7 +2079,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
       if(!element)continue;element.setAttribute('width',String(width));element.setAttribute('height',String(height));
     }
     if(materialSurface){materialSurface.setAttribute('width',String(width));materialSurface.setAttribute('height',String(height));}
-    const resolution=Math.max(1.5,Math.sqrt(width*height/180000));
+    const resolution=centerSpread?Math.max(2,Math.sqrt(width*height/55000)):Math.max(1.5,Math.sqrt(width*height/180000));
     mapCanvas.width=maskCanvas.width=Math.ceil(width/resolution);
     mapCanvas.height=maskCanvas.height=Math.ceil(height/resolution);
     const runtimeWidth=width/1.1;
@@ -2126,11 +2150,11 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
       const py=(y+.5)*sy,ya=Math.exp(-((py-ay)**2)/den),yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);
       for(let x=0;x<mw;x++){
         const p=(y*mw+x)*4,px=(x+.5)*sx,fa=xsA[x]*ya,fb=xsB[x]*yb,fc=xsC[x]*yc,nearest=mapClamp(px,bx,cx);
-        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+(1-weight)*(fb+fc)+weight*capsule;
+        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+spreadGain*((1-weight)*(fb+fc)+weight*capsule);
         m[p]=128;m[p+1]=128;m[p+2]=128;m[p+3]=255;k[p]=255;k[p+1]=255;k[p+2]=255;k[p+3]=0;
         if(f<threshold-.025)continue;
-        const gx=-(px-ax)*fa/(upperSigma*upperSigma)-((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
-        const gy=-(py-ay)*fa/(upperSigma*upperSigma)-((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
+        const gx=-(px-ax)*fa/(upperSigma*upperSigma)-spreadGain*((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
+        const gy=-(py-ay)*fa/(upperSigma*upperSigma)-spreadGain*((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
         const g=Math.hypot(gx,gy),safe=Math.sqrt(g*g+.00000625),r=Math.sqrt(Math.max(0,-Math.log(Math.max(f,1e-8)))/logThreshold);
         const amp=lookup[Math.round(mapClamp(r,0,1)*1024)],distance=(f-threshold)/Math.max(g,.003),edgeT=mapClamp((distance-1.7)/3,0,1),edgeGate=edgeT*edgeT*(3-2*edgeT);
         const dx=gx/safe*amp*12*distortionStrength*edgeGate,dy=gy/safe*amp*17.5*distortionStrength*edgeGate;
@@ -2160,10 +2184,10 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
       const py=y0+(iy+.5)/scale,ya=Math.exp(-((py-ay)**2)/den),yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);
       for(let ix=0;ix<cw;ix++){
         const px=x0+(ix+.5)/scale,p=(iy*cw+ix)*4,fa=xsA[ix]*ya,fb=xsB[ix]*yb,fc=xsC[ix]*yc,nearest=mapClamp(px,bx,cx);
-        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+(1-weight)*(fb+fc)+weight*capsule;
+        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=fa+spreadGain*((1-weight)*(fb+fc)+weight*capsule);
         if(f<threshold-.06)continue;
-        const gx=-(px-ax)*fa/(upperSigma*upperSigma)-((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
-        const gy=-(py-ay)*fa/(upperSigma*upperSigma)-((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
+        const gx=-(px-ax)*fa/(upperSigma*upperSigma)-spreadGain*((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
+        const gy=-(py-ay)*fa/(upperSigma*upperSigma)-spreadGain*((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
         const g=Math.hypot(gx,gy),safe=Math.max(g,.003),distance=(f-threshold)/safe,coverage=mapClamp(distance*scale+.5,0,1);
         if(coverage<=0)continue;
         const nx=-gx/safe,ny=-gy/safe,edge=Math.exp(-(((distance-.30)/.48)**2)),soft=Math.exp(-(((distance-1.10)/1.05)**2));
@@ -2184,7 +2208,17 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     let lo=0,hi=path.length-1;
     while(hi-lo>1){const mid=(lo+hi)>>1;if(path[mid].s<s)lo=mid;else hi=mid;}
     const a=path[lo],b=path[hi],q=mapClamp((s-a.s)/Math.max(1e-8,b.s-a.s),0,1),x=a.x+(b.x-a.x)*q,y=a.y+(b.y-a.y)*q;
-    const baseX=width/2;bx=baseX-x;cx=baseX+x;by=cy=baseY+y;
+    const baseX=width/2;
+    if(centerSpread){
+      const progress=mapClamp(s/Math.max(1e-8,path[path.length-1].s),0,1),spreadX=path[path.length-1].x*progress;
+      bx=baseX-spreadX;cx=baseX+spreadX;by=cy=baseY;
+      const gainU=mapClamp(spreadX/Math.max(1,sigma*2.2),0,1),gainEase=gainU*gainU*(3-2*gainU);
+      spreadGain=.5+.5*gainEase;
+      ax=baseX;ay=height+10000;
+      syncStartupIcons();
+      return;
+    }
+    spreadGain=1;bx=baseX-x;cx=baseX+x;by=cy=baseY+y;
     if(fabHost){
       const target=finalFabTarget(),moveStart=Math.max(0,timing.t1-.10);
       const moveRaw=mapClamp((t-moveStart)/Math.max(.001,timing.t2-moveStart),0,1);
@@ -2205,7 +2239,12 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
   function settle(){
     if(!prepareGeometry())return;
     elapsed=timing.total;
-    const final=path[path.length-1];ax=width/2;ay=baseY;bx=ax-final.x;cx=ax+final.x;by=cy=baseY+final.y;
+    const final=path[path.length-1],baseX=width/2;
+    if(centerSpread){
+      ax=baseX;ay=height+10000;bx=baseX-final.x;cx=baseX+final.x;by=cy=baseY;spreadGain=1;
+    }else{
+      ax=baseX;ay=baseY;bx=ax-final.x;cx=ax+final.x;by=cy=baseY+final.y;spreadGain=1;
+    }
     syncStartupIcons();setFinalState();
     window.dispatchEvent(new Event('resize'));
   }
