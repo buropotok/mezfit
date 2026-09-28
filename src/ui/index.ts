@@ -15,4 +15,5 @@ export { LiftedGlass, type LiftedGlassProps } from './LiftedGlass';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
 export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+export type { LiquidGlassTabsNoFabProps, LiquidGlassTabsNoFabTab } from './LiquidGlassTabsNoFab';
 export type { LiquidGlassTextOnlyProps, LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
