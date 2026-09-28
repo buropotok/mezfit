@@ -29,7 +29,7 @@
 .modal-title {
   margin: 0;
   font-size: var(--ui-font-size-headline);
-  line-height: var(--ui-line-height-headline);
+  line-height: var(--ui-line-height-headline); letter-spacing: var(--ui-letter-spacing-headline);
   font-weight: var(--ui-font-weight-medium);
 }
 .icon-button {
@@ -52,7 +52,7 @@
   gap: var(--space-1);
   color: var(--color-text);
   font-size: var(--ui-font-size-footnote);
-  line-height: var(--ui-line-height-footnote);
+  line-height: var(--ui-line-height-footnote); letter-spacing: var(--ui-letter-spacing-footnote);
   font-weight: var(--ui-font-weight-semibold);
 }
 .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -66,7 +66,7 @@
   color: var(--color-text-secondary);
   background: var(--color-surface-2);
   font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-line-height-caption); letter-spacing: var(--ui-letter-spacing-caption);
   font-weight: var(--ui-font-weight-medium);
   cursor: pointer;
 }
@@ -80,7 +80,7 @@
   border: 0;
   border-radius: var(--radius-control);
   font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
+  line-height: var(--ui-line-height-body); letter-spacing: var(--ui-letter-spacing-body);
   font-weight: var(--ui-font-weight-medium);
   cursor: pointer;
 }
@@ -131,7 +131,7 @@
   justify-content: space-between;
   gap: var(--space-3);
 }
-.exercise-catalog-header h2 { margin: 0; font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); font-weight: var(--ui-font-weight-regular); }
+.exercise-catalog-header h2 { margin: 0; font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); letter-spacing: var(--ui-letter-spacing-title); font-weight: var(--ui-font-weight-regular); }
 .exercise-catalog-search .text-input { width: 100%; height: var(--control-h); }
 .exercise-catalog-directory {
   position: relative;
@@ -173,8 +173,8 @@
 .exercise-row-copy { min-width: 0; display: grid; gap: 1px; }
 .exercise-row-main strong,
 .exercise-row-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.exercise-row-main strong { font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); font-weight: var(--ui-font-weight-semibold); }
-.exercise-row-main small { color: var(--color-text-secondary); font-size: var(--ui-font-size-footnote); line-height: var(--ui-line-height-footnote); }
+.exercise-row-main strong { font-size: var(--ui-font-size-body); line-height: var(--ui-line-height-body); letter-spacing: var(--ui-letter-spacing-body); font-weight: var(--ui-font-weight-semibold); }
+.exercise-row-main small { color: var(--color-text-secondary); font-size: var(--ui-font-size-footnote); line-height: var(--ui-line-height-footnote); letter-spacing: var(--ui-letter-spacing-footnote); }
 .scope-badge {
   min-width: 44px;
   height: var(--chip-h);
@@ -187,7 +187,7 @@
   color: var(--color-text-secondary);
   background: var(--color-surface-2);
   font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-line-height-caption); letter-spacing: var(--ui-letter-spacing-caption);
   font-weight: var(--ui-font-weight-medium);
 }
 .scope-global { color: #A9B8C8; }
