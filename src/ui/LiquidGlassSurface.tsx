@@ -94,7 +94,8 @@ export function LiquidGlassSurface({
 
       const canvas = workCanvasRef.current ?? currentElement.ownerDocument.createElement('canvas');
       workCanvasRef.current = canvas;
-      const vectorMap = buildLiquidGlassVectorMap(canvas, geometry, optics, 1.5);
+      const ratio = currentElement.ownerDocument.defaultView?.devicePixelRatio ?? 1.5;
+      const vectorMap = buildLiquidGlassVectorMap(canvas, geometry, optics, ratio);
       if (!cancelled) setVectorMapHref(vectorMap?.href ?? '');
     };
 
