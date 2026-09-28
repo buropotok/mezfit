@@ -82,6 +82,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const dayViewportRef = useRef<HTMLDivElement>(null);
   const timers = useRef<Set<number>>(new Set());
   const frames = useRef<Set<number>>(new Set());
+  const latestDate = useRef(date);
   const weekGesture = useRef<DragState | null>(null);
   const dayGesture = useRef<DragState | null>(null);
   const initialScrollApplied = useRef(false);
@@ -93,6 +94,12 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const [dayDrag, setDayDrag] = useState(0);
   const [dayAnimating, setDayAnimating] = useState(false);
   const [dayDirection, setDayDirection] = useState<-1 | 0 | 1>(0);
+  const [nowMinutes, setNowMinutes] = useState(() => {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  });
+
+  latestDate.current = date;
 
   const monday = startOfWeek(date);
   const selectedIndex = dayIndex(date);
@@ -124,6 +131,21 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     frames.current.clear();
   }, []);
 
+  useEffect(() => {
+    let timerId = 0;
+    const scheduleNextMinute = () => {
+      const now = new Date();
+      const elapsedInMinute = now.getSeconds() * 1000 + now.getMilliseconds();
+      timerId = window.setTimeout(() => {
+        const current = new Date();
+        setNowMinutes(current.getHours() * 60 + current.getMinutes());
+        scheduleNextMinute();
+      }, 60_000 - elapsedInMinute + 16);
+    };
+    scheduleNextMinute();
+    return () => window.clearTimeout(timerId);
+  }, []);
+
   useLayoutEffect(() => {
     if (initialScrollApplied.current) return;
     const viewport = dayViewportRef.current;
@@ -143,6 +165,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     targetIndex = selectedIndex,
     onArrive?: () => void,
   ) => {
+    const sourceDate = date;
     setWeekAnimating(true);
     setWeekDirection(direction);
     setWeekSelectorSuppressed(true);
@@ -152,9 +175,19 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       setWeekAnimating(false);
       setWeekDirection(0);
       setWeekDrag(0);
+
+      if (latestDate.current !== sourceDate) {
+        setWeekSelectorSuppressed(false);
+        return;
+      }
+
       onDateChange(targetDate);
 
       addTimer(() => {
+        if (latestDate.current !== targetDate) {
+          setWeekSelectorSuppressed(false);
+          return;
+        }
         weekRef.current?.tapIndex(targetIndex);
         addFrame(() => setWeekSelectorSuppressed(false));
       }, POST_WEEK_TAP_DELAY_MS);
@@ -162,6 +195,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   };
 
   const startDayCommit = (direction: -1 | 1) => {
+    const sourceDate = date;
     const next = addDays(date, direction);
     const crossesBoundary = !sameWeek(date, next);
 
@@ -182,7 +216,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       setDayAnimating(false);
       setDayDirection(0);
       setDayDrag(0);
-      onDateChange(next);
+      if (latestDate.current === sourceDate) onDateChange(next);
     }, TRANSITION_MS);
   };
 
@@ -349,9 +383,9 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           className={`ui-day-schedule__day-track${dayAnimating ? ' ui-day-schedule__day-track--animating' : ''}`}
           style={{ transform: `translate3d(${dayTranslate},0,0)` }}
         >
-          <DayPanel date={previousDate} events={eventsByDate[previousDate] ?? []} renderEvent={renderEvent} today={today} />
-          <DayPanel date={date} events={eventsByDate[date] ?? []} renderEvent={renderEvent} today={today} />
-          <DayPanel date={nextDate} events={eventsByDate[nextDate] ?? []} renderEvent={renderEvent} today={today} />
+          <DayPanel date={previousDate} events={eventsByDate[previousDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={nowMinutes} />
+          <DayPanel date={date} events={eventsByDate[date] ?? []} renderEvent={renderEvent} today={today} nowMinutes={nowMinutes} />
+          <DayPanel date={nextDate} events={eventsByDate[nextDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={nowMinutes} />
         </div>
       </div>
     </section>
