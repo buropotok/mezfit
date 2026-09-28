@@ -9,6 +9,7 @@ The entrance core is derived from the approved local prototype `tabbar-liquid-ta
 - pause before reveal: 0.30 s
 - reveal: 0.75 s
 - handoff: 0.16 s
+- base speed: 500 px/s
 - initial lens size: 114%
 - saturation: 129%
 - frost/material: 14%
