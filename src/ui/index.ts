@@ -12,6 +12,8 @@ export { Menu, MenuDivider, MenuItem, type MenuProps } from './Menu';
 export { NestedBadges, type NestedBadgeItem, type NestedBadgesProps } from './NestedBadges';
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { LiftedGlass, type LiftedGlassProps } from './LiftedGlass';
+export { LiquidGlassSurface, type LiquidGlassSurfaceProps } from './LiquidGlassSurface';
+export { LIQUID_GLASS_PRESETS, resolveLiquidGlassOptics, type LiquidGlassOptics, type LiquidGlassOpticsOverrides, type LiquidGlassPresetName, type LiquidGlassTint } from './liquidGlassLensOptics';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
 export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
