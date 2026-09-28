@@ -540,7 +540,24 @@ export function mountPrototype(root, initialIndex, onSelect) {
 
   function commitHoldSelection() {
     const next = data.newActiveIndex;
-    animateSelectionTravel(next, true, null, true);
+    const target = links[next];
+    if (!target) {
+      requestLensRelease();
+      return;
+    }
+
+    const targetGeometry = geometryFor(target);
+
+    selectorTrack.style.transitionDuration = '0ms';
+    selectorTrack.style.width = `${targetGeometry.width}px`;
+    selectorTrack.style.transform = `translateX(${targetGeometry.left}px)`;
+
+    lensTrack.style.transitionDuration = '0ms';
+    setLensAnchor(targetGeometry.left, targetGeometry.width);
+    syncLensTrackToAnchor();
+
+    setActive(next, true);
+    animateSelectionTravel(next, true, null, false);
     requestLensRelease();
   }
 
