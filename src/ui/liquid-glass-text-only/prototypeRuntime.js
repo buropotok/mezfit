@@ -286,15 +286,13 @@ export function mountPrototype(root, initialIndex, onSelect) {
     if (notify && previous !== index) onSelect(index);
   }
 
-  function animateSelectionTravel(index, animated = true, onComplete = null, notify = true, fromGeometryOverride = null) {
+  function animateSelectionTravel(index, animated = true, onComplete = null, notify = true) {
     const target = links[index];
     const from = links[data.activeIndex];
     if (!target || !from) return false;
-    const fromGeometry = fromGeometryOverride ?? (
-      data.selectionTravelActive && data.lensAnchorWidth > 0
-        ? { left: data.lensAnchorLeft, width: data.lensAnchorWidth }
-        : geometryFor(from)
-    );
+    const fromGeometry = data.selectionTravelActive && data.lensAnchorWidth > 0
+      ? { left: data.lensAnchorLeft, width: data.lensAnchorWidth }
+      : geometryFor(from);
     cancelSelectionTravel();
     const toGeometry = geometryFor(target);
     const startScroll = tabStrip.scrollLeft;
@@ -542,25 +540,7 @@ export function mountPrototype(root, initialIndex, onSelect) {
 
   function commitHoldSelection() {
     const next = data.newActiveIndex;
-    const target = links[next];
-    if (!target) {
-      requestLensRelease();
-      return;
-    }
-
-    cancelMomentum();
-
-    const targetGeometry = geometryFor(target);
-
-    selectorTrack.style.transitionDuration = '0ms';
-    selectorTrack.style.width = `${targetGeometry.width}px`;
-    selectorTrack.style.transform = `translateX(${targetGeometry.left}px)`;
-
-    setLensAnchor(targetGeometry.left, targetGeometry.width);
-    lensTrack.style.transitionDuration = '0ms';
-    syncLensTrackToAnchor();
-
-    animateSelectionTravel(next, true, null, true, targetGeometry);
+    animateSelectionTravel(next, true, null, true);
     requestLensRelease();
   }
 

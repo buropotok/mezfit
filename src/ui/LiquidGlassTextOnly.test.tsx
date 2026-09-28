@@ -200,34 +200,6 @@ describe('LiquidGlassTextOnly', () => {
     expect(changed).not.toHaveBeenCalled();
   });
 
-  it('keeps the dragged lens on the release slot instead of jumping back to the previous active slot', () => {
-    const view = render(<Controlled />);
-    const root = getScene(view.container);
-    const pane = element(root, 'toolbar-pane');
-    const strip = element(root, 'tab-strip');
-    const lensTrack = element(root, 'lens-track');
-
-    fireEvent.pointerDown(pane, { pointerId:7, pointerType:'touch', clientX:39, clientY:22 });
-    act(() => vi.advanceTimersByTime(160));
-
-    const target = button(root, 2);
-    const targetClientX = target.offsetLeft + target.offsetWidth / 2;
-    fireEvent.pointerMove(document, { pointerId:7, pointerType:'touch', clientX:targetClientX, clientY:22 });
-    fireEvent.pointerUp(document, { pointerId:7, pointerType:'touch', clientX:targetClientX, clientY:22 });
-
-    expect(changed).toHaveBeenCalledExactlyOnceWith('programs');
-
-    act(() => vi.advanceTimersByTime(16));
-
-    const lensCenter = translateX(lensTrack) + Number.parseFloat(lensTrack.style.width) / 2;
-    const targetRawCenter = target.offsetLeft + target.offsetWidth / 2 - strip.scrollLeft;
-    const paneCenter = pane.offsetWidth / 2;
-    const targetVisualCenter = paneCenter + (targetRawCenter - paneCenter) * 1.05;
-
-    expect(lensCenter).toBeCloseTo(targetVisualCenter, 1);
-    expect(button(root, 2).getAttribute('aria-selected')).toBe('true');
-  });
-
   it('clamps manual lens drag to the first slot center', () => {
     const view = render(ui());
     const root = getScene(view.container);
