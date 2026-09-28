@@ -2,6 +2,8 @@
 
 `LiquidGlassTextOnly` is the React/UI-Kit adapter for the approved Text Only liquid-glass prototype fixed on 2026-09-28.
 
+Its gesture/selection runtime remains private to Text Only. The SDF vector-map builder and the approved Lens optical constants are shared through `src/ui/liquidGlassLensOptics.ts`, so the UI-kit glass tuner can experiment with the same optical engine without changing Text Only interaction behavior.
+
 ## Fixed geometry and interaction preset
 
 - container height: 44 px
