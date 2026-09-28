@@ -15,5 +15,6 @@ export { LiftedGlass, type LiftedGlassProps } from './LiftedGlass';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
 export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+export { LiquidGlassTabsNoFab, type LiquidGlassTabsNoFabProps, type LiquidGlassTabsNoFabTab } from './LiquidGlassTabsNoFab';
 export type { LiquidGlassTextOnlyProps, LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
 export { DaySchedule, type DayScheduleEvent, type DayScheduleProps, type DayScheduleRenderState } from './DaySchedule';

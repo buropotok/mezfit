@@ -29,10 +29,10 @@ async function bootstrap(): Promise<void> {
   root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;
   if (window.location.pathname === '/ui-kit') {
-    const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }, { LiquidGlassTextOnlyCatalog }, { DayScheduleCatalog }] = await Promise.all([
-      import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'), import('./ui/LiquidGlassTextOnlyCatalog'), import('./ui/DayScheduleCatalog'),
+    const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }, { LiquidGlassTextOnlyCatalog }, { DayScheduleCatalog }, { LiquidGlassTabsNoFabCatalog }] = await Promise.all([
+      import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'), import('./ui/LiquidGlassTextOnlyCatalog'), import('./ui/DayScheduleCatalog'), import('./ui/LiquidGlassTabsNoFabCatalog'),
     ]);
-    content = <><UiKitPage /><ThemeVariantsCatalog /><LiquidGlassIconOnlyCatalog /><LiquidGlassTextOnlyCatalog /><DayScheduleCatalog /></>;
+    content = <><UiKitPage /><ThemeVariantsCatalog /><LiquidGlassIconOnlyCatalog /><LiquidGlassTextOnlyCatalog /><DayScheduleCatalog /><LiquidGlassTabsNoFabCatalog /></>;
   }
   createRoot(root).render(
     <React.StrictMode>
