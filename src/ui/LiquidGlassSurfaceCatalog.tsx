@@ -104,6 +104,7 @@ export function LiquidGlassSurfaceCatalog() {
             variant={name}
             radius={24}
             className="ui-kit-liquid-glass-surface__preset-card"
+            contentClassName="ui-kit-liquid-glass-surface__preset-content"
           >
             <Text variant="headline">{label}</Text>
             <Text variant="caption" tone="muted">
@@ -123,6 +124,7 @@ export function LiquidGlassSurfaceCatalog() {
             optics={optics}
             radius={radius}
             className="ui-kit-liquid-glass-surface__preview"
+            contentClassName="ui-kit-liquid-glass-surface__preview-content"
           >
             <Text variant="title">Liquid Glass</Text>
             <Text variant="body">Настраиваемая линза Mezfit</Text>
