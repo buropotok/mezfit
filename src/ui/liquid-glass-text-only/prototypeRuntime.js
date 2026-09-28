@@ -1,7 +1,7 @@
 import { buildLiquidGlassVectorMap, LIQUID_GLASS_PRESETS } from '../liquidGlassLensOptics';
 
 // Direct extraction of the approved Text Only prototype interaction model.
-// React owns identity/controlled value; this private runtime owns the tuned gesture optics.
+// React owns identity/controlled value; this private runtime owns gestures while the shared optics core builds the lens map.
 export function mountPrototype(root, initialIndex, onSelect) {
   const owner = root.ownerDocument;
   const win = owner.defaultView;
