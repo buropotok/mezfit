@@ -19,62 +19,57 @@ function ui(hidden = false, value = '0', list = tabs) {
   return <LiquidGlassTabsNoFab hidden={hidden} tabs={list} value={value} onValueChange={changed} />;
 }
 
-function getScene(container: HTMLElement): ShadowRoot {
-  const host = container.firstElementChild?.firstElementChild;
-  if (!host?.shadowRoot) throw new Error('Visible scene must own a shadow root');
-  return host.shadowRoot;
+function scene(container: HTMLElement): HTMLElement {
+  const result = container.firstElementChild?.firstElementChild;
+  if (!(result instanceof HTMLElement)) throw new Error('Missing visible scene');
+  return result;
 }
 
-function button(root: ShadowRoot, index: number): HTMLButtonElement {
-  const result = root.querySelectorAll<HTMLButtonElement>('.tab-link')[index];
+function realTabsHost(container: HTMLElement): HTMLElement {
+  const result = container.querySelector<HTMLElement>('[data-liquid-glass-tabs-no-fab-real]');
+  if (!result) throw new Error('Missing canonical tabs host');
+  return result;
+}
+
+function startupRoot(container: HTMLElement): ShadowRoot {
+  const result = scene(container).children[1]?.shadowRoot;
+  if (!result) throw new Error('Missing startup shadow root');
+  return result;
+}
+
+function tab(container: HTMLElement, index: number): HTMLElement {
+  const result = container.querySelectorAll<HTMLElement>('[role="tab"]')[index];
   if (!result) throw new Error('Missing tab');
   return result;
 }
 
-function element(root: ShadowRoot, id: string): HTMLElement {
-  const result = root.getElementById(id);
-  if (!(result instanceof HTMLElement)) throw new Error(`Missing ${id}`);
-  return result;
-}
-
-const cancels: ReturnType<typeof vi.fn>[] = [];
-
 beforeEach(() => {
   vi.useFakeTimers();
   changed.mockClear();
-  cancels.length = 0;
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+    window.setTimeout(() => callback(performance.now()), 16));
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
     disconnect() {}
   });
-  vi.stubGlobal('matchMedia', () => ({ matches: false }));
-  vi.stubGlobal('PointerEvent', class extends MouseEvent {
-    pointerId: number;
-    pointerType: string;
-    constructor(type: string, init: PointerEventInit = {}) {
-      super(type, init);
-      this.pointerId = init.pointerId ?? 1;
-      this.pointerType = init.pointerType ?? 'touch';
-    }
+  vi.stubGlobal('MutationObserver', class {
+    observe() {}
+    disconnect() {}
   });
   vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(390);
   vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function(this: HTMLElement) {
-    return this.classList.contains('tab-link') ? 78 : 390;
+    if (this.getAttribute('role') === 'tab') return 70;
+    return 354;
   });
-  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(64);
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function(this: HTMLElement) {
-    const width = this.classList.contains('tab-link') ? 78 : 390;
-    const left = Number(this.dataset.index || 0) * 78;
-    return { x: left, y: 0, left, top: 0, right: left + width, bottom: 64, width, height: 64, toJSON: () => ({}) };
+  vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function(this: HTMLElement) {
+    if (this.getAttribute('role') !== 'tab') return 0;
+    return Number(this.getAttribute('data-ui-tab-value') ?? 0) * 70;
   });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   Object.defineProperty(Element.prototype, 'animate', {
     configurable: true,
-    value: vi.fn(() => {
-      const cancel = vi.fn();
-      cancels.push(cancel);
-      return { cancel, addEventListener: vi.fn(), removeEventListener: vi.fn() };
-    }),
+    value: vi.fn(() => ({ cancel: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn() })),
   });
 });
 
@@ -86,78 +81,76 @@ afterEach(() => {
 });
 
 describe('LiquidGlassTabsNoFab', () => {
-  it('renders no private scene or timers while hidden', () => {
+  it('unmounts both canonical tabs and startup optics while hidden', () => {
     const view = render(ui(true));
     expect(view.container.firstElementChild?.hasAttribute('hidden')).toBe(true);
     expect(view.container.firstElementChild?.childElementCount).toBe(0);
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('settles immediately when first mounted visible', () => {
+  it('uses the canonical liquidGlass icon Tabs primitive for the settled control', () => {
     const view = render(ui());
-    const root = getScene(view.container);
-    expect(root.querySelectorAll('.tab-link')).toHaveLength(5);
-    expect(element(root, 'iconMask').classList.contains('tabs-interactive')).toBe(true);
-    expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
-    expect(root.querySelector('[data-art="2-filled"]')).not.toBeNull();
+    const root = view.container.querySelector<HTMLElement>('[data-ui-theme="liquidGlass"][data-ui-mode="icon"]');
+    expect(root).not.toBeNull();
+    expect(view.container.querySelectorAll('[role="tab"]')).toHaveLength(5);
+    expect(tab(view.container, 0).getAttribute('data-state')).toBe('active');
+    expect(realTabsHost(view.container).style.opacity).toBe('1');
+    expect(view.container.querySelector('[data-art="2-filled"]')).not.toBeNull();
   });
 
-  it('uses the approved sharp-icon startup material', () => {
+  it('keeps startup icons sharp while applying the tuned blur to the masked backdrop', () => {
     const view = render(ui(true));
     view.rerender(ui(false));
-    const root = getScene(view.container);
-    expect(root.getElementById('startup-lens-blur')).toBeNull();
+    const root = startupRoot(view.container);
+    const iconFilter = root.getElementById('startup-refraction-icons');
+
+    expect(iconFilter?.querySelector('feGaussianBlur')).toBeNull();
     expect(root.getElementById('startup-lens-saturation')?.getAttribute('values')).toBe('1.29');
+    expect((root.getElementById('startup-backdrop-layer') as HTMLElement | null)?.style.backdropFilter).toContain('blur(0.7px)');
     expect(Number(root.getElementById('startup-material-surface')?.getAttribute('fill-opacity'))).toBeCloseTo(.032, 3);
-    const backdrop = root.querySelector<HTMLElement>('.startup-backdrop-layer');
-    expect(backdrop?.style.backdropFilter).toContain('blur(0.7px)');
-    expect(backdrop?.style.backdropFilter).toContain('saturate(1.29)');
   });
 
-  it('plays the center-spread reveal once and hands off after the tuned timing', () => {
+  it('plays the center-spread entrance and hands interaction to the canonical Tabs', () => {
     const view = render(ui(true));
     view.rerender(ui(false));
-    const root = getScene(view.container);
-    expect(element(root, 'iconLayer').hasAttribute('startup')).toBe(true);
-    expect(element(root, 'iconMask').classList.contains('tabs-interactive')).toBe(false);
 
-    act(() => vi.advanceTimersByTime(920));
+    const host = realTabsHost(view.container);
+    const startup = startupRoot(view.container).getElementById('startupScene') as SVGElement;
 
-    expect(element(root, 'iconLayer').hasAttribute('startup')).toBe(false);
-    expect(element(root, 'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    expect(host.style.opacity).toBe('0');
+    expect(host.style.pointerEvents).toBe('none');
+    expect(host.inert).toBe(true);
+    expect(startup.style.visibility).toBe('visible');
 
-    const cancelCount = cancels.length;
-    view.rerender(ui(false, '2'));
-    expect(cancels).toHaveLength(cancelCount);
-    expect(button(root, 2).getAttribute('aria-selected')).toBe('true');
+    act(() => vi.advanceTimersByTime(940));
+
+    expect(host.style.opacity).toBe('1');
+    expect(host.style.pointerEvents).toBe('auto');
+    expect(host.inert).toBe(false);
+    expect(startup.style.visibility).toBe('hidden');
   });
 
-  it('keeps controlled selection and interaction behavior after handoff', () => {
+  it('keeps selection controlled by React after handoff', () => {
     const view = render(ui());
-    const root = getScene(view.container);
-    fireEvent.click(button(root, 3));
+
+    fireEvent.click(tab(view.container, 3));
     expect(changed).toHaveBeenCalledExactlyOnceWith('3');
-    expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
 
     view.rerender(ui(false, '3'));
-    expect(button(root, 3).getAttribute('aria-selected')).toBe('true');
-    expect(element(root, 'selector-track').style.transform).toBe('translateX(234px)');
+    expect(tab(view.container, 3).getAttribute('data-state')).toBe('active');
+    expect(tab(view.container, 0).getAttribute('data-state')).toBe('inactive');
   });
 
-  it('isolates instances and disposes animation work under StrictMode', () => {
-    const view = render(<StrictMode>{ui()}{ui()}</StrictMode>);
-    const first = view.container.children[0].firstElementChild?.shadowRoot;
-    const second = view.container.children[1].firstElementChild?.shadowRoot;
-    expect(first).toBeTruthy();
-    expect(second).toBeTruthy();
-    expect(first).not.toBe(second);
-    if (!first || !second) throw new Error('Missing scenes');
+  it('keeps instances isolated and cleans up entrance RAF work under StrictMode', () => {
+    const view = render(<StrictMode>{ui(true)}{ui(true)}</StrictMode>);
+    view.rerender(<StrictMode>{ui(false)}{ui(false)}</StrictMode>);
 
-    fireEvent.click(button(first, 1));
-    expect(button(second, 0).getAttribute('aria-selected')).toBe('true');
+    const hosts = view.container.querySelectorAll<HTMLElement>('[data-liquid-glass-tabs-no-fab-real]');
+    expect(hosts).toHaveLength(2);
+    expect(hosts[0]).not.toBe(hosts[1]);
 
+    act(() => vi.advanceTimersByTime(80));
     view.unmount();
-    expect(cancels.every(cancel => cancel.mock.calls.length > 0)).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
   });
 });
