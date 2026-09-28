@@ -2,30 +2,30 @@ import { useState, type CSSProperties } from 'react';
 import { Button, Text } from './primitives';
 
 export type TypographyRole = 'large-title' | 'title' | 'headline' | 'body' | 'footnote' | 'caption';
-export type TypographyValue = { size: number; lineHeight: number; weight: number };
+export type TypographyValue = { size: number; lineHeight: number; weight: number; letterSpacing: number };
 export type TypographyValues = Record<TypographyRole, TypographyValue>;
 export type TypographySlot = { id: string; label: string; defaultRole: TypographyRole; selector: string; weightOverride?: number };
 export type TypographyAssignments = Record<string, TypographyRole>;
 
 export const roleDefinitions: ReadonlyArray<TypographyValue & { role: TypographyRole; label: string; usage: string }> = [
-  { role: 'large-title', label: 'Large title', usage: 'Main screen title', size: 24, lineHeight: 28, weight: 400 },
-  { role: 'title', label: 'Title', usage: 'Large content / section heading', size: 20, lineHeight: 24, weight: 400 },
-  { role: 'headline', label: 'Headline', usage: 'Modal title / important compact heading', size: 17, lineHeight: 22, weight: 500 },
-  { role: 'body', label: 'Body', usage: 'Main text / inputs / controls', size: 15, lineHeight: 20, weight: 400 },
-  { role: 'footnote', label: 'Footnote', usage: 'Metadata / field labels / secondary text', size: 13, lineHeight: 18, weight: 400 },
-  { role: 'caption', label: 'Caption', usage: 'Small service / supporting text', size: 12, lineHeight: 16, weight: 400 },
+  { role: 'large-title', label: 'Large title', usage: 'Main screen title', size: 24, lineHeight: 24, weight: 300, letterSpacing: 0 },
+  { role: 'title', label: 'Title', usage: 'Large content / section heading', size: 20, lineHeight: 24, weight: 300, letterSpacing: 0.35 },
+  { role: 'headline', label: 'Headline', usage: 'Modal title / important compact heading', size: 17, lineHeight: 22, weight: 300, letterSpacing: 0.5 },
+  { role: 'body', label: 'Body', usage: 'Main text / inputs / controls', size: 15, lineHeight: 20, weight: 300, letterSpacing: 0.35 },
+  { role: 'footnote', label: 'Footnote', usage: 'Metadata / field labels / secondary text', size: 13, lineHeight: 18, weight: 300, letterSpacing: 0.55 },
+  { role: 'caption', label: 'Caption', usage: 'Small service / supporting text', size: 12, lineHeight: 16, weight: 300, letterSpacing: 0.4 },
 ];
 
 export function defaultTypographyValues(): TypographyValues {
-  return Object.fromEntries(roleDefinitions.map(({ role, size, lineHeight, weight }) => [role, { size, lineHeight, weight }])) as TypographyValues;
+  return Object.fromEntries(roleDefinitions.map(({ role, size, lineHeight, weight, letterSpacing }) => [role, { size, lineHeight, weight, letterSpacing }])) as TypographyValues;
 }
 
 export function typographyStyle(value: TypographyValue): CSSProperties {
-  return { fontFamily: 'var(--ui-font-family)', fontSize: `${value.size}px`, lineHeight: `${value.lineHeight}px`, fontWeight: value.weight };
+  return { fontFamily: 'var(--ui-font-family)', fontSize: `${value.size}px`, lineHeight: `${value.lineHeight}px`, fontWeight: value.weight, letterSpacing: `${value.letterSpacing}px` };
 }
 
 function cssDeclarations(value: TypographyValue) {
-  return `font-family: var(--ui-font-family);\n  font-size: ${value.size}px;\n  line-height: ${value.lineHeight}px;\n  font-weight: ${value.weight};`;
+  return `font-family: var(--ui-font-family);\n  font-size: ${value.size}px;\n  line-height: ${value.lineHeight}px;\n  font-weight: ${value.weight};\n  letter-spacing: ${value.letterSpacing}px;`;
 }
 
 function cssFor(value: TypographyValue) {
@@ -55,7 +55,7 @@ export function TypographyRoleAdmin({ values, onChange }: { values: TypographyVa
     const value = values[definition.role];
     const defaults = defaultTypographyValues()[definition.role];
     const css = cssFor(value);
-    return <div className="ui-kit-admin-card" key={definition.role}><div className="ui-kit-admin-heading"><div><Text variant="headline">{definition.label}</Text><Text variant="footnote" tone="muted">{definition.usage}</Text></div><Text variant="caption" tone="muted">{definition.role}</Text></div><div className="ui-kit-admin-preview" style={typographyStyle(value)}>Пример типографики · {definition.label}</div><div className="ui-kit-admin-fields"><NumberField label="Size" value={value.size} min={12} max={48} onChange={(size) => onChange({ ...values, [definition.role]: { ...value, size } })} /><NumberField label="Line height" value={value.lineHeight} min={12} max={56} onChange={(lineHeight) => onChange({ ...values, [definition.role]: { ...value, lineHeight } })} /><label className="ui-kit-admin-field"><Text variant="footnote" className="ui-kit-admin-field-label">Weight</Text><select value={value.weight} onChange={(event) => onChange({ ...values, [definition.role]: { ...value, weight: Number(event.currentTarget.value) } })}><option value="400">Regular · 400</option><option value="500">Medium · 500</option><option value="600">Semibold · 600</option><option value="700">Bold · 700</option></select></label></div><pre className="ui-kit-admin-code"><code>{css}</code></pre><CopyActions css={css} onReset={() => onChange({ ...values, [definition.role]: defaults })} /></div>;
+    return <div className="ui-kit-admin-card" key={definition.role}><div className="ui-kit-admin-heading"><div><Text variant="headline">{definition.label}</Text><Text variant="footnote" tone="muted">{definition.usage}</Text></div><Text variant="caption" tone="muted">{definition.role}</Text></div><div className="ui-kit-admin-preview" style={typographyStyle(value)}>Пример типографики · {definition.label}</div><div className="ui-kit-admin-fields"><NumberField label="Size" value={value.size} min={12} max={48} onChange={(size) => onChange({ ...values, [definition.role]: { ...value, size } })} /><NumberField label="Line height" value={value.lineHeight} min={12} max={56} onChange={(lineHeight) => onChange({ ...values, [definition.role]: { ...value, lineHeight } })} /><NumberField label="Letter spacing ×100" value={Math.round(value.letterSpacing * 100)} min={-150} max={200} onChange={(letterSpacing) => onChange({ ...values, [definition.role]: { ...value, letterSpacing: letterSpacing / 100 } })} /><label className="ui-kit-admin-field"><Text variant="footnote" className="ui-kit-admin-field-label">Weight</Text><select value={value.weight} onChange={(event) => onChange({ ...values, [definition.role]: { ...value, weight: Number(event.currentTarget.value) } })}><option value="300">Light · 300</option><option value="400">Regular · 400</option><option value="500">Medium · 500</option><option value="600">Semibold · 600</option><option value="700">Bold · 700</option></select></label></div><pre className="ui-kit-admin-code"><code>{css}</code></pre><CopyActions css={css} onReset={() => onChange({ ...values, [definition.role]: defaults })} /></div>;
   })}</div>;
 }
 
