@@ -11,6 +11,7 @@ The entrance core is derived from the approved local prototype `tabbar-liquid-ta
 - handoff: 0.16 s
 - base speed: 500 px/s
 - initial lens size: 114%
+- backdrop blur: 0.7 px (not applied to icons)
 - saturation: 129%
 - frost/material: 14%
 - speed profile control points: 0, 0.186, 0.360, 0.577, 0
