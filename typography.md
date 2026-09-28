@@ -10,22 +10,23 @@ Use the shared typography font stack only:
 font-family: var(--ui-font-family);
 ```
 
-`--ui-font-family` resolves to the native Apple system font (SF Pro) on Apple platforms and falls through to bundled Golos Text on other platforms. Do not introduce component-local font-family stacks.
+`--ui-font-family` resolves to Zen Maru Gothic for the whole product. The font is loaded centrally by `src/ui/tokens/typography.css`. Do not introduce component-local font-family stacks.
 
 ## Type scale
 
-| Role | Token | Size / line-height | Default weight | Intended use |
-| --- | --- | --- | --- | --- |
-| Large title | `--ui-font-size-large-title` / `--ui-line-height-large-title` | 24 / 28 px | 400 | Primary screen title |
-| Title | `--ui-font-size-title` / `--ui-line-height-title` | 20 / 24 px | 400 | Large content or section heading |
-| Headline | `--ui-font-size-headline` / `--ui-line-height-headline` | 17 / 22 px | 500 | Important heading, including every modal title |
-| Body | `--ui-font-size-body` / `--ui-line-height-body` | 15 / 20 px | 400 | Normal UI text, inputs, selects, textareas |
-| Footnote | `--ui-font-size-footnote` / `--ui-line-height-footnote` | 13 / 18 px | 400 | Secondary text, metadata, field labels |
-| Caption | `--ui-font-size-caption` / `--ui-line-height-caption` | 12 / 16 px | 400 | Small service/supporting information |
+| Role | Token | Size / line-height | Default weight | Letter spacing | Intended use |
+| --- | --- | --- | --- | --- | --- |
+| Large title | `--ui-font-size-large-title` / `--ui-line-height-large-title` | 24 / 24 px | 300 | 0 px | Primary screen title |
+| Title | `--ui-font-size-title` / `--ui-line-height-title` | 20 / 24 px | 300 | 0.35 px | Large content or section heading |
+| Headline | `--ui-font-size-headline` / `--ui-line-height-headline` | 17 / 22 px | 300 | 0.5 px | Important heading, including every modal title |
+| Body | `--ui-font-size-body` / `--ui-line-height-body` | 15 / 20 px | 300 | 0.35 px | Normal UI text, inputs, selects, textareas |
+| Footnote | `--ui-font-size-footnote` / `--ui-line-height-footnote` | 13 / 18 px | 300 | 0.55 px | Secondary text, metadata, field labels |
+| Caption | `--ui-font-size-caption` / `--ui-line-height-caption` | 12 / 16 px | 300 | 0.4 px | Small service/supporting information |
 
 Available weight tokens:
 
 ```css
+--ui-font-weight-light: 300;
 --ui-font-weight-regular: 400;
 --ui-font-weight-medium: 500;
 --ui-font-weight-semibold: 600;
@@ -40,12 +41,12 @@ All text-bearing UI must map to the shared type scale. The standard mapping is:
 
 | UI element | Typography |
 | --- | --- |
-| Main screen title | Large title — 24/28, regular 400 |
-| Large content / section heading | Title — 20/24, regular 400 |
-| Modal title | Headline — 17/22, medium 500 |
-| Important compact heading / app-bar heading | Headline — 17/22, medium 500 |
-| Main text | Body — 15/20, regular 400 |
-| Input / textarea / select / search text | Body — 15/20, regular 400 |
+| Main screen title | Large title — 24/24, light 300 |
+| Large content / section heading | Title — 20/24, light 300 |
+| Modal title | Headline — 17/22, light 300 |
+| Important compact heading / app-bar heading | Headline — 17/22, light 300 |
+| Main text | Body — 15/20, light 300 |
+| Input / textarea / select / search text | Body — 15/20, light 300 |
 | Button / interactive text | Body — 15/20, medium 500 |
 | List item primary text | Body — 15/20, semibold 600 when emphasis is required |
 | Field label / important secondary label | Footnote — 13/18, semibold 600 |
@@ -54,15 +55,15 @@ All text-bearing UI must map to the shared type scale. The standard mapping is:
 
 ### Modal rule
 
-A modal title is always **Headline — 17/22, medium 500**, not Title 20/24.
+A modal title is always **Headline — 17/22, light 300**, not Title 20/24.
 
 Inside a normal modal, use this hierarchy:
 
 | Modal element | Typography |
 | --- | --- |
-| Title | Headline — 17/22, 500 |
-| Main content | Body — 15/20, 400 |
-| Field/control text | Body — 15/20, 400 |
+| Title | Headline — 17/22, 300 |
+| Main content | Body — 15/20, 300 |
+| Field/control text | Body — 15/20, 300 |
 | Buttons | Body — 15/20, 500 |
 | Field labels / important labels | Footnote — 13/18, 600 |
 | Secondary explanations | Footnote — 13/18, 400 |
@@ -74,7 +75,7 @@ Normal textual content must not use sizes below Caption 12/16. Smaller dimension
 
 Every newly created app-owned text-bearing element in the application must use this typography system. Prefer existing shared primitives and semantic typography roles. When component-owned CSS is appropriate, reference the shared typography tokens directly instead of duplicating literal font sizes or line-heights.
 
-Konsta UI primitives are the exception at the primitive boundary: their internal typography is part of the library-owned visual representation and must not be overridden to force Mezfit typography tokens onto the primitive. The product-level font choice is configured through Konsta's supported Tailwind theme API: the iOS token `--font-ios` points to `var(--ui-font-family)` in `src/ui/konsta.css`, preserving SF Pro on Apple platforms and Golos Text elsewhere. Do not target Konsta internal `.k-*` selectors or otherwise restyle a Konsta primitive's text. Mezfit typography tokens still apply to app-owned text and composition outside the primitive itself.
+Konsta UI primitives are the exception at the primitive boundary: their internal typography is part of the library-owned visual representation and must not be overridden to force Mezfit typography tokens onto the primitive. The product-level font choice is configured through Konsta's supported Tailwind theme API: the iOS token `--font-ios` points to `var(--ui-font-family)` in `src/ui/konsta.css`, using the shared Zen Maru Gothic family. Do not target Konsta internal `.k-*` selectors or otherwise restyle a Konsta primitive's text. Mezfit typography tokens still apply to app-owned text and composition outside the primitive itself.
 
 Do not create parallel component-specific typography systems. A component may choose an existing semantic role, but it must not invent its own type scale.
 

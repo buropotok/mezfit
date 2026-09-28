@@ -15,7 +15,7 @@
   background: var(--ui-color-surface);
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
+  line-height: var(--ui-line-height-body); letter-spacing: var(--ui-letter-spacing-body);
   font-weight: var(--ui-font-weight-regular);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
@@ -45,7 +45,7 @@
   background: var(--ui-color-surface);
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-line-height-caption); letter-spacing: var(--ui-letter-spacing-caption);
   font-weight: var(--ui-font-weight-regular);
   transition: transform 150ms ease, color 150ms ease;
 }
@@ -63,7 +63,7 @@
   color: var(--ui-color-surface-muted);
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-line-height-caption); letter-spacing: var(--ui-letter-spacing-caption);
   font-weight: var(--ui-font-weight-regular);
 }
 
@@ -107,7 +107,7 @@
 .ui-choice__label {
   color: var(--ui-color-surface-text);
   font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
+  line-height: var(--ui-line-height-body); letter-spacing: var(--ui-letter-spacing-body);
   font-weight: var(--ui-font-weight-regular);
 }
 .ui-choice input:focus-visible + .ui-choice__control { box-shadow: 0 0 0 3px var(--ui-color-primary-soft); }

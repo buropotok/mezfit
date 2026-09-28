@@ -64,7 +64,7 @@
   color: var(--color-text);
   background: var(--color-surface-2);
   font-size: var(--ui-font-size-title);
-  line-height: var(--ui-line-height-title);
+  line-height: var(--ui-line-height-title); letter-spacing: var(--ui-letter-spacing-title);
   cursor: pointer;
 }
 .client-workspace-title {
@@ -75,14 +75,14 @@
 .client-workspace-title span {
   color: var(--color-text-secondary);
   font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-line-height-caption); letter-spacing: var(--ui-letter-spacing-caption);
   font-weight: var(--ui-font-weight-medium);
 }
 .client-workspace-title strong {
   overflow: hidden;
   color: var(--color-text);
   font-size: var(--ui-font-size-headline);
-  line-height: var(--ui-line-height-headline);
+  line-height: var(--ui-line-height-headline); letter-spacing: var(--ui-letter-spacing-headline);
   font-weight: var(--ui-font-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
