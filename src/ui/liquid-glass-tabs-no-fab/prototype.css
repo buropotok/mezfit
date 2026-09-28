@@ -58,9 +58,7 @@
       min-height: 100%;
       background: #dfe6ef;
       color: #000;
-      font-family:
-        -apple-system, "SF Pro Text", "SF UI Text", system-ui,
-        "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-family: var(--ui-font-family);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -497,7 +495,7 @@
       border-radius: 9999px;
       background: transparent;
       color: inherit;
-      font-family: var(--ui-font-family, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif);
+      font-family: var(--ui-font-family);
       font-size: 13px;
       line-height: 18px;
       font-weight: 500;
@@ -918,7 +916,7 @@
       background: rgba(255,255,255,.92);
       color: #111;
       box-shadow: 0 12px 34px rgba(0,0,0,.12);
-      font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+      font-family: var(--ui-font-family);
     }
 
     .dark .standalone-tuner-dom {
@@ -1153,7 +1151,7 @@
     .spring-time-label {
       fill: currentColor;
       pointer-events: none;
-      font-family: var(--ui-font-family, -apple-system, system-ui, sans-serif);
+      font-family: var(--ui-font-family);
     }
 
     .spring-axis-label {
