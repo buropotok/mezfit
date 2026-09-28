@@ -128,8 +128,23 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoF
               <feDisplacementMap in="SourceGraphic" in2="map" scale="64" xChannelSelector="R" yChannelSelector="G" result="displaced" />
               <feColorMatrix id="startup-lens-saturation" in="displaced" type="saturate" values="1.29" />
             </filter>
-            <mask id="startup-reveal-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
-              <image id="startup-mask-surface" x="0" y="0" preserveAspectRatio="none" />
+            <filter id="startup-mask-from-blue" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+              <feColorMatrix
+                type="matrix"
+                values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 1 0 0"
+              />
+            </filter>
+            <mask
+              id="startup-reveal-mask"
+              maskUnits="userSpaceOnUse"
+              maskContentUnits="userSpaceOnUse"
+              x="0"
+              y="0"
+              width="100%"
+              height="100%"
+              style={{ maskType: 'alpha' }}
+            >
+              <image id="startup-mask-surface" x="0" y="0" preserveAspectRatio="none" filter="url(#startup-mask-from-blue)" />
             </mask>
           </defs>
 
