@@ -133,7 +133,9 @@ describe('LiquidGlassTabsNoFab', () => {
   it('keeps selection controlled by React after handoff', () => {
     const view = render(ui());
 
-    fireEvent.click(tab(view.container, 3));
+    const target = tab(view.container, 3);
+    fireEvent.pointerDown(target, { pointerId: 1, pointerType: 'touch', button: 0 });
+    fireEvent.mouseDown(target, { button: 0, ctrlKey: false });
     expect(changed).toHaveBeenCalledExactlyOnceWith('3');
 
     view.rerender(ui(false, '3'));
