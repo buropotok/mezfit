@@ -39,8 +39,11 @@
       --shadow-ios-dark-glass-thumb:
         inset 3px 3px 0px -3.5px rgba(255, 255, 255, 1),
         inset -3px -3px 0px -3.5px rgba(255, 255, 255, 1),
-        inset -0.5px -0.5px 0px rgba(255, 255, 255, 0.18),
-        inset 0.5px 0.5px 0px rgba(255, 255, 255, 0.08);
+        inset -0.5px -0.5px 0px rgba(255, 255, 255, 0.5),
+        inset 0.5px 0.5px 0px rgba(255, 255, 255, 0.1),
+        inset -3px 3px 0px -3.5px rgba(255, 255, 255, 0.25),
+        inset 0px -5px 0px -3.5px rgba(255, 255, 255, 0.25),
+        inset 0px -5px 5px rgba(255, 255, 255, 0.25);
     }
 
     .dark {
