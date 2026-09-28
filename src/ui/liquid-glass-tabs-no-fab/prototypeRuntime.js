@@ -1881,7 +1881,8 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   let timing=null,path=[],breaks=null,running=false,startTime=0,elapsed=0,handoffProgress=0,bezelFrame=0;
   const mapCanvas=document.createElement('canvas'),mapCtx=mapCanvas.getContext('2d');
   const bezelCanvas=document.createElement('canvas'),bezelCtx=bezelCanvas.getContext('2d');
-  const speedIntegral=new Float32Array(257);
+  const speedIntegral=new Float32Array(257),fieldAmpLookup=new Float32Array(2049);
+  let fieldAmpLookupReady=false;
 
   function baseSigma(){return Math.max(12,Math.min(40,width/8));}
   function applyLensSize(){sigma=SETTINGS.lensScale*baseSigma();}
@@ -1923,6 +1924,14 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     return .5*((2*b.y)+(-a.y+c.y)*t+(2*a.y-5*b.y+4*c.y-d.y)*t2+(-a.y+3*b.y-3*c.y+d.y)*t3);
   }
   const lookup=new Float32Array(1025);for(let i=0;i<=1024;i++)lookup[i]=profile(i/1024);
+  function ensureFieldAmpLookup(){
+    if(fieldAmpLookupReady)return;
+    for(let i=0;i<fieldAmpLookup.length;i++){
+      const value=i/(fieldAmpLookup.length-1)*2.4;
+      fieldAmpLookup[i]=value>1e-8?lookup[Math.round(mapClamp(Math.sqrt(Math.max(0,-Math.log(value))/logThreshold),0,1)*1024)]:0;
+    }
+    fieldAmpLookupReady=true;
+  }
 
   function connected(u){
     const p={x:halfSpan()/sigma*u*u,y:4.8*(2*u-u*u)},extent=Math.ceil(halfSpan()/sigma+3),step=.12;
@@ -2022,7 +2031,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
       if(!element)continue;element.setAttribute('width',String(width));element.setAttribute('height',String(height));
     }
     if(materialSurface){materialSurface.setAttribute('width',String(width));materialSurface.setAttribute('height',String(height));}
-    const resolution=Math.max(2,Math.sqrt(width*height/55000));
+    const resolution=Math.max(2.2,Math.sqrt(width*height/55000));
     mapCanvas.width=Math.ceil(width/resolution);
     mapCanvas.height=Math.ceil(height/resolution);
     const runtimeWidth=width/1.1;
@@ -2055,60 +2064,63 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   }
   function render(){
     if(!width||!mapCtx)return;
+    ensureFieldAmpLookup();
     const handoffEase=handoffProgress*handoffProgress*(3-2*handoffProgress);
     const distortionStrength=1-Math.pow(mapClamp(handoffEase/.78,0,1),1.15);
     const mw=mapCanvas.width,mh=mapCanvas.height,sx=width/mw,sy=height/mh;
     const map=mapCtx.createImageData(mw,mh),m=map.data;
-    const offset=Math.abs(cx-width/2),movingS=movingSigma(offset),movingDen=2*movingS*movingS,weight=bridgeWeight(offset);
+    const offset=Math.abs(cx-width/2),movingS=movingSigma(offset),movingDen=2*movingS*movingS,invMovingS2=1/(movingS*movingS),weight=bridgeWeight(offset);
     const gainU=mapClamp(offset/Math.max(1,sigma*2.2),0,1),gainEase=gainU*gainU*(3-2*gainU),flowGain=.5+.5*gainEase;
-    const xsB=new Float32Array(mw),xsC=new Float32Array(mw);
+    const xBody=new Float32Array(mw),xGrad=new Float32Array(mw);
     for(let x=0;x<mw;x++){
-      const px=(x+.5)*sx;xsB[x]=Math.exp(-((px-bx)**2)/movingDen);xsC[x]=Math.exp(-((px-cx)**2)/movingDen);
+      const px=(x+.5)*sx,dxB=px-bx,dxC=px-cx,nearest=mapClamp(px,bx,cx),dxN=px-nearest;
+      const eB=Math.exp(-(dxB*dxB)/movingDen),eC=Math.exp(-(dxC*dxC)/movingDen),eN=2*Math.exp(-(dxN*dxN)/movingDen);
+      xBody[x]=flowGain*((1-weight)*(eB+eC)+weight*eN);
+      xGrad[x]=-flowGain*((1-weight)*(dxB*eB+dxC*eC)+weight*dxN*eN)*invMovingS2;
     }
     for(let y=0;y<mh;y++){
-      const py=(y+.5)*sy,yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);
+      const py=(y+.5)*sy,dy=py-by,yGaussian=Math.exp(-(dy*dy)/movingDen),gyScale=-dy*invMovingS2;
       for(let x=0;x<mw;x++){
-        const p=(y*mw+x)*4,px=(x+.5)*sx,fb=xsB[x]*yb,fc=xsC[x]*yc,nearest=mapClamp(px,bx,cx);
-        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen);
-        const f=flowGain*((1-weight)*(fb+fc)+weight*capsule);
+        const p=(y*mw+x)*4,f=xBody[x]*yGaussian;
         m[p]=128;m[p+1]=128;m[p+2]=0;m[p+3]=255;
         if(f<threshold-.025)continue;
-        const gx=-flowGain*((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
-        const gy=-flowGain*((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
-        const g=Math.hypot(gx,gy),safe=Math.sqrt(g*g+.00000625),r=Math.sqrt(Math.max(0,-Math.log(Math.max(f,1e-8)))/logThreshold);
-        const amp=lookup[Math.round(mapClamp(r,0,1)*1024)],distance=(f-threshold)/Math.max(g,.003),edgeT=mapClamp((distance-1.7)/3,0,1),edgeGate=edgeT*edgeT*(3-2*edgeT);
-        const dx=gx/safe*amp*12*distortionStrength*edgeGate,dy=gy/safe*amp*17.5*distortionStrength*edgeGate;
-        m[p]=Math.round(mapClamp(128+dx/64*255,0,255));m[p+1]=Math.round(mapClamp(128+dy/64*255,0,255));
+        const gx=xGrad[x]*yGaussian,gy=gyScale*f,g=Math.sqrt(gx*gx+gy*gy),safe=Math.sqrt(g*g+.00000625);
+        const lutIndex=Math.min(fieldAmpLookup.length-1,Math.max(0,Math.round(mapClamp(f/2.4,0,1)*(fieldAmpLookup.length-1))));
+        const amp=fieldAmpLookup[lutIndex],distance=(f-threshold)/Math.max(g,.003),edgeT=mapClamp((distance-1.7)/3,0,1),edgeGate=edgeT*edgeT*(3-2*edgeT);
+        const dx=gx/safe*amp*12*distortionStrength*edgeGate,dyDisp=gy/safe*amp*17.5*distortionStrength*edgeGate;
+        m[p]=Math.round(mapClamp(128+dx/64*255,0,255));
+        m[p+1]=Math.round(mapClamp(128+dyDisp/64*255,0,255));
         m[p+2]=Math.round(mapClamp(distance/sx+.5,0,1)*255);
       }
     }
     mapCtx.putImageData(map,0,0);
-    const mapUrl=mapCanvas.toDataURL();
+    const mapUrl=mapCanvas.toDataURL('image/png');
     vector.setAttribute('href',mapUrl);
     if(maskSurface)maskSurface.setAttribute('href',mapUrl);
-    if((bezelFrame++&1)===0)renderBezel(movingS,weight,flowGain);
+    if((bezelFrame++&1)===0||handoffProgress>=1)renderBezel(movingS,weight,flowGain);
   }
   function renderBezel(movingS,weight,flowGain){
-    if(!bezelCtx)return;
-    const scale=1.45,supportLevel=Math.max(.001,threshold-.06),overlapPeak=2;
+    if(!bezelCtx||!surface)return;
+    const scale=1.25,supportLevel=Math.max(.001,threshold-.06),overlapPeak=3;
     const supportRadius=movingS*Math.sqrt(-2*Math.log(supportLevel/overlapPeak)),pad=Math.max(10,supportRadius+6);
-    const x0=Math.max(0,Math.floor(Math.min(bx,cx)-pad)),x1=Math.min(width,Math.ceil(Math.max(bx,cx)+pad));
+    const x0=Math.max(0,Math.floor(bx-pad)),x1=Math.min(width,Math.ceil(cx+pad));
     const y0=Math.max(0,Math.floor(by-pad)),y1=Math.min(height,Math.ceil(by+pad));
     const bw=Math.max(1,x1-x0),bh=Math.max(1,y1-y0),cw=Math.max(1,Math.ceil(bw*scale)),ch=Math.max(1,Math.ceil(bh*scale));
     if(bezelCanvas.width!==cw)bezelCanvas.width=cw;if(bezelCanvas.height!==ch)bezelCanvas.height=ch;
-    const img=bezelCtx.createImageData(cw,ch),d=img.data,movingDen=2*movingS*movingS,sqrt2=Math.SQRT2;
-    const xsB=new Float32Array(cw),xsC=new Float32Array(cw);
-    for(let ix=0;ix<cw;ix++){const px=x0+(ix+.5)/scale;xsB[ix]=Math.exp(-((px-bx)**2)/movingDen);xsC[ix]=Math.exp(-((px-cx)**2)/movingDen);}
+    const img=bezelCtx.createImageData(cw,ch),d=img.data,movingDen=2*movingS*movingS,invS2=1/(movingS*movingS),sqrt2=Math.SQRT2;
+    const bodyX=new Float32Array(cw),gradX=new Float32Array(cw);
+    for(let ix=0;ix<cw;ix++){
+      const px=x0+(ix+.5)/scale,dxB=px-bx,dxC=px-cx,nearest=mapClamp(px,bx,cx),dxN=px-nearest;
+      const eB=Math.exp(-(dxB*dxB)/movingDen),eC=Math.exp(-(dxC*dxC)/movingDen),eN=2*Math.exp(-(dxN*dxN)/movingDen);
+      bodyX[ix]=flowGain*((1-weight)*(eB+eC)+weight*eN);
+      gradX[ix]=-flowGain*((1-weight)*(dxB*eB+dxC*eC)+weight*dxN*eN)*invS2;
+    }
     for(let iy=0;iy<ch;iy++){
-      const py=y0+(iy+.5)/scale,yb=Math.exp(-((py-by)**2)/movingDen),yc=Math.exp(-((py-cy)**2)/movingDen);
+      const py=y0+(iy+.5)/scale,dy=py-by,yGaussian=Math.exp(-(dy*dy)/movingDen),gyScale=-dy*invS2;
       for(let ix=0;ix<cw;ix++){
-        const px=x0+(ix+.5)/scale,p=(iy*cw+ix)*4,fb=xsB[ix]*yb,fc=xsC[ix]*yc,nearest=mapClamp(px,bx,cx);
-        const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen),f=flowGain*((1-weight)*(fb+fc)+weight*capsule);
-        if(f<threshold-.06)continue;
-        const gx=-flowGain*((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
-        const gy=-flowGain*((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
-        const g=Math.hypot(gx,gy),safe=Math.max(g,.003),distance=(f-threshold)/safe,coverage=mapClamp(distance*scale+.5,0,1);
-        if(coverage<=0)continue;
+        const p=(iy*cw+ix)*4,f=bodyX[ix]*yGaussian;if(f<threshold-.06)continue;
+        const gx=gradX[ix]*yGaussian,gy=gyScale*f,g=Math.sqrt(gx*gx+gy*gy),safe=Math.max(g,.003),distance=(f-threshold)/safe;
+        const coverage=mapClamp(distance*scale+.5,0,1);if(coverage<=0)continue;
         const nx=-gx/safe,ny=-gy/safe,edge=Math.exp(-(((distance-.30)/.48)**2)),soft=Math.exp(-(((distance-1.10)/1.05)**2));
         const tl=Math.pow(Math.max(0,(-nx-ny)/sqrt2),11),br=Math.pow(Math.max(0,(nx+ny)/sqrt2),11);
         const base=coverage*(.014+.055*edge),highlight=coverage*soft*(.46*tl+.36*br),alpha=mapClamp(base+highlight,0,.58),mix=mapClamp((tl+br)*.9,0,1);
@@ -2117,7 +2129,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     }
     bezelCtx.putImageData(img,0,0);
     surface.setAttribute('x',String(x0));surface.setAttribute('y',String(y0));surface.setAttribute('width',String(bw));surface.setAttribute('height',String(bh));
-    surface.setAttribute('href',bezelCanvas.toDataURL());
+    surface.setAttribute('href',bezelCanvas.toDataURL('image/png'));
   }
   function pose(ms){
     const motionEnd=timing.motionMs,handoffElapsed=Math.max(0,ms-motionEnd);
