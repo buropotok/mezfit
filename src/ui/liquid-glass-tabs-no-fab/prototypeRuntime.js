@@ -1873,11 +1873,11 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const iconsFo=document.getElementById('startup-icons-fo'), materialSurface=document.getElementById('startup-material-surface');
   const lensSaturationNode=document.getElementById('startup-lens-saturation');
   const refraction=document.getElementById('startup-refraction-icons');
-  const SETTINGS={pauseSec:.30,revealSec:.75,handoffSec:.16,lensScale:1.14,saturation:1.29,frost:.14,speedPoints:[0,.186,.360,.577,0]};
+  const SETTINGS={pauseSec:.30,revealSec:.75,handoffSec:.16,speed:500,lensScale:1.14,saturation:1.29,frost:.14,speedPoints:[0,.186,.360,.577,0]};
   const threshold=.46,logThreshold=-Math.log(threshold),nodes=[{x:0,y:0},{x:.21,y:.88},{x:.47,y:1},{x:.78,y:.88},{x:1,y:0}];
   const mapClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   let width=0,height=0,baseY=0,sigma=30,bx=0,by=0,cx=0,cy=0;
-  let running=false,startTime=0,elapsed=0,handoffProgress=0;
+  let timing=null,path=[],breaks=null,running=false,startTime=0,elapsed=0,handoffProgress=0;
   const mapCanvas=document.createElement('canvas'),mapCtx=mapCanvas.getContext('2d');
   const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
   const bezelCanvas=document.createElement('canvas'),bezelCtx=bezelCanvas.getContext('2d');
@@ -1924,6 +1924,64 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   }
   const lookup=new Float32Array(1025);for(let i=0;i<=1024;i++)lookup[i]=profile(i/1024);
 
+  function connected(u){
+    const p={x:halfSpan()/sigma*u*u,y:4.8*(2*u-u*u)},extent=Math.ceil(halfSpan()/sigma+3),step=.12;
+    const nx=Math.ceil(2*extent/step)+1,ny=85,weight=bridgeWeight(p.x*sigma),ratio=movingSigma(p.x*sigma)/sigma,md=2*ratio*ratio;
+    const grid=new Uint8Array(nx*ny),queue=new Int32Array(nx*ny);
+    for(let j=0;j<ny;j++){
+      const y=j*step-2,fy=Math.exp(-y*y/2),my=Math.exp(-((y-p.y)**2)/md);
+      for(let i=0;i<nx;i++){
+        const x=i*step-extent,near=mapClamp(x,-p.x,p.x);
+        const pair=(Math.exp(-((x-p.x)**2)/md)+Math.exp(-((x+p.x)**2)/md))*my;
+        const capsule=2*Math.exp(-((x-near)**2)/md)*my;
+        grid[j*nx+i]=Math.exp(-x*x/2)*fy+(1-weight)*pair+weight*capsule>=threshold?1:0;
+      }
+    }
+    const index=(x,y)=>Math.round((y+2)/step)*nx+Math.round((x+extent)/step),from=index(0,0),target=index(p.x,p.y);
+    let head=0,tail=1;queue[0]=from;grid[from]=2;
+    while(head<tail){
+      const n=queue[head++];if(n===target)return true;const col=n%nx;
+      for(const next of [col>0?n-1:-1,col<nx-1?n+1:-1,n-nx,n+nx]){
+        if(next>=0&&next<grid.length&&grid[next]===1){grid[next]=2;queue[tail++]=next;}
+      }
+    }
+    return false;
+  }
+  function calibrate(){
+    let lo=0,hi=1;
+    for(let i=0;i<17;i++){const mid=(lo+hi)/2;if(connected(mid))lo=mid;else hi=mid;}
+    breaks=[(lo+hi)/2];
+  }
+  function buildPath(){
+    calibrate();path=[{s:0,x:0,y:0,u:0}];
+    for(let i=1;i<=600;i++){
+      const u=i/600,p={x:halfSpan()/sigma*u*u,y:4.8*(2*u-u*u)},prev=path[path.length-1],x=p.x*sigma,y=p.y*sigma;
+      path.push({s:prev.s+Math.hypot(x-prev.x,y-prev.y),x,y,u});
+    }
+  }
+  function arcAt(u){
+    const f=u*600,i=Math.floor(f),a=path[i],b=path[Math.min(i+1,600)];
+    return a.s+(b.s-a.s)*(f-i);
+  }
+  function readTiming(){
+    const speed=SETTINGS.speed,t1=SETTINGS.pauseSec,t2=SETTINGS.revealSec,s1=arcAt(breaks[0]),end=path[path.length-1].s;
+    const begin=Math.max(0,t1-1.4*s1/speed),h0=Math.max(.001,t1-begin),h1=Math.max(.001,t2-t1);
+    const times=[begin,t1,t2],dist=[0,s1,end],h=[h0,h1],d=[s1/h0,(end-s1)/h1];
+    const w1=2*h[1]+h[0],w2=h[1]+2*h[0],slopes=[0,(w1+w2)/(w1/d[0]+w2/d[1]),0];
+    timing={t1,t2,times,dist,slopes,motionMs:t2*1000,handoffMs:SETTINGS.handoffSec*1000,total:t2*1000+SETTINGS.handoffSec*1000};
+  }
+  function distanceAt(t){
+    const {times,dist,slopes}=timing;
+    if(t<=times[0])return 0;if(t>=times[2])return dist[2];
+    let i=0;while(i<1&&t>times[i+1])i++;
+    const h=times[i+1]-times[i],u=(t-times[i])/h,u2=u*u,u3=u2*u;
+    return (2*u3-3*u2+1)*dist[i]+(u3-2*u2+u)*h*slopes[i]+(-2*u3+3*u2)*dist[i+1]+(u3-u2)*h*slopes[i+1];
+  }
+  function motionSecondsAt(ms){
+    const normalized=mapClamp(ms/Math.max(1,timing.motionMs),0,1);
+    return speedAreaAt(normalized)*timing.t2;
+  }
+
   function applyMaterial(){
     if(lensSaturationNode)lensSaturationNode.setAttribute('values',SETTINGS.saturation.toFixed(2));
     if(materialSurface){
@@ -1943,7 +2001,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   function prepareGeometry(){
     const nextWidth=Math.round(root.host.clientWidth);
     if(!nextWidth)return false;
-    width=nextWidth;applyLensSize();rebuildSpeedIntegral();
+    width=nextWidth;applyLensSize();buildPath();readTiming();rebuildSpeedIntegral();
     const liquidRadius=sigma*Math.sqrt(-2*Math.log(threshold));
     height=Math.max(64,Math.ceil(liquidRadius*2+12));baseY=height/2;
     root.host.style.setProperty('--runtime-tabs-width',width/1.1+'px');
@@ -2056,11 +2114,11 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     surface.setAttribute('href',bezelCanvas.toDataURL());
   }
   function pose(ms){
-    const pauseEnd=SETTINGS.pauseSec*1000,motionEnd=pauseEnd+SETTINGS.revealSec*1000;
-    const raw=mapClamp((ms-pauseEnd)/Math.max(1,SETTINGS.revealSec*1000),0,1),progress=speedAreaAt(raw);
-    const x=halfSpan()*progress,baseX=width/2;
+    const motionEnd=timing.motionMs,handoffElapsed=Math.max(0,ms-motionEnd);
+    const handoffP=timing.handoffMs>0?mapClamp(handoffElapsed/timing.handoffMs,0,1):1;
+    const t=motionSecondsAt(Math.min(ms,motionEnd)),traveled=distanceAt(t),endDistance=Math.max(1e-6,path[path.length-1].s);
+    const progress=mapClamp(traveled/endDistance,0,1),x=halfSpan()*progress,baseX=width/2;
     bx=baseX-x;cx=baseX+x;by=cy=baseY;
-    const handoffElapsed=Math.max(0,ms-motionEnd),handoffP=SETTINGS.handoffSec>0?mapClamp(handoffElapsed/(SETTINGS.handoffSec*1000),0,1):1;
     setHandoffVisuals(ms>=motionEnd?handoffP:0);
     syncStartupIcons();
   }
@@ -2073,7 +2131,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   function play(){
     if(!prepareGeometry())return;
     setInitialState();running=true;startTime=performance.now();elapsed=0;
-    const total=(SETTINGS.pauseSec+SETTINGS.revealSec+SETTINGS.handoffSec)*1000;
+    const total=timing.total;
     function frame(now){
       elapsed=Math.min(total,now-startTime);pose(elapsed);render();
       if(elapsed<total)requestAnimationFrame(frame);
