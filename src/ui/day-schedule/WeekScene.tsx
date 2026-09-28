@@ -7,8 +7,8 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { mountPrototype, type PrototypeController } from '../liquid-glass-text-only/prototypeRuntime';
-import prototypeCss from '../liquid-glass-text-only/prototype.css?inline';
+import { mountPrototype, type PrototypeController } from './prototypeRuntime';
+import prototypeCss from './prototype.css?inline';
 import type { LocalDate } from '../date-picker/datePickerDate';
 import { addDays, toDate, WEEKDAY_LABELS } from './dateMath';
 
