@@ -109,6 +109,9 @@ describe('LiquidGlassTabsNoFab', () => {
     expect(root.getElementById('startup-lens-blur')).toBeNull();
     expect(root.getElementById('startup-lens-saturation')?.getAttribute('values')).toBe('1.29');
     expect(Number(root.getElementById('startup-material-surface')?.getAttribute('fill-opacity'))).toBeCloseTo(.032, 3);
+    const backdrop = root.querySelector<HTMLElement>('.startup-backdrop-layer');
+    expect(backdrop?.style.backdropFilter).toContain('blur(0.7px)');
+    expect(backdrop?.style.backdropFilter).toContain('saturate(1.29)');
   });
 
   it('plays the center-spread reveal once and hands off after the tuned timing', () => {
@@ -118,7 +121,7 @@ describe('LiquidGlassTabsNoFab', () => {
     expect(element(root, 'iconLayer').hasAttribute('startup')).toBe(true);
     expect(element(root, 'iconMask').classList.contains('tabs-interactive')).toBe(false);
 
-    act(() => vi.advanceTimersByTime(1250));
+    act(() => vi.advanceTimersByTime(920));
 
     expect(element(root, 'iconLayer').hasAttribute('startup')).toBe(false);
     expect(element(root, 'iconMask').classList.contains('tabs-interactive')).toBe(true);
