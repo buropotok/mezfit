@@ -34,7 +34,7 @@
   padding: var(--ui-space-4);
 }
 
-.ui-kit-liquid-glass-surface__preset-card .ui-liquid-glass-surface__content {
+.ui-kit-liquid-glass-surface__preset-content {
   display: grid;
   gap: var(--ui-space-1);
 }
@@ -94,7 +94,7 @@
   padding: var(--ui-space-5);
 }
 
-.ui-kit-liquid-glass-surface__preview .ui-liquid-glass-surface__content {
+.ui-kit-liquid-glass-surface__preview-content {
   display: grid;
   align-content: center;
   gap: var(--ui-space-2);
