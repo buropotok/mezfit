@@ -4,9 +4,5 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  build: {
-    rollupOptions: {
-      input: ['index.html', 'ui-kit.html'],
-    },
-  },
+  input: ['index.html', 'ui-kit.html'],
 });
