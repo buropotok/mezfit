@@ -115,7 +115,8 @@ describe('LiquidGlassTabsNoFab', () => {
     view.rerender(ui(false));
 
     const host = realTabsHost(view.container);
-    const startup = startupRoot(view.container).getElementById('startupScene') as SVGElement;
+    const startup = startupRoot(view.container).querySelector<SVGSVGElement>('#startupScene');
+    if (!startup) throw new Error('Missing startup scene');
 
     expect(host.style.opacity).toBe('0');
     expect(host.style.pointerEvents).toBe('none');
