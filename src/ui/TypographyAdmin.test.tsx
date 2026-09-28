@@ -28,7 +28,8 @@ describe('UI Kit typography admin', () => {
     expect(html).toContain('.ui-modal__title');
     expect(html).toContain('.ui-modal__content .ui-text');
     expect(html).toContain('font-size: 17px');
-    expect(html).toContain('font-weight: 500');
+    expect(html).toContain('font-weight: 300');
+    expect(html).toContain('letter-spacing: 0.5px');
     expect(html).toContain('Copy CSS');
     expect(html).toContain('Reset');
   });
