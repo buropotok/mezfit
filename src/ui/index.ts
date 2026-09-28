@@ -16,3 +16,4 @@ export { SortableList, type SortableListItem, type SortableListProps } from './S
 
 export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 export type { LiquidGlassTextOnlyProps, LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
+export { DaySchedule, type DayScheduleEvent, type DayScheduleProps, type DayScheduleRenderState } from './DaySchedule';
