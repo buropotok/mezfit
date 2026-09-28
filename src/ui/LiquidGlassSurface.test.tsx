@@ -31,7 +31,7 @@ afterEach(() => {
 describe('LiquidGlassSurface', () => {
   it('renders the approved lens preset as an isolated reusable surface', () => {
     const view = render(
-      <LiquidGlassSurface variant="lens" radius={34}>Glass</LiquidGlassSurface>,
+      <LiquidGlassSurface variant="lens" radius={34} contentClassName="test-content">Glass</LiquidGlassSurface>,
     );
     const surface = view.container.firstElementChild as HTMLElement;
     expect(surface.classList.contains('ui-liquid-glass-surface')).toBe(true);
@@ -40,6 +40,7 @@ describe('LiquidGlassSurface', () => {
     expect(surface.style.getPropertyValue('--ui-liquid-glass-saturation')).toBe('1.05');
     expect(surface.style.getPropertyValue('--ui-liquid-glass-tint-rgb')).toBe('20 20 20');
     expect(surface.style.getPropertyValue('--ui-liquid-glass-tint-alpha')).toBe('0.17');
+    expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
 
     const displacementMaps = surface.querySelectorAll('feDisplacementMap');
     expect(displacementMaps).toHaveLength(3);
