@@ -200,6 +200,29 @@ describe('LiquidGlassTextOnly', () => {
     expect(changed).not.toHaveBeenCalled();
   });
 
+  it('releases a held drag directly on the slot under the finger', () => {
+    const view = render(<Controlled />);
+    const root = getScene(view.container);
+    const pane = element(root, 'toolbar-pane');
+    const lensTrack = element(root, 'lens-track');
+
+    fireEvent.pointerDown(pane, { pointerId:7, pointerType:'touch', clientX:39, clientY:22 });
+    act(() => vi.advanceTimersByTime(460));
+
+    const target = button(root, 1);
+    const targetCenter = target.offsetLeft + target.offsetWidth / 2;
+    fireEvent.pointerMove(document, { pointerId:7, pointerType:'touch', clientX:targetCenter, clientY:22 });
+    fireEvent.pointerUp(document, { pointerId:7, pointerType:'touch', clientX:targetCenter, clientY:22 });
+
+    expect(changed).toHaveBeenCalledExactlyOnceWith('clients');
+
+    act(() => vi.advanceTimersByTime(16));
+
+    const lensCenter = translateX(lensTrack) + Number.parseFloat(lensTrack.style.width) / 2;
+    expect(lensCenter).toBeCloseTo(targetCenter, 1);
+    expect(target.getAttribute('aria-selected')).toBe('true');
+  });
+
   it('clamps manual lens drag to the first slot center', () => {
     const view = render(ui());
     const root = getScene(view.container);
