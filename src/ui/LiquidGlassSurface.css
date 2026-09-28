@@ -1,0 +1,45 @@
+.ui-liquid-glass-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: rgb(var(--ui-liquid-glass-tint-rgb) / var(--ui-liquid-glass-tint-alpha));
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / var(--ui-liquid-glass-border-opacity)),
+    0 8px 24px rgb(0 0 0 / var(--ui-liquid-glass-shadow-opacity));
+  -webkit-backdrop-filter:
+    blur(var(--ui-liquid-glass-blur))
+    saturate(var(--ui-liquid-glass-saturation))
+    brightness(var(--ui-liquid-glass-brightness));
+  backdrop-filter:
+    blur(var(--ui-liquid-glass-blur))
+    var(--ui-liquid-glass-filter)
+    saturate(var(--ui-liquid-glass-saturation))
+    brightness(var(--ui-liquid-glass-brightness));
+}
+
+.ui-liquid-glass-surface::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 3px 3px 0 -3.5px rgb(255 255 255 / 1),
+    inset -3px -3px 0 -3.5px rgb(255 255 255 / 1),
+    inset -0.5px -0.5px 0 rgb(255 255 255 / 0.18),
+    inset 0.5px 0.5px 0 rgb(255 255 255 / 0.08);
+  opacity: var(--ui-liquid-glass-bezel-opacity);
+}
+
+.ui-liquid-glass-surface__filter {
+  position: absolute;
+  pointer-events: none;
+}
+
+.ui-liquid-glass-surface__content {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+}
