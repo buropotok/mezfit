@@ -30,14 +30,14 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   events,
   renderEvent,
   today,
+  nowMinutes,
 }: {
   date: LocalDate;
   events: readonly TEvent[];
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
   today: LocalDate;
+  nowMinutes: number;
 }) {
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const showNow = date === today && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60;
 
   return (
