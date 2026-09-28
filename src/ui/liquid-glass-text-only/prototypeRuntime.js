@@ -540,8 +540,58 @@ export function mountPrototype(root, initialIndex, onSelect) {
 
   function commitHoldSelection() {
     const next = data.newActiveIndex;
-    animateSelectionTravel(next, true, null, true);
+    const target = links[next];
+    if (!target) {
+      requestLensRelease();
+      return;
+    }
+
+    cancelSelectionTravel();
+    cancelMomentum();
+
+    const targetGeometry = geometryFor(target);
+    const startScroll = tabStrip.scrollLeft;
+    const endScroll = targetScrollFor(next, startScroll);
+
+    setActive(next, true);
+    selectorTrack.style.transitionDuration = '0ms';
+    selectorTrack.style.width = `${targetGeometry.width}px`;
+    selectorTrack.style.transform = `translateX(${targetGeometry.left}px)`;
+
+    setLensAnchor(targetGeometry.left, targetGeometry.width);
+    lensTrack.style.transitionDuration = '0ms';
+    syncLensTrackToAnchor();
+
+    if (Math.abs(endScroll - startScroll) < .5) {
+      requestLensRelease();
+      return;
+    }
+
+    const startedAt = now();
+    data.selectionTravelActive = true;
     requestLensRelease();
+
+    const render = time => {
+      const raw = clamp((time - startedAt) / TRAVEL_MS, 0, 1);
+      const progress = travelEase(raw);
+      tabStrip.scrollLeft = startScroll + (endScroll - startScroll) * progress;
+
+      setLensAnchor(targetGeometry.left, targetGeometry.width);
+      syncLensTrackToAnchor();
+
+      if (raw < 1) {
+        data.selectionTravelRaf = frame(render);
+        return;
+      }
+
+      data.selectionTravelRaf = 0;
+      data.selectionTravelActive = false;
+      tabStrip.scrollLeft = endScroll;
+      positionSelector(next, false);
+      positionLensTrack(next, false);
+    };
+
+    data.selectionTravelRaf = frame(render);
   }
 
   function classifyAsScroll() {
