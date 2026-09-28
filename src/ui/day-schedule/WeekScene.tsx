@@ -82,6 +82,7 @@ export const WeekScene = forwardRef<WeekSceneHandle, WeekSceneProps>(function We
   suppressSelector = false,
   onSelect,
 }, ref) {
+  const DaySlot = preview ? 'span' : 'button';
   const hostRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<PrototypeController | null>(null);
   const latestSelect = useRef(onSelect);
@@ -130,6 +131,7 @@ export const WeekScene = forwardRef<WeekSceneHandle, WeekSceneProps>(function We
   return (
     <div
       ref={hostRef}
+      aria-hidden={preview || undefined}
       data-preview={preview || undefined}
       data-suppress-selector={suppressSelector || undefined}
       className="ui-day-schedule__week-scene"
@@ -145,16 +147,16 @@ export const WeekScene = forwardRef<WeekSceneHandle, WeekSceneProps>(function We
             <div className="optical-tabs-playground">
               <div className="toolbar-pane" id="toolbar-pane">
                 <div className="selector-mask">
-                  <div className="tab-strip" id="tab-strip" role="tablist" aria-label="Дни недели">
+                  <div className="tab-strip" id="tab-strip" role={preview ? undefined : 'tablist'} aria-label={preview ? undefined : 'Дни недели'}>
                     {dates.map((day, index) => (
-                      <button
-                        className={`tab-link${index === selectedIndex ? ' active' : ''}`}
-                        type="button"
-                        onClick={() => { if (!preview) latestSelect.current?.(index); }}
+                      <DaySlot
+                        className={`tab-link${!preview && index === selectedIndex ? ' active' : ''}`}
+                        type={preview ? undefined : 'button'}
+                        onClick={preview ? undefined : () => latestSelect.current?.(index)}
                         key={day}
                         data-index={index}
-                        role="tab"
-                        aria-selected={index === selectedIndex}
+                        role={preview ? undefined : 'tab'}
+                        aria-selected={preview ? undefined : index === selectedIndex}
                         aria-label={`${WEEKDAY_LABELS[index]} ${toDate(day).day}`}
                       >
                         <span className="tab-label">
@@ -163,7 +165,7 @@ export const WeekScene = forwardRef<WeekSceneHandle, WeekSceneProps>(function We
                             <strong>{toDate(day).day}</strong>
                           </span>
                         </span>
-                      </button>
+                      </DaySlot>
                     ))}
                     <span className="selector-track" id="selector-track" aria-hidden="true">
                       <span className="selector" id="selector" />
@@ -184,4 +186,3 @@ export const WeekScene = forwardRef<WeekSceneHandle, WeekSceneProps>(function We
     </div>
   );
 });
-

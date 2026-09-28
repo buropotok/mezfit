@@ -61,6 +61,23 @@ function renderSchedule(date: LocalDate = '2026-09-28') {
 }
 
 describe('DaySchedule', () => {
+  it('keeps adjacent week previews neutral and outside the accessible controls', () => {
+    const view = renderSchedule('2026-10-04');
+    const hosts = view.container.querySelectorAll('.ui-day-schedule__week-scene');
+    for (const host of [hosts[0], hosts[2]]) {
+      expect(host.getAttribute('aria-hidden')).toBe('true');
+      const shadow = host.shadowRoot!;
+      expect(shadow.querySelectorAll('.tab-link')).toHaveLength(7);
+      expect(shadow.querySelectorAll('button, [role="tab"], [role="tablist"], [tabindex]')).toHaveLength(0);
+      expect(shadow.querySelectorAll('.active, [aria-selected]')).toHaveLength(0);
+      fireEvent.click(shadow.querySelector('.tab-link')!);
+    }
+    expect(changed).not.toHaveBeenCalled();
+    expect(hosts[1].hasAttribute('aria-hidden')).toBe(false);
+    expect(hosts[1].shadowRoot!.querySelectorAll('button[role="tab"]')).toHaveLength(7);
+    expect(hosts[1].shadowRoot!.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('6');
+  });
+
   it('renders the selected day and adjacent day event content', () => {
     const view = renderSchedule();
     expect(view.getAllByTestId('event-a')).toHaveLength(1);
