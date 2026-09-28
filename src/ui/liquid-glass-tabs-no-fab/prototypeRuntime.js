@@ -1871,15 +1871,15 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const scene=document.getElementById('startupScene'), vector=document.getElementById('startup-vector');
   const maskSurface=document.getElementById('startup-mask-surface'), surface=document.getElementById('startup-bezel-surface');
   const iconsFo=document.getElementById('startup-icons-fo'), materialSurface=document.getElementById('startup-material-surface');
+  const backdropLayer=document.getElementById('startup-backdrop-layer');
   const lensSaturationNode=document.getElementById('startup-lens-saturation');
   const refraction=document.getElementById('startup-refraction-icons');
-  const SETTINGS={pauseSec:.30,revealSec:.75,handoffSec:.16,speed:500,lensScale:1.14,saturation:1.29,frost:.14,speedPoints:[0,.186,.360,.577,0]};
+  const SETTINGS={pauseSec:.30,revealSec:.75,handoffSec:.16,speed:500,lensScale:1.14,blurPx:.7,saturation:1.29,frost:.14,speedPoints:[0,.186,.360,.577,0]};
   const threshold=.46,logThreshold=-Math.log(threshold),nodes=[{x:0,y:0},{x:.21,y:.88},{x:.47,y:1},{x:.78,y:.88},{x:1,y:0}];
   const mapClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   let width=0,height=0,baseY=0,sigma=30,bx=0,by=0,cx=0,cy=0;
-  let timing=null,path=[],breaks=null,running=false,startTime=0,elapsed=0,handoffProgress=0;
+  let timing=null,path=[],breaks=null,running=false,startTime=0,elapsed=0,handoffProgress=0,bezelFrame=0;
   const mapCanvas=document.createElement('canvas'),mapCtx=mapCanvas.getContext('2d');
-  const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
   const bezelCanvas=document.createElement('canvas'),bezelCtx=bezelCanvas.getContext('2d');
   const speedIntegral=new Float32Array(257);
 
@@ -1984,6 +1984,11 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
 
   function applyMaterial(){
     if(lensSaturationNode)lensSaturationNode.setAttribute('values',SETTINGS.saturation.toFixed(2));
+    if(backdropLayer){
+      const filter='blur('+SETTINGS.blurPx.toFixed(1)+'px) saturate('+SETTINGS.saturation.toFixed(2)+')';
+      backdropLayer.style.backdropFilter=filter;
+      backdropLayer.style.webkitBackdropFilter=filter;
+    }
     if(materialSurface){
       const alpha=(SETTINGS.frost*.01+SETTINGS.frost*.99*.22).toFixed(3);
       materialSurface.setAttribute('fill-opacity',alpha);
@@ -2017,9 +2022,9 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
       if(!element)continue;element.setAttribute('width',String(width));element.setAttribute('height',String(height));
     }
     if(materialSurface){materialSurface.setAttribute('width',String(width));materialSurface.setAttribute('height',String(height));}
-    const resolution=Math.max(1.8,Math.sqrt(width*height/55000));
-    mapCanvas.width=maskCanvas.width=Math.ceil(width/resolution);
-    mapCanvas.height=maskCanvas.height=Math.ceil(height/resolution);
+    const resolution=Math.max(2,Math.sqrt(width*height/55000));
+    mapCanvas.width=Math.ceil(width/resolution);
+    mapCanvas.height=Math.ceil(height/resolution);
     const runtimeWidth=width/1.1;
     iconMask.style.width=runtimeWidth+'px';iconMask.style.height='64px';
     iconLayer.style.width=runtimeWidth+'px';
@@ -2049,11 +2054,11 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     setFinalState();
   }
   function render(){
-    if(!width||!mapCtx||!maskCtx)return;
+    if(!width||!mapCtx)return;
     const handoffEase=handoffProgress*handoffProgress*(3-2*handoffProgress);
     const distortionStrength=1-Math.pow(mapClamp(handoffEase/.78,0,1),1.15);
     const mw=mapCanvas.width,mh=mapCanvas.height,sx=width/mw,sy=height/mh;
-    const map=mapCtx.createImageData(mw,mh),mask=maskCtx.createImageData(mw,mh),m=map.data,k=mask.data;
+    const map=mapCtx.createImageData(mw,mh),m=map.data;
     const offset=Math.abs(cx-width/2),movingS=movingSigma(offset),movingDen=2*movingS*movingS,weight=bridgeWeight(offset);
     const gainU=mapClamp(offset/Math.max(1,sigma*2.2),0,1),gainEase=gainU*gainU*(3-2*gainU),flowGain=.5+.5*gainEase;
     const xsB=new Float32Array(mw),xsC=new Float32Array(mw);
@@ -2066,7 +2071,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         const p=(y*mw+x)*4,px=(x+.5)*sx,fb=xsB[x]*yb,fc=xsC[x]*yc,nearest=mapClamp(px,bx,cx);
         const capsule=2*Math.exp(-((px-nearest)**2+(py-by)**2)/movingDen);
         const f=flowGain*((1-weight)*(fb+fc)+weight*capsule);
-        m[p]=128;m[p+1]=128;m[p+2]=128;m[p+3]=255;k[p]=255;k[p+1]=255;k[p+2]=255;k[p+3]=0;
+        m[p]=128;m[p+1]=128;m[p+2]=0;m[p+3]=255;
         if(f<threshold-.025)continue;
         const gx=-flowGain*((1-weight)*((px-bx)*fb+(px-cx)*fc)+weight*(px-nearest)*capsule)/(movingS*movingS);
         const gy=-flowGain*((1-weight)*((py-by)*fb+(py-cy)*fc)+weight*(py-by)*capsule)/(movingS*movingS);
@@ -2074,13 +2079,14 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         const amp=lookup[Math.round(mapClamp(r,0,1)*1024)],distance=(f-threshold)/Math.max(g,.003),edgeT=mapClamp((distance-1.7)/3,0,1),edgeGate=edgeT*edgeT*(3-2*edgeT);
         const dx=gx/safe*amp*12*distortionStrength*edgeGate,dy=gy/safe*amp*17.5*distortionStrength*edgeGate;
         m[p]=Math.round(mapClamp(128+dx/64*255,0,255));m[p+1]=Math.round(mapClamp(128+dy/64*255,0,255));
-        k[p+3]=Math.round(mapClamp(distance/sx+.5,0,1)*255);
+        m[p+2]=Math.round(mapClamp(distance/sx+.5,0,1)*255);
       }
     }
-    mapCtx.putImageData(map,0,0);maskCtx.putImageData(mask,0,0);
-    vector.setAttribute('href',mapCanvas.toDataURL());
-    if(maskSurface)maskSurface.setAttribute('href',maskCanvas.toDataURL());
-    renderBezel(movingS,weight,flowGain);
+    mapCtx.putImageData(map,0,0);
+    const mapUrl=mapCanvas.toDataURL();
+    vector.setAttribute('href',mapUrl);
+    if(maskSurface)maskSurface.setAttribute('href',mapUrl);
+    if((bezelFrame++&1)===0)renderBezel(movingS,weight,flowGain);
   }
   function renderBezel(movingS,weight,flowGain){
     if(!bezelCtx)return;
