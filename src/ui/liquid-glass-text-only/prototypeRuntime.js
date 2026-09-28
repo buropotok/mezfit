@@ -1,3 +1,5 @@
+import { buildLiquidGlassVectorMap, LIQUID_GLASS_PRESETS } from '../liquidGlassLensOptics';
+
 // Direct extraction of the approved Text Only prototype interaction model.
 // React owns identity/controlled value; this private runtime owns the tuned gesture optics.
 export function mountPrototype(root, initialIndex, onSelect) {
@@ -695,16 +697,7 @@ export function mountPrototype(root, initialIndex, onSelect) {
   }), tabStrip);
   links.forEach(link => layoutObserver.observe(link));
 
-  const OPTICS = Object.freeze({
-    neutralEdge: 1.7,
-    rimWidth: 8,
-    rimStrength: .67,
-    trenchWidth: 1,
-    trenchStrength: .09,
-    refraction: 8,
-    rgbSpread: .1,
-    padding: 51,
-  });
+  const OPTICS = LIQUID_GLASS_PRESETS.lens;
 
   filter.innerHTML = `
     <feImage id="optical-vector-image" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="vectorMap"></feImage>
@@ -722,70 +715,28 @@ export function mountPrototype(root, initialIndex, onSelect) {
   const dispG = root.getElementById('optical-disp-g');
   const dispB = root.getElementById('optical-disp-b');
   const work = owner.createElement('canvas');
-  const ctx = work.getContext('2d', { willReadFrequently: true });
-
-  function capsuleSdf(x, y, halfW, halfH) {
-    const radius = halfH;
-    const qx = Math.abs(x) - Math.max(0, halfW - radius);
-    const qy = Math.abs(y);
-    const ox = Math.max(qx, 0);
-    const oy = Math.max(qy, 0);
-    return Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - radius;
-  }
 
   function buildVectorMap() {
-    if (!ctx || !vectorImage || !dispR || !dispG || !dispB) return;
+    if (!vectorImage || !dispR || !dispG || !dispB) return;
     const width = Math.max(1, lens.offsetWidth);
     const height = Math.max(1, lens.offsetHeight);
-    const sampleScale = Math.max(1.5, Math.min(3, win?.devicePixelRatio || 1.5));
-    const w = Math.max(128, Math.round(width * sampleScale));
-    const h = Math.max(72, Math.round(height * sampleScale));
-    work.width = w;
-    work.height = h;
-    const sx = w / width, sy = h / height, halfW = width / 2, halfH = height / 2;
-    const image = ctx.createImageData(w, h);
-    const pixels = image.data;
-
-    for (let j = 0; j < h; j++) {
-      const y = (j + .5) / sy - halfH;
-      for (let i = 0; i < w; i++) {
-        const x = (i + .5) / sx - halfW;
-        const sdf = capsuleSdf(x, y, halfW, halfH);
-        const d = -sdf;
-        let vx = 0, vy = 0;
-        if (d > OPTICS.neutralEdge) {
-          const eps = .35;
-          const gx = capsuleSdf(x + eps, y, halfW, halfH) - capsuleSdf(x - eps, y, halfW, halfH);
-          const gy = capsuleSdf(x, y + eps, halfW, halfH) - capsuleSdf(x, y - eps, halfW, halfH);
-          const length = Math.hypot(gx, gy) || 1;
-          const local = d - OPTICS.neutralEdge;
-          let magnitude = 0;
-          if (local < OPTICS.rimWidth) magnitude += Math.sin(Math.PI * (local / OPTICS.rimWidth)) * OPTICS.rimStrength;
-          if (local >= OPTICS.rimWidth && local < OPTICS.rimWidth + OPTICS.trenchWidth) {
-            const t = (local - OPTICS.rimWidth) / Math.max(.001, OPTICS.trenchWidth);
-            magnitude -= Math.sin(Math.PI * t) * OPTICS.trenchStrength;
-          }
-          vx = (gx / length) * magnitude;
-          vy = (gy / length) * magnitude;
-        }
-        const p = (j * w + i) * 4;
-        pixels[p] = Math.round(clamp(128 + vx * 127, 0, 255));
-        pixels[p + 1] = Math.round(clamp(128 + vy * 127, 0, 255));
-        pixels[p + 2] = 128;
-        pixels[p + 3] = 255;
-      }
-    }
-    ctx.putImageData(image, 0, 0);
-    vectorImage.setAttribute('href', work.toDataURL('image/png'));
-    vectorImage.setAttribute('width', String(width));
-    vectorImage.setAttribute('height', String(height));
+    const vectorMap = buildLiquidGlassVectorMap(
+      work,
+      { width, height, radius: height / 2 },
+      OPTICS,
+      win?.devicePixelRatio || 1.5,
+    );
+    if (!vectorMap) return;
+    vectorImage.setAttribute('href', vectorMap.href);
+    vectorImage.setAttribute('width', String(vectorMap.width));
+    vectorImage.setAttribute('height', String(vectorMap.height));
     dispR.setAttribute('scale', String(OPTICS.refraction + OPTICS.rgbSpread));
     dispG.setAttribute('scale', String(OPTICS.refraction));
     dispB.setAttribute('scale', String(Math.max(0, OPTICS.refraction - OPTICS.rgbSpread)));
-    filter.setAttribute('x', `${-OPTICS.padding}%`);
-    filter.setAttribute('y', `${-OPTICS.padding}%`);
-    filter.setAttribute('width', `${100 + OPTICS.padding * 2}%`);
-    filter.setAttribute('height', `${100 + OPTICS.padding * 2}%`);
+    filter.setAttribute('x', `${-OPTICS.filterPaddingPercent}%`);
+    filter.setAttribute('y', `${-OPTICS.filterPaddingPercent}%`);
+    filter.setAttribute('width', `${100 + OPTICS.filterPaddingPercent * 2}%`);
+    filter.setAttribute('height', `${100 + OPTICS.filterPaddingPercent * 2}%`);
   }
 
   frame(() => frame(buildVectorMap));
