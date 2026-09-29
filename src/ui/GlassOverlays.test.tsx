@@ -70,6 +70,85 @@ describe('glass overlay primitives', () => {
     expect(getContext).not.toHaveBeenCalled();
   });
 
+  it('keeps panel displacement active until the exit transform finishes', () => {
+    const view = render(
+      <GlassPanel opened role="dialog" aria-label="Animated panel">
+        Content
+      </GlassPanel>,
+    );
+
+    const getPanel = () => document.querySelector<HTMLElement>('.ui-glass-panel');
+    const getSurface = () => getPanel()?.querySelector<HTMLElement>('.ui-glass-surface');
+
+    expect(getSurface()?.dataset.uiGlassActive).toBe('true');
+
+    view.rerender(
+      <GlassPanel opened={false} role="dialog" aria-label="Animated panel">
+        Content
+      </GlassPanel>,
+    );
+
+    expect(getPanel()?.dataset.state).toBe('closed');
+    expect(getSurface()?.dataset.uiGlassActive).toBe('true');
+
+    const panel = getPanel();
+    if (panel) fireEvent.transitionEnd(panel, { propertyName: 'transform' });
+
+    expect(getSurface()?.dataset.uiGlassActive).toBe('false');
+  });
+
+  it('keeps popover displacement active until its exit transform finishes', () => {
+    const target = document.createElement('button');
+    target.getBoundingClientRect = () => ({
+      x: 120,
+      y: 120,
+      left: 120,
+      top: 120,
+      right: 164,
+      bottom: 164,
+      width: 44,
+      height: 44,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+
+    const view = render(
+      <GlassPopover
+        opened
+        target={target}
+        role="dialog"
+        aria-label="Animated popover"
+      >
+        Years
+      </GlassPopover>,
+    );
+
+    const getPopover = () => screen.getByRole('dialog', { name: 'Animated popover', hidden: true });
+    const getSurface = () => getPopover().querySelector<HTMLElement>('.ui-glass-surface');
+
+    expect(getSurface()?.dataset.uiGlassActive).toBe('true');
+
+    view.rerender(
+      <GlassPopover
+        opened={false}
+        target={target}
+        role="dialog"
+        aria-label="Animated popover"
+      >
+        Years
+      </GlassPopover>,
+    );
+
+    expect(getPopover().dataset.state).toBe('closed');
+    expect(getPopover().dataset.ready).toBe('true');
+    expect(getSurface()?.dataset.uiGlassActive).toBe('true');
+
+    fireEvent.transitionEnd(getPopover(), { propertyName: 'transform' });
+
+    expect(getPopover().dataset.ready).toBe('false');
+    expect(getSurface()?.dataset.uiGlassActive).toBe('false');
+  });
+
   it('positions an opened GlassPopover around its target and owns ModalTuned directly', () => {
     const target = document.createElement('button');
     target.getBoundingClientRect = () => ({
