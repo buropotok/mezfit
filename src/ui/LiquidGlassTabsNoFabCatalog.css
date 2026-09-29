@@ -1,0 +1,68 @@
+.ui-kit-liquid-glass-tabs-no-fab {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-block: var(--ui-space-6) calc(var(--ui-space-6) + env(safe-area-inset-bottom));
+  padding-inline: 0;
+  overflow: visible;
+  color: #fff;
+  background: #000;
+  font-family: var(--ui-font-family);
+}
+
+.ui-kit-liquid-glass-tabs-no-fab__header {
+  display: grid;
+  gap: var(--ui-space-2);
+  justify-items: start;
+  width: 100%;
+  margin: 0 0 var(--ui-space-6);
+  padding-inline: max(18px, env(safe-area-inset-left)) max(18px, env(safe-area-inset-right));
+}
+
+.ui-kit-liquid-glass-tabs-no-fab__stage {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: grid;
+  align-items: center;
+  width: 100%;
+  min-height: 12rem;
+  padding-inline: 0;
+  overflow: visible;
+}
+
+.ui-kit-liquid-glass-tabs-no-fab__backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  gap: var(--ui-space-5);
+  overflow: hidden;
+  padding-inline: max(18px, env(safe-area-inset-left)) max(18px, env(safe-area-inset-right));
+  pointer-events: none;
+}
+
+.ui-kit-liquid-glass-tabs-no-fab__backdrop-line {
+  display: block;
+  width: max-content;
+  max-width: none;
+  color: #fff;
+  opacity: .1;
+  white-space: nowrap;
+}
+
+.ui-kit-liquid-glass-tabs-no-fab__backdrop-line[data-offset='shifted'] {
+  transform: translateX(12vw);
+}
+
+.ui-kit-liquid-glass-tabs-no-fab__control {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.ui-kit-liquid-glass-tabs-no-fab__status {
+  display: block;
+}
