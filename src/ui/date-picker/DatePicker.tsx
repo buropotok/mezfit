@@ -59,6 +59,10 @@ export function DatePicker({
   const yearScrollRef = useRef<HTMLDivElement | null>(null);
   const wasOpenedRef = useRef(false);
   const pendingMonthScrollRef = useRef(false);
+  const onChangeRef = useRef(onChange);
+  const onCloseRef = useRef(onClose);
+  onChangeRef.current = onChange;
+  onCloseRef.current = onClose;
 
   const weekdayLabels = useMemo(() => getWeekdayLabels(locale), [locale]);
   const monthNameFormatter = useMemo(
@@ -88,10 +92,10 @@ export function DatePicker({
   );
 
   const chooseDate = useCallback((monthIndex: number, day: number) => {
-    onChange(formatLocalDate(visibleYear, monthIndex + 1, day));
+    onChangeRef.current(formatLocalDate(visibleYear, monthIndex + 1, day));
     setYearPopoverOpened(false);
-    onClose();
-  }, [onChange, onClose, visibleYear]);
+    onCloseRef.current();
+  }, [visibleYear]);
 
   const monthSections = useMemo(
     () => monthViews.map(({ monthIndex, title, cells }) => (
