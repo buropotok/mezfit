@@ -119,7 +119,7 @@ describe('DaySchedule', () => {
     expect(selected?.getAttribute('aria-selected')).toBe('true');
   });
 
-  it('isolates draggable event frames from the day-swipe gesture owner', () => {
+  it('lets a quick horizontal swipe from an event card win before long-press drag activates', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -132,8 +132,17 @@ describe('DaySchedule', () => {
       />,
     );
     const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
-    expect(frame).not.toBeNull();
-    expect(frame?.hasAttribute('data-schedule-no-swipe')).toBe(true);
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+    if (!frame || !viewport) throw new Error('Missing draggable event frame or day viewport');
+    Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 390 });
+
+    fireEvent.pointerDown(frame, { pointerId: 7, pointerType: 'touch', clientX: 320, clientY: 300 });
+    fireEvent.pointerMove(viewport, { pointerId: 7, pointerType: 'touch', clientX: 120, clientY: 300 });
+    fireEvent.pointerUp(viewport, { pointerId: 7, pointerType: 'touch', clientX: 120, clientY: 300 });
+    act(() => vi.advanceTimersByTime(320));
+
+    expect(changed).toHaveBeenCalledWith('2026-09-29');
+    expect(moved).not.toHaveBeenCalled();
   });
 
   it('activates event drag on pointer movement and locks timeline scrolling until drop', () => {
@@ -207,6 +216,84 @@ describe('DaySchedule', () => {
       clientY: 120,
     });
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+    act(() => vi.advanceTimersByTime(50));
+  });
+
+  it('keeps long-press drag eligible through small finger jitter', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
+
+    fireEvent.pointerDown(frame, {
+      pointerId: 9,
+      pointerType: 'touch',
+      clientX: 100,
+      clientY: 100,
+    });
+    fireEvent.pointerMove(document, {
+      pointerId: 9,
+      pointerType: 'touch',
+      clientX: 118,
+      clientY: 106,
+    });
+
+    act(() => vi.advanceTimersByTime(300));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
+
+    fireEvent.pointerUp(document, {
+      pointerId: 9,
+      pointerType: 'touch',
+      clientX: 118,
+      clientY: 106,
+    });
+    act(() => vi.advanceTimersByTime(50));
+  });
+
+  it('renders only the event-sized GlassSurface while an event is lifted', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div className="event-card-content">{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    if (!frame) throw new Error('Missing draggable event frame');
+
+    fireEvent.pointerDown(frame, {
+      pointerId: 10,
+      pointerType: 'touch',
+      clientX: 100,
+      clientY: 100,
+    });
+    act(() => vi.advanceTimersByTime(300));
+
+    const overlay = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay');
+    expect(overlay).not.toBeNull();
+    expect(overlay?.parentElement?.style.height).toBe('100px');
+    expect(overlay?.querySelector('.ui-day-schedule__drag-overlay-content')?.textContent).toBe('');
+
+    fireEvent.pointerUp(document, {
+      pointerId: 10,
+      pointerType: 'touch',
+      clientX: 100,
+      clientY: 100,
+    });
     act(() => vi.advanceTimersByTime(50));
   });
 
