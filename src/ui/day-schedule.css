@@ -129,6 +129,12 @@
   touch-action: pan-y;
 }
 
+.ui-day-schedule__event-frame--draggable {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
 .ui-day-schedule__event-frame--dragging {
   opacity: 0;
 }
