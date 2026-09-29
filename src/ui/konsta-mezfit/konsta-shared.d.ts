@@ -89,12 +89,14 @@ declare module 'konsta/shared/classes' {
     base: ThemedClass;
     left: {
       common: string;
+      ios?: string;
       material?: string;
       opened: string;
       closed: string;
     };
     right: {
       common: string;
+      ios?: string;
       material?: string;
       opened: string;
       closed: string;
