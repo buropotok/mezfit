@@ -15,7 +15,6 @@ export type GlassMaterial = {
   trenchWidth: number;
   trenchStrength: number;
   refraction: number;
-  rgbSpread: number;
   filterPadding: number;
 };
 
@@ -39,7 +38,7 @@ export type GlassFilterRegion = {
 
 export function resolveGlassFilterRegion(
   geometry: Pick<GlassGeometry, 'width' | 'height'>,
-  material: Pick<GlassMaterial, 'blur' | 'refraction' | 'rgbSpread' | 'filterPadding'>,
+  material: Pick<GlassMaterial, 'blur' | 'refraction' | 'filterPadding'>,
 ): GlassFilterRegion {
   const width = Math.max(1, geometry.width);
   const height = Math.max(1, geometry.height);
@@ -48,7 +47,6 @@ export function resolveGlassFilterRegion(
   // that percentage to large surfaces when the optical displacement only
   // needs a small number of CSS pixels around the host bounds.
   const requiredExtentPx = material.refraction
-    + material.rgbSpread
     + material.blur * 3
     + 2;
 
@@ -75,7 +73,6 @@ export const MODAL_TUNED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   trenchWidth: 3,
   trenchStrength: 0.04,
   refraction: 10.7,
-  rgbSpread: 0.2,
   filterPadding: 51,
 });
 
@@ -96,7 +93,6 @@ export const MODAL_GLASS: Readonly<GlassMaterial> = Object.freeze({
   trenchWidth: 3,
   trenchStrength: 0.04,
   refraction: 6.2,
-  rgbSpread: 0.05,
   filterPadding: 51,
 });
 
@@ -117,7 +113,6 @@ export const LENS_GLASS: Readonly<GlassMaterial> = Object.freeze({
   trenchWidth: 1,
   trenchStrength: 0.09,
   refraction: 8,
-  rgbSpread: 0.1,
   filterPadding: 51,
 });
 
@@ -138,7 +133,6 @@ export const CLEAR_GLASS: Readonly<GlassMaterial> = Object.freeze({
   trenchWidth: 1,
   trenchStrength: 0.07,
   refraction: 6,
-  rgbSpread: 0.08,
   filterPadding: 51,
 });
 
@@ -159,7 +153,6 @@ export const FROSTED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   trenchWidth: 1.5,
   trenchStrength: 0.08,
   refraction: 5.5,
-  rgbSpread: 0.12,
   filterPadding: 51,
 });
 
@@ -180,7 +173,6 @@ export const BLUE_GLASS: Readonly<GlassMaterial> = Object.freeze({
   trenchWidth: 1,
   trenchStrength: 0.09,
   refraction: 8,
-  rgbSpread: 0.18,
   filterPadding: 51,
 });
 
@@ -201,7 +193,6 @@ export const SMOKED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   trenchWidth: 1.5,
   trenchStrength: 0.10,
   refraction: 8.5,
-  rgbSpread: 0.12,
   filterPadding: 51,
 });
 
