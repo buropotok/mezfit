@@ -5,6 +5,7 @@ import type { LocalDate } from '../date-picker/datePickerDate';
 export const START_HOUR = 6;
 export const END_HOUR = 24;
 export const HOUR_HEIGHT = 112;
+export const DRAG_SNAP_MINUTES = 15;
 
 export type DayScheduleEventBase = {
   id: string;
@@ -31,10 +32,16 @@ export function startMinutesAfterDrag(
 ): number {
   const deltaMinutes = deltaPixels / HOUR_HEIGHT * 60;
   const minStart = START_HOUR * 60;
-  const maxStart = Math.max(minStart, END_HOUR * 60 - Math.max(0, durationMinutes));
+  const maxStart = Math.max(minStart, Math.floor((END_HOUR * 60 - Math.max(0, durationMinutes)) / DRAG_SNAP_MINUTES) * DRAG_SNAP_MINUTES);
   const minDelta = Math.min(0, minStart - startMinutes);
   const maxDelta = Math.max(0, maxStart - startMinutes);
-  const clampedDelta = Math.max(minDelta, Math.min(maxDelta, Math.round(deltaMinutes)));
+
+  if (Math.abs(deltaMinutes) < DRAG_SNAP_MINUTES / 2) return startMinutes;
+
+  const rawTarget = startMinutes + deltaMinutes;
+  const snappedTarget = Math.round(rawTarget / DRAG_SNAP_MINUTES) * DRAG_SNAP_MINUTES;
+  const snappedDelta = snappedTarget - startMinutes;
+  const clampedDelta = Math.max(minDelta, Math.min(maxDelta, snappedDelta));
   return startMinutes + clampedDelta;
 }
 
@@ -80,7 +87,6 @@ function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
       style={{ top, height }}
       data-event-id={event.id}
       data-ui-dnd-handle=""
-      data-schedule-no-swipe=""
       {...attributes}
       {...listeners}
     >

@@ -16,8 +16,10 @@ describe('schedule geometry and date boundaries', () => {
     expect(eventGeometry({ id: 'a', startMinutes: NaN, durationMinutes: 30 })).toBeNull();
     expect(eventGeometry({ id: 'a', startMinutes: 600, durationMinutes: -1 })).toBeNull();
   });
-  it('maps vertical event drag distance to bounded whole-minute start times', () => {
-    expect(startMinutesAfterDrag(600, 60, 56)).toBe(630);
+  it('snaps vertical event dragging to quarter-hour start times', () => {
+    expect(startMinutesAfterDrag(600, 60, 20)).toBe(615);
+    expect(startMinutesAfterDrag(607, 60, 28)).toBe(615);
+    expect(startMinutesAfterDrag(607, 60, 40)).toBe(630);
     expect(startMinutesAfterDrag(600, 60, -1000)).toBe(360);
     expect(startMinutesAfterDrag(1380, 60, 1000)).toBe(1380);
   });
@@ -25,10 +27,14 @@ describe('schedule geometry and date boundaries', () => {
   it('does not reverse boundary-crossing events when the drag cannot continue outward', () => {
     expect(startMinutesAfterDrag(1430, 60, 0)).toBe(1430);
     expect(startMinutesAfterDrag(1430, 60, 56)).toBe(1430);
-    expect(startMinutesAfterDrag(1430, 60, -56)).toBe(1400);
+    expect(startMinutesAfterDrag(1430, 60, -56)).toBe(1395);
     expect(startMinutesAfterDrag(330, 60, 0)).toBe(330);
     expect(startMinutesAfterDrag(330, 60, -56)).toBe(330);
     expect(startMinutesAfterDrag(330, 60, 56)).toBe(360);
+  });
+
+  it('keeps the bottom drag boundary on the quarter-hour grid', () => {
+    expect(startMinutesAfterDrag(600, 50, 5000)).toBe(1380);
   });
 
   it('pages across month, year and leap-day boundaries without local timezone shifts', () => {
