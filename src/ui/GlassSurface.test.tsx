@@ -112,7 +112,6 @@ describe('GlassSurface', () => {
           saturation: 1.4,
           brightness: 1.1,
           refraction: 12,
-          rgbSpread: 0.5,
           bezel: 0.7,
           border: 0.08,
         }}
