@@ -3,30 +3,30 @@
   isolation: isolate;
   overflow: hidden;
   background: rgb(
-    var(--ui-glass-tint-r)
-    var(--ui-glass-tint-g)
-    var(--ui-glass-tint-b)
-    / var(--ui-glass-tint-a)
+    var(--ui-glass-surface-tint-r)
+    var(--ui-glass-surface-tint-g)
+    var(--ui-glass-surface-tint-b)
+    / var(--ui-glass-surface-tint-a)
   );
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / var(--ui-glass-border)),
-    0 14px 42px rgb(0 0 0 / var(--ui-glass-shadow));
+    inset 0 0 0 1px rgb(255 255 255 / var(--ui-glass-surface-border)),
+    0 14px 42px rgb(0 0 0 / var(--ui-glass-surface-shadow));
   -webkit-backdrop-filter:
-    blur(var(--ui-glass-blur))
-    saturate(var(--ui-glass-saturation))
-    brightness(var(--ui-glass-brightness));
+    blur(var(--ui-glass-surface-blur))
+    saturate(var(--ui-glass-surface-saturation))
+    brightness(var(--ui-glass-surface-brightness));
   backdrop-filter:
-    blur(var(--ui-glass-blur))
-    saturate(var(--ui-glass-saturation))
-    brightness(var(--ui-glass-brightness));
+    blur(var(--ui-glass-surface-blur))
+    saturate(var(--ui-glass-surface-saturation))
+    brightness(var(--ui-glass-surface-brightness));
 }
 
 .ui-glass-surface[data-ui-glass-map-ready="true"] {
   backdrop-filter:
-    blur(var(--ui-glass-blur))
-    var(--ui-glass-filter)
-    saturate(var(--ui-glass-saturation))
-    brightness(var(--ui-glass-brightness));
+    blur(var(--ui-glass-surface-blur))
+    var(--ui-glass-surface-filter)
+    saturate(var(--ui-glass-surface-saturation))
+    brightness(var(--ui-glass-surface-brightness));
 }
 
 .ui-glass-surface::before {
@@ -39,30 +39,30 @@
   background:
     radial-gradient(
       140% 120% at 16% 14%,
-      rgb(255 255 255 / var(--ui-glass-caustic-42)) 0%,
-      rgb(255 255 255 / var(--ui-glass-caustic-18)) 18%,
-      rgb(255 255 255 / var(--ui-glass-caustic-06)) 34%,
+      rgb(255 255 255 / var(--ui-glass-surface-caustic-42)) 0%,
+      rgb(255 255 255 / var(--ui-glass-surface-caustic-18)) 18%,
+      rgb(255 255 255 / var(--ui-glass-surface-caustic-06)) 34%,
       transparent 58%
     ),
     radial-gradient(
       150% 130% at 88% 88%,
-      rgb(0 0 0 / var(--ui-glass-depth-shadow-18)) 0%,
-      rgb(0 0 0 / var(--ui-glass-depth-shadow-10)) 20%,
-      rgb(0 0 0 / var(--ui-glass-depth-shadow-04)) 40%,
+      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-18)) 0%,
+      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-10)) 20%,
+      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-04)) 40%,
       transparent 66%
     ),
     linear-gradient(
       145deg,
-      rgb(255 255 255 / var(--ui-glass-thickness-08)) 0%,
+      rgb(255 255 255 / var(--ui-glass-surface-thickness-08)) 0%,
       transparent 34%,
       transparent 58%,
-      rgb(0 0 0 / var(--ui-glass-depth-shadow-08)) 100%
+      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-08)) 100%
     );
   box-shadow:
-    inset 10px 10px 22px -14px rgb(255 255 255 / var(--ui-glass-thickness-62)),
-    inset -14px -14px 28px -20px rgb(0 0 0 / var(--ui-glass-depth-shadow-22)),
-    inset -4px -4px 16px -12px rgb(0 0 0 / var(--ui-glass-depth-shadow-12)),
-    inset 0 0 22px -12px rgb(255 255 255 / var(--ui-glass-caustic-28));
+    inset 10px 10px 22px -14px rgb(255 255 255 / var(--ui-glass-surface-thickness-62)),
+    inset -14px -14px 28px -20px rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-22)),
+    inset -4px -4px 16px -12px rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-12)),
+    inset 0 0 22px -12px rgb(255 255 255 / var(--ui-glass-surface-caustic-28));
   opacity: 0.96;
 }
 
@@ -78,8 +78,8 @@
     inset -3px -3px 0 -3.5px rgb(255 255 255 / 0.92),
     inset -0.5px -0.5px 0 rgb(255 255 255 / 0.18),
     inset 0.5px 0.5px 0 rgb(255 255 255 / 0.10),
-    inset 0 0 0 1px rgb(255 255 255 / var(--ui-glass-bezel-08));
-  opacity: var(--ui-glass-bezel);
+    inset 0 0 0 1px rgb(255 255 255 / var(--ui-glass-surface-bezel-08));
+  opacity: var(--ui-glass-surface-bezel);
 }
 
 .ui-glass-surface__top-glint {
@@ -95,14 +95,14 @@
   background:
     radial-gradient(
       96% 130% at 50% 0%,
-      rgb(255 255 255 / var(--ui-glass-top-glint-112)) 0%,
-      rgb(255 255 255 / var(--ui-glass-top-glint-68)) 18%,
-      rgb(255 255 255 / var(--ui-glass-top-glint-22)) 38%,
+      rgb(255 255 255 / var(--ui-glass-surface-top-glint-112)) 0%,
+      rgb(255 255 255 / var(--ui-glass-surface-top-glint-68)) 18%,
+      rgb(255 255 255 / var(--ui-glass-surface-top-glint-22)) 38%,
       transparent 68%
     ),
     radial-gradient(
       120% 100% at 50% 100%,
-      rgb(255 255 255 / var(--ui-glass-top-glint-14)) 0%,
+      rgb(255 255 255 / var(--ui-glass-surface-top-glint-14)) 0%,
       transparent 72%
     );
   filter: blur(0.4px);
