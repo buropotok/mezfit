@@ -14,6 +14,7 @@ import {
   resolveGlassRadius,
   type GlassGeometry,
   type GlassMaterialOverrides,
+  type GlassPresetName,
   type GlassShape,
 } from './glassMaterial';
 import './GlassSurface.css';
@@ -54,12 +55,14 @@ type GlassCssProperties = CSSProperties & {
 };
 
 export type GlassSurfaceProps = HTMLAttributes<HTMLDivElement> & {
+  preset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
   contentClassName?: string;
 };
 
 export function GlassSurface({
+  preset = 'modalTuned',
   glass,
   shape = 'auto',
   className = '',
@@ -72,7 +75,7 @@ export function GlassSurface({
   const workCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
-  const material = useMemo(() => resolveGlassMaterial(glass), [glass]);
+  const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
   const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
   const [vectorMapHref, setVectorMapHref] = useState<string | null>(null);
