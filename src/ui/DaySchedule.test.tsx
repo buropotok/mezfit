@@ -117,6 +117,23 @@ describe('DaySchedule', () => {
     expect(selected?.getAttribute('aria-selected')).toBe('true');
   });
 
+  it('isolates draggable event frames from the day-swipe gesture owner', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    expect(frame).not.toBeNull();
+    expect(frame?.hasAttribute('data-schedule-no-swipe')).toBe(true);
+  });
+
   it('requests the next day after a committed horizontal day swipe', () => {
     const view = renderSchedule();
     const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
