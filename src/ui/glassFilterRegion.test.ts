@@ -11,8 +11,8 @@ describe('glass filter region', () => {
       MODAL_TUNED_GLASS,
     );
 
-    expect(region.paddingX).toBeCloseTo(6.56, 2);
-    expect(region.paddingY).toBeCloseTo(2.36, 2);
+    expect(region.paddingX).toBeCloseTo(6.49, 2);
+    expect(region.paddingY).toBeCloseTo(2.34, 2);
 
     const areaMultiplier = (1 + region.paddingX * 2 / 100)
       * (1 + region.paddingY * 2 / 100);

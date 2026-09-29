@@ -262,41 +262,10 @@ export function GlassSurface({
             <feDisplacementMap
               in="SourceGraphic"
               in2="vectorMap"
-              scale={material.refraction + material.rgbSpread}
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-            <feColorMatrix
-              type="matrix"
-              result="redPass"
-              values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="vectorMap"
               scale={material.refraction}
               xChannelSelector="R"
               yChannelSelector="G"
             />
-            <feColorMatrix
-              type="matrix"
-              result="greenPass"
-              values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="vectorMap"
-              scale={Math.max(0, material.refraction - material.rgbSpread)}
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-            <feColorMatrix
-              type="matrix"
-              result="bluePass"
-              values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
-            />
-            <feBlend in="redPass" in2="greenPass" mode="screen" result="rg" />
-            <feBlend in="rg" in2="bluePass" mode="screen" />
           </filter>
         </svg>
       ) : null}
