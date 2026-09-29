@@ -49,6 +49,21 @@ describe('GlassSurface', () => {
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
   });
 
+  it('can replace an existing host element without adding a content wrapper', () => {
+    const view = render(
+      <GlassSurface component="section" wrapContent={false}>
+        <span data-testid="direct-child">Direct</span>
+      </GlassSurface>,
+    );
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.tagName).toBe('SECTION');
+    expect(surface.classList.contains('ui-glass-surface--host')).toBe(true);
+    expect(surface.classList.contains('ui-glass-surface--standalone')).toBe(false);
+    expect(surface.querySelector('.ui-glass-surface__content')).toBeNull();
+    expect(surface.querySelector('[data-testid="direct-child"]')?.parentElement).toBe(surface);
+  });
+
   it('applies a named preset before public material overrides', () => {
     const view = render(
       <GlassSurface
