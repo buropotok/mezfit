@@ -446,14 +446,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     ? `${-33.333333 + dayDirection * -33.333333}%`
     : `calc(-33.333333% + ${dayDrag.current}px)`;
 
-  return (
-    <DndContext
-      sensors={eventDragSensors}
-      onDragStart={handleEventDragStart}
-      onDragCancel={clearEventDrag}
-      onDragEnd={handleEventDragEnd}
-    >
-      <section className={['ui-day-schedule', className].filter(Boolean).join(' ')}>
+  const schedule = (
+    <section className={['ui-day-schedule', className].filter(Boolean).join(' ')}>
       <div
         className="ui-day-schedule__week-viewport"
         ref={weekViewportRef}
@@ -511,7 +505,19 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           <DayPanel date={nextDate} events={eventsByDate[nextDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating} />
         </div>
       </div>
-      </section>
+    </section>
+  );
+
+  if (!onEventMove) return schedule;
+
+  return (
+    <DndContext
+      sensors={eventDragSensors}
+      onDragStart={handleEventDragStart}
+      onDragCancel={clearEventDrag}
+      onDragEnd={handleEventDragEnd}
+    >
+      {schedule}
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
         {activeEventEntry && activeEventDragRef.current ? (
           <GlassSurface
