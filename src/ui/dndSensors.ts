@@ -1,5 +1,5 @@
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { MouseSensor, PointerSensor, TouchSensor } from '@dnd-kit/core';
+import type { PointerEvent as ReactPointerEvent, TouchEvent as ReactTouchEvent } from 'react';
+import { PointerSensor, TouchSensor, type TouchSensorOptions } from '@dnd-kit/core';
 
 export const LONG_PRESS_DELAY_MS = 300;
 export const DRAG_ACTIVATION_TOLERANCE = 8;
@@ -22,16 +22,16 @@ export class UiPointerSensor extends PointerSensor {
   }];
 }
 
-export class UiMouseSensor extends MouseSensor {
-  static activators = [{
-    eventName: 'onMouseDown' as const,
-    handler: ({ nativeEvent: event }: ReactMouseEvent) => event.button !== 2 && !blocksDrag(event.target),
-  }];
-}
-
 export class UiTouchSensor extends TouchSensor {
   static activators = [{
     eventName: 'onTouchStart' as const,
-    handler: ({ nativeEvent: event }: ReactTouchEvent) => !blocksDrag(event.target),
+    handler: (
+      { nativeEvent: event }: ReactTouchEvent,
+      { onActivation }: TouchSensorOptions,
+    ) => {
+      if (event.touches.length > 1 || blocksDrag(event.target)) return false;
+      onActivation?.({ event });
+      return true;
+    },
   }];
 }
