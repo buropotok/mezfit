@@ -78,7 +78,7 @@ export function MezfitPanel(props: MezfitPanelProps) {
         <GlassSurface
           component={Component}
           ref={setRef}
-          className={classes}
+          className={cls('k-glass touch-none', classes)}
           preset={glassPreset}
           glass={glass}
           shape={glassShape}
