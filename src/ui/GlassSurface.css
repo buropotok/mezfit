@@ -1,5 +1,8 @@
-.ui-glass-surface {
+.ui-glass-surface--standalone {
   position: relative;
+}
+
+.ui-glass-surface {
   isolation: isolate;
   overflow: hidden;
   background: rgb(

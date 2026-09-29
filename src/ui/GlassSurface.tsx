@@ -6,7 +6,10 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ElementType,
   type HTMLAttributes,
+  type ReactNode,
+  type Ref,
 } from 'react';
 import {
   buildGlassVectorMap,
@@ -33,28 +36,36 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-filter': string;
 };
 
-export type GlassSurfaceProps = HTMLAttributes<HTMLDivElement> & {
+export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & {
+  component?: ElementType;
+  ref?: Ref<HTMLElement>;
   preset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
   contentClassName?: string;
+  wrapContent?: boolean;
+  children?: ReactNode;
 };
 
 export function GlassSurface({
+  component = 'div',
+  ref,
   preset = 'modalTuned',
   glass,
   shape = 'auto',
   className = '',
   contentClassName = '',
+  wrapContent = true,
   style,
   children,
   ...props
 }: GlassSurfaceProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const workCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
   const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
+  const hostMode = !wrapContent;
   const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
   const [vectorMapHref, setVectorMapHref] = useState<string | null>(null);
@@ -67,7 +78,13 @@ export function GlassSurface({
       const rect = element.getBoundingClientRect();
       const width = Math.max(1, rect.width);
       const height = Math.max(1, rect.height);
-      const radius = resolveGlassRadius(width, height, shape);
+      const preserveHostRadius = hostMode && shape === 'auto';
+      const computedRadius = preserveHostRadius
+        ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element).borderTopLeftRadius ?? '')
+        : Number.NaN;
+      const radius = Number.isFinite(computedRadius)
+        ? Math.min(computedRadius, Math.min(width, height) / 2)
+        : resolveGlassRadius(width, height, shape);
 
       setGeometry(current => {
         if (
@@ -87,7 +104,7 @@ export function GlassSurface({
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [shapeRadius]);
+  }, [hostMode, shapeRadius]);
 
   useEffect(() => {
     const element = rootRef.current;
@@ -130,11 +147,18 @@ export function GlassSurface({
     material.trenchStrength,
   ]);
 
+  const Component = component;
+  const setRootRef = (element: HTMLElement | null) => {
+    rootRef.current = element;
+    if (typeof ref === 'function') ref(element);
+    else if (ref) ref.current = element;
+  };
+
   const radius = geometry?.radius ?? 0;
   const filterPadding = material.filterPadding;
   const glassStyle: GlassCssProperties = {
     ...style,
-    borderRadius: radius || undefined,
+    ...(hostMode && shape === 'auto' ? {} : { borderRadius: radius || undefined }),
     '--ui-glass-surface-tint-r': String(material.tintR),
     '--ui-glass-surface-tint-g': String(material.tintG),
     '--ui-glass-surface-tint-b': String(material.tintB),
@@ -149,10 +173,10 @@ export function GlassSurface({
   };
 
   return (
-    <div
+    <Component
       {...props}
-      ref={rootRef}
-      className={`ui-glass-surface ${className}`.trim()}
+      ref={setRootRef}
+      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'} ${className}`.trim()}
       data-ui-glass-map-ready={vectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
@@ -221,7 +245,9 @@ export function GlassSurface({
           </filter>
         </svg>
       ) : null}
-      <div className={`ui-glass-surface__content ${contentClassName}`.trim()}>{children}</div>
-    </div>
+      {wrapContent ? (
+        <div className={`ui-glass-surface__content ${contentClassName}`.trim()}>{children}</div>
+      ) : children}
+    </Component>
   );
 }
