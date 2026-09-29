@@ -1,16 +1,35 @@
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
 import type { LocalDate } from './date-picker/datePickerDate';
-import { DayPanel, type DayScheduleEventBase, type DayScheduleRenderState, yForMinutes } from './day-schedule/DayPanel';
+import {
+  DayPanel,
+  eventGeometry,
+  scheduleEventDragId,
+  startMinutesAfterDrag,
+  type DayScheduleEventBase,
+  type DayScheduleRenderState,
+  yForMinutes,
+} from './day-schedule/DayPanel';
 import { addDays, currentLocalDate, dayIndex, sameWeek, startOfWeek, titleForDate } from './day-schedule/dateMath';
 import { WeekScene, type WeekSceneHandle } from './day-schedule/WeekScene';
 import { useScheduleClock } from './day-schedule/useScheduleClock';
+import { GlassSurface } from './GlassSurface';
+import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, UiPointerSensor, UiTouchSensor } from './dndSensors';
 import './day-schedule.css';
 
 const WEEK_SWIPE_THRESHOLD = 0.18;
@@ -31,11 +50,19 @@ type DragState = {
 export type DayScheduleEvent = DayScheduleEventBase;
 export type { DayScheduleRenderState };
 
+export type DayScheduleEventMove = {
+  eventId: string;
+  date: LocalDate;
+  previousStartMinutes: number;
+  startMinutes: number;
+};
+
 export type DayScheduleProps<TEvent extends DayScheduleEvent = DayScheduleEvent> = {
   date: LocalDate;
   eventsByDate: Readonly<Record<LocalDate, readonly TEvent[]>>;
   onDateChange: (date: LocalDate) => void;
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
+  onEventMove?: (move: DayScheduleEventMove) => void;
   today?: LocalDate;
   className?: string;
 };
@@ -57,6 +84,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   eventsByDate,
   onDateChange,
   renderEvent,
+  onEventMove,
   today: todayOverride,
   className,
 }: DayScheduleProps<TEvent>) {
@@ -76,6 +104,14 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const suppressDayClickUntil = useRef(0);
   const currentDate = useRef(date);
   const latestChange = useRef(onDateChange);
+  const eventDragActive = useRef(false);
+  const activeEventDragRef = useRef<{
+    dragId: string;
+    initialScrollTop: number;
+    width?: number;
+    height?: number;
+  } | null>(null);
+  const [activeEventDragId, setActiveEventDragId] = useState<string | null>(null);
   const arrival = useRef<{ date: LocalDate; week: boolean; from?: LocalDate } | null>(null);
 
   const weekDrag = useRef(0);
@@ -94,6 +130,31 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const displayDate = dayTransition?.from ?? date;
   const previousDate = dayTransition && dayTransition.to < displayDate ? dayTransition.to : addDays(displayDate, -1);
   const nextDate = dayTransition && dayTransition.to > displayDate ? dayTransition.to : addDays(displayDate, 1);
+
+  const eventDragSensors = useSensors(
+    useSensor(UiPointerSensor, {
+      activationConstraint: { delay: LONG_PRESS_DELAY_MS, tolerance: DRAG_ACTIVATION_TOLERANCE },
+    }),
+    useSensor(UiTouchSensor, {
+      activationConstraint: { delay: LONG_PRESS_DELAY_MS, tolerance: DRAG_ACTIVATION_TOLERANCE },
+    }),
+  );
+  const dragEntries = useMemo(() => {
+    const entries = new Map<string, { date: LocalDate; event: TEvent; compact: boolean }>();
+    for (const entryDate of [previousDate, displayDate, nextDate]) {
+      for (const event of eventsByDate[entryDate] ?? []) {
+        const geometry = eventGeometry(event);
+        if (!geometry) continue;
+        entries.set(scheduleEventDragId(entryDate, event.id), {
+          date: entryDate,
+          event,
+          compact: geometry.height < 72,
+        });
+      }
+    }
+    return entries;
+  }, [displayDate, eventsByDate, nextDate, previousDate]);
+  const activeEventEntry = activeEventDragId ? dragEntries.get(activeEventDragId) ?? null : null;
 
   // These transforms belong to this component; pointer moves never rerender event cards.
   const setWeekDrag = (pixels: number) => {
@@ -245,7 +306,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const beginGesture = (event: ReactPointerEvent<HTMLElement>, target: 'week' | 'day') => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (!event.isPrimary && event.nativeEvent.isPrimary === false) return;
-    if (busy.current || weekGesture.current || dayGesture.current) return;
+    if (busy.current || eventDragActive.current || weekGesture.current || dayGesture.current) return;
     if (target === 'day' && event.target instanceof Element &&
       event.target.closest('button, a, input, select, textarea, [data-schedule-no-swipe]')) return;
     const state: DragState = {
@@ -347,6 +408,50 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     else startDayCommit(direction);
   };
 
+  const clearEventDrag = () => {
+    eventDragActive.current = false;
+    activeEventDragRef.current = null;
+    setActiveEventDragId(null);
+  };
+
+  const handleEventDragStart = (event: DragStartEvent) => {
+    const dragId = String(event.active.id);
+    if (!onEventMove || !dragEntries.has(dragId)) return;
+    const rect = event.active.rect.current.initial;
+    eventDragActive.current = true;
+    suppressDayClickUntil.current = performance.now() + 500;
+    activeEventDragRef.current = {
+      dragId,
+      initialScrollTop: dayViewportRef.current?.scrollTop ?? 0,
+      width: rect?.width,
+      height: rect?.height,
+    };
+    setActiveEventDragId(dragId);
+  };
+
+  const handleEventDragEnd = (event: DragEndEvent) => {
+    const dragId = String(event.active.id);
+    const activeDrag = activeEventDragRef.current;
+    const entry = dragEntries.get(dragId);
+    const currentScrollTop = dayViewportRef.current?.scrollTop ?? activeDrag?.initialScrollTop ?? 0;
+    clearEventDrag();
+
+    if (!onEventMove || !entry || !activeDrag || activeDrag.dragId !== dragId) return;
+    const scrollDelta = currentScrollTop - activeDrag.initialScrollTop;
+    const startMinutes = startMinutesAfterDrag(
+      entry.event.startMinutes,
+      entry.event.durationMinutes,
+      event.delta.y + scrollDelta,
+    );
+    if (startMinutes === entry.event.startMinutes) return;
+    onEventMove({
+      eventId: entry.event.id,
+      date: entry.date,
+      previousStartMinutes: entry.event.startMinutes,
+      startMinutes,
+    });
+  };
+
   const weekTranslate = weekAnimating
     ? `calc(-33.333333% + ${weekDirection * -100 / 3}%)`
     : `calc(-33.333333% + ${weekDrag.current}px)`;
@@ -355,7 +460,13 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     : `calc(-33.333333% + ${dayDrag.current}px)`;
 
   return (
-    <section className={['ui-day-schedule', className].filter(Boolean).join(' ')}>
+    <DndContext
+      sensors={eventDragSensors}
+      onDragStart={handleEventDragStart}
+      onDragCancel={clearEventDrag}
+      onDragEnd={handleEventDragEnd}
+    >
+      <section className={['ui-day-schedule', className].filter(Boolean).join(' ')}>
       <div
         className="ui-day-schedule__week-viewport"
         ref={weekViewportRef}
@@ -408,11 +519,26 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           className={`ui-day-schedule__day-track${dayAnimating ? ' ui-day-schedule__day-track--animating' : ''}`}
           style={{ transition: dayAnimating ? TRACK_TRANSITION : 'none', transform: `translate3d(${dayTranslate},0,0)` }}
         >
-          <DayPanel date={previousDate} events={eventsByDate[previousDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
-          <DayPanel date={displayDate} events={eventsByDate[displayDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
-          <DayPanel date={nextDate} events={eventsByDate[nextDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
+          <DayPanel date={previousDate} events={eventsByDate[previousDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating} />
+          <DayPanel date={displayDate} events={eventsByDate[displayDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating} />
+          <DayPanel date={nextDate} events={eventsByDate[nextDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating} />
         </div>
       </div>
-    </section>
+      </section>
+      <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
+        {activeEventEntry && activeEventDragRef.current ? (
+          <GlassSurface
+            className="ui-day-schedule__drag-overlay"
+            contentClassName="ui-day-schedule__drag-overlay-content"
+            style={{
+              width: activeEventDragRef.current.width,
+              height: activeEventDragRef.current.height,
+            }}
+          >
+            {renderEvent(activeEventEntry.event, { compact: activeEventEntry.compact })}
+          </GlassSurface>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
