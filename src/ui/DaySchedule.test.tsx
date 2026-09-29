@@ -78,10 +78,12 @@ describe('DaySchedule', () => {
     expect(hosts[1].shadowRoot!.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('6');
   });
 
-  it('renders the selected day and adjacent day event content', () => {
+  it('renders the selected day and adjacent day event content without enabling drag by default', () => {
     const view = renderSchedule();
     expect(view.getAllByTestId('event-a')).toHaveLength(1);
     expect(view.getAllByTestId('event-b')).toHaveLength(1);
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    expect(frame?.hasAttribute('data-schedule-no-swipe')).toBe(false);
   });
 
   it('renders seven full-width week slots inside the private liquid-glass scene', () => {
