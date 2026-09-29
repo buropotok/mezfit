@@ -12,6 +12,8 @@ export { Menu, MenuDivider, MenuItem, type MenuProps } from './Menu';
 export { NestedBadges, type NestedBadgeItem, type NestedBadgesProps } from './NestedBadges';
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { LiftedGlass, type LiftedGlassProps } from './LiftedGlass';
+export { GlassSurface, type GlassSurfaceProps } from './GlassSurface';
+export { BLUE_GLASS, CLEAR_GLASS, FROSTED_GLASS, GLASS_PRESETS, LENS_GLASS, MODAL_TUNED_GLASS, SMOKED_GLASS, resolveGlassMaterial, resolveGlassRadius, type GlassMaterial, type GlassMaterialOverrides, type GlassPresetName, type GlassShape } from './glassMaterial';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
 export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
