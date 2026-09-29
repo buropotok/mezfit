@@ -79,6 +79,7 @@ function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
       className={`ui-day-schedule__event-frame${isDragging ? ' ui-day-schedule__event-frame--dragging' : ''}`}
       style={{ top, height }}
       data-event-id={event.id}
+      data-ui-dnd-handle=""
       data-schedule-no-swipe=""
       {...attributes}
       {...listeners}
