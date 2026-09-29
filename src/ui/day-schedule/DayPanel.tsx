@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useDraggable } from '@dnd-kit/core';
 import type { LocalDate } from '../date-picker/datePickerDate';
 
 export const START_HOUR = 6;
@@ -19,6 +20,24 @@ export function yForMinutes(totalMinutes: number): number {
   return ((totalMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT;
 }
 
+export function scheduleEventDragId(date: LocalDate, eventId: string): string {
+  return `schedule-event:${date}:${eventId}`;
+}
+
+export function startMinutesAfterDrag(
+  startMinutes: number,
+  durationMinutes: number,
+  deltaPixels: number,
+): number {
+  const deltaMinutes = deltaPixels / HOUR_HEIGHT * 60;
+  const minStart = START_HOUR * 60;
+  const maxStart = Math.max(minStart, END_HOUR * 60 - Math.max(0, durationMinutes));
+  const minDelta = Math.min(0, minStart - startMinutes);
+  const maxDelta = Math.max(0, maxStart - startMinutes);
+  const clampedDelta = Math.max(minDelta, Math.min(maxDelta, Math.round(deltaMinutes)));
+  return startMinutes + clampedDelta;
+}
+
 /** Clip to the displayed 06:00–24:00 range; visual size never exceeds time. */
 export function eventGeometry(event: DayScheduleEventBase): { top: number; height: number } | null {
   if (!Number.isFinite(event.startMinutes) || !Number.isFinite(event.durationMinutes) || event.durationMinutes <= 0) return null;
@@ -36,18 +55,53 @@ function formatTime(totalMinutes: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
+function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
+  date,
+  event,
+  top,
+  height,
+  children,
+}: {
+  date: LocalDate;
+  event: TEvent;
+  top: number;
+  height: number;
+  children: ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: scheduleEventDragId(date, event.id),
+    attributes: { tabIndex: -1 },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`ui-day-schedule__event-frame${isDragging ? ' ui-day-schedule__event-frame--dragging' : ''}`}
+      style={{ top, height }}
+      data-event-id={event.id}
+      data-schedule-no-swipe=""
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function DayPanel<TEvent extends DayScheduleEventBase>({
   date,
   events,
   renderEvent,
   today,
   nowMinutes,
+  draggableEvents = false,
 }: {
   date: LocalDate;
   events: readonly TEvent[];
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
   today: LocalDate;
   nowMinutes: number;
+  draggableEvents?: boolean;
 }) {
   const showNow = date === today && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60;
 
@@ -71,6 +125,20 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
           const geometry = eventGeometry(event);
           if (!geometry) return null;
           const { top, height } = geometry;
+          const content = renderEvent(event, { compact: height < 72 });
+          if (draggableEvents) {
+            return (
+              <DraggableEventFrame
+                date={date}
+                event={event}
+                top={top}
+                height={height}
+                key={event.id}
+              >
+                {content}
+              </DraggableEventFrame>
+            );
+          }
           return (
             <div
               className="ui-day-schedule__event-frame"
@@ -78,7 +146,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
               data-event-id={event.id}
               key={event.id}
             >
-              {renderEvent(event, { compact: height < 72 })}
+              {content}
             </div>
           );
         })}
