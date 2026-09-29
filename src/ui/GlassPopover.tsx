@@ -21,6 +21,7 @@ import './glass-overlays.css';
 type GlassPopoverPosition = {
   left: number;
   top: number;
+  maxWidth: number | null;
   ready: boolean;
 };
 
@@ -71,6 +72,7 @@ export function GlassPopover({
   const [position, setPosition] = useState<GlassPopoverPosition>({
     left: 0,
     top: 0,
+    maxWidth: null,
     ready: false,
   });
 
@@ -98,7 +100,7 @@ export function GlassPopover({
 
     const targetRect = target.getBoundingClientRect();
     const transformedRect = element.getBoundingClientRect();
-    const popoverWidth = element.offsetWidth || transformedRect.width;
+    const layoutWidth = element.offsetWidth || transformedRect.width;
     const popoverHeight = element.offsetHeight || transformedRect.height;
     const computedStyle = window.getComputedStyle(element);
     const safeLeft = Number.parseFloat(computedStyle.getPropertyValue('--ui-glass-safe-area-left')) || 0;
@@ -116,6 +118,8 @@ export function GlassPopover({
     const minTop = viewportTop + safeTop + viewportPadding;
     const maxRight = viewportRight - safeRight - viewportPadding;
     const maxBottom = viewportBottom - safeBottom - viewportPadding;
+    const availableWidth = Math.max(0, maxRight - minLeft);
+    const popoverWidth = Math.min(layoutWidth, availableWidth);
     const availableBelow = maxBottom - targetRect.bottom - gap;
     const availableAbove = targetRect.top - minTop - gap;
     const placeBelow = popoverHeight <= availableBelow || availableBelow >= availableAbove;
@@ -133,9 +137,10 @@ export function GlassPopover({
     setPosition((current) => (
       Math.abs(current.left - left) < 0.5
       && Math.abs(current.top - top) < 0.5
+      && current.maxWidth === availableWidth
       && current.ready
         ? current
-        : { left, top, ready: true }
+        : { left, top, maxWidth: availableWidth, ready: true }
     ));
   }, [gap, opened, target, viewportPadding]);
 
@@ -181,6 +186,7 @@ export function GlassPopover({
     ...style,
     left: position.left,
     top: position.top,
+    maxWidth: position.maxWidth ?? style?.maxWidth,
     '--ui-glass-overlay-backdrop-z': String(layer),
     '--ui-glass-overlay-surface-z': String(layer + 1),
   };
