@@ -21,6 +21,8 @@
 }
 
 .ui-kit-liquid-glass-icon-only__stage {
+  position: relative;
+  isolation: isolate;
   box-sizing: border-box;
   display: grid;
   align-items: center;
@@ -28,4 +30,35 @@
   min-height: 12rem;
   padding-inline: 0;
   overflow: visible;
+}
+
+.ui-kit-liquid-glass-icon-only__backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  gap: var(--ui-space-5);
+  overflow: hidden;
+  padding-inline: max(18px, env(safe-area-inset-left)) max(18px, env(safe-area-inset-right));
+  pointer-events: none;
+}
+
+.ui-kit-liquid-glass-icon-only__backdrop-line {
+  display: block;
+  width: max-content;
+  max-width: none;
+  color: #fff;
+  opacity: .1;
+  white-space: nowrap;
+}
+
+.ui-kit-liquid-glass-icon-only__backdrop-line[data-offset='shifted'] {
+  transform: translateX(12vw);
+}
+
+.ui-kit-liquid-glass-icon-only__control {
+  position: relative;
+  z-index: 1;
+  width: 100%;
 }
