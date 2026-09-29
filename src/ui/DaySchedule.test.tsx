@@ -78,10 +78,12 @@ describe('DaySchedule', () => {
     expect(hosts[1].shadowRoot!.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('6');
   });
 
-  it('renders the selected day and adjacent day event content', () => {
+  it('renders the selected day and adjacent day event content without enabling drag by default', () => {
     const view = renderSchedule();
     expect(view.getAllByTestId('event-a')).toHaveLength(1);
     expect(view.getAllByTestId('event-b')).toHaveLength(1);
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    expect(frame?.hasAttribute('data-schedule-no-swipe')).toBe(false);
   });
 
   it('renders seven full-width week slots inside the private liquid-glass scene', () => {
@@ -115,6 +117,23 @@ describe('DaySchedule', () => {
     const host = view.container.querySelectorAll('.ui-day-schedule__week-scene')[1];
     const selected = host?.shadowRoot?.querySelectorAll<HTMLButtonElement>('.tab-link')[1];
     expect(selected?.getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('isolates draggable event frames from the day-swipe gesture owner', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    expect(frame).not.toBeNull();
+    expect(frame?.hasAttribute('data-schedule-no-swipe')).toBe(true);
   });
 
   it('requests the next day after a committed horizontal day swipe', () => {
