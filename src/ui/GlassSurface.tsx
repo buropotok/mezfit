@@ -34,6 +34,7 @@ type GlassCssProperties = CSSProperties & {
 };
 
 export type GlassSurfaceProps = HTMLAttributes<HTMLDivElement> & {
+  active?: boolean;
   preset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
@@ -41,6 +42,7 @@ export type GlassSurfaceProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export function GlassSurface({
+  active = true,
   preset = 'modalTuned',
   glass,
   shape = 'auto',
@@ -60,6 +62,8 @@ export function GlassSurface({
   const [vectorMapHref, setVectorMapHref] = useState<string | null>(null);
 
   useLayoutEffect(() => {
+    if (!active) return undefined;
+
     const element = rootRef.current;
     if (!element) return undefined;
 
@@ -87,9 +91,14 @@ export function GlassSurface({
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [shapeRadius]);
+  }, [active, shapeRadius]);
 
   useEffect(() => {
+    if (!active) {
+      setVectorMapHref(null);
+      return undefined;
+    }
+
     const element = rootRef.current;
     if (!element || !geometry) return undefined;
 
@@ -122,6 +131,7 @@ export function GlassSurface({
       view.cancelAnimationFrame(frame);
     };
   }, [
+    active,
     geometry,
     material.neutralEdge,
     material.rimWidth,
