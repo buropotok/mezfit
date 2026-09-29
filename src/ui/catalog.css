@@ -34,6 +34,7 @@
 .ui-kit-glass-material-stage__text { position: absolute; left: var(--ui-space-3); right: var(--ui-space-3); bottom: var(--ui-space-2); color: rgb(255 255 255 / 0.28); font-family: var(--ui-font-family); font-size: var(--ui-font-size-caption); line-height: var(--ui-line-height-caption); font-weight: var(--ui-font-weight-semibold); letter-spacing: 0.08em; white-space: nowrap; }
 .ui-kit-glass-material-card { position: relative; z-index: 1; width: min(100%, 260px); min-height: 104px; margin: 8px auto; padding: var(--ui-space-4); }
 .ui-kit-glass-material-card__content { display: grid; align-content: center; gap: var(--ui-space-1); min-height: 72px; }
+.ui-kit-glass-overlay-content { display: grid; align-content: start; gap: var(--ui-space-3); padding: var(--ui-space-4); }
 
 .ui-kit-type-specimen--buttons .ui-button, .ui-kit-type-specimen--tabs .ui-tabs__trigger, .ui-kit-type-specimen--tabs .ui-tabs__indicator-tab { font-size: var(--ui-kit-slot-labels-size); line-height: var(--ui-kit-slot-labels-line); font-weight: var(--ui-kit-slot-labels-weight); }
 .ui-kit-type-specimen--search .ui-search-input__field { font-size: var(--ui-kit-slot-text-size); line-height: var(--ui-kit-slot-text-line); font-weight: var(--ui-kit-slot-text-weight); }
