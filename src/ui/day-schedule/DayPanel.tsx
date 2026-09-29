@@ -52,24 +52,21 @@ function formatTime(totalMinutes: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-function EventFrame<TEvent extends DayScheduleEventBase>({
+function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
   date,
   event,
   top,
   height,
-  draggable,
   children,
 }: {
   date: LocalDate;
   event: TEvent;
   top: number;
   height: number;
-  draggable: boolean;
   children: ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: scheduleEventDragId(date, event.id),
-    disabled: !draggable,
   });
 
   return (
@@ -78,9 +75,9 @@ function EventFrame<TEvent extends DayScheduleEventBase>({
       className={`ui-day-schedule__event-frame${isDragging ? ' ui-day-schedule__event-frame--dragging' : ''}`}
       style={{ top, height }}
       data-event-id={event.id}
-      data-schedule-no-swipe={draggable ? '' : undefined}
-      {...(draggable ? attributes : {})}
-      {...(draggable ? listeners : {})}
+      data-schedule-no-swipe=""
+      {...attributes}
+      {...listeners}
     >
       {children}
     </div>
@@ -124,17 +121,29 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
           const geometry = eventGeometry(event);
           if (!geometry) return null;
           const { top, height } = geometry;
+          const content = renderEvent(event, { compact: height < 72 });
+          if (draggableEvents) {
+            return (
+              <DraggableEventFrame
+                date={date}
+                event={event}
+                top={top}
+                height={height}
+                key={event.id}
+              >
+                {content}
+              </DraggableEventFrame>
+            );
+          }
           return (
-            <EventFrame
-              date={date}
-              event={event}
-              top={top}
-              height={height}
-              draggable={draggableEvents}
+            <div
+              className="ui-day-schedule__event-frame"
+              style={{ top, height }}
+              data-event-id={event.id}
               key={event.id}
             >
-              {renderEvent(event, { compact: height < 72 })}
-            </EventFrame>
+              {content}
+            </div>
           );
         })}
 
