@@ -17,6 +17,12 @@ const clientTabs: readonly LiquidGlassIconOnlyTab[] = prototypeTabs.map(tab => t
   ? { value: 'training', label: 'Тренировка', icon: 'barbell' }
   : tab);
 
+const backdropLines = [
+  'Сегодня · Клиенты · Программы',
+  'Тренировки · Прогресс · Аналитика',
+  'Подходы · Повторы · Нагрузка',
+] as const;
+
 export function LiquidGlassIconOnlyCatalog() {
   const [mode, setMode] = useState<'coach' | 'client'>('coach');
   const tabs = mode === 'coach' ? prototypeTabs : clientTabs;
@@ -37,13 +43,27 @@ export function LiquidGlassIconOnlyCatalog() {
         }}>Сменить режим</Button>
       </div>
       <div className="ui-kit-liquid-glass-icon-only__stage">
-        <LiquidGlassIconOnly
-          tabs={tabs}
-          value={value}
-          onValueChange={setValue}
-          hidden={hidden}
-          fab={<FloatingActionButton label="Действие">＋</FloatingActionButton>}
-        />
+        <div className="ui-kit-liquid-glass-icon-only__backdrop" aria-hidden="true">
+          {backdropLines.map((line, index) => (
+            <Text
+              key={line}
+              variant="large-title"
+              className="ui-kit-liquid-glass-icon-only__backdrop-line"
+              data-offset={index === 1 ? 'shifted' : undefined}
+            >
+              {line}
+            </Text>
+          ))}
+        </div>
+        <div className="ui-kit-liquid-glass-icon-only__control">
+          <LiquidGlassIconOnly
+            tabs={tabs}
+            value={value}
+            onValueChange={setValue}
+            hidden={hidden}
+            fab={<FloatingActionButton label="Действие">＋</FloatingActionButton>}
+          />
+        </div>
       </div>
       <Text>{tabs.find(tab => tab.value === value)?.label}</Text>
     </section>
