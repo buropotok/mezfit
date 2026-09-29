@@ -1,8 +1,11 @@
-import type {
-  CSSProperties,
-  HTMLAttributes,
-  MouseEventHandler,
-  ReactNode,
+import {
+  useEffect,
+  useState,
+  type CSSProperties,
+  type HTMLAttributes,
+  type MouseEventHandler,
+  type ReactNode,
+  type TransitionEventHandler,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { GlassSurface } from './GlassSurface';
@@ -45,11 +48,31 @@ export function GlassPanel({
   surfaceClassName = '',
   contentClassName = '',
   style,
+  onTransitionEnd,
   ...props
 }: GlassPanelProps) {
+  const [glassActive, setGlassActive] = useState(opened);
+
+  useEffect(() => {
+    if (opened) {
+      setGlassActive(true);
+      return;
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setGlassActive(false);
+    }
+  }, [opened]);
+
   if (typeof document === 'undefined') return null;
 
   const state = opened ? 'opened' : 'closed';
+  const handleTransitionEnd: TransitionEventHandler<HTMLDivElement> = (event) => {
+    onTransitionEnd?.(event);
+    if (!opened && event.target === event.currentTarget && event.propertyName === 'transform') {
+      setGlassActive(false);
+    }
+  };
   const panelStyle: GlassPanelStyle = {
     ...style,
     '--ui-glass-panel-width': typeof width === 'number' ? `${width}px` : width,
@@ -70,9 +93,10 @@ export function GlassPanel({
         className={`ui-glass-panel ui-glass-panel--${side} ${className}`.trim()}
         data-state={state}
         style={panelStyle}
+        onTransitionEnd={handleTransitionEnd}
       >
         <GlassSurface
-          active={opened}
+          active={glassActive}
           preset={preset}
           glass={glass}
           shape={shape}
