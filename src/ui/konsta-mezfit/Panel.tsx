@@ -4,7 +4,7 @@ import {
   type ComponentProps,
   type ElementType,
 } from 'react';
-import { Panel as KonstaPanel } from 'konsta/react';
+import { Panel as KonstaPanel, useTheme } from 'konsta/react';
 import { PanelClasses } from 'konsta/shared/classes';
 import { PanelColors } from 'konsta/shared/colors';
 import { cls } from 'konsta/shared/utils';
@@ -35,8 +35,8 @@ export function MezfitPanel(props: MezfitPanelProps) {
     floating = false,
     onBackdropClick,
 
-    ios: _ios,
-    material: _material,
+    ios,
+    material,
 
     glassPreset = 'modalTuned',
     glass,
@@ -52,14 +52,17 @@ export function MezfitPanel(props: MezfitPanelProps) {
   const Component = component as ElementType;
   const attrs = { ...rest };
 
+  const contextTheme = useTheme();
+  const theme = ios ? 'ios' : material ? 'material' : contextTheme;
   const colors = PanelColors(colorsProp, canonicalDark);
   const c = PanelClasses({ ...props, floating }, colors);
 
   const classes = cls(
     c.base.common,
-    c.base.ios,
+    c.base[theme],
     className,
     c[side].common,
+    c[side][theme],
     c[side][state],
   );
   const backdropClasses = cls(c.backdrop.common, c.backdrop[state]);
@@ -75,7 +78,7 @@ export function MezfitPanel(props: MezfitPanelProps) {
       {backdrop && (
         <div className={backdropClasses} onClick={onBackdropClick} />
       )}
-      {floating ? (
+      {theme === 'ios' && floating ? (
         <GlassSurface
           component={Component}
           ref={setRef}
