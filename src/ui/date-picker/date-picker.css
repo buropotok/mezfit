@@ -1,13 +1,3 @@
-.ui-date-picker__glass,
-.ui-date-picker__glass-content {
-  width: 100%;
-  height: 100%;
-}
-
-.ui-date-picker__year-glass {
-  width: 100%;
-}
-
 .ui-date-picker__scroll {
   height: 100%;
   overflow-y: auto;
@@ -75,7 +65,7 @@
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-title);
   line-height: var(--ui-line-height-title);
-  font-weight: var(--ui-font-weight-light);
+  font-weight: var(--ui-font-weight-regular);
 }
 
 .ui-date-picker__weekdays,
@@ -89,7 +79,7 @@
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-footnote);
   line-height: var(--ui-line-height-footnote);
-  font-weight: var(--ui-font-weight-regular);
+  font-weight: var(--ui-font-weight-medium);
   text-align: center;
 }
 
@@ -113,7 +103,7 @@
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-body);
   line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-medium);
+  font-weight: var(--ui-font-weight-regular);
   -webkit-tap-highlight-color: transparent;
 }
 
