@@ -29,7 +29,7 @@ import { addDays, currentLocalDate, dayIndex, sameWeek, startOfWeek, titleForDat
 import { WeekScene, type WeekSceneHandle } from './day-schedule/WeekScene';
 import { useScheduleClock } from './day-schedule/useScheduleClock';
 import { GlassSurface } from './GlassSurface';
-import { UiSchedulePointerSensor } from './dndSensors';
+import { SCHEDULE_TOUCH_ACTIVATION_TOLERANCE, UiSchedulePointerSensor } from './dndSensors';
 import './day-schedule.css';
 
 const WEEK_SWIPE_THRESHOLD = 0.18;
@@ -45,6 +45,7 @@ type DragState = {
   deltaX: number;
   startedAt: number;
   dragging: boolean;
+  activationThreshold: number;
 };
 
 export type DayScheduleEvent = DayScheduleEventBase;
@@ -130,7 +131,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     useSensor(UiSchedulePointerSensor),
   );
   const dragEntries = useMemo(() => {
-    const entries = new Map<string, { date: LocalDate; event: TEvent; compact: boolean }>();
+    const entries = new Map<string, { date: LocalDate; event: TEvent; height: number }>();
     for (const entryDate of [previousDate, displayDate, nextDate]) {
       for (const event of eventsByDate[entryDate] ?? []) {
         const geometry = eventGeometry(event);
@@ -138,7 +139,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         entries.set(scheduleEventDragId(entryDate, event.id), {
           date: entryDate,
           event,
-          compact: geometry.height < 72,
+          height: geometry.height,
         });
       }
     }
@@ -299,6 +300,10 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (busy.current || eventDragActive.current || weekGesture.current || dayGesture.current) return;
     if (target === 'day' && event.target instanceof Element &&
       event.target.closest('button, a, input, select, textarea, [data-schedule-no-swipe]')) return;
+    const startsOnDraggableEvent = target === 'day'
+      && event.pointerType === 'touch'
+      && event.target instanceof Element
+      && Boolean(event.target.closest('[data-ui-dnd-handle]'));
     const state: DragState = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -306,6 +311,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       deltaX: 0,
       startedAt: performance.now(),
       dragging: false,
+      activationThreshold: startsOnDraggableEvent ? SCHEDULE_TOUCH_ACTIVATION_TOLERANCE : 8,
     };
     if (target === 'week') {
       weekGesture.current = state;
@@ -326,7 +332,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     const dx = event.clientX - state.startX;
     const dy = event.clientY - state.startY;
     if (!state.dragging) {
-      if (Math.abs(dx) < 8 || Math.abs(dx) <= Math.abs(dy)) return;
+      if (Math.abs(dx) < state.activationThreshold || Math.abs(dx) <= Math.abs(dy)) return;
       state.dragging = true;
       if (target === 'day') suppressDayClickUntil.current = performance.now() + 500;
       try { event.currentTarget.setPointerCapture?.(event.pointerId); } catch { /* Optional in WebViews. */ }
@@ -408,6 +414,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     const dragId = String(event.active.id);
     if (!onEventMove || !dragEntries.has(dragId)) return;
     eventDragActive.current = true;
+    dayGesture.current = null;
+    setDayDrag(0);
     suppressDayClickUntil.current = performance.now() + 500;
     activeEventDragRef.current = dragId;
     setActiveEventDragId(dragId);
@@ -514,14 +522,16 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       onDragEnd={handleEventDragEnd}
     >
       {schedule}
-      <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
+      <DragOverlay
+        dropAnimation={{ duration: 180, easing: 'ease-out' }}
+        style={activeEventEntry ? { height: activeEventEntry.height } : undefined}
+      >
         {activeEventEntry && activeEventDragRef.current ? (
           <GlassSurface
             className="ui-day-schedule__drag-overlay"
             contentClassName="ui-day-schedule__drag-overlay-content"
-          >
-            {renderEvent(activeEventEntry.event, { compact: activeEventEntry.compact })}
-          </GlassSurface>
+            aria-hidden="true"
+          />
         ) : null}
       </DragOverlay>
     </DndContext>
