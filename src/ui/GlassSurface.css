@@ -29,43 +29,6 @@
     brightness(var(--ui-glass-surface-brightness));
 }
 
-.ui-glass-surface::before {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      140% 120% at 16% 14%,
-      rgb(255 255 255 / var(--ui-glass-surface-caustic-42)) 0%,
-      rgb(255 255 255 / var(--ui-glass-surface-caustic-18)) 18%,
-      rgb(255 255 255 / var(--ui-glass-surface-caustic-06)) 34%,
-      transparent 58%
-    ),
-    radial-gradient(
-      150% 130% at 88% 88%,
-      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-18)) 0%,
-      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-10)) 20%,
-      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-04)) 40%,
-      transparent 66%
-    ),
-    linear-gradient(
-      145deg,
-      rgb(255 255 255 / var(--ui-glass-surface-thickness-08)) 0%,
-      transparent 34%,
-      transparent 58%,
-      rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-08)) 100%
-    );
-  box-shadow:
-    inset 10px 10px 22px -14px rgb(255 255 255 / var(--ui-glass-surface-thickness-62)),
-    inset -14px -14px 28px -20px rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-22)),
-    inset -4px -4px 16px -12px rgb(0 0 0 / var(--ui-glass-surface-depth-shadow-12)),
-    inset 0 0 22px -12px rgb(255 255 255 / var(--ui-glass-surface-caustic-28));
-  opacity: 0.96;
-}
-
 .ui-glass-surface::after {
   content: "";
   position: absolute;
@@ -75,38 +38,10 @@
   pointer-events: none;
   box-shadow:
     inset 3px 3px 0 -3.5px rgb(255 255 255 / 1),
-    inset -3px -3px 0 -3.5px rgb(255 255 255 / 0.92),
+    inset -3px -3px 0 -3.5px rgb(255 255 255 / 1),
     inset -0.5px -0.5px 0 rgb(255 255 255 / 0.18),
-    inset 0.5px 0.5px 0 rgb(255 255 255 / 0.10),
-    inset 0 0 0 1px rgb(255 255 255 / var(--ui-glass-surface-bezel-08));
+    inset 0.5px 0.5px 0 rgb(255 255 255 / 0.08);
   opacity: var(--ui-glass-surface-bezel);
-}
-
-.ui-glass-surface__top-glint {
-  position: absolute;
-  z-index: 2;
-  left: 11%;
-  right: 11%;
-  top: 4px;
-  height: 29%;
-  border-radius: 50% 50% 48% 48% / 80% 80% 22% 22%;
-  pointer-events: none;
-  opacity: 0.94;
-  background:
-    radial-gradient(
-      96% 130% at 50% 0%,
-      rgb(255 255 255 / var(--ui-glass-surface-top-glint-112)) 0%,
-      rgb(255 255 255 / var(--ui-glass-surface-top-glint-68)) 18%,
-      rgb(255 255 255 / var(--ui-glass-surface-top-glint-22)) 38%,
-      transparent 68%
-    ),
-    radial-gradient(
-      120% 100% at 50% 100%,
-      rgb(255 255 255 / var(--ui-glass-surface-top-glint-14)) 0%,
-      transparent 72%
-    );
-  filter: blur(0.4px);
-  mix-blend-mode: screen;
 }
 
 .ui-glass-surface__filter {

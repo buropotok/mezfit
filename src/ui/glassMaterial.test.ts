@@ -16,16 +16,16 @@ describe('glass material', () => {
   it('uses ModalTuned as the default material and merges public overrides', () => {
     const material = resolveGlassMaterial('modalTuned', {
       blur: 8,
-      topGlint: 0.5,
       tintA: 0.18,
     });
 
     expect(material.refraction).toBe(10.7);
     expect(material.rimWidth).toBe(15.5);
-    expect(material.depthWidth).toBe(34);
+    expect(material.trenchWidth).toBe(3);
     expect(material.blur).toBe(8);
-    expect(material.topGlint).toBe(0.5);
     expect(material.tintA).toBe(0.18);
+    expect('topGlint' in material).toBe(false);
+    expect('thickness' in material).toBe(false);
     expect(MODAL_TUNED_GLASS.tintR).toBe(24);
   });
 
@@ -40,12 +40,14 @@ describe('glass material', () => {
   it('exposes the named UI-kit glass presets', () => {
     expect(Object.keys(GLASS_PRESETS)).toEqual([
       'modalTuned',
+      'modal',
       'lens',
       'clear',
       'frosted',
       'blue',
       'smoked',
     ]);
+    expect(resolveGlassMaterial('modal').blur).toBe(16);
     expect(resolveGlassMaterial('clear').tintA).toBe(0.08);
     expect(resolveGlassMaterial('frosted').blur).toBe(14);
     expect(resolveGlassMaterial('smoked').shadow).toBe(0.28);
@@ -58,7 +60,7 @@ describe('glass material', () => {
     expect(resolveGlassRadius(180, 100, { radius: 24 })).toBe(24);
   });
 
-  it('builds the edge-and-depth displacement map with bounded render resolution', () => {
+  it('builds the approved edge displacement map with bounded render resolution', () => {
     const canvas = document.createElement('canvas');
     const putImageData = vi.fn();
     const context = {

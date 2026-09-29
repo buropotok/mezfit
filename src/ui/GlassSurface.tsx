@@ -30,27 +30,6 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-bezel': string;
   '--ui-glass-surface-border': string;
   '--ui-glass-surface-shadow': string;
-  '--ui-glass-surface-thickness': string;
-  '--ui-glass-surface-caustic': string;
-  '--ui-glass-surface-depth-shadow': string;
-  '--ui-glass-surface-top-glint': string;
-  '--ui-glass-surface-caustic-42': string;
-  '--ui-glass-surface-caustic-18': string;
-  '--ui-glass-surface-caustic-06': string;
-  '--ui-glass-surface-caustic-28': string;
-  '--ui-glass-surface-depth-shadow-18': string;
-  '--ui-glass-surface-depth-shadow-10': string;
-  '--ui-glass-surface-depth-shadow-04': string;
-  '--ui-glass-surface-depth-shadow-08': string;
-  '--ui-glass-surface-depth-shadow-22': string;
-  '--ui-glass-surface-depth-shadow-12': string;
-  '--ui-glass-surface-thickness-08': string;
-  '--ui-glass-surface-thickness-62': string;
-  '--ui-glass-surface-top-glint-112': string;
-  '--ui-glass-surface-top-glint-68': string;
-  '--ui-glass-surface-top-glint-22': string;
-  '--ui-glass-surface-top-glint-14': string;
-  '--ui-glass-surface-bezel-08': string;
   '--ui-glass-surface-filter': string;
 };
 
@@ -149,8 +128,6 @@ export function GlassSurface({
     material.rimStrength,
     material.trenchWidth,
     material.trenchStrength,
-    material.depthWidth,
-    material.depthRefraction,
   ]);
 
   const radius = geometry?.radius ?? 0;
@@ -168,27 +145,6 @@ export function GlassSurface({
     '--ui-glass-surface-bezel': String(material.bezel),
     '--ui-glass-surface-border': String(material.border),
     '--ui-glass-surface-shadow': String(material.shadow),
-    '--ui-glass-surface-thickness': String(material.thickness),
-    '--ui-glass-surface-caustic': String(material.caustic),
-    '--ui-glass-surface-depth-shadow': String(material.depthShadow),
-    '--ui-glass-surface-top-glint': String(material.topGlint),
-    '--ui-glass-surface-caustic-42': String(material.caustic * 0.42),
-    '--ui-glass-surface-caustic-18': String(material.caustic * 0.18),
-    '--ui-glass-surface-caustic-06': String(material.caustic * 0.06),
-    '--ui-glass-surface-caustic-28': String(material.caustic * 0.28),
-    '--ui-glass-surface-depth-shadow-18': String(material.depthShadow * 0.18),
-    '--ui-glass-surface-depth-shadow-10': String(material.depthShadow * 0.10),
-    '--ui-glass-surface-depth-shadow-04': String(material.depthShadow * 0.04),
-    '--ui-glass-surface-depth-shadow-08': String(material.depthShadow * 0.08),
-    '--ui-glass-surface-depth-shadow-22': String(material.depthShadow * 0.22),
-    '--ui-glass-surface-depth-shadow-12': String(material.depthShadow * 0.12),
-    '--ui-glass-surface-thickness-08': String(material.thickness * 0.08),
-    '--ui-glass-surface-thickness-62': String(material.thickness * 0.62),
-    '--ui-glass-surface-top-glint-112': String(material.topGlint * 1.12),
-    '--ui-glass-surface-top-glint-68': String(material.topGlint * 0.68),
-    '--ui-glass-surface-top-glint-22': String(material.topGlint * 0.22),
-    '--ui-glass-surface-top-glint-14': String(material.topGlint * 0.14),
-    '--ui-glass-surface-bezel-08': String(material.bezel * 0.08),
     '--ui-glass-surface-filter': `url(#${filterId})`,
   };
 
@@ -265,7 +221,6 @@ export function GlassSurface({
           </filter>
         </svg>
       ) : null}
-      <div className="ui-glass-surface__top-glint" aria-hidden="true" />
       <div className={`ui-glass-surface__content ${contentClassName}`.trim()}>{children}</div>
     </div>
   );

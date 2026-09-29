@@ -42,7 +42,8 @@ describe('GlassSurface', () => {
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('26');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
     expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
-    expect(surface.style.getPropertyValue('--ui-glass-surface-top-glint')).toBe('0.38');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-top-glint')).toBe('');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-thickness')).toBe('');
     expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
     expect(surface.querySelector('feImage')).toBeNull();
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
@@ -90,8 +91,8 @@ describe('GlassSurface', () => {
           brightness: 1.1,
           refraction: 12,
           rgbSpread: 0.5,
-          topGlint: 0.6,
-          thickness: 0.9,
+          bezel: 0.7,
+          border: 0.08,
         }}
       >
         Tuned
@@ -107,7 +108,7 @@ describe('GlassSurface', () => {
     expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('18px');
     expect(surface.style.getPropertyValue('--ui-glass-surface-saturation')).toBe('1.4');
     expect(surface.style.getPropertyValue('--ui-glass-surface-brightness')).toBe('1.1');
-    expect(surface.style.getPropertyValue('--ui-glass-surface-top-glint')).toBe('0.6');
-    expect(surface.style.getPropertyValue('--ui-glass-surface-thickness')).toBe('0.9');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-bezel')).toBe('0.7');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-border')).toBe('0.08');
   });
 });
