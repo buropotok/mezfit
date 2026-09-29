@@ -35,9 +35,6 @@ export function MezfitPanel(props: MezfitPanelProps) {
     floating = false,
     onBackdropClick,
 
-    ios,
-    material,
-
     glassPreset = 'modalTuned',
     glass,
     glassShape = 'auto',
@@ -52,8 +49,7 @@ export function MezfitPanel(props: MezfitPanelProps) {
   const Component = component as ElementType;
   const attrs = { ...rest };
 
-  const contextTheme = useTheme();
-  const theme = ios ? 'ios' : material ? 'material' : contextTheme;
+  const theme = useTheme();
   const colors = PanelColors(colorsProp, canonicalDark);
   const c = PanelClasses({ ...props, floating }, colors);
 
