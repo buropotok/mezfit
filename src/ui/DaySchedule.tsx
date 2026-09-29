@@ -548,7 +548,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         }}
       >
         {activeEventEntry && activeEventDragRef.current ? (
-          <div className="ui-day-schedule__drag-visual">
+          <div className="ui-day-schedule__drag-visual" aria-hidden="true">
             <GlassSurface
               className="ui-day-schedule__drag-overlay"
               contentClassName="ui-day-schedule__drag-overlay-content"
