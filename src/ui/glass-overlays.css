@@ -72,10 +72,19 @@
 }
 
 .ui-glass-popover {
+  --ui-glass-safe-area-left: env(safe-area-inset-left, 0px);
+  --ui-glass-safe-area-right: env(safe-area-inset-right, 0px);
+  --ui-glass-safe-area-top: env(safe-area-inset-top, 0px);
+  --ui-glass-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   position: fixed;
   z-index: var(--ui-glass-overlay-surface-z, 51);
   width: 15rem;
-  max-width: calc(100vw - 1.5rem);
+  max-width: calc(
+    100vw
+    - var(--ui-glass-safe-area-left)
+    - var(--ui-glass-safe-area-right)
+    - 1.5rem
+  );
   opacity: 1;
   visibility: visible;
   transform: scale(1);
