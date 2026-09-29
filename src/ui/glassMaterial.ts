@@ -215,10 +215,15 @@ export function resolveGlassMaterial(
   preset: GlassPresetName = 'modalTuned',
   overrides?: GlassMaterialOverrides,
 ): GlassMaterial {
-  return {
-    ...GLASS_PRESETS[preset],
-    ...overrides,
-  };
+  const material: GlassMaterial = { ...GLASS_PRESETS[preset] };
+
+  for (const [key, value] of Object.entries(overrides ?? {}) as Array<
+    [keyof GlassMaterial, number | undefined]
+  >) {
+    if (value !== undefined) material[key] = value;
+  }
+
+  return material;
 }
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -267,8 +272,16 @@ export function buildGlassVectorMap(
   const height = Math.max(1, geometry.height);
   const radius = clamp(geometry.radius, 0.5, Math.min(width, height) / 2);
   const sampleScale = clamp(pixelRatio || 1.5, 1.25, 2);
-  const bitmapWidth = Math.max(128, Math.round(width * sampleScale));
-  const bitmapHeight = Math.max(72, Math.round(height * sampleScale));
+  const maxPixels = 450_000;
+  let bitmapWidth = Math.max(128, Math.round(width * sampleScale));
+  let bitmapHeight = Math.max(72, Math.round(height * sampleScale));
+  const desiredPixels = bitmapWidth * bitmapHeight;
+
+  if (desiredPixels > maxPixels) {
+    const reduction = Math.sqrt(maxPixels / desiredPixels);
+    bitmapWidth = Math.max(128, Math.floor(bitmapWidth * reduction));
+    bitmapHeight = Math.max(72, Math.floor(bitmapHeight * reduction));
+  }
 
   canvas.width = bitmapWidth;
   canvas.height = bitmapHeight;
