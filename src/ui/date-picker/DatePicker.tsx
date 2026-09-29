@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button as KonstaButton, Glass, Link, Navbar, Panel, Popover } from 'konsta/react';
+import { GlassSurface } from '../GlassSurface';
 import {
   buildMonthGrid,
   calculateCenteredScrollTop,
@@ -159,22 +160,29 @@ export function DatePicker({
         opened={opened}
         floating
         backdrop
+        colors={{ floatingBgIos: 'bg-transparent' }}
         onBackdropClick={yearPopoverOpened ? undefined : onClose}
         role="dialog"
         aria-modal="true"
         aria-label="Выбор даты"
       >
-        <div className="ui-date-picker__scroll" ref={monthScrollRef}>
-          <div className="ui-date-picker__header-blur" aria-hidden="true" />
-          <Navbar
-            className="ui-date-picker__navbar"
-            centerTitle
-            outline={false}
-            title={yearTrigger}
-            right={closeAction}
-          />
+        <GlassSurface
+          preset="modalTuned"
+          className="ui-date-picker__glass"
+          contentClassName="ui-date-picker__glass-content"
+        >
+          <div className="ui-date-picker__scroll" ref={monthScrollRef}>
+            <div className="ui-date-picker__header-blur" aria-hidden="true" />
+            <Navbar
+              className="ui-date-picker__navbar"
+              centerTitle
+              outline={false}
+              colors={{ bgIos: 'bg-transparent' }}
+              title={yearTrigger}
+              right={closeAction}
+            />
 
-          <div className="ui-date-picker__months">
+            <div className="ui-date-picker__months">
             {Array.from({ length: MONTH_COUNT }, (_, monthIndex) => (
               <section className="ui-date-picker__month" data-month-index={monthIndex} key={monthIndex}>
                 <h2 className="ui-date-picker__month-title">
@@ -212,8 +220,9 @@ export function DatePicker({
                 </div>
               </section>
             ))}
+            </div>
           </div>
-        </div>
+        </GlassSurface>
       </Panel>
 
       <Popover
@@ -221,14 +230,16 @@ export function DatePicker({
         target={yearTargetRef.current ?? undefined}
         angle={false}
         backdrop
+        colors={{ bgIos: 'bg-transparent' }}
         onBackdropClick={() => setYearPopoverOpened(false)}
         style={{ width: '284px', maxWidth: 'calc(100vw - 24px)' }}
         role="dialog"
         aria-modal="true"
         aria-label="Выберите год"
       >
-        <div className="ui-date-picker__year-popover">
-          <div className="ui-date-picker__year-scroll" ref={yearScrollRef}>
+        <GlassSurface preset="modalTuned" className="ui-date-picker__year-glass">
+          <div className="ui-date-picker__year-popover">
+            <div className="ui-date-picker__year-scroll" ref={yearScrollRef}>
             <div className="ui-date-picker__year-grid">
               {years.map((year) => {
                 const selected = year === visibleYear;
@@ -255,9 +266,10 @@ export function DatePicker({
                   </KonstaButton>
                 );
               })}
+              </div>
             </div>
           </div>
-        </div>
+        </GlassSurface>
       </Popover>
     </>
   );
