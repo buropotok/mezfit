@@ -78,7 +78,7 @@
     inset -3px -3px 0 -3.5px rgb(255 255 255 / 0.92),
     inset -0.5px -0.5px 0 rgb(255 255 255 / 0.18),
     inset 0.5px 0.5px 0 rgb(255 255 255 / 0.10),
-    inset 0 0 0 1px rgb(255 255 255 / calc(var(--ui-glass-bezel) * 0.08));
+    inset 0 0 0 1px rgb(255 255 255 / var(--ui-glass-bezel-08));
   opacity: var(--ui-glass-bezel);
 }
 
