@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button as KonstaButton, Glass, Link, Navbar, Panel, Popover } from 'konsta/react';
+import { GlassSurface } from '../GlassSurface';
 import {
   buildMonthGrid,
   calculateCenteredScrollTop,
@@ -159,17 +160,24 @@ export function DatePicker({
         opened={opened}
         floating
         backdrop
+        colors={{ floatingBgIos: 'bg-transparent' }}
         onBackdropClick={yearPopoverOpened ? undefined : onClose}
         role="dialog"
         aria-modal="true"
         aria-label="Выбор даты"
       >
+        <GlassSurface
+          preset="modalTuned"
+          className="ui-date-picker__glass"
+          contentClassName="ui-date-picker__glass-content"
+        >
         <div className="ui-date-picker__scroll" ref={monthScrollRef}>
           <div className="ui-date-picker__header-blur" aria-hidden="true" />
           <Navbar
             className="ui-date-picker__navbar"
             centerTitle
             outline={false}
+            colors={{ bgIos: 'bg-transparent' }}
             title={yearTrigger}
             right={closeAction}
           />
@@ -214,6 +222,7 @@ export function DatePicker({
             ))}
           </div>
         </div>
+        </GlassSurface>
       </Panel>
 
       <Popover
@@ -221,12 +230,14 @@ export function DatePicker({
         target={yearTargetRef.current ?? undefined}
         angle={false}
         backdrop
+        colors={{ bgIos: 'bg-transparent' }}
         onBackdropClick={() => setYearPopoverOpened(false)}
         style={{ width: '284px', maxWidth: 'calc(100vw - 24px)' }}
         role="dialog"
         aria-modal="true"
         aria-label="Выберите год"
       >
+        <GlassSurface preset="modalTuned" className="ui-date-picker__year-glass">
         <div className="ui-date-picker__year-popover">
           <div className="ui-date-picker__year-scroll" ref={yearScrollRef}>
             <div className="ui-date-picker__year-grid">
@@ -258,6 +269,7 @@ export function DatePicker({
             </div>
           </div>
         </div>
+        </GlassSurface>
       </Popover>
     </>
   );
