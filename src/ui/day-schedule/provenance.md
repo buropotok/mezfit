@@ -36,13 +36,17 @@ move/resize, the event editor and backend/API integration are outside this slice
   nonadjacent dates. The visual snapshot never becomes authoritative date state.
 - Horizontal week dragging pages the entire seven-slot container and day panel.
   Each page has 12 px gutters inside a clipped viewport; adjacent glass surfaces
-  cannot leak into the resting page. The timeline begins below the week row.
+  cannot leak into the resting page. The timeline fills the entire component
+  behind the floating week row; it reserves no navbar or week-row band.
 - Horizontal day dragging pages the adjacent day; vertical touch remains scroll.
 - Sunday/Monday crossings page day and week together over 300 ms.
 - Incoming weeks are neutral. After the controlled date is committed, wait 50 ms,
   then invoke the ordinary lens travel -> spring -> selector command.
 - One paging transition runs at a time. Repeated gestures during settling are
   ignored; external date changes interrupt and cancel old callbacks.
+- Track transitions are disabled synchronously before resetting transforms,
+  so the new dates and the centred tracks appear without reverse travel.
+  React re-enables the transition only for the next intentional animation.
 - Pointer moves update only this component's track transforms, not event content.
 - Interactive descendants and `data-schedule-no-swipe` regions opt out of day
   paging, preserving event controls. A completed drag suppresses the trailing tap.

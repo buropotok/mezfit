@@ -149,6 +149,35 @@ function withDate(date: LocalDate, onDateChange = changed) {
 }
 
 describe('DaySchedule transition ownership', () => {
+  it.each([-180, 180])('recenters both tracks without a transition after a weekday tap then week swipe (%s)', dx => {
+    const view = renderSchedule();
+    const accept = (next: LocalDate) => view.rerender(withDate(next, accept));
+    view.rerender(withDate('2026-09-28', accept));
+    const friday = view.container.querySelectorAll('.ui-day-schedule__week-scene')[1].shadowRoot!.querySelectorAll('button')[4];
+    fireEvent.click(friday);
+    act(() => vi.advanceTimersByTime(400));
+    const day = viewportFor(view, 'day');
+    day.scrollTop = 375;
+    swipe(viewportFor(view, 'week'), dx);
+    const transitionsAtReset: string[] = [];
+    for (const kind of ['week', 'day']) {
+      const track = view.container.querySelector<HTMLElement>(`.ui-day-schedule__${kind}-track`)!;
+      const setter = vi.spyOn(track.style, 'transform', 'set');
+      setter.mockImplementation(function(value: string) {
+        transitionsAtReset.push(track.style.transition);
+        track.style.setProperty('transform', value);
+      });
+    }
+    act(() => vi.advanceTimersByTime(300));
+    expect(transitionsAtReset.length).toBeGreaterThan(0);
+    expect(transitionsAtReset.every(transition => transition === 'none')).toBe(true);
+    expect(view.container.querySelectorAll('.ui-day-schedule__day-panel')[1].getAttribute('data-date')).toBe(dx < 0 ? '2026-10-09' : '2026-09-25');
+    expect(day.scrollTop).toBe(375);
+    act(() => vi.advanceTimersByTime(50));
+    swipe(viewportFor(view, 'week'), dx);
+    expect(view.container.querySelector<HTMLElement>('.ui-day-schedule__week-track')!.style.transition).toContain('300ms');
+  });
+
   it('animates from the outgoing day to a tapped nonadjacent day after acceptance', () => {
     const view = renderSchedule();
     const friday = view.container.querySelectorAll('.ui-day-schedule__week-scene')[1].shadowRoot!.querySelectorAll('button')[4];
