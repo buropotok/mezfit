@@ -30,6 +30,16 @@ declare module 'konsta/shared/utils' {
     targetHeight?: number;
     theme: 'ios' | 'material';
   }): KonstaPopoverPosition;
+
+  export function useIosHighlight(options: {
+    getEl: () => HTMLElement | null;
+    enabled?: boolean | (() => boolean);
+    data?: Record<string, unknown>;
+  }): {
+    attachEvents: () => void;
+    detachEvents: () => void;
+    removeHoverHighlight: () => void;
+  };
 }
 
 declare module 'konsta/shared/colors' {
