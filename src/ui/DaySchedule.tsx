@@ -536,9 +536,14 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         dropAnimation={{
           duration: 200,
           easing: 'cubic-bezier(.2,.8,.2,1)',
-          sideEffects: ({ dragOverlay }) => {
+          sideEffects: ({ active, dragOverlay }) => {
+            const previousOpacity = active.node.style.opacity;
+            active.node.style.opacity = '0';
             dragOverlay.node.classList.add('ui-day-schedule__drag-overlay-wrapper--dropping');
-            return () => dragOverlay.node.classList.remove('ui-day-schedule__drag-overlay-wrapper--dropping');
+            return () => {
+              active.node.style.opacity = previousOpacity;
+              dragOverlay.node.classList.remove('ui-day-schedule__drag-overlay-wrapper--dropping');
+            };
           },
         }}
       >
