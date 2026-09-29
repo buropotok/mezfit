@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -68,7 +67,7 @@ export function GlassPopover({
     ready: false,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (opened) {
       setGlassActive(true);
       return;
