@@ -79,8 +79,8 @@ function EventFrame<TEvent extends DayScheduleEventBase>({
       style={{ top, height }}
       data-event-id={event.id}
       data-schedule-no-swipe={draggable ? '' : undefined}
-      {...attributes}
-      {...listeners}
+      {...(draggable ? attributes : {})}
+      {...(draggable ? listeners : {})}
     >
       {children}
     </div>
