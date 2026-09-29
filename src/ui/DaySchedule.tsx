@@ -105,12 +105,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const currentDate = useRef(date);
   const latestChange = useRef(onDateChange);
   const eventDragActive = useRef(false);
-  const activeEventDragRef = useRef<{
-    dragId: string;
-    initialScrollTop: number;
-    width?: number;
-    height?: number;
-  } | null>(null);
+  const activeEventDragRef = useRef<string | null>(null);
   const [activeEventDragId, setActiveEventDragId] = useState<string | null>(null);
   const arrival = useRef<{ date: LocalDate; week: boolean; from?: LocalDate } | null>(null);
 
@@ -417,31 +412,23 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const handleEventDragStart = (event: DragStartEvent) => {
     const dragId = String(event.active.id);
     if (!onEventMove || !dragEntries.has(dragId)) return;
-    const rect = event.active.rect.current.initial;
     eventDragActive.current = true;
     suppressDayClickUntil.current = performance.now() + 500;
-    activeEventDragRef.current = {
-      dragId,
-      initialScrollTop: dayViewportRef.current?.scrollTop ?? 0,
-      width: rect?.width,
-      height: rect?.height,
-    };
+    activeEventDragRef.current = dragId;
     setActiveEventDragId(dragId);
   };
 
   const handleEventDragEnd = (event: DragEndEvent) => {
     const dragId = String(event.active.id);
-    const activeDrag = activeEventDragRef.current;
+    const activeDragId = activeEventDragRef.current;
     const entry = dragEntries.get(dragId);
-    const currentScrollTop = dayViewportRef.current?.scrollTop ?? activeDrag?.initialScrollTop ?? 0;
     clearEventDrag();
 
-    if (!onEventMove || !entry || !activeDrag || activeDrag.dragId !== dragId) return;
-    const scrollDelta = currentScrollTop - activeDrag.initialScrollTop;
+    if (!onEventMove || !entry || activeDragId !== dragId) return;
     const startMinutes = startMinutesAfterDrag(
       entry.event.startMinutes,
       entry.event.durationMinutes,
-      event.delta.y + scrollDelta,
+      event.delta.y,
     );
     if (startMinutes === entry.event.startMinutes) return;
     onEventMove({
@@ -530,10 +517,6 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           <GlassSurface
             className="ui-day-schedule__drag-overlay"
             contentClassName="ui-day-schedule__drag-overlay-content"
-            style={{
-              width: activeEventDragRef.current.width,
-              height: activeEventDragRef.current.height,
-            }}
           >
             {renderEvent(activeEventEntry.event, { compact: activeEventEntry.compact })}
           </GlassSurface>
