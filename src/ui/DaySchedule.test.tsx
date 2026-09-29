@@ -144,7 +144,7 @@ function swipe(element: HTMLElement, dx = -180) {
   fireEvent.pointerUp(element, { pointerId: 1, pointerType: 'touch', clientX: 220 + dx, clientY: 200 });
 }
 
-function withDate(date: LocalDate, onDateChange = changed) {
+function withDate(date: LocalDate, onDateChange: (date: LocalDate) => void = changed) {
   return <DaySchedule date={date} today="2026-09-28" eventsByDate={events} onDateChange={onDateChange} renderEvent={event => <div>{event.id}</div>} />;
 }
 
