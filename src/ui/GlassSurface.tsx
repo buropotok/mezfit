@@ -59,7 +59,7 @@ export function GlassSurface({
   const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
   const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
-  const [vectorMapHref, setVectorMapHref] = useState<string | null>(null);
+  const [vectorMap, setVectorMap] = useState<{ href: string; key: string } | null>(null);
 
   useLayoutEffect(() => {
     if (!active) return undefined;
@@ -94,13 +94,23 @@ export function GlassSurface({
   }, [active, shapeRadius]);
 
   useEffect(() => {
-    if (!active) {
-      setVectorMapHref(null);
-      return undefined;
-    }
+    if (!active) return undefined;
 
     const element = rootRef.current;
     if (!element || !geometry) return undefined;
+
+    const mapKey = [
+      geometry.width,
+      geometry.height,
+      geometry.radius,
+      material.neutralEdge,
+      material.rimWidth,
+      material.rimStrength,
+      material.trenchWidth,
+      material.trenchStrength,
+    ].join(':');
+
+    if (vectorMap?.key === mapKey) return undefined;
 
     const view = element.ownerDocument.defaultView;
     let cancelled = false;
@@ -115,7 +125,7 @@ export function GlassSurface({
       workCanvasRef.current = canvas;
       const ratio = currentElement.ownerDocument.defaultView?.devicePixelRatio ?? 1.5;
       const map = buildGlassVectorMap(canvas, geometry, material, ratio);
-      if (!cancelled) setVectorMapHref(map?.href ?? null);
+      if (!cancelled) setVectorMap(map ? { href: map.href, key: mapKey } : null);
     };
 
     if (!view || typeof view.requestAnimationFrame !== 'function') {
@@ -138,8 +148,27 @@ export function GlassSurface({
     material.rimStrength,
     material.trenchWidth,
     material.trenchStrength,
+    vectorMap?.key,
   ]);
 
+  const currentMapKey = geometry
+    ? [
+        geometry.width,
+        geometry.height,
+        geometry.radius,
+        material.neutralEdge,
+        material.rimWidth,
+        material.rimStrength,
+        material.trenchWidth,
+        material.trenchStrength,
+      ].join(':')
+    : null;
+  const vectorMapReady = Boolean(
+    active
+    && vectorMap
+    && currentMapKey
+    && vectorMap.key === currentMapKey
+  );
   const radius = geometry?.radius ?? 0;
   const filterPadding = material.filterPadding;
   const glassStyle: GlassCssProperties = {
@@ -164,10 +193,10 @@ export function GlassSurface({
       ref={rootRef}
       className={`ui-glass-surface ${className}`.trim()}
       data-ui-glass-active={active ? 'true' : 'false'}
-      data-ui-glass-map-ready={vectorMapHref ? 'true' : 'false'}
+      data-ui-glass-map-ready={vectorMapReady ? 'true' : 'false'}
       style={glassStyle}
     >
-      {vectorMapHref && geometry ? (
+      {vectorMap && geometry ? (
         <svg
           width="0"
           height="0"
@@ -188,7 +217,7 @@ export function GlassSurface({
               width={geometry.width}
               height={geometry.height}
               preserveAspectRatio="none"
-              href={vectorMapHref}
+              href={vectorMap.href}
               result="vectorMap"
             />
             <feDisplacementMap
