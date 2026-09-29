@@ -49,6 +49,7 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-top-glint-68': string;
   '--ui-glass-top-glint-22': string;
   '--ui-glass-top-glint-14': string;
+  '--ui-glass-bezel-08': string;
   '--ui-glass-filter': string;
 };
 
@@ -184,16 +185,17 @@ export function GlassSurface({
     '--ui-glass-top-glint-68': String(material.topGlint * 0.68),
     '--ui-glass-top-glint-22': String(material.topGlint * 0.22),
     '--ui-glass-top-glint-14': String(material.topGlint * 0.14),
+    '--ui-glass-bezel-08': String(material.bezel * 0.08),
     '--ui-glass-filter': `url(#${filterId})`,
   };
 
   return (
     <div
+      {...props}
       ref={rootRef}
       className={`ui-glass-surface ${className}`.trim()}
       data-ui-glass-map-ready={vectorMapHref ? 'true' : 'false'}
       style={glassStyle}
-      {...props}
     >
       {vectorMapHref && geometry ? (
         <svg
