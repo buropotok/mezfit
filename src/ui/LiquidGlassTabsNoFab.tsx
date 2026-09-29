@@ -1,8 +1,7 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { resolveUiIconPair } from './Icon';
 import type { UiIconSource } from './iconPair';
-import { Tabs, TabsList, TabsTrigger } from './components';
 import { mountPrototype, type PrototypeController } from './liquid-glass-tabs-no-fab/prototypeRuntime';
 import prototypeCss from './liquid-glass-tabs-no-fab/prototype.css?inline';
 
@@ -19,67 +18,105 @@ export type LiquidGlassTabsNoFabProps = {
   hidden: boolean;
 };
 
+const PROTOTYPE_LENS_STYLE = {
+  '--sl-glass-tint': '.17',
+  '--sl-backdrop-blur': '0px',
+  '--sl-glass-brightness': '1.02',
+  '--sl-bezel-opacity': '.86',
+} as CSSProperties;
+
 function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoFabProps, 'hidden'> & { entrance: boolean }) {
-  const startupHost = useRef<HTMLDivElement>(null);
-  const tabsHost = useRef<HTMLDivElement>(null);
+  const host = useRef<HTMLDivElement>(null);
   const controller = useRef<PrototypeController | null>(null);
+  const latest = useRef({ tabs, value, onValueChange });
+  const [selectionRequest, reconcileSelection] = useReducer((revision: number) => revision + 1, 0);
+  const initialEntrance = useRef(entrance);
   const [shadow, setShadow] = useState<ShadowRoot | null>(null);
+  const order = JSON.stringify(tabs.map(tab => tab.value));
 
   useLayoutEffect(() => {
-    const element = startupHost.current;
+    const element = host.current;
     if (element) setShadow(element.shadowRoot ?? element.attachShadow({ mode: 'open' }));
   }, []);
 
   useLayoutEffect(() => {
-    if (!shadow || !tabsHost.current) return;
-    controller.current = mountPrototype(shadow, tabsHost.current, entrance);
+    latest.current = { tabs, value, onValueChange };
+  });
+
+  useLayoutEffect(() => {
+    if (!shadow || tabs.length === 0) return;
+    const activeIndex = Math.max(0, latest.current.tabs.findIndex(tab => tab.value === latest.current.value));
+    const playEntrance = initialEntrance.current;
+    initialEntrance.current = false;
+    controller.current = mountPrototype(shadow, activeIndex, index => {
+      const current = latest.current;
+      const tab = current.tabs[index];
+      if (tab && tab.value !== current.value) current.onValueChange(tab.value);
+      reconcileSelection();
+    }, playEntrance);
     return () => {
       controller.current?.dispose();
       controller.current = null;
     };
-  }, [shadow, entrance]);
+  }, [shadow, order]);
+
+  useLayoutEffect(() => {
+    controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
+  }, [value, order, shadow, selectionRequest]);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: 64, overflow: 'visible' }}>
-      <div
-        ref={tabsHost}
-        data-liquid-glass-tabs-no-fab-real=""
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: 0,
-          width: 'calc(100% / 1.1)',
-          height: 64,
-          transform: 'translateX(-50%)',
-          zIndex: 2,
-          opacity: entrance ? 0 : 1,
-          pointerEvents: entrance ? 'none' : 'auto',
-        }}
-      >
-        <Tabs theme="liquidGlass" mode="icon" value={value} onValueChange={onValueChange}>
-          <TabsList aria-label="Навигация">
-            {tabs.map(tab => (
-              <TabsTrigger key={tab.value} value={tab.value} icon={tab.icon} aria-label={tab.label} title={tab.label}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
-
-      <div
-        ref={startupHost}
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 3,
-          overflow: 'visible',
-          pointerEvents: 'none',
-        }}
-      >
-        {shadow && createPortal(<>
+    <div ref={host} style={{ display: 'block', position: 'relative', width: '100%', height: 64, overflow: 'visible' }}>
+      {shadow && createPortal(
+        <>
           <style>{prototypeCss}</style>
+          <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
+            <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
+          </svg>
+
+          <div className="motion" id="motion">
+            <div className="icon-mask" id="iconMask">
+              <div id="iconLayer">
+                <div className="donor-root dark">
+                  <div className="standalone-lens-playground optical-tabs-playground" data-tab-mode="icons">
+                    <div className="toolbar-pane optical-toolbar-pane" id="toolbar-pane">
+                      <div className="tab-strip" id="tab-strip" role="tablist" aria-label="Навигация">
+                        {tabs.map((tab, index) => {
+                          const icon = resolveUiIconPair(tab.icon);
+                          return (
+                            <button
+                              className={`tab-link${tab.value === value ? ' active' : ''}`}
+                              type="button"
+                              key={tab.value}
+                              data-index={index}
+                              role="tab"
+                              aria-label={tab.label}
+                              aria-selected={tab.value === value}
+                              title={tab.label}
+                            >
+                              <span className="tab-content">
+                                <span className="tab-icon-wrap" aria-hidden="true">
+                                  <span className="tab-icon tab-icon-outline">{icon.outline}</span>
+                                  <span className="tab-icon tab-icon-filled">{icon.filled}</span>
+                                </span>
+                                <span className="tab-label">{tab.label}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                        <span className="selector-track" id="selector-track" aria-hidden="true">
+                          <span className="selector" id="selector" />
+                        </span>
+                      </div>
+                    </div>
+                    <span className="selector-track extracted-lens-demo" id="lens-track" aria-hidden="true">
+                      <span className="lens optical-working-lens" id="lens" style={PROTOTYPE_LENS_STYLE} />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <svg id="startupScene" className="startup-scene" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
               <filter id="startup-refraction-icons" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
@@ -91,12 +128,11 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoF
                 <feDisplacementMap in="SourceGraphic" in2="map" scale="64" xChannelSelector="R" yChannelSelector="G" result="displaced" />
                 <feColorMatrix id="startup-lens-saturation" in="displaced" type="saturate" values="1.29" />
               </filter>
+
               <filter id="startup-mask-from-blue" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
-                <feColorMatrix
-                  type="matrix"
-                  values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 1 0 0"
-                />
+                <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 1 0 0" />
               </filter>
+
               <mask
                 id="startup-reveal-mask"
                 maskUnits="userSpaceOnUse"
@@ -107,7 +143,13 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoF
                 height="100%"
                 style={{ maskType: 'alpha' }}
               >
-                <image id="startup-mask-surface" x="0" y="0" preserveAspectRatio="none" filter="url(#startup-mask-from-blue)" />
+                <image
+                  id="startup-mask-surface"
+                  x="0"
+                  y="0"
+                  preserveAspectRatio="none"
+                  filter="url(#startup-mask-from-blue)"
+                />
               </mask>
             </defs>
 
@@ -141,19 +183,29 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoF
             </g>
 
             <g mask="url(#startup-reveal-mask)" pointerEvents="none">
-              <rect id="startup-material-surface" x="0" y="0" width="100%" height="100%" fill="rgb(185,208,239)" fillOpacity=".032" />
+              <rect
+                id="startup-material-surface"
+                x="0"
+                y="0"
+                width="100%"
+                height="100%"
+                fill="rgb(185,208,239)"
+                fillOpacity=".032"
+              />
             </g>
+
             <image id="startup-bezel-surface" x="0" y="0" preserveAspectRatio="none" pointerEvents="none" />
           </svg>
-        </>, shadow)}
-      </div>
+        </>,
+        shadow,
+      )}
     </div>
   );
 }
 
 /**
- * Canonical liquidGlass icon tabs with the approved center-spread entrance.
- * The startup overlay is temporary; settled interaction is owned by the UI Kit Tabs primitive.
+ * LiquidGlassIconOnly architecture with the approved center-spread reveal and no FAB.
+ * The settled tabs and their interaction model are the same private runtime as LiquidGlassIconOnly.
  */
 export function LiquidGlassTabsNoFab(props: LiquidGlassTabsNoFabProps) {
   const previousHidden = useRef(props.hidden);
@@ -169,7 +221,7 @@ export function LiquidGlassTabsNoFab(props: LiquidGlassTabsNoFabProps) {
     <div
       hidden={props.hidden}
       aria-hidden={props.hidden || undefined}
-      style={{ position: 'relative', width: '100%', height: 64, overflow: 'visible' }}
+      style={{ position: 'relative', width: '100%', overflow: 'visible' }}
     >
       {!props.hidden && props.tabs.length > 0 && <Scene key={order} {...props} entrance={entrance} />}
     </div>
