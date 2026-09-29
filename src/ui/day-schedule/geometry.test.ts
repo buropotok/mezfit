@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventGeometry, yForMinutes } from './DayPanel';
+import { eventGeometry, startMinutesAfterDrag, yForMinutes } from './DayPanel';
 import { addDays, dayIndex, startOfWeek } from './dateMath';
 
 describe('schedule geometry and date boundaries', () => {
@@ -16,6 +16,12 @@ describe('schedule geometry and date boundaries', () => {
     expect(eventGeometry({ id: 'a', startMinutes: NaN, durationMinutes: 30 })).toBeNull();
     expect(eventGeometry({ id: 'a', startMinutes: 600, durationMinutes: -1 })).toBeNull();
   });
+  it('maps vertical event drag distance to bounded whole-minute start times', () => {
+    expect(startMinutesAfterDrag(600, 60, 56)).toBe(630);
+    expect(startMinutesAfterDrag(600, 60, -1000)).toBe(360);
+    expect(startMinutesAfterDrag(1380, 60, 1000)).toBe(1380);
+  });
+
   it('pages across month, year and leap-day boundaries without local timezone shifts', () => {
     expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
     expect(addDays('2028-02-28', 1)).toBe('2028-02-29');
