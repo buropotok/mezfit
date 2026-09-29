@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  GLASS_PRESETS,
   MODAL_TUNED_GLASS,
   buildGlassVectorMap,
   resolveGlassMaterial,
@@ -13,7 +14,7 @@ afterEach(() => {
 
 describe('glass material', () => {
   it('uses ModalTuned as the default material and merges public overrides', () => {
-    const material = resolveGlassMaterial({
+    const material = resolveGlassMaterial('modalTuned', {
       blur: 8,
       topGlint: 0.5,
       tintA: 0.18,
@@ -26,6 +27,20 @@ describe('glass material', () => {
     expect(material.topGlint).toBe(0.5);
     expect(material.tintA).toBe(0.18);
     expect(MODAL_TUNED_GLASS.tintR).toBe(24);
+  });
+
+  it('exposes the named UI-kit glass presets', () => {
+    expect(Object.keys(GLASS_PRESETS)).toEqual([
+      'modalTuned',
+      'lens',
+      'clear',
+      'frosted',
+      'blue',
+      'smoked',
+    ]);
+    expect(resolveGlassMaterial('clear').tintA).toBe(0.08);
+    expect(resolveGlassMaterial('frosted').blur).toBe(14);
+    expect(resolveGlassMaterial('smoked').shadow).toBe(0.28);
   });
 
   it('anchors compact auto geometry at 44px -> 22px and preserves the tuned modal radius', () => {
