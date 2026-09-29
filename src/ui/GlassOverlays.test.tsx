@@ -278,6 +278,48 @@ describe('glass overlay primitives', () => {
     expect(Number.parseFloat(popover.style.left)).toBeGreaterThanOrEqual(36);
   });
 
+  it('shrinks the popover to the visual viewport when custom padding is larger', () => {
+    const target = document.createElement('button');
+    target.getBoundingClientRect = () => ({
+      x: 140,
+      y: 120,
+      left: 140,
+      top: 120,
+      right: 184,
+      bottom: 164,
+      width: 44,
+      height: 44,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+
+    vi.stubGlobal('innerWidth', 320);
+    vi.stubGlobal('innerHeight', 640);
+
+    const offsetWidth = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('ui-glass-popover') ? 284 : 0;
+    });
+
+    render(
+      <GlassPopover
+        opened
+        target={target}
+        viewportPadding={24}
+        style={{ width: '284px' }}
+        role="dialog"
+        aria-label="Padded popover"
+      >
+        Popover
+      </GlassPopover>,
+    );
+
+    const popover = screen.getByRole('dialog', { name: 'Padded popover' });
+    expect(popover.style.maxWidth).toBe('272px');
+    expect(Number.parseFloat(popover.style.left)).toBeGreaterThanOrEqual(24);
+    expect(Number.parseFloat(popover.style.left) + 272).toBeLessThanOrEqual(296);
+    expect(offsetWidth).toHaveBeenCalled();
+  });
+
   it('positions an opened GlassPopover around its target and owns ModalTuned directly', () => {
     const target = document.createElement('button');
     target.getBoundingClientRect = () => ({
