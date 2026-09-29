@@ -512,6 +512,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
   return (
     <DndContext
+      accessibility={{ restoreFocus: false }}
       sensors={eventDragSensors}
       onDragStart={handleEventDragStart}
       onDragCancel={clearEventDrag}
