@@ -65,6 +65,7 @@ export function GlassSurface({
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
   const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
+  const hostMode = !wrapContent;
   const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
   const [vectorMapHref, setVectorMapHref] = useState<string | null>(null);
@@ -77,7 +78,12 @@ export function GlassSurface({
       const rect = element.getBoundingClientRect();
       const width = Math.max(1, rect.width);
       const height = Math.max(1, rect.height);
-      const radius = resolveGlassRadius(width, height, shape);
+      const computedRadius = hostMode
+        ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element).borderTopLeftRadius ?? '')
+        : Number.NaN;
+      const radius = Number.isFinite(computedRadius)
+        ? Math.min(computedRadius, Math.min(width, height) / 2)
+        : resolveGlassRadius(width, height, shape);
 
       setGeometry(current => {
         if (
@@ -97,7 +103,7 @@ export function GlassSurface({
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [shapeRadius]);
+  }, [hostMode, shapeRadius]);
 
   useEffect(() => {
     const element = rootRef.current;
@@ -151,7 +157,7 @@ export function GlassSurface({
   const filterPadding = material.filterPadding;
   const glassStyle: GlassCssProperties = {
     ...style,
-    borderRadius: radius || undefined,
+    ...(hostMode ? {} : { borderRadius: radius || undefined }),
     '--ui-glass-surface-tint-r': String(material.tintR),
     '--ui-glass-surface-tint-g': String(material.tintG),
     '--ui-glass-surface-tint-b': String(material.tintB),
