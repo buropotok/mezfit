@@ -5,6 +5,7 @@ import { GlassSurface } from './GlassSurface';
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
