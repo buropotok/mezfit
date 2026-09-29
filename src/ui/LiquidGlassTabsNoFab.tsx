@@ -58,11 +58,11 @@ function Scene({ tabs, value, onValueChange, entrance }: Omit<LiquidGlassTabsNoF
       controller.current?.dispose();
       controller.current = null;
     };
-  }, [shadow, order, tabs.length]);
+  }, [shadow, order]);
 
   useLayoutEffect(() => {
     controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
-  }, [value, order, shadow, selectionRequest, tabs]);
+  }, [value, order, shadow, selectionRequest]);
 
   return (
     <div ref={host} style={{ display: 'block', position: 'relative', width: '100%', height: 64, overflow: 'visible' }}>
