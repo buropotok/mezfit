@@ -159,6 +159,7 @@ describe('DaySchedule', () => {
 
     fireEvent.pointerUp(document, { pointerId: 1, pointerType: 'mouse', button: 0, clientX: 100, clientY: 120 });
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+    act(() => vi.advanceTimersByTime(50));
   });
 
   it('requests the next day after a committed horizontal day swipe', () => {
