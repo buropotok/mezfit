@@ -66,21 +66,34 @@ export function calculateCenteredScrollTop({
   return Math.min(maxTop, Math.max(0, desiredTop));
 }
 
-export function formatMonthName(year: number, monthIndex: number, locale: string): string {
-  const label = new Intl.DateTimeFormat(locale, {
+export function formatMonthName(
+  year: number,
+  monthIndex: number,
+  locale: string,
+  formatter?: Intl.DateTimeFormat,
+): string {
+  const activeFormatter = formatter ?? new Intl.DateTimeFormat(locale, {
     month: 'long',
     timeZone: 'UTC',
-  }).format(new Date(Date.UTC(year, monthIndex, 1)));
+  });
+  const label = activeFormatter.format(new Date(Date.UTC(year, monthIndex, 1)));
 
   const [first = '', ...rest] = Array.from(label);
   return `${first.toLocaleUpperCase(locale)}${rest.join('')}`;
 }
 
-export function formatDayLabel(year: number, monthIndex: number, day: number, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
+export function formatDayLabel(
+  year: number,
+  monthIndex: number,
+  day: number,
+  locale: string,
+  formatter?: Intl.DateTimeFormat,
+): string {
+  const activeFormatter = formatter ?? new Intl.DateTimeFormat(locale, {
     dateStyle: 'long',
     timeZone: 'UTC',
-  }).format(new Date(Date.UTC(year, monthIndex, day)));
+  });
+  return activeFormatter.format(new Date(Date.UTC(year, monthIndex, day)));
 }
 
 export function getWeekdayLabels(locale: string): string[] {

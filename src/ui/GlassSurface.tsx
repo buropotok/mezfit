@@ -36,6 +36,48 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-filter': string;
 };
 
+const GLASS_VECTOR_MAP_CACHE_LIMIT = 4;
+const glassVectorMapCache = new Map<string, string>();
+
+function readCachedVectorMap(key: string) {
+  const href = glassVectorMapCache.get(key);
+  if (!href) return null;
+
+  glassVectorMapCache.delete(key);
+  glassVectorMapCache.set(key, href);
+  return href;
+}
+
+function cacheVectorMap(key: string, href: string) {
+  glassVectorMapCache.delete(key);
+  glassVectorMapCache.set(key, href);
+
+  while (glassVectorMapCache.size > GLASS_VECTOR_MAP_CACHE_LIMIT) {
+    const oldestKey = glassVectorMapCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    glassVectorMapCache.delete(oldestKey);
+  }
+}
+
+function vectorMapCacheKey(
+  geometry: GlassGeometry,
+  material: ReturnType<typeof resolveGlassMaterial>,
+  pixelRatio: number,
+) {
+  const sampleScale = Math.max(1.25, Math.min(2, pixelRatio || 1.5));
+  return [
+    geometry.width.toFixed(1),
+    geometry.height.toFixed(1),
+    geometry.radius.toFixed(1),
+    material.neutralEdge,
+    material.rimWidth,
+    material.rimStrength,
+    material.trenchWidth,
+    material.trenchStrength,
+    sampleScale.toFixed(2),
+  ].join(':');
+}
+
 export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & {
   component?: ElementType;
   ref?: Ref<HTMLElement>;
@@ -111,6 +153,14 @@ export function GlassSurface({
     if (!element || !geometry) return undefined;
 
     const view = element.ownerDocument.defaultView;
+    const ratio = view?.devicePixelRatio ?? 1.5;
+    const cacheKey = vectorMapCacheKey(geometry, material, ratio);
+    const cachedMap = readCachedVectorMap(cacheKey);
+    if (cachedMap) {
+      setVectorMapHref(cachedMap);
+      return undefined;
+    }
+
     let cancelled = false;
 
     const build = () => {
@@ -121,9 +171,11 @@ export function GlassSurface({
 
       const canvas = workCanvasRef.current ?? currentElement.ownerDocument.createElement('canvas');
       workCanvasRef.current = canvas;
-      const ratio = currentElement.ownerDocument.defaultView?.devicePixelRatio ?? 1.5;
       const map = buildGlassVectorMap(canvas, geometry, material, ratio);
-      if (!cancelled) setVectorMapHref(map?.href ?? null);
+      if (!cancelled) {
+        if (map) cacheVectorMap(cacheKey, map.href);
+        setVectorMapHref(map?.href ?? null);
+      }
     };
 
     if (!view || typeof view.requestAnimationFrame !== 'function') {

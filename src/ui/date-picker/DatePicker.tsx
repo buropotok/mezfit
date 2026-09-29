@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button as KonstaButton, Glass, Link, Navbar } from 'konsta/react';
 import { MezfitPanel as Panel, MezfitPopover as Popover } from '../konsta-mezfit';
 import {
@@ -58,17 +58,126 @@ export function DatePicker({
   const monthScrollRef = useRef<HTMLDivElement | null>(null);
   const yearScrollRef = useRef<HTMLDivElement | null>(null);
   const wasOpenedRef = useRef(false);
+  const pendingMonthScrollRef = useRef(false);
+  const onChangeRef = useRef(onChange);
+  const onCloseRef = useRef(onClose);
+  onChangeRef.current = onChange;
+  onCloseRef.current = onClose;
 
   const weekdayLabels = useMemo(() => getWeekdayLabels(locale), [locale]);
+  const monthNameFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }),
+    [locale],
+  );
+  const dayLabelFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }),
+    [locale],
+  );
   const years = useMemo(
     () => Array.from({ length: safeMaxYear - safeMinYear + 1 }, (_, index) => safeMinYear + index),
     [safeMaxYear, safeMinYear],
   );
+  const monthViews = useMemo(
+    () => Array.from({ length: MONTH_COUNT }, (_, monthIndex) => ({
+      monthIndex,
+      title: formatMonthName(visibleYear, monthIndex, locale, monthNameFormatter),
+      cells: buildMonthGrid(visibleYear, monthIndex).map((cell) => ({
+        day: cell.day,
+        label: cell.day === null
+          ? null
+          : formatDayLabel(visibleYear, monthIndex, cell.day, locale, dayLabelFormatter),
+      })),
+    })),
+    [dayLabelFormatter, locale, monthNameFormatter, visibleYear],
+  );
 
-  useEffect(() => {
+  const chooseDate = useCallback((monthIndex: number, day: number) => {
+    onChangeRef.current(formatLocalDate(visibleYear, monthIndex + 1, day));
+    setYearPopoverOpened(false);
+    onCloseRef.current();
+  }, [visibleYear]);
+
+  const monthSections = useMemo(
+    () => monthViews.map(({ monthIndex, title, cells }) => (
+      <section className="ui-date-picker__month" data-month-index={monthIndex} key={monthIndex}>
+        <h2 className="ui-date-picker__month-title">{title}</h2>
+        <div className="ui-date-picker__weekdays" aria-hidden="true">
+          {weekdayLabels.map((label, index) => (
+            <span key={`${label}-${index}`}>{label}</span>
+          ))}
+        </div>
+        <div className="ui-date-picker__days">
+          {cells.map((cell, cellIndex) => {
+            const day = cell.day;
+            if (day === null) {
+              return <span className="ui-date-picker__empty-day" aria-hidden="true" key={`empty-${cellIndex}`} />;
+            }
+
+            const isSelected = safeSelectedDate.year === visibleYear
+              && safeSelectedDate.month === monthIndex + 1
+              && safeSelectedDate.day === day;
+
+            return (
+              <button
+                type="button"
+                className={`ui-date-picker__day${isSelected ? ' ui-date-picker__day--selected' : ''}`}
+                aria-label={cell.label ?? undefined}
+                aria-current={isSelected ? 'date' : undefined}
+                onClick={() => chooseDate(monthIndex, day)}
+                key={day}
+              >
+                <span className="ui-date-picker__day-label">{day}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    )),
+    [
+      chooseDate,
+      monthViews,
+      safeSelectedDate.day,
+      safeSelectedDate.month,
+      safeSelectedDate.year,
+      visibleYear,
+      weekdayLabels,
+    ],
+  );
+
+  const yearButtons = useMemo(
+    () => years.map((year) => {
+      const selected = year === visibleYear;
+      return (
+        <KonstaButton
+          key={year}
+          data-year={year}
+          clear={!selected}
+          tonal={selected}
+          rounded
+          colors={{
+            textIos: 'text-white',
+            clearBgIos: 'bg-transparent active:bg-white/10',
+            tonalTextIos: 'text-white',
+            tonalBgIos: 'bg-white/14 active:bg-white/20',
+          }}
+          aria-current={selected ? 'date' : undefined}
+          onClick={() => {
+            setVisibleYear(year);
+            setYearPopoverOpened(false);
+          }}
+        >
+          {year}
+        </KonstaButton>
+      );
+    }),
+    [visibleYear, years],
+  );
+
+  useLayoutEffect(() => {
     if (!opened) {
       setYearPopoverOpened(false);
       wasOpenedRef.current = false;
+      pendingMonthScrollRef.current = false;
       return;
     }
 
@@ -76,39 +185,48 @@ export function DatePicker({
     wasOpenedRef.current = true;
     if (!justOpened) return;
 
+    pendingMonthScrollRef.current = true;
     setVisibleYear(clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
     setYearPopoverOpened(false);
+  }, [opened, safeMaxYear, safeMinYear, safeSelectedDate.year]);
 
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const scrollElement = monthScrollRef.current;
-        const monthElement = scrollElement?.querySelector<HTMLElement>(`[data-month-index="${safeSelectedDate.month - 1}"]`);
-        if (!scrollElement || !monthElement) return;
-        scrollElement.scrollTop = Math.max(0, monthElement.offsetTop - HEADER_SCROLL_OFFSET);
-      });
-    });
-  }, [opened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
+  useLayoutEffect(() => {
+    if (!opened || !pendingMonthScrollRef.current) return;
 
-  useEffect(() => {
+    const targetYear = clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear);
+    if (visibleYear !== targetYear) return;
+
+    const scrollElement = monthScrollRef.current;
+    const monthElement = scrollElement?.querySelector<HTMLElement>(`[data-month-index="${safeSelectedDate.month - 1}"]`);
+    if (!scrollElement || !monthElement) return;
+
+    scrollElement.scrollTop = Math.max(0, monthElement.offsetTop - HEADER_SCROLL_OFFSET);
+    pendingMonthScrollRef.current = false;
+  }, [
+    opened,
+    safeMaxYear,
+    safeMinYear,
+    safeSelectedDate.month,
+    safeSelectedDate.year,
+    visibleYear,
+  ]);
+
+  useLayoutEffect(() => {
     if (!yearPopoverOpened) return;
 
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const scrollElement = yearScrollRef.current;
-        const yearElement = scrollElement?.querySelector<HTMLElement>(`[data-year="${visibleYear}"]`);
-        if (!scrollElement || !yearElement) return;
+    const scrollElement = yearScrollRef.current;
+    const yearElement = scrollElement?.querySelector<HTMLElement>(`[data-year="${visibleYear}"]`);
+    if (!scrollElement || !yearElement) return;
 
-        const scrollRect = scrollElement.getBoundingClientRect();
-        const yearRect = yearElement.getBoundingClientRect();
-        const targetOffset = scrollElement.scrollTop + yearRect.top - scrollRect.top;
+    const scrollRect = scrollElement.getBoundingClientRect();
+    const yearRect = yearElement.getBoundingClientRect();
+    const targetOffset = scrollElement.scrollTop + yearRect.top - scrollRect.top;
 
-        scrollElement.scrollTop = calculateCenteredScrollTop({
-          targetOffset,
-          targetHeight: yearRect.height || yearElement.offsetHeight,
-          viewportHeight: scrollElement.clientHeight,
-          scrollHeight: scrollElement.scrollHeight,
-        });
-      });
+    scrollElement.scrollTop = calculateCenteredScrollTop({
+      targetOffset,
+      targetHeight: yearRect.height || yearElement.offsetHeight,
+      viewportHeight: scrollElement.clientHeight,
+      scrollHeight: scrollElement.scrollHeight,
     });
   }, [visibleYear, yearPopoverOpened]);
 
@@ -117,12 +235,6 @@ export function DatePicker({
   if (selectedDate.year < minYear || selectedDate.year > maxYear) {
     throw new Error('DatePicker value must be inside the configured year range');
   }
-
-  const chooseDate = (monthIndex: number, day: number) => {
-    onChange(formatLocalDate(visibleYear, monthIndex + 1, day));
-    setYearPopoverOpened(false);
-    onClose();
-  };
 
   const yearTrigger = (
     <Glass
@@ -176,43 +288,7 @@ export function DatePicker({
           />
 
           <div className="ui-date-picker__months">
-            {Array.from({ length: MONTH_COUNT }, (_, monthIndex) => (
-              <section className="ui-date-picker__month" data-month-index={monthIndex} key={monthIndex}>
-                <h2 className="ui-date-picker__month-title">
-                  {formatMonthName(visibleYear, monthIndex, locale)}
-                </h2>
-                <div className="ui-date-picker__weekdays" aria-hidden="true">
-                  {weekdayLabels.map((label, index) => (
-                    <span key={`${label}-${index}`}>{label}</span>
-                  ))}
-                </div>
-                <div className="ui-date-picker__days">
-                  {buildMonthGrid(visibleYear, monthIndex).map((cell, cellIndex) => {
-                    const day = cell.day;
-                    if (day === null) {
-                      return <span className="ui-date-picker__empty-day" aria-hidden="true" key={`empty-${cellIndex}`} />;
-                    }
-
-                    const isSelected = selectedDate.year === visibleYear
-                      && selectedDate.month === monthIndex + 1
-                      && selectedDate.day === day;
-
-                    return (
-                      <button
-                        type="button"
-                        className={`ui-date-picker__day${isSelected ? ' ui-date-picker__day--selected' : ''}`}
-                        aria-label={formatDayLabel(visibleYear, monthIndex, day, locale)}
-                        aria-current={isSelected ? 'date' : undefined}
-                        onClick={() => chooseDate(monthIndex, day)}
-                        key={day}
-                      >
-                        <span className="ui-date-picker__day-label">{day}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+            {monthSections}
           </div>
         </div>
       </Panel>
@@ -231,31 +307,7 @@ export function DatePicker({
         <div className="ui-date-picker__year-popover">
           <div className="ui-date-picker__year-scroll" ref={yearScrollRef}>
             <div className="ui-date-picker__year-grid">
-              {years.map((year) => {
-                const selected = year === visibleYear;
-                return (
-                  <KonstaButton
-                    key={year}
-                    data-year={year}
-                    clear={!selected}
-                    tonal={selected}
-                    rounded
-                    colors={{
-                      textIos: 'text-white',
-                      clearBgIos: 'bg-transparent active:bg-white/10',
-                      tonalTextIos: 'text-white',
-                      tonalBgIos: 'bg-white/14 active:bg-white/20',
-                    }}
-                    aria-current={selected ? 'date' : undefined}
-                    onClick={() => {
-                      setVisibleYear(year);
-                      setYearPopoverOpened(false);
-                    }}
-                  >
-                    {year}
-                  </KonstaButton>
-                );
-              })}
+              {yearButtons}
             </div>
           </div>
         </div>
