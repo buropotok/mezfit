@@ -163,6 +163,7 @@ export function GlassSurface({
       {...props}
       ref={rootRef}
       className={`ui-glass-surface ${className}`.trim()}
+      data-ui-glass-active={active ? 'true' : 'false'}
       data-ui-glass-map-ready={vectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
