@@ -16,7 +16,7 @@ beforeEach(() => {
   });
 
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     if (this.classList.contains('ui-glass-popover')) {
       return {
         x: 0,
@@ -95,6 +95,50 @@ describe('glass overlay primitives', () => {
     if (panel) fireEvent.transitionEnd(panel, { propertyName: 'transform' });
 
     expect(getSurface()?.dataset.uiGlassActive).toBe('false');
+  });
+
+  it('places a nested popover backdrop above the default panel surface', () => {
+    render(
+      <>
+        <GlassPanel opened role="dialog" aria-label="Panel">
+          Panel
+        </GlassPanel>
+        <GlassPopover opened target={document.body} role="dialog" aria-label="Nested popover">
+          Popover
+        </GlassPopover>
+      </>,
+    );
+
+    const panel = document.querySelector<HTMLElement>('.ui-glass-panel');
+    const backdrops = Array.from(document.querySelectorAll<HTMLElement>('.ui-glass-overlay-backdrop'));
+    const popoverBackdrop = backdrops.at(-1);
+
+    expect(panel?.style.getPropertyValue('--ui-glass-overlay-surface-z')).toBe('41');
+    expect(popoverBackdrop?.style.getPropertyValue('--ui-glass-overlay-backdrop-z')).toBe('50');
+  });
+
+  it('hides an opened popover when its target disappears', () => {
+    const target = document.createElement('button');
+    document.body.appendChild(target);
+
+    const view = render(
+      <GlassPopover opened target={target} role="dialog" aria-label="Target popover">
+        Popover
+      </GlassPopover>,
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Target popover' }).dataset.state).toBe('opened');
+
+    view.rerender(
+      <GlassPopover opened target={null} role="dialog" aria-label="Target popover">
+        Popover
+      </GlassPopover>,
+    );
+
+    const popover = screen.getByRole('dialog', { name: 'Target popover', hidden: true });
+    expect(popover.dataset.state).toBe('closed');
+    expect(popover.dataset.ready).toBe('false');
+    expect(popover.querySelector<HTMLElement>('.ui-glass-surface')?.dataset.uiGlassActive).toBe('false');
   });
 
   it('keeps popover displacement active until its exit transform finishes', () => {
