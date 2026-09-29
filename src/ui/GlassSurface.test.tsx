@@ -37,12 +37,12 @@ describe('GlassSurface', () => {
 
     expect(surface.classList.contains('ui-glass-surface')).toBe(true);
     expect(Number.parseFloat(surface.style.borderRadius)).toBeCloseTo(34.7, 1);
-    expect(surface.style.getPropertyValue('--ui-glass-tint-r')).toBe('24');
-    expect(surface.style.getPropertyValue('--ui-glass-tint-g')).toBe('24');
-    expect(surface.style.getPropertyValue('--ui-glass-tint-b')).toBe('26');
-    expect(surface.style.getPropertyValue('--ui-glass-tint-a')).toBe('0.27');
-    expect(surface.style.getPropertyValue('--ui-glass-blur')).toBe('2px');
-    expect(surface.style.getPropertyValue('--ui-glass-top-glint')).toBe('0.38');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-r')).toBe('24');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-g')).toBe('24');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('26');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-top-glint')).toBe('0.38');
     expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
     expect(surface.querySelector('feImage')).toBeNull();
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
@@ -59,9 +59,9 @@ describe('GlassSurface', () => {
     );
     const surface = view.container.firstElementChild as HTMLElement;
 
-    expect(surface.style.getPropertyValue('--ui-glass-tint-a')).toBe('0.08');
-    expect(surface.style.getPropertyValue('--ui-glass-saturation')).toBe('1.08');
-    expect(surface.style.getPropertyValue('--ui-glass-blur')).toBe('5px');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.08');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-saturation')).toBe('1.08');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('5px');
   });
 
   it('exposes material and shape overrides through the public API', () => {
@@ -100,14 +100,14 @@ describe('GlassSurface', () => {
     const surface = view.container.firstElementChild as HTMLElement;
 
     expect(Number.parseFloat(surface.style.borderRadius)).toBe(60);
-    expect(surface.style.getPropertyValue('--ui-glass-tint-r')).toBe('10');
-    expect(surface.style.getPropertyValue('--ui-glass-tint-g')).toBe('70');
-    expect(surface.style.getPropertyValue('--ui-glass-tint-b')).toBe('140');
-    expect(surface.style.getPropertyValue('--ui-glass-tint-a')).toBe('0.3');
-    expect(surface.style.getPropertyValue('--ui-glass-blur')).toBe('18px');
-    expect(surface.style.getPropertyValue('--ui-glass-saturation')).toBe('1.4');
-    expect(surface.style.getPropertyValue('--ui-glass-brightness')).toBe('1.1');
-    expect(surface.style.getPropertyValue('--ui-glass-top-glint')).toBe('0.6');
-    expect(surface.style.getPropertyValue('--ui-glass-thickness')).toBe('0.9');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-r')).toBe('10');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-g')).toBe('70');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('140');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.3');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('18px');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-saturation')).toBe('1.4');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-brightness')).toBe('1.1');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-top-glint')).toBe('0.6');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-thickness')).toBe('0.9');
   });
 });
