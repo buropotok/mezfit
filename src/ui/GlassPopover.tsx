@@ -97,7 +97,14 @@ export function GlassPopover({
     if (!opened || !target || !element || typeof window === 'undefined') return;
 
     const targetRect = target.getBoundingClientRect();
-    const popoverRect = element.getBoundingClientRect();
+    const transformedRect = element.getBoundingClientRect();
+    const popoverWidth = element.offsetWidth || transformedRect.width;
+    const popoverHeight = element.offsetHeight || transformedRect.height;
+    const computedStyle = window.getComputedStyle(element);
+    const safeLeft = Number.parseFloat(computedStyle.getPropertyValue('--ui-glass-safe-area-left')) || 0;
+    const safeRight = Number.parseFloat(computedStyle.getPropertyValue('--ui-glass-safe-area-right')) || 0;
+    const safeTop = Number.parseFloat(computedStyle.getPropertyValue('--ui-glass-safe-area-top')) || 0;
+    const safeBottom = Number.parseFloat(computedStyle.getPropertyValue('--ui-glass-safe-area-bottom')) || 0;
     const visualViewport = window.visualViewport;
     const viewportLeft = visualViewport?.offsetLeft ?? 0;
     const viewportTop = visualViewport?.offsetTop ?? 0;
@@ -105,19 +112,23 @@ export function GlassPopover({
     const viewportHeight = visualViewport?.height ?? window.innerHeight;
     const viewportRight = viewportLeft + viewportWidth;
     const viewportBottom = viewportTop + viewportHeight;
-    const availableBelow = viewportBottom - targetRect.bottom - gap - viewportPadding;
-    const availableAbove = targetRect.top - viewportTop - gap - viewportPadding;
-    const placeBelow = popoverRect.height <= availableBelow || availableBelow >= availableAbove;
+    const minLeft = viewportLeft + safeLeft + viewportPadding;
+    const minTop = viewportTop + safeTop + viewportPadding;
+    const maxRight = viewportRight - safeRight - viewportPadding;
+    const maxBottom = viewportBottom - safeBottom - viewportPadding;
+    const availableBelow = maxBottom - targetRect.bottom - gap;
+    const availableAbove = targetRect.top - minTop - gap;
+    const placeBelow = popoverHeight <= availableBelow || availableBelow >= availableAbove;
 
-    const idealLeft = targetRect.left + targetRect.width / 2 - popoverRect.width / 2;
-    const maxLeft = Math.max(viewportLeft + viewportPadding, viewportRight - popoverRect.width - viewportPadding);
-    const left = clamp(idealLeft, viewportLeft + viewportPadding, maxLeft);
+    const idealLeft = targetRect.left + targetRect.width / 2 - popoverWidth / 2;
+    const maxLeft = Math.max(minLeft, maxRight - popoverWidth);
+    const left = clamp(idealLeft, minLeft, maxLeft);
 
     const idealTop = placeBelow
       ? targetRect.bottom + gap
-      : targetRect.top - popoverRect.height - gap;
-    const maxTop = Math.max(viewportTop + viewportPadding, viewportBottom - popoverRect.height - viewportPadding);
-    const top = clamp(idealTop, viewportTop + viewportPadding, maxTop);
+      : targetRect.top - popoverHeight - gap;
+    const maxTop = Math.max(minTop, maxBottom - popoverHeight);
+    const top = clamp(idealTop, minTop, maxTop);
 
     setPosition((current) => (
       Math.abs(current.left - left) < 0.5
