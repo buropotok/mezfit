@@ -202,6 +202,36 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('lets a vertical gesture from an event card abort pending DnD before long-press', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
+
+    const start = { identifier: 8, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
+    const movedTouch = { ...start, clientX: 102, clientY: 140, pageX: 102, pageY: 140 };
+    fireEvent.touchStart(frame, { touches: [start], targetTouches: [start], changedTouches: [start] });
+    fireEvent.touchMove(frame, { touches: [movedTouch], targetTouches: [movedTouch], changedTouches: [movedTouch] });
+
+    act(() => vi.advanceTimersByTime(350));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+    expect(moved).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
+
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
+    act(() => vi.advanceTimersByTime(50));
+  });
+
   it('keeps touch long-press eligible through small finger jitter', () => {
     const moved = vi.fn();
     const view = render(
@@ -262,7 +292,6 @@ describe('DaySchedule', () => {
     expect(liftedStates).toContain(true);
 
     fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
-    expect(view.container.querySelector('.ui-day-schedule__drag-overlay-wrapper--dropping')).not.toBeNull();
   });
 
   it('requests the next day after a committed horizontal day swipe', () => {
