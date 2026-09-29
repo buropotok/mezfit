@@ -136,6 +136,31 @@ describe('DaySchedule', () => {
     expect(frame?.hasAttribute('data-schedule-no-swipe')).toBe(true);
   });
 
+  it('activates event drag on pointer movement and locks timeline scrolling until drop', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !schedule) throw new Error('Missing draggable event frame');
+
+    fireEvent.pointerDown(frame, { pointerId: 1, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 1, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 120 });
+
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
+
+    fireEvent.pointerUp(document, { pointerId: 1, pointerType: 'mouse', button: 0, clientX: 100, clientY: 120 });
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+  });
+
   it('requests the next day after a committed horizontal day swipe', () => {
     const view = renderSchedule();
     const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
