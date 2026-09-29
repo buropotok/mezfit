@@ -57,9 +57,6 @@ export function MezfitPopover(props: MezfitPopoverProps) {
     targetY,
     targetWidth,
     targetHeight,
-    ios,
-    material,
-
     glassPreset = 'modalTuned',
     glass,
     glassShape = 'auto',
@@ -88,8 +85,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   const Component = component as ElementType;
   const attrs = { ...rest };
 
-  const contextTheme = useTheme();
-  const theme = ios ? 'ios' : material ? 'material' : contextTheme;
+  const theme = useTheme();
   const colors = PopoverColors(colorsProp, canonicalDark);
   const c = PopoverClasses({ ...props, angleClassName }, colors, canonicalDark);
   const { attachEvents: attachHighlight, detachEvents: detachHighlight } = useIosHighlight({
