@@ -65,7 +65,7 @@
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-title);
   line-height: var(--ui-line-height-title);
-  font-weight: var(--ui-font-weight-regular);
+  font-weight: var(--ui-font-weight-light);
 }
 
 .ui-date-picker__weekdays,
@@ -103,7 +103,7 @@
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-body);
   line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-regular);
+  font-weight: var(--ui-font-weight-medium);
   -webkit-tap-highlight-color: transparent;
 }
 
