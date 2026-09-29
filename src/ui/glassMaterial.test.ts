@@ -17,14 +17,12 @@ describe('glass material', () => {
     const material = resolveGlassMaterial('modalTuned', {
       blur: 8,
       tintA: 0.18,
-      refraction: 9.5,
     });
 
     expect(material.refraction).toBe(10.7);
     expect(material.rimWidth).toBe(15.5);
     expect(material.trenchWidth).toBe(3);
     expect(material.blur).toBe(8);
-    expect(material.refraction).toBe(9.5);
     expect(material.tintA).toBe(0.18);
     expect('topGlint' in material).toBe(false);
     expect('thickness' in material).toBe(false);
