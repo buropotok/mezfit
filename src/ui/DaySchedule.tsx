@@ -29,7 +29,7 @@ import { addDays, currentLocalDate, dayIndex, sameWeek, startOfWeek, titleForDat
 import { WeekScene, type WeekSceneHandle } from './day-schedule/WeekScene';
 import { useScheduleClock } from './day-schedule/useScheduleClock';
 import { GlassSurface } from './GlassSurface';
-import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, UiPointerSensor, UiTouchSensor } from './dndSensors';
+import { UiSchedulePointerSensor } from './dndSensors';
 import './day-schedule.css';
 
 const WEEK_SWIPE_THRESHOLD = 0.18;
@@ -127,12 +127,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const nextDate = dayTransition && dayTransition.to > displayDate ? dayTransition.to : addDays(displayDate, 1);
 
   const eventDragSensors = useSensors(
-    useSensor(UiPointerSensor, {
-      activationConstraint: { distance: DRAG_ACTIVATION_TOLERANCE },
-    }),
-    useSensor(UiTouchSensor, {
-      activationConstraint: { delay: LONG_PRESS_DELAY_MS, tolerance: DRAG_ACTIVATION_TOLERANCE },
-    }),
+    useSensor(UiSchedulePointerSensor),
   );
   const dragEntries = useMemo(() => {
     const entries = new Map<string, { date: LocalDate; event: TEvent; compact: boolean }>();
