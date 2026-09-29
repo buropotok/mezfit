@@ -29,6 +29,14 @@ describe('glass material', () => {
     expect(MODAL_TUNED_GLASS.tintR).toBe(24);
   });
 
+  it('ignores undefined public overrides instead of corrupting preset values', () => {
+    const maybeBlur: number | undefined = undefined;
+    const material = resolveGlassMaterial('clear', { blur: maybeBlur });
+
+    expect(material.blur).toBe(2);
+    expect(Number.isFinite(material.blur)).toBe(true);
+  });
+
   it('exposes the named UI-kit glass presets', () => {
     expect(Object.keys(GLASS_PRESETS)).toEqual([
       'modalTuned',
@@ -83,5 +91,32 @@ describe('glass material', () => {
     expect(canvas.width).toBe(160);
     expect(canvas.height).toBe(88);
     expect(putImageData).toHaveBeenCalledOnce();
+  });
+
+  it('caps large displacement maps by total pixel count', () => {
+    const canvas = document.createElement('canvas');
+    const context = {
+      createImageData(width: number, height: number) {
+        return {
+          data: new Uint8ClampedArray(width * height * 4),
+          width,
+          height,
+          colorSpace: 'srgb',
+        };
+      },
+      putImageData() {},
+    } as unknown as CanvasRenderingContext2D;
+
+    vi.spyOn(canvas, 'getContext').mockReturnValue(context);
+    vi.spyOn(canvas, 'toDataURL').mockReturnValue('data:image/png;base64,glass-map-large');
+
+    buildGlassVectorMap(
+      canvas,
+      { width: 430, height: 900, radius: 40 },
+      MODAL_TUNED_GLASS,
+      2,
+    );
+
+    expect(canvas.width * canvas.height).toBeLessThanOrEqual(450_000);
   });
 });
