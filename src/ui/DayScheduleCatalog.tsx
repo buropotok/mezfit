@@ -52,16 +52,32 @@ export function DayScheduleCatalog() {
         eventsByDate={eventsByDate}
         onDateChange={next => { setLastChange(next); setDate(next); }}
         onEventMove={({ eventId, startMinutes }) => setMovedStarts(current => ({ ...current, [eventId]: startMinutes }))}
-        renderEvent={(event, state) => (
-          <List nested strong>
-            <ListItem
-              media={<Avatar name={event.title} />}
-              title={event.title}
-              subtitle={state.compact ? undefined : event.purpose}
-              after={`${String(Math.floor(event.startMinutes / 60)).padStart(2, '0')}:${String(event.startMinutes % 60).padStart(2, '0')}`}
-            />
-          </List>
-        )}
+        renderEvent={(event, state) => {
+          const time = `${String(Math.floor(event.startMinutes / 60)).padStart(2, '0')}:${String(event.startMinutes % 60).padStart(2, '0')}`;
+          if (state.lifted) {
+            return (
+              <div className="ui-kit-day-schedule__lifted-event">
+                <Avatar name={event.title} />
+                <div className="ui-kit-day-schedule__lifted-copy">
+                  <div className="ui-kit-day-schedule__lifted-title">{event.title}</div>
+                  {!state.compact && <div className="ui-kit-day-schedule__lifted-subtitle">{event.purpose}</div>}
+                </div>
+                <div className="ui-kit-day-schedule__lifted-time">{time}</div>
+              </div>
+            );
+          }
+          return (
+            <List nested strong className="ui-kit-day-schedule__event-list">
+              <ListItem
+                className="ui-kit-day-schedule__event-item"
+                media={<Avatar name={event.title} />}
+                title={event.title}
+                subtitle={state.compact ? undefined : event.purpose}
+                after={time}
+              />
+            </List>
+          );
+        }}
       />
       <DatePicker opened={pickerOpen} value={date} onChange={next => { setDate(next); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
       <div className="ui-kit-day-schedule__contract">
@@ -69,7 +85,7 @@ export function DayScheduleCatalog() {
         <dl>
           <dt>date: LocalDate</dt><dd>Выбранная дата YYYY-MM-DD. Ею управляет родитель.</dd>
           <dt>eventsByDate: Record&lt;LocalDate, Event[]&gt;</dt><dd>События по датам: id, startMinutes, durationMinutes и любые поля вашей карточки. Нужны соседние дни и дни соседних недель.</dd>
-          <dt>renderEvent(event, {'{ compact }'})</dt><dd>Рендер карточки внутри рамки события. Расписание задаёт позицию и высоту по времени. Здесь передаётся Konsta List + ListItem с Avatar; compact означает высоту меньше 72 px.</dd>
+          <dt>renderEvent(event, {'{ compact, lifted, height }'})</dt><dd>Рендер события внутри рассчитанной рамки. compact означает высоту меньше 72 px; lifted включается только для drag-overlay, чтобы карточка могла убрать свою обычную подложку, сохранив содержимое; height — фактическая высота event-frame.</dd>
           <dt>onEventMove(move)?</dt><dd>Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут и отдаёт семантический move наружу. Точное минутное время остаётся задачей редактора.</dd>
           <dt>today?: LocalDate</dt><dd>Дата для индикатора текущего времени; по умолчанию локальная дата устройства.</dd>
           <dt>className?: string</dt><dd>Класс контейнера, например для высоты под внешним Navbar. По умолчанию высота равна viewport.</dd>
@@ -79,7 +95,7 @@ export function DayScheduleCatalog() {
           <dt>onDateChange(nextDate)</dt><dd>Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</dd>
           <dt>getDayScheduleValue(date, today?)</dt><dd>Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</dd>
         </dl>
-        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 112 px/час. При long-press исходная карточка скрывается, а lifted-состояние показывает только GlassSurface той же высоты, что временной слот события. Быстрый горизонтальный жест до активации long-press остаётся свайпом дня. renderEvent не сохраняет данные; API, редактор и обработчики карточки принадлежат вызывающему экрану.</p>
+        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 112 px/час. При long-press исходная карточка скрывается, а lifted-состояние показывает GlassSurface того же фактического размера с содержимым события, но без обычной чёрной оболочки карточки. Быстрый горизонтальный жест до активации long-press остаётся свайпом дня. renderEvent не сохраняет данные; API, редактор и обработчики карточки принадлежат вызывающему экрану.</p>
         <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  onEventMove={handleEventMove}\n  eventsByDate={events}\n  renderEvent={(event, { compact }) => (\n    <ClientEvent event={event} compact={compact} />\n  )}\n/>\nconst value = getDayScheduleValue(date);\n// <Navbar title={value.title} ... />`}</pre>
       </div>
     </section>
