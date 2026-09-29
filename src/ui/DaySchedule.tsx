@@ -128,7 +128,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
   const eventDragSensors = useSensors(
     useSensor(UiPointerSensor, {
-      activationConstraint: { delay: LONG_PRESS_DELAY_MS, tolerance: DRAG_ACTIVATION_TOLERANCE },
+      activationConstraint: { distance: DRAG_ACTIVATION_TOLERANCE },
     }),
     useSensor(UiTouchSensor, {
       activationConstraint: { delay: LONG_PRESS_DELAY_MS, tolerance: DRAG_ACTIVATION_TOLERANCE },
@@ -447,7 +447,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     : `calc(-33.333333% + ${dayDrag.current}px)`;
 
   const schedule = (
-    <section className={['ui-day-schedule', className].filter(Boolean).join(' ')}>
+    <section className={['ui-day-schedule', activeEventDragId ? 'ui-day-schedule--event-dragging' : '', className].filter(Boolean).join(' ')}>
       <div
         className="ui-day-schedule__week-viewport"
         ref={weekViewportRef}
