@@ -13,6 +13,7 @@ import {
 } from 'react';
 import {
   buildGlassVectorMap,
+  resolveGlassFilterRegion,
   resolveGlassMaterial,
   resolveGlassRadius,
   type GlassGeometry,
@@ -207,7 +208,9 @@ export function GlassSurface({
   };
 
   const radius = geometry?.radius ?? 0;
-  const filterPadding = material.filterPadding;
+  const filterRegion = geometry
+    ? resolveGlassFilterRegion(geometry, material)
+    : { paddingX: material.filterPadding, paddingY: material.filterPadding };
   const glassStyle: GlassCssProperties = {
     ...style,
     ...(hostMode && shape === 'auto' ? {} : { borderRadius: radius || undefined }),
@@ -241,10 +244,10 @@ export function GlassSurface({
         >
           <filter
             id={filterId}
-            x={`${-filterPadding}%`}
-            y={`${-filterPadding}%`}
-            width={`${100 + filterPadding * 2}%`}
-            height={`${100 + filterPadding * 2}%`}
+            x={`${-filterRegion.paddingX}%`}
+            y={`${-filterRegion.paddingY}%`}
+            width={`${100 + filterRegion.paddingX * 2}%`}
+            height={`${100 + filterRegion.paddingY * 2}%`}
             colorInterpolationFilters="sRGB"
           >
             <feImage

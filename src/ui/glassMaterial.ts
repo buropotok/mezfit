@@ -32,6 +32,32 @@ export type GlassGeometry = {
   radius: number;
 };
 
+export type GlassFilterRegion = {
+  paddingX: number;
+  paddingY: number;
+};
+
+export function resolveGlassFilterRegion(
+  geometry: Pick<GlassGeometry, 'width' | 'height'>,
+  material: Pick<GlassMaterial, 'blur' | 'refraction' | 'rgbSpread' | 'filterPadding'>,
+): GlassFilterRegion {
+  const width = Math.max(1, geometry.width);
+  const height = Math.max(1, geometry.height);
+
+  // Keep the approved filterPadding as the hard ceiling, but avoid applying
+  // that percentage to large surfaces when the optical displacement only
+  // needs a small number of CSS pixels around the host bounds.
+  const requiredExtentPx = material.refraction
+    + material.rgbSpread
+    + material.blur * 3
+    + 2;
+
+  return {
+    paddingX: Math.min(material.filterPadding, (requiredExtentPx / width) * 100),
+    paddingY: Math.min(material.filterPadding, (requiredExtentPx / height) * 100),
+  };
+}
+
 export const MODAL_TUNED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   tintR: 24,
   tintG: 24,
