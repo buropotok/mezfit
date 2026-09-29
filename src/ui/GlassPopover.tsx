@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -7,6 +8,7 @@ import {
   type HTMLAttributes,
   type MouseEventHandler,
   type ReactNode,
+  type TransitionEventHandler,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { GlassSurface } from './GlassSurface';
@@ -55,21 +57,32 @@ export function GlassPopover({
   surfaceClassName = '',
   contentClassName = '',
   style,
+  onTransitionEnd,
   ...props
 }: GlassPopoverProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [glassActive, setGlassActive] = useState(opened);
   const [position, setPosition] = useState<GlassPopoverPosition>({
     left: 0,
     top: 0,
     ready: false,
   });
 
-  const updatePosition = useCallback(() => {
-    const element = containerRef.current;
-    if (!opened || !target || !element || typeof window === 'undefined') {
-      setPosition((current) => current.ready ? { ...current, ready: false } : current);
+  useEffect(() => {
+    if (opened) {
+      setGlassActive(true);
       return;
     }
+
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setGlassActive(false);
+      setPosition((current) => current.ready ? { ...current, ready: false } : current);
+    }
+  }, [opened]);
+
+  const updatePosition = useCallback(() => {
+    const element = containerRef.current;
+    if (!opened || !target || !element || typeof window === 'undefined') return;
 
     const targetRect = target.getBoundingClientRect();
     const popoverRect = element.getBoundingClientRect();
@@ -104,10 +117,7 @@ export function GlassPopover({
   }, [gap, opened, target, viewportPadding]);
 
   useLayoutEffect(() => {
-    if (!opened || !target || typeof window === 'undefined') {
-      setPosition((current) => current.ready ? { ...current, ready: false } : current);
-      return undefined;
-    }
+    if (!opened || !target || typeof window === 'undefined') return undefined;
 
     updatePosition();
 
@@ -137,6 +147,13 @@ export function GlassPopover({
   if (typeof document === 'undefined') return null;
 
   const state = opened ? 'opened' : 'closed';
+  const handleTransitionEnd: TransitionEventHandler<HTMLDivElement> = (event) => {
+    onTransitionEnd?.(event);
+    if (!opened && event.target === event.currentTarget && event.propertyName === 'transform') {
+      setGlassActive(false);
+      setPosition((current) => current.ready ? { ...current, ready: false } : current);
+    }
+  };
   const positionedStyle: CSSProperties = {
     ...style,
     left: position.left,
@@ -160,9 +177,10 @@ export function GlassPopover({
         data-state={state}
         data-ready={position.ready ? 'true' : 'false'}
         style={positionedStyle}
+        onTransitionEnd={handleTransitionEnd}
       >
         <GlassSurface
-          active={opened && position.ready}
+          active={glassActive && position.ready}
           preset={preset}
           glass={glass}
           shape={shape}
