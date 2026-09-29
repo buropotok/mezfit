@@ -211,9 +211,12 @@ export const GLASS_PRESETS = Object.freeze({
 
 export type GlassPresetName = keyof typeof GLASS_PRESETS;
 
-export function resolveGlassMaterial(overrides?: GlassMaterialOverrides): GlassMaterial {
+export function resolveGlassMaterial(
+  preset: GlassPresetName = 'modalTuned',
+  overrides?: GlassMaterialOverrides,
+): GlassMaterial {
   return {
-    ...MODAL_TUNED_GLASS,
+    ...GLASS_PRESETS[preset],
     ...overrides,
   };
 }
