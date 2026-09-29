@@ -48,6 +48,22 @@ describe('GlassSurface', () => {
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
   });
 
+  it('applies a named preset before public material overrides', () => {
+    const view = render(
+      <GlassSurface
+        preset="clear"
+        glass={{ blur: 5 }}
+      >
+        Clear
+      </GlassSurface>,
+    );
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.style.getPropertyValue('--ui-glass-tint-a')).toBe('0.08');
+    expect(surface.style.getPropertyValue('--ui-glass-saturation')).toBe('1.08');
+    expect(surface.style.getPropertyValue('--ui-glass-blur')).toBe('5px');
+  });
+
   it('exposes material and shape overrides through the public API', () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0,
