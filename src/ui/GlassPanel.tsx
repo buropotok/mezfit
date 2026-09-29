@@ -1,5 +1,5 @@
 import {
-  useEffect,
+  useLayoutEffect,
   useState,
   type CSSProperties,
   type HTMLAttributes,
@@ -53,7 +53,7 @@ export function GlassPanel({
 }: GlassPanelProps) {
   const [glassActive, setGlassActive] = useState(opened);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (opened) {
       setGlassActive(true);
       return;
