@@ -18,12 +18,13 @@ const dropdownOptions: DropdownOption[] = [
 ];
 const badgeColors: BadgeColor[] = ['green', 'yellow', 'blue', 'red', 'orange', 'purple', 'cyan', 'gray'];
 const glassPresets: readonly { name: GlassPresetName; label: string; description: string }[] = [
-  { name: 'modalTuned', label: 'Modal Tuned', description: 'Default · approved baseline' },
+  { name: 'modalTuned', label: 'Modal Tuned', description: 'Default · approved prototype' },
+  { name: 'modal', label: 'Modal', description: 'Soft modal variant from prototype' },
   { name: 'lens', label: 'Lens', description: 'Low blur · optical edge' },
   { name: 'clear', label: 'Clear', description: 'Light tint · restrained refraction' },
   { name: 'frosted', label: 'Frosted', description: 'High blur · soft material' },
   { name: 'blue', label: 'Blue', description: 'Tinted · saturated glass' },
-  { name: 'smoked', label: 'Smoked', description: 'Dark tint · heavier depth' },
+  { name: 'smoked', label: 'Smoked', description: 'Dark tint · stronger shadow' },
 ];
 
 const buttonSlots: TypographySlot[] = [{ id: 'labels', label: 'Подписи', defaultRole: 'body', selector: '.ui-button', weightOverride: 500 }];
