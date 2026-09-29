@@ -8,7 +8,11 @@ function blocksDrag(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
   if (target.closest('[data-no-dnd],a,input,select,textarea')) return true;
   const button = target.closest('button,[role="button"]');
-  return Boolean(button && !button.classList.contains('ui-list-item'));
+  return Boolean(
+    button
+    && !button.classList.contains('ui-list-item')
+    && !button.hasAttribute('data-ui-dnd-handle')
+  );
 }
 
 export class UiPointerSensor extends PointerSensor {
