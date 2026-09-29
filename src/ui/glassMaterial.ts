@@ -266,6 +266,9 @@ export function buildGlassVectorMap(
   const halfH = height / 2;
   const image = context.createImageData(bitmapWidth, bitmapHeight);
   const pixels = image.data;
+  const epsilon = 0.35;
+  const bandPeak = Math.max(0.001, material.rimWidth * 0.42);
+  const bandEnd = Math.max(bandPeak + 0.001, material.rimWidth + material.trenchWidth);
 
   for (let j = 0; j < bitmapHeight; j += 1) {
     const y = (j + 0.5) / sy - halfH;
@@ -277,22 +280,20 @@ export function buildGlassVectorMap(
       let vx = 0;
       let vy = 0;
 
-      if (distanceInside > material.neutralEdge) {
-        const epsilon = 0.35;
+      const local = distanceInside - material.neutralEdge;
+
+      if (local > 0 && local < bandEnd) {
         const gx = roundedRectSdf(x + epsilon, y, halfW, halfH, radius)
           - roundedRectSdf(x - epsilon, y, halfW, halfH, radius);
         const gy = roundedRectSdf(x, y + epsilon, halfW, halfH, radius)
           - roundedRectSdf(x, y - epsilon, halfW, halfH, radius);
         const length = Math.hypot(gx, gy) || 1;
-        const local = distanceInside - material.neutralEdge;
-        const bandPeak = Math.max(0.001, material.rimWidth * 0.42);
-        const bandEnd = Math.max(bandPeak + 0.001, material.rimWidth + material.trenchWidth);
         let magnitude = 0;
 
         if (local < bandPeak) {
           const progress = local / bandPeak;
           magnitude = Math.sin(progress * Math.PI * 0.5) * material.rimStrength;
-        } else if (local < bandEnd) {
+        } else {
           const progress = (local - bandPeak) / Math.max(0.001, bandEnd - bandPeak);
           magnitude = Math.cos(progress * Math.PI * 0.5) * material.rimStrength;
           magnitude -= Math.sin(progress * Math.PI) * material.trenchStrength * 0.5;
