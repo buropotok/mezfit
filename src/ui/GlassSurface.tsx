@@ -6,7 +6,10 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ElementType,
   type HTMLAttributes,
+  type ReactNode,
+  type Ref,
 } from 'react';
 import {
   buildGlassVectorMap,
@@ -33,24 +36,31 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-filter': string;
 };
 
-export type GlassSurfaceProps = HTMLAttributes<HTMLDivElement> & {
+export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & {
+  component?: ElementType;
+  ref?: Ref<HTMLElement>;
   preset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
   contentClassName?: string;
+  wrapContent?: boolean;
+  children?: ReactNode;
 };
 
 export function GlassSurface({
+  component = 'div',
+  ref,
   preset = 'modalTuned',
   glass,
   shape = 'auto',
   className = '',
   contentClassName = '',
+  wrapContent = true,
   style,
   children,
   ...props
 }: GlassSurfaceProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const workCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
@@ -130,6 +140,13 @@ export function GlassSurface({
     material.trenchStrength,
   ]);
 
+  const Component = component;
+  const setRootRef = (element: HTMLElement | null) => {
+    rootRef.current = element;
+    if (typeof ref === 'function') ref(element);
+    else if (ref) ref.current = element;
+  };
+
   const radius = geometry?.radius ?? 0;
   const filterPadding = material.filterPadding;
   const glassStyle: GlassCssProperties = {
@@ -149,9 +166,9 @@ export function GlassSurface({
   };
 
   return (
-    <div
+    <Component
       {...props}
-      ref={rootRef}
+      ref={setRootRef}
       className={`ui-glass-surface ${className}`.trim()}
       data-ui-glass-map-ready={vectorMapHref ? 'true' : 'false'}
       style={glassStyle}
@@ -221,7 +238,9 @@ export function GlassSurface({
           </filter>
         </svg>
       ) : null}
-      <div className={`ui-glass-surface__content ${contentClassName}`.trim()}>{children}</div>
-    </div>
+      {wrapContent ? (
+        <div className={`ui-glass-surface__content ${contentClassName}`.trim()}>{children}</div>
+      ) : children}
+    </Component>
   );
 }
