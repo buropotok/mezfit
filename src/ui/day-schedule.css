@@ -126,7 +126,7 @@
   right: 10px;
   min-width: 0;
   overflow: hidden;
-  touch-action: pan-y;
+  touch-action: manipulation;
 }
 
 .ui-day-schedule__event-frame--dragging {
