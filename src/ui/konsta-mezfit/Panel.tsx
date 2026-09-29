@@ -1,3 +1,4 @@
+// Konsta 5.4.0 Mezfit edition: preserve Panel mechanics; replace only the iOS floating Glass renderer.
 import {
   useRef,
   type ComponentProps,
