@@ -23,6 +23,22 @@ export type MezfitPopoverProps = ComponentProps<typeof KonstaPopover> & {
   glassShape?: GlassShape;
 };
 
+type MezfitPopoverPosition = {
+  set: boolean;
+  angleTop?: string | number;
+  angleLeft?: string | number;
+  anglePosition: 'top' | 'bottom' | 'left' | 'right';
+  popoverTop: string | number;
+  popoverLeft: string | number;
+  popoverPosition:
+    | 'top-left'
+    | 'top-right'
+    | 'middle-left'
+    | 'middle-right'
+    | 'bottom-left'
+    | 'bottom-right';
+};
+
 const canonicalDark = (classNames: string) => classNames;
 
 export function MezfitPopover(props: MezfitPopoverProps) {
@@ -55,13 +71,13 @@ export function MezfitPopover(props: MezfitPopoverProps) {
 
   const elRef = useRef<HTMLElement | null>(null);
   const angleElRef = useRef<HTMLDivElement | null>(null);
-  const [positions, setPositions] = useState({
+  const [positions, setPositions] = useState<MezfitPopoverPosition>({
     set: false,
-    angleTop: 0 as string | number | undefined,
-    angleLeft: 0 as string | number | undefined,
+    angleTop: 0,
+    angleLeft: 0,
     anglePosition: 'bottom',
-    popoverTop: 0 as string | number,
-    popoverLeft: 0 as string | number,
+    popoverTop: 0,
+    popoverLeft: 0,
     popoverPosition: 'top-left',
   });
 
