@@ -169,7 +169,7 @@ export function GlassSurface({
     <Component
       {...props}
       ref={setRootRef}
-      className={`ui-glass-surface ${className}`.trim()}
+      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'} ${className}`.trim()}
       data-ui-glass-map-ready={vectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
