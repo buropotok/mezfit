@@ -29,7 +29,7 @@ import { addDays, currentLocalDate, dayIndex, sameWeek, startOfWeek, titleForDat
 import { WeekScene, type WeekSceneHandle } from './day-schedule/WeekScene';
 import { useScheduleClock } from './day-schedule/useScheduleClock';
 import { GlassSurface } from './GlassSurface';
-import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, UiPointerSensor, UiTouchSensor } from './dndSensors';
+import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, UiMouseSensor, UiTouchSensor } from './dndSensors';
 import './day-schedule.css';
 
 const WEEK_SWIPE_THRESHOLD = 0.18;
@@ -127,7 +127,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const nextDate = dayTransition && dayTransition.to > displayDate ? dayTransition.to : addDays(displayDate, 1);
 
   const eventDragSensors = useSensors(
-    useSensor(UiPointerSensor, {
+    useSensor(UiMouseSensor, {
       activationConstraint: { distance: DRAG_ACTIVATION_TOLERANCE },
     }),
     useSensor(UiTouchSensor, {
