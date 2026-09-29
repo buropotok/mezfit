@@ -33,6 +33,22 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-caustic': string;
   '--ui-glass-depth-shadow': string;
   '--ui-glass-top-glint': string;
+  '--ui-glass-caustic-42': string;
+  '--ui-glass-caustic-18': string;
+  '--ui-glass-caustic-06': string;
+  '--ui-glass-caustic-28': string;
+  '--ui-glass-depth-shadow-18': string;
+  '--ui-glass-depth-shadow-10': string;
+  '--ui-glass-depth-shadow-04': string;
+  '--ui-glass-depth-shadow-08': string;
+  '--ui-glass-depth-shadow-22': string;
+  '--ui-glass-depth-shadow-12': string;
+  '--ui-glass-thickness-08': string;
+  '--ui-glass-thickness-62': string;
+  '--ui-glass-top-glint-112': string;
+  '--ui-glass-top-glint-68': string;
+  '--ui-glass-top-glint-22': string;
+  '--ui-glass-top-glint-14': string;
   '--ui-glass-filter': string;
 };
 
@@ -152,6 +168,22 @@ export function GlassSurface({
     '--ui-glass-caustic': String(material.caustic),
     '--ui-glass-depth-shadow': String(material.depthShadow),
     '--ui-glass-top-glint': String(material.topGlint),
+    '--ui-glass-caustic-42': String(material.caustic * 0.42),
+    '--ui-glass-caustic-18': String(material.caustic * 0.18),
+    '--ui-glass-caustic-06': String(material.caustic * 0.06),
+    '--ui-glass-caustic-28': String(material.caustic * 0.28),
+    '--ui-glass-depth-shadow-18': String(material.depthShadow * 0.18),
+    '--ui-glass-depth-shadow-10': String(material.depthShadow * 0.10),
+    '--ui-glass-depth-shadow-04': String(material.depthShadow * 0.04),
+    '--ui-glass-depth-shadow-08': String(material.depthShadow * 0.08),
+    '--ui-glass-depth-shadow-22': String(material.depthShadow * 0.22),
+    '--ui-glass-depth-shadow-12': String(material.depthShadow * 0.12),
+    '--ui-glass-thickness-08': String(material.thickness * 0.08),
+    '--ui-glass-thickness-62': String(material.thickness * 0.62),
+    '--ui-glass-top-glint-112': String(material.topGlint * 1.12),
+    '--ui-glass-top-glint-68': String(material.topGlint * 0.68),
+    '--ui-glass-top-glint-22': String(material.topGlint * 0.22),
+    '--ui-glass-top-glint-14': String(material.topGlint * 0.14),
     '--ui-glass-filter': `url(#${filterId})`,
   };
 
