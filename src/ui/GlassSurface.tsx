@@ -78,7 +78,8 @@ export function GlassSurface({
       const rect = element.getBoundingClientRect();
       const width = Math.max(1, rect.width);
       const height = Math.max(1, rect.height);
-      const computedRadius = hostMode
+      const preserveHostRadius = hostMode && shape === 'auto';
+      const computedRadius = preserveHostRadius
         ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element).borderTopLeftRadius ?? '')
         : Number.NaN;
       const radius = Number.isFinite(computedRadius)
@@ -157,7 +158,7 @@ export function GlassSurface({
   const filterPadding = material.filterPadding;
   const glassStyle: GlassCssProperties = {
     ...style,
-    ...(hostMode ? {} : { borderRadius: radius || undefined }),
+    ...(hostMode && shape === 'auto' ? {} : { borderRadius: radius || undefined }),
     '--ui-glass-surface-tint-r': String(material.tintR),
     '--ui-glass-surface-tint-g': String(material.tintG),
     '--ui-glass-surface-tint-b': String(material.tintB),
