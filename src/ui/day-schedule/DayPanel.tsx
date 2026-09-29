@@ -76,7 +76,7 @@ function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
   return (
     <div
       ref={setNodeRef}
-      className={`ui-day-schedule__event-frame${isDragging ? ' ui-day-schedule__event-frame--dragging' : ''}`}
+      className={`ui-day-schedule__event-frame ui-day-schedule__event-frame--draggable${isDragging ? ' ui-day-schedule__event-frame--dragging' : ''}`}
       style={{ top, height }}
       data-event-id={event.id}
       data-ui-dnd-handle=""
