@@ -1,77 +1,84 @@
 import { useMemo, useState } from 'react';
+import { Button, List, ListItem } from 'konsta/react';
 import { Avatar } from './primitives';
-import { DaySchedule, type DayScheduleEvent } from './DaySchedule';
-import type { LocalDate } from './date-picker/DatePicker';
+import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
+import { DatePicker, type LocalDate } from './date-picker/DatePicker';
+import { addDays, currentLocalDate, dayIndex } from './day-schedule/dateMath';
 import './DayScheduleCatalog.css';
 
-type DemoEvent = DayScheduleEvent & {
-  title: string;
-  meta: string;
-  avatar: string;
-};
+type DemoEvent = DayScheduleEvent & { title: string; purpose: string };
+const names = ['Иван Петров', 'Анна Смирнова', 'Олег Морозов', 'Мария Орлова', 'Елена Волкова', 'Дмитрий Соколов', 'Ирина Белова'];
 
-const demoEvents: Readonly<Record<LocalDate, readonly DemoEvent[]>> = {
-  '2026-09-27': [
-    { id: 'sun-1', startMinutes: 660, durationMinutes: 60, title: 'Мария Орлова', meta: 'Персональная', avatar: 'МО' },
-  ],
-  '2026-09-28': [
-    { id: 'mon-1', startMinutes: 570, durationMinutes: 60, title: 'Иван Петров', meta: 'Персональная', avatar: 'ИП' },
-    { id: 'mon-2', startMinutes: 720, durationMinutes: 90, title: 'Иван + Анна', meta: 'Мини-группа · 2 участника', avatar: '2' },
-    { id: 'mon-3', startMinutes: 975, durationMinutes: 45, title: 'Анна Смирнова', meta: 'Функциональная', avatar: 'АС' },
-  ],
-  '2026-09-29': [
-    { id: 'tue-1', startMinutes: 630, durationMinutes: 60, title: 'Елена Волкова', meta: 'Персональная', avatar: 'ЕВ' },
-  ],
-  '2026-09-30': [],
-  '2026-10-01': [
-    { id: 'thu-1', startMinutes: 540, durationMinutes: 45, title: 'Олег Морозов', meta: 'Кардио', avatar: 'ОМ' },
-    { id: 'thu-2', startMinutes: 780, durationMinutes: 60, title: 'Наталья + Ирина', meta: 'Мини-группа · 2 участника', avatar: '2' },
-  ],
-  '2026-10-02': [
-    { id: 'fri-1', startMinutes: 600, durationMinutes: 90, title: 'Алексей Романов', meta: 'Силовая', avatar: 'АР' },
-    { id: 'fri-2', startMinutes: 870, durationMinutes: 60, title: 'Мария Орлова', meta: 'Персональная', avatar: 'МО' },
-  ],
-  '2026-10-03': [
-    { id: 'sat-1', startMinutes: 720, durationMinutes: 60, title: 'Иван + Анна + Олег', meta: 'Мини-группа · 3 участника', avatar: '3' },
-  ],
-  '2026-10-04': [
-    { id: 'sun-next-1', startMinutes: 780, durationMinutes: 60, title: 'Анна Смирнова', meta: 'Мобилити', avatar: 'АС' },
-  ],
-  '2026-10-05': [
-    { id: 'mon-next-1', startMinutes: 600, durationMinutes: 60, title: 'Дмитрий Соколов', meta: 'Персональная', avatar: 'ДС' },
-  ],
-};
+/** Fixtures for every browsed date, not a production data source. */
+function demoDay(date: LocalDate): DemoEvent[] {
+  const index = dayIndex(date);
+  return [
+    { id: `${date}-morning`, startMinutes: 480 + index * 15, durationMinutes: 60, title: names[index], purpose: `Персональная · ${date}` },
+    { id: `${date}-midday`, startMinutes: 660 + index * 15, durationMinutes: 90, title: names[(index + 2) % 7], purpose: `Силовая · ${date}` },
+  ];
+}
 
 export function DayScheduleCatalog() {
-  const [date, setDate] = useState<LocalDate>('2026-09-28');
-  const [message, setMessage] = useState('');
-  const eventsByDate = useMemo(() => demoEvents, []);
+  const [date, setDate] = useState<LocalDate>(() => currentLocalDate());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [empty, setEmpty] = useState(false);
+  const [lastChange, setLastChange] = useState<LocalDate | null>(null);
+  const value = getDayScheduleValue(date);
+  const eventsByDate = useMemo(() => Object.fromEntries(
+    Array.from({ length: 15 }, (_, index) => {
+      const day = addDays(date, index - 7);
+      return [day, empty ? [] : demoDay(day)];
+    }),
+  ), [date, empty]);
 
   return (
-    <section className="ui-kit-day-schedule" aria-label="Day Schedule prototype">
+    <section className="ui-kit-day-schedule" aria-label="DaySchedule">
+      <h2>DaySchedule</h2>
+      <p>Только неделя и сетка дня. Navbar и его действия принадлежат экрану приложения.</p>
+      <div className="ui-kit-day-schedule__controls">
+        <Button onClick={() => setPickerOpen(true)}>Выбрать дату</Button>
+        <Button onClick={() => setEmpty(previous => !previous)}>{empty ? 'Показать события' : 'Пустой день'}</Button>
+      </div>
+      <div className="ui-kit-day-schedule__value" aria-live="polite">
+        <div>value.date: {value.date}</div>
+        <div>value.title для Navbar: {value.title}</div>
+        <div>value.weekdayIndex: {value.weekdayIndex} · value.isToday: {String(value.isToday)}</div>
+        <div>Последний onDateChange: {lastChange ?? 'ещё не вызван'}</div>
+      </div>
       <DaySchedule
+        className="ui-kit-day-schedule__preview"
         date={date}
-        today="2026-09-28"
         eventsByDate={eventsByDate}
-        onDateChange={setDate}
-        onBack={() => setMessage('Назад')}
-        onOpenDatePicker={() => setMessage('Открыть DatePicker')}
-        onAddEvent={() => setMessage('Добавить тренировку')}
+        onDateChange={next => { setLastChange(next); setDate(next); }}
         renderEvent={(event, state) => (
-          <div className={`ui-kit-day-schedule__event${state.compact ? ' ui-kit-day-schedule__event--compact' : ''}`}>
-            <Avatar name={event.title} />
-            <div className="ui-kit-day-schedule__event-copy">
-              <strong>{event.title}</strong>
-              {!state.compact && <span>{event.meta}</span>}
-            </div>
-            <span className="ui-kit-day-schedule__event-time">
-              {String(Math.floor(event.startMinutes / 60)).padStart(2, '0')}:{String(event.startMinutes % 60).padStart(2, '0')}
-            </span>
-          </div>
+          <List nested strong>
+            <ListItem
+              media={<Avatar name={event.title} />}
+              title={event.title}
+              subtitle={state.compact ? undefined : event.purpose}
+              after={`${String(Math.floor(event.startMinutes / 60)).padStart(2, '0')}:${String(event.startMinutes % 60).padStart(2, '0')}`}
+            />
+          </List>
         )}
       />
-      {message && <div className="ui-kit-day-schedule__message">{message}</div>}
+      <DatePicker opened={pickerOpen} value={date} onChange={next => { setDate(next); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
+      <div className="ui-kit-day-schedule__contract">
+        <h3>Входные параметры</h3>
+        <dl>
+          <dt>date: LocalDate</dt><dd>Выбранная дата YYYY-MM-DD. Ею управляет родитель.</dd>
+          <dt>eventsByDate: Record&lt;LocalDate, Event[]&gt;</dt><dd>События по датам: id, startMinutes, durationMinutes и любые поля вашей карточки. Нужны соседние дни и дни соседних недель.</dd>
+          <dt>renderEvent(event, {'{ compact }'})</dt><dd>Рендер карточки внутри рамки события. Расписание задаёт позицию и высоту по времени. Здесь передаётся Konsta List + ListItem с Avatar; compact означает высоту меньше 72 px.</dd>
+          <dt>today?: LocalDate</dt><dd>Дата для индикатора текущего времени; по умолчанию локальная дата устройства.</dd>
+          <dt>className?: string</dt><dd>Класс контейнера, например для высоты под внешним Navbar. По умолчанию высота равна viewport.</dd>
+        </dl>
+        <h3>Выходные параметры</h3>
+        <dl>
+          <dt>onDateChange(nextDate)</dt><dd>Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</dd>
+          <dt>getDayScheduleValue(date, today?)</dt><dd>Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</dd>
+        </dl>
+        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 112 px/час. renderEvent не сохраняет данные; API, редактор и обработчики карточки принадлежат вызывающему экрану.</p>
+        <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  eventsByDate={events}\n  renderEvent={(event, { compact }) => (\n    <ClientEvent event={event} compact={compact} />\n  )}\n/>\nconst value = getDayScheduleValue(date);\n// <Navbar title={value.title} ... />`}</pre>
+      </div>
     </section>
   );
 }
-

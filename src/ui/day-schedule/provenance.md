@@ -7,7 +7,10 @@ Sol's DaySchedule snapshot at `5df001b48a136c5a6d21e156a747422281105723`.
 ## Public boundary
 
 The caller owns the controlled `date` (`YYYY-MM-DD`), `eventsByDate`, event-card
-presentation through `renderEvent`, app actions and persistence. Accept date
+presentation through `renderEvent`, navbar/actions and persistence. The component
+renders no navbar. `getDayScheduleValue(date, today?)` derives the public
+`{ date, title, weekdayIndex, isToday }` value for the external navbar;
+`onDateChange` emits only the requested LocalDate, keeping date ownership singular. Accept date
 requests by setting `date` in `onDateChange`; rejected requests return to the
 caller's selection. A later external date update always wins and cancels pending
 paging. A request is not a server mutation and should not await network I/O.
@@ -29,7 +32,11 @@ move/resize, the event editor and backend/API integration are outside this slice
 - DaySchedule alone recognizes week touch gestures; the private optical runtime
   has no pointer/click handlers and cannot emit date changes.
 - A week tap calls the typed optical command and requests one date change.
-- Horizontal week dragging pages the entire seven-slot container.
+  Once accepted, an outgoing/incoming panel pair animates for 300 ms, including
+  nonadjacent dates. The visual snapshot never becomes authoritative date state.
+- Horizontal week dragging pages the entire seven-slot container and day panel.
+  Each page has 12 px gutters inside a clipped viewport; adjacent glass surfaces
+  cannot leak into the resting page. The timeline begins below the week row.
 - Horizontal day dragging pages the adjacent day; vertical touch remains scroll.
 - Sunday/Monday crossings page day and week together over 300 ms.
 - Incoming weeks are neutral. After the controlled date is committed, wait 50 ms,
@@ -39,12 +46,16 @@ move/resize, the event editor and backend/API integration are outside this slice
 - Pointer moves update only this component's track transforms, not event content.
 - Interactive descendants and `data-schedule-no-swipe` regions opt out of day
   paging, preserving event controls. A completed drag suppresses the trailing tap.
+- A bubbled lostpointercapture from a child is not loss of the viewport capture.
+  Only cancellation/loss on the owning viewport aborts its gesture.
 - Unmount cancels schedule timers, animation frames and optical resources.
 
 WeekScene owns its ShadowRoot and typed optical controller. The optical CSS and
 runtime are private to DaySchedule, not imports of another component's private
-implementation. Konsta Navbar/Link retain their stock presentation; no private
-Konsta selectors are overridden.
+implementation. The catalog uses stock Konsta List/ListItem to demonstrate
+renderEvent and keeps DatePicker outside the scheduler. No private Konsta
+selectors are overridden. Catalog fixtures cover any browsed date, including
+neighbour weeks; these synthetic fixtures are not a production query strategy.
 
 ## Verification
 
