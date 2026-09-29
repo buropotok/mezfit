@@ -24,6 +24,11 @@ type GlassPopoverPosition = {
   ready: boolean;
 };
 
+type GlassPopoverStyle = CSSProperties & {
+  '--ui-glass-overlay-backdrop-z'?: string;
+  '--ui-glass-overlay-surface-z'?: string;
+};
+
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 export type GlassPopoverProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> & {
@@ -34,6 +39,7 @@ export type GlassPopoverProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'>
   onBackdropClick?: MouseEventHandler<HTMLDivElement>;
   gap?: number;
   viewportPadding?: number;
+  layer?: number;
   preset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
@@ -49,6 +55,7 @@ export function GlassPopover({
   onBackdropClick,
   gap = 8,
   viewportPadding = 12,
+  layer = 50,
   preset = 'modalTuned',
   glass,
   shape = 'auto',
@@ -68,8 +75,14 @@ export function GlassPopover({
   });
 
   useLayoutEffect(() => {
-    if (opened) {
+    if (opened && target) {
       setGlassActive(true);
+      return;
+    }
+
+    if (opened && !target) {
+      setGlassActive(false);
+      setPosition((current) => current.ready ? { ...current, ready: false } : current);
       return;
     }
 
@@ -77,7 +90,7 @@ export function GlassPopover({
       setGlassActive(false);
       setPosition((current) => current.ready ? { ...current, ready: false } : current);
     }
-  }, [opened]);
+  }, [opened, target]);
 
   const updatePosition = useCallback(() => {
     const element = containerRef.current;
@@ -145,7 +158,7 @@ export function GlassPopover({
 
   if (typeof document === 'undefined') return null;
 
-  const state = opened ? 'opened' : 'closed';
+  const state = opened && target ? 'opened' : 'closed';
   const handleTransitionEnd: TransitionEventHandler<HTMLDivElement> = (event) => {
     onTransitionEnd?.(event);
     if (!opened && event.target === event.currentTarget && event.propertyName === 'transform') {
@@ -153,10 +166,12 @@ export function GlassPopover({
       setPosition((current) => current.ready ? { ...current, ready: false } : current);
     }
   };
-  const positionedStyle: CSSProperties = {
+  const positionedStyle: GlassPopoverStyle = {
     ...style,
     left: position.left,
     top: position.top,
+    '--ui-glass-overlay-backdrop-z': String(layer),
+    '--ui-glass-overlay-surface-z': String(layer + 1),
   };
 
   return createPortal(
@@ -166,6 +181,9 @@ export function GlassPopover({
           className="ui-glass-overlay-backdrop"
           data-state={state}
           aria-hidden="true"
+          style={{
+            '--ui-glass-overlay-backdrop-z': String(layer),
+          } as CSSProperties}
           onClick={opened ? onBackdropClick : undefined}
         />
       ) : null}
