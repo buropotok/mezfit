@@ -32,7 +32,7 @@ async function bootstrap(): Promise<void> {
     const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }, { LiquidGlassTextOnlyCatalog }, { DayScheduleCatalog }, { LiquidGlassTabsNoFabCatalog }] = await Promise.all([
       import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'), import('./ui/LiquidGlassTextOnlyCatalog'), import('./ui/DayScheduleCatalog'), import('./ui/LiquidGlassTabsNoFabCatalog'),
     ]);
-    content = <><UiKitPage /><ThemeVariantsCatalog /><LiquidGlassIconOnlyCatalog /><LiquidGlassTextOnlyCatalog /><DayScheduleCatalog /><LiquidGlassTabsNoFabCatalog /></>;
+    content = <><UiKitPage /><ThemeVariantsCatalog /><LiquidGlassIconOnlyCatalog /><LiquidGlassTabsNoFabCatalog /><LiquidGlassTextOnlyCatalog /><DayScheduleCatalog /></>;
   }
   createRoot(root).render(
     <React.StrictMode>
