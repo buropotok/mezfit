@@ -28,10 +28,6 @@
   will-change: transform;
 }
 
-.ui-day-schedule__week-track--animating {
-  transition: transform 300ms ease-out;
-}
-
 .ui-day-schedule__week-page {
   flex: 0 0 33.333333%;
   min-width: 0;
@@ -52,7 +48,7 @@
 .ui-day-schedule__day-viewport {
   position: absolute;
   z-index: 1;
-  inset: 68px 0 0;
+  inset: 0;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
@@ -69,10 +65,6 @@
   width: 300%;
   min-height: calc(112px * 18);
   will-change: transform;
-}
-
-.ui-day-schedule__day-track--animating {
-  transition: transform 300ms ease-out;
 }
 
 .ui-day-schedule__day-panel {

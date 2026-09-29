@@ -16,6 +16,7 @@ import './day-schedule.css';
 const WEEK_SWIPE_THRESHOLD = 0.18;
 const DAY_SWIPE_THRESHOLD = 0.18;
 const TRANSITION_MS = 300;
+const TRACK_TRANSITION = `transform ${TRANSITION_MS}ms ease-out`;
 const POST_WEEK_TAP_DELAY_MS = 50;
 
 type DragState = {
@@ -143,6 +144,11 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   };
 
   const resetPaging = () => {
+    // Disable the transition synchronously, before any transform write or
+    // WeekScene layout measurement. React batches the state changes below.
+    // Recentring is bookkeeping, never a second (reverse) page animation.
+    if (weekTrackRef.current) weekTrackRef.current.style.transition = 'none';
+    if (dayTrackRef.current) dayTrackRef.current.style.transition = 'none';
     weekGesture.current = null;
     dayGesture.current = null;
     setWeekAnimating(false);
@@ -365,7 +371,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         <div
           ref={weekTrackRef}
           className={`ui-day-schedule__week-track${weekAnimating ? ' ui-day-schedule__week-track--animating' : ''}`}
-          style={{ transform: `translate3d(${weekTranslate},0,0)` }}
+          style={{ transition: weekAnimating ? TRACK_TRANSITION : 'none', transform: `translate3d(${weekTranslate},0,0)` }}
         >
           <div className="ui-day-schedule__week-page">
             <WeekScene monday={previousMonday} selectedIndex={selectedIndex} preview />
@@ -400,7 +406,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         <div
           ref={dayTrackRef}
           className={`ui-day-schedule__day-track${dayAnimating ? ' ui-day-schedule__day-track--animating' : ''}`}
-          style={{ transform: `translate3d(${dayTranslate},0,0)` }}
+          style={{ transition: dayAnimating ? TRACK_TRANSITION : 'none', transform: `translate3d(${dayTranslate},0,0)` }}
         >
           <DayPanel date={previousDate} events={eventsByDate[previousDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
           <DayPanel date={displayDate} events={eventsByDate[displayDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} />
