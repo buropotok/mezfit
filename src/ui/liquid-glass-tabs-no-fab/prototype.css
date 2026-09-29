@@ -1436,7 +1436,7 @@
   left:0;
   bottom:0;
   width:100%;
-  height:var(--startup-scene-height,248px);
+  height:var(--startup-scene-height,64px);
   overflow:visible;
   pointer-events:none;
   z-index:3;
@@ -1450,7 +1450,6 @@
   backdrop-filter:blur(.7px) saturate(1.29);
   -webkit-backdrop-filter:blur(.7px) saturate(1.29);
 }
-
 .startup-icons-layer,
 .startup-icons-strip {
   width:100%;
@@ -1484,4 +1483,3 @@
 .startup-icon svg * {
   stroke-width:1;
 }
-
