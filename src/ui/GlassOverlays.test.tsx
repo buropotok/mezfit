@@ -193,6 +193,91 @@ describe('glass overlay primitives', () => {
     expect(getSurface()?.dataset.uiGlassActive).toBe('false');
   });
 
+  it('uses untransformed layout dimensions when clamping a popover', () => {
+    const target = document.createElement('button');
+    target.getBoundingClientRect = () => ({
+      x: 980,
+      y: 700,
+      left: 980,
+      top: 700,
+      right: 1024,
+      bottom: 744,
+      width: 44,
+      height: 44,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+
+    const offsetWidth = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('ui-glass-popover') ? 284 : 0;
+    });
+    const offsetHeight = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('ui-glass-popover') ? 376 : 0;
+    });
+
+    render(
+      <GlassPopover
+        opened
+        target={target}
+        style={{ width: '284px' }}
+        role="dialog"
+        aria-label="Clamped popover"
+      >
+        Popover
+      </GlassPopover>,
+    );
+
+    const popover = screen.getByRole('dialog', { name: 'Clamped popover' });
+    expect(Number.parseFloat(popover.style.left)).toBeLessThanOrEqual(window.innerWidth - 284 - 12);
+    expect(offsetWidth).toHaveBeenCalled();
+    expect(offsetHeight).toHaveBeenCalled();
+  });
+
+  it('includes resolved safe-area insets in popover clamping', () => {
+    const target = document.createElement('button');
+    target.getBoundingClientRect = () => ({
+      x: 0,
+      y: 120,
+      left: 0,
+      top: 120,
+      right: 44,
+      bottom: 164,
+      width: 44,
+      height: 44,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+
+    const originalGetComputedStyle = window.getComputedStyle.bind(window);
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((element: Element) => {
+      const styles = originalGetComputedStyle(element);
+      return {
+        ...styles,
+        getPropertyValue: (name: string) => {
+          if (name === '--ui-glass-safe-area-left') return '24px';
+          if (name === '--ui-glass-safe-area-right') return '18px';
+          if (name === '--ui-glass-safe-area-top') return '0px';
+          if (name === '--ui-glass-safe-area-bottom') return '0px';
+          return styles.getPropertyValue(name);
+        },
+      } as CSSStyleDeclaration;
+    });
+
+    render(
+      <GlassPopover
+        opened
+        target={target}
+        role="dialog"
+        aria-label="Safe area popover"
+      >
+        Popover
+      </GlassPopover>,
+    );
+
+    const popover = screen.getByRole('dialog', { name: 'Safe area popover' });
+    expect(Number.parseFloat(popover.style.left)).toBeGreaterThanOrEqual(36);
+  });
+
   it('positions an opened GlassPopover around its target and owns ModalTuned directly', () => {
     const target = document.createElement('button');
     target.getBoundingClientRect = () => ({
