@@ -121,7 +121,7 @@ export function buildGlassVectorMap(
   const width = Math.max(1, geometry.width);
   const height = Math.max(1, geometry.height);
   const radius = clamp(geometry.radius, 0.5, Math.min(width, height) / 2);
-  const sampleScale = clamp(pixelRatio || 1.5, 1.25, 1.5);
+  const sampleScale = clamp(pixelRatio || 1.5, 1.25, 2);
   const bitmapWidth = Math.max(128, Math.round(width * sampleScale));
   const bitmapHeight = Math.max(72, Math.round(height * sampleScale));
 
