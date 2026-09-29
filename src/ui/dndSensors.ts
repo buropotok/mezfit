@@ -3,6 +3,7 @@ import { PointerSensor, TouchSensor, type PointerSensorProps } from '@dnd-kit/co
 
 export const LONG_PRESS_DELAY_MS = 300;
 export const DRAG_ACTIVATION_TOLERANCE = 8;
+export const SCHEDULE_TOUCH_ACTIVATION_TOLERANCE = 24;
 
 function blocksDrag(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
@@ -37,7 +38,7 @@ export class UiSchedulePointerSensor extends PointerSensor {
       options: {
         ...props.options,
         activationConstraint: pointerType === 'touch'
-          ? { delay: LONG_PRESS_DELAY_MS, tolerance: DRAG_ACTIVATION_TOLERANCE }
+          ? { delay: LONG_PRESS_DELAY_MS, tolerance: SCHEDULE_TOUCH_ACTIVATION_TOLERANCE }
           : { distance: DRAG_ACTIVATION_TOLERANCE },
       },
     });
