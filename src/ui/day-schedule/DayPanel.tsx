@@ -32,7 +32,7 @@ export function startMinutesAfterDrag(
 ): number {
   const deltaMinutes = deltaPixels / HOUR_HEIGHT * 60;
   const minStart = START_HOUR * 60;
-  const maxStart = Math.max(minStart, END_HOUR * 60 - Math.max(0, durationMinutes));
+  const maxStart = Math.max(minStart, Math.floor((END_HOUR * 60 - Math.max(0, durationMinutes)) / DRAG_SNAP_MINUTES) * DRAG_SNAP_MINUTES);
   const minDelta = Math.min(0, minStart - startMinutes);
   const maxDelta = Math.max(0, maxStart - startMinutes);
 
