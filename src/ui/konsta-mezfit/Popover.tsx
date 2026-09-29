@@ -9,7 +9,7 @@ import {
 import { Popover as KonstaPopover } from 'konsta/react';
 import { PopoverClasses } from 'konsta/shared/classes';
 import { PopoverColors } from 'konsta/shared/colors';
-import { calcPopoverPosition, cls } from 'konsta/shared/utils';
+import { calcPopoverPosition, cls, useIosHighlight } from 'konsta/shared/utils';
 import { GlassSurface } from '../GlassSurface';
 import type {
   GlassMaterialOverrides,
@@ -71,6 +71,8 @@ export function MezfitPopover(props: MezfitPopoverProps) {
 
   const elRef = useRef<HTMLElement | null>(null);
   const angleElRef = useRef<HTMLDivElement | null>(null);
+  const glassRef = useRef<HTMLElement | null>(null);
+  const highlightData = useRef<Record<string, unknown>>({});
   const [positions, setPositions] = useState<MezfitPopoverPosition>({
     set: false,
     angleTop: 0,
@@ -87,6 +89,11 @@ export function MezfitPopover(props: MezfitPopoverProps) {
 
   const colors = PopoverColors(colorsProp, canonicalDark);
   const c = PopoverClasses({ ...props, angleClassName }, colors, canonicalDark);
+  const { attachEvents: attachHighlight, detachEvents: detachHighlight } = useIosHighlight({
+    getEl: () => glassRef.current,
+    enabled: true,
+    data: highlightData.current,
+  });
 
   const setPopover = () => {
     if (!target || !elRef.current || !opened) return;
@@ -118,6 +125,11 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   useEffect(() => {
     attachEvents();
     return () => detachEvents();
+  });
+
+  useEffect(() => {
+    attachHighlight();
+    return () => detachHighlight();
   });
 
   useEffect(() => {
@@ -200,7 +212,8 @@ export function MezfitPopover(props: MezfitPopoverProps) {
           </div>
         )}
         <GlassSurface
-          className={innerClasses}
+          ref={glassRef}
+          className={cls('k-glass touch-none', innerClasses)}
           preset={glassPreset}
           glass={glass}
           shape={glassShape}
