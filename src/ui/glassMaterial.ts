@@ -14,12 +14,6 @@ export type GlassMaterial = {
   rimStrength: number;
   trenchWidth: number;
   trenchStrength: number;
-  depthWidth: number;
-  depthRefraction: number;
-  thickness: number;
-  caustic: number;
-  depthShadow: number;
-  topGlint: number;
   refraction: number;
   rgbSpread: number;
   filterPadding: number;
@@ -54,14 +48,29 @@ export const MODAL_TUNED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   rimStrength: 1.22,
   trenchWidth: 3,
   trenchStrength: 0.04,
-  depthWidth: 34,
-  depthRefraction: 0.2,
-  thickness: 0.68,
-  caustic: 0.42,
-  depthShadow: 0.22,
-  topGlint: 0.38,
   refraction: 10.7,
   rgbSpread: 0.2,
+  filterPadding: 51,
+});
+
+export const MODAL_GLASS: Readonly<GlassMaterial> = Object.freeze({
+  tintR: 24,
+  tintG: 24,
+  tintB: 26,
+  tintA: 0.14,
+  blur: 16,
+  saturation: 1.08,
+  brightness: 1.03,
+  bezel: 0.78,
+  border: 0.13,
+  shadow: 0.18,
+  neutralEdge: 1.8,
+  rimWidth: 14,
+  rimStrength: 0.48,
+  trenchWidth: 3,
+  trenchStrength: 0.04,
+  refraction: 6.2,
+  rgbSpread: 0.05,
   filterPadding: 51,
 });
 
@@ -81,12 +90,6 @@ export const LENS_GLASS: Readonly<GlassMaterial> = Object.freeze({
   rimStrength: 0.67,
   trenchWidth: 1,
   trenchStrength: 0.09,
-  depthWidth: 20,
-  depthRefraction: 0.10,
-  thickness: 0.42,
-  caustic: 0.24,
-  depthShadow: 0.18,
-  topGlint: 0.22,
   refraction: 8,
   rgbSpread: 0.1,
   filterPadding: 51,
@@ -108,12 +111,6 @@ export const CLEAR_GLASS: Readonly<GlassMaterial> = Object.freeze({
   rimStrength: 0.55,
   trenchWidth: 1,
   trenchStrength: 0.07,
-  depthWidth: 24,
-  depthRefraction: 0.11,
-  thickness: 0.48,
-  caustic: 0.28,
-  depthShadow: 0.20,
-  topGlint: 0.26,
   refraction: 6,
   rgbSpread: 0.08,
   filterPadding: 51,
@@ -135,12 +132,6 @@ export const FROSTED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   rimStrength: 0.58,
   trenchWidth: 1.5,
   trenchStrength: 0.08,
-  depthWidth: 28,
-  depthRefraction: 0.12,
-  thickness: 0.54,
-  caustic: 0.30,
-  depthShadow: 0.22,
-  topGlint: 0.20,
   refraction: 5.5,
   rgbSpread: 0.12,
   filterPadding: 51,
@@ -162,12 +153,6 @@ export const BLUE_GLASS: Readonly<GlassMaterial> = Object.freeze({
   rimStrength: 0.68,
   trenchWidth: 1,
   trenchStrength: 0.09,
-  depthWidth: 30,
-  depthRefraction: 0.15,
-  thickness: 0.58,
-  caustic: 0.34,
-  depthShadow: 0.24,
-  topGlint: 0.24,
   refraction: 8,
   rgbSpread: 0.18,
   filterPadding: 51,
@@ -189,12 +174,6 @@ export const SMOKED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   rimStrength: 0.72,
   trenchWidth: 1.5,
   trenchStrength: 0.10,
-  depthWidth: 28,
-  depthRefraction: 0.14,
-  thickness: 0.64,
-  caustic: 0.25,
-  depthShadow: 0.34,
-  topGlint: 0.18,
   refraction: 8.5,
   rgbSpread: 0.12,
   filterPadding: 51,
@@ -202,6 +181,7 @@ export const SMOKED_GLASS: Readonly<GlassMaterial> = Object.freeze({
 
 export const GLASS_PRESETS = Object.freeze({
   modalTuned: MODAL_TUNED_GLASS,
+  modal: MODAL_GLASS,
   lens: LENS_GLASS,
   clear: CLEAR_GLASS,
   frosted: FROSTED_GLASS,
@@ -255,13 +235,7 @@ export function buildGlassVectorMap(
   geometry: GlassGeometry,
   material: Pick<
     GlassMaterial,
-    | 'neutralEdge'
-    | 'rimWidth'
-    | 'rimStrength'
-    | 'trenchWidth'
-    | 'trenchStrength'
-    | 'depthWidth'
-    | 'depthRefraction'
+    'neutralEdge' | 'rimWidth' | 'rimStrength' | 'trenchWidth' | 'trenchStrength'
   >,
   pixelRatio = 1.5,
 ) {
@@ -322,11 +296,6 @@ export function buildGlassVectorMap(
           const progress = (local - bandPeak) / Math.max(0.001, bandEnd - bandPeak);
           magnitude = Math.cos(progress * Math.PI * 0.5) * material.rimStrength;
           magnitude -= Math.sin(progress * Math.PI) * material.trenchStrength * 0.5;
-        }
-
-        if (material.depthWidth > 0 && local < material.depthWidth) {
-          const depthProgress = local / Math.max(0.001, material.depthWidth);
-          magnitude += Math.sin(Math.PI * depthProgress) * material.depthRefraction;
         }
 
         vx = (gx / length) * magnitude;
