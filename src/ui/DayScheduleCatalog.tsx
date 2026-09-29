@@ -67,15 +67,16 @@ export function DayScheduleCatalog() {
             );
           }
           return (
-            <List nested strong className="ui-kit-day-schedule__event-list">
-              <ListItem
-                className="ui-kit-day-schedule__event-item"
-                media={<Avatar name={event.title} />}
-                title={event.title}
-                subtitle={state.compact ? undefined : event.purpose}
-                after={time}
-              />
-            </List>
+            <div className="ui-kit-day-schedule__event-card-slot">
+              <List nested strong>
+                <ListItem
+                  media={<Avatar name={event.title} />}
+                  title={event.title}
+                  subtitle={state.compact ? undefined : event.purpose}
+                  after={time}
+                />
+              </List>
+            </div>
           );
         }}
       />
