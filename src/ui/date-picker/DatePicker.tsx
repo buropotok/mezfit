@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button as KonstaButton, Glass, Link, Navbar } from 'konsta/react';
 import { MezfitPanel as Panel, MezfitPopover as Popover } from '../konsta-mezfit';
 import {
@@ -58,6 +58,7 @@ export function DatePicker({
   const monthScrollRef = useRef<HTMLDivElement | null>(null);
   const yearScrollRef = useRef<HTMLDivElement | null>(null);
   const wasOpenedRef = useRef(false);
+  const pendingMonthScrollRef = useRef(false);
 
   const weekdayLabels = useMemo(() => getWeekdayLabels(locale), [locale]);
   const monthNameFormatter = useMemo(
@@ -168,10 +169,11 @@ export function DatePicker({
     [visibleYear, years],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!opened) {
       setYearPopoverOpened(false);
       wasOpenedRef.current = false;
+      pendingMonthScrollRef.current = false;
       return;
     }
 
@@ -179,39 +181,48 @@ export function DatePicker({
     wasOpenedRef.current = true;
     if (!justOpened) return;
 
+    pendingMonthScrollRef.current = true;
     setVisibleYear(clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
     setYearPopoverOpened(false);
+  }, [opened, safeMaxYear, safeMinYear, safeSelectedDate.year]);
 
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const scrollElement = monthScrollRef.current;
-        const monthElement = scrollElement?.querySelector<HTMLElement>(`[data-month-index="${safeSelectedDate.month - 1}"]`);
-        if (!scrollElement || !monthElement) return;
-        scrollElement.scrollTop = Math.max(0, monthElement.offsetTop - HEADER_SCROLL_OFFSET);
-      });
-    });
-  }, [opened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
+  useLayoutEffect(() => {
+    if (!opened || !pendingMonthScrollRef.current) return;
 
-  useEffect(() => {
+    const targetYear = clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear);
+    if (visibleYear !== targetYear) return;
+
+    const scrollElement = monthScrollRef.current;
+    const monthElement = scrollElement?.querySelector<HTMLElement>(`[data-month-index="${safeSelectedDate.month - 1}"]`);
+    if (!scrollElement || !monthElement) return;
+
+    scrollElement.scrollTop = Math.max(0, monthElement.offsetTop - HEADER_SCROLL_OFFSET);
+    pendingMonthScrollRef.current = false;
+  }, [
+    opened,
+    safeMaxYear,
+    safeMinYear,
+    safeSelectedDate.month,
+    safeSelectedDate.year,
+    visibleYear,
+  ]);
+
+  useLayoutEffect(() => {
     if (!yearPopoverOpened) return;
 
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const scrollElement = yearScrollRef.current;
-        const yearElement = scrollElement?.querySelector<HTMLElement>(`[data-year="${visibleYear}"]`);
-        if (!scrollElement || !yearElement) return;
+    const scrollElement = yearScrollRef.current;
+    const yearElement = scrollElement?.querySelector<HTMLElement>(`[data-year="${visibleYear}"]`);
+    if (!scrollElement || !yearElement) return;
 
-        const scrollRect = scrollElement.getBoundingClientRect();
-        const yearRect = yearElement.getBoundingClientRect();
-        const targetOffset = scrollElement.scrollTop + yearRect.top - scrollRect.top;
+    const scrollRect = scrollElement.getBoundingClientRect();
+    const yearRect = yearElement.getBoundingClientRect();
+    const targetOffset = scrollElement.scrollTop + yearRect.top - scrollRect.top;
 
-        scrollElement.scrollTop = calculateCenteredScrollTop({
-          targetOffset,
-          targetHeight: yearRect.height || yearElement.offsetHeight,
-          viewportHeight: scrollElement.clientHeight,
-          scrollHeight: scrollElement.scrollHeight,
-        });
-      });
+    scrollElement.scrollTop = calculateCenteredScrollTop({
+      targetOffset,
+      targetHeight: yearRect.height || yearElement.offsetHeight,
+      viewportHeight: scrollElement.clientHeight,
+      scrollHeight: scrollElement.scrollHeight,
     });
   }, [visibleYear, yearPopoverOpened]);
 
