@@ -18,6 +18,8 @@ import './glass-overlays.css';
 
 type GlassPanelStyle = CSSProperties & {
   '--ui-glass-panel-width'?: string;
+  '--ui-glass-overlay-backdrop-z'?: string;
+  '--ui-glass-overlay-surface-z'?: string;
 };
 
 export type GlassPanelProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> & {
@@ -27,6 +29,7 @@ export type GlassPanelProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> &
   backdrop?: boolean;
   onBackdropClick?: MouseEventHandler<HTMLDivElement>;
   width?: CSSProperties['width'];
+  layer?: number;
   preset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
@@ -41,6 +44,7 @@ export function GlassPanel({
   backdrop = true,
   onBackdropClick,
   width = '18rem',
+  layer = 40,
   preset = 'modalTuned',
   glass,
   shape = 'auto',
@@ -76,6 +80,8 @@ export function GlassPanel({
   const panelStyle: GlassPanelStyle = {
     ...style,
     '--ui-glass-panel-width': typeof width === 'number' ? `${width}px` : width,
+    '--ui-glass-overlay-backdrop-z': String(layer),
+    '--ui-glass-overlay-surface-z': String(layer + 1),
   };
 
   return createPortal(
@@ -85,6 +91,9 @@ export function GlassPanel({
           className="ui-glass-overlay-backdrop"
           data-state={state}
           aria-hidden="true"
+          style={{
+            '--ui-glass-overlay-backdrop-z': String(layer),
+          } as CSSProperties}
           onClick={opened ? onBackdropClick : undefined}
         />
       ) : null}
