@@ -67,6 +67,7 @@ function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: scheduleEventDragId(date, event.id),
+    attributes: { tabIndex: -1 },
   });
 
   return (
