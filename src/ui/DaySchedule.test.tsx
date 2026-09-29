@@ -162,7 +162,7 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
-  it('activates event drag after the touch long-press delay', () => {
+  it('activates event drag from a touch pointer after the long-press delay', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -171,37 +171,40 @@ describe('DaySchedule', () => {
         eventsByDate={events}
         onDateChange={changed}
         onEventMove={moved}
-        renderEvent={event => <div data-testid={`touch-event-${event.id}`}>{event.id}</div>}
+        renderEvent={event => <div>{event.id}</div>}
       />,
     );
     const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
-    const target = view.getByTestId('touch-event-a');
     const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
     if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
 
-    const startTouch = {
-      identifier: 1,
-      target,
+    fireEvent.pointerDown(frame, {
+      pointerId: 7,
+      pointerType: 'touch',
+      button: 0,
       clientX: 100,
       clientY: 100,
-      pageX: 100,
-      pageY: 100,
-      screenX: 100,
-      screenY: 100,
-    };
-    fireEvent.touchStart(target, {
-      touches: [startTouch],
-      targetTouches: [startTouch],
-      changedTouches: [startTouch],
     });
 
-    act(() => vi.advanceTimersByTime(300));
+    act(() => vi.advanceTimersByTime(299));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+
+    act(() => vi.advanceTimersByTime(1));
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
 
-    fireEvent.touchEnd(target, {
-      touches: [],
-      targetTouches: [],
-      changedTouches: [startTouch],
+    fireEvent.pointerMove(document, {
+      pointerId: 7,
+      pointerType: 'touch',
+      buttons: 1,
+      clientX: 100,
+      clientY: 120,
+    });
+    fireEvent.pointerUp(document, {
+      pointerId: 7,
+      pointerType: 'touch',
+      button: 0,
+      clientX: 100,
+      clientY: 120,
     });
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
     act(() => vi.advanceTimersByTime(50));
