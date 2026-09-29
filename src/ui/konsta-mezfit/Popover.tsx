@@ -1,3 +1,4 @@
+// Konsta 5.4.0 Mezfit edition: preserve Popover mechanics; replace only the inner iOS Glass renderer.
 /* eslint-disable no-restricted-globals */
 import {
   useEffect,
