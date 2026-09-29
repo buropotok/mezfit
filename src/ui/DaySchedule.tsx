@@ -548,16 +548,18 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         }}
       >
         {activeEventEntry && activeEventDragRef.current ? (
-          <GlassSurface
-            className="ui-day-schedule__drag-overlay"
-            contentClassName="ui-day-schedule__drag-overlay-content"
-          >
-            {renderEvent(activeEventEntry.event, {
-              compact: activeEventEntry.compact,
-              lifted: true,
-              height: activeEventEntry.height,
-            })}
-          </GlassSurface>
+          <div className="ui-day-schedule__drag-visual">
+            <GlassSurface
+              className="ui-day-schedule__drag-overlay"
+              contentClassName="ui-day-schedule__drag-overlay-content"
+            >
+              {renderEvent(activeEventEntry.event, {
+                compact: activeEventEntry.compact,
+                lifted: true,
+                height: activeEventEntry.height,
+              })}
+            </GlassSurface>
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>
