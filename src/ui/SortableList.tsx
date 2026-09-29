@@ -1,9 +1,7 @@
-import { useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type TouchEvent as ReactTouchEvent } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
-  TouchSensor,
   closestCenter,
   useSensor,
   useSensors,
@@ -19,6 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { LiftedGlass } from './LiftedGlass';
+import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, UiPointerSensor, UiTouchSensor } from './dndSensors';
 import './SortableList.css';
 
 export type SortableListItem = {
@@ -33,27 +32,6 @@ export type SortableListProps = {
   longPressDelay?: number;
   showSeparators?: boolean;
 };
-
-function blocksDrag(target: EventTarget | null) {
-  if (!(target instanceof Element)) return false;
-  if (target.closest('[data-no-dnd],a,input,select,textarea')) return true;
-  const button = target.closest('button,[role="button"]');
-  return Boolean(button && !button.classList.contains('ui-list-item'));
-}
-
-class RowPointerSensor extends PointerSensor {
-  static activators = [{
-    eventName: 'onPointerDown' as const,
-    handler: ({ nativeEvent: event }: ReactPointerEvent) => event.pointerType !== 'touch' && !blocksDrag(event.target),
-  }];
-}
-
-class RowTouchSensor extends TouchSensor {
-  static activators = [{
-    eventName: 'onTouchStart' as const,
-    handler: ({ nativeEvent: event }: ReactTouchEvent) => !blocksDrag(event.target),
-  }];
-}
 
 function SortableRow({ item }: { item: SortableListItem }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
@@ -70,12 +48,12 @@ function SortableRow({ item }: { item: SortableListItem }) {
   );
 }
 
-export function SortableList({ items, onReorder, className = '', longPressDelay = 300, showSeparators = true }: SortableListProps) {
+export function SortableList({ items, onReorder, className = '', longPressDelay = LONG_PRESS_DELAY_MS, showSeparators = true }: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const activationConstraint = { delay: longPressDelay, tolerance: 8 };
+  const activationConstraint = { delay: longPressDelay, tolerance: DRAG_ACTIVATION_TOLERANCE };
   const sensors = useSensors(
-    useSensor(RowPointerSensor, { activationConstraint }),
-    useSensor(RowTouchSensor, { activationConstraint }),
+    useSensor(UiPointerSensor, { activationConstraint }),
+    useSensor(UiTouchSensor, { activationConstraint }),
   );
   const ids = useMemo(() => items.map((item) => item.id), [items]);
   const activeItem = activeId == null ? null : items.find((item) => item.id === activeId) ?? null;
