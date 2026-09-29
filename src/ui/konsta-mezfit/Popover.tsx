@@ -6,11 +6,7 @@ import {
   type ComponentProps,
   type ElementType,
 } from 'react';
-import {
-  Popover as KonstaPopover,
-  useTheme,
-  useThemeClasses,
-} from 'konsta/react';
+import { Popover as KonstaPopover } from 'konsta/react';
 import { PopoverClasses } from 'konsta/shared/classes';
 import { PopoverColors } from 'konsta/shared/colors';
 import { calcPopoverPosition, cls } from 'konsta/shared/utils';
@@ -44,8 +40,8 @@ export function MezfitPopover(props: MezfitPopoverProps) {
     targetY,
     targetWidth,
     targetHeight,
-    ios,
-    material,
+    ios: _ios,
+    material: _material,
 
     glassPreset = 'modalTuned',
     glass,
@@ -73,14 +69,8 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   const Component = component as ElementType;
   const attrs = { ...rest };
 
-  const theme = useTheme({ ios, material });
-  const themeClasses = useThemeClasses({ ios, material });
   const colors = PopoverColors(colorsProp, canonicalDark);
-
-  const c = themeClasses(
-    PopoverClasses({ ...props, angleClassName }, colors, canonicalDark),
-    className,
-  );
+  const c = PopoverClasses({ ...props, angleClassName }, colors, canonicalDark);
 
   const setPopover = () => {
     if (!target || !elRef.current || !opened) return;
@@ -94,7 +84,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
         targetY,
         targetHeight,
         targetWidth,
-        theme,
+        theme: 'ios',
       }),
     );
   };
@@ -143,14 +133,25 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   };
 
   const classes = cls(
-    c.base[state],
+    c.base.common,
+    c.base.ios,
+    c.base[state].common,
+    c.base[state].ios,
+    className,
     originClasses[positions.popoverPosition],
+  );
+  const backdropClasses = cls(c.backdrop.common, c.backdrop[state]);
+  const innerClasses = cls(
+    c.inner.common,
+    c.inner.ios,
+    c.inner[state].common,
+    c.inner[state].ios,
   );
 
   return (
     <>
       {backdrop && (
-        <div className={c.backdrop[state]} onClick={onBackdropClick} />
+        <div className={backdropClasses} onClick={onBackdropClick} />
       )}
 
       <Component
@@ -167,13 +168,23 @@ export function MezfitPopover(props: MezfitPopoverProps) {
           <div
             ref={angleElRef}
             style={angleStyle}
-            className={c.angleWrap[positions.anglePosition]}
+            className={cls(
+              c.angleWrap.common,
+              c.angleWrap.ios,
+              c.angleWrap[positions.anglePosition],
+            )}
           >
-            <div className={c.angleArrow[positions.anglePosition]} />
+            <div
+              className={cls(
+                c.angleArrow.common,
+                c.angleArrow.ios,
+                c.angleArrow[positions.anglePosition],
+              )}
+            />
           </div>
         )}
         <GlassSurface
-          className={c.inner[state]}
+          className={innerClasses}
           preset={glassPreset}
           glass={glass}
           shape={glassShape}
