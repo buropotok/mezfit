@@ -550,7 +550,6 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     setDragWeekDate(target);
     setDragPageDirection(direction);
     setDragPageAnimating(true);
-    addFrame(() => weekRef.current?.tapIndex(dayIndex(target)));
 
     addTimer(() => {
       if (!eventDragActive.current) return;
