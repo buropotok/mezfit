@@ -52,6 +52,12 @@ function getWeekdayFormatter(locale: string): Intl.DateTimeFormat {
   return formatter;
 }
 
+export function prewarmDateFormatters(locale: string): void {
+  getMonthFormatter(locale);
+  getDayFormatter(locale);
+  getWeekdayFormatter(locale);
+}
+
 export function daysInMonth(year: number, monthIndex: number): number {
   return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 }
