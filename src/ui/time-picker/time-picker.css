@@ -5,13 +5,16 @@
 }
 
 .ui-time-picker {
+  box-sizing: border-box;
   width: 100%;
-  padding: var(--ui-space-3);
+  padding-block: var(--ui-space-3);
+  padding-inline: var(--ui-space-6);
 }
 
 .ui-time-picker__wheel {
   position: relative;
-  width: min(18rem, calc(100vw - 48px));
+  width: min(18rem, calc(100vw - 72px));
+  margin-inline: auto;
   height: var(--ui-time-picker-wheel-height);
   overflow: visible;
 }
