@@ -4,6 +4,7 @@ export { Icon, type IconProps, type UiIconName, type UiIconVariant } from './Ico
 export type { UiIconPair, UiIconSource } from './iconPair';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge';
 export { DatePicker, type DatePickerProps, type LocalDate } from './date-picker/DatePicker';
+export { TimePicker, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
 export { IdentityAction, type IdentityActionAvatar, type IdentityActionProps } from './IdentityAction';
 export { Checkbox, Radio, TextArea, TextInput, type CheckboxProps, type RadioProps, type TextAreaProps, type TextInputProps } from './FormControls';
