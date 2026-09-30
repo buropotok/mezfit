@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
-import { getSelectionHapticBackend, getTelegramWebApp } from '../telegram';
+import {
+  getSelectionHapticBackend,
+  getTelegramWebApp,
+  runHapticProbe,
+  type HapticProbeKind,
+  type HapticProbeResult,
+} from '../telegram';
 import { Button, DatePicker, MezfitSidePanel, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
@@ -109,9 +115,13 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [emptyDatePickerOpen, setEmptyDatePickerOpen] = useState(false);
   const [datePickerValue, setDatePickerValue] = useState<LocalDate>('2026-09-30');
+  const [hapticProbe, setHapticProbe] = useState<{ kind: HapticProbeKind; result: HapticProbeResult } | null>(null);
   const timePickerTargetRef = useRef<HTMLSpanElement | null>(null);
   const telegramWebApp = getTelegramWebApp();
   const hapticBackend = getSelectionHapticBackend(telegramWebApp);
+  const runProbe = (kind: HapticProbeKind) => {
+    setHapticProbe({ kind, result: runHapticProbe(kind, telegramWebApp) });
+  };
   const closeModules = useCallback(() => {
     setTimePickerOpen(false);
     setDatePickerOpen(false);
@@ -160,6 +170,20 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
         <Text variant="caption" tone="muted">
           Haptic backend: {hapticBackend} · Telegram: {telegramWebApp?.platform ?? 'нет'} · version: {telegramWebApp?.version ?? 'нет'}
         </Text>
+        <div className="modules-gallery__haptic-probes" aria-label="Проверка haptic feedback">
+          <Button onClick={() => runProbe('telegram-selection')}>Selection</Button>
+          <Button onClick={() => runProbe('telegram-light-impact')}>Impact light</Button>
+          <Button onClick={() => runProbe('telegram-success-notification')}>Notification success</Button>
+          <Button onClick={() => runProbe('browser-vibration')}>Vibrate 50 ms</Button>
+        </div>
+        <Text variant="caption" tone="muted">
+          sent означает, что запрос отправлен API. Физическую вибрацию Telegram/WebView не подтверждает программно.
+        </Text>
+        {hapticProbe ? (
+          <Text variant="caption" tone="muted">
+            Probe: {hapticProbe.kind} → {hapticProbe.result}
+          </Text>
+        ) : null}
         <span ref={timePickerTargetRef} className="modules-gallery__trigger">
           <Button onClick={() => setTimePickerOpen(true)}>Выбрать время</Button>
         </span>
