@@ -270,6 +270,41 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('hands the touch exclusively to DnD after long-press without manual timeline scrolling', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !viewport || !schedule) throw new Error('Missing draggable event or day viewport');
+
+    viewport.scrollTop = 400;
+    const start = { identifier: 72, target: frame, clientX: 100, clientY: 200, pageX: 100, pageY: 200, screenX: 100, screenY: 200 };
+    const movedTouch = { ...start, clientX: 102, clientY: 240, pageX: 102, pageY: 240 };
+
+    fireEvent.pointerDown(frame, { pointerId: 72, pointerType: 'touch', clientX: 100, clientY: 200 });
+    fireEvent.touchStart(frame, { touches: [start], targetTouches: [start], changedTouches: [start] });
+    act(() => vi.advanceTimersByTime(300));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
+
+    fireEvent.pointerMove(frame, { pointerId: 72, pointerType: 'touch', clientX: 102, clientY: 240 });
+    fireEvent.touchMove(frame, { touches: [movedTouch], targetTouches: [movedTouch], changedTouches: [movedTouch] });
+    expect(viewport.scrollTop).toBe(400);
+
+    fireEvent.pointerUp(frame, { pointerId: 72, pointerType: 'touch', clientX: 102, clientY: 240 });
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
+    act(() => vi.advanceTimersByTime(50));
+  });
+
   it('lets a vertical gesture from an event card abort pending DnD before long-press', () => {
     const moved = vi.fn();
     const view = render(
