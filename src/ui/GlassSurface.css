@@ -24,11 +24,6 @@
     brightness(var(--ui-glass-surface-brightness));
 }
 
-.ui-glass-surface[data-ui-glass-prewarm="true"] {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / var(--ui-glass-surface-border));
-}
-
 .ui-glass-surface[data-ui-glass-map-ready="true"] {
   backdrop-filter:
     blur(var(--ui-glass-surface-blur))
