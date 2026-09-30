@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
-import { Button, Surface, Text } from '../ui';
+import { Button, Surface, Text, TimePicker, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
@@ -103,7 +103,13 @@ interface SettingsPageProps {
 
 export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
   const [modulesOpen, setModulesOpen] = useState(false);
-  const closeModules = useCallback(() => setModulesOpen(false), []);
+  const [timePickerOpen, setTimePickerOpen] = useState(false);
+  const [timePickerValue, setTimePickerValue] = useState<LocalTime>('08:30');
+  const timePickerTargetRef = useRef<HTMLSpanElement | null>(null);
+  const closeModules = useCallback(() => {
+    setTimePickerOpen(false);
+    setModulesOpen(false);
+  }, []);
 
   useEffect(() => {
     if (!modulesOpen) {
@@ -137,6 +143,25 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
           Здесь отображаются реальные React-компоненты приложения на демонстрационных данных.
         </Text>
       </div>
+
+      <section className="modules-gallery__example" aria-labelledby="module-time-picker-title">
+        <Text id="module-time-picker-title" variant="headline">Time picker</Text>
+        <Text variant="footnote" tone="muted">
+          Реальный UI Kit TimePicker с Telegram haptic feedback. Выбранное время: {timePickerValue}.
+        </Text>
+        <span ref={timePickerTargetRef} className="modules-gallery__trigger">
+          <Button onClick={() => setTimePickerOpen(true)}>Выбрать время</Button>
+        </span>
+        {timePickerOpen && (
+          <TimePicker
+            opened
+            target={timePickerTargetRef.current}
+            value={timePickerValue}
+            onChange={setTimePickerValue}
+            onClose={() => setTimePickerOpen(false)}
+          />
+        )}
+      </section>
 
       <section className="modules-gallery__example" aria-labelledby="module-session-exercise-title">
         <Text id="module-session-exercise-title" variant="headline">Карточка упражнения и подходов</Text>
