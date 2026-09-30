@@ -192,7 +192,9 @@ describe('DaySchedule', () => {
     fireEvent.pointerDown(frame, { pointerId: 3, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
     fireEvent.pointerMove(document, { pointerId: 3, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 140 });
     fireEvent.pointerUp(document, { pointerId: 3, pointerType: 'mouse', button: 0, clientX: 100, clientY: 140 });
-    act(() => vi.advanceTimersByTime(50));
+    act(() => vi.advanceTimersByTime(199));
+    expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
+    act(() => vi.advanceTimersByTime(1));
 
     expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(2);
     expect(view.container.querySelector('[data-editing="true"]')).not.toBeNull();
