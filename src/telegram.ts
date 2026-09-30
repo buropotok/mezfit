@@ -7,8 +7,11 @@ export interface TelegramBackButton {
   offClick(callback: () => void): void;
 }
 
+export type TelegramHapticImpactStyle = 'light' | 'medium' | 'heavy' | 'rigid' | 'soft';
+
 export interface TelegramHapticFeedback {
   selectionChanged(): void;
+  impactOccurred?(style: TelegramHapticImpactStyle): void;
 }
 
 export interface TelegramWebApp {
@@ -17,6 +20,8 @@ export interface TelegramWebApp {
     start_param?: string;
   };
   colorScheme: 'light' | 'dark';
+  version?: string;
+  platform?: string;
   ready(): void;
   expand(): void;
   disableVerticalSwipes?(): void;
@@ -76,12 +81,67 @@ export function bindTelegramBackButton(
 }
 
 
+export type SelectionHapticBackend =
+  | 'android-vibration'
+  | 'telegram-light-impact'
+  | 'telegram-selection'
+  | 'none';
+
+interface VibrationNavigator {
+  vibrate?: (pattern: number | number[]) => boolean;
+}
+
+function getDefaultVibrationNavigator(): VibrationNavigator | null {
+  return typeof navigator === 'undefined' ? null : navigator;
+}
+
+export function getSelectionHapticBackend(
+  webApp: TelegramWebApp | null = getTelegramWebApp(),
+  vibrationNavigator: VibrationNavigator | null = getDefaultVibrationNavigator(),
+): SelectionHapticBackend {
+  if (
+    webApp?.platform === 'android'
+    && typeof vibrationNavigator?.vibrate === 'function'
+  ) {
+    return 'android-vibration';
+  }
+
+  if (typeof webApp?.HapticFeedback?.impactOccurred === 'function') {
+    return 'telegram-light-impact';
+  }
+
+  if (typeof webApp?.HapticFeedback?.selectionChanged === 'function') {
+    return 'telegram-selection';
+  }
+
+  return 'none';
+}
+
 export function triggerTelegramSelectionHaptic(
   webApp: TelegramWebApp | null = getTelegramWebApp(),
+  vibrationNavigator: VibrationNavigator | null = getDefaultVibrationNavigator(),
 ): void {
   try {
-    webApp?.HapticFeedback?.selectionChanged();
+    const backend = getSelectionHapticBackend(webApp, vibrationNavigator);
+
+    if (backend === 'android-vibration') {
+      vibrationNavigator?.vibrate?.(12);
+      return;
+    }
+
+    if (backend === 'telegram-light-impact') {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+      return;
+    }
+
+    if (backend === 'telegram-selection') {
+      webApp?.HapticFeedback?.selectionChanged();
+    }
   } catch {
-    // Haptics are a best-effort enhancement and must never block UI interaction.
+    try {
+      webApp?.HapticFeedback?.selectionChanged();
+    } catch {
+      // Haptics are a best-effort enhancement and must never block UI interaction.
+    }
   }
 }

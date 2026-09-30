@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
+import { getSelectionHapticBackend, getTelegramWebApp } from '../telegram';
 import { Button, DatePicker, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
@@ -108,6 +109,8 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [datePickerValue, setDatePickerValue] = useState<LocalDate>('2026-09-30');
   const timePickerTargetRef = useRef<HTMLSpanElement | null>(null);
+  const telegramWebApp = getTelegramWebApp();
+  const hapticBackend = getSelectionHapticBackend(telegramWebApp);
   const closeModules = useCallback(() => {
     setTimePickerOpen(false);
     setDatePickerOpen(false);
@@ -150,7 +153,10 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
       <section className="modules-gallery__example" aria-labelledby="module-time-picker-title">
         <Text id="module-time-picker-title" variant="headline">Time picker</Text>
         <Text variant="footnote" tone="muted">
-          Реальный UI Kit TimePicker с Telegram haptic feedback. Выбранное время: {timePickerValue}.
+          Реальный UI Kit TimePicker с haptic feedback. Выбранное время: {timePickerValue}.
+        </Text>
+        <Text variant="caption" tone="muted">
+          Haptic backend: {hapticBackend} · Telegram: {telegramWebApp?.platform ?? 'нет'} · version: {telegramWebApp?.version ?? 'нет'}
         </Text>
         <span ref={timePickerTargetRef} className="modules-gallery__trigger">
           <Button onClick={() => setTimePickerOpen(true)}>Выбрать время</Button>
