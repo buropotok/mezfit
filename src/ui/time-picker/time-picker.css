@@ -36,6 +36,8 @@
   scrollbar-width: none;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0) 0%, rgb(0 0 0) 32%, transparent 38%, transparent 62%, rgb(0 0 0) 68%, rgb(0 0 0) 100%);
+  mask-image: linear-gradient(to bottom, rgb(0 0 0) 0%, rgb(0 0 0) 32%, transparent 38%, transparent 62%, rgb(0 0 0) 68%, rgb(0 0 0) 100%);
 }
 
 .ui-time-picker__column::-webkit-scrollbar {
@@ -74,6 +76,7 @@
   line-height: var(--ui-line-height-title);
   font-weight: var(--ui-font-weight-light);
   letter-spacing: var(--ui-letter-spacing-title);
+  opacity: 0;
 }
 
 .ui-time-picker__lens {
