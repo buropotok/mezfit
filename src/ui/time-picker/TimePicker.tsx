@@ -3,6 +3,7 @@ import {
   useId,
   useRef,
   useState,
+  type RefObject,
   type UIEvent,
 } from 'react';
 import { MezfitPopover } from '../konsta-mezfit';
@@ -247,7 +248,7 @@ function TimeColumnWheel({
   onScroll: (kind: TimeColumn, event: UIEvent<HTMLDivElement>) => void;
   onSelect: (kind: TimeColumn, index: number) => void;
   onInteractionChange: (active: boolean) => void;
-  columnRef: React.RefObject<HTMLDivElement | null>;
+  columnRef: RefObject<HTMLDivElement | null>;
 }) {
   const label = kind === 'hour' ? 'Часы' : 'Минуты';
 
@@ -299,6 +300,7 @@ export function TimePicker({
   const wasOpenedRef = useRef(false);
   const hourFrameRef = useRef<number | null>(null);
   const minuteFrameRef = useRef<number | null>(null);
+  const interactionTimerRef = useRef<number | null>(null);
   const pendingScrollRef = useRef<ScrollTops>({
     hour: parsedValue.hour * ROW_HEIGHT,
     minute: parsedValue.minute * ROW_HEIGHT,
@@ -366,6 +368,7 @@ export function TimePicker({
     const view = target?.ownerDocument.defaultView ?? window;
     if (hourFrameRef.current !== null) view.cancelAnimationFrame(hourFrameRef.current);
     if (minuteFrameRef.current !== null) view.cancelAnimationFrame(minuteFrameRef.current);
+    if (interactionTimerRef.current !== null) view.clearTimeout(interactionTimerRef.current);
   }, [target]);
 
   const commitIndex = (kind: TimeColumn, index: number) => {
@@ -395,6 +398,13 @@ export function TimePicker({
     if (frameRef.current !== null) return;
 
     const view = event.currentTarget.ownerDocument.defaultView ?? window;
+    setInteracting(true);
+    if (interactionTimerRef.current !== null) view.clearTimeout(interactionTimerRef.current);
+    interactionTimerRef.current = view.setTimeout(() => {
+      interactionTimerRef.current = null;
+      setInteracting(false);
+    }, 140);
+
     frameRef.current = view.requestAnimationFrame(() => {
       frameRef.current = null;
       const nextTop = pendingScrollRef.current[kind];
