@@ -16,22 +16,39 @@ function renderPicker({
   const target = document.createElement('button');
   document.body.appendChild(target);
 
+  const renderResult = render(
+    <KonstaProvider theme="ios" dark>
+      <div className="k-ios dark">
+        <TimePicker
+          opened
+          target={target}
+          value={value}
+          onChange={onChange}
+          onClose={onClose}
+        />
+      </div>
+    </KonstaProvider>,
+  );
+
   return {
     onChange,
     onClose,
-    ...render(
-      <KonstaProvider theme="ios" dark>
-        <div className="k-ios dark">
-          <TimePicker
-            opened
-            target={target}
-            value={value}
-            onChange={onChange}
-            onClose={onClose}
-          />
-        </div>
-      </KonstaProvider>,
-    ),
+    ...renderResult,
+    setValue(nextValue: LocalTime) {
+      renderResult.rerender(
+        <KonstaProvider theme="ios" dark>
+          <div className="k-ios dark">
+            <TimePicker
+              opened
+              target={target}
+              value={nextValue}
+              onChange={onChange}
+              onClose={onClose}
+            />
+          </div>
+        </KonstaProvider>,
+      );
+    },
   };
 }
 
@@ -65,13 +82,14 @@ describe('TimePicker', () => {
     expect(within(minutes).getByRole('option', { name: '15' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('commits an HH:mm value when a wheel option is tapped', () => {
+  it('commits an HH:mm value when a controlled parent accepts each wheel change', () => {
     const onChange = vi.fn();
-    renderPicker({ onChange });
+    const picker = renderPicker({ onChange });
 
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Часы' })).getByRole('option', { name: '10' }));
     expect(onChange).toHaveBeenLastCalledWith('10:15');
 
+    picker.setValue('10:15');
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Минуты' })).getByRole('option', { name: '45' }));
     expect(onChange).toHaveBeenLastCalledWith('10:45');
   });
