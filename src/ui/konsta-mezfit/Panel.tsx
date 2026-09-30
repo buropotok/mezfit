@@ -88,6 +88,7 @@ export function MezfitPanel(props: MezfitPanelProps) {
           {...attrs}
           aria-hidden={prewarmClosedGlass ? true : attrs['aria-hidden']}
           inert={prewarmClosedGlass ? true : undefined}
+          data-ui-glass-prewarm={prewarmClosedGlass ? 'true' : undefined}
           style={{
             ...style,
             visibility: prewarmClosedGlass ? 'visible' : style?.visibility,
