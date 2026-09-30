@@ -116,7 +116,7 @@ export class UiScheduleTouchSensor implements SensorInstance {
     this.document.addEventListener('touchend', this.handleEnd);
     this.document.addEventListener('touchcancel', this.handleCancel);
     this.document.addEventListener('selectionchange', this.removeSelection);
-    this.view.addEventListener('visibilitychange', this.handleVisibilityChange);
+    this.document.addEventListener('visibilitychange', this.handleVisibilityChange);
     this.view.addEventListener('contextmenu', this.handleContextMenu);
     this.view.addEventListener('dragstart', this.handleDragStart);
 
@@ -241,7 +241,7 @@ export class UiScheduleTouchSensor implements SensorInstance {
     this.document.removeEventListener('touchend', this.handleEnd);
     this.document.removeEventListener('touchcancel', this.handleCancel);
     this.document.removeEventListener('selectionchange', this.removeSelection);
-    this.view.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    this.document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.view.removeEventListener('contextmenu', this.handleContextMenu);
     this.view.removeEventListener('dragstart', this.handleDragStart);
 
