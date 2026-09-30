@@ -197,6 +197,7 @@ describe('DaySchedule', () => {
     expect(track.style.transform).toContain('-66.666666%');
     const week = view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot;
     expect(week?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('1');
+    expect(week?.querySelector('.lens')?.classList.contains('tap-spring-active')).toBe(true);
 
     act(() => vi.advanceTimersByTime(300));
     expect(track.style.transform).toContain('-33.333333%');
