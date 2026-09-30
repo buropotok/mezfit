@@ -1,0 +1,144 @@
+.glass-background-lab {
+  display: grid;
+  gap: var(--ui-space-4);
+}
+
+.glass-background-lab__stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  padding: var(--ui-space-6) var(--ui-space-4);
+  border-radius: var(--ui-radius-md);
+  transition: background-color 120ms ease-out;
+}
+
+.glass-background-lab__stage-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.glass-background-lab__stage-art::before {
+  content: "";
+  position: absolute;
+  width: 172px;
+  height: 172px;
+  left: -42px;
+  top: 28px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.22);
+}
+
+.glass-background-lab__stage-art::after {
+  content: "MEZFIT";
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  color: rgb(255 255 255 / 0.26);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-title);
+  line-height: var(--ui-line-height-title);
+  font-weight: var(--ui-font-weight-semibold);
+  letter-spacing: 0.08em;
+}
+
+.glass-background-lab__tile {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 280px);
+  min-height: 152px;
+  padding: var(--ui-space-5);
+}
+
+.glass-background-lab__tile-content {
+  min-height: 112px;
+  display: grid;
+  align-content: center;
+  gap: var(--ui-space-2);
+}
+
+.glass-background-lab__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: var(--ui-space-4);
+  align-items: center;
+}
+
+.glass-background-lab__wheel-wrap,
+.glass-background-lab__brightness {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.glass-background-lab__wheel {
+  position: relative;
+  width: min(64vw, 220px);
+  aspect-ratio: 1;
+  justify-self: center;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  appearance: none;
+  background:
+    radial-gradient(circle, rgb(255 255 255) 0%, rgb(255 255 255 / 0.94) 7%, rgb(255 255 255 / 0) 68%),
+    conic-gradient(
+      #ff0000 0deg,
+      #ffff00 60deg,
+      #00ff00 120deg,
+      #00ffff 180deg,
+      #0000ff 240deg,
+      #ff00ff 300deg,
+      #ff0000 360deg
+    );
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.18),
+    0 12px 30px rgb(0 0 0 / 0.28);
+  touch-action: none;
+}
+
+.glass-background-lab__wheel-marker {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgb(255 255 255 / 0.96);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.4),
+    0 2px 8px rgb(0 0 0 / 0.36);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.glass-background-lab__brightness-control {
+  display: grid;
+  gap: var(--ui-space-2);
+  max-width: 320px;
+}
+
+.glass-background-lab__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.glass-background-lab__swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.24);
+}
+
+@media (max-width: 620px) {
+  .glass-background-lab__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .glass-background-lab__brightness-control {
+    max-width: none;
+  }
+}
