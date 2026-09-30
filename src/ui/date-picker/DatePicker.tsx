@@ -173,6 +173,10 @@ export function DatePicker({
     () => Array.from({ length: safeMaxYear - safeMinYear + 1 }, (_, index) => safeMinYear + index),
     [safeMaxYear, safeMinYear],
   );
+  const effectivePanelOpened = opened && (panelHasOpenedRef.current || panelOpened);
+  const effectiveYearPopoverOpened = effectivePanelOpened
+    && yearPopoverRequested
+    && (yearPopoverHasOpenedRef.current || yearPopoverOpened);
 
   useEffect(() => {
     if (!opened) {
@@ -183,10 +187,7 @@ export function DatePicker({
       return;
     }
 
-    if (panelHasOpenedRef.current) {
-      setPanelOpened(true);
-      return;
-    }
+    if (panelHasOpenedRef.current) return;
 
     if (!panelContentReady) {
       setPanelContentReady(true);
@@ -201,7 +202,7 @@ export function DatePicker({
   }, [opened, panelContentReady]);
 
   useEffect(() => {
-    if (!panelOpened) return;
+    if (!effectivePanelOpened) return;
 
     const justOpened = !wasOpenedRef.current;
     wasOpenedRef.current = true;
@@ -219,7 +220,7 @@ export function DatePicker({
         scrollElement.scrollTop = Math.max(0, monthElement.offsetTop - HEADER_SCROLL_OFFSET);
       });
     });
-  }, [panelOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
+  }, [effectivePanelOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
 
   useEffect(() => {
     if (!opened || !yearPopoverRequested) {
@@ -227,10 +228,7 @@ export function DatePicker({
       return;
     }
 
-    if (yearPopoverHasOpenedRef.current) {
-      setYearPopoverOpened(true);
-      return;
-    }
+    if (yearPopoverHasOpenedRef.current) return;
 
     if (!yearPopoverContentReady) {
       setYearPopoverContentReady(true);
@@ -245,7 +243,7 @@ export function DatePicker({
   }, [opened, yearPopoverContentReady, yearPopoverRequested]);
 
   useEffect(() => {
-    if (!yearPopoverOpened) return;
+    if (!effectiveYearPopoverOpened) return;
 
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -265,7 +263,7 @@ export function DatePicker({
         });
       });
     });
-  }, [visibleYear, yearPopoverOpened]);
+  }, [effectiveYearPopoverOpened, visibleYear]);
 
   if (!rangeIsValid) throw new Error('DatePicker requires a valid minYear/maxYear range');
   if (!selectedDate) throw new Error('DatePicker value must be a valid YYYY-MM-DD local date');
@@ -292,7 +290,7 @@ export function DatePicker({
       ref={yearTargetRef}
       className="ui-date-picker__year-trigger"
       aria-label={`Выбрать год, сейчас ${visibleYear}`}
-      aria-expanded={yearPopoverOpened}
+      aria-expanded={effectiveYearPopoverOpened}
       onClick={(event) => {
         event.preventDefault();
         setYearPopoverRequested((current) => !current);
@@ -319,7 +317,7 @@ export function DatePicker({
     <>
       <MezfitSidePanel
         side="right"
-        opened={opened && panelOpened}
+        opened={effectivePanelOpened}
         floating
         backdrop
         onBackdropClick={yearPopoverRequested ? undefined : onClose}
@@ -350,7 +348,7 @@ export function DatePicker({
       </MezfitSidePanel>
 
       <MezfitPopover
-        opened={opened && panelOpened && yearPopoverOpened}
+        opened={effectiveYearPopoverOpened}
         target={yearTargetRef.current ?? undefined}
         angle={false}
         backdrop
