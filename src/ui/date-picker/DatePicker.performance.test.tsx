@@ -1,20 +1,25 @@
 // @vitest-environment jsdom
 import { cleanup, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatePicker } from './DatePicker';
+
+beforeEach(() => {
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0);
+    return 1;
+  });
+});
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
-describe('DatePicker opening performance', () => {
-  it('reuses localized formatters when opening an already mounted picker', () => {
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+describe('DatePicker formatter reuse', () => {
+  it('does not construct per-day Intl formatters again on rerender', () => {
     const formatterSpy = vi.spyOn(Intl, 'DateTimeFormat');
-    const onChange = vi.fn();
-    const onClose = vi.fn();
 
     const renderPicker = (opened: boolean) => (
       <KonstaProvider theme="ios" dark>
@@ -22,8 +27,9 @@ describe('DatePicker opening performance', () => {
           <DatePicker
             opened={opened}
             value="2026-09-25"
-            onChange={onChange}
-            onClose={onClose}
+            locale="en-AU"
+            onChange={() => {}}
+            onClose={() => {}}
           />
         </div>
       </KonstaProvider>
@@ -33,6 +39,7 @@ describe('DatePicker opening performance', () => {
     const initialFormatterCalls = formatterSpy.mock.calls.length;
 
     expect(initialFormatterCalls).toBeGreaterThan(0);
+    expect(initialFormatterCalls).toBeLessThan(10);
 
     view.rerender(renderPicker(true));
 

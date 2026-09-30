@@ -6,18 +6,9 @@ const datePickerCss = readFileSync(
   'utf8',
 );
 
-describe('DatePicker filter prewarm CSS', () => {
-  it('keeps the sticky header blur on a compositor-ready filter layer', () => {
-    expect(datePickerCss).toContain('.ui-date-picker__header-blur');
-    expect(datePickerCss).toContain('will-change: backdrop-filter');
-    expect(datePickerCss).toContain('backdrop-filter: blur(48px) saturate(110%)');
-  });
-
-  it('prewarms glass and header blur outside the Konsta Panel lifecycle', () => {
-    expect(datePickerCss).toContain('.ui-date-picker__prewarm');
-    expect(datePickerCss).toContain('left: calc(100vw + 64px)');
-    expect(datePickerCss).toContain('.ui-date-picker__prewarm-glass');
-    expect(datePickerCss).toContain('will-change: backdrop-filter');
-    expect(datePickerCss).toContain('.ui-date-picker__header-blur--prewarm');
+describe('DatePicker baseline CSS', () => {
+  it('contains no filter-prewarm workaround styles', () => {
+    expect(datePickerCss).not.toContain('.ui-date-picker__prewarm');
+    expect(datePickerCss).not.toContain('will-change: backdrop-filter');
   });
 });

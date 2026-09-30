@@ -12,6 +12,46 @@ export interface MonthCell {
 
 const LOCAL_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
+const monthFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const dayFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const weekdayFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function getMonthFormatter(locale: string): Intl.DateTimeFormat {
+  const cached = monthFormatterCache.get(locale);
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    timeZone: 'UTC',
+  });
+  monthFormatterCache.set(locale, formatter);
+  return formatter;
+}
+
+function getDayFormatter(locale: string): Intl.DateTimeFormat {
+  const cached = dayFormatterCache.get(locale);
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: 'long',
+    timeZone: 'UTC',
+  });
+  dayFormatterCache.set(locale, formatter);
+  return formatter;
+}
+
+function getWeekdayFormatter(locale: string): Intl.DateTimeFormat {
+  const cached = weekdayFormatterCache.get(locale);
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    timeZone: 'UTC',
+  });
+  weekdayFormatterCache.set(locale, formatter);
+  return formatter;
+}
+
 export function daysInMonth(year: number, monthIndex: number): number {
   return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 }
@@ -66,41 +106,19 @@ export function calculateCenteredScrollTop({
   return Math.min(maxTop, Math.max(0, desiredTop));
 }
 
-export function formatMonthName(
-  year: number,
-  monthIndex: number,
-  locale: string,
-  formatter?: Intl.DateTimeFormat,
-): string {
-  const activeFormatter = formatter ?? new Intl.DateTimeFormat(locale, {
-    month: 'long',
-    timeZone: 'UTC',
-  });
-  const label = activeFormatter.format(new Date(Date.UTC(year, monthIndex, 1)));
+export function formatMonthName(year: number, monthIndex: number, locale: string): string {
+  const label = getMonthFormatter(locale).format(new Date(Date.UTC(year, monthIndex, 1)));
 
   const [first = '', ...rest] = Array.from(label);
   return `${first.toLocaleUpperCase(locale)}${rest.join('')}`;
 }
 
-export function formatDayLabel(
-  year: number,
-  monthIndex: number,
-  day: number,
-  locale: string,
-  formatter?: Intl.DateTimeFormat,
-): string {
-  const activeFormatter = formatter ?? new Intl.DateTimeFormat(locale, {
-    dateStyle: 'long',
-    timeZone: 'UTC',
-  });
-  return activeFormatter.format(new Date(Date.UTC(year, monthIndex, day)));
+export function formatDayLabel(year: number, monthIndex: number, day: number, locale: string): string {
+  return getDayFormatter(locale).format(new Date(Date.UTC(year, monthIndex, day)));
 }
 
 export function getWeekdayLabels(locale: string): string[] {
-  const formatter = new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
-    timeZone: 'UTC',
-  });
+  const formatter = getWeekdayFormatter(locale);
   const monday = Date.UTC(2026, 0, 5);
 
   return Array.from({ length: 7 }, (_, index) => {
