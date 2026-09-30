@@ -337,11 +337,14 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (!event.isPrimary && event.nativeEvent.isPrimary === false) return;
     if (busy.current || eventDragActive.current || weekGesture.current || dayGesture.current) return;
     const targetElement = event.target instanceof Element ? event.target : null;
+    const draggableHandle = targetElement?.closest('[data-ui-dnd-handle]') ?? null;
+    const interactiveTarget = targetElement?.closest('button, a, input, select, textarea, [role="button"], [data-no-dnd], [data-schedule-no-swipe]') ?? null;
     const startsOnDraggableEvent = target === 'day'
       && event.pointerType === 'touch'
-      && Boolean(targetElement?.closest('[data-ui-dnd-handle]'));
+      && Boolean(draggableHandle);
     const startsOnInteractiveChild = target === 'day'
-      && Boolean(targetElement?.closest('button, a, input, select, textarea, [role="button"], [data-no-dnd], [data-schedule-no-swipe]'));
+      && Boolean(interactiveTarget)
+      && interactiveTarget !== draggableHandle;
     if (startsOnInteractiveChild && !startsOnDraggableEvent) return;
     const state: DragState = {
       pointerId: event.pointerId,
