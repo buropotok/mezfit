@@ -103,10 +103,7 @@ export function IdentityAction({
   };
 
   const handleAnimationEnd: AnimationEventHandler<HTMLElement> = (event) => {
-    if (
-      event.target !== event.currentTarget
-      || event.animationName !== 'ui-identity-action-press'
-    ) return;
+    if (event.target !== event.currentTarget) return;
 
     animationActiveRef.current = false;
     setIsAnimating(false);
