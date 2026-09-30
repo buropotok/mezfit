@@ -1,31 +1,3 @@
-.ui-date-picker__prewarm {
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-  left: calc(100vw + 64px);
-  width: 18rem;
-  height: calc(
-    100dvh
-    - env(safe-area-inset-top, 0px)
-    - env(safe-area-inset-bottom, 0px)
-    - 1rem
-  );
-  pointer-events: none;
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-.ui-date-picker__prewarm-glass {
-  width: 100%;
-  height: 100%;
-  will-change: backdrop-filter;
-}
-
-.ui-date-picker__header-blur--prewarm {
-  position: absolute;
-  width: 100%;
-  margin-bottom: 0;
-}
-
 .ui-date-picker__scroll {
   height: 100%;
   overflow-y: auto;
@@ -45,7 +17,6 @@
   height: 78px;
   margin-bottom: -78px;
   pointer-events: none;
-  will-change: backdrop-filter;
   -webkit-backdrop-filter: blur(48px) saturate(110%);
   backdrop-filter: blur(48px) saturate(110%);
   background: linear-gradient(
@@ -94,7 +65,7 @@
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-title);
   line-height: var(--ui-line-height-title);
-  font-weight: var(--ui-font-weight-light);
+  font-weight: var(--ui-font-weight-regular);
 }
 
 .ui-date-picker__weekdays,
@@ -132,7 +103,7 @@
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-body);
   line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-medium);
+  font-weight: var(--ui-font-weight-regular);
   -webkit-tap-highlight-color: transparent;
 }
 
