@@ -22,6 +22,9 @@ const DEFAULT_WIDTH = 288;
 const DEFAULT_HEIGHT = 72;
 const DEFAULT_PIXEL_RATIO = 2;
 const EDGE_BEZEL_WIDTH = 18;
+const EDGE_NEUTRAL_WIDTH = 1.7;
+const EDGE_REFRACTION_WIDTH = 10;
+const EDGE_REFRACTION_STRENGTH = 0.67;
 const GLASS_THICKNESS = 96;
 const REFRACTIVE_INDEX = 1.5;
 const ZOOM_MAGNIFICATION = 1.55;
@@ -161,7 +164,8 @@ export function buildTimeLensVectorFields({
       const zoomY = -y * zoomFactor;
       writeVector(zoomPixels, offset, zoomX / zoomScale, zoomY / zoomScale);
 
-      if (distanceInside <= EDGE_BEZEL_WIDTH) {
+      const edgeLocal = distanceInside - EDGE_NEUTRAL_WIDTH;
+      if (edgeLocal > 0 && edgeLocal < EDGE_REFRACTION_WIDTH) {
         const gx = roundedRectSdf(x + epsilon, y, halfWidth, halfHeight, radius)
           - roundedRectSdf(x - epsilon, y, halfWidth, halfHeight, radius);
         const gy = roundedRectSdf(x, y + epsilon, halfWidth, halfHeight, radius)
@@ -169,12 +173,15 @@ export function buildTimeLensVectorFields({
         const gradientLength = Math.hypot(gx, gy) || 1;
         const normalX = gx / gradientLength;
         const normalY = gy / gradientLength;
-        const profileRatio = clamp(distanceInside / EDGE_BEZEL_WIDTH, 0, 1);
+        const profileRatio = clamp(edgeLocal / EDGE_REFRACTION_WIDTH, 0, 1);
         const profileIndex = Math.min(
           refractionProfile.length - 1,
           Math.floor(profileRatio * refractionProfile.length),
         );
-        const distance = refractionProfile[profileIndex] ?? 0;
+        const envelope = Math.sin(Math.PI * profileRatio);
+        const distance = (refractionProfile[profileIndex] ?? 0)
+          * envelope
+          * EDGE_REFRACTION_STRENGTH;
 
         writeVector(
           edgePixels,
