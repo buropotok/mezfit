@@ -172,6 +172,37 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('enters resize mode after drop and exits when the user taps outside', () => {
+    const moved = vi.fn();
+    const resized = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        onEventResize={resized}
+        renderEvent={(event, state) => <div data-editing={String(state.editing)}>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    if (!frame) throw new Error('Missing draggable event frame');
+
+    fireEvent.pointerDown(frame, { pointerId: 3, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 3, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 140 });
+    fireEvent.pointerUp(document, { pointerId: 3, pointerType: 'mouse', button: 0, clientX: 100, clientY: 140 });
+    act(() => vi.advanceTimersByTime(50));
+
+    expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(2);
+    expect(view.container.querySelector('[data-editing="true"]')).not.toBeNull();
+
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+    if (!viewport) throw new Error('Missing day viewport');
+    fireEvent.pointerDown(viewport, { pointerId: 4, pointerType: 'touch', clientX: 20, clientY: 500 });
+    expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
+  });
+
   it('activates touch drag after long-press while leaving pre-activation pan-y available', () => {
     const moved = vi.fn();
     const view = render(
