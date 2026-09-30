@@ -44,6 +44,9 @@ describe('SettingsPage modules gallery', () => {
     expect(screen.getByText(/Выбранное время: 08:30/)).toBeTruthy();
     expect(screen.getByText(/Haptic backend: none/)).toBeTruthy();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Selection' }));
+    expect(screen.getByText(/Probe: telegram-selection → unsupported/)).toBeTruthy();
+
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать время' }));
 
     expect(screen.getByRole('dialog', { name: 'Выбор времени' })).toBeTruthy();
