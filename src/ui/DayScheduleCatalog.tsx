@@ -66,18 +66,19 @@ export function DayScheduleCatalog() {
         date={date}
         eventsByDate={eventsByDate}
         onDateChange={next => { setLastChange(next); setDate(next); }}
-        onEventMove={({ eventId, date: eventDate, startMinutes }) => setEventOverrides(current => ({
+        onEventMove={({ eventId, date: eventDate, targetDate, startMinutes }) => setEventOverrides(current => ({
           ...current,
           [eventId]: {
+            date: targetDate,
             startMinutes,
             durationMinutes: current[eventId]?.durationMinutes
               ?? eventsByDate[eventDate]?.find(event => event.id === eventId)?.durationMinutes
               ?? 60,
           },
         }))}
-        onEventResize={({ eventId, startMinutes, durationMinutes }) => setEventOverrides(current => ({
+        onEventResize={({ eventId, date: eventDate, startMinutes, durationMinutes }) => setEventOverrides(current => ({
           ...current,
-          [eventId]: { startMinutes, durationMinutes },
+          [eventId]: { date: eventDate, startMinutes, durationMinutes },
         }))}
         renderEvent={(event, state) => (
           <DayScheduleEventCard
