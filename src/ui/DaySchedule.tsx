@@ -51,6 +51,7 @@ type DragState = {
   dragging: boolean;
   verticalScrolling: boolean;
   manualScroll: boolean;
+  verticalOnly: boolean;
   startScrollTop: number;
   activationThreshold: number;
 };
@@ -335,12 +336,13 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (!event.isPrimary && event.nativeEvent.isPrimary === false) return;
     if (busy.current || eventDragActive.current || weekGesture.current || dayGesture.current) return;
-    if (target === 'day' && event.target instanceof Element &&
-      event.target.closest('button, a, input, select, textarea, [data-schedule-no-swipe]')) return;
+    const targetElement = event.target instanceof Element ? event.target : null;
     const startsOnDraggableEvent = target === 'day'
       && event.pointerType === 'touch'
-      && event.target instanceof Element
-      && Boolean(event.target.closest('[data-ui-dnd-handle]'));
+      && Boolean(targetElement?.closest('[data-ui-dnd-handle]'));
+    const startsOnInteractiveChild = target === 'day'
+      && Boolean(targetElement?.closest('button, a, input, select, textarea, [role="button"], [data-no-dnd], [data-schedule-no-swipe]'));
+    if (startsOnInteractiveChild && !startsOnDraggableEvent) return;
     const state: DragState = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -350,6 +352,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       dragging: false,
       verticalScrolling: false,
       manualScroll: startsOnDraggableEvent,
+      verticalOnly: startsOnDraggableEvent && startsOnInteractiveChild,
       startScrollTop: target === 'day' ? dayViewportRef.current?.scrollTop ?? 0 : 0,
       activationThreshold: startsOnDraggableEvent ? SCHEDULE_TOUCH_ACTIVATION_TOLERANCE : 8,
     };
@@ -376,6 +379,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       if (state.manualScroll) {
         if (Math.hypot(dx, dy) <= state.activationThreshold) return;
         if (Math.abs(dy) > Math.abs(dx)) state.verticalScrolling = true;
+        else if (state.verticalOnly) return;
         else state.dragging = true;
       } else {
         if (Math.abs(dx) < state.activationThreshold || Math.abs(dx) <= Math.abs(dy)) return;
