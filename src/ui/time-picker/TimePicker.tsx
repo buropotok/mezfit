@@ -383,18 +383,18 @@ export function TimePicker({
       ? { ...current, hour: nextValue }
       : { ...current, minute: nextValue };
 
-    if (next.hour === current.hour && next.minute === current.minute) {
-      draftRef.current = current;
-      setDraft(current);
-      return;
-    }
-
     if (feedbackValueRef.current[kind] !== nextValue) {
       feedbackValueRef.current = {
         ...feedbackValueRef.current,
         [kind]: nextValue,
       };
       triggerTelegramSelectionHaptic();
+    }
+
+    if (next.hour === current.hour && next.minute === current.minute) {
+      draftRef.current = current;
+      setDraft(current);
+      return;
     }
 
     draftRef.current = next;
@@ -413,6 +413,7 @@ export function TimePicker({
       if (canonical.hour === next.hour && canonical.minute === next.minute) return;
 
       draftRef.current = canonical;
+      feedbackValueRef.current = canonical;
       setDraft(canonical);
       const canonicalScrollTops = {
         hour: canonical.hour * ROW_HEIGHT,
