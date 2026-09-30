@@ -44,12 +44,12 @@ function formatUnit(value: number) {
   return String(value).padStart(2, '0');
 }
 
-function scrollColumn(element: HTMLDivElement | null, index: number, smooth = false) {
+function scrollColumn(element: HTMLDivElement | null, index: number) {
   if (!element) return;
 
   const top = index * ROW_HEIGHT;
   if (typeof element.scrollTo === 'function') {
-    element.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+    element.scrollTo({ top, behavior: 'auto' });
   } else {
     element.scrollTop = top;
   }
@@ -297,6 +297,7 @@ export function TimePicker({
   const minuteRef = useRef<HTMLDivElement | null>(null);
   const draftRef = useRef<LocalTimeParts>(parsedValue);
   const onChangeRef = useRef(onChange);
+  const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const hourFrameRef = useRef<number | null>(null);
   const minuteFrameRef = useRef<number | null>(null);
@@ -312,6 +313,7 @@ export function TimePicker({
   const [interacting, setInteracting] = useState(false);
 
   onChangeRef.current = onChange;
+  openedRef.current = opened;
 
   useEffect(() => {
     const documentRef = target?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
@@ -338,18 +340,50 @@ export function TimePicker({
   }, [target]);
 
   useEffect(() => {
+    const view = target?.ownerDocument.defaultView ?? window;
+
     if (!opened) {
       wasOpenedRef.current = false;
       setInteracting(false);
+
+      if (hourFrameRef.current !== null) {
+        view.cancelAnimationFrame(hourFrameRef.current);
+        hourFrameRef.current = null;
+      }
+      if (minuteFrameRef.current !== null) {
+        view.cancelAnimationFrame(minuteFrameRef.current);
+        minuteFrameRef.current = null;
+      }
+      if (interactionTimerRef.current !== null) {
+        view.clearTimeout(interactionTimerRef.current);
+        interactionTimerRef.current = null;
+      }
       return;
     }
 
     const justOpened = !wasOpenedRef.current;
     wasOpenedRef.current = true;
-    if (!justOpened) return;
+    const currentDraft = draftRef.current;
+    const valueChanged = currentDraft.hour !== parsedValue.hour
+      || currentDraft.minute !== parsedValue.minute;
+    if (!justOpened && !valueChanged) return;
+
+    if (hourFrameRef.current !== null) {
+      view.cancelAnimationFrame(hourFrameRef.current);
+      hourFrameRef.current = null;
+    }
+    if (minuteFrameRef.current !== null) {
+      view.cancelAnimationFrame(minuteFrameRef.current);
+      minuteFrameRef.current = null;
+    }
+    if (interactionTimerRef.current !== null) {
+      view.clearTimeout(interactionTimerRef.current);
+      interactionTimerRef.current = null;
+    }
 
     draftRef.current = parsedValue;
     setDraft(parsedValue);
+    setInteracting(false);
     const nextScrollTops = {
       hour: parsedValue.hour * ROW_HEIGHT,
       minute: parsedValue.minute * ROW_HEIGHT,
@@ -357,8 +391,8 @@ export function TimePicker({
     pendingScrollRef.current = nextScrollTops;
     setScrollTops(nextScrollTops);
 
-    const view = target?.ownerDocument.defaultView ?? window;
     view.requestAnimationFrame(() => {
+      if (!openedRef.current) return;
       scrollColumn(hourRef.current, parsedValue.hour);
       scrollColumn(minuteRef.current, parsedValue.minute);
     });
@@ -388,6 +422,8 @@ export function TimePicker({
   };
 
   const handleScroll = (kind: TimeColumn, event: UIEvent<HTMLDivElement>) => {
+    if (!openedRef.current) return;
+
     const top = event.currentTarget.scrollTop;
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
@@ -407,6 +443,8 @@ export function TimePicker({
 
     frameRef.current = view.requestAnimationFrame(() => {
       frameRef.current = null;
+      if (!openedRef.current) return;
+
       const nextTop = pendingScrollRef.current[kind];
       setScrollTops((current) => ({ ...current, [kind]: nextTop }));
       commitIndex(kind, Math.round(nextTop / ROW_HEIGHT));
@@ -414,8 +452,16 @@ export function TimePicker({
   };
 
   const handleSelect = (kind: TimeColumn, index: number) => {
+    if (!openedRef.current) return;
+
     commitIndex(kind, index);
-    scrollColumn(kind === 'hour' ? hourRef.current : minuteRef.current, index, true);
+    const nextTop = index * ROW_HEIGHT;
+    pendingScrollRef.current = {
+      ...pendingScrollRef.current,
+      [kind]: nextTop,
+    };
+    setScrollTops((current) => ({ ...current, [kind]: nextTop }));
+    scrollColumn(kind === 'hour' ? hourRef.current : minuteRef.current, index);
   };
 
   return (
