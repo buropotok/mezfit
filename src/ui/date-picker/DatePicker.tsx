@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button as KonstaButton, Glass, Link, Navbar } from 'konsta/react';
 import { MezfitPopover, MezfitSidePanel } from '../konsta-mezfit';
 import {
@@ -10,7 +10,9 @@ import {
   formatMonthName,
   getWeekdayLabels,
   parseLocalDate,
+  prewarmDateFormatters,
   type LocalDate,
+  type LocalDateParts,
 } from './datePickerDate';
 import './date-picker.css';
 
@@ -37,6 +39,99 @@ function CloseIcon() {
   );
 }
 
+const CalendarMonths = memo(function CalendarMonths({
+  visibleYear,
+  selectedDate,
+  locale,
+  weekdayLabels,
+  onChooseDate,
+}: {
+  visibleYear: number;
+  selectedDate: LocalDateParts;
+  locale: string;
+  weekdayLabels: readonly string[];
+  onChooseDate: (monthIndex: number, day: number) => void;
+}) {
+  return (
+    <div className="ui-date-picker__months">
+      {Array.from({ length: MONTH_COUNT }, (_, monthIndex) => (
+        <section className="ui-date-picker__month" data-month-index={monthIndex} key={monthIndex}>
+          <h2 className="ui-date-picker__month-title">
+            {formatMonthName(visibleYear, monthIndex, locale)}
+          </h2>
+          <div className="ui-date-picker__weekdays" aria-hidden="true">
+            {weekdayLabels.map((label, index) => (
+              <span key={`${label}-${index}`}>{label}</span>
+            ))}
+          </div>
+          <div className="ui-date-picker__days">
+            {buildMonthGrid(visibleYear, monthIndex).map((cell, cellIndex) => {
+              const day = cell.day;
+              if (day === null) {
+                return <span className="ui-date-picker__empty-day" aria-hidden="true" key={`empty-${cellIndex}`} />;
+              }
+
+              const isSelected = selectedDate.year === visibleYear
+                && selectedDate.month === monthIndex + 1
+                && selectedDate.day === day;
+
+              return (
+                <button
+                  type="button"
+                  className={`ui-date-picker__day${isSelected ? ' ui-date-picker__day--selected' : ''}`}
+                  aria-label={formatDayLabel(visibleYear, monthIndex, day, locale)}
+                  aria-current={isSelected ? 'date' : undefined}
+                  onClick={() => onChooseDate(monthIndex, day)}
+                  key={day}
+                >
+                  <span className="ui-date-picker__day-label">{day}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+});
+
+const YearGrid = memo(function YearGrid({
+  years,
+  visibleYear,
+  onChooseYear,
+}: {
+  years: readonly number[];
+  visibleYear: number;
+  onChooseYear: (year: number) => void;
+}) {
+  return (
+    <div className="ui-date-picker__year-grid">
+      {years.map((year) => {
+        const selected = year === visibleYear;
+        return (
+          <KonstaButton
+            key={year}
+            data-year={year}
+            clear={!selected}
+            tonal={selected}
+            rounded
+            colors={{
+              textIos: 'text-white',
+              clearBgIos: 'bg-transparent active:bg-white/10',
+              tonalTextIos: 'text-white',
+              tonalBgIos: 'bg-white/14 active:bg-white/20',
+            }}
+            aria-current={selected ? 'date' : undefined}
+            onClick={() => onChooseYear(year)}
+          >
+            {year}
+          </KonstaButton>
+        );
+      })}
+    </div>
+  );
+});
+
 export function DatePicker({
   opened,
   value,
@@ -53,31 +148,63 @@ export function DatePicker({
   const safeSelectedDate = selectedDate ?? { year: safeMinYear, month: 1, day: 1 };
 
   const [visibleYear, setVisibleYear] = useState(() => clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
-  const [yearPopoverOpened, setYearPopoverOpened] = useState(false);
+  const [panelContentReady, setPanelContentReady] = useState(false);
+  const [panelReadyToOpen, setPanelReadyToOpen] = useState(false);
+  const [yearPopoverRequested, setYearPopoverRequested] = useState(false);
+  const [yearPopoverContentReady, setYearPopoverContentReady] = useState(false);
+  const [yearPopoverReadyToOpen, setYearPopoverReadyToOpen] = useState(false);
+  const onChangeRef = useRef(onChange);
+  const onCloseRef = useRef(onClose);
   const yearTargetRef = useRef<HTMLButtonElement | null>(null);
   const monthScrollRef = useRef<HTMLDivElement | null>(null);
   const yearScrollRef = useRef<HTMLDivElement | null>(null);
   const wasOpenedRef = useRef(false);
 
-  const weekdayLabels = useMemo(() => getWeekdayLabels(locale), [locale]);
+  onChangeRef.current = onChange;
+  onCloseRef.current = onClose;
+
+  const weekdayLabels = useMemo(() => {
+    prewarmDateFormatters(locale);
+    return getWeekdayLabels(locale);
+  }, [locale]);
   const years = useMemo(
     () => Array.from({ length: safeMaxYear - safeMinYear + 1 }, (_, index) => safeMinYear + index),
     [safeMaxYear, safeMinYear],
   );
+  const effectivePanelOpened = opened && panelReadyToOpen;
+  const effectiveYearPopoverOpened = effectivePanelOpened
+    && yearPopoverRequested
+    && yearPopoverReadyToOpen;
 
   useEffect(() => {
     if (!opened) {
-      setYearPopoverOpened(false);
+      setYearPopoverRequested(false);
       wasOpenedRef.current = false;
       return;
     }
+
+    if (panelReadyToOpen) return;
+
+    if (!panelContentReady) {
+      setPanelContentReady(true);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      setPanelReadyToOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [opened, panelContentReady, panelReadyToOpen]);
+
+  useEffect(() => {
+    if (!effectivePanelOpened) return;
 
     const justOpened = !wasOpenedRef.current;
     wasOpenedRef.current = true;
     if (!justOpened) return;
 
     setVisibleYear(clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
-    setYearPopoverOpened(false);
+    setYearPopoverRequested(false);
 
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -87,10 +214,24 @@ export function DatePicker({
         scrollElement.scrollTop = Math.max(0, monthElement.offsetTop - HEADER_SCROLL_OFFSET);
       });
     });
-  }, [opened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
+  }, [effectivePanelOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
 
   useEffect(() => {
-    if (!yearPopoverOpened) return;
+    if (!opened || !yearPopoverRequested || yearPopoverReadyToOpen) return;
+
+    if (!yearPopoverContentReady) {
+      setYearPopoverContentReady(true);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      setYearPopoverReadyToOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [opened, yearPopoverContentReady, yearPopoverReadyToOpen, yearPopoverRequested]);
+
+  useEffect(() => {
+    if (!effectiveYearPopoverOpened) return;
 
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -110,7 +251,7 @@ export function DatePicker({
         });
       });
     });
-  }, [visibleYear, yearPopoverOpened]);
+  }, [effectiveYearPopoverOpened, visibleYear]);
 
   if (!rangeIsValid) throw new Error('DatePicker requires a valid minYear/maxYear range');
   if (!selectedDate) throw new Error('DatePicker value must be a valid YYYY-MM-DD local date');
@@ -118,11 +259,16 @@ export function DatePicker({
     throw new Error('DatePicker value must be inside the configured year range');
   }
 
-  const chooseDate = (monthIndex: number, day: number) => {
-    onChange(formatLocalDate(visibleYear, monthIndex + 1, day));
-    setYearPopoverOpened(false);
-    onClose();
-  };
+  const chooseDate = useCallback((monthIndex: number, day: number) => {
+    onChangeRef.current(formatLocalDate(visibleYear, monthIndex + 1, day));
+    setYearPopoverRequested(false);
+    onCloseRef.current();
+  }, [visibleYear]);
+
+  const chooseYear = useCallback((year: number) => {
+    setVisibleYear(year);
+    setYearPopoverRequested(false);
+  }, []);
 
   const yearTrigger = (
     <Glass
@@ -130,10 +276,10 @@ export function DatePicker({
       ref={yearTargetRef}
       className="ui-date-picker__year-trigger"
       aria-label={`Выбрать год, сейчас ${visibleYear}`}
-      aria-expanded={yearPopoverOpened}
+      aria-expanded={effectiveYearPopoverOpened}
       onClick={(event) => {
         event.preventDefault();
-        setYearPopoverOpened((current) => !current);
+        setYearPopoverRequested((current) => !current);
       }}
     >
       {visibleYear}
@@ -144,10 +290,10 @@ export function DatePicker({
     <Link
       component="button"
       iconOnly
-      linkProps={{ type: 'button', disabled: yearPopoverOpened }}
-      aria-disabled={yearPopoverOpened}
+      linkProps={{ type: 'button', disabled: yearPopoverRequested }}
+      aria-disabled={yearPopoverRequested}
       aria-label="Закрыть календарь"
-      onClick={yearPopoverOpened ? undefined : onClose}
+      onClick={yearPopoverRequested ? undefined : onClose}
     >
       <CloseIcon />
     </Link>
@@ -157,10 +303,10 @@ export function DatePicker({
     <>
       <MezfitSidePanel
         side="right"
-        opened={opened}
+        opened={effectivePanelOpened}
         floating
         backdrop
-        onBackdropClick={yearPopoverOpened ? undefined : onClose}
+        onBackdropClick={yearPopoverRequested ? undefined : onClose}
         role="dialog"
         aria-modal="true"
         aria-label="Выбор даты"
@@ -175,54 +321,24 @@ export function DatePicker({
             right={closeAction}
           />
 
-          <div className="ui-date-picker__months">
-            {Array.from({ length: MONTH_COUNT }, (_, monthIndex) => (
-              <section className="ui-date-picker__month" data-month-index={monthIndex} key={monthIndex}>
-                <h2 className="ui-date-picker__month-title">
-                  {formatMonthName(visibleYear, monthIndex, locale)}
-                </h2>
-                <div className="ui-date-picker__weekdays" aria-hidden="true">
-                  {weekdayLabels.map((label, index) => (
-                    <span key={`${label}-${index}`}>{label}</span>
-                  ))}
-                </div>
-                <div className="ui-date-picker__days">
-                  {buildMonthGrid(visibleYear, monthIndex).map((cell, cellIndex) => {
-                    const day = cell.day;
-                    if (day === null) {
-                      return <span className="ui-date-picker__empty-day" aria-hidden="true" key={`empty-${cellIndex}`} />;
-                    }
-
-                    const isSelected = selectedDate.year === visibleYear
-                      && selectedDate.month === monthIndex + 1
-                      && selectedDate.day === day;
-
-                    return (
-                      <button
-                        type="button"
-                        className={`ui-date-picker__day${isSelected ? ' ui-date-picker__day--selected' : ''}`}
-                        aria-label={formatDayLabel(visibleYear, monthIndex, day, locale)}
-                        aria-current={isSelected ? 'date' : undefined}
-                        onClick={() => chooseDate(monthIndex, day)}
-                        key={day}
-                      >
-                        <span className="ui-date-picker__day-label">{day}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
+          {panelContentReady ? (
+            <CalendarMonths
+              visibleYear={visibleYear}
+              selectedDate={selectedDate}
+              locale={locale}
+              weekdayLabels={weekdayLabels}
+              onChooseDate={chooseDate}
+            />
+          ) : null}
         </div>
       </MezfitSidePanel>
 
       <MezfitPopover
-        opened={opened && yearPopoverOpened}
+        opened={effectiveYearPopoverOpened}
         target={yearTargetRef.current ?? undefined}
         angle={false}
         backdrop
-        onBackdropClick={() => setYearPopoverOpened(false)}
+        onBackdropClick={() => setYearPopoverRequested(false)}
         style={{ width: '284px', maxWidth: 'calc(100vw - 24px)' }}
         role="dialog"
         aria-modal="true"
@@ -230,33 +346,13 @@ export function DatePicker({
       >
         <div className="ui-date-picker__year-popover">
           <div className="ui-date-picker__year-scroll" ref={yearScrollRef}>
-            <div className="ui-date-picker__year-grid">
-              {years.map((year) => {
-                const selected = year === visibleYear;
-                return (
-                  <KonstaButton
-                    key={year}
-                    data-year={year}
-                    clear={!selected}
-                    tonal={selected}
-                    rounded
-                    colors={{
-                      textIos: 'text-white',
-                      clearBgIos: 'bg-transparent active:bg-white/10',
-                      tonalTextIos: 'text-white',
-                      tonalBgIos: 'bg-white/14 active:bg-white/20',
-                    }}
-                    aria-current={selected ? 'date' : undefined}
-                    onClick={() => {
-                      setVisibleYear(year);
-                      setYearPopoverOpened(false);
-                    }}
-                  >
-                    {year}
-                  </KonstaButton>
-                );
-              })}
-            </div>
+            {yearPopoverContentReady ? (
+              <YearGrid
+                years={years}
+                visibleYear={visibleYear}
+                onChooseYear={chooseYear}
+              />
+            ) : null}
           </div>
         </div>
       </MezfitPopover>
