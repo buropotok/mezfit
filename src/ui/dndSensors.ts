@@ -7,7 +7,7 @@ import {
   type SensorInstance,
   type SensorProps,
 } from '@dnd-kit/core';
-import { getEventCoordinates } from '@dnd-kit/utilities';
+import { getEventCoordinates, getOwnerDocument, getWindow } from '@dnd-kit/utilities';
 
 export const LONG_PRESS_DELAY_MS = 300;
 export const DRAG_ACTIVATION_TOLERANCE = 8;
@@ -95,9 +95,8 @@ export class UiScheduleTouchSensor implements SensorInstance {
   constructor(props: SensorProps<ScheduleTouchSensorOptions>) {
     this.props = props;
 
-    const target = props.event.target;
-    this.document = target instanceof Node ? target.ownerDocument ?? document : document;
-    this.view = this.document.defaultView ?? window;
+    this.document = getOwnerDocument(props.event.target);
+    this.view = getWindow(props.event.target);
 
     const coordinates = getEventCoordinates(props.event) ?? { x: 0, y: 0 };
     this.initialX = coordinates.x;
@@ -115,7 +114,6 @@ export class UiScheduleTouchSensor implements SensorInstance {
     this.document.addEventListener('touchmove', this.handleMove, { passive: false });
     this.document.addEventListener('touchend', this.handleEnd);
     this.document.addEventListener('touchcancel', this.handleCancel);
-    this.document.addEventListener('selectionchange', this.removeSelection);
     this.document.addEventListener('visibilitychange', this.handleVisibilityChange);
     this.view.addEventListener('contextmenu', this.handleContextMenu);
     this.view.addEventListener('dragstart', this.handleDragStart);
@@ -140,6 +138,7 @@ export class UiScheduleTouchSensor implements SensorInstance {
     this.activated = true;
     this.clearActivationTimer();
     this.document.addEventListener('click', this.stopClick, true);
+    this.document.addEventListener('selectionchange', this.removeSelection);
     this.removeSelection();
     this.props.onStart({ x: this.initialX, y: this.initialY });
   }
