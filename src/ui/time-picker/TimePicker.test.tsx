@@ -46,11 +46,6 @@ beforeEach(() => {
   });
   vi.stubGlobal('cancelAnimationFrame', vi.fn());
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
-  vi.spyOn(HTMLElement.prototype, 'scrollTo').mockImplementation(function scrollTo(options) {
-    if (typeof options === 'object' && options && 'top' in options && typeof options.top === 'number') {
-      this.scrollTop = options.top;
-    }
-  });
 });
 
 afterEach(() => {
