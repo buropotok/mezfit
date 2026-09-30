@@ -9,9 +9,12 @@ export interface TelegramBackButton {
 
 export type TelegramHapticImpactStyle = 'light' | 'medium' | 'heavy' | 'rigid' | 'soft';
 
+export type TelegramHapticNotificationType = 'success' | 'warning' | 'error';
+
 export interface TelegramHapticFeedback {
   selectionChanged(): void;
   impactOccurred?(style: TelegramHapticImpactStyle): void;
+  notificationOccurred?(type: TelegramHapticNotificationType): void;
 }
 
 export interface TelegramWebApp {
@@ -87,6 +90,14 @@ export type SelectionHapticBackend =
   | 'telegram-selection'
   | 'none';
 
+export type HapticProbeKind =
+  | 'telegram-selection'
+  | 'telegram-light-impact'
+  | 'telegram-success-notification'
+  | 'browser-vibration';
+
+export type HapticProbeResult = 'sent' | 'unsupported' | 'rejected' | 'error';
+
 interface VibrationNavigator {
   vibrate?: (pattern: number | number[]) => boolean;
 }
@@ -122,26 +133,58 @@ export function triggerTelegramSelectionHaptic(
   vibrationNavigator: VibrationNavigator | null = getDefaultVibrationNavigator(),
 ): void {
   try {
-    const backend = getSelectionHapticBackend(webApp, vibrationNavigator);
+    if (
+      webApp?.platform === 'android'
+      && typeof vibrationNavigator?.vibrate === 'function'
+    ) {
+      const accepted = vibrationNavigator.vibrate(12);
+      if (accepted) return;
+    }
 
-    if (backend === 'android-vibration') {
-      vibrationNavigator?.vibrate?.(12);
+    if (typeof webApp?.HapticFeedback?.impactOccurred === 'function') {
+      webApp.HapticFeedback.impactOccurred('light');
       return;
     }
 
-    if (backend === 'telegram-light-impact') {
-      webApp?.HapticFeedback?.impactOccurred?.('light');
-      return;
-    }
-
-    if (backend === 'telegram-selection') {
-      webApp?.HapticFeedback?.selectionChanged();
-    }
+    webApp?.HapticFeedback?.selectionChanged();
   } catch {
     try {
       webApp?.HapticFeedback?.selectionChanged();
     } catch {
       // Haptics are a best-effort enhancement and must never block UI interaction.
     }
+  }
+}
+
+export function runHapticProbe(
+  kind: HapticProbeKind,
+  webApp: TelegramWebApp | null = getTelegramWebApp(),
+  vibrationNavigator: VibrationNavigator | null = getDefaultVibrationNavigator(),
+): HapticProbeResult {
+  try {
+    if (kind === 'browser-vibration') {
+      if (typeof vibrationNavigator?.vibrate !== 'function') return 'unsupported';
+      return vibrationNavigator.vibrate(50) ? 'sent' : 'rejected';
+    }
+
+    const haptics = webApp?.HapticFeedback;
+    if (!haptics) return 'unsupported';
+
+    if (kind === 'telegram-selection') {
+      haptics.selectionChanged();
+      return 'sent';
+    }
+
+    if (kind === 'telegram-light-impact') {
+      if (typeof haptics.impactOccurred !== 'function') return 'unsupported';
+      haptics.impactOccurred('light');
+      return 'sent';
+    }
+
+    if (typeof haptics.notificationOccurred !== 'function') return 'unsupported';
+    haptics.notificationOccurred('success');
+    return 'sent';
+  } catch {
+    return 'error';
   }
 }
