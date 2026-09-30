@@ -85,7 +85,7 @@ export function bindTelegramBackButton(
 
 
 export type SelectionHapticBackend =
-  | 'android-vibration'
+  | 'telegram-success-notification'
   | 'telegram-light-impact'
   | 'telegram-selection'
   | 'none';
@@ -108,13 +108,9 @@ function getDefaultVibrationNavigator(): VibrationNavigator | null {
 
 export function getSelectionHapticBackend(
   webApp: TelegramWebApp | null = getTelegramWebApp(),
-  vibrationNavigator: VibrationNavigator | null = getDefaultVibrationNavigator(),
 ): SelectionHapticBackend {
-  if (
-    webApp?.platform === 'android'
-    && typeof vibrationNavigator?.vibrate === 'function'
-  ) {
-    return 'android-vibration';
+  if (typeof webApp?.HapticFeedback?.notificationOccurred === 'function') {
+    return 'telegram-success-notification';
   }
 
   if (typeof webApp?.HapticFeedback?.impactOccurred === 'function') {
@@ -130,29 +126,24 @@ export function getSelectionHapticBackend(
 
 export function triggerTelegramSelectionHaptic(
   webApp: TelegramWebApp | null = getTelegramWebApp(),
-  vibrationNavigator: VibrationNavigator | null = getDefaultVibrationNavigator(),
 ): void {
   try {
-    if (
-      webApp?.platform === 'android'
-      && typeof vibrationNavigator?.vibrate === 'function'
-    ) {
-      const accepted = vibrationNavigator.vibrate(12);
-      if (accepted) return;
-    }
+    const haptics = webApp?.HapticFeedback;
+    if (!haptics) return;
 
-    if (typeof webApp?.HapticFeedback?.impactOccurred === 'function') {
-      webApp.HapticFeedback.impactOccurred('light');
+    if (typeof haptics.notificationOccurred === 'function') {
+      haptics.notificationOccurred('success');
       return;
     }
 
-    webApp?.HapticFeedback?.selectionChanged();
-  } catch {
-    try {
-      webApp?.HapticFeedback?.selectionChanged();
-    } catch {
-      // Haptics are a best-effort enhancement and must never block UI interaction.
+    if (typeof haptics.impactOccurred === 'function') {
+      haptics.impactOccurred('light');
+      return;
     }
+
+    haptics.selectionChanged();
+  } catch {
+    // Haptics are a best-effort enhancement and must never block UI interaction.
   }
 }
 
