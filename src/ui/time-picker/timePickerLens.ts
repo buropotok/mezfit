@@ -16,7 +16,6 @@ export interface TimeLensAssets {
   edgeScale: number;
   zoomHref: string;
   zoomScale: number;
-  specularHref: string;
 }
 
 const DEFAULT_WIDTH = 288;
@@ -119,10 +118,12 @@ export function buildTimeLensVectorFields({
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
   pixelRatio = DEFAULT_PIXEL_RATIO,
+  includeSpecular = true,
 }: {
   width?: number;
   height?: number;
   pixelRatio?: number;
+  includeSpecular?: boolean;
 } = {}): TimeLensVectorFields {
   const safeWidth = Math.max(1, width);
   const safeHeight = Math.max(1, height);
@@ -183,7 +184,7 @@ export function buildTimeLensVectorFields({
         );
       }
 
-      if (distanceInside <= SPECULAR_THICKNESS) {
+      if (includeSpecular && distanceInside <= SPECULAR_THICKNESS) {
         const gx = roundedRectSdf(x + epsilon, y, halfWidth, halfHeight, radius)
           - roundedRectSdf(x - epsilon, y, halfWidth, halfHeight, radius);
         const gy = roundedRectSdf(x, y + epsilon, halfWidth, halfHeight, radius)
@@ -251,18 +252,16 @@ export function buildTimeLensAssets(documentRef: Document): TimeLensAssets | nul
   const cached = assetCache.get(documentRef);
   if (cached) return cached;
 
-  const fields = buildTimeLensVectorFields();
+  const fields = buildTimeLensVectorFields({ includeSpecular: false });
   const edgeHref = fieldToDataUrl(documentRef, fields.edge);
   const zoomHref = fieldToDataUrl(documentRef, fields.zoom);
-  const specularHref = fieldToDataUrl(documentRef, fields.specular);
-  if (!edgeHref || !zoomHref || !specularHref) return null;
+  if (!edgeHref || !zoomHref) return null;
 
   const assets = {
     edgeHref,
     edgeScale: fields.edge.scale,
     zoomHref,
     zoomScale: fields.zoom.scale,
-    specularHref,
   };
   assetCache.set(documentRef, assets);
   return assets;
