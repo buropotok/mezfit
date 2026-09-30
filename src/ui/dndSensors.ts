@@ -7,7 +7,7 @@ export const SCHEDULE_TOUCH_ACTIVATION_TOLERANCE = 24;
 
 function blocksDrag(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
-  if (target.closest('[data-no-dnd],a,input,select,textarea')) return true;
+  if (target.closest('[data-no-dnd],[data-schedule-no-swipe],a,input,select,textarea')) return true;
   const button = target.closest('button,[role="button"]');
   return Boolean(
     button

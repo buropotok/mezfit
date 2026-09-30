@@ -24,14 +24,28 @@ export function DayScheduleCatalog() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [empty, setEmpty] = useState(false);
   const [lastChange, setLastChange] = useState<LocalDate | null>(null);
-  const [eventOverrides, setEventOverrides] = useState<Record<string, { startMinutes: number; durationMinutes: number }>>({});
+  const [eventOverrides, setEventOverrides] = useState<Record<string, { date: LocalDate; startMinutes: number; durationMinutes: number }>>({});
   const value = getDayScheduleValue(date);
-  const eventsByDate = useMemo(() => Object.fromEntries(
-    Array.from({ length: 15 }, (_, index) => {
-      const day = addDays(date, index - 7);
-      return [day, empty ? [] : demoDay(day).map(event => ({ ...event, ...(eventOverrides[event.id] ?? {}) }))];
-    }),
-  ), [date, empty, eventOverrides]);
+  const eventsByDate = useMemo(() => {
+    const days = Array.from({ length: 15 }, (_, index) => addDays(date, index - 7));
+    const grouped = new Map<LocalDate, DemoEvent[]>(days.map(day => [day, []]));
+    if (empty) return Object.fromEntries(grouped);
+
+    for (const sourceDate of days) {
+      for (const event of demoDay(sourceDate)) {
+        const override = eventOverrides[event.id];
+        const targetDate = override?.date ?? sourceDate;
+        const targetEvents = grouped.get(targetDate) ?? [];
+        targetEvents.push({
+          ...event,
+          startMinutes: override?.startMinutes ?? event.startMinutes,
+          durationMinutes: override?.durationMinutes ?? event.durationMinutes,
+        });
+        grouped.set(targetDate, targetEvents);
+      }
+    }
+    return Object.fromEntries(grouped);
+  }, [date, empty, eventOverrides]);
 
   return (
     <section className="ui-kit-day-schedule" aria-label="DaySchedule">
@@ -52,18 +66,19 @@ export function DayScheduleCatalog() {
         date={date}
         eventsByDate={eventsByDate}
         onDateChange={next => { setLastChange(next); setDate(next); }}
-        onEventMove={({ eventId, date: eventDate, startMinutes }) => setEventOverrides(current => ({
+        onEventMove={({ eventId, date: eventDate, targetDate, startMinutes }) => setEventOverrides(current => ({
           ...current,
           [eventId]: {
+            date: targetDate,
             startMinutes,
             durationMinutes: current[eventId]?.durationMinutes
               ?? eventsByDate[eventDate]?.find(event => event.id === eventId)?.durationMinutes
               ?? 60,
           },
         }))}
-        onEventResize={({ eventId, startMinutes, durationMinutes }) => setEventOverrides(current => ({
+        onEventResize={({ eventId, date: eventDate, startMinutes, durationMinutes }) => setEventOverrides(current => ({
           ...current,
-          [eventId]: { startMinutes, durationMinutes },
+          [eventId]: { date: eventDate, startMinutes, durationMinutes },
         }))}
         renderEvent={(event, state) => (
           <DayScheduleEventCard
@@ -81,7 +96,7 @@ export function DayScheduleCatalog() {
           <dt>date: LocalDate</dt><dd>Выбранная дата YYYY-MM-DD. Ею управляет родитель.</dd>
           <dt>eventsByDate: Record&lt;LocalDate, Event[]&gt;</dt><dd>События по датам: id, startMinutes, durationMinutes и любые поля вашей карточки. Нужны соседние дни и дни соседних недель.</dd>
           <dt>renderEvent(event, state)</dt><dd>Рендер события внутри рассчитанной рамки. state содержит compact, lifted, editing, height, startMinutes и durationMinutes; поэтому normal, lifted и resize-состояния используют одинаковый контент и типографику.</dd>
-          <dt>onEventMove(move)?</dt><dd>Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут. Если слот пересекается с другим событием, drop отклоняется.</dd>
+          <dt>onEventMove(move)?</dt><dd>Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут. Горизонтальный drag снапит экран на соседний день и передаёт targetDate; если слот пересекается с другим событием, drop отклоняется.</dd>
           <dt>onEventResize(resize)?</dt><dd>После успешного DnD карточка входит в resize-режим. Верхняя правая точка меняет начало, нижняя левая — окончание. Resize работает по сетке 15 минут и не допускает пересечений с соседними событиями.</dd>
           <dt>today?: LocalDate</dt><dd>Дата для индикатора текущего времени; по умолчанию локальная дата устройства.</dd>
           <dt>className?: string</dt><dd>Класс контейнера, например для высоты под внешним Navbar. По умолчанию высота равна viewport.</dd>

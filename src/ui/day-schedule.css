@@ -127,7 +127,7 @@
 }
 
 .ui-day-schedule__event-frame--draggable {
-  touch-action: pan-y;
+  touch-action: none;
   -webkit-touch-callout: none;
   user-select: none;
 }

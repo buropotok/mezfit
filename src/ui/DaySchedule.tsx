@@ -13,6 +13,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragMoveEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
 import type { LocalDate } from './date-picker/datePickerDate';
@@ -38,6 +39,8 @@ const DAY_SWIPE_THRESHOLD = 0.18;
 const TRANSITION_MS = 300;
 const TRACK_TRANSITION = `transform ${TRANSITION_MS}ms ease-out`;
 const POST_WEEK_TAP_DELAY_MS = 50;
+const DRAG_DAY_ENTER_RATIO = 0.28;
+const DRAG_DAY_EXIT_RATIO = 0.16;
 
 type DragState = {
   pointerId: number;
@@ -46,6 +49,10 @@ type DragState = {
   deltaX: number;
   startedAt: number;
   dragging: boolean;
+  verticalScrolling: boolean;
+  manualScroll: boolean;
+  verticalOnly: boolean;
+  startScrollTop: number;
   activationThreshold: number;
 };
 
@@ -55,6 +62,7 @@ export type { DayScheduleRenderState };
 export type DayScheduleEventMove = {
   eventId: string;
   date: LocalDate;
+  targetDate: LocalDate;
   previousStartMinutes: number;
   startMinutes: number;
 };
@@ -119,7 +127,10 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const latestChange = useRef(onDateChange);
   const eventDragActive = useRef(false);
   const activeEventDragRef = useRef<string | null>(null);
+  const dragDayDirectionRef = useRef<-1 | 0 | 1>(0);
+  const pendingEditingEvent = useRef<{ date: LocalDate; eventId: string } | null>(null);
   const [activeEventDragId, setActiveEventDragId] = useState<string | null>(null);
+  const [dragDayDirection, setDragDayDirection] = useState<-1 | 0 | 1>(0);
   const [editingEvent, setEditingEvent] = useState<{ date: LocalDate; eventId: string } | null>(null);
   const arrival = useRef<{ date: LocalDate; week: boolean; from?: LocalDate } | null>(null);
 
@@ -238,6 +249,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
   useLayoutEffect(() => {
     currentDate.current = date;
+    const pendingEdit = pendingEditingEvent.current?.date === date ? pendingEditingEvent.current : null;
+    if (pendingEdit) pendingEditingEvent.current = null;
     setEditingEvent(null);
     const expected = arrival.current?.date === date ? arrival.current : null;
     arrival.current = null;
@@ -265,6 +278,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     } else if (!expected) {
       weekRef.current?.resetIndex(dayIndex(date));
     }
+    if (pendingEdit) addTimer(() => setEditingEvent(pendingEdit), 200);
   }, [date]);
 
   const requestDate = (next: LocalDate, week: boolean, from?: LocalDate) => {
@@ -275,6 +289,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     addFrame(() => {
       if (currentDate.current !== next && arrival.current?.date === next) {
         arrival.current = null;
+        if (pendingEditingEvent.current?.date === next) pendingEditingEvent.current = null;
         resetPaging();
         setWeekSelectorSuppressed(false);
         busy.current = false;
@@ -321,12 +336,16 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (!event.isPrimary && event.nativeEvent.isPrimary === false) return;
     if (busy.current || eventDragActive.current || weekGesture.current || dayGesture.current) return;
-    if (target === 'day' && event.target instanceof Element &&
-      event.target.closest('button, a, input, select, textarea, [data-schedule-no-swipe]')) return;
+    const targetElement = event.target instanceof Element ? event.target : null;
+    const draggableHandle = targetElement?.closest('[data-ui-dnd-handle]') ?? null;
+    const interactiveTarget = targetElement?.closest('button, a, input, select, textarea, [role="button"], [data-no-dnd], [data-schedule-no-swipe]') ?? null;
     const startsOnDraggableEvent = target === 'day'
       && event.pointerType === 'touch'
-      && event.target instanceof Element
-      && Boolean(event.target.closest('[data-ui-dnd-handle]'));
+      && Boolean(draggableHandle);
+    const startsOnInteractiveChild = target === 'day'
+      && Boolean(interactiveTarget)
+      && interactiveTarget !== draggableHandle;
+    if (startsOnInteractiveChild && !startsOnDraggableEvent) return;
     const state: DragState = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -334,6 +353,10 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       deltaX: 0,
       startedAt: performance.now(),
       dragging: false,
+      verticalScrolling: false,
+      manualScroll: startsOnDraggableEvent,
+      verticalOnly: startsOnDraggableEvent && startsOnInteractiveChild,
+      startScrollTop: target === 'day' ? dayViewportRef.current?.scrollTop ?? 0 : 0,
       activationThreshold: startsOnDraggableEvent ? SCHEDULE_TOUCH_ACTIVATION_TOLERANCE : 8,
     };
     if (target === 'week') {
@@ -354,13 +377,30 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (!state || state.pointerId !== event.pointerId) return;
     const dx = event.clientX - state.startX;
     const dy = event.clientY - state.startY;
-    if (!state.dragging) {
-      if (Math.abs(dx) < state.activationThreshold || Math.abs(dx) <= Math.abs(dy)) return;
-      state.dragging = true;
+
+    if (!state.dragging && !state.verticalScrolling) {
+      if (state.manualScroll) {
+        if (Math.hypot(dx, dy) <= state.activationThreshold) return;
+        if (Math.abs(dy) > Math.abs(dx)) state.verticalScrolling = true;
+        else if (state.verticalOnly) return;
+        else state.dragging = true;
+      } else {
+        if (Math.abs(dx) < state.activationThreshold || Math.abs(dx) <= Math.abs(dy)) return;
+        state.dragging = true;
+      }
+
       if (target === 'day') suppressDayClickUntil.current = performance.now() + 500;
       try { event.currentTarget.setPointerCapture?.(event.pointerId); } catch { /* Optional in WebViews. */ }
     }
+
     event.preventDefault();
+
+    if (state.verticalScrolling) {
+      const viewport = dayViewportRef.current;
+      if (viewport) viewport.scrollTop = state.startScrollTop - dy;
+      return;
+    }
+
     state.deltaX = dx;
     if (target === 'week') setWeekDrag(dx);
     else setDayDrag(dx);
@@ -375,6 +415,11 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     const state = ref.current;
     if (!state || state.pointerId !== event.pointerId) return;
     ref.current = null;
+
+    if (state.verticalScrolling) {
+      if (target === 'day') suppressDayClickUntil.current = performance.now() + 500;
+      return;
+    }
 
     if (!state.dragging) {
       if (target === 'week') {
@@ -427,9 +472,16 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     else startDayCommit(direction);
   };
 
+  const setDragDayTarget = (direction: -1 | 0 | 1) => {
+    dragDayDirectionRef.current = direction;
+    setDragDayDirection(direction);
+  };
+
   const clearEventDrag = () => {
     eventDragActive.current = false;
     activeEventDragRef.current = null;
+    setDragDayTarget(0);
+    if (dayViewportRef.current) dayViewportRef.current.scrollLeft = 0;
     setActiveEventDragId(null);
   };
 
@@ -439,37 +491,74 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     eventDragActive.current = true;
     dayGesture.current = null;
     setDayDrag(0);
+    setDragDayTarget(0);
+    if (dayViewportRef.current) dayViewportRef.current.scrollLeft = 0;
     suppressDayClickUntil.current = performance.now() + 500;
     activeEventDragRef.current = dragId;
     setActiveEventDragId(dragId);
+  };
+
+  const handleEventDragMove = (event: DragMoveEvent) => {
+    if (!activeEventDragRef.current) return;
+    const width = dayViewportRef.current?.clientWidth ?? 0;
+    if (width <= 0) return;
+
+    const enter = width * DRAG_DAY_ENTER_RATIO;
+    const exit = width * DRAG_DAY_EXIT_RATIO;
+    const current = dragDayDirectionRef.current;
+    let next: -1 | 0 | 1 = current;
+
+    if (current === 0) {
+      if (event.delta.x <= -enter) next = 1;
+      else if (event.delta.x >= enter) next = -1;
+    } else if (current === 1) {
+      if (event.delta.x >= enter) next = -1;
+      else if (event.delta.x > -exit) next = 0;
+    } else {
+      if (event.delta.x <= -enter) next = 1;
+      else if (event.delta.x < exit) next = 0;
+    }
+
+    if (next !== current) setDragDayTarget(next);
   };
 
   const handleEventDragEnd = (event: DragEndEvent) => {
     const dragId = String(event.active.id);
     const activeDragId = activeEventDragRef.current;
     const entry = dragEntries.get(dragId);
+    const targetDirection = dragDayDirectionRef.current;
+    const targetDate = entry ? addDays(entry.date, targetDirection) : null;
     clearEventDrag();
 
-    if (!onEventMove || !entry || activeDragId !== dragId) return;
+    if (!onEventMove || !entry || !targetDate || activeDragId !== dragId) return;
     const startMinutes = startMinutesAfterDrag(
       entry.event.startMinutes,
       entry.event.durationMinutes,
       event.delta.y,
     );
     const fits = eventFitsSlot(
-      eventsByDate[entry.date] ?? [],
+      eventsByDate[targetDate] ?? [],
       entry.event.id,
       startMinutes,
       entry.event.durationMinutes,
     );
+    const movedDay = targetDate !== entry.date;
+    const acceptedMove = fits && (movedDay || startMinutes !== entry.event.startMinutes);
 
-    if (fits && startMinutes !== entry.event.startMinutes) {
+    if (acceptedMove) {
       onEventMove({
         eventId: entry.event.id,
         date: entry.date,
+        targetDate,
         previousStartMinutes: entry.event.startMinutes,
         startMinutes,
       });
+    }
+
+    if (acceptedMove && movedDay) {
+      if (onEventResize) pendingEditingEvent.current = { date: targetDate, eventId: entry.event.id };
+      requestDate(targetDate, false);
+      return;
     }
 
     if (onEventResize) {
@@ -500,9 +589,16 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const weekTranslate = weekAnimating
     ? `calc(-33.333333% + ${weekDirection * -100 / 3}%)`
     : `calc(-33.333333% + ${weekDrag.current}px)`;
-  const dayTranslate = dayAnimating
-    ? `${-33.333333 + dayDirection * -33.333333}%`
-    : `calc(-33.333333% + ${dayDrag.current}px)`;
+  const dayTranslate = activeEventDragId
+    ? `${-33.333333 + dragDayDirection * -33.333333}%`
+    : dayAnimating
+      ? `${-33.333333 + dayDirection * -33.333333}%`
+      : `calc(-33.333333% + ${dayDrag.current}px)`;
+  const dayTrackTransition = activeEventDragId
+    ? TRACK_TRANSITION
+    : dayAnimating
+      ? TRACK_TRANSITION
+      : 'none';
 
   const schedule = (
     <section
@@ -559,7 +655,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         <div
           ref={dayTrackRef}
           className={`ui-day-schedule__day-track${dayAnimating ? ' ui-day-schedule__day-track--animating' : ''}`}
-          style={{ transition: dayAnimating ? TRACK_TRANSITION : 'none', transform: `translate3d(${dayTranslate},0,0)` }}
+          style={{ transition: dayTrackTransition, transform: `translate3d(${dayTranslate},0,0)` }}
         >
           <DayPanel
             date={previousDate}
@@ -601,8 +697,10 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   return (
     <DndContext
       accessibility={{ restoreFocus: false }}
+      autoScroll={false}
       sensors={eventDragSensors}
       onDragStart={handleEventDragStart}
+      onDragMove={handleEventDragMove}
       onDragCancel={clearEventDrag}
       onDragEnd={handleEventDragEnd}
     >
