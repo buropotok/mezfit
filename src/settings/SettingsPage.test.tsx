@@ -1,9 +1,26 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
 
-afterEach(() => cleanup());
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    disconnect() {}
+  });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0);
+    return 1;
+  });
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('SettingsPage modules gallery', () => {
   it('opens the modules gallery and exposes real workout modules', () => {
@@ -17,5 +34,19 @@ describe('SettingsPage modules gallery', () => {
     expect(screen.getByText('Жим штанги лёжа')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
     expect(onNavigationContextChange).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Модули' }));
+  });
+
+  it('mounts the real TimePicker in the modules stand', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
+
+    expect(screen.getByText('Time picker')).toBeTruthy();
+    expect(screen.getByText(/Выбранное время: 08:30/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать время' }));
+
+    expect(screen.getByRole('dialog', { name: 'Выбор времени' })).toBeTruthy();
+    expect(screen.getByRole('listbox', { name: 'Часы' })).toBeTruthy();
+    expect(screen.getByRole('listbox', { name: 'Минуты' })).toBeTruthy();
   });
 });

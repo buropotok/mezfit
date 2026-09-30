@@ -22,3 +22,9 @@
 .modules-gallery__example {
   min-width: 0;
 }
+
+
+.modules-gallery__trigger {
+  display: inline-flex;
+  justify-self: start;
+}
