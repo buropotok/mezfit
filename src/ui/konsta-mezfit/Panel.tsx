@@ -1,4 +1,4 @@
-// Konsta 5.4.0 Mezfit edition: preserve Panel mechanics; replace only the iOS floating Glass renderer.
+// Konsta 5.4.0 Mezfit edition: preserve Side Panel mechanics; replace only the iOS floating Glass renderer.
 import {
   useRef,
   type ComponentProps,
@@ -15,7 +15,7 @@ import type {
   GlassShape,
 } from '../glassMaterial';
 
-export type MezfitPanelProps = ComponentProps<typeof KonstaPanel> & {
+export type MezfitSidePanelProps = ComponentProps<typeof KonstaPanel> & {
   glassPreset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   glassShape?: GlassShape;
@@ -23,7 +23,9 @@ export type MezfitPanelProps = ComponentProps<typeof KonstaPanel> & {
 
 const canonicalDark = (classNames: string) => classNames;
 
-export function MezfitPanel(props: MezfitPanelProps) {
+export type MezfitPanelProps = MezfitSidePanelProps;
+
+export function MezfitSidePanel(props: MezfitSidePanelProps) {
   const {
     component = 'div',
     className,
@@ -101,4 +103,6 @@ export function MezfitPanel(props: MezfitPanelProps) {
   );
 }
 
-MezfitPanel.displayName = 'MezfitPanel';
+MezfitSidePanel.displayName = 'MezfitSidePanel';
+
+export const MezfitPanel = MezfitSidePanel;
