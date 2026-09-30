@@ -131,17 +131,17 @@ Drag state, ordering, and persistence need explicit ownership. Visual and persis
 
 ## 19. UI libraries and CSS
 
-**Konsta UI v5 (`konsta/react`) is the canonical Mezfit UI kit for new and modified product UI.** When Konsta provides a suitable primitive, use that primitive directly instead of creating a parallel implementation.
+**Konsta UI 5.4.0 (`konsta/react`) is the canonical Mezfit UI kit for new and modified product UI.** The repository pins this exact version; do not upgrade it as part of feature work unless the product decision explicitly changes. When Konsta provides a suitable primitive, Mezfit-owned UI should use, compose, or wrap that public primitive instead of reimplementing its mechanics in parallel.
 
 The canonical Konsta theme is **iOS + dark**. Keep `KonstaProvider theme="ios" dark` and the required public `k-ios dark` theme-root classes at the application root unless the user explicitly changes the product-wide theme decision.
 
 Konsta must use the shared Mezfit font family through the supported Tailwind/Konsta `@theme` token `--font-ios: var(--ui-font-family)`. The shared family is Zen Maru Gothic. Do not enforce fonts through `.k-*` selectors or component-internal overrides.
 
-Konsta primitives own their mechanics and visual representation. Do not restyle, reskin, fork, or recreate a Konsta primitive through project CSS, wrapper-only visual overrides, private DOM selectors, or copied library markup. Use only the public configuration exposed by the Konsta component API. In particular, project CSS must not target Konsta's internal `.k-*` classes to alter a primitive.
+Konsta primitives own their internal mechanics and library implementation. Mezfit may create product-specific components by composing or wrapping public Konsta primitives and by using their documented public props, slots, children/content extension points, and documented theme/color APIs. App-owned content rendered through those public extension points may have Mezfit-owned presentation; this is not considered a modification of Konsta itself. Such wrappers must not patch or vendor Konsta source, copy or recreate Konsta mechanics/markup, override the Konsta primitive host merely to reskin it, depend on private DOM structure, or target internal `.k-*` classes/selectors. Project CSS and wrappers must not reach into Konsta's private internals to alter the primitive's own chrome or behavior.
 
 Tailwind Preflight is part of the canonical Konsta CSS baseline and must remain enabled in the lower `base` cascade layer. During migration, legacy compatibility rules may remain in the higher `legacy-base` layer, but they must not target or visually override Konsta primitives.
 
-If the available Konsta primitive or its documented configuration is insufficient for a product requirement, stop and report the missing capability instead of locally modifying the primitive. The UI kit can then be deliberately extended or the product decision can be revised. App-owned composition, spacing, and layout around Konsta primitives may use Mezfit CSS as long as it does not change the primitive itself.
+If a product requirement cannot be met through the public Konsta API, documented theming, or app-owned composition/content without relying on private Konsta internals, stop and report the missing capability instead of patching or reverse-engineering the primitive. The Mezfit UI kit can then be deliberately extended or the product decision can be revised. App-owned composition, spacing, content, and layout around a primitive or on app-owned nodes passed through public Konsta extension points may use Mezfit code/CSS as long as they do not reskin the Konsta host or depend on/mutate private Konsta implementation details.
 
 Existing pre-Konsta shared primitives may remain while their owning surfaces are intentionally migrated, but do not add new parallel primitives when Konsta already covers the need. Radix UI, dnd-kit, DayPicker, and other libraries remain implementation tools for capabilities not supplied by the canonical UI kit; they are not domain owners. Do not couple domain logic to third-party private DOM.
 
