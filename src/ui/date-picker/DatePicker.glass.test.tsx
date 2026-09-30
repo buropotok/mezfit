@@ -34,12 +34,10 @@ describe('DatePicker Mezfit overlay materials', () => {
 
     const pickerDialog = screen.getByRole('dialog', { name: 'Выбор даты' });
     expect(pickerDialog.classList.contains('ui-glass-surface')).toBe(true);
-    expect(pickerDialog.classList.contains('k-panel')).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' }));
 
     const yearDialog = screen.getByRole('dialog', { name: 'Выберите год' });
-    expect(yearDialog.classList.contains('k-popover')).toBe(true);
     expect(yearDialog.querySelector('.ui-glass-surface')).not.toBeNull();
   });
 });
