@@ -24,6 +24,7 @@ const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
 const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
 const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
+const LENS_SOURCE_VERTICAL_INSET = 8;
 
 export interface TimePickerProps {
   opened: boolean;
@@ -57,8 +58,8 @@ function scrollColumn(element: HTMLDivElement | null, index: number) {
 
 function visibleLensItems(values: readonly number[], scrollTop: number) {
   const centerIndex = Math.round(scrollTop / ROW_HEIGHT);
-  const start = Math.max(0, centerIndex - 2);
-  const end = Math.min(values.length - 1, centerIndex + 2);
+  const start = Math.max(0, centerIndex - 1);
+  const end = Math.min(values.length - 1, centerIndex + 1);
 
   return values.slice(start, end + 1).map((value, localIndex) => {
     const index = start + localIndex;
@@ -109,6 +110,7 @@ function TimeLens({
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-time-picker-lens-${reactId}`;
   const clipId = `ui-time-picker-lens-clip-${reactId}`;
+  const sourceClipId = `ui-time-picker-lens-source-clip-${reactId}`;
 
   return (
     <div className="ui-time-picker__lens" aria-hidden="true">
@@ -120,6 +122,13 @@ function TimeLens({
         <defs>
           <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
             <rect width={LENS_WIDTH} height={LENS_HEIGHT} rx={LENS_HEIGHT / 2} />
+          </clipPath>
+          <clipPath id={sourceClipId} clipPathUnits="userSpaceOnUse">
+            <rect
+              y={LENS_SOURCE_VERTICAL_INSET}
+              width={LENS_WIDTH}
+              height={LENS_HEIGHT - LENS_SOURCE_VERTICAL_INSET * 2}
+            />
           </clipPath>
           {assets ? (
             <filter
@@ -166,46 +175,27 @@ function TimeLens({
                 yChannelSelector="G"
                 result="refracted"
               />
-              <feImage
-                href={assets.specularHref}
-                x="0"
-                y="0"
-                width={LENS_WIDTH}
-                height={LENS_HEIGHT}
-                preserveAspectRatio="none"
-                result="specular"
-              />
-              <feGaussianBlur in="specular" stdDeviation="0.35" result="specularBloom" />
-              <feComponentTransfer in="specularBloom" result="specularAlpha">
-                <feFuncA type="linear" slope="0.5" />
-              </feComponentTransfer>
-              <feColorMatrix
-                in="specularAlpha"
-                type="saturate"
-                values="9"
-                result="specularSaturated"
-              />
-              <feBlend in="refracted" in2="specularSaturated" mode="screen" />
             </filter>
           ) : null}
         </defs>
 
-        <g
-          clipPath={`url(#${clipId})`}
-          filter={assets ? `url(#${filterId})` : undefined}
-        >
-          <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
-          <LensText x={LENS_WIDTH * 0.25} values={HOUR_VALUES} scrollTop={scrollTops.hour} />
-          <text
-            x={LENS_WIDTH * 0.5}
-            y={LENS_HEIGHT / 2}
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="ui-time-picker__lens-separator"
-          >
-            :
-          </text>
-          <LensText x={LENS_WIDTH * 0.75} values={MINUTE_VALUES} scrollTop={scrollTops.minute} />
+        <g clipPath={`url(#${clipId})`}>
+          <g filter={assets ? `url(#${filterId})` : undefined}>
+            <g clipPath={`url(#${sourceClipId})`}>
+              <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
+              <LensText x={LENS_WIDTH * 0.25} values={HOUR_VALUES} scrollTop={scrollTops.hour} />
+              <text
+                x={LENS_WIDTH * 0.5}
+                y={LENS_HEIGHT / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="ui-time-picker__lens-separator"
+              >
+                :
+              </text>
+              <LensText x={LENS_WIDTH * 0.75} values={MINUTE_VALUES} scrollTop={scrollTops.minute} />
+            </g>
+          </g>
         </g>
 
       </svg>
@@ -467,6 +457,7 @@ export function TimePicker({
       target={target ?? undefined}
       angle={false}
       backdrop
+      iosHighlight={false}
       onBackdropClick={onClose}
       className="ui-time-picker__popover"
       style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
