@@ -32,7 +32,8 @@ beforeEach(() => {
     const index = Number(this.dataset.index ?? 0);
     const width = this.classList.contains('tab-link') ? 50 : 350;
     const left = this.classList.contains('tab-link') ? index * 50 : 0;
-    return { x: left, y: 0, left, top: 0, right: left + width, bottom: 44, width, height: 44, toJSON: () => ({}) };
+    const height = Number.parseFloat(this.style.height) || 44;
+    return { x: left, y: 0, left, top: 0, right: left + width, bottom: height, width, height, toJSON: () => ({}) };
   });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   Object.defineProperty(Element.prototype, 'animate', {
@@ -171,7 +172,7 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
-  it('activates event drag from a touch pointer after the long-press delay', () => {
+  it('activates touch drag after long-press while leaving pre-activation pan-y available', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -187,13 +188,8 @@ describe('DaySchedule', () => {
     const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
     if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
 
-    fireEvent.pointerDown(frame, {
-      pointerId: 7,
-      pointerType: 'touch',
-      button: 0,
-      clientX: 100,
-      clientY: 100,
-    });
+    const touch = { identifier: 7, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
+    fireEvent.touchStart(frame, { touches: [touch], targetTouches: [touch], changedTouches: [touch] });
 
     act(() => vi.advanceTimersByTime(299));
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
@@ -201,25 +197,12 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(1));
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
 
-    fireEvent.pointerMove(document, {
-      pointerId: 7,
-      pointerType: 'touch',
-      buttons: 1,
-      clientX: 100,
-      clientY: 120,
-    });
-    fireEvent.pointerUp(document, {
-      pointerId: 7,
-      pointerType: 'touch',
-      button: 0,
-      clientX: 100,
-      clientY: 120,
-    });
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
     act(() => vi.advanceTimersByTime(50));
   });
 
-  it('keeps long-press drag eligible through small finger jitter', () => {
+  it('lets a vertical gesture from an event card abort pending DnD before long-press', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -235,32 +218,21 @@ describe('DaySchedule', () => {
     const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
     if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
 
-    fireEvent.pointerDown(frame, {
-      pointerId: 9,
-      pointerType: 'touch',
-      clientX: 100,
-      clientY: 100,
-    });
-    fireEvent.pointerMove(document, {
-      pointerId: 9,
-      pointerType: 'touch',
-      clientX: 118,
-      clientY: 106,
-    });
+    const start = { identifier: 8, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
+    const movedTouch = { ...start, clientX: 102, clientY: 140, pageX: 102, pageY: 140 };
+    fireEvent.touchStart(frame, { touches: [start], targetTouches: [start], changedTouches: [start] });
+    fireEvent.touchMove(frame, { touches: [movedTouch], targetTouches: [movedTouch], changedTouches: [movedTouch] });
 
-    act(() => vi.advanceTimersByTime(300));
-    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
+    act(() => vi.advanceTimersByTime(350));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+    expect(moved).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
 
-    fireEvent.pointerUp(document, {
-      pointerId: 9,
-      pointerType: 'touch',
-      clientX: 118,
-      clientY: 106,
-    });
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
     act(() => vi.advanceTimersByTime(50));
   });
 
-  it('renders only the event-sized GlassSurface while an event is lifted', () => {
+  it('keeps touch long-press eligible through small finger jitter', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -269,31 +241,57 @@ describe('DaySchedule', () => {
         eventsByDate={events}
         onDateChange={changed}
         onEventMove={moved}
-        renderEvent={event => <div className="event-card-content">{event.id}</div>}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
+
+    const start = { identifier: 9, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
+    const movedTouch = { ...start, clientX: 118, clientY: 106, pageX: 118, pageY: 106 };
+    fireEvent.touchStart(frame, { touches: [start], targetTouches: [start], changedTouches: [start] });
+    fireEvent.touchMove(frame, { touches: [movedTouch], targetTouches: [movedTouch], changedTouches: [movedTouch] });
+
+    act(() => vi.advanceTimersByTime(300));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
+
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
+    act(() => vi.advanceTimersByTime(50));
+  });
+
+  it('keeps lifted content and measures DragOverlay from the event frame', () => {
+    const moved = vi.fn();
+    const liftedStates: boolean[] = [];
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={(event, state) => {
+          liftedStates.push(state.lifted);
+          return <div className={state.lifted ? 'lifted-event-content' : 'event-card-content'}>{event.id}</div>;
+        }}
       />,
     );
     const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
     if (!frame) throw new Error('Missing draggable event frame');
+    expect(frame.style.height).toBe('100px');
 
-    fireEvent.pointerDown(frame, {
-      pointerId: 10,
-      pointerType: 'touch',
-      clientX: 100,
-      clientY: 100,
-    });
+    const touch = { identifier: 10, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
+    fireEvent.touchStart(frame, { touches: [touch], targetTouches: [touch], changedTouches: [touch] });
     act(() => vi.advanceTimersByTime(300));
 
+    const wrapper = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay-wrapper');
     const overlay = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay');
-    expect(overlay).not.toBeNull();
-    expect(overlay?.parentElement?.style.height).toBe('100px');
-    expect(overlay?.querySelector('.ui-day-schedule__drag-overlay-content')?.textContent).toBe('');
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.style.height).toBe('100px');
+    expect(overlay?.querySelector('.lifted-event-content')?.textContent).toBe('a');
+    expect(liftedStates).toContain(true);
 
-    fireEvent.pointerUp(document, {
-      pointerId: 10,
-      pointerType: 'touch',
-      clientX: 100,
-      clientY: 100,
-    });
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
     act(() => vi.advanceTimersByTime(50));
   });
 

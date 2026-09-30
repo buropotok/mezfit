@@ -29,7 +29,7 @@ import { addDays, currentLocalDate, dayIndex, sameWeek, startOfWeek, titleForDat
 import { WeekScene, type WeekSceneHandle } from './day-schedule/WeekScene';
 import { useScheduleClock } from './day-schedule/useScheduleClock';
 import { GlassSurface } from './GlassSurface';
-import { SCHEDULE_TOUCH_ACTIVATION_TOLERANCE, UiSchedulePointerSensor } from './dndSensors';
+import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, SCHEDULE_TOUCH_ACTIVATION_TOLERANCE, UiPointerSensor, UiTouchSensor } from './dndSensors';
 import './day-schedule.css';
 
 const WEEK_SWIPE_THRESHOLD = 0.18;
@@ -128,10 +128,18 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const nextDate = dayTransition && dayTransition.to > displayDate ? dayTransition.to : addDays(displayDate, 1);
 
   const eventDragSensors = useSensors(
-    useSensor(UiSchedulePointerSensor),
+    useSensor(UiPointerSensor, {
+      activationConstraint: { distance: DRAG_ACTIVATION_TOLERANCE },
+    }),
+    useSensor(UiTouchSensor, {
+      activationConstraint: {
+        delay: LONG_PRESS_DELAY_MS,
+        tolerance: SCHEDULE_TOUCH_ACTIVATION_TOLERANCE,
+      },
+    }),
   );
   const dragEntries = useMemo(() => {
-    const entries = new Map<string, { date: LocalDate; event: TEvent; height: number }>();
+    const entries = new Map<string, { date: LocalDate; event: TEvent; height: number; compact: boolean }>();
     for (const entryDate of [previousDate, displayDate, nextDate]) {
       for (const event of eventsByDate[entryDate] ?? []) {
         const geometry = eventGeometry(event);
@@ -140,6 +148,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           date: entryDate,
           event,
           height: geometry.height,
+          compact: geometry.height < 72,
         });
       }
     }
@@ -523,15 +532,34 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     >
       {schedule}
       <DragOverlay
-        dropAnimation={{ duration: 180, easing: 'ease-out' }}
-        style={activeEventEntry ? { height: activeEventEntry.height } : undefined}
+        className="ui-day-schedule__drag-overlay-wrapper"
+        dropAnimation={{
+          duration: 200,
+          easing: 'cubic-bezier(.2,.8,.2,1)',
+          sideEffects: ({ active, dragOverlay }) => {
+            const previousOpacity = active.node.style.opacity;
+            active.node.style.opacity = '0';
+            dragOverlay.node.classList.add('ui-day-schedule__drag-overlay-wrapper--dropping');
+            return () => {
+              active.node.style.opacity = previousOpacity;
+              dragOverlay.node.classList.remove('ui-day-schedule__drag-overlay-wrapper--dropping');
+            };
+          },
+        }}
       >
         {activeEventEntry && activeEventDragRef.current ? (
-          <GlassSurface
-            className="ui-day-schedule__drag-overlay"
-            contentClassName="ui-day-schedule__drag-overlay-content"
-            aria-hidden="true"
-          />
+          <div className="ui-day-schedule__drag-visual" aria-hidden="true">
+            <GlassSurface
+              className="ui-day-schedule__drag-overlay"
+              contentClassName="ui-day-schedule__drag-overlay-content"
+            >
+              {renderEvent(activeEventEntry.event, {
+                compact: activeEventEntry.compact,
+                lifted: true,
+                height: activeEventEntry.height,
+              })}
+            </GlassSurface>
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>

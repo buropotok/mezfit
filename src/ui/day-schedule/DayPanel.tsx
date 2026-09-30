@@ -15,6 +15,8 @@ export type DayScheduleEventBase = {
 
 export type DayScheduleRenderState = {
   compact: boolean;
+  lifted: boolean;
+  height: number;
 };
 
 export function yForMinutes(totalMinutes: number): number {
@@ -132,7 +134,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
           const geometry = eventGeometry(event);
           if (!geometry) return null;
           const { top, height } = geometry;
-          const content = renderEvent(event, { compact: height < 72 });
+          const content = renderEvent(event, { compact: height < 72, lifted: false, height });
           if (draggableEvents) {
             return (
               <DraggableEventFrame
