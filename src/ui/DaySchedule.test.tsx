@@ -210,6 +210,32 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('rejects a cross-day drop when the target day slot is occupied', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+    if (!frame || !viewport) throw new Error('Missing draggable event or day viewport');
+    Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 350 });
+
+    fireEvent.pointerDown(frame, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 424 });
+    fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 100, clientY: 424 });
+
+    expect(moved).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(50));
+  });
+
   it('enters resize mode after drop and exits when the user taps outside', () => {
     const moved = vi.fn();
     const resized = vi.fn();
