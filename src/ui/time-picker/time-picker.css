@@ -39,8 +39,8 @@
   scrollbar-width: none;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
-  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0) 0%, rgb(0 0 0) 32%, transparent 38%, transparent 62%, rgb(0 0 0) 68%, rgb(0 0 0) 100%);
-  mask-image: linear-gradient(to bottom, rgb(0 0 0) 0%, rgb(0 0 0) 32%, transparent 38%, transparent 62%, rgb(0 0 0) 68%, rgb(0 0 0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 35%, transparent 35% 65%, rgb(0 0 0) 65% 100%);
+  mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 35%, transparent 35% 65%, rgb(0 0 0) 65% 100%);
 }
 
 .ui-time-picker__column::-webkit-scrollbar {
