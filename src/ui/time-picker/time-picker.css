@@ -66,6 +66,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.ui-time-picker__column--minute .ui-time-picker__option {
+  scroll-snap-stop: normal;
+}
+
 .ui-time-picker__option--selected {
   color: var(--ui-color-surface-text);
 }
