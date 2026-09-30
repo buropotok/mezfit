@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { KonstaProvider, List, ListItem, Radio } from 'konsta/react';
 import { describe, expect, it } from 'vitest';
 import { MezfitDialog, MezfitDialogButton } from './index';
 
-function renderDialog(dialog: React.ReactNode) {
+function renderDialog(dialog: ReactNode) {
   return renderToStaticMarkup(
     <KonstaProvider theme="ios" dark>
       {dialog}
@@ -74,23 +75,19 @@ describe('MezfitDialog scenarios', () => {
     expect(listHtml).toContain('Confirm');
   });
 
-  it('keeps the Delete button mechanics and changes only its text color', () => {
-    const html = renderDialog(
-      <MezfitDialog
-        opened
-        title="Delete"
-        content="This cannot be undone."
-        buttons={(
-          <>
-            <MezfitDialogButton>Cancel</MezfitDialogButton>
-            <MezfitDialogButton strong tone="danger">Delete</MezfitDialogButton>
-          </>
-        )}
-      />,
+  it('keeps the Delete button mechanics and changes only its label color', () => {
+    const regularButtonHtml = renderDialog(
+      <MezfitDialogButton strong>Delete</MezfitDialogButton>,
     );
+    const dangerButtonHtml = renderDialog(
+      <MezfitDialogButton strong tone="danger">Delete</MezfitDialogButton>,
+    );
+    const regularButtonTag = regularButtonHtml.match(/<button[^>]*>/)?.[0];
+    const dangerButtonTag = dangerButtonHtml.match(/<button[^>]*>/)?.[0];
 
-    expect(html).toContain('Delete');
-    expect(html).toContain('bg-primary');
-    expect(html).toContain('color:var(--ui-color-danger, #ff6b6b)');
+    expect(dangerButtonTag).toBe(regularButtonTag);
+    expect(dangerButtonHtml).toContain(
+      '<span style="color:var(--ui-color-danger, #ff6b6b)">Delete</span>',
+    );
   });
 });
