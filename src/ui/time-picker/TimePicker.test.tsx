@@ -107,17 +107,14 @@ describe('TimePicker', () => {
 
     const hours = screen.getByRole('listbox', { name: 'Часы' });
     fireEvent.click(within(hours).getByRole('option', { name: '10' }));
-    fireEvent.click(within(hours).getByRole('option', { name: '10' }));
-
     expect(selectionHapticMock).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(within(hours).getByRole('option', { name: '08' }));
-    expect(selectionHapticMock).toHaveBeenCalledTimes(2);
-
     picker.setValue('10:15');
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Минуты' })).getByRole('option', { name: '45' }));
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Часы' })).getByRole('option', { name: '10' }));
+    expect(selectionHapticMock).toHaveBeenCalledTimes(1);
 
-    expect(selectionHapticMock).toHaveBeenCalledTimes(3);
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Минуты' })).getByRole('option', { name: '45' }));
+    expect(selectionHapticMock).toHaveBeenCalledTimes(2);
   });
 
   it('rejects malformed local-time values instead of guessing a timezone-bearing time', () => {
