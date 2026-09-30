@@ -6,6 +6,7 @@ import {
   type RefObject,
   type UIEvent,
 } from 'react';
+import { triggerTelegramSelectionHaptic } from '../../telegram';
 import { MezfitPopover } from '../konsta-mezfit';
 import { buildTimeLensAssets, type TimeLensAssets } from './timePickerLens';
 import {
@@ -268,6 +269,7 @@ export function TimePicker({
   const hourFrameRef = useRef<number | null>(null);
   const minuteFrameRef = useRef<number | null>(null);
   const reconcileFrameRef = useRef<number | null>(null);
+  const feedbackValueRef = useRef<LocalTimeParts>(parsedValue);
   const pendingScrollRef = useRef<ScrollTops>({
     hour: parsedValue.hour * ROW_HEIGHT,
     minute: parsedValue.minute * ROW_HEIGHT,
@@ -349,6 +351,7 @@ export function TimePicker({
     }
 
     draftRef.current = parsedValue;
+    feedbackValueRef.current = parsedValue;
     setDraft(parsedValue);
     const nextScrollTops = {
       hour: parsedValue.hour * ROW_HEIGHT,
@@ -380,6 +383,14 @@ export function TimePicker({
       ? { ...current, hour: nextValue }
       : { ...current, minute: nextValue };
 
+    if (feedbackValueRef.current[kind] !== nextValue) {
+      feedbackValueRef.current = {
+        ...feedbackValueRef.current,
+        [kind]: nextValue,
+      };
+      triggerTelegramSelectionHaptic();
+    }
+
     if (next.hour === current.hour && next.minute === current.minute) {
       draftRef.current = current;
       setDraft(current);
@@ -402,6 +413,7 @@ export function TimePicker({
       if (canonical.hour === next.hour && canonical.minute === next.minute) return;
 
       draftRef.current = canonical;
+      feedbackValueRef.current = canonical;
       setDraft(canonical);
       const canonicalScrollTops = {
         hour: canonical.hour * ROW_HEIGHT,

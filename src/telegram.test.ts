@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getTelegramLaunchStartParam, prepareTelegramWebApp, type TelegramWebApp } from './telegram';
+import {
+  getTelegramLaunchStartParam,
+  prepareTelegramWebApp,
+  triggerTelegramSelectionHaptic,
+  type TelegramWebApp,
+} from './telegram';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -79,5 +84,33 @@ describe('getTelegramLaunchStartParam', () => {
       '',
       `#tgWebAppStartParam=invite_${'d'.repeat(36)}&tgWebAppVersion=8.0`,
     )).toBe(`invite_${'d'.repeat(36)}`);
+  });
+});
+
+
+describe('triggerTelegramSelectionHaptic', () => {
+  it('uses Telegram selectionChanged when haptics are available', () => {
+    const selectionChanged = vi.fn();
+    const webApp = createWebApp();
+    webApp.HapticFeedback = { selectionChanged };
+
+    triggerTelegramSelectionHaptic(webApp);
+
+    expect(selectionChanged).toHaveBeenCalledOnce();
+  });
+
+  it('is a safe no-op when haptics are unavailable', () => {
+    expect(() => triggerTelegramSelectionHaptic(createWebApp())).not.toThrow();
+  });
+
+  it('does not let a Telegram haptic failure break the UI action', () => {
+    const webApp = createWebApp();
+    webApp.HapticFeedback = {
+      selectionChanged: () => {
+        throw new Error('haptics unavailable');
+      },
+    };
+
+    expect(() => triggerTelegramSelectionHaptic(webApp)).not.toThrow();
   });
 });
