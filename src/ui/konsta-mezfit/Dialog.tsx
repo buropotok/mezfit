@@ -30,14 +30,15 @@ const destructiveTextColor = 'var(--ui-color-danger, #ff6b6b)';
 
 export function MezfitDialogButton({
   tone = 'default',
-  style,
+  children,
   ...props
 }: MezfitDialogButtonProps) {
   return (
-    <KonstaDialogButton
-      {...props}
-      style={tone === 'danger' ? { ...style, color: destructiveTextColor } : style}
-    />
+    <KonstaDialogButton {...props}>
+      {tone === 'danger' ? (
+        <span style={{ color: destructiveTextColor }}>{children}</span>
+      ) : children}
+    </KonstaDialogButton>
   );
 }
 
