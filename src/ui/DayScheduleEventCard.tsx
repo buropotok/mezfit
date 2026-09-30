@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { List, ListItem } from 'konsta/react';
 import type { DayScheduleRenderState } from './DaySchedule';
+import './DayScheduleEventCard.css';
 
 export type DayScheduleEventCardProps = {
   title: ReactNode;
