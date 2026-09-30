@@ -501,8 +501,10 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
   const pointerStartX = (event: Event): number | null => {
     if ('clientX' in event && typeof event.clientX === 'number') return event.clientX;
-    if ('touches' in event && event.touches instanceof TouchList && event.touches[0]) return event.touches[0].clientX;
-    if ('changedTouches' in event && event.changedTouches instanceof TouchList && event.changedTouches[0]) return event.changedTouches[0].clientX;
+    if ('touches' in event && 'changedTouches' in event) {
+      const touchEvent = event as Event & { touches: TouchList; changedTouches: TouchList };
+      return touchEvent.touches[0]?.clientX ?? touchEvent.changedTouches[0]?.clientX ?? null;
+    }
     return null;
   };
 
