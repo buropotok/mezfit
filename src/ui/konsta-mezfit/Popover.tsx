@@ -7,7 +7,7 @@ import {
   type ComponentProps,
   type ElementType,
 } from 'react';
-import { Popover as KonstaPopover, useTheme } from 'konsta/react';
+import { Glass as KonstaGlass, Popover as KonstaPopover, useTheme } from 'konsta/react';
 import { PopoverClasses } from 'konsta/shared/classes';
 import { PopoverColors } from 'konsta/shared/colors';
 import { calcPopoverPosition, cls, useIosHighlight } from 'konsta/shared/utils';
@@ -222,7 +222,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
             {children}
           </GlassSurface>
         ) : (
-          <div className={innerClasses}>{children}</div>
+          <KonstaGlass className={innerClasses}>{children}</KonstaGlass>
         )}
       </Component>
     </>
