@@ -26,12 +26,26 @@ export function DayScheduleCatalog() {
   const [lastChange, setLastChange] = useState<LocalDate | null>(null);
   const [eventOverrides, setEventOverrides] = useState<Record<string, { date: LocalDate; startMinutes: number; durationMinutes: number }>>({});
   const value = getDayScheduleValue(date);
-  const eventsByDate = useMemo(() => Object.fromEntries(
-    Array.from({ length: 15 }, (_, index) => {
-      const day = addDays(date, index - 7);
-      return [day, empty ? [] : demoDay(day).map(event => ({ ...event, ...(eventOverrides[event.id] ?? {}) }))];
-    }),
-  ), [date, empty, eventOverrides]);
+  const eventsByDate = useMemo(() => {
+    const days = Array.from({ length: 15 }, (_, index) => addDays(date, index - 7));
+    const grouped = new Map<LocalDate, DemoEvent[]>(days.map(day => [day, []]));
+    if (empty) return Object.fromEntries(grouped);
+
+    for (const sourceDate of days) {
+      for (const event of demoDay(sourceDate)) {
+        const override = eventOverrides[event.id];
+        const targetDate = override?.date ?? sourceDate;
+        const targetEvents = grouped.get(targetDate) ?? [];
+        targetEvents.push({
+          ...event,
+          startMinutes: override?.startMinutes ?? event.startMinutes,
+          durationMinutes: override?.durationMinutes ?? event.durationMinutes,
+        });
+        grouped.set(targetDate, targetEvents);
+      }
+    }
+    return Object.fromEntries(grouped);
+  }, [date, empty, eventOverrides]);
 
   return (
     <section className="ui-kit-day-schedule" aria-label="DaySchedule">
