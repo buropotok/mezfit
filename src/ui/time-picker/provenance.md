@@ -13,8 +13,11 @@ that uses two displacement maps (edge refraction plus a stronger zoom map).
 The article does not publish the original magnifying-glass bitmap or its exact
 zoom-map generator. Mezfit therefore generates its own maps at runtime:
 - the edge field follows the documented convex-squircle/Snell construction;
-- the zoom field is an inward sampling field for deterministic magnification;
-- the specular field is generated separately and blended over the refracted text.
+- the zoom field is an inward sampling field for deterministic magnification.
+
+The rendered TimePicker filter uses only those two displacement stages. Its
+former SVG specular blend is intentionally not composited: the visible bezel
+and highlights come from the approved `LiquidGlassTextOnly` shell instead.
 
 Unlike the article's Chrome-only demo, the lens filter is applied directly to a
 synchronized inline SVG text layer. The primitive does not depend on
@@ -27,5 +30,6 @@ bezel highlights, and the same 0 8px 24px / 20% outer shadow. TimePicker does
 not reuse the Text Only interaction runtime; it only reuses the approved shell
 appearance around its own hour/minute displacement layer.
 
-The surrounding overlay uses the existing Mezfit/Konsta Popover primitive; no
-Konsta private DOM or visual mechanics are modified.
+The surrounding overlay uses the existing Mezfit/Konsta Popover primitive. The
+shared wrapper exposes a public `iosHighlight` opt-out so TimePicker can disable
+Konsta's radial press glow without targeting private Konsta DOM or CSS.
