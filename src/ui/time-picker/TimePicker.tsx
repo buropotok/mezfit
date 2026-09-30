@@ -469,7 +469,7 @@ export function TimePicker({
       backdrop
       onBackdropClick={onClose}
       className="ui-time-picker__popover"
-      style={{ width: '312px', maxWidth: 'calc(100vw - 24px)' }}
+      style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
       aria-modal="true"
       aria-label="Выбор времени"
