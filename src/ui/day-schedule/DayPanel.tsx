@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import type { LocalDate } from '../date-picker/datePickerDate';
 
@@ -16,8 +16,13 @@ export type DayScheduleEventBase = {
 export type DayScheduleRenderState = {
   compact: boolean;
   lifted: boolean;
+  editing: boolean;
   height: number;
+  startMinutes: number;
+  durationMinutes: number;
 };
+
+export type DayScheduleResizeEdge = 'start' | 'end';
 
 export function yForMinutes(totalMinutes: number): number {
   return ((totalMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT;
@@ -45,6 +50,83 @@ export function startMinutesAfterDrag(
   const snappedDelta = snappedTarget - startMinutes;
   const clampedDelta = Math.max(minDelta, Math.min(maxDelta, snappedDelta));
   return startMinutes + clampedDelta;
+}
+
+function snapMinutes(value: number): number {
+  return Math.round(value / DRAG_SNAP_MINUTES) * DRAG_SNAP_MINUTES;
+}
+
+function ceilToSnap(value: number): number {
+  return Math.ceil(value / DRAG_SNAP_MINUTES) * DRAG_SNAP_MINUTES;
+}
+
+function floorToSnap(value: number): number {
+  return Math.floor(value / DRAG_SNAP_MINUTES) * DRAG_SNAP_MINUTES;
+}
+
+export function eventFitsSlot(
+  events: readonly DayScheduleEventBase[],
+  eventId: string,
+  startMinutes: number,
+  durationMinutes: number,
+): boolean {
+  const endMinutes = startMinutes + durationMinutes;
+  if (
+    !Number.isFinite(startMinutes)
+    || !Number.isFinite(durationMinutes)
+    || durationMinutes <= 0
+    || startMinutes < START_HOUR * 60
+    || endMinutes > END_HOUR * 60
+  ) return false;
+
+  return events.every(other => {
+    if (other.id === eventId || other.durationMinutes <= 0) return true;
+    const otherEnd = other.startMinutes + other.durationMinutes;
+    return endMinutes <= other.startMinutes || startMinutes >= otherEnd;
+  });
+}
+
+export function resizedEventTiming(
+  event: DayScheduleEventBase,
+  edge: DayScheduleResizeEdge,
+  deltaPixels: number,
+  events: readonly DayScheduleEventBase[],
+): { startMinutes: number; durationMinutes: number } {
+  const deltaMinutes = deltaPixels / HOUR_HEIGHT * 60;
+  if (Math.abs(deltaMinutes) < DRAG_SNAP_MINUTES / 2) {
+    return { startMinutes: event.startMinutes, durationMinutes: event.durationMinutes };
+  }
+
+  const originalStart = event.startMinutes;
+  const originalEnd = event.startMinutes + event.durationMinutes;
+  const others = events.filter(other => other.id !== event.id && other.durationMinutes > 0);
+
+  if (edge === 'start') {
+    const previousBoundary = others.reduce((boundary, other) => {
+      const otherEnd = other.startMinutes + other.durationMinutes;
+      return otherEnd <= originalStart ? Math.max(boundary, otherEnd) : boundary;
+    }, START_HOUR * 60);
+    const minStart = ceilToSnap(previousBoundary);
+    const maxStart = floorToSnap(originalEnd - DRAG_SNAP_MINUTES);
+    const desiredStart = snapMinutes(originalStart + deltaMinutes);
+    const nextStart = Math.max(minStart, Math.min(maxStart, desiredStart));
+    return {
+      startMinutes: nextStart,
+      durationMinutes: originalEnd - nextStart,
+    };
+  }
+
+  const nextBoundary = others.reduce((boundary, other) => (
+    other.startMinutes >= originalEnd ? Math.min(boundary, other.startMinutes) : boundary
+  ), END_HOUR * 60);
+  const minEnd = ceilToSnap(originalStart + DRAG_SNAP_MINUTES);
+  const maxEnd = floorToSnap(nextBoundary);
+  const desiredEnd = snapMinutes(originalEnd + deltaMinutes);
+  const nextEnd = Math.max(minEnd, Math.min(maxEnd, desiredEnd));
+  return {
+    startMinutes: originalStart,
+    durationMinutes: nextEnd - originalStart,
+  };
 }
 
 /** Clip to the displayed 06:00–24:00 range; visual size never exceeds time. */
@@ -88,11 +170,126 @@ function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
       className={`ui-day-schedule__event-frame ui-day-schedule__event-frame--draggable${isDragging ? ' ui-day-schedule__event-frame--dragging' : ''}`}
       style={{ top, height }}
       data-event-id={event.id}
+      data-event-date={date}
       data-ui-dnd-handle=""
       {...attributes}
       {...listeners}
     >
       {children}
+    </div>
+  );
+}
+
+function EditableEventFrame<TEvent extends DayScheduleEventBase>({
+  date,
+  event,
+  events,
+  renderEvent,
+  onCommit,
+}: {
+  date: LocalDate;
+  event: TEvent;
+  events: readonly TEvent[];
+  renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
+  onCommit: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
+}) {
+  const [draft, setDraft] = useState({
+    startMinutes: event.startMinutes,
+    durationMinutes: event.durationMinutes,
+  });
+  const resize = useRef<{
+    pointerId: number;
+    edge: DayScheduleResizeEdge;
+    startY: number;
+    startMinutes: number;
+    durationMinutes: number;
+  } | null>(null);
+
+  useEffect(() => {
+    setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
+  }, [event.durationMinutes, event.startMinutes]);
+
+  const draftEvent = { ...event, ...draft };
+  const geometry = eventGeometry(draftEvent);
+  if (!geometry) return null;
+  const { top, height } = geometry;
+
+  const beginResize = (edge: DayScheduleResizeEdge, pointerEvent: ReactPointerEvent<HTMLButtonElement>) => {
+    if (pointerEvent.pointerType === 'mouse' && pointerEvent.button !== 0) return;
+    pointerEvent.preventDefault();
+    pointerEvent.stopPropagation();
+    resize.current = {
+      pointerId: pointerEvent.pointerId,
+      edge,
+      startY: pointerEvent.clientY,
+      startMinutes: draft.startMinutes,
+      durationMinutes: draft.durationMinutes,
+    };
+    try { pointerEvent.currentTarget.setPointerCapture(pointerEvent.pointerId); } catch { /* Optional in WebViews. */ }
+  };
+
+  const moveResize = (pointerEvent: ReactPointerEvent<HTMLButtonElement>) => {
+    const state = resize.current;
+    if (!state || state.pointerId !== pointerEvent.pointerId) return;
+    pointerEvent.preventDefault();
+    pointerEvent.stopPropagation();
+    const baseEvent = {
+      ...event,
+      startMinutes: state.startMinutes,
+      durationMinutes: state.durationMinutes,
+    };
+    setDraft(resizedEventTiming(baseEvent, state.edge, pointerEvent.clientY - state.startY, events));
+  };
+
+  const finishResize = (pointerEvent: ReactPointerEvent<HTMLButtonElement>, cancelled = false) => {
+    const state = resize.current;
+    if (!state || state.pointerId !== pointerEvent.pointerId) return;
+    pointerEvent.preventDefault();
+    pointerEvent.stopPropagation();
+    resize.current = null;
+    if (cancelled) {
+      setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
+      return;
+    }
+    if (draft.startMinutes !== event.startMinutes || draft.durationMinutes !== event.durationMinutes) {
+      onCommit(event, draft.startMinutes, draft.durationMinutes);
+      setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
+    }
+  };
+
+  return (
+    <div
+      className="ui-day-schedule__event-frame ui-day-schedule__event-frame--editing"
+      style={{ top, height }}
+      data-event-id={event.id}
+      data-event-date={date}
+    >
+      {renderEvent(event, {
+        compact: height < 72,
+        lifted: false,
+        editing: true,
+        height,
+        startMinutes: draft.startMinutes,
+        durationMinutes: draft.durationMinutes,
+      })}
+      <button
+        type="button"
+        className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--start"
+        aria-label="Изменить время начала"
+        onPointerDown={pointerEvent => beginResize('start', pointerEvent)}
+        onPointerMove={moveResize}
+        onPointerUp={pointerEvent => finishResize(pointerEvent)}
+        onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
+      />
+      <button
+        type="button"
+        className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--end"
+        aria-label="Изменить время окончания"
+        onPointerDown={pointerEvent => beginResize('end', pointerEvent)}
+        onPointerMove={moveResize}
+        onPointerUp={pointerEvent => finishResize(pointerEvent)}
+        onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
+      />
     </div>
   );
 }
@@ -104,6 +301,8 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   today,
   nowMinutes,
   draggableEvents = false,
+  editingEventId,
+  onEventResize,
 }: {
   date: LocalDate;
   events: readonly TEvent[];
@@ -111,6 +310,8 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   today: LocalDate;
   nowMinutes: number;
   draggableEvents?: boolean;
+  editingEventId?: string;
+  onEventResize?: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
 }) {
   const showNow = date === today && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60;
 
@@ -131,10 +332,30 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
         })}
 
         {events.map(event => {
+          if (event.id === editingEventId && onEventResize) {
+            return (
+              <EditableEventFrame
+                date={date}
+                event={event}
+                events={events}
+                renderEvent={renderEvent}
+                onCommit={onEventResize}
+                key={event.id}
+              />
+            );
+          }
+
           const geometry = eventGeometry(event);
           if (!geometry) return null;
           const { top, height } = geometry;
-          const content = renderEvent(event, { compact: height < 72, lifted: false, height });
+          const content = renderEvent(event, {
+            compact: height < 72,
+            lifted: false,
+            editing: false,
+            height,
+            startMinutes: event.startMinutes,
+            durationMinutes: event.durationMinutes,
+          });
           if (draggableEvents) {
             return (
               <DraggableEventFrame
@@ -153,6 +374,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
               className="ui-day-schedule__event-frame"
               style={{ top, height }}
               data-event-id={event.id}
+              data-event-date={date}
               key={event.id}
             >
               {content}
@@ -169,4 +391,3 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
     </div>
   );
 }
-

@@ -18,6 +18,7 @@ import {
 import type { LocalDate } from './date-picker/datePickerDate';
 import {
   DayPanel,
+  eventFitsSlot,
   eventGeometry,
   scheduleEventDragId,
   startMinutesAfterDrag,
@@ -58,12 +59,22 @@ export type DayScheduleEventMove = {
   startMinutes: number;
 };
 
+export type DayScheduleEventResize = {
+  eventId: string;
+  date: LocalDate;
+  previousStartMinutes: number;
+  previousDurationMinutes: number;
+  startMinutes: number;
+  durationMinutes: number;
+};
+
 export type DayScheduleProps<TEvent extends DayScheduleEvent = DayScheduleEvent> = {
   date: LocalDate;
   eventsByDate: Readonly<Record<LocalDate, readonly TEvent[]>>;
   onDateChange: (date: LocalDate) => void;
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
   onEventMove?: (move: DayScheduleEventMove) => void;
+  onEventResize?: (resize: DayScheduleEventResize) => void;
   today?: LocalDate;
   className?: string;
 };
@@ -86,6 +97,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   onDateChange,
   renderEvent,
   onEventMove,
+  onEventResize,
   today: todayOverride,
   className,
 }: DayScheduleProps<TEvent>) {
@@ -108,6 +120,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const eventDragActive = useRef(false);
   const activeEventDragRef = useRef<string | null>(null);
   const [activeEventDragId, setActiveEventDragId] = useState<string | null>(null);
+  const [editingEvent, setEditingEvent] = useState<{ date: LocalDate; eventId: string } | null>(null);
   const arrival = useRef<{ date: LocalDate; week: boolean; from?: LocalDate } | null>(null);
 
   const weekDrag = useRef(0);
@@ -225,6 +238,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
   useLayoutEffect(() => {
     currentDate.current = date;
+    setEditingEvent(null);
     const expected = arrival.current?.date === date ? arrival.current : null;
     arrival.current = null;
     clearPending();
@@ -442,13 +456,45 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       entry.event.durationMinutes,
       event.delta.y,
     );
-    if (startMinutes === entry.event.startMinutes) return;
-    onEventMove({
-      eventId: entry.event.id,
-      date: entry.date,
-      previousStartMinutes: entry.event.startMinutes,
+    const fits = eventFitsSlot(
+      eventsByDate[entry.date] ?? [],
+      entry.event.id,
       startMinutes,
+      entry.event.durationMinutes,
+    );
+
+    if (fits && startMinutes !== entry.event.startMinutes) {
+      onEventMove({
+        eventId: entry.event.id,
+        date: entry.date,
+        previousStartMinutes: entry.event.startMinutes,
+        startMinutes,
+      });
+    }
+
+    if (onEventResize) {
+      addTimer(() => setEditingEvent({ date: entry.date, eventId: entry.event.id }), 200);
+    }
+  };
+
+  const handleEventResize = (entryDate: LocalDate, event: TEvent, startMinutes: number, durationMinutes: number) => {
+    if (!onEventResize) return;
+    if (!eventFitsSlot(eventsByDate[entryDate] ?? [], event.id, startMinutes, durationMinutes)) return;
+    onEventResize({
+      eventId: event.id,
+      date: entryDate,
+      previousStartMinutes: event.startMinutes,
+      previousDurationMinutes: event.durationMinutes,
+      startMinutes,
+      durationMinutes,
     });
+  };
+
+  const dismissEditingOnOutsidePress = (pointerEvent: ReactPointerEvent<HTMLElement>) => {
+    if (!editingEvent || !(pointerEvent.target instanceof Element)) return;
+    const frame = pointerEvent.target.closest<HTMLElement>('[data-event-id][data-event-date]');
+    if (frame?.dataset.eventId === editingEvent.eventId && frame.dataset.eventDate === editingEvent.date) return;
+    setEditingEvent(null);
   };
 
   const weekTranslate = weekAnimating
@@ -459,7 +505,10 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     : `calc(-33.333333% + ${dayDrag.current}px)`;
 
   const schedule = (
-    <section className={['ui-day-schedule', activeEventDragId ? 'ui-day-schedule--event-dragging' : '', className].filter(Boolean).join(' ')}>
+    <section
+      className={['ui-day-schedule', activeEventDragId ? 'ui-day-schedule--event-dragging' : '', editingEvent ? 'ui-day-schedule--event-editing' : '', className].filter(Boolean).join(' ')}
+      onPointerDownCapture={dismissEditingOnOutsidePress}
+    >
       <div
         className="ui-day-schedule__week-viewport"
         ref={weekViewportRef}
@@ -512,9 +561,36 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           className={`ui-day-schedule__day-track${dayAnimating ? ' ui-day-schedule__day-track--animating' : ''}`}
           style={{ transition: dayAnimating ? TRACK_TRANSITION : 'none', transform: `translate3d(${dayTranslate},0,0)` }}
         >
-          <DayPanel date={previousDate} events={eventsByDate[previousDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating} />
-          <DayPanel date={displayDate} events={eventsByDate[displayDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating} />
-          <DayPanel date={nextDate} events={eventsByDate[nextDate] ?? []} renderEvent={renderEvent} today={today} nowMinutes={now.getHours() * 60 + now.getMinutes()} draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating} />
+          <DayPanel
+            date={previousDate}
+            events={eventsByDate[previousDate] ?? []}
+            renderEvent={renderEvent}
+            today={today}
+            nowMinutes={now.getHours() * 60 + now.getMinutes()}
+            draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating}
+            editingEventId={editingEvent?.date === previousDate ? editingEvent.eventId : undefined}
+            onEventResize={onEventResize ? (event, startMinutes, durationMinutes) => handleEventResize(previousDate, event, startMinutes, durationMinutes) : undefined}
+          />
+          <DayPanel
+            date={displayDate}
+            events={eventsByDate[displayDate] ?? []}
+            renderEvent={renderEvent}
+            today={today}
+            nowMinutes={now.getHours() * 60 + now.getMinutes()}
+            draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating}
+            editingEventId={editingEvent?.date === displayDate ? editingEvent.eventId : undefined}
+            onEventResize={onEventResize ? (event, startMinutes, durationMinutes) => handleEventResize(displayDate, event, startMinutes, durationMinutes) : undefined}
+          />
+          <DayPanel
+            date={nextDate}
+            events={eventsByDate[nextDate] ?? []}
+            renderEvent={renderEvent}
+            today={today}
+            nowMinutes={now.getHours() * 60 + now.getMinutes()}
+            draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating}
+            editingEventId={editingEvent?.date === nextDate ? editingEvent.eventId : undefined}
+            onEventResize={onEventResize ? (event, startMinutes, durationMinutes) => handleEventResize(nextDate, event, startMinutes, durationMinutes) : undefined}
+          />
         </div>
       </div>
     </section>
@@ -552,11 +628,15 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             <GlassSurface
               className="ui-day-schedule__drag-overlay"
               contentClassName="ui-day-schedule__drag-overlay-content"
+              shape={{ radius: 14 }}
             >
               {renderEvent(activeEventEntry.event, {
                 compact: activeEventEntry.compact,
                 lifted: true,
+                editing: false,
                 height: activeEventEntry.height,
+                startMinutes: activeEventEntry.event.startMinutes,
+                durationMinutes: activeEventEntry.event.durationMinutes,
               })}
             </GlassSurface>
           </div>

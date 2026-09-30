@@ -1,11 +1,12 @@
 .ui-day-schedule {
+  --ui-day-schedule-event-card-color: 132 163 150;
   position: relative;
   width: 100%;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
   color: var(--ui-color-canvas-text);
-  background: var(--ui-color-canvas);
+  background: #000;
   font-family: var(--ui-font-family);
 }
 
@@ -76,7 +77,7 @@
   min-width: 0;
   position: relative;
   height: calc(112px * 18);
-  background: var(--ui-color-canvas);
+  background: #000;
 }
 
 .ui-day-schedule__timeline {
@@ -113,7 +114,7 @@
   padding-right: 12px;
   text-align: right;
   color: var(--ui-color-canvas-muted);
-  background: var(--ui-color-canvas);
+  background: #000;
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-footnote);
   line-height: var(--ui-line-height-footnote);
@@ -137,6 +138,54 @@
 
 .ui-day-schedule__event-frame--dragging {
   opacity: 0;
+}
+
+.ui-day-schedule__event-frame--editing {
+  z-index: 12;
+  overflow: visible;
+}
+
+.ui-day-schedule__resize-handle {
+  position: absolute;
+  z-index: 4;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ui-day-schedule__resize-handle::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.35);
+}
+
+.ui-day-schedule__resize-handle--start {
+  top: -12px;
+  right: -12px;
+}
+
+.ui-day-schedule__resize-handle--start::after {
+  top: 10px;
+  right: 10px;
+}
+
+.ui-day-schedule__resize-handle--end {
+  bottom: -12px;
+  left: -12px;
+}
+
+.ui-day-schedule__resize-handle--end::after {
+  bottom: 10px;
+  left: 10px;
 }
 
 .ui-day-schedule__drag-overlay-wrapper {
@@ -203,7 +252,7 @@
   width: calc(var(--ui-day-schedule-time-column) - 9px);
   text-align: right;
   color: var(--ui-color-danger, #ff453a);
-  background: var(--ui-color-canvas);
+  background: #000;
   font-family: var(--ui-font-family);
   font-size: var(--ui-font-size-caption);
   line-height: var(--ui-line-height-caption);
