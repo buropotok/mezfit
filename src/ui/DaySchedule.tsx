@@ -473,7 +473,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     }
 
     if (onEventResize) {
-      setEditingEvent({ date: entry.date, eventId: entry.event.id });
+      addTimer(() => setEditingEvent({ date: entry.date, eventId: entry.event.id }), 200);
     }
   };
 
