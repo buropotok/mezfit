@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventGeometry, startMinutesAfterDrag, yForMinutes } from './DayPanel';
+import { eventFitsSlot, eventGeometry, resizedEventTiming, startMinutesAfterDrag, yForMinutes } from './DayPanel';
 import { addDays, dayIndex, startOfWeek } from './dateMath';
 
 describe('schedule geometry and date boundaries', () => {
@@ -35,6 +35,30 @@ describe('schedule geometry and date boundaries', () => {
 
   it('keeps the bottom drag boundary on the quarter-hour grid', () => {
     expect(startMinutesAfterDrag(600, 50, 5000)).toBe(1380);
+  });
+
+  it('rejects moved events that overlap another event slot', () => {
+    const items = [
+      { id: 'a', startMinutes: 600, durationMinutes: 60 },
+      { id: 'b', startMinutes: 690, durationMinutes: 60 },
+    ];
+    expect(eventFitsSlot(items, 'a', 615, 60)).toBe(false);
+    expect(eventFitsSlot(items, 'a', 630, 60)).toBe(true);
+  });
+
+  it('resizes against adjacent events on the 15-minute grid', () => {
+    const items = [
+      { id: 'a', startMinutes: 600, durationMinutes: 60 },
+      { id: 'b', startMinutes: 690, durationMinutes: 60 },
+    ];
+    expect(resizedEventTiming(items[0], 'end', 200, items)).toEqual({
+      startMinutes: 600,
+      durationMinutes: 90,
+    });
+    expect(resizedEventTiming(items[1], 'start', -200, items)).toEqual({
+      startMinutes: 660,
+      durationMinutes: 90,
+    });
   });
 
   it('pages across month, year and leap-day boundaries without local timezone shifts', () => {
