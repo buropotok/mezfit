@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button as KonstaButton, Glass, Link, Navbar } from 'konsta/react';
+import { GlassSurface } from '../GlassSurface';
 import { MezfitPanel as Panel, MezfitPopover as Popover } from '../konsta-mezfit';
 import {
   buildMonthGrid,
@@ -267,6 +268,12 @@ export function DatePicker({
 
   return (
     <>
+      <div className="ui-date-picker__prewarm" aria-hidden="true">
+        <GlassSurface className="ui-date-picker__prewarm-glass">
+          <div className="ui-date-picker__header-blur ui-date-picker__header-blur--prewarm" />
+        </GlassSurface>
+      </div>
+
       <Panel
         side="right"
         opened={opened}
