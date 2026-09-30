@@ -3,7 +3,6 @@ import {
   PointerSensor,
   TouchSensor,
   type DistanceMeasurement,
-  type PointerActivationConstraint,
   type SensorInstance,
   type SensorProps,
 } from '@dnd-kit/core';
@@ -38,8 +37,13 @@ export class UiTouchSensor extends TouchSensor {
   }];
 }
 
+type ScheduleTouchActivationConstraint = {
+  delay: number;
+  tolerance: DistanceMeasurement;
+};
+
 type ScheduleTouchSensorOptions = {
-  activationConstraint?: PointerActivationConstraint;
+  activationConstraint?: ScheduleTouchActivationConstraint;
 };
 
 function exceedsDistance(deltaX: number, deltaY: number, measurement: DistanceMeasurement): boolean {
@@ -50,12 +54,6 @@ function exceedsDistance(deltaX: number, deltaY: number, measurement: DistanceMe
   if ('x' in measurement && 'y' in measurement) return dx > measurement.x && dy > measurement.y;
   if ('x' in measurement) return dx > measurement.x;
   return dy > measurement.y;
-}
-
-function isDelayConstraint(
-  constraint: PointerActivationConstraint,
-): constraint is PointerActivationConstraint & { delay: number; tolerance: DistanceMeasurement } {
-  return 'delay' in constraint;
 }
 
 /**
@@ -124,13 +122,8 @@ export class UiScheduleTouchSensor implements SensorInstance {
       return;
     }
 
-    if (isDelayConstraint(constraint)) {
-      props.onPending(props.active, constraint, coordinates);
-      this.activationTimer = this.view.setTimeout(() => this.activate(), constraint.delay);
-      return;
-    }
-
     props.onPending(props.active, constraint, coordinates);
+    this.activationTimer = this.view.setTimeout(() => this.activate(), constraint.delay);
   }
 
   private activate() {
@@ -153,20 +146,9 @@ export class UiScheduleTouchSensor implements SensorInstance {
     const constraint = this.props.options.activationConstraint;
 
     if (!this.activated && constraint) {
-      if (isDelayConstraint(constraint)) {
-        if (exceedsDistance(deltaX, deltaY, constraint.tolerance)) {
-          this.abortPendingDrag();
-          return;
-        }
-      } else if ('distance' in constraint) {
-        if (constraint.tolerance != null && exceedsDistance(deltaX, deltaY, constraint.tolerance)) {
-          this.abortPendingDrag();
-          return;
-        }
-        if (exceedsDistance(deltaX, deltaY, constraint.distance)) {
-          this.activate();
-          return;
-        }
+      if (exceedsDistance(deltaX, deltaY, constraint.tolerance)) {
+        this.abortPendingDrag();
+        return;
       }
 
       this.props.onPending(
