@@ -46,6 +46,9 @@ type DragState = {
   deltaX: number;
   startedAt: number;
   dragging: boolean;
+  verticalScrolling: boolean;
+  manualScroll: boolean;
+  startScrollTop: number;
   activationThreshold: number;
 };
 
@@ -334,6 +337,9 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       deltaX: 0,
       startedAt: performance.now(),
       dragging: false,
+      verticalScrolling: false,
+      manualScroll: startsOnDraggableEvent,
+      startScrollTop: target === 'day' ? dayViewportRef.current?.scrollTop ?? 0 : 0,
       activationThreshold: startsOnDraggableEvent ? SCHEDULE_TOUCH_ACTIVATION_TOLERANCE : 8,
     };
     if (target === 'week') {
@@ -354,13 +360,29 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (!state || state.pointerId !== event.pointerId) return;
     const dx = event.clientX - state.startX;
     const dy = event.clientY - state.startY;
-    if (!state.dragging) {
-      if (Math.abs(dx) < state.activationThreshold || Math.abs(dx) <= Math.abs(dy)) return;
-      state.dragging = true;
+
+    if (!state.dragging && !state.verticalScrolling) {
+      if (state.manualScroll) {
+        if (Math.hypot(dx, dy) <= state.activationThreshold) return;
+        if (Math.abs(dy) > Math.abs(dx)) state.verticalScrolling = true;
+        else state.dragging = true;
+      } else {
+        if (Math.abs(dx) < state.activationThreshold || Math.abs(dx) <= Math.abs(dy)) return;
+        state.dragging = true;
+      }
+
       if (target === 'day') suppressDayClickUntil.current = performance.now() + 500;
       try { event.currentTarget.setPointerCapture?.(event.pointerId); } catch { /* Optional in WebViews. */ }
     }
+
     event.preventDefault();
+
+    if (state.verticalScrolling) {
+      const viewport = dayViewportRef.current;
+      if (viewport) viewport.scrollTop = state.startScrollTop - dy;
+      return;
+    }
+
     state.deltaX = dx;
     if (target === 'week') setWeekDrag(dx);
     else setDayDrag(dx);
@@ -375,6 +397,11 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     const state = ref.current;
     if (!state || state.pointerId !== event.pointerId) return;
     ref.current = null;
+
+    if (state.verticalScrolling) {
+      if (target === 'day') suppressDayClickUntil.current = performance.now() + 500;
+      return;
+    }
 
     if (!state.dragging) {
       if (target === 'week') {
