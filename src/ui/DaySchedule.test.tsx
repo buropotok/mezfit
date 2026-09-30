@@ -192,6 +192,7 @@ describe('DaySchedule', () => {
     viewport.scrollLeft = 90;
 
     fireEvent.pointerDown(frame, { pointerId: 31, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 210, clientY: 200 });
     fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 200 });
 
     expect(viewport.scrollLeft).toBe(0);
@@ -228,6 +229,7 @@ describe('DaySchedule', () => {
     Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 350 });
 
     fireEvent.pointerDown(frame, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 210, clientY: 200 });
     fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 424 });
     fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 100, clientY: 424 });
 
@@ -331,6 +333,41 @@ describe('DaySchedule', () => {
 
     fireEvent.pointerUp(frame, { pointerId: 71, pointerType: 'touch', clientX: 102, clientY: 240 });
     fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
+    act(() => vi.advanceTimersByTime(50));
+  });
+
+  it('keeps vertical timeline scrolling available from an interactive no-swipe child inside a draggable event', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <button type="button" data-schedule-no-swipe>{event.id}</button>}
+      />,
+    );
+    const button = view.container.querySelector<HTMLButtonElement>('[data-event-id="a"] button');
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!button || !viewport || !schedule) throw new Error('Missing interactive event child or day viewport');
+
+    viewport.scrollTop = 400;
+    const start = { identifier: 73, target: button, clientX: 100, clientY: 200, pageX: 100, pageY: 200, screenX: 100, screenY: 200 };
+    const movedTouch = { ...start, clientX: 102, clientY: 240, pageX: 102, pageY: 240 };
+
+    fireEvent.pointerDown(button, { pointerId: 73, pointerType: 'touch', clientX: 100, clientY: 200 });
+    fireEvent.touchStart(button, { touches: [start], targetTouches: [start], changedTouches: [start] });
+    fireEvent.pointerMove(button, { pointerId: 73, pointerType: 'touch', clientX: 102, clientY: 240 });
+    fireEvent.touchMove(button, { touches: [movedTouch], targetTouches: [movedTouch], changedTouches: [movedTouch] });
+
+    expect(viewport.scrollTop).toBe(360);
+    act(() => vi.advanceTimersByTime(350));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+
+    fireEvent.pointerUp(button, { pointerId: 73, pointerType: 'touch', clientX: 102, clientY: 240 });
+    fireEvent.touchEnd(button, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
     act(() => vi.advanceTimersByTime(50));
   });
 
