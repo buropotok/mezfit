@@ -453,7 +453,7 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
-  it('keeps touch move and end ownership after the source event frame is detached', () => {
+  it('keeps touch move and end ownership after repeated paging unmounts the source frame', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -467,21 +467,27 @@ describe('DaySchedule', () => {
     );
     const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
     const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
-    const track = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-track');
-    if (!frame || !schedule || !track) throw new Error('Missing draggable touch event frame or day track');
+    if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
 
     const start = { identifier: 76, target: frame, clientX: 100, clientY: 200, pageX: 100, pageY: 200, screenX: 100, screenY: 200 };
+    const edgeTouch = { ...start, clientX: 330, pageX: 330, screenX: 330 };
     fireEvent.touchStart(frame, { touches: [start], targetTouches: [start], changedTouches: [start] });
     act(() => vi.advanceTimersByTime(300));
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
 
-    frame.remove();
+    fireEvent.touchMove(frame, { touches: [edgeTouch], targetTouches: [edgeTouch], changedTouches: [edgeTouch] });
+    act(() => vi.advanceTimersByTime(1200));
+    expect(frame.isConnected).toBe(false);
+    expect(view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot
+      ?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('2');
 
-    const movedTouch = { ...start, clientX: 330, pageX: 330, screenX: 330 };
-    fireEvent.touchMove(frame, { touches: [movedTouch], targetTouches: [movedTouch], changedTouches: [movedTouch] });
-    expect(track.style.transform).toContain('-66.666666%');
+    const centerTouch = { ...start, clientX: 200, pageX: 200, screenX: 200 };
+    fireEvent.touchMove(frame, { touches: [centerTouch], targetTouches: [centerTouch], changedTouches: [centerTouch] });
+    act(() => vi.advanceTimersByTime(1000));
+    expect(view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot
+      ?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('2');
 
-    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [centerTouch] });
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
     act(() => vi.advanceTimersByTime(50));
   });
