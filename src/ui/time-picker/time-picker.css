@@ -83,6 +83,10 @@
 }
 
 .ui-time-picker__lens {
+  --sl-glass-tint: .17;
+  --sl-backdrop-blur: 0px;
+  --sl-glass-brightness: 1.02;
+  --sl-bezel-opacity: .86;
   position: absolute;
   z-index: 2147483647;
   top: 50%;
@@ -92,19 +96,30 @@
   border-radius: 999px;
   pointer-events: none;
   transform: translateY(-50%);
-  background: rgba(20,20,20,.17);
+  background: rgba(20,20,20,var(--sl-glass-tint));
+  box-shadow: 0 8px 24px rgba(0,0,0,.20);
+  -webkit-backdrop-filter:
+    blur(var(--sl-backdrop-blur))
+    saturate(1.05)
+    brightness(var(--sl-glass-brightness));
+  backdrop-filter:
+    blur(var(--sl-backdrop-blur))
+    saturate(1.05)
+    brightness(var(--sl-glass-brightness));
+}
+
+.ui-time-picker__lens::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
   box-shadow:
     inset 3px 3px 0 -3.5px rgba(255,255,255,1),
     inset -3px -3px 0 -3.5px rgba(255,255,255,1),
     inset -0.5px -0.5px 0 rgba(255,255,255,.18),
-    inset 0.5px 0.5px 0 rgba(255,255,255,.08),
-    0 8px 24px rgba(0,0,0,.20);
-  -webkit-backdrop-filter:
-    saturate(1.05)
-    brightness(1.02);
-  backdrop-filter:
-    saturate(1.05)
-    brightness(1.02);
+    inset 0.5px 0.5px 0 rgba(255,255,255,.08);
+  opacity: var(--sl-bezel-opacity);
 }
 
 .ui-time-picker__lens svg {
