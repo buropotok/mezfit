@@ -253,6 +253,7 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
     }
     if (draft.startMinutes !== event.startMinutes || draft.durationMinutes !== event.durationMinutes) {
       onCommit(event, draft.startMinutes, draft.durationMinutes);
+      setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
     }
   };
 
