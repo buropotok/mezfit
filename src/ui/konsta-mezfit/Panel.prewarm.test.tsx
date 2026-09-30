@@ -58,6 +58,7 @@ describe('MezfitPanel cold-start prewarm', () => {
     expect(panel?.style.pointerEvents).toBe('none');
     expect(panel?.getAttribute('aria-hidden')).toBe('true');
     expect(panel?.hasAttribute('inert')).toBe(true);
+    expect(panel?.getAttribute('data-ui-glass-prewarm')).toBe('true');
 
     view.rerender(renderPanel(true));
 
@@ -66,5 +67,6 @@ describe('MezfitPanel cold-start prewarm', () => {
     expect(openedPanel?.style.pointerEvents).toBe('');
     expect(openedPanel?.hasAttribute('aria-hidden')).toBe(false);
     expect(openedPanel?.hasAttribute('inert')).toBe(false);
+    expect(openedPanel?.hasAttribute('data-ui-glass-prewarm')).toBe(false);
   });
 });
