@@ -4,7 +4,7 @@ import {
   type ComponentProps,
   type ElementType,
 } from 'react';
-import { Dialog as KonstaDialog, Glass as KonstaGlass, useTheme } from 'konsta/react';
+import { Dialog as KonstaDialog, DialogButton as KonstaDialogButton, Glass as KonstaGlass, useTheme } from 'konsta/react';
 import { DialogClasses } from 'konsta/shared/classes';
 import { DialogColors } from 'konsta/shared/colors';
 import { cls } from 'konsta/shared/utils';
@@ -21,7 +21,27 @@ export type MezfitDialogProps = ComponentProps<typeof KonstaDialog> & {
   glassShape?: GlassShape;
 };
 
+export type MezfitDialogButtonProps = ComponentProps<typeof KonstaDialogButton> & {
+  tone?: 'default' | 'danger';
+};
+
 const canonicalDark = (classNames: string) => classNames;
+const destructiveTextColor = 'var(--ui-color-danger, #ff6b6b)';
+
+export function MezfitDialogButton({
+  tone = 'default',
+  style,
+  ...props
+}: MezfitDialogButtonProps) {
+  return (
+    <KonstaDialogButton
+      {...props}
+      style={tone === 'danger' ? { ...style, color: destructiveTextColor } : style}
+    />
+  );
+}
+
+MezfitDialogButton.displayName = 'MezfitDialogButton';
 
 export function MezfitDialog(props: MezfitDialogProps) {
   const {
