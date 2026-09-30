@@ -10,6 +10,7 @@ import {
   formatMonthName,
   getWeekdayLabels,
   parseLocalDate,
+  prewarmDateFormatters,
   type LocalDate,
   type LocalDateParts,
 } from './datePickerDate';
@@ -164,7 +165,10 @@ export function DatePicker({
   onChangeRef.current = onChange;
   onCloseRef.current = onClose;
 
-  const weekdayLabels = useMemo(() => getWeekdayLabels(locale), [locale]);
+  const weekdayLabels = useMemo(() => {
+    prewarmDateFormatters(locale);
+    return getWeekdayLabels(locale);
+  }, [locale]);
   const years = useMemo(
     () => Array.from({ length: safeMaxYear - safeMinYear + 1 }, (_, index) => safeMinYear + index),
     [safeMaxYear, safeMinYear],
@@ -288,7 +292,7 @@ export function DatePicker({
       ref={yearTargetRef}
       className="ui-date-picker__year-trigger"
       aria-label={`Выбрать год, сейчас ${visibleYear}`}
-      aria-expanded={yearPopoverRequested}
+      aria-expanded={yearPopoverOpened}
       onClick={(event) => {
         event.preventDefault();
         setYearPopoverRequested((current) => !current);
@@ -315,7 +319,7 @@ export function DatePicker({
     <>
       <MezfitSidePanel
         side="right"
-        opened={panelOpened}
+        opened={opened && panelOpened}
         floating
         backdrop
         onBackdropClick={yearPopoverRequested ? undefined : onClose}
@@ -346,7 +350,7 @@ export function DatePicker({
       </MezfitSidePanel>
 
       <MezfitPopover
-        opened={panelOpened && yearPopoverOpened}
+        opened={opened && panelOpened && yearPopoverOpened}
         target={yearTargetRef.current ?? undefined}
         angle={false}
         backdrop
