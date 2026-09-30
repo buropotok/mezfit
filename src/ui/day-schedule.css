@@ -61,10 +61,6 @@
   display: none;
 }
 
-.ui-day-schedule--event-dragging .ui-day-schedule__day-viewport {
-  overflow-y: hidden;
-}
-
 .ui-day-schedule__day-track {
   display: flex;
   width: 300%;
