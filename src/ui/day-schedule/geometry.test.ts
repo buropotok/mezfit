@@ -42,7 +42,7 @@ describe('schedule geometry and date boundaries', () => {
       { id: 'a', startMinutes: 600, durationMinutes: 60 },
       { id: 'b', startMinutes: 690, durationMinutes: 60 },
     ];
-    expect(eventFitsSlot(items, 'a', 615, 60)).toBe(false);
+    expect(eventFitsSlot(items, 'a', 645, 60)).toBe(false);
     expect(eventFitsSlot(items, 'a', 630, 60)).toBe(true);
   });
 
