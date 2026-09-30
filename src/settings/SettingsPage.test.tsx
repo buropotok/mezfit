@@ -42,6 +42,7 @@ describe('SettingsPage modules gallery', () => {
 
     expect(screen.getByText('Time picker')).toBeTruthy();
     expect(screen.getByText(/Выбранное время: 08:30/)).toBeTruthy();
+    expect(screen.getByText(/Haptic backend: none/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать время' }));
 
