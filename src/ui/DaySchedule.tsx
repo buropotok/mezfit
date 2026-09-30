@@ -288,6 +288,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     addFrame(() => {
       if (currentDate.current !== next && arrival.current?.date === next) {
         arrival.current = null;
+        if (pendingEditingEvent.current?.date === next) pendingEditingEvent.current = null;
         resetPaging();
         setWeekSelectorSuppressed(false);
         busy.current = false;
@@ -549,7 +550,6 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
     if (acceptedMove && movedDay) {
       if (onEventResize) pendingEditingEvent.current = { date: targetDate, eventId: entry.event.id };
-      weekRef.current?.selectIndex(dayIndex(targetDate));
       requestDate(targetDate, false);
       return;
     }
