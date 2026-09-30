@@ -22,6 +22,7 @@ export type MezfitPopoverProps = ComponentProps<typeof KonstaPopover> & {
   glassPreset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   glassShape?: GlassShape;
+  iosHighlight?: boolean;
 };
 
 type MezfitPopoverPosition = {
@@ -60,6 +61,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
     glassPreset = 'modalTuned',
     glass,
     glassShape = 'auto',
+    iosHighlight = true,
 
     children,
     style = {},
@@ -90,7 +92,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   const c = PopoverClasses({ ...props, angleClassName }, colors, canonicalDark);
   const { attachEvents: attachHighlight, detachEvents: detachHighlight } = useIosHighlight({
     getEl: () => glassRef.current,
-    enabled: theme === 'ios',
+    enabled: theme === 'ios' && iosHighlight,
     data: highlightData.current,
   });
 
