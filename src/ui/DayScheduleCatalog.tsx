@@ -52,12 +52,12 @@ export function DayScheduleCatalog() {
         date={date}
         eventsByDate={eventsByDate}
         onDateChange={next => { setLastChange(next); setDate(next); }}
-        onEventMove={({ eventId, startMinutes }) => setEventOverrides(current => ({
+        onEventMove={({ eventId, date: eventDate, startMinutes }) => setEventOverrides(current => ({
           ...current,
           [eventId]: {
             startMinutes,
             durationMinutes: current[eventId]?.durationMinutes
-              ?? eventsByDate[date]?.find(event => event.id === eventId)?.durationMinutes
+              ?? eventsByDate[eventDate]?.find(event => event.id === eventId)?.durationMinutes
               ?? 60,
           },
         }))}
@@ -92,7 +92,7 @@ export function DayScheduleCatalog() {
           <dt>getDayScheduleValue(date, today?)</dt><dd>Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</dd>
         </dl>
         <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 112 px/час. Фон календаря чёрный. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; resize-состояние делает карточку непрозрачной. Тап вне выбранной карточки завершает resize-режим.</p>
-        <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  onEventMove={handleEventMove}\n  eventsByDate={events}\n  renderEvent={(event, { compact }) => (\n    <ClientEvent event={event} compact={compact} />\n  )}\n/>\nconst value = getDayScheduleValue(date);\n// <Navbar title={value.title} ... />`}</pre>
+        <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} state={state} />\n  )}\n/>`}</pre>
       </div>
     </section>
   );
