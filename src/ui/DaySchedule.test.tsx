@@ -172,7 +172,7 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
-  it('snaps a horizontal DnD move to the adjacent day and emits targetDate', () => {
+  it('pages to the next day from the right DnD edge, pauses there, and emits targetDate on drop', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -188,17 +188,27 @@ describe('DaySchedule', () => {
     const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
     const track = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-track');
     if (!frame || !viewport || !track) throw new Error('Missing draggable event or day track');
-    Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 350 });
-    viewport.scrollLeft = 90;
 
     fireEvent.pointerDown(frame, { pointerId: 31, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
-    fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 210, clientY: 200 });
-    fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 230, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 330, clientY: 200 });
 
     expect(viewport.scrollLeft).toBe(0);
     expect(track.style.transform).toContain('-66.666666%');
+    const week = view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot;
+    expect(week?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('1');
+    expect(week?.querySelector('.lens')?.classList.contains('tap-spring-active')).toBe(true);
 
-    fireEvent.pointerUp(document, { pointerId: 31, pointerType: 'mouse', button: 0, clientX: 100, clientY: 200 });
+    act(() => vi.advanceTimersByTime(300));
+    expect(track.style.transform).toContain('-33.333333%');
+
+    fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 200, clientY: 200 });
+    act(() => vi.advanceTimersByTime(650));
+    expect(track.style.transform).toContain('-33.333333%');
+    expect(view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot
+      ?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('1');
+
+    fireEvent.pointerUp(document, { pointerId: 31, pointerType: 'mouse', button: 0, clientX: 200, clientY: 200 });
 
     expect(moved).toHaveBeenCalledWith({
       eventId: 'a',
@@ -208,6 +218,49 @@ describe('DaySchedule', () => {
       startMinutes: 600,
     });
     expect(changed).toHaveBeenCalledWith('2026-09-29');
+    act(() => vi.advanceTimersByTime(50));
+  });
+
+  it('repeats DnD day paging after the edge pause while the tile stays at the edge', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const track = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-track');
+    if (!frame || !track) throw new Error('Missing draggable event or day track');
+
+    fireEvent.pointerDown(frame, { pointerId: 33, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 33, pointerType: 'mouse', buttons: 1, clientX: 230, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 33, pointerType: 'mouse', buttons: 1, clientX: 330, clientY: 200 });
+
+    act(() => vi.advanceTimersByTime(899));
+    expect(view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot
+      ?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('1');
+
+    act(() => vi.advanceTimersByTime(1));
+    expect(track.style.transform).toContain('-66.666666%');
+    expect(view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot
+      ?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('2');
+
+    act(() => vi.advanceTimersByTime(300));
+    fireEvent.pointerUp(document, { pointerId: 33, pointerType: 'mouse', button: 0, clientX: 330, clientY: 200 });
+
+    expect(moved).toHaveBeenCalledWith({
+      eventId: 'a',
+      date: '2026-09-28',
+      targetDate: '2026-09-30',
+      previousStartMinutes: 600,
+      startMinutes: 600,
+    });
+    expect(changed).toHaveBeenCalledWith('2026-09-30');
     act(() => vi.advanceTimersByTime(50));
   });
 
@@ -229,9 +282,9 @@ describe('DaySchedule', () => {
     Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 350 });
 
     fireEvent.pointerDown(frame, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
-    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 210, clientY: 200 });
-    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 424 });
-    fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 100, clientY: 424 });
+    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 230, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 330, clientY: 424 });
+    fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 330, clientY: 424 });
 
     expect(moved).not.toHaveBeenCalled();
     expect(changed).not.toHaveBeenCalled();
