@@ -39,9 +39,6 @@ export function MezfitDialog(props: MezfitDialogProps) {
     content,
     buttons,
 
-    ios,
-    material,
-
     glassPreset = 'modalTuned',
     glass,
     glassShape = 'auto',
@@ -56,7 +53,7 @@ export function MezfitDialog(props: MezfitDialogProps) {
   const Component = component as ElementType;
   const attrs = { ...rest };
 
-  const theme = useTheme({ ios, material });
+  const theme = useTheme();
   const colors = DialogColors(colorsProp, canonicalDark);
   const c = DialogClasses(
     {
