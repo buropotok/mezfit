@@ -24,6 +24,14 @@ describe('time picker magnifying lens vector maps', () => {
     expect(sample(edge, 3, 36).r).not.toBe(128);
   });
 
+  it('keeps the outer rim neutral before refraction ramps in', () => {
+    const { edge } = buildTimeLensVectorFields();
+
+    expect(sample(edge, 0.5, 36)).toMatchObject({ r: 128, g: 128, b: 128, a: 255 });
+    expect(sample(edge, 3, 36).r).not.toBe(128);
+    expect(sample(edge, 13, 36)).toMatchObject({ r: 128, g: 128, b: 128, a: 255 });
+  });
+
   it('encodes the zoom map as an inward sampling field around the center', () => {
     const { zoom } = buildTimeLensVectorFields();
     const center = sample(zoom, 144, 36);
