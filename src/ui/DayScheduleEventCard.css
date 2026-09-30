@@ -4,7 +4,7 @@
   min-height: 0;
   overflow: hidden;
   border-radius: 14px;
-  background: rgb(var(--ui-day-schedule-event-card-color) / 0.58);
+  background: rgb(var(--ui-day-schedule-event-card-color, 132 163 150) / 0.58);
 }
 
 .ui-day-schedule-event-card--lifted {
@@ -12,5 +12,5 @@
 }
 
 .ui-day-schedule-event-card--editing {
-  background: rgb(var(--ui-day-schedule-event-card-color) / 1);
+  background: rgb(var(--ui-day-schedule-event-card-color, 132 163 150) / 1);
 }
