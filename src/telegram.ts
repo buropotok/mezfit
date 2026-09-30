@@ -7,6 +7,10 @@ export interface TelegramBackButton {
   offClick(callback: () => void): void;
 }
 
+export interface TelegramHapticFeedback {
+  selectionChanged(): void;
+}
+
 export interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: {
@@ -17,6 +21,7 @@ export interface TelegramWebApp {
   expand(): void;
   disableVerticalSwipes?(): void;
   BackButton?: TelegramBackButton;
+  HapticFeedback?: TelegramHapticFeedback;
 }
 
 export function getTelegramWebApp(): TelegramWebApp | null {
@@ -68,4 +73,15 @@ export function bindTelegramBackButton(
     backButton.offClick(onBack);
     backButton.hide();
   };
+}
+
+
+export function triggerTelegramSelectionHaptic(
+  webApp: TelegramWebApp | null = getTelegramWebApp(),
+): void {
+  try {
+    webApp?.HapticFeedback?.selectionChanged();
+  } catch {
+    // Haptics are a best-effort enhancement and must never block UI interaction.
+  }
 }
