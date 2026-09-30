@@ -14,7 +14,7 @@ function renderPicker({
   onClose?: () => void;
 } = {}) {
   const target = document.createElement('button');
-  document.body.append(target);
+  document.body.appendChild(target);
 
   return {
     onChange,
