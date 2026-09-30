@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatePicker } from './DatePicker';
@@ -63,5 +63,30 @@ describe('DatePicker first-open rendering', () => {
     act(() => openFrame(0));
 
     expect(dialog?.className).not.toContain('invisible');
+  });
+
+  it('mounts the year grid before starting the first popover animation', () => {
+    const view = render(picker(true));
+    const panelOpenFrame = frames.shift();
+    if (!panelOpenFrame) throw new Error('Missing staged DatePicker opening frame');
+    act(() => panelOpenFrame(0));
+
+    frames = [];
+    const yearTrigger = view.container.querySelector<HTMLButtonElement>('[aria-label="Выбрать год, сейчас 2026"]');
+    if (!yearTrigger) throw new Error('Missing year trigger');
+
+    fireEvent.click(yearTrigger);
+
+    const yearDialog = view.container.querySelector<HTMLElement>('[aria-label="Выберите год"]');
+    expect(yearDialog).toBeTruthy();
+    expect(view.container.querySelector('[data-year="1950"]')).not.toBeNull();
+    expect(yearDialog?.className).toContain('scale-0');
+    expect(frames.length).toBeGreaterThan(0);
+
+    const popoverOpenFrame = frames.shift();
+    if (!popoverOpenFrame) throw new Error('Missing staged year popover opening frame');
+    act(() => popoverOpenFrame(0));
+
+    expect(yearDialog?.className).not.toContain('scale-0');
   });
 });
