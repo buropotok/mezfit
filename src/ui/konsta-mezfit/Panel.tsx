@@ -43,6 +43,7 @@ export function MezfitSidePanel(props: MezfitSidePanelProps) {
 
     children,
     ref,
+    style,
     ...rest
   } = props;
 
@@ -85,12 +86,16 @@ export function MezfitSidePanel(props: MezfitSidePanelProps) {
           glass={glass}
           shape={glassShape}
           wrapContent={false}
+          style={{
+            ...style,
+            willChange: style?.willChange ?? 'transform',
+          }}
           {...attrs}
         >
           {children}
         </GlassSurface>
       ) : (
-        <Component ref={setRef} className={classes} {...attrs}>
+        <Component ref={setRef} className={classes} style={style} {...attrs}>
           {children}
         </Component>
       )}
