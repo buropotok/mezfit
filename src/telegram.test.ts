@@ -3,6 +3,7 @@ import {
   getSelectionHapticBackend,
   getTelegramLaunchStartParam,
   prepareTelegramWebApp,
+  runHapticProbe,
   triggerTelegramSelectionHaptic,
   type TelegramWebApp,
 } from './telegram';
@@ -90,7 +91,7 @@ describe('getTelegramLaunchStartParam', () => {
 
 
 describe('triggerTelegramSelectionHaptic', () => {
-  it('uses a short browser vibration on Telegram Android when available', () => {
+  it('uses a short browser vibration on Telegram Android when accepted', () => {
     const selectionChanged = vi.fn();
     const impactOccurred = vi.fn();
     const vibrate = vi.fn(() => true);
@@ -105,6 +106,21 @@ describe('triggerTelegramSelectionHaptic', () => {
     expect(vibrate).toHaveBeenCalledWith(12);
     expect(selectionChanged).not.toHaveBeenCalled();
     expect(impactOccurred).not.toHaveBeenCalled();
+  });
+
+  it('falls through to Telegram haptics when Android browser vibration is rejected', () => {
+    const selectionChanged = vi.fn();
+    const impactOccurred = vi.fn();
+    const vibrate = vi.fn(() => false);
+    const webApp = createWebApp();
+    webApp.platform = 'android';
+    webApp.HapticFeedback = { selectionChanged, impactOccurred };
+
+    triggerTelegramSelectionHaptic(webApp, { vibrate });
+
+    expect(vibrate).toHaveBeenCalledWith(12);
+    expect(impactOccurred).toHaveBeenCalledWith('light');
+    expect(selectionChanged).not.toHaveBeenCalled();
   });
 
   it('uses a light Telegram impact on non-Android clients when supported', () => {
@@ -151,5 +167,42 @@ describe('triggerTelegramSelectionHaptic', () => {
       },
     })).not.toThrow();
     expect(selectionChanged).toHaveBeenCalledOnce();
+  });
+});
+
+
+describe('runHapticProbe', () => {
+  it('can invoke every Telegram haptic channel independently', () => {
+    const selectionChanged = vi.fn();
+    const impactOccurred = vi.fn();
+    const notificationOccurred = vi.fn();
+    const webApp = createWebApp();
+    webApp.HapticFeedback = { selectionChanged, impactOccurred, notificationOccurred };
+
+    expect(runHapticProbe('telegram-selection', webApp, null)).toBe('sent');
+    expect(runHapticProbe('telegram-light-impact', webApp, null)).toBe('sent');
+    expect(runHapticProbe('telegram-success-notification', webApp, null)).toBe('sent');
+
+    expect(selectionChanged).toHaveBeenCalledOnce();
+    expect(impactOccurred).toHaveBeenCalledWith('light');
+    expect(notificationOccurred).toHaveBeenCalledWith('success');
+  });
+
+  it('reports browser vibration acceptance and rejection', () => {
+    expect(runHapticProbe('browser-vibration', null, { vibrate: () => true })).toBe('sent');
+    expect(runHapticProbe('browser-vibration', null, { vibrate: () => false })).toBe('rejected');
+  });
+
+  it('reports unsupported and thrown probe paths without breaking the stand', () => {
+    expect(runHapticProbe('telegram-light-impact', createWebApp(), null)).toBe('unsupported');
+    expect(runHapticProbe('browser-vibration', null, null)).toBe('unsupported');
+
+    const webApp = createWebApp();
+    webApp.HapticFeedback = {
+      selectionChanged: () => {
+        throw new Error('native failure');
+      },
+    };
+    expect(runHapticProbe('telegram-selection', webApp, null)).toBe('error');
   });
 });
