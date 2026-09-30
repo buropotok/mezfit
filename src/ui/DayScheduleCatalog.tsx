@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Button, List, ListItem } from 'konsta/react';
+import { Button } from 'konsta/react';
 import { Avatar } from './primitives';
 import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
+import { DayScheduleEventCard } from './DayScheduleEventCard';
 import { DatePicker, type LocalDate } from './date-picker/DatePicker';
 import { addDays, currentLocalDate, dayIndex } from './day-schedule/dateMath';
 import './DayScheduleCatalog.css';
@@ -13,8 +14,8 @@ const names = ['Иван Петров', 'Анна Смирнова', 'Олег �
 function demoDay(date: LocalDate): DemoEvent[] {
   const index = dayIndex(date);
   return [
-    { id: `${date}-morning`, startMinutes: 480 + index * 15, durationMinutes: 60, title: names[index], purpose: `Персональная · ${date}` },
-    { id: `${date}-midday`, startMinutes: 660 + index * 15, durationMinutes: 90, title: names[(index + 2) % 7], purpose: `Силовая · ${date}` },
+    { id: `${date}-morning`, startMinutes: 480 + index * 15, durationMinutes: 60, title: names[index], purpose: 'Персональная' },
+    { id: `${date}-midday`, startMinutes: 660 + index * 15, durationMinutes: 90, title: names[(index + 2) % 7], purpose: 'Силовая' },
   ];
 }
 
@@ -23,14 +24,14 @@ export function DayScheduleCatalog() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [empty, setEmpty] = useState(false);
   const [lastChange, setLastChange] = useState<LocalDate | null>(null);
-  const [movedStarts, setMovedStarts] = useState<Record<string, number>>({});
+  const [eventOverrides, setEventOverrides] = useState<Record<string, { startMinutes: number; durationMinutes: number }>>({});
   const value = getDayScheduleValue(date);
   const eventsByDate = useMemo(() => Object.fromEntries(
     Array.from({ length: 15 }, (_, index) => {
       const day = addDays(date, index - 7);
-      return [day, empty ? [] : demoDay(day).map(event => ({ ...event, startMinutes: movedStarts[event.id] ?? event.startMinutes }))];
+      return [day, empty ? [] : demoDay(day).map(event => ({ ...event, ...(eventOverrides[event.id] ?? {}) }))];
     }),
-  ), [date, empty, movedStarts]);
+  ), [date, empty, eventOverrides]);
 
   return (
     <section className="ui-kit-day-schedule" aria-label="DaySchedule">
@@ -51,34 +52,27 @@ export function DayScheduleCatalog() {
         date={date}
         eventsByDate={eventsByDate}
         onDateChange={next => { setLastChange(next); setDate(next); }}
-        onEventMove={({ eventId, startMinutes }) => setMovedStarts(current => ({ ...current, [eventId]: startMinutes }))}
-        renderEvent={(event, state) => {
-          const time = `${String(Math.floor(event.startMinutes / 60)).padStart(2, '0')}:${String(event.startMinutes % 60).padStart(2, '0')}`;
-          if (state.lifted) {
-            return (
-              <div className="ui-kit-day-schedule__lifted-event">
-                <Avatar name={event.title} />
-                <div className="ui-kit-day-schedule__lifted-copy">
-                  <div className="ui-kit-day-schedule__lifted-title">{event.title}</div>
-                  {!state.compact && <div className="ui-kit-day-schedule__lifted-subtitle">{event.purpose}</div>}
-                </div>
-                <div className="ui-kit-day-schedule__lifted-time">{time}</div>
-              </div>
-            );
-          }
-          return (
-            <div className="ui-kit-day-schedule__event-card-slot">
-              <List nested strong>
-                <ListItem
-                  media={<Avatar name={event.title} />}
-                  title={event.title}
-                  subtitle={state.compact ? undefined : event.purpose}
-                  after={time}
-                />
-              </List>
-            </div>
-          );
-        }}
+        onEventMove={({ eventId, startMinutes }) => setEventOverrides(current => ({
+          ...current,
+          [eventId]: {
+            startMinutes,
+            durationMinutes: current[eventId]?.durationMinutes
+              ?? eventsByDate[date]?.find(event => event.id === eventId)?.durationMinutes
+              ?? 60,
+          },
+        }))}
+        onEventResize={({ eventId, startMinutes, durationMinutes }) => setEventOverrides(current => ({
+          ...current,
+          [eventId]: { startMinutes, durationMinutes },
+        }))}
+        renderEvent={(event, state) => (
+          <DayScheduleEventCard
+            title={event.title}
+            detail={event.purpose}
+            media={<Avatar name={event.title} />}
+            state={state}
+          />
+        )}
       />
       <DatePicker opened={pickerOpen} value={date} onChange={next => { setDate(next); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
       <div className="ui-kit-day-schedule__contract">
@@ -86,8 +80,9 @@ export function DayScheduleCatalog() {
         <dl>
           <dt>date: LocalDate</dt><dd>Выбранная дата YYYY-MM-DD. Ею управляет родитель.</dd>
           <dt>eventsByDate: Record&lt;LocalDate, Event[]&gt;</dt><dd>События по датам: id, startMinutes, durationMinutes и любые поля вашей карточки. Нужны соседние дни и дни соседних недель.</dd>
-          <dt>renderEvent(event, {'{ compact, lifted, height }'})</dt><dd>Рендер события внутри рассчитанной рамки. compact означает высоту меньше 72 px; lifted включается только для drag-overlay, чтобы карточка могла убрать свою обычную подложку, сохранив содержимое; height — фактическая высота event-frame.</dd>
-          <dt>onEventMove(move)?</dt><dd>Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут и отдаёт семантический move наружу. Точное минутное время остаётся задачей редактора.</dd>
+          <dt>renderEvent(event, state)</dt><dd>Рендер события внутри рассчитанной рамки. state содержит compact, lifted, editing, height, startMinutes и durationMinutes; поэтому normal, lifted и resize-состояния используют одинаковый контент и типографику.</dd>
+          <dt>onEventMove(move)?</dt><dd>Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут. Если слот пересекается с другим событием, drop отклоняется.</dd>
+          <dt>onEventResize(resize)?</dt><dd>После успешного DnD карточка входит в resize-режим. Верхняя правая точка меняет начало, нижняя левая — окончание. Resize работает по сетке 15 минут и не допускает пересечений с соседними событиями.</dd>
           <dt>today?: LocalDate</dt><dd>Дата для индикатора текущего времени; по умолчанию локальная дата устройства.</dd>
           <dt>className?: string</dt><dd>Класс контейнера, например для высоты под внешним Navbar. По умолчанию высота равна viewport.</dd>
         </dl>
@@ -96,7 +91,7 @@ export function DayScheduleCatalog() {
           <dt>onDateChange(nextDate)</dt><dd>Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</dd>
           <dt>getDayScheduleValue(date, today?)</dt><dd>Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</dd>
         </dl>
-        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 112 px/час. При long-press исходная карточка скрывается, а lifted-состояние показывает GlassSurface того же фактического размера с содержимым события, но без обычной чёрной оболочки карточки. Быстрый горизонтальный жест до активации long-press остаётся свайпом дня. renderEvent не сохраняет данные; API, редактор и обработчики карточки принадлежат вызывающему экрану.</p>
+        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 112 px/час. Фон календаря чёрный. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; resize-состояние делает карточку непрозрачной. Тап вне выбранной карточки завершает resize-режим.</p>
         <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  onEventMove={handleEventMove}\n  eventsByDate={events}\n  renderEvent={(event, { compact }) => (\n    <ClientEvent event={event} compact={compact} />\n  )}\n/>\nconst value = getDayScheduleValue(date);\n// <Navbar title={value.title} ... />`}</pre>
       </div>
     </section>
