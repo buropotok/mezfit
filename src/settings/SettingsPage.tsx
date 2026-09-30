@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
-import { Button, Surface, Text, TimePicker, type LocalTime } from '../ui';
+import { Button, DatePicker, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
@@ -105,9 +105,12 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
   const [modulesOpen, setModulesOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [timePickerValue, setTimePickerValue] = useState<LocalTime>('08:30');
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [datePickerValue, setDatePickerValue] = useState<LocalDate>('2026-09-30');
   const timePickerTargetRef = useRef<HTMLSpanElement | null>(null);
   const closeModules = useCallback(() => {
     setTimePickerOpen(false);
+    setDatePickerOpen(false);
     setModulesOpen(false);
   }, []);
 
@@ -161,6 +164,22 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
             onClose={() => setTimePickerOpen(false)}
           />
         )}
+      </section>
+
+      <section className="modules-gallery__example" aria-labelledby="module-date-picker-title">
+        <Text id="module-date-picker-title" variant="headline">Date picker</Text>
+        <Text variant="footnote" tone="muted">
+          Реальный UI Kit DatePicker внутри Mini App. Выбранная дата: {datePickerValue}.
+        </Text>
+        <div className="modules-gallery__trigger">
+          <Button onClick={() => setDatePickerOpen(true)}>Выбрать дату</Button>
+        </div>
+        <DatePicker
+          opened={datePickerOpen}
+          value={datePickerValue}
+          onChange={setDatePickerValue}
+          onClose={() => setDatePickerOpen(false)}
+        />
       </section>
 
       <section className="modules-gallery__example" aria-labelledby="module-session-exercise-title">
