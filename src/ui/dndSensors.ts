@@ -96,10 +96,7 @@ export class UiScheduleTouchSensor implements SensorInstance {
 
     this.document = getOwnerDocument(props.event.target);
     this.view = getWindow(props.event.target);
-    const { EventTarget: ViewEventTarget } = this.view;
-    this.listenerTarget = props.event.target instanceof ViewEventTarget
-      ? props.event.target
-      : this.document;
+    this.listenerTarget = props.event.target ?? this.document;
 
     const coordinates = getEventCoordinates(props.event) ?? { x: 0, y: 0 };
     this.initialX = coordinates.x;
