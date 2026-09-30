@@ -172,6 +172,44 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('snaps a horizontal DnD move to the adjacent day and emits targetDate', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+    const track = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-track');
+    if (!frame || !viewport || !track) throw new Error('Missing draggable event or day track');
+    Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 350 });
+    viewport.scrollLeft = 90;
+
+    fireEvent.pointerDown(frame, { pointerId: 31, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
+    fireEvent.pointerMove(document, { pointerId: 31, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 200 });
+
+    expect(viewport.scrollLeft).toBe(0);
+    expect(track.style.transform).toContain('-66.666666%');
+
+    fireEvent.pointerUp(document, { pointerId: 31, pointerType: 'mouse', button: 0, clientX: 100, clientY: 200 });
+
+    expect(moved).toHaveBeenCalledWith({
+      eventId: 'a',
+      date: '2026-09-28',
+      targetDate: '2026-09-29',
+      previousStartMinutes: 600,
+      startMinutes: 600,
+    });
+    expect(changed).toHaveBeenCalledWith('2026-09-29');
+    act(() => vi.advanceTimersByTime(50));
+  });
+
   it('enters resize mode after drop and exits when the user taps outside', () => {
     const moved = vi.fn();
     const resized = vi.fn();
