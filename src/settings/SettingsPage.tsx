@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import { getSelectionHapticBackend, getTelegramWebApp } from '../telegram';
-import { Button, DatePicker, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
+import { Button, DatePicker, MezfitSidePanel, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
@@ -107,6 +107,7 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [timePickerValue, setTimePickerValue] = useState<LocalTime>('08:30');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [emptyDatePickerOpen, setEmptyDatePickerOpen] = useState(false);
   const [datePickerValue, setDatePickerValue] = useState<LocalDate>('2026-09-30');
   const timePickerTargetRef = useRef<HTMLSpanElement | null>(null);
   const telegramWebApp = getTelegramWebApp();
@@ -114,6 +115,7 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
   const closeModules = useCallback(() => {
     setTimePickerOpen(false);
     setDatePickerOpen(false);
+    setEmptyDatePickerOpen(false);
     setModulesOpen(false);
   }, []);
 
@@ -179,12 +181,23 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
         </Text>
         <span className="modules-gallery__trigger">
           <Button onClick={() => setDatePickerOpen(true)}>Выбрать дату</Button>
+          <Button variant="secondary" onClick={() => setEmptyDatePickerOpen(true)}>Открыть пустой</Button>
         </span>
         <DatePicker
           opened={datePickerOpen}
           value={datePickerValue}
           onChange={setDatePickerValue}
           onClose={() => setDatePickerOpen(false)}
+        />
+        <MezfitSidePanel
+          side="right"
+          opened={emptyDatePickerOpen}
+          floating
+          backdrop
+          onBackdropClick={() => setEmptyDatePickerOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Пустой Date picker"
         />
       </section>
 
