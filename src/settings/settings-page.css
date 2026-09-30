@@ -28,3 +28,10 @@
   display: inline-flex;
   justify-self: start;
 }
+
+
+.modules-gallery__haptic-probes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
