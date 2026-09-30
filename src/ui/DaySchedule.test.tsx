@@ -205,7 +205,7 @@ describe('DaySchedule', () => {
     expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
   });
 
-  it('activates touch drag after long-press while leaving pre-activation pan-y available', () => {
+  it('activates touch drag after schedule-owned long-press arbitration', () => {
     const moved = vi.fn();
     const view = render(
       <DaySchedule
@@ -232,6 +232,41 @@ describe('DaySchedule', () => {
 
     fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
     expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+    act(() => vi.advanceTimersByTime(50));
+  });
+
+  it('manually scrolls the timeline when a draggable-card touch resolves vertical before long-press', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !viewport || !schedule) throw new Error('Missing draggable event or day viewport');
+
+    viewport.scrollTop = 400;
+    const start = { identifier: 71, target: frame, clientX: 100, clientY: 200, pageX: 100, pageY: 200, screenX: 100, screenY: 200 };
+    const movedTouch = { ...start, clientX: 102, clientY: 240, pageX: 102, pageY: 240 };
+
+    fireEvent.pointerDown(frame, { pointerId: 71, pointerType: 'touch', clientX: 100, clientY: 200 });
+    fireEvent.touchStart(frame, { touches: [start], targetTouches: [start], changedTouches: [start] });
+    fireEvent.pointerMove(frame, { pointerId: 71, pointerType: 'touch', clientX: 102, clientY: 240 });
+    fireEvent.touchMove(frame, { touches: [movedTouch], targetTouches: [movedTouch], changedTouches: [movedTouch] });
+
+    expect(viewport.scrollTop).toBe(360);
+    act(() => vi.advanceTimersByTime(350));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+
+    fireEvent.pointerUp(frame, { pointerId: 71, pointerType: 'touch', clientX: 102, clientY: 240 });
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [movedTouch] });
     act(() => vi.advanceTimersByTime(50));
   });
 
