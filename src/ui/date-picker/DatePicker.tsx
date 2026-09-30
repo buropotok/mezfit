@@ -149,12 +149,10 @@ export function DatePicker({
 
   const [visibleYear, setVisibleYear] = useState(() => clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
   const [panelContentReady, setPanelContentReady] = useState(false);
-  const [panelOpened, setPanelOpened] = useState(false);
+  const [panelReadyToOpen, setPanelReadyToOpen] = useState(false);
   const [yearPopoverRequested, setYearPopoverRequested] = useState(false);
   const [yearPopoverContentReady, setYearPopoverContentReady] = useState(false);
-  const [yearPopoverOpened, setYearPopoverOpened] = useState(false);
-  const panelHasOpenedRef = useRef(false);
-  const yearPopoverHasOpenedRef = useRef(false);
+  const [yearPopoverReadyToOpen, setYearPopoverReadyToOpen] = useState(false);
   const onChangeRef = useRef(onChange);
   const onCloseRef = useRef(onClose);
   const yearTargetRef = useRef<HTMLButtonElement | null>(null);
@@ -173,21 +171,19 @@ export function DatePicker({
     () => Array.from({ length: safeMaxYear - safeMinYear + 1 }, (_, index) => safeMinYear + index),
     [safeMaxYear, safeMinYear],
   );
-  const effectivePanelOpened = opened && (panelHasOpenedRef.current || panelOpened);
+  const effectivePanelOpened = opened && panelReadyToOpen;
   const effectiveYearPopoverOpened = effectivePanelOpened
     && yearPopoverRequested
-    && (yearPopoverHasOpenedRef.current || yearPopoverOpened);
+    && yearPopoverReadyToOpen;
 
   useEffect(() => {
     if (!opened) {
-      setPanelOpened(false);
       setYearPopoverRequested(false);
-      setYearPopoverOpened(false);
       wasOpenedRef.current = false;
       return;
     }
 
-    if (panelHasOpenedRef.current) return;
+    if (panelReadyToOpen) return;
 
     if (!panelContentReady) {
       setPanelContentReady(true);
@@ -195,11 +191,10 @@ export function DatePicker({
     }
 
     const frame = window.requestAnimationFrame(() => {
-      panelHasOpenedRef.current = true;
-      setPanelOpened(true);
+      setPanelReadyToOpen(true);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [opened, panelContentReady]);
+  }, [opened, panelContentReady, panelReadyToOpen]);
 
   useEffect(() => {
     if (!effectivePanelOpened) return;
@@ -210,7 +205,6 @@ export function DatePicker({
 
     setVisibleYear(clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
     setYearPopoverRequested(false);
-    setYearPopoverOpened(false);
 
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -223,12 +217,7 @@ export function DatePicker({
   }, [effectivePanelOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
 
   useEffect(() => {
-    if (!opened || !yearPopoverRequested) {
-      setYearPopoverOpened(false);
-      return;
-    }
-
-    if (yearPopoverHasOpenedRef.current) return;
+    if (!opened || !yearPopoverRequested || yearPopoverReadyToOpen) return;
 
     if (!yearPopoverContentReady) {
       setYearPopoverContentReady(true);
@@ -236,11 +225,10 @@ export function DatePicker({
     }
 
     const frame = window.requestAnimationFrame(() => {
-      yearPopoverHasOpenedRef.current = true;
-      setYearPopoverOpened(true);
+      setYearPopoverReadyToOpen(true);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [opened, yearPopoverContentReady, yearPopoverRequested]);
+  }, [opened, yearPopoverContentReady, yearPopoverReadyToOpen, yearPopoverRequested]);
 
   useEffect(() => {
     if (!effectiveYearPopoverOpened) return;
@@ -274,14 +262,12 @@ export function DatePicker({
   const chooseDate = useCallback((monthIndex: number, day: number) => {
     onChangeRef.current(formatLocalDate(visibleYear, monthIndex + 1, day));
     setYearPopoverRequested(false);
-    setYearPopoverOpened(false);
     onCloseRef.current();
   }, [visibleYear]);
 
   const chooseYear = useCallback((year: number) => {
     setVisibleYear(year);
     setYearPopoverRequested(false);
-    setYearPopoverOpened(false);
   }, []);
 
   const yearTrigger = (
@@ -352,10 +338,7 @@ export function DatePicker({
         target={yearTargetRef.current ?? undefined}
         angle={false}
         backdrop
-        onBackdropClick={() => {
-          setYearPopoverRequested(false);
-          setYearPopoverOpened(false);
-        }}
+        onBackdropClick={() => setYearPopoverRequested(false)}
         style={{ width: '284px', maxWidth: 'calc(100vw - 24px)' }}
         role="dialog"
         aria-modal="true"
