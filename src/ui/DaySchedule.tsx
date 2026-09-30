@@ -628,6 +628,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             <GlassSurface
               className="ui-day-schedule__drag-overlay"
               contentClassName="ui-day-schedule__drag-overlay-content"
+              shape={{ radius: 14 }}
             >
               {renderEvent(activeEventEntry.event, {
                 compact: activeEventEntry.compact,
