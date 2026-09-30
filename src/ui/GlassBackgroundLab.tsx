@@ -68,7 +68,9 @@ export function GlassBackgroundLab() {
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     activePointerId.current = event.pointerId;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    if (typeof event.currentTarget.setPointerCapture === 'function') {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     updateFromPointer(event);
   };
 
@@ -80,7 +82,11 @@ export function GlassBackgroundLab() {
   const releasePointer = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (activePointerId.current !== event.pointerId) return;
     activePointerId.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (
+      typeof event.currentTarget.hasPointerCapture === 'function'
+      && typeof event.currentTarget.releasePointerCapture === 'function'
+      && event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
   };
@@ -111,8 +117,7 @@ export function GlassBackgroundLab() {
             <button
               type="button"
               className="glass-background-lab__wheel"
-              aria-label="Выбрать цвет фона"
-              aria-valuetext={`Hue ${Math.round(color.hue)}°, saturation ${Math.round(color.saturation)}%`}
+              aria-label={`Выбрать цвет фона. Оттенок ${Math.round(color.hue)}°, насыщенность ${Math.round(color.saturation)}%`}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={releasePointer}
@@ -126,7 +131,9 @@ export function GlassBackgroundLab() {
           </div>
           <div className="glass-background-lab__brightness">
             <div className="glass-background-lab__brightness-control">
-              <Text variant="footnote" tone="muted">Яркость · {Math.round(color.value)}%</Text>
+              <label htmlFor="glass-background-brightness">
+                <Text variant="footnote" tone="muted">Яркость · {Math.round(color.value)}%</Text>
+              </label>
               <KonstaRange
                 inputId="glass-background-brightness"
                 min={20}
