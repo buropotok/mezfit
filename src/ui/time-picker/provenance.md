@@ -21,5 +21,11 @@ synchronized inline SVG text layer. The primitive does not depend on
 `backdrop-filter: url(...)` for magnification, which avoids making the lens
 mechanics contingent on Chromium-only backdrop SVG reference filters.
 
+The visible lens shell follows the approved `LiquidGlassTextOnly` lens treatment:
+17% dark tint, zero blur, 1.05 saturation, 1.02 brightness, the same four inset
+bezel highlights, and the same 0 8px 24px / 20% outer shadow. TimePicker does
+not reuse the Text Only interaction runtime; it only reuses the approved shell
+appearance around its own hour/minute displacement layer.
+
 The surrounding overlay uses the existing Mezfit/Konsta Popover primitive; no
 Konsta private DOM or visual mechanics are modified.

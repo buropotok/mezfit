@@ -102,21 +102,16 @@ function LensText({
 function TimeLens({
   assets,
   scrollTops,
-  active,
 }: {
   assets: TimeLensAssets | null;
   scrollTops: ScrollTops;
-  active: boolean;
 }) {
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-time-picker-lens-${reactId}`;
   const clipId = `ui-time-picker-lens-clip-${reactId}`;
 
   return (
-    <div
-      className={`ui-time-picker__lens${active ? ' ui-time-picker__lens--active' : ''}`}
-      aria-hidden="true"
-    >
+    <div className="ui-time-picker__lens" aria-hidden="true">
       <svg
         viewBox={`0 0 ${LENS_WIDTH} ${LENS_HEIGHT}`}
         preserveAspectRatio="none"
@@ -195,13 +190,6 @@ function TimeLens({
           ) : null}
         </defs>
 
-        <rect
-          width={LENS_WIDTH}
-          height={LENS_HEIGHT}
-          rx={LENS_HEIGHT / 2}
-          className="ui-time-picker__lens-base"
-        />
-
         <g
           clipPath={`url(#${clipId})`}
           filter={assets ? `url(#${filterId})` : undefined}
@@ -220,14 +208,6 @@ function TimeLens({
           <LensText x={LENS_WIDTH * 0.75} values={MINUTE_VALUES} scrollTop={scrollTops.minute} />
         </g>
 
-        <rect
-          x="0.5"
-          y="0.5"
-          width={LENS_WIDTH - 1}
-          height={LENS_HEIGHT - 1}
-          rx={(LENS_HEIGHT - 1) / 2}
-          className="ui-time-picker__lens-border"
-        />
       </svg>
     </div>
   );
@@ -239,7 +219,6 @@ function TimeColumnWheel({
   selected,
   onScroll,
   onSelect,
-  onInteractionChange,
   columnRef,
 }: {
   kind: TimeColumn;
@@ -247,7 +226,6 @@ function TimeColumnWheel({
   selected: number;
   onScroll: (kind: TimeColumn, event: UIEvent<HTMLDivElement>) => void;
   onSelect: (kind: TimeColumn, index: number) => void;
-  onInteractionChange: (active: boolean) => void;
   columnRef: RefObject<HTMLDivElement | null>;
 }) {
   const label = kind === 'hour' ? 'Часы' : 'Минуты';
@@ -259,9 +237,6 @@ function TimeColumnWheel({
       role="listbox"
       aria-label={label}
       onScroll={(event) => onScroll(kind, event)}
-      onPointerDown={() => onInteractionChange(true)}
-      onPointerUp={() => onInteractionChange(false)}
-      onPointerCancel={() => onInteractionChange(false)}
     >
       {values.map((value, index) => {
         const isSelected = value === selected;
@@ -303,7 +278,6 @@ export function TimePicker({
   const hourFrameRef = useRef<number | null>(null);
   const minuteFrameRef = useRef<number | null>(null);
   const reconcileFrameRef = useRef<number | null>(null);
-  const interactionTimerRef = useRef<number | null>(null);
   const pendingScrollRef = useRef<ScrollTops>({
     hour: parsedValue.hour * ROW_HEIGHT,
     minute: parsedValue.minute * ROW_HEIGHT,
@@ -312,7 +286,6 @@ export function TimePicker({
   const [draft, setDraft] = useState<LocalTimeParts>(parsedValue);
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
-  const [interacting, setInteracting] = useState(false);
 
   controlledRef.current = parsedValue;
   onChangeRef.current = onChange;
@@ -349,7 +322,6 @@ export function TimePicker({
 
     if (!opened) {
       wasOpenedRef.current = false;
-      setInteracting(false);
 
       if (hourFrameRef.current !== null) {
         view.cancelAnimationFrame(hourFrameRef.current);
@@ -362,10 +334,6 @@ export function TimePicker({
       if (reconcileFrameRef.current !== null) {
         view.cancelAnimationFrame(reconcileFrameRef.current);
         reconcileFrameRef.current = null;
-      }
-      if (interactionTimerRef.current !== null) {
-        view.clearTimeout(interactionTimerRef.current);
-        interactionTimerRef.current = null;
       }
       return;
     }
@@ -389,14 +357,9 @@ export function TimePicker({
       view.cancelAnimationFrame(reconcileFrameRef.current);
       reconcileFrameRef.current = null;
     }
-    if (interactionTimerRef.current !== null) {
-      view.clearTimeout(interactionTimerRef.current);
-      interactionTimerRef.current = null;
-    }
 
     draftRef.current = parsedValue;
     setDraft(parsedValue);
-    setInteracting(false);
     const nextScrollTops = {
       hour: parsedValue.hour * ROW_HEIGHT,
       minute: parsedValue.minute * ROW_HEIGHT,
@@ -416,7 +379,6 @@ export function TimePicker({
     if (hourFrameRef.current !== null) view.cancelAnimationFrame(hourFrameRef.current);
     if (minuteFrameRef.current !== null) view.cancelAnimationFrame(minuteFrameRef.current);
     if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
-    if (interactionTimerRef.current !== null) view.clearTimeout(interactionTimerRef.current);
   }, [target]);
 
   const commitIndex = (kind: TimeColumn, index: number) => {
@@ -475,12 +437,6 @@ export function TimePicker({
     if (frameRef.current !== null) return;
 
     const view = event.currentTarget.ownerDocument.defaultView ?? window;
-    setInteracting(true);
-    if (interactionTimerRef.current !== null) view.clearTimeout(interactionTimerRef.current);
-    interactionTimerRef.current = view.setTimeout(() => {
-      interactionTimerRef.current = null;
-      setInteracting(false);
-    }, 140);
 
     frameRef.current = view.requestAnimationFrame(() => {
       frameRef.current = null;
@@ -513,7 +469,7 @@ export function TimePicker({
       backdrop
       onBackdropClick={onClose}
       className="ui-time-picker__popover"
-      style={{ width: '312px', maxWidth: 'calc(100vw - 24px)' }}
+      style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
       aria-modal="true"
       aria-label="Выбор времени"
@@ -527,7 +483,6 @@ export function TimePicker({
               selected={draft.hour}
               onScroll={handleScroll}
               onSelect={handleSelect}
-              onInteractionChange={setInteracting}
               columnRef={hourRef}
             />
             <span className="ui-time-picker__separator" aria-hidden="true">:</span>
@@ -537,14 +492,11 @@ export function TimePicker({
               selected={draft.minute}
               onScroll={handleScroll}
               onSelect={handleSelect}
-              onInteractionChange={setInteracting}
               columnRef={minuteRef}
             />
           </div>
 
-          <TimeLens assets={lensAssets} scrollTops={scrollTops} active={interacting} />
-          <div className="ui-time-picker__fade ui-time-picker__fade--top" aria-hidden="true" />
-          <div className="ui-time-picker__fade ui-time-picker__fade--bottom" aria-hidden="true" />
+          <TimeLens assets={lensAssets} scrollTops={scrollTops} />
         </div>
       </div>
     </MezfitPopover>
