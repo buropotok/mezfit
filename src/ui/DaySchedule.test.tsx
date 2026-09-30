@@ -292,6 +292,7 @@ describe('DaySchedule', () => {
     expect(liftedStates).toContain(true);
 
     fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
+    act(() => vi.advanceTimersByTime(50));
   });
 
   it('requests the next day after a committed horizontal day swipe', () => {
