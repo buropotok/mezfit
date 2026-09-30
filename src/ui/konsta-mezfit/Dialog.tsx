@@ -85,6 +85,22 @@ export function MezfitDialog(props: MezfitDialogProps) {
     else if (ref) ref.current = element;
   };
 
+  const dialogContent = (
+    <>
+      <div className={contentWrapClasses}>
+        {title && <div className={titleClasses}>{title}</div>}
+        {(content || children) && (
+          <div className={contentClasses}>
+            {content}
+            {children}
+          </div>
+        )}
+      </div>
+
+      {buttons && <div className={buttonsClasses}>{buttons}</div>}
+    </>
+  );
+
   return (
     <>
       {backdrop && (
@@ -102,17 +118,7 @@ export function MezfitDialog(props: MezfitDialogProps) {
           active={Boolean(opened)}
           {...attrs}
         >
-          <div className={contentWrapClasses}>
-            {title && <div className={titleClasses}>{title}</div>}
-            {(content || children) && (
-              <div className={contentClasses}>
-                {content}
-                {children}
-              </div>
-            )}
-          </div>
-
-          {buttons && <div className={buttonsClasses}>{buttons}</div>}
+          {dialogContent}
         </GlassSurface>
       ) : (
         <KonstaGlass
@@ -122,17 +128,7 @@ export function MezfitDialog(props: MezfitDialogProps) {
           className={baseClasses}
           {...attrs}
         >
-          <div className={contentWrapClasses}>
-            {title && <div className={titleClasses}>{title}</div>}
-            {(content || children) && (
-              <div className={contentClasses}>
-                {content}
-                {children}
-              </div>
-            )}
-          </div>
-
-          {buttons && <div className={buttonsClasses}>{buttons}</div>}
+          {dialogContent}
         </KonstaGlass>
       )}
     </>
