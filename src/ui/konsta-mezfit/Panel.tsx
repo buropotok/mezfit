@@ -63,7 +63,6 @@ export function MezfitPanel(props: MezfitPanelProps) {
     c[side][state],
   );
   const backdropClasses = cls(c.backdrop.common, c.backdrop[state]);
-  const prewarmClosedGlass = theme === 'ios' && floating && !opened;
 
   const setRef = (element: HTMLElement | null) => {
     elRef.current = element;
@@ -85,16 +84,11 @@ export function MezfitPanel(props: MezfitPanelProps) {
           glass={glass}
           shape={glassShape}
           wrapContent={false}
-          {...attrs}
-          aria-hidden={prewarmClosedGlass ? true : attrs['aria-hidden']}
-          inert={prewarmClosedGlass ? true : undefined}
-          data-ui-glass-prewarm={prewarmClosedGlass ? 'true' : undefined}
           style={{
             ...style,
-            visibility: prewarmClosedGlass ? 'visible' : style?.visibility,
-            pointerEvents: prewarmClosedGlass ? 'none' : style?.pointerEvents,
             willChange: style?.willChange ?? 'transform',
           }}
+          {...attrs}
         >
           {children}
         </GlassSurface>
