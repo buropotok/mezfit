@@ -296,11 +296,13 @@ export function TimePicker({
   const hourRef = useRef<HTMLDivElement | null>(null);
   const minuteRef = useRef<HTMLDivElement | null>(null);
   const draftRef = useRef<LocalTimeParts>(parsedValue);
+  const controlledRef = useRef<LocalTimeParts>(parsedValue);
   const onChangeRef = useRef(onChange);
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const hourFrameRef = useRef<number | null>(null);
   const minuteFrameRef = useRef<number | null>(null);
+  const reconcileFrameRef = useRef<number | null>(null);
   const interactionTimerRef = useRef<number | null>(null);
   const pendingScrollRef = useRef<ScrollTops>({
     hour: parsedValue.hour * ROW_HEIGHT,
@@ -312,10 +314,13 @@ export function TimePicker({
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
   const [interacting, setInteracting] = useState(false);
 
+  controlledRef.current = parsedValue;
   onChangeRef.current = onChange;
   openedRef.current = opened;
 
   useEffect(() => {
+    if (!opened || lensAssets) return undefined;
+
     const documentRef = target?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
     if (!documentRef) return undefined;
 
@@ -337,7 +342,7 @@ export function TimePicker({
       cancelled = true;
       view.cancelAnimationFrame(frame);
     };
-  }, [target]);
+  }, [lensAssets, opened, target]);
 
   useEffect(() => {
     const view = target?.ownerDocument.defaultView ?? window;
@@ -353,6 +358,10 @@ export function TimePicker({
       if (minuteFrameRef.current !== null) {
         view.cancelAnimationFrame(minuteFrameRef.current);
         minuteFrameRef.current = null;
+      }
+      if (reconcileFrameRef.current !== null) {
+        view.cancelAnimationFrame(reconcileFrameRef.current);
+        reconcileFrameRef.current = null;
       }
       if (interactionTimerRef.current !== null) {
         view.clearTimeout(interactionTimerRef.current);
@@ -375,6 +384,10 @@ export function TimePicker({
     if (minuteFrameRef.current !== null) {
       view.cancelAnimationFrame(minuteFrameRef.current);
       minuteFrameRef.current = null;
+    }
+    if (reconcileFrameRef.current !== null) {
+      view.cancelAnimationFrame(reconcileFrameRef.current);
+      reconcileFrameRef.current = null;
     }
     if (interactionTimerRef.current !== null) {
       view.clearTimeout(interactionTimerRef.current);
@@ -402,6 +415,7 @@ export function TimePicker({
     const view = target?.ownerDocument.defaultView ?? window;
     if (hourFrameRef.current !== null) view.cancelAnimationFrame(hourFrameRef.current);
     if (minuteFrameRef.current !== null) view.cancelAnimationFrame(minuteFrameRef.current);
+    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     if (interactionTimerRef.current !== null) view.clearTimeout(interactionTimerRef.current);
   }, [target]);
 
@@ -409,16 +423,43 @@ export function TimePicker({
     const values = kind === 'hour' ? HOUR_VALUES : MINUTE_VALUES;
     const clampedIndex = Math.max(0, Math.min(values.length - 1, index));
     const nextValue = values[clampedIndex];
-    const current = draftRef.current;
+    const current = controlledRef.current;
     const next = kind === 'hour'
       ? { ...current, hour: nextValue }
       : { ...current, minute: nextValue };
 
-    if (next.hour === current.hour && next.minute === current.minute) return;
+    if (next.hour === current.hour && next.minute === current.minute) {
+      draftRef.current = current;
+      setDraft(current);
+      return;
+    }
 
     draftRef.current = next;
     setDraft(next);
     onChangeRef.current(formatLocalTime(next.hour, next.minute));
+
+    const view = target?.ownerDocument.defaultView ?? window;
+    if (reconcileFrameRef.current !== null) {
+      view.cancelAnimationFrame(reconcileFrameRef.current);
+    }
+    reconcileFrameRef.current = view.requestAnimationFrame(() => {
+      reconcileFrameRef.current = null;
+      if (!openedRef.current) return;
+
+      const canonical = controlledRef.current;
+      if (canonical.hour === next.hour && canonical.minute === next.minute) return;
+
+      draftRef.current = canonical;
+      setDraft(canonical);
+      const canonicalScrollTops = {
+        hour: canonical.hour * ROW_HEIGHT,
+        minute: canonical.minute * ROW_HEIGHT,
+      };
+      pendingScrollRef.current = canonicalScrollTops;
+      setScrollTops(canonicalScrollTops);
+      scrollColumn(hourRef.current, canonical.hour);
+      scrollColumn(minuteRef.current, canonical.minute);
+    });
   };
 
   const handleScroll = (kind: TimeColumn, event: UIEvent<HTMLDivElement>) => {
