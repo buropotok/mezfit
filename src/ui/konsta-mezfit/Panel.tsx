@@ -86,6 +86,7 @@ export function MezfitSidePanel(props: MezfitSidePanelProps) {
           glass={glass}
           shape={glassShape}
           wrapContent={false}
+          active={Boolean(opened)}
           style={{
             ...style,
             willChange: style?.willChange ?? 'transform',
