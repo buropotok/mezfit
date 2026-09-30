@@ -224,7 +224,7 @@ function TimeColumnWheel({
   return (
     <div
       ref={columnRef}
-      className="ui-time-picker__column"
+      className={`ui-time-picker__column ui-time-picker__column--${kind}`}
       role="listbox"
       aria-label={label}
       onScroll={(event) => onScroll(kind, event)}
