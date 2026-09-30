@@ -24,7 +24,7 @@ export function DayScheduleCatalog() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [empty, setEmpty] = useState(false);
   const [lastChange, setLastChange] = useState<LocalDate | null>(null);
-  const [eventOverrides, setEventOverrides] = useState<Record<string, { startMinutes: number; durationMinutes: number }>>({});
+  const [eventOverrides, setEventOverrides] = useState<Record<string, { date: LocalDate; startMinutes: number; durationMinutes: number }>>({});
   const value = getDayScheduleValue(date);
   const eventsByDate = useMemo(() => Object.fromEntries(
     Array.from({ length: 15 }, (_, index) => {
