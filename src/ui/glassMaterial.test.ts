@@ -26,6 +26,7 @@ describe('glass material', () => {
     expect(material.tintA).toBe(0.18);
     expect('topGlint' in material).toBe(false);
     expect('thickness' in material).toBe(false);
+    expect('rgbSpread' in material).toBe(false);
     expect(MODAL_TUNED_GLASS.tintR).toBe(24);
   });
 
