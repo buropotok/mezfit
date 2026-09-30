@@ -26,6 +26,8 @@
 
 .modules-gallery__trigger {
   display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
   justify-self: start;
 }
 
