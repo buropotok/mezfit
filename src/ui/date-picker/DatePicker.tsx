@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button as KonstaButton, Glass, Link, Navbar, Panel, Popover } from 'konsta/react';
+import { Button as KonstaButton, Glass, Link, Navbar } from 'konsta/react';
+import { MezfitPopover, MezfitSidePanel } from '../konsta-mezfit';
 import {
   buildMonthGrid,
   calculateCenteredScrollTop,
@@ -154,7 +155,7 @@ export function DatePicker({
 
   return (
     <>
-      <Panel
+      <MezfitSidePanel
         side="right"
         opened={opened}
         floating
@@ -214,9 +215,9 @@ export function DatePicker({
             ))}
           </div>
         </div>
-      </Panel>
+      </MezfitSidePanel>
 
-      <Popover
+      <MezfitPopover
         opened={opened && yearPopoverOpened}
         target={yearTargetRef.current ?? undefined}
         angle={false}
@@ -258,7 +259,7 @@ export function DatePicker({
             </div>
           </div>
         </div>
-      </Popover>
+      </MezfitPopover>
     </>
   );
 }

@@ -17,8 +17,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('DatePicker Konsta baseline', () => {
-  it('uses the original Konsta Panel and Popover materials without Mezfit GlassSurface wrappers', () => {
+describe('DatePicker Mezfit overlay materials', () => {
+  it('uses MezfitSidePanel and MezfitPopover GlassSurface materials', () => {
     render(
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
@@ -33,12 +33,11 @@ describe('DatePicker Konsta baseline', () => {
     );
 
     const pickerDialog = screen.getByRole('dialog', { name: 'Выбор даты' });
-    expect(pickerDialog.classList.contains('ui-glass-surface')).toBe(false);
-    expect(pickerDialog.querySelector('.ui-glass-surface')).toBeNull();
+    expect(pickerDialog.classList.contains('ui-glass-surface')).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' }));
 
     const yearDialog = screen.getByRole('dialog', { name: 'Выберите год' });
-    expect(yearDialog.querySelector('.ui-glass-surface')).toBeNull();
+    expect(yearDialog.querySelector('.ui-glass-surface')).not.toBeNull();
   });
 });

@@ -218,6 +218,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
             glass={glass}
             shape={glassShape}
             wrapContent={false}
+            active={Boolean(opened)}
           >
             {children}
           </GlassSurface>

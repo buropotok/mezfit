@@ -87,6 +87,7 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   shape?: GlassShape;
   contentClassName?: string;
   wrapContent?: boolean;
+  active?: boolean;
   children?: ReactNode;
 };
 
@@ -99,6 +100,7 @@ export function GlassSurface({
   className = '',
   contentClassName = '',
   wrapContent = true,
+  active = true,
   style,
   children,
   ...props
@@ -114,13 +116,15 @@ export function GlassSurface({
   const [vectorMapHref, setVectorMapHref] = useState<string | null>(null);
 
   useLayoutEffect(() => {
+    if (!active) return undefined;
+
     const element = rootRef.current;
     if (!element) return undefined;
 
     const measure = () => {
       const rect = element.getBoundingClientRect();
-      const width = Math.max(1, rect.width);
-      const height = Math.max(1, rect.height);
+      const width = Math.max(1, element.offsetWidth || rect.width);
+      const height = Math.max(1, element.offsetHeight || rect.height);
       const preserveHostRadius = hostMode && shape === 'auto';
       const computedRadius = preserveHostRadius
         ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element).borderTopLeftRadius ?? '')
@@ -147,9 +151,11 @@ export function GlassSurface({
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [hostMode, shapeRadius]);
+  }, [active, hostMode, shapeRadius]);
 
   useEffect(() => {
+    if (!active) return undefined;
+
     const element = rootRef.current;
     if (!element || !geometry) return undefined;
 
@@ -192,6 +198,7 @@ export function GlassSurface({
       view.cancelAnimationFrame(frame);
     };
   }, [
+    active,
     geometry,
     material.neutralEdge,
     material.rimWidth,
