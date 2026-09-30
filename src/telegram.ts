@@ -85,7 +85,7 @@ export function bindTelegramBackButton(
 
 
 export type SelectionHapticBackend =
-  | 'android-vibration'
+  | 'telegram-success-notification'
   | 'telegram-light-impact'
   | 'telegram-selection'
   | 'none';
@@ -108,13 +108,9 @@ function getDefaultVibrationNavigator(): VibrationNavigator | null {
 
 export function getSelectionHapticBackend(
   webApp: TelegramWebApp | null = getTelegramWebApp(),
-  vibrationNavigator: VibrationNavigator | null = getDefaultVibrationNavigator(),
 ): SelectionHapticBackend {
-  if (
-    webApp?.platform === 'android'
-    && typeof vibrationNavigator?.vibrate === 'function'
-  ) {
-    return 'android-vibration';
+  if (typeof webApp?.HapticFeedback?.notificationOccurred === 'function') {
+    return 'telegram-success-notification';
   }
 
   if (typeof webApp?.HapticFeedback?.impactOccurred === 'function') {
