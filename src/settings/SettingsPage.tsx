@@ -174,6 +174,9 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
           <Button onClick={() => runProbe('telegram-success-notification')}>Notification success</Button>
           <Button onClick={() => runProbe('browser-vibration')}>Vibrate 50 ms</Button>
         </div>
+        <Text variant="caption" tone="muted">
+          sent означает, что запрос отправлен API. Физическую вибрацию Telegram/WebView не подтверждает программно.
+        </Text>
         {hapticProbe ? (
           <Text variant="caption" tone="muted">
             Probe: {hapticProbe.kind} → {hapticProbe.result}
