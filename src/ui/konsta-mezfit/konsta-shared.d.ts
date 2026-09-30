@@ -45,6 +45,15 @@ declare module 'konsta/shared/utils' {
 declare module 'konsta/shared/colors' {
   type DarkClassResolver = (classNames: string) => string;
 
+  export type KonstaDialogColors = {
+    bgIos: string;
+    bgMaterial: string;
+    titleIos: string;
+    titleMaterial: string;
+    contentTextIos: string;
+    contentTextMaterial: string;
+  };
+
   export type KonstaPanelColors = {
     bgIos: string;
     bgMaterial: string;
@@ -56,6 +65,11 @@ declare module 'konsta/shared/colors' {
     bgIos: string;
     bgMaterial: string;
   };
+
+  export function DialogColors(
+    colorsProp: unknown,
+    dark: DarkClassResolver,
+  ): KonstaDialogColors;
 
   export function PanelColors(
     colorsProp: unknown,
@@ -70,6 +84,7 @@ declare module 'konsta/shared/colors' {
 
 declare module 'konsta/shared/classes' {
   import type {
+    KonstaDialogColors,
     KonstaPanelColors,
     KonstaPopoverColors,
   } from 'konsta/shared/colors';
@@ -83,6 +98,22 @@ declare module 'konsta/shared/classes' {
   type StatefulThemedClass = ThemedClass & {
     opened: ThemedClass;
     closed: ThemedClass;
+  };
+
+  export type KonstaDialogClassMap = {
+    base: ThemedClass & {
+      opened: string;
+      closed: string;
+    };
+    contentWrap: ThemedClass;
+    title: ThemedClass;
+    content: ThemedClass;
+    buttons: ThemedClass;
+    backdrop: {
+      common: string;
+      opened: string;
+      closed: string;
+    };
   };
 
   export type KonstaPanelClassMap = {
@@ -129,6 +160,11 @@ declare module 'konsta/shared/classes' {
       closed: string;
     };
   };
+
+  export function DialogClasses(
+    props: object,
+    colors: KonstaDialogColors,
+  ): KonstaDialogClassMap;
 
   export function PanelClasses(
     props: object,
