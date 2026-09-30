@@ -91,85 +91,63 @@ describe('getTelegramLaunchStartParam', () => {
 
 
 describe('triggerTelegramSelectionHaptic', () => {
-  it('uses a short browser vibration on Telegram Android when accepted', () => {
+  it('prefers Telegram notification success for TimePicker selection feedback', () => {
     const selectionChanged = vi.fn();
     const impactOccurred = vi.fn();
-    const vibrate = vi.fn(() => true);
+    const notificationOccurred = vi.fn();
     const webApp = createWebApp();
-    webApp.platform = 'android';
-    webApp.HapticFeedback = { selectionChanged, impactOccurred };
+    webApp.HapticFeedback = { selectionChanged, impactOccurred, notificationOccurred };
 
-    expect(getSelectionHapticBackend(webApp, { vibrate })).toBe('android-vibration');
+    expect(getSelectionHapticBackend(webApp)).toBe('telegram-success-notification');
 
-    triggerTelegramSelectionHaptic(webApp, { vibrate });
+    triggerTelegramSelectionHaptic(webApp);
 
-    expect(vibrate).toHaveBeenCalledWith(12);
-    expect(selectionChanged).not.toHaveBeenCalled();
+    expect(notificationOccurred).toHaveBeenCalledWith('success');
     expect(impactOccurred).not.toHaveBeenCalled();
-  });
-
-  it('falls through to Telegram haptics when Android browser vibration is rejected', () => {
-    const selectionChanged = vi.fn();
-    const impactOccurred = vi.fn();
-    const vibrate = vi.fn(() => false);
-    const webApp = createWebApp();
-    webApp.platform = 'android';
-    webApp.HapticFeedback = { selectionChanged, impactOccurred };
-
-    triggerTelegramSelectionHaptic(webApp, { vibrate });
-
-    expect(vibrate).toHaveBeenCalledWith(12);
-    expect(impactOccurred).toHaveBeenCalledWith('light');
     expect(selectionChanged).not.toHaveBeenCalled();
   });
 
-  it('uses a light Telegram impact on non-Android clients when supported', () => {
+  it('falls back to a light Telegram impact when notification feedback is unavailable', () => {
     const selectionChanged = vi.fn();
     const impactOccurred = vi.fn();
     const webApp = createWebApp();
-    webApp.platform = 'ios';
     webApp.HapticFeedback = { selectionChanged, impactOccurred };
 
-    expect(getSelectionHapticBackend(webApp, null)).toBe('telegram-light-impact');
+    expect(getSelectionHapticBackend(webApp)).toBe('telegram-light-impact');
 
-    triggerTelegramSelectionHaptic(webApp, null);
+    triggerTelegramSelectionHaptic(webApp);
 
     expect(impactOccurred).toHaveBeenCalledWith('light');
     expect(selectionChanged).not.toHaveBeenCalled();
   });
 
-  it('falls back to Telegram selectionChanged when impact feedback is unavailable', () => {
+  it('falls back to Telegram selection feedback when notification and impact are unavailable', () => {
     const selectionChanged = vi.fn();
     const webApp = createWebApp();
     webApp.HapticFeedback = { selectionChanged };
 
-    expect(getSelectionHapticBackend(webApp, null)).toBe('telegram-selection');
+    expect(getSelectionHapticBackend(webApp)).toBe('telegram-selection');
 
-    triggerTelegramSelectionHaptic(webApp, null);
+    triggerTelegramSelectionHaptic(webApp);
 
     expect(selectionChanged).toHaveBeenCalledOnce();
   });
 
-  it('is a safe no-op when haptics are unavailable', () => {
-    expect(getSelectionHapticBackend(createWebApp(), null)).toBe('none');
-    expect(() => triggerTelegramSelectionHaptic(createWebApp(), null)).not.toThrow();
-  });
+  it('is a safe no-op when haptics are unavailable or the client throws', () => {
+    expect(getSelectionHapticBackend(createWebApp())).toBe('none');
+    expect(() => triggerTelegramSelectionHaptic(createWebApp())).not.toThrow();
 
-  it('falls back to Telegram selection feedback if the primary backend throws', () => {
-    const selectionChanged = vi.fn();
     const webApp = createWebApp();
-    webApp.platform = 'android';
-    webApp.HapticFeedback = { selectionChanged };
-
-    expect(() => triggerTelegramSelectionHaptic(webApp, {
-      vibrate: () => {
-        throw new Error('vibration unavailable');
+    webApp.HapticFeedback = {
+      selectionChanged: vi.fn(),
+      notificationOccurred: () => {
+        throw new Error('haptics unavailable');
       },
-    })).not.toThrow();
-    expect(selectionChanged).toHaveBeenCalledOnce();
+    };
+
+    expect(() => triggerTelegramSelectionHaptic(webApp)).not.toThrow();
   });
 });
-
 
 describe('runHapticProbe', () => {
   it('can invoke every Telegram haptic channel independently', () => {
