@@ -4,7 +4,7 @@ import {
   type ComponentProps,
   type ElementType,
 } from 'react';
-import { Dialog as KonstaDialog, useTheme } from 'konsta/react';
+import { Dialog as KonstaDialog, Glass as KonstaGlass, useTheme } from 'konsta/react';
 import { DialogClasses } from 'konsta/shared/classes';
 import { DialogColors } from 'konsta/shared/colors';
 import { cls } from 'konsta/shared/utils';
@@ -90,29 +90,51 @@ export function MezfitDialog(props: MezfitDialogProps) {
       {backdrop && (
         <div className={backdropClasses} onClick={onBackdropClick} />
       )}
-      <GlassSurface
-        component={Component}
-        ref={setRef}
-        className={cls('k-glass', theme === 'ios' && 'touch-none', baseClasses)}
-        preset={glassPreset}
-        glass={glass}
-        shape={glassShape}
-        wrapContent={false}
-        active={Boolean(opened)}
-        {...attrs}
-      >
-        <div className={contentWrapClasses}>
-          {title && <div className={titleClasses}>{title}</div>}
-          {(content || children) && (
-            <div className={contentClasses}>
-              {content}
-              {children}
-            </div>
-          )}
-        </div>
+      {theme === 'ios' ? (
+        <GlassSurface
+          component={Component}
+          ref={setRef}
+          className={cls('k-glass touch-none', baseClasses)}
+          preset={glassPreset}
+          glass={glass}
+          shape={glassShape}
+          wrapContent={false}
+          active={Boolean(opened)}
+          {...attrs}
+        >
+          <div className={contentWrapClasses}>
+            {title && <div className={titleClasses}>{title}</div>}
+            {(content || children) && (
+              <div className={contentClasses}>
+                {content}
+                {children}
+              </div>
+            )}
+          </div>
 
-        {buttons && <div className={buttonsClasses}>{buttons}</div>}
-      </GlassSurface>
+          {buttons && <div className={buttonsClasses}>{buttons}</div>}
+        </GlassSurface>
+      ) : (
+        <KonstaGlass
+          component={Component}
+          highlight={false}
+          ref={setRef}
+          className={baseClasses}
+          {...attrs}
+        >
+          <div className={contentWrapClasses}>
+            {title && <div className={titleClasses}>{title}</div>}
+            {(content || children) && (
+              <div className={contentClasses}>
+                {content}
+                {children}
+              </div>
+            )}
+          </div>
+
+          {buttons && <div className={buttonsClasses}>{buttons}</div>}
+        </KonstaGlass>
+      )}
     </>
   );
 }
