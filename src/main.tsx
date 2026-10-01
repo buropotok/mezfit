@@ -28,7 +28,11 @@ async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
   root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;
-  if (window.location.pathname === '/ui-kit-day-schedule.html') {
+  const isFullscreenDayScheduleUiKit = (
+    window.location.pathname === '/ui-kit-day-schedule.html'
+    || window.location.pathname === '/ui-kit-day-schedule'
+  );
+  if (isFullscreenDayScheduleUiKit) {
     const { DayScheduleCatalog } = await import('./ui/DayScheduleCatalog');
     content = <DayScheduleCatalog fullScreen />;
   } else if (window.location.pathname === '/ui-kit') {
