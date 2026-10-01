@@ -31,7 +31,7 @@ export type IdentityActionItem = {
   label: string;
   onClick?: () => void;
   disabled?: boolean;
-  renderControl?: (control: ReactElement<HTMLButtonElement>) => ReactNode;
+  renderControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
 };
 
 type IdentityActionBaseProps = {
