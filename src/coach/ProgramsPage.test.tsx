@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ProgramsPage } from './ProgramsPage';
 
 describe('ProgramsPage', () => {
-  it('renders the coach program controls while data is loading', () => {
+  it('renders program controls without owning the global FAB slot', () => {
     const html = renderToStaticMarkup(
       <ProgramsPage
         initData="test-init-data"
@@ -25,6 +25,6 @@ describe('ProgramsPage', () => {
     expect(html).toContain('Завершённые');
     expect(html).toContain('Черновики');
     expect(html).toContain('Загружаем программы');
-    expect(html).toContain('aria-label="Создать программу"');
+    expect(html).not.toContain('aria-label="Создать программу"');
   });
 });
