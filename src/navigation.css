@@ -2,9 +2,6 @@
 .navigation-navbar-frame { margin: 0 calc(var(--page-pad-x) * -1) var(--space-3); }
 .navigation-content { position: relative; min-width: 0; min-height: calc(100dvh - var(--appbar-h) - 2rem); }
 .navigation-content--with-tabs { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
-.navigation-floating-action { position: fixed; z-index: 31; left: max(0px, calc((100vw - 720px) / 2)); bottom: max(0px, env(safe-area-inset-bottom)); width: 5.5rem; height: 5.5rem; pointer-events: none; }
-.navigation-floating-action--with-tabs { bottom: calc(4.5rem + max(0.75rem, env(safe-area-inset-bottom))); }
-.navigation-floating-action > * { pointer-events: auto; }
 .navigation-primary-tabs { position: fixed; z-index: 30; left: 50%; bottom: max(0.75rem, env(safe-area-inset-bottom)); width: min(calc(100% - 1.5rem), 696px); transform: translateX(-50%); }
 .navigation-menu-icon { display: block; width: 24px; height: 24px; object-fit: contain; }
 .global-placeholder { width: 100%; padding: var(--surface-pad); border: 1px solid var(--theme-border); border-radius: var(--radius-surface); color: var(--theme-surface-text); background: var(--theme-surface); }
