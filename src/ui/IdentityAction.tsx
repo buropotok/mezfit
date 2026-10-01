@@ -1,4 +1,5 @@
 import {
+  Fragment,
   forwardRef,
   useCallback,
   useEffect,
@@ -7,6 +8,8 @@ import {
   type ButtonHTMLAttributes,
   type MouseEventHandler,
   type PointerEventHandler,
+  type ReactElement,
+  type ReactNode,
 } from 'react';
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName } from './Icon';
@@ -28,6 +31,7 @@ export type IdentityActionItem = {
   label: string;
   onClick?: () => void;
   disabled?: boolean;
+  renderControl?: (control: ReactElement<HTMLButtonElement>) => ReactNode;
 };
 
 type IdentityActionBaseProps = {
@@ -168,18 +172,25 @@ export function IdentityAction(props: IdentityActionProps) {
         onPointerCancel={cancelPointerActivation}
         onPointerLeave={cancelPointerActivation}
       >
-        {props.actions.map((action) => (
-          <button
-            key={action.label}
-            className="ui-identity-action__segment"
-            type="button"
-            aria-label={action.label}
-            disabled={disabled || action.disabled}
-            onClick={() => queueActivation(action.onClick)}
-          >
-            <Icon className="ui-identity-action__segment-icon" name={action.icon} variant="filled" />
-          </button>
-        ))}
+        {props.actions.map((action) => {
+          const control = (
+            <button
+              className="ui-identity-action__segment"
+              type="button"
+              aria-label={action.label}
+              disabled={disabled || action.disabled}
+              onClick={() => queueActivation(action.onClick)}
+            >
+              <Icon className="ui-identity-action__segment-icon" name={action.icon} variant="filled" />
+            </button>
+          );
+
+          return (
+            <Fragment key={action.label}>
+              {action.renderControl ? action.renderControl(control) : control}
+            </Fragment>
+          );
+        })}
       </GlassSurface>
     );
   }
