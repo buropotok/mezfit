@@ -6,7 +6,9 @@ export { Badge, type BadgeColor, type BadgeProps } from './Badge';
 export { DatePicker, type DatePickerProps, type LocalDate } from './date-picker/DatePicker';
 export { TimePicker, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
-export { IdentityAction, type IdentityActionAvatar, type IdentityActionProps } from './IdentityAction';
+export { IdentityAction, type IdentityActionAvatar, type IdentityActionItem, type IdentityActionProps } from './IdentityAction';
+export { MezfitNavbar, type MezfitNavbarIdentity, type MezfitNavbarProps } from './MezfitNavbar';
+export { MEZFIT_NAVBAR_GLASS_PRESET } from './mezfitNavbarConfig';
 export { Checkbox, Radio, TextArea, TextInput, type CheckboxProps, type RadioProps, type TextAreaProps, type TextInputProps } from './FormControls';
 export { BottomSheet, FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, type BottomSheetProps, type ListItemProps, type ModalAction, type TabsIconPair, type TabsMode, type TabsProps, type TabsTriggerProps } from './components';
 export { Menu, MenuDivider, MenuItem, type MenuProps } from './Menu';
@@ -18,7 +20,7 @@ export { MezfitDialog, MezfitDialogButton, MezfitPanel, MezfitPopover, MezfitSid
 export { BLUE_GLASS, CLEAR_GLASS, FROSTED_GLASS, GLASS_PRESETS, LENS_GLASS, MODAL_GLASS, MODAL_TUNED_GLASS, SMOKED_GLASS, resolveGlassMaterial, resolveGlassRadius, type GlassMaterial, type GlassMaterialOverrides, type GlassPresetName, type GlassShape } from './glassMaterial';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
-export type { LiquidGlassIconOnlyProps, LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+export { LiquidGlassIconOnly, type LiquidGlassIconOnlyProps, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 export { LiquidGlassTabsNoFab, type LiquidGlassTabsNoFabProps, type LiquidGlassTabsNoFabTab } from './LiquidGlassTabsNoFab';
 export type { LiquidGlassTextOnlyProps, LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
 export { DaySchedule, getDayScheduleValue, type DayScheduleValue, type DayScheduleEvent, type DayScheduleEventMove, type DayScheduleEventResize, type DayScheduleProps, type DayScheduleRenderState } from './DaySchedule';

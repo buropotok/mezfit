@@ -1,4 +1,5 @@
 import {
+  Fragment,
   forwardRef,
   useCallback,
   useEffect,
@@ -7,9 +8,12 @@ import {
   type ButtonHTMLAttributes,
   type MouseEventHandler,
   type PointerEventHandler,
+  type ReactElement,
+  type ReactNode,
 } from 'react';
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName } from './Icon';
+import type { GlassPresetName } from './glassMaterial';
 import { Avatar } from './primitives';
 import './identity-action.css';
 
@@ -22,13 +26,38 @@ type IdentityActionVisual =
   | { avatar: IdentityActionAvatar; icon?: never }
   | { avatar?: never; icon: UiIconName };
 
-export type IdentityActionProps = IdentityActionVisual & {
-  title: string;
-  variant?: 'default' | 'avatar-only';
+export type IdentityActionItem = {
+  icon: UiIconName;
+  label: string;
   onClick?: () => void;
   disabled?: boolean;
+  renderControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
+};
+
+type IdentityActionBaseProps = {
+  glassPreset?: GlassPresetName;
+  disabled?: boolean;
+};
+
+type IdentityActionSingleProps = IdentityActionBaseProps & IdentityActionVisual & {
+  title: string;
+  variant?: 'labeled' | 'single' | 'default' | 'avatar-only';
+  onClick?: () => void;
+  actions?: never;
   'aria-label'?: string;
 };
+
+type IdentityActionDoubleProps = IdentityActionBaseProps & {
+  variant: 'double';
+  actions: readonly [IdentityActionItem, IdentityActionItem];
+  avatar?: never;
+  icon?: never;
+  title?: never;
+  onClick?: never;
+  'aria-label'?: never;
+};
+
+export type IdentityActionProps = IdentityActionSingleProps | IdentityActionDoubleProps;
 
 const IdentityGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
   ({ 'aria-disabled': ariaDisabled, ...props }, ref) => (
@@ -44,35 +73,33 @@ const IdentityGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<H
 
 IdentityGlassButton.displayName = 'IdentityGlassButton';
 
-export function IdentityAction({
-  avatar,
-  icon,
-  title,
-  variant = 'default',
-  onClick,
-  disabled = false,
-  'aria-label': ariaLabel,
-}: IdentityActionProps) {
+export function IdentityAction(props: IdentityActionProps) {
+  const {
+    variant = 'labeled',
+    glassPreset,
+    disabled = false,
+  } = props;
   const [isAnimating, setIsAnimating] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const animationActiveRef = useRef(false);
   const pointerPressRef = useRef(false);
   const animationFinishedRef = useRef(false);
-  const activationQueuedRef = useRef(false);
+  const pendingActionRef = useRef<(() => void) | null>(null);
 
   const finishActivation = useCallback(() => {
-    activationQueuedRef.current = false;
+    const action = pendingActionRef.current;
+    pendingActionRef.current = null;
     pointerPressRef.current = false;
     animationFinishedRef.current = false;
-    if (!disabled) onClick?.();
-  }, [disabled, onClick]);
+    if (!disabled) action?.();
+  }, [disabled]);
 
   const finishAnimation = useCallback(() => {
     animationActiveRef.current = false;
     setIsAnimating(false);
     animationFinishedRef.current = pointerPressRef.current;
 
-    if (activationQueuedRef.current) finishActivation();
+    if (pendingActionRef.current) finishActivation();
   }, [finishActivation]);
 
   useEffect(() => {
@@ -102,34 +129,89 @@ export function IdentityAction({
   };
 
   const cancelPointerActivation = () => {
-    if (activationQueuedRef.current) return;
+    if (pendingActionRef.current) return;
     pointerPressRef.current = false;
     animationFinishedRef.current = false;
   };
 
-  const handleClick: MouseEventHandler<HTMLElement> = () => {
-    if (disabled || !onClick || activationQueuedRef.current) return;
+  const queueActivation = (action?: () => void) => {
+    if (disabled || !action || pendingActionRef.current) return;
 
     if (animationActiveRef.current) {
-      activationQueuedRef.current = true;
+      pendingActionRef.current = action;
       return;
     }
 
     if (pointerPressRef.current && animationFinishedRef.current) {
+      pendingActionRef.current = action;
       finishActivation();
       return;
     }
 
-    activationQueuedRef.current = true;
+    pendingActionRef.current = action;
     startAnimation(false);
   };
+
+  const className = [
+    'ui-identity-action',
+    variant === 'double' ? 'ui-identity-action--double' : '',
+    variant === 'single' || variant === 'avatar-only' ? 'ui-identity-action--single' : '',
+    variant === 'avatar-only' ? 'ui-identity-action--avatar-only' : '',
+    disabled ? 'ui-identity-action--disabled' : '',
+    isAnimating ? 'ui-identity-action--animating' : '',
+  ].filter(Boolean).join(' ');
+
+  if (variant === 'double') {
+    return (
+      <GlassSurface
+        ref={rootRef}
+        preset={glassPreset}
+        wrapContent={false}
+        className={className}
+        onPointerDown={handlePointerDown}
+        onPointerCancel={cancelPointerActivation}
+        onPointerLeave={cancelPointerActivation}
+      >
+        {props.actions.map((action) => {
+          const control = (
+            <button
+              className="ui-identity-action__segment"
+              type="button"
+              aria-label={action.label}
+              disabled={disabled || action.disabled}
+              onClick={() => queueActivation(action.onClick)}
+            >
+              <Icon className="ui-identity-action__segment-icon" name={action.icon} variant="filled" />
+            </button>
+          );
+
+          return (
+            <Fragment key={action.label}>
+              {action.renderControl ? action.renderControl(control) : control}
+            </Fragment>
+          );
+        })}
+      </GlassSurface>
+    );
+  }
+
+  const {
+    avatar,
+    icon,
+    title,
+    onClick,
+    'aria-label': ariaLabel,
+  } = props;
+  const handleClick: MouseEventHandler<HTMLElement> = () => queueActivation(onClick);
+  const showTitle = variant !== 'single' && variant !== 'avatar-only';
 
   return (
     <GlassSurface
       component={IdentityGlassButton}
       ref={rootRef}
+      preset={glassPreset}
       wrapContent={false}
-      className={`ui-identity-action${variant === 'avatar-only' ? ' ui-identity-action--avatar-only' : ''}${disabled ? ' ui-identity-action--disabled' : ''}${isAnimating ? ' ui-identity-action--animating' : ''}`}
+      className={className}
       aria-label={ariaLabel ?? title}
       aria-disabled={disabled || undefined}
       onPointerDown={handlePointerDown}
@@ -148,7 +230,7 @@ export function IdentityAction({
           />
         ) : null}
       </span>
-      {variant === 'default' && <span className="ui-identity-action__title">{title}</span>}
+      {showTitle && <span className="ui-identity-action__title">{title}</span>}
     </GlassSurface>
   );
 }

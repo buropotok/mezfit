@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
-import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
-import { DatePicker, Menu, MenuDivider, MenuItem, type LocalDate } from './ui';
+import {
+  DatePicker,
+  Menu,
+  MenuDivider,
+  MenuItem,
+  LiquidGlassIconOnly,
+  MezfitNavbar,
+  type LocalDate,
+  type MezfitNavbarIdentity,
+  type UiIconName,
+} from './ui';
 import userIconUrl from './ui/icons/user.svg';
 
 export type AppDestination =
@@ -17,38 +26,56 @@ export type AppDestination =
   | 'settings'
   | 'about';
 
+export type NavigationLevel = 1 | 2;
+
+export interface NavigationMenuAction {
+  id: string;
+  label: string;
+  onSelect: () => void;
+  disabled?: boolean;
+}
+
 export interface NavigationContext {
+  level?: NavigationLevel;
   title: string;
-  onBack: () => void;
+  onBack?: () => void;
+  identity?: MezfitNavbarIdentity;
+  menuActions?: readonly NavigationMenuAction[];
 }
 
 interface NavigationItem {
   id: AppDestination;
   label: string;
-  icon: GymKeeperIcon;
+  icon: UiIconName;
   section?: 'secondary';
+  showFab?: boolean;
 }
 
+const NavigationLevelContext = createContext<NavigationLevel>(1);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
 const coachItems: NavigationItem[] = [
-  { id: 'clients', label: 'Клиенты', icon: 'clients' },
-  { id: 'programs', label: 'Программы', icon: 'programs' },
-  { id: 'exercises', label: 'Упражнения', icon: 'exercises' },
+  { id: 'clients', label: 'Клиенты', icon: 'users' },
+  { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
+  { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
   { id: 'calendar', label: 'Календарь', icon: 'calendar' },
-  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
-  { id: 'about', label: 'О приложении', icon: 'about', section: 'secondary' },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
+  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
 ];
 
 const clientItems: NavigationItem[] = [
-  { id: 'today', label: 'Сегодня', icon: 'today' },
-  { id: 'programs', label: 'Программа', icon: 'programs' },
-  { id: 'exercises', label: 'Упражнения', icon: 'exercises' },
-  { id: 'history', label: 'История', icon: 'history' },
-  { id: 'progress', label: 'Прогресс', icon: 'progress' },
-  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
-  { id: 'about', label: 'О приложении', icon: 'about', section: 'secondary' },
+  { id: 'today', label: 'Сегодня', icon: 'home' },
+  { id: 'programs', label: 'Программа', icon: 'clipboard-list' },
+  { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
+  { id: 'history', label: 'История', icon: 'clock' },
+  { id: 'progress', label: 'Прогресс', icon: 'chart-dots-2' },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
+  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
 ];
+
+export function useNavigationLevel(): NavigationLevel {
+  return useContext(NavigationLevelContext);
+}
 
 function itemsForRole(role: Role): NavigationItem[] {
   return role === 'coach' ? coachItems : clientItems;
@@ -58,16 +85,9 @@ function roleLabel(role: Role): string {
   return role === 'coach' ? 'Тренер' : 'Клиент';
 }
 
-function destinationTitle(role: Role, destination: AppDestination): string {
-  return itemsForRole(role).find((item) => item.id === destination)?.label ?? 'Mezfit';
-}
-
-function iconStyle(icon: GymKeeperIcon): CSSProperties {
-  return { '--navigation-icon': gymKeeperIcons[icon] } as CSSProperties;
-}
-
-function urlIconStyle(url: string): CSSProperties {
-  return { '--navigation-icon': `url("${url}")` } as CSSProperties;
+function itemForDestination(role: Role, destination: AppDestination): NavigationItem {
+  return itemsForRole(role).find((item) => item.id === destination)
+    ?? { id: destination, label: 'Mezfit', icon: 'home' };
 }
 
 function historyStateRecord(): Record<string, unknown> {
@@ -114,10 +134,19 @@ export function NavigationShell({
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<LocalDate>(todayLocalDate);
-  const contextRef = useRef(context);
+  const nestedContext = context && (context.level ?? 2) === 2 ? context : null;
+  const contextRef = useRef(nestedContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
+  const primaryItems = items.filter((item) => item.section !== 'secondary');
+  const secondaryItems = items.filter((item) => item.section === 'secondary');
+  const currentItem = itemForDestination(activeRole, destination);
+  const level: NavigationLevel = nestedContext ? 2 : 1;
+  const identity: MezfitNavbarIdentity = context?.identity ?? {
+    title: context?.title ?? currentItem.label,
+    icon: currentItem.icon,
+  };
 
   useEffect(() => {
     setMenuOpen(false);
@@ -125,8 +154,9 @@ export function NavigationShell({
   }, [activeRole]);
 
   useEffect(() => {
-    contextRef.current = context;
-  }, [context]);
+    contextRef.current = nestedContext;
+    setMenuOpen(false);
+  }, [nestedContext]);
 
   const requestBack = useCallback(() => {
     const currentContext = contextRef.current;
@@ -137,7 +167,7 @@ export function NavigationShell({
       return;
     }
     historyEntryRef.current = null;
-    currentContext.onBack();
+    currentContext.onBack?.();
   }, []);
 
   useEffect(() => {
@@ -145,7 +175,7 @@ export function NavigationShell({
       const currentContext = contextRef.current;
       if (!currentContext) return;
       historyEntryRef.current = null;
-      currentContext.onBack();
+      currentContext.onBack?.();
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -153,14 +183,14 @@ export function NavigationShell({
 
   useEffect(() => {
     const existingEntry = historyEntryRef.current;
-    if (!context) {
+    if (!nestedContext) {
       if (!existingEntry) return;
       historyEntryRef.current = null;
       if (historyHasToken(existingEntry.token)) window.history.back();
       return;
     }
 
-    if (existingEntry?.context === context) return;
+    if (existingEntry?.context === nestedContext) return;
     historySequenceRef.current += 1;
     const token = `mezfit-${historySequenceRef.current}`;
     const nextState = { ...historyStateRecord(), [HISTORY_TOKEN_KEY]: token };
@@ -169,10 +199,13 @@ export function NavigationShell({
     } else {
       window.history.pushState(nextState, '');
     }
-    historyEntryRef.current = { context, token };
-  }, [context]);
+    historyEntryRef.current = { context: nestedContext, token };
+  }, [nestedContext]);
 
-  useEffect(() => bindTelegramBackButton(getTelegramWebApp(), context !== null, requestBack), [context, requestBack]);
+  useEffect(
+    () => bindTelegramBackButton(getTelegramWebApp(), nestedContext !== null, requestBack),
+    [nestedContext, requestBack],
+  );
 
   useEffect(() => () => {
     const existingEntry = historyEntryRef.current;
@@ -192,101 +225,116 @@ export function NavigationShell({
     setMenuOpen(false);
   };
 
-  return (
-    <main className="app-shell navigation-shell">
-      <header className="navigation-appbar">
-        {context ? (
-          <button className="navigation-icon-button" type="button" onClick={requestBack} aria-label="Назад">
-            <span className="navigation-apk-icon" style={iconStyle('back')} aria-hidden="true" />
-          </button>
-        ) : (
-          <div className="navigation-menu-anchor">
-            <Menu
-              isOpen={menuOpen}
-              onOpenChange={setMenuOpen}
-              label="Главное меню"
-              className="navigation-main-menu"
-              trigger={(
-                <button className="navigation-icon-button" type="button" aria-label="Открыть меню">
-                  <span className="navigation-apk-icon" style={iconStyle('menu')} aria-hidden="true" />
-                </button>
-              )}
+  const contextualMenuActions = context?.menuActions ?? [];
+  const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
+  const renderMenuControl = (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => (
+    <Menu
+      isOpen={menuOpen}
+      onOpenChange={(open) => {
+        if (!open) setMenuOpen(false);
+      }}
+      label="Меню страницы"
+      className="navigation-main-menu"
+      align="end"
+      trigger={control}
+    >
+      {contextualMenuActions.map((action) => (
+        <MenuItem
+          key={action.id}
+          disabled={action.disabled}
+          onSelect={action.onSelect}
+        >
+          {action.label}
+        </MenuItem>
+      ))}
+
+      {contextualMenuActions.length > 0 && hasSystemMenu ? <MenuDivider /> : null}
+
+      {me.roles.length > 1 ? (
+        <>
+          {me.roles.map((role) => (
+            <MenuItem
+              key={role}
+              active={role === activeRole}
+              onSelect={() => switchRole(role)}
+              aria-checked={role === activeRole}
             >
-              <div className="drawer-account" role="presentation">
-                <div className="drawer-avatar" aria-hidden="true">{me.user.firstName.slice(0, 1).toUpperCase()}</div>
-                <div className="drawer-account-copy">
-                  <strong>{[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}</strong>
-                  <small>{roleLabel(activeRole)}</small>
-                </div>
-              </div>
+              {roleLabel(role)}
+            </MenuItem>
+          ))}
+          <MenuDivider />
+        </>
+      ) : null}
 
-              {me.roles.length > 1 ? (
-                <>
-                  <MenuDivider />
-                  {me.roles.map((role) => (
-                    <MenuItem
-                      key={role}
-                      active={role === activeRole}
-                      onSelect={() => switchRole(role)}
-                      aria-checked={role === activeRole}
-                    >
-                      {roleLabel(role)}
-                    </MenuItem>
-                  ))}
-                  <MenuDivider />
-                </>
-              ) : null}
+      {activeRole === 'client' ? (
+        <MenuItem
+          leading={<img className="navigation-menu-icon" src={userIconUrl} alt="" />}
+          onSelect={() => {
+            setMenuOpen(false);
+            setCoachSelectorOpen(true);
+          }}
+        >
+          Тренер
+        </MenuItem>
+      ) : null}
 
-              {activeRole === 'client' ? (
-                <MenuItem
-                  leading={<span className="navigation-apk-icon" style={urlIconStyle(userIconUrl)} />}
-                  onSelect={() => {
-                    setMenuOpen(false);
-                    setCoachSelectorOpen(true);
-                  }}
-                >
-                  Тренер
-                </MenuItem>
-              ) : null}
+      {activeRole === 'client' && secondaryItems.length > 0 ? <MenuDivider /> : null}
 
-              {items.map((item, index) => {
-                const divider = item.section === 'secondary' && items[index - 1]?.section !== 'secondary';
-                return (
-                  <div key={item.id} className="navigation-main-menu-item">
-                    {divider ? <MenuDivider /> : null}
-                    <MenuItem
-                      active={destination === item.id}
-                      onSelect={() => chooseDestination(item.id)}
-                      aria-current={destination === item.id ? 'page' : undefined}
-                      leading={<span className="navigation-apk-icon" style={iconStyle(item.icon)} />}
-                    >
-                      {item.label}
-                    </MenuItem>
-                  </div>
-                );
-              })}
-            </Menu>
-          </div>
-        )}
-        <h1>{context?.title ?? destinationTitle(activeRole, destination)}</h1>
-        <button className="navigation-icon-button" type="button" onClick={() => setCalendarOpen(true)} aria-label="Открыть календарь">
-          <span className="navigation-apk-icon" style={iconStyle('calendar')} aria-hidden="true" />
-        </button>
-      </header>
+      {secondaryItems.map((item) => (
+        <MenuItem
+          key={item.id}
+          active={destination === item.id}
+          onSelect={() => chooseDestination(item.id)}
+          aria-current={destination === item.id ? 'page' : undefined}
+        >
+          {item.label}
+        </MenuItem>
+      ))}
+    </Menu>
+  );
 
-      <section className="navigation-content">
-        {children}
-        {floatingAction}
-      </section>
+  return (
+    <NavigationLevelContext.Provider value={level}>
+      <main className="app-shell navigation-shell">
+        <div className="navigation-navbar-frame">
+          <MezfitNavbar
+            level={level}
+            identity={identity}
+            onBack={requestBack}
+            onMenu={() => setMenuOpen(true)}
+            onCalendar={() => setCalendarOpen(true)}
+            renderMenuControl={renderMenuControl}
+            menuDisabled={menuOpen}
+          />
+        </div>
 
-      <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
+        <section className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
+          {children}
+        </section>
 
-      <DatePicker
-        opened={calendarOpen}
-        value={selectedDate}
-        onChange={setSelectedDate}
-        onClose={() => setCalendarOpen(false)}
-      />
-    </main>
+        <div className="navigation-primary-tabs">
+          <LiquidGlassIconOnly
+            hidden={level !== 1}
+            tabs={primaryItems.map((item) => ({
+              value: item.id,
+              label: item.label,
+              icon: item.icon,
+            }))}
+            value={destination}
+            onValueChange={(value) => chooseDestination(value as AppDestination)}
+            fab={currentItem.showFab === false ? undefined : floatingAction}
+          />
+        </div>
+
+        <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
+
+        <DatePicker
+          opened={calendarOpen}
+          value={selectedDate}
+          onChange={setSelectedDate}
+          onClose={() => setCalendarOpen(false)}
+        />
+      </main>
+    </NavigationLevelContext.Provider>
   );
 }
