@@ -46,10 +46,9 @@ export function DayScheduleEventCard({
         className,
       ].filter(Boolean).join(' ')}
     >
-      <List nested dividers={false} className="h-full">
+      <List nested dividers={false} className="w-full">
         <ListItem
-          className="h-full"
-          contentClassName="!ps-[6px] h-full min-h-0"
+          contentClassName="!ps-[6px] min-h-0"
           mediaClassName="!py-0 !me-[6px]"
           innerClassName="!py-0 !pe-[6px] min-h-0 flex flex-col justify-center"
           titleWrapClassName="!min-h-0"
