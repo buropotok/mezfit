@@ -1,18 +1,10 @@
 /** @vitest-environment jsdom */
-import { act, cleanup, render } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MezfitPopover, MezfitSidePanel } from './index';
 
-let frames: FrameRequestCallback[];
-
 beforeEach(() => {
-  frames = [];
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    frames.push(callback);
-    return frames.length;
-  });
-  vi.stubGlobal('cancelAnimationFrame', vi.fn());
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
     disconnect() {}
@@ -39,16 +31,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function runQueuedFrames() {
-  const queued = frames;
-  frames = [];
-  act(() => {
-    queued.forEach((callback) => callback(0));
-  });
-}
-
-describe('Mezfit overlay glass prewarm', () => {
-  it('prewarms floating SidePanel glass while the panel is still closed', () => {
+describe('Mezfit overlay glass optics', () => {
+  it('does not calculate floating SidePanel distortion while closed by default', () => {
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
     const view = render(
@@ -61,14 +45,11 @@ describe('Mezfit overlay glass prewarm', () => {
 
     const surface = view.container.querySelector<HTMLElement>('.ui-glass-surface');
     expect(surface).toBeTruthy();
-    expect(frames.length).toBeGreaterThan(0);
-
-    runQueuedFrames();
-
-    expect(getContext).toHaveBeenCalled();
+    expect(surface?.getAttribute('data-ui-glass-map-ready')).toBe('false');
+    expect(getContext).not.toHaveBeenCalled();
   });
 
-  it('prewarms Popover glass while the popover is still closed', () => {
+  it('does not calculate Popover distortion while closed by default', () => {
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
     const view = render(
@@ -81,10 +62,7 @@ describe('Mezfit overlay glass prewarm', () => {
 
     const surface = view.container.querySelector<HTMLElement>('.ui-glass-surface');
     expect(surface).toBeTruthy();
-    expect(frames.length).toBeGreaterThan(0);
-
-    runQueuedFrames();
-
-    expect(getContext).toHaveBeenCalled();
+    expect(surface?.getAttribute('data-ui-glass-map-ready')).toBe('false');
+    expect(getContext).not.toHaveBeenCalled();
   });
 });

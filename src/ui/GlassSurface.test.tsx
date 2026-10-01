@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe('GlassSurface', () => {
-  it('renders ModalTuned by default without emitting an empty displacement href', () => {
+  it('defaults optics to false and skips distortion calculation', () => {
     const view = render(<GlassSurface contentClassName="test-content">Glass</GlassSurface>);
     const surface = view.container.firstElementChild as HTMLElement;
 
@@ -46,6 +46,7 @@ describe('GlassSurface', () => {
     expect(surface.style.getPropertyValue('--ui-glass-surface-thickness')).toBe('');
     expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
     expect(surface.querySelector('feImage')).toBeNull();
+    expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
   });
 
