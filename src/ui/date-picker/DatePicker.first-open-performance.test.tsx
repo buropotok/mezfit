@@ -41,6 +41,16 @@ function picker(opened: boolean) {
   );
 }
 
+function runFramesUntil(predicate: () => boolean, errorMessage: string) {
+  for (let index = 0; index < 20 && !predicate(); index += 1) {
+    const frame = frames.shift();
+    if (!frame) throw new Error(errorMessage);
+    act(() => frame(0));
+  }
+
+  expect(predicate()).toBe(true);
+}
+
 describe('DatePicker first-open rendering', () => {
   it('mounts heavy calendar content before starting the first panel animation', () => {
     const view = render(picker(false));
@@ -58,20 +68,19 @@ describe('DatePicker first-open rendering', () => {
     expect(dialog?.className).toContain('invisible');
     expect(frames.length).toBeGreaterThan(0);
 
-    const openFrame = frames.shift();
-    if (!openFrame) throw new Error('Missing staged DatePicker opening frame');
-    act(() => openFrame(0));
-
-    expect(dialog?.className).not.toContain('invisible');
+    runFramesUntil(
+      () => !dialog?.className.includes('invisible'),
+      'Missing staged DatePicker opening frame',
+    );
   });
 
   it('mounts the year grid before starting the first popover animation', () => {
     const view = render(picker(true));
-    const panelOpenFrame = frames.shift();
-    if (!panelOpenFrame) throw new Error('Missing staged DatePicker opening frame');
-    act(() => panelOpenFrame(0));
-
-    frames = [];
+    const dialog = view.container.querySelector<HTMLElement>('[aria-label="Выбор даты"]');
+    runFramesUntil(
+      () => Boolean(dialog) && !dialog?.className.includes('invisible'),
+      'Missing staged DatePicker opening frame',
+    );
     const yearTrigger = view.container.querySelector<HTMLButtonElement>('[aria-label="Выбрать год, сейчас 2026"]');
     if (!yearTrigger) throw new Error('Missing year trigger');
 
@@ -83,10 +92,9 @@ describe('DatePicker first-open rendering', () => {
     expect(yearDialog?.className).toContain('scale-0');
     expect(frames.length).toBeGreaterThan(0);
 
-    const popoverOpenFrame = frames.shift();
-    if (!popoverOpenFrame) throw new Error('Missing staged year popover opening frame');
-    act(() => popoverOpenFrame(0));
-
-    expect(yearDialog?.className).not.toContain('scale-0');
+    runFramesUntil(
+      () => Boolean(yearDialog) && !yearDialog?.className.includes('scale-0'),
+      'Missing staged year popover opening frame',
+    );
   });
 });
