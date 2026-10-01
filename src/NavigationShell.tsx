@@ -38,8 +38,9 @@ export interface NavigationMenuAction {
 }
 
 export interface NavigationContext {
+  level?: NavigationLevel;
   title: string;
-  onBack: () => void;
+  onBack?: () => void;
   identity?: MezfitNavbarIdentity;
   menuActions?: readonly NavigationMenuAction[];
 }
@@ -134,14 +135,15 @@ export function NavigationShell({
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<LocalDate>(todayLocalDate);
-  const contextRef = useRef(context);
+  const nestedContext = context && (context.level ?? 2) === 2 ? context : null;
+  const contextRef = useRef(nestedContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
   const primaryItems = items.filter((item) => item.section !== 'secondary');
   const secondaryItems = items.filter((item) => item.section === 'secondary');
   const currentItem = itemForDestination(activeRole, destination);
-  const level: NavigationLevel = context ? 2 : 1;
+  const level: NavigationLevel = nestedContext ? 2 : 1;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
     title: context?.title ?? currentItem.label,
     icon: currentItem.icon,
@@ -153,9 +155,9 @@ export function NavigationShell({
   }, [activeRole]);
 
   useEffect(() => {
-    contextRef.current = context;
+    contextRef.current = nestedContext;
     setMenuOpen(false);
-  }, [context]);
+  }, [nestedContext]);
 
   const requestBack = useCallback(() => {
     const currentContext = contextRef.current;
@@ -166,7 +168,7 @@ export function NavigationShell({
       return;
     }
     historyEntryRef.current = null;
-    currentContext.onBack();
+    currentContext.onBack?.();
   }, []);
 
   useEffect(() => {
@@ -174,7 +176,7 @@ export function NavigationShell({
       const currentContext = contextRef.current;
       if (!currentContext) return;
       historyEntryRef.current = null;
-      currentContext.onBack();
+      currentContext.onBack?.();
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -182,14 +184,14 @@ export function NavigationShell({
 
   useEffect(() => {
     const existingEntry = historyEntryRef.current;
-    if (!context) {
+    if (!nestedContext) {
       if (!existingEntry) return;
       historyEntryRef.current = null;
       if (historyHasToken(existingEntry.token)) window.history.back();
       return;
     }
 
-    if (existingEntry?.context === context) return;
+    if (existingEntry?.context === nestedContext) return;
     historySequenceRef.current += 1;
     const token = `mezfit-${historySequenceRef.current}`;
     const nextState = { ...historyStateRecord(), [HISTORY_TOKEN_KEY]: token };
@@ -198,10 +200,13 @@ export function NavigationShell({
     } else {
       window.history.pushState(nextState, '');
     }
-    historyEntryRef.current = { context, token };
-  }, [context]);
+    historyEntryRef.current = { context: nestedContext, token };
+  }, [nestedContext]);
 
-  useEffect(() => bindTelegramBackButton(getTelegramWebApp(), context !== null, requestBack), [context, requestBack]);
+  useEffect(
+    () => bindTelegramBackButton(getTelegramWebApp(), nestedContext !== null, requestBack),
+    [nestedContext, requestBack],
+  );
 
   useEffect(() => () => {
     const existingEntry = historyEntryRef.current;
