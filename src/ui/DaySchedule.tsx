@@ -282,6 +282,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     const pendingEdit = pendingEditingEvent.current?.date === date ? pendingEditingEvent.current : null;
     if (pendingEdit) pendingEditingEvent.current = null;
     setEditingEvent(null);
+    setDeleteCandidate(null);
     const expected = arrival.current?.date === date ? arrival.current : null;
     arrival.current = null;
     clearPending();
