@@ -22,6 +22,8 @@ export type AppDestination =
   | 'exercises'
   | 'calendar'
   | 'today'
+  | 'training'
+  | 'analytics'
   | 'history'
   | 'progress'
   | 'settings'
@@ -70,24 +72,32 @@ const NavigationLevelContext = createContext<NavigationLevel>(1);
 const NavigationFloatingActionContext = createContext<Dispatch<SetStateAction<RegisteredFloatingAction | null>> | null>(null);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
-const coachItems: NavigationItem[] = [
+const coachPrimaryItems: NavigationItem[] = [
+  { id: 'today', label: 'Сегодня', icon: 'calendar-event' },
   { id: 'clients', label: 'Клиенты', icon: 'users' },
   { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
-  { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
-  { id: 'calendar', label: 'Календарь', icon: 'calendar' },
-  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
+  { id: 'analytics', label: 'Аналитика', icon: 'chart-dots-2', showFab: false },
+  { id: 'settings', label: 'Настройки', icon: 'settings', showFab: false },
+];
+
+const clientPrimaryItems: NavigationItem[] = [
+  { id: 'today', label: 'Сегодня', icon: 'calendar-event' },
+  { id: 'training', label: 'Тренировка', icon: 'barbell' },
+  { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
+  { id: 'analytics', label: 'Аналитика', icon: 'chart-dots-2', showFab: false },
+  { id: 'settings', label: 'Настройки', icon: 'settings', showFab: false },
+];
+
+const coachSecondaryItems: NavigationItem[] = [
   { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary', showFab: false },
 ];
 
-const clientItems: NavigationItem[] = [
-  { id: 'today', label: 'Сегодня', icon: 'home' },
-  { id: 'programs', label: 'Программа', icon: 'clipboard-list' },
-  { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
-  { id: 'history', label: 'История', icon: 'clock' },
-  { id: 'progress', label: 'Прогресс', icon: 'chart-dots-2' },
-  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
+const clientSecondaryItems: NavigationItem[] = [
   { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary', showFab: false },
 ];
+
+const coachItems: NavigationItem[] = [...coachPrimaryItems, ...coachSecondaryItems];
+const clientItems: NavigationItem[] = [...clientPrimaryItems, ...clientSecondaryItems];
 
 export function useNavigationLevel(): NavigationLevel {
   return useContext(NavigationLevelContext);
@@ -113,6 +123,10 @@ export function useNavigationFloatingAction(destination: AppDestination, action:
 
 function itemsForRole(role: Role): NavigationItem[] {
   return role === 'coach' ? coachItems : clientItems;
+}
+
+function primaryItemsForRole(role: Role): NavigationItem[] {
+  return role === 'coach' ? coachPrimaryItems : clientPrimaryItems;
 }
 
 function roleLabel(role: Role): string {
@@ -174,7 +188,7 @@ export function NavigationShell({
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
-  const primaryItems = items.filter((item) => item.section !== 'secondary');
+  const primaryItems = primaryItemsForRole(activeRole);
   const secondaryItems = items.filter((item) => item.section === 'secondary');
   const currentItem = itemForDestination(activeRole, destination);
   const primaryDestination = primaryItems.some((item) => item.id === destination) ? destination : null;
