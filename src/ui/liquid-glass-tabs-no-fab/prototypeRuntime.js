@@ -1878,7 +1878,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const saturationNode=document.getElementById('startup-lens-saturation');
   const refraction=document.getElementById('startup-refraction-icons');
   const SETTINGS={
-    pauseSec:.30,
+    pauseSec:.04,
     revealSec:.75,
     handoffSec:.16,
     speed:500,
