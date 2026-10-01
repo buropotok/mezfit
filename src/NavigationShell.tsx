@@ -69,7 +69,7 @@ const clientItems: NavigationItem[] = [
   { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
   { id: 'history', label: 'История', icon: 'clock' },
   { id: 'progress', label: 'Прогресс', icon: 'chart-dots-2' },
-  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
   { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
 ];
 
