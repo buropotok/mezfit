@@ -84,7 +84,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const identity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(identity?.getAttribute('aria-label')).toBe('Мой день');
     expect(view.getByRole('tab', { name: 'Сегодня' })).not.toBeNull();
-    expect(view.getByRole('button', { name: 'Назад', hidden: true }).getAttribute('disabled')).not.toBeNull();
+    expect(view.container.querySelector('.ui-mezfit-navbar__side--left')?.getAttribute('aria-hidden')).toBe('true');
 
     fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
     const doubleAction = view.container.querySelector('.ui-identity-action--double');
