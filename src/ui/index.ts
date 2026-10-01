@@ -5,6 +5,7 @@ export type { UiIconPair, UiIconSource } from './iconPair';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge';
 export { DatePicker, type DatePickerProps, type LocalDate } from './date-picker/DatePicker';
 export { TimePicker, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
+export { NumPicker, type NumPickerProps } from './num-picker/NumPicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
 export { IdentityAction, type IdentityActionAvatar, type IdentityActionItem, type IdentityActionProps } from './IdentityAction';
 export { MezfitNavbar, type MezfitNavbarIdentity, type MezfitNavbarProps } from './MezfitNavbar';
