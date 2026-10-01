@@ -707,9 +707,23 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           style={{ transition: weekAnimating ? TRACK_TRANSITION : 'none', transform: `translate3d(${weekTranslate},0,0)` }}
         >
           <div className="ui-day-schedule__week-page">
+            <GlassSurface
+              className="ui-day-schedule__week-background"
+              preset="frosted"
+              shape="capsule"
+              wrapContent={false}
+              aria-hidden="true"
+            />
             <WeekScene monday={previousMonday} selectedIndex={selectedIndex} preview />
           </div>
           <div className="ui-day-schedule__week-page">
+            <GlassSurface
+              className="ui-day-schedule__week-background"
+              preset="frosted"
+              shape="capsule"
+              wrapContent={false}
+              aria-hidden="true"
+            />
             <WeekScene
               ref={weekRef}
               monday={monday}
@@ -719,6 +733,13 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             />
           </div>
           <div className="ui-day-schedule__week-page">
+            <GlassSurface
+              className="ui-day-schedule__week-background"
+              preset="frosted"
+              shape="capsule"
+              wrapContent={false}
+              aria-hidden="true"
+            />
             <WeekScene monday={nextMonday} selectedIndex={selectedIndex} preview />
           </div>
         </div>
@@ -810,6 +831,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             <GlassSurface
               className="ui-day-schedule__drag-overlay"
               contentClassName="ui-day-schedule__drag-overlay-content"
+              preset="frosted"
               shape={{ radius: 14 }}
             >
               {renderEvent(activeEventEntry.event, {

@@ -1,6 +1,8 @@
+/** @vitest-environment jsdom */
 import { renderToStaticMarkup } from 'react-dom/server';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IdentityAction } from './IdentityAction';
 
 function renderIdentityAction(node: React.ReactNode) {
@@ -11,6 +13,20 @@ function renderIdentityAction(node: React.ReactNode) {
   );
 }
 
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    disconnect() {}
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
 describe('IdentityAction', () => {
   it('renders avatar and title as one semantic action', () => {
     const html = renderIdentityAction(
@@ -19,6 +35,7 @@ describe('IdentityAction', () => {
 
     expect(html).toContain('<button');
     expect(html).toContain('type="button"');
+    expect(html).toContain('ui-glass-surface');
     expect(html).toContain('aria-label="Andrei Sokolov"');
     expect(html).toContain('>AS<');
     expect(html).toContain('ui-identity-action__title">Andrei Sokolov</span>');
@@ -69,5 +86,59 @@ describe('IdentityAction', () => {
 
     expect(html).toContain('aria-label="Открыть клиента Андрей Соколов"');
     expect(html).toContain('ui-identity-action__title">Andrei Sokolov</span>');
+  });
+
+  it('finishes the press animation before invoking the action', () => {
+    const onClick = vi.fn();
+    const view = render(
+      <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" onClick={onClick} />,
+    );
+    const button = view.getByRole('button', { name: 'Andrei Sokolov' });
+
+    fireEvent.pointerDown(button, { pointerType: 'touch', button: 0 });
+    fireEvent.pointerUp(button, { pointerType: 'touch', button: 0 });
+    fireEvent.click(button);
+    fireEvent.pointerLeave(button, { pointerType: 'touch' });
+
+    expect(button.classList.contains('ui-identity-action--animating')).toBe(true);
+    expect(onClick).not.toHaveBeenCalled();
+
+    fireEvent.animationEnd(button, { animationName: 'ui-identity-action-press' });
+
+    expect(button.classList.contains('ui-identity-action--animating')).toBe(false);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not replay the animation when a long press completed before click', () => {
+    const onClick = vi.fn();
+    const view = render(<IdentityAction icon="users" title="Клиенты" onClick={onClick} />);
+    const button = view.getByRole('button', { name: 'Клиенты' });
+
+    fireEvent.pointerDown(button, { pointerType: 'touch', button: 0 });
+    fireEvent.animationEnd(button, { animationName: 'ui-identity-action-press' });
+
+    expect(onClick).not.toHaveBeenCalled();
+    expect(button.classList.contains('ui-identity-action--animating')).toBe(false);
+
+    fireEvent.click(button);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(button.classList.contains('ui-identity-action--animating')).toBe(false);
+  });
+
+  it('coalesces repeated clicks while one animated activation is pending', () => {
+    const onClick = vi.fn();
+    const view = render(<IdentityAction icon="users" title="Клиенты" onClick={onClick} />);
+    const button = view.getByRole('button', { name: 'Клиенты' });
+
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(onClick).not.toHaveBeenCalled();
+    expect(button.classList.contains('ui-identity-action--animating')).toBe(true);
+
+    fireEvent.animationEnd(button, { animationName: 'ui-identity-action-press' });
+
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

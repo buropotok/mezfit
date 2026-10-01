@@ -1,4 +1,7 @@
 .ui-identity-action {
+  --ui-identity-action-press-scale: 1.075;
+  --ui-identity-action-press-duration: 240ms;
+
   position: relative;
   min-width: 0;
   max-width: 100%;
@@ -19,6 +22,8 @@
 }
 
 .ui-identity-action--avatar-only {
+  --ui-identity-action-press-scale: 1.375;
+
   width: 2.75rem;
   min-width: 2.75rem;
   max-width: 2.75rem;
@@ -30,6 +35,11 @@
 .ui-identity-action--disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.ui-identity-action--animating {
+  animation: ui-identity-action-press var(--ui-identity-action-press-duration) ease-in-out both;
+  will-change: transform;
 }
 
 .ui-identity-action__visual {
@@ -56,4 +66,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@keyframes ui-identity-action-press {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(var(--ui-identity-action-press-scale));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-identity-action {
+    --ui-identity-action-press-scale: 1;
+    --ui-identity-action-press-duration: 1ms;
+  }
 }
