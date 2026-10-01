@@ -61,6 +61,39 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
   });
 
+  it('allows level-one pages to provide contextual identity and menu actions without creating Back history', () => {
+    const pageAction = vi.fn();
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={{
+          level: 1,
+          title: 'Сегодня',
+          identity: { title: 'Мой день', icon: 'home' },
+          menuActions: [{ id: 'refresh', label: 'Обновить день', onSelect: pageAction }],
+        }}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Today content</div>
+      </NavigationShell>,
+    );
+
+    const identity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
+    expect(identity?.getAttribute('aria-label')).toBe('Мой день');
+    expect(view.getByRole('tab', { name: 'Сегодня' })).not.toBeNull();
+    expect(view.getByRole('button', { name: 'Назад', hidden: true }).getAttribute('disabled')).not.toBeNull();
+
+    fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
+    const doubleAction = view.container.querySelector('.ui-identity-action--double');
+    fireEvent.animationEnd(doubleAction as Element);
+    fireEvent.click(view.getByRole('menuitem', { name: 'Обновить день' }));
+
+    expect(pageAction).toHaveBeenCalledTimes(1);
+  });
+
   it('opens the page menu only after the shared double-action animation completes', () => {
     const view = render(
       <NavigationShell
