@@ -51,7 +51,7 @@ export function MezfitNavbar({
         data-level={level}
         data-entered={entered ? 'true' : 'false'}
       >
-        <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" inert={level === 1 ? true : undefined}>
+        <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
           <IdentityAction
             variant="single"
             icon="arrow-left"
