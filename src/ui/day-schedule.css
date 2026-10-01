@@ -1,6 +1,7 @@
 .ui-day-schedule {
   --ui-day-schedule-event-card-color: 132 163 150;
   --ui-day-schedule-hour-height: 64px;
+  --ui-day-schedule-top-clearance: calc(132px + max(16px, var(--k-safe-area-top)));
   position: relative;
   width: 100%;
   height: 100vh;
@@ -69,6 +70,11 @@
 
 .ui-day-schedule__day-viewport::-webkit-scrollbar {
   display: none;
+}
+
+.ui-day-schedule__top-clearance {
+  height: var(--ui-day-schedule-top-clearance);
+  pointer-events: none;
 }
 
 .ui-day-schedule__day-track {
