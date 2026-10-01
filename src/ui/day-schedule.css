@@ -74,7 +74,7 @@
 .ui-day-schedule__day-track {
   display: flex;
   width: 300%;
-  min-height: calc(var(--ui-day-schedule-hour-height) * 18);
+  min-height: calc(var(--ui-day-schedule-hour-height) * 24);
   will-change: transform;
 }
 
@@ -82,7 +82,7 @@
   flex: 0 0 33.333333%;
   min-width: 0;
   position: relative;
-  height: calc(var(--ui-day-schedule-hour-height) * 18);
+  height: calc(var(--ui-day-schedule-hour-height) * 24);
   background: transparent;
 }
 
@@ -90,7 +90,7 @@
   --ui-day-schedule-time-column: 62px;
   position: relative;
   width: 100%;
-  height: calc(var(--ui-day-schedule-hour-height) * 18);
+  height: calc(var(--ui-day-schedule-hour-height) * 24);
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
@@ -255,16 +255,25 @@
 .ui-day-schedule__drag-visual {
   width: 100%;
   height: 100%;
+  border-radius: 14px;
   transform-origin: center;
   transform: scale(1.035);
+  box-shadow:
+    0 0 18px rgb(255 255 255 / 0.16),
+    0 0 36px rgb(170 205 255 / 0.10);
   animation: ui-day-schedule-event-lift 140ms cubic-bezier(.2,.8,.2,1) both;
-  will-change: transform;
+  will-change: transform, box-shadow;
 }
 
 .ui-day-schedule__drag-overlay-wrapper--dropping .ui-day-schedule__drag-visual {
   animation: none;
   transform: scale(.985);
-  transition: transform 90ms ease-in;
+  box-shadow:
+    0 0 8px rgb(255 255 255 / 0.06),
+    0 0 16px rgb(170 205 255 / 0.04);
+  transition:
+    transform 90ms ease-in,
+    box-shadow 90ms ease-in;
 }
 
 .ui-day-schedule__drag-overlay {
@@ -280,8 +289,18 @@
 }
 
 @keyframes ui-day-schedule-event-lift {
-  from { transform: scale(.99); }
-  to { transform: scale(1.035); }
+  from {
+    transform: scale(.99);
+    box-shadow:
+      0 0 6px rgb(255 255 255 / 0.04),
+      0 0 12px rgb(170 205 255 / 0.02);
+  }
+  to {
+    transform: scale(1.035);
+    box-shadow:
+      0 0 18px rgb(255 255 255 / 0.16),
+      0 0 36px rgb(170 205 255 / 0.10);
+  }
 }
 
 .ui-day-schedule__now-line {
