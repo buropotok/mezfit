@@ -1,8 +1,9 @@
 import {
   forwardRef,
+  useCallback,
+  useEffect,
   useRef,
   useState,
-  type AnimationEventHandler,
   type ButtonHTMLAttributes,
   type MouseEventHandler,
   type PointerEventHandler,
@@ -53,17 +54,38 @@ export function IdentityAction({
   'aria-label': ariaLabel,
 }: IdentityActionProps) {
   const [isAnimating, setIsAnimating] = useState(false);
+  const rootRef = useRef<HTMLElement>(null);
   const animationActiveRef = useRef(false);
   const pointerPressRef = useRef(false);
   const animationFinishedRef = useRef(false);
   const activationQueuedRef = useRef(false);
 
-  const finishActivation = () => {
+  const finishActivation = useCallback(() => {
     activationQueuedRef.current = false;
     pointerPressRef.current = false;
     animationFinishedRef.current = false;
     if (!disabled) onClick?.();
-  };
+  }, [disabled, onClick]);
+
+  const finishAnimation = useCallback(() => {
+    animationActiveRef.current = false;
+    setIsAnimating(false);
+    animationFinishedRef.current = pointerPressRef.current;
+
+    if (activationQueuedRef.current) finishActivation();
+  }, [finishActivation]);
+
+  useEffect(() => {
+    const element = rootRef.current;
+    if (!element) return undefined;
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      if (event.target === element) finishAnimation();
+    };
+
+    element.addEventListener('animationend', handleAnimationEnd);
+    return () => element.removeEventListener('animationend', handleAnimationEnd);
+  }, [finishAnimation]);
 
   const startAnimation = (fromPointer: boolean) => {
     if (disabled || animationActiveRef.current) return;
@@ -102,19 +124,10 @@ export function IdentityAction({
     startAnimation(false);
   };
 
-  const handleAnimationEnd: AnimationEventHandler<HTMLElement> = (event) => {
-    if (event.target !== event.currentTarget) return;
-
-    animationActiveRef.current = false;
-    setIsAnimating(false);
-    animationFinishedRef.current = pointerPressRef.current;
-
-    if (activationQueuedRef.current) finishActivation();
-  };
-
   return (
     <GlassSurface
       component={IdentityGlassButton}
+      ref={rootRef}
       wrapContent={false}
       className={`ui-identity-action${variant === 'avatar-only' ? ' ui-identity-action--avatar-only' : ''}${disabled ? ' ui-identity-action--disabled' : ''}${isAnimating ? ' ui-identity-action--animating' : ''}`}
       aria-label={ariaLabel ?? title}
@@ -123,7 +136,6 @@ export function IdentityAction({
       onPointerCancel={cancelPointerActivation}
       onPointerLeave={cancelPointerActivation}
       onClick={handleClick}
-      onAnimationEnd={handleAnimationEnd}
     >
       <span className="ui-identity-action__visual" aria-hidden="true">
         {icon ? (
