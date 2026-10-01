@@ -19,7 +19,7 @@ function demoDay(date: LocalDate): DemoEvent[] {
   ];
 }
 
-export function DayScheduleCatalog() {
+export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolean } = {}) {
   const [date, setDate] = useState<LocalDate>(() => currentLocalDate());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [empty, setEmpty] = useState(false);
@@ -46,6 +46,45 @@ export function DayScheduleCatalog() {
     }
     return Object.fromEntries(grouped);
   }, [date, empty, eventOverrides]);
+
+  const schedule = (
+    <DaySchedule
+      className={fullScreen ? 'ui-kit-day-schedule__fullscreen-preview' : 'ui-kit-day-schedule__preview'}
+      date={date}
+      eventsByDate={eventsByDate}
+      onDateChange={next => { setLastChange(next); setDate(next); }}
+      onEventMove={({ eventId, date: eventDate, targetDate, startMinutes }) => setEventOverrides(current => ({
+        ...current,
+        [eventId]: {
+          date: targetDate,
+          startMinutes,
+          durationMinutes: current[eventId]?.durationMinutes
+            ?? eventsByDate[eventDate]?.find(event => event.id === eventId)?.durationMinutes
+            ?? 60,
+        },
+      }))}
+      onEventResize={({ eventId, date: eventDate, startMinutes, durationMinutes }) => setEventOverrides(current => ({
+        ...current,
+        [eventId]: { date: eventDate, startMinutes, durationMinutes },
+      }))}
+      renderEvent={(event, state) => (
+        <DayScheduleEventCard
+          title={event.title}
+          detail={event.purpose}
+          media={<Avatar name={event.title} />}
+          state={state}
+        />
+      )}
+    />
+  );
+
+  if (fullScreen) {
+    return (
+      <main className="ui-kit-day-schedule-fullscreen" aria-label="DaySchedule fullscreen">
+        {schedule}
+      </main>
+    );
+  }
 
   return (
     <section className="ui-kit-day-schedule" aria-label="DaySchedule">
