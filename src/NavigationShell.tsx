@@ -48,6 +48,7 @@ interface NavigationItem {
   label: string;
   icon: UiIconName;
   section?: 'secondary';
+  showFab?: boolean;
 }
 
 const NavigationLevelContext = createContext<NavigationLevel>(1);
@@ -58,7 +59,7 @@ const coachItems: NavigationItem[] = [
   { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
   { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
   { id: 'calendar', label: 'Календарь', icon: 'calendar' },
-  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
   { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
 ];
 
@@ -321,7 +322,7 @@ export function NavigationShell({
             }))}
             value={destination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}
-            fab={floatingAction}
+            fab={currentItem.showFab === false ? undefined : floatingAction}
           />
         </div>
 
