@@ -123,6 +123,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const weekRef = useRef<WeekSceneHandle>(null);
   const weekViewportRef = useRef<HTMLDivElement>(null);
   const dayViewportRef = useRef<HTMLDivElement>(null);
+  const dayTopSpacerRef = useRef<HTMLDivElement>(null);
   const timers = useRef<Set<number>>(new Set());
   const frames = useRef<Set<number>>(new Set());
   const weekTrackRef = useRef<HTMLDivElement>(null);
@@ -247,7 +248,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     if (initialScrollApplied.current) return;
     const viewport = dayViewportRef.current;
     if (!viewport) return;
-    viewport.scrollTop = Math.max(0, yForMinutes(8 * 60));
+    const topClearance = dayTopSpacerRef.current?.offsetHeight ?? 0;
+    viewport.scrollTop = Math.max(0, topClearance + yForMinutes(8 * 60));
     initialScrollApplied.current = true;
   }, []);
 
@@ -784,6 +786,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           if (performance.now() < suppressDayClickUntil.current) { event.preventDefault(); event.stopPropagation(); }
         }}
       >
+        <div ref={dayTopSpacerRef} className="ui-day-schedule__top-clearance" aria-hidden="true" />
         <div
           ref={dayTrackRef}
           className={`ui-day-schedule__day-track${dayAnimating ? ' ui-day-schedule__day-track--animating' : ''}`}
