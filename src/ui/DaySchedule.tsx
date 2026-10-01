@@ -887,6 +887,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         )}
         onBackdropClick={() => setDeleteCandidate(null)}
         role="dialog"
+        aria-modal="true"
         aria-label="Подтверждение удаления карточки"
       />
     </DndContext>
