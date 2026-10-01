@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ButtonHTMLAttributes,
+  type CSSProperties,
   type MouseEventHandler,
   type PointerEventHandler,
   type ReactElement,
@@ -45,6 +46,7 @@ type IdentityActionSingleProps = IdentityActionBaseProps & IdentityActionVisual 
   onClick?: () => void;
   actions?: never;
   'aria-label'?: string;
+  width?: CSSProperties['width'];
 };
 
 type IdentityActionDoubleProps = IdentityActionBaseProps & {
@@ -200,6 +202,7 @@ export function IdentityAction(props: IdentityActionProps) {
     icon,
     title,
     onClick,
+    width,
     'aria-label': ariaLabel,
   } = props;
   const handleClick: MouseEventHandler<HTMLElement> = () => queueActivation(onClick);
@@ -214,6 +217,7 @@ export function IdentityAction(props: IdentityActionProps) {
       className={className}
       aria-label={ariaLabel ?? title}
       aria-disabled={disabled || undefined}
+      style={width === undefined ? undefined : { width, minWidth: width, maxWidth: width }}
       onPointerDown={handlePointerDown}
       onPointerCancel={cancelPointerActivation}
       onPointerLeave={cancelPointerActivation}
