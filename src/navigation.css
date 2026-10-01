@@ -3,8 +3,6 @@
 .navigation-content { position: relative; min-width: 0; min-height: calc(100dvh - var(--appbar-h) - 2rem); }
 .navigation-content--with-tabs { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
 .navigation-primary-tabs { position: fixed; z-index: 30; left: 50%; bottom: max(0.75rem, env(safe-area-inset-bottom)); width: min(calc(100% - 1.5rem), 696px); transform: translateX(-50%); }
-.navigation-page-menu-anchor { pointer-events: none; position: fixed; z-index: 29; top: max(16px, env(safe-area-inset-top)); right: max(60px, calc((100vw - 720px) / 2 + 60px)); width: 44px; height: 44px; opacity: 0; }
-.navigation-page-menu-anchor__trigger { width: 44px; height: 44px; padding: 0; border: 0; background: transparent; }
 .navigation-menu-icon { display: block; width: 24px; height: 24px; object-fit: contain; }
 .global-placeholder { width: 100%; padding: var(--surface-pad); border: 1px solid var(--theme-border); border-radius: var(--radius-surface); color: var(--theme-surface-text); background: var(--theme-surface); }
 .global-placeholder h2 { margin-bottom: var(--space-2); }
