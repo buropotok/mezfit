@@ -4,5 +4,5 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  input: ['index.html', 'ui-kit.html'],
+  input: ['index.html', 'ui-kit.html', 'ui-kit-day-schedule.html'],
 });
