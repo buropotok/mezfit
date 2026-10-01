@@ -33,10 +33,20 @@ export function MezfitNavbar({
   menuDisabled = false,
   calendarDisabled = false,
 }: MezfitNavbarProps) {
-  const [entered, setEntered] = useState(false);
+  const [entryPhase, setEntryPhase] = useState<'collapsed' | 'spread' | 'settled'>('collapsed');
 
   useEffect(() => {
-    setEntered(true);
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setEntryPhase('settled');
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => setEntryPhase('spread'));
+    const timer = window.setTimeout(() => setEntryPhase('settled'), 340);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -49,7 +59,7 @@ export function MezfitNavbar({
       <div
         className="ui-mezfit-navbar__layout"
         data-level={level}
-        data-entered={entered ? 'true' : 'false'}
+        data-entry-phase={entryPhase}
       >
         <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
           <IdentityAction
