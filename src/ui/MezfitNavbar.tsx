@@ -39,10 +39,6 @@ export function MezfitNavbar({
     setEntered(true);
   }, []);
 
-  const identityVisual = identity.icon
-    ? { icon: identity.icon as UiIconName }
-    : { avatar: identity.avatar };
-
   return (
     <Navbar
       component="header"
@@ -68,13 +64,23 @@ export function MezfitNavbar({
         </div>
 
         <div className="ui-mezfit-navbar__identity">
-          <IdentityAction
-            variant="labeled"
-            {...identityVisual}
-            title={identity.title}
-            glassPreset={glassPreset}
-            onClick={onIdentityClick}
-          />
+          {identity.icon ? (
+            <IdentityAction
+              variant="labeled"
+              icon={identity.icon}
+              title={identity.title}
+              glassPreset={glassPreset}
+              onClick={onIdentityClick}
+            />
+          ) : (
+            <IdentityAction
+              variant="labeled"
+              avatar={identity.avatar}
+              title={identity.title}
+              glassPreset={glassPreset}
+              onClick={onIdentityClick}
+            />
+          )}
         </div>
 
         <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right">
