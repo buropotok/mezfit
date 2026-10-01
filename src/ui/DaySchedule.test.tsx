@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
 import type { LocalDate } from './date-picker/DatePicker';
@@ -332,6 +333,49 @@ describe('DaySchedule', () => {
     if (!viewport) throw new Error('Missing day viewport');
     fireEvent.pointerDown(viewport, { pointerId: 4, pointerType: 'touch', clientX: 20, clientY: 500 });
     expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
+  });
+
+  it('shows delete after drop and requires MezfitDialog confirmation before emitting deletion', () => {
+    const moved = vi.fn();
+    const deleted = vi.fn();
+    const view = render(
+      <KonstaProvider theme="ios" dark>
+        <DaySchedule
+          date="2026-09-28"
+          today="2026-09-28"
+          eventsByDate={events}
+          onDateChange={changed}
+          onEventMove={moved}
+          onEventDelete={deleted}
+          renderEvent={event => <div>{event.id}</div>}
+        />
+      </KonstaProvider>,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    if (!frame) throw new Error('Missing draggable event frame');
+
+    fireEvent.pointerDown(frame, { pointerId: 35, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 35, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 140 });
+    fireEvent.pointerUp(document, { pointerId: 35, pointerType: 'mouse', button: 0, clientX: 100, clientY: 140 });
+    act(() => vi.advanceTimersByTime(200));
+
+    const deleteButton = view.getByRole('button', { name: 'Удалить карточку' });
+    expect(deleteButton).toBeTruthy();
+    expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
+
+    fireEvent.click(deleteButton);
+    expect(deleted).not.toHaveBeenCalled();
+    expect(view.getByRole('dialog', { name: 'Подтверждение удаления карточки' })).toBeTruthy();
+
+    fireEvent.click(view.getByRole('button', { name: 'Отмена' }));
+    expect(deleted).not.toHaveBeenCalled();
+
+    fireEvent.click(view.getByRole('button', { name: 'Удалить карточку' }));
+    fireEvent.click(view.getByRole('button', { name: 'Удалить' }));
+
+    expect(deleted).toHaveBeenCalledOnce();
+    expect(deleted).toHaveBeenCalledWith({ eventId: 'a', date: '2026-09-28' });
+    expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
   });
 
   it('activates touch drag after schedule-owned long-press arbitration', () => {
