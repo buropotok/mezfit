@@ -1,9 +1,20 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
-import { gymKeeperIcons, type GymKeeperIcon } from './gymKeeperIcons';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
-import { DatePicker, Menu, MenuDivider, MenuItem, type LocalDate } from './ui';
+import {
+  DatePicker,
+  Menu,
+  MenuDivider,
+  MenuItem,
+  MezfitNavbar,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  type LocalDate,
+  type MezfitNavbarIdentity,
+  type UiIconName,
+} from './ui';
 import userIconUrl from './ui/icons/user.svg';
 
 export type AppDestination =
@@ -17,38 +28,54 @@ export type AppDestination =
   | 'settings'
   | 'about';
 
+export type NavigationLevel = 1 | 2;
+
+export interface NavigationMenuAction {
+  id: string;
+  label: string;
+  onSelect: () => void;
+  disabled?: boolean;
+}
+
 export interface NavigationContext {
   title: string;
   onBack: () => void;
+  identity?: MezfitNavbarIdentity;
+  menuActions?: readonly NavigationMenuAction[];
 }
 
 interface NavigationItem {
   id: AppDestination;
   label: string;
-  icon: GymKeeperIcon;
+  icon: UiIconName;
   section?: 'secondary';
 }
 
+const NavigationLevelContext = createContext<NavigationLevel>(1);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
 const coachItems: NavigationItem[] = [
-  { id: 'clients', label: 'Клиенты', icon: 'clients' },
-  { id: 'programs', label: 'Программы', icon: 'programs' },
-  { id: 'exercises', label: 'Упражнения', icon: 'exercises' },
+  { id: 'clients', label: 'Клиенты', icon: 'users' },
+  { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
+  { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
   { id: 'calendar', label: 'Календарь', icon: 'calendar' },
   { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
-  { id: 'about', label: 'О приложении', icon: 'about', section: 'secondary' },
+  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
 ];
 
 const clientItems: NavigationItem[] = [
-  { id: 'today', label: 'Сегодня', icon: 'today' },
-  { id: 'programs', label: 'Программа', icon: 'programs' },
-  { id: 'exercises', label: 'Упражнения', icon: 'exercises' },
-  { id: 'history', label: 'История', icon: 'history' },
-  { id: 'progress', label: 'Прогресс', icon: 'progress' },
+  { id: 'today', label: 'Сегодня', icon: 'home' },
+  { id: 'programs', label: 'Программа', icon: 'clipboard-list' },
+  { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
+  { id: 'history', label: 'История', icon: 'clock' },
+  { id: 'progress', label: 'Прогресс', icon: 'chart-dots-2' },
   { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary' },
-  { id: 'about', label: 'О приложении', icon: 'about', section: 'secondary' },
+  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
 ];
+
+export function useNavigationLevel(): NavigationLevel {
+  return useContext(NavigationLevelContext);
+}
 
 function itemsForRole(role: Role): NavigationItem[] {
   return role === 'coach' ? coachItems : clientItems;
@@ -58,16 +85,9 @@ function roleLabel(role: Role): string {
   return role === 'coach' ? 'Тренер' : 'Клиент';
 }
 
-function destinationTitle(role: Role, destination: AppDestination): string {
-  return itemsForRole(role).find((item) => item.id === destination)?.label ?? 'Mezfit';
-}
-
-function iconStyle(icon: GymKeeperIcon): CSSProperties {
-  return { '--navigation-icon': gymKeeperIcons[icon] } as CSSProperties;
-}
-
-function urlIconStyle(url: string): CSSProperties {
-  return { '--navigation-icon': `url("${url}")` } as CSSProperties;
+function itemForDestination(role: Role, destination: AppDestination): NavigationItem {
+  return itemsForRole(role).find((item) => item.id === destination)
+    ?? { id: destination, label: 'Mezfit', icon: 'home' };
 }
 
 function historyStateRecord(): Record<string, unknown> {
@@ -118,6 +138,14 @@ export function NavigationShell({
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
+  const primaryItems = items.filter((item) => item.section !== 'secondary');
+  const secondaryItems = items.filter((item) => item.section === 'secondary');
+  const currentItem = itemForDestination(activeRole, destination);
+  const level: NavigationLevel = context ? 2 : 1;
+  const identity: MezfitNavbarIdentity = context?.identity ?? {
+    title: context?.title ?? currentItem.label,
+    icon: currentItem.icon,
+  };
 
   useEffect(() => {
     setMenuOpen(false);
@@ -126,6 +154,7 @@ export function NavigationShell({
 
   useEffect(() => {
     contextRef.current = context;
+    setMenuOpen(false);
   }, [context]);
 
   const requestBack = useCallback(() => {
@@ -192,101 +221,116 @@ export function NavigationShell({
     setMenuOpen(false);
   };
 
+  const contextualMenuActions = context?.menuActions ?? [];
+  const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
+
   return (
-    <main className="app-shell navigation-shell">
-      <header className="navigation-appbar">
-        {context ? (
-          <button className="navigation-icon-button" type="button" onClick={requestBack} aria-label="Назад">
-            <span className="navigation-apk-icon" style={iconStyle('back')} aria-hidden="true" />
-          </button>
-        ) : (
-          <div className="navigation-menu-anchor">
-            <Menu
-              isOpen={menuOpen}
-              onOpenChange={setMenuOpen}
-              label="Главное меню"
-              className="navigation-main-menu"
-              trigger={(
-                <button className="navigation-icon-button" type="button" aria-label="Открыть меню">
-                  <span className="navigation-apk-icon" style={iconStyle('menu')} aria-hidden="true" />
-                </button>
-              )}
-            >
-              <div className="drawer-account" role="presentation">
-                <div className="drawer-avatar" aria-hidden="true">{me.user.firstName.slice(0, 1).toUpperCase()}</div>
-                <div className="drawer-account-copy">
-                  <strong>{[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}</strong>
-                  <small>{roleLabel(activeRole)}</small>
-                </div>
-              </div>
+    <NavigationLevelContext.Provider value={level}>
+      <main className="app-shell navigation-shell">
+        <MezfitNavbar
+          level={level}
+          identity={identity}
+          onBack={requestBack}
+          onMenu={() => setMenuOpen(true)}
+          onCalendar={() => setCalendarOpen(true)}
+        />
 
-              {me.roles.length > 1 ? (
-                <>
-                  <MenuDivider />
-                  {me.roles.map((role) => (
-                    <MenuItem
-                      key={role}
-                      active={role === activeRole}
-                      onSelect={() => switchRole(role)}
-                      aria-checked={role === activeRole}
-                    >
-                      {roleLabel(role)}
-                    </MenuItem>
-                  ))}
-                  <MenuDivider />
-                </>
-              ) : null}
+        <div className="navigation-page-menu-anchor" aria-hidden="true">
+          <Menu
+            isOpen={menuOpen}
+            onOpenChange={setMenuOpen}
+            label="Меню страницы"
+            className="navigation-main-menu"
+            align="end"
+            trigger={<button className="navigation-page-menu-anchor__trigger" type="button" tabIndex={-1} aria-label="Якорь меню страницы" />}
+          >
+            {contextualMenuActions.map((action) => (
+              <MenuItem
+                key={action.id}
+                disabled={action.disabled}
+                onSelect={action.onSelect}
+              >
+                {action.label}
+              </MenuItem>
+            ))}
 
-              {activeRole === 'client' ? (
-                <MenuItem
-                  leading={<span className="navigation-apk-icon" style={urlIconStyle(userIconUrl)} />}
-                  onSelect={() => {
-                    setMenuOpen(false);
-                    setCoachSelectorOpen(true);
-                  }}
-                >
-                  Тренер
-                </MenuItem>
-              ) : null}
+            {contextualMenuActions.length > 0 && hasSystemMenu ? <MenuDivider /> : null}
 
-              {items.map((item, index) => {
-                const divider = item.section === 'secondary' && items[index - 1]?.section !== 'secondary';
-                return (
-                  <div key={item.id} className="navigation-main-menu-item">
-                    {divider ? <MenuDivider /> : null}
-                    <MenuItem
-                      active={destination === item.id}
-                      onSelect={() => chooseDestination(item.id)}
-                      aria-current={destination === item.id ? 'page' : undefined}
-                      leading={<span className="navigation-apk-icon" style={iconStyle(item.icon)} />}
-                    >
-                      {item.label}
-                    </MenuItem>
-                  </div>
-                );
-              })}
-            </Menu>
-          </div>
-        )}
-        <h1>{context?.title ?? destinationTitle(activeRole, destination)}</h1>
-        <button className="navigation-icon-button" type="button" onClick={() => setCalendarOpen(true)} aria-label="Открыть календарь">
-          <span className="navigation-apk-icon" style={iconStyle('calendar')} aria-hidden="true" />
-        </button>
-      </header>
+            {me.roles.length > 1 ? (
+              <>
+                {me.roles.map((role) => (
+                  <MenuItem
+                    key={role}
+                    active={role === activeRole}
+                    onSelect={() => switchRole(role)}
+                    aria-checked={role === activeRole}
+                  >
+                    {roleLabel(role)}
+                  </MenuItem>
+                ))}
+                <MenuDivider />
+              </>
+            ) : null}
 
-      <section className="navigation-content">
-        {children}
-        {floatingAction}
-      </section>
+            {activeRole === 'client' ? (
+              <MenuItem
+                leading={<img className="navigation-menu-icon" src={userIconUrl} alt="" />}
+                onSelect={() => {
+                  setMenuOpen(false);
+                  setCoachSelectorOpen(true);
+                }}
+              >
+                Тренер
+              </MenuItem>
+            ) : null}
 
-      <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
+            {activeRole === 'client' && secondaryItems.length > 0 ? <MenuDivider /> : null}
 
-      <DatePicker
-        opened={calendarOpen}
-        value={selectedDate}
-        onChange={setSelectedDate}
-        onClose={() => setCalendarOpen(false)}
-      />
-    </main>
+            {secondaryItems.map((item) => (
+              <MenuItem
+                key={item.id}
+                active={destination === item.id}
+                onSelect={() => chooseDestination(item.id)}
+                aria-current={destination === item.id ? 'page' : undefined}
+              >
+                {item.label}
+              </MenuItem>
+            ))}
+          </Menu>
+        </div>
+
+        <section className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
+          {children}
+          {floatingAction}
+        </section>
+
+        {level === 1 ? (
+          <Tabs
+            className="navigation-primary-tabs"
+            mode="icon"
+            theme="glass"
+            value={destination}
+            onValueChange={(value) => chooseDestination(value as AppDestination)}
+          >
+            <TabsList aria-label={activeRole === 'coach' ? 'Разделы тренера' : 'Разделы клиента'}>
+              {primaryItems.map((item) => (
+                <TabsTrigger key={item.id} value={item.id} icon={item.icon}>
+                  {item.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        ) : null}
+
+        <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
+
+        <DatePicker
+          opened={calendarOpen}
+          value={selectedDate}
+          onChange={setSelectedDate}
+          onClose={() => setCalendarOpen(false)}
+        />
+      </main>
+    </NavigationLevelContext.Provider>
   );
 }
