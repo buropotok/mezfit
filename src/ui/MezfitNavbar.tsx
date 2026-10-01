@@ -41,10 +41,14 @@ export function MezfitNavbar({
       return undefined;
     }
 
-    const frame = window.requestAnimationFrame(() => setEntryPhase('spread'));
+    const hasAnimationFrame = typeof window.requestAnimationFrame === 'function';
+    const frame = hasAnimationFrame
+      ? window.requestAnimationFrame(() => setEntryPhase('spread'))
+      : window.setTimeout(() => setEntryPhase('spread'), 0);
     const timer = window.setTimeout(() => setEntryPhase('settled'), 340);
     return () => {
-      window.cancelAnimationFrame(frame);
+      if (hasAnimationFrame) window.cancelAnimationFrame(frame);
+      else window.clearTimeout(frame);
       window.clearTimeout(timer);
     };
   }, []);
