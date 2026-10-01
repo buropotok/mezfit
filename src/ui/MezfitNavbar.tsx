@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import { Navbar } from 'konsta/react';
 import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
 import type { UiIconName } from './Icon';
@@ -17,7 +17,7 @@ export type MezfitNavbarProps = {
   onMenu: () => void;
   onCalendar: () => void;
   onIdentityClick?: () => void;
-  renderMenuControl?: (control: ReactElement<HTMLButtonElement>) => ReactNode;
+  renderMenuControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
   glassPreset?: GlassPresetName;
   menuDisabled?: boolean;
   calendarDisabled?: boolean;
@@ -74,7 +74,7 @@ export function MezfitNavbar({
             title="Назад"
             aria-label="Назад"
             glassPreset={glassPreset}
-            disabled={level === 1}
+            disabled={level === 1 && entryPhase === 'settled'}
             onClick={onBack}
           />
         </div>
