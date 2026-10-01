@@ -70,7 +70,7 @@ const clientItems: NavigationItem[] = [
   { id: 'history', label: 'История', icon: 'clock' },
   { id: 'progress', label: 'Прогресс', icon: 'chart-dots-2' },
   { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
-  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
+  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary', showFab: false },
 ];
 
 export function useNavigationLevel(): NavigationLevel {
