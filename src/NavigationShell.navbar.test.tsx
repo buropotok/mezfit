@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell } from './NavigationShell';
+import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
   ClientCoachSelectorModal: () => null,
@@ -28,6 +29,12 @@ function getPrimaryTabsRoot(container: HTMLElement): ShadowRoot {
     throw new Error('LiquidGlassIconOnly must expose its production shadow scene');
   }
   return host.shadowRoot;
+}
+
+function expectTabIcon(root: ShadowRoot, label: string, iconName: UiIconName) {
+  const icon = root.querySelector<HTMLElement>(`[role="tab"][aria-label="${label}"] .tab-icon-outline .ui-icon`);
+  expect(icon).not.toBeNull();
+  expect(icon?.style.maskImage).toContain(getUiIconAsset(iconName, 'outline'));
 }
 
 beforeEach(() => {
@@ -92,10 +99,39 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Тренировка"]')).not.toBeNull();
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Аналитика"]')).not.toBeNull();
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Настройки"]')).not.toBeNull();
+    expectTabIcon(tabsRoot, 'Сегодня', 'calendar-event');
+    expectTabIcon(tabsRoot, 'Тренировка', 'barbell');
+    expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
+    expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
+    expectTabIcon(tabsRoot, 'Настройки', 'settings');
     if (!programsTab) throw new Error('Missing Programs liquid glass tab');
 
     fireEvent.click(programsTab);
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
+  });
+
+  it('preserves the approved five coach tab positions and icons', () => {
+    const coachMe = { ...me, roles: ['coach' as const] };
+    const view = render(
+      <NavigationShell
+        me={coachMe}
+        activeRole="coach"
+        destination="clients"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Clients content</div>
+      </NavigationShell>,
+    );
+
+    const tabsRoot = getPrimaryTabsRoot(view.container);
+    expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
+    expectTabIcon(tabsRoot, 'Сегодня', 'calendar-event');
+    expectTabIcon(tabsRoot, 'Клиенты', 'users');
+    expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
+    expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
+    expectTabIcon(tabsRoot, 'Настройки', 'settings');
   });
 
   it('keeps Settings as the fifth selected primary tab with no FAB', () => {
