@@ -1,12 +1,13 @@
 .ui-day-schedule {
   --ui-day-schedule-event-card-color: 132 163 150;
+  --ui-day-schedule-hour-height: 64px;
   position: relative;
   width: 100%;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
   color: var(--ui-color-canvas-text);
-  background: #000;
+  background: #000 url('../assets/day-schedule-background.jpg') center / cover no-repeat;
   font-family: var(--ui-font-family);
 }
 
@@ -73,7 +74,7 @@
 .ui-day-schedule__day-track {
   display: flex;
   width: 300%;
-  min-height: calc(112px * 18);
+  min-height: calc(var(--ui-day-schedule-hour-height) * 18);
   will-change: transform;
 }
 
@@ -81,15 +82,15 @@
   flex: 0 0 33.333333%;
   min-width: 0;
   position: relative;
-  height: calc(112px * 18);
-  background: #000;
+  height: calc(var(--ui-day-schedule-hour-height) * 18);
+  background: transparent;
 }
 
 .ui-day-schedule__timeline {
   --ui-day-schedule-time-column: 62px;
   position: relative;
   width: 100%;
-  height: calc(112px * 18);
+  height: calc(var(--ui-day-schedule-hour-height) * 18);
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
@@ -97,7 +98,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 112px;
+  height: var(--ui-day-schedule-hour-height);
   border-top: 1px solid rgba(255,255,255,.12);
   pointer-events: none;
 }

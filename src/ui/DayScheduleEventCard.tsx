@@ -32,6 +32,9 @@ export function DayScheduleEventCard({
       {detail} · {timeRange}
     </>
   ) : timeRange;
+  const resolvedMedia = !state.compact && media ? (
+    <span className="ui-day-schedule-event-card__media">{media}</span>
+  ) : undefined;
 
   return (
     <div
@@ -39,12 +42,17 @@ export function DayScheduleEventCard({
         'ui-day-schedule-event-card',
         state.lifted ? 'ui-day-schedule-event-card--lifted' : '',
         state.editing ? 'ui-day-schedule-event-card--editing' : '',
+        state.compact ? 'ui-day-schedule-event-card--compact' : '',
         className,
       ].filter(Boolean).join(' ')}
     >
-      <List nested dividers={false}>
+      <List nested dividers={false} className="w-full">
         <ListItem
-          media={media}
+          contentClassName="!ps-[6px] min-h-0"
+          mediaClassName="!py-0 !me-[6px]"
+          innerClassName="!py-0 !pe-[6px] min-h-0 flex flex-col justify-center"
+          titleWrapClassName="!min-h-0"
+          media={resolvedMedia}
           title={title}
           subtitle={subtitle}
         />

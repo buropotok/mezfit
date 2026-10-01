@@ -95,13 +95,13 @@ describe('DaySchedule', () => {
     expect(current?.querySelectorAll('.tab-link')).toHaveLength(7);
   });
 
-  it('uses frosted GlassSurface material behind each week page', () => {
+  it('uses modalTuned GlassSurface material behind each week page', () => {
     const view = renderSchedule();
     const backgrounds = view.container.querySelectorAll<HTMLElement>('.ui-day-schedule__week-background');
     expect(backgrounds).toHaveLength(3);
     for (const background of backgrounds) {
-      expect(background.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
+      expect(background.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
     }
   });
 
@@ -293,8 +293,8 @@ describe('DaySchedule', () => {
 
     fireEvent.pointerDown(frame, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
     fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 230, clientY: 200 });
-    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 330, clientY: 424 });
-    fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 330, clientY: 424 });
+    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 330, clientY: 328 });
+    fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 330, clientY: 328 });
 
     expect(moved).not.toHaveBeenCalled();
     expect(changed).not.toHaveBeenCalled();
@@ -624,6 +624,7 @@ describe('DaySchedule', () => {
   it('keeps lifted content and measures DragOverlay from the event frame', () => {
     const moved = vi.fn();
     const liftedStates: boolean[] = [];
+    const liftedCompactStates: boolean[] = [];
     const view = render(
       <DaySchedule
         date="2026-09-28"
@@ -633,13 +634,14 @@ describe('DaySchedule', () => {
         onEventMove={moved}
         renderEvent={(event, state) => {
           liftedStates.push(state.lifted);
+          if (state.lifted) liftedCompactStates.push(state.compact);
           return <div className={state.lifted ? 'lifted-event-content' : 'event-card-content'}>{event.id}</div>;
         }}
       />,
     );
     const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
     if (!frame) throw new Error('Missing draggable event frame');
-    expect(frame.style.height).toBe('100px');
+    expect(frame.style.height).toBe('62px');
 
     const touch = { identifier: 10, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
     fireEvent.touchStart(frame, { touches: [touch], targetTouches: [touch], changedTouches: [touch] });
@@ -648,11 +650,12 @@ describe('DaySchedule', () => {
     const wrapper = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay-wrapper');
     const overlay = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay');
     expect(wrapper).not.toBeNull();
-    expect(wrapper?.style.height).toBe('100px');
-    expect(overlay?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-    expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
+    expect(wrapper?.style.height).toBe('62px');
+    expect(overlay?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+    expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
     expect(overlay?.querySelector('.lifted-event-content')?.textContent).toBe('a');
     expect(liftedStates).toContain(true);
+    expect(liftedCompactStates).toContain(false);
 
     fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
     act(() => vi.advanceTimersByTime(50));

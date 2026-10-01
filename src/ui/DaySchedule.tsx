@@ -19,6 +19,7 @@ import {
 import type { LocalDate } from './date-picker/datePickerDate';
 import {
   DayPanel,
+  FULL_EVENT_CARD_HEIGHT,
   eventFitsSlot,
   eventGeometry,
   scheduleEventDragId,
@@ -191,7 +192,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           date: entryDate,
           event,
           height: geometry.height,
-          compact: geometry.height < 72,
+          compact: geometry.height < FULL_EVENT_CARD_HEIGHT,
         });
       }
     }
@@ -709,7 +710,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           <div className="ui-day-schedule__week-page">
             <GlassSurface
               className="ui-day-schedule__week-background"
-              preset="frosted"
+              preset="modalTuned"
               shape="capsule"
               wrapContent={false}
               aria-hidden="true"
@@ -719,7 +720,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           <div className="ui-day-schedule__week-page">
             <GlassSurface
               className="ui-day-schedule__week-background"
-              preset="frosted"
+              preset="modalTuned"
               shape="capsule"
               wrapContent={false}
               aria-hidden="true"
@@ -735,7 +736,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           <div className="ui-day-schedule__week-page">
             <GlassSurface
               className="ui-day-schedule__week-background"
-              preset="frosted"
+              preset="modalTuned"
               shape="capsule"
               wrapContent={false}
               aria-hidden="true"
@@ -831,7 +832,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             <GlassSurface
               className="ui-day-schedule__drag-overlay"
               contentClassName="ui-day-schedule__drag-overlay-content"
-              preset="frosted"
+              preset="modalTuned"
               shape={{ radius: 14 }}
             >
               {renderEvent(activeEventEntry.event, {

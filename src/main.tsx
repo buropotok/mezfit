@@ -28,7 +28,10 @@ async function bootstrap(): Promise<void> {
   await loadGlobalTheme();
   root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;
-  if (window.location.pathname === '/ui-kit') {
+  if (window.location.pathname === '/ui-kit-day-schedule.html') {
+    const { DayScheduleCatalog } = await import('./ui/DayScheduleCatalog');
+    content = <DayScheduleCatalog fullScreen />;
+  } else if (window.location.pathname === '/ui-kit') {
     const [{ UiKitPage }, { ThemeVariantsCatalog }, { LiquidGlassIconOnlyCatalog }, { LiquidGlassTextOnlyCatalog }, { DayScheduleCatalog }, { LiquidGlassTabsNoFabCatalog }] = await Promise.all([
       import('./ui/UiKitPage'), import('./ui/ThemeVariantsCatalog'), import('./ui/LiquidGlassIconOnlyCatalog'), import('./ui/LiquidGlassTextOnlyCatalog'), import('./ui/DayScheduleCatalog'), import('./ui/LiquidGlassTabsNoFabCatalog'),
     ]);

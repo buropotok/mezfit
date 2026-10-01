@@ -1,7 +1,9 @@
 .ui-day-schedule-event-card {
+  display: flex;
   width: 100%;
   height: 100%;
   min-height: 0;
+  align-items: center;
   overflow: hidden;
   border-radius: 14px;
   background: rgb(var(--ui-day-schedule-event-card-color, 132 163 150) / 0.58);
@@ -13,4 +15,17 @@
 
 .ui-day-schedule-event-card--editing {
   background: rgb(var(--ui-day-schedule-event-card-color, 132 163 150) / 1);
+}
+
+.ui-day-schedule-event-card__media {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+  place-items: center;
+}
+
+.ui-day-schedule-event-card__media > .ui-avatar {
+  width: 50px;
+  height: 50px;
 }

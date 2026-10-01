@@ -4,7 +4,9 @@ import type { LocalDate } from '../date-picker/datePickerDate';
 
 export const START_HOUR = 6;
 export const END_HOUR = 24;
-export const HOUR_HEIGHT = 112;
+export const HOUR_HEIGHT = 64;
+export const EVENT_EDGE_INSET = 1;
+export const FULL_EVENT_CARD_HEIGHT = HOUR_HEIGHT - EVENT_EDGE_INSET * 2;
 export const DRAG_SNAP_MINUTES = 15;
 
 export type DayScheduleEventBase = {
@@ -136,7 +138,7 @@ export function eventGeometry(event: DayScheduleEventBase): { top: number; heigh
   const end = Math.min(END_HOUR * 60, event.startMinutes + event.durationMinutes);
   if (end <= start) return null;
   const slotHeight = (end - start) / 60 * HOUR_HEIGHT;
-  const inset = Math.min(6, slotHeight / 4);
+  const inset = Math.min(EVENT_EDGE_INSET, slotHeight / 4);
   return { top: yForMinutes(start) + inset, height: slotHeight - 2 * inset };
 }
 
@@ -265,7 +267,7 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
       data-event-date={date}
     >
       {renderEvent(event, {
-        compact: height < 72,
+        compact: height < FULL_EVENT_CARD_HEIGHT,
         lifted: false,
         editing: true,
         height,
@@ -349,7 +351,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
           if (!geometry) return null;
           const { top, height } = geometry;
           const content = renderEvent(event, {
-            compact: height < 72,
+            compact: height < FULL_EVENT_CARD_HEIGHT,
             lifted: false,
             editing: false,
             height,
