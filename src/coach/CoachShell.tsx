@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { List as KonstaList, ListGroup, ListItem as KonstaListItem } from 'konsta/react';
 import {
   createClientInvite,
@@ -8,8 +8,8 @@ import {
   type CreateCoachProgramOwner,
   type ProgramListItem,
 } from '../api';
-import type { AppDestination, NavigationContext } from '../NavigationShell';
-import { Avatar, Button, FloatingActionButton, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
+import { useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
+import { Avatar, Button, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
@@ -27,6 +27,8 @@ const tabs: Array<{ id: ClientTab; label: string }> = [
 ];
 
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
+  today: { title: 'Сегодня', text: 'Здесь появится сводка тренера на сегодня: тренировки, задачи и ближайшие события.' },
+  analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика клиентов, тренировок и нагрузки.' },
   calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
   settings: { title: 'Настройки', text: 'Системные настройки будут добавляться отдельными задачами.' },
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
@@ -136,6 +138,13 @@ function ClientDirectory({
   presentation?: 'selection' | 'contacts';
 }) {
   const contactGroups = presentation === 'contacts' && clients ? groupClientsForContacts(clients) : [];
+  const floatingAction = useMemo(() => onAdd ? {
+    label: 'Добавить клиента',
+    onClick: onAdd,
+    disabled: busy,
+    content: <AddClientIcon />,
+  } : null, [onAdd, busy]);
+  useNavigationFloatingAction('clients', floatingAction);
 
   return (
     <section className="client-directory-surface" aria-label="Список клиентов">
@@ -195,11 +204,6 @@ function ClientDirectory({
         )}
       </div>
 
-      {onAdd ? (
-        <FloatingActionButton label="Добавить клиента" onClick={onAdd} disabled={busy}>
-          <AddClientIcon />
-        </FloatingActionButton>
-      ) : null}
     </section>
   );
 }
@@ -236,6 +240,25 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       setMessage(error instanceof Error ? error.message : 'Не удалось загрузить клиентов');
     }
   }, [initData]);
+
+  const createInvite = useCallback(async () => {
+    setBusy(true);
+    setInviteError('');
+    setInviteCopyError('');
+    try {
+      const result = await createClientInvite(initData);
+      setInviteUrl(result.telegramUrl);
+    } catch (error) {
+      setInviteError(error instanceof Error ? error.message : 'Не удалось создать приглашение');
+    } finally {
+      setBusy(false);
+    }
+  }, [initData]);
+
+  const openProgramCreation = useCallback(() => {
+    setProgramCreateError('');
+    setProgramDraft({ name: '', owner: null });
+  }, []);
 
   useEffect(() => {
     void loadClients();
@@ -356,10 +379,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         creationBusy={programCreateBusy}
         creationError={programCreateError}
         refreshKey={programRefreshKey}
-        onOpenCreation={() => {
-          setProgramCreateError('');
-          setProgramDraft({ name: '', owner: null });
-        }}
+        onOpenCreation={openProgramCreation}
         onCancelCreation={() => {
           if (!programCreateBusy) {
             setProgramDraft(null);
@@ -384,20 +404,6 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const closeInvite = () => {
     setInviteUrl(null);
     setInviteCopyError('');
-  };
-
-  const createInvite = async () => {
-    setBusy(true);
-    setInviteError('');
-    setInviteCopyError('');
-    try {
-      const result = await createClientInvite(initData);
-      setInviteUrl(result.telegramUrl);
-    } catch (error) {
-      setInviteError(error instanceof Error ? error.message : 'Не удалось создать приглашение');
-    } finally {
-      setBusy(false);
-    }
   };
 
   const copyInvite = async () => {
@@ -425,7 +431,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         error={message}
         onRetry={() => { void loadClients(); }}
         onSelect={setSelectedClient}
-        onAdd={() => { void createInvite(); }}
+        onAdd={createInvite}
         busy={busy}
         presentation="contacts"
       />

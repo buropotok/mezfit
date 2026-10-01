@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavigationShell } from './NavigationShell';
+import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
+import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
   ClientCoachSelectorModal: () => null,
@@ -28,6 +29,23 @@ function getPrimaryTabsRoot(container: HTMLElement): ShadowRoot {
     throw new Error('LiquidGlassIconOnly must expose its production shadow scene');
   }
   return host.shadowRoot;
+}
+
+function expectTabIcon(root: ShadowRoot, label: string, iconName: UiIconName) {
+  const icon = root.querySelector<HTMLElement>(`[role="tab"][aria-label="${label}"] .tab-icon-outline .ui-icon`);
+  expect(icon).not.toBeNull();
+  expect(icon?.style.maskImage).toContain(getUiIconAsset(iconName, 'outline'));
+}
+
+const programFloatingAction = {
+  label: 'Создать программу',
+  onClick: vi.fn(),
+  content: <span>＋</span>,
+};
+
+function ProgramFloatingActionRegistration() {
+  useNavigationFloatingAction('programs', programFloatingAction);
+  return null;
 }
 
 beforeEach(() => {
@@ -86,15 +104,72 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(identity?.getAttribute('aria-label')).toBe('Сегодня');
     const tabsRoot = getPrimaryTabsRoot(view.container);
     const todayTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Сегодня"]');
-    const programsTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Программа"]');
+    const programsTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Программы"]');
     expect(todayTab?.getAttribute('aria-selected')).toBe('true');
-    if (!programsTab) throw new Error('Missing Program liquid glass tab');
+    expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
+    expect(tabsRoot.querySelector('[role="tab"][aria-label="Тренировка"]')).not.toBeNull();
+    expect(tabsRoot.querySelector('[role="tab"][aria-label="Аналитика"]')).not.toBeNull();
+    expect(tabsRoot.querySelector('[role="tab"][aria-label="Настройки"]')).not.toBeNull();
+    expectTabIcon(tabsRoot, 'Сегодня', 'calendar-event');
+    expectTabIcon(tabsRoot, 'Тренировка', 'barbell');
+    expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
+    expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
+    expectTabIcon(tabsRoot, 'Настройки', 'settings');
+    if (!programsTab) throw new Error('Missing Programs liquid glass tab');
 
     fireEvent.click(programsTab);
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
   });
 
-  it('keeps bottom tabs visible but unselected for a secondary level-one destination', () => {
+  it('preserves the approved five coach tab positions and icons', () => {
+    const coachMe = { ...me, roles: ['coach' as const] };
+    const view = render(
+      <NavigationShell
+        me={coachMe}
+        activeRole="coach"
+        destination="clients"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Clients content</div>
+      </NavigationShell>,
+    );
+
+    const tabsRoot = getPrimaryTabsRoot(view.container);
+    expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
+    expectTabIcon(tabsRoot, 'Сегодня', 'calendar-event');
+    expectTabIcon(tabsRoot, 'Клиенты', 'users');
+    expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
+    expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
+    expectTabIcon(tabsRoot, 'Настройки', 'settings');
+  });
+
+  it('renders a page-owned primary action through the tab-bar FAB slot', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="programs"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+        floatingAction={{
+          label: 'Открыть тренировку',
+          onClick: vi.fn(),
+          content: <span>W</span>,
+        }}
+      >
+        <ProgramFloatingActionRegistration />
+      </NavigationShell>,
+    );
+
+    expect(view.getByRole('button', { name: 'Создать программу' })).not.toBeNull();
+    expect(view.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
+    expect(view.container.querySelector('[data-liquid-glass-fab-slot]')).not.toBeNull();
+  });
+
+  it('keeps Settings as the fifth selected primary tab with no FAB', () => {
     const view = render(
       <NavigationShell
         me={me}
@@ -103,15 +178,21 @@ describe('NavigationShell MezfitNavbar integration', () => {
         context={null}
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
+        floatingAction={{
+          label: 'Открыть тренировку',
+          onClick: vi.fn(),
+          content: <span>W</span>,
+        }}
       >
         <div>Settings content</div>
       </NavigationShell>,
     );
 
     const tabsRoot = getPrimaryTabsRoot(view.container);
-    expect([...tabsRoot.querySelectorAll('[role="tab"]')].some(tab => tab.getAttribute('aria-selected') === 'true')).toBe(false);
-    expect((tabsRoot.getElementById('selector-track') as HTMLElement | null)?.style.visibility).toBe('hidden');
-    expect((tabsRoot.getElementById('lens-track') as HTMLElement | null)?.style.visibility).toBe('hidden');
+    const settingsTab = tabsRoot.querySelector('[role="tab"][aria-label="Настройки"]');
+    expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
+    expect(settingsTab?.getAttribute('aria-selected')).toBe('true');
+    expect(view.container.querySelector('[data-liquid-glass-fab-slot]')).toBeNull();
   });
 
   it('allows level-one pages to provide contextual identity and menu actions without creating Back history', () => {
