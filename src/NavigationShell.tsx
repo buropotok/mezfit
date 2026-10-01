@@ -1,9 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react';
 import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
 import {
   DatePicker,
+  FloatingActionButton,
   Menu,
   MenuDivider,
   MenuItem,
@@ -35,6 +36,20 @@ export interface NavigationMenuAction {
   disabled?: boolean;
 }
 
+export interface NavigationFloatingAction {
+  label: string;
+  onClick: () => void;
+  content: ReactNode;
+  placement?: 'left' | 'right';
+  disabled?: boolean;
+  isShown?: boolean;
+}
+
+type RegisteredFloatingAction = {
+  destination: AppDestination;
+  action: NavigationFloatingAction;
+};
+
 export interface NavigationContext {
   level?: NavigationLevel;
   title: string;
@@ -52,6 +67,7 @@ interface NavigationItem {
 }
 
 const NavigationLevelContext = createContext<NavigationLevel>(1);
+const NavigationFloatingActionContext = createContext<Dispatch<SetStateAction<RegisteredFloatingAction | null>> | null>(null);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
 const coachItems: NavigationItem[] = [
@@ -75,6 +91,24 @@ const clientItems: NavigationItem[] = [
 
 export function useNavigationLevel(): NavigationLevel {
   return useContext(NavigationLevelContext);
+}
+
+export function useNavigationFloatingAction(destination: AppDestination, action: NavigationFloatingAction | null): void {
+  const setFloatingAction = useContext(NavigationFloatingActionContext);
+
+  useLayoutEffect(() => {
+    if (!setFloatingAction) return undefined;
+    if (!action) {
+      setFloatingAction((current) => current?.destination === destination ? null : current);
+      return undefined;
+    }
+
+    const registration: RegisteredFloatingAction = { destination, action };
+    setFloatingAction(registration);
+    return () => {
+      setFloatingAction((current) => current === registration ? null : current);
+    };
+  }, [action, destination, setFloatingAction]);
 }
 
 function itemsForRole(role: Role): NavigationItem[] {
@@ -116,7 +150,7 @@ interface Props {
   context: NavigationContext | null;
   onDestinationChange: (destination: AppDestination) => void;
   onRoleSwitch: (role: Role) => void;
-  floatingAction?: ReactNode;
+  floatingAction?: NavigationFloatingAction | null;
   children: ReactNode;
 }
 
@@ -134,6 +168,7 @@ export function NavigationShell({
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<LocalDate>(todayLocalDate);
+  const [registeredFloatingAction, setRegisteredFloatingAction] = useState<RegisteredFloatingAction | null>(null);
   const nestedContext = context && (context.level ?? 2) === 2 ? context : null;
   const contextRef = useRef(nestedContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
@@ -143,6 +178,8 @@ export function NavigationShell({
   const secondaryItems = items.filter((item) => item.section === 'secondary');
   const currentItem = itemForDestination(activeRole, destination);
   const primaryDestination = primaryItems.some((item) => item.id === destination) ? destination : null;
+  const pageFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
+  const resolvedFloatingAction = pageFloatingAction ?? floatingAction ?? null;
   const level: NavigationLevel = nestedContext ? 2 : 1;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
     title: context?.title ?? currentItem.label,
@@ -295,8 +332,9 @@ export function NavigationShell({
   );
 
   return (
-    <NavigationLevelContext.Provider value={level}>
-      <main className="app-shell navigation-shell">
+    <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
+      <NavigationLevelContext.Provider value={level}>
+        <main className="app-shell navigation-shell">
         <div className="navigation-navbar-frame">
           <MezfitNavbar
             level={level}
@@ -323,7 +361,17 @@ export function NavigationShell({
             }))}
             value={primaryDestination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}
-            fab={currentItem.showFab === false ? undefined : floatingAction}
+            fab={currentItem.showFab === false || !resolvedFloatingAction ? undefined : (
+              <FloatingActionButton
+                label={resolvedFloatingAction.label}
+                placement={resolvedFloatingAction.placement}
+                disabled={resolvedFloatingAction.disabled}
+                isShown={resolvedFloatingAction.isShown}
+                onClick={resolvedFloatingAction.onClick}
+              >
+                {resolvedFloatingAction.content}
+              </FloatingActionButton>
+            )}
           />
         </div>
 
@@ -335,7 +383,8 @@ export function NavigationShell({
           onChange={setSelectedDate}
           onClose={() => setCalendarOpen(false)}
         />
-      </main>
-    </NavigationLevelContext.Provider>
+        </main>
+      </NavigationLevelContext.Provider>
+    </NavigationFloatingActionContext.Provider>
   );
 }
