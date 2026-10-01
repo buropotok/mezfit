@@ -188,12 +188,14 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
   events,
   renderEvent,
   onCommit,
+  onDeleteRequest,
 }: {
   date: LocalDate;
   event: TEvent;
   events: readonly TEvent[];
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
   onCommit: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
+  onDeleteRequest?: (event: TEvent) => void;
 }) {
   const [draft, setDraft] = useState({
     startMinutes: event.startMinutes,
@@ -292,6 +294,20 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
         onPointerUp={pointerEvent => finishResize(pointerEvent)}
         onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
       />
+      {onDeleteRequest ? (
+        <button
+          type="button"
+          className="ui-day-schedule__delete-button"
+          aria-label="Удалить карточку"
+          onClick={(clickEvent) => {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+            onDeleteRequest(event);
+          }}
+        >
+          <span className="ui-day-schedule__delete-icon" aria-hidden="true" />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -305,6 +321,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   draggableEvents = false,
   editingEventId,
   onEventResize,
+  onEventDeleteRequest,
 }: {
   date: LocalDate;
   events: readonly TEvent[];
@@ -314,6 +331,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   draggableEvents?: boolean;
   editingEventId?: string;
   onEventResize?: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
+  onEventDeleteRequest?: (event: TEvent) => void;
 }) {
   const showNow = date === today && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60;
 
@@ -342,6 +360,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
                 events={events}
                 renderEvent={renderEvent}
                 onCommit={onEventResize}
+                onDeleteRequest={onEventDeleteRequest}
                 key={event.id}
               />
             );
