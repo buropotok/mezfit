@@ -16,15 +16,17 @@
 }
 
 .ui-mezfit-navbar__identity {
-  left: 50%;
+  left: calc(50% - 1.375rem);
   z-index: 2;
-  max-width: calc(100% - 11rem);
+  width: 224px;
+  min-width: 224px;
+  max-width: 224px;
   transform: translateX(-50%);
 }
 
 
 .ui-mezfit-navbar__side {
-  left: 50%;
+  left: calc(50% - 1.375rem);
   z-index: 1;
   transform: translateX(-50%);
 }
