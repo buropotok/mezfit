@@ -63,6 +63,15 @@ function renderSchedule(date: LocalDate = '2026-09-28') {
 }
 
 describe('DaySchedule', () => {
+  it('renders a full 00:00–24:00 timeline while keeping the initial view scrollable', () => {
+    const view = renderSchedule();
+    const panel = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-panel[data-date="2026-09-28"]');
+    const labels = panel?.querySelectorAll<HTMLElement>('.ui-day-schedule__hour-label');
+    expect(labels).toHaveLength(24);
+    expect(labels?.[0]?.textContent).toBe('00:00');
+    expect(labels?.[23]?.textContent).toBe('23:00');
+  });
+
   it('keeps adjacent week previews neutral and outside the accessible controls', () => {
     const view = renderSchedule('2026-10-04');
     const hosts = view.container.querySelectorAll('.ui-day-schedule__week-scene');

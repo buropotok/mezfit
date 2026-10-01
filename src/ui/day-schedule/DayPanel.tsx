@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, ty
 import { useDraggable } from '@dnd-kit/core';
 import type { LocalDate } from '../date-picker/datePickerDate';
 
-export const START_HOUR = 6;
+export const START_HOUR = 0;
 export const END_HOUR = 24;
 export const HOUR_HEIGHT = 64;
 export const EVENT_EDGE_INSET = 1;
@@ -131,7 +131,7 @@ export function resizedEventTiming(
   };
 }
 
-/** Clip to the displayed 06:00–24:00 range; visual size never exceeds time. */
+/** Clip to the displayed 00:00–24:00 range; visual size never exceeds time. */
 export function eventGeometry(event: DayScheduleEventBase): { top: number; height: number } | null {
   if (!Number.isFinite(event.startMinutes) || !Number.isFinite(event.durationMinutes) || event.durationMinutes <= 0) return null;
   const start = Math.max(START_HOUR * 60, event.startMinutes);
