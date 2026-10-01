@@ -300,6 +300,7 @@ export function NavigationShell({
             onMenu={() => setMenuOpen(true)}
             onCalendar={() => setCalendarOpen(true)}
             renderMenuControl={renderMenuControl}
+            menuDisabled={menuOpen}
           />
         </div>
 
