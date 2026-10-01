@@ -94,6 +94,26 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
   });
 
+  it('keeps bottom tabs visible but unselected for a secondary level-one destination', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="settings"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Settings content</div>
+      </NavigationShell>,
+    );
+
+    const tabsRoot = getPrimaryTabsRoot(view.container);
+    expect([...tabsRoot.querySelectorAll('[role="tab"]')].some(tab => tab.getAttribute('aria-selected') === 'true')).toBe(false);
+    expect((tabsRoot.getElementById('selector-track') as HTMLElement | null)?.style.visibility).toBe('hidden');
+    expect((tabsRoot.getElementById('lens-track') as HTMLElement | null)?.style.visibility).toBe('hidden');
+  });
+
   it('allows level-one pages to provide contextual identity and menu actions without creating Back history', () => {
     const pageAction = vi.fn();
     const view = render(
