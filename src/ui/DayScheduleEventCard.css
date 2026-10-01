@@ -30,7 +30,3 @@
   width: 50px;
   height: 50px;
 }
-
-.ui-day-schedule-event-card--compact .ui-day-schedule-event-card__media {
-  display: none;
-}
