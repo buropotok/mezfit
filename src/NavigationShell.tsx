@@ -227,13 +227,15 @@ export function NavigationShell({
   return (
     <NavigationLevelContext.Provider value={level}>
       <main className="app-shell navigation-shell">
-        <MezfitNavbar
-          level={level}
-          identity={identity}
-          onBack={requestBack}
-          onMenu={() => setMenuOpen(true)}
-          onCalendar={() => setCalendarOpen(true)}
-        />
+        <div className="navigation-navbar-frame">
+          <MezfitNavbar
+            level={level}
+            identity={identity}
+            onBack={requestBack}
+            onMenu={() => setMenuOpen(true)}
+            onCalendar={() => setCalendarOpen(true)}
+          />
+        </div>
 
         <div className="navigation-page-menu-anchor" aria-hidden="true">
           <Menu
