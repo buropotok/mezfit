@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
@@ -223,6 +223,71 @@ export function NavigationShell({
 
   const contextualMenuActions = context?.menuActions ?? [];
   const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
+  const renderMenuControl = (control: ReactElement<HTMLButtonElement>) => (
+    <Menu
+      isOpen={menuOpen}
+      onOpenChange={(open) => {
+        if (!open) setMenuOpen(false);
+      }}
+      label="Меню страницы"
+      className="navigation-main-menu"
+      align="end"
+      trigger={control}
+    >
+      {contextualMenuActions.map((action) => (
+        <MenuItem
+          key={action.id}
+          disabled={action.disabled}
+          onSelect={action.onSelect}
+        >
+          {action.label}
+        </MenuItem>
+      ))}
+
+      {contextualMenuActions.length > 0 && hasSystemMenu ? <MenuDivider /> : null}
+
+      {me.roles.length > 1 ? (
+        <>
+          {me.roles.map((role) => (
+            <MenuItem
+              key={role}
+              active={role === activeRole}
+              onSelect={() => switchRole(role)}
+              aria-checked={role === activeRole}
+            >
+              {roleLabel(role)}
+            </MenuItem>
+          ))}
+          <MenuDivider />
+        </>
+      ) : null}
+
+      {activeRole === 'client' ? (
+        <MenuItem
+          leading={<img className="navigation-menu-icon" src={userIconUrl} alt="" />}
+          onSelect={() => {
+            setMenuOpen(false);
+            setCoachSelectorOpen(true);
+          }}
+        >
+          Тренер
+        </MenuItem>
+      ) : null}
+
+      {activeRole === 'client' && secondaryItems.length > 0 ? <MenuDivider /> : null}
+
+      {secondaryItems.map((item) => (
+        <MenuItem
+          key={item.id}
+          active={destination === item.id}
+          onSelect={() => chooseDestination(item.id)}
+          aria-current={destination === item.id ? 'page' : undefined}
+        >
+          {item.label}
+        </MenuItem>
+      ))}
+    </Menu>
+  );
 
   return (
     <NavigationLevelContext.Provider value={level}>
@@ -234,71 +299,8 @@ export function NavigationShell({
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
             onCalendar={() => setCalendarOpen(true)}
+            renderMenuControl={renderMenuControl}
           />
-        </div>
-
-        <div className="navigation-page-menu-anchor" aria-hidden="true">
-          <Menu
-            isOpen={menuOpen}
-            onOpenChange={setMenuOpen}
-            label="Меню страницы"
-            className="navigation-main-menu"
-            align="end"
-            trigger={<button className="navigation-page-menu-anchor__trigger" type="button" tabIndex={-1} aria-label="Якорь меню страницы" />}
-          >
-            {contextualMenuActions.map((action) => (
-              <MenuItem
-                key={action.id}
-                disabled={action.disabled}
-                onSelect={action.onSelect}
-              >
-                {action.label}
-              </MenuItem>
-            ))}
-
-            {contextualMenuActions.length > 0 && hasSystemMenu ? <MenuDivider /> : null}
-
-            {me.roles.length > 1 ? (
-              <>
-                {me.roles.map((role) => (
-                  <MenuItem
-                    key={role}
-                    active={role === activeRole}
-                    onSelect={() => switchRole(role)}
-                    aria-checked={role === activeRole}
-                  >
-                    {roleLabel(role)}
-                  </MenuItem>
-                ))}
-                <MenuDivider />
-              </>
-            ) : null}
-
-            {activeRole === 'client' ? (
-              <MenuItem
-                leading={<img className="navigation-menu-icon" src={userIconUrl} alt="" />}
-                onSelect={() => {
-                  setMenuOpen(false);
-                  setCoachSelectorOpen(true);
-                }}
-              >
-                Тренер
-              </MenuItem>
-            ) : null}
-
-            {activeRole === 'client' && secondaryItems.length > 0 ? <MenuDivider /> : null}
-
-            {secondaryItems.map((item) => (
-              <MenuItem
-                key={item.id}
-                active={destination === item.id}
-                onSelect={() => chooseDestination(item.id)}
-                aria-current={destination === item.id ? 'page' : undefined}
-              >
-                {item.label}
-              </MenuItem>
-            ))}
-          </Menu>
         </div>
 
         <section className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
