@@ -25,6 +25,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
   const [empty, setEmpty] = useState(false);
   const [lastChange, setLastChange] = useState<LocalDate | null>(null);
   const [eventOverrides, setEventOverrides] = useState<Record<string, { date: LocalDate; startMinutes: number; durationMinutes: number }>>({});
+  const [deletedEventIds, setDeletedEventIds] = useState<ReadonlySet<string>>(() => new Set());
   const value = getDayScheduleValue(date);
   const eventsByDate = useMemo(() => {
     const days = Array.from({ length: 15 }, (_, index) => addDays(date, index - 7));
@@ -33,6 +34,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
 
     for (const sourceDate of days) {
       for (const event of demoDay(sourceDate)) {
+        if (deletedEventIds.has(event.id)) continue;
         const override = eventOverrides[event.id];
         const targetDate = override?.date ?? sourceDate;
         const targetEvents = grouped.get(targetDate) ?? [];
@@ -45,7 +47,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
       }
     }
     return Object.fromEntries(grouped);
-  }, [date, empty, eventOverrides]);
+  }, [date, deletedEventIds, empty, eventOverrides]);
 
   const schedule = (
     <DaySchedule
@@ -67,6 +69,11 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
         ...current,
         [eventId]: { date: eventDate, startMinutes, durationMinutes },
       }))}
+      onEventDelete={({ eventId }) => setDeletedEventIds(current => {
+        const next = new Set(current);
+        next.add(eventId);
+        return next;
+      })}
       renderEvent={(event, state) => (
         <DayScheduleEventCard
           title={event.title}
@@ -111,6 +118,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
           <dt>renderEvent(event, state)</dt><dd>Рендер события внутри рассчитанной рамки. state содержит compact, lifted, editing, height, startMinutes и durationMinutes; поэтому normal, lifted и resize-состояния используют одинаковый контент и типографику.</dd>
           <dt>onEventMove(move)?</dt><dd>Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут. Плитка у правого края перелистывает на следующий день, у левого — на предыдущий; после каждого перехода действует короткая пауза, а удержание в edge-zone продолжает перелистывание. Недельная линза следует за текущим DnD-днём. Если целевой слот пересекается с другим событием, drop отклоняется.</dd>
           <dt>onEventResize(resize)?</dt><dd>После успешного DnD карточка входит в resize-режим. Верхняя правая точка меняет начало, нижняя левая — окончание. Resize работает по сетке 15 минут и не допускает пересечений с соседними событиями.</dd>
+          <dt>onEventDelete(delete)?</dt><dd>Добавляет в режим редактирования кнопку удаления. После подтверждения через MezfitDialog вызывает callback с eventId и date; удаление данных остаётся ответственностью родителя.</dd>
           <dt>today?: LocalDate</dt><dd>Дата для индикатора текущего времени; по умолчанию локальная дата устройства.</dd>
           <dt>className?: string</dt><dd>Класс контейнера, например для высоты под внешним Navbar. По умолчанию высота равна viewport.</dd>
         </dl>
@@ -119,8 +127,8 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
           <dt>onDateChange(nextDate)</dt><dd>Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</dd>
           <dt>getDayScheduleValue(date, today?)</dt><dd>Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</dd>
         </dl>
-        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 64 px/час. Фон календаря использует фоновое изображение DaySchedule. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; resize-состояние делает карточку непрозрачной. Тап вне выбранной карточки завершает resize-режим.</p>
-        <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} state={state} />\n  )}\n/>`}</pre>
+        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 64 px/час. Фон календаря использует фоновое изображение DaySchedule. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; режим редактирования делает карточку непрозрачной, показывает resize-точки и кнопку удаления. Тап вне выбранной карточки завершает режим редактирования.</p>
+        <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  onEventDelete={handleEventDelete}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} state={state} />\n  )}\n/>`}</pre>
       </div>
     </section>
   );
