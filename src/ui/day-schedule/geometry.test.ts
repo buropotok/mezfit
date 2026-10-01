@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { EVENT_EDGE_INSET, HOUR_HEIGHT, eventFitsSlot, eventGeometry, resizedEventTiming, startMinutesAfterDrag, yForMinutes } from './DayPanel';
+import { EVENT_EDGE_INSET, HOUR_HEIGHT, START_HOUR, eventFitsSlot, eventGeometry, resizedEventTiming, startMinutesAfterDrag, yForMinutes } from './DayPanel';
 import { addDays, dayIndex, startOfWeek } from './dateMath';
 
 describe('schedule geometry and date boundaries', () => {
   it('uses the compact 64px hour scale with symmetric 1px card insets', () => {
+    expect(START_HOUR).toBe(0);
     expect(HOUR_HEIGHT).toBe(64);
     expect(EVENT_EDGE_INSET).toBe(1);
     expect(eventGeometry({ id: 'hour', startMinutes: 600, durationMinutes: 60 })).toEqual({
@@ -18,8 +19,14 @@ describe('schedule geometry and date boundaries', () => {
     expect(a).not.toBeNull(); expect(b).not.toBeNull();
     expect(a!.top + a!.height).toBeLessThan(b!.top);
   });
-  it('clips events at the display boundaries and ignores invalid geometry', () => {
-    expect(eventGeometry({ id: 'a', startMinutes: 300, durationMinutes: 30 })).toBeNull();
+  it('renders early-morning events, clips at day boundaries, and ignores invalid geometry', () => {
+    expect(eventGeometry({ id: 'early', startMinutes: 300, durationMinutes: 30 })).toEqual({
+      top: yForMinutes(300) + 1,
+      height: 30,
+    });
+    expect(eventGeometry({ id: 'before-day', startMinutes: -60, durationMinutes: 30 })).toBeNull();
+    const midnightCrossing = eventGeometry({ id: 'midnight-crossing', startMinutes: -30, durationMinutes: 60 });
+    expect(midnightCrossing).toEqual({ top: 1, height: 30 });
     const crossing = eventGeometry({ id: 'a', startMinutes: 1430, durationMinutes: 60 });
     expect(crossing!.top + crossing!.height).toBeLessThanOrEqual(yForMinutes(1440));
     expect(eventGeometry({ id: 'a', startMinutes: NaN, durationMinutes: 30 })).toBeNull();
@@ -29,7 +36,7 @@ describe('schedule geometry and date boundaries', () => {
     expect(startMinutesAfterDrag(600, 60, 20)).toBe(615);
     expect(startMinutesAfterDrag(607, 60, 12)).toBe(615);
     expect(startMinutesAfterDrag(607, 60, 28)).toBe(630);
-    expect(startMinutesAfterDrag(600, 60, -1000)).toBe(360);
+    expect(startMinutesAfterDrag(600, 60, -1000)).toBe(0);
     expect(startMinutesAfterDrag(1380, 60, 1000)).toBe(1380);
   });
 
@@ -37,9 +44,9 @@ describe('schedule geometry and date boundaries', () => {
     expect(startMinutesAfterDrag(1430, 60, 0)).toBe(1430);
     expect(startMinutesAfterDrag(1430, 60, 40)).toBe(1430);
     expect(startMinutesAfterDrag(1430, 60, -40)).toBe(1395);
-    expect(startMinutesAfterDrag(330, 60, 0)).toBe(330);
-    expect(startMinutesAfterDrag(330, 60, -24)).toBe(330);
-    expect(startMinutesAfterDrag(330, 60, 24)).toBe(360);
+    expect(startMinutesAfterDrag(0, 60, 0)).toBe(0);
+    expect(startMinutesAfterDrag(0, 60, -24)).toBe(0);
+    expect(startMinutesAfterDrag(0, 60, 24)).toBe(30);
   });
 
   it('keeps the bottom drag boundary on the quarter-hour grid', () => {
