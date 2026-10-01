@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavigationShell } from './NavigationShell';
+import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
@@ -35,6 +35,17 @@ function expectTabIcon(root: ShadowRoot, label: string, iconName: UiIconName) {
   const icon = root.querySelector<HTMLElement>(`[role="tab"][aria-label="${label}"] .tab-icon-outline .ui-icon`);
   expect(icon).not.toBeNull();
   expect(icon?.style.maskImage).toContain(getUiIconAsset(iconName, 'outline'));
+}
+
+const programFloatingAction = {
+  label: 'Создать программу',
+  onClick: vi.fn(),
+  content: <span>＋</span>,
+};
+
+function ProgramFloatingActionRegistration() {
+  useNavigationFloatingAction('programs', programFloatingAction);
+  return null;
 }
 
 beforeEach(() => {
@@ -134,6 +145,30 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expectTabIcon(tabsRoot, 'Настройки', 'settings');
   });
 
+  it('renders a page-owned primary action through the tab-bar FAB slot', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="programs"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+        floatingAction={{
+          label: 'Открыть тренировку',
+          onClick: vi.fn(),
+          content: <span>W</span>,
+        }}
+      >
+        <ProgramFloatingActionRegistration />
+      </NavigationShell>,
+    );
+
+    expect(view.getByRole('button', { name: 'Создать программу' })).not.toBeNull();
+    expect(view.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
+    expect(view.container.querySelector('[data-liquid-glass-fab-slot]')).not.toBeNull();
+  });
+
   it('keeps Settings as the fifth selected primary tab with no FAB', () => {
     const view = render(
       <NavigationShell
@@ -143,6 +178,11 @@ describe('NavigationShell MezfitNavbar integration', () => {
         context={null}
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
+        floatingAction={{
+          label: 'Открыть тренировку',
+          onClick: vi.fn(),
+          content: <span>W</span>,
+        }}
       >
         <div>Settings content</div>
       </NavigationShell>,
