@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
@@ -228,7 +228,7 @@ export function NavigationShell({
 
   const contextualMenuActions = context?.menuActions ?? [];
   const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
-  const renderMenuControl = (control: ReactElement<HTMLButtonElement>) => (
+  const renderMenuControl = (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => (
     <Menu
       isOpen={menuOpen}
       onOpenChange={(open) => {
