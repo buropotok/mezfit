@@ -39,7 +39,7 @@ export function WorkoutExerciseSelectionSheet({
 
   const requestBack = useCallback(() => {
     if (saving) return;
-    if (navigationContext) navigationContext.onBack();
+    if (navigationContext?.onBack) navigationContext.onBack();
     else onClose();
   }, [navigationContext, onClose, saving]);
 
