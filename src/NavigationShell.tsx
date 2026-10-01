@@ -142,6 +142,7 @@ export function NavigationShell({
   const primaryItems = items.filter((item) => item.section !== 'secondary');
   const secondaryItems = items.filter((item) => item.section === 'secondary');
   const currentItem = itemForDestination(activeRole, destination);
+  const primaryDestination = primaryItems.some((item) => item.id === destination) ? destination : null;
   const level: NavigationLevel = nestedContext ? 2 : 1;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
     title: context?.title ?? currentItem.label,
@@ -320,7 +321,7 @@ export function NavigationShell({
               label: item.label,
               icon: item.icon,
             }))}
-            value={destination}
+            value={primaryDestination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}
             fab={currentItem.showFab === false ? undefined : floatingAction}
           />
