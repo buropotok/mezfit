@@ -32,6 +32,7 @@ import { addDays, currentLocalDate, dayIndex, sameWeek, startOfWeek, titleForDat
 import { WeekScene, type WeekSceneHandle } from './day-schedule/WeekScene';
 import { useScheduleClock } from './day-schedule/useScheduleClock';
 import { GlassSurface } from './GlassSurface';
+import { MezfitDialog, MezfitDialogButton } from './konsta-mezfit';
 import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, SCHEDULE_TOUCH_ACTIVATION_TOLERANCE, UiPointerSensor, UiScheduleTouchSensor } from './dndSensors';
 import './day-schedule.css';
 
@@ -77,6 +78,11 @@ export type DayScheduleEventResize = {
   durationMinutes: number;
 };
 
+export type DayScheduleEventDelete = {
+  eventId: string;
+  date: LocalDate;
+};
+
 export type DayScheduleProps<TEvent extends DayScheduleEvent = DayScheduleEvent> = {
   date: LocalDate;
   eventsByDate: Readonly<Record<LocalDate, readonly TEvent[]>>;
@@ -84,6 +90,7 @@ export type DayScheduleProps<TEvent extends DayScheduleEvent = DayScheduleEvent>
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
   onEventMove?: (move: DayScheduleEventMove) => void;
   onEventResize?: (resize: DayScheduleEventResize) => void;
+  onEventDelete?: (deletion: DayScheduleEventDelete) => void;
   today?: LocalDate;
   className?: string;
 };
@@ -107,6 +114,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   renderEvent,
   onEventMove,
   onEventResize,
+  onEventDelete,
   today: todayOverride,
   className,
 }: DayScheduleProps<TEvent>) {
@@ -142,6 +150,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   const [dragPageDirection, setDragPageDirection] = useState<-1 | 0 | 1>(0);
   const [dragPageAnimating, setDragPageAnimating] = useState(false);
   const [editingEvent, setEditingEvent] = useState<{ date: LocalDate; eventId: string } | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<DayScheduleEventDelete | null>(null);
   const arrival = useRef<{ date: LocalDate; week: boolean; from?: LocalDate } | null>(null);
 
   const weekDrag = useRef(0);
@@ -273,6 +282,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     const pendingEdit = pendingEditingEvent.current?.date === date ? pendingEditingEvent.current : null;
     if (pendingEdit) pendingEditingEvent.current = null;
     setEditingEvent(null);
+    setDeleteCandidate(null);
     const expected = arrival.current?.date === date ? arrival.current : null;
     arrival.current = null;
     clearPending();
@@ -640,13 +650,15 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       });
     }
 
+    const editingEnabled = Boolean(onEventResize || onEventDelete);
+
     if (acceptedMove && movedDay) {
-      if (onEventResize) pendingEditingEvent.current = { date: targetDate, eventId: entry.event.id };
+      if (editingEnabled) pendingEditingEvent.current = { date: targetDate, eventId: entry.event.id };
       latestChange.current(targetDate);
       return;
     }
 
-    if (onEventResize) {
+    if (editingEnabled) {
       addTimer(() => setEditingEvent({ date: entry.date, eventId: entry.event.id }), 200);
     }
   };
@@ -662,6 +674,18 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       startMinutes,
       durationMinutes,
     });
+  };
+
+  const requestEventDelete = (entryDate: LocalDate, event: TEvent) => {
+    if (!onEventDelete) return;
+    setDeleteCandidate({ date: entryDate, eventId: event.id });
+  };
+
+  const confirmEventDelete = () => {
+    if (!onEventDelete || !deleteCandidate) return;
+    onEventDelete(deleteCandidate);
+    setDeleteCandidate(null);
+    setEditingEvent(null);
   };
 
   const dismissEditingOnOutsidePress = (pointerEvent: ReactPointerEvent<HTMLElement>) => {
@@ -755,6 +779,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         onPointerCancel={event => endGesture(event, 'day', true)}
         onLostPointerCapture={event => { if (event.target === event.currentTarget) endGesture(event, 'day', true); }}
         onClickCapture={event => {
+          const target = event.target instanceof Element ? event.target : null;
+          if (target?.closest('[data-schedule-edit-control]')) return;
           if (performance.now() < suppressDayClickUntil.current) { event.preventDefault(); event.stopPropagation(); }
         }}
       >
@@ -772,6 +798,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating}
             editingEventId={editingEvent?.date === previousDate ? editingEvent.eventId : undefined}
             onEventResize={onEventResize ? (event, startMinutes, durationMinutes) => handleEventResize(previousDate, event, startMinutes, durationMinutes) : undefined}
+            onEventDeleteRequest={onEventDelete ? event => requestEventDelete(previousDate, event) : undefined}
           />
           <DayPanel
             date={displayDate}
@@ -782,6 +809,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating}
             editingEventId={editingEvent?.date === displayDate ? editingEvent.eventId : undefined}
             onEventResize={onEventResize ? (event, startMinutes, durationMinutes) => handleEventResize(displayDate, event, startMinutes, durationMinutes) : undefined}
+            onEventDeleteRequest={onEventDelete ? event => requestEventDelete(displayDate, event) : undefined}
           />
           <DayPanel
             date={nextDate}
@@ -792,6 +820,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
             draggableEvents={Boolean(onEventMove) && !dayAnimating && !weekAnimating}
             editingEventId={editingEvent?.date === nextDate ? editingEvent.eventId : undefined}
             onEventResize={onEventResize ? (event, startMinutes, durationMinutes) => handleEventResize(nextDate, event, startMinutes, durationMinutes) : undefined}
+            onEventDeleteRequest={onEventDelete ? event => requestEventDelete(nextDate, event) : undefined}
           />
         </div>
       </div>
@@ -847,6 +876,21 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           </div>
         ) : null}
       </DragOverlay>
+      <MezfitDialog
+        opened={Boolean(deleteCandidate)}
+        title="Удалить карточку?"
+        content="Карточка будет удалена из расписания."
+        buttons={(
+          <>
+            <MezfitDialogButton onClick={() => setDeleteCandidate(null)}>Отмена</MezfitDialogButton>
+            <MezfitDialogButton tone="danger" strong onClick={confirmEventDelete}>Удалить</MezfitDialogButton>
+          </>
+        )}
+        onBackdropClick={() => setDeleteCandidate(null)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Подтверждение удаления карточки"
+      />
     </DndContext>
   );
 }

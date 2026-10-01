@@ -188,12 +188,14 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
   events,
   renderEvent,
   onCommit,
+  onDeleteRequest,
 }: {
   date: LocalDate;
   event: TEvent;
   events: readonly TEvent[];
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
-  onCommit: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
+  onCommit?: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
+  onDeleteRequest?: (event: TEvent) => void;
 }) {
   const [draft, setDraft] = useState({
     startMinutes: event.startMinutes,
@@ -253,7 +255,10 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
       setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
       return;
     }
-    if (draft.startMinutes !== event.startMinutes || draft.durationMinutes !== event.durationMinutes) {
+    if (
+      onCommit
+      && (draft.startMinutes !== event.startMinutes || draft.durationMinutes !== event.durationMinutes)
+    ) {
       onCommit(event, draft.startMinutes, draft.durationMinutes);
       setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
     }
@@ -274,24 +279,43 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
         startMinutes: draft.startMinutes,
         durationMinutes: draft.durationMinutes,
       })}
-      <button
-        type="button"
-        className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--start"
-        aria-label="Изменить время начала"
-        onPointerDown={pointerEvent => beginResize('start', pointerEvent)}
-        onPointerMove={moveResize}
-        onPointerUp={pointerEvent => finishResize(pointerEvent)}
-        onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
-      />
-      <button
-        type="button"
-        className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--end"
-        aria-label="Изменить время окончания"
-        onPointerDown={pointerEvent => beginResize('end', pointerEvent)}
-        onPointerMove={moveResize}
-        onPointerUp={pointerEvent => finishResize(pointerEvent)}
-        onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
-      />
+      {onCommit ? (
+        <>
+          <button
+            type="button"
+            className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--start"
+            aria-label="Изменить время начала"
+            onPointerDown={pointerEvent => beginResize('start', pointerEvent)}
+            onPointerMove={moveResize}
+            onPointerUp={pointerEvent => finishResize(pointerEvent)}
+            onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
+          />
+          <button
+            type="button"
+            className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--end"
+            aria-label="Изменить время окончания"
+            onPointerDown={pointerEvent => beginResize('end', pointerEvent)}
+            onPointerMove={moveResize}
+            onPointerUp={pointerEvent => finishResize(pointerEvent)}
+            onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
+          />
+        </>
+      ) : null}
+      {onDeleteRequest ? (
+        <button
+          type="button"
+          className="ui-day-schedule__delete-button"
+          data-schedule-edit-control=""
+          aria-label="Удалить карточку"
+          onClick={(clickEvent) => {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+            onDeleteRequest(event);
+          }}
+        >
+          <span className="ui-day-schedule__delete-icon" aria-hidden="true" />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -305,6 +329,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   draggableEvents = false,
   editingEventId,
   onEventResize,
+  onEventDeleteRequest,
 }: {
   date: LocalDate;
   events: readonly TEvent[];
@@ -314,6 +339,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   draggableEvents?: boolean;
   editingEventId?: string;
   onEventResize?: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
+  onEventDeleteRequest?: (event: TEvent) => void;
 }) {
   const showNow = date === today && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60;
 
@@ -334,7 +360,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
         })}
 
         {events.map(event => {
-          if (event.id === editingEventId && onEventResize) {
+          if (event.id === editingEventId && (onEventResize || onEventDeleteRequest)) {
             return (
               <EditableEventFrame
                 date={date}
@@ -342,6 +368,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
                 events={events}
                 renderEvent={renderEvent}
                 onCommit={onEventResize}
+                onDeleteRequest={onEventDeleteRequest}
                 key={event.id}
               />
             );
