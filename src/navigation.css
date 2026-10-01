@@ -1,5 +1,5 @@
 .navigation-shell { width: min(720px, 100%); min-height: 100dvh; padding-top: 0; }
-.navigation-navbar-frame { margin: 0 calc(var(--page-pad-x) * -1) var(--space-3); }
+.navigation-navbar-frame { position: sticky; z-index: 40; top: 0; margin: 0 calc(var(--page-pad-x) * -1) var(--space-3); }
 .navigation-content { position: relative; min-width: 0; min-height: calc(100dvh - var(--appbar-h) - 2rem); }
 .navigation-content--with-tabs { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
 .navigation-primary-tabs { position: fixed; z-index: 30; left: 50%; bottom: max(0.75rem, env(safe-area-inset-bottom)); width: min(calc(100% - 1.5rem), 696px); transform: translateX(-50%); }
