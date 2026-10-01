@@ -283,7 +283,7 @@ export function App() {
   };
   const shellContext = workoutOpen ? workoutNestedNavigationContext ?? workoutRootNavigationContext : navigationContext;
   const workoutFabLabel = workoutStatus === 'active' ? 'Продолжить тренировку' : 'Открыть тренировку';
-  const workoutFloatingAction = useMemo<NavigationFloatingAction>(() => ({
+  const workoutFloatingAction: NavigationFloatingAction = {
     label: workoutFabLabel,
     placement: 'left',
     isShown: !workoutOpen,
@@ -296,7 +296,7 @@ export function App() {
         style={{ display: 'block', width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', pointerEvents: 'none' }}
       />
     ),
-  }), [workoutFabLabel, workoutOpen]);
+  };
 
   return (
     <ClientCoachProvider
