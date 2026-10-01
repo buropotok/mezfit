@@ -70,7 +70,7 @@ describe('MezfitNavbar', () => {
     );
     const initialIdentity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(initialIdentity).not.toBeNull();
-    expect((view.getByRole('button', { name: 'Назад' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((view.getByRole('button', { name: 'Назад', hidden: true }) as HTMLButtonElement).disabled).toBe(true);
 
     view.rerender(
       <KonstaProvider theme="ios" dark>
