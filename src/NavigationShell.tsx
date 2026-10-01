@@ -311,8 +311,13 @@ export function NavigationShell({
 
         <section className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
           {children}
-          {floatingAction}
         </section>
+
+        {floatingAction ? (
+          <div className={`navigation-floating-action${level === 1 ? ' navigation-floating-action--with-tabs' : ''}`}>
+            {floatingAction}
+          </div>
+        ) : null}
 
         {level === 1 ? (
           <Tabs
