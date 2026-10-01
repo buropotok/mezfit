@@ -624,6 +624,7 @@ describe('DaySchedule', () => {
   it('keeps lifted content and measures DragOverlay from the event frame', () => {
     const moved = vi.fn();
     const liftedStates: boolean[] = [];
+    const liftedCompactStates: boolean[] = [];
     const view = render(
       <DaySchedule
         date="2026-09-28"
@@ -633,6 +634,7 @@ describe('DaySchedule', () => {
         onEventMove={moved}
         renderEvent={(event, state) => {
           liftedStates.push(state.lifted);
+          if (state.lifted) liftedCompactStates.push(state.compact);
           return <div className={state.lifted ? 'lifted-event-content' : 'event-card-content'}>{event.id}</div>;
         }}
       />,
@@ -653,6 +655,7 @@ describe('DaySchedule', () => {
     expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
     expect(overlay?.querySelector('.lifted-event-content')?.textContent).toBe('a');
     expect(liftedStates).toContain(true);
+    expect(liftedCompactStates).toContain(false);
 
     fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
     act(() => vi.advanceTimersByTime(50));
