@@ -93,6 +93,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
       <div className="ui-kit-day-schedule__controls">
         <Button onClick={() => setPickerOpen(true)}>Выбрать дату</Button>
         <Button onClick={() => setEmpty(previous => !previous)}>{empty ? 'Показать события' : 'Пустой день'}</Button>
+        <Button href="/ui-kit/day-schedule">На весь экран</Button>
       </div>
       <div className="ui-kit-day-schedule__value" aria-live="polite">
         <div>value.date: {value.date}</div>
@@ -100,34 +101,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
         <div>value.weekdayIndex: {value.weekdayIndex} · value.isToday: {String(value.isToday)}</div>
         <div>Последний onDateChange: {lastChange ?? 'ещё не вызван'}</div>
       </div>
-      <DaySchedule
-        className="ui-kit-day-schedule__preview"
-        date={date}
-        eventsByDate={eventsByDate}
-        onDateChange={next => { setLastChange(next); setDate(next); }}
-        onEventMove={({ eventId, date: eventDate, targetDate, startMinutes }) => setEventOverrides(current => ({
-          ...current,
-          [eventId]: {
-            date: targetDate,
-            startMinutes,
-            durationMinutes: current[eventId]?.durationMinutes
-              ?? eventsByDate[eventDate]?.find(event => event.id === eventId)?.durationMinutes
-              ?? 60,
-          },
-        }))}
-        onEventResize={({ eventId, date: eventDate, startMinutes, durationMinutes }) => setEventOverrides(current => ({
-          ...current,
-          [eventId]: { date: eventDate, startMinutes, durationMinutes },
-        }))}
-        renderEvent={(event, state) => (
-          <DayScheduleEventCard
-            title={event.title}
-            detail={event.purpose}
-            media={<Avatar name={event.title} />}
-            state={state}
-          />
-        )}
-      />
+      {schedule}
       <DatePicker opened={pickerOpen} value={date} onChange={next => { setDate(next); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
       <div className="ui-kit-day-schedule__contract">
         <h3>Входные параметры</h3>
@@ -145,7 +119,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
           <dt>onDateChange(nextDate)</dt><dd>Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</dd>
           <dt>getDayScheduleValue(date, today?)</dt><dd>Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</dd>
         </dl>
-        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 64 px/час. Фон календаря чёрный. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; resize-состояние делает карточку непрозрачной. Тап вне выбранной карточки завершает resize-режим.</p>
+        <p>Демо создаёт события для любой выбранной даты. Диапазон: 06:00–24:00, 64 px/час. Фон календаря использует фоновое изображение DaySchedule. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; resize-состояние делает карточку непрозрачной. Тап вне выбранной карточки завершает resize-режим.</p>
         <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} state={state} />\n  )}\n/>`}</pre>
       </div>
     </section>
