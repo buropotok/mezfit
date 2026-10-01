@@ -4,132 +4,119 @@ Status: canonical UI contract for global navigation.
 
 This contract is governed together with `docs/design/platform-ui-policy.md` and `docs/design/ui-spec-v1.md`.
 
-## Reference-first rule
+## Ownership
 
-Gym Keeper's left navigation drawer is the product/UX reference pattern for Mezfit global navigation. Telegram remains the platform reference for safe-area, viewport and native Mini App navigation capabilities. Visual tokens may differ, but the global UX pattern is preserved: compact top app bar, hamburger on top-level destinations, left overlay drawer, and contextual Back navigation inside a selected entity.
+`NavigationShell` owns application navigation infrastructure: active first-level destination, nested navigation context, browser history integration, Telegram BackButton integration, role switching, and the globally readable navigation level.
 
-Where Telegram exposes a native Back Button or platform back event that can represent the same navigation action without changing the Mezfit/Gym Keeper flow, the implementation should integrate it rather than treating the webview as an isolated website. A visible in-app Back control may still be retained when required by the approved shell UX; both paths must resolve to the same navigation state.
+`MezfitNavbar` owns navbar presentation and navbar-only motion. It must not infer application navigation from DOM state or browser history.
 
-## App bar
+The application has two navigation levels:
 
-| Token | Value |
-| --- | ---: |
-| height | 52 px + applicable Telegram safe-area/content-safe-area inset |
-| left action target | 44 × 44 px |
-| right action reserve | 44 × 44 px |
-| title | 16/20 px, semibold |
-| horizontal page inset | 16 px |
-| title overflow | one line, ellipsis |
-| bottom divider | 1 px |
+- level 1 — a first-level application destination selected by the bottom Tabs control;
+- level 2 — a contextual entity/detail surface with Back navigation.
 
-Top-level destination: left action is hamburger.
+The global navigation level is authoritative application/navigation state. Navbar offsets, visibility and animation progress are derived presentation state and must not be stored globally.
 
-Selected-client context: left action is Back and title is the selected client's display name. The drawer is not duplicated inside the selected-client context; returning to the global level restores hamburger navigation.
+## MezfitNavbar
 
-Telegram-provided safe-area/content-safe-area values are platform inputs and must be added where the shell touches a protected edge. Do not replace them with device-specific hard-coded notch/home-indicator padding.
+The production navbar is `MezfitNavbar`, composed through the public Konsta UI `Navbar` API.
 
-## Drawer
+Konsta owns Navbar safe-area, sticky positioning and library mechanics. Mezfit supplies app-owned children inside the public `children` extension point. Do not patch Konsta source, target private `.k-*` selectors, or wrap Mezfit actions in the Konsta `left`/`right` Glass slots.
 
-| Token | Value |
-| --- | ---: |
-| width | 280 px |
-| max width | 84vw |
-| position | fixed, left edge |
-| height | current usable Telegram viewport / `100dvh` fallback |
-| outer radius | 0 px |
-| backdrop | rgba(0,0,0,0.56) |
-| navigation row | 48 px |
-| row horizontal padding | 16 px |
-| icon slot | 24 px |
-| icon-to-label gap | 12 px |
-| section divider | 1 px |
-| account block min height | 76 px |
-| account avatar | 40 × 40 px |
+The navbar contains three persistent visual regions:
 
-Required close paths: destination selection, backdrop tap, Escape. Keyboard focus stays inside the open drawer and returns to the hamburger after closing.
+1. left Back `IdentityAction`;
+2. central labeled `IdentityAction` describing the current page/entity;
+3. right double `IdentityAction` containing page menu and calendar actions.
 
-Drawer motion is 220 ms on open with `cubic-bezier(0.2, 0, 0, 1)` and 180 ms on close with `cubic-bezier(0.4, 0, 1, 1)`. The panel translates from `-100%` while the backdrop fades. `prefers-reduced-motion` suppresses non-essential motion.
+All navbar actions consume the shared navbar GlassSurface preset. The default preset is configured in `src/ui/mezfitNavbarConfig.ts`; individual navbar instances may explicitly override it when a product requirement needs that.
 
-The drawer must tolerate Telegram viewport changes without clipping its last actionable row. When Telegram reports a viewport or safe-area change, the shell recomputes usable geometry instead of assuming a fixed physical screen height.
+### Level 1
 
-## Global destinations
+The Back action is non-interactive and positioned beneath the central identity action.
 
-### Coach
+The central identity displays the selected first-level destination title and destination icon.
 
-1. Клиенты
-2. Программы
-3. Упражнения
-4. Календарь
-5. divider
-6. Настройки
-7. О приложении
+The bottom `LiquidGlassIconOnly` control owns first-level destination selection. `NavigationShell` keeps the available FAB source, while the active destination descriptor decides whether that FAB is passed through the public `fab` slot.
 
-### Client
+### Level 2
 
-1. Сегодня
-2. Программа
-3. Упражнения
-4. История
-5. Прогресс
-6. divider
-7. Настройки
-8. О приложении
+The Back action moves out from beneath the central identity action and becomes interactive.
 
-Unimplemented destinations remain visible and render a compact stable placeholder. We do not hide navigation merely because a destination is scheduled for a later issue.
+The central identity displays the contextual entity. A selected client uses the client's display name and avatar URL. Other level-2 surfaces may use a registered UI icon and title.
 
-## Gym Keeper APK icon mapping
+Browser Back, Telegram BackButton and the in-app Back `IdentityAction` must resolve through the same `NavigationContext.onBack` path.
 
-The production navigation icon family is extracted from `com.kg.app.sportdiary_615_rs.apk`, using the original 24×24 monochrome resources. Mezfit renders their alpha masks with `currentColor`, preserving the exact artwork while allowing theme/active-state tinting.
+### Navbar entrance motion
 
-| Mezfit action/destination | APK resource |
-| --- | --- |
-| Клиенты | `ic_change_person.png` |
-| Программа / Программы | `ic_workout.png` |
-| Упражнения | `ic_exercise.png` |
-| Календарь | `ic_calendar.png` |
-| Сегодня | `ic_today.png` |
-| История | `ic_history.png` |
-| Прогресс | `ic_stat.png` |
-| Настройки | `ic_settings.png` |
-| О приложении | `ic_info.png` |
-| Back | `ic_back.png` |
-| global menu trigger | `ic_more.png` (closest APK-family menu action asset) |
+On initial mount, side action regions originate beneath the central identity region and move to their resolved positions. On level changes the left Back region moves between its hidden level-1 position and visible level-2 position.
 
-Do not replace these with emoji, Unicode glyphs or a mixed third-party icon library. App-bar artwork renders at 22 px inside the canonical 44×44 target; drawer artwork uses the canonical 24 px slot.
+`prefers-reduced-motion` reduces this motion to effectively immediate state changes.
 
-## Selected-client contextual navigation
+## IdentityAction
 
-The selected client's local sections are not global drawer destinations:
+`IdentityAction` is the only action primitive used inside `MezfitNavbar`.
 
-- Обзор
-- Программа
-- Упражнения
-- Календарь
-- Прогресс
-- История
+Supported variants:
 
-They remain a compact horizontally scrollable local navigation control below the contextual app bar.
+- `labeled` — icon or avatar plus title;
+- `single` — one icon/avatar action;
+- `double` — one GlassSurface capsule containing two independent semantic button zones.
 
-## Role switching
+The double variant animates the whole capsule while the tapped inner button determines which action is invoked. Button actions run after the shared press animation completes.
 
-When the Telegram user has both roles, role switching lives in the drawer account area. It does not occupy permanent app-bar space. Switching roles closes the drawer, clears selected-client context, and restores the last top-level destination for the target role.
+The labeled identity keeps one stable action host while its visual slot changes between registered icon and avatar content. Navigation must update props rather than keying/remounting the component.
+
+## Page menu
+
+The right menu action is the entry point for contextual page/entity actions. `NavigationContext.menuActions` may contribute actions for level-2 surfaces.
+
+Account/system actions required to preserve application access may be appended as secondary menu content, but primary destination navigation does not live in this menu.
+
+## Calendar
+
+The second action in the right double capsule opens the application calendar/date selection surface.
+
+Calendar data ownership is outside `MezfitNavbar`; the navbar only emits the calendar intent.
+
+## First-level Tabs
+
+Primary role destinations are rendered with the approved UI Kit `LiquidGlassIconOnly` tab bar. The tab bar reports the selected destination to `NavigationShell`; it does not duplicate destination title/icon state. The existing workout FAB remains owned above the primitive and is passed through the public `fab` slot only for destinations whose descriptor enables it. On `hidden: true → false`, `LiquidGlassIconOnly` selects its approved entrance choreography from current FAB presence: with FAB uses the FAB reveal, without FAB uses the center-spread no-FAB reveal. FAB availability may change while level 1 remains visible without replaying entrance.
+
+The shell derives first-level navbar identity from the destination descriptor.
+
+Secondary destinations such as Settings/About may remain available from the page/system menu until their final first-level placement is explicitly changed. While such a level-1 destination is active, the bottom tab bar remains mounted but exposes no selected primary tab, and no FAB is passed for these secondary destinations.
+
+## Role switching and client coach selection
+
+Role switching remains application navigation state and clears nested context before switching role.
+
+For client mode, coach selection remains available from the page/system menu. These system actions do not replace the page-specific contextual action contract.
+
+## Telegram and browser navigation
+
+When level 2 is active:
+
+- Telegram BackButton is shown and subscribed to the same Back request;
+- an application history entry is maintained for browser/webview Back;
+- the visible in-app Back action uses that same request path.
+
+At level 1 the Telegram BackButton remains hidden.
+
+## Typography
+
+Navbar interactive text uses the shared Body 15/20 medium role through `IdentityAction`. Do not introduce component-specific typography values.
 
 ## Explicit non-patterns
 
-Mezfit does not use these as its global mobile navigation pattern:
+Mezfit navigation must not:
 
-- bottom tab navigation;
-- permanently visible desktop sidebar;
-- oversized branding header above every screen;
-- duplicating selected-client local sections inside the global drawer;
-- ignoring Telegram safe-area/viewport events and treating the Mini App like a generic fixed browser page.
-
-## Themes
-
-The drawer consumes the existing global theme tokens:
-
-- app bar: `theme-bg`, `theme-bg-text`, `theme-bg-muted`;
-- drawer/surfaces: `theme-surface`, `theme-surface-2`, `theme-surface-text`, `theme-surface-muted`, `theme-border`;
-- selected item: global accent.
-
-The same shell geometry is invariant across all five Mezfit themes. Telegram theme parameters may be used to coordinate host/header/background integration, but they do not create a per-user override of the Mezfit global theme.
+- create a second navigation state inside `MezfitNavbar`;
+- derive level from DOM presence, CSS classes or button visibility;
+- put two independent commands inside one semantic `button`;
+- create a separate split-action primitive for navbar use;
+- use Konsta Navbar `left`/`right` Glass slots around `IdentityAction`, which would create nested glass surfaces;
+- remount the central identity action merely because its icon/avatar/title changed;
+- use the page menu as the primary first-level destination navigator;
+- replace the approved Liquid Glass tab bars with generic Radix Tabs for product navigation;
+- ignore Telegram BackButton/history coordination.

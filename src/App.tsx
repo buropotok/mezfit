@@ -16,10 +16,11 @@ import {
   NavigationShell,
   type AppDestination,
   type NavigationContext,
+  type NavigationFloatingAction,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
-import { Button, FloatingActionButton } from './ui';
+import { Button } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -176,6 +177,7 @@ export function App() {
   }, []);
   const workoutRootNavigationContext = useMemo<NavigationContext>(() => ({
     title: 'Тренировка',
+    identity: { title: 'Тренировка', icon: 'barbell' },
     onBack: closeWorkout,
   }), [closeWorkout]);
 
@@ -281,6 +283,20 @@ export function App() {
   };
   const shellContext = workoutOpen ? workoutNestedNavigationContext ?? workoutRootNavigationContext : navigationContext;
   const workoutFabLabel = workoutStatus === 'active' ? 'Продолжить тренировку' : 'Открыть тренировку';
+  const workoutFloatingAction: NavigationFloatingAction = {
+    label: workoutFabLabel,
+    placement: 'left',
+    isShown: !workoutOpen,
+    onClick: () => setWorkoutOpen(true),
+    content: (
+      <img
+        src={workoutFabIconUrl}
+        alt=""
+        aria-hidden="true"
+        style={{ display: 'block', width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', pointerEvents: 'none' }}
+      />
+    ),
+  };
 
   return (
     <ClientCoachProvider
@@ -295,21 +311,7 @@ export function App() {
         context={shellContext}
         onDestinationChange={changeDestination}
         onRoleSwitch={switchRole}
-        floatingAction={(
-          <FloatingActionButton
-            placement="left"
-            label={workoutFabLabel}
-            isShown={!workoutOpen}
-            onClick={() => setWorkoutOpen(true)}
-          >
-            <img
-              src={workoutFabIconUrl}
-              alt=""
-              aria-hidden="true"
-              style={{ display: 'block', width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', pointerEvents: 'none' }}
-            />
-          </FloatingActionButton>
-        )}
+        floatingAction={workoutFloatingAction}
       >
         {workoutOpen ? (
           <WorkoutSessionScreen

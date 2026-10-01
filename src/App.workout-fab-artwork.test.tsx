@@ -24,6 +24,10 @@ vi.mock('./workout', () => ({
 const getMeMock = vi.mocked(getMe);
 
 beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    disconnect() {}
+  });
   window.localStorage.clear();
   getMeMock.mockReset();
   getMeMock.mockResolvedValue({
@@ -52,6 +56,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   delete window.Telegram;
+  vi.unstubAllGlobals();
 });
 
 describe('workout FAB artwork', () => {
