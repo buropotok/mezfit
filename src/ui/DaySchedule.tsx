@@ -778,6 +778,8 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
         onPointerCancel={event => endGesture(event, 'day', true)}
         onLostPointerCapture={event => { if (event.target === event.currentTarget) endGesture(event, 'day', true); }}
         onClickCapture={event => {
+          const target = event.target instanceof Element ? event.target : null;
+          if (target?.closest('[data-schedule-edit-control]')) return;
           if (performance.now() < suppressDayClickUntil.current) { event.preventDefault(); event.stopPropagation(); }
         }}
       >
