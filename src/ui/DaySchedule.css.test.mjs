@@ -7,6 +7,12 @@ const dayScheduleCss = readFileSync(
 );
 
 describe('DaySchedule CSS contract', () => {
+  it('reserves background clearance above the midnight grid for fixed header controls', () => {
+    expect(dayScheduleCss).toContain('--ui-day-schedule-top-clearance: calc(132px + max(16px, var(--k-safe-area-top)))');
+    expect(dayScheduleCss).toContain('.ui-day-schedule__top-clearance');
+    expect(dayScheduleCss).toContain('height: var(--ui-day-schedule-top-clearance)');
+  });
+
   it('adds a light halo to the lifted DnD tile and fades it during drop', () => {
     expect(dayScheduleCss).toContain('0 0 18px rgb(255 255 255 / 0.16)');
     expect(dayScheduleCss).toContain('0 0 36px rgb(170 205 255 / 0.10)');
