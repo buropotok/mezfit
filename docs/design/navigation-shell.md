@@ -37,7 +37,7 @@ The Back action is non-interactive and positioned beneath the central identity a
 
 The central identity displays the selected first-level destination title and destination icon.
 
-The bottom Tabs control owns first-level destination selection.
+The bottom `LiquidGlassIconOnly` control owns first-level destination selection and receives the existing global workout FAB through its public `fab` slot.
 
 ### Level 2
 
@@ -81,7 +81,7 @@ Calendar data ownership is outside `MezfitNavbar`; the navbar only emits the cal
 
 ## First-level Tabs
 
-Primary role destinations are rendered with the shared UI Kit `Tabs` primitive in icon mode. The Tabs control reports the selected destination to `NavigationShell`; it does not duplicate destination title/icon state.
+Primary role destinations are rendered with the approved UI Kit `LiquidGlassIconOnly` tab bar. The tab bar reports the selected destination to `NavigationShell`; it does not duplicate destination title/icon state. The existing workout FAB is passed through the component's public `fab` slot, so navigation layout does not recreate or reposition the primitive's internal mechanics.
 
 The shell derives first-level navbar identity from the destination descriptor.
 
@@ -118,4 +118,5 @@ Mezfit navigation must not:
 - use Konsta Navbar `left`/`right` Glass slots around `IdentityAction`, which would create nested glass surfaces;
 - remount the central identity action merely because its icon/avatar/title changed;
 - use the page menu as the primary first-level destination navigator;
+- replace the approved Liquid Glass tab bars with generic Radix Tabs for product navigation;
 - ignore Telegram BackButton/history coordination.
