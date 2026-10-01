@@ -66,7 +66,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.ui-time-picker__column--minute .ui-time-picker__option {
+.ui-time-picker__column--free-momentum .ui-time-picker__option {
   scroll-snap-stop: normal;
 }
 
