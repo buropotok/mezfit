@@ -9,7 +9,7 @@
   color: var(--ui-color-canvas-text);
   background:
     linear-gradient(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.12)),
-    #000 url('../assets/day-schedule-background.jpg') center / cover no-repeat fixed;
+    #000 url('../assets/day-schedule-background.jpg') center / cover no-repeat;
   font-family: var(--ui-font-family);
 }
 
