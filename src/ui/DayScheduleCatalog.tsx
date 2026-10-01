@@ -93,7 +93,7 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
       <div className="ui-kit-day-schedule__controls">
         <Button onClick={() => setPickerOpen(true)}>Выбрать дату</Button>
         <Button onClick={() => setEmpty(previous => !previous)}>{empty ? 'Показать события' : 'Пустой день'}</Button>
-        <Button href="/ui-kit/day-schedule">На весь экран</Button>
+        <Button href="/ui-kit-day-schedule.html">На весь экран</Button>
       </div>
       <div className="ui-kit-day-schedule__value" aria-live="polite">
         <div>value.date: {value.date}</div>
