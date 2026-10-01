@@ -85,7 +85,7 @@ Primary role destinations are rendered with the approved UI Kit `LiquidGlassIcon
 
 The shell derives first-level navbar identity from the destination descriptor.
 
-Secondary destinations such as Settings/About may remain available from the page/system menu until their final first-level placement is explicitly changed.
+Secondary destinations such as Settings/About may remain available from the page/system menu until their final first-level placement is explicitly changed. While such a level-1 destination is active, the bottom tab bar remains mounted but exposes no selected primary tab, and no FAB is passed for these secondary destinations.
 
 ## Role switching and client coach selection
 
