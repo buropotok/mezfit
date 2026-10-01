@@ -101,7 +101,7 @@ describe('DaySchedule', () => {
     expect(backgrounds).toHaveLength(3);
     for (const background of backgrounds) {
       expect(background.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.2');
+      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
     }
   });
 
