@@ -194,7 +194,7 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
   event: TEvent;
   events: readonly TEvent[];
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
-  onCommit: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
+  onCommit?: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
   onDeleteRequest?: (event: TEvent) => void;
 }) {
   const [draft, setDraft] = useState({
@@ -255,7 +255,10 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
       setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
       return;
     }
-    if (draft.startMinutes !== event.startMinutes || draft.durationMinutes !== event.durationMinutes) {
+    if (
+      onCommit
+      && (draft.startMinutes !== event.startMinutes || draft.durationMinutes !== event.durationMinutes)
+    ) {
       onCommit(event, draft.startMinutes, draft.durationMinutes);
       setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
     }
@@ -276,24 +279,28 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
         startMinutes: draft.startMinutes,
         durationMinutes: draft.durationMinutes,
       })}
-      <button
-        type="button"
-        className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--start"
-        aria-label="Изменить время начала"
-        onPointerDown={pointerEvent => beginResize('start', pointerEvent)}
-        onPointerMove={moveResize}
-        onPointerUp={pointerEvent => finishResize(pointerEvent)}
-        onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
-      />
-      <button
-        type="button"
-        className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--end"
-        aria-label="Изменить время окончания"
-        onPointerDown={pointerEvent => beginResize('end', pointerEvent)}
-        onPointerMove={moveResize}
-        onPointerUp={pointerEvent => finishResize(pointerEvent)}
-        onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
-      />
+      {onCommit ? (
+        <>
+          <button
+            type="button"
+            className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--start"
+            aria-label="Изменить время начала"
+            onPointerDown={pointerEvent => beginResize('start', pointerEvent)}
+            onPointerMove={moveResize}
+            onPointerUp={pointerEvent => finishResize(pointerEvent)}
+            onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
+          />
+          <button
+            type="button"
+            className="ui-day-schedule__resize-handle ui-day-schedule__resize-handle--end"
+            aria-label="Изменить время окончания"
+            onPointerDown={pointerEvent => beginResize('end', pointerEvent)}
+            onPointerMove={moveResize}
+            onPointerUp={pointerEvent => finishResize(pointerEvent)}
+            onPointerCancel={pointerEvent => finishResize(pointerEvent, true)}
+          />
+        </>
+      ) : null}
       {onDeleteRequest ? (
         <button
           type="button"
@@ -352,7 +359,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
         })}
 
         {events.map(event => {
-          if (event.id === editingEventId && onEventResize) {
+          if (event.id === editingEventId && (onEventResize || onEventDeleteRequest)) {
             return (
               <EditableEventFrame
                 date={date}
