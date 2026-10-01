@@ -17,7 +17,6 @@
   background: rgb(var(--ui-day-schedule-event-card-color, 132 163 150) / 1);
 }
 
-
 .ui-day-schedule-event-card__media {
   display: grid;
   width: 50px;
