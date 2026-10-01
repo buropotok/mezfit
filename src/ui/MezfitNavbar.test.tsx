@@ -70,7 +70,7 @@ describe('MezfitNavbar', () => {
     );
     const initialIdentity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(initialIdentity).not.toBeNull();
-    expect(view.getByRole('button', { name: 'Назад' })).toBeDisabled();
+    expect((view.getByRole('button', { name: 'Назад' }) as HTMLButtonElement).disabled).toBe(true);
 
     view.rerender(
       <KonstaProvider theme="ios" dark>
@@ -85,6 +85,6 @@ describe('MezfitNavbar', () => {
     const nextIdentity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(nextIdentity).toBe(initialIdentity);
     expect(view.getByRole('button', { name: 'Анна Смирнова' })).toBe(initialIdentity);
-    expect(view.getByRole('button', { name: 'Назад' })).not.toBeDisabled();
+    expect((view.getByRole('button', { name: 'Назад' }) as HTMLButtonElement).disabled).toBe(false);
   });
 });
