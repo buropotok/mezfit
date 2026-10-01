@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
-import { Avatar, Badge, FloatingActionButton, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
+import { useNavigationFloatingAction } from '../NavigationShell';
+import { Avatar, Badge, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -276,6 +277,12 @@ export function ProgramsPage({
 
   const canSave = Boolean(creationDraft?.name.trim() && creationDraft.owner && !creationBusy);
   const selectedClient = creationDraft?.owner?.type === 'client' ? creationDraft.owner.client : null;
+  const floatingAction = useMemo(() => onOpenCreation ? {
+    label: 'Создать программу',
+    onClick: onOpenCreation,
+    content: <AddIcon />,
+  } : null, [onOpenCreation]);
+  useNavigationFloatingAction('programs', floatingAction);
 
   return (
     <section className="programs-page" aria-label="Программы">
@@ -340,12 +347,6 @@ export function ProgramsPage({
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
       </div>
-
-      {onOpenCreation ? (
-        <FloatingActionButton label="Создать программу" onClick={onOpenCreation}>
-          <AddIcon />
-        </FloatingActionButton>
-      ) : null}
 
       <Modal
         isOpen={creationDraft !== null}
