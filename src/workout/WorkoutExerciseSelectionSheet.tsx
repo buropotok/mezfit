@@ -39,14 +39,16 @@ export function WorkoutExerciseSelectionSheet({
 
   const requestBack = useCallback(() => {
     if (saving) return;
-    if (navigationContext) navigationContext.onBack();
+    if (navigationContext?.onBack) navigationContext.onBack();
     else onClose();
   }, [navigationContext, onClose, saving]);
 
+  const externalNavigationTitle = navigationContext?.title ?? 'Упражнения';
   const externalNavigationContext = useMemo<NavigationContext>(() => ({
-    title: navigationContext?.title ?? 'Упражнения',
+    title: externalNavigationTitle,
+    identity: { title: externalNavigationTitle, icon: 'barbell' },
     onBack: requestBack,
-  }), [navigationContext?.title, requestBack]);
+  }), [externalNavigationTitle, requestBack]);
 
   useEffect(() => {
     onNavigationContextChange?.(externalNavigationContext);

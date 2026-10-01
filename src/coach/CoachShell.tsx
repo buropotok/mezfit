@@ -268,8 +268,16 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       return undefined;
     }
 
+    const selectedClientName = displayName(selectedClient);
     onNavigationContextChange({
-      title: displayName(selectedClient),
+      title: selectedClientName,
+      identity: {
+        title: selectedClientName,
+        avatar: {
+          name: selectedClientName,
+          src: selectedClient.user.photoUrl ?? undefined,
+        },
+      },
       onBack: () => setSelectedClient(null),
     });
     return () => onNavigationContextChange(null);
