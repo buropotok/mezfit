@@ -17,4 +17,8 @@ describe('UI kit HTML entry', () => {
     expect(mainSource).toContain("window.location.pathname === '/ui-kit-day-schedule.html'");
     expect(mainSource).toContain('<DayScheduleCatalog fullScreen />');
   });
+
+  it('recognizes the extensionless pathname used after static asset normalization', () => {
+    expect(mainSource).toContain("window.location.pathname === '/ui-kit-day-schedule'");
+  });
 });
