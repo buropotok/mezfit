@@ -13,7 +13,7 @@ const namedTabs:LiquidGlassIconOnlyTab[]=[
   {value:'settings',label:'Настройки',icon:'settings'},
 ];
 const changed=vi.fn();
-function ui(hidden=false, value='0', list=tabs, withFab=false){return <LiquidGlassIconOnly hidden={hidden} tabs={list} value={value} onValueChange={changed} fab={withFab?<button data-test-fab type="button">＋</button>:undefined}/>}
+function ui(hidden=false, value:string|null='0', list=tabs, withFab=false){return <LiquidGlassIconOnly hidden={hidden} tabs={list} value={value} onValueChange={changed} fab={withFab?<button data-test-fab type="button">＋</button>:undefined}/>}
 function getScene(container:HTMLElement):ShadowRoot {
   const host=container.firstElementChild?.firstElementChild;
   if(!host?.shadowRoot)throw new Error('Visible scene must own a shadow root');
@@ -51,6 +51,16 @@ describe('direct prototype adapter',()=>{
     expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     expect(button(root,2).getAttribute('aria-label')).toBe('Программы');expect(root.querySelector('[data-art="2-filled"]')).not.toBeNull();
     expect(button(root,0).style.width).toBe('20%');
+  });
+  it('supports an explicitly inactive selection and restores it when a primary value returns',()=>{
+    const view=render(ui(false,null));const root=getScene(view.container);
+    expect([...root.querySelectorAll('[role="tab"]')].some(tab=>tab.getAttribute('aria-selected')==='true')).toBe(false);
+    expect(element(root,'selector-track').style.visibility).toBe('hidden');
+    expect(element(root,'lens-track').style.visibility).toBe('hidden');
+    view.rerender(ui(false,'2'));
+    expect(button(root,2).getAttribute('aria-selected')).toBe('true');
+    expect(element(root,'selector-track').style.visibility).toBe('');
+    expect(element(root,'lens-track').style.visibility).toBe('');
   });
   it('resolves registered icon names inside the prototype scene',()=>{
     const view=render(ui(false,'today',namedTabs));const root=getScene(view.container);
