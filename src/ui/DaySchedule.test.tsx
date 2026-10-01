@@ -95,13 +95,13 @@ describe('DaySchedule', () => {
     expect(current?.querySelectorAll('.tab-link')).toHaveLength(7);
   });
 
-  it('uses frosted GlassSurface material behind each week page', () => {
+  it('uses modalTuned GlassSurface material behind each week page', () => {
     const view = renderSchedule();
     const backgrounds = view.container.querySelectorAll<HTMLElement>('.ui-day-schedule__week-background');
     expect(backgrounds).toHaveLength(3);
     for (const background of backgrounds) {
-      expect(background.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
+      expect(background.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
     }
   });
 
@@ -649,8 +649,8 @@ describe('DaySchedule', () => {
     const overlay = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay');
     expect(wrapper).not.toBeNull();
     expect(wrapper?.style.height).toBe('62px');
-    expect(overlay?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-    expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
+    expect(overlay?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+    expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
     expect(overlay?.querySelector('.lifted-event-content')?.textContent).toBe('a');
     expect(liftedStates).toContain(true);
 
