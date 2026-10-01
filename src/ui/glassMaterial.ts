@@ -137,22 +137,22 @@ export const CLEAR_GLASS: Readonly<GlassMaterial> = Object.freeze({
 });
 
 export const FROSTED_GLASS: Readonly<GlassMaterial> = Object.freeze({
-  tintR: 28,
-  tintG: 28,
-  tintB: 30,
-  tintA: 0.20,
+  tintR: 40,
+  tintG: 40,
+  tintB: 44,
+  tintA: 0.26,
   blur: 14,
-  saturation: 1.18,
-  brightness: 1.04,
-  bezel: 0.78,
-  border: 0.16,
-  shadow: 0.18,
+  saturation: 1.12,
+  brightness: 1.08,
+  bezel: 0.40,
+  border: 0.07,
+  shadow: 0.12,
   neutralEdge: 1.8,
   rimWidth: 9,
-  rimStrength: 0.58,
+  rimStrength: 0.75,
   trenchWidth: 1.5,
   trenchStrength: 0.08,
-  refraction: 5.5,
+  refraction: 6.5,
   filterPadding: 51,
 });
 
