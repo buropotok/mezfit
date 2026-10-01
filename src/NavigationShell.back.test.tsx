@@ -28,6 +28,11 @@ beforeEach(() => {
       BackButton: backButton,
     },
   };
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    disconnect() {}
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   window.history.replaceState({}, '');
 });
 
@@ -36,6 +41,7 @@ afterEach(() => {
   window.history.replaceState({}, '');
   delete window.Telegram;
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 const me = {
@@ -53,7 +59,7 @@ const me = {
 };
 
 describe('NavigationShell nested back behavior', () => {
-  it('uses the browser history entry for both the app-bar and Telegram back controls', async () => {
+  it('uses the browser history entry for both the animated navbar Back action and Telegram back controls', async () => {
     const onBack = vi.fn();
     const browserBack = vi.spyOn(window.history, 'back').mockImplementation(() => {});
 
@@ -73,7 +79,14 @@ describe('NavigationShell nested back behavior', () => {
     await waitFor(() => expect(backButton.show).toHaveBeenCalledTimes(1));
     expect(telegramBackHandler).not.toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    const navbarBack = screen.getByRole('button', { name: 'Назад' });
+    fireEvent.click(navbarBack);
+
+    expect(browserBack).not.toHaveBeenCalled();
+    expect(onBack).not.toHaveBeenCalled();
+
+    fireEvent.animationEnd(navbarBack);
+
     expect(browserBack).toHaveBeenCalledTimes(1);
     expect(onBack).not.toHaveBeenCalled();
 
