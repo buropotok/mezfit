@@ -18,7 +18,7 @@
 .ui-mezfit-navbar__identity {
   left: 50%;
   z-index: 2;
-  max-width: calc(100% - 9rem);
+  max-width: calc(100% - 11rem);
   transform: translateX(-50%);
 }
 
