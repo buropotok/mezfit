@@ -19,6 +19,7 @@ import {
 import type { LocalDate } from './date-picker/datePickerDate';
 import {
   DayPanel,
+  FULL_EVENT_CARD_HEIGHT,
   eventFitsSlot,
   eventGeometry,
   scheduleEventDragId,
@@ -191,7 +192,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
           date: entryDate,
           event,
           height: geometry.height,
-          compact: geometry.height < 72,
+          compact: geometry.height < FULL_EVENT_CARD_HEIGHT,
         });
       }
     }
