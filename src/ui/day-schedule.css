@@ -35,10 +35,19 @@
   height: 44px;
   padding-inline: 12px;
   box-sizing: border-box;
+  position: relative;
   overflow: visible;
 }
 
+.ui-day-schedule__week-background {
+  position: absolute;
+  z-index: 0;
+  inset: 0 12px;
+  pointer-events: none;
+}
+
 .ui-day-schedule__week-scene {
+  z-index: 1;
   display: block;
   position: relative;
   width: 100%;
