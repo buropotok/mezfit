@@ -11,14 +11,14 @@ import { mountPrototype as mountNoFabPrototype } from './liquid-glass-tabs-no-fa
 import noFabPrototypeCss from './liquid-glass-tabs-no-fab/prototype.css?inline';
 
 export type LiquidGlassIconOnlyTab = {
-  value: string | null;
+  value: string;
   label: string;
   icon: UiIconSource;
 };
 
 export type LiquidGlassIconOnlyProps = {
   tabs: readonly LiquidGlassIconOnlyTab[];
-  value: string;
+  value: string | null;
   onValueChange: (value: string) => void;
   hidden: boolean;
   fab?: ReactNode;
