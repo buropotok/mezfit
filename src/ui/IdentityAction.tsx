@@ -161,7 +161,7 @@ export function IdentityAction(props: IdentityActionProps) {
     isAnimating ? 'ui-identity-action--animating' : '',
   ].filter(Boolean).join(' ');
 
-  if (variant === 'double') {
+  if (props.variant === 'double') {
     return (
       <GlassSurface
         ref={rootRef}
