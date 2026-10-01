@@ -1,31 +1,33 @@
 import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type RefObject,
-  type UIEvent,
-} from 'react';
-import { triggerTelegramSelectionHaptic } from '../../telegram';
-import { MezfitPopover } from '../konsta-mezfit';
-import { buildTimeLensAssets, type TimeLensAssets } from './timePickerLens';
+  TwoColumnPicker,
+  type TwoColumnPickerColumn,
+} from '../two-column-picker/TwoColumnPicker';
 import {
   formatLocalTime,
   parseLocalTime,
   type LocalTime,
-  type LocalTimeParts,
 } from './timePickerTime';
-import './time-picker.css';
 
 const HOUR_VALUES = Array.from({ length: 24 }, (_, index) => index);
 const MINUTE_VALUES = Array.from({ length: 60 }, (_, index) => index);
-const ROW_HEIGHT = 48;
-const WHEEL_HEIGHT = 240;
-const LENS_HEIGHT = 72;
-const LENS_WIDTH = 288;
-const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
-const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
-const LENS_SOURCE_VERTICAL_INSET = 8;
+
+function formatUnit(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+const TIME_COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
+  {
+    ariaLabel: 'Часы',
+    values: HOUR_VALUES,
+    format: formatUnit,
+  },
+  {
+    ariaLabel: 'Минуты',
+    values: MINUTE_VALUES,
+    format: formatUnit,
+    freeMomentum: true,
+  },
+];
 
 export interface TimePickerProps {
   opened: boolean;
@@ -33,220 +35,6 @@ export interface TimePickerProps {
   onChange: (value: LocalTime) => void;
   onClose: () => void;
   target: HTMLElement | null;
-}
-
-type TimeColumn = 'hour' | 'minute';
-
-type ScrollTops = {
-  hour: number;
-  minute: number;
-};
-
-function formatUnit(value: number) {
-  return String(value).padStart(2, '0');
-}
-
-function scrollColumn(element: HTMLDivElement | null, index: number) {
-  if (!element) return;
-
-  const top = index * ROW_HEIGHT;
-  if (typeof element.scrollTo === 'function') {
-    element.scrollTo({ top, behavior: 'auto' });
-  } else {
-    element.scrollTop = top;
-  }
-}
-
-function visibleLensItems(values: readonly number[], scrollTop: number) {
-  const centerIndex = Math.round(scrollTop / ROW_HEIGHT);
-  const start = Math.max(0, centerIndex - 1);
-  const end = Math.min(values.length - 1, centerIndex + 1);
-
-  return values.slice(start, end + 1).map((value, localIndex) => {
-    const index = start + localIndex;
-    const globalCenter = WHEEL_PADDING + index * ROW_HEIGHT + ROW_HEIGHT / 2 - scrollTop;
-
-    return {
-      index,
-      value,
-      y: globalCenter - LENS_TOP,
-    };
-  });
-}
-
-function LensText({
-  x,
-  values,
-  scrollTop,
-}: {
-  x: number;
-  values: readonly number[];
-  scrollTop: number;
-}) {
-  return (
-    <>
-      {visibleLensItems(values, scrollTop).map(({ index, value, y }) => (
-        <text
-          key={index}
-          x={x}
-          y={y}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="ui-time-picker__lens-text"
-        >
-          {formatUnit(value)}
-        </text>
-      ))}
-    </>
-  );
-}
-
-function TimeLens({
-  assets,
-  scrollTops,
-}: {
-  assets: TimeLensAssets | null;
-  scrollTops: ScrollTops;
-}) {
-  const reactId = useId().replace(/:/g, '');
-  const filterId = `ui-time-picker-lens-${reactId}`;
-  const clipId = `ui-time-picker-lens-clip-${reactId}`;
-  const sourceClipId = `ui-time-picker-lens-source-clip-${reactId}`;
-
-  return (
-    <div className="ui-time-picker__lens" aria-hidden="true">
-      <svg
-        viewBox={`0 0 ${LENS_WIDTH} ${LENS_HEIGHT}`}
-        preserveAspectRatio="none"
-        focusable="false"
-      >
-        <defs>
-          <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
-            <rect width={LENS_WIDTH} height={LENS_HEIGHT} rx={LENS_HEIGHT / 2} />
-          </clipPath>
-          <clipPath id={sourceClipId} clipPathUnits="userSpaceOnUse">
-            <rect
-              y={LENS_SOURCE_VERTICAL_INSET}
-              width={LENS_WIDTH}
-              height={LENS_HEIGHT - LENS_SOURCE_VERTICAL_INSET * 2}
-            />
-          </clipPath>
-          {assets ? (
-            <filter
-              id={filterId}
-              filterUnits="userSpaceOnUse"
-              primitiveUnits="userSpaceOnUse"
-              x="0"
-              y="0"
-              width={LENS_WIDTH}
-              height={LENS_HEIGHT}
-              colorInterpolationFilters="sRGB"
-            >
-              <feImage
-                href={assets.zoomHref}
-                x="0"
-                y="0"
-                width={LENS_WIDTH}
-                height={LENS_HEIGHT}
-                preserveAspectRatio="none"
-                result="zoomMap"
-              />
-              <feDisplacementMap
-                in="SourceGraphic"
-                in2="zoomMap"
-                scale={assets.zoomScale}
-                xChannelSelector="R"
-                yChannelSelector="G"
-                result="zoomed"
-              />
-              <feImage
-                href={assets.edgeHref}
-                x="0"
-                y="0"
-                width={LENS_WIDTH}
-                height={LENS_HEIGHT}
-                preserveAspectRatio="none"
-                result="edgeMap"
-              />
-              <feDisplacementMap
-                in="zoomed"
-                in2="edgeMap"
-                scale={assets.edgeScale}
-                xChannelSelector="R"
-                yChannelSelector="G"
-                result="refracted"
-              />
-            </filter>
-          ) : null}
-        </defs>
-
-        <g clipPath={`url(#${clipId})`}>
-          <g filter={assets ? `url(#${filterId})` : undefined}>
-            <g clipPath={`url(#${sourceClipId})`}>
-              <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
-              <LensText x={LENS_WIDTH * 0.25} values={HOUR_VALUES} scrollTop={scrollTops.hour} />
-              <text
-                x={LENS_WIDTH * 0.5}
-                y={LENS_HEIGHT / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                className="ui-time-picker__lens-separator"
-              >
-                :
-              </text>
-              <LensText x={LENS_WIDTH * 0.75} values={MINUTE_VALUES} scrollTop={scrollTops.minute} />
-            </g>
-          </g>
-        </g>
-
-      </svg>
-    </div>
-  );
-}
-
-function TimeColumnWheel({
-  kind,
-  values,
-  selected,
-  onScroll,
-  onSelect,
-  columnRef,
-}: {
-  kind: TimeColumn;
-  values: readonly number[];
-  selected: number;
-  onScroll: (kind: TimeColumn, event: UIEvent<HTMLDivElement>) => void;
-  onSelect: (kind: TimeColumn, index: number) => void;
-  columnRef: RefObject<HTMLDivElement | null>;
-}) {
-  const label = kind === 'hour' ? 'Часы' : 'Минуты';
-
-  return (
-    <div
-      ref={columnRef}
-      className={`ui-time-picker__column ui-time-picker__column--${kind}`}
-      role="listbox"
-      aria-label={label}
-      onScroll={(event) => onScroll(kind, event)}
-    >
-      {values.map((value, index) => {
-        const isSelected = value === selected;
-
-        return (
-          <button
-            key={value}
-            type="button"
-            className={`ui-time-picker__option${isSelected ? ' ui-time-picker__option--selected' : ''}`}
-            role="option"
-            aria-selected={isSelected}
-            onClick={() => onSelect(kind, index)}
-          >
-            {formatUnit(value)}
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 export function TimePicker({
@@ -259,250 +47,17 @@ export function TimePicker({
   const parsedValue = parseLocalTime(value);
   if (!parsedValue) throw new Error('TimePicker value must be a valid HH:mm local time');
 
-  const hourRef = useRef<HTMLDivElement | null>(null);
-  const minuteRef = useRef<HTMLDivElement | null>(null);
-  const draftRef = useRef<LocalTimeParts>(parsedValue);
-  const controlledRef = useRef<LocalTimeParts>(parsedValue);
-  const onChangeRef = useRef(onChange);
-  const openedRef = useRef(opened);
-  const wasOpenedRef = useRef(false);
-  const hourFrameRef = useRef<number | null>(null);
-  const minuteFrameRef = useRef<number | null>(null);
-  const reconcileFrameRef = useRef<number | null>(null);
-  const feedbackValueRef = useRef<LocalTimeParts>(parsedValue);
-  const pendingScrollRef = useRef<ScrollTops>({
-    hour: parsedValue.hour * ROW_HEIGHT,
-    minute: parsedValue.minute * ROW_HEIGHT,
-  });
-
-  const [draft, setDraft] = useState<LocalTimeParts>(parsedValue);
-  const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
-  const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
-
-  controlledRef.current = parsedValue;
-  onChangeRef.current = onChange;
-  openedRef.current = opened;
-
-  useEffect(() => {
-    if (!opened || lensAssets) return undefined;
-
-    const documentRef = target?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
-    if (!documentRef) return undefined;
-
-    let cancelled = false;
-    const view = documentRef.defaultView;
-    const build = () => {
-      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef));
-    };
-
-    if (!view || typeof view.requestAnimationFrame !== 'function') {
-      build();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const frame = view.requestAnimationFrame(build);
-    return () => {
-      cancelled = true;
-      view.cancelAnimationFrame(frame);
-    };
-  }, [lensAssets, opened, target]);
-
-  useEffect(() => {
-    const view = target?.ownerDocument.defaultView ?? window;
-
-    if (!opened) {
-      wasOpenedRef.current = false;
-
-      if (hourFrameRef.current !== null) {
-        view.cancelAnimationFrame(hourFrameRef.current);
-        hourFrameRef.current = null;
-      }
-      if (minuteFrameRef.current !== null) {
-        view.cancelAnimationFrame(minuteFrameRef.current);
-        minuteFrameRef.current = null;
-      }
-      if (reconcileFrameRef.current !== null) {
-        view.cancelAnimationFrame(reconcileFrameRef.current);
-        reconcileFrameRef.current = null;
-      }
-      return;
-    }
-
-    const justOpened = !wasOpenedRef.current;
-    wasOpenedRef.current = true;
-    const currentDraft = draftRef.current;
-    const valueChanged = currentDraft.hour !== parsedValue.hour
-      || currentDraft.minute !== parsedValue.minute;
-    if (!justOpened && !valueChanged) return;
-
-    if (hourFrameRef.current !== null) {
-      view.cancelAnimationFrame(hourFrameRef.current);
-      hourFrameRef.current = null;
-    }
-    if (minuteFrameRef.current !== null) {
-      view.cancelAnimationFrame(minuteFrameRef.current);
-      minuteFrameRef.current = null;
-    }
-    if (reconcileFrameRef.current !== null) {
-      view.cancelAnimationFrame(reconcileFrameRef.current);
-      reconcileFrameRef.current = null;
-    }
-
-    draftRef.current = parsedValue;
-    feedbackValueRef.current = parsedValue;
-    setDraft(parsedValue);
-    const nextScrollTops = {
-      hour: parsedValue.hour * ROW_HEIGHT,
-      minute: parsedValue.minute * ROW_HEIGHT,
-    };
-    pendingScrollRef.current = nextScrollTops;
-    setScrollTops(nextScrollTops);
-
-    view.requestAnimationFrame(() => {
-      if (!openedRef.current) return;
-      scrollColumn(hourRef.current, parsedValue.hour);
-      scrollColumn(minuteRef.current, parsedValue.minute);
-    });
-  }, [opened, parsedValue.hour, parsedValue.minute, target]);
-
-  useEffect(() => () => {
-    const view = target?.ownerDocument.defaultView ?? window;
-    if (hourFrameRef.current !== null) view.cancelAnimationFrame(hourFrameRef.current);
-    if (minuteFrameRef.current !== null) view.cancelAnimationFrame(minuteFrameRef.current);
-    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
-  }, [target]);
-
-  const commitIndex = (kind: TimeColumn, index: number) => {
-    const values = kind === 'hour' ? HOUR_VALUES : MINUTE_VALUES;
-    const clampedIndex = Math.max(0, Math.min(values.length - 1, index));
-    const nextValue = values[clampedIndex];
-    const current = controlledRef.current;
-    const next = kind === 'hour'
-      ? { ...current, hour: nextValue }
-      : { ...current, minute: nextValue };
-
-    if (feedbackValueRef.current[kind] !== nextValue) {
-      feedbackValueRef.current = {
-        ...feedbackValueRef.current,
-        [kind]: nextValue,
-      };
-      triggerTelegramSelectionHaptic();
-    }
-
-    if (next.hour === current.hour && next.minute === current.minute) {
-      draftRef.current = current;
-      setDraft(current);
-      return;
-    }
-
-    draftRef.current = next;
-    setDraft(next);
-    onChangeRef.current(formatLocalTime(next.hour, next.minute));
-
-    const view = target?.ownerDocument.defaultView ?? window;
-    if (reconcileFrameRef.current !== null) {
-      view.cancelAnimationFrame(reconcileFrameRef.current);
-    }
-    reconcileFrameRef.current = view.requestAnimationFrame(() => {
-      reconcileFrameRef.current = null;
-      if (!openedRef.current) return;
-
-      const canonical = controlledRef.current;
-      if (canonical.hour === next.hour && canonical.minute === next.minute) return;
-
-      draftRef.current = canonical;
-      feedbackValueRef.current = canonical;
-      setDraft(canonical);
-      const canonicalScrollTops = {
-        hour: canonical.hour * ROW_HEIGHT,
-        minute: canonical.minute * ROW_HEIGHT,
-      };
-      pendingScrollRef.current = canonicalScrollTops;
-      setScrollTops(canonicalScrollTops);
-      scrollColumn(hourRef.current, canonical.hour);
-      scrollColumn(minuteRef.current, canonical.minute);
-    });
-  };
-
-  const handleScroll = (kind: TimeColumn, event: UIEvent<HTMLDivElement>) => {
-    if (!openedRef.current) return;
-
-    const top = event.currentTarget.scrollTop;
-    pendingScrollRef.current = {
-      ...pendingScrollRef.current,
-      [kind]: top,
-    };
-
-    const frameRef = kind === 'hour' ? hourFrameRef : minuteFrameRef;
-    if (frameRef.current !== null) return;
-
-    const view = event.currentTarget.ownerDocument.defaultView ?? window;
-
-    frameRef.current = view.requestAnimationFrame(() => {
-      frameRef.current = null;
-      if (!openedRef.current) return;
-
-      const nextTop = pendingScrollRef.current[kind];
-      setScrollTops((current) => ({ ...current, [kind]: nextTop }));
-      commitIndex(kind, Math.round(nextTop / ROW_HEIGHT));
-    });
-  };
-
-  const handleSelect = (kind: TimeColumn, index: number) => {
-    if (!openedRef.current) return;
-
-    commitIndex(kind, index);
-    const nextTop = index * ROW_HEIGHT;
-    pendingScrollRef.current = {
-      ...pendingScrollRef.current,
-      [kind]: nextTop,
-    };
-    setScrollTops((current) => ({ ...current, [kind]: nextTop }));
-    scrollColumn(kind === 'hour' ? hourRef.current : minuteRef.current, index);
-  };
-
   return (
-    <MezfitPopover
+    <TwoColumnPicker
       opened={opened}
-      target={target ?? undefined}
-      angle={false}
-      backdrop
-      iosHighlight={false}
-      onBackdropClick={onClose}
-      className="ui-time-picker__popover"
-      style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Выбор времени"
-    >
-      <div className="ui-time-picker">
-        <div className="ui-time-picker__wheel">
-          <div className="ui-time-picker__columns">
-            <TimeColumnWheel
-              kind="hour"
-              values={HOUR_VALUES}
-              selected={draft.hour}
-              onScroll={handleScroll}
-              onSelect={handleSelect}
-              columnRef={hourRef}
-            />
-            <span className="ui-time-picker__separator" aria-hidden="true">:</span>
-            <TimeColumnWheel
-              kind="minute"
-              values={MINUTE_VALUES}
-              selected={draft.minute}
-              onScroll={handleScroll}
-              onSelect={handleSelect}
-              columnRef={minuteRef}
-            />
-          </div>
-
-          <TimeLens assets={lensAssets} scrollTops={scrollTops} />
-        </div>
-      </div>
-    </MezfitPopover>
+      target={target}
+      value={{ left: parsedValue.hour, right: parsedValue.minute }}
+      columns={TIME_COLUMNS}
+      separator=":"
+      ariaLabel="Выбор времени"
+      onChange={({ left, right }) => onChange(formatLocalTime(left, right))}
+      onClose={onClose}
+    />
   );
 }
 
