@@ -27,6 +27,8 @@ const tabs: Array<{ id: ClientTab; label: string }> = [
 ];
 
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
+  today: { title: 'Сегодня', text: 'Здесь появится сводка тренера на сегодня: тренировки, задачи и ближайшие события.' },
+  analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика клиентов, тренировок и нагрузки.' },
   calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
   settings: { title: 'Настройки', text: 'Системные настройки будут добавляться отдельными задачами.' },
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
