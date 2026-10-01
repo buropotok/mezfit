@@ -305,6 +305,7 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
         <button
           type="button"
           className="ui-day-schedule__delete-button"
+          data-schedule-edit-control=""
           aria-label="Удалить карточку"
           onClick={(clickEvent) => {
             clickEvent.preventDefault();
