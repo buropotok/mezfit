@@ -60,7 +60,7 @@ const coachItems: NavigationItem[] = [
   { id: 'exercises', label: 'Упражнения', icon: 'barbell' },
   { id: 'calendar', label: 'Календарь', icon: 'calendar' },
   { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
-  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary' },
+  { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary', showFab: false },
 ];
 
 const clientItems: NavigationItem[] = [
