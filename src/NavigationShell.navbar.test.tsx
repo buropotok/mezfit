@@ -21,10 +21,39 @@ const me = {
   roles: ['client' as const],
 };
 
+function getPrimaryTabsRoot(container: HTMLElement): ShadowRoot {
+  const wrapper = container.querySelector<HTMLElement>('.navigation-primary-tabs > div');
+  const host = wrapper?.firstElementChild;
+  if (!(host instanceof HTMLElement) || !host.shadowRoot) {
+    throw new Error('LiquidGlassIconOnly must expose its production shadow scene');
+  }
+  return host.shadowRoot;
+}
+
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
     disconnect() {}
+  });
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  vi.stubGlobal('PointerEvent', class extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+      this.pointerType = init.pointerType ?? 'touch';
+    }
+  });
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(390);
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function(this: HTMLElement) {
+    return this.classList.contains('tab-link') ? 78 : 390;
+  });
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(64);
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function(this: HTMLElement) {
+    const width = this.classList.contains('tab-link') ? 78 : 390;
+    const left = Number(this.dataset.index ?? 0) * 78;
+    return { x: left, y: 0, left, top: 0, right: left + width, bottom: 64, width, height: 64, toJSON: () => ({}) };
   });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   window.history.replaceState({}, '');
@@ -55,9 +84,13 @@ describe('NavigationShell MezfitNavbar integration', () => {
 
     const identity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(identity?.getAttribute('aria-label')).toBe('Сегодня');
-    expect(view.getByRole('tab', { name: 'Сегодня' }).getAttribute('data-state')).toBe('active');
+    const tabsRoot = getPrimaryTabsRoot(view.container);
+    const todayTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Сегодня"]');
+    const programsTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Программа"]');
+    expect(todayTab?.getAttribute('aria-selected')).toBe('true');
+    if (!programsTab) throw new Error('Missing Program liquid glass tab');
 
-    fireEvent.click(view.getByRole('tab', { name: 'Программа' }));
+    fireEvent.click(programsTab);
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
   });
 
@@ -83,7 +116,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
 
     const identity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(identity?.getAttribute('aria-label')).toBe('Мой день');
-    expect(view.getByRole('tab', { name: 'Сегодня' })).not.toBeNull();
+    expect(getPrimaryTabsRoot(view.container).querySelector('[role="tab"][aria-label="Сегодня"]')).not.toBeNull();
     expect(view.container.querySelector('.ui-mezfit-navbar__side--left')?.getAttribute('aria-hidden')).toBe('true');
 
     fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
@@ -140,7 +173,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     );
 
     expect(view.container.querySelector('.ui-mezfit-navbar__identity .ui-avatar')).not.toBeNull();
-    expect(view.queryByRole('tab', { name: 'Сегодня' })).toBeNull();
+    expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
     expect(view.getByRole('button', { name: 'Назад' })).not.toBeNull();
   });
 });
