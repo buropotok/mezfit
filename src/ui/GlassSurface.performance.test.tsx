@@ -44,13 +44,13 @@ describe('GlassSurface vector-map cache', () => {
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context);
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,cached-perf-map');
 
-    const first = render(<GlassSurface>First</GlassSurface>);
+    const first = render(<GlassSurface optics>First</GlassSurface>);
     expect(first.container.firstElementChild?.getAttribute('data-ui-glass-map-ready')).toBe('true');
     const firstBuildCount = getContext.mock.calls.length;
 
     first.unmount();
 
-    const second = render(<GlassSurface>Second</GlassSurface>);
+    const second = render(<GlassSurface optics>Second</GlassSurface>);
     expect(second.container.firstElementChild?.getAttribute('data-ui-glass-map-ready')).toBe('true');
     expect(getContext.mock.calls.length).toBe(firstBuildCount);
   });

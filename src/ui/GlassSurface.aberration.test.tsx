@@ -44,7 +44,7 @@ describe('GlassSurface refraction pipeline', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context);
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,no-aberration-map');
 
-    const view = render(<GlassSurface>Glass</GlassSurface>);
+    const view = render(<GlassSurface optics>Glass</GlassSurface>);
     const surface = view.container.firstElementChild as HTMLElement;
 
     expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('true');

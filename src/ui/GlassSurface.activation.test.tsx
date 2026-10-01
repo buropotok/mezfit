@@ -24,7 +24,7 @@ describe('GlassSurface activation', () => {
     const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect');
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
-    const view = render(<GlassSurface active={false}>Dormant</GlassSurface>);
+    const view = render(<GlassSurface active={false} optics>Dormant</GlassSurface>);
     const surface = view.container.firstElementChild as HTMLElement;
 
     expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
@@ -32,7 +32,7 @@ describe('GlassSurface activation', () => {
     expect(measure).not.toHaveBeenCalled();
     expect(getContext).not.toHaveBeenCalled();
 
-    view.rerender(<GlassSurface active>Active</GlassSurface>);
+    view.rerender(<GlassSurface active optics>Active</GlassSurface>);
 
     expect(observerCount).toBe(1);
     expect(measure).toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe('GlassSurface activation', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context);
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,activation-map');
 
-    const view = render(<GlassSurface active>Visible</GlassSurface>);
+    const view = render(<GlassSurface active optics>Visible</GlassSurface>);
     const image = view.container.querySelector('feImage');
 
     expect(image?.getAttribute('width')).toBe('287');

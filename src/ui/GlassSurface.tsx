@@ -88,6 +88,7 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   contentClassName?: string;
   wrapContent?: boolean;
   active?: boolean;
+  optics?: boolean;
   children?: ReactNode;
 };
 
@@ -101,6 +102,7 @@ export function GlassSurface({
   contentClassName = '',
   wrapContent = true,
   active = true,
+  optics = false,
   style,
   children,
   ...props
@@ -154,6 +156,10 @@ export function GlassSurface({
   }, [active, hostMode, shapeRadius]);
 
   useEffect(() => {
+    if (!optics) {
+      setVectorMapHref(null);
+      return undefined;
+    }
     if (!active) return undefined;
 
     const element = rootRef.current;
@@ -199,6 +205,7 @@ export function GlassSurface({
     };
   }, [
     active,
+    optics,
     geometry,
     material.neutralEdge,
     material.rimWidth,
@@ -215,9 +222,10 @@ export function GlassSurface({
   };
 
   const radius = geometry?.radius ?? 0;
-  const filterRegion = geometry
+  const activeVectorMapHref = optics ? vectorMapHref : null;
+  const filterRegion = activeVectorMapHref && geometry
     ? resolveGlassFilterRegion(geometry, material)
-    : { paddingX: material.filterPadding, paddingY: material.filterPadding };
+    : null;
   const glassStyle: GlassCssProperties = {
     ...style,
     ...(hostMode && shape === 'auto' ? {} : { borderRadius: radius || undefined }),
@@ -239,10 +247,10 @@ export function GlassSurface({
       {...props}
       ref={setRootRef}
       className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'} ${className}`.trim()}
-      data-ui-glass-map-ready={vectorMapHref ? 'true' : 'false'}
+      data-ui-glass-map-ready={activeVectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
-      {vectorMapHref && geometry ? (
+      {activeVectorMapHref && geometry && filterRegion ? (
         <svg
           width="0"
           height="0"
@@ -263,7 +271,7 @@ export function GlassSurface({
               width={geometry.width}
               height={geometry.height}
               preserveAspectRatio="none"
-              href={vectorMapHref}
+              href={activeVectorMapHref}
               result="vectorMap"
             />
             <feDisplacementMap
