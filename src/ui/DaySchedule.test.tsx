@@ -453,6 +453,45 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('keeps touch move and end ownership after repeated paging unmounts the source frame', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !schedule) throw new Error('Missing draggable touch event frame');
+
+    const start = { identifier: 76, target: frame, clientX: 100, clientY: 200, pageX: 100, pageY: 200, screenX: 100, screenY: 200 };
+    const edgeTouch = { ...start, clientX: 330, pageX: 330, screenX: 330 };
+    fireEvent.touchStart(frame, { touches: [start], targetTouches: [start], changedTouches: [start] });
+    act(() => vi.advanceTimersByTime(300));
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
+
+    fireEvent.touchMove(frame, { touches: [edgeTouch], targetTouches: [edgeTouch], changedTouches: [edgeTouch] });
+    act(() => vi.advanceTimersByTime(1200));
+    expect(frame.isConnected).toBe(false);
+    expect(view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot
+      ?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('2');
+
+    const centerTouch = { ...start, clientX: 200, pageX: 200, screenX: 200 };
+    fireEvent.touchMove(frame, { touches: [centerTouch], targetTouches: [centerTouch], changedTouches: [centerTouch] });
+    act(() => vi.advanceTimersByTime(1000));
+    expect(view.container.querySelectorAll('.ui-day-schedule__week-scene')[1]?.shadowRoot
+      ?.querySelector('[aria-selected="true"]')?.getAttribute('data-index')).toBe('2');
+
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [centerTouch] });
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+    act(() => vi.advanceTimersByTime(50));
+  });
+
   it('still cancels an active touch drag on a real touchcancel', () => {
     const moved = vi.fn();
     const view = render(

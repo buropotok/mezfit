@@ -84,6 +84,7 @@ export class UiScheduleTouchSensor implements SensorInstance {
   private readonly props: SensorProps<ScheduleTouchSensorOptions>;
   private readonly document: Document;
   private readonly view: Window;
+  private readonly listenerTarget: EventTarget;
   private readonly initialX: number;
   private readonly initialY: number;
   private activationTimer: number | null = null;
@@ -95,6 +96,7 @@ export class UiScheduleTouchSensor implements SensorInstance {
 
     this.document = getOwnerDocument(props.event.target);
     this.view = getWindow(props.event.target);
+    this.listenerTarget = props.event.target ?? this.document;
 
     const coordinates = getEventCoordinates(props.event) ?? { x: 0, y: 0 };
     this.initialX = coordinates.x;
@@ -109,9 +111,9 @@ export class UiScheduleTouchSensor implements SensorInstance {
     this.removeSelection = this.removeSelection.bind(this);
     this.stopClick = this.stopClick.bind(this);
 
-    this.document.addEventListener('touchmove', this.handleMove, { passive: false });
-    this.document.addEventListener('touchend', this.handleEnd);
-    this.document.addEventListener('touchcancel', this.handleCancel);
+    this.listenerTarget.addEventListener('touchmove', this.handleMove as EventListener, { passive: false });
+    this.listenerTarget.addEventListener('touchend', this.handleEnd as EventListener);
+    this.listenerTarget.addEventListener('touchcancel', this.handleCancel as EventListener);
     this.document.addEventListener('visibilitychange', this.handleVisibilityChange);
     this.view.addEventListener('contextmenu', this.handleContextMenu);
     this.view.addEventListener('dragstart', this.handleDragStart);
@@ -218,9 +220,9 @@ export class UiScheduleTouchSensor implements SensorInstance {
     this.detached = true;
     this.clearActivationTimer();
 
-    this.document.removeEventListener('touchmove', this.handleMove);
-    this.document.removeEventListener('touchend', this.handleEnd);
-    this.document.removeEventListener('touchcancel', this.handleCancel);
+    this.listenerTarget.removeEventListener('touchmove', this.handleMove as EventListener);
+    this.listenerTarget.removeEventListener('touchend', this.handleEnd as EventListener);
+    this.listenerTarget.removeEventListener('touchcancel', this.handleCancel as EventListener);
     this.document.removeEventListener('selectionchange', this.removeSelection);
     this.document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.view.removeEventListener('contextmenu', this.handleContextMenu);
