@@ -101,7 +101,7 @@ describe('DaySchedule', () => {
     expect(backgrounds).toHaveLength(3);
     for (const background of backgrounds) {
       expect(background.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.2');
+      expect(background.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
     }
   });
 
@@ -650,7 +650,7 @@ describe('DaySchedule', () => {
     expect(wrapper).not.toBeNull();
     expect(wrapper?.style.height).toBe('100px');
     expect(overlay?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-    expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.2');
+    expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
     expect(overlay?.querySelector('.lifted-event-content')?.textContent).toBe('a');
     expect(liftedStates).toContain(true);
 
