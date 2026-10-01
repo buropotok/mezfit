@@ -55,6 +55,24 @@ describe('IdentityAction double navbar variant', () => {
 });
 
 describe('MezfitNavbar', () => {
+  it('passes the configured navbar glass preset to every identity action', () => {
+    const view = renderWithKonsta(
+      <MezfitNavbar
+        level={2}
+        identity={{ title: 'Клиенты', icon: 'users' }}
+        onBack={vi.fn()}
+        onMenu={vi.fn()}
+        onCalendar={vi.fn()}
+      />,
+    );
+
+    const surfaces = [...view.container.querySelectorAll<HTMLElement>('.ui-mezfit-navbar .ui-glass-surface')];
+    expect(surfaces).toHaveLength(3);
+    for (const surface of surfaces) {
+      expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
+    }
+  });
+
   it('keeps the identity action mounted while switching from a page icon to a client avatar', () => {
     const props = {
       onBack: vi.fn(),
