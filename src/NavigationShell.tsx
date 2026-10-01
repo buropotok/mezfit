@@ -7,10 +7,8 @@ import {
   Menu,
   MenuDivider,
   MenuItem,
+  LiquidGlassIconOnly,
   MezfitNavbar,
-  Tabs,
-  TabsList,
-  TabsTrigger,
   type LocalDate,
   type MezfitNavbarIdentity,
   type UiIconName,
@@ -313,29 +311,19 @@ export function NavigationShell({
           {children}
         </section>
 
-        {floatingAction ? (
-          <div className={`navigation-floating-action${level === 1 ? ' navigation-floating-action--with-tabs' : ''}`}>
-            {floatingAction}
-          </div>
-        ) : null}
-
-        {level === 1 ? (
-          <Tabs
-            className="navigation-primary-tabs"
-            mode="icon"
-            theme="glass"
+        <div className="navigation-primary-tabs">
+          <LiquidGlassIconOnly
+            hidden={level !== 1}
+            tabs={primaryItems.map((item) => ({
+              value: item.id,
+              label: item.label,
+              icon: item.icon,
+            }))}
             value={destination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}
-          >
-            <TabsList aria-label={activeRole === 'coach' ? 'Разделы тренера' : 'Разделы клиента'}>
-              {primaryItems.map((item) => (
-                <TabsTrigger key={item.id} value={item.id} icon={item.icon}>
-                  {item.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        ) : null}
+            fab={floatingAction}
+          />
+        </div>
 
         <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
 
