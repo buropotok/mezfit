@@ -5,7 +5,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const host = root.getElementById('iconLayer');
   const events = new EventTarget();
   const timers = new Set(), frames = new Set(), observers = new Set(), animations = new Set(), disposers = [];
-  let disposed = false, pointerId = null, selectIndex = () => {};
+  let disposed = false, pointerId = null, selectIndex = () => {}, clearSelection = () => {};
   const document = {
     getElementById: id => root.getElementById(id),
     createElement: tag => owner.createElement(tag),
@@ -692,7 +692,21 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
       });
 
 
-      selectIndex = index => updateActive(index, false);
+      selectIndex = index => {
+        selectorTrack.style.visibility = '';
+        lensTrack.style.visibility = '';
+        updateActive(index, false);
+      };
+      clearSelection = () => {
+        data.activeIndex = -1;
+        data.newActiveIndex = -1;
+        links.forEach(link => {
+          link.classList.remove('active');
+          link.setAttribute('aria-selected', 'false');
+        });
+        selectorTrack.style.visibility = 'hidden';
+        lensTrack.style.visibility = 'hidden';
+      };
       updateActive(initialIndex, false);
       requestAnimationFrame(() => {
         syncSlotWidths();
@@ -2136,6 +2150,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   if(playEntrance)play();else settle();
   return{
     setValue(index){selectIndex(index)},
+    clearValue(){clearSelection()},
     dispose(){
       disposed=true;
       timers.forEach(id=>globalThis.clearTimeout(id));frames.forEach(id=>globalThis.cancelAnimationFrame(id));
