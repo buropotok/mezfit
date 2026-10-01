@@ -37,7 +37,7 @@ The Back action is non-interactive and positioned beneath the central identity a
 
 The central identity displays the selected first-level destination title and destination icon.
 
-The bottom `LiquidGlassIconOnly` control owns first-level destination selection and receives the existing global workout FAB through its public `fab` slot.
+The bottom `LiquidGlassIconOnly` control owns first-level destination selection. `NavigationShell` keeps the available FAB source, while the active destination descriptor decides whether that FAB is passed through the public `fab` slot.
 
 ### Level 2
 
@@ -81,7 +81,7 @@ Calendar data ownership is outside `MezfitNavbar`; the navbar only emits the cal
 
 ## First-level Tabs
 
-Primary role destinations are rendered with the approved UI Kit `LiquidGlassIconOnly` tab bar. The tab bar reports the selected destination to `NavigationShell`; it does not duplicate destination title/icon state. The existing workout FAB is passed through the component's public `fab` slot, so navigation layout does not recreate or reposition the primitive's internal mechanics.
+Primary role destinations are rendered with the approved UI Kit `LiquidGlassIconOnly` tab bar. The tab bar reports the selected destination to `NavigationShell`; it does not duplicate destination title/icon state. The existing workout FAB remains owned above the primitive and is passed through the public `fab` slot only for destinations whose descriptor enables it. On `hidden: true → false`, `LiquidGlassIconOnly` selects its approved entrance choreography from current FAB presence: with FAB uses the FAB reveal, without FAB uses the center-spread no-FAB reveal. FAB availability may change while level 1 remains visible without replaying entrance.
 
 The shell derives first-level navbar identity from the destination descriptor.
 
