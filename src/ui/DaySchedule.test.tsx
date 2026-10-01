@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
+import { yForMinutes } from './day-schedule/DayPanel';
 import type { LocalDate } from './date-picker/DatePicker';
 
 const changed = vi.fn();
@@ -28,7 +29,10 @@ beforeEach(() => {
     if (this.classList.contains('tab-link')) return 50;
     return 350;
   });
-  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(44);
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function(this: HTMLElement) {
+    if (this.classList.contains('ui-day-schedule__top-clearance')) return 148;
+    return 44;
+  });
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function(this: HTMLElement) {
     const index = Number(this.dataset.index ?? 0);
     const width = this.classList.contains('tab-link') ? 50 : 350;
@@ -63,13 +67,18 @@ function renderSchedule(date: LocalDate = '2026-09-28') {
 }
 
 describe('DaySchedule', () => {
-  it('renders a full 00:00–24:00 timeline while keeping the initial view scrollable', () => {
+  it('keeps midnight below the header clearance while initial scroll still targets 08:00', () => {
     const view = renderSchedule();
     const panel = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-panel[data-date="2026-09-28"]');
     const labels = panel?.querySelectorAll<HTMLElement>('.ui-day-schedule__hour-label');
+    const clearance = view.container.querySelector<HTMLElement>('.ui-day-schedule__top-clearance');
+    const viewport = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-viewport');
+
+    expect(clearance).not.toBeNull();
     expect(labels).toHaveLength(24);
     expect(labels?.[0]?.textContent).toBe('00:00');
     expect(labels?.[23]?.textContent).toBe('23:00');
+    expect(viewport?.scrollTop).toBe(148 + yForMinutes(8 * 60));
   });
 
   it('keeps adjacent week previews neutral and outside the accessible controls', () => {
