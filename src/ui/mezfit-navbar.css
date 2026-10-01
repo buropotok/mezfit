@@ -22,9 +22,6 @@
   transform: translateX(-50%);
 }
 
-.ui-mezfit-navbar__identity .ui-identity-action {
-  max-width: 100%;
-}
 
 .ui-mezfit-navbar__side {
   left: 50%;
