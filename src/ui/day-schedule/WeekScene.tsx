@@ -22,6 +22,12 @@ const weekOverrideCss = `
 .tab-strip {
   overflow: hidden;
 }
+.toolbar-pane {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 .tab-link {
   flex: 1 1 0;
   width: 0;
