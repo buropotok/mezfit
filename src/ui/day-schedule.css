@@ -194,6 +194,60 @@
   left: 10px;
 }
 
+.ui-day-schedule__delete-button {
+  position: absolute;
+  z-index: 5;
+  right: -12px;
+  bottom: -12px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ui-day-schedule__delete-button::before {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ui-color-danger, #ff453a);
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.35);
+}
+
+.ui-day-schedule__delete-icon {
+  position: relative;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+}
+
+.ui-day-schedule__delete-icon::before,
+.ui-day-schedule__delete-icon::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: #fff;
+}
+
+.ui-day-schedule__delete-icon::before {
+  transform: rotate(45deg);
+}
+
+.ui-day-schedule__delete-icon::after {
+  transform: rotate(-45deg);
+}
+
 .ui-day-schedule__drag-overlay-wrapper {
   transform-origin: center;
 }
