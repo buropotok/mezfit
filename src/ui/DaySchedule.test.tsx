@@ -293,8 +293,8 @@ describe('DaySchedule', () => {
 
     fireEvent.pointerDown(frame, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 220, clientY: 200 });
     fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 230, clientY: 200 });
-    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 330, clientY: 424 });
-    fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 330, clientY: 424 });
+    fireEvent.pointerMove(document, { pointerId: 32, pointerType: 'mouse', buttons: 1, clientX: 330, clientY: 328 });
+    fireEvent.pointerUp(document, { pointerId: 32, pointerType: 'mouse', button: 0, clientX: 330, clientY: 328 });
 
     expect(moved).not.toHaveBeenCalled();
     expect(changed).not.toHaveBeenCalled();
@@ -639,7 +639,7 @@ describe('DaySchedule', () => {
     );
     const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
     if (!frame) throw new Error('Missing draggable event frame');
-    expect(frame.style.height).toBe('100px');
+    expect(frame.style.height).toBe('62px');
 
     const touch = { identifier: 10, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
     fireEvent.touchStart(frame, { touches: [touch], targetTouches: [touch], changedTouches: [touch] });
@@ -648,7 +648,7 @@ describe('DaySchedule', () => {
     const wrapper = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay-wrapper');
     const overlay = view.container.querySelector<HTMLElement>('.ui-day-schedule__drag-overlay');
     expect(wrapper).not.toBeNull();
-    expect(wrapper?.style.height).toBe('100px');
+    expect(wrapper?.style.height).toBe('62px');
     expect(overlay?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
     expect(overlay?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.26');
     expect(overlay?.querySelector('.lifted-event-content')?.textContent).toBe('a');
