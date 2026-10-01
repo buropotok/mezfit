@@ -61,6 +61,30 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
   });
 
+  it('opens the page menu only after the shared double-action animation completes', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Today content</div>
+      </NavigationShell>,
+    );
+
+    fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
+    expect(view.queryByRole('menu', { name: 'Меню страницы' })).toBeNull();
+
+    const doubleAction = view.container.querySelector('.ui-identity-action--double');
+    expect(doubleAction).not.toBeNull();
+    fireEvent.animationEnd(doubleAction as Element);
+
+    expect(view.getByRole('menu', { name: 'Меню страницы' })).not.toBeNull();
+  });
+
   it('uses a contextual avatar identity and hides first-level tabs on level two', () => {
     const view = render(
       <NavigationShell
