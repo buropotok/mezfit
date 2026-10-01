@@ -23,5 +23,5 @@ export { SortableList, type SortableListItem, type SortableListProps } from './S
 export { LiquidGlassIconOnly, type LiquidGlassIconOnlyProps, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 export { LiquidGlassTabsNoFab, type LiquidGlassTabsNoFabProps, type LiquidGlassTabsNoFabTab } from './LiquidGlassTabsNoFab';
 export type { LiquidGlassTextOnlyProps, LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
-export { DaySchedule, getDayScheduleValue, type DayScheduleValue, type DayScheduleEvent, type DayScheduleEventMove, type DayScheduleEventResize, type DayScheduleProps, type DayScheduleRenderState } from './DaySchedule';
+export { DaySchedule, getDayScheduleValue, type DayScheduleValue, type DayScheduleEvent, type DayScheduleEventDelete, type DayScheduleEventMove, type DayScheduleEventResize, type DayScheduleProps, type DayScheduleRenderState } from './DaySchedule';
 export { DayScheduleEventCard, type DayScheduleEventCardProps } from './DayScheduleEventCard';
