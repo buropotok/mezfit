@@ -152,6 +152,7 @@ export function IdentityAction(props: IdentityActionProps) {
     'ui-identity-action',
     variant === 'double' ? 'ui-identity-action--double' : '',
     variant === 'single' || variant === 'avatar-only' ? 'ui-identity-action--single' : '',
+    variant === 'avatar-only' ? 'ui-identity-action--avatar-only' : '',
     disabled ? 'ui-identity-action--disabled' : '',
     isAnimating ? 'ui-identity-action--animating' : '',
   ].filter(Boolean).join(' ');
