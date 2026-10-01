@@ -11,7 +11,7 @@ import { mountPrototype as mountNoFabPrototype } from './liquid-glass-tabs-no-fa
 import noFabPrototypeCss from './liquid-glass-tabs-no-fab/prototype.css?inline';
 
 export type LiquidGlassIconOnlyTab = {
-  value: string;
+  value: string | null;
   label: string;
   icon: UiIconSource;
 };
@@ -177,7 +177,8 @@ function Scene({
   useLayoutEffect(() => {
     if (!shadow || tabs.length === 0) return undefined;
 
-    const activeIndex = Math.max(0, latest.current.tabs.findIndex(tab => tab.value === latest.current.value));
+    const resolvedIndex = latest.current.tabs.findIndex(tab => tab.value === latest.current.value);
+    const activeIndex = Math.max(0, resolvedIndex);
     const playEntrance = initialEntrance.current;
     initialEntrance.current = false;
     const onSelect = (index: number) => {
@@ -198,7 +199,9 @@ function Scene({
   }, [shadow, order, hasFab]);
 
   useLayoutEffect(() => {
-    controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
+    const index = tabs.findIndex(tab => tab.value === value);
+    if (index < 0) controller.current?.clearValue();
+    else controller.current?.setValue(index);
   }, [value, order, shadow, selectionRequest]);
 
   return (
