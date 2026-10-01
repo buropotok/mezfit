@@ -86,27 +86,27 @@ describe('direct prototype adapter',()=>{
     expect(fabSlot?.style.opacity).toBe('1');expect(fabSlot?.style.pointerEvents).toBe('auto');
     expect(fabSlot?.inert).toBe(false);expect(fabSlot?.hasAttribute('aria-hidden')).toBe(false);
   });
-  it('plays once for true -> false, settles, and does not replay on selection/parent renders',()=>{
+  it('plays the no-FAB reveal once for true -> false, settles, and does not replay on selection/parent renders',()=>{
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
     expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
-    act(()=>vi.advanceTimersByTime(880));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    act(()=>vi.advanceTimersByTime(940));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     const count=cancels.length;view.rerender(ui(false,'2'));expect(cancels).toHaveLength(count);
     expect(button(root,2).getAttribute('aria-selected')).toBe('true');
   });
   it('does not replay the entrance when FAB availability changes after settling',()=>{
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
-    act(()=>vi.advanceTimersByTime(880));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    act(()=>vi.advanceTimersByTime(940));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     view.rerender(ui(false,'0',tabs,true));
     const reboundRoot=getScene(view.container),fabSlot=view.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
     expect(element(reboundRoot,'iconLayer').hasAttribute('startup')).toBe(false);
     expect(element(reboundRoot,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     expect(fabSlot?.style.opacity).toBe('1');expect(fabSlot?.inert).toBe(false);
   });
-  it('still plays the required true -> false reveal when reduced motion is preferred',()=>{
+  it('still plays the required no-FAB true -> false reveal when reduced motion is preferred',()=>{
     vi.stubGlobal('matchMedia',()=>({matches:true}));
     const view=render(ui(true));view.rerender(ui(false));const root=getScene(view.container);
     expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
-    act(()=>vi.advanceTimersByTime(880));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+    act(()=>vi.advanceTimersByTime(940));expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
   });
   it('cancels all animation work on hide and can show again',()=>{
     const view=render(ui(true));view.rerender(ui(false));act(()=>vi.advanceTimersByTime(100));
