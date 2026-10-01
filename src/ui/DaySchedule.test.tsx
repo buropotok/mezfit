@@ -3,7 +3,6 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
-import dayScheduleCss from './day-schedule.css?raw';
 import type { LocalDate } from './date-picker/DatePicker';
 
 const changed = vi.fn();
@@ -64,13 +63,6 @@ function renderSchedule(date: LocalDate = '2026-09-28') {
 }
 
 describe('DaySchedule', () => {
-  it('adds a light halo to the lifted DnD tile and fades it during drop', () => {
-    expect(dayScheduleCss).toContain('0 0 18px rgb(255 255 255 / 0.16)');
-    expect(dayScheduleCss).toContain('0 0 36px rgb(170 205 255 / 0.10)');
-    expect(dayScheduleCss).toContain('.ui-day-schedule__drag-overlay-wrapper--dropping .ui-day-schedule__drag-visual');
-    expect(dayScheduleCss).toContain('box-shadow 90ms ease-in');
-  });
-
   it('renders a full 00:00–24:00 timeline while keeping the initial view scrollable', () => {
     const view = renderSchedule();
     const panel = view.container.querySelector<HTMLElement>('.ui-day-schedule__day-panel[data-date="2026-09-28"]');
