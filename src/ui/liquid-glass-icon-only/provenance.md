@@ -26,6 +26,7 @@ The upper lens starts moving 100 ms before split when a FAB target exists. Its X
 - The private runtime owns entrance geometry, displacement/mask/bezel rendering, the liquid-to-real crossfade, and the existing tab gesture optics.
 - The real FAB primitive is not restyled by the runtime. The runtime only positions and fades its app-owned wrapper.
 - Runtime listeners, observers, RAFs, timeouts, and Web Animations are tracked and disposed with the scene.
+- Settled touch optics include fail-safe release paths: lost pointer capture clears the pressed lens immediately, and the tap-spring has a duration watchdog so a missed Web Animations `finish`/`cancel` callback cannot leave the lens/selector in a transient state.
 - Width remains responsive: the final tabs width is derived from the host width / 1.1 and is shared by both the entrance geometry and the settled tabs.
 - The entrance layer is pointer-inert. Tabs and FAB become interactive only after handoff completes.
 - Hidden scenes unmount completely.
