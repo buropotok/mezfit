@@ -35,7 +35,7 @@ All navbar actions consume the shared navbar GlassSurface preset. The default pr
 
 The Back action is non-interactive and positioned beneath the central identity action.
 
-The central identity displays the selected first-level destination title and destination icon.
+The central identity displays the selected first-level destination title and destination icon. Its action surface is capped at 224px and centered in the free horizontal interval between the 44px Back action slot and the 88px Menu/Calendar action slot. It preserves at least 16px clearance from each side action by shrinking only when that interval is narrower than 224px.
 
 The bottom `LiquidGlassIconOnly` control owns first-level destination selection. `NavigationShell` keeps the available FAB source, while the active destination descriptor decides whether that FAB is passed through the public `fab` slot.
 
@@ -81,11 +81,11 @@ Calendar data ownership is outside `MezfitNavbar`; the navbar only emits the cal
 
 ## First-level Tabs
 
-Primary role destinations are rendered with the approved UI Kit `LiquidGlassIconOnly` tab bar. The tab bar reports the selected destination to `NavigationShell`; it does not duplicate destination title/icon state. The existing workout FAB remains owned above the primitive and is passed through the public `fab` slot only for destinations whose descriptor enables it. On `hidden: true → false`, `LiquidGlassIconOnly` selects its approved entrance choreography from current FAB presence: with FAB uses the FAB reveal, without FAB uses the center-spread no-FAB reveal. FAB availability may change while level 1 remains visible without replaying entrance.
+Primary role destinations are rendered with the approved UI Kit `LiquidGlassIconOnly` tab bar. The production contract always contains exactly five positions and preserves the UI Kit icon mapping. Coach mode: Сегодня (`calendar-event`), Клиенты (`users`), Программы (`clipboard-list`), Аналитика (`chart-dots-2`), Настройки (`settings`). Client mode: Сегодня (`calendar-event`), Тренировка (`barbell`), Программы (`clipboard-list`), Аналитика (`chart-dots-2`), Настройки (`settings`). Missing product screens render level-1 placeholders rather than changing the tab composition.
 
-The shell derives first-level navbar identity from the destination descriptor.
+The tab bar reports the selected destination to `NavigationShell`; it does not duplicate destination title/icon state. The existing workout FAB remains owned above the primitive and page-specific creation actions register through the navigation FAB contract. The active destination descriptor decides whether the resolved FAB is passed through the public `fab` slot: Сегодня, Клиенты/Тренировка and Программы allow a FAB; Аналитика and Настройки do not. On `hidden: true → false`, `LiquidGlassIconOnly` selects its approved entrance choreography from current FAB presence: with FAB uses the FAB reveal, without FAB uses the center-spread no-FAB reveal. FAB availability may change while level 1 remains visible without replaying entrance.
 
-Secondary destinations such as Settings/About may remain available from the page/system menu until their final first-level placement is explicitly changed. While such a level-1 destination is active, the bottom tab bar remains mounted but exposes no selected primary tab, and no FAB is passed for these secondary destinations.
+The shell derives first-level navbar identity from the destination descriptor. `About` remains a secondary page/system-menu destination; `Settings` is a primary fifth tab.
 
 ## Role switching and client coach selection
 

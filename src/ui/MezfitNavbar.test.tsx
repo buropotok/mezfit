@@ -86,8 +86,11 @@ describe('MezfitNavbar', () => {
         {...props}
       />,
     );
-    const initialIdentity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
+    const initialIdentity = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(initialIdentity).not.toBeNull();
+    expect(initialIdentity?.style.width).toBe('100%');
+    expect(initialIdentity?.style.minWidth).toBe('100%');
+    expect(initialIdentity?.style.maxWidth).toBe('100%');
     expect(view.container.querySelector('.ui-mezfit-navbar__side--left')?.getAttribute('aria-hidden')).toBe('true');
 
     view.rerender(
