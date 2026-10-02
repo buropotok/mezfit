@@ -33,6 +33,7 @@ beforeEach(()=>{
   vi.stubGlobal('PointerEvent',class extends MouseEvent {pointerId:number;pointerType:string;constructor(type:string,init:PointerEventInit={}){super(type,init);this.pointerId=init.pointerId??1;this.pointerType=init.pointerType??'touch'}});
   vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockReturnValue(390);
   vi.spyOn(HTMLElement.prototype,'offsetWidth','get').mockImplementation(function(this:HTMLElement){return this.classList.contains('tab-link')?78:390});
+  vi.spyOn(HTMLElement.prototype,'offsetLeft','get').mockImplementation(function(this:HTMLElement){return this.classList.contains('tab-link')?Number(this.dataset.index||0)*78:0});
   vi.spyOn(HTMLElement.prototype,'offsetHeight','get').mockReturnValue(64);
   vi.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(this:HTMLElement){const width=this.classList.contains('tab-link')?78:390;const left=Number(this.dataset.index||0)*78;return {x:left,y:0,left,top:0,right:left+width,bottom:64,width,height:64,toJSON:()=>({})}});
   vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
