@@ -32,6 +32,9 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     pointerId = event.pointerId;
     if (event.pointerType === 'touch') paneElement.setPointerCapture?.(event.pointerId);
   }, true);
+  listen(paneElement, 'lostpointercapture', event => {
+    if (pointerId === event.pointerId) pointerId = null;
+  }, true);
   function setTimeout(callback, delay) {
     const id = globalThis.setTimeout(() => { timers.delete(id); if (!disposed) callback(); }, delay);
     timers.add(id); return id;
@@ -564,6 +567,19 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
       listen(document, 'pointermove', onPointer);
       listen(document, 'pointerup', onPointer);
       listen(document, 'pointercancel', onPointer);
+      listen(pane, 'lostpointercapture', () => {
+        if (!data.touched) return;
+        data.touched = false;
+        data.moved = false;
+        data.holdActivated = false;
+        data.gesture = 'idle';
+        cancelPressIntent();
+        cancelLensForScroll();
+        data.setTransform = null;
+        stopAnimation();
+        positionSelector(data.activeIndex, false);
+        positionLensTrack(data.activeIndex, false);
+      });
 
       listen(pane, 'click', (e) => {
         if (data.suppressNativeClick && e.isTrusted) {
