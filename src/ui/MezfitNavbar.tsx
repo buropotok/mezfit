@@ -85,7 +85,7 @@ export function MezfitNavbar({
               variant="labeled"
               icon={identity.icon}
               title={identity.title}
-              width={224}
+              width="100%"
               glassPreset={glassPreset}
               onClick={onIdentityClick}
             />
@@ -94,7 +94,7 @@ export function MezfitNavbar({
               variant="labeled"
               avatar={identity.avatar}
               title={identity.title}
-              width={224}
+              width="100%"
               glassPreset={glassPreset}
               onClick={onIdentityClick}
             />
