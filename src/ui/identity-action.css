@@ -54,10 +54,6 @@
   cursor: pointer;
 }
 
-.ui-identity-action__segment + .ui-identity-action__segment {
-  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-}
-
 .ui-identity-action__segment:disabled {
   cursor: default;
   opacity: 0.45;
@@ -94,6 +90,11 @@
 .ui-identity-action__icon {
   width: 2.25rem;
   height: 2.25rem;
+}
+
+.ui-identity-action--labeled .ui-identity-action__icon {
+  width: 2rem;
+  height: 2rem;
 }
 
 .ui-identity-action__title {
