@@ -93,8 +93,8 @@
 }
 
 .ui-identity-action--labeled .ui-identity-action__icon {
-  width: 2rem;
-  height: 2rem;
+  width: 32px;
+  height: 32px;
 }
 
 .ui-identity-action__title {
