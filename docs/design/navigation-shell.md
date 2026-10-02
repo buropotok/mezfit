@@ -75,7 +75,7 @@ Account/system actions required to preserve application access may be appended a
 
 ## Calendar
 
-The second action in the right double capsule opens the application calendar/date selection surface.
+The first (left) action in the right double capsule opens the application calendar/date selection surface.
 
 Calendar data ownership is outside `MezfitNavbar`; the navbar only emits the calendar intent.
 
