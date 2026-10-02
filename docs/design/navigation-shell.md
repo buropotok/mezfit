@@ -35,7 +35,7 @@ All navbar actions consume the shared navbar GlassSurface preset. The default pr
 
 The Back action is non-interactive and positioned beneath the central identity action.
 
-The central identity displays the selected first-level destination title and destination icon. Its action surface is fixed at 224px and centered in the free horizontal interval between the 44px Back action slot and the 88px Menu/Calendar action slot.
+The central identity displays the selected first-level destination title and destination icon. Its action surface is capped at 224px and centered in the free horizontal interval between the 44px Back action slot and the 88px Menu/Calendar action slot. It preserves at least 16px clearance from each side action by shrinking only when that interval is narrower than 224px.
 
 The bottom `LiquidGlassIconOnly` control owns first-level destination selection. `NavigationShell` keeps the available FAB source, while the active destination descriptor decides whether that FAB is passed through the public `fab` slot.
 
