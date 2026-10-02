@@ -33,9 +33,19 @@ beforeEach(()=>{
   vi.stubGlobal('PointerEvent',class extends MouseEvent {pointerId:number;pointerType:string;constructor(type:string,init:PointerEventInit={}){super(type,init);this.pointerId=init.pointerId??1;this.pointerType=init.pointerType??'touch'}});
   vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockReturnValue(390);
   vi.spyOn(HTMLElement.prototype,'offsetWidth','get').mockImplementation(function(this:HTMLElement){return this.classList.contains('tab-link')?78:390});
-  vi.spyOn(HTMLElement.prototype,'offsetLeft','get').mockImplementation(function(this:HTMLElement){return this.classList.contains('tab-link')?Number(this.dataset.index||0)*78:0});
+  vi.spyOn(HTMLElement.prototype,'offsetLeft','get').mockImplementation(function(this:HTMLElement){
+    if(!this.classList.contains('tab-link'))return 0;
+    const siblings=this.parentElement?[...this.parentElement.children]:[];
+    return siblings.indexOf(this)*78;
+  });
   vi.spyOn(HTMLElement.prototype,'offsetHeight','get').mockReturnValue(64);
-  vi.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(this:HTMLElement){const width=this.classList.contains('tab-link')?78:390;const left=Number(this.dataset.index||0)*78;return {x:left,y:0,left,top:0,right:left+width,bottom:64,width,height:64,toJSON:()=>({})}});
+  vi.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(this:HTMLElement){
+    const width=this.classList.contains('tab-link')?78:390;
+    const siblings=this.parentElement?[...this.parentElement.children]:[];
+    const index=this.classList.contains('tab-link')?siblings.indexOf(this):0;
+    const left=index*78;
+    return {x:left,y:0,left,top:0,right:left+width,bottom:64,width,height:64,toJSON:()=>({})};
+  });
   vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
   Object.defineProperty(Element.prototype,'animate',{configurable:true,value:vi.fn(()=>{const cancel=vi.fn();cancels.push(cancel);return {cancel,addEventListener:vi.fn(),removeEventListener:vi.fn()}})});
 });
