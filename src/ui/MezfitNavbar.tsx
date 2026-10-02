@@ -108,6 +108,8 @@ export function MezfitNavbar({
             actions={[
               {
                 icon: 'calendar',
+                iconVariant: 'outline',
+                iconSize: 32,
                 label: 'Открыть календарь',
                 onClick: onCalendar,
                 disabled: calendarDisabled,
