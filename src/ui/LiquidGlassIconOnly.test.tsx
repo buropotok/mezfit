@@ -136,6 +136,29 @@ describe('direct prototype adapter',()=>{
     expect(element(root,'selector-track').style.transform).toBe('translateX(0px)');expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     view.rerender(ui(false,'2',tabs.slice(0,4)));expect(button(getScene(view.container),0).style.width).toBe('25%');
   });
+  it('releases the tap spring in both FAB modes even when Web Animations never reports finish',()=>{
+    for(const withFab of [false,true]){
+      const view=render(ui(false,'0',tabs,withFab));const root=getScene(view.container);const pane=element(root,'toolbar-pane');
+      fireEvent.pointerDown(button(root,3),{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
+      fireEvent.pointerUp(pane,{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
+      act(()=>vi.advanceTimersByTime(260));
+      expect(element(root,'lens').classList.contains('tap-spring-active')).toBe(true);
+      act(()=>vi.advanceTimersByTime(800));
+      expect(element(root,'lens').classList.contains('tap-spring-active')).toBe(false);
+      expect(element(root,'selector').classList.contains('tap-spring-hidden')).toBe(false);
+      view.unmount();
+    }
+  });
+  it('clears a pressed lens when pointer capture is lost',()=>{
+    const view=render(ui());const root=getScene(view.container);const pane=element(root,'toolbar-pane');
+    fireEvent.pointerDown(button(root,0),{composed:true,pointerId:1,clientX:39,clientY:32,pointerType:'touch'});
+    act(()=>vi.advanceTimersByTime(160));
+    expect(element(root,'lens').classList.contains('pressed')).toBe(true);
+    fireEvent(pane,new PointerEvent('lostpointercapture',{bubbles:true,pointerId:1,pointerType:'touch'}));
+    expect(element(root,'lens').classList.contains('pressed')).toBe(false);
+    expect(element(root,'selector').classList.contains('pressed')).toBe(false);
+    view.unmount();
+  });
   it('retains hold/drag optics and cancels without changing selection',()=>{
     const view=render(ui());const root=getScene(view.container);const pane=element(root,'toolbar-pane');
     fireEvent.pointerDown(button(root,0),{composed:true,pointerId:1,clientX:39,clientY:32,pointerType:'touch'});
