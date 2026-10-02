@@ -151,7 +151,7 @@ describe('direct prototype adapter',()=>{
     for(const withFab of [false,true]){
       const view=render(ui(false,'0',tabs,withFab));const root=getScene(view.container);const pane=element(root,'toolbar-pane');
       fireEvent.pointerDown(button(root,3),{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
-      fireEvent.pointerUp(pane,{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
+      fireEvent(pane.ownerDocument,new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'}));
       act(()=>vi.advanceTimersByTime(260));
       expect(element(root,'lens').classList.contains('tap-spring-active')).toBe(true);
       act(()=>vi.advanceTimersByTime(800));
