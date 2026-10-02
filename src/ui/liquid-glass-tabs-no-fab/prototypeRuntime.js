@@ -1431,8 +1431,9 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
           { release=true }={}
         ) {
           if (springAnimation) {
-            springAnimation.cancel();
+            const animation = springAnimation;
             springAnimation = null;
+            animation.cancel();
           }
 
           if (release) {
@@ -1484,7 +1485,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
 
           holdLensForSpring();
 
-          springAnimation =
+          const animation =
             animate(lens,
               sampledSpringKeyframes(),
               {
@@ -1495,19 +1496,40 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
               }
             );
 
-          listen(springAnimation,
+          springAnimation = animation;
+
+          // Some Telegram/WebView builds can miss Web Animations finish/cancel
+          // callbacks. Always release the temporary lens state after the
+          // approved spring duration so the tab bar cannot remain stuck.
+          const releaseFallback =
+            setTimeout(
+              () => {
+                if (springAnimation !== animation) return;
+                springAnimation = null;
+                animation.cancel();
+                releaseLensAfterSpring();
+              },
+              state.duration + 80
+            );
+
+          listen(animation,
             'finish',
             () => {
+              clearTimeout(releaseFallback);
+              if (springAnimation !== animation) return;
               springAnimation = null;
               releaseLensAfterSpring();
             },
             { once:true }
           );
 
-          listen(springAnimation,
+          listen(animation,
             'cancel',
             () => {
+              clearTimeout(releaseFallback);
+              if (springAnimation !== animation) return;
               springAnimation = null;
+              releaseLensAfterSpring();
             },
             { once:true }
           );
