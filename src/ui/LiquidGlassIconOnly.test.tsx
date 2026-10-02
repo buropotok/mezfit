@@ -32,10 +32,6 @@ beforeEach(()=>{
   vi.stubGlobal('ResizeObserver',class {observe(){}disconnect(){}});
   vi.stubGlobal('matchMedia',()=>({matches:false}));
   vi.stubGlobal('PointerEvent',class extends MouseEvent {pointerId:number;pointerType:string;constructor(type:string,init:PointerEventInit={}){super(type,init);this.pointerId=init.pointerId??1;this.pointerType=init.pointerType??'touch'}});
-  Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:function(this:Element,selector:string){
-    if(selector===':scope > .tab-link')return [...this.children].filter(child=>child instanceof HTMLElement&&child.classList.contains('tab-link'));
-    return nativeQuerySelectorAll.call(this,selector);
-  }});
   vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockReturnValue(390);
   vi.spyOn(HTMLElement.prototype,'offsetWidth','get').mockImplementation(function(this:HTMLElement){return this.classList.contains('tab-link')?78:390});
   vi.spyOn(HTMLElement.prototype,'offsetLeft','get').mockImplementation(function(this:HTMLElement){
@@ -54,7 +50,7 @@ beforeEach(()=>{
   vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
   Object.defineProperty(Element.prototype,'animate',{configurable:true,value:vi.fn(()=>{const cancel=vi.fn();cancels.push(cancel);return {cancel,addEventListener:vi.fn(),removeEventListener:vi.fn()}})});
 });
-afterEach(()=>{cleanup();Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
+afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
 
 describe('direct prototype adapter',()=>{
   it('renders no scene, lenses, icons or timers while hidden',()=>{
@@ -153,16 +149,24 @@ describe('direct prototype adapter',()=>{
     view.rerender(ui(false,'2',tabs.slice(0,4)));expect(button(getScene(view.container),0).style.width).toBe('25%');
   });
   it('releases the tap spring in both FAB modes even when Web Animations never reports finish',()=>{
-    for(const withFab of [false,true]){
-      const view=render(ui(false,'0',tabs,withFab));const root=getScene(view.container);const pane=element(root,'toolbar-pane');
-      fireEvent.pointerDown(button(root,3),{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
-      fireEvent(pane.ownerDocument,new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'}));
-      act(()=>vi.advanceTimersByTime(260));
-      expect(element(root,'lens').classList.contains('tap-spring-active')).toBe(true);
-      act(()=>vi.advanceTimersByTime(800));
-      expect(element(root,'lens').classList.contains('tap-spring-active')).toBe(false);
-      expect(element(root,'selector').classList.contains('tap-spring-hidden')).toBe(false);
-      view.unmount();
+    Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:function(this:Element,selector:string){
+      if(selector===':scope > .tab-link')return [...this.children].filter(child=>child instanceof HTMLElement&&child.classList.contains('tab-link'));
+      return nativeQuerySelectorAll.call(this,selector);
+    }});
+    try{
+      for(const withFab of [false,true]){
+        const view=render(ui(false,'0',tabs,withFab));const root=getScene(view.container);const pane=element(root,'toolbar-pane');
+        fireEvent.pointerDown(button(root,3),{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
+        fireEvent(pane.ownerDocument,new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'}));
+        act(()=>vi.advanceTimersByTime(260));
+        expect(element(root,'lens').classList.contains('tap-spring-active')).toBe(true);
+        act(()=>vi.advanceTimersByTime(800));
+        expect(element(root,'lens').classList.contains('tap-spring-active')).toBe(false);
+        expect(element(root,'selector').classList.contains('tap-spring-hidden')).toBe(false);
+        view.unmount();
+      }
+    }finally{
+      Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});
     }
   });
   it('clears a pressed lens when pointer capture is lost',()=>{
