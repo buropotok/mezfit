@@ -26,11 +26,16 @@ function element(root:ShadowRoot,id:string):HTMLElement {
   const result=root.getElementById(id);if(!(result instanceof HTMLElement))throw new Error('Missing '+id);return result;
 }
 const cancels:ReturnType<typeof vi.fn>[]=[];
+const nativeQuerySelectorAll=Element.prototype.querySelectorAll;
 beforeEach(()=>{
   vi.useFakeTimers();changed.mockClear();cancels.length=0;
   vi.stubGlobal('ResizeObserver',class {observe(){}disconnect(){}});
   vi.stubGlobal('matchMedia',()=>({matches:false}));
   vi.stubGlobal('PointerEvent',class extends MouseEvent {pointerId:number;pointerType:string;constructor(type:string,init:PointerEventInit={}){super(type,init);this.pointerId=init.pointerId??1;this.pointerType=init.pointerType??'touch'}});
+  Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:function(this:Element,selector:string){
+    if(selector===':scope > .tab-link')return [...this.children].filter(child=>child instanceof HTMLElement&&child.classList.contains('tab-link'));
+    return nativeQuerySelectorAll.call(this,selector);
+  }});
   vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockReturnValue(390);
   vi.spyOn(HTMLElement.prototype,'offsetWidth','get').mockImplementation(function(this:HTMLElement){return this.classList.contains('tab-link')?78:390});
   vi.spyOn(HTMLElement.prototype,'offsetLeft','get').mockImplementation(function(this:HTMLElement){
@@ -49,7 +54,7 @@ beforeEach(()=>{
   vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
   Object.defineProperty(Element.prototype,'animate',{configurable:true,value:vi.fn(()=>{const cancel=vi.fn();cancels.push(cancel);return {cancel,addEventListener:vi.fn(),removeEventListener:vi.fn()}})});
 });
-afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
+afterEach(()=>{cleanup();Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
 
 describe('direct prototype adapter',()=>{
   it('renders no scene, lenses, icons or timers while hidden',()=>{
