@@ -13,7 +13,7 @@ import {
   type ReactNode,
 } from 'react';
 import { GlassSurface } from './GlassSurface';
-import { Icon, type UiIconName } from './Icon';
+import { Icon, type UiIconName, type UiIconVariant } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
 import { Avatar } from './primitives';
 import './identity-action.css';
@@ -29,6 +29,8 @@ type IdentityActionVisual =
 
 export type IdentityActionItem = {
   icon: UiIconName;
+  iconVariant?: UiIconVariant;
+  iconSize?: CSSProperties['width'];
   label: string;
   onClick?: () => void;
   disabled?: boolean;
@@ -184,7 +186,12 @@ export function IdentityAction(props: IdentityActionProps) {
               disabled={disabled || action.disabled}
               onClick={() => queueActivation(action.onClick)}
             >
-              <Icon className="ui-identity-action__segment-icon" name={action.icon} variant="filled" />
+              <Icon
+                className="ui-identity-action__segment-icon"
+                name={action.icon}
+                variant={action.iconVariant ?? 'filled'}
+                style={action.iconSize === undefined ? undefined : { width: action.iconSize, height: action.iconSize }}
+              />
             </button>
           );
 
