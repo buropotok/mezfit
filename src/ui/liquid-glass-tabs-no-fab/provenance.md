@@ -12,7 +12,7 @@ Everything after handoff remains the same private settled tabs implementation us
 
 ## Tuned reveal preset
 
-- pause / first timing point: 0.30 s
+- pause / first timing point: 0.04 s
 - reveal end: 0.75 s
 - handoff: 0.16 s
 - base speed: 500 px/s
@@ -30,3 +30,4 @@ Everything after handoff remains the same private settled tabs implementation us
 - No FAB state, host, geometry, timing, or API exists in this component.
 - Hidden scenes unmount completely.
 - Runtime timers, RAFs, observers, animations, and listeners are disposed with the scene.
+- The shared settled touch runtime includes the same lost-pointer-capture cleanup and tap-spring watchdog as `LiquidGlassIconOnly`, preventing a transient lens state from remaining visible if WebView animation callbacks are dropped.
