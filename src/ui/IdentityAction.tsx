@@ -157,6 +157,7 @@ export function IdentityAction(props: IdentityActionProps) {
   const className = [
     'ui-identity-action',
     variant === 'double' ? 'ui-identity-action--double' : '',
+    variant === 'labeled' || variant === 'default' ? 'ui-identity-action--labeled' : '',
     variant === 'single' || variant === 'avatar-only' ? 'ui-identity-action--single' : '',
     variant === 'avatar-only' ? 'ui-identity-action--avatar-only' : '',
     disabled ? 'ui-identity-action--disabled' : '',
@@ -225,7 +226,7 @@ export function IdentityAction(props: IdentityActionProps) {
     >
       <span className="ui-identity-action__visual" aria-hidden="true">
         {icon ? (
-          <Icon className="ui-identity-action__icon" name={icon} variant="filled" />
+          <Icon className="ui-identity-action__icon" name={icon} variant="outline" />
         ) : avatar ? (
           <Avatar
             className="ui-identity-action__avatar"
