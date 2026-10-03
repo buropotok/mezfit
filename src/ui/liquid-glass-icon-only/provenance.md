@@ -31,3 +31,4 @@ The upper lens starts moving 100 ms before split when a FAB target exists. Its X
 - Width remains responsive: the final tabs width is derived from the host width / 1.1 and is shared by both the entrance geometry and the settled tabs.
 - The entrance layer is pointer-inert. Tabs and FAB become interactive only after handoff completes.
 - Hidden scenes unmount completely.
+- Changing FAB presence replaces the private scene together with its runtime. The new scene settles at the controlled value without replaying entrance, so cancelled gesture timers cannot leave transient classes/styles on reused nodes. Ordinary value and FAB-content updates retain the current scene.

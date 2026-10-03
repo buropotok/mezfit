@@ -296,6 +296,9 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
   }, [props.hidden]);
 
   const order = JSON.stringify(props.tabs.map(tab => tab.value));
+  // A runtime and its imperative DOM state share one lifetime. Changing the
+  // choreography must replace both, so cancelled springs cannot strand a lens.
+  const sceneKey = `${order}:${props.fab != null ? 'fab' : 'no-fab'}`;
 
   return (
     <div
@@ -303,7 +306,7 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
       aria-hidden={props.hidden || undefined}
       style={{ position: 'relative', width: '100%', overflow: 'visible' }}
     >
-      {!props.hidden && props.tabs.length > 0 && <Scene key={order} {...props} entrance={entrance} />}
+      {!props.hidden && props.tabs.length > 0 && <Scene key={sceneKey} {...props} entrance={entrance} />}
     </div>
   );
 }
