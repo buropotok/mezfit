@@ -564,6 +564,12 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
       }
 
       listen(pane, 'pointerdown', onPointer);
+      // Pointer capture keeps the touch targeted at the pane. Handle release
+      // there first so Telegram/WebView cannot strand the pressed lens if a
+      // document-level pointerup/cancel is dropped. The document listeners stay
+      // as a fallback for non-captured paths; onPointer is already idempotent.
+      listen(pane, 'pointerup', onPointer);
+      listen(pane, 'pointercancel', onPointer);
       listen(document, 'pointermove', onPointer);
       listen(document, 'pointerup', onPointer);
       listen(document, 'pointercancel', onPointer);
@@ -1716,8 +1722,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
           { capture:true }
         );
 
-        listen(document,
-          'pointerup',
+        const onTapSpringPointerUp =
           event => {
             if (
               event.pointerType !==
@@ -1792,12 +1797,9 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
             }
 
             armSpringBeforeArrival();
-          },
-          { capture:true }
-        );
+          };
 
-        listen(document,
-          'pointercancel',
+        const onTapSpringPointerCancel =
           event => {
             if (
               event.pointerId !==
@@ -1810,7 +1812,29 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
             cancelArmedSpring();
             cancelRunningSpring();
             restoreContainerWithSelector();
-          },
+          };
+
+        // With pointer capture the pane is the authoritative release target.
+        // Keep document listeners as a fallback for browsers that retarget the
+        // release outside the captured element.
+        listen(pane,
+          'pointerup',
+          onTapSpringPointerUp,
+          { capture:true }
+        );
+        listen(pane,
+          'pointercancel',
+          onTapSpringPointerCancel,
+          { capture:true }
+        );
+        listen(document,
+          'pointerup',
+          onTapSpringPointerUp,
+          { capture:true }
+        );
+        listen(document,
+          'pointercancel',
+          onTapSpringPointerCancel,
           { capture:true }
         );
 
