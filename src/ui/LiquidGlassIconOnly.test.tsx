@@ -169,6 +169,17 @@ describe('direct prototype adapter',()=>{
       Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});
     }
   });
+  it('releases a captured touch directly on the pane without waiting for document propagation',()=>{
+    const view=render(ui());const root=getScene(view.container);const pane=element(root,'toolbar-pane');
+    fireEvent.pointerDown(button(root,0),{composed:true,pointerId:1,clientX:39,clientY:32,pointerType:'touch'});
+    act(()=>vi.advanceTimersByTime(160));
+    expect(element(root,'lens').classList.contains('pressed')).toBe(true);
+    fireEvent.pointerUp(pane,{composed:true,pointerId:1,clientX:39,clientY:32,pointerType:'touch'});
+    act(()=>vi.advanceTimersByTime(320));
+    expect(element(root,'lens').classList.contains('pressed')).toBe(false);
+    expect(element(root,'selector').classList.contains('pressed')).toBe(false);
+    view.unmount();
+  });
   it('clears a pressed lens when pointer capture is lost',()=>{
     const view=render(ui());const root=getScene(view.container);const pane=element(root,'toolbar-pane');
     fireEvent.pointerDown(button(root,0),{composed:true,pointerId:1,clientX:39,clientY:32,pointerType:'touch'});
