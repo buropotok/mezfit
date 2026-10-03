@@ -92,11 +92,6 @@
   height: 2.25rem;
 }
 
-.ui-identity-action--labeled .ui-identity-action__icon {
-  width: 32px;
-  height: 32px;
-}
-
 .ui-identity-action__title {
   min-width: 0;
   max-width: 12rem;
