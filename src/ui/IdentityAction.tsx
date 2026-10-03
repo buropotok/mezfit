@@ -233,7 +233,12 @@ export function IdentityAction(props: IdentityActionProps) {
     >
       <span className="ui-identity-action__visual" aria-hidden="true">
         {icon ? (
-          <Icon className="ui-identity-action__icon" name={icon} variant="outline" />
+          <Icon
+            className="ui-identity-action__icon"
+            name={icon}
+            variant="outline"
+            style={{ width: 32, height: 32 }}
+          />
         ) : avatar ? (
           <Avatar
             className="ui-identity-action__avatar"
