@@ -4,6 +4,7 @@ import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IdentityAction } from './IdentityAction';
 import { MezfitNavbar } from './MezfitNavbar';
+import { getUiIconAsset } from './icons/registry';
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
@@ -71,6 +72,25 @@ describe('MezfitNavbar', () => {
     for (const surface of surfaces) {
       expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
     }
+  });
+
+  it('orders calendar before menu and renders the calendar as a 32px outline icon', () => {
+    const view = renderWithKonsta(
+      <MezfitNavbar
+        level={1}
+        identity={{ title: 'Клиенты', icon: 'users' }}
+        onBack={vi.fn()}
+        onMenu={vi.fn()}
+        onCalendar={vi.fn()}
+      />,
+    );
+
+    const controls = [...view.container.querySelectorAll<HTMLButtonElement>('.ui-identity-action--double .ui-identity-action__segment')];
+    expect(controls.map(control => control.getAttribute('aria-label'))).toEqual(['Открыть календарь', 'Меню страницы']);
+    const calendarIcon = controls[0]?.querySelector<HTMLElement>('.ui-icon');
+    expect(calendarIcon?.style.width).toBe('32px');
+    expect(calendarIcon?.style.height).toBe('32px');
+    expect(calendarIcon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('calendar', 'outline'));
   });
 
   it('keeps the identity action mounted while switching from a page icon to a client avatar', () => {

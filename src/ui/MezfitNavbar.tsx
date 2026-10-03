@@ -107,17 +107,19 @@ export function MezfitNavbar({
             glassPreset={glassPreset}
             actions={[
               {
-                icon: 'dots-vertical',
+                icon: 'calendar',
+                iconVariant: 'outline',
+                iconSize: 32,
+                label: 'Открыть календарь',
+                onClick: onCalendar,
+                disabled: calendarDisabled,
+              },
+              {
+                icon: 'settings',
                 label: 'Меню страницы',
                 onClick: onMenu,
                 disabled: menuDisabled,
                 renderControl: renderMenuControl,
-              },
-              {
-                icon: 'calendar',
-                label: 'Открыть календарь',
-                onClick: onCalendar,
-                disabled: calendarDisabled,
               },
             ]}
           />

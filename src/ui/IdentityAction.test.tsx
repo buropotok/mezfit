@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IdentityAction } from './IdentityAction';
+import { getUiIconAsset } from './icons/registry';
 
 function renderIdentityAction(node: React.ReactNode) {
   return renderToStaticMarkup(
@@ -56,15 +57,14 @@ describe('IdentityAction', () => {
     expect(html).not.toContain('ui-identity-action__title');
   });
 
-  it('renders a registered filled icon in the identity visual slot', () => {
-    const html = renderIdentityAction(
-      <IdentityAction icon="users" title="Клиенты" />,
-    );
+  it('renders the registered outline icon in the labeled identity visual slot', () => {
+    const view = render(<IdentityAction icon="users" title="Клиенты" />);
+    const icon = view.container.querySelector<HTMLElement>('.ui-identity-action__icon');
 
-    expect(html).toContain('aria-label="Клиенты"');
-    expect(html).toContain('ui-identity-action__icon');
-    expect(html).toContain('data:image/svg+xml');
-    expect(html).not.toContain('ui-avatar--fallback');
+    expect(view.getByRole('button', { name: 'Клиенты' })).not.toBeNull();
+    expect(icon).not.toBeNull();
+    expect(icon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('users', 'outline'));
+    expect(view.container.querySelector('.ui-avatar--fallback')).toBeNull();
   });
 
   it('preserves Konsta disabled button semantics', () => {
