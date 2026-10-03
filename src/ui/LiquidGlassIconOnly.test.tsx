@@ -169,6 +169,47 @@ describe('direct prototype adapter',()=>{
       Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});
     }
   });
+  it('finishes touch interaction when captured pointerup is delivered only to the pane',()=>{
+    for(const withFab of [false,true]){
+      const view=render(ui(false,'0',tabs,withFab));const root=getScene(view.container);const pane=element(root,'toolbar-pane');
+      fireEvent.pointerDown(button(root,3),{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
+      act(()=>vi.advanceTimersByTime(160));
+      expect(element(root,'lens').classList.contains('pressed')).toBe(true);
+
+      fireEvent(pane,new PointerEvent('pointerup',{bubbles:false,composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'}));
+
+      expect(changed).toHaveBeenLastCalledWith('3');
+      act(()=>vi.advanceTimersByTime(320));
+      expect(element(root,'lens').classList.contains('pressed')).toBe(false);
+      expect(element(root,'selector').classList.contains('pressed')).toBe(false);
+      view.unmount();
+      changed.mockClear();
+    }
+  });
+
+  it('keeps the captured pointer active when a second touch ends first',()=>{
+    for(const withFab of [false,true]){
+      const view=render(ui(false,'0',tabs,withFab));const root=getScene(view.container);const pane=element(root,'toolbar-pane');
+      fireEvent.pointerDown(button(root,3),{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
+      act(()=>vi.advanceTimersByTime(160));
+      expect(element(root,'lens').classList.contains('pressed')).toBe(true);
+
+      fireEvent(pane,new PointerEvent('pointerup',{bubbles:false,composed:true,pointerId:2,clientX:120,clientY:32,pointerType:'touch'}));
+
+      expect(changed).not.toHaveBeenCalled();
+      expect(element(root,'lens').classList.contains('pressed')).toBe(true);
+
+      fireEvent(pane,new PointerEvent('pointerup',{bubbles:false,composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'}));
+
+      expect(changed).toHaveBeenLastCalledWith('3');
+      act(()=>vi.advanceTimersByTime(320));
+      expect(element(root,'lens').classList.contains('pressed')).toBe(false);
+      expect(element(root,'selector').classList.contains('pressed')).toBe(false);
+      view.unmount();
+      changed.mockClear();
+    }
+  });
+
   it('clears a pressed lens when pointer capture is lost',()=>{
     const view=render(ui());const root=getScene(view.container);const pane=element(root,'toolbar-pane');
     fireEvent.pointerDown(button(root,0),{composed:true,pointerId:1,clientX:39,clientY:32,pointerType:'touch'});

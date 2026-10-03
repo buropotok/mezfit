@@ -84,6 +84,8 @@ export function MezfitNavbar({
             <IdentityAction
               variant="labeled"
               icon={identity.icon}
+              iconVariant="outline"
+              iconSize={32}
               title={identity.title}
               width="100%"
               glassPreset={glassPreset}
@@ -116,6 +118,7 @@ export function MezfitNavbar({
               },
               {
                 icon: 'settings',
+                iconSize: 32,
                 label: 'Меню страницы',
                 onClick: onMenu,
                 disabled: menuDisabled,

@@ -564,6 +564,12 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
       }
 
       listen(pane, 'pointerdown', onPointer);
+      listen(pane, 'pointerup', event => {
+        if (pointerId === event.pointerId) onPointer(event);
+      });
+      listen(pane, 'pointercancel', event => {
+        if (pointerId === event.pointerId) onPointer(event);
+      });
       listen(document, 'pointermove', onPointer);
       listen(document, 'pointerup', onPointer);
       listen(document, 'pointercancel', onPointer);
@@ -700,12 +706,13 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
 
       // A touch can end while the pointer is still geometrically over the pane,
       // so pointerleave is not reliable enough to cancel a pending highlight.
-      listen(document, 'pointerup', (e) => {
+      const removeGlassHighlightOnTouchEnd = (e) => {
         if (e.pointerType !== 'mouse') removeGlassHighlight();
-      });
-      listen(document, 'pointercancel', (e) => {
-        if (e.pointerType !== 'mouse') removeGlassHighlight();
-      });
+      };
+      listen(document, 'pointerup', removeGlassHighlightOnTouchEnd);
+      listen(document, 'pointercancel', removeGlassHighlightOnTouchEnd);
+      listen(pane, 'pointerup', removeGlassHighlightOnTouchEnd);
+      listen(pane, 'pointercancel', removeGlassHighlightOnTouchEnd);
 
 
       selectIndex = index => {
@@ -1716,101 +1723,114 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
           { capture:true }
         );
 
+        const onTapSpringPointerUp = event => {
+          if (
+            event.pointerType !==
+            'touch'
+          ) {
+            return;
+          }
+
+          if (
+            event.pointerId !==
+            pointerId
+          ) {
+            return;
+          }
+
+          const elapsed =
+            performance.now() -
+            pointerDownAt;
+
+          const holdDelay =
+            Number(
+              holdDelayInput?.value ||
+              140
+            );
+
+          const dx =
+            Math.abs(
+              event.clientX -
+              pointerStartX
+            );
+
+          const dy =
+            Math.abs(
+              event.clientY -
+              pointerStartY
+            );
+
+          const scrollDistance =
+            Math.abs(
+              tabStrip.scrollLeft -
+              startScrollLeft
+            );
+
+          pointerId = null;
+
+          const isQuickTap =
+            elapsed < holdDelay &&
+            dx <= 6 &&
+            dy <= 10 &&
+            scrollDistance <= 4;
+
+          if (!isQuickTap) return;
+
+          const currentIndex =
+            links.findIndex(
+              link =>
+                link.classList.contains(
+                  'active'
+                )
+            );
+
+          const targetIndex =
+            nearestTabIndex(
+              event.clientX
+            );
+
+          if (
+            targetIndex ===
+            currentIndex
+          ) {
+            return;
+          }
+
+          armSpringBeforeArrival();
+        };
+
+        const onTapSpringPointerCancel = event => {
+          if (
+            event.pointerId !==
+            pointerId
+          ) {
+            return;
+          }
+
+          pointerId = null;
+          cancelArmedSpring();
+          cancelRunningSpring();
+          restoreContainerWithSelector();
+        };
+
         listen(document,
           'pointerup',
-          event => {
-            if (
-              event.pointerType !==
-              'touch'
-            ) {
-              return;
-            }
-
-            if (
-              event.pointerId !==
-              pointerId
-            ) {
-              return;
-            }
-
-            const elapsed =
-              performance.now() -
-              pointerDownAt;
-
-            const holdDelay =
-              Number(
-                holdDelayInput?.value ||
-                140
-              );
-
-            const dx =
-              Math.abs(
-                event.clientX -
-                pointerStartX
-              );
-
-            const dy =
-              Math.abs(
-                event.clientY -
-                pointerStartY
-              );
-
-            const scrollDistance =
-              Math.abs(
-                tabStrip.scrollLeft -
-                startScrollLeft
-              );
-
-            pointerId = null;
-
-            const isQuickTap =
-              elapsed < holdDelay &&
-              dx <= 6 &&
-              dy <= 10 &&
-              scrollDistance <= 4;
-
-            if (!isQuickTap) return;
-
-            const currentIndex =
-              links.findIndex(
-                link =>
-                  link.classList.contains(
-                    'active'
-                  )
-              );
-
-            const targetIndex =
-              nearestTabIndex(
-                event.clientX
-              );
-
-            if (
-              targetIndex ===
-              currentIndex
-            ) {
-              return;
-            }
-
-            armSpringBeforeArrival();
-          },
+          onTapSpringPointerUp,
           { capture:true }
         );
-
+        listen(pane,
+          'pointerup',
+          onTapSpringPointerUp,
+          { capture:true }
+        );
         listen(document,
           'pointercancel',
-          event => {
-            if (
-              event.pointerId !==
-              pointerId
-            ) {
-              return;
-            }
-
-            pointerId = null;
-            cancelArmedSpring();
-            cancelRunningSpring();
-            restoreContainerWithSelector();
-          },
+          onTapSpringPointerCancel,
+          { capture:true }
+        );
+        listen(pane,
+          'pointercancel',
+          onTapSpringPointerCancel,
           { capture:true }
         );
 
@@ -2180,8 +2200,13 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     }
     frame(startTime);
   }
-  listen(document,'pointerup',()=>{pointerId=null});
-  listen(document,'pointercancel',()=>{pointerId=null});
+  const clearCapturedPointer = event => {
+    if (event.pointerId === pointerId) pointerId = null;
+  };
+  listen(document,'pointerup',clearCapturedPointer);
+  listen(document,'pointercancel',clearCapturedPointer);
+  listen(paneElement,'pointerup',clearCapturedPointer);
+  listen(paneElement,'pointercancel',clearCapturedPointer);
   let lastWidth=0;
   const resize=new ResizeObserver(()=>{if(root.host.clientWidth===lastWidth)return;lastWidth=root.host.clientWidth;if(!running)settle();});
   resize.observe(root.host);

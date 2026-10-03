@@ -24,8 +24,13 @@ export type IdentityActionAvatar = {
 };
 
 type IdentityActionVisual =
-  | { avatar: IdentityActionAvatar; icon?: never }
-  | { avatar?: never; icon: UiIconName };
+  | { avatar: IdentityActionAvatar; icon?: never; iconVariant?: never; iconSize?: never }
+  | {
+      avatar?: never;
+      icon: UiIconName;
+      iconVariant?: UiIconVariant;
+      iconSize?: CSSProperties['width'];
+    };
 
 export type IdentityActionItem = {
   icon: UiIconName;
@@ -208,6 +213,8 @@ export function IdentityAction(props: IdentityActionProps) {
   const {
     avatar,
     icon,
+    iconVariant,
+    iconSize,
     title,
     onClick,
     width,
@@ -233,7 +240,15 @@ export function IdentityAction(props: IdentityActionProps) {
     >
       <span className="ui-identity-action__visual" aria-hidden="true">
         {icon ? (
-          <Icon className="ui-identity-action__icon" name={icon} variant="outline" />
+          <Icon
+            className="ui-identity-action__icon"
+            name={icon}
+            variant={iconVariant ?? 'outline'}
+            style={{
+              width: iconSize ?? (variant === 'labeled' || variant === 'default' ? 32 : 36),
+              height: iconSize ?? (variant === 'labeled' || variant === 'default' ? 32 : 36),
+            }}
+          />
         ) : avatar ? (
           <Avatar
             className="ui-identity-action__avatar"
