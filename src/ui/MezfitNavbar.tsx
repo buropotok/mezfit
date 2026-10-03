@@ -89,6 +89,7 @@ export function MezfitNavbar({
               iconVariant="outline"
               iconSize={32}
               title={identity.title}
+              titleRole="headline"
               width="100%"
               glassPreset={glassPreset}
               onClick={onIdentityClick}
@@ -98,6 +99,7 @@ export function MezfitNavbar({
               variant="labeled"
               avatar={identity.avatar}
               title={identity.title}
+              titleRole="headline"
               width="100%"
               glassPreset={glassPreset}
               onClick={onIdentityClick}
