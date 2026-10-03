@@ -7,7 +7,7 @@ export { DatePicker, type DatePickerProps, type LocalDate } from './date-picker/
 export { TimePicker, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
 export { NumPicker, type NumPickerProps } from './num-picker/NumPicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
-export { IdentityAction, type IdentityActionAvatar, type IdentityActionItem, type IdentityActionProps } from './IdentityAction';
+export { IdentityAction, type IdentityActionAvatar, type IdentityActionItem, type IdentityActionProps, type IdentityActionTitleRole } from './IdentityAction';
 export { MezfitNavbar, type MezfitNavbarIdentity, type MezfitNavbarProps } from './MezfitNavbar';
 export { MEZFIT_NAVBAR_GLASS_PRESET } from './mezfitNavbarConfig';
 export { Checkbox, Radio, TextArea, TextInput, type CheckboxProps, type RadioProps, type TextAreaProps, type TextInputProps } from './FormControls';
