@@ -1,14 +1,8 @@
 # Liquid Glass Tabs No Fab prototype core
 
-`LiquidGlassTabsNoFab` is derived directly from the current `LiquidGlassIconOnly` component architecture.
+`LiquidGlassTabsNoFab` is a compatibility wrapper around `LiquidGlassIconOnly` that omits its optional FAB prop. Both public adapters use this single private no-FAB runtime and the approved center-spread reveal from `tabbar-liquid-tabs-center-spread-v12-timing-baseline.html`.
 
-The intentional differences are only:
-
-- the FAB prop/host/geometry are removed;
-- the original reveal animation is replaced with the approved center-spread reveal from `tabbar-liquid-tabs-center-spread-v12-timing-baseline.html`;
-- startup background blur is separated from icon optics, so startup icons keep displacement/saturation without Gaussian blur.
-
-Everything after handoff remains the same private settled tabs implementation used by `LiquidGlassIconOnly`: the same ShadowRoot structure, selector/lens mechanics, touch interaction, active-icon spring, controlled React selection bridge, lifecycle, and cleanup behavior.
+Startup background blur is separated from icon optics, so startup icons keep displacement/saturation without Gaussian blur. After handoff the same private settled tabs implementation owns the ShadowRoot structure, selector/lens mechanics, touch interaction, active-icon spring, controlled React selection bridge, lifecycle and cleanup.
 
 ## Tuned reveal preset
 
