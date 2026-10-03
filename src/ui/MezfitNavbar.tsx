@@ -70,7 +70,9 @@ export function MezfitNavbar({
         <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
           <IdentityAction
             variant="single"
-            icon="arrow-left"
+            icon="chevron-left"
+            iconVariant="outline"
+            iconSize={32}
             title="Назад"
             aria-label="Назад"
             glassPreset={glassPreset}
@@ -117,7 +119,8 @@ export function MezfitNavbar({
                 disabled: calendarDisabled,
               },
               {
-                icon: 'settings',
+                icon: 'menu-2',
+                iconVariant: 'outline',
                 iconSize: 32,
                 label: 'Меню страницы',
                 onClick: onMenu,
