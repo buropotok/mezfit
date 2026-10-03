@@ -231,14 +231,17 @@ describe('direct prototype adapter',()=>{
             withFab=!withFab;
             view.rerender(ui(false,'3',tabs,withFab));
             const next=getScene(view.container),lens=element(next,'lens'),selector=element(next,'selector');
+            expect(next).toBe(root);
+            expect(lens.classList.contains(hold?'pressed':'tap-spring-active')).toBe(true);
             expect(button(next,3).getAttribute('aria-selected')).toBe('true');
             expect(element(next,'iconLayer').hasAttribute('startup')).toBe(false);
             expect(element(next,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+            expect(Boolean(view.container.querySelector('[data-liquid-glass-fab-slot]'))).toBe(withFab);
+            act(()=>vi.advanceTimersByTime(1100));
             expect(lens.classList.contains('pressed')).toBe(false);
             expect(lens.classList.contains('tap-spring-active')).toBe(false);
             expect(selector.classList.contains('pressed')).toBe(false);
             expect(selector.classList.contains('tap-spring-hidden')).toBe(false);
-            expect(Boolean(view.container.querySelector('[data-liquid-glass-fab-slot]'))).toBe(withFab);
 
             // A new tap in the destination mode must still animate and finish.
             fireEvent.pointerDown(button(next,0),{composed:true,pointerId:2,clientX:39,clientY:32,pointerType:'touch'});
@@ -259,6 +262,61 @@ describe('direct prototype adapter',()=>{
     }finally{
       Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});
     }
+  });
+
+  it('preserves the current lens spring across repeated FAB changes',()=>{
+    Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:function(this:Element,selector:string){
+      if(selector===':scope > .tab-link')return [...this.children].filter(child=>child instanceof HTMLElement&&child.classList.contains('tab-link'));
+      return nativeQuerySelectorAll.call(this,selector);
+    }});
+    try{
+      for(const initiallyWithFab of [false,true]){
+        const view=render(ui(false,'0',tabs,initiallyWithFab));
+        const root=getScene(view.container),lens=element(root,'lens'),selector=element(root,'selector');
+        let withFab=initiallyWithFab;
+        for(let transition=0;transition<4;transition++){
+          const destination=transition%2===0?3:0,x=destination*78+39;
+          fireEvent.pointerDown(button(root,destination),{composed:true,pointerId:1,clientX:x,clientY:32,pointerType:'touch'});
+          fireEvent(element(root,'toolbar-pane').ownerDocument,new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:1,clientX:x,clientY:32,pointerType:'touch'}));
+          expect(changed).toHaveBeenLastCalledWith(String(destination));
+          act(()=>vi.advanceTimersByTime(260));
+          expect(lens.classList.contains('tap-spring-active')).toBe(true);
+          const animations=[...cancels],calls=animations.map(cancel=>cancel.mock.calls.length);
+          withFab=!withFab;
+          view.rerender(ui(false,String(destination),tabs,withFab));
+          expect(getScene(view.container)).toBe(root);
+          expect(element(root,'lens')).toBe(lens);
+          expect(lens.classList.contains('tap-spring-active')).toBe(true);
+          expect(selector.classList.contains('tap-spring-hidden')).toBe(true);
+          expect(animations.map(cancel=>cancel.mock.calls.length)).toEqual(calls);
+          expect(element(root,'iconLayer').hasAttribute('startup')).toBe(false);
+          expect(button(root,destination).getAttribute('aria-selected')).toBe('true');
+          act(()=>vi.advanceTimersByTime(1100));
+          expect(lens.classList.contains('tap-spring-active')).toBe(false);
+          expect(lens.classList.contains('pressed')).toBe(false);
+          expect(selector.classList.contains('tap-spring-hidden')).toBe(false);
+        }
+        view.unmount();expect(vi.getTimerCount()).toBe(0);
+      }
+    }finally{
+      Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});
+    }
+  });
+
+  it('places a FAB added to a no-FAB scene at the approved FAB-scene position',()=>{
+    const fabView=render(ui(false,'0',tabs,true));
+    const original=fabView.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
+    const position={left:original?.style.left,top:original?.style.top};
+    fabView.unmount();
+    const view=render(ui());const root=getScene(view.container);
+    view.rerender(ui(false,'0',tabs,true));
+    const added=view.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
+    expect(getScene(view.container)).toBe(root);
+    expect(added?.hidden).toBe(false);
+    expect(added?.style.left).toBe(position.left);
+    expect(added?.style.top).toBe(position.top);
+    expect(added?.style.opacity).toBe('1');
+    expect(added?.inert).toBe(false);
   });
 
   it('clears a pressed lens when pointer capture is lost',()=>{
