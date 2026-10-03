@@ -24,6 +24,12 @@
   transform: translateX(-50%);
 }
 
+.ui-mezfit-navbar__identity .ui-identity-action__title {
+  font-size: var(--ui-font-size-headline);
+  line-height: var(--ui-line-height-headline);
+  font-weight: var(--ui-font-weight-light);
+  letter-spacing: 0.5px;
+}
 
 .ui-mezfit-navbar__side {
   left: calc(50% - 22px);
