@@ -93,6 +93,29 @@ describe('MezfitNavbar', () => {
     expect(calendarIcon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('calendar', 'outline'));
   });
 
+  it('renders the center and both right action icon boxes at 32px', () => {
+    const view = renderWithKonsta(
+      <MezfitNavbar
+        level={1}
+        identity={{ title: 'Аналитика', icon: 'chart-dots-2' }}
+        onBack={vi.fn()}
+        onMenu={vi.fn()}
+        onCalendar={vi.fn()}
+      />,
+    );
+
+    const centerIcon = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-identity-action__icon');
+    const rightIcons = [...view.container.querySelectorAll<HTMLElement>('.ui-identity-action--double .ui-identity-action__segment-icon')];
+
+    expect(centerIcon?.style.width).toBe('32px');
+    expect(centerIcon?.style.height).toBe('32px');
+    expect(rightIcons).toHaveLength(2);
+    for (const icon of rightIcons) {
+      expect(icon.style.width).toBe('32px');
+      expect(icon.style.height).toBe('32px');
+    }
+  });
+
   it('keeps the identity action mounted while switching from a page icon to a client avatar', () => {
     const props = {
       onBack: vi.fn(),
