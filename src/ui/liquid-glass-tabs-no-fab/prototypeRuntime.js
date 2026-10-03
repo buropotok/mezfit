@@ -706,12 +706,13 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
 
       // A touch can end while the pointer is still geometrically over the pane,
       // so pointerleave is not reliable enough to cancel a pending highlight.
-      listen(document, 'pointerup', (e) => {
+      const removeGlassHighlightOnTouchEnd = (e) => {
         if (e.pointerType !== 'mouse') removeGlassHighlight();
-      });
-      listen(document, 'pointercancel', (e) => {
-        if (e.pointerType !== 'mouse') removeGlassHighlight();
-      });
+      };
+      listen(document, 'pointerup', removeGlassHighlightOnTouchEnd);
+      listen(document, 'pointercancel', removeGlassHighlightOnTouchEnd);
+      listen(pane, 'pointerup', removeGlassHighlightOnTouchEnd);
+      listen(pane, 'pointercancel', removeGlassHighlightOnTouchEnd);
 
 
       selectIndex = index => {
