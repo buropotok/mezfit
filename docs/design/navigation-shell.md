@@ -63,9 +63,9 @@ Supported variants:
 - `single` — one icon/avatar action;
 - `double` — one GlassSurface capsule containing two independent semantic button zones.
 
-The double variant animates the whole capsule while the tapped inner button determines which action is invoked. Its two action zones share one uninterrupted GlassSurface without a visible vertical divider. In `MezfitNavbar`, Calendar is the left action and uses the registered outline calendar asset at 32px; contextual Menu is the right action. Button actions run after the shared press animation completes.
+The double variant animates the whole capsule while the tapped inner button determines which action is invoked. Its two action zones share one uninterrupted GlassSurface without a visible vertical divider. In `MezfitNavbar`, Calendar is the left action and uses the registered outline calendar asset at an actual 32px icon box; contextual Menu is the right action and uses the registered settings asset in the same 32px icon box. Button actions run after the shared press animation completes.
 
-Labeled identity icons use registered outline assets at 32px. The labeled identity keeps one stable action host while its visual slot changes between registered icon and avatar content. Navigation must update props rather than keying/remounting the component.
+Labeled identity icons use registered outline assets in an actual 32px icon box. The size is applied through the primitive's icon API rather than relying on CSS that can be overridden by the icon renderer's inline geometry. The labeled identity keeps one stable action host while its visual slot changes between registered icon and avatar content. Navigation must update props rather than keying/remounting the component.
 
 ## Page menu
 
