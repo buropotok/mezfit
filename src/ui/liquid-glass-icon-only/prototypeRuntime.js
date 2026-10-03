@@ -564,6 +564,12 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
       }
 
       listen(pane, 'pointerdown', onPointer);
+      listen(pane, 'pointerup', event => {
+        if (pointerId === event.pointerId) onPointer(event);
+      });
+      listen(pane, 'pointercancel', event => {
+        if (pointerId === event.pointerId) onPointer(event);
+      });
       listen(document, 'pointermove', onPointer);
       listen(document, 'pointerup', onPointer);
       listen(document, 'pointercancel', onPointer);
@@ -1716,101 +1722,114 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
           { capture:true }
         );
 
+        const onTapSpringPointerUp = event => {
+          if (
+            event.pointerType !==
+            'touch'
+          ) {
+            return;
+          }
+
+          if (
+            event.pointerId !==
+            pointerId
+          ) {
+            return;
+          }
+
+          const elapsed =
+            performance.now() -
+            pointerDownAt;
+
+          const holdDelay =
+            Number(
+              holdDelayInput?.value ||
+              140
+            );
+
+          const dx =
+            Math.abs(
+              event.clientX -
+              pointerStartX
+            );
+
+          const dy =
+            Math.abs(
+              event.clientY -
+              pointerStartY
+            );
+
+          const scrollDistance =
+            Math.abs(
+              tabStrip.scrollLeft -
+              startScrollLeft
+            );
+
+          pointerId = null;
+
+          const isQuickTap =
+            elapsed < holdDelay &&
+            dx <= 6 &&
+            dy <= 10 &&
+            scrollDistance <= 4;
+
+          if (!isQuickTap) return;
+
+          const currentIndex =
+            links.findIndex(
+              link =>
+                link.classList.contains(
+                  'active'
+                )
+            );
+
+          const targetIndex =
+            nearestTabIndex(
+              event.clientX
+            );
+
+          if (
+            targetIndex ===
+            currentIndex
+          ) {
+            return;
+          }
+
+          armSpringBeforeArrival();
+        };
+
+        const onTapSpringPointerCancel = event => {
+          if (
+            event.pointerId !==
+            pointerId
+          ) {
+            return;
+          }
+
+          pointerId = null;
+          cancelArmedSpring();
+          cancelRunningSpring();
+          restoreContainerWithSelector();
+        };
+
         listen(document,
           'pointerup',
-          event => {
-            if (
-              event.pointerType !==
-              'touch'
-            ) {
-              return;
-            }
-
-            if (
-              event.pointerId !==
-              pointerId
-            ) {
-              return;
-            }
-
-            const elapsed =
-              performance.now() -
-              pointerDownAt;
-
-            const holdDelay =
-              Number(
-                holdDelayInput?.value ||
-                140
-              );
-
-            const dx =
-              Math.abs(
-                event.clientX -
-                pointerStartX
-              );
-
-            const dy =
-              Math.abs(
-                event.clientY -
-                pointerStartY
-              );
-
-            const scrollDistance =
-              Math.abs(
-                tabStrip.scrollLeft -
-                startScrollLeft
-              );
-
-            pointerId = null;
-
-            const isQuickTap =
-              elapsed < holdDelay &&
-              dx <= 6 &&
-              dy <= 10 &&
-              scrollDistance <= 4;
-
-            if (!isQuickTap) return;
-
-            const currentIndex =
-              links.findIndex(
-                link =>
-                  link.classList.contains(
-                    'active'
-                  )
-              );
-
-            const targetIndex =
-              nearestTabIndex(
-                event.clientX
-              );
-
-            if (
-              targetIndex ===
-              currentIndex
-            ) {
-              return;
-            }
-
-            armSpringBeforeArrival();
-          },
+          onTapSpringPointerUp,
           { capture:true }
         );
-
+        listen(pane,
+          'pointerup',
+          onTapSpringPointerUp,
+          { capture:true }
+        );
         listen(document,
           'pointercancel',
-          event => {
-            if (
-              event.pointerId !==
-              pointerId
-            ) {
-              return;
-            }
-
-            pointerId = null;
-            cancelArmedSpring();
-            cancelRunningSpring();
-            restoreContainerWithSelector();
-          },
+          onTapSpringPointerCancel,
+          { capture:true }
+        );
+        listen(pane,
+          'pointercancel',
+          onTapSpringPointerCancel,
           { capture:true }
         );
 
@@ -2274,6 +2293,8 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
   // Pointer lifecycle ends only after all prototype handlers have seen pointerup/cancel.
   listen(document,'pointerup',()=>{pointerId=null});
   listen(document,'pointercancel',()=>{pointerId=null});
+  listen(paneElement,'pointerup',()=>{pointerId=null});
+  listen(paneElement,'pointercancel',()=>{pointerId=null});
   let lastWidth=0;
   const resize=new ResizeObserver(()=>{
     if(root.host.clientWidth===lastWidth)return;
