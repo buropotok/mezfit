@@ -93,7 +93,7 @@ describe('MezfitNavbar', () => {
     expect(calendarIcon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('calendar', 'outline'));
   });
 
-  it('renders the center and both right action icon boxes at 32px', () => {
+  it('renders the back, center, and both right action icon boxes at 32px', () => {
     const view = renderWithKonsta(
       <MezfitNavbar
         level={1}
@@ -104,9 +104,13 @@ describe('MezfitNavbar', () => {
       />,
     );
 
+    const backIcon = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__side--left .ui-identity-action__icon');
     const centerIcon = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-identity-action__icon');
     const rightIcons = [...view.container.querySelectorAll<HTMLElement>('.ui-identity-action--double .ui-identity-action__segment-icon')];
 
+    expect(backIcon?.style.width).toBe('32px');
+    expect(backIcon?.style.height).toBe('32px');
+    expect(backIcon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('chevron-left', 'outline'));
     expect(centerIcon?.style.width).toBe('32px');
     expect(centerIcon?.style.height).toBe('32px');
     expect(rightIcons).toHaveLength(2);
@@ -114,6 +118,22 @@ describe('MezfitNavbar', () => {
       expect(icon.style.width).toBe('32px');
       expect(icon.style.height).toBe('32px');
     }
+    expect(rightIcons[1]?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('menu-2', 'outline'));
+  });
+
+  it('uses the headline title role for the center identity action', () => {
+    const view = renderWithKonsta(
+      <MezfitNavbar
+        level={1}
+        identity={{ title: 'Сегодня', icon: 'calendar-event' }}
+        onBack={vi.fn()}
+        onMenu={vi.fn()}
+        onCalendar={vi.fn()}
+      />,
+    );
+
+    const title = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-identity-action__title');
+    expect(title?.classList.contains('ui-identity-action__title--headline')).toBe(true);
   });
 
   it('keeps the identity action mounted while switching from a page icon to a client avatar', () => {
