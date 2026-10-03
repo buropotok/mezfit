@@ -210,6 +210,57 @@ describe('direct prototype adapter',()=>{
     }
   });
 
+  it('keeps touch selection and spring cleanup working across FAB mode changes during release',()=>{
+    Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:function(this:Element,selector:string){
+      if(selector===':scope > .tab-link')return [...this.children].filter(child=>child instanceof HTMLElement&&child.classList.contains('tab-link'));
+      return nativeQuerySelectorAll.call(this,selector);
+    }});
+    try{
+      for(const initiallyWithFab of [false,true]){
+        for(const hold of [false,true]){
+          const view=render(ui(false,'0',tabs,initiallyWithFab));
+          let withFab=initiallyWithFab;
+          for(let transition=0;transition<3;transition++){
+            const root=getScene(view.container),pane=element(root,'toolbar-pane');
+            fireEvent.pointerDown(button(root,3),{composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'});
+            if(hold)act(()=>vi.advanceTimersByTime(160));
+            fireEvent(pane.ownerDocument,new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:1,clientX:273,clientY:32,pointerType:'touch'}));
+            expect(changed).toHaveBeenLastCalledWith('3');
+            expect(element(root,'lens').classList.contains(hold?'pressed':'tap-spring-active')).toBe(true);
+
+            withFab=!withFab;
+            view.rerender(ui(false,'3',tabs,withFab));
+            const next=getScene(view.container),lens=element(next,'lens'),selector=element(next,'selector');
+            expect(button(next,3).getAttribute('aria-selected')).toBe('true');
+            expect(element(next,'iconLayer').hasAttribute('startup')).toBe(false);
+            expect(element(next,'iconMask').classList.contains('tabs-interactive')).toBe(true);
+            expect(lens.classList.contains('pressed')).toBe(false);
+            expect(lens.classList.contains('tap-spring-active')).toBe(false);
+            expect(selector.classList.contains('pressed')).toBe(false);
+            expect(selector.classList.contains('tap-spring-hidden')).toBe(false);
+            expect(Boolean(view.container.querySelector('[data-liquid-glass-fab-slot]'))).toBe(withFab);
+
+            // A new tap in the destination mode must still animate and finish.
+            fireEvent.pointerDown(button(next,0),{composed:true,pointerId:2,clientX:39,clientY:32,pointerType:'touch'});
+            fireEvent(element(next,'toolbar-pane').ownerDocument,new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:2,clientX:39,clientY:32,pointerType:'touch'}));
+            expect(changed).toHaveBeenLastCalledWith('0');
+            view.rerender(ui(false,'0',tabs,withFab));
+            act(()=>vi.advanceTimersByTime(260));
+            expect(lens.classList.contains('tap-spring-active')).toBe(true);
+            act(()=>vi.advanceTimersByTime(1100));
+            expect(lens.classList.contains('pressed')).toBe(false);
+            expect(lens.classList.contains('tap-spring-active')).toBe(false);
+            expect(selector.classList.contains('tap-spring-hidden')).toBe(false);
+            changed.mockClear();
+          }
+          view.unmount();expect(vi.getTimerCount()).toBe(0);
+        }
+      }
+    }finally{
+      Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});
+    }
+  });
+
   it('clears a pressed lens when pointer capture is lost',()=>{
     const view=render(ui());const root=getScene(view.container);const pane=element(root,'toolbar-pane');
     fireEvent.pointerDown(button(root,0),{composed:true,pointerId:1,clientX:39,clientY:32,pointerType:'touch'});
