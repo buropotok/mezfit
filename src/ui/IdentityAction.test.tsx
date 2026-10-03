@@ -67,6 +67,14 @@ describe('IdentityAction', () => {
     expect(view.container.querySelector('.ui-avatar--fallback')).toBeNull();
   });
 
+  it('renders the default labeled icon at a real 32px inline size', () => {
+    const view = render(<IdentityAction icon="chart-dots-2" title="Аналитика" />);
+    const icon = view.container.querySelector<HTMLElement>('.ui-identity-action__icon');
+
+    expect(icon?.style.width).toBe('32px');
+    expect(icon?.style.height).toBe('32px');
+  });
+
   it('preserves Konsta disabled button semantics', () => {
     const html = renderIdentityAction(
       <IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" disabled />,
