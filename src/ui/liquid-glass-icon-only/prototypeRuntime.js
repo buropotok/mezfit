@@ -1,5 +1,6 @@
 // Direct extraction from the approved HTML, not a rewritten interaction model.
 // See provenance.md for the extraction boundary and intentional lifecycle changes.
+import { fabTarget, FAB_LENS_SCALE, FAB_Y_OFFSET } from './fabGeometry';
 export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHost) {
   const owner = root.ownerDocument;
   const host = root.getElementById('iconLayer');
@@ -1949,12 +1950,12 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     revealSec:.65,
     handoffSec:.22,
     speed:290,
-    lensScale:.74,
+    lensScale:FAB_LENS_SCALE,
     delayMs:0,
     blurPx:.5,
     saturation:1.24,
     frost:.13,
-    fabYOffset:-26,
+    fabYOffset:FAB_Y_OFFSET,
     speedPoints:[0,.186,.360,.577,0],
   };
   const FAB_DIAMETER=56,threshold=.46,logThreshold=-Math.log(threshold),nodes=[{x:0,y:0},{x:.21,y:.88},{x:.47,y:1},{x:.78,y:.88},{x:1,y:0}];
@@ -2003,14 +2004,9 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     return sigma+(targetSigma-sigma)*mapClamp(progress,0,1);
   }
   function finalFabTarget(){
-    const runtimeWidth=width/1.1,baseX=width/2,final=path.length?path[path.length-1]:{x:0,y:0};
+    const final=path.length?path[path.length-1]:{x:0,y:0};
     const lowerX=final.x,lowerY=final.y,movingS=movingSigma(lowerX),weight=bridgeWeight(lowerX);
-    const bx0=baseX-lowerX,cx0=baseX+lowerX,by0=baseY+lowerY;
-    const desiredX=(width-runtimeWidth)/2+runtimeWidth*.9;
-    const targetX=supportedContourX(desiredX,baseX,bx0,cx0,movingS,weight);
-    const topY=lowerTopContourY(targetX,bx0,cx0,by0,movingS,weight);
-    const liquidRadius=sigma*Math.sqrt(-2*Math.log(threshold)),overlap=4;
-    return {x:targetX,y:(topY??(by0-shellRadius()))-liquidRadius+overlap+SETTINGS.fabYOffset,liquidRadius};
+    return fabTarget(width,lowerX,lowerY,baseY,sigma,movingS,weight,threshold,SETTINGS.fabYOffset);
   }
   function syncFabHostGeometry(){
     if(!fabHost||!width||!height)return;
