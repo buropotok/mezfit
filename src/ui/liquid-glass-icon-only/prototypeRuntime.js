@@ -2292,10 +2292,13 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     frame(startTime);
   }
   // Pointer lifecycle ends only after all prototype handlers have seen pointerup/cancel.
-  listen(document,'pointerup',()=>{pointerId=null});
-  listen(document,'pointercancel',()=>{pointerId=null});
-  listen(paneElement,'pointerup',()=>{pointerId=null});
-  listen(paneElement,'pointercancel',()=>{pointerId=null});
+  const clearCapturedPointer = event => {
+    if (event.pointerId === pointerId) pointerId = null;
+  };
+  listen(document,'pointerup',clearCapturedPointer);
+  listen(document,'pointercancel',clearCapturedPointer);
+  listen(paneElement,'pointerup',clearCapturedPointer);
+  listen(paneElement,'pointercancel',clearCapturedPointer);
   let lastWidth=0;
   const resize=new ResizeObserver(()=>{
     if(root.host.clientWidth===lastWidth)return;
