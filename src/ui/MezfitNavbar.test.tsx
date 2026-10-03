@@ -74,7 +74,7 @@ describe('MezfitNavbar', () => {
     }
   });
 
-  it('orders calendar before menu and renders the calendar as a 32px outline icon', () => {
+  it('orders calendar before menu and renders both action icons as 32px outline icons', () => {
     const view = renderWithKonsta(
       <MezfitNavbar
         level={1}
@@ -88,9 +88,13 @@ describe('MezfitNavbar', () => {
     const controls = [...view.container.querySelectorAll<HTMLButtonElement>('.ui-identity-action--double .ui-identity-action__segment')];
     expect(controls.map(control => control.getAttribute('aria-label'))).toEqual(['Открыть календарь', 'Меню страницы']);
     const calendarIcon = controls[0]?.querySelector<HTMLElement>('.ui-icon');
+    const menuIcon = controls[1]?.querySelector<HTMLElement>('.ui-icon');
     expect(calendarIcon?.style.width).toBe('32px');
     expect(calendarIcon?.style.height).toBe('32px');
     expect(calendarIcon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('calendar', 'outline'));
+    expect(menuIcon?.style.width).toBe('32px');
+    expect(menuIcon?.style.height).toBe('32px');
+    expect(menuIcon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('settings', 'outline'));
   });
 
   it('keeps the identity action mounted while switching from a page icon to a client avatar', () => {
