@@ -31,3 +31,4 @@ Everything after handoff remains the same private settled tabs implementation us
 - Hidden scenes unmount completely.
 - Runtime timers, RAFs, observers, animations, and listeners are disposed with the scene.
 - The shared settled touch runtime includes the same lost-pointer-capture cleanup and tap-spring watchdog as `LiquidGlassIconOnly`, preventing a transient lens state from remaining visible if WebView animation callbacks are dropped.
+- Captured `pointerup` / `pointercancel` are handled on both the owner document and the toolbar pane, so Telegram/WebView retargeting cannot leave the pressed lens or global pointer lifecycle active.
