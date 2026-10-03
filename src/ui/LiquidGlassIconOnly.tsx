@@ -164,6 +164,8 @@ function Scene({
   const [shadow, setShadow] = useState<ShadowRoot | null>(null);
   const order = JSON.stringify(tabs.map(tab => tab.value));
   const hasFab = fab != null;
+  // Entrance choice belongs to this visible lifetime, not to the active tab.
+  const entranceHasFab = useRef(hasFab).current;
 
   useLayoutEffect(() => {
     const element = host.current;
@@ -188,15 +190,15 @@ function Scene({
       reconcileSelection();
     };
 
-    controller.current = hasFab
+    controller.current = entranceHasFab
       ? mountFabPrototype(shadow, activeIndex, onSelect, playEntrance, fabHost.current)
-      : mountNoFabPrototype(shadow, activeIndex, onSelect, playEntrance);
+      : mountNoFabPrototype(shadow, activeIndex, onSelect, playEntrance, fabHost.current);
 
     return () => {
       controller.current?.dispose();
       controller.current = null;
     };
-  }, [shadow, order, hasFab]);
+  }, [shadow, order, entranceHasFab]);
 
   useLayoutEffect(() => {
     const index = tabs.findIndex(tab => tab.value === value);
@@ -209,7 +211,7 @@ function Scene({
       <div ref={host} style={{ display: 'block', position: 'relative', width: '100%', height: 64, overflow: 'visible' }}>
         {shadow && createPortal(
           <>
-            <style>{hasFab ? fabPrototypeCss : noFabPrototypeCss}</style>
+            <style>{entranceHasFab ? fabPrototypeCss : noFabPrototypeCss}</style>
             <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
               <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
             </svg>
@@ -256,27 +258,27 @@ function Scene({
                 </div>
               </div>
             </div>
-            {hasFab ? <FabStartupScene tabs={tabs} /> : <NoFabStartupScene tabs={tabs} />}
+            {entranceHasFab ? <FabStartupScene tabs={tabs} /> : <NoFabStartupScene tabs={tabs} />}
           </>,
           shadow,
         )}
       </div>
-      {fab ? (
-        <div
-          ref={fabHost}
-          data-liquid-glass-fab-slot=""
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: 88,
-            height: 88,
-            zIndex: 4,
-          }}
-        >
-          {fab}
-        </div>
-      ) : null}
+      <div
+        ref={fabHost}
+        hidden={!hasFab}
+        aria-hidden={!hasFab || undefined}
+        data-liquid-glass-fab-slot={hasFab ? '' : undefined}
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: 88,
+          height: 88,
+          zIndex: 4,
+        }}
+      >
+        {fab}
+      </div>
     </>
   );
 }
@@ -296,9 +298,6 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
   }, [props.hidden]);
 
   const order = JSON.stringify(props.tabs.map(tab => tab.value));
-  // A runtime and its imperative DOM state share one lifetime. Changing the
-  // choreography must replace both, so cancelled springs cannot strand a lens.
-  const sceneKey = `${order}:${props.fab != null ? 'fab' : 'no-fab'}`;
 
   return (
     <div
@@ -306,7 +305,7 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
       aria-hidden={props.hidden || undefined}
       style={{ position: 'relative', width: '100%', overflow: 'visible' }}
     >
-      {!props.hidden && props.tabs.length > 0 && <Scene key={sceneKey} {...props} entrance={entrance} />}
+      {!props.hidden && props.tabs.length > 0 && <Scene key={order} {...props} entrance={entrance} />}
     </div>
   );
 }
