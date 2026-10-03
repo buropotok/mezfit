@@ -219,7 +219,7 @@ export function IdentityAction(props: IdentityActionProps) {
     iconVariant,
     iconSize,
     title,
-    titleRole = 'body',
+    titleRole,
     onClick,
     width,
     'aria-label': ariaLabel,
@@ -261,7 +261,7 @@ export function IdentityAction(props: IdentityActionProps) {
           />
         ) : null}
       </span>
-      {showTitle && <span className={`ui-identity-action__title ui-identity-action__title--${titleRole}`}>{title}</span>}
+      {showTitle && <span className={titleRole === 'headline' ? 'ui-identity-action__title ui-identity-action__title--headline' : 'ui-identity-action__title'}>{title}</span>}
     </GlassSurface>
   );
 }
