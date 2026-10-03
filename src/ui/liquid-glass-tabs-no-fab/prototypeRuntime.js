@@ -2200,10 +2200,13 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     }
     frame(startTime);
   }
-  listen(document,'pointerup',()=>{pointerId=null});
-  listen(document,'pointercancel',()=>{pointerId=null});
-  listen(paneElement,'pointerup',()=>{pointerId=null});
-  listen(paneElement,'pointercancel',()=>{pointerId=null});
+  const clearCapturedPointer = event => {
+    if (event.pointerId === pointerId) pointerId = null;
+  };
+  listen(document,'pointerup',clearCapturedPointer);
+  listen(document,'pointercancel',clearCapturedPointer);
+  listen(paneElement,'pointerup',clearCapturedPointer);
+  listen(paneElement,'pointercancel',clearCapturedPointer);
   let lastWidth=0;
   const resize=new ResizeObserver(()=>{if(root.host.clientWidth===lastWidth)return;lastWidth=root.host.clientWidth;if(!running)settle();});
   resize.observe(root.host);
