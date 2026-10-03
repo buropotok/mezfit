@@ -1,7 +1,6 @@
 // Direct extraction from the approved HTML, not a rewritten interaction model.
 // See provenance.md for the extraction boundary and intentional lifecycle changes.
-import { settledFabSlot } from '../liquid-glass-icon-only/fabGeometry';
-export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHost) {
+export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const owner = root.ownerDocument;
   const host = root.getElementById('iconLayer');
   const events = new EventTarget();
@@ -2097,19 +2096,16 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     handoffProgress=0;scene.style.visibility='visible';scene.style.opacity='1';
     iconLayer.style.opacity='0';iconLayer.style.willChange='opacity';iconLayer.inert=true;iconLayer.setAttribute('startup','');
     iconMask.classList.remove('tabs-interactive');iconMask.style.pointerEvents='none';
-    if(fabHost){fabHost.style.opacity='0';fabHost.style.pointerEvents='none';fabHost.inert=true;}
   }
   function setFinalState(){
     const changed=!iconMask.classList.contains('tabs-interactive');
     handoffProgress=1;scene.style.opacity='0';scene.style.visibility='hidden';
     iconLayer.style.opacity='1';iconLayer.style.willChange='auto';iconLayer.inert=false;iconLayer.removeAttribute('startup');
     iconMask.classList.add('tabs-interactive');iconMask.style.pointerEvents='auto';
-    if(fabHost){fabHost.style.opacity='1';fabHost.style.pointerEvents='auto';fabHost.inert=false;}
     if(changed)iconLayer.dispatchEvent(new Event('tabs-layout-ready'));
   }
   function setHandoffVisuals(progress){
     const p=clamp(progress,0,1);handoffProgress=p;scene.style.visibility='visible';scene.style.opacity=String(1-p);iconLayer.style.opacity=String(p);
-    if(fabHost){fabHost.style.opacity=String(p);fabHost.style.pointerEvents=p<1?'none':'auto';fabHost.inert=p<1;}
     if(p<1){iconLayer.inert=true;iconMask.style.pointerEvents='none';return;}setFinalState();
   }
   function prepareGeometry(){
@@ -2126,7 +2122,6 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance, fabHo
     if(materialSurface){materialSurface.setAttribute('width',String(width));materialSurface.setAttribute('height',String(height));}
     const resolution=Math.max(2.2,Math.sqrt(width*height/55000));mapCanvas.width=Math.ceil(width/resolution);mapCanvas.height=Math.ceil(height/resolution);
     const runtimeWidth=width/1.1;iconMask.style.width=runtimeWidth+'px';iconMask.style.height='64px';iconLayer.style.width=runtimeWidth+'px';
-    if(fabHost){const slot=settledFabSlot(width);fabHost.style.left=slot.left+'px';fabHost.style.top=slot.top+'px';}
     applyMaterial();syncStartupIcons();return true;
   }
   function pose(ms){
