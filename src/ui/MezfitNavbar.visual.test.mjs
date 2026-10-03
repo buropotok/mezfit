@@ -25,7 +25,10 @@ const backOutline = readFileSync(
 describe('MezfitNavbar visual contract', () => {
   it('centers double-action icons inside the same 40px visual slot as labeled identity icons', () => {
     const segmentRule = identityActionCss.match(/\.ui-identity-action__segment \{[\s\S]*?\n\}/)?.[0];
+    const visualRule = identityActionCss.match(/\.ui-identity-action__visual \{[\s\S]*?\n\}/)?.[0];
 
+    expect(visualRule).toContain('width: 2.5rem');
+    expect(visualRule).toContain('height: 2.5rem');
     expect(segmentRule).toContain('width: 2.75rem');
     expect(segmentRule).toContain('height: 2.75rem');
     expect(segmentRule).toContain('padding: 0.125rem');
