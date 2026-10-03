@@ -42,6 +42,8 @@ export type IdentityActionItem = {
   renderControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
 };
 
+export type IdentityActionTitleRole = 'body' | 'headline';
+
 type IdentityActionBaseProps = {
   glassPreset?: GlassPresetName;
   disabled?: boolean;
@@ -54,6 +56,7 @@ type IdentityActionSingleProps = IdentityActionBaseProps & IdentityActionVisual 
   actions?: never;
   'aria-label'?: string;
   width?: CSSProperties['width'];
+  titleRole?: IdentityActionTitleRole;
 };
 
 type IdentityActionDoubleProps = IdentityActionBaseProps & {
@@ -216,6 +219,7 @@ export function IdentityAction(props: IdentityActionProps) {
     iconVariant,
     iconSize,
     title,
+    titleRole = 'body',
     onClick,
     width,
     'aria-label': ariaLabel,
@@ -257,7 +261,7 @@ export function IdentityAction(props: IdentityActionProps) {
           />
         ) : null}
       </span>
-      {showTitle && <span className="ui-identity-action__title">{title}</span>}
+      {showTitle && <span className={`ui-identity-action__title ui-identity-action__title--${titleRole}`}>{title}</span>}
     </GlassSurface>
   );
 }
