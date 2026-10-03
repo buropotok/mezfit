@@ -67,6 +67,13 @@ describe('IdentityAction', () => {
     expect(view.container.querySelector('.ui-avatar--fallback')).toBeNull();
   });
 
+  it('supports the public headline title role', () => {
+    const view = render(<IdentityAction icon="users" title="Клиенты" titleRole="headline" />);
+    const title = view.container.querySelector<HTMLElement>('.ui-identity-action__title');
+
+    expect(title?.classList.contains('ui-identity-action__title--headline')).toBe(true);
+  });
+
   it('renders the default labeled icon at a real 32px inline size', () => {
     const view = render(<IdentityAction icon="chart-dots-2" title="Аналитика" />);
     const icon = view.container.querySelector<HTMLElement>('.ui-identity-action__icon');

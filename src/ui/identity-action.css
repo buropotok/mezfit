@@ -17,6 +17,7 @@
   font-size: var(--ui-font-size-body);
   line-height: var(--ui-line-height-body);
   font-weight: var(--ui-font-weight-medium);
+  letter-spacing: var(--ui-letter-spacing-body);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -98,6 +99,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ui-identity-action__title--headline {
+  font-size: var(--ui-font-size-headline);
+  line-height: var(--ui-line-height-headline);
+  font-weight: var(--ui-font-weight-light);
+  letter-spacing: var(--ui-letter-spacing-headline);
 }
 
 @keyframes ui-identity-action-press {
