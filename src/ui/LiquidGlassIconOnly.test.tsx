@@ -26,9 +26,10 @@ function element(root:ShadowRoot,id:string):HTMLElement {
   const result=root.getElementById(id);if(!(result instanceof HTMLElement))throw new Error('Missing '+id);return result;
 }
 const cancels:ReturnType<typeof vi.fn>[]=[];
+const animationTargets=new Map<ReturnType<typeof vi.fn>,Element>();
 const nativeQuerySelectorAll=Element.prototype.querySelectorAll;
 beforeEach(()=>{
-  vi.useFakeTimers();changed.mockClear();cancels.length=0;
+  vi.useFakeTimers();changed.mockClear();cancels.length=0;animationTargets.clear();
   vi.stubGlobal('ResizeObserver',class {observe(){}disconnect(){}});
   vi.stubGlobal('matchMedia',()=>({matches:false}));
   vi.stubGlobal('PointerEvent',class extends MouseEvent {pointerId:number;pointerType:string;constructor(type:string,init:PointerEventInit={}){super(type,init);this.pointerId=init.pointerId??1;this.pointerType=init.pointerType??'touch'}});
@@ -48,7 +49,7 @@ beforeEach(()=>{
     return {x:left,y:0,left,top:0,right:left+width,bottom:64,width,height:64,toJSON:()=>({})};
   });
   vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
-  Object.defineProperty(Element.prototype,'animate',{configurable:true,value:vi.fn(()=>{const cancel=vi.fn();cancels.push(cancel);return {cancel,addEventListener:vi.fn(),removeEventListener:vi.fn()}})});
+  Object.defineProperty(Element.prototype,'animate',{configurable:true,value:vi.fn(function(this:Element){const cancel=vi.fn();cancels.push(cancel);animationTargets.set(cancel,this);return {cancel,addEventListener:vi.fn(),removeEventListener:vi.fn()}})});
 });
 afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
 
@@ -92,18 +93,20 @@ describe('direct prototype adapter',()=>{
     expect(lens.style.getPropertyValue('--sl-glass-brightness')).toBe('1.02');
     expect(lens.style.getPropertyValue('--sl-bezel-opacity')).toBe('.86');
   });
-  it('uses the tuned startup material and hands off to the FAB with the tabs',()=>{
+  it('always uses the no-FAB reveal while the independent FAB is already available',()=>{
     const view=render(ui(true,'0',tabs,true));view.rerender(ui(false,'0',tabs,true));const root=getScene(view.container);
     const blur=root.getElementById('startup-lens-blur'),saturation=root.getElementById('startup-lens-saturation');
     const material=root.getElementById('startup-material-surface');
     const fabSlot=view.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
-    expect(blur?.getAttribute('stdDeviation')).toBe('0.50');
-    expect(saturation?.getAttribute('values')).toBe('1.24');
+    expect(blur).toBeNull();
+    expect(saturation?.getAttribute('values')).toBe('1.29');
     expect(Number(material?.getAttribute('fill-opacity'))).toBeCloseTo(.03,2);
-    expect(fabSlot).not.toBeNull();expect(fabSlot?.style.opacity).toBe('0');expect(fabSlot?.style.pointerEvents).toBe('none');
-    expect(fabSlot?.inert).toBe(true);expect(fabSlot?.getAttribute('aria-hidden')).toBe('true');
+    expect(fabSlot).not.toBeNull();expect(fabSlot?.style.opacity).toBe('1');expect(fabSlot?.style.pointerEvents).toBe('auto');
+    expect(fabSlot?.parentElement).toBe(view.container.firstElementChild);
+    expect(element(root,'iconLayer').hasAttribute('startup')).toBe(true);
+    expect(fabSlot?.inert).toBe(false);expect(fabSlot?.hasAttribute('aria-hidden')).toBe(false);
     expect(Number.parseFloat(fabSlot?.style.top??'0')).toBeLessThan(0);
-    act(()=>vi.advanceTimersByTime(880));
+    act(()=>vi.advanceTimersByTime(940));
     expect(element(root,'iconMask').classList.contains('tabs-interactive')).toBe(true);
     expect(fabSlot?.style.opacity).toBe('1');expect(fabSlot?.style.pointerEvents).toBe('auto');
     expect(fabSlot?.inert).toBe(false);expect(fabSlot?.hasAttribute('aria-hidden')).toBe(false);
@@ -281,7 +284,8 @@ describe('direct prototype adapter',()=>{
           expect(changed).toHaveBeenLastCalledWith(String(destination));
           act(()=>vi.advanceTimersByTime(260));
           expect(lens.classList.contains('tap-spring-active')).toBe(true);
-          const animations=[...cancels],calls=animations.map(cancel=>cancel.mock.calls.length);
+          const animations=cancels.filter(cancel=>animationTargets.get(cancel)===lens),calls=animations.map(cancel=>cancel.mock.calls.length);
+          expect(animations.length).toBeGreaterThan(0);
           withFab=!withFab;
           view.rerender(ui(false,String(destination),tabs,withFab));
           expect(getScene(view.container)).toBe(root);
@@ -303,7 +307,7 @@ describe('direct prototype adapter',()=>{
     }
   });
 
-  it('places a FAB added to a no-FAB scene at the approved FAB-scene position',()=>{
+  it('places an independent FAB at the approved position without rebuilding the tabs',()=>{
     const fabView=render(ui(false,'0',tabs,true));
     const original=fabView.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
     const position={left:original?.style.left,top:original?.style.top};
@@ -315,6 +319,8 @@ describe('direct prototype adapter',()=>{
     expect(added?.hidden).toBe(false);
     expect(added?.style.left).toBe(position.left);
     expect(added?.style.top).toBe(position.top);
+    expect(Number.parseFloat(added?.style.top??'0')).toBeCloseTo(-103.80803231964103,5);
+    expect(Number.parseFloat(added?.style.left??'0')).toBeCloseTo(292.8181818181818,5);
     expect(added?.style.opacity).toBe('1');
     expect(added?.inert).toBe(false);
   });
