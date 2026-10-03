@@ -63,6 +63,8 @@ describe('IdentityAction', () => {
 
     expect(view.getByRole('button', { name: 'Клиенты' })).not.toBeNull();
     expect(icon).not.toBeNull();
+    expect(icon?.style.width).toBe('32px');
+    expect(icon?.style.height).toBe('32px');
     expect(icon?.style.getPropertyValue('mask-image')).toContain(getUiIconAsset('users', 'outline'));
     expect(view.container.querySelector('.ui-avatar--fallback')).toBeNull();
   });
