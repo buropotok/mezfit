@@ -31,5 +31,5 @@ export function settledFabSlot(width) {
   const height=Math.ceil(baseY+lowerY+32),lowerX=Math.max(1,width/2/1.1-32);
   const movingS=32/Math.sqrt(2*Math.log(2/threshold));
   const target=fabTarget(width,lowerX,lowerY,baseY,sigma,movingS,1,threshold,FAB_Y_OFFSET);
-  return {left:target.x-44,top:target.y-(height-64)};
+  return {left:target.x-44,top:target.y-(height-64)-44};
 }
