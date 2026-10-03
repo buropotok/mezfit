@@ -116,6 +116,8 @@ export function MezfitNavbar({
               },
               {
                 icon: 'settings',
+                iconVariant: 'outline',
+                iconSize: 32,
                 label: 'Меню страницы',
                 onClick: onMenu,
                 disabled: menuDisabled,
