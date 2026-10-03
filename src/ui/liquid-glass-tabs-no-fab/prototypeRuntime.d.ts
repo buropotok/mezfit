@@ -4,5 +4,4 @@ export function mountPrototype(
   initialIndex: number,
   onSelect: (index: number) => void,
   playEntrance: boolean,
-  fabHost?: HTMLDivElement | null,
 ): PrototypeController;
