@@ -135,16 +135,10 @@
 .exercise-catalog-search .text-input { width: 100%; height: var(--control-h); }
 .exercise-catalog-directory {
   position: relative;
-  overflow: hidden;
-  height: calc(100dvh - var(--appbar-h) - 13rem);
   min-height: 12rem;
 }
 .exercise-catalog-scroll {
-  height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding-bottom: 4.5rem;
-  scrollbar-width: thin;
 }
 .exercise-catalog-surface {
   overflow: hidden;
