@@ -10,7 +10,7 @@ export type BadgeProps = Omit<HTMLAttributes<HTMLSpanElement>, 'color'> & {
 
 export function Badge({ color = 'gray', className = '', children, ...props }: BadgeProps) {
   return (
-    <span {...props} className={`ui-badge ui-badge--${color} ${className}`.trim()}>
+    <span {...props} className={`ui-badge ui-text--body ui-badge--${color} ${className}`.trim()}>
       {children}
     </span>
   );
