@@ -74,6 +74,7 @@ interface NavigationItem {
 }
 
 const NavigationLevelContext = createContext<NavigationLevel>(1);
+const NavigationBackTransitionContext = createContext<((transition: () => void) => void) | null>(null);
 const NavigationFloatingActionContext = createContext<Dispatch<SetStateAction<RegisteredFloatingAction | null>> | null>(null);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
@@ -111,6 +112,11 @@ const clientItems: NavigationItem[] = [...clientPrimaryItems, ...clientSecondary
 
 export function useNavigationLevel(): NavigationLevel {
   return useContext(NavigationLevelContext);
+}
+
+export function useNavigationBackTransition(): (transition: () => void) => void {
+  const requestBackTransition = useContext(NavigationBackTransitionContext);
+  return requestBackTransition ?? ((transition) => transition());
 }
 
 export function useNavigationFloatingAction(destination: AppDestination, action: NavigationFloatingAction | null): void {
@@ -249,6 +255,11 @@ export function NavigationShell({
     currentScrollSurfaceRef.current = scrollSurfaceKey;
   }, [scrollSurfaceKey]);
 
+  const requestBackTransition = useCallback((transition: () => void) => {
+    restoreScrollOnNextSurfaceRef.current = true;
+    transition();
+  }, []);
+
   const requestBack = useCallback(() => {
     const currentContext = contextRef.current;
     if (!currentContext) return;
@@ -259,21 +270,19 @@ export function NavigationShell({
       return;
     }
     historyEntryRef.current = null;
-    restoreScrollOnNextSurfaceRef.current = true;
-    currentContext.onBack?.();
-  }, []);
+    if (currentContext.onBack) requestBackTransition(currentContext.onBack);
+  }, [requestBackTransition]);
 
   useEffect(() => {
     const onPopState = () => {
       const currentContext = contextRef.current;
-      if (!currentContext) return;
+      if (!currentContext?.onBack) return;
       historyEntryRef.current = null;
-      restoreScrollOnNextSurfaceRef.current = true;
-      currentContext.onBack?.();
+      requestBackTransition(currentContext.onBack);
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, []);
+  }, [requestBackTransition]);
 
   useEffect(() => {
     const existingEntry = historyEntryRef.current;
@@ -389,6 +398,7 @@ export function NavigationShell({
 
   return (
     <FloatingActionButtonGlassProvider preset={glassPreset} optics={glassOptics}>
+    <NavigationBackTransitionContext.Provider value={requestBackTransition}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
         <main className="app-shell navigation-shell">
@@ -454,6 +464,7 @@ export function NavigationShell({
         </main>
       </NavigationLevelContext.Provider>
     </NavigationFloatingActionContext.Provider>
+    </NavigationBackTransitionContext.Provider>
     </FloatingActionButtonGlassProvider>
   );
 }
