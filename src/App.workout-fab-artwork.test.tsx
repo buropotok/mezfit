@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getMe } from './api';
 import { App } from './App';
-import workoutFabIconUrl from './assets/strong.png';
+import { getUiIconAsset } from './ui/icons/registry';
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>();
@@ -60,18 +60,20 @@ afterEach(() => {
 });
 
 describe('workout FAB artwork', () => {
-  it('renders the approved workout artwork as the full content of the left FAB', async () => {
+  it('renders the shared outlined barbell in the left FAB and opens the workout', async () => {
     render(<App />);
 
     expect(await screen.findByText('Coach home')).toBeTruthy();
     const launcher = screen.getByRole('button', { name: 'Открыть тренировку' });
-    const image = launcher.querySelector('img');
+    const icon = launcher.querySelector<HTMLElement>('.ui-icon');
 
     expect(launcher.className).toContain('ui-fab--left');
-    expect(image?.getAttribute('src')).toBe(workoutFabIconUrl);
-    expect(image?.style.width).toBe('100%');
-    expect(image?.style.height).toBe('100%');
-    expect(image?.style.borderRadius).toBe('50%');
-    expect(image?.style.objectFit).toBe('cover');
+    expect(icon?.style.maskImage).toContain(getUiIconAsset('barbell', 'outline'));
+    expect(icon?.style.width).toBe('36px');
+    expect(icon?.style.height).toBe('36px');
+    expect(launcher.querySelector('img')).toBeNull();
+
+    fireEvent.click(launcher);
+    expect(screen.getByText('Workout session')).toBeTruthy();
   });
 });
