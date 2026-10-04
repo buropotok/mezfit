@@ -44,7 +44,8 @@ export interface NavigationMenuAction {
 export interface NavigationFloatingAction {
   label: string;
   onClick: () => void;
-  content: ReactNode;
+  content?: ReactNode;
+  icon?: UiIconName;
   placement?: 'left' | 'right';
   disabled?: boolean;
   isShown?: boolean;
@@ -395,6 +396,7 @@ export function NavigationShell({
             fab={currentItem.showFab === false || !resolvedFloatingAction ? undefined : (
               <FloatingActionButton
                 label={resolvedFloatingAction.label}
+                icon={resolvedFloatingAction.icon}
                 placement={resolvedFloatingAction.placement}
                 disabled={resolvedFloatingAction.disabled}
                 isShown={resolvedFloatingAction.isShown}
