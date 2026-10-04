@@ -18,7 +18,7 @@ import infoCircleUrl from './info-circle.svg';
 import menu2Url from './menu-2.svg';
 import plusOutlineUrl from './plus-outline.svg';
 import textPlusUrl from './text-plus.svg';
-import userPlusUrl from './user-plus.svg';
+import userPlusUrl from './user-plus-outline.svg';
 import settingsFilledUrl from './liquid-glass-settings-filled.svg';
 import settingsOutlineUrl from './liquid-glass-settings-outline.svg';
 import usersFilledUrl from './liquid-glass-users-filled.svg';
