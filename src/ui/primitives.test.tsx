@@ -75,10 +75,9 @@ describe('UI Kit primitives', () => {
     expect(html).toMatch(/<button[^>]*class="(?=[^"]*k-glass)(?=[^"]*ui-fab)[^"]*"/);
   });
 
-  it('supports canonical textual FAB labels without a nested typography primitive', () => {
+  it('uses the Body preset for textual FAB labels without a nested typography primitive', () => {
     const html = renderToStaticMarkup(<FloatingActionButton label="Confirm">ОК</FloatingActionButton>);
-    expect(html).toContain('>ОК</button>');
-    expect(html).not.toContain('ui-text');
+    expect(html).toMatch(/<button[^>]*class="[^"]*ui-text--body[^"]*"[^>]*>ОК<\/button>/);
   });
 
   it('makes a hidden floating action button inaccessible and non-tabbable', () => {
