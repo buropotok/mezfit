@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavigationShell, type NavigationContext } from './NavigationShell';
+import { NavigationShell, useNavigationBackTransition, type NavigationContext } from './NavigationShell';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
   ClientCoachSelectorModal: () => null,
@@ -130,6 +130,50 @@ describe('NavigationShell page scroll ownership', () => {
     content.scrollTop = 60;
     fireEvent.scroll(content);
     fireEvent(window, new PopStateEvent('popstate'));
+
+    expect(content.scrollTop).toBe(140);
+  });
+
+  it('restores the parent offset when a nested surface closes directly', () => {
+    function DirectClose({ onClose }: { onClose: () => void }) {
+      const requestBackTransition = useNavigationBackTransition();
+      return <button type="button" onClick={() => requestBackTransition(onClose)}>Close detail</button>;
+    }
+
+    function Harness() {
+      const [context, setContext] = useState<NavigationContext | null>(null);
+      return (
+        <NavigationShell
+          me={me}
+          activeRole="client"
+          destination="today"
+          context={context}
+          onDestinationChange={vi.fn()}
+          onRoleSwitch={vi.fn()}
+        >
+          {context ? (
+            <DirectClose onClose={() => setContext(null)} />
+          ) : (
+            <button type="button" onClick={() => setContext({ title: 'Детали', scrollKey: 'detail' })}>
+              Open detail
+            </button>
+          )}
+        </NavigationShell>
+      );
+    }
+
+    const view = render(<Harness />);
+    const content = view.container.querySelector<HTMLElement>('.navigation-content');
+    if (!content) throw new Error('Missing navigation content scroller');
+
+    content.scrollTop = 140;
+    fireEvent.scroll(content);
+    fireEvent.click(view.getByRole('button', { name: 'Open detail' }));
+    expect(content.scrollTop).toBe(0);
+
+    content.scrollTop = 60;
+    fireEvent.scroll(content);
+    fireEvent.click(view.getByRole('button', { name: 'Close detail' }));
 
     expect(content.scrollTop).toBe(140);
   });
