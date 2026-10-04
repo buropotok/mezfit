@@ -135,6 +135,7 @@ export function MezfitNavbar({
           />
         </div>
       </div>
+      </div>
     </header>
   );
 }
