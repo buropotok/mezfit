@@ -8,7 +8,6 @@ import {
   type MeResponse,
   type Role,
 } from './api';
-import workoutFabIconUrl from './assets/strong.png';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
@@ -303,14 +302,7 @@ export function App() {
     placement: 'left',
     isShown: !workoutOpen,
     onClick: () => setWorkoutOpen(true),
-    content: (
-      <img
-        src={workoutFabIconUrl}
-        alt=""
-        aria-hidden="true"
-        style={{ display: 'block', width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', pointerEvents: 'none' }}
-      />
-    ),
+    icon: 'barbell',
   };
 
   return (
