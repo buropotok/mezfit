@@ -17,14 +17,6 @@ import { SessionExercise } from '../workout/SessionExercise';
 import type { SessionExerciseData, SessionExerciseSetData } from '../workout/sessionExerciseTypes';
 import './program-details.css';
 
-function AddIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor" />
-    </svg>
-  );
-}
-
 function ownerName(details: CoachProgramDetails): string {
   return [details.owner.firstName, details.owner.lastName].filter(Boolean).join(' ');
 }
@@ -330,9 +322,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
         </section>
       </div>
 
-      <FloatingActionButton label="Добавить фазу" onClick={openPhaseCreation}>
-        <AddIcon />
-      </FloatingActionButton>
+      <FloatingActionButton label="Добавить фазу" icon="plus" onClick={openPhaseCreation} />
 
       <Modal
         isOpen={phaseCreateOpen}
