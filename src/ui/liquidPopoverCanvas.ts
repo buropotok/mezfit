@@ -87,6 +87,8 @@ export function paintLiquidMesh(
   time: number,
   rect: LiquidRect,
   stretch: number,
+  vector?: LiquidVectorMap,
+  strength = 0,
 ) {
   context.resetTransform();
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
@@ -125,7 +127,12 @@ export function paintLiquidMesh(
       const u = i / cols,
         compressed = left + (right - left) * u,
         flat = bounds.left + (bounds.right - bounds.left) * u;
-      grid.push({ x: compressed + (flat - compressed) * unfold, y });
+      const point = { x: compressed + (flat - compressed) * unfold, y };
+      const offset = vector ? sampleLiquidMap(vector, point) : { x: 0, y: 0 };
+      grid.push({
+        x: point.x - offset.x * strength,
+        y: point.y - offset.y * strength,
+      });
     }
   }
   for (let j = 0; j < rows; j++)
@@ -145,7 +152,7 @@ export function paintLiquidMesh(
 }
 
 /** A neutral optical center, with inward sampling confined to the rim. */
-export function paintLiquidMap(
+export function buildLiquidMap(
   context: CanvasRenderingContext2D,
   loops: Point[][],
   path: string,
@@ -233,14 +240,8 @@ export function paintLiquidMap(
     }
     soft = out;
   }
-  const edgeBand = Math.min(32, maxDepth * Math.min(sx, sy) * 0.45),
-    map = context.createImageData(mw, mh);
-  for (let i = 0; i < depth.length; i++) {
-    map.data[i * 4] = 128;
-    map.data[i * 4 + 1] = 128;
-    map.data[i * 4 + 2] = 128;
-    map.data[i * 4 + 3] = 255;
-  }
+  const edgeBand = Math.min(32, maxDepth * Math.min(sx, sy) * 0.45);
+  const vectors = new Float32Array(mw * mh * 2);
   for (let row = 2; row < mh - 2; row++)
     for (let col = 2; col < mw - 2; col++) {
       const i = row * mw + col,
@@ -250,13 +251,44 @@ export function paintLiquidMap(
         gy = (soft[i + mw * 2] - soft[i - mw * 2]) / 4;
       const safe = Math.sqrt(gx * gx + gy * gy + 0.25),
         amplitude = edgeBand * 0.4 * smoother(1 - distance / edgeBand);
-      map.data[i * 4] = Math.round(
-        clamp(128 + (((gx / safe) * amplitude) / 64) * 255, 0, 255),
-      );
-      map.data[i * 4 + 1] = Math.round(
-        clamp(128 + (((gy / safe) * amplitude) / 64) * 255, 0, 255),
-      );
+      vectors[i * 2] = (gx / safe) * amplitude;
+      vectors[i * 2 + 1] = (gy / safe) * amplitude;
     }
-  context.putImageData(map, 0, 0);
-  return { x, y, width, height, href: context.canvas.toDataURL() };
+  return { x, y, width, height, columns: mw, rows: mh, vectors };
+}
+
+export type LiquidVectorMap = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  columns: number;
+  rows: number;
+  vectors: Float32Array;
+};
+
+/** Bilinear field sampling; a neutral center stays exactly zero (no byte quantization). */
+export function sampleLiquidMap(map: LiquidVectorMap, point: Point): Point {
+  const x = clamp(
+    ((point.x - map.x) / map.width) * map.columns,
+    0,
+    map.columns - 1,
+  );
+  const y = clamp(((point.y - map.y) / map.height) * map.rows, 0, map.rows - 1);
+  const left = Math.floor(x),
+    top = Math.floor(y),
+    right = Math.min(left + 1, map.columns - 1),
+    bottom = Math.min(top + 1, map.rows - 1);
+  const read = (column: number, row: number, channel: number) =>
+    map.vectors[(row * map.columns + column) * 2 + channel];
+  const interpolate = (channel: number) => {
+    const a =
+      read(left, top, channel) * (1 - (x - left)) +
+      read(right, top, channel) * (x - left);
+    const b =
+      read(left, bottom, channel) * (1 - (x - left)) +
+      read(right, bottom, channel) * (x - left);
+    return a * (1 - (y - top)) + b * (y - top);
+  };
+  return { x: interpolate(0), y: interpolate(1) };
 }
