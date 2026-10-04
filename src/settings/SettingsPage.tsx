@@ -152,6 +152,67 @@ function updateTypographyPreset(
   });
 }
 
+type TypographyNumberFieldProps = {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onValueChange: (value: number) => void;
+};
+
+function TypographyNumberField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onValueChange,
+}: TypographyNumberFieldProps) {
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
+  const commitIfComplete = (nextDraft: string): boolean => {
+    const normalizedDraft = nextDraft.trim();
+    if (
+      normalizedDraft === ''
+      || normalizedDraft === '-'
+      || normalizedDraft === '+'
+      || normalizedDraft.endsWith('.')
+    ) {
+      return false;
+    }
+
+    const nextValue = Number(normalizedDraft);
+    if (!Number.isFinite(nextValue) || nextValue < min || nextValue > max) return false;
+    onValueChange(nextValue);
+    return true;
+  };
+
+  return (
+    <TextInput
+      type="number"
+      label={label}
+      min={min}
+      max={max}
+      step={step}
+      showNumberControls={false}
+      value={draft}
+      onChange={(event) => {
+        const nextDraft = event.currentTarget.value;
+        setDraft(nextDraft);
+        commitIfComplete(nextDraft);
+      }}
+      onBlur={() => {
+        if (!commitIfComplete(draft)) setDraft(String(value));
+      }}
+    />
+  );
+}
+
 export function SettingsPage({
   glassSettings = DEFAULT_GLASS_SETTINGS,
   onGlassSettingsChange = () => {},
@@ -282,19 +343,6 @@ export function SettingsPage({
   }
 
   if (typographySettingsOpen) {
-    const setNumber = (
-      role: TypographyRole,
-      key: 'size' | 'lineHeight' | 'letterSpacing',
-      value: number,
-    ) => {
-      if (!Number.isFinite(value)) return;
-      const patch: Partial<TypographyPresetSettings> = key === 'size'
-        ? { size: value }
-        : key === 'lineHeight'
-          ? { lineHeight: value }
-          : { letterSpacing: value };
-      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, patch));
-    };
     const setWeight = (role: TypographyRole, value: string) => {
       const weight = TYPOGRAPHY_WEIGHTS.find((candidate) => String(candidate) === value);
       if (weight === undefined) return;
@@ -326,35 +374,35 @@ export function SettingsPage({
                     </div>
 
                     <div className="settings-page__typography-fields">
-                      <TextInput
-                        type="number"
+                      <TypographyNumberField
                         label="Размер, px"
                         min={8}
                         max={64}
                         step={1}
-                        showNumberControls={false}
                         value={preset.size}
-                        onChange={(event) => setNumber(role, 'size', event.currentTarget.valueAsNumber)}
+                        onValueChange={(size) => onTypographySettingsChange(
+                          updateTypographyPreset(typographySettings, role, { size }),
+                        )}
                       />
-                      <TextInput
-                        type="number"
+                      <TypographyNumberField
                         label="Межстрочный интервал, px"
                         min={8}
                         max={80}
                         step={1}
-                        showNumberControls={false}
                         value={preset.lineHeight}
-                        onChange={(event) => setNumber(role, 'lineHeight', event.currentTarget.valueAsNumber)}
+                        onValueChange={(lineHeight) => onTypographySettingsChange(
+                          updateTypographyPreset(typographySettings, role, { lineHeight }),
+                        )}
                       />
-                      <TextInput
-                        type="number"
+                      <TypographyNumberField
                         label="Межбуквенное, px"
                         min={-2}
                         max={4}
                         step={0.05}
-                        showNumberControls={false}
                         value={preset.letterSpacing}
-                        onChange={(event) => setNumber(role, 'letterSpacing', event.currentTarget.valueAsNumber)}
+                        onValueChange={(letterSpacing) => onTypographySettingsChange(
+                          updateTypographyPreset(typographySettings, role, { letterSpacing }),
+                        )}
                       />
                       <div className="settings-page__typography-select">
                         <Text variant="footnote">Вес</Text>
