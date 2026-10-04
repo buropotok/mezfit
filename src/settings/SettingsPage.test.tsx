@@ -22,6 +22,43 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('SettingsPage glass settings', () => {
+  it('opens glass settings and emits preset and optics changes', () => {
+    const onGlassSettingsChange = vi.fn();
+    const onNavigationContextChange = vi.fn();
+
+    render(
+      <SettingsPage
+        glassSettings={{ preset: 'frosted', optics: false }}
+        onGlassSettingsChange={onGlassSettingsChange}
+        onNavigationContextChange={onNavigationContextChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Настройки стекла' }));
+
+    expect(screen.getByRole('region', { name: 'Настройки стекла' })).toBeTruthy();
+    expect(onNavigationContextChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ title: 'Настройки стекла' }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'frosted' }));
+    fireEvent.click(screen.getByText('clear'));
+
+    expect(onGlassSettingsChange).toHaveBeenLastCalledWith({
+      preset: 'clear',
+      optics: false,
+    });
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Optics/ }));
+
+    expect(onGlassSettingsChange).toHaveBeenLastCalledWith({
+      preset: 'frosted',
+      optics: true,
+    });
+  });
+});
+
 describe('SettingsPage modules gallery', () => {
   it('opens the modules gallery and exposes real workout modules', () => {
     const onNavigationContextChange = vi.fn();

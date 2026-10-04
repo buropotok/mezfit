@@ -1,6 +1,9 @@
 import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { GlassSurface } from './GlassSurface';
+import glassSurfaceCss from './GlassSurface.css?inline';
 import { resolveUiIconPair } from './Icon';
+import type { GlassPresetName } from './glassMaterial';
 import type { UiIconSource } from './iconPair';
 import { mountPrototype as mountNoFabPrototype, type PrototypeController } from './liquid-glass-tabs-no-fab/prototypeRuntime';
 import noFabPrototypeCss from './liquid-glass-tabs-no-fab/prototype.css?inline';
@@ -17,6 +20,8 @@ export type LiquidGlassIconOnlyProps = {
   value: string | null;
   onValueChange: (value: string) => void;
   hidden: boolean;
+  glassPreset?: GlassPresetName;
+  glassOptics?: boolean;
   fab?: ReactNode;
 };
 
@@ -115,6 +120,8 @@ function Scene({
   tabs,
   value,
   onValueChange,
+  glassPreset,
+  glassOptics = false,
   entrance,
 }: Omit<LiquidGlassIconOnlyProps, 'hidden' | 'fab'> & { entrance: boolean }) {
   const host = useRef<HTMLDivElement>(null);
@@ -168,6 +175,7 @@ function Scene({
         {shadow && createPortal(
           <>
             <style>{noFabPrototypeCss}</style>
+            <style>{glassSurfaceCss}</style>
             <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
               <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
             </svg>
@@ -176,7 +184,13 @@ function Scene({
                 <div id="iconLayer">
                   <div className="donor-root dark">
                     <div className="standalone-lens-playground optical-tabs-playground" data-tab-mode="icons">
-                      <div className="toolbar-pane optical-toolbar-pane" id="toolbar-pane">
+                      <GlassSurface
+                        preset={glassPreset}
+                        optics={glassOptics}
+                        wrapContent={false}
+                        className="toolbar-pane optical-toolbar-pane"
+                        id="toolbar-pane"
+                      >
                         <div className="tab-strip" id="tab-strip" role="tablist" aria-label="Навигация">
                           {tabs.map((tab, index) => {
                             const icon = resolveUiIconPair(tab.icon);
@@ -205,7 +219,7 @@ function Scene({
                             <span className="selector" id="selector" />
                           </span>
                         </div>
-                      </div>
+                      </GlassSurface>
                       <span className="selector-track extracted-lens-demo" id="lens-track" aria-hidden="true">
                         <span className="lens optical-working-lens" id="lens" style={PROTOTYPE_LENS_STYLE} />
                       </span>
@@ -265,7 +279,17 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
       aria-hidden={props.hidden || undefined}
       style={{ position: 'relative', width: '100%', overflow: 'visible' }}
     >
-      {!props.hidden && props.tabs.length > 0 && <Scene key={order} tabs={props.tabs} value={props.value} onValueChange={props.onValueChange} entrance={entrance} />}
+      {!props.hidden && props.tabs.length > 0 && (
+        <Scene
+          key={order}
+          tabs={props.tabs}
+          value={props.value}
+          onValueChange={props.onValueChange}
+          glassPreset={props.glassPreset}
+          glassOptics={props.glassOptics}
+          entrance={entrance}
+        />
+      )}
       {!props.hidden && props.tabs.length > 0 && props.fab != null && <FabSlot>{props.fab}</FabSlot>}
     </div>
   );

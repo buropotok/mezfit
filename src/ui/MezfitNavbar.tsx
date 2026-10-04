@@ -19,6 +19,7 @@ export type MezfitNavbarProps = {
   onIdentityClick?: () => void;
   renderMenuControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
   glassPreset?: GlassPresetName;
+  glassOptics?: boolean;
   menuDisabled?: boolean;
   calendarDisabled?: boolean;
 };
@@ -32,6 +33,7 @@ export function MezfitNavbar({
   onIdentityClick,
   renderMenuControl,
   glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
+  glassOptics = false,
   menuDisabled = false,
   calendarDisabled = false,
 }: MezfitNavbarProps) {
@@ -76,6 +78,7 @@ export function MezfitNavbar({
             title="Назад"
             aria-label="Назад"
             glassPreset={glassPreset}
+            glassOptics={glassOptics}
             disabled={level === 1 && entryPhase === 'settled'}
             onClick={onBack}
           />
@@ -92,6 +95,7 @@ export function MezfitNavbar({
               titleRole="headline"
               width="100%"
               glassPreset={glassPreset}
+              glassOptics={glassOptics}
               onClick={onIdentityClick}
             />
           ) : (
@@ -102,6 +106,7 @@ export function MezfitNavbar({
               titleRole="headline"
               width="100%"
               glassPreset={glassPreset}
+              glassOptics={glassOptics}
               onClick={onIdentityClick}
             />
           )}
@@ -111,6 +116,7 @@ export function MezfitNavbar({
           <IdentityAction
             variant="double"
             glassPreset={glassPreset}
+            glassOptics={glassOptics}
             actions={[
               {
                 icon: 'calendar',

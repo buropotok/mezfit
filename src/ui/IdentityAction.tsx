@@ -46,6 +46,7 @@ export type IdentityActionTitleRole = 'body' | 'headline';
 
 type IdentityActionBaseProps = {
   glassPreset?: GlassPresetName;
+  glassOptics?: boolean;
   disabled?: boolean;
 };
 
@@ -89,6 +90,7 @@ export function IdentityAction(props: IdentityActionProps) {
   const {
     variant = 'labeled',
     glassPreset,
+    glassOptics = false,
     disabled = false,
   } = props;
   const [isAnimating, setIsAnimating] = useState(false);
@@ -179,6 +181,7 @@ export function IdentityAction(props: IdentityActionProps) {
       <GlassSurface
         ref={rootRef}
         preset={glassPreset}
+        optics={glassOptics}
         wrapContent={false}
         className={className}
         onPointerDown={handlePointerDown}
@@ -232,6 +235,7 @@ export function IdentityAction(props: IdentityActionProps) {
       component={IdentityGlassButton}
       ref={rootRef}
       preset={glassPreset}
+      optics={glassOptics}
       wrapContent={false}
       className={className}
       aria-label={ariaLabel ?? title}

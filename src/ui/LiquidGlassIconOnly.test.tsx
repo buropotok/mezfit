@@ -65,6 +65,22 @@ describe('direct prototype adapter',()=>{
     expect(button(root,2).getAttribute('aria-label')).toBe('Программы');expect(root.querySelector('[data-art="2-filled"]')).not.toBeNull();
     expect(button(root,0).style.width).toBe('20%');
   });
+  it('renders the icon container with GlassSurface using the requested preset',()=>{
+    const view=render(
+      <LiquidGlassIconOnly
+        hidden={false}
+        tabs={tabs}
+        value="0"
+        onValueChange={changed}
+        glassPreset="clear"
+        glassOptics={false}
+      />,
+    );
+    const pane=element(getScene(view.container),'toolbar-pane');
+    expect(pane.classList.contains('ui-glass-surface')).toBe(true);
+    expect(pane.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+    expect(pane.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.08');
+  });
   it('supports an explicitly inactive selection and restores it when a primary value returns',()=>{
     const view=render(ui(false,null));const root=getScene(view.container);
     expect([...root.querySelectorAll('[role="tab"]')].some(tab=>tab.getAttribute('aria-selected')==='true')).toBe(false);

@@ -12,6 +12,7 @@ import workoutFabIconUrl from './assets/strong.png';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
+import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
 import {
   NavigationShell,
   type AppDestination,
@@ -169,6 +170,7 @@ export function App() {
   const [workoutOpen, setWorkoutOpen] = useState(false);
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
   const [workoutNestedNavigationContext, setWorkoutNestedNavigationContext] = useState<NavigationContext | null>(null);
+  const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
@@ -182,6 +184,10 @@ export function App() {
     identity: { title: 'Тренировка', icon: 'barbell' },
     onBack: closeWorkout,
   }), [closeWorkout]);
+
+  useEffect(() => {
+    saveBrowserGlassSettings(glassSettings);
+  }, [glassSettings]);
 
   useEffect(() => {
     const webApp = getTelegramWebApp();
@@ -314,6 +320,8 @@ export function App() {
         onDestinationChange={changeDestination}
         onRoleSwitch={switchRole}
         floatingAction={workoutFloatingAction}
+        glassPreset={glassSettings.preset}
+        glassOptics={glassSettings.optics}
       >
         {workoutOpen ? (
           <WorkoutSessionScreen
@@ -323,7 +331,11 @@ export function App() {
             onSessionLifecycleChange={({ status }) => setWorkoutStatus(status)}
           />
         ) : destination === 'settings' ? (
-          <SettingsPage onNavigationContextChange={handleNavigationContextChange} />
+          <SettingsPage
+            glassSettings={glassSettings}
+            onGlassSettingsChange={setGlassSettings}
+            onNavigationContextChange={handleNavigationContextChange}
+          />
         ) : state.activeRole === 'coach' ? (
           <CoachShell
             initData={state.initData}

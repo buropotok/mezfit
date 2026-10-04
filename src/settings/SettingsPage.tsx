@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Toggle } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
+import {
+  DEFAULT_GLASS_SETTINGS,
+  GLASS_PRESET_NAMES,
+  isGlassPresetName,
+  type GlassSettings,
+} from '../glassSettings';
 import {
   getSelectionHapticBackend,
   getTelegramWebApp,
@@ -7,7 +14,7 @@ import {
   type HapticProbeKind,
   type HapticProbeResult,
 } from '../telegram';
-import { Button, DatePicker, MezfitSidePanel, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
+import { Button, DatePicker, Dropdown, MezfitSidePanel, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
@@ -105,11 +112,20 @@ const planPreviewExercise: SessionExerciseData = {
 };
 
 interface SettingsPageProps {
+  glassSettings?: Readonly<GlassSettings>;
+  onGlassSettingsChange?: (settings: GlassSettings) => void;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
 
-export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
+const glassPresetOptions = GLASS_PRESET_NAMES.map((preset) => ({ value: preset, label: preset }));
+
+export function SettingsPage({
+  glassSettings = DEFAULT_GLASS_SETTINGS,
+  onGlassSettingsChange = () => {},
+  onNavigationContextChange,
+}: SettingsPageProps) {
   const [modulesOpen, setModulesOpen] = useState(false);
+  const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [timePickerValue, setTimePickerValue] = useState<LocalTime>('08:30');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -128,26 +144,93 @@ export function SettingsPage({ onNavigationContextChange }: SettingsPageProps) {
     setEmptyDatePickerOpen(false);
     setModulesOpen(false);
   }, []);
+  const closeGlassSettings = useCallback(() => {
+    setGlassSettingsOpen(false);
+  }, []);
 
   useEffect(() => {
-    if (!modulesOpen) {
-      onNavigationContextChange(null);
-      return undefined;
+    if (glassSettingsOpen) {
+      onNavigationContextChange({ title: 'Настройки стекла', onBack: closeGlassSettings });
+      return () => onNavigationContextChange(null);
     }
 
-    onNavigationContextChange({ title: 'Модули', onBack: closeModules });
-    return () => onNavigationContextChange(null);
-  }, [closeModules, modulesOpen, onNavigationContextChange]);
+    if (modulesOpen) {
+      onNavigationContextChange({ title: 'Модули', onBack: closeModules });
+      return () => onNavigationContextChange(null);
+    }
 
-  if (!modulesOpen) {
+    onNavigationContextChange(null);
+    return undefined;
+  }, [closeGlassSettings, closeModules, glassSettingsOpen, modulesOpen, onNavigationContextChange]);
+
+  if (!modulesOpen && !glassSettingsOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
+        <Surface className="settings-page__section">
+          <Text variant="title">Интерфейс</Text>
+          <Text variant="footnote" tone="muted">
+            Общие параметры материалов интерфейса.
+          </Text>
+          <span className="settings-page__action">
+            <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
+          </span>
+        </Surface>
+
         <Surface className="settings-page__section">
           <Text variant="title">Разработка</Text>
           <Text variant="footnote" tone="muted">
             Временные инструменты для просмотра собранных интерфейсных модулей.
           </Text>
-          <Button onClick={() => setModulesOpen(true)}>Модули</Button>
+          <span className="settings-page__action">
+            <Button onClick={() => setModulesOpen(true)}>Модули</Button>
+          </span>
+        </Surface>
+      </section>
+    );
+  }
+
+  if (glassSettingsOpen) {
+    const changeGlassPreset = (value: string) => {
+      if (!isGlassPresetName(value)) return;
+      onGlassSettingsChange({ ...glassSettings, preset: value });
+    };
+
+    return (
+      <section className="settings-page" aria-label="Настройки стекла">
+        <Surface className="settings-page__section">
+          <Text variant="title">Настройки стекла</Text>
+          <Text variant="footnote" tone="muted">
+            Эти параметры применяются к GlassSurface в Navbar и Liquid Glass Icon Only.
+          </Text>
+
+          <div className="settings-page__glass-field">
+            <Text variant="footnote">Preset</Text>
+            <Dropdown
+              mode="single"
+              value={glassSettings.preset}
+              options={glassPresetOptions}
+              title="Пресет GlassSurface"
+              variant="field"
+              onChange={changeGlassPreset}
+            />
+          </div>
+
+          <label className="settings-page__glass-toggle">
+            <span className="settings-page__glass-toggle-copy">
+              <Text variant="body">Optics</Text>
+              <Text variant="footnote" tone="muted">
+                Включает оптическое преломление GlassSurface.
+              </Text>
+            </span>
+            <Toggle
+              component="span"
+              checked={glassSettings.optics}
+              onChange={() => onGlassSettingsChange({
+                ...glassSettings,
+                optics: !glassSettings.optics,
+              })}
+            />
+          </label>
         </Surface>
       </section>
     );

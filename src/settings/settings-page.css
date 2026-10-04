@@ -10,7 +10,8 @@
   gap: 12px;
 }
 
-.settings-page__section > .ui-button {
+.settings-page__action {
+  display: inline-flex;
   justify-self: start;
 }
 
@@ -36,4 +37,22 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.settings-page__glass-field {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.settings-page__glass-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+}
+
+.settings-page__glass-toggle-copy {
+  display: grid;
+  gap: var(--ui-space-1);
+  min-width: 0;
 }
