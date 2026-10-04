@@ -16,6 +16,9 @@ import homeFilledUrl from './home-filled.svg';
 import homeUrl from './home.svg';
 import infoCircleUrl from './info-circle.svg';
 import menu2Url from './menu-2.svg';
+import plusOutlineUrl from './plus-outline.svg';
+import textPlusUrl from './text-plus.svg';
+import userPlusUrl from './user-plus.svg';
 import settingsFilledUrl from './liquid-glass-settings-filled.svg';
 import settingsOutlineUrl from './liquid-glass-settings-outline.svg';
 import usersFilledUrl from './liquid-glass-users-filled.svg';
@@ -34,6 +37,9 @@ const uiIconRegistry = {
   home: { outline: homeUrl, filled: homeFilledUrl },
   'info-circle': { outline: infoCircleUrl, filled: infoCircleUrl },
   'menu-2': { outline: menu2Url, filled: menu2Url },
+  plus: { outline: plusOutlineUrl, filled: plusOutlineUrl },
+  'text-plus': { outline: textPlusUrl, filled: textPlusUrl },
+  'user-plus': { outline: userPlusUrl, filled: userPlusUrl },
   settings: { outline: settingsOutlineUrl, filled: settingsFilledUrl },
   users: { outline: usersOutlineUrl, filled: usersFilledUrl },
 } as const;
