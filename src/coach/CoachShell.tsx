@@ -269,12 +269,12 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
   useEffect(() => {
     if (selectingProgramClient && destination === 'programs') {
-      onNavigationContextChange({ title: 'Клиенты', onBack: () => setSelectingProgramClient(false) });
+      onNavigationContextChange({ title: 'Клиенты', scrollKey: 'program-client-selection', onBack: () => setSelectingProgramClient(false) });
       return () => onNavigationContextChange(null);
     }
 
     if (selectedProgram && destination === 'programs') {
-      onNavigationContextChange({ title: 'Детали программы', onBack: () => setSelectedProgram(null) });
+      onNavigationContextChange({ title: 'Детали программы', scrollKey: `program:${selectedProgram.id}`, onBack: () => setSelectedProgram(null) });
       return () => onNavigationContextChange(null);
     }
 
@@ -286,6 +286,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     const selectedClientName = displayName(selectedClient);
     onNavigationContextChange({
       title: selectedClientName,
+      scrollKey: `client:${selectedClient.user.id}`,
       identity: {
         title: selectedClientName,
         avatar: {
