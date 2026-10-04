@@ -1,3 +1,31 @@
+.ui-mezfit-navbar {
+  position: relative;
+  width: 100%;
+  padding-top: max(1rem, var(--k-safe-area-top, 0px));
+  padding-right: calc(var(--k-safe-area-right, 0px) + var(--page-pad-x));
+  padding-left: calc(var(--k-safe-area-left, 0px) + var(--page-pad-x));
+}
+
+.ui-mezfit-navbar__backdrop {
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: calc(var(--space-3) * -1);
+  left: 0;
+  background: transparent;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+
+.ui-mezfit-navbar__content {
+  position: relative;
+  z-index: 1;
+}
+
 .ui-mezfit-navbar__layout {
   position: relative;
   width: 100%;
