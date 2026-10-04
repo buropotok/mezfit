@@ -1,8 +1,10 @@
 import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ComponentPropsWithRef, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
-import { Dialog as KonstaDialog, DialogButton, Glass as KonstaGlass } from 'konsta/react';
+import { Dialog as KonstaDialog, DialogButton } from 'konsta/react';
 import type { UiComponentTheme } from './componentTheme';
+import { GlassSurface } from './GlassSurface';
+import type { GlassPresetName } from './glassMaterial';
 import { resolveUiIconPair } from './Icon';
 import type { UiIconPair, UiIconSource } from './iconPair';
 import { usePressSpot } from './PressSpot';
@@ -100,7 +102,15 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
   );
 }
 
-type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; children: ReactNode };
+type FloatingActionButtonGlass = { preset?: GlassPresetName; optics?: boolean };
+const FloatingActionButtonGlassContext = createContext<FloatingActionButtonGlass | null>(null);
+
+/** Shares the shell's glass settings with both navigation and page-owned FABs. */
+export function FloatingActionButtonGlassProvider({ preset, optics, children }: FloatingActionButtonGlass & { children: ReactNode }) {
+  return <FloatingActionButtonGlassContext.Provider value={{ preset, optics }}>{children}</FloatingActionButtonGlassContext.Provider>;
+}
+
+type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; glassPreset?: GlassPresetName; glassOptics?: boolean; children: ReactNode };
 type FloatingActionButtonBehavior = { buttonProps: ButtonHTMLAttributes<HTMLButtonElement>; isShown: boolean };
 
 const FloatingActionButtonBehaviorContext = createContext<FloatingActionButtonBehavior | null>(null);
@@ -110,11 +120,12 @@ function FloatingActionButtonElement({ children, ...glassProps }: ComponentProps
   if (!behavior) return <button {...glassProps}>{children}</button>;
 
   const { buttonProps, isShown } = behavior;
-  const { type = 'button', disabled, onClick, onPointerDown, onKeyDown, ...restButtonProps } = buttonProps;
+  const { type = 'button', disabled, onClick, onPointerDown, onKeyDown, style, ...restButtonProps } = buttonProps;
   return (
     <button
       {...glassProps}
       {...restButtonProps}
+      style={{ ...style, ...glassProps.style }}
       type={type}
       disabled={disabled}
       onClick={isShown ? onClick : undefined}
@@ -126,7 +137,8 @@ function FloatingActionButtonElement({ children, ...glassProps }: ComponentProps
   );
 }
 
-export function FloatingActionButton({ label, isShown = true, placement = 'right', className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+export function FloatingActionButton({ label, isShown = true, placement = 'right', glassPreset, glassOptics, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+  const glassSettings = useContext(FloatingActionButtonGlassContext);
   const buttonProps: ButtonHTMLAttributes<HTMLButtonElement> = {
     ...props,
     type,
@@ -141,13 +153,16 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
 
   return (
     <FloatingActionButtonBehaviorContext.Provider value={{ buttonProps, isShown }}>
-      <KonstaGlass
+      <GlassSurface
         component={FloatingActionButtonElement}
-        highlight={false}
+        preset={glassPreset ?? glassSettings?.preset}
+        optics={glassOptics ?? glassSettings?.optics ?? false}
+        active={isShown}
+        wrapContent={false}
         className={`ui-fab ui-text--body ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
       >
         {children}
-      </KonstaGlass>
+      </GlassSurface>
     </FloatingActionButtonBehaviorContext.Provider>
   );
 }
