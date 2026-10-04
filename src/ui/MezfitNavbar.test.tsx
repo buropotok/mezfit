@@ -133,7 +133,7 @@ describe('MezfitNavbar', () => {
     );
 
     const title = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-identity-action__title');
-    expect(title?.classList.contains('ui-identity-action__title--headline')).toBe(true);
+    expect(title?.classList.contains('ui-text--headline')).toBe(true);
   });
 
   it('keeps the identity action mounted while switching from a page icon to a client avatar', () => {
