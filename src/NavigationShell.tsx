@@ -251,7 +251,6 @@ export function NavigationShell({
     }
     if (previousSurface === scrollSurfaceKey) return;
 
-    scrollPositionsRef.current.set(previousSurface, content.scrollTop);
     content.scrollTop = restoreScrollOnNextSurfaceRef.current
       ? scrollPositionsRef.current.get(scrollSurfaceKey) ?? 0
       : 0;
@@ -416,7 +415,13 @@ export function NavigationShell({
           />
         </div>
 
-        <section ref={contentRef} className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
+        <section
+          ref={contentRef}
+          className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}
+          onScroll={(event) => {
+            scrollPositionsRef.current.set(scrollSurfaceKey, event.currentTarget.scrollTop);
+          }}
+        >
           {children}
         </section>
 
