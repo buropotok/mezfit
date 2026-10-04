@@ -288,7 +288,12 @@ export function SettingsPage({
       value: number,
     ) => {
       if (!Number.isFinite(value)) return;
-      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, { [key]: value }));
+      const patch: Partial<TypographyPresetSettings> = key === 'size'
+        ? { size: value }
+        : key === 'lineHeight'
+          ? { lineHeight: value }
+          : { letterSpacing: value };
+      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, patch));
     };
     const setWeight = (role: TypographyRole, value: string) => {
       const weight = TYPOGRAPHY_WEIGHTS.find((candidate) => String(candidate) === value);
