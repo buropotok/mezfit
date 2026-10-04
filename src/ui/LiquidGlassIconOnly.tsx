@@ -1,6 +1,9 @@
 import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { GlassSurface } from './GlassSurface';
+import glassSurfaceCss from './GlassSurface.css?inline';
 import { resolveUiIconPair } from './Icon';
+import type { GlassPresetName } from './glassMaterial';
 import type { UiIconSource } from './iconPair';
 import { mountPrototype as mountNoFabPrototype, type PrototypeController } from './liquid-glass-tabs-no-fab/prototypeRuntime';
 import noFabPrototypeCss from './liquid-glass-tabs-no-fab/prototype.css?inline';
@@ -17,6 +20,8 @@ export type LiquidGlassIconOnlyProps = {
   value: string | null;
   onValueChange: (value: string) => void;
   hidden: boolean;
+  glassPreset?: GlassPresetName;
+  glassOptics?: boolean;
   fab?: ReactNode;
 };
 
@@ -115,6 +120,8 @@ function Scene({
   tabs,
   value,
   onValueChange,
+  glassPreset,
+  glassOptics = false,
   entrance,
 }: Omit<LiquidGlassIconOnlyProps, 'hidden' | 'fab'> & { entrance: boolean }) {
   const host = useRef<HTMLDivElement>(null);
