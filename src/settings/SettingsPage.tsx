@@ -222,9 +222,9 @@ export function SettingsPage({
               component="div"
               checked={glassSettings.optics}
               aria-label="Optics"
-              onChange={(event) => onGlassSettingsChange({
+              onChange={() => onGlassSettingsChange({
                 ...glassSettings,
-                optics: event.target.checked,
+                optics: !glassSettings.optics,
               })}
             />
           </div>
