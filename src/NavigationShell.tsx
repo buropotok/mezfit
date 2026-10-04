@@ -361,20 +361,17 @@ export function NavigationShell({
       <NavigationLevelContext.Provider value={level}>
         <main className="app-shell navigation-shell">
         <div className="navigation-navbar-frame">
-          <div className="navigation-navbar-backdrop" aria-hidden="true" />
-          <div className="navigation-navbar-control">
-            <MezfitNavbar
-              level={level}
-              identity={identity}
-              onBack={requestBack}
-              onMenu={() => setMenuOpen(true)}
-              onCalendar={() => setCalendarOpen(true)}
-              renderMenuControl={renderMenuControl}
-              glassPreset={glassPreset}
-              glassOptics={glassOptics}
-              menuDisabled={menuOpen}
-            />
-          </div>
+          <MezfitNavbar
+            level={level}
+            identity={identity}
+            onBack={requestBack}
+            onMenu={() => setMenuOpen(true)}
+            onCalendar={() => setCalendarOpen(true)}
+            renderMenuControl={renderMenuControl}
+            glassPreset={glassPreset}
+            glassOptics={glassOptics}
+            menuDisabled={menuOpen}
+          />
         </div>
 
         <section className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
