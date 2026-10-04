@@ -279,7 +279,17 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
       aria-hidden={props.hidden || undefined}
       style={{ position: 'relative', width: '100%', overflow: 'visible' }}
     >
-      {!props.hidden && props.tabs.length > 0 && <Scene key={order} tabs={props.tabs} value={props.value} onValueChange={props.onValueChange} entrance={entrance} />}
+      {!props.hidden && props.tabs.length > 0 && (
+        <Scene
+          key={order}
+          tabs={props.tabs}
+          value={props.value}
+          onValueChange={props.onValueChange}
+          glassPreset={props.glassPreset}
+          glassOptics={props.glassOptics}
+          entrance={entrance}
+        />
+      )}
       {!props.hidden && props.tabs.length > 0 && props.fab != null && <FabSlot>{props.fab}</FabSlot>}
     </div>
   );
