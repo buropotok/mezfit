@@ -31,7 +31,8 @@ describe('MezfitNavbar backdrop', () => {
     expect(navigationCss).not.toContain('navigation-navbar-backdrop');
     expect(navigationCss).not.toContain('backdrop-filter');
     expect(navigationCss).toContain('height: 0');
-    expect(navigationCss).toContain('min-height: 100dvh');
+    expect(navigationCss).toContain('height: 100dvh');
+    expect(navigationCss).toContain('overflow-y: auto');
     expect(navigationCss).toContain('--navigation-content-start: calc(max(1rem, var(--k-safe-area-top, 0px)) + 2.75rem + var(--space-3))');
     expect(navigationCss).toContain('padding-top: var(--navigation-content-start)');
   });
