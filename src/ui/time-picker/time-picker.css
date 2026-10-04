@@ -59,10 +59,6 @@
   color: var(--ui-color-surface-muted);
   background: transparent;
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-medium);
-  letter-spacing: var(--ui-letter-spacing-body);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -79,10 +75,6 @@
   place-items: center;
   color: var(--ui-color-surface-muted);
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-title);
-  line-height: var(--ui-line-height-title);
-  font-weight: var(--ui-font-weight-light);
-  letter-spacing: var(--ui-letter-spacing-title);
   opacity: 0;
 }
 
@@ -137,7 +129,4 @@
 .ui-time-picker__lens-separator {
   fill: var(--ui-color-surface-text);
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-title);
-  font-weight: var(--ui-font-weight-light);
-  letter-spacing: var(--ui-letter-spacing-title);
 }
