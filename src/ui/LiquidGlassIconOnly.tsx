@@ -175,6 +175,7 @@ function Scene({
         {shadow && createPortal(
           <>
             <style>{noFabPrototypeCss}</style>
+            <style>{glassSurfaceCss}</style>
             <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
               <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
             </svg>
@@ -183,7 +184,13 @@ function Scene({
                 <div id="iconLayer">
                   <div className="donor-root dark">
                     <div className="standalone-lens-playground optical-tabs-playground" data-tab-mode="icons">
-                      <div className="toolbar-pane optical-toolbar-pane" id="toolbar-pane">
+                      <GlassSurface
+                        preset={glassPreset}
+                        optics={glassOptics}
+                        wrapContent={false}
+                        className="toolbar-pane optical-toolbar-pane"
+                        id="toolbar-pane"
+                      >
                         <div className="tab-strip" id="tab-strip" role="tablist" aria-label="Навигация">
                           {tabs.map((tab, index) => {
                             const icon = resolveUiIconPair(tab.icon);
@@ -212,7 +219,7 @@ function Scene({
                             <span className="selector" id="selector" />
                           </span>
                         </div>
-                      </div>
+                      </GlassSurface>
                       <span className="selector-track extracted-lens-demo" id="lens-track" aria-hidden="true">
                         <span className="lens optical-working-lens" id="lens" style={PROTOTYPE_LENS_STYLE} />
                       </span>
