@@ -61,6 +61,7 @@ export function LiquidPopoverCatalog() {
         renderMenuControl={(control) => (
           <LiquidPopover
             trigger={control}
+            triggerActivation="controlled"
             triggerRef={navbarRef}
             isOpen={navbarOpen}
             onOpenChange={(open) => {
@@ -87,7 +88,6 @@ export function LiquidPopoverCatalog() {
           items={items(() => setRoundOpen(false))}
           motion={motion}
           label="Живое меню круглой кнопки"
-          align="start"
           trigger={
             <GlassSurface
               component={RoundTrigger}
