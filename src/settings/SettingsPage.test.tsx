@@ -50,7 +50,7 @@ describe('SettingsPage glass settings', () => {
       optics: false,
     });
 
-    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Optics/ }));
 
     expect(onGlassSettingsChange).toHaveBeenLastCalledWith({
       preset: 'frosted',
