@@ -11,16 +11,10 @@
   gap: var(--space-3);
 }
 .client-directory-surface {
-  overflow: hidden;
-  height: calc(100dvh - var(--appbar-h) - 7rem);
   min-height: 12rem;
 }
 .client-directory-scroll {
-  height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding-bottom: 4.5rem;
-  scrollbar-width: thin;
 }
 .compact-client-list {
   margin: 0;
