@@ -1,5 +1,4 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
-import { Navbar } from 'konsta/react';
 import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
 import type { UiIconName } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
@@ -58,17 +57,14 @@ export function MezfitNavbar({
   }, []);
 
   return (
-    <Navbar
-      component="header"
-      transparent
-      outline={false}
-      className="ui-mezfit-navbar"
-    >
-      <div
-        className="ui-mezfit-navbar__layout"
-        data-level={level}
-        data-entry-phase={entryPhase}
-      >
+    <header className="ui-mezfit-navbar">
+      <div className="ui-mezfit-navbar__backdrop" aria-hidden="true" />
+      <div className="ui-mezfit-navbar__content">
+        <div
+          className="ui-mezfit-navbar__layout"
+          data-level={level}
+          data-entry-phase={entryPhase}
+        >
         <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
           <IdentityAction
             variant="single"
@@ -139,6 +135,6 @@ export function MezfitNavbar({
           />
         </div>
       </div>
-    </Navbar>
+    </header>
   );
 }
