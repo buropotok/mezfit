@@ -44,11 +44,13 @@ export function WorkoutExerciseSelectionSheet({
   }, [navigationContext, onClose, saving]);
 
   const externalNavigationTitle = navigationContext?.title ?? 'Упражнения';
+  const externalNavigationScrollKey = navigationContext?.scrollKey ?? 'root';
   const externalNavigationContext = useMemo<NavigationContext>(() => ({
     title: externalNavigationTitle,
+    scrollKey: `workout-exercise-selection:${externalNavigationScrollKey}`,
     identity: { title: externalNavigationTitle, icon: 'barbell' },
     onBack: requestBack,
-  }), [externalNavigationTitle, requestBack]);
+  }), [externalNavigationScrollKey, externalNavigationTitle, requestBack]);
 
   useEffect(() => {
     onNavigationContextChange?.(externalNavigationContext);
