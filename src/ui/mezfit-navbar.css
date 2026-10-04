@@ -1,10 +1,9 @@
 .ui-mezfit-navbar {
   position: relative;
   width: 100%;
-  padding-top: max(1rem, var(--k-safe-area-top, env(safe-area-inset-top, 0px)));
-  padding-right: max(var(--page-pad-x), env(safe-area-inset-right, 0px));
-  padding-left: max(var(--page-pad-x), env(safe-area-inset-left, 0px));
-  color: var(--theme-bg-text);
+  padding-top: max(1rem, var(--k-safe-area-top, 0px));
+  padding-right: calc(var(--k-safe-area-right, 0px) + var(--page-pad-x));
+  padding-left: calc(var(--k-safe-area-left, 0px) + var(--page-pad-x));
 }
 
 .ui-mezfit-navbar__backdrop {
