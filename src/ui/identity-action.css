@@ -109,7 +109,7 @@
 .ui-identity-action__title--headline {
   font-size: var(--ui-font-size-headline);
   line-height: var(--ui-line-height-headline);
-  font-weight: var(--ui-font-weight-regular);
+  font-weight: var(--ui-font-weight-light);
   letter-spacing: var(--ui-letter-spacing-headline);
 }
 
