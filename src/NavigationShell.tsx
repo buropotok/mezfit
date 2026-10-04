@@ -59,6 +59,7 @@ type RegisteredFloatingAction = {
 export interface NavigationContext {
   level?: NavigationLevel;
   title: string;
+  scrollKey?: string;
   onBack?: () => void;
   identity?: MezfitNavbarIdentity;
   menuActions?: readonly NavigationMenuAction[];
@@ -204,8 +205,6 @@ export function NavigationShell({
   const scrollPositionsRef = useRef(new Map<string, number>());
   const currentScrollSurfaceRef = useRef<string | null>(null);
   const restoreScrollOnNextSurfaceRef = useRef(false);
-  const contextSurfaceIdsRef = useRef(new WeakMap<NavigationContext, number>());
-  const contextSurfaceSequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
   const primaryItems = primaryItemsForRole(activeRole);
   const secondaryItems = items.filter((item) => item.section === 'secondary');
@@ -214,16 +213,8 @@ export function NavigationShell({
   const pageFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
   const resolvedFloatingAction = pageFloatingAction ?? floatingAction ?? null;
   const level: NavigationLevel = nestedContext ? 2 : 1;
-  let contextSurfaceId = 0;
-  if (nestedContext) {
-    contextSurfaceId = contextSurfaceIdsRef.current.get(nestedContext) ?? 0;
-    if (contextSurfaceId === 0) {
-      contextSurfaceSequenceRef.current += 1;
-      contextSurfaceId = contextSurfaceSequenceRef.current;
-      contextSurfaceIdsRef.current.set(nestedContext, contextSurfaceId);
-    }
-  }
-  const scrollSurfaceKey = `${activeRole}:${destination}:${nestedContext ? `nested-${contextSurfaceId}` : 'root'}`;
+  const nestedScrollKey = nestedContext?.scrollKey ?? (nestedContext ? `nested:${nestedContext.title}` : 'root');
+  const scrollSurfaceKey = `${activeRole}:${destination}:${nestedScrollKey}`;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
     title: context?.title ?? currentItem.label,
     icon: currentItem.icon,
