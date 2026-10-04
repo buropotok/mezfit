@@ -47,7 +47,7 @@ export function MenuItem({ leading, active = false, className = '', children, on
 
   return (
     <DropdownMenu.Item
-      className={`ui-menu-item${active ? ' ui-menu-item--active' : ''} ${className}`.trim()}
+      className={`ui-menu-item ui-text--body${active ? ' ui-menu-item--active' : ''} ${className}`.trim()}
       onSelect={onSelect}
       onPointerDown={(event) => {
         onPointerDown?.(event);
