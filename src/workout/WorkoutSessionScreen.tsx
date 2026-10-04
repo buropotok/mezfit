@@ -8,6 +8,7 @@ import {
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
+import { useNavigationBackTransition } from '../NavigationShell';
 import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
@@ -56,6 +57,7 @@ export function WorkoutSessionScreen({
   onSessionLifecycleChange,
   onNavigationContextChange,
 }: WorkoutSessionScreenProps) {
+  const requestBackTransition = useNavigationBackTransition();
   const [session, setSession] = useState<WorkoutSessionState | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
   const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Record<number, boolean>>({});
@@ -234,7 +236,10 @@ export function WorkoutSessionScreen({
       acknowledgedSessionRef.current = nextSession;
       if (!isCurrentIntent(intent)) return;
       setSession(nextSession);
-      setExerciseSelectionOpen(false);
+      requestBackTransition(() => {
+        setExerciseSelectionOpen(false);
+        setExerciseSelectionError('');
+      });
     } catch (error) {
       if (isCurrentIntent(intent)) setExerciseSelectionError(errorMessage(error, 'Не удалось добавить упражнения'));
     } finally {
@@ -257,7 +262,7 @@ export function WorkoutSessionScreen({
       setExerciseSelectionOpen(false);
       setCompleteConfirmOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
-      onClose();
+      requestBackTransition(onClose);
     } catch (error) {
       if (isCurrentIntent(intent)) setMessage(errorMessage(error, 'Не удалось завершить тренировку'));
     } finally {
@@ -298,7 +303,7 @@ export function WorkoutSessionScreen({
         </div>
         <div className="workout-session-screen__actions">
           <Button onClick={() => setRetryVersion((version) => version + 1)}>Повторить</Button>
-          <Button variant="secondary" onClick={onClose}>Закрыть</Button>
+          <Button variant="secondary" onClick={() => requestBackTransition(onClose)}>Закрыть</Button>
         </div>
       </section>
     );
@@ -384,8 +389,10 @@ export function WorkoutSessionScreen({
           onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
           onClose={() => {
             if (addingExercises) return;
-            setExerciseSelectionOpen(false);
-            setExerciseSelectionError('');
+            requestBackTransition(() => {
+              setExerciseSelectionOpen(false);
+              setExerciseSelectionError('');
+            });
           }}
         />
       ) : null}
