@@ -1,5 +1,6 @@
 import {
   Fragment,
+  cloneElement,
   useCallback,
   useId,
   useLayoutEffect,
@@ -7,15 +8,17 @@ import {
   useRef,
   useState,
   type ReactElement,
+  type ButtonHTMLAttributes,
   type RefObject,
 } from 'react';
 import { GlassSurface } from './GlassSurface';
-import { Menu, MenuDivider, MenuItem } from './Menu';
+import { MezfitPopover } from './konsta-mezfit/Popover';
+import './menu.css';
 import { resolveGlassRadius, type GlassPresetName } from './glassMaterial';
 import {
   clamp,
   contourBounds,
-  paintLiquidMap,
+  buildLiquidMap,
   paintLiquidMesh,
   smooth,
   smoother,
@@ -42,13 +45,13 @@ export type LiquidPopoverItem = {
 export interface LiquidPopoverProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  /** The existing Menu trigger; activation and application state stay with its owner. */
-  trigger: ReactElement;
+  /** Controlled preserves the trigger owner's delayed activation (e.g. Navbar). */
+  triggerActivation?: 'automatic' | 'controlled';
+  trigger: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>;
   /** The whole originating surface, e.g. Navbar's right capsule or a circular button. */
   triggerRef: RefObject<HTMLElement | null>;
   items: readonly LiquidPopoverItem[];
   label?: string;
-  align?: 'start' | 'end';
   preset?: GlassPresetName;
   motion?: Partial<LiquidMotionOptions>;
 }
@@ -89,28 +92,26 @@ export function LiquidPopover({
   triggerRef,
   items,
   label = 'Меню',
-  align = 'end',
+  triggerActivation = 'automatic',
   preset = 'frosted',
   motion,
 }: LiquidPopoverProps) {
   const id = useId().replace(/:/g, ''),
-    clipId = `liquid-clip-${id}`,
-    filterId = `liquid-filter-${id}`;
+    clipId = `liquid-clip-${id}`;
   const measureRef = useRef<HTMLDivElement>(null),
     rowRefs = useRef(new Map<string, HTMLDivElement>());
   const nativeRef = useRef<HTMLDivElement>(null),
     glassRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<SVGSVGElement>(null),
     clipRef = useRef<SVGPathElement>(null);
-  const imageRef = useRef<SVGImageElement>(null),
-    vectorRef = useRef<SVGFEImageElement>(null);
-  const displacementRef = useRef<SVGFEDisplacementMapElement>(null),
-    blurRef = useRef<SVGFEGaussianBlurElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceRef = useRef<HTMLCanvasElement | null>(null);
-  const [host, setHost] = useState<HTMLDivElement | null>(null),
-    [settled, setSettled] = useState(false);
+  const [host, setHost] = useState<HTMLElement | null>(null),
+    [settled, setSettled] = useState(false),
+    [positioned, setPositioned] = useState(false);
+  const handlePositioned = useCallback(() => setPositioned(true), []);
   const contentRef = useCallback(
-    (element: HTMLDivElement | null) => setHost(element),
+    (element: HTMLElement | null) => setHost(element),
     [],
   );
   const options = useMemo(() => resolveLiquidMotionOptions(motion), [motion]);
@@ -185,19 +186,22 @@ export function LiquidPopover({
   }, [contentKey, items]);
 
   useLayoutEffect(() => {
-    if (!isOpen || !host) {
+    if (!isOpen || !host || !positioned) {
+      if (!isOpen) setPositioned(false);
       setSettled(false);
       return;
     }
     const native = nativeRef.current,
       glass = glassRef.current,
-      scene = sceneRef.current;
-    if (!native || !glass || !scene) return;
+      scene = sceneRef.current,
+      canvas = canvasRef.current;
+    if (!native || !glass || !scene || !canvas) return;
     let frame = 0,
       cancelled = false;
     let sizeObserver: ResizeObserver | null = null;
     const finish = () => {
       scene.style.display = 'none';
+      canvas.style.display = 'none';
       native.style.opacity = '1';
       native.style.filter = 'none';
       native.style.transform = 'none';
@@ -217,7 +221,10 @@ export function LiquidPopover({
     setSettled(false);
     native.style.opacity = '0';
     scene.style.display = 'block';
-    // Wait one paint frame for the existing Menu's collision placement.
+    canvas.style.display = 'block';
+    canvas.style.opacity = '0';
+    glass.style.opacity = '0';
+    // Shared MezfitPopover owns placement; wait for its positioned frame.
     frame = requestAnimationFrame(() => {
       const sourceBounds = triggerRef.current?.getBoundingClientRect(),
         destinationBounds = host.getBoundingClientRect();
@@ -250,22 +257,42 @@ export function LiquidPopover({
         return;
       }
       textureContext.drawImage(source, 0, 0);
-      const canvas = host.ownerDocument.createElement('canvas'),
-        map = host.ownerDocument.createElement('canvas');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const map = host.ownerDocument.createElement('canvas');
+      const cropX = Math.floor(
+        Math.max(0, Math.min(sourceBounds.left, destinationBounds.left) - 80),
+      );
+      const cropY = Math.floor(
+        Math.max(0, Math.min(sourceBounds.top, destinationBounds.top) - 80),
+      );
+      canvas.width = Math.max(
+        1,
+        Math.ceil(
+          Math.min(
+            window.innerWidth,
+            Math.max(sourceBounds.right, destinationBounds.right) + 80,
+          ) - cropX,
+        ),
+      );
+      canvas.height = Math.max(
+        1,
+        Math.ceil(
+          Math.min(
+            window.innerHeight,
+            Math.max(sourceBounds.bottom, destinationBounds.bottom) + 80,
+          ) - cropY,
+        ),
+      );
       const context = canvas.getContext('2d'),
-        mapContext = map.getContext('2d');
+        mapContext = map.getContext('2d', { willReadFrequently: true });
       if (!context || !mapContext) {
         finish();
         return;
       }
       const left = destinationBounds.left,
         top = destinationBounds.top;
-      scene.setAttribute('viewBox', `0 0 ${canvas.width} ${canvas.height}`);
-      Object.assign(scene.style, {
-        left: `${-left}px`,
-        top: `${-top}px`,
+      Object.assign(canvas.style, {
+        left: `${cropX - left}px`,
+        top: `${cropY - top}px`,
         width: `${canvas.width}px`,
         height: `${canvas.height}px`,
       });
@@ -289,8 +316,7 @@ export function LiquidPopover({
           (now - started) / (animation.totalSeconds * 1000),
         );
         const time = animation.time(progress),
-          loops = animation.contour(progress),
-          path = animation.path(loops);
+          loops = animation.contour(progress);
         const bounds = contourBounds(loops),
           width = bounds.right - bounds.left,
           height = bounds.bottom - bounds.top;
@@ -311,32 +337,37 @@ export function LiquidPopover({
           clipPath: `path('${localPath}')`,
           opacity: '1',
         });
-        clipRef.current?.setAttribute('d', path);
+        const localLoops = loops.map((loop) =>
+          loop.map((point) => ({ x: point.x - cropX, y: point.y - cropY })),
+        );
+        const canvasPath = animation.path(localLoops);
+        clipRef.current?.setAttribute('d', canvasPath);
         const stretch =
           time >= 1 ? animation.spring((time - 1) * options.duration) : 0;
-        paintLiquidMesh(context, texture, loops, time, rect, stretch);
+        const strength = 1 - smoother((time - 0.8) / 0.2);
+        const vector =
+          strength > 0
+            ? buildLiquidMap(mapContext, localLoops, canvasPath)
+            : undefined;
+        paintLiquidMesh(
+          context,
+          texture,
+          localLoops,
+          time,
+          { ...rect, x: rect.x - cropX, y: rect.y - cropY },
+          stretch,
+          vector,
+          strength,
+        );
         const fill = time >= 0.8 ? 1 : animation.geometry(time).fill;
         const blur = 16 * (1 - 0.8 * fill) * (1 - progress),
           opacity = smooth(progress / 0.5);
         const handoff = smoother((progress - 0.9) / 0.1);
-        imageRef.current?.setAttribute('href', canvas.toDataURL());
-        imageRef.current?.setAttribute('width', String(canvas.width));
-        imageRef.current?.setAttribute('height', String(canvas.height));
-        imageRef.current?.setAttribute(
-          'opacity',
-          String(opacity * (1 - handoff)),
-        );
-        blurRef.current?.setAttribute('stdDeviation', String(blur));
+        canvas.style.opacity = String(opacity * (1 - handoff));
+        canvas.style.filter = `blur(${blur}px)`;
         native.style.opacity = String(opacity * handoff);
         native.style.filter = `blur(${blur}px)`;
         native.style.transform = `scale(${1 / (1 + stretch)}, ${1 + stretch})`;
-        const strength = 1 - smoother((time - 0.8) / 0.2);
-        displacementRef.current?.setAttribute('scale', String(64 * strength));
-        if (strength > 0) {
-          const vector = paintLiquidMap(mapContext, loops, path);
-          for (const [key, value] of Object.entries(vector))
-            vectorRef.current?.setAttribute(key, String(value));
-        }
         if (progress < 1) frame = requestAnimationFrame(draw);
         else finish();
       };
@@ -358,7 +389,7 @@ export function LiquidPopover({
         cancelAndFinish,
       );
     };
-  }, [isOpen, host, triggerRef, options, contentKey]);
+  }, [isOpen, host, positioned, triggerRef, options, contentKey]);
 
   return (
     <>
@@ -383,13 +414,25 @@ export function LiquidPopover({
           </Fragment>
         ))}
       </div>
-      <Menu
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        trigger={trigger}
-        label={label}
-        align={align}
-        contentRef={contentRef}
+      {cloneElement(trigger, {
+        'aria-haspopup': 'menu',
+        'aria-expanded': isOpen,
+        onClick: (event) => {
+          trigger.props.onClick?.(event);
+          if (triggerActivation === 'automatic' && !event.defaultPrevented)
+            onOpenChange(!isOpen);
+        },
+      })}
+      <MezfitPopover
+        opened={isOpen}
+        target={triggerRef.current ?? undefined}
+        onBackdropClick={() => onOpenChange(false)}
+        presentation="custom"
+        onPositioned={handlePositioned}
+        portal
+        ref={contentRef}
+        role="menu"
+        aria-label={label}
         className="ui-liquid-popover"
       >
         <GlassSurface
@@ -402,47 +445,23 @@ export function LiquidPopover({
         <div className="ui-liquid-popover__composite">
           <svg
             ref={sceneRef}
-            className="ui-liquid-popover__scene"
+            width="0"
+            height="0"
             aria-hidden="true"
+            className="ui-liquid-popover__clip"
           >
             <defs>
-              <clipPath id={clipId}>
+              <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
                 <path ref={clipRef} />
               </clipPath>
-              <filter
-                id={filterId}
-                x="-10%"
-                y="-10%"
-                width="120%"
-                height="120%"
-                colorInterpolationFilters="sRGB"
-                filterUnits="userSpaceOnUse"
-              >
-                <feGaussianBlur
-                  ref={blurRef}
-                  in="SourceGraphic"
-                  stdDeviation="16"
-                  result="soft"
-                />
-                <feImage
-                  ref={vectorRef}
-                  preserveAspectRatio="none"
-                  result="map"
-                />
-                <feDisplacementMap
-                  ref={displacementRef}
-                  in="soft"
-                  in2="map"
-                  scale="64"
-                  xChannelSelector="R"
-                  yChannelSelector="G"
-                />
-              </filter>
             </defs>
-            <g clipPath={`url(#${clipId})`}>
-              <image ref={imageRef} filter={`url(#${filterId})`} />
-            </g>
           </svg>
+          <canvas
+            ref={canvasRef}
+            aria-hidden="true"
+            className="ui-liquid-popover__scene"
+            style={{ clipPath: `url(#${clipId})` }}
+          />
           <div
             ref={nativeRef}
             className="ui-liquid-popover__native"
@@ -450,21 +469,29 @@ export function LiquidPopover({
           >
             {items.map((item) => (
               <Fragment key={item.id}>
-                {item.dividerBefore ? <MenuDivider /> : null}
-                <MenuItem
+                {item.dividerBefore ? (
+                  <div role="separator" className="ui-menu-divider" />
+                ) : null}
+                <button
+                  type="button"
+                  role="menuitem"
                   disabled={item.disabled}
-                  active={item.active}
-                  onSelect={item.onSelect}
+                  data-disabled={item.disabled || undefined}
+                  className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
+                  onClick={() => {
+                    item.onSelect?.();
+                    onOpenChange(false);
+                  }}
                   aria-checked={item['aria-checked']}
                   aria-current={item['aria-current']}
                 >
-                  {item.label}
-                </MenuItem>
+                  <span className="ui-menu-item__label">{item.label}</span>
+                </button>
               </Fragment>
             ))}
           </div>
         </div>
-      </Menu>
+      </MezfitPopover>
     </>
   );
 }
