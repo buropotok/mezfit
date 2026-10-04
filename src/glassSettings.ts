@@ -1,4 +1,4 @@
-import type { GlassPresetName } from './ui/glassMaterial';
+import { GLASS_PRESETS, type GlassPresetName } from './ui/glassMaterial';
 import { MEZFIT_NAVBAR_GLASS_PRESET } from './ui/mezfitNavbarConfig';
 
 export type GlassSettings = {
@@ -6,15 +6,14 @@ export type GlassSettings = {
   optics: boolean;
 };
 
-export const GLASS_PRESET_NAMES = [
-  'modalTuned',
-  'modal',
-  'lens',
-  'clear',
-  'frosted',
-  'blue',
-  'smoked',
-] as const satisfies readonly GlassPresetName[];
+export function isGlassPresetName(value: unknown): value is GlassPresetName {
+  return typeof value === 'string'
+    && Object.prototype.hasOwnProperty.call(GLASS_PRESETS, value);
+}
+
+export const GLASS_PRESET_NAMES: readonly GlassPresetName[] = Object.freeze(
+  Object.keys(GLASS_PRESETS).filter(isGlassPresetName),
+);
 
 export const DEFAULT_GLASS_SETTINGS: Readonly<GlassSettings> = Object.freeze({
   preset: MEZFIT_NAVBAR_GLASS_PRESET,
@@ -22,11 +21,6 @@ export const DEFAULT_GLASS_SETTINGS: Readonly<GlassSettings> = Object.freeze({
 });
 
 const GLASS_SETTINGS_STORAGE_KEY = 'mezfit.glassSettings';
-const glassPresetNames = new Set<string>(GLASS_PRESET_NAMES);
-
-export function isGlassPresetName(value: unknown): value is GlassPresetName {
-  return typeof value === 'string' && glassPresetNames.has(value);
-}
 
 export function loadGlassSettings(storage: Pick<Storage, 'getItem'>): GlassSettings {
   try {
