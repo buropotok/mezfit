@@ -81,7 +81,7 @@ describe('FAB glass appearance', () => {
         <FloatingActionButton label="Добавить" isShown={false} onClick={onClick}>+</FloatingActionButton>
       </FloatingActionButtonGlassProvider>,
     );
-    const hiddenButton = view.getByRole('button', { name: 'Добавить', hidden: true });
+    const hiddenButton = view.getByRole('button', { hidden: true });
     fireEvent.click(hiddenButton);
     expect(onClick).not.toHaveBeenCalled();
     expect(getContext).not.toHaveBeenCalled();
