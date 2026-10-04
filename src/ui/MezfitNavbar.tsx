@@ -95,7 +95,7 @@ export function MezfitNavbar({
               titleRole="headline"
               width="100%"
               glassPreset={glassPreset}
-            glassOptics={glassOptics}
+              glassOptics={glassOptics}
               onClick={onIdentityClick}
             />
           ) : (
@@ -106,7 +106,7 @@ export function MezfitNavbar({
               titleRole="headline"
               width="100%"
               glassPreset={glassPreset}
-            glassOptics={glassOptics}
+              glassOptics={glassOptics}
               onClick={onIdentityClick}
             />
           )}
