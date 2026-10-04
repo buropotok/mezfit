@@ -51,3 +51,28 @@ export function saveGlassSettings(storage: Pick<Storage, 'setItem'>, settings: G
     // Visual preferences remain usable for the current session when storage is unavailable.
   }
 }
+
+type GlassStorageProvider = () => Pick<Storage, 'getItem' | 'setItem'>;
+
+const browserStorageProvider: GlassStorageProvider = () => window.localStorage;
+
+export function loadBrowserGlassSettings(
+  getStorage: GlassStorageProvider = browserStorageProvider,
+): GlassSettings {
+  try {
+    return loadGlassSettings(getStorage());
+  } catch {
+    return { ...DEFAULT_GLASS_SETTINGS };
+  }
+}
+
+export function saveBrowserGlassSettings(
+  settings: GlassSettings,
+  getStorage: GlassStorageProvider = browserStorageProvider,
+): void {
+  try {
+    saveGlassSettings(getStorage(), settings);
+  } catch {
+    // Accessing the storage object itself can be denied by the WebView/browser.
+  }
+}
