@@ -45,6 +45,24 @@ If none of the six presets fits a product requirement, stop and request a delibe
 
 Component CSS may own layout around text and non-typographic presentation, but the typography bundle itself remains owned by the selected semantic preset.
 
+## Runtime typography settings
+
+The Settings → **Шрифты** screen may change the values of the six semantic presets at runtime. This is the only supported runtime customization path for app-owned typography.
+
+For each preset the runtime settings may override:
+
+- font size;
+- font weight;
+- font style (`normal` or `italic`);
+- line height;
+- letter spacing.
+
+Runtime settings update the shared CSS custom properties for the semantic preset itself. Components must continue to request only the preset role; they must not read the stored settings directly or add component-local typography overrides.
+
+Typography settings are persisted in browser/WebView local storage and applied before the first React render, so a reload must restore the configured preset values without requiring the Settings screen to be opened.
+
+The static values in `src/ui/tokens/typography.css` remain the product defaults and fallback when no valid stored settings exist.
+
 ## Component mapping rules
 
 All text-bearing UI must map to the shared type scale. The standard mapping is:
@@ -101,4 +119,4 @@ If the correct semantic role is genuinely ambiguous or changing it would materia
 
 ## Source of truth
 
-The CSS token definitions live in `src/ui/tokens/typography.css`. The semantic `Text` role styles live in `src/ui/typography.css`. This document defines how those tokens and roles must be used across the application.
+The default CSS token definitions live in `src/ui/tokens/typography.css`. Runtime persistence and application of user-configured preset values live in `src/typographySettings.ts`. The semantic `Text` role styles live in `src/ui/typography.css`. This document defines how those tokens and roles must be used across the application.
