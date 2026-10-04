@@ -200,6 +200,12 @@ export function NavigationShell({
   const contextRef = useRef(nestedContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
+  const contentRef = useRef<HTMLElement | null>(null);
+  const scrollPositionsRef = useRef(new Map<string, number>());
+  const currentScrollSurfaceRef = useRef<string | null>(null);
+  const restoreScrollOnNextSurfaceRef = useRef(false);
+  const contextSurfaceIdsRef = useRef(new WeakMap<NavigationContext, number>());
+  const contextSurfaceSequenceRef = useRef(0);
   const items = itemsForRole(activeRole);
   const primaryItems = primaryItemsForRole(activeRole);
   const secondaryItems = items.filter((item) => item.section === 'secondary');
@@ -208,6 +214,16 @@ export function NavigationShell({
   const pageFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
   const resolvedFloatingAction = pageFloatingAction ?? floatingAction ?? null;
   const level: NavigationLevel = nestedContext ? 2 : 1;
+  let contextSurfaceId = 0;
+  if (nestedContext) {
+    contextSurfaceId = contextSurfaceIdsRef.current.get(nestedContext) ?? 0;
+    if (contextSurfaceId === 0) {
+      contextSurfaceSequenceRef.current += 1;
+      contextSurfaceId = contextSurfaceSequenceRef.current;
+      contextSurfaceIdsRef.current.set(nestedContext, contextSurfaceId);
+    }
+  }
+  const scrollSurfaceKey = `${activeRole}:${destination}:${nestedContext ? `nested-${contextSurfaceId}` : 'root'}`;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
     title: context?.title ?? currentItem.label,
     icon: currentItem.icon,
@@ -223,15 +239,37 @@ export function NavigationShell({
     setMenuOpen(false);
   }, [nestedContext]);
 
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const previousSurface = currentScrollSurfaceRef.current;
+    if (previousSurface === null) {
+      currentScrollSurfaceRef.current = scrollSurfaceKey;
+      content.scrollTop = 0;
+      return;
+    }
+    if (previousSurface === scrollSurfaceKey) return;
+
+    scrollPositionsRef.current.set(previousSurface, content.scrollTop);
+    content.scrollTop = restoreScrollOnNextSurfaceRef.current
+      ? scrollPositionsRef.current.get(scrollSurfaceKey) ?? 0
+      : 0;
+    restoreScrollOnNextSurfaceRef.current = false;
+    currentScrollSurfaceRef.current = scrollSurfaceKey;
+  }, [scrollSurfaceKey]);
+
   const requestBack = useCallback(() => {
     const currentContext = contextRef.current;
     if (!currentContext) return;
     const historyEntry = historyEntryRef.current;
     if (historyEntry && historyHasToken(historyEntry.token)) {
+      restoreScrollOnNextSurfaceRef.current = true;
       window.history.back();
       return;
     }
     historyEntryRef.current = null;
+    restoreScrollOnNextSurfaceRef.current = true;
     currentContext.onBack?.();
   }, []);
 
@@ -240,6 +278,7 @@ export function NavigationShell({
       const currentContext = contextRef.current;
       if (!currentContext) return;
       historyEntryRef.current = null;
+      restoreScrollOnNextSurfaceRef.current = true;
       currentContext.onBack?.();
     };
     window.addEventListener('popstate', onPopState);
@@ -377,7 +416,7 @@ export function NavigationShell({
           />
         </div>
 
-        <section className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
+        <section ref={contentRef} className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
           {children}
         </section>
 
