@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_GLASS_SETTINGS,
+  loadBrowserGlassSettings,
   loadGlassSettings,
+  saveBrowserGlassSettings,
   saveGlassSettings,
 } from './glassSettings';
 
@@ -31,5 +33,20 @@ describe('glassSettings', () => {
       'mezfit.glassSettings',
       JSON.stringify({ preset: 'lens', optics: true }),
     );
+  });
+
+  it('falls back when acquiring browser storage throws', () => {
+    expect(loadBrowserGlassSettings(() => {
+      throw new DOMException('Denied', 'SecurityError');
+    })).toEqual(DEFAULT_GLASS_SETTINGS);
+  });
+
+  it('ignores denied browser storage while persisting', () => {
+    expect(() => saveBrowserGlassSettings(
+      { preset: 'clear', optics: true },
+      () => {
+        throw new DOMException('Denied', 'SecurityError');
+      },
+    )).not.toThrow();
   });
 });
