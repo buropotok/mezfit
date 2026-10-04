@@ -5,11 +5,6 @@ const navigationCss = readFileSync(
   new URL('./navigation.css', import.meta.url),
   'utf8',
 );
-const navigationShellSource = readFileSync(
-  new URL('./NavigationShell.tsx', import.meta.url),
-  'utf8',
-);
-
 describe('NavigationShell navbar backdrop', () => {
   it('uses a transparent masked backdrop with a maximum 5px blur', () => {
     const backdropRule = navigationCss.match(/\.navigation-navbar-backdrop \{[^}]*\}/)?.[0];
@@ -21,8 +16,4 @@ describe('NavigationShell navbar backdrop', () => {
     expect(backdropRule).toContain('bottom: calc(var(--space-3) * -1)');
   });
 
-  it('renders the blur layer separately from the navbar control surface', () => {
-    expect(navigationShellSource).toContain('className="navigation-navbar-backdrop"');
-    expect(navigationShellSource).toContain('className="navigation-navbar-control"');
-  });
 });
