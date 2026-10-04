@@ -12,7 +12,7 @@ const navigationShellSource = readFileSync(
 
 describe('NavigationShell navbar backdrop', () => {
   it('uses a transparent masked backdrop with a maximum 5px blur', () => {
-    const backdropRule = navigationCss.match(/\.navigation-navbar-backdrop \{[\s\S]*?\n\}/)?.[0];
+    const backdropRule = navigationCss.match(/\.navigation-navbar-backdrop \{[^}]*\}/)?.[0];
 
     expect(backdropRule).toContain('background: transparent');
     expect(backdropRule).toContain('-webkit-backdrop-filter: blur(5px)');
