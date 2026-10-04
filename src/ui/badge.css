@@ -7,9 +7,6 @@
   border: 1px solid;
   border-radius: 999px;
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-regular);
   white-space: nowrap;
 }
 
