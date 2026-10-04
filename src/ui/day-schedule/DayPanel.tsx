@@ -354,7 +354,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
               style={{ top: index * HOUR_HEIGHT }}
               key={hour}
             >
-              <span className="ui-day-schedule__hour-label">{String(hour).padStart(2, '0')}:00</span>
+              <span className="ui-day-schedule__hour-label ui-text--footnote">{String(hour).padStart(2, '0')}:00</span>
             </div>
           );
         })}
@@ -413,7 +413,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
 
         {showNow && (
           <div className="ui-day-schedule__now-line" style={{ top: yForMinutes(nowMinutes) }}>
-            <span className="ui-day-schedule__now-time">{formatTime(nowMinutes)}</span>
+            <span className="ui-day-schedule__now-time ui-text--caption">{formatTime(nowMinutes)}</span>
           </div>
         )}
       </div>
