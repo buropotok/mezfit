@@ -1,10 +1,14 @@
-.ui-menu.ui-liquid-popover {
-  overflow: visible;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-  animation: none;
-  will-change: auto;
+.ui-liquid-popover {
+  z-index: 61;
+  width: max-content;
+  min-width: 13.5rem;
+  max-width: min(20rem, calc(100vw - 1rem));
+  color: var(--ui-color-surface-text);
+  outline: none;
+}
+.ui-liquid-popover__clip {
+  position: absolute;
+  pointer-events: none;
 }
 .ui-liquid-popover__measure {
   position: fixed;
@@ -38,7 +42,7 @@
 .ui-liquid-popover__native {
   position: relative;
   padding: 0.5rem 0;
-  max-height: var(--radix-dropdown-menu-content-available-height);
+  max-height: calc(100dvh - 2rem);
   overflow-x: hidden;
   overflow-y: auto;
   opacity: 0;
