@@ -317,7 +317,7 @@ export function NavigationShell({
       isOpen={menuOpen}
       onOpenChange={(open) => { if (!open) setMenuOpen(false); }}
       label="Меню страницы"
-      align="end"
+      triggerActivation="controlled"
       trigger={control}
       triggerRef={menuOriginRef}
       items={menuItems}
