@@ -1359,6 +1359,7 @@
 .optical-tabs-playground > .optical-toolbar-pane,
 .optical-tabs-playground .extracted-lens-demo { top:0; }
 #iconLayer[startup] .optical-toolbar-pane { background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+#iconLayer[startup] .optical-toolbar-pane.ui-glass-surface::after { opacity:0; }
 #iconLayer[startup] .tab-link,
 #iconLayer[startup] .tab-link.active { color:#fff!important; }
 #iconLayer[startup] .tab-icon-outline,
