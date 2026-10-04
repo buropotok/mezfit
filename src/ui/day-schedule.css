@@ -128,9 +128,6 @@
   color: var(--ui-color-canvas-muted);
   background: #000;
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-footnote);
-  line-height: var(--ui-line-height-footnote);
-  font-weight: var(--ui-font-weight-medium);
 }
 
 .ui-day-schedule__event-frame {
@@ -339,9 +336,6 @@
   color: var(--ui-color-danger, #ff453a);
   background: #000;
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
-  font-weight: var(--ui-font-weight-medium);
 }
 
 @media (max-width: 360px) {
