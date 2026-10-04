@@ -12,7 +12,7 @@ import workoutFabIconUrl from './assets/strong.png';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
-import { loadGlassSettings, saveGlassSettings } from './glassSettings';
+import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
 import {
   NavigationShell,
   type AppDestination,
@@ -170,7 +170,7 @@ export function App() {
   const [workoutOpen, setWorkoutOpen] = useState(false);
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
   const [workoutNestedNavigationContext, setWorkoutNestedNavigationContext] = useState<NavigationContext | null>(null);
-  const [glassSettings, setGlassSettings] = useState(() => loadGlassSettings(window.localStorage));
+  const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
@@ -186,7 +186,7 @@ export function App() {
   }), [closeWorkout]);
 
   useEffect(() => {
-    saveGlassSettings(window.localStorage, glassSettings);
+    saveBrowserGlassSettings(glassSettings);
   }, [glassSettings]);
 
   useEffect(() => {
