@@ -73,8 +73,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
         aria-describedby={describedBy}
         {...props}
       />
-      {label ? <label className="ui-text-input__label" htmlFor={inputId}>{label}</label> : null}
-      {feedback ? <span id={feedbackId} className="ui-text-input__feedback">{feedback}</span> : null}
+      {label ? <label className="ui-text-input__label ui-text--caption" htmlFor={inputId}>{label}</label> : null}
+      {feedback ? <span id={feedbackId} className="ui-text-input__feedback ui-text--caption">{feedback}</span> : null}
     </div>
   );
 });
@@ -103,6 +103,6 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
   return <label className={`ui-choice ui-radio ${className}`.trim()} htmlFor={inputId}>
     <input ref={ref} id={inputId} type="radio" {...props} />
     <span className="ui-choice__control" aria-hidden="true"><span className="ui-radio__dot" /></span>
-    {label !== undefined ? <span className="ui-choice__label">{label}</span> : null}
+    {label !== undefined ? <span className="ui-choice__label ui-text--body">{label}</span> : null}
   </label>;
 });
