@@ -43,9 +43,6 @@
   border-radius: 999px;
   color: inherit;
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-medium);
 }
 
 .ui-date-picker__months {
@@ -63,9 +60,6 @@
 .ui-date-picker__month-title {
   margin: 0;
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-title);
-  line-height: var(--ui-line-height-title);
-  font-weight: var(--ui-font-weight-light);
 }
 
 .ui-date-picker__weekdays,
@@ -77,9 +71,6 @@
 .ui-date-picker__weekdays {
   color: var(--ui-color-surface-muted);
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-footnote);
-  line-height: var(--ui-line-height-footnote);
-  font-weight: var(--ui-font-weight-medium);
   text-align: center;
 }
 
@@ -101,9 +92,6 @@
   color: var(--ui-color-surface-text);
   background: transparent;
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
-  font-weight: var(--ui-font-weight-medium);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -121,7 +109,6 @@
 
 .ui-date-picker__day--selected {
   color: var(--ui-color-primary-text);
-  font-weight: var(--ui-font-weight-medium);
 }
 
 .ui-date-picker__day--selected .ui-date-picker__day-label,

@@ -3,6 +3,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadGlobalTheme } from './theme';
+import { applyTypographySettings, loadBrowserTypographySettings } from './typographySettings';
 import './ui/konsta.css';
 import './style.css';
 import './exercise.css';
@@ -25,6 +26,7 @@ function resolveRoot(): HTMLElement {
 const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
+  applyTypographySettings(loadBrowserTypographySettings());
   await loadGlobalTheme();
   root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;

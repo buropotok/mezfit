@@ -29,7 +29,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 export function Button({ variant = 'primary', color, size = 'default', selected: selectedProp, shadow = false, className = '', type = 'button', onPointerDown, onKeyDown, disabled, ...props }: ButtonProps) {
   const selected = selectedProp === true;
   const colorClass = color ? ` ui-button--color-${color}` : '';
-  return <button type={type} className={`ui-button ui-button--${variant} ui-button--${size}${colorClass}${selected ? ' ui-button--selected' : ''}${shadow ? ' ui-button--shadow' : ''} ${className}`.trim()} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />;
+  return <button type={type} className={`ui-button ui-text--body ui-button--${variant} ui-button--${size}${colorClass}${selected ? ' ui-button--selected' : ''}${shadow ? ' ui-button--shadow' : ''} ${className}`.trim()} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props} />;
 }
 
 type IconButtonBaseProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> & {
@@ -96,7 +96,7 @@ export function Avatar({ name, src, className = '', ...props }: AvatarProps) {
     return <img className={`ui-avatar ${className}`.trim()} src={src} alt="" onError={() => setImageFailed(true)} {...props} />;
   }
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'M';
-  return <span className={`ui-avatar ui-avatar--fallback ${className}`.trim()} aria-label={name} role="img">{initials}</span>;
+  return <span className={`ui-avatar ui-avatar--fallback ui-text--footnote ${className}`.trim()} aria-label={name} role="img">{initials}</span>;
 }
 
 export function Divider({ className = '', ...props }: HTMLAttributes<HTMLHRElement>) {

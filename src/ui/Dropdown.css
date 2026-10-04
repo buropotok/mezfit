@@ -9,9 +9,6 @@
   border: 0;
   color: var(--ui-color-primary);
   font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  font-weight: var(--ui-font-weight-medium);
-  line-height: var(--ui-line-height-body);
   text-align: inherit;
   background: transparent;
   transition: opacity .15s, border-color .15s, box-shadow .15s;
@@ -29,7 +26,6 @@
   border-radius: 10px;
   color: var(--ui-color-surface-text);
   background: var(--ui-color-surface);
-  font-weight: var(--ui-font-weight-regular);
   text-align: left;
 }
 .ui-dropdown__trigger--field::after {

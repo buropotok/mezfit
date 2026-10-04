@@ -36,10 +36,10 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
     {pressSpot}
     {leading ? <span className={`ui-list-item__leading${leadingClassName}`} aria-hidden="true">{leading}</span> : null}
     <span className="ui-list-item__content">
-      <span className="ui-list-item__title">{title}</span>
-      {subtitle ? <span className="ui-list-item__subtitle">{subtitle}</span> : null}
+      <span className="ui-list-item__title ui-text--body">{title}</span>
+      {subtitle ? <span className="ui-list-item__subtitle ui-text--footnote">{subtitle}</span> : null}
     </span>
-    {trailing ? <span className="ui-list-item__trailing">{trailing}</span> : null}
+    {trailing ? <span className="ui-list-item__trailing ui-text--footnote">{trailing}</span> : null}
   </>;
   const actionClassName = trailingAction ? ' ui-list-item-wrap--with-action' : '';
   return (
@@ -87,7 +87,7 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
               <div className="ui-bottom-sheet__header">
                 {headerLeading ? <span className="ui-bottom-sheet__header-leading">{headerLeading}</span> : null}
                 {hasCloseButton ? <Dialog.Close asChild><button className="ui-bottom-sheet__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}
-                {title ? <Dialog.Title className="ui-bottom-sheet__title">{title}</Dialog.Title> : null}
+                {title ? <Dialog.Title className="ui-bottom-sheet__title ui-text--headline">{title}</Dialog.Title> : null}
               </div>
             ) : null}
             {!title ? <Dialog.Title className="ui-visually-hidden">Панель</Dialog.Title> : null}
@@ -144,7 +144,7 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
       <KonstaGlass
         component={FloatingActionButtonElement}
         highlight={false}
-        className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
+        className={`ui-fab ui-text--body ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
       >
         {children}
       </KonstaGlass>
@@ -232,7 +232,7 @@ export function TabsList({ className = '', children, style, onPointerDown, onPoi
   const indicatorChildren = hasMovingIndicator ? null : Children.map(children, (child) => {
     if (!isValidElement(child)) return child;
     const element = child as ReactElement<IndicatorChildProps>;
-    return <div className={`ui-tabs__indicator-tab ${element.props.className ?? ''}`.trim()}>{element.props.children}</div>;
+    return <div className={`ui-tabs__indicator-tab ui-text--body ${element.props.className ?? ''}`.trim()}>{element.props.children}</div>;
   });
   const indicatorStyle = hasMovingIndicator
     ? { '--ui-tabs-indicator-left': `${indicatorGeometry.left}px`, '--ui-tabs-indicator-width': `${indicatorGeometry.width}px` } as CSSProperties
@@ -298,7 +298,7 @@ export function TabsTrigger({ icon, className = '', children, onPointerDown, onK
     <span className="ui-tabs__label">{children}</span>
   </> : children;
 
-  return <RadixTabs.Trigger value={value} data-ui-tab-value={value} className={`ui-tabs__trigger ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && theme !== 'liquidGlass') startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && theme !== 'liquidGlass' && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</RadixTabs.Trigger>;
+  return <RadixTabs.Trigger value={value} data-ui-tab-value={value} className={`ui-tabs__trigger ui-text--body ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled && theme !== 'liquidGlass') startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && theme !== 'liquidGlass' && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{content}</RadixTabs.Trigger>;
 }
 export function TabsContent({ className = '', ...props }: TabsContentProps) { return <RadixTabs.Content className={`ui-tabs__content ${className}`.trim()} {...props} />; }
 
@@ -404,11 +404,11 @@ export function Modal({
           <div className="ui-modal__container">
             <Dialog.Overlay className="ui-modal__backdrop" onPointerDown={allowBackdropClose ? undefined : (event) => event.preventDefault()} />
             <Dialog.Content className="ui-modal__dialog" aria-describedby={undefined} onPointerDownOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()} onInteractOutside={allowBackdropClose ? undefined : (event) => event.preventDefault()}>
-              {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title">{title}</Dialog.Title> : null}</div> : null}
+              {title || showCloseButton ? <div className="ui-modal__header">{showCloseButton ? <Dialog.Close asChild><button className="ui-modal__close" type="button" aria-label={closeLabel} onPointerDown={(event) => startPressScale(event.currentTarget)} onKeyDown={startKeyboardScale}>×</button></Dialog.Close> : null}{title ? <Dialog.Title className="ui-modal__title ui-text--headline">{title}</Dialog.Title> : null}</div> : null}
               {!title ? <Dialog.Title className="ui-visually-hidden">Диалог</Dialog.Title> : null}
-              <div className="ui-modal__content">
+              <div className="ui-modal__content ui-text--body">
                 {children}
-                {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onPointerDown={(event) => { if (!action.disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { if (!action.disabled) startKeyboardScale(event); }} onClick={action.onClick}>{action.label}</button>)}</div> : null}
+                {actions?.length ? <div className={`ui-modal__actions ui-modal__actions--${actionsLayout}`}>{actions.map((action) => <button key={action.id} type="button" className={`ui-modal__action ui-text--body${action.tone === 'danger' ? ' ui-modal__action--danger' : ''}`} disabled={action.disabled} onPointerDown={(event) => { if (!action.disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { if (!action.disabled) startKeyboardScale(event); }} onClick={action.onClick}>{action.label}</button>)}</div> : null}
               </div>
             </Dialog.Content>
           </div>

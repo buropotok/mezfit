@@ -20,6 +20,7 @@ import {
   type NavigationFloatingAction,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
+import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
@@ -171,6 +172,7 @@ export function App() {
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
   const [workoutNestedNavigationContext, setWorkoutNestedNavigationContext] = useState<NavigationContext | null>(null);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
+  const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
@@ -188,6 +190,11 @@ export function App() {
   useEffect(() => {
     saveBrowserGlassSettings(glassSettings);
   }, [glassSettings]);
+
+  useEffect(() => {
+    applyTypographySettings(typographySettings);
+    saveBrowserTypographySettings(typographySettings);
+  }, [typographySettings]);
 
   useEffect(() => {
     const webApp = getTelegramWebApp();
@@ -334,6 +341,8 @@ export function App() {
           <SettingsPage
             glassSettings={glassSettings}
             onGlassSettingsChange={setGlassSettings}
+            typographySettings={typographySettings}
+            onTypographySettingsChange={setTypographySettings}
             onNavigationContextChange={handleNavigationContextChange}
           />
         ) : state.activeRole === 'coach' ? (

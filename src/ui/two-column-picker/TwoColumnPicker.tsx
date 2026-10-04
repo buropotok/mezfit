@@ -112,7 +112,7 @@ function LensText({
           y={y}
           textAnchor="middle"
           dominantBaseline="central"
-          className="ui-time-picker__lens-text"
+          className="ui-time-picker__lens-text ui-text--title"
         >
           {column.format(value)}
         </text>
@@ -215,7 +215,7 @@ function PickerLens({
                   y={LENS_HEIGHT / 2}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className="ui-time-picker__lens-separator"
+                  className="ui-time-picker__lens-separator ui-text--title"
                 >
                   {separator}
                 </text>
@@ -260,7 +260,7 @@ function PickerColumnWheel({
           <button
             key={value}
             type="button"
-            className={`ui-time-picker__option${isSelected ? ' ui-time-picker__option--selected' : ''}`}
+            className={`ui-time-picker__option ui-text--body${isSelected ? ' ui-time-picker__option--selected' : ''}`}
             role="option"
             aria-label={column.formatAria?.(value) ?? label}
             aria-selected={isSelected}
@@ -506,7 +506,7 @@ export function TwoColumnPicker({
               onSelect={handleSelect}
               columnRef={leftRef}
             />
-            <span className="ui-time-picker__separator" aria-hidden="true">
+            <span className="ui-time-picker__separator ui-text--title" aria-hidden="true">
               {separator ?? ''}
             </span>
             <PickerColumnWheel
