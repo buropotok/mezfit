@@ -56,10 +56,10 @@ const CalendarMonths = memo(function CalendarMonths({
     <div className="ui-date-picker__months">
       {Array.from({ length: MONTH_COUNT }, (_, monthIndex) => (
         <section className="ui-date-picker__month" data-month-index={monthIndex} key={monthIndex}>
-          <h2 className="ui-date-picker__month-title">
+          <h2 className="ui-date-picker__month-title ui-text--title">
             {formatMonthName(visibleYear, monthIndex, locale)}
           </h2>
-          <div className="ui-date-picker__weekdays" aria-hidden="true">
+          <div className="ui-date-picker__weekdays ui-text--footnote" aria-hidden="true">
             {weekdayLabels.map((label, index) => (
               <span key={`${label}-${index}`}>{label}</span>
             ))}
@@ -78,7 +78,7 @@ const CalendarMonths = memo(function CalendarMonths({
               return (
                 <button
                   type="button"
-                  className={`ui-date-picker__day${isSelected ? ' ui-date-picker__day--selected' : ''}`}
+                  className={`ui-date-picker__day ui-text--body${isSelected ? ' ui-date-picker__day--selected' : ''}`}
                   aria-label={formatDayLabel(visibleYear, monthIndex, day, locale)}
                   aria-current={isSelected ? 'date' : undefined}
                   onClick={() => onChooseDate(monthIndex, day)}
@@ -274,7 +274,7 @@ export function DatePicker({
     <Glass
       component="button"
       ref={yearTargetRef}
-      className="ui-date-picker__year-trigger"
+      className="ui-date-picker__year-trigger ui-text--body"
       aria-label={`Выбрать год, сейчас ${visibleYear}`}
       aria-expanded={effectiveYearPopoverOpened}
       onClick={(event) => {
