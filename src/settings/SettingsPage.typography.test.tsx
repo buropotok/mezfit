@@ -36,6 +36,32 @@ describe('SettingsPage typography settings', () => {
     );
   });
 
+  it('keeps incomplete numeric drafts editable until they become valid', () => {
+    const onTypographySettingsChange = vi.fn();
+    const view = render(
+      <SettingsPage
+        typographySettings={defaultTypographySettings()}
+        onTypographySettingsChange={onTypographySettingsChange}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Шрифты' }));
+
+    const firstPreset = view.container.querySelector<HTMLElement>('.settings-page__typography-preset');
+    const sizeInput = within(firstPreset as HTMLElement).getByLabelText('Размер, px') as HTMLInputElement;
+
+    fireEvent.change(sizeInput, { target: { value: '3' } });
+    expect(sizeInput.value).toBe('3');
+    expect(onTypographySettingsChange).not.toHaveBeenCalled();
+
+    fireEvent.change(sizeInput, { target: { value: '30' } });
+    expect(onTypographySettingsChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        'large-title': expect.objectContaining({ size: 30 }),
+      }),
+    );
+  });
+
   it('emits size, weight and font-style changes for a semantic preset', () => {
     const onTypographySettingsChange = vi.fn();
     const settings = defaultTypographySettings();
