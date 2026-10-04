@@ -1,5 +1,4 @@
 .program-details-page {
-  margin-top: calc(var(--navigation-content-start) * -1);
   position: relative;
   overflow: hidden;
   height: calc(100dvh - var(--appbar-h) - 2rem);
@@ -8,7 +7,6 @@
 }
 
 .program-details-scroll {
-  padding-top: var(--navigation-content-start);
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
