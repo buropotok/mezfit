@@ -34,14 +34,14 @@ export const TYPOGRAPHY_ROLE_LABELS: Readonly<Record<TypographyRole, string>> = 
   caption: 'Caption',
 });
 
-const DEFAULTS: Readonly<TypographySettings> = Object.freeze({
-  'large-title': Object.freeze({ size: 24, weight: 500, fontStyle: 'normal', lineHeight: 24, letterSpacing: 0 }),
-  title: Object.freeze({ size: 20, weight: 500, fontStyle: 'normal', lineHeight: 24, letterSpacing: 0.35 }),
-  headline: Object.freeze({ size: 17, weight: 400, fontStyle: 'normal', lineHeight: 22, letterSpacing: 0.5 }),
-  body: Object.freeze({ size: 15, weight: 300, fontStyle: 'normal', lineHeight: 20, letterSpacing: 0.35 }),
-  footnote: Object.freeze({ size: 13, weight: 300, fontStyle: 'normal', lineHeight: 18, letterSpacing: 0.55 }),
-  caption: Object.freeze({ size: 12, weight: 300, fontStyle: 'normal', lineHeight: 16, letterSpacing: 0.4 }),
-});
+const DEFAULTS: Readonly<Record<TypographyRole, Readonly<TypographyPresetSettings>>> = {
+  'large-title': { size: 24, weight: 500, fontStyle: 'normal', lineHeight: 24, letterSpacing: 0 },
+  title: { size: 20, weight: 500, fontStyle: 'normal', lineHeight: 24, letterSpacing: 0.35 },
+  headline: { size: 17, weight: 400, fontStyle: 'normal', lineHeight: 22, letterSpacing: 0.5 },
+  body: { size: 15, weight: 300, fontStyle: 'normal', lineHeight: 20, letterSpacing: 0.35 },
+  footnote: { size: 13, weight: 300, fontStyle: 'normal', lineHeight: 18, letterSpacing: 0.55 },
+  caption: { size: 12, weight: 300, fontStyle: 'normal', lineHeight: 16, letterSpacing: 0.4 },
+};
 
 const TYPOGRAPHY_SETTINGS_STORAGE_KEY = 'mezfit.typographySettings.v1';
 
@@ -113,7 +113,7 @@ export function saveTypographySettings(
   settings: TypographySettings,
 ): void {
   try {
-    storage.setItem(TYPOGRAPHY_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    storage.setItem(TYPOGRAPHY_SETTINGS_STORAGE_KEY, JSON.stringify(normalizeTypographySettings(settings)));
   } catch {
     // Typography remains usable for the current session when storage is unavailable.
   }
@@ -125,8 +125,9 @@ export function applyTypographySettings(
   settings: TypographySettings,
   target: TypographyStyleTarget = document.documentElement.style,
 ): void {
+  const normalized = normalizeTypographySettings(settings);
   for (const role of TYPOGRAPHY_ROLES) {
-    const value = settings[role];
+    const value = normalized[role];
     target.setProperty(`--ui-font-size-${role}`, `${value.size}px`);
     target.setProperty(`--ui-line-height-${role}`, `${value.lineHeight}px`);
     target.setProperty(`--ui-letter-spacing-${role}`, `${value.letterSpacing}px`);
