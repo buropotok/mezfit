@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import type { ComponentPropsWithoutRef, ReactElement, ReactNode, Ref } from 'react';
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react';
 import { usePressSpot } from './PressSpot';
 import './menu.css';
 
@@ -11,16 +11,14 @@ export interface MenuProps {
   label?: string;
   className?: string;
   align?: 'start' | 'end';
-  contentRef?: Ref<HTMLDivElement>;
 }
 
-export function Menu({ isOpen, onOpenChange, children, trigger, label = 'Меню', className = '', align = 'start', contentRef }: MenuProps) {
+export function Menu({ isOpen, onOpenChange, children, trigger, label = 'Меню', className = '', align = 'start' }: MenuProps) {
   return (
     <DropdownMenu.Root open={isOpen} onOpenChange={onOpenChange} modal>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          ref={contentRef}
           className={`ui-menu ${className}`.trim()}
           align={align}
           sideOffset={8}
