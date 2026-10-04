@@ -55,3 +55,9 @@
 
 .ui-fab-metaball__label { display: flex; align-items: center; gap: 4px; }
 .ui-fab-metaball__label[data-disabled] { opacity: .5; }
+
+.ui-fab-metaball--left .ui-fab-metaball__source { left: 0; right: auto; }
+.ui-fab-metaball--left .ui-fab-metaball__liquid,
+.ui-fab-metaball--left .ui-fab-metaball__labels { transform: scaleX(-1); }
+.ui-fab-metaball--left .ui-fab-metaball__label,
+.ui-fab-metaball--left .ui-fab-metaball__artwork { transform: translate(-50%, -50%) scaleX(-1); }
