@@ -211,23 +211,22 @@ export function SettingsPage({
             />
           </div>
 
-          <div className="settings-page__glass-toggle">
-            <div className="settings-page__glass-toggle-copy">
+          <label className="settings-page__glass-toggle">
+            <span className="settings-page__glass-toggle-copy">
               <Text variant="body">Optics</Text>
               <Text variant="footnote" tone="muted">
                 Включает оптическое преломление GlassSurface.
               </Text>
-            </div>
+            </span>
             <Toggle
-              component="div"
+              component="span"
               checked={glassSettings.optics}
-              aria-label="Optics"
               onChange={() => onGlassSettingsChange({
                 ...glassSettings,
                 optics: !glassSettings.optics,
               })}
             />
-          </div>
+          </label>
         </Surface>
       </section>
     );
