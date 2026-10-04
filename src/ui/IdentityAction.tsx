@@ -15,7 +15,7 @@ import {
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName, type UiIconVariant } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
-import { Avatar } from './primitives';
+import { Avatar, Text } from './primitives';
 import './identity-action.css';
 
 export type IdentityActionAvatar = {
@@ -261,7 +261,7 @@ export function IdentityAction(props: IdentityActionProps) {
           />
         ) : null}
       </span>
-      {showTitle && <span className={titleRole === 'headline' ? 'ui-identity-action__title ui-identity-action__title--headline' : 'ui-identity-action__title'}>{title}</span>}
+      {showTitle && <Text variant={titleRole ?? 'body'} className="ui-identity-action__title">{title}</Text>}
     </GlassSurface>
   );
 }
