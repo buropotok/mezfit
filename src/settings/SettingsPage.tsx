@@ -20,11 +20,11 @@ import {
   TYPOGRAPHY_ROLE_LABELS,
   TYPOGRAPHY_WEIGHTS,
   defaultTypographySettings,
+  normalizeTypographySettings,
   type TypographyFontStyle,
   type TypographyPresetSettings,
   type TypographyRole,
   type TypographySettings,
-  type TypographyWeight,
 } from '../typographySettings';
 import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, Surface, Text, TextInput, TimePicker, type LocalDate, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
@@ -143,13 +143,13 @@ function updateTypographyPreset(
   role: TypographyRole,
   patch: Partial<TypographyPresetSettings>,
 ): TypographySettings {
-  return {
+  return normalizeTypographySettings({
     ...settings,
     [role]: {
       ...settings[role],
       ...patch,
     },
-  };
+  });
 }
 
 export function SettingsPage({
@@ -293,7 +293,7 @@ export function SettingsPage({
     const setWeight = (role: TypographyRole, value: string) => {
       const weight = TYPOGRAPHY_WEIGHTS.find((candidate) => String(candidate) === value);
       if (weight === undefined) return;
-      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, { weight: weight as TypographyWeight }));
+      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, { weight }));
     };
     const setFontStyle = (role: TypographyRole, value: string) => {
       const fontStyle = TYPOGRAPHY_FONT_STYLES.find((candidate) => candidate === value);
