@@ -66,73 +66,73 @@ export function MezfitNavbar({
           data-entry-phase={entryPhase}
         >
           <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
-          <IdentityAction
-            variant="single"
-            icon="chevron-left"
-            iconVariant="outline"
-            iconSize={32}
-            title="Назад"
-            aria-label="Назад"
-            glassPreset={glassPreset}
-            glassOptics={glassOptics}
-            disabled={level === 1 && entryPhase === 'settled'}
-            onClick={onBack}
-          />
+            <IdentityAction
+              variant="single"
+              icon="chevron-left"
+              iconVariant="outline"
+              iconSize={32}
+              title="Назад"
+              aria-label="Назад"
+              glassPreset={glassPreset}
+              glassOptics={glassOptics}
+              disabled={level === 1 && entryPhase === 'settled'}
+              onClick={onBack}
+            />
           </div>
 
           <div className="ui-mezfit-navbar__identity">
-          {identity.icon ? (
-            <IdentityAction
-              variant="labeled"
-              icon={identity.icon}
-              iconVariant="outline"
-              iconSize={32}
-              title={identity.title}
-              titleRole="headline"
-              width="100%"
-              glassPreset={glassPreset}
-              glassOptics={glassOptics}
-              onClick={onIdentityClick}
-            />
-          ) : (
-            <IdentityAction
-              variant="labeled"
-              avatar={identity.avatar}
-              title={identity.title}
-              titleRole="headline"
-              width="100%"
-              glassPreset={glassPreset}
-              glassOptics={glassOptics}
-              onClick={onIdentityClick}
-            />
-          )}
+            {identity.icon ? (
+              <IdentityAction
+                variant="labeled"
+                icon={identity.icon}
+                iconVariant="outline"
+                iconSize={32}
+                title={identity.title}
+                titleRole="headline"
+                width="100%"
+                glassPreset={glassPreset}
+                glassOptics={glassOptics}
+                onClick={onIdentityClick}
+              />
+            ) : (
+              <IdentityAction
+                variant="labeled"
+                avatar={identity.avatar}
+                title={identity.title}
+                titleRole="headline"
+                width="100%"
+                glassPreset={glassPreset}
+                glassOptics={glassOptics}
+                onClick={onIdentityClick}
+              />
+            )}
           </div>
 
           <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right">
-          <IdentityAction
-            variant="double"
-            glassPreset={glassPreset}
-            glassOptics={glassOptics}
-            actions={[
-              {
-                icon: 'calendar',
-                iconVariant: 'outline',
-                iconSize: 32,
-                label: 'Открыть календарь',
-                onClick: onCalendar,
-                disabled: calendarDisabled,
-              },
-              {
-                icon: 'menu-2',
-                iconVariant: 'outline',
-                iconSize: 32,
-                label: 'Меню страницы',
-                onClick: onMenu,
-                disabled: menuDisabled,
-                renderControl: renderMenuControl,
-              },
-            ]}
-          />
+            <IdentityAction
+              variant="double"
+              glassPreset={glassPreset}
+              glassOptics={glassOptics}
+              actions={[
+                {
+                  icon: 'calendar',
+                  iconVariant: 'outline',
+                  iconSize: 32,
+                  label: 'Открыть календарь',
+                  onClick: onCalendar,
+                  disabled: calendarDisabled,
+                },
+                {
+                  icon: 'menu-2',
+                  iconVariant: 'outline',
+                  iconSize: 32,
+                  label: 'Меню страницы',
+                  onClick: onMenu,
+                  disabled: menuDisabled,
+                  renderControl: renderMenuControl,
+                },
+              ]}
+            />
           </div>
         </div>
       </div>
