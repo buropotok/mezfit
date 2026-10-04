@@ -1,5 +1,4 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
-import { Navbar } from 'konsta/react';
 import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
 import type { UiIconName } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
@@ -58,87 +57,85 @@ export function MezfitNavbar({
   }, []);
 
   return (
-    <Navbar
-      component="header"
-      transparent
-      outline={false}
-      className="ui-mezfit-navbar"
-    >
-      <div
-        className="ui-mezfit-navbar__layout"
-        data-level={level}
-        data-entry-phase={entryPhase}
-      >
-        <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
-          <IdentityAction
-            variant="single"
-            icon="chevron-left"
-            iconVariant="outline"
-            iconSize={32}
-            title="Назад"
-            aria-label="Назад"
-            glassPreset={glassPreset}
-            glassOptics={glassOptics}
-            disabled={level === 1 && entryPhase === 'settled'}
-            onClick={onBack}
-          />
-        </div>
-
-        <div className="ui-mezfit-navbar__identity">
-          {identity.icon ? (
+    <header className="ui-mezfit-navbar">
+      <div className="ui-mezfit-navbar__backdrop" aria-hidden="true" />
+      <div className="ui-mezfit-navbar__content">
+        <div
+          className="ui-mezfit-navbar__layout"
+          data-level={level}
+          data-entry-phase={entryPhase}
+        >
+          <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
             <IdentityAction
-              variant="labeled"
-              icon={identity.icon}
+              variant="single"
+              icon="chevron-left"
               iconVariant="outline"
               iconSize={32}
-              title={identity.title}
-              titleRole="headline"
-              width="100%"
+              title="Назад"
+              aria-label="Назад"
               glassPreset={glassPreset}
               glassOptics={glassOptics}
-              onClick={onIdentityClick}
+              disabled={level === 1 && entryPhase === 'settled'}
+              onClick={onBack}
             />
-          ) : (
-            <IdentityAction
-              variant="labeled"
-              avatar={identity.avatar}
-              title={identity.title}
-              titleRole="headline"
-              width="100%"
-              glassPreset={glassPreset}
-              glassOptics={glassOptics}
-              onClick={onIdentityClick}
-            />
-          )}
-        </div>
+          </div>
 
-        <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right">
-          <IdentityAction
-            variant="double"
-            glassPreset={glassPreset}
-            glassOptics={glassOptics}
-            actions={[
-              {
-                icon: 'calendar',
-                iconVariant: 'outline',
-                iconSize: 32,
-                label: 'Открыть календарь',
-                onClick: onCalendar,
-                disabled: calendarDisabled,
-              },
-              {
-                icon: 'menu-2',
-                iconVariant: 'outline',
-                iconSize: 32,
-                label: 'Меню страницы',
-                onClick: onMenu,
-                disabled: menuDisabled,
-                renderControl: renderMenuControl,
-              },
-            ]}
-          />
+          <div className="ui-mezfit-navbar__identity">
+            {identity.icon ? (
+              <IdentityAction
+                variant="labeled"
+                icon={identity.icon}
+                iconVariant="outline"
+                iconSize={32}
+                title={identity.title}
+                titleRole="headline"
+                width="100%"
+                glassPreset={glassPreset}
+                glassOptics={glassOptics}
+                onClick={onIdentityClick}
+              />
+            ) : (
+              <IdentityAction
+                variant="labeled"
+                avatar={identity.avatar}
+                title={identity.title}
+                titleRole="headline"
+                width="100%"
+                glassPreset={glassPreset}
+                glassOptics={glassOptics}
+                onClick={onIdentityClick}
+              />
+            )}
+          </div>
+
+          <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right">
+            <IdentityAction
+              variant="double"
+              glassPreset={glassPreset}
+              glassOptics={glassOptics}
+              actions={[
+                {
+                  icon: 'calendar',
+                  iconVariant: 'outline',
+                  iconSize: 32,
+                  label: 'Открыть календарь',
+                  onClick: onCalendar,
+                  disabled: calendarDisabled,
+                },
+                {
+                  icon: 'menu-2',
+                  iconVariant: 'outline',
+                  iconSize: 32,
+                  label: 'Меню страницы',
+                  onClick: onMenu,
+                  disabled: menuDisabled,
+                  renderControl: renderMenuControl,
+                },
+              ]}
+            />
+          </div>
         </div>
       </div>
-    </Navbar>
+    </header>
   );
 }
