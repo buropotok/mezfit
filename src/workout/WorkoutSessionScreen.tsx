@@ -9,7 +9,6 @@ import {
   startWorkoutSession,
 } from '../api';
 import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
-import plusIconUrl from '../ui/icons/plus.svg';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
@@ -370,10 +369,9 @@ export function WorkoutSessionScreen({
           <FloatingActionButton
             placement="right"
             label="Добавить упражнение"
+            icon="plus"
             onClick={openExerciseSelection}
-          >
-            <img src={plusIconUrl} alt="" aria-hidden="true" width={24} height={24} />
-          </FloatingActionButton>
+          />
         </>
       ) : null}
 
