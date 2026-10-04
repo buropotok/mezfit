@@ -171,7 +171,9 @@ export function SettingsPage({
           <Text variant="footnote" tone="muted">
             Общие параметры материалов интерфейса.
           </Text>
-          <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
+          <span className="settings-page__action">
+            <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
+          </span>
         </Surface>
 
         <Surface className="settings-page__section">
@@ -179,7 +181,9 @@ export function SettingsPage({
           <Text variant="footnote" tone="muted">
             Временные инструменты для просмотра собранных интерфейсных модулей.
           </Text>
-          <Button onClick={() => setModulesOpen(true)}>Модули</Button>
+          <span className="settings-page__action">
+            <Button onClick={() => setModulesOpen(true)}>Модули</Button>
+          </span>
         </Surface>
       </section>
     );
