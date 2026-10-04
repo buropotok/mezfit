@@ -8,9 +8,9 @@ export type TypographySlot = { id: string; label: string; defaultRole: Typograph
 export type TypographyAssignments = Record<string, TypographyRole>;
 
 export const roleDefinitions: ReadonlyArray<TypographyValue & { role: TypographyRole; label: string; usage: string }> = [
-  { role: 'large-title', label: 'Large title', usage: 'Main screen title', size: 24, lineHeight: 24, weight: 300, letterSpacing: 0 },
-  { role: 'title', label: 'Title', usage: 'Large content / section heading', size: 20, lineHeight: 24, weight: 300, letterSpacing: 0.35 },
-  { role: 'headline', label: 'Headline', usage: 'Modal title / important compact heading', size: 17, lineHeight: 22, weight: 300, letterSpacing: 0.5 },
+  { role: 'large-title', label: 'Large title', usage: 'Main screen title', size: 24, lineHeight: 24, weight: 500, letterSpacing: 0 },
+  { role: 'title', label: 'Title', usage: 'Large content / section heading', size: 20, lineHeight: 24, weight: 500, letterSpacing: 0.35 },
+  { role: 'headline', label: 'Headline', usage: 'Modal title / important compact heading', size: 17, lineHeight: 22, weight: 400, letterSpacing: 0.5 },
   { role: 'body', label: 'Body', usage: 'Main text / inputs / controls', size: 15, lineHeight: 20, weight: 300, letterSpacing: 0.35 },
   { role: 'footnote', label: 'Footnote', usage: 'Metadata / field labels / secondary text', size: 13, lineHeight: 18, weight: 300, letterSpacing: 0.55 },
   { role: 'caption', label: 'Caption', usage: 'Small service / supporting text', size: 12, lineHeight: 16, weight: 300, letterSpacing: 0.4 },

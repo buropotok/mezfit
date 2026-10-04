@@ -13,6 +13,13 @@ describe('UI Kit typography admin', () => {
     expect(html.match(/Reset/g)?.length).toBe(6);
   });
 
+  it('uses the approved heading weights in shared defaults', () => {
+    const values = defaultTypographyValues();
+    expect(values['large-title'].weight).toBe(500);
+    expect(values.title.weight).toBe(500);
+    expect(values.headline.weight).toBe(400);
+  });
+
   it('offers only shared roles for semantic slots and renders effective copyable CSS', () => {
     const slots: TypographySlot[] = [
       { id: 'title', label: 'Заголовок', defaultRole: 'headline', selector: '.ui-modal__title' },
@@ -28,7 +35,7 @@ describe('UI Kit typography admin', () => {
     expect(html).toContain('.ui-modal__title');
     expect(html).toContain('.ui-modal__content .ui-text');
     expect(html).toContain('font-size: 17px');
-    expect(html).toContain('font-weight: 300');
+    expect(html).toContain('font-weight: 400');
     expect(html).toContain('letter-spacing: 0.5px');
     expect(html).toContain('Copy CSS');
     expect(html).toContain('Reset');
