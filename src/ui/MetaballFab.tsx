@@ -74,13 +74,13 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
     return () => document.removeEventListener('pointerdown', outside);
   }, [open, isShown, disabled]);
 
-  const hitbox = (x: number, width: number, height: number): CSSProperties => ({ left: x - width / 2, top: (layout.sourceSize - height) / 2, width, height });
+  const hitbox = (x: number, width: number, height: number): CSSProperties => ({ left: (placement === 'left' ? layout.width - x : x) - width / 2, top: (layout.sourceSize - height) / 2, width, height });
   const artwork = icon ? <Icon name={icon} variant="outline" style={{ width: 36, height: 36, flexShrink: 0, pointerEvents: 'none' }} /> : children;
   const dayLabelX = geometry.base.x + (final.day.x - geometry.base.x) * smoothFab(time / rupture);
   const revealBlur = 3 * (1 - smoothFab((time - 0.35) / 0.3));
 
   return (
-    <div ref={root} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ui-text--body ui-fab-metaball ${className}`.trim()} style={style} aria-hidden={!isShown || undefined} data-ui-fab-mode="metaball" data-disabled={disabled || undefined}>
+    <div ref={root} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ui-text--body ui-fab-metaball ui-fab-metaball--${placement} ${className}`.trim()} style={style} aria-hidden={!isShown || undefined} data-ui-fab-mode="metaball" data-disabled={disabled || undefined}>
       {!expanded ? <GlassSurface className="ui-fab-metaball__source" contentClassName="ui-fab-metaball__source-content" preset={glassPreset} optics={glassOptics} active={isShown} shape="capsule">{artwork}</GlassSurface> : null}
       {expanded && !settled ? <GlassSurface className="ui-fab-metaball__liquid" preset={glassPreset} active={isShown} contour={contour} shape={{ radius: 0 }} /> : null}
       {settled ? [final.day, final.phase].map((shape, index) => <GlassSurface key={index} className="ui-fab-metaball__capsule" preset={glassPreset} optics={glassOptics} active={isShown} shape="capsule" style={hitbox(shape.x, shape.width, 44)} />) : null}
