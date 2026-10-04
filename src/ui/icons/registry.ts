@@ -2,7 +2,7 @@ import arrowLeftUrl from './arrow-left.svg';
 import barbellFilledUrl from './liquid-glass-barbell-filled.svg';
 import barbellOutlineUrl from './liquid-glass-barbell-outline.svg';
 import calendarFilledUrl from './calendar-filled.svg';
-import calendarUrl from './calendar.svg';
+import calendarOutlineUrl from './liquid-glass-calendar-outline.svg';
 import calendarEventFilledUrl from './liquid-glass-calendar-event-filled.svg';
 import calendarEventOutlineUrl from './liquid-glass-calendar-event-outline.svg';
 import chartDotsFilledUrl from './liquid-glass-chart-dots-2-filled.svg';
@@ -24,7 +24,7 @@ import usersOutlineUrl from './liquid-glass-users-outline.svg';
 const uiIconRegistry = {
   'arrow-left': { outline: arrowLeftUrl, filled: arrowLeftUrl },
   barbell: { outline: barbellOutlineUrl, filled: barbellFilledUrl },
-  calendar: { outline: calendarUrl, filled: calendarFilledUrl },
+  calendar: { outline: calendarOutlineUrl, filled: calendarFilledUrl },
   'calendar-event': { outline: calendarEventOutlineUrl, filled: calendarEventFilledUrl },
   'chart-dots-2': { outline: chartDotsOutlineUrl, filled: chartDotsFilledUrl },
   'chevron-left': { outline: chevronLeftUrl, filled: chevronLeftUrl },
