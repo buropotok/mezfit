@@ -11,11 +11,13 @@
   gap: var(--space-3);
 }
 .client-directory-surface {
+  margin-top: calc(var(--navigation-content-start) * -1);
   overflow: hidden;
   height: calc(100dvh - var(--appbar-h) - 7rem);
   min-height: 12rem;
 }
 .client-directory-scroll {
+  padding-top: var(--navigation-content-start);
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
