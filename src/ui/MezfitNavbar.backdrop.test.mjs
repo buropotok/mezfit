@@ -21,8 +21,8 @@ describe('MezfitNavbar backdrop', () => {
     expect(backdropRule).toContain('background: transparent');
     expect(backdropRule).toContain('-webkit-backdrop-filter: blur(3px)');
     expect(backdropRule).toContain('backdrop-filter: blur(3px)');
-    expect(backdropRule).toContain('linear-gradient(to bottom, #000 0%, #000 calc(100% - 2rem), transparent 100%)');
-    expect(backdropRule).toContain('bottom: calc(-2rem - var(--space-3))');
+    expect(backdropRule).toContain('linear-gradient(to bottom, #000 0%, #000 calc(100% - var(--space-3)), transparent 100%)');
+    expect(backdropRule).toContain('bottom: calc(var(--space-3) * -1)');
   });
 
   it('keeps backdrop ownership inside MezfitNavbar without a second shell or Konsta navbar backdrop', () => {
@@ -30,5 +30,7 @@ describe('MezfitNavbar backdrop', () => {
     expect(navbarSource).not.toContain("from 'konsta/react'");
     expect(navigationCss).not.toContain('navigation-navbar-backdrop');
     expect(navigationCss).not.toContain('backdrop-filter');
+    expect(navigationCss).toContain('height: 0');
+    expect(navigationCss).toContain('min-height: 100dvh');
   });
 });
