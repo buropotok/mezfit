@@ -12,13 +12,13 @@
   z-index: 0;
   top: 0;
   right: 0;
-  bottom: -2rem;
+  bottom: calc(var(--space-3) * -1);
   left: 0;
   background: transparent;
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 2rem), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 2rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - var(--space-3)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - var(--space-3)), transparent 100%);
 }
 
 .ui-mezfit-navbar__content {
