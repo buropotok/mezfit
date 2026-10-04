@@ -93,7 +93,3 @@
   padding: var(--ui-space-4);
 }
 
-.program-details-page > .ui-fab svg {
-  width: 1.5rem;
-  height: 1.5rem;
-}
