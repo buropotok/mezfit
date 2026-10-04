@@ -71,7 +71,7 @@ describe('IdentityAction', () => {
     const view = render(<IdentityAction icon="users" title="Клиенты" titleRole="headline" />);
     const title = view.container.querySelector<HTMLElement>('.ui-identity-action__title');
 
-    expect(title?.classList.contains('ui-identity-action__title--headline')).toBe(true);
+    expect(title?.classList.contains('ui-text--headline')).toBe(true);
   });
 
   it('renders the default labeled icon at a real 32px inline size', () => {
