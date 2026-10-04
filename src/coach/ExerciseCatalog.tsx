@@ -158,7 +158,7 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
           </List>
         )}
       </div>
-      <FloatingActionButton label="Добавить упражнение" onClick={() => setShowCreate(true)}>+</FloatingActionButton>
+      <FloatingActionButton label="Добавить упражнение" icon="plus" onClick={() => setShowCreate(true)} />
     </section>
 
     <Modal isOpen={showCreate} title="Новое упражнение" onClose={closeCreate} closeOnBackdrop={!saving} className="exercise-create-modal">
