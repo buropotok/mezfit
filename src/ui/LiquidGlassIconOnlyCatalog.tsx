@@ -61,7 +61,7 @@ export function LiquidGlassIconOnlyCatalog() {
             value={value}
             onValueChange={setValue}
             hidden={hidden}
-            fab={<FloatingActionButton label="Действие">＋</FloatingActionButton>}
+            fab={<FloatingActionButton label="Действие" icon="plus" />}
           />
         </div>
       </div>
