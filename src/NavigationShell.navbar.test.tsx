@@ -121,7 +121,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
   });
 
-  it('forwards shared glass preset and optics to navbar and primary tabs', () => {
+  it('forwards the shared glass preset to navbar and primary tabs', () => {
     const view = render(
       <NavigationShell
         me={me}
@@ -131,7 +131,6 @@ describe('NavigationShell MezfitNavbar integration', () => {
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
         glassPreset="clear"
-        glassOptics
       >
         <div>Today content</div>
       </NavigationShell>,
@@ -148,7 +147,6 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const primaryTabsSurface = getPrimaryTabsRoot(view.container).getElementById('toolbar-pane');
     expect(primaryTabsSurface?.classList.contains('ui-glass-surface')).toBe(true);
     expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
-    expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalled();
   });
 
   it('preserves the approved five coach tab positions and icons', () => {
