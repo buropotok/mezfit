@@ -1,7 +1,11 @@
 // Konsta 5.4.0 Mezfit edition: preserve Popover mechanics; replace only the inner iOS Glass renderer.
 /* eslint-disable no-restricted-globals */
+import { createPortal } from 'react-dom';
+import './popover.css';
 import {
   useEffect,
+  useLayoutEffect,
+  useCallback,
   useRef,
   useState,
   type ComponentProps,
@@ -23,6 +27,11 @@ export type MezfitPopoverProps = ComponentProps<typeof KonstaPopover> & {
   glass?: GlassMaterialOverrides;
   glassShape?: GlassShape;
   iosHighlight?: boolean;
+  /** Custom owns its surface and opening animation; shared placement/backdrop stay here. */
+  presentation?: 'standard' | 'custom';
+  /** Render through a React portal without losing theme/context. */
+  portal?: boolean;
+  onPositioned?: (element: HTMLElement) => void;
 };
 
 type MezfitPopoverPosition = {
@@ -62,6 +71,9 @@ export function MezfitPopover(props: MezfitPopoverProps) {
     glass,
     glassShape = 'auto',
     iosHighlight = true,
+    presentation = 'standard',
+    portal = false,
+    onPositioned,
 
     children,
     style = {},
@@ -70,6 +82,11 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   } = props;
 
   const elRef = useRef<HTMLElement | null>(null);
+  const setRootRef = useCallback((element: HTMLElement | null) => {
+    elRef.current = element;
+    if (typeof ref === 'function') ref(element);
+    else if (ref) ref.current = element;
+  }, [ref]);
   const angleElRef = useRef<HTMLDivElement | null>(null);
   const glassRef = useRef<HTMLElement | null>(null);
   const highlightData = useRef<Record<string, unknown>>({});
@@ -83,6 +100,15 @@ export function MezfitPopover(props: MezfitPopoverProps) {
     popoverPosition: 'top-left',
   });
 
+  const lastNotifiedPosition = useRef<MezfitPopoverPosition | null>(null);
+  useLayoutEffect(() => {
+    if (!opened) { lastNotifiedPosition.current = positions; return; }
+    if (positions.set && positions !== lastNotifiedPosition.current && elRef.current) {
+      lastNotifiedPosition.current = positions;
+      onPositioned?.(elRef.current);
+    }
+  }, [positions, opened, onPositioned]);
+
   const state = opened ? 'opened' : 'closed';
   const Component = component as ElementType;
   const attrs = { ...rest };
@@ -92,7 +118,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   const c = PopoverClasses({ ...props, angleClassName }, colors, canonicalDark);
   const { attachEvents: attachHighlight, detachEvents: detachHighlight } = useIosHighlight({
     getEl: () => glassRef.current,
-    enabled: theme === 'ios' && iosHighlight,
+    enabled: presentation === 'standard' && theme === 'ios' && iosHighlight,
     data: highlightData.current,
   });
 
@@ -135,7 +161,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
 
   useEffect(() => {
     setPopover();
-  }, [opened]);
+  }, [opened, target, targetX, targetY, targetWidth, targetHeight]);
 
   const popoverStyle = positions.set
     ? {
@@ -177,19 +203,16 @@ export function MezfitPopover(props: MezfitPopoverProps) {
     c.inner[state][theme],
   );
 
-  return (
+  const content = (
     <>
       {backdrop && (
         <div className={backdropClasses} onClick={onBackdropClick} />
       )}
 
       <Component
-        ref={(element: HTMLElement | null) => {
-          elRef.current = element;
-          if (typeof ref === 'function') ref(element);
-          else if (ref) ref.current = element;
-        }}
-        className={classes}
+        ref={setRootRef}
+        className={presentation === 'custom' ? cls('ui-mezfit-popover-custom', className) : classes}
+        hidden={presentation === 'custom' && !opened ? true : undefined}
         style={popoverStyle}
         {...attrs}
       >
@@ -212,7 +235,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
             />
           </div>
         )}
-        {theme === 'ios' ? (
+        {presentation === 'custom' ? children : theme === 'ios' ? (
           <GlassSurface
             ref={glassRef}
             className={cls('k-glass touch-none', innerClasses)}
@@ -229,6 +252,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
       </Component>
     </>
   );
+  return portal && typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 }
 
 MezfitPopover.displayName = 'MezfitPopover';
