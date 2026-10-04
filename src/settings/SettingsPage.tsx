@@ -167,11 +167,67 @@ export function SettingsPage({
     return (
       <section className="settings-page" aria-label="Настройки">
         <Surface className="settings-page__section">
+          <Text variant="title">Интерфейс</Text>
+          <Text variant="footnote" tone="muted">
+            Общие параметры материалов интерфейса.
+          </Text>
+          <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
+        </Surface>
+
+        <Surface className="settings-page__section">
           <Text variant="title">Разработка</Text>
           <Text variant="footnote" tone="muted">
             Временные инструменты для просмотра собранных интерфейсных модулей.
           </Text>
           <Button onClick={() => setModulesOpen(true)}>Модули</Button>
+        </Surface>
+      </section>
+    );
+  }
+
+  if (glassSettingsOpen) {
+    const changeGlassPreset = (value: string) => {
+      if (!isGlassPresetName(value)) return;
+      onGlassSettingsChange({ ...glassSettings, preset: value });
+    };
+
+    return (
+      <section className="settings-page" aria-label="Настройки стекла">
+        <Surface className="settings-page__section">
+          <Text variant="title">Настройки стекла</Text>
+          <Text variant="footnote" tone="muted">
+            Эти параметры применяются к GlassSurface в Navbar и Liquid Glass Icon Only.
+          </Text>
+
+          <div className="settings-page__glass-field">
+            <Text variant="footnote">Preset</Text>
+            <Dropdown
+              mode="single"
+              value={glassSettings.preset}
+              options={glassPresetOptions}
+              title="Пресет GlassSurface"
+              variant="field"
+              onChange={changeGlassPreset}
+            />
+          </div>
+
+          <div className="settings-page__glass-toggle">
+            <div className="settings-page__glass-toggle-copy">
+              <Text variant="body">Optics</Text>
+              <Text variant="footnote" tone="muted">
+                Включает оптическое преломление GlassSurface.
+              </Text>
+            </div>
+            <Toggle
+              component="div"
+              checked={glassSettings.optics}
+              aria-label="Optics"
+              onChange={(event) => onGlassSettingsChange({
+                ...glassSettings,
+                optics: event.target.checked,
+              })}
+            />
+          </div>
         </Surface>
       </section>
     );
