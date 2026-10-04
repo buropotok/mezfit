@@ -134,12 +134,14 @@
 .exercise-catalog-header h2 { margin: 0; font-size: var(--ui-font-size-title); line-height: var(--ui-line-height-title); letter-spacing: var(--ui-letter-spacing-title); font-weight: var(--ui-font-weight-regular); }
 .exercise-catalog-search .text-input { width: 100%; height: var(--control-h); }
 .exercise-catalog-directory {
+  margin-top: calc(var(--navigation-content-start) * -1);
   position: relative;
   overflow: hidden;
   height: calc(100dvh - var(--appbar-h) - 13rem);
   min-height: 12rem;
 }
 .exercise-catalog-scroll {
+  padding-top: var(--navigation-content-start);
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
