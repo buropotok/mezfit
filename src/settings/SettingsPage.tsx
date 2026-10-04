@@ -14,7 +14,19 @@ import {
   type HapticProbeKind,
   type HapticProbeResult,
 } from '../telegram';
-import { Button, DatePicker, Dropdown, MezfitSidePanel, Surface, Text, TimePicker, type LocalDate, type LocalTime } from '../ui';
+import {
+  TYPOGRAPHY_FONT_STYLES,
+  TYPOGRAPHY_ROLES,
+  TYPOGRAPHY_ROLE_LABELS,
+  TYPOGRAPHY_WEIGHTS,
+  defaultTypographySettings,
+  type TypographyFontStyle,
+  type TypographyPresetSettings,
+  type TypographyRole,
+  type TypographySettings,
+  type TypographyWeight,
+} from '../typographySettings';
+import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, Surface, Text, TextInput, TimePicker, type LocalDate, type LocalTime } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
@@ -114,18 +126,42 @@ const planPreviewExercise: SessionExerciseData = {
 interface SettingsPageProps {
   glassSettings?: Readonly<GlassSettings>;
   onGlassSettingsChange?: (settings: GlassSettings) => void;
+  typographySettings?: Readonly<TypographySettings>;
+  onTypographySettingsChange?: (settings: TypographySettings) => void;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
 
 const glassPresetOptions = GLASS_PRESET_NAMES.map((preset) => ({ value: preset, label: preset }));
+const typographyWeightOptions = TYPOGRAPHY_WEIGHTS.map((weight) => ({ value: String(weight), label: String(weight) }));
+const typographyFontStyleOptions = [
+  { value: 'normal', label: 'Обычное' },
+  { value: 'italic', label: 'Курсив' },
+] satisfies Array<{ value: TypographyFontStyle; label: string }>;
+
+function updateTypographyPreset(
+  settings: Readonly<TypographySettings>,
+  role: TypographyRole,
+  patch: Partial<TypographyPresetSettings>,
+): TypographySettings {
+  return {
+    ...settings,
+    [role]: {
+      ...settings[role],
+      ...patch,
+    },
+  };
+}
 
 export function SettingsPage({
   glassSettings = DEFAULT_GLASS_SETTINGS,
   onGlassSettingsChange = () => {},
+  typographySettings = defaultTypographySettings(),
+  onTypographySettingsChange = () => {},
   onNavigationContextChange,
 }: SettingsPageProps) {
   const [modulesOpen, setModulesOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
+  const [typographySettingsOpen, setTypographySettingsOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [timePickerValue, setTimePickerValue] = useState<LocalTime>('08:30');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -147,8 +183,16 @@ export function SettingsPage({
   const closeGlassSettings = useCallback(() => {
     setGlassSettingsOpen(false);
   }, []);
+  const closeTypographySettings = useCallback(() => {
+    setTypographySettingsOpen(false);
+  }, []);
 
   useEffect(() => {
+    if (typographySettingsOpen) {
+      onNavigationContextChange({ title: 'Шрифты', onBack: closeTypographySettings });
+      return () => onNavigationContextChange(null);
+    }
+
     if (glassSettingsOpen) {
       onNavigationContextChange({ title: 'Настройки стекла', onBack: closeGlassSettings });
       return () => onNavigationContextChange(null);
@@ -161,9 +205,9 @@ export function SettingsPage({
 
     onNavigationContextChange(null);
     return undefined;
-  }, [closeGlassSettings, closeModules, glassSettingsOpen, modulesOpen, onNavigationContextChange]);
+  }, [closeGlassSettings, closeModules, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, typographySettingsOpen]);
 
-  if (!modulesOpen && !glassSettingsOpen) {
+  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
         <Surface className="settings-page__section">
@@ -171,9 +215,10 @@ export function SettingsPage({
           <Text variant="footnote" tone="muted">
             Общие параметры материалов интерфейса.
           </Text>
-          <span className="settings-page__action">
+          <div className="settings-page__actions">
             <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
-          </span>
+            <Button variant="secondary" onClick={() => setTypographySettingsOpen(true)}>Шрифты</Button>
+          </div>
         </Surface>
 
         <Surface className="settings-page__section">
@@ -231,6 +276,119 @@ export function SettingsPage({
               })}
             />
           </label>
+        </Surface>
+      </section>
+    );
+  }
+
+  if (typographySettingsOpen) {
+    const setNumber = (
+      role: TypographyRole,
+      key: 'size' | 'lineHeight' | 'letterSpacing',
+      value: number,
+    ) => {
+      if (!Number.isFinite(value)) return;
+      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, { [key]: value }));
+    };
+    const setWeight = (role: TypographyRole, value: string) => {
+      const weight = TYPOGRAPHY_WEIGHTS.find((candidate) => String(candidate) === value);
+      if (weight === undefined) return;
+      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, { weight: weight as TypographyWeight }));
+    };
+    const setFontStyle = (role: TypographyRole, value: string) => {
+      const fontStyle = TYPOGRAPHY_FONT_STYLES.find((candidate) => candidate === value);
+      if (fontStyle === undefined) return;
+      onTypographySettingsChange(updateTypographyPreset(typographySettings, role, { fontStyle }));
+    };
+
+    return (
+      <section className="settings-page" aria-label="Шрифты">
+        <Surface className="settings-page__section">
+          <Text variant="title">Шрифты</Text>
+          <Text variant="footnote" tone="muted">
+            Настройте шесть общих типографических пресетов. Изменения сразу применяются ко всему интерфейсу и сохраняются после перезагрузки.
+          </Text>
+
+          <div className="settings-page__typography-list">
+            {TYPOGRAPHY_ROLES.map((role, index) => {
+              const preset = typographySettings[role];
+              return (
+                <div key={role}>
+                  <div className="settings-page__typography-preset">
+                    <div className="settings-page__typography-preview">
+                      <Text variant="footnote" tone="muted">{TYPOGRAPHY_ROLE_LABELS[role]}</Text>
+                      <Text variant={role}>Пример текста</Text>
+                    </div>
+
+                    <div className="settings-page__typography-fields">
+                      <TextInput
+                        type="number"
+                        label="Размер, px"
+                        min={8}
+                        max={64}
+                        step={1}
+                        showNumberControls={false}
+                        value={preset.size}
+                        onChange={(event) => setNumber(role, 'size', event.currentTarget.valueAsNumber)}
+                      />
+                      <TextInput
+                        type="number"
+                        label="Межстрочный интервал, px"
+                        min={8}
+                        max={80}
+                        step={1}
+                        showNumberControls={false}
+                        value={preset.lineHeight}
+                        onChange={(event) => setNumber(role, 'lineHeight', event.currentTarget.valueAsNumber)}
+                      />
+                      <TextInput
+                        type="number"
+                        label="Межбуквенное, px"
+                        min={-2}
+                        max={4}
+                        step={0.05}
+                        showNumberControls={false}
+                        value={preset.letterSpacing}
+                        onChange={(event) => setNumber(role, 'letterSpacing', event.currentTarget.valueAsNumber)}
+                      />
+                      <div className="settings-page__typography-select">
+                        <Text variant="footnote">Вес</Text>
+                        <Dropdown
+                          mode="single"
+                          value={String(preset.weight)}
+                          options={typographyWeightOptions}
+                          title={`Вес · ${TYPOGRAPHY_ROLE_LABELS[role]}`}
+                          variant="field"
+                          onChange={(value) => setWeight(role, value)}
+                        />
+                      </div>
+                      <div className="settings-page__typography-select">
+                        <Text variant="footnote">Начертание</Text>
+                        <Dropdown
+                          mode="single"
+                          value={preset.fontStyle}
+                          options={typographyFontStyleOptions}
+                          title={`Начертание · ${TYPOGRAPHY_ROLE_LABELS[role]}`}
+                          variant="field"
+                          onChange={(value) => setFontStyle(role, value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {index < TYPOGRAPHY_ROLES.length - 1 ? <Divider /> : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <span className="settings-page__action">
+            <Button
+              variant="secondary"
+              onClick={() => onTypographySettingsChange(defaultTypographySettings())}
+            >
+              Сбросить шрифты
+            </Button>
+          </span>
         </Surface>
       </section>
     );
