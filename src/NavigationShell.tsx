@@ -5,6 +5,7 @@ import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
 import {
   DatePicker,
   FloatingActionButton,
+  FloatingActionButtonGlassProvider,
   Menu,
   MenuDivider,
   MenuItem,
@@ -357,6 +358,7 @@ export function NavigationShell({
   );
 
   return (
+    <FloatingActionButtonGlassProvider preset={glassPreset} optics={glassOptics}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
         <main className="app-shell navigation-shell">
@@ -415,5 +417,6 @@ export function NavigationShell({
         </main>
       </NavigationLevelContext.Provider>
     </NavigationFloatingActionContext.Provider>
+    </FloatingActionButtonGlassProvider>
   );
 }
