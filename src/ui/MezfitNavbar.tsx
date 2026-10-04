@@ -65,7 +65,7 @@ export function MezfitNavbar({
           data-level={level}
           data-entry-phase={entryPhase}
         >
-        <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
+          <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
           <IdentityAction
             variant="single"
             icon="chevron-left"
@@ -78,9 +78,9 @@ export function MezfitNavbar({
             disabled={level === 1 && entryPhase === 'settled'}
             onClick={onBack}
           />
-        </div>
+          </div>
 
-        <div className="ui-mezfit-navbar__identity">
+          <div className="ui-mezfit-navbar__identity">
           {identity.icon ? (
             <IdentityAction
               variant="labeled"
@@ -106,9 +106,9 @@ export function MezfitNavbar({
               onClick={onIdentityClick}
             />
           )}
-        </div>
+          </div>
 
-        <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right">
+          <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right">
           <IdentityAction
             variant="double"
             glassPreset={glassPreset}
@@ -133,8 +133,8 @@ export function MezfitNavbar({
               },
             ]}
           />
+          </div>
         </div>
-      </div>
       </div>
     </header>
   );
