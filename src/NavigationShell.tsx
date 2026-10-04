@@ -9,7 +9,9 @@ import {
   MenuDivider,
   MenuItem,
   LiquidGlassIconOnly,
+  MEZFIT_NAVBAR_GLASS_PRESET,
   MezfitNavbar,
+  type GlassPresetName,
   type LocalDate,
   type MezfitNavbarIdentity,
   type UiIconName,
@@ -170,6 +172,8 @@ interface Props {
   onDestinationChange: (destination: AppDestination) => void;
   onRoleSwitch: (role: Role) => void;
   floatingAction?: NavigationFloatingAction | null;
+  glassPreset?: GlassPresetName;
+  glassOptics?: boolean;
   children: ReactNode;
 }
 
@@ -181,6 +185,8 @@ export function NavigationShell({
   onDestinationChange,
   onRoleSwitch,
   floatingAction,
+  glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
+  glassOptics = false,
   children,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -362,6 +368,8 @@ export function NavigationShell({
             onMenu={() => setMenuOpen(true)}
             onCalendar={() => setCalendarOpen(true)}
             renderMenuControl={renderMenuControl}
+            glassPreset={glassPreset}
+            glassOptics={glassOptics}
             menuDisabled={menuOpen}
           />
         </div>
@@ -380,6 +388,8 @@ export function NavigationShell({
             }))}
             value={primaryDestination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}
+            glassPreset={glassPreset}
+            glassOptics={glassOptics}
             fab={currentItem.showFab === false || !resolvedFloatingAction ? undefined : (
               <FloatingActionButton
                 label={resolvedFloatingAction.label}
