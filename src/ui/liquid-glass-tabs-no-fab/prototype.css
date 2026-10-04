@@ -307,16 +307,19 @@
       justify-content: space-between;
       align-items: center;
       border-radius: 9999px;
-      background: rgba(255,255,255,.75);
-      box-shadow: var(--shadow-ios-light-glass);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       touch-action: pan-x;
       transition-property: scale;
       overflow: visible;
     }
 
-    .dark .toolbar-pane {
+    .toolbar-pane:not(.ui-glass-surface) {
+      background: rgba(255,255,255,.75);
+      box-shadow: var(--shadow-ios-light-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .dark .toolbar-pane:not(.ui-glass-surface) {
       background: rgba(50,50,50,.50);
       box-shadow: var(--shadow-ios-dark-glass);
     }
