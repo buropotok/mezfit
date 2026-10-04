@@ -20,5 +20,4 @@
 .program-create-title img { width:1.75rem; height:1.75rem; object-fit:contain; }
 .program-create-content { display:flex; flex-direction:column; gap:var(--ui-space-3); }
 .program-create-content .ui-list { width:100%; }
-.programs-page > .ui-fab svg { width:1.5rem; height:1.5rem; }
 @media (max-width:430px) { .programs-row .ui-list-item { padding-right:3rem; } .programs-more { right:.25rem; width:2.5rem; } }
