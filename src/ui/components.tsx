@@ -5,7 +5,7 @@ import { Dialog as KonstaDialog, DialogButton } from 'konsta/react';
 import type { UiComponentTheme } from './componentTheme';
 import { GlassSurface } from './GlassSurface';
 import type { GlassPresetName } from './glassMaterial';
-import { resolveUiIconPair } from './Icon';
+import { Icon, resolveUiIconPair, type UiIconName } from './Icon';
 import type { UiIconPair, UiIconSource } from './iconPair';
 import { usePressSpot } from './PressSpot';
 import { isPressScaleActivationKey, startPressScale } from './PressScale';
@@ -110,7 +110,7 @@ export function FloatingActionButtonGlassProvider({ preset, optics, children }: 
   return <FloatingActionButtonGlassContext.Provider value={{ preset, optics }}>{children}</FloatingActionButtonGlassContext.Provider>;
 }
 
-type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; glassPreset?: GlassPresetName; glassOptics?: boolean; children: ReactNode };
+type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; glassPreset?: GlassPresetName; glassOptics?: boolean; icon?: UiIconName; children?: ReactNode };
 type FloatingActionButtonBehavior = { buttonProps: ButtonHTMLAttributes<HTMLButtonElement>; isShown: boolean };
 
 const FloatingActionButtonBehaviorContext = createContext<FloatingActionButtonBehavior | null>(null);
@@ -137,7 +137,7 @@ function FloatingActionButtonElement({ children, ...glassProps }: ComponentProps
   );
 }
 
-export function FloatingActionButton({ label, isShown = true, placement = 'right', glassPreset, glassOptics, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+export function FloatingActionButton({ label, isShown = true, placement = 'right', glassPreset, glassOptics, icon, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   const glassSettings = useContext(FloatingActionButtonGlassContext);
   const buttonProps: ButtonHTMLAttributes<HTMLButtonElement> = {
     ...props,
@@ -161,7 +161,7 @@ export function FloatingActionButton({ label, isShown = true, placement = 'right
         wrapContent={false}
         className={`ui-fab ui-text--body ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
       >
-        {children}
+        {icon ? <Icon name={icon} variant="outline" style={{ width: 36, height: 36, flexShrink: 0, pointerEvents: 'none' }} /> : children}
       </GlassSurface>
     </FloatingActionButtonBehaviorContext.Provider>
   );

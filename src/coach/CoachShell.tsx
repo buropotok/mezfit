@@ -73,14 +73,6 @@ function groupClientsForContacts(clients: CoachClientListItem[]): Array<{ title:
     });
 }
 
-function AddClientIcon() {
-  return (
-    <svg className="add-client-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.14 0-7.5 2.24-7.5 5v1h11.1a6.5 6.5 0 0 1-.1-1.1c0-1.86.78-3.54 2.04-4.72A12.16 12.16 0 0 0 9.5 13Zm9.5 1v3h3v2h-3v3h-2v-3h-3v-2h3v-3h2Z" fill="currentColor" />
-    </svg>
-  );
-}
-
 function Placeholder({ title, text }: { title: string; text: string }) {
   return (
     <section className="card">
@@ -142,7 +134,7 @@ function ClientDirectory({
     label: 'Добавить клиента',
     onClick: onAdd,
     disabled: busy,
-    content: <AddClientIcon />,
+    icon: 'user-plus' as const,
   } : null, [onAdd, busy]);
   useNavigationFloatingAction('clients', floatingAction);
 
