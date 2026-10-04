@@ -11,6 +11,7 @@ import {
   type PointerEventHandler,
   type ReactElement,
   type ReactNode,
+  type Ref,
 } from 'react';
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName, type UiIconVariant } from './Icon';
@@ -45,6 +46,7 @@ export type IdentityActionItem = {
 export type IdentityActionTitleRole = 'body' | 'headline';
 
 type IdentityActionBaseProps = {
+  surfaceRef?: Ref<HTMLElement>;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
   disabled?: boolean;
@@ -95,6 +97,12 @@ export function IdentityAction(props: IdentityActionProps) {
   } = props;
   const [isAnimating, setIsAnimating] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
+  const surfaceRef = props.surfaceRef;
+  const setSurfaceRef = useCallback((element: HTMLElement | null) => {
+    rootRef.current = element;
+    if (typeof surfaceRef === 'function') surfaceRef(element);
+    else if (surfaceRef) surfaceRef.current = element;
+  }, [surfaceRef]);
   const animationActiveRef = useRef(false);
   const pointerPressRef = useRef(false);
   const animationFinishedRef = useRef(false);
@@ -179,7 +187,7 @@ export function IdentityAction(props: IdentityActionProps) {
   if (props.variant === 'double') {
     return (
       <GlassSurface
-        ref={rootRef}
+        ref={setSurfaceRef}
         preset={glassPreset}
         optics={glassOptics}
         wrapContent={false}
@@ -233,7 +241,7 @@ export function IdentityAction(props: IdentityActionProps) {
   return (
     <GlassSurface
       component={IdentityGlassButton}
-      ref={rootRef}
+      ref={setSurfaceRef}
       preset={glassPreset}
       optics={glassOptics}
       wrapContent={false}
