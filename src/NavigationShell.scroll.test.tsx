@@ -76,6 +76,7 @@ describe('NavigationShell page scroll ownership', () => {
     if (!content) throw new Error('Missing navigation content scroller');
 
     content.scrollTop = 180;
+    fireEvent.scroll(content);
     view.rerender(
       <NavigationShell
         me={me}
@@ -122,10 +123,12 @@ describe('NavigationShell page scroll ownership', () => {
     if (!content) throw new Error('Missing navigation content scroller');
 
     content.scrollTop = 140;
+    fireEvent.scroll(content);
     fireEvent.click(view.getByRole('button', { name: 'Open detail' }));
     expect(content.scrollTop).toBe(0);
 
     content.scrollTop = 60;
+    fireEvent.scroll(content);
     fireEvent(window, new PopStateEvent('popstate'));
 
     expect(content.scrollTop).toBe(140);
