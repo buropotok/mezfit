@@ -1,4 +1,4 @@
-import { useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode, type Ref } from 'react';
 import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
 import type { UiIconName } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
@@ -16,6 +16,8 @@ export type MezfitNavbarProps = {
   onMenu: () => void;
   onCalendar: () => void;
   onIdentityClick?: () => void;
+  rightControlRef?: Ref<HTMLElement>;
+  rightControlHidden?: boolean;
   renderMenuControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
@@ -31,6 +33,8 @@ export function MezfitNavbar({
   onCalendar,
   onIdentityClick,
   renderMenuControl,
+  rightControlRef,
+  rightControlHidden = false,
   glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
   glassOptics = false,
   menuDisabled = false,
@@ -108,9 +112,10 @@ export function MezfitNavbar({
             )}
           </div>
 
-          <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right">
+          <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right" style={rightControlHidden ? { visibility: 'hidden' } : undefined}>
             <IdentityAction
               variant="double"
+              surfaceRef={rightControlRef}
               glassPreset={glassPreset}
               glassOptics={glassOptics}
               actions={[
