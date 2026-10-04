@@ -21,8 +21,8 @@ describe('MezfitNavbar backdrop', () => {
     expect(backdropRule).toContain('background: transparent');
     expect(backdropRule).toContain('-webkit-backdrop-filter: blur(3px)');
     expect(backdropRule).toContain('backdrop-filter: blur(3px)');
-    expect(backdropRule).toContain('linear-gradient(to bottom, #000 0%, #000 calc(100% - 2rem), transparent 100%)');
-    expect(backdropRule).toContain('bottom: -2rem;');
+    expect(backdropRule).toContain('linear-gradient(to bottom, #000 0%, #000 calc(100% - var(--space-3)), transparent 100%)');
+    expect(backdropRule).toContain('bottom: calc(var(--space-3) * -1)');
   });
 
   it('keeps backdrop ownership inside MezfitNavbar without a second shell or Konsta navbar backdrop', () => {
