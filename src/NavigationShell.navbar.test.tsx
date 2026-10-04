@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
+import { FloatingActionButton } from './ui';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
@@ -147,6 +148,33 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const primaryTabsSurface = getPrimaryTabsRoot(view.container).getElementById('toolbar-pane');
     expect(primaryTabsSurface?.classList.contains('ui-glass-surface')).toBe(true);
     expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+  });
+
+  it('shares shell material settings with both the tab-slot FAB and page-owned FABs', () => {
+    const onClick = vi.fn();
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+        glassPreset="frosted"
+        glassOptics={false}
+        floatingAction={{ label: 'Действие навигации', onClick, content: '+' }}
+      >
+        <FloatingActionButton label="Действие страницы">ОК</FloatingActionButton>
+      </NavigationShell>,
+    );
+
+    for (const label of ['Действие навигации', 'Действие страницы']) {
+      const button = view.getByRole('button', { name: label });
+      expect(button.classList.contains('ui-glass-surface')).toBe(true);
+      expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
+    }
+    fireEvent.click(view.getByRole('button', { name: 'Действие навигации' }));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('preserves the approved five coach tab positions and icons', () => {
