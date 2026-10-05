@@ -52,3 +52,32 @@
 .ui-liquid-popover__native[inert] {
   pointer-events: none;
 }
+
+.ui-liquid-popover--grid {
+  width: 17.75rem;
+  max-width: calc(100vw - 1.5rem);
+}
+.ui-liquid-popover__measure--grid,
+.ui-liquid-popover__native--grid {
+  display: grid;
+  grid-template-columns: repeat(var(--ui-liquid-popover-columns), minmax(0, 1fr));
+  grid-auto-rows: 2.125rem;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-2);
+}
+.ui-liquid-popover__measure--grid {
+  width: 17.75rem;
+}
+.ui-liquid-popover__measure--grid .ui-menu-item,
+.ui-liquid-popover__native--grid .ui-menu-item {
+  justify-content: center;
+  min-height: 2.125rem;
+  padding: 0 var(--ui-space-1);
+  border-radius: 999px;
+  text-align: center;
+}
+.ui-liquid-popover__measure--grid .ui-menu-item--active,
+.ui-liquid-popover__native--grid .ui-menu-item--active {
+  color: var(--ui-color-surface-text);
+  background: rgb(255 255 255 / 14%);
+}
