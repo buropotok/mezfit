@@ -63,6 +63,8 @@ describe('NavbarMetaball', () => {
     const backSurface = view.container.querySelector<HTMLElement>('.ui-navbar-metaball__back-slot .ui-identity-action');
     const initialIdentitySurface = view.container.querySelector<HTMLElement>('.ui-navbar-metaball__identity-slot .ui-identity-action');
     const identityBezel = initialIdentitySurface?.style.getPropertyValue('--ui-glass-surface-bezel');
+    const identityTopLeftBezel = initialIdentitySurface?.style.getPropertyValue('--ui-glass-surface-bezel-top-left');
+    const identityBottomRightBezel = initialIdentitySurface?.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right');
     expect(backSlot?.style.left).toBe('61px');
     expect(backSlot?.style.opacity).toBe('0');
     expect(backSlot?.style.visibility).toBe('hidden');
@@ -85,6 +87,9 @@ describe('NavbarMetaball', () => {
     expect(backSlot?.style.visibility).toBe('visible');
     expect(identitySurface?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0');
     expect(identitySurface?.style.getPropertyValue('--ui-glass-surface-bezel')).toBe(identityBezel);
+    expect(identitySurface?.style.getPropertyValue('--ui-glass-surface-bezel-top-left')).toBe('0');
+    expect(identitySurface?.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right')).toBe(identityBottomRightBezel);
+    expect(identityTopLeftBezel).toBe(identityBottomRightBezel);
     expect(backSurface?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0');
 
     act(() => advance(0));
@@ -95,6 +100,7 @@ describe('NavbarMetaball', () => {
     expect(backSlot?.style.opacity).toBe('1');
     expect(backSlot?.style.visibility).toBe('visible');
     expect(identitySurface?.style.getPropertyValue('--ui-glass-surface-tint-a')).not.toBe('0');
+    expect(identitySurface?.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right')).toBe(identityBottomRightBezel);
     expect(backSurface?.style.getPropertyValue('--ui-glass-surface-tint-a')).not.toBe('0');
   });
 
