@@ -118,7 +118,9 @@ export async function handleScheduleRoute(
 
   const occurrenceMatch = url.pathname.match(/^\/api\/schedule\/occurrences\/(\d+)$/);
   if (occurrenceMatch) {
-    if (!hasRole(roles, 'coach')) return errorResponse(403, 'ROLE_REQUIRED', 'coach role is required');
+    if (!hasRole(roles, 'coach') && !hasRole(roles, 'client')) {
+      return errorResponse(403, 'ROLE_REQUIRED', 'coach or client role is required');
+    }
     const occurrenceId = Number(occurrenceMatch[1]);
 
     if (request.method === 'PATCH') {

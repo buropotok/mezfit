@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  cancelScheduleOccurrence,
   getScheduleOccurrences,
+  rescheduleScheduleOccurrence,
   type Role,
   type ScheduleOccurrence,
 } from '../api';
@@ -12,6 +14,9 @@ import {
   Text,
   getDayScheduleValue,
   type DayScheduleEvent,
+  type DayScheduleEventDelete,
+  type DayScheduleEventMove,
+  type DayScheduleEventResize,
   type LocalDate,
 } from '../ui';
 import './today-page.css';
@@ -99,6 +104,41 @@ function displayName(person: ScheduleOccurrence['coach']): string {
   return [person.firstName, person.lastName].filter(Boolean).join(' ') || person.username || 'Mezfit';
 }
 
+function occurrenceIdFromEventId(eventId: string): number | null {
+  const id = Number(eventId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function upsertOccurrence(
+  current: Readonly<Record<LocalDate, readonly ScheduleOccurrence[]>>,
+  occurrence: ScheduleOccurrence,
+): Record<LocalDate, ScheduleOccurrence[]> {
+  const next: Record<LocalDate, ScheduleOccurrence[]> = {};
+
+  for (const [entryDate, entries] of Object.entries(current)) {
+    next[entryDate as LocalDate] = entries.filter((entry) => entry.id !== occurrence.id);
+  }
+
+  const targetDate = occurrence.calendarDate as LocalDate;
+  const targetEntries = next[targetDate] ?? [];
+  targetEntries.push(occurrence);
+  targetEntries.sort((left, right) => left.startMinute - right.startMinute || left.id - right.id);
+  next[targetDate] = targetEntries;
+  return next;
+}
+
+function removeOccurrence(
+  current: Readonly<Record<LocalDate, readonly ScheduleOccurrence[]>>,
+  occurrenceId: number,
+): Record<LocalDate, ScheduleOccurrence[]> {
+  return Object.fromEntries(
+    Object.entries(current).map(([entryDate, entries]) => [
+      entryDate,
+      entries.filter((entry) => entry.id !== occurrenceId),
+    ]),
+  ) as Record<LocalDate, ScheduleOccurrence[]>;
+}
+
 export function TodayPage({
   initData,
   role,
@@ -116,7 +156,9 @@ export function TodayPage({
   const [occurrencesByDate, setOccurrencesByDate] = useState<Record<LocalDate, ScheduleOccurrence[]>>({});
   const [loadingToday, setLoadingToday] = useState(true);
   const [error, setError] = useState('');
+  const [mutatingOccurrenceIds, setMutatingOccurrenceIds] = useState<ReadonlySet<number>>(() => new Set());
   const loadedRangesRef = useRef<DateRange[]>([]);
+  const mutatingOccurrenceIdsRef = useRef<Set<number>>(new Set());
   const pendingRangesRef = useRef<DateRange[]>([]);
   const requestGenerationRef = useRef(0);
   const initialLoadSettledRef = useRef(false);
@@ -205,6 +247,7 @@ export function TodayPage({
   useEffect(() => {
     if (
       !initialLoadSettledRef.current
+      || mutatingOccurrenceIds.size > 0
       || includesDate(loadedRangesRef.current, date)
       || includesDate(pendingRangesRef.current, date)
     ) return undefined;
@@ -233,7 +276,111 @@ export function TodayPage({
       });
 
     return () => controller.abort();
-  }, [date, initData, loadingToday, role]);
+  }, [date, initData, loadingToday, mutatingOccurrenceIds, role]);
+
+  const occurrenceIsEditable = (occurrence: ScheduleOccurrence): boolean => (
+    occurrence.status === 'scheduled'
+    && !mutatingOccurrenceIds.has(occurrence.id)
+    && (
+      role === 'coach'
+      || (currentUserId !== undefined && occurrence.createdByUserId === currentUserId)
+    )
+  );
+
+  const beginMutation = (occurrenceId: number): boolean => {
+    if (mutatingOccurrenceIdsRef.current.has(occurrenceId)) return false;
+    mutatingOccurrenceIdsRef.current.add(occurrenceId);
+    setMutatingOccurrenceIds(new Set(mutatingOccurrenceIdsRef.current));
+
+    // Any in-flight cache read may have been issued before this mutation and
+    // must not overwrite the authoritative mutation response when it arrives.
+    requestGenerationRef.current += 1;
+    pendingRangesRef.current = [];
+    return true;
+  };
+
+  const finishMutation = (occurrenceId: number) => {
+    mutatingOccurrenceIdsRef.current.delete(occurrenceId);
+    setMutatingOccurrenceIds(new Set(mutatingOccurrenceIdsRef.current));
+  };
+
+  const occurrenceForEvent = (entryDate: LocalDate, eventId: string): ScheduleOccurrence | null => {
+    const occurrenceId = occurrenceIdFromEventId(eventId);
+    if (occurrenceId === null) return null;
+    return occurrencesByDate[entryDate]?.find((entry) => entry.id === occurrenceId) ?? null;
+  };
+
+  const handleEventMove = async (move: DayScheduleEventMove) => {
+    const occurrence = occurrenceForEvent(move.date, move.eventId);
+    if (!occurrence || !occurrenceIsEditable(occurrence) || !beginMutation(occurrence.id)) return;
+
+    const optimistic: ScheduleOccurrence = {
+      ...occurrence,
+      calendarDate: move.targetDate,
+      dateKey: Number(move.targetDate.replaceAll('-', '')),
+      startMinute: move.startMinutes,
+    };
+    setOccurrencesByDate((current) => upsertOccurrence(current, optimistic));
+    setError('');
+
+    try {
+      const result = await rescheduleScheduleOccurrence(initData, occurrence.id, {
+        date: move.targetDate,
+        startMinute: move.startMinutes,
+        durationMinutes: occurrence.durationMinutes,
+      });
+      setOccurrencesByDate((current) => upsertOccurrence(current, result.occurrence));
+    } catch (mutationError) {
+      setOccurrencesByDate((current) => upsertOccurrence(current, occurrence));
+      setError(mutationError instanceof Error ? mutationError.message : 'Не удалось перенести тренировку');
+    } finally {
+      finishMutation(occurrence.id);
+    }
+  };
+
+  const handleEventResize = async (resize: DayScheduleEventResize) => {
+    const occurrence = occurrenceForEvent(resize.date, resize.eventId);
+    if (!occurrence || !occurrenceIsEditable(occurrence) || !beginMutation(occurrence.id)) return;
+
+    const optimistic: ScheduleOccurrence = {
+      ...occurrence,
+      startMinute: resize.startMinutes,
+      durationMinutes: resize.durationMinutes,
+    };
+    setOccurrencesByDate((current) => upsertOccurrence(current, optimistic));
+    setError('');
+
+    try {
+      const result = await rescheduleScheduleOccurrence(initData, occurrence.id, {
+        date: resize.date,
+        startMinute: resize.startMinutes,
+        durationMinutes: resize.durationMinutes,
+      });
+      setOccurrencesByDate((current) => upsertOccurrence(current, result.occurrence));
+    } catch (mutationError) {
+      setOccurrencesByDate((current) => upsertOccurrence(current, occurrence));
+      setError(mutationError instanceof Error ? mutationError.message : 'Не удалось изменить время тренировки');
+    } finally {
+      finishMutation(occurrence.id);
+    }
+  };
+
+  const handleEventDelete = async (deletion: DayScheduleEventDelete) => {
+    const occurrence = occurrenceForEvent(deletion.date, deletion.eventId);
+    if (!occurrence || !occurrenceIsEditable(occurrence) || !beginMutation(occurrence.id)) return;
+
+    setOccurrencesByDate((current) => removeOccurrence(current, occurrence.id));
+    setError('');
+
+    try {
+      await cancelScheduleOccurrence(initData, occurrence.id);
+    } catch (mutationError) {
+      setOccurrencesByDate((current) => upsertOccurrence(current, occurrence));
+      setError(mutationError instanceof Error ? mutationError.message : 'Не удалось отменить тренировку');
+    } finally {
+      finishMutation(occurrence.id);
+    }
+  };
 
   const eventsByDate = useMemo<Record<LocalDate, TodayScheduleEvent[]>>(() => (
     Object.fromEntries(
@@ -256,13 +403,10 @@ export function TodayPage({
         date={date}
         eventsByDate={eventsByDate}
         onDateChange={setDate}
-        isEventEditable={(event) => (
-          event.occurrence.status === 'scheduled'
-          && (
-            role === 'coach'
-            || (currentUserId !== undefined && event.occurrence.createdByUserId === currentUserId)
-          )
-        )}
+        isEventEditable={(event) => occurrenceIsEditable(event.occurrence)}
+        onEventMove={(move) => { void handleEventMove(move); }}
+        onEventResize={(resize) => { void handleEventResize(resize); }}
+        onEventDelete={(deletion) => { void handleEventDelete(deletion); }}
         renderEvent={(event, state) => {
           const otherPerson = role === 'coach' ? event.occurrence.client : event.occurrence.coach;
           const otherPersonName = displayName(otherPerson);

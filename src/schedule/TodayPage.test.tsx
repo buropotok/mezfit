@@ -1,12 +1,17 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getScheduleOccurrences, type ScheduleOccurrence } from '../api';
+import { cancelScheduleOccurrence, getScheduleOccurrences, rescheduleScheduleOccurrence, type ScheduleOccurrence } from '../api';
 import { TodayPage } from './TodayPage';
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>();
-  return { ...actual, getScheduleOccurrences: vi.fn() };
+  return {
+    ...actual,
+    getScheduleOccurrences: vi.fn(),
+    rescheduleScheduleOccurrence: vi.fn(),
+    cancelScheduleOccurrence: vi.fn(),
+  };
 });
 
 vi.mock('../ui', async (importOriginal) => {
@@ -18,27 +23,99 @@ vi.mock('../ui', async (importOriginal) => {
       eventsByDate,
       onDateChange,
       isEventEditable,
+      onEventMove,
+      onEventResize,
+      onEventDelete,
     }: {
       date: string;
-      eventsByDate: Record<string, Array<{ id: string; occurrence: ScheduleOccurrence }>>;
+      eventsByDate: Record<string, Array<{
+        id: string;
+        startMinutes: number;
+        durationMinutes: number;
+        occurrence: ScheduleOccurrence;
+      }>>;
       onDateChange: (date: string) => void;
-      isEventEditable?: (event: { id: string; occurrence: ScheduleOccurrence }) => boolean;
-    }) => (
-      <div
-        data-testid="day-schedule"
-        data-date={date}
-        data-event-count={eventsByDate[date]?.length ?? 0}
-        data-editable-count={(eventsByDate[date] ?? []).filter(event => isEventEditable?.(event) ?? true).length}
-      >
-        <button type="button" onClick={() => onDateChange('2026-12-20')}>Jump date</button>
-      </div>
-    ),
+      isEventEditable?: (event: {
+        id: string;
+        startMinutes: number;
+        durationMinutes: number;
+        occurrence: ScheduleOccurrence;
+      }) => boolean;
+      onEventMove?: (move: {
+        eventId: string;
+        date: string;
+        targetDate: string;
+        previousStartMinutes: number;
+        startMinutes: number;
+      }) => void;
+      onEventResize?: (resize: {
+        eventId: string;
+        date: string;
+        previousStartMinutes: number;
+        previousDurationMinutes: number;
+        startMinutes: number;
+        durationMinutes: number;
+      }) => void;
+      onEventDelete?: (deletion: { eventId: string; date: string }) => void;
+    }) => {
+      const events = eventsByDate[date] ?? [];
+      const first = events[0];
+      const firstEditable = first ? (isEventEditable?.(first) ?? true) : false;
+      return (
+        <div
+          data-testid="day-schedule"
+          data-date={date}
+          data-event-count={events.length}
+          data-editable-count={events.filter(event => isEventEditable?.(event) ?? true).length}
+          data-first-start={first?.startMinutes ?? ''}
+          data-first-duration={first?.durationMinutes ?? ''}
+        >
+          <button type="button" onClick={() => onDateChange('2026-12-20')}>Jump date</button>
+          <button
+            type="button"
+            disabled={!firstEditable}
+            onClick={() => first && onEventMove?.({
+              eventId: first.id,
+              date,
+              targetDate: date,
+              previousStartMinutes: first.startMinutes,
+              startMinutes: first.startMinutes + 30,
+            })}
+          >
+            Move first
+          </button>
+          <button
+            type="button"
+            disabled={!firstEditable}
+            onClick={() => first && onEventResize?.({
+              eventId: first.id,
+              date,
+              previousStartMinutes: first.startMinutes,
+              previousDurationMinutes: first.durationMinutes,
+              startMinutes: first.startMinutes,
+              durationMinutes: first.durationMinutes + 15,
+            })}
+          >
+            Resize first
+          </button>
+          <button
+            type="button"
+            disabled={!firstEditable}
+            onClick={() => first && onEventDelete?.({ eventId: first.id, date })}
+          >
+            Delete first
+          </button>
+        </div>
+      );
+    },
     DayScheduleEventCard: () => null,
     Avatar: () => null,
   };
 });
 
 const getScheduleMock = vi.mocked(getScheduleOccurrences);
+const rescheduleMock = vi.mocked(rescheduleScheduleOccurrence);
+const cancelMock = vi.mocked(cancelScheduleOccurrence);
 
 function localDateNow(): string {
   const now = new Date();
@@ -80,6 +157,8 @@ function occurrence(date: string): ScheduleOccurrence {
 
 beforeEach(() => {
   getScheduleMock.mockReset();
+  rescheduleMock.mockReset();
+  cancelMock.mockReset();
 });
 
 afterEach(cleanup);
@@ -179,6 +258,82 @@ describe('TodayPage schedule loading', () => {
     );
 
     await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-editable-count')).toBe('1'));
+  });
+
+  it('persists DnD moves and replaces the optimistic event with the backend occurrence', async () => {
+    const today = localDateNow();
+    const original = occurrence(today);
+    const moved = { ...original, startMinute: 630 };
+    getScheduleMock.mockResolvedValue({ occurrences: [original] });
+    rescheduleMock.mockResolvedValue({ occurrence: moved });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="coach"
+        currentUserId={7}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Move first' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Move first' }));
+
+    await waitFor(() => expect(rescheduleMock).toHaveBeenCalledWith('telegram-init', 11, {
+      date: today,
+      startMinute: 630,
+      durationMinutes: 60,
+    }));
+    await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-first-start')).toBe('630'));
+  });
+
+  it('persists resize for a client-created scheduled occurrence', async () => {
+    const today = localDateNow();
+    const original = { ...occurrence(today), createdByUserId: 8 };
+    const resized = { ...original, durationMinutes: 75 };
+    getScheduleMock.mockResolvedValue({ occurrences: [original] });
+    rescheduleMock.mockResolvedValue({ occurrence: resized });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="client"
+        currentUserId={8}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Resize first' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Resize first' }));
+
+    await waitFor(() => expect(rescheduleMock).toHaveBeenCalledWith('telegram-init', 11, {
+      date: today,
+      startMinute: 600,
+      durationMinutes: 75,
+    }));
+    await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-first-duration')).toBe('75'));
+  });
+
+  it('cancels and removes a client-created scheduled occurrence', async () => {
+    const today = localDateNow();
+    const original = { ...occurrence(today), createdByUserId: 8 };
+    getScheduleMock.mockResolvedValue({ occurrences: [original] });
+    cancelMock.mockResolvedValue({ ok: true });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="client"
+        currentUserId={8}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Delete first' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete first' }));
+
+    await waitFor(() => expect(cancelMock).toHaveBeenCalledWith('telegram-init', 11));
+    await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-event-count')).toBe('0'));
   });
 
   it('loads another +/-31 day window only when navigation leaves the warmed cache', async () => {
