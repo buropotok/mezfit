@@ -13,6 +13,7 @@ import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs,
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
+import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
 
 type ClientTab = 'overview' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
@@ -280,7 +281,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     }
 
     if (!selectedClient) {
-      if (destination !== 'exercises') onNavigationContextChange(null);
+      if (destination !== 'exercises' && destination !== 'today') onNavigationContextChange(null);
       return undefined;
     }
 
@@ -302,6 +303,16 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
   if (selectedClient) {
     return <ClientWorkspace initData={initData} client={selectedClient} />;
+  }
+
+  if (destination === 'today') {
+    return (
+      <TodayPage
+        initData={initData}
+        role="coach"
+        onNavigationContextChange={onNavigationContextChange}
+      />
+    );
   }
 
   if (destination === 'exercises') {
