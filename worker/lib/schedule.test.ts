@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { dayDistance, listScheduleOccurrences, parseCalendarDay, rescheduleOccurrence } from './schedule';
+import { createScheduleOccurrence, dayDistance, listScheduleOccurrences, parseCalendarDay, rescheduleOccurrence } from './schedule';
 
 describe('schedule calendar dates', () => {
   it('derives a sortable YYYYMMDD key and ISO week metadata', () => {
@@ -82,6 +82,35 @@ describe('schedule occurrence read model', () => {
   });
 });
 
+describe('calendar reference writes', () => {
+  it('rejects occurrence creation when the requested date is absent from calendar_day', async () => {
+    const targetFirst = vi.fn().mockResolvedValue({ id: 3 });
+    const calendarFirst = vi.fn().mockResolvedValue(null);
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes('SELECT program_day.id')) {
+        return { bind: vi.fn().mockReturnValue({ first: targetFirst }) };
+      }
+      if (sql.includes('SELECT date_key') && sql.includes('FROM calendar_day')) {
+        return { bind: vi.fn().mockReturnValue({ first: calendarFirst }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const db = { prepare } as unknown as D1Database;
+    const day = parseCalendarDay('2200-01-01');
+    if (!day) throw new Error('Expected syntactically valid date');
+
+    await expect(createScheduleOccurrence(db, 7, {
+      clientUserId: 8,
+      programDayId: 3,
+      day,
+      startMinute: 600,
+      durationMinutes: 60,
+    })).resolves.toEqual({ kind: 'calendar_day_not_found' });
+
+    expect(prepare).not.toHaveBeenCalledWith(expect.stringContaining('INSERT OR IGNORE INTO calendar_day'));
+  });
+});
+
 describe('schedule occurrence races', () => {
   it('reports a locked reschedule when the guarded update loses a Start race', async () => {
     const existingFirst = vi.fn().mockResolvedValue({
@@ -91,23 +120,21 @@ describe('schedule occurrence races', () => {
       program_day_id: 3,
       status: 'scheduled',
     });
+    const calendarFirst = vi.fn().mockResolvedValue({ date_key: 20261006 });
+    const updateRun = vi.fn().mockResolvedValue({ meta: { changes: 0 } });
     const prepare = vi.fn((sql: string) => {
       if (sql.includes('FROM workout_occurrence occurrence')) {
         return { bind: vi.fn().mockReturnValue({ first: existingFirst }) };
       }
-      if (sql.includes('INSERT OR IGNORE INTO calendar_day')) {
-        return { bind: vi.fn().mockReturnValue({ sql }) };
+      if (sql.includes('SELECT date_key') && sql.includes('FROM calendar_day')) {
+        return { bind: vi.fn().mockReturnValue({ first: calendarFirst }) };
       }
       if (sql.includes('UPDATE workout_occurrence')) {
-        return { bind: vi.fn().mockReturnValue({ sql }) };
+        return { bind: vi.fn().mockReturnValue({ run: updateRun }) };
       }
       throw new Error(`Unexpected SQL: ${sql}`);
     });
-    const batch = vi.fn().mockResolvedValue([
-      { meta: { changes: 0 } },
-      { meta: { changes: 0 } },
-    ]);
-    const db = { prepare, batch } as unknown as D1Database;
+    const db = { prepare } as unknown as D1Database;
     const day = parseCalendarDay('2026-10-06');
     if (!day) throw new Error('Expected valid date');
 
