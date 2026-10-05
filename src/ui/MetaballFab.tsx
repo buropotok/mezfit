@@ -1,10 +1,10 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
-import { GlassSurface } from './GlassSurface';
+import { GlassContourBezel, GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName } from './Icon';
 import { Text } from './primitives';
 import type { GlassPresetName } from './glassMaterial';
 import { startPressScale } from './PressScale';
-import { FAB_METABALL, FAB_METABALL_STAGE_WIDTH, fabContour, fabFrame, fabGeometry, fabRupture, smoothFab } from './fabMetaballGeometry';
+import { FAB_METABALL, FAB_METABALL_STAGE_WIDTH, fabBezelHighlights, fabContour, fabFrame, fabGeometry, fabRupture, smoothFab } from './fabMetaballGeometry';
 import './MetaballFab.css';
 
 export type FloatingActionButtonAction = { label: string; onClick: () => void; disabled?: boolean; icon?: UiIconName };
@@ -111,6 +111,10 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
       {!expanded ? <GlassSurface className="ui-fab-metaball__source" contentClassName="ui-fab-metaball__source-content" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule">{artwork}</GlassSurface> : null}
       {expanded && !settled ? <GlassSurface className="ui-fab-metaball__liquid" preset={glassPreset} active={isShown} bezelOpacity={0} contour={contour} shape={{ radius: 0 }} /> : null}
       {settled ? [final.day, final.phase].map((shape, index) => <GlassSurface key={index} className="ui-fab-metaball__capsule" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule" style={hitbox(shape.x, shape.width, 44)} />) : null}
+      {isShown && (expanded || bezelReveal < 1) ? <div className="ui-fab-metaball__liquid">
+        <GlassContourBezel contour={contour} highlights={fabBezelHighlights(geometry, time, rupture)} preset={glassPreset}
+          opacity={moving ? 1 : 1 - bezelReveal} />
+      </div> : null}
       {expanded ? <div className="ui-fab-metaball__labels" style={{ clipPath: `path('${contour}')` }} aria-hidden="true">
         {time > 0.35 ? <div style={{ filter: `blur(${revealBlur}px)` }}>
           {actions.map((action, index) => { const actionIcon = action.icon ?? icon; return <span key={index} className="ui-fab-metaball__label" data-disabled={action.disabled || undefined} style={{ left: index ? final.phase.x : dayLabelX, top: geometry.base.y }}>

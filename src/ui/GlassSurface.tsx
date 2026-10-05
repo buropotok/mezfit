@@ -320,3 +320,33 @@ export function GlassSurface({
     </Component>
   );
 }
+
+export type GlassBezelHighlight = { x: number; y: number; radius: number; opacity: number };
+
+/** Material-owned highlights on an arbitrary contour, without a second material or border. */
+export function GlassContourBezel({ contour, highlights, preset = 'modalTuned', opacity = 1 }: {
+  contour: string;
+  highlights: readonly GlassBezelHighlight[];
+  preset?: GlassPresetName;
+  opacity?: number;
+}) {
+  const id = `ui-glass-bezel-${useId().replace(/:/g, '')}`;
+  const material = useMemo(() => resolveGlassMaterial(preset), [preset]);
+  return (
+    <svg className="ui-glass-surface__contour ui-glass-surface__contour-edge" aria-hidden="true"
+      opacity={material.bezel * Math.max(0, Math.min(1, opacity))}>
+      <defs>
+        <clipPath id={`${id}-clip`} clipPathUnits="userSpaceOnUse"><path d={contour} /></clipPath>
+        {highlights.map((highlight, index) => <radialGradient key={index} id={`${id}-${index}`} gradientUnits="userSpaceOnUse"
+          cx={highlight.x} cy={highlight.y} r={highlight.radius}>
+          <stop offset="0" stopColor="white" stopOpacity={highlight.opacity} />
+          <stop offset="1" stopColor="white" stopOpacity="0" />
+        </radialGradient>)}
+      </defs>
+      <g clipPath={`url(#${id}-clip)`}>
+        {highlights.map((_, index) => <path key={index} d={contour} fill="none"
+          stroke={`url(#${id}-${index})`} strokeWidth="2" />)}
+      </g>
+    </svg>
+  );
+}
