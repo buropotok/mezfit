@@ -3,6 +3,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CoachShell } from './CoachShell';
 
+vi.mock('../schedule/TodayPage', () => ({
+  TodayPage: () => <div>Coach Today</div>,
+}));
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -109,5 +113,24 @@ describe('CoachShell client contacts', () => {
     await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({
       title: 'Андрей Соколов',
     })));
+  });
+});
+
+
+describe('CoachShell Today loading', () => {
+  it('does not preload the client directory on the Today cold path', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <CoachShell
+        initData="telegram-init"
+        destination="today"
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Coach Today')).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

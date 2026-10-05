@@ -20,6 +20,7 @@ import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/pr
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
+import { handleScheduleRoute } from './lib/schedule-api';
 
 type Role = 'coach' | 'client';
 
@@ -299,6 +300,11 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (url.pathname.startsWith('/api/workout-sessions')) {
     const auth = await requireUser(request, env);
     return handleWorkoutSessionRoute(request, env.DB_BINDING, auth.row.id);
+  }
+
+  if (url.pathname.startsWith('/api/schedule')) {
+    const auth = await requireUser(request, env);
+    return handleScheduleRoute(request, env.DB_BINDING, auth.row.id, auth.roles);
   }
 
   const mediaMatch = url.pathname.match(/^\/api\/exercise-media\/gym_keeper_apk\/([^/]+)$/);

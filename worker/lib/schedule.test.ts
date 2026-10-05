@@ -1,0 +1,69 @@
+import { describe, expect, it, vi } from 'vitest';
+import { dayDistance, parseCalendarDay, rescheduleOccurrence } from './schedule';
+
+describe('schedule calendar dates', () => {
+  it('derives a sortable YYYYMMDD key and ISO week metadata', () => {
+    expect(parseCalendarDay('2026-10-05')).toEqual({
+      dateKey: 20261005,
+      localDate: '2026-10-05',
+      year: 2026,
+      month: 10,
+      day: 5,
+      isoWeekYear: 2026,
+      isoWeek: 41,
+      weekday: 1,
+    });
+  });
+
+  it('keeps ISO week year separate from calendar year at year boundaries', () => {
+    expect(parseCalendarDay('2027-01-01')).toMatchObject({
+      dateKey: 20270101,
+      year: 2027,
+      isoWeekYear: 2026,
+      isoWeek: 53,
+      weekday: 5,
+    });
+  });
+
+  it('rejects impossible dates and computes range distance without local timezone conversion', () => {
+    expect(parseCalendarDay('2026-02-29')).toBeNull();
+    const from = parseCalendarDay('2026-09-05');
+    const to = parseCalendarDay('2026-11-05');
+    if (!from || !to) throw new Error('Expected valid dates');
+    expect(dayDistance(from, to)).toBe(61);
+  });
+});
+
+
+describe('schedule occurrence races', () => {
+  it('reports a locked reschedule when the guarded update loses a Start race', async () => {
+    const existingFirst = vi.fn().mockResolvedValue({
+      id: 11,
+      coach_user_id: 7,
+      client_user_id: 8,
+      program_day_id: 3,
+      status: 'scheduled',
+    });
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes('FROM workout_occurrence occurrence')) {
+        return { bind: vi.fn().mockReturnValue({ first: existingFirst }) };
+      }
+      if (sql.includes('INSERT OR IGNORE INTO calendar_day')) {
+        return { bind: vi.fn().mockReturnValue({ sql }) };
+      }
+      if (sql.includes('UPDATE workout_occurrence')) {
+        return { bind: vi.fn().mockReturnValue({ sql }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const batch = vi.fn().mockResolvedValue([
+      { meta: { changes: 0 } },
+      { meta: { changes: 0 } },
+    ]);
+    const db = { prepare, batch } as unknown as D1Database;
+    const day = parseCalendarDay('2026-10-06');
+    if (!day) throw new Error('Expected valid date');
+
+    await expect(rescheduleOccurrence(db, 7, 11, day, 660, 60)).resolves.toEqual({ kind: 'locked' });
+  });
+});

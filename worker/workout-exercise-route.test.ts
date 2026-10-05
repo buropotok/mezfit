@@ -42,6 +42,7 @@ describe('workout exercise routes', () => {
       kind: 'ok',
       session: {
         sessionId: 501,
+        occurrenceId: null,
         status: 'active',
         workoutDate: '2026-09-17',
         program: null,

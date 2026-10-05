@@ -1,5 +1,6 @@
 import { addWorkoutExercises, listWorkoutExerciseOptions } from './workout-exercise-actions';
 import type { ExerciseCategoryCode } from './exercises';
+import { parseCalendarDay } from './schedule';
 import {
   completeWorkoutSession,
   initializeWorkoutSession,
@@ -94,7 +95,12 @@ function parseFact(value: unknown): WorkoutSetFactInput | null {
 function parseStartInput(body: Record<string, unknown>): WorkoutStartInput | null {
   if (body.type === 'own') return { type: 'own' };
   if (body.type === 'program' && isPositiveInteger(body.programDayId)) {
-    return { type: 'program', programDayId: body.programDayId };
+    if (body.occurrenceId !== undefined && !isPositiveInteger(body.occurrenceId)) return null;
+    return {
+      type: 'program',
+      programDayId: body.programDayId,
+      ...(body.occurrenceId === undefined ? {} : { occurrenceId: body.occurrenceId }),
+    };
   }
   return null;
 }
@@ -131,8 +137,17 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
     if (requestedPlan !== null && !isPositiveInteger(requestedPlan)) {
       return errorResponse(400, 'INVALID_PROGRAM', 'Training plan id is invalid');
     }
+    const localDate = body.localDate ?? null;
+    if (localDate !== null && (typeof localDate !== 'string' || !parseCalendarDay(localDate))) {
+      return errorResponse(400, 'INVALID_SCHEDULE_DATE', 'Local workout date is invalid');
+    }
 
-    const result = await initializeWorkoutSession(db, userId, requestedPlan as number | null);
+    const result = await initializeWorkoutSession(
+      db,
+      userId,
+      requestedPlan as number | null,
+      localDate as string | null,
+    );
     if (result.kind === 'program_not_found') return errorResponse(404, 'PROGRAM_NOT_FOUND', 'Active program not found');
     if (result.kind === 'program_selection_required') {
       return errorResponse(409, 'PROGRAM_SELECTION_REQUIRED', 'Multiple active programs require an explicit selection', { programs: result.programs });
@@ -152,6 +167,7 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
     if (result.kind === 'not_found') return errorResponse(404, 'WORKOUT_NOT_FOUND', 'Workout session not found');
     if (result.kind === 'invalid_state') return errorResponse(409, 'WORKOUT_STATE_INVALID', 'Workout session cannot be started');
     if (result.kind === 'invalid_program_day') return errorResponse(409, 'PROGRAM_DAY_INVALID', 'Program day is no longer available');
+    if (result.kind === 'invalid_occurrence') return errorResponse(409, 'SCHEDULE_OCCURRENCE_INVALID', 'Scheduled workout is no longer available');
     return jsonResponse({ session: result.session });
   }
 

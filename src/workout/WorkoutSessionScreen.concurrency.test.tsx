@@ -79,6 +79,7 @@ function exerciseData(id: number, position: number, withSet: boolean): SessionEx
 
 const initialSession: ActiveWorkoutSession = {
   sessionId: 700,
+  occurrenceId: null,
   status: 'active',
   workoutDate: '2026-09-16',
   program: null,

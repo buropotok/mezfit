@@ -19,6 +19,7 @@ import {
   type NavigationFloatingAction,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
+import { TodayPage } from './schedule/TodayPage';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button } from './ui';
@@ -89,14 +90,15 @@ function ClientShell({
   initData,
   startParam,
   destination,
+  onNavigationContextChange,
 }: {
   initData: string;
   startParam: string | null;
   destination: AppDestination;
+  onNavigationContextChange: (context: NavigationContext | null) => void;
 }) {
   const { refreshCoaches } = useClientCoach();
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
-  const [accepted, setAccepted] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -117,7 +119,6 @@ function ClientShell({
     setMessage('');
     try {
       await acceptCurrentInvite(initData, startParam);
-      setAccepted(true);
       setInvite(null);
       refreshCoaches();
     } catch (error) {
@@ -140,31 +141,31 @@ function ClientShell({
     );
   }
 
-  if (destination === 'programs') return <ClientProgramsPage initData={initData} />;
-
-  if (destination !== 'today') {
-    const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
+  if (destination === 'today') {
     return (
-      <section className="global-placeholder">
-        <h2>{placeholder.title}</h2>
-        <p>{placeholder.text}</p>
-      </section>
+      <TodayPage
+        initData={initData}
+        role="client"
+        onNavigationContextChange={onNavigationContextChange}
+        notice={message}
+      />
     );
   }
 
+  if (destination === 'programs') return <ClientProgramsPage initData={initData} />;
+
+  const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
   return (
-    <section className="card">
-      <div className="eyebrow">Сегодня</div>
-      <h2>{accepted ? 'Готово' : 'Тренировка'}</h2>
-      <p>{accepted ? 'Вы подключены к тренеру. Назначенная программа появится здесь.' : invite === undefined ? 'Проверяем приглашение…' : 'Здесь будет ваша назначенная тренировка.'}</p>
-      {message ? <p className="inline-message">{message}</p> : null}
+    <section className="global-placeholder">
+      <h2>{placeholder.title}</h2>
+      <p>{placeholder.text}</p>
     </section>
   );
 }
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
-  const [coachDestination, setCoachDestination] = useState<AppDestination>('clients');
+  const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [workoutOpen, setWorkoutOpen] = useState(false);
@@ -349,6 +350,7 @@ export function App() {
             initData={state.initData}
             startParam={state.startParam}
             destination={clientDestination}
+            onNavigationContextChange={handleNavigationContextChange}
           />
         )}
       </NavigationShell>

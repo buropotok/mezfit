@@ -61,6 +61,11 @@ export interface NavigationContext {
   onBack?: () => void;
   identity?: MezfitNavbarIdentity;
   menuActions?: readonly NavigationMenuAction[];
+  calendar?: {
+    value: LocalDate;
+    onChange: (date: LocalDate) => void;
+  };
+  contentMode?: 'default' | 'viewport';
 }
 
 interface NavigationItem {
@@ -224,6 +229,9 @@ export function NavigationShell({
     title: context?.title ?? currentItem.label,
     icon: currentItem.icon,
   };
+  const calendarValue = context?.calendar?.value ?? selectedDate;
+  const onCalendarDateChange = context?.calendar?.onChange ?? setSelectedDate;
+  const viewportContent = context?.contentMode === 'viewport';
 
   useEffect(() => {
     setMenuOpen(false);
@@ -386,7 +394,11 @@ export function NavigationShell({
 
         <section
           ref={contentRef}
-          className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}
+          className={[
+            'navigation-content',
+            level === 1 ? 'navigation-content--with-tabs' : '',
+            viewportContent ? 'navigation-content--viewport' : '',
+          ].filter(Boolean).join(' ')}
           onScroll={(event) => {
             scrollPositionsRef.current.set(scrollSurfaceKey, event.currentTarget.scrollTop);
           }}
@@ -425,8 +437,8 @@ export function NavigationShell({
 
         <DatePicker
           opened={calendarOpen}
-          value={selectedDate}
-          onChange={setSelectedDate}
+          value={calendarValue}
+          onChange={onCalendarDateChange}
           onClose={() => setCalendarOpen(false)}
         />
         </main>

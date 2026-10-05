@@ -62,7 +62,7 @@ const draft: DraftWorkoutSession = {
   status: 'draft',
   program: { id: 20, name: 'Силовой блок' },
   phase: { id: 30, name: 'Фаза 1' },
-  suggestedDay: { id: 40, name: 'День B', position: 1, resolution: 'next_incomplete' },
+  suggestedDay: { id: 40, name: 'День B', position: 1, resolution: 'next_incomplete', occurrenceId: null },
   availableDays: [
     { id: 39, name: 'День A', position: 0, completed: true },
     { id: 40, name: 'День B', position: 1, completed: false },
@@ -71,6 +71,7 @@ const draft: DraftWorkoutSession = {
 
 const programSession: ActiveWorkoutSession = {
   sessionId: 501,
+  occurrenceId: null,
   status: 'active',
   workoutDate: '2026-09-15',
   program: { id: 20, name: 'Силовой блок' },
@@ -81,6 +82,7 @@ const programSession: ActiveWorkoutSession = {
 
 const ownSession: ActiveWorkoutSession = {
   sessionId: 501,
+  occurrenceId: null,
   status: 'active',
   workoutDate: '2026-09-15',
   program: null,
@@ -158,7 +160,11 @@ describe('WorkoutSessionScreen', () => {
 
     expect(screen.getByText('Подготавливаем тренировку')).toBeTruthy();
     await screen.findByText('День B');
-    expect(initializeMock).toHaveBeenCalledWith('telegram-init', 20);
+    expect(initializeMock).toHaveBeenCalledWith(
+      'telegram-init',
+      20,
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    );
     expect(onSessionLifecycleChange).toHaveBeenCalledWith({ sessionId: 501, status: 'draft' });
     expect(startMock).not.toHaveBeenCalled();
   });
@@ -175,6 +181,35 @@ describe('WorkoutSessionScreen', () => {
       expect(startMock).toHaveBeenCalledWith('telegram-init', 501, { type: 'program', programDayId: 40 });
     });
     expect(await screen.findByText('Силовой блок · Фаза 1 · День B')).toBeTruthy();
+  });
+
+  it('preserves a scheduled occurrence when starting its suggested program day', async () => {
+    const scheduledDraft: DraftWorkoutSession = {
+      ...draft,
+      suggestedDay: {
+        id: 40,
+        name: 'День B',
+        position: 1,
+        resolution: 'scheduled_today',
+        occurrenceId: 77,
+      },
+    };
+    initializeMock.mockResolvedValue({ session: scheduledDraft });
+    startMock.mockResolvedValue({
+      session: { ...programSession, occurrenceId: 77 },
+    });
+
+    renderScreen();
+    await screen.findByText('День B');
+    fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
+
+    await waitFor(() => {
+      expect(startMock).toHaveBeenCalledWith('telegram-init', 501, {
+        type: 'program',
+        programDayId: 40,
+        occurrenceId: 77,
+      });
+    });
   });
 
   it('starts an own workout without requesting or rendering program PLAN/PREVIOUS data', async () => {

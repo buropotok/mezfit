@@ -284,6 +284,33 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(pageAction).toHaveBeenCalledTimes(1);
   });
 
+  it('lets a level-one schedule own viewport layout and navbar calendar state', () => {
+    const onCalendarDateChange = vi.fn();
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={{
+          level: 1,
+          title: 'Пн, 5 октября',
+          identity: { title: 'Пн, 5 октября', icon: 'calendar-event' },
+          calendar: { value: '2026-10-05', onChange: onCalendarDateChange },
+          contentMode: 'viewport',
+        }}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Schedule content</div>
+      </NavigationShell>,
+    );
+
+    expect(view.container.querySelector('.navigation-content')?.classList.contains('navigation-content--viewport')).toBe(true);
+    const identity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
+    expect(identity?.getAttribute('aria-label')).toBe('Пн, 5 октября');
+    expect(view.getByRole('button', { name: 'Открыть календарь' })).not.toBeNull();
+  });
+
   it('opens the page menu only after the shared double-action animation completes', () => {
     const view = render(
       <NavigationShell

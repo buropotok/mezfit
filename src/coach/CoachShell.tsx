@@ -13,6 +13,7 @@ import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs,
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
+import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
 
 type ClientTab = 'overview' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
@@ -27,7 +28,6 @@ const tabs: Array<{ id: ClientTab; label: string }> = [
 ];
 
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
-  today: { title: 'Сегодня', text: 'Здесь появится сводка тренера на сегодня: тренировки, задачи и ближайшие события.' },
   analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика клиентов, тренировок и нагрузки.' },
   calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
   settings: { title: 'Настройки', text: 'Системные настройки будут добавляться отдельными задачами.' },
@@ -254,8 +254,8 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }, []);
 
   useEffect(() => {
-    void loadClients();
-  }, [loadClients]);
+    if (destination === 'clients' || destination === 'programs') void loadClients();
+  }, [destination, loadClients]);
 
   useEffect(() => {
     programClientRequestRef.current += 1;
@@ -280,7 +280,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     }
 
     if (!selectedClient) {
-      if (destination !== 'exercises') onNavigationContextChange(null);
+      if (destination !== 'exercises' && destination !== 'today') onNavigationContextChange(null);
       return undefined;
     }
 
@@ -302,6 +302,16 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
   if (selectedClient) {
     return <ClientWorkspace initData={initData} client={selectedClient} />;
+  }
+
+  if (destination === 'today') {
+    return (
+      <TodayPage
+        initData={initData}
+        role="coach"
+        onNavigationContextChange={onNavigationContextChange}
+      />
+    );
   }
 
   if (destination === 'exercises') {
