@@ -328,37 +328,22 @@ export function DatePicker({
 
   return (
     <>
-      {surface === 'panel' ? (
-        <MezfitSidePanel
-          side="right"
-          opened={effectiveSurfaceOpened}
-          floating
-          backdrop
-          onBackdropClick={yearPopoverRequested ? undefined : onClose}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Выбор даты"
-        >
-          {calendarContent}
-        </MezfitSidePanel>
-      ) : (
-        <>
-          <div
-            className={`ui-date-picker__bare-backdrop${effectiveSurfaceOpened ? ' ui-date-picker__bare-backdrop--opened' : ''}`}
-            onClick={yearPopoverRequested ? undefined : onClose}
-            aria-hidden="true"
-          />
-          <div
-            className={`ui-date-picker__bare-surface${effectiveSurfaceOpened ? ' ui-date-picker__bare-surface--opened' : ' invisible'}`}
-            data-date-picker-surface="bare"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Выбор даты"
-          >
-            {calendarContent}
-          </div>
-        </>
-      )}
+      <MezfitSidePanel
+        side="right"
+        opened={effectiveSurfaceOpened}
+        floating
+        backdrop
+        surface={surface === 'bare' ? 'bare' : 'glass'}
+        backdropClassName={surface === 'bare' ? 'ui-date-picker__bare-backdrop' : undefined}
+        className={surface === 'bare' ? 'ui-date-picker__bare-surface' : undefined}
+        data-date-picker-surface={surface}
+        onBackdropClick={yearPopoverRequested ? undefined : onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Выбор даты"
+      >
+        {calendarContent}
+      </MezfitSidePanel>
 
       <MezfitPopover
         opened={effectiveYearPopoverOpened}
