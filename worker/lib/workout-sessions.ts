@@ -292,6 +292,57 @@ export async function resolveWorkoutProgram(
   };
 }
 
+async function scheduledOccurrenceForLocalDate(
+  db: D1Database,
+  userId: number,
+  localDate: string | null,
+  requestedTrainingPlanId: number | null,
+): Promise<ScheduledOccurrenceRow | null> {
+  if (!localDate) return null;
+  const calendarDay = parseCalendarDay(localDate);
+  if (!calendarDay) return null;
+
+  const planFilter = requestedTrainingPlanId === null ? '' : 'AND plan.id = ?';
+  const statement = db.prepare(`
+    SELECT
+      occurrence.id AS occurrence_id,
+      program_day.id AS program_day_id,
+      program_day.name AS day_name,
+      program_day.position AS day_position,
+      phase.id AS phase_id,
+      phase.name AS phase_name,
+      plan.id AS program_id,
+      plan.name AS program_name,
+      COALESCE(plan.owner_coach_user_id, plan.created_by_user_id) AS coach_user_id
+    FROM workout_occurrence occurrence
+    JOIN program_day
+      ON program_day.id = occurrence.program_day_id
+     AND program_day.status = 'active'
+    JOIN program_phase phase
+      ON phase.id = program_day.program_phase_id
+     AND phase.status = 'active'
+    JOIN training_plan plan
+      ON plan.id = phase.training_plan_id
+     AND plan.user_id = occurrence.client_user_id
+    JOIN coach_client relationship
+      ON relationship.coach_user_id = occurrence.coach_user_id
+     AND relationship.client_user_id = occurrence.client_user_id
+     AND relationship.status = 'active'
+    WHERE occurrence.client_user_id = ?
+      AND occurrence.calendar_date_key = ?
+      AND occurrence.status = 'scheduled'
+      ${planFilter}
+    ORDER BY occurrence.start_minute, occurrence.id
+    LIMIT 2
+  `);
+
+  const result = requestedTrainingPlanId === null
+    ? await statement.bind(userId, calendarDay.dateKey).all<ScheduledOccurrenceRow>()
+    : await statement.bind(userId, calendarDay.dateKey, requestedTrainingPlanId).all<ScheduledOccurrenceRow>();
+
+  return result.results.length === 1 ? result.results[0] : null;
+}
+
 async function listPhaseDays(db: D1Database, userId: number, phaseId: number): Promise<WorkoutDayOption[]> {
   const result = await db
     .prepare(`
@@ -323,7 +374,7 @@ async function listPhaseDays(db: D1Database, userId: number, phaseId: number): P
 async function openSession(db: D1Database, userId: number): Promise<WorkoutSessionRow | null> {
   return db
     .prepare(`
-      SELECT id, user_id, source_program_phase_id, source_program_day_id, status, started_at, created_at
+      SELECT id, user_id, source_program_phase_id, source_program_day_id, occurrence_id, status, started_at, created_at
       FROM workout_session
       WHERE user_id = ? AND status IN ('draft', 'active')
       ORDER BY id DESC
@@ -337,6 +388,7 @@ export async function initializeWorkoutSession(
   db: D1Database,
   userId: number,
   requestedTrainingPlanId: number | null,
+  localDate: string | null = null,
 ): Promise<{ kind: 'ok'; session: WorkoutInitializeResult } | { kind: 'program_not_found' } | { kind: 'program_selection_required'; programs: WorkoutProgramSummary[] }> {
   const existing = await openSession(db, userId);
   if (existing?.status === 'active') {
@@ -345,14 +397,30 @@ export async function initializeWorkoutSession(
     return { kind: 'ok', session };
   }
 
-  const resolution = await resolveWorkoutProgram(db, userId, requestedTrainingPlanId);
+  const scheduledOccurrence = await scheduledOccurrenceForLocalDate(
+    db,
+    userId,
+    localDate,
+    requestedTrainingPlanId,
+  );
+  const resolution: WorkoutProgramResolution = scheduledOccurrence
+    ? {
+        kind: 'selected',
+        program: { id: scheduledOccurrence.program_id, name: scheduledOccurrence.program_name },
+        phase: { id: scheduledOccurrence.phase_id, name: scheduledOccurrence.phase_name },
+        coachUserId: scheduledOccurrence.coach_user_id,
+      }
+    : await resolveWorkoutProgram(db, userId, requestedTrainingPlanId);
   if (resolution.kind === 'not_found') return { kind: 'program_not_found' };
   if (resolution.kind === 'ambiguous') return { kind: 'program_selection_required', programs: resolution.programs };
 
   const program = resolution.kind === 'selected' ? resolution.program : null;
   const phase = resolution.kind === 'selected' ? resolution.phase : null;
   const days = phase ? await listPhaseDays(db, userId, phase.id) : [];
-  const suggested = days.find((day) => !day.completed) ?? null;
+  const scheduledDay = scheduledOccurrence
+    ? days.find((day) => day.id === scheduledOccurrence.program_day_id) ?? null
+    : null;
+  const suggested = scheduledDay ?? days.find((day) => !day.completed) ?? null;
 
   let draft = existing?.status === 'draft' ? existing : null;
   if (!draft) {
@@ -361,7 +429,7 @@ export async function initializeWorkoutSession(
         INSERT OR IGNORE INTO workout_session (
           user_id, source_program_phase_id, source_program_day_id, started_by_user_id, status, started_at, completed_at
         ) VALUES (?, ?, ?, ?, 'draft', NULL, NULL)
-        RETURNING id, user_id, source_program_phase_id, source_program_day_id, status, started_at, created_at
+        RETURNING id, user_id, source_program_phase_id, source_program_day_id, occurrence_id, status, started_at, created_at
       `)
       .bind(userId, null, null, userId)
       .first<WorkoutSessionRow>();
@@ -401,7 +469,13 @@ export async function initializeWorkoutSession(
       status: 'draft',
       program,
       phase,
-      suggestedDay: suggested ? { ...suggested, resolution: 'next_incomplete' } : null,
+      suggestedDay: suggested
+        ? {
+            ...suggested,
+            resolution: scheduledDay ? 'scheduled_today' : 'next_incomplete',
+            occurrenceId: scheduledDay ? scheduledOccurrence?.occurrence_id ?? null : null,
+          }
+        : null,
       availableDays: days,
     },
   };
