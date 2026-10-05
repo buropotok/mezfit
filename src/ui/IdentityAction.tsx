@@ -15,7 +15,7 @@ import {
 } from 'react';
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName, type UiIconVariant } from './Icon';
-import type { GlassPresetName } from './glassMaterial';
+import type { GlassMaterialOverrides, GlassPresetName } from './glassMaterial';
 import { Avatar, Text } from './primitives';
 import './identity-action.css';
 
@@ -49,6 +49,8 @@ type IdentityActionBaseProps = {
   surfaceRef?: Ref<HTMLElement>;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
+  glass?: GlassMaterialOverrides;
+  glassBezelOpacity?: number;
   disabled?: boolean;
 };
 
@@ -93,6 +95,8 @@ export function IdentityAction(props: IdentityActionProps) {
     variant = 'labeled',
     glassPreset,
     glassOptics = false,
+    glass,
+    glassBezelOpacity = 1,
     disabled = false,
   } = props;
   const [isAnimating, setIsAnimating] = useState(false);
@@ -190,6 +194,8 @@ export function IdentityAction(props: IdentityActionProps) {
         ref={setSurfaceRef}
         preset={glassPreset}
         optics={glassOptics}
+        glass={glass}
+        bezelOpacity={glassBezelOpacity}
         wrapContent={false}
         className={className}
         onPointerDown={handlePointerDown}
@@ -244,6 +250,8 @@ export function IdentityAction(props: IdentityActionProps) {
       ref={setSurfaceRef}
       preset={glassPreset}
       optics={glassOptics}
+      glass={glass}
+      bezelOpacity={glassBezelOpacity}
       wrapContent={false}
       className={className}
       aria-label={ariaLabel ?? title}

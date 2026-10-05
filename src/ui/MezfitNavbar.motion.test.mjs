@@ -5,28 +5,30 @@ const navbarCss = readFileSync(
   new URL('./mezfit-navbar.css', import.meta.url),
   'utf8',
 );
+const metaballCss = readFileSync(
+  new URL('./NavbarMetaball.css', import.meta.url),
+  'utf8',
+);
+const metaballSource = readFileSync(
+  new URL('./NavbarMetaball.tsx', import.meta.url),
+  'utf8',
+);
 
 describe('MezfitNavbar back button motion', () => {
-  it('parks the hidden Back control under the identity visual and makes it fully transparent', () => {
-    const layoutRule = navbarCss.match(/\.ui-mezfit-navbar__layout \{[^}]*\}/)?.[0];
-    const hiddenBackRule = navbarCss.match(/\.ui-mezfit-navbar__side--left \{[^}]*\}/)?.[0];
-
-    expect(layoutRule).toContain('--ui-mezfit-navbar-identity-width: min(224px, calc(100% - 164px))');
-    expect(layoutRule).toContain('--ui-mezfit-navbar-identity-half-width: min(112px, calc(50% - 82px))');
-    expect(hiddenBackRule).toContain('left: calc(50% - 22px - var(--ui-mezfit-navbar-identity-half-width))');
-    expect(hiddenBackRule).toContain('transform: translateX(0)');
-    expect(hiddenBackRule).toContain('opacity: 0');
+  it('moves Back/identity ownership out of the old linear CSS transition', () => {
+    expect(navbarCss).not.toContain('.ui-mezfit-navbar__side--left {');
+    expect(navbarCss).not.toContain('opacity 320ms');
+    expect(navbarCss).not.toContain('--ui-mezfit-navbar-identity-half-width');
+    expect(navbarCss).toContain('.ui-mezfit-navbar__side--right {');
   });
 
-  it('uses the same 320ms easing for Back movement and visibility in both directions', () => {
-    const movingRule = navbarCss.match(/\.ui-mezfit-navbar__identity,\n\.ui-mezfit-navbar__side \{[^}]*\}/)?.[0];
-    const visibleBackRule = navbarCss.match(/\.ui-mezfit-navbar__layout\[data-entry-phase='spread'\] \.ui-mezfit-navbar__side--left,[\s\S]*?\{[^}]*\}/)?.[0];
+  it('keeps liquid visuals non-interactive while IdentityAction owns controls', () => {
+    const liquidRule = metaballCss.match(/\.ui-navbar-metaball__liquid \{[^}]*\}/)?.[0];
+    const identityRule = metaballCss.match(/\.ui-navbar-metaball__identity-slot \{[^}]*\}/)?.[0];
 
-    expect(movingRule).toContain('left 320ms cubic-bezier(0.2, 0, 0, 1)');
-    expect(movingRule).toContain('transform 320ms cubic-bezier(0.2, 0, 0, 1)');
-    expect(movingRule).toContain('opacity 320ms cubic-bezier(0.2, 0, 0, 1)');
-    expect(visibleBackRule).toContain('left: 0');
-    expect(visibleBackRule).toContain('transform: translateX(0)');
-    expect(visibleBackRule).toContain('opacity: 1');
+    expect(liquidRule).toContain('pointer-events: none');
+    expect(identityRule).toContain('pointer-events: auto');
+    expect(metaballSource).toContain('<IdentityAction');
+    expect(metaballSource).toContain('glass={movingGlass}');
   });
 });

@@ -1,13 +1,11 @@
 import { cloneElement, useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode, type Ref } from 'react';
-import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
-import type { UiIconName } from './Icon';
+import { IdentityAction } from './IdentityAction';
+import { NavbarMetaball, type NavbarMetaballIdentity } from './NavbarMetaball';
 import type { GlassPresetName } from './glassMaterial';
 import { MEZFIT_NAVBAR_GLASS_PRESET } from './mezfitNavbarConfig';
 import './mezfit-navbar.css';
 
-export type MezfitNavbarIdentity =
-  | { title: string; icon: UiIconName; avatar?: never }
-  | { title: string; avatar: IdentityActionAvatar; icon?: never };
+export type MezfitNavbarIdentity = NavbarMetaballIdentity;
 
 export type MezfitNavbarProps = {
   level: 1 | 2;
@@ -69,47 +67,14 @@ export function MezfitNavbar({
           data-level={level}
           data-entry-phase={entryPhase}
         >
-          <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--left" aria-hidden={level === 1 || undefined}>
-            <IdentityAction
-              variant="single"
-              icon="chevron-left"
-              iconVariant="outline"
-              iconSize={32}
-              title="Назад"
-              aria-label="Назад"
-              glassPreset={glassPreset}
-              glassOptics={glassOptics}
-              onClick={level === 2 ? onBack : undefined}
-            />
-          </div>
-
-          <div className="ui-mezfit-navbar__identity">
-            {identity.icon ? (
-              <IdentityAction
-                variant="labeled"
-                icon={identity.icon}
-                iconVariant="outline"
-                iconSize={32}
-                title={identity.title}
-                titleRole="headline"
-                width="100%"
-                glassPreset={glassPreset}
-                glassOptics={glassOptics}
-                onClick={onIdentityClick}
-              />
-            ) : (
-              <IdentityAction
-                variant="labeled"
-                avatar={identity.avatar}
-                title={identity.title}
-                titleRole="headline"
-                width="100%"
-                glassPreset={glassPreset}
-                glassOptics={glassOptics}
-                onClick={onIdentityClick}
-              />
-            )}
-          </div>
+          <NavbarMetaball
+            level={level}
+            identity={identity}
+            onBack={onBack}
+            onIdentityClick={onIdentityClick}
+            glassPreset={glassPreset}
+            glassOptics={glassOptics}
+          />
 
           <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right" style={rightControlHidden ? { visibility: 'hidden' } : undefined}>
             <IdentityAction
