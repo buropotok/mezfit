@@ -1,12 +1,16 @@
 // Konsta 5.4.0 Mezfit edition: preserve Searchbar mechanics; replace only Konsta Glass with GlassSurface.
 import {
+  forwardRef,
   useEffect,
   useRef,
   useState,
+  type ButtonHTMLAttributes,
+  type ChangeEvent,
   type ComponentProps,
   type ElementType,
   type FocusEvent,
   type FormEvent,
+  type MouseEvent,
   type PointerEvent,
 } from 'react';
 import {
@@ -74,29 +78,40 @@ function DeleteIcon({
   return theme === 'ios' ? (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 56 56"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
       fill="currentcolor"
       className={className}
       aria-hidden="true"
     >
-      <path d="M 28 51.9062 C 41.0781 51.9062 51.9062 41.0547 51.9062 28 C 51.9062 14.9219 41.0547 4.0938 27.9766 4.0938 C 14.9219 4.0938 4.0938 14.9219 4.0938 28 C 4.0938 41.0547 14.9453 51.9062 28 51.9062 Z M 19.2109 39.25 C 17.9453 39.25 16.9609 38.2656 16.9609 37 C 16.9609 36.4141 17.1953 35.875 17.6172 35.4531 L 25.0703 28 L 17.6172 20.5469 C 17.1953 20.125 16.9609 19.5625 16.9609 19 C 16.9609 17.7344 17.9453 16.75 19.2109 16.75 C 19.7969 16.75 20.3359 16.9609 20.7578 17.3828 L 28.2109 24.8594 L 35.7109 17.3594 C 36.1562 16.9141 36.6719 16.7031 37.2578 16.7031 C 38.5234 16.7031 39.5078 17.6875 39.5078 18.9531 C 39.5078 19.5391 39.2969 20.0547 38.8516 20.5 L 31.375 28 L 38.8281 35.4297 C 39.25 35.875 39.4844 36.3906 39.4844 36.9766 C 39.4844 38.2422 38.5 39.2266 37.2344 39.2266 C 36.6484 39.2266 36.1328 39.0156 35.6875 38.5703 L 28.2109 31.1172 L 20.7578 38.5703 C 20.3359 39.0156 19.7969 39.25 19.2109 39.25 Z" />
+      <path d="M14,0 C21.7319865,0 28,6.2680135 28,14 C28,21.7319865 21.7319865,28 14,28 C6.2680135,28 0,21.7319865 0,14 C0,6.2680135 6.2680135,0 14,0 Z M18.9393398,6.93933983 L14,11.8786797 L9.06066017,6.93933983 L6.93933983,9.06066017 L11.8786797,14 L6.93933983,18.9393398 L9.06066017,21.0606602 L14,16.1213203 L18.9393398,21.0606602 L21.0606602,18.9393398 L16.1213203,14 L21.0606602,9.06066017 L18.9393398,6.93933983 Z" />
     </svg>
   ) : (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      fill="currentcolor"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
     >
-      <path d="M18.3 5.71 12 12l6.3 6.29-1.42 1.42L10.59 13.41 4.29 19.71 2.88 18.3 9.17 12 2.88 5.71 4.29 4.29 10.59 10.59 16.88 4.29z" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.47 2 2 6.47 2 12C2 17.53 6.47 22 12 22C17.53 22 22 17.53 22 12C22 6.47 17.53 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12 10.59L15.59 7L17 8.41L13.41 12L17 15.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59Z"
+        fill="currentcolor"
+      />
     </svg>
   );
 }
+
+const SearchbarGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
+  (props, ref) => <button ref={ref} type="button" {...props} />,
+);
+
+SearchbarGlassButton.displayName = 'SearchbarGlassButton';
 
 function BackIcon({ className }: { className?: string }) {
   return (
@@ -156,7 +171,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     onInput?.(event);
   };
 
-  const handleChange = (event: FormEvent<HTMLInputElement>) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange?.(event);
   };
 
@@ -185,7 +200,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     if (disableTimeout.current !== null) clearTimeout(disableTimeout.current);
   }, []);
 
-  const handleDisableButton = (event: PointerEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>) => {
+  const handleDisableButton = (event: PointerEvent<HTMLButtonElement> | MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     setIsEnabled(false);
     searchElRef.current?.blur();
@@ -209,9 +224,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
 
   const cancelButton = theme === 'ios' ? (
     <GlassSurface
-      component="button"
-      type="button"
-      ref={undefined}
+      component={SearchbarGlassButton}
       style={{
         marginRight: isEnabled ? 0 : `-${48 + 16}px`,
         marginLeft: isEnabled ? '16px' : 0,
