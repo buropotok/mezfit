@@ -103,10 +103,12 @@ export function TodayPage({
   initData,
   role,
   onNavigationContextChange,
+  notice = '',
 }: {
   initData: string;
   role: Role;
   onNavigationContextChange: (context: NavigationContext | null) => void;
+  notice?: string;
 }) {
   const [date, setDate] = useState<LocalDate>(() => currentLocalDate());
   const [occurrencesByDate, setOccurrencesByDate] = useState<Record<LocalDate, ScheduleOccurrence[]>>({});
@@ -271,10 +273,10 @@ export function TodayPage({
         }}
       />
 
-      {loadingToday || error ? (
+      {loadingToday || error || notice ? (
         <div className="today-page__status" aria-live="polite">
           <Text variant="footnote" tone="muted">
-            {error || 'Загружаем расписание…'}
+            {error || notice || 'Загружаем расписание…'}
           </Text>
         </div>
       ) : null}
