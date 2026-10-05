@@ -506,10 +506,11 @@ describe('DaySchedule', () => {
     expect(deleted).toHaveBeenCalledWith({ eventId: 'editable', date: '2026-09-28' });
   });
 
-  it('does not start drag, resize, or delete flow for a non-editable event', () => {
+  it('does not start drag, resize, or delete flow for a non-editable event while preserving normal clicks', () => {
     const moved = vi.fn();
     const resized = vi.fn();
     const deleted = vi.fn();
+    const clicked = vi.fn();
     const view = render(
       <KonstaProvider theme="ios" dark>
         <DaySchedule
@@ -521,7 +522,7 @@ describe('DaySchedule', () => {
           onEventMove={moved}
           onEventResize={resized}
           onEventDelete={deleted}
-          renderEvent={event => <button type="button">{event.id}</button>}
+          renderEvent={event => <button type="button" onClick={() => clicked(event.id)}>{event.id}</button>}
         />
       </KonstaProvider>,
     );
@@ -537,6 +538,9 @@ describe('DaySchedule', () => {
     expect(view.container.querySelector('.ui-day-schedule__drag-overlay')).toBeNull();
     expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
     expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
+
+    fireEvent.click(view.getByRole('button', { name: 'locked' }));
+    expect(clicked).toHaveBeenCalledWith('locked');
 
     fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
     fireEvent.pointerDown(frame, { pointerId: 46, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
