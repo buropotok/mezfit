@@ -5,10 +5,11 @@ export const FAB_METABALL = Object.freeze({
 });
 
 // Reserve the complete motion, including the day capsule's recoil, in CSS pixels.
-export const FAB_METABALL_STAGE_WIDTH = 2 * FAB_METABALL.width + FAB_METABALL.distance
+export const fabStageWidth = (dayWidth: number, phaseWidth: number) => dayWidth + phaseWidth + FAB_METABALL.distance
   - FAB_METABALL.height + FAB_METABALL.phaseRecoil + FAB_METABALL.dayRecoil;
+export const FAB_METABALL_STAGE_WIDTH = fabStageWidth(FAB_METABALL.width, FAB_METABALL.width);
 
-export type FabLayout = { width: number; sourceSize: number };
+export type FabLayout = { width: number; sourceSize: number; dayWidth?: number; phaseWidth?: number };
 type Point = { x: number; y: number };
 type Capsule = Point & { width: number; height: number; tailHeight: number };
 export type FabGeometry = { day: Capsule; phase: Capsule; base: Point };
@@ -17,21 +18,24 @@ export const smoothFab = (x: number) => { const p = clamp(x); return p * p * (3 
 
 export function fabGeometry(time: number, layout: FabLayout, shift = 0, dayShift = 0): FabGeometry {
   const c = FAB_METABALL;
-  const width = c.width;
-  const separation = (width + c.distance - c.height) * smoothFab(time / 0.86);
+  const dayTarget = layout.dayWidth ?? c.width, phaseTarget = layout.phaseWidth ?? c.width;
+  const travel = smoothFab(time / 0.86);
+  const separation = ((dayTarget + phaseTarget) / 2 + c.distance - c.height) * travel;
   const initial = layout.sourceSize * 0.2;
   const exit = (layout.sourceSize + initial) / 2;
-  const full = width - initial * 0.6;
-  const growth = clamp((separation - exit) / (full - exit));
+  const full = c.width - initial * 0.6;
+  // Keep the tuned inflation timing independent of the labels' eventual widths.
+  const inflationTravel = (c.width + c.distance - c.height) * travel;
+  const growth = clamp((inflationTravel - exit) / (full - exit));
   const phaseGrowth = smoothFab((growth - c.delay) / (1 - c.delay));
-  const phaseWidth = layout.sourceSize + (width - layout.sourceSize) * phaseGrowth;
+  const phaseWidth = layout.sourceSize + (phaseTarget - layout.sourceSize) * phaseGrowth;
   const phaseHeight = layout.sourceSize + (c.height - layout.sourceSize) * phaseGrowth;
   const exponent = 1 + c.dropLead * 2;
   const height = initial + (c.height - initial) * (1 - (1 - growth) ** exponent);
   const tailHeight = initial + (c.height - initial) * growth ** exponent;
-  let dayWidth = initial + (width - initial) * growth;
+  let dayWidth = initial + (dayTarget - initial) * growth;
   if (growth > 0 && growth < 1) {
-    dayWidth = Math.min(width, Math.max(dayWidth, 2 * separation - phaseWidth + initial * 0.6 * growth));
+    dayWidth = Math.min(dayTarget, Math.max(dayWidth, 2 * separation - phaseWidth + initial * 0.6 * growth));
   }
   dayWidth = Math.max(dayWidth, height);
   const base = { x: layout.width - layout.sourceSize / 2, y: layout.sourceSize / 2 };
