@@ -152,8 +152,8 @@ export function DatePicker({
   const safeSelectedDate = selectedDate ?? { year: safeMinYear, month: 1, day: 1 };
 
   const [visibleYear, setVisibleYear] = useState(() => clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
-  const [surfaceContentReady, setPanelContentReady] = useState(false);
-  const [surfaceReadyToOpen, setPanelReadyToOpen] = useState(false);
+  const [surfaceContentReady, setSurfaceContentReady] = useState(false);
+  const [surfaceReadyToOpen, setSurfaceReadyToOpen] = useState(false);
   const [yearPopoverRequested, setYearPopoverRequested] = useState(false);
   const [yearPopoverContentReady, setYearPopoverContentReady] = useState(false);
   const [yearPopoverReadyToOpen, setYearPopoverReadyToOpen] = useState(false);
@@ -190,12 +190,12 @@ export function DatePicker({
     if (surfaceReadyToOpen) return;
 
     if (!surfaceContentReady) {
-      setPanelContentReady(true);
+      setSurfaceContentReady(true);
       return;
     }
 
     const frame = window.requestAnimationFrame(() => {
-      setPanelReadyToOpen(true);
+      setSurfaceReadyToOpen(true);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [opened, surfaceContentReady, surfaceReadyToOpen]);
@@ -349,7 +349,7 @@ export function DatePicker({
             aria-hidden="true"
           />
           <div
-            className={`ui-date-picker__bare-surface${effectiveSurfaceOpened ? ' ui-date-picker__bare-surface--opened' : ''}`}
+            className={`ui-date-picker__bare-surface${effectiveSurfaceOpened ? ' ui-date-picker__bare-surface--opened' : ' invisible'}`}
             data-date-picker-surface="bare"
             role="dialog"
             aria-modal="true"
