@@ -1,6 +1,5 @@
 .ui-fab.ui-fab-metaball {
-  width: 317px;
-  max-width: calc(100vw - 2rem);
+  width: var(--ui-fab-metaball-width);
   cursor: default;
   background: transparent;
   border-radius: 0;
