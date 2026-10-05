@@ -96,6 +96,12 @@ export function NavbarMetaball({
   );
   const contour = useMemo(() => navbarMetaballContour(geometry), [geometry]);
   const backReveal = navbarBackReveal(time, rupture);
+  const backSlotShape = {
+    x: geometry.day.x,
+    y: geometry.day.y,
+    width: NAVBAR_METABALL.backSize,
+    height: NAVBAR_METABALL.backSize,
+  };
 
   useLayoutEffect(() => {
     const element = rootRef.current;
@@ -249,7 +255,7 @@ export function NavbarMetaball({
         className="ui-mezfit-navbar__side--left ui-navbar-metaball__back-slot"
         aria-hidden={level === 1 || undefined}
         style={{
-          ...shapeStyle(geometry.day),
+          ...shapeStyle(backSlotShape),
           opacity: backReveal,
           visibility: atIdentity ? 'hidden' : 'visible',
           pointerEvents: atLevelTwo ? 'auto' : 'none',
