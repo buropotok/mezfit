@@ -10,7 +10,7 @@ import {
 export const NAVBAR_METABALL = Object.freeze({
   duration: FAB_METABALL.duration,
   backSize: 44,
-  backRecoil: 4,
+  backRecoil: FAB_METABALL.dayRecoil,
   bezelRevealDuration: 120,
 });
 
@@ -18,6 +18,10 @@ export type NavbarMetaballLayout = {
   width: number;
   identityWidth: number;
 };
+
+export const navbarIdentityWidth = (width: number) => (
+  Math.max(NAVBAR_METABALL.backSize, Math.min(224, width - 164))
+);
 
 const clampIdentityWidth = (layout: NavbarMetaballLayout) => (
   Math.max(NAVBAR_METABALL.backSize, Math.min(layout.identityWidth, layout.width))
