@@ -186,6 +186,11 @@ export function LiquidPopover({
 
   useLayoutEffect(() => {
     if (!isOpen || !host || !positioned) {
+      // Clear the previous handoff before the browser can paint an opening
+      // surface, even while MezfitPopover is still measuring its position.
+      if (nativeRef.current) nativeRef.current.style.opacity = '0';
+      if (glassRef.current) glassRef.current.style.opacity = '0';
+      if (canvasRef.current) canvasRef.current.style.opacity = '0';
       if (!isOpen) setPositioned(false);
       setSettled(false);
       return;
