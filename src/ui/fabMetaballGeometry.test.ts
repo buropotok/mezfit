@@ -1,7 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { FAB_METABALL_STAGE_WIDTH, fabBezelHighlights, fabContour, fabFrame, fabGeometry, fabJoined, fabRupture } from './fabMetaballGeometry';
+import { FAB_METABALL_STAGE_WIDTH, fabBezelHighlights, fabContour, fabFrame, fabGeometry, fabJoined, fabRupture, fabStageWidth } from './fabMetaballGeometry';
 
 describe('FAB metaball invariants', () => {
+  it.each([[180, 100], [100, 260], [400, 600]])('preserves full height, gap and recoil for independent widths %i/%i', (dayWidth, phaseWidth) => {
+    const layout = { width: fabStageWidth(dayWidth, phaseWidth), sourceSize: 56, dayWidth, phaseWidth };
+    const reference = { width: FAB_METABALL_STAGE_WIDTH, sourceSize: 56 };
+    const rupture = fabRupture(layout);
+    expect(rupture).toBeCloseTo(fabRupture(reference), 5);
+    const initial = fabGeometry(0, layout);
+    expect(initial.day.x).toBe(initial.phase.x);
+    expect(initial.day.height).toBeCloseTo(11.2);
+    const atRupture = fabFrame(rupture, layout, rupture);
+    expect(atRupture.day.height).toBe(44);
+    expect(atRupture.day.tailHeight).toBe(44);
+    expect(atRupture.phase.height).toBe(44);
+    const final = fabFrame(1, layout, rupture), nominal = fabGeometry(1, reference);
+    expect(final.day.width).toBe(dayWidth);
+    expect(final.phase.width).toBe(phaseWidth);
+    expect(final.phase.x - phaseWidth / 2 - final.day.x - dayWidth / 2)
+      .toBeCloseTo(nominal.phase.x - nominal.phase.width / 2 - nominal.day.x - nominal.day.width / 2);
+    expect(final.day.x - dayWidth / 2).toBeCloseTo(5.5);
+    expect(final.phase.x + phaseWidth / 2).toBe(layout.width);
+    const peak = rupture + 45 / 450;
+    expect(fabFrame(peak, layout, rupture).day.x - fabGeometry(peak, layout).day.x).toBeCloseTo(-5.5);
+  });
+
+
   it('coincident sources have exactly the source FAB silhouette', () => {
     const g = fabGeometry(0, { width: 317, sourceSize: 56 });
     expect(g.day.height).toBeCloseTo(11.2);

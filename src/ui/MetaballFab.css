@@ -52,7 +52,7 @@
 .ui-fab-metaball__hitbox:disabled { pointer-events: none; }
 .ui-fab-metaball__hitbox:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
-.ui-fab-metaball__label { display: flex; align-items: center; gap: 4px; }
+.ui-fab-metaball__label { display: flex; align-items: center; gap: 4px; width: max-content; }
 .ui-fab-metaball__label[data-disabled] { opacity: .5; }
 
 .ui-fab-metaball--left .ui-fab-metaball__source { left: 0; right: auto; }
