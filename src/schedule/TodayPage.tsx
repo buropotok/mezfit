@@ -67,6 +67,10 @@ function addLoadedRange(ranges: readonly DateRange[], next: DateRange): DateRang
   return [...untouched, merged];
 }
 
+function removePendingRange(ranges: readonly DateRange[], target: DateRange): DateRange[] {
+  return ranges.filter((range) => range.from !== target.from || range.to !== target.to);
+}
+
 function replaceRange(
   current: Readonly<Record<LocalDate, readonly ScheduleOccurrence[]>>,
   range: DateRange,
@@ -109,6 +113,7 @@ export function TodayPage({
   const [loadingToday, setLoadingToday] = useState(true);
   const [error, setError] = useState('');
   const loadedRangesRef = useRef<DateRange[]>([]);
+  const pendingRangesRef = useRef<DateRange[]>([]);
   const requestGenerationRef = useRef(0);
   const initialLoadSettledRef = useRef(false);
 
@@ -141,6 +146,7 @@ export function TodayPage({
     setError('');
     setLoadingToday(true);
     loadedRangesRef.current = [];
+    pendingRangesRef.current = [];
     initialLoadSettledRef.current = false;
 
     const load = async () => {
@@ -166,6 +172,7 @@ export function TodayPage({
       }
 
       if (controller.signal.aborted || requestGenerationRef.current !== generation) return;
+      pendingRangesRef.current = addLoadedRange(pendingRangesRef.current, windowRange);
 
       try {
         const { occurrences } = await getScheduleOccurrences(
@@ -182,6 +189,8 @@ export function TodayPage({
       } catch (loadError) {
         if (controller.signal.aborted) return;
         setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить календарь');
+      } finally {
+        pendingRangesRef.current = removePendingRange(pendingRangesRef.current, windowRange);
       }
     };
 
@@ -190,7 +199,11 @@ export function TodayPage({
   }, [initData, role]);
 
   useEffect(() => {
-    if (!initialLoadSettledRef.current || includesDate(loadedRangesRef.current, date)) return undefined;
+    if (
+      !initialLoadSettledRef.current
+      || includesDate(loadedRangesRef.current, date)
+      || includesDate(pendingRangesRef.current, date)
+    ) return undefined;
 
     const generation = requestGenerationRef.current;
     const controller = new AbortController();
@@ -198,6 +211,7 @@ export function TodayPage({
       from: addLocalDays(date, -CACHE_RADIUS_DAYS),
       to: addLocalDays(date, CACHE_RADIUS_DAYS),
     };
+    pendingRangesRef.current = addLoadedRange(pendingRangesRef.current, range);
 
     getScheduleOccurrences(initData, role, range.from, range.to, controller.signal)
       .then(({ occurrences }) => {
@@ -209,6 +223,9 @@ export function TodayPage({
       .catch((loadError: unknown) => {
         if (controller.signal.aborted) return;
         setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить календарь');
+      })
+      .finally(() => {
+        pendingRangesRef.current = removePendingRange(pendingRangesRef.current, range);
       });
 
     return () => controller.abort();
