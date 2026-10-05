@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { GlassSurface } from './GlassSurface';
+import { GlassContourBezel, GlassSurface } from './GlassSurface';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('GlassSurface contour', () => {
@@ -40,4 +40,24 @@ describe('GlassSurface contour', () => {
     expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
     surface.querySelectorAll('path').forEach(path => expect(path.getAttribute('d')).toBe('M0,0H56V56H0Z'));
   });
+
+  it('clips localized bezel highlights to the exact contour and inherits material strength', () => {
+    const contour = 'M0,0H100V44H0Z';
+    const highlights = [{ x: 10, y: 8, radius: 20, opacity: 1 }, { x: 90, y: 36, radius: 20, opacity: 0.5 }];
+    const view = render(<GlassContourBezel contour={contour} highlights={highlights} preset="frosted" />);
+    const svg = view.container.querySelector('svg')!;
+    const strength = Number(svg.getAttribute('opacity'));
+    expect(strength).toBeGreaterThan(0);
+    expect(svg.querySelector('clipPath path')?.getAttribute('d')).toBe(contour);
+    expect(svg.querySelectorAll('radialGradient')).toHaveLength(2);
+    svg.querySelectorAll('g path').forEach(path => {
+      expect(path.getAttribute('d')).toBe(contour);
+      expect(path.getAttribute('fill')).toBe('none');
+    });
+    expect(svg.querySelector('g')?.getAttribute('clip-path')).toContain('url(#');
+    view.rerender(<GlassContourBezel contour={contour} highlights={highlights} preset="frosted" opacity={0.5} />);
+    expect(Number(svg.getAttribute('opacity'))).toBeCloseTo(strength / 2);
+    expect(svg.querySelector('feDisplacementMap')).toBeNull();
+  });
+
 });

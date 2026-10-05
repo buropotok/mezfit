@@ -276,9 +276,10 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(getPrimaryTabsRoot(view.container).querySelector('[role="tab"][aria-label="Сегодня"]')).not.toBeNull();
     expect(view.container.querySelector('.ui-mezfit-navbar__side--left')?.getAttribute('aria-hidden')).toBe('true');
 
-    fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
-    const doubleAction = view.container.querySelector('.ui-identity-action--double');
-    fireEvent.animationEnd(doubleAction as Element);
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
+    expect(view.getByRole('menu', { name: 'Меню страницы' })).not.toBeNull();
     fireEvent.click(view.getByRole('menuitem', { name: 'Обновить день' }));
 
     expect(pageAction).toHaveBeenCalledTimes(1);
@@ -311,7 +312,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(view.getByRole('button', { name: 'Открыть календарь' })).not.toBeNull();
   });
 
-  it('opens the page menu only after the shared double-action animation completes', () => {
+  it('opens the page menu immediately without waiting for the shared double-action animation', () => {
     const view = render(
       <NavigationShell
         me={me}
@@ -325,13 +326,13 @@ describe('NavigationShell MezfitNavbar integration', () => {
       </NavigationShell>,
     );
 
-    fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
-    expect(view.queryByRole('menu', { name: 'Меню страницы' })).toBeNull();
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
 
     const doubleAction = view.container.querySelector('.ui-identity-action--double');
     expect(doubleAction).not.toBeNull();
-    fireEvent.animationEnd(doubleAction as Element);
-
+    expect(doubleAction?.classList.contains('ui-identity-action--animating')).toBe(true);
     expect(view.getByRole('menu', { name: 'Меню страницы' })).not.toBeNull();
   });
 

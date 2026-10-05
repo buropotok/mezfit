@@ -328,6 +328,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   nowMinutes,
   draggableEvents = false,
   editingEventId,
+  isEventEditable,
   onEventResize,
   onEventDeleteRequest,
 }: {
@@ -338,6 +339,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
   nowMinutes: number;
   draggableEvents?: boolean;
   editingEventId?: string;
+  isEventEditable?: (event: TEvent) => boolean;
   onEventResize?: (event: TEvent, startMinutes: number, durationMinutes: number) => void;
   onEventDeleteRequest?: (event: TEvent) => void;
 }) {
@@ -360,7 +362,8 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
         })}
 
         {events.map(event => {
-          if (event.id === editingEventId && (onEventResize || onEventDeleteRequest)) {
+          const eventEditable = isEventEditable?.(event) ?? true;
+          if (eventEditable && event.id === editingEventId && (onEventResize || onEventDeleteRequest)) {
             return (
               <EditableEventFrame
                 date={date}
@@ -385,7 +388,7 @@ export function DayPanel<TEvent extends DayScheduleEventBase>({
             startMinutes: event.startMinutes,
             durationMinutes: event.durationMinutes,
           });
-          if (draggableEvents) {
+          if (draggableEvents && eventEditable) {
             return (
               <DraggableEventFrame
                 date={date}
