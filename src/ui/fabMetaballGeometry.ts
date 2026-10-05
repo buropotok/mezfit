@@ -1,8 +1,12 @@
 /** CSS-pixel geometry from the approved FAB lab; no displacement/lens layer. */
 export const FAB_METABALL = Object.freeze({
-  duration: 1000, delay: 0.2, distance: 84, reach: 18,
-  width: 136, height: 44, phaseRecoil: 3, dayRecoil: 2, dropLead: 0.65,
+  duration: 450, delay: 0.22, distance: 68, reach: 24,
+  width: 100, height: 44, phaseRecoil: 10, dayRecoil: 5.5, dropLead: 0.65,
 });
+
+// Reserve the complete motion, including the day capsule's recoil, in CSS pixels.
+export const FAB_METABALL_STAGE_WIDTH = 2 * FAB_METABALL.width + FAB_METABALL.distance
+  - FAB_METABALL.height + FAB_METABALL.phaseRecoil + FAB_METABALL.dayRecoil;
 
 export type FabLayout = { width: number; sourceSize: number };
 type Point = { x: number; y: number };
@@ -13,8 +17,7 @@ export const smoothFab = (x: number) => { const p = clamp(x); return p * p * (3 
 
 export function fabGeometry(time: number, layout: FabLayout, shift = 0, dayShift = 0): FabGeometry {
   const c = FAB_METABALL;
-  // Preserve CSS pixels on narrow Mini App surfaces: reduce width, never scale the stage.
-  const width = Math.min(c.width, Math.max(44, (layout.width - 45) / 2));
+  const width = c.width;
   const separation = (width + c.distance - c.height) * smoothFab(time / 0.86);
   const initial = layout.sourceSize * 0.2;
   const exit = (layout.sourceSize + initial) / 2;
