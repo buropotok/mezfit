@@ -94,6 +94,28 @@ describe('schedule API', () => {
     });
   });
 
+  it('rejects creation when the requested date is outside the calendar reference', async () => {
+    createMock.mockResolvedValue({ kind: 'calendar_day_not_found' });
+    const request = new Request('https://mezfit.test/api/schedule/occurrences', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        clientUserId: 8,
+        programDayId: 3,
+        date: '2200-01-01',
+        startMinute: 600,
+        durationMinutes: 60,
+      }),
+    });
+
+    const response = await handleScheduleRoute(request, db, 7, ['coach']);
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'SCHEDULE_DATE_NOT_FOUND' },
+    });
+  });
+
   it('prevents rescheduling an occurrence after execution has locked it', async () => {
     rescheduleMock.mockResolvedValue({ kind: 'locked' });
     const request = new Request('https://mezfit.test/api/schedule/occurrences/11', {
@@ -105,6 +127,22 @@ describe('schedule API', () => {
     const response = await handleScheduleRoute(request, db, 7, ['coach']);
 
     expect(response.status).toBe(409);
+  });
+
+  it('rejects rescheduling outside the calendar reference', async () => {
+    rescheduleMock.mockResolvedValue({ kind: 'calendar_day_not_found' });
+    const request = new Request('https://mezfit.test/api/schedule/occurrences/11', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '2200-01-01', startMinute: 660, durationMinutes: 60 }),
+    });
+
+    const response = await handleScheduleRoute(request, db, 7, ['coach']);
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'SCHEDULE_DATE_NOT_FOUND' },
+    });
   });
 
   it('cancels a scheduled occurrence instead of physically deleting history', async () => {
