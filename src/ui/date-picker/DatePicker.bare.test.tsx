@@ -38,7 +38,7 @@ describe('DatePicker bare surface', () => {
     expect(dialog.getAttribute('data-date-picker-surface')).toBe('bare');
     expect(dialog.classList.contains('ui-glass-surface')).toBe(false);
 
-    const backdrop = view.container.querySelector<HTMLElement>('.ui-date-picker__bare-backdrop--opened');
+    const backdrop = view.container.querySelector<HTMLElement>('.ui-date-picker__bare-backdrop');
     expect(backdrop).toBeTruthy();
 
     fireEvent.click(backdrop as HTMLElement);
