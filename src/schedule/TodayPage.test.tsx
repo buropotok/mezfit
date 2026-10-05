@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getScheduleOccurrences, type ScheduleOccurrence } from '../api';
 import { TodayPage } from './TodayPage';
@@ -126,5 +126,40 @@ describe('TodayPage schedule loading', () => {
       contentMode: 'viewport',
       calendar: expect.objectContaining({ value: today }),
     }));
+  });
+
+  it('loads another +/-31 day window only when navigation leaves the warmed cache', async () => {
+    const today = localDateNow();
+    getScheduleMock.mockResolvedValue({ occurrences: [] });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="client"
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(getScheduleMock).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: 'Jump date' }));
+
+    await waitFor(() => expect(getScheduleMock).toHaveBeenCalledTimes(3));
+    expect(getScheduleMock).toHaveBeenNthCalledWith(
+      3,
+      'telegram-init',
+      'client',
+      addDays('2026-12-20', -31),
+      addDays('2026-12-20', 31),
+      expect.anything(),
+    );
+
+    expect(getScheduleMock).toHaveBeenNthCalledWith(
+      2,
+      'telegram-init',
+      'client',
+      addDays(today, -31),
+      addDays(today, 31),
+      expect.anything(),
+    );
   });
 });
