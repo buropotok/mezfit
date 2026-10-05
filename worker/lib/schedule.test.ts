@@ -64,6 +64,6 @@ describe('schedule occurrence races', () => {
     const day = parseCalendarDay('2026-10-06');
     if (!day) throw new Error('Expected valid date');
 
-    await expect(rescheduleOccurrence(db, 7, 11, day, 660, 60)).resolves.toBe('locked');
+    await expect(rescheduleOccurrence(db, 7, 11, day, 660, 60)).resolves.toEqual({ kind: 'locked' });
   });
 });
