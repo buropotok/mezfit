@@ -1,9 +1,12 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button as KonstaButton, Glass, Link, Navbar } from 'konsta/react';
-import { MezfitPopover, MezfitSidePanel } from '../konsta-mezfit';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type RefObject } from 'react';
+import { Link, Navbar } from 'konsta/react';
+import { GlassSurface } from '../GlassSurface';
+import { LiquidPopover, type LiquidPopoverItem } from '../LiquidPopover';
+import type { GlassPresetName } from '../glassMaterial';
+import { MEZFIT_NAVBAR_GLASS_PRESET } from '../mezfitNavbarConfig';
+import { MezfitSidePanel } from '../konsta-mezfit';
 import {
   buildMonthGrid,
-  calculateCenteredScrollTop,
   clampYear,
   formatDayLabel,
   formatLocalDate,
@@ -32,6 +35,8 @@ export interface DatePickerProps {
   maxYear?: number;
   locale?: string;
   surface?: DatePickerSurface;
+  glassPreset?: GlassPresetName;
+  glassOptics?: boolean;
 }
 
 function CloseIcon() {
@@ -98,42 +103,39 @@ const CalendarMonths = memo(function CalendarMonths({
   );
 });
 
-const YearGrid = memo(function YearGrid({
-  years,
-  visibleYear,
-  onChooseYear,
-}: {
-  years: readonly number[];
-  visibleYear: number;
-  onChooseYear: (year: number) => void;
-}) {
+type YearTriggerProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  surfaceRef: RefObject<HTMLElement | null>;
+  preset: GlassPresetName;
+  optics: boolean;
+};
+
+function YearTrigger({
+  surfaceRef,
+  preset,
+  optics,
+  className = '',
+  children,
+  ...buttonProps
+}: YearTriggerProps) {
   return (
-    <div className="ui-date-picker__year-grid">
-      {years.map((year) => {
-        const selected = year === visibleYear;
-        return (
-          <KonstaButton
-            key={year}
-            data-year={year}
-            clear={!selected}
-            tonal={selected}
-            rounded
-            colors={{
-              textIos: 'text-white',
-              clearBgIos: 'bg-transparent active:bg-white/10',
-              tonalTextIos: 'text-white',
-              tonalBgIos: 'bg-white/14 active:bg-white/20',
-            }}
-            aria-current={selected ? 'date' : undefined}
-            onClick={() => onChooseYear(year)}
-          >
-            {year}
-          </KonstaButton>
-        );
-      })}
-    </div>
+    <GlassSurface
+      ref={surfaceRef}
+      preset={preset}
+      optics={optics}
+      wrapContent={false}
+      shape="capsule"
+      className="ui-date-picker__year-trigger"
+    >
+      <button
+        type="button"
+        {...buttonProps}
+        className={`ui-date-picker__year-trigger-button ui-text--body ${className}`.trim()}
+      >
+        {children}
+      </button>
+    </GlassSurface>
   );
-});
+}
 
 export function DatePicker({
   opened,
@@ -144,6 +146,8 @@ export function DatePicker({
   maxYear = DEFAULT_MAX_YEAR,
   locale = 'ru-RU',
   surface = 'bare',
+  glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
+  glassOptics = false,
 }: DatePickerProps) {
   const rangeIsValid = Number.isInteger(minYear) && Number.isInteger(maxYear) && minYear <= maxYear;
   const safeMinYear = rangeIsValid ? minYear : DEFAULT_MIN_YEAR;
@@ -155,13 +159,10 @@ export function DatePicker({
   const [surfaceContentReady, setSurfaceContentReady] = useState(false);
   const [surfaceReadyToOpen, setSurfaceReadyToOpen] = useState(false);
   const [yearPopoverRequested, setYearPopoverRequested] = useState(false);
-  const [yearPopoverContentReady, setYearPopoverContentReady] = useState(false);
-  const [yearPopoverReadyToOpen, setYearPopoverReadyToOpen] = useState(false);
   const onChangeRef = useRef(onChange);
   const onCloseRef = useRef(onClose);
-  const yearTargetRef = useRef<HTMLButtonElement | null>(null);
+  const yearTargetRef = useRef<HTMLElement | null>(null);
   const monthScrollRef = useRef<HTMLDivElement | null>(null);
-  const yearScrollRef = useRef<HTMLDivElement | null>(null);
   const wasOpenedRef = useRef(false);
 
   onChangeRef.current = onChange;
@@ -176,9 +177,7 @@ export function DatePicker({
     [safeMaxYear, safeMinYear],
   );
   const effectiveSurfaceOpened = opened && surfaceReadyToOpen;
-  const effectiveYearPopoverOpened = effectiveSurfaceOpened
-    && yearPopoverRequested
-    && yearPopoverReadyToOpen;
+  const effectiveYearPopoverOpened = effectiveSurfaceOpened && yearPopoverRequested;
 
   useEffect(() => {
     if (!opened) {
@@ -220,42 +219,6 @@ export function DatePicker({
     });
   }, [effectiveSurfaceOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
 
-  useEffect(() => {
-    if (!opened || !yearPopoverRequested || yearPopoverReadyToOpen) return;
-
-    if (!yearPopoverContentReady) {
-      setYearPopoverContentReady(true);
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      setYearPopoverReadyToOpen(true);
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [opened, yearPopoverContentReady, yearPopoverReadyToOpen, yearPopoverRequested]);
-
-  useEffect(() => {
-    if (!effectiveYearPopoverOpened) return;
-
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const scrollElement = yearScrollRef.current;
-        const yearElement = scrollElement?.querySelector<HTMLElement>(`[data-year="${visibleYear}"]`);
-        if (!scrollElement || !yearElement) return;
-
-        const scrollRect = scrollElement.getBoundingClientRect();
-        const yearRect = yearElement.getBoundingClientRect();
-        const targetOffset = scrollElement.scrollTop + yearRect.top - scrollRect.top;
-
-        scrollElement.scrollTop = calculateCenteredScrollTop({
-          targetOffset,
-          targetHeight: yearRect.height || yearElement.offsetHeight,
-          viewportHeight: scrollElement.clientHeight,
-          scrollHeight: scrollElement.scrollHeight,
-        });
-      });
-    });
-  }, [effectiveYearPopoverOpened, visibleYear]);
 
   if (!rangeIsValid) throw new Error('DatePicker requires a valid minYear/maxYear range');
   if (!selectedDate) throw new Error('DatePicker value must be a valid YYYY-MM-DD local date');
@@ -269,25 +232,41 @@ export function DatePicker({
     onCloseRef.current();
   }, [visibleYear]);
 
-  const chooseYear = useCallback((year: number) => {
-    setVisibleYear(year);
-    setYearPopoverRequested(false);
-  }, []);
+  const yearItems = useMemo<LiquidPopoverItem[]>(
+    () => years.map((year) => ({
+      id: String(year),
+      label: String(year),
+      active: year === visibleYear,
+      'aria-current': year === visibleYear ? 'date' : undefined,
+      onSelect: () => setVisibleYear(year),
+    })),
+    [visibleYear, years],
+  );
 
   const yearTrigger = (
-    <Glass
-      component="button"
-      ref={yearTargetRef}
-      className="ui-date-picker__year-trigger ui-text--body"
-      aria-label={`Выбрать год, сейчас ${visibleYear}`}
-      aria-expanded={effectiveYearPopoverOpened}
-      onClick={(event) => {
-        event.preventDefault();
-        setYearPopoverRequested((current) => !current);
-      }}
-    >
-      {visibleYear}
-    </Glass>
+    <LiquidPopover
+      isOpen={effectiveYearPopoverOpened}
+      onOpenChange={setYearPopoverRequested}
+      trigger={(
+        <YearTrigger
+          surfaceRef={yearTargetRef}
+          preset={glassPreset}
+          optics={glassOptics}
+          aria-label={`Выбрать год, сейчас ${visibleYear}`}
+        >
+          {visibleYear}
+        </YearTrigger>
+      )}
+      triggerRef={yearTargetRef}
+      items={yearItems}
+      label="Выберите год"
+      preset={glassPreset}
+      optics={glassOptics}
+      layout="grid"
+      columns={4}
+      role="dialog"
+      scrollActiveIntoView
+    />
   );
 
   const closeAction = (
@@ -345,29 +324,6 @@ export function DatePicker({
         {calendarContent}
       </MezfitSidePanel>
 
-      <MezfitPopover
-        opened={effectiveYearPopoverOpened}
-        target={yearTargetRef.current ?? undefined}
-        angle={false}
-        backdrop
-        onBackdropClick={() => setYearPopoverRequested(false)}
-        style={{ width: '284px', maxWidth: 'calc(100vw - 24px)' }}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Выберите год"
-      >
-        <div className="ui-date-picker__year-popover">
-          <div className="ui-date-picker__year-scroll" ref={yearScrollRef}>
-            {yearPopoverContentReady ? (
-              <YearGrid
-                years={years}
-                visibleYear={visibleYear}
-                onChooseYear={chooseYear}
-              />
-            ) : null}
-          </div>
-        </div>
-      </MezfitPopover>
     </>
   );
 }
