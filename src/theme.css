@@ -87,7 +87,6 @@ body,
 .role-switch,
 .exercise-catalog-surface,
 .client-tabs button,
-.link-box,
 .selector-button,
 .text-input,
 .exercise-media-slot,
@@ -122,7 +121,6 @@ body,
 
 .text-input,
 .selector-button,
-.link-box,
 .exercise-media-slot {
   color: var(--theme-surface-text);
   border-color: var(--theme-border);
