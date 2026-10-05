@@ -27,10 +27,26 @@ describe('navbar metaball geometry', () => {
     const identityLeft = hidden.phase.x - hidden.phase.width / 2;
 
     expect(hidden.day.x).toBeCloseTo(identityLeft + NAVBAR_METABALL.backSize / 2);
-    expect(hidden.day.width).toBe(NAVBAR_METABALL.backSize);
-    expect(hidden.day.height).toBe(NAVBAR_METABALL.backSize);
+    expect(hidden.day.width).toBeCloseTo(NAVBAR_METABALL.backSize * 0.2);
+    expect(hidden.day.height).toBeCloseTo(NAVBAR_METABALL.backSize * 0.2);
     expect(visible.day.x).toBe(NAVBAR_METABALL.backSize / 2);
+    expect(visible.day.width).toBe(NAVBAR_METABALL.backSize);
+    expect(visible.day.height).toBe(NAVBAR_METABALL.backSize);
     expect(visible.phase).toEqual(hidden.phase);
+  });
+
+  it('grows Back with the FAB leading-edge profile before rupture', () => {
+    const hidden = navbarMetaballGeometry(0, layout);
+    const growing = navbarMetaballGeometry(0.45, layout);
+    const rupture = navbarMetaballRupture(layout);
+    const beforeRupture = navbarMetaballGeometry(rupture - 0.0001, layout);
+
+    expect(growing.day.width).toBeGreaterThan(hidden.day.width);
+    expect(growing.day.width).toBeLessThan(NAVBAR_METABALL.backSize);
+    expect(growing.day.height).toBeGreaterThan(growing.day.tailHeight);
+    expect(beforeRupture.day.width).toBe(NAVBAR_METABALL.backSize);
+    expect(beforeRupture.day.height).toBe(NAVBAR_METABALL.backSize);
+    expect(beforeRupture.day.tailHeight).toBe(NAVBAR_METABALL.backSize);
   });
 
   it('starts as one joined identity silhouette and ruptures before the final Back position', () => {
