@@ -1,12 +1,13 @@
 /** @vitest-environment jsdom */
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { ComponentProps } from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider, Searchbar as KonstaSearchbar } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MezfitSearchbar } from './Searchbar';
 
-const source = readFileSync(new URL('./Searchbar.tsx', import.meta.url), 'utf8');
+const source = readFileSync(resolve(process.cwd(), 'src/ui/konsta-mezfit/Searchbar.tsx'), 'utf8');
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
