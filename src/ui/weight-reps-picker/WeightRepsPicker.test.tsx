@@ -73,7 +73,9 @@ describe('WeightRepsPicker', () => {
 
     const columns = reps.parentElement;
     expect(columns?.className).toContain('ui-weight-reps-picker__columns');
-    expect(screen.getByText(',')).toBeTruthy();
+    const comma = screen.getByText(',');
+    expect(comma.getAttribute('x')).toBe('216');
+    expect(comma.closest('.ui-time-picker__lens')).not.toBeNull();
   });
 
   it('emits repetitions while preserving the selected weight', () => {
