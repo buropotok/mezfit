@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fabJoined } from './fabMetaballGeometry';
 import {
   NAVBAR_METABALL,
+  navbarBackReveal,
   navbarMetaballContour,
   navbarMetaballFrame,
   navbarMetaballGeometry,
@@ -33,6 +34,16 @@ describe('navbar metaball geometry', () => {
     expect(rupture).toBeGreaterThan(0);
     expect(rupture).toBeLessThan(1);
     expect(fabJoined(visible)).toBe(false);
+  });
+
+  it('keeps Back content fully hidden until the glass contour has ruptured', () => {
+    const rupture = navbarMetaballRupture(layout);
+
+    expect(navbarBackReveal(0, rupture)).toBe(0);
+    expect(navbarBackReveal(rupture - 0.0001, rupture)).toBe(0);
+    expect(navbarBackReveal(rupture, rupture)).toBe(0);
+    expect(navbarBackReveal(rupture + 0.12, rupture)).toBe(1);
+    expect(navbarBackReveal(1, rupture)).toBe(1);
   });
 
   it('uses the new FAB-style recoil and settles to the exact same path in either direction', () => {
