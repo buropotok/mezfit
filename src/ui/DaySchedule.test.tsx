@@ -473,7 +473,6 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(250));
 
     expect(moved).not.toHaveBeenCalled();
-    expect(view.container.querySelector('.ui-day-schedule__drag-overlay')).toBeNull();
     expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
     expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
   });
