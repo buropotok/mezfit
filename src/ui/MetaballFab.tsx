@@ -19,6 +19,7 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
   const root = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
   const progress = useRef(0);
+  const selectionLocked = useRef(false);
   const [time, setTime] = useState(0);
   const [open, setOpen] = useState(false);
   const [layout, setLayout] = useState({ width: 317, sourceSize: 56 });
@@ -94,11 +95,16 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
         {time < 0.4 ? <span className="ui-fab-metaball__artwork" style={{ left: geometry.base.x, top: geometry.base.y, opacity: 1 - smoothFab(time / 0.4) }}>{artwork}</span> : null}
       </div> : null}
       <button {...props} type={type} className="ui-fab-metaball__hitbox" style={hitbox(geometry.base.x, layout.sourceSize, layout.sourceSize)} aria-label={label} aria-expanded={open} aria-controls={`${id}-actions`} disabled={disabled || !isShown || expanded} tabIndex={isShown && !expanded ? props.tabIndex ?? 0 : -1}
-        onClick={event => { onClick?.(event); if (!event.defaultPrevented) setOpen(true); }}
+        onClick={event => { onClick?.(event); if (!event.defaultPrevented) { selectionLocked.current = false; setOpen(true); } }}
         onPointerDown={event => { onPointerDown?.(event); if (!event.defaultPrevented) startPressScale(event.currentTarget); }} onKeyDown={onKeyDown} />
       <div id={`${id}-actions`} role="group" aria-label={label} hidden={!expanded}>
-        {actions.map((action, index) => <button key={index} type="button" className="ui-fab-metaball__hitbox" aria-label={action.label} style={hitbox(index ? final.phase.x : final.day.x, index ? final.phase.width : final.day.width, 44)} disabled={disabled || action.disabled || !isShown || !settled} tabIndex={isShown && settled ? 0 : -1}
-          onPointerDown={event => startPressScale(event.currentTarget)} onClick={() => { action.onClick(); setOpen(false); }} />)}
+        {actions.map((action, index) => <button key={index} type="button" className="ui-fab-metaball__hitbox" aria-label={action.label} style={hitbox(index ? final.phase.x : final.day.x, index ? final.phase.width : final.day.width, 44)} disabled={disabled || action.disabled || !isShown || !open || !settled} tabIndex={isShown && open && settled ? 0 : -1}
+          onPointerDown={event => startPressScale(event.currentTarget)} onClick={() => {
+            if (selectionLocked.current || disabled || action.disabled || !isShown || !open || !settled) return;
+            selectionLocked.current = true;
+            setOpen(false);
+            action.onClick();
+          }} />)}
       </div>
     </div>
   );
