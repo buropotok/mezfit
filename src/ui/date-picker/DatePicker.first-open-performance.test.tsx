@@ -72,7 +72,7 @@ describe('DatePicker first-open rendering', () => {
     );
   });
 
-  it('pre-renders LiquidPopover year content before the first opening', () => {
+  it('mounts LiquidPopover year content before starting the first year animation', () => {
     const view = render(picker(true));
     const dialog = view.container.querySelector<HTMLElement>('[aria-label="Выбор даты"]');
     runFramesUntil(
@@ -80,16 +80,27 @@ describe('DatePicker first-open rendering', () => {
       'Missing staged DatePicker opening frame',
     );
 
-    const measuredItems = view.container.querySelectorAll('.ui-liquid-popover__measure .ui-menu-item');
-    expect(measuredItems).toHaveLength(100);
-    expect(Array.from(measuredItems).some((item) => item.textContent === '1950')).toBe(true);
+    expect(view.container.querySelectorAll('.ui-liquid-popover__measure .ui-menu-item')).toHaveLength(0);
 
     const yearTrigger = view.container.querySelector<HTMLButtonElement>('[aria-label="Выбрать год, сейчас 2026"]');
     if (!yearTrigger) throw new Error('Missing year trigger');
     fireEvent.click(yearTrigger);
 
+    const measuredItems = view.container.querySelectorAll('.ui-liquid-popover__measure .ui-menu-item');
+    expect(measuredItems).toHaveLength(100);
+    expect(Array.from(measuredItems).some((item) => item.textContent === '1950')).toBe(true);
+
     const yearDialog = document.querySelector<HTMLElement>('[aria-label="Выберите год"]');
     expect(yearDialog).toBeTruthy();
-    expect(yearDialog?.className).toContain('ui-liquid-popover--grid');
+    expect(yearDialog?.hidden).toBe(true);
+    expect(frames.length).toBeGreaterThan(0);
+
+    runFramesUntil(
+      () => !document.querySelector<HTMLElement>('[aria-label="Выберите год"]')?.hidden,
+      'Missing staged LiquidPopover opening frame',
+    );
+
+    expect(document.querySelector<HTMLElement>('[aria-label="Выберите год"]')?.className)
+      .toContain('ui-liquid-popover--grid');
   });
 });
