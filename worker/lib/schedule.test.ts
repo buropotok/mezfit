@@ -36,6 +36,42 @@ describe('schedule calendar dates', () => {
 
 
 describe('schedule occurrence read model', () => {
+  it('excludes client-created self workouts from the normal coach schedule', async () => {
+    let selectedSql = '';
+    const prepare = vi.fn((sql: string) => {
+      selectedSql = sql;
+      return {
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockResolvedValue({ results: [] }),
+        }),
+      };
+    });
+    const db = { prepare } as unknown as D1Database;
+
+    await listScheduleOccurrences(db, 7, 'coach', 20261005, 20261005);
+
+    expect(selectedSql).toContain('occurrence.coach_user_id = ?');
+    expect(selectedSql).toContain('occurrence.created_by_user_id <> occurrence.client_user_id');
+  });
+
+  it('keeps client-created self workouts in the client schedule', async () => {
+    let selectedSql = '';
+    const prepare = vi.fn((sql: string) => {
+      selectedSql = sql;
+      return {
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockResolvedValue({ results: [] }),
+        }),
+      };
+    });
+    const db = { prepare } as unknown as D1Database;
+
+    await listScheduleOccurrences(db, 8, 'client', 20261005, 20261005);
+
+    expect(selectedSql).toContain('WHERE occurrence.client_user_id = ?');
+    expect(selectedSql).not.toContain('occurrence.created_by_user_id <> occurrence.client_user_id');
+  });
+
   it('projects the occurrence creator for frontend editability decisions', async () => {
     let selectedSql = '';
     const row = {

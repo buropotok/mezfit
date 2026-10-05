@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cancelScheduleOccurrence, getScheduleOccurrences, rescheduleScheduleOccurrence, type ScheduleOccurrence } from '../api';
 import { TodayPage } from './TodayPage';
@@ -26,6 +27,7 @@ vi.mock('../ui', async (importOriginal) => {
       onEventMove,
       onEventResize,
       onEventDelete,
+      renderEvent,
     }: {
       date: string;
       eventsByDate: Record<string, Array<{
@@ -57,6 +59,19 @@ vi.mock('../ui', async (importOriginal) => {
         durationMinutes: number;
       }) => void;
       onEventDelete?: (deletion: { eventId: string; date: string }) => void;
+      renderEvent?: (event: {
+        id: string;
+        startMinutes: number;
+        durationMinutes: number;
+        occurrence: ScheduleOccurrence;
+      }, state: {
+        compact: boolean;
+        lifted: boolean;
+        editing: boolean;
+        height: number;
+        startMinutes: number;
+        durationMinutes: number;
+      }) => ReactNode;
     }) => {
       const events = eventsByDate[date] ?? [];
       const first = events[0];
@@ -70,6 +85,14 @@ vi.mock('../ui', async (importOriginal) => {
           data-first-start={first?.startMinutes ?? ''}
           data-first-duration={first?.durationMinutes ?? ''}
         >
+          {first && renderEvent ? renderEvent(first, {
+            compact: false,
+            lifted: false,
+            editing: false,
+            height: 62,
+            startMinutes: first.startMinutes,
+            durationMinutes: first.durationMinutes,
+          }) : null}
           <button type="button" onClick={() => onDateChange('2026-12-20')}>Jump date</button>
           <button
             type="button"
@@ -108,8 +131,24 @@ vi.mock('../ui', async (importOriginal) => {
         </div>
       );
     },
-    DayScheduleEventCard: () => null,
-    Avatar: () => null,
+    DayScheduleEventCard: ({
+      title,
+      detail,
+      media,
+    }: {
+      title: ReactNode;
+      detail?: ReactNode;
+      media?: ReactNode;
+    }) => (
+      <div data-testid="event-card">
+        <span data-testid="event-title">{title}</span>
+        <span data-testid="event-detail">{detail}</span>
+        {media}
+      </div>
+    ),
+    Avatar: ({ name, src }: { name: string; src?: string }) => (
+      <span data-testid="event-avatar" data-name={name} data-src={src ?? ''} />
+    ),
   };
 });
 
@@ -214,6 +253,39 @@ describe('TodayPage schedule loading', () => {
       contentMode: 'viewport',
       calendar: expect.objectContaining({ value: today }),
     }));
+  });
+
+  it('uses the client avatar for a self-created workout in client mode', async () => {
+    const today = localDateNow();
+    const selfWorkout: ScheduleOccurrence = {
+      ...occurrence(today),
+      createdByUserId: 8,
+      coach: {
+        ...occurrence(today).coach,
+        firstName: 'Тренер',
+        photoUrl: 'https://example.test/coach.jpg',
+      },
+      client: {
+        ...occurrence(today).client,
+        firstName: 'Клиент',
+        photoUrl: 'https://example.test/client.jpg',
+      },
+    };
+    getScheduleMock.mockResolvedValue({ occurrences: [selfWorkout] });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="client"
+        currentUserId={8}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('event-avatar').getAttribute('data-name')).toBe('Клиент'));
+    expect(screen.getByTestId('event-avatar').getAttribute('data-src')).toBe('https://example.test/client.jpg');
+    expect(screen.getByTestId('event-detail').textContent).toContain('Клиент');
+    expect(screen.getByTestId('event-detail').textContent).not.toContain('Тренер');
   });
 
   it('marks only scheduled coach events editable', async () => {
