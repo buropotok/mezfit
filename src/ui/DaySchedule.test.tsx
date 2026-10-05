@@ -440,6 +440,44 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('cancels an active drag if the event becomes non-editable before drop', () => {
+    const moved = vi.fn();
+    const editableEvents: Readonly<Record<LocalDate, readonly EditableTestEvent[]>> = {
+      '2026-09-28': [{ id: 'editable', startMinutes: 600, durationMinutes: 60, editable: true }],
+    };
+    const lockedEvents: Readonly<Record<LocalDate, readonly EditableTestEvent[]>> = {
+      '2026-09-28': [{ id: 'editable', startMinutes: 600, durationMinutes: 60, editable: false }],
+    };
+    const renderSchedule = (eventsByDate: typeof editableEvents) => (
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={eventsByDate}
+        onDateChange={changed}
+        isEventEditable={event => event.editable}
+        onEventMove={moved}
+        onEventResize={vi.fn()}
+        onEventDelete={vi.fn()}
+        renderEvent={event => <div>{event.id}</div>}
+      />
+    );
+    const view = render(renderSchedule(editableEvents));
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="editable"]');
+    if (!frame) throw new Error('Missing editable event frame');
+
+    fireEvent.pointerDown(frame, { pointerId: 47, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 47, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 110 });
+    view.rerender(renderSchedule(lockedEvents));
+    fireEvent.pointerMove(document, { pointerId: 47, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 164 });
+    fireEvent.pointerUp(document, { pointerId: 47, pointerType: 'mouse', button: 0, clientX: 100, clientY: 164 });
+    act(() => vi.advanceTimersByTime(250));
+
+    expect(moved).not.toHaveBeenCalled();
+    expect(view.container.querySelector('.ui-day-schedule__drag-overlay')).toBeNull();
+    expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
+    expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
+  });
+
   it('resizes an editable event when the predicate allows it', () => {
     const resized = vi.fn();
     const view = render(

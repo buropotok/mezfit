@@ -631,26 +631,29 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     clearEventDrag();
 
     if (!onEventMove || !entry || !targetDate || activeDragId !== dragId) return;
+    const currentEvent = (eventsByDate[entry.date] ?? []).find(candidate => candidate.id === entry.event.id);
+    if (!currentEvent || isEventEditable?.(currentEvent) === false) return;
+
     const startMinutes = startMinutesAfterDrag(
-      entry.event.startMinutes,
-      entry.event.durationMinutes,
+      currentEvent.startMinutes,
+      currentEvent.durationMinutes,
       event.delta.y,
     );
     const fits = eventFitsSlot(
       eventsByDate[targetDate] ?? [],
-      entry.event.id,
+      currentEvent.id,
       startMinutes,
-      entry.event.durationMinutes,
+      currentEvent.durationMinutes,
     );
     const movedDay = targetDate !== entry.date;
-    const acceptedMove = fits && (movedDay || startMinutes !== entry.event.startMinutes);
+    const acceptedMove = fits && (movedDay || startMinutes !== currentEvent.startMinutes);
 
     if (acceptedMove) {
       onEventMove({
-        eventId: entry.event.id,
+        eventId: currentEvent.id,
         date: entry.date,
         targetDate,
-        previousStartMinutes: entry.event.startMinutes,
+        previousStartMinutes: currentEvent.startMinutes,
         startMinutes,
       });
     }
@@ -658,13 +661,13 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
     const editingEnabled = Boolean(onEventResize || onEventDelete);
 
     if (acceptedMove && movedDay) {
-      if (editingEnabled) pendingEditingEvent.current = { date: targetDate, eventId: entry.event.id };
+      if (editingEnabled) pendingEditingEvent.current = { date: targetDate, eventId: currentEvent.id };
       latestChange.current(targetDate);
       return;
     }
 
     if (editingEnabled) {
-      addTimer(() => setEditingEvent({ date: entry.date, eventId: entry.event.id }), 200);
+      addTimer(() => setEditingEvent({ date: entry.date, eventId: currentEvent.id }), 200);
     }
   };
 
