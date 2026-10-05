@@ -25,6 +25,10 @@ vi.mock('./NavigationShell', () => ({
   NavigationShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
+vi.mock('./schedule/TodayPage', () => ({
+  TodayPage: () => <div>Client Today</div>,
+}));
+
 const acceptCurrentInviteMock = vi.mocked(acceptCurrentInvite);
 const getClientCoachesMock = vi.mocked(getClientCoaches);
 const getCurrentInviteMock = vi.mocked(getCurrentInvite);
