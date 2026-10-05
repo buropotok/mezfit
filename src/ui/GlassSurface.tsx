@@ -86,6 +86,8 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
   contentClassName?: string;
+  /** Implicit CSS-pixel silhouette; material, shadow and bezel follow this path. */
+  contour?: string;
   wrapContent?: boolean;
   active?: boolean;
   optics?: boolean;
@@ -100,6 +102,7 @@ export function GlassSurface({
   shape = 'auto',
   className = '',
   contentClassName = '',
+  contour,
   wrapContent = true,
   active = true,
   optics = false,
@@ -246,10 +249,33 @@ export function GlassSurface({
     <Component
       {...props}
       ref={setRootRef}
-      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'} ${className}`.trim()}
+      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''} ${className}`.trim()}
       data-ui-glass-map-ready={activeVectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
+      {contour ? <>
+        <svg className="ui-glass-surface__contour" aria-hidden="true">
+          <defs>
+            <clipPath id={`${filterId}-clip`} clipPathUnits="userSpaceOnUse"><path d={contour} /></clipPath>
+            <filter id={`${filterId}-shadow`} x="-100%" y="-200%" width="300%" height="500%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="21" result="blurred" />
+              <feOffset in="blurred" dy="14" result="shadow" />
+              <feComposite in="shadow" in2="SourceAlpha" operator="out" />
+            </filter>
+            <linearGradient id={`${filterId}-bezel`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="white" stopOpacity="0.8" />
+              <stop offset="0.5" stopColor="white" stopOpacity="0.08" />
+              <stop offset="1" stopColor="white" stopOpacity="0.18" />
+            </linearGradient>
+          </defs>
+          <path d={contour} fill="black" opacity={material.shadow} filter={`url(#${filterId}-shadow)`} />
+        </svg>
+        <div className="ui-glass-surface__contour-material" style={{ clipPath: `url(#${filterId}-clip)` }} />
+        <svg className="ui-glass-surface__contour ui-glass-surface__contour-edge" aria-hidden="true">
+          <path d={contour} fill="none" stroke="white" strokeOpacity={material.border} strokeWidth="1" />
+          <path d={contour} fill="none" stroke={`url(#${filterId}-bezel)`} strokeOpacity={material.bezel} strokeWidth="0.5" />
+        </svg>
+      </> : null}
       {activeVectorMapHref && geometry && filterRegion ? (
         <svg
           width="0"
