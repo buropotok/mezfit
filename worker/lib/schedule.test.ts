@@ -83,6 +83,72 @@ describe('schedule occurrence read model', () => {
 });
 
 describe('calendar reference writes', () => {
+  it('uses the persisted calendar_day key when creating an occurrence', async () => {
+    const targetFirst = vi.fn().mockResolvedValue({ id: 3 });
+    const calendarFirst = vi.fn().mockResolvedValue({ date_key: 20261005 });
+    const insertFirst = vi.fn().mockResolvedValue({ id: 11 });
+    const occurrenceFirst = vi.fn().mockResolvedValue({
+      id: 11,
+      calendar_date: '2026-10-05',
+      calendar_date_key: 20261005,
+      start_minute: 600,
+      duration_minutes: 60,
+      status: 'scheduled',
+      created_by_user_id: 7,
+      program_id: 1,
+      program_name: 'Программа',
+      phase_id: 2,
+      phase_name: 'Фаза',
+      day_id: 3,
+      day_name: 'День A',
+      day_position: 0,
+      coach_id: 7,
+      coach_first_name: 'Coach',
+      coach_last_name: null,
+      coach_username: 'coach',
+      coach_photo_url: null,
+      client_id: 8,
+      client_first_name: 'Client',
+      client_last_name: null,
+      client_username: 'client',
+      client_photo_url: null,
+      session_id: null,
+    });
+    const insertBind = vi.fn().mockReturnValue({ first: insertFirst });
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes('SELECT program_day.id')) {
+        return { bind: vi.fn().mockReturnValue({ first: targetFirst }) };
+      }
+      if (sql.includes('SELECT date_key') && sql.includes('FROM calendar_day')) {
+        return { bind: vi.fn().mockReturnValue({ first: calendarFirst }) };
+      }
+      if (sql.includes('INSERT INTO workout_occurrence')) {
+        return { bind: insertBind };
+      }
+      if (sql.includes('FROM workout_occurrence occurrence')) {
+        return { bind: vi.fn().mockReturnValue({ first: occurrenceFirst }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const db = { prepare } as unknown as D1Database;
+    const parsed = parseCalendarDay('2026-10-05');
+    if (!parsed) throw new Error('Expected valid date');
+    const day = { ...parsed, dateKey: 19990101 };
+
+    await expect(createScheduleOccurrence(db, 7, {
+      clientUserId: 8,
+      programDayId: 3,
+      day,
+      startMinute: 600,
+      durationMinutes: 60,
+    })).resolves.toMatchObject({
+      kind: 'ok',
+      occurrence: { id: 11, dateKey: 20261005 },
+    });
+
+    expect(insertBind).toHaveBeenCalledWith(7, 8, 3, 20261005, 600, 60, 7);
+  });
+
   it('rejects occurrence creation when the requested date is absent from calendar_day', async () => {
     const targetFirst = vi.fn().mockResolvedValue({ id: 3 });
     const calendarFirst = vi.fn().mockResolvedValue(null);
