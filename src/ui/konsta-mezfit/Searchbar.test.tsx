@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import type { ComponentProps } from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { KonstaProvider } from 'konsta/react';
+import { KonstaProvider, Searchbar as KonstaSearchbar } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MezfitSearchbar } from './Searchbar';
 
@@ -31,6 +31,31 @@ function renderSearchbar(props: ComponentProps<typeof MezfitSearchbar>) {
 }
 
 describe('MezfitSearchbar', () => {
+  it('keeps Konsta Searchbar layout classes while replacing its Glass renderer', () => {
+    const konsta = render(
+      <KonstaProvider theme="ios" dark>
+        <KonstaSearchbar value="bench" placeholder="Поиск" disableButton />
+      </KonstaProvider>,
+    );
+    const mezfit = renderSearchbar({
+      value: 'bench',
+      placeholder: 'Поиск',
+      disableButton: true,
+    });
+
+    const konstaRoot = konsta.container.querySelector<HTMLElement>('.k-searchbar');
+    const mezfitRoot = mezfit.container.querySelector<HTMLElement>('.k-searchbar');
+    const konstaInput = konsta.getByPlaceholderText<HTMLInputElement>('Поиск');
+    const mezfitInput = mezfit.getByPlaceholderText<HTMLInputElement>('Поиск');
+    const konstaClear = konsta.container.querySelector<HTMLButtonElement>('button');
+    const mezfitClear = mezfit.container.querySelector<HTMLButtonElement>('button');
+
+    expect(mezfitRoot?.className).toBe(konstaRoot?.className);
+    expect(mezfitInput.className).toBe(konstaInput.className);
+    expect(mezfitClear?.className).toBe(konstaClear?.className);
+    expect(mezfit.container.querySelector('.ui-glass-surface')).not.toBeNull();
+  });
+
   it('preserves Konsta Searchbar input, clear, focus, and disable behavior', () => {
     const onClear = vi.fn();
     const onDisable = vi.fn();
