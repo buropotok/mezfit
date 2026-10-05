@@ -29,6 +29,7 @@ export interface ScheduleOccurrence {
   startMinute: number;
   durationMinutes: number;
   status: ScheduleOccurrenceStatus;
+  createdByUserId: number;
   program: { id: number; name: string };
   phase: { id: number; name: string };
   day: { id: number; name: string; position: number };
@@ -360,6 +361,9 @@ function decodeScheduleOccurrence(value: unknown): ScheduleOccurrence | null {
     || value.durationMinutes <= 0
     || value.startMinute + value.durationMinutes > 1440
     || (status !== 'scheduled' && status !== 'in_progress' && status !== 'completed')
+    || typeof value.createdByUserId !== 'number'
+    || !Number.isInteger(value.createdByUserId)
+    || value.createdByUserId <= 0
     || (value.sessionId !== null && (
       typeof value.sessionId !== 'number'
       || !Number.isInteger(value.sessionId)
@@ -377,6 +381,7 @@ function decodeScheduleOccurrence(value: unknown): ScheduleOccurrence | null {
     startMinute: value.startMinute,
     durationMinutes: value.durationMinutes,
     status,
+    createdByUserId: value.createdByUserId,
     program,
     phase,
     day: { ...day, position: value.day.position },
