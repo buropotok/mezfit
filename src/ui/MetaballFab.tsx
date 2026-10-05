@@ -20,6 +20,7 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
   const frame = useRef(0);
   const progress = useRef(0);
   const selectionLocked = useRef(false);
+  const wasMoving = useRef(false);
   const [time, setTime] = useState(0);
   const [open, setOpen] = useState(false);
   const [bezelReveal, setBezelReveal] = useState(1);
@@ -69,6 +70,9 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
 
   const moving = expanded && !settled;
   useLayoutEffect(() => {
+    const revealAfterMotion = wasMoving.current;
+    wasMoving.current = moving;
+    if (!moving && !revealAfterMotion) return;
     if (moving) { setBezelReveal(0); return; }
     const view = root.current?.ownerDocument.defaultView;
     if (!isShown || view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
