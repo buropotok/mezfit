@@ -12,6 +12,7 @@ import {
   type FormEvent,
   type MouseEvent,
   type PointerEvent,
+  type SVGProps,
 } from 'react';
 import {
   Searchbar as KonstaSearchbar,
@@ -113,7 +114,7 @@ const SearchbarGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<
 
 SearchbarGlassButton.displayName = 'SearchbarGlassButton';
 
-function BackIcon(props: React.SVGProps<SVGSVGElement>) {
+function BackIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -229,7 +230,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     if (disableTimeout.current !== null) clearTimeout(disableTimeout.current);
   }, []);
 
-  const handleDisableButton = (event: PointerEvent<HTMLButtonElement> | MouseEvent<HTMLButtonElement>) => {
+  const handleDisableButton = (event: PointerEvent<Element> | MouseEvent<Element>) => {
     event.preventDefault();
     setIsEnabled(false);
     searchElRef.current?.blur();
