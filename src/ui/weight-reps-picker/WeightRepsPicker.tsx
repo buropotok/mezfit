@@ -20,6 +20,8 @@ const ROW_HEIGHT = 48;
 const WHEEL_HEIGHT = 240;
 const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
+const LENS_CONTENT_HORIZONTAL_INSET = 16;
+const LENS_CONTENT_WIDTH = LENS_WIDTH - LENS_CONTENT_HORIZONTAL_INSET * 2;
 const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
 const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
@@ -164,6 +166,10 @@ function iosLensScale(y: number) {
   return 1 + (IOS_LENS_MAGNIFICATION - 1) * eased;
 }
 
+function lensContentX(position: number) {
+  return LENS_CONTENT_HORIZONTAL_INSET + LENS_CONTENT_WIDTH * position;
+}
+
 function LensText({
   x,
   column,
@@ -214,7 +220,7 @@ function PickerLens({
   const filterId = `ui-weight-reps-picker-lens-${reactId}`;
   const clipId = `ui-weight-reps-picker-lens-clip-${reactId}`;
   const sourceClipId = `ui-weight-reps-picker-lens-source-clip-${reactId}`;
-  const separatorX = LENS_WIDTH * 0.75;
+  const separatorX = lensContentX(0.75);
   const separatorTransform = lensMode === 'ios'
     ? `translate(${separatorX} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-separatorX} ${-LENS_HEIGHT / 2})`
     : undefined;
@@ -223,13 +229,13 @@ function PickerLens({
     <>
       <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
       <LensText
-        x={LENS_WIDTH * 0.25}
+        x={lensContentX(0.25)}
         column={COLUMNS.reps}
         scrollTop={scrollTops.reps}
         lensMode={lensMode}
       />
       <LensText
-        x={LENS_WIDTH * 0.625}
+        x={lensContentX(0.625)}
         column={COLUMNS.kilograms}
         scrollTop={scrollTops.kilograms}
         lensMode={lensMode}
@@ -245,7 +251,7 @@ function PickerLens({
         ,
       </text>
       <LensText
-        x={LENS_WIDTH * 0.875}
+        x={lensContentX(0.875)}
         column={COLUMNS.fraction}
         scrollTop={scrollTops.fraction}
         lensMode={lensMode}
