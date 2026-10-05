@@ -96,6 +96,37 @@ describe('metaball FAB mode', () => {
     view.unmount(); expect(frames.size).toBe(0);
   });
 
+  it.each(['right', 'left'] as const)('sizes each title with 10 CSS px padding and responds to content/font changes at %s', placement => {
+    let measuredDay = 132, measuredPhase = 210;
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      if (!this.classList.contains('ui-fab-metaball__label')) return 0;
+      return this.textContent === 'Длинное название' ? measuredDay : measuredPhase;
+    });
+    const observers: { callback: ResizeObserverCallback; disconnect: ReturnType<typeof vi.fn> }[] = [];
+    vi.stubGlobal('ResizeObserver', class {
+      disconnect = vi.fn();
+      constructor(callback: ResizeObserverCallback) { observers.push({ callback, disconnect: this.disconnect }); }
+      observe() {}
+    });
+    const actions = [{ label: 'Длинное название', onClick: vi.fn() }, { label: 'Другое название', onClick: vi.fn() }] as const;
+    const view = render(<FloatingActionButton label="Добавить" placement={placement} mode="metaball" icon="plus" actions={actions} />);
+    fireEvent.click(view.getByRole('button', { name: 'Добавить' }));
+    act(() => advance(0)); act(() => advance(450));
+    const sizes = () => [...view.container.querySelectorAll<HTMLElement>('.ui-fab-metaball__capsule')].map(node => [node.style.width, node.style.height]);
+    expect(sizes()).toEqual([['152px', '44px'], ['230px', '44px']]);
+    expect(view.getByRole('button', { name: 'Длинное название' }).style.width).toBe('152px');
+    measuredDay = 160;
+    act(() => observers.forEach(observer => observer.callback([], {} as ResizeObserver)));
+    expect(sizes()).toEqual([['180px', '44px'], ['230px', '44px']]);
+    measuredPhase = 250;
+    view.rerender(<FloatingActionButton label="Добавить" placement={placement} mode="metaball" icon="plus" actions={[actions[0], { ...actions[1], label: 'Изменённый заголовок' }]} />);
+    expect(sizes()).toEqual([['180px', '44px'], ['270px', '44px']]);
+    expect(view.getByRole('button', { name: 'Изменённый заголовок' }).style.width).toBe('270px');
+    view.unmount();
+    observers.forEach(observer => expect(observer.disconnect).toHaveBeenCalled());
+    expect(frames.size).toBe(0);
+  });
+
   it('keeps hidden and disabled FABs inert', () => {
     const clicked = vi.fn();
     const actions = [{ label: 'День', onClick: clicked }, { label: 'Фаза', onClick: clicked }] as const;
