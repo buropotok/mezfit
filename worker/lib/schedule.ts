@@ -69,6 +69,7 @@ interface OccurrenceMutationRow {
   coach_user_id: number;
   client_user_id: number;
   program_day_id: number;
+  created_by_user_id: number;
   status: WorkoutOccurrenceStatus;
 }
 
@@ -222,10 +223,29 @@ export async function listScheduleOccurrences(
   return result.results.map(mapOccurrence);
 }
 
+const occurrenceEditorPredicate = `
+  (
+    (
+      occurrence.coach_user_id = ?
+      AND EXISTS (
+        SELECT 1
+        FROM coach_client relationship
+        WHERE relationship.coach_user_id = occurrence.coach_user_id
+          AND relationship.client_user_id = occurrence.client_user_id
+          AND relationship.status = 'active'
+      )
+    )
+    OR (
+      occurrence.client_user_id = ?
+      AND occurrence.created_by_user_id = ?
+    )
+  )
+`;
+
 async function occurrenceForActor(
   db: D1Database,
   occurrenceId: number,
-  coachUserId: number,
+  actorUserId: number,
 ): Promise<OccurrenceMutationRow | null> {
   return db
     .prepare(`
@@ -234,38 +254,31 @@ async function occurrenceForActor(
         occurrence.coach_user_id,
         occurrence.client_user_id,
         occurrence.program_day_id,
+        occurrence.created_by_user_id,
         occurrence.status
       FROM workout_occurrence occurrence
-      JOIN coach_client relationship
-        ON relationship.coach_user_id = occurrence.coach_user_id
-       AND relationship.client_user_id = occurrence.client_user_id
-       AND relationship.status = 'active'
       WHERE occurrence.id = ?
-        AND occurrence.coach_user_id = ?
+        AND ${occurrenceEditorPredicate}
       LIMIT 1
     `)
-    .bind(occurrenceId, coachUserId)
+    .bind(occurrenceId, actorUserId, actorUserId, actorUserId)
     .first<OccurrenceMutationRow>();
 }
 
 async function occurrenceById(
   db: D1Database,
   occurrenceId: number,
-  coachUserId: number,
+  actorUserId: number,
 ): Promise<ScheduleOccurrence | null> {
   const row = await db
     .prepare(`
       ${occurrenceProjection}
-      JOIN coach_client relationship
-        ON relationship.coach_user_id = occurrence.coach_user_id
-       AND relationship.client_user_id = occurrence.client_user_id
-       AND relationship.status = 'active'
       WHERE occurrence.id = ?
-        AND occurrence.coach_user_id = ?
+        AND ${occurrenceEditorPredicate}
         AND occurrence.status <> 'cancelled'
       LIMIT 1
     `)
-    .bind(occurrenceId, coachUserId)
+    .bind(occurrenceId, actorUserId, actorUserId, actorUserId)
     .first<OccurrenceRow>();
 
   return row ? mapOccurrence(row) : null;
@@ -372,7 +385,7 @@ export async function createScheduleOccurrence(
 
 export async function rescheduleOccurrence(
   db: D1Database,
-  coachUserId: number,
+  actorUserId: number,
   occurrenceId: number,
   day: CalendarDayValue,
   startMinute: number,
@@ -383,7 +396,7 @@ export async function rescheduleOccurrence(
   | { kind: 'locked' }
   | { kind: 'calendar_day_not_found' }
 > {
-  const existing = await occurrenceForActor(db, occurrenceId, coachUserId);
+  const existing = await occurrenceForActor(db, occurrenceId, actorUserId);
   if (!existing) return { kind: 'not_found' };
   if (existing.status !== 'scheduled') return { kind: 'locked' };
 
@@ -398,24 +411,51 @@ export async function rescheduleOccurrence(
           duration_minutes = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-        AND coach_user_id = ?
         AND status = 'scheduled'
+        AND (
+          (
+            coach_user_id = ?
+            AND EXISTS (
+              SELECT 1
+              FROM coach_client relationship
+              WHERE relationship.coach_user_id = workout_occurrence.coach_user_id
+                AND relationship.client_user_id = workout_occurrence.client_user_id
+                AND relationship.status = 'active'
+            )
+          )
+          OR (
+            client_user_id = ?
+            AND created_by_user_id = ?
+          )
+        )
     `)
-    .bind(dateKey, startMinute, durationMinutes, occurrenceId, coachUserId)
+    .bind(
+      dateKey,
+      startMinute,
+      durationMinutes,
+      occurrenceId,
+      actorUserId,
+      actorUserId,
+      actorUserId,
+    )
     .run();
-  if ((result.meta?.changes ?? 0) === 0) return { kind: 'locked' };
+  if ((result.meta?.changes ?? 0) === 0) {
+    return await occurrenceForActor(db, occurrenceId, actorUserId)
+      ? { kind: 'locked' }
+      : { kind: 'not_found' };
+  }
 
-  const occurrence = await occurrenceById(db, occurrenceId, coachUserId);
+  const occurrence = await occurrenceById(db, occurrenceId, actorUserId);
   if (!occurrence) throw new Error('RESCHEDULED_WORKOUT_OCCURRENCE_MISSING');
   return { kind: 'ok', occurrence };
 }
 
 export async function cancelOccurrence(
   db: D1Database,
-  coachUserId: number,
+  actorUserId: number,
   occurrenceId: number,
 ): Promise<'ok' | 'not_found' | 'locked'> {
-  const existing = await occurrenceForActor(db, occurrenceId, coachUserId);
+  const existing = await occurrenceForActor(db, occurrenceId, actorUserId);
   if (!existing) return 'not_found';
   if (existing.status !== 'scheduled') return 'locked';
 
@@ -423,10 +463,28 @@ export async function cancelOccurrence(
     .prepare(`
       UPDATE workout_occurrence
       SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND coach_user_id = ? AND status = 'scheduled'
+      WHERE id = ?
+        AND status = 'scheduled'
+        AND (
+          (
+            coach_user_id = ?
+            AND EXISTS (
+              SELECT 1
+              FROM coach_client relationship
+              WHERE relationship.coach_user_id = workout_occurrence.coach_user_id
+                AND relationship.client_user_id = workout_occurrence.client_user_id
+                AND relationship.status = 'active'
+            )
+          )
+          OR (
+            client_user_id = ?
+            AND created_by_user_id = ?
+          )
+        )
     `)
-    .bind(occurrenceId, coachUserId)
+    .bind(occurrenceId, actorUserId, actorUserId, actorUserId)
     .run();
 
-  return (result.meta?.changes ?? 0) > 0 ? 'ok' : 'locked';
+  if ((result.meta?.changes ?? 0) > 0) return 'ok';
+  return await occurrenceForActor(db, occurrenceId, actorUserId) ? 'locked' : 'not_found';
 }
