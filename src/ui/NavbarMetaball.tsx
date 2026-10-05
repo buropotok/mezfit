@@ -14,6 +14,7 @@ import type { GlassPresetName } from './glassMaterial';
 import { Avatar, Text } from './primitives';
 import {
   NAVBAR_METABALL,
+  navbarBackReveal,
   navbarMetaballBezelHighlights,
   navbarMetaballContour,
   navbarMetaballFrame,
@@ -81,7 +82,7 @@ export function NavbarMetaball({
   const atIdentity = time === 0;
   const atLevelTwo = time === 1;
   const moving = !atIdentity && !atLevelTwo;
-  const backReveal = smoothFab((time / Math.max(rupture, 0.001) - 0.2) / 0.6);
+  const backReveal = navbarBackReveal(time, rupture);
   const centralActivation = useIdentityActionActivation();
   const backActivation = useIdentityActionActivation();
 
@@ -288,11 +289,11 @@ export function NavbarMetaball({
 
       <div
         className="ui-mezfit-navbar__side--left ui-navbar-metaball__back-slot"
-        aria-hidden={level === 1 || undefined}
+        aria-hidden={!atLevelTwo || undefined}
         style={{
           ...shapeStyle(geometry.day),
           opacity: backReveal,
-          pointerEvents: level === 2 ? 'auto' : 'none',
+          pointerEvents: atLevelTwo ? 'auto' : 'none',
         }}
       >
         <button
