@@ -9,6 +9,11 @@ import {
 import { triggerTelegramSelectionHaptic } from '../../telegram';
 import { MezfitPopover } from '../konsta-mezfit';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
+import {
+  resolveTwoColumnPickerLensMode,
+  type ResolvedTwoColumnPickerLensMode,
+  type TwoColumnPickerLensMode,
+} from './lensMode';
 import '../time-picker/time-picker.css';
 
 const ROW_HEIGHT = 48;
@@ -18,6 +23,7 @@ const LENS_WIDTH = 288;
 const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
 const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
+const IOS_LENS_MAGNIFICATION = 1.55;
 
 export type TwoColumnPickerSide = 'left' | 'right';
 
@@ -43,6 +49,7 @@ export interface TwoColumnPickerProps {
   columns: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn];
   ariaLabel: string;
   separator?: string;
+  lensMode?: TwoColumnPickerLensMode;
 }
 
 type ScrollTops = TwoColumnPickerParts;
@@ -94,29 +101,46 @@ function visibleLensItems(
   });
 }
 
+function iosLensScale(y: number) {
+  const centerDistance = Math.abs(y - LENS_HEIGHT / 2);
+  const progress = Math.max(0, 1 - centerDistance / (LENS_HEIGHT / 2));
+  const eased = progress * progress * (3 - 2 * progress);
+  return 1 + (IOS_LENS_MAGNIFICATION - 1) * eased;
+}
+
 function LensText({
   x,
   column,
   scrollTop,
+  lensMode,
 }: {
   x: number;
   column: TwoColumnPickerColumn;
   scrollTop: number;
+  lensMode: ResolvedTwoColumnPickerLensMode;
 }) {
   return (
     <>
-      {visibleLensItems(column.values, scrollTop).map(({ index, value, y }) => (
-        <text
-          key={index}
-          x={x}
-          y={y}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="ui-time-picker__lens-text ui-text--title"
-        >
-          {column.format(value)}
-        </text>
-      ))}
+      {visibleLensItems(column.values, scrollTop).map(({ index, value, y }) => {
+        const scale = lensMode === 'ios' ? iosLensScale(y) : 1;
+        const transform = lensMode === 'ios' && scale !== 1
+          ? `translate(${x} ${y}) scale(${scale}) translate(${-x} ${-y})`
+          : undefined;
+
+        return (
+          <text
+            key={index}
+            x={x}
+            y={y}
+            transform={transform}
+            textAnchor="middle"
+            dominantBaseline="central"
+            className="ui-time-picker__lens-text ui-text--title"
+          >
+            {column.format(value)}
+          </text>
+        );
+      })}
     </>
   );
 }
@@ -126,19 +150,58 @@ function PickerLens({
   scrollTops,
   columns,
   separator,
+  lensMode,
 }: {
   assets: TimeLensAssets | null;
   scrollTops: ScrollTops;
   columns: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn];
   separator?: string;
+  lensMode: ResolvedTwoColumnPickerLensMode;
 }) {
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-time-picker-lens-${reactId}`;
   const clipId = `ui-time-picker-lens-clip-${reactId}`;
   const sourceClipId = `ui-time-picker-lens-source-clip-${reactId}`;
+  const separatorTransform = lensMode === 'ios'
+    ? `translate(${LENS_WIDTH * 0.5} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-LENS_WIDTH * 0.5} ${-LENS_HEIGHT / 2})`
+    : undefined;
+
+  const lensContent = (
+    <>
+      <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
+      <LensText
+        x={LENS_WIDTH * 0.25}
+        column={columns[0]}
+        scrollTop={scrollTops.left}
+        lensMode={lensMode}
+      />
+      {separator ? (
+        <text
+          x={LENS_WIDTH * 0.5}
+          y={LENS_HEIGHT / 2}
+          transform={separatorTransform}
+          textAnchor="middle"
+          dominantBaseline="central"
+          className="ui-time-picker__lens-separator ui-text--title"
+        >
+          {separator}
+        </text>
+      ) : null}
+      <LensText
+        x={LENS_WIDTH * 0.75}
+        column={columns[1]}
+        scrollTop={scrollTops.right}
+        lensMode={lensMode}
+      />
+    </>
+  );
 
   return (
-    <div className="ui-time-picker__lens" aria-hidden="true">
+    <div
+      className="ui-time-picker__lens"
+      data-ui-time-picker-lens-mode={lensMode}
+      aria-hidden="true"
+    >
       <svg
         viewBox={`0 0 ${LENS_WIDTH} ${LENS_HEIGHT}`}
         preserveAspectRatio="none"
@@ -155,7 +218,7 @@ function PickerLens({
               height={LENS_HEIGHT - LENS_SOURCE_VERTICAL_INSET * 2}
             />
           </clipPath>
-          {assets ? (
+          {lensMode === 'displacement' && assets ? (
             <filter
               id={filterId}
               filterUnits="userSpaceOnUse"
@@ -204,26 +267,15 @@ function PickerLens({
           ) : null}
         </defs>
 
-        <g clipPath={`url(#${clipId})`}>
-          <g filter={assets ? `url(#${filterId})` : undefined}>
-            <g clipPath={`url(#${sourceClipId})`}>
-              <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
-              <LensText x={LENS_WIDTH * 0.25} column={columns[0]} scrollTop={scrollTops.left} />
-              {separator ? (
-                <text
-                  x={LENS_WIDTH * 0.5}
-                  y={LENS_HEIGHT / 2}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="ui-time-picker__lens-separator ui-text--title"
-                >
-                  {separator}
-                </text>
-              ) : null}
-              <LensText x={LENS_WIDTH * 0.75} column={columns[1]} scrollTop={scrollTops.right} />
+        {lensMode === 'ios' ? (
+          <g clipPath={`url(#${clipId})`}>{lensContent}</g>
+        ) : (
+          <g clipPath={`url(#${clipId})`}>
+            <g filter={assets ? `url(#${filterId})` : undefined}>
+              <g clipPath={`url(#${sourceClipId})`}>{lensContent}</g>
             </g>
           </g>
-        </g>
+        )}
       </svg>
     </div>
   );
@@ -283,9 +335,11 @@ export function TwoColumnPicker({
   columns,
   ariaLabel,
   separator,
+  lensMode = 'auto',
 }: TwoColumnPickerProps) {
   valueIndex(columns[0], value.left);
   valueIndex(columns[1], value.right);
+  const resolvedLensMode = resolveTwoColumnPickerLensMode(lensMode);
 
   const leftRef = useRef<HTMLDivElement | null>(null);
   const rightRef = useRef<HTMLDivElement | null>(null);
@@ -309,7 +363,7 @@ export function TwoColumnPicker({
   openedRef.current = opened;
 
   useEffect(() => {
-    if (!opened || lensAssets) return undefined;
+    if (resolvedLensMode !== 'displacement' || !opened || lensAssets) return undefined;
 
     const documentRef = target?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
     if (!documentRef) return undefined;
@@ -332,7 +386,7 @@ export function TwoColumnPicker({
       cancelled = true;
       view.cancelAnimationFrame(frame);
     };
-  }, [lensAssets, opened, target]);
+  }, [lensAssets, opened, resolvedLensMode, target]);
 
   useEffect(() => {
     const view = target?.ownerDocument.defaultView ?? window;
@@ -524,6 +578,7 @@ export function TwoColumnPicker({
             scrollTops={scrollTops}
             columns={columns}
             separator={separator}
+            lensMode={resolvedLensMode}
           />
         </div>
       </div>
