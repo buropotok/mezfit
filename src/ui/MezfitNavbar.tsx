@@ -1,4 +1,4 @@
-import { useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode, type Ref } from 'react';
+import { cloneElement, useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode, type Ref } from 'react';
 import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
 import type { UiIconName } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
@@ -133,7 +133,12 @@ export function MezfitNavbar({
                   label: 'Меню страницы',
                   onClick: onMenu,
                   disabled: menuDisabled,
-                  renderControl: renderMenuControl,
+                  renderControl: (control) => {
+                    const immediateControl = cloneElement(control, {
+                      onClick: () => onMenu(),
+                    });
+                    return renderMenuControl ? renderMenuControl(immediateControl) : immediateControl;
+                  },
                 },
               ]}
             />
