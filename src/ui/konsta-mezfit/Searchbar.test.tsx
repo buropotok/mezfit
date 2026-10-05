@@ -46,13 +46,15 @@ describe('MezfitSearchbar', () => {
 
     const konstaRoot = konsta.container.querySelector<HTMLElement>('.k-searchbar');
     const mezfitRoot = mezfit.container.querySelector<HTMLElement>('.k-searchbar');
-    const konstaInput = konsta.getByPlaceholderText<HTMLInputElement>('Поиск');
-    const mezfitInput = mezfit.getByPlaceholderText<HTMLInputElement>('Поиск');
+    const konstaInput = konsta.container.querySelector<HTMLInputElement>('input[placeholder="Поиск"]');
+    const mezfitInput = mezfit.container.querySelector<HTMLInputElement>('input[placeholder="Поиск"]');
     const konstaClear = konsta.container.querySelector<HTMLButtonElement>('button');
     const mezfitClear = mezfit.container.querySelector<HTMLButtonElement>('button');
 
     expect(mezfitRoot?.className).toBe(konstaRoot?.className);
-    expect(mezfitInput.className).toBe(konstaInput.className);
+    expect(konstaInput).not.toBeNull();
+    expect(mezfitInput).not.toBeNull();
+    expect(mezfitInput?.className).toBe(konstaInput?.className);
     expect(mezfitClear?.className).toBe(konstaClear?.className);
     expect(mezfit.container.querySelector('.ui-glass-surface')).not.toBeNull();
   });
