@@ -9,6 +9,7 @@ import {
   useState,
   type ReactElement,
   type ButtonHTMLAttributes,
+  type CSSProperties,
   type RefObject,
 } from 'react';
 import { GlassSurface } from './GlassSurface';
@@ -38,8 +39,11 @@ export type LiquidPopoverItem = {
   active?: boolean;
   dividerBefore?: boolean;
   'aria-checked'?: boolean;
-  'aria-current'?: 'page';
+  'aria-current'?: 'page' | 'date';
 };
+
+export type LiquidPopoverLayout = 'menu' | 'grid';
+export type LiquidPopoverRole = 'menu' | 'dialog';
 
 export interface LiquidPopoverProps {
   isOpen: boolean;
@@ -52,6 +56,11 @@ export interface LiquidPopoverProps {
   items: readonly LiquidPopoverItem[];
   label?: string;
   preset?: GlassPresetName;
+  optics?: boolean;
+  layout?: LiquidPopoverLayout;
+  columns?: number;
+  role?: LiquidPopoverRole;
+  scrollActiveIntoView?: boolean;
   motion?: Partial<LiquidMotionOptions>;
 }
 
@@ -93,6 +102,11 @@ export function LiquidPopover({
   label = 'Меню',
   triggerActivation = 'automatic',
   preset = 'frosted',
+  optics = false,
+  layout = 'menu',
+  columns = 4,
+  role = 'menu',
+  scrollActiveIntoView = false,
   motion,
 }: LiquidPopoverProps) {
   const id = useId().replace(/:/g, ''),
@@ -100,6 +114,7 @@ export function LiquidPopover({
   const measureRef = useRef<HTMLDivElement>(null),
     rowRefs = useRef(new Map<string, HTMLDivElement>());
   const nativeRef = useRef<HTMLDivElement>(null),
+    nativeRowRefs = useRef(new Map<string, HTMLButtonElement>()),
     glassRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<SVGSVGElement>(null),
     clipRef = useRef<SVGPathElement>(null);
@@ -114,6 +129,16 @@ export function LiquidPopover({
     [],
   );
   const options = useMemo(() => resolveLiquidMotionOptions(motion), [motion]);
+  const resolvedColumns = Math.max(1, Math.min(8, Math.floor(columns || 1)));
+  const gridStyle = layout === 'grid'
+    ? ({ '--ui-liquid-popover-columns': String(resolvedColumns) } as CSSProperties)
+    : undefined;
+  const activeItemId = items.find((item) => item.active)?.id;
+  const centerActiveItem = useCallback((container: HTMLElement | null, item: HTMLElement | null) => {
+    if (!scrollActiveIntoView || !container || !item) return;
+    const target = item.offsetTop + item.offsetHeight / 2 - container.clientHeight / 2;
+    container.scrollTop = Math.max(0, Math.min(target, container.scrollHeight - container.clientHeight));
+  }, [scrollActiveIntoView]);
   const contentKey = JSON.stringify(
     items.map((item) => [
       item.id,
@@ -130,6 +155,7 @@ export function LiquidPopover({
     const element = measureRef.current;
     if (!element || typeof CanvasRenderingContext2D === 'undefined') return;
     const prepare = () => {
+      centerActiveItem(element, activeItemId ? rowRefs.current.get(activeItemId) ?? null : null);
       const bounds = element.getBoundingClientRect();
       if (!bounds.width || !bounds.height) return;
       const canvas = element.ownerDocument.createElement('canvas'),
@@ -182,7 +208,7 @@ export function LiquidPopover({
       observer?.disconnect();
       element.ownerDocument.fonts?.removeEventListener('loadingdone', prepare);
     };
-  }, [contentKey, items]);
+  }, [activeItemId, centerActiveItem, contentKey, items]);
 
   useLayoutEffect(() => {
     if (!isOpen || !host || !positioned) {
@@ -200,6 +226,7 @@ export function LiquidPopover({
       scene = sceneRef.current,
       canvas = canvasRef.current;
     if (!native || !glass || !scene || !canvas) return;
+    centerActiveItem(native, activeItemId ? nativeRowRefs.current.get(activeItemId) ?? null : null);
     let frame = 0,
       cancelled = false;
     let sizeObserver: ResizeObserver | null = null;
@@ -386,13 +413,14 @@ export function LiquidPopover({
         cancelAndFinish,
       );
     };
-  }, [isOpen, host, positioned, triggerRef, options, contentKey]);
+  }, [activeItemId, centerActiveItem, isOpen, host, positioned, triggerRef, options, contentKey]);
 
   return (
     <>
       <div
         ref={measureRef}
-        className="ui-liquid-popover__measure"
+        className={`ui-liquid-popover__measure${layout === 'grid' ? ' ui-liquid-popover__measure--grid' : ''}`}
+        style={gridStyle}
         aria-hidden="true"
         inert
       >
@@ -412,7 +440,7 @@ export function LiquidPopover({
         ))}
       </div>
       {cloneElement(trigger, {
-        'aria-haspopup': 'menu',
+        'aria-haspopup': role,
         'aria-expanded': isOpen,
         onClick: (event) => {
           trigger.props.onClick?.(event);
@@ -428,14 +456,15 @@ export function LiquidPopover({
         onPositioned={handlePositioned}
         portal
         ref={contentRef}
-        role="menu"
+        role={role}
         aria-label={label}
-        className="ui-liquid-popover"
+        className={`ui-liquid-popover${layout === 'grid' ? ' ui-liquid-popover--grid' : ''}`}
+        style={gridStyle}
       >
         <GlassSurface
           ref={glassRef}
           preset={preset}
-          optics={false}
+          optics={optics}
           className="ui-liquid-popover__glass"
           aria-hidden="true"
         />
@@ -461,7 +490,8 @@ export function LiquidPopover({
           />
           <div
             ref={nativeRef}
-            className="ui-liquid-popover__native"
+            className={`ui-liquid-popover__native${layout === 'grid' ? ' ui-liquid-popover__native--grid' : ''}`}
+            style={gridStyle}
             inert={!settled}
           >
             {items.map((item) => (
@@ -470,8 +500,12 @@ export function LiquidPopover({
                   <div role="separator" className="ui-menu-divider" />
                 ) : null}
                 <button
+                  ref={(element) => {
+                    if (element) nativeRowRefs.current.set(item.id, element);
+                    else nativeRowRefs.current.delete(item.id);
+                  }}
                   type="button"
-                  role="menuitem"
+                  role={role === 'menu' ? 'menuitem' : undefined}
                   disabled={item.disabled}
                   data-disabled={item.disabled || undefined}
                   className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
