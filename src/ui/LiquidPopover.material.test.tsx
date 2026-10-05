@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { createRef, type CSSProperties, type ReactNode, type Ref } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LiquidPopover } from './LiquidPopover';
@@ -87,9 +87,10 @@ describe('LiquidPopover material and layout', () => {
       />,
     );
 
-    expect(screen.getByRole('dialog', { name: 'Выберите год' }).className).toContain('ui-liquid-popover--grid');
+    const dialog = screen.getByRole('dialog', { name: 'Выберите год' });
+    expect(dialog.className).toContain('ui-liquid-popover--grid');
     expect(screen.getByTestId('liquid-glass').getAttribute('data-preset')).toBe('smoked');
     expect(screen.getByTestId('liquid-glass').getAttribute('data-optics')).toBe('true');
-    expect(screen.getByRole('button', { name: '2026' }).getAttribute('aria-current')).toBe('date');
+    expect(within(dialog).getByRole('button', { name: '2026' }).getAttribute('aria-current')).toBe('date');
   });
 });
