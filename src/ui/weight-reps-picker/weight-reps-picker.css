@@ -1,0 +1,11 @@
+.ui-weight-reps-picker__labels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  width: min(18rem, calc(100vw - 72px));
+  margin: 0 auto var(--ui-space-1);
+  text-align: center;
+}
+
+.ui-weight-reps-picker__columns {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+}
