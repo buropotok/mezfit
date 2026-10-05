@@ -111,6 +111,7 @@ function createDb(options: {
 
 const canonicalSession = {
   sessionId: 501,
+  occurrenceId: null,
   status: 'active' as const,
   workoutDate: '2026-09-17',
   program: null,
