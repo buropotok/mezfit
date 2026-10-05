@@ -95,8 +95,9 @@ describe('IdentityAction', () => {
       <IdentityAction
         icon="users"
         title="Клиенты"
-        glass={{ tintA: 0, blur: 0, border: 0, shadow: 0, bezel: 0 }}
-        glassBezelOpacity={0}
+        glass={{ tintA: 0, blur: 0, border: 0, shadow: 0 }}
+        glassBezelOpacity={0.5}
+        glassBezelHighlights={{ topLeft: 0, bottomRight: 1 }}
       />,
     );
     const button = view.getByRole('button', { name: 'Клиенты' });
@@ -105,7 +106,10 @@ describe('IdentityAction', () => {
     expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('0px');
     expect(button.style.getPropertyValue('--ui-glass-surface-border')).toBe('0');
     expect(button.style.getPropertyValue('--ui-glass-surface-shadow')).toBe('0');
-    expect(button.style.getPropertyValue('--ui-glass-surface-bezel')).toBe('0');
+    const masterBezel = Number(button.style.getPropertyValue('--ui-glass-surface-bezel'));
+    expect(masterBezel).toBeGreaterThan(0);
+    expect(Number(button.style.getPropertyValue('--ui-glass-surface-bezel-top-left'))).toBe(0);
+    expect(Number(button.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right'))).toBeCloseTo(masterBezel);
   });
 
   it('accepts an explicit accessible label without changing the visible title', () => {
