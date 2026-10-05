@@ -229,8 +229,8 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     event.preventDefault();
     setIsEnabled(false);
     searchElRef.current?.blur();
-    onDisable?.();
-    onClear?.();
+    onDisable?.(undefined);
+    onClear?.(undefined);
   };
 
   const c = SearchbarClasses({ ...props }, colors, {
