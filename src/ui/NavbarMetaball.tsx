@@ -199,6 +199,7 @@ export function NavbarMetaball({
 
   const movingGlass = moving ? TRANSPARENT_GLASS : undefined;
   const movingIdentityGlass = moving ? TRANSPARENT_GLASS_WITH_BEZEL : undefined;
+  const identityBezelHighlights = { topLeft: bezelReveal, bottomRight: 1 } as const;
   const movingOptics = moving ? false : glassOptics;
 
   return (
@@ -246,6 +247,7 @@ export function NavbarMetaball({
             glassOptics={movingOptics}
             glass={movingIdentityGlass}
             glassBezelOpacity={1}
+            glassBezelHighlights={identityBezelHighlights}
             onClick={onIdentityClick}
           />
         ) : (
@@ -259,6 +261,7 @@ export function NavbarMetaball({
             glassOptics={movingOptics}
             glass={movingIdentityGlass}
             glassBezelOpacity={1}
+            glassBezelHighlights={identityBezelHighlights}
             onClick={onIdentityClick}
           />
         )}
