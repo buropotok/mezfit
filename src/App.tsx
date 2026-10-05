@@ -88,11 +88,13 @@ const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; tex
 
 function ClientShell({
   initData,
+  currentUserId,
   startParam,
   destination,
   onNavigationContextChange,
 }: {
   initData: string;
+  currentUserId: number;
   startParam: string | null;
   destination: AppDestination;
   onNavigationContextChange: (context: NavigationContext | null) => void;
@@ -146,6 +148,7 @@ function ClientShell({
       <TodayPage
         initData={initData}
         role="client"
+        currentUserId={currentUserId}
         onNavigationContextChange={onNavigationContextChange}
         notice={message}
       />
@@ -348,6 +351,7 @@ export function App() {
         ) : (
           <ClientShell
             initData={state.initData}
+            currentUserId={state.me.user.id}
             startParam={state.startParam}
             destination={clientDestination}
             onNavigationContextChange={handleNavigationContextChange}
