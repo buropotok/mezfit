@@ -28,6 +28,6 @@ describe('DatePicker closed lifecycle', () => {
     const surface = view.container.querySelector<HTMLElement>('[data-date-picker-surface="bare"]');
     expect(surface).toBeTruthy();
     expect(surface?.classList.contains('invisible')).toBe(true);
-    expect(surface?.classList.contains('ui-date-picker__bare-surface--opened')).toBe(false);
+    expect(surface?.classList.contains('ui-glass-surface')).toBe(false);
   });
 });
