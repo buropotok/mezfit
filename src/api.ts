@@ -12,6 +12,37 @@ export type ProgramStatus = 'active' | 'draft' | 'finished';
 export type ProgramPhaseStatus = 'pending' | 'active' | 'finished';
 export type CreateCoachProgramOwner = { type: 'self' } | { type: 'client'; clientUserId: number };
 
+export type ScheduleOccurrenceStatus = 'scheduled' | 'in_progress' | 'completed';
+
+export interface SchedulePersonSummary {
+  id: number;
+  firstName: string;
+  lastName: string | null;
+  username: string | null;
+  photoUrl: string | null;
+}
+
+export interface ScheduleOccurrence {
+  id: number;
+  calendarDate: string;
+  dateKey: number;
+  startMinute: number;
+  durationMinutes: number;
+  status: ScheduleOccurrenceStatus;
+  program: { id: number; name: string };
+  phase: { id: number; name: string };
+  day: { id: number; name: string; position: number };
+  coach: SchedulePersonSummary;
+  client: SchedulePersonSummary;
+  sessionId: number | null;
+}
+
+export interface ScheduleOccurrenceTimingInput {
+  date: string;
+  startMinute: number;
+  durationMinutes: number;
+}
+
 export interface AppUser {
   id: number;
   telegramUserId: string;
@@ -188,6 +219,13 @@ const russianApiErrors: Record<string, string> = {
   SET_NOT_FOUND: 'Подход не найден',
   INVALID_SET_FACT: 'Не удалось сохранить данные подхода',
   INVALID_EXERCISE_ORDER: 'Не удалось сохранить порядок упражнений',
+  INVALID_SCHEDULE_ROLE: 'Режим расписания недоступен',
+  INVALID_SCHEDULE_RANGE: 'Выбран слишком большой диапазон расписания',
+  INVALID_SCHEDULE_TARGET: 'Не удалось определить клиента или день программы',
+  INVALID_SCHEDULE_TIME: 'Время тренировки указано неверно',
+  SCHEDULE_TARGET_NOT_FOUND: 'День программы недоступен для этого клиента',
+  SCHEDULE_OCCURRENCE_NOT_FOUND: 'Тренировка в расписании не найдена',
+  SCHEDULE_OCCURRENCE_LOCKED: 'Начатую или завершённую тренировку нельзя переносить',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
@@ -448,6 +486,49 @@ export function setCoachExerciseFavourite(
     method: 'PUT',
     body: JSON.stringify({ favourite }),
   });
+}
+
+export async function getScheduleOccurrences(
+  initData: string,
+  role: Role,
+  from: string,
+  to: string,
+  signal?: AbortSignal,
+): Promise<{ occurrences: ScheduleOccurrence[] }> {
+  const query = new URLSearchParams({ role, from, to });
+  return apiRequest<{ occurrences: ScheduleOccurrence[] }>(
+    initData,
+    `/api/schedule?${query.toString()}`,
+    signal ? { signal } : undefined,
+  );
+}
+
+export function createScheduleOccurrence(
+  initData: string,
+  input: ScheduleOccurrenceTimingInput & { clientUserId: number; programDayId: number },
+): Promise<{ occurrence: ScheduleOccurrence }> {
+  return apiRequest(initData, '/api/schedule/occurrences', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function rescheduleScheduleOccurrence(
+  initData: string,
+  occurrenceId: number,
+  input: ScheduleOccurrenceTimingInput,
+): Promise<{ occurrence: ScheduleOccurrence }> {
+  return apiRequest(initData, `/api/schedule/occurrences/${occurrenceId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function cancelScheduleOccurrence(
+  initData: string,
+  occurrenceId: number,
+): Promise<{ ok: true }> {
+  return apiRequest(initData, `/api/schedule/occurrences/${occurrenceId}`, { method: 'DELETE' });
 }
 
 export async function getWorkoutExerciseOptions(
