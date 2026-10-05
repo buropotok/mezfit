@@ -62,11 +62,17 @@ describe('navbar metaball geometry', () => {
     expect(fabJoined(visible)).toBe(false);
   });
 
-  it('leaves stationary IdentityAction bezel highlights owned by the identity surface', () => {
+  it('keeps only the identity bottom-right bezel out of the liquid contour', () => {
     const rupture = navbarMetaballRupture(layout);
     const initial = navbarMetaballBezelHighlights(
       navbarMetaballFrame(0, layout, rupture),
       0,
+      rupture,
+    );
+    const movingTime = rupture * 0.9;
+    const moving = navbarMetaballBezelHighlights(
+      navbarMetaballFrame(movingTime, layout, rupture),
+      movingTime,
       rupture,
     );
     const settled = navbarMetaballBezelHighlights(
@@ -76,12 +82,15 @@ describe('navbar metaball geometry', () => {
     );
 
     expect(initial[0].opacity).toBe(0);
-    expect(initial[1].opacity).toBe(0);
+    expect(initial[1].opacity).toBe(1);
     expect(initial[3].opacity).toBe(0);
+    expect(moving[0].opacity).toBe(0);
+    expect(moving[1].opacity).toBe(1);
+    expect(moving[1].x).not.toBeCloseTo(initial[1].x);
     expect(settled[0].opacity).toBe(0);
     expect(settled[1].opacity).toBe(1);
     expect(settled[2].opacity).toBe(1);
-    expect(settled[3].opacity).toBe(0);
+    expect(settled[3].opacity).toBe(1);
   });
 
   it('keeps Back content fully hidden until the glass contour has ruptured', () => {
