@@ -196,17 +196,20 @@ SELECT
   seed.start_minute,
   seed.duration_minutes,
   'scheduled',
-  coach.id
+  CASE seed.creator
+    WHEN 'client' THEN client.id
+    ELSE coach.id
+  END
 FROM (
-  SELECT '2026-10-05' AS local_date, 0 AS day_position, 540 AS start_minute, 60 AS duration_minutes
+  SELECT '2026-10-05' AS local_date, 0 AS day_position, 540 AS start_minute, 60 AS duration_minutes, 'coach' AS creator
   UNION ALL
-  SELECT '2026-10-05', 1, 810, 75
+  SELECT '2026-10-05', 1, 810, 75, 'client'
   UNION ALL
-  SELECT '2026-10-05', 2, 1080, 90
+  SELECT '2026-10-05', 2, 1080, 90, 'coach'
   UNION ALL
-  SELECT '2026-10-06', 0, 660, 60
+  SELECT '2026-10-06', 0, 660, 60, 'client'
   UNION ALL
-  SELECT '2026-10-07', 1, 1170, 60
+  SELECT '2026-10-07', 1, 1170, 60, 'coach'
 ) seed
 JOIN calendar_day calendar
   ON calendar.local_date = seed.local_date
