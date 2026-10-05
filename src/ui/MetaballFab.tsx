@@ -4,7 +4,7 @@ import { Icon, type UiIconName } from './Icon';
 import { Text } from './primitives';
 import type { GlassPresetName } from './glassMaterial';
 import { startPressScale } from './PressScale';
-import { FAB_METABALL, FAB_METABALL_STAGE_WIDTH, fabContour, fabFrame, fabGeometry, fabRupture, smoothFab } from './fabMetaballGeometry';
+import { FAB_METABALL, FAB_METABALL_STAGE_WIDTH, fabContour, fabFrame, fabGeometry, fabRupture, smoothFab, fabStageWidth, type FabLayout } from './fabMetaballGeometry';
 import './MetaballFab.css';
 
 export type FloatingActionButtonAction = { label: string; onClick: () => void; disabled?: boolean; icon?: UiIconName };
@@ -17,6 +17,8 @@ export type MetaballFabProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 export function MetaballFab({ label, isShown, placement, glassPreset, glassOptics, icon, children, actions, className = '', style, disabled, onClick, onPointerDown, onKeyDown, type = 'button', ...props }: MetaballFabProps) {
   const root = useRef<HTMLDivElement>(null);
+  const dayMeasure = useRef<HTMLSpanElement>(null);
+  const phaseMeasure = useRef<HTMLSpanElement>(null);
   const frame = useRef(0);
   const progress = useRef(0);
   const selectionLocked = useRef(false);
@@ -24,7 +26,7 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
   const [time, setTime] = useState(0);
   const [open, setOpen] = useState(false);
   const [bezelReveal, setBezelReveal] = useState(1);
-  const [layout, setLayout] = useState({ width: FAB_METABALL_STAGE_WIDTH, sourceSize: 56 });
+  const [layout, setLayout] = useState<FabLayout>({ width: FAB_METABALL_STAGE_WIDTH, sourceSize: 56 });
   const id = `fab-metaball-${useId().replace(/:/g, '')}`;
   const rupture = useMemo(() => fabRupture(layout), [layout]);
   const geometry = useMemo(() => fabFrame(time, layout, rupture), [time, layout, rupture]);
@@ -37,14 +39,19 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
     if (!isShown) return;
     const element = root.current; if (!element) return;
     const measure = () => {
-      const width = element.offsetWidth || FAB_METABALL_STAGE_WIDTH, sourceSize = element.offsetHeight || 56;
-      setLayout(current => current.width === width && current.sourceSize === sourceSize ? current : { width, sourceSize });
+      const dayWidth = Math.max(FAB_METABALL.width, (dayMeasure.current?.offsetWidth ?? 0) + 20);
+      const phaseWidth = Math.max(FAB_METABALL.width, (phaseMeasure.current?.offsetWidth ?? 0) + 20);
+      const width = fabStageWidth(dayWidth, phaseWidth), sourceSize = element.offsetHeight || 56;
+      setLayout(current => current.width === width && current.sourceSize === sourceSize && current.dayWidth === dayWidth && current.phaseWidth === phaseWidth
+        ? current : { width, sourceSize, dayWidth, phaseWidth });
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure); observer.observe(element);
+    if (dayMeasure.current) observer.observe(dayMeasure.current);
+    if (phaseMeasure.current) observer.observe(phaseMeasure.current);
     return () => observer.disconnect();
-  }, [isShown]);
+  }, [isShown, actions[0].label, actions[1].label, actions[0].icon, actions[1].icon, icon, children]);
 
   useEffect(() => {
     cancelAnimationFrame(frame.current);
@@ -107,19 +114,19 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
   const revealBlur = 3 * (1 - smoothFab((time - 0.35) / 0.3));
 
   return (
-    <div ref={root} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ui-text--body ui-fab-metaball ui-fab-metaball--${placement} ${className}`.trim()} style={{ ...style, '--ui-fab-metaball-width': `${FAB_METABALL_STAGE_WIDTH}px` } as CSSProperties} aria-hidden={!isShown || undefined} data-ui-fab-mode="metaball" data-disabled={disabled || undefined}>
+    <div ref={root} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ui-text--body ui-fab-metaball ui-fab-metaball--${placement} ${className}`.trim()} style={{ ...style, '--ui-fab-metaball-width': `${layout.width}px` } as CSSProperties} aria-hidden={!isShown || undefined} data-ui-fab-mode="metaball" data-disabled={disabled || undefined}>
       {!expanded ? <GlassSurface className="ui-fab-metaball__source" contentClassName="ui-fab-metaball__source-content" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule">{artwork}</GlassSurface> : null}
       {expanded && !settled ? <GlassSurface className="ui-fab-metaball__liquid" preset={glassPreset} active={isShown} bezelOpacity={0} contour={contour} shape={{ radius: 0 }} /> : null}
       {settled ? [final.day, final.phase].map((shape, index) => <GlassSurface key={index} className="ui-fab-metaball__capsule" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule" style={hitbox(shape.x, shape.width, 44)} />) : null}
-      {expanded ? <div className="ui-fab-metaball__labels" style={{ clipPath: `path('${contour}')` }} aria-hidden="true">
-        {time > 0.35 ? <div style={{ filter: `blur(${revealBlur}px)` }}>
-          {actions.map((action, index) => { const actionIcon = action.icon ?? icon; return <span key={index} className="ui-fab-metaball__label" data-disabled={action.disabled || undefined} style={{ left: index ? final.phase.x : dayLabelX, top: geometry.base.y }}>
+      {<div className="ui-fab-metaball__labels" style={{ clipPath: `path('${contour}')` }} aria-hidden="true">
+        {<div style={{ filter: `blur(${revealBlur}px)`, visibility: time > 0.35 ? 'visible' : 'hidden' }}>
+          {actions.map((action, index) => { const actionIcon = action.icon ?? icon; return <span key={index} ref={index ? phaseMeasure : dayMeasure} className="ui-fab-metaball__label" data-disabled={action.disabled || undefined} style={{ left: index ? final.phase.x : dayLabelX, top: geometry.base.y }}>
             {actionIcon ? <Icon name={actionIcon} variant="outline" style={{ width: 36, height: 36, flexShrink: 0 }} /> : artwork}
             <Text variant="headline">{action.label}</Text>
           </span>; })}
-        </div> : null}
+        </div>}
         {time < 0.4 ? <span className="ui-fab-metaball__artwork" style={{ left: geometry.base.x, top: geometry.base.y, opacity: 1 - smoothFab(time / 0.4) }}>{artwork}</span> : null}
-      </div> : null}
+      </div>}
       <button {...props} type={type} className="ui-fab-metaball__hitbox" style={hitbox(geometry.base.x, layout.sourceSize, layout.sourceSize)} aria-label={label} aria-expanded={open} aria-controls={`${id}-actions`} disabled={disabled || !isShown || expanded} tabIndex={isShown && !expanded ? props.tabIndex ?? 0 : -1}
         onClick={event => { onClick?.(event); if (!event.defaultPrevented) { selectionLocked.current = false; setOpen(true); } }}
         onPointerDown={event => { onPointerDown?.(event); if (!event.defaultPrevented) startPressScale(event.currentTarget); }} onKeyDown={onKeyDown} />
