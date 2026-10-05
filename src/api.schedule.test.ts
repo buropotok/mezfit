@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, getScheduleOccurrences } from './api';
+import { ApiError, getScheduleOccurrences, initializeWorkoutSession } from './api';
 
 const fetchMock = vi.fn();
 
@@ -55,7 +55,39 @@ describe('schedule API runtime contract', () => {
       'coach',
       '2026-10-05',
       '2026-10-05',
-    )).rejects.toMatchObject<ApiError>({
+    )).rejects.toMatchObject({
+      status: 502,
+      code: 'INVALID_API_RESPONSE',
+    });
+  });
+
+  it('rejects scheduled_today workout metadata without a persisted occurrence id', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      session: {
+        sessionId: 501,
+        status: 'draft',
+        program: { id: 1, name: 'Программа' },
+        phase: { id: 2, name: 'Фаза' },
+        suggestedDay: {
+          id: 3,
+          name: 'День A',
+          position: 0,
+          completed: false,
+          resolution: 'scheduled_today',
+          occurrenceId: null,
+        },
+        availableDays: [],
+      },
+    }), {
+      status: 201,
+      headers: { 'content-type': 'application/json' },
+    }));
+
+    await expect(initializeWorkoutSession(
+      'telegram-init',
+      1,
+      '2026-10-05',
+    )).rejects.toMatchObject({
       status: 502,
       code: 'INVALID_API_RESPONSE',
     });
