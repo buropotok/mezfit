@@ -20,7 +20,7 @@ import {
 } from 'konsta/react';
 import { SearchbarClasses } from 'konsta/shared/classes';
 import { SearchbarColors } from 'konsta/shared/colors';
-import { cls } from 'konsta/shared/utils';
+import { cls, useIosHighlight } from 'konsta/shared/utils';
 import { GlassSurface } from '../GlassSurface';
 import type { GlassPresetName } from '../glassMaterial';
 
@@ -113,7 +113,7 @@ const SearchbarGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<
 
 SearchbarGlassButton.displayName = 'SearchbarGlassButton';
 
-function BackIcon({ className }: { className?: string }) {
+function BackIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -121,8 +121,8 @@ function BackIcon({ className }: { className?: string }) {
       height="16"
       viewBox="0 0 16 16"
       fill="currentcolor"
-      className={className}
       aria-hidden="true"
+      {...props}
     >
       <polygon points="16 7 3.83 7 9.42 1.41 8 0 0 8 8 16 9.41 14.59 3.83 9 16 9" />
     </svg>
@@ -161,11 +161,31 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
 
   const searchElRef = useRef<HTMLInputElement | null>(null);
   const elRef = useRef<HTMLElement | null>(null);
+  const innerGlassRef = useRef<HTMLElement | null>(null);
+  const cancelGlassRef = useRef<HTMLElement | null>(null);
+  const innerHighlightData = useRef<Record<string, unknown>>({});
+  const cancelHighlightData = useRef<Record<string, unknown>>({});
   const disableTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isEnabled, setIsEnabled] = useState(false);
   const theme = useTheme({ ios, material });
   const themeClasses = useThemeClasses({ ios, material });
   const colors = SearchbarColors(colorsProp, canonicalDark);
+  const {
+    attachEvents: attachInnerHighlight,
+    detachEvents: detachInnerHighlight,
+  } = useIosHighlight({
+    getEl: () => innerGlassRef.current,
+    enabled: theme === 'ios',
+    data: innerHighlightData.current,
+  });
+  const {
+    attachEvents: attachCancelHighlight,
+    detachEvents: detachCancelHighlight,
+  } = useIosHighlight({
+    getEl: () => cancelGlassRef.current,
+    enabled: theme === 'ios',
+    data: cancelHighlightData.current,
+  });
 
   const handleInput = (event: FormEvent<HTMLInputElement>) => {
     onInput?.(event);
@@ -196,6 +216,15 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     if (disableTimeout.current !== null) clearTimeout(disableTimeout.current);
   };
 
+  useEffect(() => {
+    attachInnerHighlight();
+    attachCancelHighlight();
+    return () => {
+      detachInnerHighlight();
+      detachCancelHighlight();
+    };
+  });
+
   useEffect(() => () => {
     if (disableTimeout.current !== null) clearTimeout(disableTimeout.current);
   }, []);
@@ -225,6 +254,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
   const cancelButton = theme === 'ios' ? (
     <GlassSurface
       component={SearchbarGlassButton}
+      ref={cancelGlassRef}
       style={{
         marginRight: isEnabled ? 0 : `-${48 + 16}px`,
         marginLeft: isEnabled ? '16px' : 0,
@@ -239,14 +269,11 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
       <SearchDisableIcon />
     </GlassSurface>
   ) : (
-    <button
-      type="button"
+    <BackIcon
       className={cls(c.cancelButton)}
       onClick={handleDisableButton}
       onPointerDown={(event) => event.preventDefault()}
-    >
-      <BackIcon />
-    </button>
+    />
   );
 
   return (
@@ -258,6 +285,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
       onFocusCapture={onGlobalFocus}
     >
       <GlassSurface
+        ref={innerGlassRef}
         className={cls('k-glass touch-none', c.inner)}
         preset={glassPreset}
         optics={glassOptics}
