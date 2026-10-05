@@ -82,6 +82,7 @@ export function NavbarMetaball({
   const atIdentity = time === 0;
   const atLevelTwo = time === 1;
   const moving = !atIdentity && !atLevelTwo;
+  const backInteractive = level === 2 && atLevelTwo;
   const backReveal = navbarBackReveal(time, rupture);
   const centralActivation = useIdentityActionActivation();
   const backActivation = useIdentityActionActivation();
@@ -289,11 +290,11 @@ export function NavbarMetaball({
 
       <div
         className="ui-mezfit-navbar__side--left ui-navbar-metaball__back-slot"
-        aria-hidden={!atLevelTwo || undefined}
+        aria-hidden={!backInteractive || undefined}
         style={{
           ...shapeStyle(geometry.day),
           opacity: backReveal,
-          pointerEvents: atLevelTwo ? 'auto' : 'none',
+          pointerEvents: backInteractive ? 'auto' : 'none',
         }}
       >
         <button
