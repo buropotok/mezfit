@@ -1,13 +1,9 @@
 /** @vitest-environment jsdom */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type { ComponentProps } from 'react';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { KonstaProvider, Searchbar as KonstaSearchbar } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MezfitSearchbar } from './Searchbar';
-
-const source = readFileSync(resolve(process.cwd(), 'src/ui/konsta-mezfit/Searchbar.tsx'), 'utf8');
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
@@ -71,7 +67,7 @@ describe('MezfitSearchbar', () => {
     });
 
     const root = view.container.querySelector<HTMLElement>('.k-searchbar');
-    const input = view.getByPlaceholderText<HTMLInputElement>('Поиск');
+    const input = view.getByPlaceholderText('Поиск') as HTMLInputElement;
     const buttons = view.container.querySelectorAll<HTMLButtonElement>('button');
     const glassSurfaces = view.container.querySelectorAll<HTMLElement>('.ui-glass-surface');
 
@@ -112,9 +108,23 @@ describe('MezfitSearchbar', () => {
     expect(glass?.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('138');
   });
 
-  it('forwards application glass optics to every replacement GlassSurface', () => {
-    expect(source.match(/optics=\{glassOptics\}/g)).toHaveLength(2);
-    expect(source.match(/preset=\{glassPreset\}/g)).toHaveLength(2);
-    expect(source).not.toContain('<KonstaGlass');
+  it('forwards application glass optics to every replacement GlassSurface', async () => {
+    const view = renderSearchbar({
+      value: '',
+      disableButton: true,
+      glassPreset: 'blue',
+      glassOptics: true,
+    });
+
+    const glassSurfaces = view.container.querySelectorAll<HTMLElement>('.ui-glass-surface');
+    expect(glassSurfaces).toHaveLength(2);
+    glassSurfaces.forEach((glass) => {
+      expect(glass.style.getPropertyValue('--ui-glass-surface-tint-r')).toBe('10');
+      expect(glass.style.getPropertyValue('--ui-glass-surface-tint-g')).toBe('74');
+      expect(glass.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('138');
+    });
+    await waitFor(() => {
+      expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalledTimes(2);
+    });
   });
 });
