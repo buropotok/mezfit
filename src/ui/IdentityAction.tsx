@@ -255,6 +255,7 @@ export function IdentityAction(props: IdentityActionProps) {
       optics={glassOptics}
       glass={glass}
       bezelOpacity={glassBezelOpacity}
+      bezelHighlights={glassBezelHighlights}
       wrapContent={false}
       className={className}
       aria-label={ariaLabel ?? title}
