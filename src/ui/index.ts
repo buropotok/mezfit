@@ -3,7 +3,7 @@ export type { UiComponentTheme } from './componentTheme';
 export { Icon, type IconProps, type UiIconName, type UiIconVariant } from './Icon';
 export type { UiIconPair, UiIconSource } from './iconPair';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge';
-export { DatePicker, type DatePickerProps, type LocalDate } from './date-picker/DatePicker';
+export { DatePicker, type DatePickerProps, type DatePickerSurface, type LocalDate } from './date-picker/DatePicker';
 export { TimePicker, type TimePickerLensMode, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
 export { NumPicker, type NumPickerProps } from './num-picker/NumPicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
@@ -17,7 +17,7 @@ export { NestedBadges, type NestedBadgeItem, type NestedBadgesProps } from './Ne
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { LiftedGlass, type LiftedGlassProps } from './LiftedGlass';
 export { GlassSurface, type GlassSurfaceProps } from './GlassSurface';
-export { MezfitDialog, MezfitDialogButton, MezfitPanel, MezfitPopover, MezfitSearchbar, MezfitSidePanel, type MezfitDialogButtonProps, type MezfitDialogProps, type MezfitPanelProps, type MezfitPopoverProps, type MezfitSearchbarProps, type MezfitSidePanelProps } from './konsta-mezfit';
+export { MezfitDialog, MezfitDialogButton, MezfitPanel, MezfitPopover, MezfitSearchbar, MezfitSidePanel, type MezfitDialogButtonProps, type MezfitDialogProps, type MezfitPanelProps, type MezfitPopoverProps, type MezfitSearchbarProps, type MezfitSidePanelProps, type MezfitSidePanelSurface } from './konsta-mezfit';
 export { BLUE_GLASS, CLEAR_GLASS, FROSTED_GLASS, GLASS_PRESETS, LENS_GLASS, MODAL_GLASS, MODAL_TUNED_GLASS, SMOKED_GLASS, resolveGlassMaterial, resolveGlassRadius, type GlassMaterial, type GlassMaterialOverrides, type GlassPresetName, type GlassShape } from './glassMaterial';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 

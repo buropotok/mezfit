@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe('DatePicker closed lifecycle', () => {
-  it('does not render a separate prewarm surface and leaves closed Panel visibility to Konsta', () => {
+  it('keeps the default bare surface mounted and hidden while closed', () => {
     const view = render(
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
@@ -25,9 +25,9 @@ describe('DatePicker closed lifecycle', () => {
 
     expect(view.container.querySelector('.ui-date-picker__prewarm')).toBeNull();
 
-    const panel = view.container.querySelector<HTMLElement>('[aria-label="Выбор даты"]');
-    expect(panel).toBeTruthy();
-    expect(panel?.className).toContain('invisible');
-    expect(panel?.style.visibility).toBe('');
+    const surface = view.container.querySelector<HTMLElement>('[data-date-picker-surface="bare"]');
+    expect(surface).toBeTruthy();
+    expect(surface?.classList.contains('invisible')).toBe(true);
+    expect(surface?.classList.contains('ui-glass-surface')).toBe(false);
   });
 });

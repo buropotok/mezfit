@@ -17,28 +17,31 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('DatePicker Mezfit overlay materials', () => {
-  it('keeps the MezfitSidePanel and MezfitPopover GlassSurface materials in panel mode', () => {
-    render(
+describe('DatePicker bare surface', () => {
+  it('uses the bare sliding calendar surface by default', () => {
+    const onClose = vi.fn();
+
+    const view = render(
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
           <DatePicker
             opened
-            surface="panel"
             value="2026-09-25"
             onChange={() => {}}
-            onClose={() => {}}
+            onClose={onClose}
           />
         </div>
       </KonstaProvider>,
     );
 
-    const pickerDialog = screen.getByRole('dialog', { name: 'Выбор даты' });
-    expect(pickerDialog.classList.contains('ui-glass-surface')).toBe(true);
+    const dialog = screen.getByRole('dialog', { name: 'Выбор даты' });
+    expect(dialog.getAttribute('data-date-picker-surface')).toBe('bare');
+    expect(dialog.classList.contains('ui-glass-surface')).toBe(false);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' }));
+    const backdrop = view.container.querySelector<HTMLElement>('.ui-date-picker__bare-backdrop');
+    expect(backdrop).toBeTruthy();
 
-    const yearDialog = screen.getByRole('dialog', { name: 'Выберите год' });
-    expect(yearDialog.querySelector('.ui-glass-surface')).not.toBeNull();
+    fireEvent.click(backdrop as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
