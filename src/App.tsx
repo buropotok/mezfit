@@ -182,6 +182,7 @@ export function App() {
   }, []);
   const workoutRootNavigationContext = useMemo<NavigationContext>(() => ({
     title: 'Тренировка',
+    scrollKey: 'workout:root',
     identity: { title: 'Тренировка', icon: 'barbell' },
     onBack: closeWorkout,
   }), [closeWorkout]);

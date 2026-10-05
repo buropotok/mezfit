@@ -250,17 +250,17 @@ export function SettingsPage({
 
   useEffect(() => {
     if (typographySettingsOpen) {
-      onNavigationContextChange({ title: 'Шрифты', onBack: closeTypographySettings });
+      onNavigationContextChange({ title: 'Шрифты', scrollKey: 'settings:typography', onBack: closeTypographySettings });
       return () => onNavigationContextChange(null);
     }
 
     if (glassSettingsOpen) {
-      onNavigationContextChange({ title: 'Настройки стекла', onBack: closeGlassSettings });
+      onNavigationContextChange({ title: 'Настройки стекла', scrollKey: 'settings:glass', onBack: closeGlassSettings });
       return () => onNavigationContextChange(null);
     }
 
     if (modulesOpen) {
-      onNavigationContextChange({ title: 'Модули', onBack: closeModules });
+      onNavigationContextChange({ title: 'Модули', scrollKey: 'settings:modules', onBack: closeModules });
       return () => onNavigationContextChange(null);
     }
 

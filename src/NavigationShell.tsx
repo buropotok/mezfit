@@ -59,6 +59,7 @@ type RegisteredFloatingAction = {
 export interface NavigationContext {
   level?: NavigationLevel;
   title: string;
+  scrollKey?: string;
   onBack?: () => void;
   identity?: MezfitNavbarIdentity;
   menuActions?: readonly NavigationMenuAction[];
@@ -73,6 +74,7 @@ interface NavigationItem {
 }
 
 const NavigationLevelContext = createContext<NavigationLevel>(1);
+const NavigationBackTransitionContext = createContext<((transition: () => void) => void) | null>(null);
 const NavigationFloatingActionContext = createContext<Dispatch<SetStateAction<RegisteredFloatingAction | null>> | null>(null);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
@@ -110,6 +112,11 @@ const clientItems: NavigationItem[] = [...clientPrimaryItems, ...clientSecondary
 
 export function useNavigationLevel(): NavigationLevel {
   return useContext(NavigationLevelContext);
+}
+
+export function useNavigationBackTransition(): (transition: () => void) => void {
+  const requestBackTransition = useContext(NavigationBackTransitionContext);
+  return requestBackTransition ?? ((transition) => transition());
 }
 
 export function useNavigationFloatingAction(destination: AppDestination, action: NavigationFloatingAction | null): void {
@@ -200,6 +207,10 @@ export function NavigationShell({
   const contextRef = useRef(nestedContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
+  const contentRef = useRef<HTMLElement | null>(null);
+  const scrollPositionsRef = useRef(new Map<string, number>());
+  const currentScrollSurfaceRef = useRef<string | null>(null);
+  const restoreScrollOnNextSurfaceRef = useRef(false);
   const items = itemsForRole(activeRole);
   const primaryItems = primaryItemsForRole(activeRole);
   const secondaryItems = items.filter((item) => item.section === 'secondary');
@@ -208,6 +219,8 @@ export function NavigationShell({
   const pageFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
   const resolvedFloatingAction = pageFloatingAction ?? floatingAction ?? null;
   const level: NavigationLevel = nestedContext ? 2 : 1;
+  const nestedScrollKey = nestedContext?.scrollKey ?? (nestedContext ? `nested:${nestedContext.title}` : 'root');
+  const scrollSurfaceKey = `${activeRole}:${destination}:${nestedScrollKey}`;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
     title: context?.title ?? currentItem.label,
     icon: currentItem.icon,
@@ -223,28 +236,53 @@ export function NavigationShell({
     setMenuOpen(false);
   }, [nestedContext]);
 
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const previousSurface = currentScrollSurfaceRef.current;
+    if (previousSurface === null) {
+      currentScrollSurfaceRef.current = scrollSurfaceKey;
+      content.scrollTop = 0;
+      return;
+    }
+    if (previousSurface === scrollSurfaceKey) return;
+
+    content.scrollTop = restoreScrollOnNextSurfaceRef.current
+      ? scrollPositionsRef.current.get(scrollSurfaceKey) ?? 0
+      : 0;
+    restoreScrollOnNextSurfaceRef.current = false;
+    currentScrollSurfaceRef.current = scrollSurfaceKey;
+  }, [scrollSurfaceKey]);
+
+  const requestBackTransition = useCallback((transition: () => void) => {
+    restoreScrollOnNextSurfaceRef.current = true;
+    transition();
+  }, []);
+
   const requestBack = useCallback(() => {
     const currentContext = contextRef.current;
     if (!currentContext) return;
     const historyEntry = historyEntryRef.current;
     if (historyEntry && historyHasToken(historyEntry.token)) {
+      restoreScrollOnNextSurfaceRef.current = true;
       window.history.back();
       return;
     }
     historyEntryRef.current = null;
-    currentContext.onBack?.();
-  }, []);
+    if (currentContext.onBack) requestBackTransition(currentContext.onBack);
+  }, [requestBackTransition]);
 
   useEffect(() => {
     const onPopState = () => {
       const currentContext = contextRef.current;
-      if (!currentContext) return;
+      if (!currentContext?.onBack) return;
       historyEntryRef.current = null;
-      currentContext.onBack?.();
+      requestBackTransition(currentContext.onBack);
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, []);
+  }, [requestBackTransition]);
 
   useEffect(() => {
     const existingEntry = historyEntryRef.current;
@@ -360,6 +398,7 @@ export function NavigationShell({
 
   return (
     <FloatingActionButtonGlassProvider preset={glassPreset} optics={glassOptics}>
+    <NavigationBackTransitionContext.Provider value={requestBackTransition}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
         <main className="app-shell navigation-shell">
@@ -377,7 +416,13 @@ export function NavigationShell({
           />
         </div>
 
-        <section className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}>
+        <section
+          ref={contentRef}
+          className={`navigation-content${level === 1 ? ' navigation-content--with-tabs' : ''}`}
+          onScroll={(event) => {
+            scrollPositionsRef.current.set(scrollSurfaceKey, event.currentTarget.scrollTop);
+          }}
+        >
           {children}
         </section>
 
@@ -419,6 +464,7 @@ export function NavigationShell({
         </main>
       </NavigationLevelContext.Provider>
     </NavigationFloatingActionContext.Provider>
+    </NavigationBackTransitionContext.Provider>
     </FloatingActionButtonGlassProvider>
   );
 }
