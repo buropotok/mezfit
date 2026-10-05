@@ -88,7 +88,7 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   contentClassName?: string;
   /** Implicit CSS-pixel silhouette; material, shadow and bezel follow this path. */
   contour?: string;
-  /** Visibility of border and bezel highlights, independent of the glass material. */
+  /** Visibility of bezel highlights only; the material border remains visible. */
   bezelOpacity?: number;
   wrapContent?: boolean;
   active?: boolean;
@@ -118,7 +118,7 @@ export function GlassSurface({
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
   const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
-  const edgeOpacity = Math.max(0, Math.min(1, bezelOpacity));
+  const highlightOpacity = Math.max(0, Math.min(1, bezelOpacity));
   const hostMode = !wrapContent;
   const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
@@ -243,8 +243,8 @@ export function GlassSurface({
     '--ui-glass-surface-blur': `${material.blur}px`,
     '--ui-glass-surface-saturation': String(material.saturation),
     '--ui-glass-surface-brightness': String(material.brightness),
-    '--ui-glass-surface-bezel': String(material.bezel * edgeOpacity),
-    '--ui-glass-surface-border': String(material.border * edgeOpacity),
+    '--ui-glass-surface-bezel': String(material.bezel * highlightOpacity),
+    '--ui-glass-surface-border': String(material.border),
     '--ui-glass-surface-shadow': String(material.shadow),
     '--ui-glass-surface-filter': `url(#${filterId})`,
   };
@@ -276,8 +276,8 @@ export function GlassSurface({
         </svg>
         <div className="ui-glass-surface__contour-material" style={{ clipPath: `url(#${filterId}-clip)` }} />
         <svg className="ui-glass-surface__contour ui-glass-surface__contour-edge" aria-hidden="true">
-          <path d={contour} fill="none" stroke="white" strokeOpacity={material.border * edgeOpacity} strokeWidth="1" />
-          <path d={contour} fill="none" stroke={`url(#${filterId}-bezel)`} strokeOpacity={material.bezel * edgeOpacity} strokeWidth="0.5" />
+          <path d={contour} fill="none" stroke="white" strokeOpacity={material.border} strokeWidth="1" />
+          <path d={contour} fill="none" stroke={`url(#${filterId}-bezel)`} strokeOpacity={material.bezel * highlightOpacity} strokeWidth="0.5" />
         </svg>
       </> : null}
       {activeVectorMapHref && geometry && filterRegion ? (
