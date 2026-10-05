@@ -164,7 +164,7 @@ function ClientShell({
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
-  const [coachDestination, setCoachDestination] = useState<AppDestination>('clients');
+  const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [workoutOpen, setWorkoutOpen] = useState(false);
