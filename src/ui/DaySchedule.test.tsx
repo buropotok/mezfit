@@ -210,6 +210,39 @@ describe('DaySchedule', () => {
     act(() => vi.advanceTimersByTime(50));
   });
 
+  it('prevents native image drag from stealing pointer DnD inside a real event card', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={moved}
+        renderEvent={event => <img src="/avatar.png" alt={event.id} />}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    const image = view.getByAltText('a');
+    if (!frame) throw new Error('Missing draggable event frame');
+
+    expect(fireEvent.dragStart(image)).toBe(false);
+
+    fireEvent.pointerDown(image, { pointerId: 81, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 81, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 110 });
+    fireEvent.pointerMove(document, { pointerId: 81, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 164 });
+    fireEvent.pointerUp(document, { pointerId: 81, pointerType: 'mouse', button: 0, clientX: 100, clientY: 164 });
+
+    expect(moved).toHaveBeenCalledWith({
+      eventId: 'a',
+      date: '2026-09-28',
+      targetDate: '2026-09-28',
+      previousStartMinutes: 600,
+      startMinutes: 660,
+    });
+    act(() => vi.advanceTimersByTime(50));
+  });
+
   it('pages to the next day from the right DnD edge, pauses there, and emits targetDate on drop', () => {
     const moved = vi.fn();
     const view = render(
