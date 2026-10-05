@@ -11,7 +11,7 @@ export { IdentityAction, type IdentityActionAvatar, type IdentityActionItem, typ
 export { MezfitNavbar, type MezfitNavbarIdentity, type MezfitNavbarProps } from './MezfitNavbar';
 export { MEZFIT_NAVBAR_GLASS_PRESET } from './mezfitNavbarConfig';
 export { Checkbox, Radio, TextArea, TextInput, type CheckboxProps, type RadioProps, type TextAreaProps, type TextInputProps } from './FormControls';
-export { BottomSheet, FloatingActionButton, FloatingActionButtonGlassProvider, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, type BottomSheetProps, type ListItemProps, type ModalAction, type TabsIconPair, type TabsMode, type TabsProps, type TabsTriggerProps } from './components';
+export { BottomSheet, FloatingActionButton, FloatingActionButtonGlassProvider, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, type BottomSheetProps, type FloatingActionButtonProps, type ListItemProps, type ModalAction, type TabsIconPair, type TabsMode, type TabsProps, type TabsTriggerProps } from './components';
 export { Menu, MenuDivider, MenuItem, type MenuProps } from './Menu';
 export { NestedBadges, type NestedBadgeItem, type NestedBadgesProps } from './NestedBadges';
 export { SearchInput, type SearchInputProps } from './SearchInput';
@@ -31,3 +31,4 @@ export { LiquidPopover, resolveLiquidMotionOptions } from './LiquidPopover';
 export type { LiquidPopoverProps, LiquidPopoverItem } from './LiquidPopover';
 export { LIQUID_POPOVER_DEFAULTS } from './liquidPopoverGeometry';
 export type { LiquidMotionOptions } from './liquidPopoverGeometry';
+export type { FloatingActionButtonAction } from './MetaballFab';
