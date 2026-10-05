@@ -202,7 +202,7 @@ function ClientDirectory({
 
 interface CoachShellProps {
   initData: string;
-  currentUserId: number;
+  currentUserId?: number;
   destination: AppDestination;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
