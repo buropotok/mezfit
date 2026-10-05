@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { cleanup, render, screen } from '@testing-library/react';
-import { createRef, type ReactNode, type Ref } from 'react';
+import { createRef, type CSSProperties, type ReactNode, type Ref } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LiquidPopover } from './LiquidPopover';
 
@@ -42,7 +42,7 @@ vi.mock('./konsta-mezfit/Popover', () => ({
     role: string;
     'aria-label': string;
     className: string;
-    style?: React.CSSProperties;
+    style?: CSSProperties;
   }) => (
     <div
       ref={ref}
