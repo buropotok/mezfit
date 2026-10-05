@@ -247,6 +247,7 @@ export function TodayPage({
   useEffect(() => {
     if (
       !initialLoadSettledRef.current
+      || mutatingOccurrenceIds.size > 0
       || includesDate(loadedRangesRef.current, date)
       || includesDate(pendingRangesRef.current, date)
     ) return undefined;
@@ -275,7 +276,7 @@ export function TodayPage({
       });
 
     return () => controller.abort();
-  }, [date, initData, loadingToday, role]);
+  }, [date, initData, loadingToday, mutatingOccurrenceIds, role]);
 
   const occurrenceIsEditable = (occurrence: ScheduleOccurrence): boolean => (
     occurrence.status === 'scheduled'
