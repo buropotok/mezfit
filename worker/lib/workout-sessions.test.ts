@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  completeWorkoutSession,
   getWorkoutSessionProjection,
   initializeWorkoutSession,
   resolveWorkoutProgram,
@@ -523,6 +524,71 @@ describe('startWorkoutSession', () => {
       programDayId: 40,
       occurrenceId: 77,
     })).resolves.toEqual({ kind: 'invalid_occurrence' });
+  });
+});
+
+describe('completeWorkoutSession', () => {
+  it('completes a linked workout occurrence together with its session', async () => {
+    const workoutFirst = vi.fn().mockResolvedValue({
+      id: 501,
+      user_id: 7,
+      source_program_phase_id: 30,
+      source_program_day_id: 40,
+      occurrence_id: 77,
+      status: 'active',
+      started_at: '2026-10-05 10:00:00',
+      created_at: '2026-10-05 09:55:00',
+    });
+    const headerFirst = vi.fn().mockResolvedValue({
+      id: 501,
+      occurrence_id: 77,
+      status: 'completed',
+      workout_date: '2026-10-05',
+      program_id: 20,
+      program_name: 'Силовой блок',
+      phase_id: 30,
+      phase_name: 'Фаза 1',
+      day_id: 40,
+      day_name: 'День B',
+      day_position: 1,
+      coach_user_id: 9,
+    });
+    const exercisesAll = vi.fn().mockResolvedValue({ results: [] });
+    const batchStatements: { sql: string }[] = [];
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes('FROM workout_session') && sql.includes('WHERE id = ? AND user_id = ?')) {
+        return { bind: vi.fn().mockReturnValue({ first: workoutFirst }) };
+      }
+      if (sql.includes('UPDATE workout_session') || sql.includes('UPDATE workout_occurrence')) {
+        return { bind: vi.fn().mockImplementation(() => {
+          const statement = { sql };
+          batchStatements.push(statement);
+          return statement;
+        }) };
+      }
+      if (sql.includes('FROM workout_session ws')) {
+        return { bind: vi.fn().mockReturnValue({ first: headerFirst }) };
+      }
+      if (sql.includes('FROM session_exercise se')) {
+        return { bind: vi.fn().mockReturnValue({ all: exercisesAll }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const batch = vi.fn().mockResolvedValue([
+      { meta: { changes: 1 } },
+      { meta: { changes: 1 } },
+    ]);
+    const db = { prepare, batch } as unknown as D1Database;
+
+    await expect(completeWorkoutSession(db, 7, 501)).resolves.toMatchObject({
+      kind: 'ok',
+      session: { sessionId: 501, occurrenceId: 77, status: 'completed' },
+    });
+
+    expect(batchStatements).toHaveLength(2);
+    expect(batchStatements[0]?.sql).toContain("status = 'completed'");
+    expect(batchStatements[1]?.sql).toContain('UPDATE workout_occurrence');
+    expect(batchStatements[1]?.sql).toContain("status = 'completed'");
   });
 });
 
