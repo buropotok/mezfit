@@ -66,6 +66,13 @@ declare module 'konsta/shared/colors' {
     bgMaterial: string;
   };
 
+  export type KonstaSearchbarColors = {
+    inputBgIos: string;
+    inputBgMaterial: string;
+    placeholderIos: string;
+    placeholderMaterial: string;
+  };
+
   export function DialogColors(
     colorsProp: unknown,
     dark: DarkClassResolver,
@@ -80,6 +87,11 @@ declare module 'konsta/shared/colors' {
     colorsProp: unknown,
     dark: DarkClassResolver,
   ): KonstaPopoverColors;
+
+  export function SearchbarColors(
+    colorsProp: unknown,
+    dark: DarkClassResolver,
+  ): KonstaSearchbarColors;
 }
 
 declare module 'konsta/shared/classes' {
@@ -87,6 +99,7 @@ declare module 'konsta/shared/classes' {
     KonstaDialogColors,
     KonstaPanelColors,
     KonstaPopoverColors,
+    KonstaSearchbarColors,
   } from 'konsta/shared/colors';
 
   type ThemedClass = {
@@ -139,6 +152,17 @@ declare module 'konsta/shared/classes' {
     };
   };
 
+  export type KonstaSearchbarClassMap = {
+    base: ThemedClass;
+    inner: ThemedClass;
+    searchIconWrap: ThemedClass;
+    clearButton: ThemedClass;
+    input: ThemedClass;
+    deleteIcon: ThemedClass;
+    searchIcon: ThemedClass;
+    cancelButton: ThemedClass;
+  };
+
   export type KonstaPopoverClassMap = {
     base: StatefulThemedClass;
     inner: StatefulThemedClass;
@@ -176,4 +200,13 @@ declare module 'konsta/shared/classes' {
     colors: KonstaPopoverColors,
     dark: (classNames: string) => string,
   ): KonstaPopoverClassMap;
+
+  export function SearchbarClasses(
+    props: object,
+    colors: KonstaSearchbarColors,
+    options: {
+      isEnabled: boolean;
+      darkClasses: (classNames: string) => string;
+    },
+  ): KonstaSearchbarClassMap;
 }
