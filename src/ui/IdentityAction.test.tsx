@@ -90,6 +90,19 @@ describe('IdentityAction', () => {
     expect(html).toContain('disabled');
   });
 
+  it('keeps the external surface ref contract after sharing activation mechanics', () => {
+    const surfaceRef = { current: null as HTMLElement | null };
+    const view = render(
+      <IdentityAction
+        icon="users"
+        title="Клиенты"
+        surfaceRef={surfaceRef}
+      />,
+    );
+
+    expect(surfaceRef.current).toBe(view.getByRole('button', { name: 'Клиенты' }));
+  });
+
   it('accepts an explicit accessible label without changing the visible title', () => {
     const html = renderIdentityAction(
       <IdentityAction

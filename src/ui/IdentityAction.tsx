@@ -1,14 +1,8 @@
 import {
   Fragment,
   forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
   type ButtonHTMLAttributes,
   type CSSProperties,
-  type MouseEventHandler,
-  type PointerEventHandler,
   type ReactElement,
   type ReactNode,
   type Ref,
@@ -16,6 +10,7 @@ import {
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName, type UiIconVariant } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
+import { useIdentityActionActivation } from './identityActionActivation';
 import { Avatar, Text } from './primitives';
 import './identity-action.css';
 
@@ -95,84 +90,16 @@ export function IdentityAction(props: IdentityActionProps) {
     glassOptics = false,
     disabled = false,
   } = props;
-  const [isAnimating, setIsAnimating] = useState(false);
-  const rootRef = useRef<HTMLElement>(null);
-  const surfaceRef = props.surfaceRef;
-  const setSurfaceRef = useCallback((element: HTMLElement | null) => {
-    rootRef.current = element;
-    if (typeof surfaceRef === 'function') surfaceRef(element);
-    else if (surfaceRef) surfaceRef.current = element;
-  }, [surfaceRef]);
-  const animationActiveRef = useRef(false);
-  const pointerPressRef = useRef(false);
-  const animationFinishedRef = useRef(false);
-  const pendingActionRef = useRef<(() => void) | null>(null);
-
-  const finishActivation = useCallback(() => {
-    const action = pendingActionRef.current;
-    pendingActionRef.current = null;
-    pointerPressRef.current = false;
-    animationFinishedRef.current = false;
-    if (!disabled) action?.();
-  }, [disabled]);
-
-  const finishAnimation = useCallback(() => {
-    animationActiveRef.current = false;
-    setIsAnimating(false);
-    animationFinishedRef.current = pointerPressRef.current;
-
-    if (pendingActionRef.current) finishActivation();
-  }, [finishActivation]);
-
-  useEffect(() => {
-    const element = rootRef.current;
-    if (!element) return undefined;
-
-    const handleAnimationEnd = (event: AnimationEvent) => {
-      if (event.target === element) finishAnimation();
-    };
-
-    element.addEventListener('animationend', handleAnimationEnd);
-    return () => element.removeEventListener('animationend', handleAnimationEnd);
-  }, [finishAnimation]);
-
-  const startAnimation = (fromPointer: boolean) => {
-    if (disabled || animationActiveRef.current) return;
-
-    animationActiveRef.current = true;
-    animationFinishedRef.current = false;
-    if (fromPointer) pointerPressRef.current = true;
-    setIsAnimating(true);
-  };
-
-  const handlePointerDown: PointerEventHandler<HTMLElement> = (event) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    startAnimation(true);
-  };
-
-  const cancelPointerActivation = () => {
-    if (pendingActionRef.current) return;
-    pointerPressRef.current = false;
-    animationFinishedRef.current = false;
-  };
-
-  const queueActivation = (action?: () => void) => {
-    if (disabled || !action || pendingActionRef.current) return;
-
-    if (animationActiveRef.current) {
-      pendingActionRef.current = action;
-      return;
-    }
-
-    if (pointerPressRef.current && animationFinishedRef.current) {
-      pendingActionRef.current = action;
-      finishActivation();
-      return;
-    }
-
-    pendingActionRef.current = action;
-    startAnimation(false);
-  };
+  const {
+    isAnimating,
+    setRootRef: setSurfaceRef,
+    handlePointerDown,
+    cancelPointerActivation,
+    queueActivation,
+  } = useIdentityActionActivation({
+    disabled,
+    externalRef: props.surfaceRef,
+  });
 
   const className = [
     'ui-identity-action',
@@ -235,7 +162,6 @@ export function IdentityAction(props: IdentityActionProps) {
     width,
     'aria-label': ariaLabel,
   } = props;
-  const handleClick: MouseEventHandler<HTMLElement> = () => queueActivation(onClick);
   const showTitle = variant !== 'single' && variant !== 'avatar-only';
 
   return (
@@ -252,7 +178,7 @@ export function IdentityAction(props: IdentityActionProps) {
       onPointerDown={handlePointerDown}
       onPointerCancel={cancelPointerActivation}
       onPointerLeave={cancelPointerActivation}
-      onClick={handleClick}
+      onClick={() => queueActivation(onClick)}
     >
       <span className="ui-identity-action__visual" aria-hidden="true">
         {icon ? (

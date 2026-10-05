@@ -81,7 +81,7 @@ describe('MezfitNavbar', () => {
     expect(onCalendar).not.toHaveBeenCalled();
   });
 
-  it('passes the configured navbar glass preset to every identity action', () => {
+  it('passes the configured navbar glass preset to every settled navbar surface', () => {
     const view = renderWithKonsta(
       <MezfitNavbar
         level={2}

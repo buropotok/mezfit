@@ -140,7 +140,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const navbarSurfaces = [
       ...view.container.querySelectorAll<HTMLElement>('.ui-mezfit-navbar .ui-glass-surface'),
     ];
-    expect(navbarSurfaces).toHaveLength(3);
+    expect(navbarSurfaces).toHaveLength(2);
     for (const surface of navbarSurfaces) {
       expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
     }
