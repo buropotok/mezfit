@@ -66,15 +66,26 @@ SELECT
     FROM training_plan existing
     WHERE existing.user_id = client.id
   ), 0)
-FROM app_user client
-JOIN app_user coach
-  ON coach.username = 'goldalex_1'
+FROM (
+  SELECT id
+  FROM app_user
+  WHERE username = 'sokolag'
+  ORDER BY id DESC
+  LIMIT 1
+) client
+JOIN (
+  SELECT id
+  FROM app_user
+  WHERE username = 'goldalex_1'
+  ORDER BY id DESC
+  LIMIT 1
+) coach
+  ON 1 = 1
 JOIN coach_client relationship
   ON relationship.coach_user_id = coach.id
  AND relationship.client_user_id = client.id
  AND relationship.status = 'active'
-WHERE client.username = 'sokolag'
-  AND NOT EXISTS (
+WHERE NOT EXISTS (
     SELECT 1
     FROM training_plan existing
     WHERE existing.user_id = client.id
@@ -98,12 +109,22 @@ SELECT
   coach.id,
   CURRENT_TIMESTAMP
 FROM training_plan plan
-JOIN app_user client
+JOIN (
+  SELECT id
+  FROM app_user
+  WHERE username = 'sokolag'
+  ORDER BY id DESC
+  LIMIT 1
+) client
   ON client.id = plan.user_id
- AND client.username = 'sokolag'
-JOIN app_user coach
+JOIN (
+  SELECT id
+  FROM app_user
+  WHERE username = 'goldalex_1'
+  ORDER BY id DESC
+  LIMIT 1
+) coach
   ON coach.id = plan.owner_coach_user_id
- AND coach.username = 'goldalex_1'
 WHERE plan.name = '[MOCK] Расписание'
   AND NOT EXISTS (
     SELECT 1
@@ -123,12 +144,22 @@ FROM program_phase phase
 JOIN training_plan plan
   ON plan.id = phase.training_plan_id
  AND plan.name = '[MOCK] Расписание'
-JOIN app_user client
+JOIN (
+  SELECT id
+  FROM app_user
+  WHERE username = 'sokolag'
+  ORDER BY id DESC
+  LIMIT 1
+) client
   ON client.id = plan.user_id
- AND client.username = 'sokolag'
-JOIN app_user coach
+JOIN (
+  SELECT id
+  FROM app_user
+  WHERE username = 'goldalex_1'
+  ORDER BY id DESC
+  LIMIT 1
+) coach
   ON coach.id = plan.owner_coach_user_id
- AND coach.username = 'goldalex_1'
 JOIN (
   SELECT 0 AS position, '[MOCK] Верх тела' AS name
   UNION ALL
@@ -179,10 +210,22 @@ FROM (
 ) seed
 JOIN calendar_day calendar
   ON calendar.local_date = seed.local_date
-JOIN app_user client
-  ON client.username = 'sokolag'
-JOIN app_user coach
-  ON coach.username = 'goldalex_1'
+JOIN (
+  SELECT id
+  FROM app_user
+  WHERE username = 'sokolag'
+  ORDER BY id DESC
+  LIMIT 1
+) client
+  ON 1 = 1
+JOIN (
+  SELECT id
+  FROM app_user
+  WHERE username = 'goldalex_1'
+  ORDER BY id DESC
+  LIMIT 1
+) coach
+  ON 1 = 1
 JOIN coach_client relationship
   ON relationship.coach_user_id = coach.id
  AND relationship.client_user_id = client.id
