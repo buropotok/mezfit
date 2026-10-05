@@ -26,4 +26,9 @@ export { LiquidGlassTabsNoFab, type LiquidGlassTabsNoFabProps, type LiquidGlassT
 export type { LiquidGlassTextOnlyProps, LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
 export { DaySchedule, getDayScheduleValue, type DayScheduleValue, type DayScheduleEvent, type DayScheduleEventDelete, type DayScheduleEventMove, type DayScheduleEventResize, type DayScheduleProps, type DayScheduleRenderState } from './DaySchedule';
 export { DayScheduleEventCard, type DayScheduleEventCardProps } from './DayScheduleEventCard';
+
+export { LiquidPopover, resolveLiquidMotionOptions } from './LiquidPopover';
+export type { LiquidPopoverProps, LiquidPopoverItem } from './LiquidPopover';
+export { LIQUID_POPOVER_DEFAULTS } from './liquidPopoverGeometry';
+export type { LiquidMotionOptions } from './liquidPopoverGeometry';
 export type { FloatingActionButtonAction } from './MetaballFab';

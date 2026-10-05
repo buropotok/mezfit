@@ -3,7 +3,6 @@
 .navigation-content { position: relative; min-width: 0; height: 100dvh; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding-top: var(--navigation-content-start); scrollbar-width: thin; }
 .navigation-content--with-tabs { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
 .navigation-primary-tabs { position: fixed; z-index: 30; left: 50%; bottom: max(0.75rem, env(safe-area-inset-bottom)); width: min(calc(100% - 1.5rem), 696px); transform: translateX(-50%); }
-.navigation-menu-icon { display: block; width: 24px; height: 24px; object-fit: contain; }
 .global-placeholder { width: 100%; padding: var(--surface-pad); border: 1px solid var(--theme-border); border-radius: var(--radius-surface); color: var(--theme-surface-text); background: var(--theme-surface); }
 .global-placeholder h2 { margin-bottom: var(--space-2); }
 .global-placeholder p { margin-bottom: 0; color: var(--theme-surface-muted); }

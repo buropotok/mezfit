@@ -1,0 +1,54 @@
+.ui-liquid-popover {
+  z-index: 61;
+  width: max-content;
+  min-width: 13.5rem;
+  max-width: min(20rem, calc(100vw - 1rem));
+  color: var(--ui-color-surface-text);
+  outline: none;
+}
+.ui-liquid-popover__clip {
+  position: absolute;
+  pointer-events: none;
+}
+.ui-liquid-popover__measure {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  width: max-content;
+  min-width: 13.5rem;
+  max-width: min(20rem, calc(100vw - 1rem));
+  max-height: calc(100dvh - 1rem);
+  overflow: hidden;
+  padding: 0.5rem 0;
+}
+.ui-liquid-popover__glass.ui-glass-surface {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.ui-liquid-popover__composite {
+  position: relative;
+  isolation: isolate;
+}
+.ui-liquid-popover__scene {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  mix-blend-mode: plus-lighter;
+}
+.ui-liquid-popover__native {
+  position: relative;
+  padding: 0.5rem 0;
+  max-height: calc(100dvh - 2rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  opacity: 0;
+  mix-blend-mode: plus-lighter;
+  transform-origin: center;
+}
+.ui-liquid-popover__native[inert] {
+  pointer-events: none;
+}

@@ -6,9 +6,8 @@ import {
   DatePicker,
   FloatingActionButton,
   FloatingActionButtonGlassProvider,
-  Menu,
-  MenuDivider,
-  MenuItem,
+  LiquidPopover,
+  type LiquidPopoverItem,
   LiquidGlassIconOnly,
   MEZFIT_NAVBAR_GLASS_PRESET,
   MezfitNavbar,
@@ -17,7 +16,6 @@ import {
   type MezfitNavbarIdentity,
   type UiIconName,
 } from './ui';
-import userIconUrl from './ui/icons/user.svg';
 
 export type AppDestination =
   | 'clients'
@@ -199,6 +197,7 @@ export function NavigationShell({
   children,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuOriginRef = useRef<HTMLElement>(null);
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<LocalDate>(todayLocalDate);
@@ -330,70 +329,37 @@ export function NavigationShell({
 
   const contextualMenuActions = context?.menuActions ?? [];
   const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
+  const menuItems: LiquidPopoverItem[] = contextualMenuActions.map(action => ({
+    id: `context-${action.id}`, label: action.label, disabled: action.disabled, onSelect: action.onSelect,
+  }));
+  const addSystemItem = (item: LiquidPopoverItem) => {
+    if (menuItems.length === contextualMenuActions.length && contextualMenuActions.length > 0 && hasSystemMenu) item.dividerBefore = true;
+    menuItems.push(item);
+  };
+  if (me.roles.length > 1) me.roles.forEach(role => addSystemItem({
+    id: `role-${role}`, label: roleLabel(role), active: role === activeRole,
+    'aria-checked': role === activeRole, onSelect: () => switchRole(role),
+  }));
+  if (activeRole === 'client') addSystemItem({
+    id: 'coach-selector', label: 'Тренер', dividerBefore: me.roles.length > 1,
+    onSelect: () => { setMenuOpen(false); setCoachSelectorOpen(true); },
+  });
+  secondaryItems.forEach((item, index) => addSystemItem({
+    id: `destination-${item.id}`, label: item.label, active: destination === item.id,
+    'aria-current': destination === item.id ? 'page' : undefined,
+    dividerBefore: index === 0 && (activeRole === 'client' || me.roles.length > 1),
+    onSelect: () => chooseDestination(item.id),
+  }));
   const renderMenuControl = (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => (
-    <Menu
+    <LiquidPopover
       isOpen={menuOpen}
-      onOpenChange={(open) => {
-        if (!open) setMenuOpen(false);
-      }}
+      onOpenChange={(open) => { if (!open) setMenuOpen(false); }}
       label="Меню страницы"
-      className="navigation-main-menu"
-      align="end"
+      triggerActivation="controlled"
       trigger={control}
-    >
-      {contextualMenuActions.map((action) => (
-        <MenuItem
-          key={action.id}
-          disabled={action.disabled}
-          onSelect={action.onSelect}
-        >
-          {action.label}
-        </MenuItem>
-      ))}
-
-      {contextualMenuActions.length > 0 && hasSystemMenu ? <MenuDivider /> : null}
-
-      {me.roles.length > 1 ? (
-        <>
-          {me.roles.map((role) => (
-            <MenuItem
-              key={role}
-              active={role === activeRole}
-              onSelect={() => switchRole(role)}
-              aria-checked={role === activeRole}
-            >
-              {roleLabel(role)}
-            </MenuItem>
-          ))}
-          <MenuDivider />
-        </>
-      ) : null}
-
-      {activeRole === 'client' ? (
-        <MenuItem
-          leading={<img className="navigation-menu-icon" src={userIconUrl} alt="" />}
-          onSelect={() => {
-            setMenuOpen(false);
-            setCoachSelectorOpen(true);
-          }}
-        >
-          Тренер
-        </MenuItem>
-      ) : null}
-
-      {activeRole === 'client' && secondaryItems.length > 0 ? <MenuDivider /> : null}
-
-      {secondaryItems.map((item) => (
-        <MenuItem
-          key={item.id}
-          active={destination === item.id}
-          onSelect={() => chooseDestination(item.id)}
-          aria-current={destination === item.id ? 'page' : undefined}
-        >
-          {item.label}
-        </MenuItem>
-      ))}
-    </Menu>
+      triggerRef={menuOriginRef}
+      items={menuItems}
+    />
   );
 
   return (
@@ -410,6 +376,8 @@ export function NavigationShell({
             onMenu={() => setMenuOpen(true)}
             onCalendar={() => setCalendarOpen(true)}
             renderMenuControl={renderMenuControl}
+            rightControlRef={menuOriginRef}
+            rightControlHidden={menuOpen}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
             menuDisabled={menuOpen}

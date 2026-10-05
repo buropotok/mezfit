@@ -1,0 +1,86 @@
+import { describe, expect, it } from 'vitest';
+import { resolveGlassRadius } from './glassMaterial';
+import {
+  createLiquidMotion,
+  LIQUID_POPOVER_DEFAULTS,
+  type Point,
+} from './liquidPopoverGeometry';
+import { contourBounds } from './liquidPopoverCanvas';
+import { resolveLiquidMotionOptions } from './LiquidPopover';
+
+const target = { x: 210, y: 280, w: 240, h: 192 };
+const area = (points: Point[]) =>
+  Math.abs(
+    points.reduce((sum, point, index) => {
+      const next = points[(index + 1) % points.length];
+      return sum + point.x * next.y - next.x * point.y;
+    }, 0),
+  ) / 2;
+
+describe('LiquidPopover geometry contract', () => {
+  it.each([
+    { w: 88, h: 44 },
+    { w: 44, h: 44 },
+  ])(
+    'starts at the measured button %o and moves during compression',
+    (size) => {
+      const source = { x: 80, y: 60, ...size },
+        motion = createLiquidMotion(source, target);
+      const initial = contourBounds(motion.contour(0));
+      expect(initial.right - initial.left).toBeCloseTo(size.w, 0);
+      expect(initial.bottom - initial.top).toBeCloseTo(size.h, 0);
+      expect((initial.left + initial.right) / 2).toBeCloseTo(source.x, 0);
+      const moving = motion.geometry(0.03);
+      expect(moving.head.x).toBeGreaterThan(motion.geometry(0).head.x);
+      expect(moving.r).toBeLessThan(source.h / 2);
+    },
+  );
+
+  it('finishes consuming the tail at exactly the requested superellipse area and bottom offset', () => {
+    const motion = createLiquidMotion({ x: 60, y: 40, w: 88, h: 44 }, target);
+    const growthEnd = 0.8 / motion.time(1),
+      points = motion.contour(growthEnd)[0];
+    expect(area(points) / (target.w * target.h)).toBeCloseTo(0.65, 3);
+    expect(contourBounds([points]).bottom).toBeCloseTo(
+      target.y + target.h / 2 + 10,
+      3,
+    );
+    expect(motion.geometry(0.8).externalLength).toBe(0);
+  });
+
+  it('settles to the rectangle with the shared GlassSurface radius and no residual spring', () => {
+    const motion = createLiquidMotion({ x: 350, y: 50, w: 44, h: 44 }, target);
+    const points = motion.contour(1)[0],
+      bounds = contourBounds([points]);
+    expect(bounds.left).toBeCloseTo(target.x - target.w / 2, 3);
+    expect(bounds.bottom).toBeCloseTo(target.y + target.h / 2, 3);
+    const radius = resolveGlassRadius(target.w, target.h);
+    const roundedArea = target.w * target.h - (4 - Math.PI) * radius * radius;
+    expect(area(points)).toBeCloseTo(roundedArea, -1);
+    expect(motion.spring(0.45)).toBe(0);
+  });
+
+  it('sanitizes malformed motion options without poisoning coordinates', () => {
+    const options = resolveLiquidMotionOptions({
+      duration: 0,
+      sourceMorph: Number.NaN,
+      exponent: Infinity,
+      growthDelay: 1,
+      curvature: -4,
+    });
+    expect(options.duration).toBe(0.1);
+    expect(options.sourceMorph).toBe(LIQUID_POPOVER_DEFAULTS.sourceMorph);
+    expect(options.exponent).toBe(2.5);
+    const motion = createLiquidMotion(
+      { x: 50, y: 40, w: 44, h: 44 },
+      target,
+      options,
+    );
+    expect(
+      motion
+        .contour(0.2)
+        .flat()
+        .every((point) => Number.isFinite(point.x) && Number.isFinite(point.y)),
+    ).toBe(true);
+  });
+});
