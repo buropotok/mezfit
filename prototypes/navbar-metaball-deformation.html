@@ -527,6 +527,16 @@
         return 1 + OVERSHOOT * (1 - smooth((elapsed - ruptureElapsed) / RETURN_MS));
       }
 
+      function forwardPreviewScale(time) {
+        var elapsed = time * DURATION;
+        if (elapsed <= OVERSHOOT_MS) {
+          return 1 + OVERSHOOT * smooth(elapsed / OVERSHOOT_MS);
+        }
+        var ruptureElapsed = RUPTURE * DURATION;
+        if (elapsed < ruptureElapsed) return 1 + OVERSHOOT;
+        return 1 + OVERSHOOT * (1 - smooth((elapsed - ruptureElapsed) / RETURN_MS));
+      }
+
       function scaleFromNeck(g, scale) {
         var phaseLeft = g.phase.x - g.phase.width / 2;
         var phaseWidth = g.phase.width * scale;
@@ -756,7 +766,8 @@
       }
 
       function draw(time, elapsed, manual) {
-        var scale = manual ? 1 : motionScale(elapsed || 0);
+        var previewMoving = Boolean(manual && time > 0.001 && time < 0.999);
+        var scale = manual ? forwardPreviewScale(time) : motionScale(elapsed || 0);
         var base = frameGeometry(time);
         var g = scaleFromNeck(base, scale);
         var contour = deformedContour(g, time);
@@ -772,8 +783,9 @@
           postReveal = smooth((performance.now() - postRevealStarted) / 120);
         }
 
-        var nativeTopLeft = motion.active ? 0 : postReveal;
-        var liquidOpacity = motion.active ? 1 : 1 - postReveal;
+        var liquidOwnsBezel = motion.active || previewMoving;
+        var nativeTopLeft = liquidOwnsBezel ? 0 : postReveal;
+        var liquidOpacity = liquidOwnsBezel ? 1 : 1 - postReveal;
 
         setBox(identityBezel, g.phase);
         identityBezel.style.setProperty("--tl", nativeTopLeft);
@@ -794,7 +806,7 @@
         setBox(backBezel, backVisual);
         setBox(backContent, backVisual);
         backContent.style.opacity = reveal;
-        backBezel.style.setProperty("--back-native-opacity", motion.active ? "0" : String(postReveal));
+        backBezel.style.setProperty("--back-native-opacity", liquidOwnsBezel ? "0" : String(postReveal));
         backBezel.style.setProperty("--tl", "1");
         backBezel.style.setProperty("--br", "1");
 
