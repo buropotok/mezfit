@@ -174,6 +174,7 @@ function DraggableEventFrame<TEvent extends DayScheduleEventBase>({
       data-event-id={event.id}
       data-event-date={date}
       data-ui-dnd-handle=""
+      onDragStart={(event) => event.preventDefault()}
       {...attributes}
       {...listeners}
     >
