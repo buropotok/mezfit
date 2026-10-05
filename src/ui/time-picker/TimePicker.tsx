@@ -2,6 +2,7 @@ import {
   TwoColumnPicker,
   type TwoColumnPickerColumn,
 } from '../two-column-picker/TwoColumnPicker';
+import type { TwoColumnPickerLensMode } from '../two-column-picker/lensMode';
 import {
   formatLocalTime,
   parseLocalTime,
@@ -29,12 +30,15 @@ const TIME_COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
   },
 ];
 
+export type TimePickerLensMode = TwoColumnPickerLensMode;
+
 export interface TimePickerProps {
   opened: boolean;
   value: LocalTime;
   onChange: (value: LocalTime) => void;
   onClose: () => void;
   target: HTMLElement | null;
+  lensMode?: TimePickerLensMode;
 }
 
 export function TimePicker({
@@ -43,6 +47,7 @@ export function TimePicker({
   onChange,
   onClose,
   target,
+  lensMode = 'auto',
 }: TimePickerProps) {
   const parsedValue = parseLocalTime(value);
   if (!parsedValue) throw new Error('TimePicker value must be a valid HH:mm local time');
@@ -55,6 +60,7 @@ export function TimePicker({
       columns={TIME_COLUMNS}
       separator=":"
       ariaLabel="Выбор времени"
+      lensMode={lensMode}
       onChange={({ left, right }) => onChange(formatLocalTime(left, right))}
       onClose={onClose}
     />
