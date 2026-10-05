@@ -18,7 +18,6 @@ import { resolveGlassRadius, type GlassPresetName } from './glassMaterial';
 import {
   clamp,
   contourBounds,
-  buildLiquidMap,
   paintLiquidMesh,
   smooth,
   smoother,
@@ -257,7 +256,6 @@ export function LiquidPopover({
         return;
       }
       textureContext.drawImage(source, 0, 0);
-      const map = host.ownerDocument.createElement('canvas');
       const cropX = Math.floor(
         Math.max(0, Math.min(sourceBounds.left, destinationBounds.left) - 80),
       );
@@ -282,9 +280,8 @@ export function LiquidPopover({
           ) - cropY,
         ),
       );
-      const context = canvas.getContext('2d'),
-        mapContext = map.getContext('2d', { willReadFrequently: true });
-      if (!context || !mapContext) {
+      const context = canvas.getContext('2d');
+      if (!context) {
         finish();
         return;
       }
@@ -345,10 +342,6 @@ export function LiquidPopover({
         const stretch =
           time >= 1 ? animation.spring((time - 1) * options.duration) : 0;
         const strength = 1 - smoother((time - 0.8) / 0.2);
-        const vector =
-          strength > 0
-            ? buildLiquidMap(mapContext, localLoops, canvasPath)
-            : undefined;
         paintLiquidMesh(
           context,
           texture,
@@ -356,7 +349,6 @@ export function LiquidPopover({
           time,
           { ...rect, x: rect.x - cropX, y: rect.y - cropY },
           stretch,
-          vector,
           strength,
         );
         const fill = time >= 0.8 ? 1 : animation.geometry(time).fill;

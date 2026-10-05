@@ -10,7 +10,7 @@ import { createRef } from 'react';
 import { afterEach, it, expect, vi } from 'vitest';
 import { KonstaProvider } from 'konsta/react';
 import { LiquidPopover } from './LiquidPopover';
-import { buildLiquidMap, sampleLiquidMap } from './liquidPopoverCanvas';
+import { paintLiquidMesh, sampleLiquidRim } from './liquidPopoverCanvas';
 
 afterEach(() => {
   cleanup();
@@ -40,6 +40,9 @@ it('renders moving text without serializing or decoding frame images', async () 
   );
   vi.spyOn(performance, 'now').mockImplementation(() => Date.now());
   const draws = vi.fn();
+  const readPixels = vi.fn(() => {
+    throw new Error("Animation pixel readback forbidden");
+  });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
     function (this: HTMLCanvasElement) {
       return {
@@ -65,12 +68,7 @@ it('renders moving text without serializing or decoding frame images', async () 
         translate: vi.fn(),
         scale: vi.fn(),
         fill: vi.fn(),
-        getImageData: (
-          _x: number,
-          _y: number,
-          width: number,
-          height: number,
-        ) => ({ data: new Uint8ClampedArray(width * height * 4) }),
+        getImageData: readPixels,
       } as unknown as CanvasRenderingContext2D;
     },
   );
@@ -124,6 +122,7 @@ it('renders moving text without serializing or decoding frame images', async () 
     vi.advanceTimersByTime(1100);
   });
   expect(encode).not.toHaveBeenCalled();
+  expect(readPixels).not.toHaveBeenCalled();
   expect(draws).toHaveBeenCalled();
   expect(canvas.style.display).toBe('none');
   fireEvent.click(screen.getByRole('menuitem', { name: 'Action' }));
@@ -131,51 +130,37 @@ it('renders moving text without serializing or decoding frame images', async () 
   expect(change).toHaveBeenCalledWith(false);
 });
 
-it('samples an exactly neutral center and interpolates edge displacement', () => {
-  const vectors = new Float32Array(3 * 3 * 2);
-  vectors[0] = 8;
-  vectors[1] = 4;
-  const map = {
-    x: 0,
-    y: 0,
-    width: 30,
-    height: 30,
-    columns: 3,
-    rows: 3,
-    vectors,
-  };
-  expect(sampleLiquidMap(map, { x: 15, y: 15 })).toEqual({ x: 0, y: 0 });
-  expect(sampleLiquidMap(map, { x: 5, y: 5 })).toEqual({ x: 2, y: 1 });
+it('keeps the center and exterior neutral, with inward displacement at the rim', () => {
+  const points = [{ x: 0, y: 0 }, { x: 120, y: 0 }, { x: 120, y: 120 }, { x: 0, y: 120 }];
+  expect(sampleLiquidRim(points, { x: 60, y: 60 }, 27)).toEqual({ x: 0, y: 0 });
+  expect(sampleLiquidRim(points, { x: -4, y: 60 }, 27)).toEqual({ x: 0, y: 0 });
+  expect(sampleLiquidRim(points, { x: 4, y: 60 }, 27).x).toBeGreaterThan(0);
+  expect(sampleLiquidRim(points, { x: 60, y: 116 }, 27).y).toBeLessThan(0);
 });
 
-it('builds a field that leaves the center flat and stretches toward the rim', () => {
-  vi.stubGlobal('Path2D', class {});
+it('handles repeated contour vertices and translated shapes', () => {
+  const points = [{ x: 20, y: 30 }, { x: 20, y: 30 }, { x: 140, y: 30 }, { x: 140, y: 150 }, { x: 20, y: 150 }];
+  const offset = sampleLiquidRim(points, { x: 24, y: 90 }, 27);
+  expect(Number.isFinite(offset.x)).toBe(true);
+  expect(offset.x).toBeGreaterThan(0);
+  expect(offset.y).toBe(0);
+});
+
+it('bounds a deformed frame to 96 texture draws and settles with one draw', () => {
+  const drawImage = vi.fn();
+  const noop = () => {};
   const context = {
-    canvas: { width: 0, height: 0 },
-    setTransform: vi.fn(),
-    resetTransform: vi.fn(),
-    fill: vi.fn(),
-    getImageData: (_x: number, _y: number, width: number, height: number) => {
-      const data = new Uint8ClampedArray(width * height * 4);
-      for (let y = 20; y <= height - 20; y++)
-        for (let x = 20; x <= width - 20; x++)
-          data[(y * width + x) * 4 + 3] = 255;
-      return { data };
-    },
+    canvas: { width: 200, height: 200 }, drawImage,
+    resetTransform: noop, clearRect: noop, save: noop, restore: noop,
+    beginPath: noop, moveTo: noop, lineTo: noop, closePath: noop,
+    clip: noop, setTransform: noop, translate: noop, scale: noop,
   } as unknown as CanvasRenderingContext2D;
-  const map = buildLiquidMap(
-    context,
-    [
-      [
-        { x: 0, y: 0 },
-        { x: 120, y: 0 },
-        { x: 120, y: 120 },
-        { x: 0, y: 120 },
-      ],
-    ],
-    'M0 0H120V120H0Z',
-  );
-  expect(sampleLiquidMap(map, { x: 60, y: 60 })).toEqual({ x: 0, y: 0 });
-  expect(sampleLiquidMap(map, { x: 4, y: 60 }).x).toBeGreaterThan(0);
-  expect(sampleLiquidMap(map, { x: 60, y: 116 }).y).toBeLessThan(0);
+  const source = { width: 120, height: 120 } as HTMLCanvasElement;
+  const loops = [[{ x: 0, y: 0 }, { x: 120, y: 0 }, { x: 120, y: 120 }, { x: 0, y: 120 }]];
+  const rect = { x: 60, y: 60, w: 120, h: 120 };
+  paintLiquidMesh(context, source, loops, 0.5, rect, 0, 1);
+  expect(drawImage).toHaveBeenCalledTimes(96);
+  drawImage.mockClear();
+  paintLiquidMesh(context, source, loops, 1, rect, 0, 0);
+  expect(drawImage).toHaveBeenCalledOnce();
 });

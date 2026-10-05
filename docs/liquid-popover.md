@@ -50,8 +50,10 @@ area/curvature/growth delay are ratios. `LIQUID_POPOVER_DEFAULTS` is exported.
 
 The material is the shared, unmodified `GlassSurface` with preset `frosted` and
 `optics={false}`. The animation's content lens has an exactly neutral center and rim distortion
-that fades during the final morph. Its distance/normal map stays a Float32Array
-and is sampled into the drawing mesh. Canvas renders directly into a bounded
+that fades during the final morph. Rim normals and distances are evaluated directly from the current contour
+only at the 63 mesh vertices. No pixel distance field, pixel readback, or
+per-frame typed-array passes are needed. The blurred content uses a 6 × 8
+mesh (at most 96 triangle draws; one draw after unfolding). Canvas renders directly into a bounded
 visible surface, with compositor blur. Neither content nor vector maps are PNG
 encoded, base64 allocated, or SVG image decoded per frame. This mesh-based
 refraction approximates the previous pixel displacement, retaining its flat
