@@ -426,6 +426,7 @@ describe('DaySchedule', () => {
     expect(lockedFrame.hasAttribute('data-ui-dnd-handle')).toBe(false);
 
     fireEvent.pointerDown(editableFrame, { pointerId: 41, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 41, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 110 });
     fireEvent.pointerMove(document, { pointerId: 41, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 164 });
     fireEvent.pointerUp(document, { pointerId: 41, pointerType: 'mouse', button: 0, clientX: 100, clientY: 164 });
 
