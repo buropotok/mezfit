@@ -65,7 +65,6 @@ describe('initializeWorkoutSession', () => {
       kind: 'ok',
       session: {
         sessionId: 501,
-        occurrenceId: null,
         status: 'draft',
         program: null,
         phase: null,
@@ -368,6 +367,13 @@ describe('startWorkoutSession', () => {
           return statement;
         }) };
       }
+      if (
+        sql.includes('SELECT id')
+        && sql.includes('FROM workout_occurrence')
+        && sql.includes("status = 'scheduled'")
+      ) {
+        return { bind: vi.fn().mockReturnValue({ first: occurrenceFirst }) };
+      }
       if (sql.includes('FROM workout_session ws')) {
         return { bind: vi.fn().mockReturnValue({ first: headerFirst }) };
       }
@@ -428,9 +434,6 @@ describe('startWorkoutSession', () => {
       }
       if (sql.includes('SELECT pd.id, pd.program_phase_id AS phase_id')) {
         return { bind: vi.fn().mockReturnValue({ first: dayFirst }) };
-      }
-      if (sql.includes('FROM workout_occurrence') && sql.includes("status = 'scheduled'")) {
-        return { bind: vi.fn().mockReturnValue({ first: occurrenceFirst }) };
       }
       if (
         sql.includes('INSERT INTO session_exercise')
