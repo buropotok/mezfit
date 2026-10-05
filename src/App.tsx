@@ -147,6 +147,7 @@ function ClientShell({
         initData={initData}
         role="client"
         onNavigationContextChange={onNavigationContextChange}
+        notice={message}
       />
     );
   }
