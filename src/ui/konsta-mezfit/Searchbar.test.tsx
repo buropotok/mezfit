@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { readFileSync } from 'node:fs';
+import type { ComponentProps } from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,7 +22,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderSearchbar(props: React.ComponentProps<typeof MezfitSearchbar>) {
+function renderSearchbar(props: ComponentProps<typeof MezfitSearchbar>) {
   return render(
     <KonstaProvider theme="ios" dark>
       <MezfitSearchbar {...props} />
