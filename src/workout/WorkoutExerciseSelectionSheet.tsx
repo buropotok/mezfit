@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GlobalExerciseCatalog } from '../coach/GlobalExerciseCatalog';
-import type { NavigationContext } from '../NavigationShell';
+import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import { BottomSheet, FloatingActionButton, IconButton, Text } from '../ui';
 
 interface WorkoutExerciseSelectionSheetProps {
@@ -20,6 +20,7 @@ export function WorkoutExerciseSelectionSheet({
   onClose,
   onNavigationContextChange,
 }: WorkoutExerciseSelectionSheetProps) {
+  const requestBackTransition = useNavigationBackTransition();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
 
@@ -39,9 +40,9 @@ export function WorkoutExerciseSelectionSheet({
 
   const requestBack = useCallback(() => {
     if (saving) return;
-    if (navigationContext?.onBack) navigationContext.onBack();
+    if (navigationContext?.onBack) requestBackTransition(navigationContext.onBack);
     else onClose();
-  }, [navigationContext, onClose, saving]);
+  }, [navigationContext, onClose, requestBackTransition, saving]);
 
   const externalNavigationTitle = navigationContext?.title ?? 'Упражнения';
   const externalNavigationScrollKey = navigationContext?.scrollKey ?? 'root';
@@ -76,7 +77,7 @@ export function WorkoutExerciseSelectionSheet({
       isOpen
       title={navigationContext?.title ?? 'Упражнения'}
       headerLeading={navigationContext ? (
-        <IconButton label="Назад" disabled={saving} onClick={navigationContext.onBack}>
+        <IconButton label="Назад" disabled={saving} onClick={requestBack}>
           <span aria-hidden="true">←</span>
         </IconButton>
       ) : undefined}
