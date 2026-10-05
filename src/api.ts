@@ -262,9 +262,15 @@ function isValidOccurrenceId(value: unknown): value is number | null {
 
 function validateWorkoutOccurrenceIdentity(session: WorkoutSessionState): void {
   if (session.status === 'draft') {
-    const occurrenceId = session.suggestedDay?.occurrenceId ?? null;
-    if (!isValidOccurrenceId(occurrenceId)) {
-      throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+    const suggestedDay = session.suggestedDay;
+    if (suggestedDay) {
+      const occurrenceId = suggestedDay.occurrenceId;
+      const occurrenceIsValid = suggestedDay.resolution === 'scheduled_today'
+        ? typeof occurrenceId === 'number' && Number.isInteger(occurrenceId) && occurrenceId > 0
+        : occurrenceId === null;
+      if (!occurrenceIsValid) {
+        throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+      }
     }
     return;
   }
