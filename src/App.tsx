@@ -345,7 +345,6 @@ export function App() {
         ) : state.activeRole === 'coach' ? (
           <CoachShell
             initData={state.initData}
-            currentUserId={state.me.user.id}
             destination={coachDestination}
             onNavigationContextChange={handleNavigationContextChange}
           />
