@@ -69,7 +69,7 @@ describe('navbar metaball geometry', () => {
       0,
       rupture,
     );
-    const movingTime = rupture * 0.9;
+    const movingTime = Math.min(0.95, rupture + 0.05);
     const moving = navbarMetaballBezelHighlights(
       navbarMetaballFrame(movingTime, layout, rupture),
       movingTime,
