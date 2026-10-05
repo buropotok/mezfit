@@ -75,6 +75,81 @@ describe('initializeWorkoutSession', () => {
     expect(batch).not.toHaveBeenCalled();
   });
 
+  it('prefers one scheduled occurrence for the supplied local date and keeps its identity for Start', async () => {
+    const openFirst = vi.fn().mockResolvedValue(null);
+    const scheduledAll = vi.fn().mockResolvedValue({
+      results: [{
+        occurrence_id: 77,
+        program_day_id: 40,
+        day_name: 'День B',
+        day_position: 1,
+        phase_id: 30,
+        phase_name: 'Фаза 1',
+        program_id: 20,
+        program_name: 'Силовой блок',
+        coach_user_id: 9,
+      }],
+    });
+    const daysAll = vi.fn().mockResolvedValue({
+      results: [
+        { id: 39, name: 'День A', position: 0, completed: 0 },
+        { id: 40, name: 'День B', position: 1, completed: 0 },
+      ],
+    });
+    const insertFirst = vi.fn().mockResolvedValue({
+      id: 501,
+      user_id: 7,
+      source_program_phase_id: null,
+      source_program_day_id: null,
+      occurrence_id: null,
+      status: 'draft',
+      started_at: null,
+      created_at: '2026-10-05 06:00:00',
+    });
+    const updateRun = vi.fn().mockResolvedValue({ success: true });
+    const prepare = vi.fn((sql: string) => {
+      if (sql.includes("WHERE user_id = ? AND status IN ('draft', 'active')")) {
+        return { bind: vi.fn().mockReturnValue({ first: openFirst }) };
+      }
+      if (sql.includes('FROM workout_occurrence occurrence')) {
+        return { bind: vi.fn().mockReturnValue({ all: scheduledAll }) };
+      }
+      if (sql.includes('FROM program_day pd') && sql.includes('completed')) {
+        return { bind: vi.fn().mockReturnValue({ all: daysAll }) };
+      }
+      if (sql.includes('INSERT OR IGNORE INTO workout_session')) {
+        return { bind: vi.fn().mockReturnValue({ first: insertFirst }) };
+      }
+      if (sql.includes('UPDATE workout_session')) {
+        return { bind: vi.fn().mockReturnValue({ run: updateRun }) };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+    const db = { prepare } as unknown as D1Database;
+
+    await expect(initializeWorkoutSession(db, 7, null, '2026-10-05')).resolves.toEqual({
+      kind: 'ok',
+      session: {
+        sessionId: 501,
+        status: 'draft',
+        program: { id: 20, name: 'Силовой блок' },
+        phase: { id: 30, name: 'Фаза 1' },
+        suggestedDay: {
+          id: 40,
+          name: 'День B',
+          position: 1,
+          completed: false,
+          resolution: 'scheduled_today',
+          occurrenceId: 77,
+        },
+        availableDays: [
+          { id: 39, name: 'День A', position: 0, completed: false },
+          { id: 40, name: 'День B', position: 1, completed: false },
+        ],
+      },
+    });
+  });
+
   it('reuses the same draft on repeated initialization instead of inserting another open session', async () => {
     const draftRow = {
       id: 501,
