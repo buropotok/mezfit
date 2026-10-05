@@ -204,7 +204,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     event.preventDefault();
     setIsEnabled(false);
     searchElRef.current?.blur();
-    onDisable?.();
+    onDisable?.(event);
     onClear?.(event);
   };
 
