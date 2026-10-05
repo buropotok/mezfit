@@ -14,5 +14,7 @@ describe('WeightRepsPicker CSS contract', () => {
     expect(weightRepsPickerCss).toContain(
       'grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)',
     );
+    expect(weightRepsPickerCss).toContain('inset-inline: 16px');
+    expect(weightRepsPickerCss).toContain('padding-inline: 16px');
   });
 });
