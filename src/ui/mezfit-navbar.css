@@ -69,10 +69,6 @@
   pointer-events: none;
 }
 
-.ui-mezfit-navbar__side--left .ui-identity-action--disabled {
-  opacity: 1;
-}
-
 .ui-mezfit-navbar__layout[data-entry-phase='spread'] .ui-mezfit-navbar__side--left,
 .ui-mezfit-navbar__layout[data-entry-phase='settled'][data-level='2'] .ui-mezfit-navbar__side--left {
   left: 0;
