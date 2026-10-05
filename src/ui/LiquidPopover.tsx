@@ -457,6 +457,7 @@ export function LiquidPopover({
         portal
         ref={contentRef}
         role={role}
+        aria-modal={role === 'dialog' ? 'true' : undefined}
         aria-label={label}
         className={`ui-liquid-popover${layout === 'grid' ? ' ui-liquid-popover--grid' : ''}`}
         style={gridStyle}
