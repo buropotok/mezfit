@@ -162,6 +162,39 @@ function PickerLens({
   const filterId = `ui-time-picker-lens-${reactId}`;
   const clipId = `ui-time-picker-lens-clip-${reactId}`;
   const sourceClipId = `ui-time-picker-lens-source-clip-${reactId}`;
+  const separatorTransform = lensMode === 'ios'
+    ? `translate(${LENS_WIDTH * 0.5} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-LENS_WIDTH * 0.5} ${-LENS_HEIGHT / 2})`
+    : undefined;
+
+  const lensContent = (
+    <>
+      <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
+      <LensText
+        x={LENS_WIDTH * 0.25}
+        column={columns[0]}
+        scrollTop={scrollTops.left}
+        lensMode={lensMode}
+      />
+      {separator ? (
+        <text
+          x={LENS_WIDTH * 0.5}
+          y={LENS_HEIGHT / 2}
+          transform={separatorTransform}
+          textAnchor="middle"
+          dominantBaseline="central"
+          className="ui-time-picker__lens-separator ui-text--title"
+        >
+          {separator}
+        </text>
+      ) : null}
+      <LensText
+        x={LENS_WIDTH * 0.75}
+        column={columns[1]}
+        scrollTop={scrollTops.right}
+        lensMode={lensMode}
+      />
+    </>
+  );
 
   return (
     <div
@@ -235,67 +268,11 @@ function PickerLens({
         </defs>
 
         {lensMode === 'ios' ? (
-          <g clipPath={`url(#${clipId})`}>
-              <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
-              <LensText
-                x={LENS_WIDTH * 0.25}
-                column={columns[0]}
-                scrollTop={scrollTops.left}
-                lensMode={lensMode}
-              />
-              {separator ? (
-                <text
-                  x={LENS_WIDTH * 0.5}
-                  y={LENS_HEIGHT / 2}
-                  transform={lensMode === 'ios'
-                    ? `translate(${LENS_WIDTH * 0.5} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-LENS_WIDTH * 0.5} ${-LENS_HEIGHT / 2})`
-                    : undefined}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="ui-time-picker__lens-separator ui-text--title"
-                >
-                  {separator}
-                </text>
-              ) : null}
-              <LensText
-                x={LENS_WIDTH * 0.75}
-                column={columns[1]}
-                scrollTop={scrollTops.right}
-                lensMode={lensMode}
-              />
-          </g>
+          <g clipPath={`url(#${clipId})`}>{lensContent}</g>
         ) : (
           <g clipPath={`url(#${clipId})`}>
             <g filter={assets ? `url(#${filterId})` : undefined}>
-              <g clipPath={`url(#${sourceClipId})`}>
-              <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
-              <LensText
-                x={LENS_WIDTH * 0.25}
-                column={columns[0]}
-                scrollTop={scrollTops.left}
-                lensMode={lensMode}
-              />
-              {separator ? (
-                <text
-                  x={LENS_WIDTH * 0.5}
-                  y={LENS_HEIGHT / 2}
-                  transform={lensMode === 'ios'
-                    ? `translate(${LENS_WIDTH * 0.5} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-LENS_WIDTH * 0.5} ${-LENS_HEIGHT / 2})`
-                    : undefined}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="ui-time-picker__lens-separator ui-text--title"
-                >
-                  {separator}
-                </text>
-              ) : null}
-              <LensText
-                x={LENS_WIDTH * 0.75}
-                column={columns[1]}
-                scrollTop={scrollTops.right}
-                lensMode={lensMode}
-              />
-              </g>
+              <g clipPath={`url(#${sourceClipId})`}>{lensContent}</g>
             </g>
           </g>
         )}
