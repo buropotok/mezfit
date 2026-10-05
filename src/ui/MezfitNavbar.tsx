@@ -75,8 +75,7 @@ export function MezfitNavbar({
               aria-label="Назад"
               glassPreset={glassPreset}
               glassOptics={glassOptics}
-              disabled={level === 1 && entryPhase === 'settled'}
-              onClick={onBack}
+              onClick={level === 2 ? onBack : undefined}
             />
           </div>
 
