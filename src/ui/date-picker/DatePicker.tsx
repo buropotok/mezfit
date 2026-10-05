@@ -159,6 +159,8 @@ export function DatePicker({
   const [surfaceContentReady, setSurfaceContentReady] = useState(false);
   const [surfaceReadyToOpen, setSurfaceReadyToOpen] = useState(false);
   const [yearPopoverRequested, setYearPopoverRequested] = useState(false);
+  const [yearPopoverContentReady, setYearPopoverContentReady] = useState(false);
+  const [yearPopoverReadyToOpen, setYearPopoverReadyToOpen] = useState(false);
   const onChangeRef = useRef(onChange);
   const onCloseRef = useRef(onClose);
   const yearTargetRef = useRef<HTMLElement | null>(null);
@@ -177,7 +179,9 @@ export function DatePicker({
     [safeMaxYear, safeMinYear],
   );
   const effectiveSurfaceOpened = opened && surfaceReadyToOpen;
-  const effectiveYearPopoverOpened = effectiveSurfaceOpened && yearPopoverRequested;
+  const effectiveYearPopoverOpened = effectiveSurfaceOpened
+    && yearPopoverRequested
+    && yearPopoverReadyToOpen;
 
   useEffect(() => {
     if (!opened) {
@@ -219,6 +223,19 @@ export function DatePicker({
     });
   }, [effectiveSurfaceOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
 
+  useEffect(() => {
+    if (!opened || !yearPopoverRequested || yearPopoverReadyToOpen) return;
+
+    if (!yearPopoverContentReady) {
+      setYearPopoverContentReady(true);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      setYearPopoverReadyToOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [opened, yearPopoverContentReady, yearPopoverReadyToOpen, yearPopoverRequested]);
 
   if (!rangeIsValid) throw new Error('DatePicker requires a valid minYear/maxYear range');
   if (!selectedDate) throw new Error('DatePicker value must be a valid YYYY-MM-DD local date');
@@ -258,7 +275,7 @@ export function DatePicker({
         </YearTrigger>
       )}
       triggerRef={yearTargetRef}
-      items={yearItems}
+      items={yearPopoverContentReady ? yearItems : []}
       label="Выберите год"
       preset={glassPreset}
       optics={glassOptics}
