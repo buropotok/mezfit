@@ -21,6 +21,8 @@ const DEFAULT_MAX_YEAR = 2049;
 const MONTH_COUNT = 12;
 const HEADER_SCROLL_OFFSET = 78;
 
+export type DatePickerSurface = 'bare' | 'panel';
+
 export interface DatePickerProps {
   opened: boolean;
   value: LocalDate;
@@ -29,6 +31,7 @@ export interface DatePickerProps {
   minYear?: number;
   maxYear?: number;
   locale?: string;
+  surface?: DatePickerSurface;
 }
 
 function CloseIcon() {
@@ -140,6 +143,7 @@ export function DatePicker({
   minYear = DEFAULT_MIN_YEAR,
   maxYear = DEFAULT_MAX_YEAR,
   locale = 'ru-RU',
+  surface = 'bare',
 }: DatePickerProps) {
   const rangeIsValid = Number.isInteger(minYear) && Number.isInteger(maxYear) && minYear <= maxYear;
   const safeMinYear = rangeIsValid ? minYear : DEFAULT_MIN_YEAR;
@@ -148,8 +152,8 @@ export function DatePicker({
   const safeSelectedDate = selectedDate ?? { year: safeMinYear, month: 1, day: 1 };
 
   const [visibleYear, setVisibleYear] = useState(() => clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
-  const [panelContentReady, setPanelContentReady] = useState(false);
-  const [panelReadyToOpen, setPanelReadyToOpen] = useState(false);
+  const [surfaceContentReady, setPanelContentReady] = useState(false);
+  const [surfaceReadyToOpen, setPanelReadyToOpen] = useState(false);
   const [yearPopoverRequested, setYearPopoverRequested] = useState(false);
   const [yearPopoverContentReady, setYearPopoverContentReady] = useState(false);
   const [yearPopoverReadyToOpen, setYearPopoverReadyToOpen] = useState(false);
@@ -171,8 +175,8 @@ export function DatePicker({
     () => Array.from({ length: safeMaxYear - safeMinYear + 1 }, (_, index) => safeMinYear + index),
     [safeMaxYear, safeMinYear],
   );
-  const effectivePanelOpened = opened && panelReadyToOpen;
-  const effectiveYearPopoverOpened = effectivePanelOpened
+  const effectiveSurfaceOpened = opened && surfaceReadyToOpen;
+  const effectiveYearPopoverOpened = effectiveSurfaceOpened
     && yearPopoverRequested
     && yearPopoverReadyToOpen;
 
@@ -183,9 +187,9 @@ export function DatePicker({
       return;
     }
 
-    if (panelReadyToOpen) return;
+    if (surfaceReadyToOpen) return;
 
-    if (!panelContentReady) {
+    if (!surfaceContentReady) {
       setPanelContentReady(true);
       return;
     }
@@ -194,10 +198,10 @@ export function DatePicker({
       setPanelReadyToOpen(true);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [opened, panelContentReady, panelReadyToOpen]);
+  }, [opened, surfaceContentReady, surfaceReadyToOpen]);
 
   useEffect(() => {
-    if (!effectivePanelOpened) return;
+    if (!effectiveSurfaceOpened) return;
 
     const justOpened = !wasOpenedRef.current;
     wasOpenedRef.current = true;
@@ -214,7 +218,7 @@ export function DatePicker({
         scrollElement.scrollTop = Math.max(0, monthElement.offsetTop - HEADER_SCROLL_OFFSET);
       });
     });
-  }, [effectivePanelOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
+  }, [effectiveSurfaceOpened, safeMaxYear, safeMinYear, safeSelectedDate.month, safeSelectedDate.year]);
 
   useEffect(() => {
     if (!opened || !yearPopoverRequested || yearPopoverReadyToOpen) return;
@@ -299,39 +303,62 @@ export function DatePicker({
     </Link>
   );
 
+  const calendarContent = (
+    <div className="ui-date-picker__scroll" ref={monthScrollRef}>
+      <div className="ui-date-picker__header-blur" aria-hidden="true" />
+      <Navbar
+        className="ui-date-picker__navbar"
+        centerTitle
+        outline={false}
+        title={yearTrigger}
+        right={closeAction}
+      />
+
+      {surfaceContentReady ? (
+        <CalendarMonths
+          visibleYear={visibleYear}
+          selectedDate={selectedDate}
+          locale={locale}
+          weekdayLabels={weekdayLabels}
+          onChooseDate={chooseDate}
+        />
+      ) : null}
+    </div>
+  );
+
   return (
     <>
-      <MezfitSidePanel
-        side="right"
-        opened={effectivePanelOpened}
-        floating
-        backdrop
-        onBackdropClick={yearPopoverRequested ? undefined : onClose}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Выбор даты"
-      >
-        <div className="ui-date-picker__scroll" ref={monthScrollRef}>
-          <div className="ui-date-picker__header-blur" aria-hidden="true" />
-          <Navbar
-            className="ui-date-picker__navbar"
-            centerTitle
-            outline={false}
-            title={yearTrigger}
-            right={closeAction}
+      {surface === 'panel' ? (
+        <MezfitSidePanel
+          side="right"
+          opened={effectiveSurfaceOpened}
+          floating
+          backdrop
+          onBackdropClick={yearPopoverRequested ? undefined : onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Выбор даты"
+        >
+          {calendarContent}
+        </MezfitSidePanel>
+      ) : (
+        <>
+          <div
+            className={`ui-date-picker__bare-backdrop${effectiveSurfaceOpened ? ' ui-date-picker__bare-backdrop--opened' : ''}`}
+            onClick={yearPopoverRequested ? undefined : onClose}
+            aria-hidden="true"
           />
-
-          {panelContentReady ? (
-            <CalendarMonths
-              visibleYear={visibleYear}
-              selectedDate={selectedDate}
-              locale={locale}
-              weekdayLabels={weekdayLabels}
-              onChooseDate={chooseDate}
-            />
-          ) : null}
-        </div>
-      </MezfitSidePanel>
+          <div
+            className={`ui-date-picker__bare-surface${effectiveSurfaceOpened ? ' ui-date-picker__bare-surface--opened' : ''}`}
+            data-date-picker-surface="bare"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Выбор даты"
+          >
+            {calendarContent}
+          </div>
+        </>
+      )}
 
       <MezfitPopover
         opened={effectiveYearPopoverOpened}
