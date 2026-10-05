@@ -8,7 +8,7 @@ import {
   type CreateCoachProgramOwner,
   type ProgramListItem,
 } from '../api';
-import { useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
+import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Avatar, Button, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
@@ -207,6 +207,7 @@ interface CoachShellProps {
 }
 
 export function CoachShell({ initData, destination, onNavigationContextChange }: CoachShellProps) {
+  const requestBackTransition = useNavigationBackTransition();
   const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
   const [selectedClient, setSelectedClient] = useState<CoachClientListItem | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
@@ -320,8 +321,10 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
             error={message}
             onRetry={() => { void loadClients(); }}
             onSelect={(client) => {
-              setProgramDraft((draft) => draft ? { ...draft, owner: { type: 'client', client } } : draft);
-              setSelectingProgramClient(false);
+              requestBackTransition(() => {
+                setProgramDraft((draft) => draft ? { ...draft, owner: { type: 'client', client } } : draft);
+                setSelectingProgramClient(false);
+              });
             }}
           />
         </section>
