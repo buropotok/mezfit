@@ -713,6 +713,7 @@ export async function initializeWorkoutSession(
       ...(localDate === null ? {} : { localDate }),
     }),
   });
+  validateWorkoutOccurrenceIdentity(result.session);
   return {
     session: result.session.status === 'draft' ? result.session : localizeWorkoutSession(result.session),
   };
