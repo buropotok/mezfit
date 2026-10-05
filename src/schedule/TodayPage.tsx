@@ -212,7 +212,7 @@ export function TodayPage({
       });
 
     return () => controller.abort();
-  }, [date, initData, role]);
+  }, [date, initData, loadingToday, role]);
 
   const eventsByDate = useMemo<Record<LocalDate, TodayScheduleEvent[]>>(() => (
     Object.fromEntries(
