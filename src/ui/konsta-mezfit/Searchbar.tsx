@@ -17,7 +17,6 @@ import {
 import {
   Searchbar as KonstaSearchbar,
   useTheme,
-  useThemeClasses,
 } from 'konsta/react';
 import { SearchbarClasses } from 'konsta/shared/classes';
 import { SearchbarColors } from 'konsta/shared/colors';
@@ -150,9 +149,6 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     onClear,
     onDisable,
 
-    ios,
-    material,
-
     glassPreset = 'frosted',
     glassOptics = false,
 
@@ -168,8 +164,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
   const cancelHighlightData = useRef<Record<string, unknown>>({});
   const disableTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isEnabled, setIsEnabled] = useState(false);
-  const theme = useTheme({ ios, material });
-  const themeClasses = useThemeClasses({ ios, material });
+  const theme = useTheme();
   const colors = SearchbarColors(colorsProp, canonicalDark);
   const {
     attachEvents: attachInnerHighlight,
@@ -234,15 +229,16 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     event.preventDefault();
     setIsEnabled(false);
     searchElRef.current?.blur();
-    onDisable?.(event);
-    onClear?.(event);
+    onDisable?.();
+    onClear?.();
   };
 
-  const c = themeClasses(
-    SearchbarClasses({ ...props }, colors, {
-      isEnabled,
-      darkClasses: canonicalDark,
-    }),
+  const c = SearchbarClasses({ ...props }, colors, {
+    isEnabled,
+    darkClasses: canonicalDark,
+  });
+  const themedClass = (entry: { common?: string; ios?: string; material?: string }) => (
+    cls(entry[theme], entry.common)
   );
 
   const Component = component as ElementType;
@@ -260,7 +256,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
         marginRight: isEnabled ? 0 : `-${48 + 16}px`,
         marginLeft: isEnabled ? '16px' : 0,
       }}
-      className={cls('k-glass touch-none', c.cancelButton)}
+      className={cls('k-glass touch-none', themedClass(c.cancelButton))}
       preset={glassPreset}
       optics={glassOptics}
       wrapContent={false}
@@ -271,7 +267,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
     </GlassSurface>
   ) : (
     <BackIcon
-      className={cls(c.cancelButton)}
+      className={themedClass(c.cancelButton)}
       onClick={handleDisableButton}
       onPointerDown={(event) => event.preventDefault()}
     />
@@ -280,25 +276,25 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
   return (
     <Component
       ref={setRootRef}
-      className={cls(c.base, className)}
+      className={cls(themedClass(c.base), className)}
       {...rest}
       onBlurCapture={onGlobalBlur}
       onFocusCapture={onGlobalFocus}
     >
       <GlassSurface
         ref={innerGlassRef}
-        className={cls('k-glass touch-none', c.inner)}
+        className={cls('k-glass touch-none', themedClass(c.inner))}
         preset={glassPreset}
         optics={glassOptics}
         wrapContent={false}
       >
-        <span className={c.searchIconWrap}>
-          <SearchIcon theme={theme} className={c.searchIcon} />
+        <span className={themedClass(c.searchIconWrap)}>
+          <SearchIcon theme={theme} className={themedClass(c.searchIcon)} />
         </span>
         <input
           id={inputId}
           ref={searchElRef}
-          className={cls(c.input)}
+          className={themedClass(c.input)}
           style={inputStyle}
           type="text"
           name="search"
@@ -310,8 +306,8 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
           onBlur={handleBlur}
         />
         {value && clearButton ? (
-          <button className={c.clearButton} onClick={onClear} type="button">
-            <DeleteIcon theme={theme} className={c.deleteIcon} />
+          <button className={themedClass(c.clearButton)} onClick={onClear} type="button">
+            <DeleteIcon theme={theme} className={themedClass(c.deleteIcon)} />
           </button>
         ) : null}
       </GlassSurface>
