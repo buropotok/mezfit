@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { dayDistance, parseCalendarDay, rescheduleOccurrence } from './schedule';
 
 describe('schedule calendar dates', () => {
