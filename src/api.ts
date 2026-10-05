@@ -226,6 +226,8 @@ const russianApiErrors: Record<string, string> = {
   SCHEDULE_TARGET_NOT_FOUND: 'День программы недоступен для этого клиента',
   SCHEDULE_OCCURRENCE_NOT_FOUND: 'Тренировка в расписании не найдена',
   SCHEDULE_OCCURRENCE_LOCKED: 'Начатую или завершённую тренировку нельзя переносить',
+  INVALID_SCHEDULE_DATE: 'Дата тренировки указана неверно',
+  SCHEDULE_OCCURRENCE_INVALID: 'Запланированная тренировка больше недоступна',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
@@ -555,10 +557,14 @@ export async function addWorkoutSessionExercises(
 export async function initializeWorkoutSession(
   initData: string,
   trainingPlanId: number | null = null,
+  localDate: string | null = null,
 ): Promise<{ session: WorkoutSessionState }> {
   const result = await apiRequest<{ session: WorkoutSessionState }>(initData, '/api/workout-sessions/initialize', {
     method: 'POST',
-    body: JSON.stringify(trainingPlanId === null ? {} : { trainingPlanId }),
+    body: JSON.stringify({
+      ...(trainingPlanId === null ? {} : { trainingPlanId }),
+      ...(localDate === null ? {} : { localDate }),
+    }),
   });
   return {
     session: result.session.status === 'draft' ? result.session : localizeWorkoutSession(result.session),
