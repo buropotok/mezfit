@@ -188,6 +188,7 @@ describe('schedule occurrence races', () => {
     });
     const calendarFirst = vi.fn().mockResolvedValue({ date_key: 20261006 });
     const updateRun = vi.fn().mockResolvedValue({ meta: { changes: 0 } });
+    const updateBind = vi.fn().mockReturnValue({ run: updateRun });
     const prepare = vi.fn((sql: string) => {
       if (sql.includes('FROM workout_occurrence occurrence')) {
         return { bind: vi.fn().mockReturnValue({ first: existingFirst }) };
@@ -196,14 +197,16 @@ describe('schedule occurrence races', () => {
         return { bind: vi.fn().mockReturnValue({ first: calendarFirst }) };
       }
       if (sql.includes('UPDATE workout_occurrence')) {
-        return { bind: vi.fn().mockReturnValue({ run: updateRun }) };
+        return { bind: updateBind };
       }
       throw new Error(`Unexpected SQL: ${sql}`);
     });
     const db = { prepare } as unknown as D1Database;
-    const day = parseCalendarDay('2026-10-06');
-    if (!day) throw new Error('Expected valid date');
+    const parsed = parseCalendarDay('2026-10-06');
+    if (!parsed) throw new Error('Expected valid date');
+    const day = { ...parsed, dateKey: 19990101 };
 
     await expect(rescheduleOccurrence(db, 7, 11, day, 660, 60)).resolves.toEqual({ kind: 'locked' });
+    expect(updateBind).toHaveBeenCalledWith(20261006, 660, 60, 11, 7);
   });
 });
