@@ -266,6 +266,124 @@ function localizeWorkoutSession(session: ActiveWorkoutSession): ActiveWorkoutSes
   };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function decodeSchedulePerson(value: unknown): SchedulePersonSummary | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.id !== 'number'
+    || !Number.isInteger(value.id)
+    || value.id <= 0
+    || typeof value.firstName !== 'string'
+    || (value.lastName !== null && typeof value.lastName !== 'string')
+    || (value.username !== null && typeof value.username !== 'string')
+    || (value.photoUrl !== null && typeof value.photoUrl !== 'string')
+  ) return null;
+
+  return {
+    id: value.id,
+    firstName: value.firstName,
+    lastName: value.lastName as string | null,
+    username: value.username as string | null,
+    photoUrl: value.photoUrl as string | null,
+  };
+}
+
+function decodeScheduleNamed(value: unknown): { id: number; name: string } | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.id !== 'number'
+    || !Number.isInteger(value.id)
+    || value.id <= 0
+    || typeof value.name !== 'string'
+  ) return null;
+  return { id: value.id, name: value.name };
+}
+
+function decodeScheduleOccurrence(value: unknown): ScheduleOccurrence | null {
+  if (!isRecord(value)) return null;
+  const program = decodeScheduleNamed(value.program);
+  const phase = decodeScheduleNamed(value.phase);
+  const day = decodeScheduleNamed(value.day);
+  const coach = decodeSchedulePerson(value.coach);
+  const client = decodeSchedulePerson(value.client);
+  const status = value.status;
+  if (
+    !program
+    || !phase
+    || !day
+    || !coach
+    || !client
+    || !isRecord(value.day)
+    || typeof value.day.position !== 'number'
+    || !Number.isInteger(value.day.position)
+    || value.day.position < 0
+    || typeof value.id !== 'number'
+    || !Number.isInteger(value.id)
+    || value.id <= 0
+    || typeof value.calendarDate !== 'string'
+    || !/^\d{4}-\d{2}-\d{2}$/.test(value.calendarDate)
+    || typeof value.dateKey !== 'number'
+    || !Number.isInteger(value.dateKey)
+    || typeof value.startMinute !== 'number'
+    || !Number.isInteger(value.startMinute)
+    || value.startMinute < 0
+    || value.startMinute > 1439
+    || typeof value.durationMinutes !== 'number'
+    || !Number.isInteger(value.durationMinutes)
+    || value.durationMinutes <= 0
+    || value.startMinute + value.durationMinutes > 1440
+    || (status !== 'scheduled' && status !== 'in_progress' && status !== 'completed')
+    || (value.sessionId !== null && (
+      typeof value.sessionId !== 'number'
+      || !Number.isInteger(value.sessionId)
+      || value.sessionId <= 0
+    ))
+  ) return null;
+
+  const expectedDateKey = Number(value.calendarDate.replaceAll('-', ''));
+  if (value.dateKey !== expectedDateKey) return null;
+
+  return {
+    id: value.id,
+    calendarDate: value.calendarDate,
+    dateKey: value.dateKey,
+    startMinute: value.startMinute,
+    durationMinutes: value.durationMinutes,
+    status,
+    program,
+    phase,
+    day: { ...day, position: value.day.position },
+    coach,
+    client,
+    sessionId: value.sessionId as number | null,
+  };
+}
+
+function decodeScheduleOccurrencesResponse(value: unknown): { occurrences: ScheduleOccurrence[] } {
+  if (!isRecord(value) || !Array.isArray(value.occurrences)) {
+    throw new ApiError(502, 'Некорректный ответ расписания', 'INVALID_API_RESPONSE');
+  }
+  const occurrences = value.occurrences.map(decodeScheduleOccurrence);
+  if (occurrences.some((occurrence) => occurrence === null)) {
+    throw new ApiError(502, 'Некорректный ответ расписания', 'INVALID_API_RESPONSE');
+  }
+  return { occurrences: occurrences as ScheduleOccurrence[] };
+}
+
+function decodeScheduleOccurrenceResponse(value: unknown): { occurrence: ScheduleOccurrence } {
+  if (!isRecord(value)) {
+    throw new ApiError(502, 'Некорректный ответ расписания', 'INVALID_API_RESPONSE');
+  }
+  const occurrence = decodeScheduleOccurrence(value.occurrence);
+  if (!occurrence) {
+    throw new ApiError(502, 'Некорректный ответ расписания', 'INVALID_API_RESPONSE');
+  }
+  return { occurrence };
+}
+
 async function apiRequest<T>(initData: string, path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set('x-telegram-init-data', initData);
@@ -498,32 +616,35 @@ export async function getScheduleOccurrences(
   signal?: AbortSignal,
 ): Promise<{ occurrences: ScheduleOccurrence[] }> {
   const query = new URLSearchParams({ role, from, to });
-  return apiRequest<{ occurrences: ScheduleOccurrence[] }>(
+  const response = await apiRequest<unknown>(
     initData,
     `/api/schedule?${query.toString()}`,
     signal ? { signal } : undefined,
   );
+  return decodeScheduleOccurrencesResponse(response);
 }
 
-export function createScheduleOccurrence(
+export async function createScheduleOccurrence(
   initData: string,
   input: ScheduleOccurrenceTimingInput & { clientUserId: number; programDayId: number },
 ): Promise<{ occurrence: ScheduleOccurrence }> {
-  return apiRequest(initData, '/api/schedule/occurrences', {
+  const response = await apiRequest<unknown>(initData, '/api/schedule/occurrences', {
     method: 'POST',
     body: JSON.stringify(input),
   });
+  return decodeScheduleOccurrenceResponse(response);
 }
 
-export function rescheduleScheduleOccurrence(
+export async function rescheduleScheduleOccurrence(
   initData: string,
   occurrenceId: number,
   input: ScheduleOccurrenceTimingInput,
 ): Promise<{ occurrence: ScheduleOccurrence }> {
-  return apiRequest(initData, `/api/schedule/occurrences/${occurrenceId}`, {
+  const response = await apiRequest<unknown>(initData, `/api/schedule/occurrences/${occurrenceId}`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
+  return decodeScheduleOccurrenceResponse(response);
 }
 
 export function cancelScheduleOccurrence(
