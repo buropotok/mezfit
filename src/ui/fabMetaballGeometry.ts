@@ -146,3 +146,30 @@ export function fabContour(g: FabGeometry) {
   }
   return path;
 }
+
+/** Bezel anchors follow the actual moving silhouette, including tapered ends and recoil. */
+export function fabBezelHighlights(g: FabGeometry, time: number, rupture: number) {
+  const corner = (c: Capsule, leading: boolean) => {
+    const r = (leading ? c.height : c.tailHeight) / 2;
+    const direction = leading ? -1 : 1;
+    return {
+      x: c.x + direction * (c.width / 2 - r * (1 - Math.SQRT1_2)),
+      y: c.y + direction * r * Math.SQRT1_2,
+      radius: r * 1.4,
+    };
+  };
+  const phaseTop = corner(g.phase, true), dayTop = corner(g.day, true);
+  const exposed = smoothFab((Math.abs(g.day.x - g.phase.x) + g.day.width / 2 - g.phase.width / 2) / g.day.height);
+  const formed = smoothFab((time - rupture) * FAB_METABALL.duration / 90);
+  return [
+    { ...corner(g.phase, false), opacity: 1 },
+    {
+      x: phaseTop.x + (dayTop.x - phaseTop.x) * exposed,
+      y: phaseTop.y + (dayTop.y - phaseTop.y) * exposed,
+      radius: phaseTop.radius + (dayTop.radius - phaseTop.radius) * exposed,
+      opacity: 1,
+    },
+    { ...corner(g.day, false), opacity: formed },
+    { ...phaseTop, opacity: formed },
+  ];
+}

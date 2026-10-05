@@ -31,6 +31,7 @@ const occurrence = {
   startMinute: 600,
   durationMinutes: 60,
   status: 'scheduled' as const,
+  createdByUserId: 7,
   program: { id: 1, name: 'Программа' },
   phase: { id: 2, name: 'Фаза' },
   day: { id: 3, name: 'День A', position: 0 },

@@ -105,4 +105,26 @@ describe('metaball FAB mode', () => {
     view.rerender(<FloatingActionButton label="Добавить" mode="metaball" isShown={false} actions={actions} />);
     expect(view.queryByRole('button')).toBeNull(); expect(frames.size).toBe(0);
   });
+
+  it('keeps contour highlights visible before rupture and during the normal-bezel handoff', () => {
+    const view = render(<FloatingActionButton label="Добавить" mode="metaball" icon="plus" actions={[{ label: 'День', onClick: vi.fn() }, { label: 'Фаза', onClick: vi.fn() }]} />);
+    const highlightLayer = () => [...view.container.querySelectorAll('svg')].find(svg => svg.querySelector('radialGradient'))!;
+    fireEvent.click(view.getByRole('button', { name: 'Добавить' }));
+    act(() => advance(0)); act(() => advance(250));
+    const before = highlightLayer(), strength = Number(before.getAttribute('opacity'));
+    expect(strength).toBeGreaterThan(0);
+    expect([...before.querySelectorAll('radialGradient stop:first-child')].map(stop => Number(stop.getAttribute('stop-opacity')))).toEqual([1, 1, 0, 0]);
+    act(() => advance(110));
+    const after = highlightLayer();
+    expect(Number(after.querySelectorAll('radialGradient stop:first-child')[2].getAttribute('stop-opacity'))).toBeGreaterThan(0);
+    expect(Number(after.getAttribute('opacity'))).toBeCloseTo(strength);
+    act(() => advance(90));
+    expect(Number(highlightLayer().getAttribute('opacity'))).toBeCloseTo(strength);
+    act(() => advance(0)); act(() => advance(60));
+    expect(Number(highlightLayer().getAttribute('opacity'))).toBeCloseTo(strength / 2);
+    act(() => advance(60));
+    expect(Number(highlightLayer().getAttribute('opacity'))).toBe(0);
+    expect(frames.size).toBe(0);
+  });
+
 });

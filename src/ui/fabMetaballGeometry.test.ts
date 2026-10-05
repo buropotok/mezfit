@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FAB_METABALL_STAGE_WIDTH, fabContour, fabFrame, fabGeometry, fabJoined, fabRupture } from './fabMetaballGeometry';
+import { FAB_METABALL_STAGE_WIDTH, fabBezelHighlights, fabContour, fabFrame, fabGeometry, fabJoined, fabRupture } from './fabMetaballGeometry';
 
 describe('FAB metaball invariants', () => {
   it('coincident sources have exactly the source FAB silhouette', () => {
@@ -40,4 +40,36 @@ describe('FAB metaball invariants', () => {
     expect(fabFrame(rupture, layout, rupture).phase.x - fabGeometry(rupture, layout).phase.x).toBeCloseTo(-10);
     expect(fabFrame(1, layout, rupture)).toEqual(fabGeometry(1, layout));
   });
+
+  it('carries the two source highlights onto the growing day and phase before rupture', () => {
+    const layout = { width: FAB_METABALL_STAGE_WIDTH, sourceSize: 56 };
+    const rupture = fabRupture(layout);
+    const initial = fabBezelHighlights(fabFrame(0, layout, rupture), 0, rupture);
+    expect(initial.map(p => p.opacity)).toEqual([1, 1, 0, 0]);
+    const time = rupture - 0.01, g = fabFrame(time, layout, rupture);
+    const patches = fabBezelHighlights(g, time, rupture);
+    expect(patches.map(p => p.opacity)).toEqual([1, 1, 0, 0]);
+    expect(patches[0].x).toBeGreaterThan(g.phase.x);
+    expect(patches[0].y).toBeGreaterThan(g.phase.y);
+    expect(patches[1].x).toBeLessThan(g.day.x);
+    expect(patches[1].y).toBeLessThan(g.day.y);
+  });
+
+  it('forms only the new facing-corner highlights after rupture and follows recoil', () => {
+    const layout = { width: FAB_METABALL_STAGE_WIDTH, sourceSize: 56 };
+    const rupture = fabRupture(layout), time = rupture + 45 / 450;
+    const g = fabFrame(time, layout, rupture);
+    const patches = fabBezelHighlights(g, time, rupture);
+    expect(patches[2].opacity).toBeGreaterThan(0);
+    expect(patches[2].opacity).toBeLessThan(1);
+    expect(patches[3].opacity).toBe(patches[2].opacity);
+    expect(patches[2].x).toBeGreaterThan(g.day.x);
+    expect(patches[2].y).toBeGreaterThan(g.day.y);
+    expect(patches[3].x).toBeLessThan(g.phase.x);
+    expect(patches[3].y).toBeLessThan(g.phase.y);
+    const nominal = fabBezelHighlights(fabGeometry(time, layout), time, rupture);
+    expect(patches[1].x - nominal[1].x).toBeCloseTo(-5.5);
+    expect(fabBezelHighlights(fabFrame(1, layout, rupture), 1, rupture).every(p => p.opacity === 1)).toBe(true);
+  });
+
 });

@@ -17,12 +17,19 @@ vi.mock('../ui', async (importOriginal) => {
       date,
       eventsByDate,
       onDateChange,
+      isEventEditable,
     }: {
       date: string;
-      eventsByDate: Record<string, Array<{ id: string }>>;
+      eventsByDate: Record<string, Array<{ id: string; occurrence: ScheduleOccurrence }>>;
       onDateChange: (date: string) => void;
+      isEventEditable?: (event: { id: string; occurrence: ScheduleOccurrence }) => boolean;
     }) => (
-      <div data-testid="day-schedule" data-date={date} data-event-count={eventsByDate[date]?.length ?? 0}>
+      <div
+        data-testid="day-schedule"
+        data-date={date}
+        data-event-count={eventsByDate[date]?.length ?? 0}
+        data-editable-count={(eventsByDate[date] ?? []).filter(event => isEventEditable?.(event) ?? true).length}
+      >
         <button type="button" onClick={() => onDateChange('2026-12-20')}>Jump date</button>
       </div>
     ),
@@ -61,6 +68,7 @@ function occurrence(date: string): ScheduleOccurrence {
     startMinute: 600,
     durationMinutes: 60,
     status: 'scheduled',
+    createdByUserId: 7,
     program: { id: 1, name: 'Программа' },
     phase: { id: 2, name: 'Фаза' },
     day: { id: 3, name: 'День A', position: 0 },
@@ -92,6 +100,7 @@ describe('TodayPage schedule loading', () => {
       <TodayPage
         initData="telegram-init"
         role="coach"
+        currentUserId={7}
         onNavigationContextChange={onNavigationContextChange}
       />,
     );
@@ -128,6 +137,50 @@ describe('TodayPage schedule loading', () => {
     }));
   });
 
+  it('marks only scheduled coach events editable', async () => {
+    const today = localDateNow();
+    getScheduleMock.mockResolvedValue({
+      occurrences: [
+        occurrence(today),
+        { ...occurrence(today), id: 12, status: 'in_progress', createdByUserId: 8 },
+        { ...occurrence(today), id: 13, status: 'completed', createdByUserId: 7 },
+      ],
+    });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="coach"
+        currentUserId={7}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-editable-count')).toBe('1'));
+  });
+
+  it('lets a client edit only scheduled occurrences they created', async () => {
+    const today = localDateNow();
+    getScheduleMock.mockResolvedValue({
+      occurrences: [
+        { ...occurrence(today), id: 11, createdByUserId: 8 },
+        { ...occurrence(today), id: 12, createdByUserId: 7 },
+        { ...occurrence(today), id: 13, status: 'in_progress', createdByUserId: 8 },
+      ],
+    });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="client"
+        currentUserId={8}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-editable-count')).toBe('1'));
+  });
+
   it('loads another +/-31 day window only when navigation leaves the warmed cache', async () => {
     const today = localDateNow();
     getScheduleMock.mockResolvedValue({ occurrences: [] });
@@ -136,6 +189,7 @@ describe('TodayPage schedule loading', () => {
       <TodayPage
         initData="telegram-init"
         role="client"
+        currentUserId={8}
         onNavigationContextChange={vi.fn()}
       />,
     );

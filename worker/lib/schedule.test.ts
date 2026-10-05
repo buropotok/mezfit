@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { dayDistance, parseCalendarDay, rescheduleOccurrence } from './schedule';
+import { dayDistance, listScheduleOccurrences, parseCalendarDay, rescheduleOccurrence } from './schedule';
 
 describe('schedule calendar dates', () => {
   it('derives a sortable YYYYMMDD key and ISO week metadata', () => {
@@ -34,6 +34,53 @@ describe('schedule calendar dates', () => {
   });
 });
 
+
+describe('schedule occurrence read model', () => {
+  it('projects the occurrence creator for frontend editability decisions', async () => {
+    let selectedSql = '';
+    const row = {
+      id: 11,
+      calendar_date: '2026-10-05',
+      calendar_date_key: 20261005,
+      start_minute: 600,
+      duration_minutes: 60,
+      status: 'scheduled' as const,
+      created_by_user_id: 8,
+      program_id: 1,
+      program_name: 'Программа',
+      phase_id: 2,
+      phase_name: 'Фаза',
+      day_id: 3,
+      day_name: 'День A',
+      day_position: 0,
+      coach_id: 7,
+      coach_first_name: 'Coach',
+      coach_last_name: null,
+      coach_username: null,
+      coach_photo_url: null,
+      client_id: 8,
+      client_first_name: 'Client',
+      client_last_name: null,
+      client_username: null,
+      client_photo_url: null,
+      session_id: null,
+    };
+    const prepare = vi.fn((sql: string) => {
+      selectedSql = sql;
+      return {
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockResolvedValue({ results: [row] }),
+        }),
+      };
+    });
+    const db = { prepare } as unknown as D1Database;
+
+    await expect(listScheduleOccurrences(db, 8, 'client', 20261005, 20261005)).resolves.toEqual([
+      expect.objectContaining({ id: 11, createdByUserId: 8 }),
+    ]);
+    expect(selectedSql).toContain('occurrence.created_by_user_id');
+  });
+});
 
 describe('schedule occurrence races', () => {
   it('reports a locked reschedule when the guarded update loses a Start race', async () => {

@@ -10,6 +10,7 @@ const validOccurrence = {
   startMinute: 600,
   durationMinutes: 60,
   status: 'scheduled',
+  createdByUserId: 7,
   program: { id: 1, name: 'Программа' },
   phase: { id: 2, name: 'Фаза' },
   day: { id: 3, name: 'День A', position: 0 },
@@ -40,6 +41,25 @@ describe('schedule API runtime contract', () => {
       '2026-10-05',
       '2026-10-05',
     )).resolves.toEqual({ occurrences: [validOccurrence] });
+  });
+
+  it('rejects a schedule row without a valid creator id', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      occurrences: [{ ...validOccurrence, createdByUserId: null }],
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }));
+
+    await expect(getScheduleOccurrences(
+      'telegram-init',
+      'client',
+      '2026-10-05',
+      '2026-10-05',
+    )).rejects.toMatchObject({
+      status: 502,
+      code: 'INVALID_API_RESPONSE',
+    });
   });
 
   it('rejects malformed schedule rows instead of trusting the TypeScript shape', async () => {

@@ -102,11 +102,13 @@ function displayName(person: ScheduleOccurrence['coach']): string {
 export function TodayPage({
   initData,
   role,
+  currentUserId,
   onNavigationContextChange,
   notice = '',
 }: {
   initData: string;
   role: Role;
+  currentUserId?: number;
   onNavigationContextChange: (context: NavigationContext | null) => void;
   notice?: string;
 }) {
@@ -254,6 +256,13 @@ export function TodayPage({
         date={date}
         eventsByDate={eventsByDate}
         onDateChange={setDate}
+        isEventEditable={(event) => (
+          event.occurrence.status === 'scheduled'
+          && (
+            role === 'coach'
+            || (currentUserId !== undefined && event.occurrence.createdByUserId === currentUserId)
+          )
+        )}
         renderEvent={(event, state) => {
           const otherPerson = role === 'coach' ? event.occurrence.client : event.occurrence.coach;
           const otherPersonName = displayName(otherPerson);
