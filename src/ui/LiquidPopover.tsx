@@ -139,7 +139,9 @@ export function LiquidPopover({
     const target = item.offsetTop + item.offsetHeight / 2 - container.clientHeight / 2;
     container.scrollTop = Math.max(0, Math.min(target, container.scrollHeight - container.clientHeight));
   }, [scrollActiveIntoView]);
-  const contentKey = JSON.stringify(
+  const contentKey = JSON.stringify([
+    layout,
+    resolvedColumns,
     items.map((item) => [
       item.id,
       item.label,
@@ -147,7 +149,7 @@ export function LiquidPopover({
       item.active,
       item.dividerBefore,
     ]),
-  );
+  ]);
 
   // This is an explicit text/button model, not a screenshot of arbitrary DOM.
   // Read our own measured labels so font settings and native row spacing agree.
