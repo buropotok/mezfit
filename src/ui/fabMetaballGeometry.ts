@@ -20,24 +20,26 @@ export function fabGeometry(time: number, layout: FabLayout, shift = 0, dayShift
   const c = FAB_METABALL;
   const dayTarget = layout.dayWidth ?? c.width, phaseTarget = layout.phaseWidth ?? c.width;
   const travel = smoothFab(time / 0.86);
-  const separation = ((dayTarget + phaseTarget) / 2 + c.distance - c.height) * travel;
+  const baseSeparation = (c.width + c.distance - c.height) * travel;
   const initial = layout.sourceSize * 0.2;
   const exit = (layout.sourceSize + initial) / 2;
   const full = c.width - initial * 0.6;
-  // Keep the tuned inflation timing independent of the labels' eventual widths.
-  const inflationTravel = (c.width + c.distance - c.height) * travel;
-  const growth = clamp((inflationTravel - exit) / (full - exit));
+  const growth = clamp((baseSeparation - exit) / (full - exit));
   const phaseGrowth = smoothFab((growth - c.delay) / (1 - c.delay));
-  const phaseWidth = layout.sourceSize + (phaseTarget - layout.sourceSize) * phaseGrowth;
+  const basePhaseWidth = layout.sourceSize + (c.width - layout.sourceSize) * phaseGrowth;
+  const phaseWidth = basePhaseWidth + (phaseTarget - c.width) * phaseGrowth;
   const phaseHeight = layout.sourceSize + (c.height - layout.sourceSize) * phaseGrowth;
   const exponent = 1 + c.dropLead * 2;
   const height = initial + (c.height - initial) * (1 - (1 - growth) ** exponent);
   const tailHeight = initial + (c.height - initial) * growth ** exponent;
-  let dayWidth = initial + (dayTarget - initial) * growth;
+  let baseDayWidth = initial + (c.width - initial) * growth;
   if (growth > 0 && growth < 1) {
-    dayWidth = Math.min(dayTarget, Math.max(dayWidth, 2 * separation - phaseWidth + initial * 0.6 * growth));
+    baseDayWidth = Math.min(c.width, Math.max(baseDayWidth, 2 * baseSeparation - basePhaseWidth + initial * 0.6 * growth));
   }
-  dayWidth = Math.max(dayWidth, height);
+  baseDayWidth = Math.max(baseDayWidth, height);
+  const dayWidth = baseDayWidth + (dayTarget - c.width) * growth;
+  // Extra content changes capsule lengths, never the tuned gap or rupture timing.
+  const separation = baseSeparation + (dayWidth + phaseWidth - baseDayWidth - basePhaseWidth) / 2;
   const base = { x: layout.width - layout.sourceSize / 2, y: layout.sourceSize / 2 };
   const phaseX = base.x - (phaseWidth - layout.sourceSize) / 2;
   return {
