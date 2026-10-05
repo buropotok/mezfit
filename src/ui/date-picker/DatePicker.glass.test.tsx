@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe('DatePicker Mezfit overlay materials', () => {
-  it('keeps the MezfitSidePanel and MezfitPopover GlassSurface materials in panel mode', () => {
+  it('keeps GlassSurface materials for the panel mode and year LiquidPopover', () => {
     render(
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
@@ -39,6 +39,7 @@ describe('DatePicker Mezfit overlay materials', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' }));
 
     const yearDialog = screen.getByRole('dialog', { name: 'Выберите год' });
-    expect(yearDialog.querySelector('.ui-glass-surface')).not.toBeNull();
+    expect(yearDialog.classList.contains('ui-liquid-popover')).toBe(true);
+    expect(yearDialog.querySelector('.ui-liquid-popover__glass.ui-glass-surface')).not.toBeNull();
   });
 });
