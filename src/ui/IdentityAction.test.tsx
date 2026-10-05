@@ -90,17 +90,22 @@ describe('IdentityAction', () => {
     expect(html).toContain('disabled');
   });
 
-  it('keeps the external surface ref contract after sharing activation mechanics', () => {
-    const surfaceRef = { current: null as HTMLElement | null };
+  it('forwards composite glass overrides without changing IdentityAction mechanics', () => {
     const view = render(
       <IdentityAction
         icon="users"
         title="Клиенты"
-        surfaceRef={surfaceRef}
+        glass={{ tintA: 0, blur: 0, border: 0, shadow: 0, bezel: 0 }}
+        glassBezelOpacity={0}
       />,
     );
+    const button = view.getByRole('button', { name: 'Клиенты' });
 
-    expect(surfaceRef.current).toBe(view.getByRole('button', { name: 'Клиенты' }));
+    expect(button.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0');
+    expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('0px');
+    expect(button.style.getPropertyValue('--ui-glass-surface-border')).toBe('0');
+    expect(button.style.getPropertyValue('--ui-glass-surface-shadow')).toBe('0');
+    expect(button.style.getPropertyValue('--ui-glass-surface-bezel')).toBe('0');
   });
 
   it('accepts an explicit accessible label without changing the visible title', () => {
