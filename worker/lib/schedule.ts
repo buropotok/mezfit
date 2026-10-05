@@ -374,7 +374,7 @@ export async function rescheduleOccurrence(
   if (!existing) return { kind: 'not_found' };
   if (existing.status !== 'scheduled') return { kind: 'locked' };
 
-  await db.batch([
+  const results = await db.batch([
     calendarInsert(db, day),
     db.prepare(`
       UPDATE workout_occurrence
@@ -387,6 +387,7 @@ export async function rescheduleOccurrence(
         AND status = 'scheduled'
     `).bind(day.dateKey, startMinute, durationMinutes, occurrenceId, coachUserId),
   ]);
+  if ((results[1]?.meta?.changes ?? 0) === 0) return { kind: 'locked' };
 
   const occurrence = await occurrenceById(db, occurrenceId, coachUserId);
   if (!occurrence) throw new Error('RESCHEDULED_WORKOUT_OCCURRENCE_MISSING');
