@@ -26,7 +26,7 @@ import {
   type TypographyRole,
   type TypographySettings,
 } from '../typographySettings';
-import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, Surface, Text, TextInput, TimePicker, type LocalDate, type LocalTime } from '../ui';
+import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, Surface, Text, TextInput, TimePicker, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
@@ -225,6 +225,7 @@ export function SettingsPage({
   const [typographySettingsOpen, setTypographySettingsOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [timePickerValue, setTimePickerValue] = useState<LocalTime>('08:30');
+  const [timePickerLensMode, setTimePickerLensMode] = useState<TimePickerLensMode>('auto');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [emptyDatePickerOpen, setEmptyDatePickerOpen] = useState(false);
   const [datePickerValue, setDatePickerValue] = useState<LocalDate>('2026-09-30');
@@ -478,18 +479,27 @@ export function SettingsPage({
             Probe: {hapticProbe.kind} → {hapticProbe.result}
           </Text>
         ) : null}
+        <Text variant="caption" tone="muted">
+          Lens mode: {timePickerLensMode}. Auto переключается на iOS scale-режим на iPhone/iPad.
+        </Text>
         <span ref={timePickerTargetRef} className="modules-gallery__trigger">
-          <Button onClick={() => setTimePickerOpen(true)}>Выбрать время</Button>
+          <Button onClick={() => {
+            setTimePickerLensMode('auto');
+            setTimePickerOpen(true);
+          }}>Выбрать время</Button>
+          <Button variant="secondary" onClick={() => {
+            setTimePickerLensMode('ios');
+            setTimePickerOpen(true);
+          }}>iOS mode</Button>
         </span>
-        {timePickerOpen && (
-          <TimePicker
-            opened
-            target={timePickerTargetRef.current}
-            value={timePickerValue}
-            onChange={setTimePickerValue}
-            onClose={() => setTimePickerOpen(false)}
-          />
-        )}
+        <TimePicker
+          opened={timePickerOpen}
+          lensMode={timePickerLensMode}
+          target={timePickerTargetRef.current}
+          value={timePickerValue}
+          onChange={setTimePickerValue}
+          onClose={() => setTimePickerOpen(false)}
+        />
       </section>
 
       <section className="modules-gallery__example" aria-labelledby="module-date-picker-title">
