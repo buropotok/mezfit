@@ -367,13 +367,6 @@ describe('startWorkoutSession', () => {
           return statement;
         }) };
       }
-      if (
-        sql.includes('SELECT id')
-        && sql.includes('FROM workout_occurrence')
-        && sql.includes("status = 'scheduled'")
-      ) {
-        return { bind: vi.fn().mockReturnValue({ first: occurrenceFirst }) };
-      }
       if (sql.includes('FROM workout_session ws')) {
         return { bind: vi.fn().mockReturnValue({ first: headerFirst }) };
       }
