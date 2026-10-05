@@ -4,11 +4,14 @@ import type {
   ExerciseScope,
   TrackingType,
 } from './exercises';
+import { parseCalendarDay } from './schedule';
 
 export type WorkoutSessionStatus = 'draft' | 'active' | 'completed';
 export type SessionExerciseStatus = 'planned' | 'active' | 'completed' | 'skipped' | 'inactive';
 export type SessionSetStatus = 'pending' | 'completed' | 'skipped';
-export type WorkoutStartInput = { type: 'own' } | { type: 'program'; programDayId: number };
+export type WorkoutStartInput =
+  | { type: 'own' }
+  | { type: 'program'; programDayId: number; occurrenceId?: number };
 export type WorkoutSetLabel = 'warmup' | 'easy' | 'normal' | 'hard' | 'drop';
 export type ResistanceBandCode = 'yellow' | 'red' | 'green' | 'blue' | 'purple' | 'black';
 
@@ -33,6 +36,7 @@ export interface WorkoutDaySummary { id: number; name: string; position: number 
 export interface WorkoutDayOption extends WorkoutDaySummary { completed: boolean }
 export interface SuggestedWorkoutDay extends WorkoutDaySummary {
   resolution: 'scheduled_today' | 'next_incomplete';
+  occurrenceId: number | null;
 }
 
 export interface DraftWorkoutSession {
@@ -95,6 +99,7 @@ export interface WorkoutSessionExerciseData {
 
 export interface ActiveWorkoutSession {
   sessionId: number;
+  occurrenceId: number | null;
   status: 'active' | 'completed';
   workoutDate: string;
   program: WorkoutProgramSummary | null;
@@ -129,6 +134,7 @@ interface WorkoutSessionRow {
   user_id: number;
   source_program_phase_id: number | null;
   source_program_day_id: number | null;
+  occurrence_id: number | null;
   status: WorkoutSessionStatus;
   started_at: string | null;
   created_at: string;
@@ -141,8 +147,21 @@ interface DayRow {
   completed: number;
 }
 
+interface ScheduledOccurrenceRow {
+  occurrence_id: number;
+  program_day_id: number;
+  day_name: string;
+  day_position: number;
+  phase_id: number;
+  phase_name: string;
+  program_id: number;
+  program_name: string;
+  coach_user_id: number;
+}
+
 interface ProjectionHeaderRow {
   id: number;
+  occurrence_id: number | null;
   status: 'active' | 'completed';
   workout_date: string;
   program_id: number | null;
