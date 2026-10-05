@@ -110,6 +110,9 @@ export async function handleScheduleRoute(
     if (result.kind === 'invalid_target') {
       return errorResponse(404, 'SCHEDULE_TARGET_NOT_FOUND', 'Program day is not available for this client');
     }
+    if (result.kind === 'calendar_day_not_found') {
+      return errorResponse(400, 'SCHEDULE_DATE_NOT_FOUND', 'Date is outside the calendar reference');
+    }
     return jsonResponse({ occurrence: result.occurrence }, { status: 201 });
   }
 
@@ -134,6 +137,9 @@ export async function handleScheduleRoute(
       );
       if (result.kind === 'not_found') return errorResponse(404, 'SCHEDULE_OCCURRENCE_NOT_FOUND', 'Schedule occurrence not found');
       if (result.kind === 'locked') return errorResponse(409, 'SCHEDULE_OCCURRENCE_LOCKED', 'Started or completed occurrence cannot be rescheduled');
+      if (result.kind === 'calendar_day_not_found') {
+        return errorResponse(400, 'SCHEDULE_DATE_NOT_FOUND', 'Date is outside the calendar reference');
+      }
       return jsonResponse({ occurrence: result.occurrence });
     }
 
