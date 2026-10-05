@@ -408,18 +408,23 @@ export function TodayPage({
         onEventResize={(resize) => { void handleEventResize(resize); }}
         onEventDelete={(deletion) => { void handleEventDelete(deletion); }}
         renderEvent={(event, state) => {
-          const otherPerson = role === 'coach' ? event.occurrence.client : event.occurrence.coach;
-          const otherPersonName = displayName(otherPerson);
-          const title = role === 'coach' ? otherPersonName : event.occurrence.day.name;
+          const clientCreated = event.occurrence.createdByUserId === event.occurrence.client.id;
+          const cardPerson = role === 'coach'
+            ? event.occurrence.client
+            : clientCreated
+              ? event.occurrence.client
+              : event.occurrence.coach;
+          const cardPersonName = displayName(cardPerson);
+          const title = role === 'coach' ? cardPersonName : event.occurrence.day.name;
           const detail = role === 'coach'
             ? `${event.occurrence.program.name} · ${event.occurrence.day.name}`
-            : `${otherPersonName} · ${event.occurrence.program.name}`;
+            : `${cardPersonName} · ${event.occurrence.program.name}`;
 
           return (
             <DayScheduleEventCard
               title={title}
               detail={detail}
-              media={<Avatar name={otherPersonName} src={otherPerson.photoUrl ?? undefined} />}
+              media={<Avatar name={cardPersonName} src={cardPerson.photoUrl ?? undefined} />}
               state={state}
             />
           );
