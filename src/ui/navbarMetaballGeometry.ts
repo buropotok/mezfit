@@ -94,6 +94,10 @@ export function navbarMetaballFrame(
   return navbarMetaballGeometry(time, layout, backShift);
 }
 
+export function navbarBackReveal(time: number, rupture: number) {
+  return smoothFab((time - rupture) / 0.12);
+}
+
 export function navbarMetaballContour(geometry: FabGeometry) {
   return fabContour(geometry);
 }
