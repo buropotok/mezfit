@@ -694,7 +694,7 @@ export async function startWorkoutSession(
       const occurrenceChanged = batchResults[3]?.meta?.changes ?? 0;
       if (sessionChanged === 0 || occurrenceChanged === 0) {
         const current = await workoutRowForUser(db, userId, sessionId);
-        if (current?.status === 'active' && current.occurrence_id === occurrenceId) {
+        if (current?.status === 'active') {
           const canonical = await getWorkoutSessionProjection(db, userId, sessionId);
           if (!canonical) throw new Error('ACTIVE_WORKOUT_PROJECTION_MISSING');
           return { kind: 'ok', session: canonical };
