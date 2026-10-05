@@ -11,8 +11,7 @@
   scrollbar-width: none;
 }
 
-.ui-date-picker__scroll::-webkit-scrollbar,
-.ui-date-picker__year-scroll::-webkit-scrollbar {
+.ui-date-picker__scroll::-webkit-scrollbar {
   display: none;
 }
 
