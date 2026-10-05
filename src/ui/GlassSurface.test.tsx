@@ -42,12 +42,50 @@ describe('GlassSurface', () => {
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('26');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.27');
     expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-bezel-top-left'))
+      .toBe(surface.style.getPropertyValue('--ui-glass-surface-bezel'));
+    expect(surface.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right'))
+      .toBe(surface.style.getPropertyValue('--ui-glass-surface-bezel'));
     expect(surface.style.getPropertyValue('--ui-glass-surface-top-glint')).toBe('');
     expect(surface.style.getPropertyValue('--ui-glass-surface-thickness')).toBe('');
     expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
     expect(surface.querySelector('feImage')).toBeNull();
     expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
+  });
+
+  it('controls built-in bezel highlights independently while bezelOpacity remains the master multiplier', () => {
+    const view = render(
+      <GlassSurface
+        preset="frosted"
+        bezelOpacity={0.5}
+        bezelHighlights={{ topLeft: 0.25, bottomRight: 1 }}
+      >
+        Split bezel
+      </GlassSurface>,
+    );
+    const surface = view.container.firstElementChild as HTMLElement;
+    const master = Number(surface.style.getPropertyValue('--ui-glass-surface-bezel'));
+
+    expect(master).toBeGreaterThan(0);
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-bezel-top-left')))
+      .toBeCloseTo(master * 0.25);
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right')))
+      .toBeCloseTo(master);
+
+    view.rerender(
+      <GlassSurface
+        preset="frosted"
+        bezelOpacity={0.5}
+        bezelHighlights={{ topLeft: -1, bottomRight: 2 }}
+      >
+        Clamped bezel
+      </GlassSurface>,
+    );
+
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-bezel-top-left'))).toBe(0);
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right')))
+      .toBeCloseTo(master);
   });
 
   it('can replace an existing host element without changing its positioning or radius contract', () => {
@@ -131,6 +169,8 @@ describe('GlassSurface', () => {
     expect(surface.style.getPropertyValue('--ui-glass-surface-saturation')).toBe('1.4');
     expect(surface.style.getPropertyValue('--ui-glass-surface-brightness')).toBe('1.1');
     expect(surface.style.getPropertyValue('--ui-glass-surface-bezel')).toBe('0.7');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-bezel-top-left')).toBe('0.7');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-bezel-bottom-right')).toBe('0.7');
     expect(surface.style.getPropertyValue('--ui-glass-surface-border')).toBe('0.08');
   });
 });

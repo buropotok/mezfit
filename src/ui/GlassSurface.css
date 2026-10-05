@@ -33,6 +33,7 @@
     brightness(var(--ui-glass-surface-brightness));
 }
 
+.ui-glass-surface::before,
 .ui-glass-surface::after {
   content: "";
   position: absolute;
@@ -40,12 +41,20 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
+}
+
+.ui-glass-surface::before {
   box-shadow:
     inset 3px 3px 0 -3.5px rgb(255 255 255 / 1),
-    inset -3px -3px 0 -3.5px rgb(255 255 255 / 1),
-    inset -0.5px -0.5px 0 rgb(255 255 255 / 0.18),
     inset 0.5px 0.5px 0 rgb(255 255 255 / 0.08);
-  opacity: var(--ui-glass-surface-bezel);
+  opacity: var(--ui-glass-surface-bezel-top-left);
+}
+
+.ui-glass-surface::after {
+  box-shadow:
+    inset -3px -3px 0 -3.5px rgb(255 255 255 / 1),
+    inset -0.5px -0.5px 0 rgb(255 255 255 / 0.18);
+  opacity: var(--ui-glass-surface-bezel-bottom-right);
 }
 
 .ui-glass-surface__filter {
@@ -67,6 +76,7 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+.ui-glass-surface--contour::before,
 .ui-glass-surface--contour::after { display: none; }
 .ui-glass-surface__contour,
 .ui-glass-surface__contour-material {

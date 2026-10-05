@@ -23,6 +23,11 @@ import {
 } from './glassMaterial';
 import './GlassSurface.css';
 
+export type GlassBezelHighlights = {
+  topLeft?: number;
+  bottomRight?: number;
+};
+
 type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-tint-r': string;
   '--ui-glass-surface-tint-g': string;
@@ -32,6 +37,8 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-saturation': string;
   '--ui-glass-surface-brightness': string;
   '--ui-glass-surface-bezel': string;
+  '--ui-glass-surface-bezel-top-left': string;
+  '--ui-glass-surface-bezel-bottom-right': string;
   '--ui-glass-surface-border': string;
   '--ui-glass-surface-shadow': string;
   '--ui-glass-surface-filter': string;
@@ -88,8 +95,10 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   contentClassName?: string;
   /** Implicit CSS-pixel silhouette; material, shadow and bezel follow this path. */
   contour?: string;
-  /** Visibility of bezel highlights only; the material border remains visible. */
+  /** Master visibility for bezel highlights only; the material border remains visible. */
   bezelOpacity?: number;
+  /** Independent multipliers for the built-in corner highlights. Contour highlights are owned by GlassContourBezel. */
+  bezelHighlights?: GlassBezelHighlights;
   wrapContent?: boolean;
   active?: boolean;
   optics?: boolean;
@@ -106,6 +115,7 @@ export function GlassSurface({
   contentClassName = '',
   contour,
   bezelOpacity = 1,
+  bezelHighlights,
   wrapContent = true,
   active = true,
   optics = false,
@@ -119,6 +129,8 @@ export function GlassSurface({
   const filterId = `ui-glass-surface-${reactId}`;
   const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
   const highlightOpacity = Math.max(0, Math.min(1, bezelOpacity));
+  const topLeftHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.topLeft ?? 1));
+  const bottomRightHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.bottomRight ?? 1));
   const hostMode = !wrapContent;
   const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
@@ -244,6 +256,8 @@ export function GlassSurface({
     '--ui-glass-surface-saturation': String(material.saturation),
     '--ui-glass-surface-brightness': String(material.brightness),
     '--ui-glass-surface-bezel': String(material.bezel * highlightOpacity),
+    '--ui-glass-surface-bezel-top-left': String(material.bezel * highlightOpacity * topLeftHighlightOpacity),
+    '--ui-glass-surface-bezel-bottom-right': String(material.bezel * highlightOpacity * bottomRightHighlightOpacity),
     '--ui-glass-surface-border': String(material.border),
     '--ui-glass-surface-shadow': String(material.shadow),
     '--ui-glass-surface-filter': `url(#${filterId})`,
