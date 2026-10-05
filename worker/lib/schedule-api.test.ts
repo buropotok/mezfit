@@ -116,6 +116,30 @@ describe('schedule API', () => {
     });
   });
 
+  it('allows a client route to reschedule an occurrence when domain authorization accepts it', async () => {
+    rescheduleMock.mockResolvedValue({
+      kind: 'ok',
+      occurrence: { ...occurrence, createdByUserId: 8, client: { ...occurrence.client, id: 8 } },
+    });
+    const request = new Request('https://mezfit.test/api/schedule/occurrences/11', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '2026-10-06', startMinute: 660, durationMinutes: 60 }),
+    });
+
+    const response = await handleScheduleRoute(request, db, 8, ['client']);
+
+    expect(response.status).toBe(200);
+    expect(rescheduleMock).toHaveBeenCalledWith(
+      db,
+      8,
+      11,
+      expect.objectContaining({ localDate: '2026-10-06' }),
+      660,
+      60,
+    );
+  });
+
   it('prevents rescheduling an occurrence after execution has locked it', async () => {
     rescheduleMock.mockResolvedValue({ kind: 'locked' });
     const request = new Request('https://mezfit.test/api/schedule/occurrences/11', {
@@ -143,6 +167,16 @@ describe('schedule API', () => {
     await expect(response.json()).resolves.toMatchObject({
       error: { code: 'SCHEDULE_DATE_NOT_FOUND' },
     });
+  });
+
+  it('allows a client route to cancel an occurrence when domain authorization accepts it', async () => {
+    cancelMock.mockResolvedValue('ok');
+    const request = new Request('https://mezfit.test/api/schedule/occurrences/11', { method: 'DELETE' });
+
+    const response = await handleScheduleRoute(request, db, 8, ['client']);
+
+    expect(response.status).toBe(200);
+    expect(cancelMock).toHaveBeenCalledWith(db, 8, 11);
   });
 
   it('cancels a scheduled occurrence instead of physically deleting history', async () => {
