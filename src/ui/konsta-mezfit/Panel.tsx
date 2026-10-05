@@ -15,10 +15,14 @@ import type {
   GlassShape,
 } from '../glassMaterial';
 
+export type MezfitSidePanelSurface = 'glass' | 'bare';
+
 export type MezfitSidePanelProps = ComponentProps<typeof KonstaPanel> & {
   glassPreset?: GlassPresetName;
   glass?: GlassMaterialOverrides;
   glassShape?: GlassShape;
+  surface?: MezfitSidePanelSurface;
+  backdropClassName?: string;
 };
 
 const canonicalDark = (classNames: string) => classNames;
@@ -40,6 +44,8 @@ export function MezfitSidePanel(props: MezfitSidePanelProps) {
     glassPreset = 'modalTuned',
     glass,
     glassShape = 'auto',
+    surface = 'glass',
+    backdropClassName,
 
     children,
     ref,
@@ -58,13 +64,13 @@ export function MezfitSidePanel(props: MezfitSidePanelProps) {
 
   const classes = cls(
     c.base.common,
-    c.base[theme],
+    surface === 'bare' && theme === 'ios' ? undefined : c.base[theme],
     className,
     c[side].common,
     c[side][theme],
     c[side][state],
   );
-  const backdropClasses = cls(c.backdrop.common, c.backdrop[state]);
+  const backdropClasses = cls(c.backdrop.common, c.backdrop[state], backdropClassName);
 
   const setRef = (element: HTMLElement | null) => {
     elRef.current = element;
@@ -77,7 +83,7 @@ export function MezfitSidePanel(props: MezfitSidePanelProps) {
       {backdrop && (
         <div className={backdropClasses} onClick={onBackdropClick} />
       )}
-      {theme === 'ios' && floating ? (
+      {theme === 'ios' && floating && surface === 'glass' ? (
         <GlassSurface
           component={Component}
           ref={setRef}
