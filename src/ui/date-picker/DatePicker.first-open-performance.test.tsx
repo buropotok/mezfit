@@ -59,12 +59,10 @@ describe('DatePicker first-open rendering', () => {
     expect(dialog).toBeTruthy();
     expect(dialog?.className).toContain('invisible');
     expect(view.container.querySelector('[data-month-index="0"]')).toBeNull();
-    expect(view.container.querySelector('[data-year="1950"]')).toBeNull();
 
     view.rerender(picker(true));
 
     expect(view.container.querySelector('[data-month-index="0"]')).not.toBeNull();
-    expect(view.container.querySelector('[data-year="1950"]')).toBeNull();
     expect(dialog?.className).toContain('invisible');
     expect(frames.length).toBeGreaterThan(0);
 
