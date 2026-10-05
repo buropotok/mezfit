@@ -9,7 +9,7 @@ import {
   type ProgramListItem,
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
-import { Avatar, Button, List, ListItem, Modal, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
+import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
@@ -409,7 +409,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       await navigator.clipboard.writeText(inviteUrl);
       closeInvite();
     } catch {
-      setInviteCopyError('Не удалось скопировать автоматически — нажмите и удерживайте ссылку');
+      setInviteCopyError('Не удалось скопировать ссылку автоматически. Попробуйте ещё раз.');
     }
   };
 
@@ -432,21 +432,19 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         presentation="contacts"
       />
 
-      <Modal
-        isOpen={Boolean(inviteUrl)}
-        presentation="dialog"
+      <MezfitDialog
+        opened={Boolean(inviteUrl)}
         title="Пригласить клиента"
-        onClose={closeInvite}
-        hasCloseButton={false}
-        actions={[
-          { id: 'cancel', label: 'Закрыть', onClick: closeInvite },
-          { id: 'copy', label: 'Копировать', tone: 'primary', onClick: copyInvite },
-        ]}
+        content={<Text variant="body">Отправьте персональную ссылку клиенту в Telegram. Ссылка одноразовая и действует 30 дней.</Text>}
+        buttons={<MezfitDialogButton strong onClick={() => void copyInvite()}>Копировать ссылку</MezfitDialogButton>}
+        onBackdropClick={closeInvite}
+        role="alertdialog"
+        aria-modal="true"
+        aria-hidden={!inviteUrl}
+        aria-label="Пригласить клиента"
       >
-        <p>Отправьте эту персональную ссылку клиенту в Telegram. Ссылка одноразовая и действует 30 дней.</p>
-        <div className="link-box">{inviteUrl}</div>
-        {inviteCopyError ? <p className="inline-message error-text invite-copy-error" role="alert">{inviteCopyError}</p> : null}
-      </Modal>
+        {inviteCopyError ? <Text variant="footnote" className="invite-copy-error error-text" role="alert">{inviteCopyError}</Text> : null}
+      </MezfitDialog>
 
       {inviteError ? <p className="inline-message" role="alert">{inviteError}</p> : null}
     </section>
