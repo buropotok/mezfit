@@ -256,7 +256,25 @@ function localizeExercise(exercise: ExerciseDefinition): ExerciseDefinition {
   };
 }
 
+function isValidOccurrenceId(value: unknown): value is number | null {
+  return value === null || (typeof value === 'number' && Number.isInteger(value) && value > 0);
+}
+
+function validateWorkoutOccurrenceIdentity(session: WorkoutSessionState): void {
+  if (session.status === 'draft') {
+    const occurrenceId = session.suggestedDay?.occurrenceId ?? null;
+    if (!isValidOccurrenceId(occurrenceId)) {
+      throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+    }
+    return;
+  }
+  if (!isValidOccurrenceId(session.occurrenceId)) {
+    throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+  }
+}
+
 function localizeWorkoutSession(session: ActiveWorkoutSession): ActiveWorkoutSession {
+  validateWorkoutOccurrenceIdentity(session);
   return {
     ...session,
     exercises: session.exercises.map((sessionExercise) => ({
