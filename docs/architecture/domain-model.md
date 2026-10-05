@@ -82,7 +82,7 @@ A scheduled workout selects the default Start context but is not an irreversible
 
 At Start the backend fresh-reads `program_day` and copies PLAN into session-owned rows exactly as for an unscheduled program workout. The occurrence changes to `in_progress`; completion changes it to `completed`. Calendar timing is therefore never the source of historical FACT time.
 
-If multiple programs or multiple scheduled occurrences remain ambiguous, the launch workflow must resolve the choice explicitly rather than silently selecting one.
+If multiple programs are active, the launch workflow must continue to resolve that existing program ambiguity explicitly. A scheduled occurrence is only used as the automatic default when the supplied local date resolves exactly one occurrence.
 
 Candidate scheduling policies:
 
