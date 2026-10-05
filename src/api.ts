@@ -647,11 +647,19 @@ export async function rescheduleScheduleOccurrence(
   return decodeScheduleOccurrenceResponse(response);
 }
 
-export function cancelScheduleOccurrence(
+export async function cancelScheduleOccurrence(
   initData: string,
   occurrenceId: number,
 ): Promise<{ ok: true }> {
-  return apiRequest(initData, `/api/schedule/occurrences/${occurrenceId}`, { method: 'DELETE' });
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/schedule/occurrences/${occurrenceId}`,
+    { method: 'DELETE' },
+  );
+  if (!isRecord(response) || response.ok !== true) {
+    throw new ApiError(502, 'Некорректный ответ расписания', 'INVALID_API_RESPONSE');
+  }
+  return { ok: true };
 }
 
 export async function getWorkoutExerciseOptions(
