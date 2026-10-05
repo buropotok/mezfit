@@ -56,6 +56,31 @@ describe('IdentityAction double navbar variant', () => {
 });
 
 describe('MezfitNavbar', () => {
+  it('opens the menu immediately without waiting for the IdentityAction press animation', () => {
+    const onMenu = vi.fn();
+    const onCalendar = vi.fn();
+    const view = renderWithKonsta(
+      <MezfitNavbar
+        level={1}
+        identity={{ title: 'Сегодня', icon: 'calendar-event' }}
+        onBack={vi.fn()}
+        onMenu={onMenu}
+        onCalendar={onCalendar}
+      />,
+    );
+
+    const menu = view.getByRole('button', { name: 'Меню страницы' });
+    const rightAction = view.container.querySelector('.ui-identity-action--double');
+    expect(rightAction).not.toBeNull();
+
+    fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menu);
+
+    expect(rightAction?.classList.contains('ui-identity-action--animating')).toBe(true);
+    expect(onMenu).toHaveBeenCalledTimes(1);
+    expect(onCalendar).not.toHaveBeenCalled();
+  });
+
   it('passes the configured navbar glass preset to every identity action', () => {
     const view = renderWithKonsta(
       <MezfitNavbar
