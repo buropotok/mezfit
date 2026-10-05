@@ -61,9 +61,28 @@ The current assigned program remains mutable for practical coach work between se
 
 `WorkoutOccurrence` represents that a workout is expected/scheduled. `WorkoutSession` represents persisted execution context. Workout sessions are never pre-created for future calendar dates; a draft is created only when the client actually enters the workout launch flow.
 
-A scheduled workout selects the default Start context but is not an irreversible choice: while the session remains `draft`, the client may choose another day from the resolved current phase or start `Своя тренировка`.
+The persisted calendar model is deliberately separate from PLAN:
 
-If multiple programs are active for the client, the outer launch workflow must resolve that ambiguity explicitly with the user before the session module receives a program context. The workout session component itself does not silently choose an active program.
+```text
+calendar_day
+  └── workout_occurrence
+        ├── coach_user_id
+        ├── client_user_id
+        ├── program_day_id
+        ├── calendar_date_key
+        ├── start_minute
+        └── duration_minutes
+
+workout_occurrence -- Start --> workout_session.occurrence_id
+```
+
+`calendar_day.date_key` is an integer `YYYYMMDD` key. An occurrence stores minutes from midnight rather than separate hour/minute foreign keys. The hot D1 indexes are `(coach_user_id, calendar_date_key, start_minute)` and `(client_user_id, calendar_date_key, start_minute)`, so Today and bounded calendar windows are range scans over the actor's schedule rather than scans of workout history.
+
+A scheduled workout selects the default Start context but is not an irreversible choice: while the session remains `draft`, the client may choose another day from the resolved current phase or start `Своя тренировка`. When exactly one scheduled occurrence resolves the supplied local date, initialization may use it as the unambiguous default and carries its occurrence ID through Start. Choosing another program day drops that occurrence association.
+
+At Start the backend fresh-reads `program_day` and copies PLAN into session-owned rows exactly as for an unscheduled program workout. The occurrence changes to `in_progress`; completion changes it to `completed`. Calendar timing is therefore never the source of historical FACT time.
+
+If multiple programs or multiple scheduled occurrences remain ambiguous, the launch workflow must resolve the choice explicitly rather than silently selecting one.
 
 Candidate scheduling policies:
 
