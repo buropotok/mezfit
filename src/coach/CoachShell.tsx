@@ -202,12 +202,11 @@ function ClientDirectory({
 
 interface CoachShellProps {
   initData: string;
-  currentUserId?: number;
   destination: AppDestination;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
 
-export function CoachShell({ initData, currentUserId, destination, onNavigationContextChange }: CoachShellProps) {
+export function CoachShell({ initData, destination, onNavigationContextChange }: CoachShellProps) {
   const requestBackTransition = useNavigationBackTransition();
   const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
   const [selectedClient, setSelectedClient] = useState<CoachClientListItem | null>(null);
@@ -310,7 +309,6 @@ export function CoachShell({ initData, currentUserId, destination, onNavigationC
       <TodayPage
         initData={initData}
         role="coach"
-        currentUserId={currentUserId}
         onNavigationContextChange={onNavigationContextChange}
       />
     );
