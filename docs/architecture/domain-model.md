@@ -76,7 +76,7 @@ calendar_day
 workout_occurrence -- Start --> workout_session.occurrence_id
 ```
 
-`calendar_day.date_key` is an integer `YYYYMMDD` key. An occurrence stores minutes from midnight rather than separate hour/minute foreign keys. The hot D1 indexes are `(coach_user_id, calendar_date_key, start_minute)` and `(client_user_id, calendar_date_key, start_minute)`, so Today and bounded calendar windows are range scans over the actor's schedule rather than scans of workout history.
+`calendar_day` is a pre-populated reference dimension for `2000-01-01` through `2100-12-31`. `date_key` is its integer `YYYYMMDD` primary key. Runtime schedule mutations never create calendar rows: they resolve the requested `local_date` against this reference and persist the returned `date_key` as the occurrence foreign key. A missing reference date is rejected instead of being synthesized at runtime. An occurrence stores minutes from midnight rather than separate hour/minute foreign keys. The hot D1 indexes are `(coach_user_id, calendar_date_key, start_minute)` and `(client_user_id, calendar_date_key, start_minute)`, so Today and bounded calendar windows are range scans over the actor's schedule rather than scans of workout history.
 
 A scheduled workout selects the default Start context but is not an irreversible choice: while the session remains `draft`, the client may choose another day from the resolved current phase or start `Своя тренировка`. When exactly one scheduled occurrence resolves the supplied local date, initialization may use it as the unambiguous default and carries its occurrence ID through Start. Choosing another program day drops that occurrence association.
 

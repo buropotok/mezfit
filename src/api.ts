@@ -225,6 +225,7 @@ const russianApiErrors: Record<string, string> = {
   INVALID_SCHEDULE_TARGET: 'Не удалось определить клиента или день программы',
   INVALID_SCHEDULE_TIME: 'Время тренировки указано неверно',
   SCHEDULE_TARGET_NOT_FOUND: 'День программы недоступен для этого клиента',
+  SCHEDULE_DATE_NOT_FOUND: 'Дата находится вне календарного справочника',
   SCHEDULE_OCCURRENCE_NOT_FOUND: 'Тренировка в расписании не найдена',
   SCHEDULE_OCCURRENCE_LOCKED: 'Начатую или завершённую тренировку нельзя переносить',
   INVALID_SCHEDULE_DATE: 'Дата тренировки указана неверно',

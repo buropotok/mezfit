@@ -299,23 +299,21 @@ async function coachOwnsProgramDay(
   return Boolean(row);
 }
 
-function calendarInsert(db: D1Database, day: CalendarDayValue): D1PreparedStatement {
-  return db
+async function calendarDateKey(
+  db: D1Database,
+  localDate: string,
+): Promise<number | null> {
+  const row = await db
     .prepare(`
-      INSERT OR IGNORE INTO calendar_day (
-        date_key, local_date, year, month, day, iso_week_year, iso_week, weekday
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      SELECT date_key
+      FROM calendar_day
+      WHERE local_date = ?
+      LIMIT 1
     `)
-    .bind(
-      day.dateKey,
-      day.localDate,
-      day.year,
-      day.month,
-      day.day,
-      day.isoWeekYear,
-      day.isoWeek,
-      day.weekday,
-    );
+    .bind(localDate)
+    .first<{ date_key: number }>();
+
+  return row?.date_key ?? null;
 }
 
 export async function createScheduleOccurrence(
@@ -328,14 +326,20 @@ export async function createScheduleOccurrence(
     startMinute: number;
     durationMinutes: number;
   },
-): Promise<{ kind: 'ok'; occurrence: ScheduleOccurrence } | { kind: 'invalid_target' }> {
+): Promise<
+  | { kind: 'ok'; occurrence: ScheduleOccurrence }
+  | { kind: 'invalid_target' }
+  | { kind: 'calendar_day_not_found' }
+> {
   if (!(await coachOwnsProgramDay(db, coachUserId, input.clientUserId, input.programDayId))) {
     return { kind: 'invalid_target' };
   }
 
-  const results = await db.batch([
-    calendarInsert(db, input.day),
-    db.prepare(`
+  const dateKey = await calendarDateKey(db, input.day.localDate);
+  if (dateKey === null) return { kind: 'calendar_day_not_found' };
+
+  const inserted = await db
+    .prepare(`
       INSERT INTO workout_occurrence (
         coach_user_id,
         client_user_id,
@@ -347,18 +351,18 @@ export async function createScheduleOccurrence(
         created_by_user_id
       ) VALUES (?, ?, ?, ?, ?, ?, 'scheduled', ?)
       RETURNING id
-    `).bind(
+    `)
+    .bind(
       coachUserId,
       input.clientUserId,
       input.programDayId,
-      input.day.dateKey,
+      dateKey,
       input.startMinute,
       input.durationMinutes,
       coachUserId,
-    ),
-  ]);
+    )
+    .first<{ id: number }>();
 
-  const inserted = results[1]?.results[0] as { id?: unknown } | undefined;
   if (!inserted || typeof inserted.id !== 'number') throw new Error('FAILED_TO_CREATE_WORKOUT_OCCURRENCE');
 
   const occurrence = await occurrenceById(db, inserted.id, coachUserId);
@@ -373,14 +377,21 @@ export async function rescheduleOccurrence(
   day: CalendarDayValue,
   startMinute: number,
   durationMinutes: number,
-): Promise<{ kind: 'ok'; occurrence: ScheduleOccurrence } | { kind: 'not_found' } | { kind: 'locked' }> {
+): Promise<
+  | { kind: 'ok'; occurrence: ScheduleOccurrence }
+  | { kind: 'not_found' }
+  | { kind: 'locked' }
+  | { kind: 'calendar_day_not_found' }
+> {
   const existing = await occurrenceForActor(db, occurrenceId, coachUserId);
   if (!existing) return { kind: 'not_found' };
   if (existing.status !== 'scheduled') return { kind: 'locked' };
 
-  const results = await db.batch([
-    calendarInsert(db, day),
-    db.prepare(`
+  const dateKey = await calendarDateKey(db, day.localDate);
+  if (dateKey === null) return { kind: 'calendar_day_not_found' };
+
+  const result = await db
+    .prepare(`
       UPDATE workout_occurrence
       SET calendar_date_key = ?,
           start_minute = ?,
@@ -389,9 +400,10 @@ export async function rescheduleOccurrence(
       WHERE id = ?
         AND coach_user_id = ?
         AND status = 'scheduled'
-    `).bind(day.dateKey, startMinute, durationMinutes, occurrenceId, coachUserId),
-  ]);
-  if ((results[1]?.meta?.changes ?? 0) === 0) return { kind: 'locked' };
+    `)
+    .bind(dateKey, startMinute, durationMinutes, occurrenceId, coachUserId)
+    .run();
+  if ((result.meta?.changes ?? 0) === 0) return { kind: 'locked' };
 
   const occurrence = await occurrenceById(db, occurrenceId, coachUserId);
   if (!occurrence) throw new Error('RESCHEDULED_WORKOUT_OCCURRENCE_MISSING');
