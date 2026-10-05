@@ -5,8 +5,10 @@ const css = readFileSync(new URL('./GlassSurface.css', import.meta.url), 'utf8')
 
 describe('GlassSurface bezel layers', () => {
   it('keeps top-left and bottom-right highlights on independently controlled layers', () => {
-    const topLeftRule = css.match(/\.ui-glass-surface::before \{[\s\S]*?\n\}/)?.[0];
-    const bottomRightRule = css.match(/\.ui-glass-surface::after \{[\s\S]*?\n\}/)?.[0];
+    const bezelRules = [...css.matchAll(/\.ui-glass-surface::(?:before|after) \{[\s\S]*?\n\}/g)]
+      .map(match => match[0]);
+    const topLeftRule = bezelRules.find(rule => rule.includes('--ui-glass-surface-bezel-top-left'));
+    const bottomRightRule = bezelRules.find(rule => rule.includes('--ui-glass-surface-bezel-bottom-right'));
 
     expect(topLeftRule).toContain('inset 3px 3px 0 -3.5px');
     expect(topLeftRule).toContain('inset 0.5px 0.5px 0');
