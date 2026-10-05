@@ -294,18 +294,7 @@ textarea.text-input { height: auto; min-height: 72px; padding-top: 10px; padding
 .scope-client { color: var(--color-accent); }
 .scope-coach { color: #C895FF; }
 
-.link-box {
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  color: var(--color-text);
-  background: var(--color-input);
-  font-size: var(--ui-font-size-caption);
-  line-height: var(--ui-line-height-caption);
-  letter-spacing: var(--ui-letter-spacing-caption);
-  overflow-wrap: anywhere;
-  user-select: all;
-}
+
 .inline-message { margin: var(--space-2) 0 0; padding: 0; font-size: var(--ui-font-size-caption); line-height: var(--ui-line-height-caption); }
 .error-text { color: var(--color-danger); }
 
