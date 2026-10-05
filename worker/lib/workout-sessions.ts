@@ -762,14 +762,23 @@ export async function completeWorkoutSession(
   }
   if (workout.status !== 'active') return { kind: 'invalid_state' };
 
-  await db
-    .prepare(`
+  const completionStatements = [
+    db.prepare(`
       UPDATE workout_session
       SET status = 'completed', completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND user_id = ? AND status = 'active'
-    `)
-    .bind(sessionId, userId)
-    .run();
+    `).bind(sessionId, userId),
+  ];
+  if (workout.occurrence_id !== null) {
+    completionStatements.push(
+      db.prepare(`
+        UPDATE workout_occurrence
+        SET status = 'completed', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND client_user_id = ?
+      `).bind(workout.occurrence_id, userId),
+    );
+  }
+  await db.batch(completionStatements);
 
   const session = await getWorkoutSessionProjection(db, userId, sessionId);
   if (!session) throw new Error('COMPLETED_WORKOUT_PROJECTION_MISSING');
@@ -785,6 +794,7 @@ export async function getWorkoutSessionProjection(
     .prepare(`
       SELECT
         ws.id,
+        ws.occurrence_id,
         ws.status,
         date(COALESCE(ws.started_at, ws.created_at)) AS workout_date,
         tp.id AS program_id,
@@ -950,6 +960,7 @@ export async function getWorkoutSessionProjection(
 
   return {
     sessionId: header.id,
+    occurrenceId: header.occurrence_id,
     status: header.status,
     workoutDate: header.workout_date,
     program: header.program_id !== null && header.program_name !== null
