@@ -49,6 +49,18 @@ const TRANSPARENT_GLASS: GlassMaterialOverrides = Object.freeze({
   refraction: 0,
 });
 
+const TRANSPARENT_GLASS_WITH_BEZEL: GlassMaterialOverrides = Object.freeze({
+  tintA: 0,
+  blur: 0,
+  saturation: 1,
+  brightness: 1,
+  border: 0,
+  shadow: 0,
+  rimStrength: 0,
+  trenchStrength: 0,
+  refraction: 0,
+});
+
 const shapeStyle = (shape: { x: number; y: number; width: number; height: number }): CSSProperties => ({
   left: shape.x - shape.width / 2,
   top: shape.y - shape.height / 2,
@@ -186,6 +198,7 @@ export function NavbarMetaball({
   }, [moving]);
 
   const movingGlass = moving ? TRANSPARENT_GLASS : undefined;
+  const movingIdentityGlass = moving ? TRANSPARENT_GLASS_WITH_BEZEL : undefined;
   const movingOptics = moving ? false : glassOptics;
 
   return (
@@ -231,8 +244,8 @@ export function NavbarMetaball({
             width="100%"
             glassPreset={glassPreset}
             glassOptics={movingOptics}
-            glass={movingGlass}
-            glassBezelOpacity={bezelReveal}
+            glass={movingIdentityGlass}
+            glassBezelOpacity={1}
             onClick={onIdentityClick}
           />
         ) : (
@@ -244,8 +257,8 @@ export function NavbarMetaball({
             width="100%"
             glassPreset={glassPreset}
             glassOptics={movingOptics}
-            glass={movingGlass}
-            glassBezelOpacity={bezelReveal}
+            glass={movingIdentityGlass}
+            glassBezelOpacity={1}
             onClick={onIdentityClick}
           />
         )}
