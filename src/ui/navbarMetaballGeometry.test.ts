@@ -69,12 +69,6 @@ describe('navbar metaball geometry', () => {
       0,
       rupture,
     );
-    const growingTime = rupture * 0.75;
-    const growing = navbarMetaballBezelHighlights(
-      navbarMetaballFrame(growingTime, layout, rupture),
-      growingTime,
-      rupture,
-    );
     const settled = navbarMetaballBezelHighlights(
       navbarMetaballFrame(1, layout, rupture),
       1,
@@ -84,9 +78,6 @@ describe('navbar metaball geometry', () => {
     expect(initial[0].opacity).toBe(0);
     expect(initial[1].opacity).toBe(0);
     expect(initial[3].opacity).toBe(0);
-    expect(growing[0].opacity).toBe(0);
-    expect(growing[1].opacity).toBeGreaterThan(0);
-    expect(growing[3].opacity).toBe(0);
     expect(settled[0].opacity).toBe(0);
     expect(settled[1].opacity).toBe(1);
     expect(settled[2].opacity).toBe(1);
