@@ -33,3 +33,21 @@ appearance around its own hour/minute displacement layer.
 The surrounding overlay uses the existing Mezfit/Konsta Popover primitive. The
 shared wrapper exposes a public `iosHighlight` opt-out so TimePicker can disable
 Konsta's radial press glow without targeting private Konsta DOM or CSS.
+
+
+## iOS fallback mode
+
+iOS/WKWebView does not reliably render the SVG displacement effect used by the
+default lens. The shared two-column picker therefore has an `ios` lens mode
+that keeps the same shell, dimensions, clipping geometry, scroll ribbons, and
+selected-value semantics but skips displacement-map generation/rendering.
+
+Inside the lens contour, glyphs are rendered on the synchronized SVG layer and
+scaled continuously from 1.0 at the lens boundary to 1.55 at the center. The
+1.55 center scale matches the displacement lens magnification constant, so the
+selected value keeps approximately the same optical size and UX emphasis.
+
+The default `auto` mode resolves to `ios` on iPhone/iPad/iPod user agents
+(including iPadOS desktop-style Macintosh user agents with touch points) and to
+`displacement` elsewhere. Explicit `ios` and `displacement` modes exist
+for UI Kit and device diagnostics.
