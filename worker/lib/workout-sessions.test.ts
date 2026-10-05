@@ -436,6 +436,13 @@ describe('startWorkoutSession', () => {
         return { bind: vi.fn().mockReturnValue({ first: dayFirst }) };
       }
       if (
+        sql.includes('SELECT id')
+        && sql.includes('FROM workout_occurrence')
+        && sql.includes("status = 'scheduled'")
+      ) {
+        return { bind: vi.fn().mockReturnValue({ first: occurrenceFirst }) };
+      }
+      if (
         sql.includes('INSERT INTO session_exercise')
         || sql.includes('INSERT INTO session_set')
         || sql.includes('UPDATE workout_session')
