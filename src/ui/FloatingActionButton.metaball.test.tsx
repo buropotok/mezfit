@@ -48,6 +48,24 @@ describe('metaball FAB mode', () => {
     view.unmount(); expect(frames.size).toBe(0);
   });
 
+
+  it('rejects reentrant and queued actions before the closing animation advances', () => {
+    let repeat: (() => void) | undefined;
+    const phase = vi.fn();
+    const day = vi.fn(() => repeat?.());
+    const view = render(<FloatingActionButton label="Добавить" mode="metaball" actions={[{ label: 'День', onClick: day }, { label: 'Фаза', onClick: phase }]} />);
+    fireEvent.click(view.getByRole('button', { name: 'Добавить' }));
+    act(() => advance(0)); act(() => advance(1000));
+    const dayButton = view.getByRole('button', { name: 'День' });
+    const phaseButton = view.getByRole('button', { name: 'Фаза' });
+    repeat = () => { fireEvent.click(dayButton); fireEvent.click(phaseButton); };
+    fireEvent.click(dayButton);
+    expect(dayButton).toHaveProperty('disabled', true);
+    expect(phaseButton).toHaveProperty('disabled', true);
+    fireEvent.click(dayButton); fireEvent.click(phaseButton);
+    expect(day).toHaveBeenCalledOnce(); expect(phase).not.toHaveBeenCalled();
+  });
+
   it('keeps hidden and disabled FABs inert', () => {
     const clicked = vi.fn();
     const actions = [{ label: 'День', onClick: clicked }, { label: 'Фаза', onClick: clicked }] as const;
