@@ -55,6 +55,7 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
     if (view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !isShown) {
       progress.current = target; setTime(target); return;
     }
+    wasMoving.current = true;
     const duration = FAB_METABALL.duration * Math.abs(target - from);
     let start: number | undefined;
     const tick = (now: number) => {
@@ -89,7 +90,7 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
     setBezelReveal(0);
     revealFrame = requestAnimationFrame(reveal);
     return () => cancelAnimationFrame(revealFrame);
-  }, [moving, isShown]);
+  }, [moving, settled, isShown]);
 
   useEffect(() => { if (!isShown || disabled) setOpen(false); }, [isShown, disabled]);
   useEffect(() => {
