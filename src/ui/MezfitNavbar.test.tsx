@@ -194,6 +194,7 @@ describe('MezfitNavbar', () => {
     const nextIdentity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(nextIdentity).toBe(initialIdentity);
     expect(view.getByRole('button', { name: 'Анна Смирнова' })).toBe(initialIdentity);
-    expect((view.getByRole('button', { name: 'Назад' }) as HTMLButtonElement).disabled).toBe(false);
+    expect(view.queryByRole('button', { name: 'Назад' })).toBeNull();
+    expect(view.getByRole('button', { name: 'Назад', hidden: true })).not.toBeNull();
   });
 });
