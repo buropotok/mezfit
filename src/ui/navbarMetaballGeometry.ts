@@ -125,19 +125,10 @@ export function navbarMetaballBezelHighlights(
   time: number,
   rupture: number,
 ) {
-  const highlights = fabBezelHighlights(geometry, time, rupture);
-  const exposed = smoothFab(
-    (Math.abs(geometry.day.x - geometry.phase.x)
-      + geometry.day.width / 2
-      - geometry.phase.width / 2)
-      / geometry.day.height,
-  );
-
-  return highlights.map((highlight, index) => {
-    // The stationary IdentityAction keeps ownership of its own top-left and
-    // bottom-right bezel highlights. The liquid layer only draws the Back lobe.
-    if (index === 0 || index === 3) return { ...highlight, opacity: 0 };
-    if (index === 1) return { ...highlight, opacity: highlight.opacity * exposed };
-    return highlight;
-  });
+  return fabBezelHighlights(geometry, time, rupture).map((highlight, index) => (
+    // IdentityAction permanently owns only its bottom-right bezel. The
+    // top-left highlight stays on the liquid contour so the metaball morph
+    // remains visible, then crossfades back to IdentityAction after motion.
+    index === 0 ? { ...highlight, opacity: 0 } : highlight
+  ));
 }
