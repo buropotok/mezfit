@@ -7,23 +7,20 @@ import {
   type CSSProperties,
 } from 'react';
 import { GlassContourBezel, GlassSurface } from './GlassSurface';
-import { Icon, type UiIconName } from './Icon';
-import type { IdentityActionAvatar } from './IdentityAction';
-import { useIdentityActionActivation } from './identityActionActivation';
-import type { GlassPresetName } from './glassMaterial';
-import { Avatar, Text } from './primitives';
+import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
+import type { UiIconName } from './Icon';
+import type { GlassMaterialOverrides, GlassPresetName } from './glassMaterial';
+import { smoothFab } from './fabMetaballGeometry';
 import {
   NAVBAR_METABALL,
   navbarBackReveal,
+  navbarIdentityWidth,
   navbarMetaballBezelHighlights,
   navbarMetaballContour,
   navbarMetaballFrame,
-  navbarMetaballGeometry,
   navbarMetaballRupture,
   type NavbarMetaballLayout,
 } from './navbarMetaballGeometry';
-import { smoothFab } from './fabMetaballGeometry';
-import './identity-action.css';
 import './NavbarMetaball.css';
 
 export type NavbarMetaballIdentity =
@@ -38,6 +35,19 @@ type NavbarMetaballProps = {
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
 };
+
+const TRANSPARENT_GLASS: GlassMaterialOverrides = Object.freeze({
+  tintA: 0,
+  blur: 0,
+  saturation: 1,
+  brightness: 1,
+  bezel: 0,
+  border: 0,
+  shadow: 0,
+  rimStrength: 0,
+  trenchStrength: 0,
+  refraction: 0,
+});
 
 const shapeStyle = (shape: { x: number; y: number; width: number; height: number }): CSSProperties => ({
   left: shape.x - shape.width / 2,
@@ -71,31 +81,32 @@ export function NavbarMetaball({
   const [time, setTime] = useState(level === 2 ? 1 : 0);
   const [bezelReveal, setBezelReveal] = useState(1);
   const [layout, setLayout] = useState<NavbarMetaballLayout>({
-    width: 320,
-    identityWidth: 156,
+    width: 390,
+    identityWidth: navbarIdentityWidth(390),
   });
+
   const target = level === 2 ? 1 : 0;
+  const moving = time !== target;
+  const atIdentity = !moving && target === 0;
+  const atLevelTwo = !moving && target === 1;
   const rupture = useMemo(() => navbarMetaballRupture(layout), [layout]);
-  const geometry = useMemo(() => navbarMetaballFrame(time, layout, rupture), [time, layout, rupture]);
-  const finalGeometry = useMemo(() => navbarMetaballGeometry(1, layout), [layout]);
+  const geometry = useMemo(
+    () => navbarMetaballFrame(time, layout, rupture),
+    [time, layout, rupture],
+  );
   const contour = useMemo(() => navbarMetaballContour(geometry), [geometry]);
-  const atIdentity = time === 0;
-  const atLevelTwo = time === 1;
-  const moving = !atIdentity && !atLevelTwo;
-  const backInteractive = level === 2 && atLevelTwo;
   const backReveal = navbarBackReveal(time, rupture);
-  const centralActivation = useIdentityActionActivation();
-  const backActivation = useIdentityActionActivation();
 
   useLayoutEffect(() => {
     const element = rootRef.current;
     if (!element) return undefined;
 
     const measure = () => {
-      const width = element.offsetWidth || element.getBoundingClientRect().width || 320;
-      const identityWidth = Math.max(44, Math.min(224, width - 164));
+      const width = element.offsetWidth || element.getBoundingClientRect().width || 390;
+      const identityWidth = navbarIdentityWidth(width);
       setLayout(current => (
-        Math.abs(current.width - width) < 0.5 && Math.abs(current.identityWidth - identityWidth) < 0.5
+        Math.abs(current.width - width) < 0.5
+        && Math.abs(current.identityWidth - identityWidth) < 0.5
           ? current
           : { width, identityWidth }
       ));
@@ -168,30 +179,8 @@ export function NavbarMetaball({
     return () => cancelFrame(revealFrame);
   }, [moving]);
 
-  const centralClassName = [
-    'ui-identity-action',
-    'ui-identity-action--labeled',
-    'ui-navbar-metaball__control',
-    'ui-navbar-metaball__control--identity',
-    centralActivation.isAnimating ? 'ui-identity-action--animating' : '',
-  ].filter(Boolean).join(' ');
-  const backClassName = [
-    'ui-identity-action',
-    'ui-identity-action--single',
-    'ui-navbar-metaball__control',
-    'ui-navbar-metaball__control--back',
-    backActivation.isAnimating ? 'ui-identity-action--animating' : '',
-  ].filter(Boolean).join(' ');
-  const centralSurfaceClassName = [
-    'ui-navbar-metaball__surface',
-    'ui-navbar-metaball__surface--identity',
-    centralActivation.isAnimating ? 'ui-identity-action--animating' : '',
-  ].filter(Boolean).join(' ');
-  const backSurfaceClassName = [
-    'ui-navbar-metaball__surface',
-    'ui-navbar-metaball__surface--back',
-    backActivation.isAnimating ? 'ui-identity-action--animating' : '',
-  ].filter(Boolean).join(' ');
+  const movingGlass = moving ? TRANSPARENT_GLASS : undefined;
+  const movingOptics = moving ? false : glassOptics;
 
   return (
     <div
@@ -200,17 +189,6 @@ export function NavbarMetaball({
       data-level={level}
       data-moving={moving || undefined}
     >
-      {atIdentity ? (
-        <GlassSurface
-          className={centralSurfaceClassName}
-          preset={glassPreset}
-          optics={glassOptics}
-          bezelOpacity={bezelReveal}
-          shape="capsule"
-          style={shapeStyle(geometry.phase)}
-        />
-      ) : null}
-
       {moving ? (
         <GlassSurface
           className="ui-navbar-metaball__liquid"
@@ -219,27 +197,6 @@ export function NavbarMetaball({
           contour={contour}
           shape={{ radius: 0 }}
         />
-      ) : null}
-
-      {atLevelTwo ? (
-        <>
-          <GlassSurface
-            className={centralSurfaceClassName}
-            preset={glassPreset}
-            optics={glassOptics}
-            bezelOpacity={bezelReveal}
-            shape="capsule"
-            style={shapeStyle(finalGeometry.phase)}
-          />
-          <GlassSurface
-            className={backSurfaceClassName}
-            preset={glassPreset}
-            optics={glassOptics}
-            bezelOpacity={bezelReveal}
-            shape="capsule"
-            style={shapeStyle(finalGeometry.day)}
-          />
-        </>
       ) : null}
 
       {(moving || bezelReveal < 1) ? (
@@ -257,65 +214,60 @@ export function NavbarMetaball({
         className="ui-mezfit-navbar__identity ui-navbar-metaball__identity-slot"
         style={shapeStyle(geometry.phase)}
       >
-        <button
-          ref={centralActivation.setRootRef}
-          type="button"
-          className={centralClassName}
-          aria-label={identity.title}
-          style={{ width: '100%', minWidth: '100%', maxWidth: '100%' }}
-          onPointerDown={centralActivation.handlePointerDown}
-          onPointerCancel={centralActivation.cancelPointerActivation}
-          onPointerLeave={centralActivation.cancelPointerActivation}
-          onClick={() => centralActivation.queueActivation(onIdentityClick)}
-        >
-          <span className="ui-identity-action__visual" aria-hidden="true">
-            {identity.icon ? (
-              <Icon
-                className="ui-identity-action__icon"
-                name={identity.icon}
-                variant="outline"
-                style={{ width: 32, height: 32 }}
-              />
-            ) : (
-              <Avatar
-                className="ui-identity-action__avatar"
-                name={identity.avatar.name}
-                src={identity.avatar.src}
-              />
-            )}
-          </span>
-          <Text variant="headline" className="ui-identity-action__title">{identity.title}</Text>
-        </button>
+        {identity.icon ? (
+          <IdentityAction
+            variant="labeled"
+            icon={identity.icon}
+            iconVariant="outline"
+            iconSize={32}
+            title={identity.title}
+            titleRole="headline"
+            width="100%"
+            glassPreset={glassPreset}
+            glassOptics={movingOptics}
+            glass={movingGlass}
+            glassBezelOpacity={bezelReveal}
+            onClick={onIdentityClick}
+          />
+        ) : (
+          <IdentityAction
+            variant="labeled"
+            avatar={identity.avatar}
+            title={identity.title}
+            titleRole="headline"
+            width="100%"
+            glassPreset={glassPreset}
+            glassOptics={movingOptics}
+            glass={movingGlass}
+            glassBezelOpacity={bezelReveal}
+            onClick={onIdentityClick}
+          />
+        )}
       </div>
 
       <div
         className="ui-mezfit-navbar__side--left ui-navbar-metaball__back-slot"
-        aria-hidden={!backInteractive || undefined}
+        aria-hidden={!atLevelTwo || undefined}
         style={{
           ...shapeStyle(geometry.day),
           opacity: backReveal,
-          pointerEvents: backInteractive ? 'auto' : 'none',
+          visibility: atIdentity ? 'hidden' : 'visible',
+          pointerEvents: atLevelTwo ? 'auto' : 'none',
         }}
       >
-        <button
-          ref={backActivation.setRootRef}
-          type="button"
-          className={backClassName}
+        <IdentityAction
+          variant="single"
+          icon="chevron-left"
+          iconVariant="outline"
+          iconSize={32}
+          title="Назад"
           aria-label="Назад"
-          onPointerDown={backActivation.handlePointerDown}
-          onPointerCancel={backActivation.cancelPointerActivation}
-          onPointerLeave={backActivation.cancelPointerActivation}
-          onClick={() => backActivation.queueActivation(level === 2 ? onBack : undefined)}
-        >
-          <span className="ui-identity-action__visual" aria-hidden="true">
-            <Icon
-              className="ui-identity-action__icon"
-              name="chevron-left"
-              variant="outline"
-              style={{ width: 32, height: 32 }}
-            />
-          </span>
-        </button>
+          glassPreset={glassPreset}
+          glassOptics={atLevelTwo ? glassOptics : false}
+          glass={movingGlass}
+          glassBezelOpacity={bezelReveal}
+          onClick={atLevelTwo ? onBack : undefined}
+        />
       </div>
     </div>
   );
