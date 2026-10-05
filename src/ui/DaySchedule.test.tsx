@@ -12,6 +12,15 @@ const events: Readonly<Record<LocalDate, readonly DayScheduleEvent[]>> = {
   '2026-09-29': [{ id: 'b', startMinutes: 720, durationMinutes: 30 }],
 };
 
+type EditableTestEvent = DayScheduleEvent & { editable: boolean };
+
+const mixedEvents: Readonly<Record<LocalDate, readonly EditableTestEvent[]>> = {
+  '2026-09-28': [
+    { id: 'editable', startMinutes: 600, durationMinutes: 60, editable: true },
+    { id: 'locked', startMinutes: 780, durationMinutes: 60, editable: false },
+  ],
+};
+
 beforeEach(() => {
   changed.mockClear();
   vi.useFakeTimers();
@@ -394,6 +403,167 @@ describe('DaySchedule', () => {
     expect(deleted).toHaveBeenCalledOnce();
     expect(deleted).toHaveBeenCalledWith({ eventId: 'a', date: '2026-09-28' });
     expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
+  });
+
+  it('moves an editable event while keeping a non-editable event out of DnD in the same schedule', () => {
+    const moved = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={mixedEvents}
+        onDateChange={changed}
+        isEventEditable={event => event.editable}
+        onEventMove={moved}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const editableFrame = view.container.querySelector<HTMLElement>('[data-event-id="editable"]');
+    const lockedFrame = view.container.querySelector<HTMLElement>('[data-event-id="locked"]');
+    if (!editableFrame || !lockedFrame) throw new Error('Missing mixed event frames');
+
+    expect(editableFrame.hasAttribute('data-ui-dnd-handle')).toBe(true);
+    expect(lockedFrame.hasAttribute('data-ui-dnd-handle')).toBe(false);
+
+    fireEvent.pointerDown(editableFrame, { pointerId: 41, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 41, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 164 });
+    fireEvent.pointerUp(document, { pointerId: 41, pointerType: 'mouse', button: 0, clientX: 100, clientY: 164 });
+
+    expect(moved).toHaveBeenCalledWith({
+      eventId: 'editable',
+      date: '2026-09-28',
+      targetDate: '2026-09-28',
+      previousStartMinutes: 600,
+      startMinutes: 660,
+    });
+    act(() => vi.advanceTimersByTime(50));
+  });
+
+  it('resizes an editable event when the predicate allows it', () => {
+    const resized = vi.fn();
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={mixedEvents}
+        onDateChange={changed}
+        isEventEditable={event => event.editable}
+        onEventMove={vi.fn()}
+        onEventResize={resized}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="editable"]');
+    if (!frame) throw new Error('Missing editable event frame');
+
+    fireEvent.pointerDown(frame, { pointerId: 42, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 42, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 120 });
+    fireEvent.pointerUp(document, { pointerId: 42, pointerType: 'mouse', button: 0, clientX: 100, clientY: 120 });
+    act(() => vi.advanceTimersByTime(200));
+
+    const endHandle = view.getByRole('button', { name: 'Изменить время окончания' });
+    fireEvent.pointerDown(endHandle, { pointerId: 43, pointerType: 'touch', clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(endHandle, { pointerId: 43, pointerType: 'touch', clientX: 100, clientY: 164 });
+    fireEvent.pointerUp(endHandle, { pointerId: 43, pointerType: 'touch', clientX: 100, clientY: 164 });
+
+    expect(resized).toHaveBeenCalledWith({
+      eventId: 'editable',
+      date: '2026-09-28',
+      previousStartMinutes: 600,
+      previousDurationMinutes: 60,
+      startMinutes: 600,
+      durationMinutes: 120,
+    });
+  });
+
+  it('lets an editable event complete the delete flow', () => {
+    const deleted = vi.fn();
+    const view = render(
+      <KonstaProvider theme="ios" dark>
+        <DaySchedule
+          date="2026-09-28"
+          today="2026-09-28"
+          eventsByDate={mixedEvents}
+          onDateChange={changed}
+          isEventEditable={event => event.editable}
+          onEventMove={vi.fn()}
+          onEventDelete={deleted}
+          renderEvent={event => <div>{event.id}</div>}
+        />
+      </KonstaProvider>,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="editable"]');
+    if (!frame) throw new Error('Missing editable event frame');
+
+    fireEvent.pointerDown(frame, { pointerId: 44, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 44, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 120 });
+    fireEvent.pointerUp(document, { pointerId: 44, pointerType: 'mouse', button: 0, clientX: 100, clientY: 120 });
+    act(() => vi.advanceTimersByTime(200));
+
+    fireEvent.click(view.getByRole('button', { name: 'Удалить карточку' }));
+    fireEvent.click(view.getByRole('button', { name: 'Удалить' }));
+
+    expect(deleted).toHaveBeenCalledWith({ eventId: 'editable', date: '2026-09-28' });
+  });
+
+  it('does not start drag, resize, or delete flow for a non-editable event', () => {
+    const moved = vi.fn();
+    const resized = vi.fn();
+    const deleted = vi.fn();
+    const view = render(
+      <KonstaProvider theme="ios" dark>
+        <DaySchedule
+          date="2026-09-28"
+          today="2026-09-28"
+          eventsByDate={mixedEvents}
+          onDateChange={changed}
+          isEventEditable={event => event.editable}
+          onEventMove={moved}
+          onEventResize={resized}
+          onEventDelete={deleted}
+          renderEvent={event => <button type="button">{event.id}</button>}
+        />
+      </KonstaProvider>,
+    );
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="locked"]');
+    const schedule = view.container.querySelector<HTMLElement>('.ui-day-schedule');
+    if (!frame || !schedule) throw new Error('Missing non-editable event frame');
+
+    const touch = { identifier: 45, target: frame, clientX: 100, clientY: 100, pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
+    fireEvent.touchStart(frame, { touches: [touch], targetTouches: [touch], changedTouches: [touch] });
+    act(() => vi.advanceTimersByTime(350));
+
+    expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
+    expect(view.container.querySelector('.ui-day-schedule__drag-overlay')).toBeNull();
+    expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
+    expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
+
+    fireEvent.touchEnd(frame, { touches: [], targetTouches: [], changedTouches: [touch] });
+    fireEvent.pointerDown(frame, { pointerId: 46, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 46, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 164 });
+    fireEvent.pointerUp(document, { pointerId: 46, pointerType: 'mouse', button: 0, clientX: 100, clientY: 164 });
+    act(() => vi.advanceTimersByTime(250));
+
+    expect(moved).not.toHaveBeenCalled();
+    expect(resized).not.toHaveBeenCalled();
+    expect(deleted).not.toHaveBeenCalled();
+    expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
+    expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
+  });
+
+  it('keeps the previous all-editable behavior when isEventEditable is omitted', () => {
+    const view = render(
+      <DaySchedule
+        date="2026-09-28"
+        today="2026-09-28"
+        eventsByDate={events}
+        onDateChange={changed}
+        onEventMove={vi.fn()}
+        renderEvent={event => <div>{event.id}</div>}
+      />,
+    );
+
+    expect(view.container.querySelector<HTMLElement>('[data-event-id="a"]')?.hasAttribute('data-ui-dnd-handle')).toBe(true);
   });
 
   it('activates touch drag after schedule-owned long-press arbitration', () => {
