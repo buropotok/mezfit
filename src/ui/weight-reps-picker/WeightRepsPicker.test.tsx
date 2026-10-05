@@ -74,8 +74,17 @@ describe('WeightRepsPicker', () => {
     const columns = reps.parentElement;
     expect(columns?.className).toContain('ui-weight-reps-picker__columns');
     const comma = screen.getByText(',');
-    expect(comma.getAttribute('x')).toBe('216');
-    expect(comma.closest('.ui-time-picker__lens')).not.toBeNull();
+    const lens = comma.closest('.ui-time-picker__lens');
+    const lensTexts = Array.from(lens?.querySelectorAll('text') ?? []);
+    const repsLensValue = lensTexts.find((node) => node.textContent === '8');
+    const kilogramsLensValue = lensTexts.find((node) => node.textContent === '77');
+    const fractionLensValue = lensTexts.find((node) => node.textContent === '5');
+
+    expect(lens).not.toBeNull();
+    expect(repsLensValue?.getAttribute('x')).toBe('80');
+    expect(kilogramsLensValue?.getAttribute('x')).toBe('176');
+    expect(comma.getAttribute('x')).toBe('208');
+    expect(fractionLensValue?.getAttribute('x')).toBe('240');
   });
 
   it('emits repetitions while preserving the selected weight', () => {
