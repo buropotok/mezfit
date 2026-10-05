@@ -484,7 +484,7 @@ export async function initializeWorkoutSession(
 async function workoutRowForUser(db: D1Database, userId: number, sessionId: number): Promise<WorkoutSessionRow | null> {
   return db
     .prepare(`
-      SELECT id, user_id, source_program_phase_id, source_program_day_id, status, started_at, created_at
+      SELECT id, user_id, source_program_phase_id, source_program_day_id, occurrence_id, status, started_at, created_at
       FROM workout_session
       WHERE id = ? AND user_id = ?
       LIMIT 1
@@ -498,7 +498,13 @@ export async function startWorkoutSession(
   userId: number,
   sessionId: number,
   input: WorkoutStartInput,
-): Promise<{ kind: 'ok'; session: ActiveWorkoutSession } | { kind: 'not_found' } | { kind: 'invalid_state' } | { kind: 'invalid_program_day' }> {
+): Promise<
+  | { kind: 'ok'; session: ActiveWorkoutSession }
+  | { kind: 'not_found' }
+  | { kind: 'invalid_state' }
+  | { kind: 'invalid_program_day' }
+  | { kind: 'invalid_occurrence' }
+> {
   const workout = await workoutRowForUser(db, userId, sessionId);
   if (!workout) return { kind: 'not_found' };
   if (workout.status === 'completed') return { kind: 'invalid_state' };
@@ -514,6 +520,7 @@ export async function startWorkoutSession(
         UPDATE workout_session
         SET source_program_phase_id = NULL,
             source_program_day_id = NULL,
+            occurrence_id = NULL,
             status = 'active',
             started_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
@@ -535,6 +542,24 @@ export async function startWorkoutSession(
       .bind(userId, input.programDayId)
       .first<{ id: number; phase_id: number }>();
     if (!day) return { kind: 'invalid_program_day' };
+
+    let occurrenceId: number | null = null;
+    if (input.occurrenceId !== undefined) {
+      const occurrence = await db
+        .prepare(`
+          SELECT id
+          FROM workout_occurrence
+          WHERE id = ?
+            AND client_user_id = ?
+            AND program_day_id = ?
+            AND status = 'scheduled'
+          LIMIT 1
+        `)
+        .bind(input.occurrenceId, userId, day.id)
+        .first<{ id: number }>();
+      if (!occurrence) return { kind: 'invalid_occurrence' };
+      occurrenceId = occurrence.id;
+    }
 
     const statements = [
       db.prepare(`
@@ -581,12 +606,22 @@ export async function startWorkoutSession(
         UPDATE workout_session
         SET source_program_phase_id = ?,
             source_program_day_id = ?,
+            occurrence_id = ?,
             status = 'active',
             started_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND user_id = ? AND status = 'draft'
-      `).bind(day.phase_id, day.id, sessionId, userId),
+      `).bind(day.phase_id, day.id, occurrenceId, sessionId, userId),
     ];
+    if (occurrenceId !== null) {
+      statements.push(
+        db.prepare(`
+          UPDATE workout_occurrence
+          SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND client_user_id = ?
+        `).bind(occurrenceId, userId),
+      );
+    }
     await db.batch(statements);
   }
 
