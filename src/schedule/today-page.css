@@ -1,0 +1,22 @@
+.today-page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.today-page__schedule {
+  width: 100%;
+  height: 100%;
+}
+
+.today-page__status {
+  position: absolute;
+  z-index: 45;
+  top: calc(max(1rem, var(--k-safe-area-top, 0px)) + 7.25rem);
+  right: var(--page-pad-x);
+  left: var(--page-pad-x);
+  pointer-events: none;
+  text-align: center;
+}
