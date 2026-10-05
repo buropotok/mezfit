@@ -208,7 +208,7 @@ export function TodayPage({
         setOccurrencesByDate((current) => replaceRange(current, todayRange, occurrences));
         loadedRangesRef.current = addLoadedRange(loadedRangesRef.current, todayRange);
       } catch (loadError) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted || requestGenerationRef.current !== generation) return;
         setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить расписание');
       } finally {
         if (!controller.signal.aborted && requestGenerationRef.current === generation) {
@@ -233,7 +233,7 @@ export function TodayPage({
         loadedRangesRef.current = addLoadedRange(loadedRangesRef.current, windowRange);
         setError('');
       } catch (loadError) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted || requestGenerationRef.current !== generation) return;
         setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить календарь');
       } finally {
         pendingRangesRef.current = removePendingRange(pendingRangesRef.current, windowRange);
@@ -268,7 +268,7 @@ export function TodayPage({
         setError('');
       })
       .catch((loadError: unknown) => {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted || requestGenerationRef.current !== generation) return;
         setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить календарь');
       })
       .finally(() => {
@@ -304,6 +304,19 @@ export function TodayPage({
     setMutatingOccurrenceIds(new Set(mutatingOccurrenceIdsRef.current));
   };
 
+  const reconcileRange = async (from: LocalDate, to: LocalDate) => {
+    const generation = requestGenerationRef.current;
+    try {
+      const { occurrences } = await getScheduleOccurrences(initData, role, from, to);
+      if (requestGenerationRef.current !== generation) return;
+      setOccurrencesByDate((current) => replaceRange(current, { from, to }, occurrences));
+      loadedRangesRef.current = addLoadedRange(loadedRangesRef.current, { from, to });
+    } catch {
+      // Keep the current optimistic state when canonical reconciliation also
+      // fails. The surfaced mutation error remains the actionable signal.
+    }
+  };
+
   const occurrenceForEvent = (entryDate: LocalDate, eventId: string): ScheduleOccurrence | null => {
     const occurrenceId = occurrenceIdFromEventId(eventId);
     if (occurrenceId === null) return null;
@@ -331,7 +344,10 @@ export function TodayPage({
       });
       setOccurrencesByDate((current) => upsertOccurrence(current, result.occurrence));
     } catch (mutationError) {
-      setOccurrencesByDate((current) => upsertOccurrence(current, occurrence));
+      await reconcileRange(
+        move.date < move.targetDate ? move.date : move.targetDate,
+        move.date > move.targetDate ? move.date : move.targetDate,
+      );
       setError(mutationError instanceof Error ? mutationError.message : 'Не удалось перенести тренировку');
     } finally {
       finishMutation(occurrence.id);
@@ -358,7 +374,7 @@ export function TodayPage({
       });
       setOccurrencesByDate((current) => upsertOccurrence(current, result.occurrence));
     } catch (mutationError) {
-      setOccurrencesByDate((current) => upsertOccurrence(current, occurrence));
+      await reconcileRange(resize.date, resize.date);
       setError(mutationError instanceof Error ? mutationError.message : 'Не удалось изменить время тренировки');
     } finally {
       finishMutation(occurrence.id);
@@ -375,7 +391,7 @@ export function TodayPage({
     try {
       await cancelScheduleOccurrence(initData, occurrence.id);
     } catch (mutationError) {
-      setOccurrencesByDate((current) => upsertOccurrence(current, occurrence));
+      await reconcileRange(deletion.date, deletion.date);
       setError(mutationError instanceof Error ? mutationError.message : 'Не удалось отменить тренировку');
     } finally {
       finishMutation(occurrence.id);
