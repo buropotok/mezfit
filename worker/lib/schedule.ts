@@ -268,17 +268,15 @@ async function occurrenceForActor(
 async function occurrenceById(
   db: D1Database,
   occurrenceId: number,
-  actorUserId: number,
 ): Promise<ScheduleOccurrence | null> {
   const row = await db
     .prepare(`
       ${occurrenceProjection}
       WHERE occurrence.id = ?
-        AND ${occurrenceEditorPredicate}
         AND occurrence.status <> 'cancelled'
       LIMIT 1
     `)
-    .bind(occurrenceId, actorUserId, actorUserId, actorUserId)
+    .bind(occurrenceId)
     .first<OccurrenceRow>();
 
   return row ? mapOccurrence(row) : null;
@@ -378,7 +376,7 @@ export async function createScheduleOccurrence(
 
   if (!inserted || typeof inserted.id !== 'number') throw new Error('FAILED_TO_CREATE_WORKOUT_OCCURRENCE');
 
-  const occurrence = await occurrenceById(db, inserted.id, coachUserId);
+  const occurrence = await occurrenceById(db, inserted.id);
   if (!occurrence) throw new Error('CREATED_WORKOUT_OCCURRENCE_MISSING');
   return { kind: 'ok', occurrence };
 }
@@ -445,7 +443,7 @@ export async function rescheduleOccurrence(
       : { kind: 'not_found' };
   }
 
-  const occurrence = await occurrenceById(db, occurrenceId, actorUserId);
+  const occurrence = await occurrenceById(db, occurrenceId);
   if (!occurrence) throw new Error('RESCHEDULED_WORKOUT_OCCURRENCE_MISSING');
   return { kind: 'ok', occurrence };
 }
