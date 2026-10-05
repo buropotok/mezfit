@@ -4,6 +4,7 @@ import {
   NAVBAR_METABALL,
   navbarBackReveal,
   navbarIdentityWidth,
+  navbarMetaballBezelHighlights,
   navbarMetaballContour,
   navbarMetaballFrame,
   navbarMetaballGeometry,
@@ -27,10 +28,26 @@ describe('navbar metaball geometry', () => {
     const identityLeft = hidden.phase.x - hidden.phase.width / 2;
 
     expect(hidden.day.x).toBeCloseTo(identityLeft + NAVBAR_METABALL.backSize / 2);
-    expect(hidden.day.width).toBe(NAVBAR_METABALL.backSize);
-    expect(hidden.day.height).toBe(NAVBAR_METABALL.backSize);
+    expect(hidden.day.width).toBeCloseTo(NAVBAR_METABALL.backSize * 0.2);
+    expect(hidden.day.height).toBeCloseTo(NAVBAR_METABALL.backSize * 0.2);
     expect(visible.day.x).toBe(NAVBAR_METABALL.backSize / 2);
+    expect(visible.day.width).toBe(NAVBAR_METABALL.backSize);
+    expect(visible.day.height).toBe(NAVBAR_METABALL.backSize);
     expect(visible.phase).toEqual(hidden.phase);
+  });
+
+  it('grows Back with the FAB leading-edge profile before rupture', () => {
+    const hidden = navbarMetaballGeometry(0, layout);
+    const growing = navbarMetaballGeometry(0.45, layout);
+    const rupture = navbarMetaballRupture(layout);
+    const beforeRupture = navbarMetaballGeometry(rupture - 0.0001, layout);
+
+    expect(growing.day.width).toBeGreaterThan(hidden.day.width);
+    expect(growing.day.width).toBeLessThan(NAVBAR_METABALL.backSize);
+    expect(growing.day.height).toBeGreaterThan(growing.day.tailHeight);
+    expect(beforeRupture.day.width).toBe(NAVBAR_METABALL.backSize);
+    expect(beforeRupture.day.height).toBe(NAVBAR_METABALL.backSize);
+    expect(beforeRupture.day.tailHeight).toBe(NAVBAR_METABALL.backSize);
   });
 
   it('starts as one joined identity silhouette and ruptures before the final Back position', () => {
@@ -43,6 +60,28 @@ describe('navbar metaball geometry', () => {
     expect(rupture).toBeGreaterThan(0);
     expect(rupture).toBeLessThan(1);
     expect(fabJoined(visible)).toBe(false);
+  });
+
+  it('leaves stationary IdentityAction bezel highlights owned by the identity surface', () => {
+    const rupture = navbarMetaballRupture(layout);
+    const initial = navbarMetaballBezelHighlights(
+      navbarMetaballFrame(0, layout, rupture),
+      0,
+      rupture,
+    );
+    const settled = navbarMetaballBezelHighlights(
+      navbarMetaballFrame(1, layout, rupture),
+      1,
+      rupture,
+    );
+
+    expect(initial[0].opacity).toBe(0);
+    expect(initial[1].opacity).toBe(0);
+    expect(initial[3].opacity).toBe(0);
+    expect(settled[0].opacity).toBe(0);
+    expect(settled[1].opacity).toBe(1);
+    expect(settled[2].opacity).toBe(1);
+    expect(settled[3].opacity).toBe(0);
   });
 
   it('keeps Back content fully hidden until the glass contour has ruptured', () => {

@@ -41,6 +41,20 @@ export function navbarMetaballGeometry(
   const finalX = size / 2;
   const travel = smoothFab(time / 0.86);
   const backX = sourceX + (finalX - sourceX) * travel + backShift;
+  // Match the FAB day-lobe scale-in: keep a small seed under the source,
+  // then grow the leading edge ahead of the trailing edge before rupture.
+  const backSeparation = Math.max(0, sourceX - backX);
+  const initialBackSize = size * 0.2;
+  const growthStart = (size + initialBackSize) / 2;
+  const growthEnd = size - initialBackSize * 0.6;
+  const backGrowth = Math.max(0, Math.min(1, (backSeparation - growthStart) / (growthEnd - growthStart)));
+  const growthExponent = 1 + FAB_METABALL.dropLead * 2;
+  const backHeight = initialBackSize + (size - initialBackSize) * (1 - (1 - backGrowth) ** growthExponent);
+  const backTailHeight = initialBackSize + (size - initialBackSize) * backGrowth ** growthExponent;
+  const backWidth = Math.max(
+    initialBackSize + (size - initialBackSize) * backGrowth,
+    backHeight,
+  );
 
   return {
     base: { x: sourceX, y },
@@ -54,9 +68,9 @@ export function navbarMetaballGeometry(
     day: {
       x: backX,
       y,
-      width: size,
-      height: size,
-      tailHeight: size,
+      width: backWidth,
+      height: backHeight,
+      tailHeight: backTailHeight,
     },
   };
 }
@@ -111,5 +125,19 @@ export function navbarMetaballBezelHighlights(
   time: number,
   rupture: number,
 ) {
-  return fabBezelHighlights(geometry, time, rupture);
+  const highlights = fabBezelHighlights(geometry, time, rupture);
+  const exposed = smoothFab(
+    (Math.abs(geometry.day.x - geometry.phase.x)
+      + geometry.day.width / 2
+      - geometry.phase.width / 2)
+      / geometry.day.height,
+  );
+
+  return highlights.map((highlight, index) => {
+    // The stationary IdentityAction keeps ownership of its own top-left and
+    // bottom-right bezel highlights. The liquid layer only draws the Back lobe.
+    if (index === 0 || index === 3) return { ...highlight, opacity: 0 };
+    if (index === 1) return { ...highlight, opacity: highlight.opacity * exposed };
+    return highlight;
+  });
 }
