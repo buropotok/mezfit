@@ -99,7 +99,6 @@ function ClientShell({
 }) {
   const { refreshCoaches } = useClientCoach();
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
-  const [accepted, setAccepted] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -120,7 +119,6 @@ function ClientShell({
     setMessage('');
     try {
       await acceptCurrentInvite(initData, startParam);
-      setAccepted(true);
       setInvite(null);
       refreshCoaches();
     } catch (error) {
