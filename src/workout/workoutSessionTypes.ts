@@ -23,6 +23,7 @@ export interface WorkoutDayOption extends WorkoutDaySummary {
 
 export interface SuggestedWorkoutDay extends WorkoutDaySummary {
   resolution: 'scheduled_today' | 'next_incomplete';
+  occurrenceId: number | null;
 }
 
 export interface DraftWorkoutSession {
@@ -36,6 +37,7 @@ export interface DraftWorkoutSession {
 
 export interface ActiveWorkoutSession {
   sessionId: number;
+  occurrenceId: number | null;
   status: 'active' | 'completed';
   workoutDate: string;
   program: WorkoutProgramSummary | null;
@@ -48,7 +50,7 @@ export type WorkoutSessionState = DraftWorkoutSession | ActiveWorkoutSession;
 
 export type WorkoutStartInput =
   | { type: 'own' }
-  | { type: 'program'; programDayId: number };
+  | { type: 'program'; programDayId: number; occurrenceId?: number };
 
 export interface WorkoutSessionScreenProps {
   initData: string;
