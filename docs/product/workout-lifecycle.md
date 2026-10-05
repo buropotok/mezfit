@@ -66,7 +66,7 @@ Initialization is idempotent:
 2. if a draft already exists, return/reuse that draft;
 3. otherwise create one minimal draft session and return its generated `sessionId`.
 
-For a resolved program, initialization also returns the current program/phase and day-selection metadata needed by the launch UI. The default day is the trainer-scheduled day when scheduling explicitly resolves one; otherwise it is the next unfinished active day in the phase. Trainer scheduling is an override of simple sequence, not a derivation from the last completed day.
+For a resolved program, initialization also returns the current program/phase and day-selection metadata needed by the launch UI. The client supplies its current local calendar date. When exactly one persisted `workout_occurrence` is scheduled for that date, it becomes the default and its occurrence ID is carried through Start; otherwise the fallback is the next unfinished active day in the phase. Trainer scheduling is an override of simple sequence, not a derivation from the last completed day.
 
 The initialize response deliberately does **not** materialize exercises and does not return PLAN, PREVIOUS, or FACT. This keeps `Своя тренировка` cheap and ensures program data is read at the actual Start boundary.
 
@@ -84,7 +84,7 @@ The second request is the Start boundary.
 
 For a program workout, `POST /api/workout-sessions/:id/start` receives the selected `programDayId`. The backend fresh-reads the current program prescription at that moment, validates that the selected day still belongs to one of the authenticated user's active programs and its active phase, then atomically:
 
-1. records source program provenance on the existing draft session;
+1. records source program provenance on the existing draft session and, when Start came from a scheduled occurrence, stores `workout_session.occurrence_id` and advances that occurrence to `in_progress`;
 2. copies/materializes active `program_exercise` rows into `session_exercise`;
 3. copies the latest active `program_set` values into `session_set.planned_*`;
 4. resolves PREVIOUS for each set from the same exercise and set position in the latest relevant completed workout;
@@ -144,7 +144,7 @@ Historical context may be introduced later for a specific exercise after the use
 
 ## Completion
 
-Explicit Finish is optional. Initial default: auto-complete after **60 minutes** with no new workout result/activity. Timeout completion uses the last known workout activity as `completed_at` and records completion source.
+Explicit Finish is optional. Initial default: auto-complete after **60 minutes** with no new workout result/activity. Timeout completion uses the last known workout activity as `completed_at` and records completion source. Completing a session linked to a scheduled occurrence also advances that occurrence to `completed`; the session's actual `started_at` / `completed_at` remain independent from the occurrence's planned calendar slot.
 
 ```text
 completion_source = EXPLICIT | TIMEOUT | MANUAL
