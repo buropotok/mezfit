@@ -64,6 +64,7 @@ describe('FAB metaball invariants', () => {
     expect(fabFrame(rupture, layout, rupture).phase.x - fabGeometry(rupture, layout).phase.x).toBeCloseTo(-10);
     expect(fabFrame(1, layout, rupture)).toEqual(fabGeometry(1, layout));
   });
+
   it('carries the two source highlights onto the growing day and phase before rupture', () => {
     const layout = { width: FAB_METABALL_STAGE_WIDTH, sourceSize: 56 };
     const rupture = fabRupture(layout);
