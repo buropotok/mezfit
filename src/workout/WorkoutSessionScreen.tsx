@@ -19,11 +19,20 @@ import type {
   WorkoutDayOption,
   WorkoutSessionScreenProps,
   WorkoutSessionState,
+  WorkoutStartInput,
 } from './workoutSessionTypes';
 import './workout-session-screen.css';
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
+}
+
+function currentLocalDate(): string {
+  const now = new Date();
+  const year = String(now.getFullYear()).padStart(4, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function sessionMeta(session: ActiveWorkoutSession): string {
@@ -99,7 +108,7 @@ export function WorkoutSessionScreen({
     setLoading(true);
     setInitializationError(null);
 
-    initializeWorkoutSession(initData, trainingPlanId)
+    initializeWorkoutSession(initData, trainingPlanId, currentLocalDate())
       .then(({ session: nextSession }) => {
         if (cancelled || !mountedRef.current || generation !== sessionGenerationRef.current) return;
         acknowledgedSessionRef.current = nextSession;
@@ -148,7 +157,7 @@ export function WorkoutSessionScreen({
     return queued;
   }
 
-  async function startDraft(input: { type: 'own' } | { type: 'program'; programDayId: number }) {
+  async function startDraft(input: WorkoutStartInput) {
     if (!draftSession) return;
     const sessionId = draftSession.sessionId;
     const intent = nextMutationIntent();
@@ -333,7 +342,15 @@ export function WorkoutSessionScreen({
                 <Button
                   disabled={selectedDayId === null}
                   onClick={() => {
-                    if (selectedDayId !== null) void startDraft({ type: 'program', programDayId: selectedDayId });
+                    if (selectedDayId === null) return;
+                    const suggestedOccurrenceId = draftSession.suggestedDay?.id === selectedDayId
+                      ? draftSession.suggestedDay.occurrenceId
+                      : null;
+                    void startDraft({
+                      type: 'program',
+                      programDayId: selectedDayId,
+                      ...(suggestedOccurrenceId === null ? {} : { occurrenceId: suggestedOccurrenceId }),
+                    });
                   }}
                 >
                   Начать тренировку
