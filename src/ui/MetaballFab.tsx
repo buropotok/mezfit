@@ -7,6 +7,8 @@ import { startPressScale } from './PressScale';
 import { FAB_METABALL, FAB_METABALL_STAGE_WIDTH, fabContour, fabFrame, fabGeometry, fabRupture, smoothFab, fabStageWidth, type FabLayout } from './fabMetaballGeometry';
 import './MetaballFab.css';
 
+const ACTION_PADDING_INLINE = 10;
+
 export type FloatingActionButtonAction = { label: string; onClick: () => void; disabled?: boolean; icon?: UiIconName };
 export type MetaballFabProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   label: string; isShown: boolean; placement: 'left' | 'right';
@@ -39,8 +41,8 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
     if (!isShown) return;
     const element = root.current; if (!element) return;
     const measure = () => {
-      const dayWidth = Math.max(FAB_METABALL.width, (dayMeasure.current?.offsetWidth ?? 0) + 20);
-      const phaseWidth = Math.max(FAB_METABALL.width, (phaseMeasure.current?.offsetWidth ?? 0) + 20);
+      const dayWidth = Math.max(FAB_METABALL.width, (dayMeasure.current?.offsetWidth ?? 0) + 2 * ACTION_PADDING_INLINE);
+      const phaseWidth = Math.max(FAB_METABALL.width, (phaseMeasure.current?.offsetWidth ?? 0) + 2 * ACTION_PADDING_INLINE);
       const width = fabStageWidth(dayWidth, phaseWidth), sourceSize = element.offsetHeight || 56;
       setLayout(current => current.width === width && current.sourceSize === sourceSize && current.dayWidth === dayWidth && current.phaseWidth === phaseWidth
         ? current : { width, sourceSize, dayWidth, phaseWidth });
@@ -118,15 +120,15 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
       {!expanded ? <GlassSurface className="ui-fab-metaball__source" contentClassName="ui-fab-metaball__source-content" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule">{artwork}</GlassSurface> : null}
       {expanded && !settled ? <GlassSurface className="ui-fab-metaball__liquid" preset={glassPreset} active={isShown} bezelOpacity={0} contour={contour} shape={{ radius: 0 }} /> : null}
       {settled ? [final.day, final.phase].map((shape, index) => <GlassSurface key={index} className="ui-fab-metaball__capsule" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule" style={hitbox(shape.x, shape.width, 44)} />) : null}
-      {<div className="ui-fab-metaball__labels" style={{ clipPath: `path('${contour}')` }} aria-hidden="true">
-        {<div style={{ filter: `blur(${revealBlur}px)`, visibility: time > 0.35 ? 'visible' : 'hidden' }}>
+      <div className="ui-fab-metaball__labels" style={{ clipPath: `path('${contour}')` }} aria-hidden="true">
+        <div style={{ filter: `blur(${revealBlur}px)`, visibility: time > 0.35 ? 'visible' : 'hidden' }}>
           {actions.map((action, index) => { const actionIcon = action.icon ?? icon; return <span key={index} ref={index ? phaseMeasure : dayMeasure} className="ui-fab-metaball__label" data-disabled={action.disabled || undefined} style={{ left: index ? final.phase.x : dayLabelX, top: geometry.base.y }}>
             {actionIcon ? <Icon name={actionIcon} variant="outline" style={{ width: 36, height: 36, flexShrink: 0 }} /> : artwork}
             <Text variant="headline">{action.label}</Text>
           </span>; })}
-        </div>}
-        {time < 0.4 ? <span className="ui-fab-metaball__artwork" style={{ left: geometry.base.x, top: geometry.base.y, opacity: 1 - smoothFab(time / 0.4) }}>{artwork}</span> : null}
-      </div>}
+        </div>
+        {expanded && time < 0.4 ? <span className="ui-fab-metaball__artwork" style={{ left: geometry.base.x, top: geometry.base.y, opacity: 1 - smoothFab(time / 0.4) }}>{artwork}</span> : null}
+      </div>
       <button {...props} type={type} className="ui-fab-metaball__hitbox" style={hitbox(geometry.base.x, layout.sourceSize, layout.sourceSize)} aria-label={label} aria-expanded={open} aria-controls={`${id}-actions`} disabled={disabled || !isShown || expanded} tabIndex={isShown && !expanded ? props.tabIndex ?? 0 : -1}
         onClick={event => { onClick?.(event); if (!event.defaultPrevented) { selectionLocked.current = false; setOpen(true); } }}
         onPointerDown={event => { onPointerDown?.(event); if (!event.defaultPrevented) startPressScale(event.currentTarget); }} onKeyDown={onKeyDown} />
