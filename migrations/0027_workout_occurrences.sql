@@ -8,6 +8,7 @@ CREATE TABLE calendar_day (
   year INTEGER NOT NULL CHECK (year BETWEEN 1 AND 9999),
   month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
   day INTEGER NOT NULL CHECK (day BETWEEN 1 AND 31),
+  iso_week_year INTEGER NOT NULL CHECK (iso_week_year BETWEEN 1 AND 9999),
   iso_week INTEGER NOT NULL CHECK (iso_week BETWEEN 1 AND 53),
   weekday INTEGER NOT NULL CHECK (weekday BETWEEN 1 AND 7)
 );
@@ -16,7 +17,7 @@ CREATE INDEX idx_calendar_day_year_month_day
   ON calendar_day(year, month, day);
 
 CREATE INDEX idx_calendar_day_iso_week
-  ON calendar_day(year, iso_week, weekday);
+  ON calendar_day(iso_week_year, iso_week, weekday);
 
 -- A calendar occurrence is the expected workout appointment. It deliberately
 -- stores only scheduling/provenance data; PLAN is copied into workout_session
