@@ -72,10 +72,11 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
   useLayoutEffect(() => {
     const revealAfterMotion = wasMoving.current;
     wasMoving.current = moving;
+    if (!isShown) { setBezelReveal(1); return; }
     if (!moving && !revealAfterMotion) return;
     if (moving) { setBezelReveal(0); return; }
     const view = root.current?.ownerDocument.defaultView;
-    if (!isShown || view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    if (view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       setBezelReveal(1); return;
     }
     let revealFrame = 0, start: number | undefined;
