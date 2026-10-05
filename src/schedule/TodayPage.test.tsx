@@ -276,7 +276,7 @@ describe('TodayPage schedule loading', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Move first' })).not.toBeDisabled());
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Move first' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Move first' }));
 
     await waitFor(() => expect(rescheduleMock).toHaveBeenCalledWith('telegram-init', 11, {
@@ -303,7 +303,7 @@ describe('TodayPage schedule loading', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Resize first' })).not.toBeDisabled());
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Resize first' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Resize first' }));
 
     await waitFor(() => expect(rescheduleMock).toHaveBeenCalledWith('telegram-init', 11, {
@@ -329,7 +329,7 @@ describe('TodayPage schedule loading', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Delete first' })).not.toBeDisabled());
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Delete first' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Delete first' }));
 
     await waitFor(() => expect(cancelMock).toHaveBeenCalledWith('telegram-init', 11));
