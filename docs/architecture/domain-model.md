@@ -53,6 +53,8 @@ An `IN_PROGRESS` occurrence has a locked PLAN. There is no `SessionPlanOverride`
 
 The lock is occurrence-scoped. Other future occurrences remain editable.
 
+A `scheduled` occurrence may be moved, resized, or cancelled by its coach while the coach/client relationship is active. A client may perform those calendar edits only for a `scheduled` occurrence that the client originally created (`created_by_user_id = client_user_id`). `in_progress` and `completed` occurrences are not calendar-editable.
+
 ### Program editing
 
 The current assigned program remains mutable for practical coach work between sessions. `ProgramChange` provides auditability; full immutable program versions are not required for every small edit. Program edits never rewrite started/completed session snapshots.
