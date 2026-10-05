@@ -276,9 +276,10 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(getPrimaryTabsRoot(view.container).querySelector('[role="tab"][aria-label="Сегодня"]')).not.toBeNull();
     expect(view.container.querySelector('.ui-mezfit-navbar__side--left')?.getAttribute('aria-hidden')).toBe('true');
 
-    fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
-    const doubleAction = view.container.querySelector('.ui-identity-action--double');
-    fireEvent.animationEnd(doubleAction as Element);
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
+    expect(view.getByRole('menu', { name: 'Меню страницы' })).not.toBeNull();
     fireEvent.click(view.getByRole('menuitem', { name: 'Обновить день' }));
 
     expect(pageAction).toHaveBeenCalledTimes(1);
@@ -325,7 +326,9 @@ describe('NavigationShell MezfitNavbar integration', () => {
       </NavigationShell>,
     );
 
-    fireEvent.click(view.getByRole('button', { name: 'Меню страницы' }));
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
 
     const doubleAction = view.container.querySelector('.ui-identity-action--double');
     expect(doubleAction).not.toBeNull();
