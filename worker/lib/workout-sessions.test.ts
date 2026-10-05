@@ -64,6 +64,7 @@ describe('initializeWorkoutSession', () => {
       kind: 'ok',
       session: {
         sessionId: 501,
+        occurrenceId: null,
         status: 'draft',
         program: null,
         phase: null,
@@ -135,6 +136,7 @@ describe('initializeWorkoutSession', () => {
     const currentFirst = vi.fn().mockResolvedValue(activeRow);
     const headerFirst = vi.fn().mockResolvedValue({
       id: 501,
+      occurrence_id: null,
       status: 'active',
       workout_date: '2026-09-15',
       program_id: null,
@@ -174,6 +176,7 @@ describe('initializeWorkoutSession', () => {
       kind: 'ok',
       session: {
         sessionId: 501,
+        occurrenceId: null,
         status: 'active',
         workoutDate: '2026-09-15',
         program: null,
@@ -199,6 +202,7 @@ describe('startWorkoutSession', () => {
     const updateRun = vi.fn().mockResolvedValue({ success: true });
     const headerFirst = vi.fn().mockResolvedValue({
       id: 501,
+      occurrence_id: null,
       status: 'active',
       workout_date: '2026-09-15',
       program_id: null,
@@ -235,6 +239,7 @@ describe('startWorkoutSession', () => {
       kind: 'ok',
       session: {
         sessionId: 501,
+        occurrenceId: null,
         status: 'active',
         workoutDate: '2026-09-15',
         program: null,
@@ -259,6 +264,7 @@ describe('startWorkoutSession', () => {
     const dayFirst = vi.fn().mockResolvedValue({ id: 40, phase_id: 30 });
     const headerFirst = vi.fn().mockResolvedValue({
       id: 501,
+      occurrence_id: null,
       status: 'active',
       workout_date: '2026-09-15',
       program_id: 20,
@@ -317,6 +323,7 @@ describe('getWorkoutSessionProjection', () => {
   it('resolves PREVIOUS only from a completed matching set', async () => {
     const headerFirst = vi.fn().mockResolvedValue({
       id: 501,
+      occurrence_id: null,
       status: 'active',
       workout_date: '2026-09-15',
       program_id: 20,
