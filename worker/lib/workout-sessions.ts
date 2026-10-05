@@ -576,8 +576,29 @@ export async function startWorkoutSession(
             FROM workout_session pending
             WHERE pending.id = ? AND pending.user_id = ? AND pending.status = 'draft'
           )
+          AND (
+            ? IS NULL
+            OR EXISTS (
+              SELECT 1
+              FROM workout_occurrence scheduled
+              WHERE scheduled.id = ?
+                AND scheduled.client_user_id = ?
+                AND scheduled.program_day_id = ?
+                AND scheduled.status = 'scheduled'
+            )
+          )
         ORDER BY pe.position, pe.id
-      `).bind(sessionId, userId, day.id, sessionId, userId),
+      `).bind(
+        sessionId,
+        userId,
+        day.id,
+        sessionId,
+        userId,
+        occurrenceId,
+        occurrenceId,
+        userId,
+        day.id,
+      ),
       db.prepare(`
         INSERT INTO session_set (
           session_exercise_id, source_program_set_id, position,
@@ -600,8 +621,29 @@ export async function startWorkoutSession(
             FROM workout_session pending
             WHERE pending.id = ? AND pending.user_id = ? AND pending.status = 'draft'
           )
+          AND (
+            ? IS NULL
+            OR EXISTS (
+              SELECT 1
+              FROM workout_occurrence scheduled
+              WHERE scheduled.id = ?
+                AND scheduled.client_user_id = ?
+                AND scheduled.program_day_id = ?
+                AND scheduled.status = 'scheduled'
+            )
+          )
         ORDER BY se.position, ps.position
-      `).bind(userId, userId, sessionId, sessionId, userId),
+      `).bind(
+        userId,
+        userId,
+        sessionId,
+        sessionId,
+        userId,
+        occurrenceId,
+        occurrenceId,
+        userId,
+        day.id,
+      ),
       db.prepare(`
         UPDATE workout_session
         SET source_program_phase_id = ?,
@@ -611,18 +653,55 @@ export async function startWorkoutSession(
             started_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND user_id = ? AND status = 'draft'
-      `).bind(day.phase_id, day.id, occurrenceId, sessionId, userId),
+          AND (
+            ? IS NULL
+            OR EXISTS (
+              SELECT 1
+              FROM workout_occurrence scheduled
+              WHERE scheduled.id = ?
+                AND scheduled.client_user_id = ?
+                AND scheduled.program_day_id = ?
+                AND scheduled.status = 'scheduled'
+            )
+          )
+      `).bind(
+        day.phase_id,
+        day.id,
+        occurrenceId,
+        sessionId,
+        userId,
+        occurrenceId,
+        occurrenceId,
+        userId,
+        day.id,
+      ),
     ];
     if (occurrenceId !== null) {
       statements.push(
         db.prepare(`
           UPDATE workout_occurrence
           SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND client_user_id = ?
-        `).bind(occurrenceId, userId),
+          WHERE id = ?
+            AND client_user_id = ?
+            AND program_day_id = ?
+            AND status = 'scheduled'
+        `).bind(occurrenceId, userId, day.id),
       );
     }
-    await db.batch(statements);
+    const batchResults = await db.batch(statements);
+    if (occurrenceId !== null) {
+      const sessionChanged = batchResults[2]?.meta?.changes ?? 0;
+      const occurrenceChanged = batchResults[3]?.meta?.changes ?? 0;
+      if (sessionChanged === 0 || occurrenceChanged === 0) {
+        const current = await workoutRowForUser(db, userId, sessionId);
+        if (current?.status === 'active' && current.occurrence_id === occurrenceId) {
+          const canonical = await getWorkoutSessionProjection(db, userId, sessionId);
+          if (!canonical) throw new Error('ACTIVE_WORKOUT_PROJECTION_MISSING');
+          return { kind: 'ok', session: canonical };
+        }
+        return { kind: 'invalid_occurrence' };
+      }
+    }
   }
 
   const session = await getWorkoutSessionProjection(db, userId, sessionId);
