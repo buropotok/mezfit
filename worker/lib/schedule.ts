@@ -27,6 +27,7 @@ export interface ScheduleOccurrence {
   startMinute: number;
   durationMinutes: number;
   status: Exclude<WorkoutOccurrenceStatus, 'cancelled'>;
+  createdByUserId: number;
   program: { id: number; name: string };
   phase: { id: number; name: string };
   day: { id: number; name: string; position: number };
@@ -42,6 +43,7 @@ interface OccurrenceRow {
   start_minute: number;
   duration_minutes: number;
   status: Exclude<WorkoutOccurrenceStatus, 'cancelled'>;
+  created_by_user_id: number;
   program_id: number;
   program_name: string;
   phase_id: number;
@@ -130,6 +132,7 @@ function mapOccurrence(row: OccurrenceRow): ScheduleOccurrence {
     startMinute: row.start_minute,
     durationMinutes: row.duration_minutes,
     status: row.status,
+    createdByUserId: row.created_by_user_id,
     program: { id: row.program_id, name: row.program_name },
     phase: { id: row.phase_id, name: row.phase_name },
     day: { id: row.day_id, name: row.day_name, position: row.day_position },
@@ -159,6 +162,7 @@ const occurrenceProjection = `
     occurrence.start_minute,
     occurrence.duration_minutes,
     occurrence.status,
+    occurrence.created_by_user_id,
     plan.id AS program_id,
     plan.name AS program_name,
     phase.id AS phase_id,
