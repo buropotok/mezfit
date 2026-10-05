@@ -189,10 +189,20 @@ export function LiquidPopover({
           metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent;
         const baseline = y + rect.height / 2 + (ascent - descent) / 2;
         const spacing = Number.parseFloat(style.letterSpacing) || 0;
-        let cursor = x + Number.parseFloat(style.paddingLeft);
+        const characters = Array.from(item.label);
+        const textWidth = spacing
+          ? characters.reduce(
+            (width, character, index) =>
+              width + context.measureText(character).width + (index < characters.length - 1 ? spacing : 0),
+            0,
+          )
+          : metrics.width;
+        let cursor = layout === 'grid'
+          ? x + (rect.width - textWidth) / 2
+          : x + Number.parseFloat(style.paddingLeft);
         if (!spacing) context.fillText(item.label, cursor, baseline);
         else
-          for (const character of item.label) {
+          for (const character of characters) {
             context.fillText(character, cursor, baseline);
             cursor += context.measureText(character).width + spacing;
           }
