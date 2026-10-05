@@ -9,6 +9,10 @@ const metaballCss = readFileSync(
   new URL('./NavbarMetaball.css', import.meta.url),
   'utf8',
 );
+const metaballSource = readFileSync(
+  new URL('./NavbarMetaball.tsx', import.meta.url),
+  'utf8',
+);
 
 describe('MezfitNavbar back button motion', () => {
   it('moves Back/identity ownership out of the old linear CSS transition', () => {
@@ -18,12 +22,13 @@ describe('MezfitNavbar back button motion', () => {
     expect(navbarCss).toContain('.ui-mezfit-navbar__side--right {');
   });
 
-  it('keeps navbar metaball visuals separate from interactive controls', () => {
-    const visualRule = metaballCss.match(/\.ui-navbar-metaball__surface,\n\.ui-navbar-metaball__liquid \{[^}]*\}/)?.[0];
+  it('keeps liquid visuals non-interactive while IdentityAction owns controls', () => {
+    const liquidRule = metaballCss.match(/\.ui-navbar-metaball__liquid \{[^}]*\}/)?.[0];
     const identityRule = metaballCss.match(/\.ui-navbar-metaball__identity-slot \{[^}]*\}/)?.[0];
 
-    expect(visualRule).toContain('pointer-events: none');
+    expect(liquidRule).toContain('pointer-events: none');
     expect(identityRule).toContain('pointer-events: auto');
-    expect(metaballCss).toContain('.ui-navbar-metaball__control--back');
+    expect(metaballSource).toContain('<IdentityAction');
+    expect(metaballSource).toContain('glass={movingGlass}');
   });
 });
