@@ -247,7 +247,7 @@ export function NavbarMetaball({
 
       <div
         className="ui-mezfit-navbar__side--left ui-navbar-metaball__back-slot"
-        aria-hidden={!atLevelTwo || undefined}
+        aria-hidden={level === 1 || undefined}
         style={{
           ...shapeStyle(geometry.day),
           opacity: backReveal,
@@ -266,7 +266,7 @@ export function NavbarMetaball({
           glassOptics={atLevelTwo ? glassOptics : false}
           glass={movingGlass}
           glassBezelOpacity={bezelReveal}
-          onClick={atLevelTwo ? onBack : undefined}
+          onClick={level === 2 ? onBack : undefined}
         />
       </div>
     </div>
