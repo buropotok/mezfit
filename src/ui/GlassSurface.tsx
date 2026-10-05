@@ -258,7 +258,9 @@ export function GlassSurface({
           <defs>
             <clipPath id={`${filterId}-clip`} clipPathUnits="userSpaceOnUse"><path d={contour} /></clipPath>
             <filter id={`${filterId}-shadow`} x="-100%" y="-200%" width="300%" height="500%">
-              <feGaussianBlur stdDeviation="21" /><feOffset dy="14" />
+              <feGaussianBlur in="SourceAlpha" stdDeviation="21" result="blurred" />
+              <feOffset in="blurred" dy="14" result="shadow" />
+              <feComposite in="shadow" in2="SourceAlpha" operator="out" />
             </filter>
             <linearGradient id={`${filterId}-bezel`} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="white" stopOpacity="0.8" />
