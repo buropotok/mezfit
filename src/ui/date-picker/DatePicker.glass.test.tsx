@@ -18,12 +18,13 @@ afterEach(() => {
 });
 
 describe('DatePicker Mezfit overlay materials', () => {
-  it('uses MezfitSidePanel and MezfitPopover GlassSurface materials', () => {
+  it('keeps the MezfitSidePanel and MezfitPopover GlassSurface materials in panel mode', () => {
     render(
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
           <DatePicker
             opened
+            surface="panel"
             value="2026-09-25"
             onChange={() => {}}
             onClose={() => {}}
