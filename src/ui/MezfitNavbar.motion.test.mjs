@@ -16,6 +16,7 @@ describe('MezfitNavbar back button motion', () => {
     expect(hiddenBackRule).toContain('left: calc(50% - 22px - var(--ui-mezfit-navbar-identity-half-width))');
     expect(hiddenBackRule).toContain('transform: translateX(0)');
     expect(hiddenBackRule).toContain('opacity: 0');
+    expect(navbarCss).toContain('.ui-mezfit-navbar__side--left .ui-identity-action--disabled {\n  opacity: 1;\n}');
   });
 
   it('uses the same 320ms easing for Back movement and visibility in both directions', () => {
