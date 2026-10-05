@@ -336,6 +336,65 @@ describe('TodayPage schedule loading', () => {
     await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-event-count')).toBe('0'));
   });
 
+  it('reconciles a failed move from the canonical schedule instead of restoring a stale snapshot', async () => {
+    const today = localDateNow();
+    const original = occurrence(today);
+    const canonical = { ...original, startMinute: 645 };
+    getScheduleMock
+      .mockResolvedValueOnce({ occurrences: [original] })
+      .mockResolvedValueOnce({ occurrences: [original] })
+      .mockResolvedValueOnce({ occurrences: [canonical] });
+    rescheduleMock.mockRejectedValue(new Error('move failed'));
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="coach"
+        currentUserId={7}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(getScheduleMock).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: 'Move first' }));
+
+    await waitFor(() => expect(getScheduleMock).toHaveBeenCalledTimes(3));
+    expect(getScheduleMock).toHaveBeenNthCalledWith(3, 'telegram-init', 'coach', today, today);
+    await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-first-start')).toBe('645'));
+  });
+
+  it('ignores a warm-cache failure after that request was invalidated by a mutation', async () => {
+    const today = localDateNow();
+    const original = occurrence(today);
+    const moved = { ...original, startMinute: 630 };
+    let rejectWarm: (error: Error) => void = () => undefined;
+    const warmRequest = new Promise<{ occurrences: ScheduleOccurrence[] }>((_resolve, reject) => {
+      rejectWarm = reject;
+    });
+    getScheduleMock
+      .mockResolvedValueOnce({ occurrences: [original] })
+      .mockReturnValueOnce(warmRequest);
+    rescheduleMock.mockResolvedValue({ occurrence: moved });
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="coach"
+        currentUserId={7}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(getScheduleMock).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: 'Move first' }));
+    await waitFor(() => expect(rescheduleMock).toHaveBeenCalledOnce());
+
+    await act(async () => rejectWarm(new Error('stale warm failure')));
+
+    expect(screen.queryByText('stale warm failure')).toBeNull();
+    await waitFor(() => expect(screen.getByTestId('day-schedule').getAttribute('data-first-start')).toBe('630'));
+  });
+
   it('loads another +/-31 day window only when navigation leaves the warmed cache', async () => {
     const today = localDateNow();
     getScheduleMock.mockResolvedValue({ occurrences: [] });
