@@ -440,6 +440,8 @@ export function NavigationShell({
           value={calendarValue}
           onChange={onCalendarDateChange}
           onClose={() => setCalendarOpen(false)}
+          glassPreset={glassPreset}
+          glassOptics={glassOptics}
         />
         </main>
       </NavigationLevelContext.Provider>

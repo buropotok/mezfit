@@ -59,12 +59,10 @@ describe('DatePicker first-open rendering', () => {
     expect(dialog).toBeTruthy();
     expect(dialog?.className).toContain('invisible');
     expect(view.container.querySelector('[data-month-index="0"]')).toBeNull();
-    expect(view.container.querySelector('[data-year="1950"]')).toBeNull();
 
     view.rerender(picker(true));
 
     expect(view.container.querySelector('[data-month-index="0"]')).not.toBeNull();
-    expect(view.container.querySelector('[data-year="1950"]')).toBeNull();
     expect(dialog?.className).toContain('invisible');
     expect(frames.length).toBeGreaterThan(0);
 
@@ -74,27 +72,35 @@ describe('DatePicker first-open rendering', () => {
     );
   });
 
-  it('mounts the year grid before starting the first popover animation', () => {
+  it('mounts LiquidPopover year content before starting the first year animation', () => {
     const view = render(picker(true));
     const dialog = view.container.querySelector<HTMLElement>('[aria-label="Выбор даты"]');
     runFramesUntil(
       () => Boolean(dialog) && !dialog?.className.includes('invisible'),
       'Missing staged DatePicker opening frame',
     );
+
+    expect(view.container.querySelectorAll('.ui-liquid-popover__measure .ui-menu-item')).toHaveLength(0);
+
     const yearTrigger = view.container.querySelector<HTMLButtonElement>('[aria-label="Выбрать год, сейчас 2026"]');
     if (!yearTrigger) throw new Error('Missing year trigger');
-
     fireEvent.click(yearTrigger);
 
-    const yearDialog = view.container.querySelector<HTMLElement>('[aria-label="Выберите год"]');
+    const measuredItems = view.container.querySelectorAll('.ui-liquid-popover__measure .ui-menu-item');
+    expect(measuredItems).toHaveLength(100);
+    expect(Array.from(measuredItems).some((item) => item.textContent === '1950')).toBe(true);
+
+    const yearDialog = document.querySelector<HTMLElement>('[aria-label="Выберите год"]');
     expect(yearDialog).toBeTruthy();
-    expect(view.container.querySelector('[data-year="1950"]')).not.toBeNull();
-    expect(yearDialog?.className).toContain('scale-0');
+    expect(yearDialog?.hidden).toBe(true);
     expect(frames.length).toBeGreaterThan(0);
 
     runFramesUntil(
-      () => Boolean(yearDialog) && !yearDialog?.className.includes('scale-0'),
-      'Missing staged year popover opening frame',
+      () => !document.querySelector<HTMLElement>('[aria-label="Выберите год"]')?.hidden,
+      'Missing staged LiquidPopover opening frame',
     );
+
+    expect(document.querySelector<HTMLElement>('[aria-label="Выберите год"]')?.className)
+      .toContain('ui-liquid-popover--grid');
   });
 });

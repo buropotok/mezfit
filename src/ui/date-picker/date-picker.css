@@ -11,8 +11,7 @@
   scrollbar-width: none;
 }
 
-.ui-date-picker__scroll::-webkit-scrollbar,
-.ui-date-picker__year-scroll::-webkit-scrollbar {
+.ui-date-picker__scroll::-webkit-scrollbar {
   display: none;
 }
 
@@ -44,11 +43,22 @@
 .ui-date-picker__year-trigger {
   min-width: 5rem;
   height: 2.5rem;
-  padding: 0 var(--ui-space-3);
-  border: 0;
   border-radius: 999px;
   color: inherit;
+}
+
+.ui-date-picker__year-trigger-button {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--ui-space-3);
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  background: transparent;
   font-family: var(--ui-font-family);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .ui-date-picker__months {
@@ -122,21 +132,3 @@
   background: var(--ui-color-primary);
 }
 
-.ui-date-picker__year-popover {
-  width: 100%;
-  padding: var(--ui-space-2);
-}
-
-.ui-date-picker__year-scroll {
-  height: 23.5rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-}
-
-.ui-date-picker__year-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: 2.125rem;
-  gap: var(--ui-space-1);
-}

@@ -29,7 +29,7 @@ export { DaySchedule, getDayScheduleValue, type DayScheduleValue, type DaySchedu
 export { DayScheduleEventCard, type DayScheduleEventCardProps } from './DayScheduleEventCard';
 
 export { LiquidPopover, resolveLiquidMotionOptions } from './LiquidPopover';
-export type { LiquidPopoverProps, LiquidPopoverItem } from './LiquidPopover';
+export type { LiquidPopoverProps, LiquidPopoverItem, LiquidPopoverLayout, LiquidPopoverRole } from './LiquidPopover';
 export { LIQUID_POPOVER_DEFAULTS } from './liquidPopoverGeometry';
 export type { LiquidMotionOptions } from './liquidPopoverGeometry';
 export type { FloatingActionButtonAction } from './MetaballFab';
