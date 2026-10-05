@@ -206,6 +206,7 @@ export async function listScheduleOccurrences(
        AND relationship.client_user_id = occurrence.client_user_id
        AND relationship.status = 'active'
       WHERE occurrence.coach_user_id = ?
+        AND occurrence.created_by_user_id <> occurrence.client_user_id
     `
     : 'WHERE occurrence.client_user_id = ?';
 
