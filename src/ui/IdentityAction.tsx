@@ -13,7 +13,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { GlassSurface } from './GlassSurface';
+import { GlassSurface, type GlassBezelHighlights } from './GlassSurface';
 import { Icon, type UiIconName, type UiIconVariant } from './Icon';
 import type { GlassMaterialOverrides, GlassPresetName } from './glassMaterial';
 import { Avatar, Text } from './primitives';
@@ -51,6 +51,7 @@ type IdentityActionBaseProps = {
   glassOptics?: boolean;
   glass?: GlassMaterialOverrides;
   glassBezelOpacity?: number;
+  glassBezelHighlights?: GlassBezelHighlights;
   disabled?: boolean;
 };
 
@@ -97,6 +98,7 @@ export function IdentityAction(props: IdentityActionProps) {
     glassOptics = false,
     glass,
     glassBezelOpacity = 1,
+    glassBezelHighlights,
     disabled = false,
   } = props;
   const [isAnimating, setIsAnimating] = useState(false);
@@ -196,6 +198,7 @@ export function IdentityAction(props: IdentityActionProps) {
         optics={glassOptics}
         glass={glass}
         bezelOpacity={glassBezelOpacity}
+        bezelHighlights={glassBezelHighlights}
         wrapContent={false}
         className={className}
         onPointerDown={handlePointerDown}
