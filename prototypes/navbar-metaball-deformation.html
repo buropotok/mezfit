@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mezfit Navbar Metaball Prototype</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --font: "Zen Maru Gothic", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      --text: rgba(255,255,255,.96);
+      --muted: rgba(255,255,255,.58);
+      --glass-rgb: 24 24 26;
+      --glass-alpha: .27;
+      --glass-blur: 2px;
+      --glass-saturation: 1.08;
+      --glass-brightness: .9;
+      --bezel: .81;
+      --border: .03;
+      --shadow: .23;
+      --accent: #0a84ff;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #09090b; color: var(--text); font-family: var(--font); }
+    body { display: grid; place-items: start center; padding: 24px 12px 48px; }
+
+    .page { width: min(100%, 430px); display: grid; gap: 16px; }
+    .phone {
+      position: relative;
+      width: 390px;
+      max-width: 100%;
+      height: 620px;
+      overflow: hidden;
+      border-radius: 38px;
+      background:
+        radial-gradient(circle at 18% 13%, rgba(10,132,255,.34), transparent 31%),
+        radial-gradient(circle at 82% 36%, rgba(191,90,242,.28), transparent 29%),
+        radial-gradient(circle at 43% 70%, rgba(48,209,88,.17), transparent 35%),
+        linear-gradient(180deg, #1c1c1e 0%, #0f0f12 70%);
+      box-shadow: 0 26px 90px rgba(0,0,0,.55);
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(115deg, transparent 18%, rgba(255,255,255,.08) 19%, transparent 20% 62%, rgba(255,255,255,.05) 63%, transparent 64%);
+      pointer-events: none;
+    }
+
+    .context-card {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      top: 126px;
+      height: 162px;
+      border-radius: 28px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 18px 48px rgba(0,0,0,.24);
+    }
+
+    .context-card::before,
+    .context-card::after {
+      content: "";
+      position: absolute;
+      left: 20px;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+    }
+    .context-card::before { top: 28px; width: 56%; }
+    .context-card::after { top: 54px; width: 34%; }
+
+    .navbar-wrap {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 56px;
+      height: 44px;
+    }
+
+    .metaball-root {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 44px;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .liquid-material {
+      position: absolute;
+      z-index: 1;
+      inset: -8px 0;
+      height: 60px;
+      background: rgb(var(--glass-rgb) / var(--glass-alpha));
+      -webkit-backdrop-filter:
+        blur(var(--glass-blur))
+        saturate(var(--glass-saturation))
+        brightness(var(--glass-brightness));
+      backdrop-filter:
+        blur(var(--glass-blur))
+        saturate(var(--glass-saturation))
+        brightness(var(--glass-brightness));
+      box-shadow: 0 14px 42px rgb(0 0 0 / var(--shadow));
+      transform: translateY(8px);
+      will-change: clip-path;
+      pointer-events: none;
+    }
+
+    .liquid-svg {
+      position: absolute;
+      z-index: 2;
+      inset: -8px 0;
+      width: 100%;
+      height: 60px;
+      overflow: visible;
+      pointer-events: none;
+      transform: translateY(8px);
+    }
+
+    .liquid-svg .fallback {
+      fill: rgb(var(--glass-rgb) / .13);
+      stroke: rgb(255 255 255 / var(--border));
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .liquid-svg .highlight {
+      fill: none;
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+
+    .identity-content,
+    .back-content,
+    .native-bezel {
+      position: absolute;
+      top: 0;
+      height: 44px;
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+      pointer-events: none;
+    }
+
+    .identity-content {
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 14px 2px 2px;
+      overflow: hidden;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .identity-visual {
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      display: grid;
+      place-items: center;
+    }
+
+    .identity-visual svg { width: 32px; height: 32px; }
+    .identity-title {
+      min-width: 0;
+      max-width: 192px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 17px;
+      line-height: 22px;
+      font-weight: 400;
+      letter-spacing: .5px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(118,118,128,.42);
+      border: 1px solid rgba(255,255,255,.11);
+      font-size: 13px;
+      line-height: 18px;
+      font-weight: 400;
+      letter-spacing: .55px;
+    }
+
+    .back-content {
+      z-index: 5;
+      width: 44px;
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      opacity: 0;
+    }
+    .back-content svg { width: 32px; height: 32px; }
+
+    .native-bezel {
+      z-index: 4;
+      overflow: hidden;
+      --tl: 1;
+      --br: 1;
+    }
+    .native-bezel::before,
+    .native-bezel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .native-bezel::before {
+      box-shadow:
+        inset 3px 3px 0 -3.5px rgb(255 255 255 / 1),
+        inset .5px .5px 0 rgb(255 255 255 / .08);
+      opacity: calc(var(--bezel) * var(--tl));
+    }
+    .native-bezel::after {
+      box-shadow:
+        inset -3px -3px 0 -3.5px rgb(255 255 255 / 1),
+        inset -.5px -.5px 0 rgb(255 255 255 / .18);
+      opacity: calc(var(--bezel) * var(--br));
+    }
+
+    .native-bezel.back {
+      opacity: var(--back-native-opacity, 0);
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(28,28,30,.88);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 14px;
+      background: rgba(118,118,128,.25);
+      color: var(--text);
+      font: 400 15px/20px var(--font);
+      cursor: pointer;
+    }
+    button.primary { background: var(--accent); }
+    button:active { transform: scale(.985); }
+
+    .scrubber { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 8px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 16px;
+      letter-spacing: .4px;
+    }
+    .metric b { display: block; color: var(--text); font-weight: 500; }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 18px;
+      font-weight: 300;
+      letter-spacing: .55px;
+    }
+
+    .rupture-mark {
+      position: absolute;
+      z-index: 8;
+      top: -22px;
+      width: 1px;
+      height: 68px;
+      background: rgba(255,149,0,.55);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .debug-on .rupture-mark { opacity: 1; }
+
+    @media (max-width: 420px) {
+      body { padding-inline: 0; }
+      .page { width: 100%; }
+      .phone { border-radius: 0; width: 100%; }
+      .controls { margin: 0 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="phone" aria-label="Mezfit Navbar metaball prototype">
+      <div class="navbar-wrap">
+        <div class="metaball-root" id="root">
+          <div class="liquid-material" id="material"></div>
+
+          <svg class="liquid-svg" id="liquidSvg" viewBox="0 -8 390 60" aria-hidden="true">
+            <defs id="gradientDefs"></defs>
+            <path id="fallbackPath" class="fallback"></path>
+            <g id="highlightLayer"></g>
+          </svg>
+
+          <div class="native-bezel identity" id="identityBezel"></div>
+          <div class="native-bezel back" id="backBezel"></div>
+
+          <div class="identity-content" id="identityContent">
+            <span class="identity-visual" id="identityVisual"></span>
+            <span class="identity-title" id="identityTitle">Сегодня</span>
+          </div>
+
+          <div class="back-content" id="backContent" aria-label="Назад">
+            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M19.5 8.5 12 16l7.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="rupture-mark" id="ruptureMark"></div>
+        </div>
+      </div>
+
+      <div class="context-card"></div>
+    </section>
+
+    <section class="controls">
+      <div class="buttons">
+        <button id="level1">Уровень 1</button>
+        <button id="level2" class="primary">Уровень 2</button>
+        <button id="replay">Replay</button>
+      </div>
+      <div class="scrubber">
+        <input id="scrub" type="range" min="0" max="1" step="0.001" value="0" />
+        <output id="scrubValue">0.000</output>
+      </div>
+      <div class="metrics">
+        <div class="metric">progress<b id="mProgress">0.000</b></div>
+        <div class="metric">rupture<b id="mRupture">—</b></div>
+        <div class="metric">button scale<b id="mScale">1.000×</b></div>
+        <div class="metric">neck half-height<b id="mNeck">—</b></div>
+      </div>
+      <p class="note">
+        Identity и Back растут до 1.20× за 30&nbsp;мс от шейки наружу. До rupture масштаб удерживается;
+        после разрыва за 120&nbsp;мс плавно возвращается к 1.00×. Правый нижний bezel Identity остаётся
+        штатным и неизменным, левый верхний следует liquid-contour.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var WIDTH = 390;
+      var SIZE = 44;
+      var IDENTITY_WIDTH = 224;
+      var DURATION = 450;
+      var RETURN_MS = 120;
+      var OVERSHOOT_MS = 30;
+      var OVERSHOOT = 0.20;
+      var REACH = 24;
+      var DROP_LEAD = 0.65;
+      var BACK_RECOIL = 5.5;
+
+      var root = document.getElementById("root");
+      var material = document.getElementById("material");
+      var fallbackPath = document.getElementById("fallbackPath");
+      var defs = document.getElementById("gradientDefs");
+      var highlightLayer = document.getElementById("highlightLayer");
+      var identityBezel = document.getElementById("identityBezel");
+      var backBezel = document.getElementById("backBezel");
+      var identityContent = document.getElementById("identityContent");
+      var identityVisual = document.getElementById("identityVisual");
+      var identityTitle = document.getElementById("identityTitle");
+      var backContent = document.getElementById("backContent");
+      var scrub = document.getElementById("scrub");
+      var scrubValue = document.getElementById("scrubValue");
+      var mProgress = document.getElementById("mProgress");
+      var mRupture = document.getElementById("mRupture");
+      var mScale = document.getElementById("mScale");
+      var mNeck = document.getElementById("mNeck");
+
+      function clamp(x) { return Math.max(0, Math.min(1, x)); }
+      function smooth(x) {
+        var p = clamp(x);
+        return p * p * (3 - 2 * p);
+      }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+
+      function baseGeometry(time, backShift) {
+        var y = SIZE / 2;
+        var identityX = WIDTH / 2 - SIZE / 2;
+        var identityLeft = identityX - IDENTITY_WIDTH / 2;
+        var sourceX = identityLeft + SIZE / 2;
+        var finalX = SIZE / 2;
+        var travel = smooth(time / 0.86);
+        var backX = sourceX + (finalX - sourceX) * travel + (backShift || 0);
+        var separation = Math.max(0, sourceX - backX);
+        var initial = SIZE * 0.2;
+        var growthStart = (SIZE + initial) / 2;
+        var growthEnd = SIZE - initial * 0.6;
+        var growth = clamp((separation - growthStart) / (growthEnd - growthStart));
+        var exponent = 1 + DROP_LEAD * 2;
+        var height = initial + (SIZE - initial) * (1 - Math.pow(1 - growth, exponent));
+        var tailHeight = initial + (SIZE - initial) * Math.pow(growth, exponent);
+        var width = Math.max(initial + (SIZE - initial) * growth, height);
+
+        return {
+          base: { x: sourceX, y: y },
+          phase: { x: identityX, y: y, width: IDENTITY_WIDTH, height: SIZE, tailHeight: SIZE },
+          day: { x: backX, y: y, width: width, height: height, tailHeight: tailHeight }
+        };
+      }
+
+      function capsuleField(x, y, c) {
+        var leftRadius = c.height / 2;
+        var rightRadius = c.tailHeight / 2;
+        var left = c.x - c.width / 2 + leftRadius;
+        var right = c.x + c.width / 2 - rightRadius;
+        var length = right - left;
+        var distance;
+
+        if (length < 0.00001) {
+          distance = Math.hypot(x - c.x, y - c.y) - Math.max(leftRadius, rightRadius);
+        } else {
+          var slope = (rightRadius - leftRadius) / length;
+          var safeSlope = Math.max(-0.99999, Math.min(0.99999, slope));
+          var closest = Math.max(
+            left,
+            Math.min(right, x + safeSlope * Math.abs(y - c.y) / Math.sqrt(1 - safeSlope * safeSlope))
+          );
+          distance = Math.hypot(x - closest, y - c.y) - leftRadius - slope * (closest - left);
+        }
+
+        var q = clamp(0.5 - distance / (2 * REACH));
+        return Math.pow(q, 3) * (q * (q * 6 - 15) + 10);
+      }
+
+      function field(g, x, y) {
+        var mix = smooth(
+          (Math.abs(g.day.x - g.phase.x) + g.day.width / 2 - g.phase.width / 2) / g.day.height
+        );
+        var a = capsuleField(x, y, g.day);
+        var b = capsuleField(x, y, g.phase);
+        return Math.max(a, b) + mix * Math.min(a, b) - 0.500001;
+      }
+
+      function joined(g) {
+        var left = g.day.x + g.day.width / 2;
+        var right = g.phase.x - g.phase.width / 2;
+        if (right <= left) return true;
+        for (var i = 0; i <= 64; i += 1) {
+          if (field(g, left + (right - left) * i / 64, g.base.y) < 0) return false;
+        }
+        return true;
+      }
+
+      function resolveRupture() {
+        var lo = 0;
+        var hi = 1;
+        for (var i = 1; i <= 120; i += 1) {
+          var t = i / 120;
+          if (!joined(baseGeometry(t, 0))) {
+            lo = (i - 1) / 120;
+            hi = t;
+            break;
+          }
+        }
+        for (var n = 0; n < 16; n += 1) {
+          var middle = (lo + hi) / 2;
+          if (joined(baseGeometry(middle, 0))) lo = middle;
+          else hi = middle;
+        }
+        return hi;
+      }
+
+      var RUPTURE = resolveRupture();
+      mRupture.textContent = RUPTURE.toFixed(3) + " / " + Math.round(RUPTURE * DURATION) + "ms";
+
+      function frameGeometry(time) {
+        var dt = Math.max(0, (time - RUPTURE) * DURATION / 1000);
+        var finish = 1 - smooth((time - 0.96) / 0.04);
+        var shift = time < RUPTURE
+          ? 0
+          : -BACK_RECOIL * (dt / 0.045) * Math.exp(1 - dt / 0.045) * finish;
+        return baseGeometry(time, shift);
+      }
+
+      var motion = {
+        active: false,
+        from: 0,
+        to: 0,
+        direction: 1,
+        started: 0,
+        duration: DURATION,
+        raf: 0
+      };
+
+      var progress = 0;
+      var level = 1;
+      var postRevealStarted = 0;
+      var postRevealRaf = 0;
+
+      function eventElapsedForMotion() {
+        if (!motion.active) return 0;
+        if (motion.direction > 0) {
+          return RUPTURE <= motion.from ? 0 : (RUPTURE - motion.from) * DURATION;
+        }
+        return RUPTURE >= motion.from ? 0 : (motion.from - RUPTURE) * DURATION;
+      }
+
+      function motionScale(elapsed) {
+        if (!motion.active) return 1;
+        if (elapsed <= OVERSHOOT_MS) {
+          return 1 + OVERSHOOT * smooth(elapsed / OVERSHOOT_MS);
+        }
+        var ruptureElapsed = eventElapsedForMotion();
+        if (elapsed < ruptureElapsed) return 1 + OVERSHOOT;
+        return 1 + OVERSHOOT * (1 - smooth((elapsed - ruptureElapsed) / RETURN_MS));
+      }
+
+      function scaleFromNeck(g, scale) {
+        var phaseLeft = g.phase.x - g.phase.width / 2;
+        var phaseWidth = g.phase.width * scale;
+        var phaseHeight = g.phase.height * scale;
+
+        var dayRight = g.day.x + g.day.width / 2;
+        var dayWidth = g.day.width * scale;
+        var dayHeight = g.day.height * scale;
+        var dayTailHeight = g.day.tailHeight * scale;
+
+        return {
+          base: g.base,
+          phase: {
+            x: phaseLeft + phaseWidth / 2,
+            y: g.phase.y,
+            width: phaseWidth,
+            height: phaseHeight,
+            tailHeight: phaseHeight
+          },
+          day: {
+            x: dayRight - dayWidth / 2,
+            y: g.day.y,
+            width: dayWidth,
+            height: dayHeight,
+            tailHeight: dayTailHeight
+          }
+        };
+      }
+
+      function capsulePath(c) {
+        var r = c.height / 2;
+        var left = c.x - c.width / 2;
+        var right = c.x + c.width / 2;
+        return [
+          "M", (left + r).toFixed(3), ",", (c.y - r).toFixed(3),
+          "H", (right - r).toFixed(3),
+          "A", r.toFixed(3), ",", r.toFixed(3), " 0 0 1 ", (right - r).toFixed(3), ",", (c.y + r).toFixed(3),
+          "H", (left + r).toFixed(3),
+          "A", r.toFixed(3), ",", r.toFixed(3), " 0 0 1 ", (left + r).toFixed(3), ",", (c.y - r).toFixed(3),
+          "Z"
+        ].join("");
+      }
+
+      function deformedContour(g, time) {
+        if (time <= 0.001) return { path: capsulePath(g.phase), neckHalf: g.phase.height / 2 };
+
+        if (time >= RUPTURE) {
+          return {
+            path: capsulePath(g.day) + capsulePath(g.phase),
+            neckHalf: 0
+          };
+        }
+
+        var phase = g.phase;
+        var day = g.day;
+        var phaseLeft = phase.x - phase.width / 2;
+        var phaseRight = phase.x + phase.width / 2;
+        var phaseR = phase.height / 2;
+        var dayLeft = day.x - day.width / 2;
+
+        var deform = smooth((time - 0.10) / Math.max(0.001, RUPTURE - 0.10));
+        var exposure = clamp((phaseLeft - dayLeft + 5) / 36);
+        deform *= smooth(exposure);
+
+        if (deform < 0.015) {
+          return { path: capsulePath(phase), neckHalf: phaseR };
+        }
+
+        var dayRx = Math.max(0.5, day.width / 2);
+        var dayRy = Math.max(0.5, day.height / 2);
+        var dayRight = day.x + day.width / 2;
+        var neckX = (phaseLeft + dayRight) / 2;
+        var neckHalf = lerp(phaseR * 0.88, 1.75, deform);
+        var angle = lerp(72, 18, deform) * Math.PI / 180;
+        var backUpper = {
+          x: day.x + dayRx * Math.cos(angle),
+          y: day.y - dayRy * Math.sin(angle)
+        };
+        var backLower = {
+          x: day.x + dayRx * Math.cos(angle),
+          y: day.y + dayRy * Math.sin(angle)
+        };
+
+        var phaseTopX = phaseLeft + phaseR;
+        var phaseBottomX = phaseLeft + phaseR;
+        var neckBias = Math.max(-10, Math.min(10, (phaseLeft - dayRight) * 0.25));
+
+        var p = [];
+        p.push("M", phaseTopX.toFixed(3), ",", (phase.y - phaseR).toFixed(3));
+        p.push("H", (phaseRight - phaseR).toFixed(3));
+        p.push("A", phaseR.toFixed(3), ",", phaseR.toFixed(3), " 0 0 1 ", (phaseRight - phaseR).toFixed(3), ",", (phase.y + phaseR).toFixed(3));
+        p.push("H", phaseBottomX.toFixed(3));
+
+        p.push(
+          "C",
+          (phaseLeft + phaseR * 0.34).toFixed(3), ",", (phase.y + phaseR).toFixed(3), " ",
+          (phaseLeft + phaseR * 0.05).toFixed(3), ",", (phase.y + neckHalf + 4).toFixed(3), " ",
+          (neckX + neckBias).toFixed(3), ",", (phase.y + neckHalf).toFixed(3)
+        );
+
+        p.push(
+          "C",
+          (neckX - 4).toFixed(3), ",", (phase.y + neckHalf).toFixed(3), " ",
+          (backLower.x + 4).toFixed(3), ",", backLower.y.toFixed(3), " ",
+          backLower.x.toFixed(3), ",", backLower.y.toFixed(3)
+        );
+
+        p.push(
+          "A", dayRx.toFixed(3), ",", dayRy.toFixed(3), " 0 0 1 ",
+          (day.x - dayRx).toFixed(3), ",", day.y.toFixed(3)
+        );
+        p.push(
+          "A", dayRx.toFixed(3), ",", dayRy.toFixed(3), " 0 0 1 ",
+          backUpper.x.toFixed(3), ",", backUpper.y.toFixed(3)
+        );
+
+        p.push(
+          "C",
+          (backUpper.x + 4).toFixed(3), ",", backUpper.y.toFixed(3), " ",
+          (neckX - 4).toFixed(3), ",", (phase.y - neckHalf).toFixed(3), " ",
+          (neckX + neckBias).toFixed(3), ",", (phase.y - neckHalf).toFixed(3)
+        );
+
+        p.push(
+          "C",
+          (phaseLeft + phaseR * 0.05).toFixed(3), ",", (phase.y - neckHalf - 4).toFixed(3), " ",
+          (phaseLeft + phaseR * 0.34).toFixed(3), ",", (phase.y - phaseR).toFixed(3), " ",
+          phaseTopX.toFixed(3), ",", (phase.y - phaseR).toFixed(3),
+          "Z"
+        );
+
+        return { path: p.join(""), neckHalf: neckHalf };
+      }
+
+      function corner(c, leading) {
+        var r = (leading ? c.height : c.tailHeight) / 2;
+        var direction = leading ? -1 : 1;
+        return {
+          x: c.x + direction * (c.width / 2 - r * (1 - Math.SQRT1_2)),
+          y: c.y + direction * r * Math.SQRT1_2,
+          radius: r * 1.4
+        };
+      }
+
+      function bezelHighlights(g, time) {
+        var phaseTop = corner(g.phase, true);
+        var dayTop = corner(g.day, true);
+        var exposed = smooth(
+          (Math.abs(g.day.x - g.phase.x) + g.day.width / 2 - g.phase.width / 2) / g.day.height
+        );
+        var formed = smooth((time - RUPTURE) * DURATION / 90);
+
+        return [
+          Object.assign(corner(g.phase, false), { opacity: 0 }),
+          {
+            x: lerp(phaseTop.x, dayTop.x, exposed),
+            y: lerp(phaseTop.y, dayTop.y, exposed),
+            radius: lerp(phaseTop.radius, dayTop.radius, exposed),
+            opacity: 1
+          },
+          Object.assign(corner(g.day, false), { opacity: formed }),
+          Object.assign(phaseTop, { opacity: formed })
+        ];
+      }
+
+      function setBox(el, c) {
+        el.style.left = (c.x - c.width / 2) + "px";
+        el.style.top = (c.y - c.height / 2) + "px";
+        el.style.width = c.width + "px";
+        el.style.height = c.height + "px";
+        el.style.borderRadius = (c.height / 2) + "px";
+      }
+
+      function makeCalendar() {
+        return '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">' +
+          '<rect x="6.5" y="8.5" width="19" height="17" rx="5" stroke="currentColor" stroke-width="1.5"/>' +
+          '<path d="M10.5 6.5v4M21.5 6.5v4M7 13h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+          '<path d="M11 17h3M18 17h3M11 21h3M18 21h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+          '</svg>';
+      }
+
+      function setIdentity(targetLevel) {
+        if (targetLevel === 2) {
+          identityVisual.innerHTML = '<span class="avatar">К</span>';
+          identityTitle.textContent = "Клиент";
+        } else {
+          identityVisual.innerHTML = makeCalendar();
+          identityTitle.textContent = "Сегодня";
+        }
+      }
+
+      function renderHighlights(path, g, time, liquidOpacity) {
+        defs.innerHTML = "";
+        highlightLayer.innerHTML = "";
+
+        var highlights = bezelHighlights(g, time);
+        highlights.forEach(function (h, index) {
+          if (h.opacity <= 0.001 || liquidOpacity <= 0.001) return;
+
+          var id = "hl-" + index;
+          var gradient = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+          gradient.setAttribute("id", id);
+          gradient.setAttribute("gradientUnits", "userSpaceOnUse");
+          gradient.setAttribute("cx", h.x);
+          gradient.setAttribute("cy", h.y);
+          gradient.setAttribute("r", Math.max(1, h.radius));
+
+          var stop0 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+          stop0.setAttribute("offset", "0");
+          stop0.setAttribute("stop-color", "white");
+          stop0.setAttribute("stop-opacity", String(h.opacity * liquidOpacity));
+          gradient.appendChild(stop0);
+
+          var stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+          stop1.setAttribute("offset", "1");
+          stop1.setAttribute("stop-color", "white");
+          stop1.setAttribute("stop-opacity", "0");
+          gradient.appendChild(stop1);
+          defs.appendChild(gradient);
+
+          var stroke = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          stroke.setAttribute("d", path);
+          stroke.setAttribute("class", "highlight");
+          stroke.setAttribute("stroke", "url(#" + id + ")");
+          highlightLayer.appendChild(stroke);
+        });
+      }
+
+      function draw(time, elapsed, manual) {
+        var scale = manual ? 1 : motionScale(elapsed || 0);
+        var base = frameGeometry(time);
+        var g = scaleFromNeck(base, scale);
+        var contour = deformedContour(g, time);
+        var path = contour.path;
+
+        material.style.clipPath = 'path("' + path + '")';
+        material.style.webkitClipPath = 'path("' + path + '")';
+        fallbackPath.setAttribute("d", path);
+
+        var reveal = smooth((time - RUPTURE) / 0.12);
+        var postReveal = 1;
+        if (!motion.active && postRevealStarted) {
+          postReveal = smooth((performance.now() - postRevealStarted) / 120);
+        }
+
+        var nativeTopLeft = motion.active ? 0 : postReveal;
+        var liquidOpacity = motion.active ? 1 : 1 - postReveal;
+
+        setBox(identityBezel, g.phase);
+        identityBezel.style.setProperty("--tl", nativeTopLeft);
+        identityBezel.style.setProperty("--br", "1");
+
+        setBox(identityContent, g.phase);
+        identityContent.style.paddingLeft = Math.max(2, 2 * scale) + "px";
+        identityContent.style.paddingRight = (14 * scale) + "px";
+
+        var backVisual = {
+          x: g.day.x,
+          y: g.day.y,
+          width: SIZE * scale,
+          height: SIZE * scale,
+          tailHeight: SIZE * scale
+        };
+
+        setBox(backBezel, backVisual);
+        setBox(backContent, backVisual);
+        backContent.style.opacity = reveal;
+        backBezel.style.setProperty("--back-native-opacity", motion.active ? "0" : String(postReveal));
+        backBezel.style.setProperty("--tl", "1");
+        backBezel.style.setProperty("--br", "1");
+
+        renderHighlights(path, g, time, liquidOpacity);
+
+        scrub.value = time.toFixed(3);
+        scrubValue.textContent = time.toFixed(3);
+        mProgress.textContent = time.toFixed(3);
+        mScale.textContent = scale.toFixed(3) + "×";
+        mNeck.textContent = contour.neckHalf ? contour.neckHalf.toFixed(2) + "px" : "ruptured";
+      }
+
+      function cancelPostReveal() {
+        if (postRevealRaf) cancelAnimationFrame(postRevealRaf);
+        postRevealRaf = 0;
+        postRevealStarted = 0;
+      }
+
+      function startPostReveal() {
+        cancelPostReveal();
+        postRevealStarted = performance.now();
+
+        function tick() {
+          draw(progress, 0, false);
+          if (performance.now() - postRevealStarted < 120) {
+            postRevealRaf = requestAnimationFrame(tick);
+          } else {
+            postRevealStarted = 0;
+            postRevealRaf = 0;
+            draw(progress, 0, true);
+          }
+        }
+        postRevealRaf = requestAnimationFrame(tick);
+      }
+
+      function stopMotion() {
+        if (motion.raf) cancelAnimationFrame(motion.raf);
+        motion.raf = 0;
+        motion.active = false;
+      }
+
+      function animateTo(target) {
+        cancelPostReveal();
+        if (Math.abs(target - progress) < 0.0001) {
+          setIdentity(target === 1 ? 2 : 1);
+          draw(progress, 0, true);
+          return;
+        }
+
+        stopMotion();
+        motion.active = true;
+        motion.from = progress;
+        motion.to = target;
+        motion.direction = target > progress ? 1 : -1;
+        motion.duration = DURATION * Math.abs(target - progress);
+        motion.started = performance.now();
+        setIdentity(target === 1 ? 2 : 1);
+
+        function tick(now) {
+          var elapsed = now - motion.started;
+          var fraction = Math.min(1, elapsed / motion.duration);
+          progress = motion.from + (motion.to - motion.from) * fraction;
+          draw(progress, elapsed, false);
+
+          if (fraction < 1) {
+            motion.raf = requestAnimationFrame(tick);
+          } else {
+            motion.active = false;
+            motion.raf = 0;
+            progress = target;
+            level = target === 1 ? 2 : 1;
+            startPostReveal();
+          }
+        }
+
+        motion.raf = requestAnimationFrame(tick);
+      }
+
+      document.getElementById("level1").addEventListener("click", function () { animateTo(0); });
+      document.getElementById("level2").addEventListener("click", function () { animateTo(1); });
+      document.getElementById("replay").addEventListener("click", function () {
+        stopMotion();
+        cancelPostReveal();
+        progress = 0;
+        level = 1;
+        setIdentity(1);
+        draw(0, 0, true);
+        requestAnimationFrame(function () { animateTo(1); });
+      });
+
+      scrub.addEventListener("input", function () {
+        stopMotion();
+        cancelPostReveal();
+        progress = Number(scrub.value);
+        setIdentity(progress >= 0.5 ? 2 : 1);
+        draw(progress, 0, true);
+      });
+
+      backContent.style.pointerEvents = "auto";
+      backContent.addEventListener("click", function () { animateTo(0); });
+
+      setIdentity(1);
+      draw(0, 0, true);
+    }());
+  </script>
+</body>
+</html>
