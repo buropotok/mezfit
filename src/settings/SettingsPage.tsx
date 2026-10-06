@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Toggle } from 'konsta/react';
+import { Range, Toggle } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import {
   DEFAULT_GLASS_SETTINGS,
+  GLASS_BLUR_MAX,
+  GLASS_BLUR_MIN,
+  GLASS_BLUR_STEP,
   GLASS_PRESET_NAMES,
   isGlassPresetName,
+  resolveGlassPresetBlur,
   type GlassSettings,
 } from '../glassSettings';
 import {
@@ -299,7 +303,11 @@ export function SettingsPage({
   if (glassSettingsOpen) {
     const changeGlassPreset = (value: string) => {
       if (!isGlassPresetName(value)) return;
-      onGlassSettingsChange({ ...glassSettings, preset: value });
+      onGlassSettingsChange({
+        ...glassSettings,
+        preset: value,
+        blur: resolveGlassPresetBlur(value),
+      });
     };
 
     return (
@@ -319,6 +327,24 @@ export function SettingsPage({
               title="Пресет GlassSurface"
               variant="field"
               onChange={changeGlassPreset}
+            />
+          </div>
+
+          <div className="settings-page__glass-field">
+            <label htmlFor="settings-glass-blur">
+              <Text variant="footnote">Blur · {glassSettings.blur}px</Text>
+            </label>
+            <Range
+              inputId="settings-glass-blur"
+              min={GLASS_BLUR_MIN}
+              max={GLASS_BLUR_MAX}
+              step={GLASS_BLUR_STEP}
+              value={glassSettings.blur}
+              onChange={(event) => {
+                const blur = Number(event.target.value);
+                if (!Number.isFinite(blur)) return;
+                onGlassSettingsChange({ ...glassSettings, blur });
+              }}
             />
           </div>
 
