@@ -240,8 +240,9 @@ export function createLiquidMotion(
         ? clamp((t - shrinkEnd) / (preMorph - shrinkEnd), 0, 1)
         : clamp(t / morphStart, 0, 1);
     const movement = flow(shellProgress),
+      sourceCircleRadius = Math.min(source.w, source.h) / 2,
       baseRadius = centerRoute
-        ? source.h / 2 + (R - source.h / 2) * movement
+        ? sourceCircleRadius + (R - sourceCircleRadius) * movement
         : source.h / 2 + (R - source.h / 2) * shrink,
       baseTail = centerRoute
         ? options.tail * movement
