@@ -57,6 +57,53 @@
   opacity: var(--ui-glass-surface-bezel-bottom-right);
 }
 
+.ui-glass-surface--liquid-convex::before {
+  inset: calc(0px - var(--ui-glass-surface-edge-outset));
+  border-radius: calc(var(--ui-glass-surface-radius) + var(--ui-glass-surface-edge-outset));
+  box-shadow:
+    inset 0 0 var(--ui-glass-surface-edge-light-blur)
+      rgb(255 255 255 / var(--ui-glass-surface-edge-light-base-alpha)),
+    inset var(--ui-glass-surface-edge-light-x) var(--ui-glass-surface-edge-light-y)
+      var(--ui-glass-surface-edge-light-blur)
+      rgb(255 255 255 / var(--ui-glass-surface-edge-light-dir-alpha)),
+    inset var(--ui-glass-surface-edge-dark-x) var(--ui-glass-surface-edge-dark-y)
+      var(--ui-glass-surface-edge-dark-blur)
+      rgb(0 0 0 / var(--ui-glass-surface-edge-dark-alpha));
+  opacity: 1;
+}
+
+.ui-glass-surface--liquid-convex::after {
+  padding: var(--ui-glass-surface-specular-width);
+  box-shadow: none;
+  opacity: 1;
+  background: conic-gradient(
+    from var(--ui-glass-surface-specular-angle),
+    rgb(255 255 255 / var(--ui-glass-surface-specular-primary-alpha)) 0deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-primary-alpha)) 10deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-primary-side-alpha)) 40deg,
+    rgb(255 255 255 / 0) 78deg,
+    rgb(255 255 255 / 0) 102deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-opposite-side-alpha)) 140deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-opposite-alpha)) 170deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-opposite-alpha)) 190deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-opposite-side-alpha)) 220deg,
+    rgb(255 255 255 / 0) 258deg,
+    rgb(255 255 255 / 0) 282deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-primary-side-alpha)) 320deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-primary-alpha)) 350deg,
+    rgb(255 255 255 / var(--ui-glass-surface-specular-primary-alpha)) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  filter: blur(var(--ui-glass-surface-specular-softness));
+}
+
 .ui-glass-surface__filter {
   position: absolute;
   pointer-events: none;
