@@ -263,7 +263,12 @@ describe('WorkoutSessionScreen', () => {
   });
 
   it('renders sortable session exercises with a transparent owned surface', async () => {
-    initializeMock.mockResolvedValue({ session: programSession });
+    initializeMock.mockResolvedValue({
+      session: {
+        ...programSession,
+        exercises: [exerciseData(42, 0, 'Жим лёжа')],
+      },
+    });
 
     const { container } = renderScreen();
 
