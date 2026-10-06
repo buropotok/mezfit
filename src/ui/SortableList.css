@@ -1,7 +1,11 @@
+.ui-sortable-list__surface,
 .ui-sortable-list {
-  position: relative;
   width: 100%;
   min-width: 0;
+}
+
+.ui-sortable-list {
+  position: relative;
 }
 
 .ui-sortable-list__row {
