@@ -8,7 +8,7 @@ export const GLASS_BLUR_STEP = 1;
 export type GlassSettings = {
   preset: GlassPresetName;
   optics: boolean;
-  blur: number;
+  blur?: number;
 };
 
 export function isGlassPresetName(value: unknown): value is GlassPresetName {
