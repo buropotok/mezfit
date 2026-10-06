@@ -71,8 +71,7 @@
 }
 
 html,
-body,
-#root {
+body {
   color: var(--theme-bg-text);
   background: var(--theme-bg);
 }
@@ -80,6 +79,12 @@ body,
 #root {
   min-width: 100%;
   min-height: 100dvh;
+  color: var(--theme-bg-text);
+  background-color: var(--theme-bg);
+  background-image: url('./assets/fitness-background.svg');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .card,
