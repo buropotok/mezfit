@@ -103,7 +103,7 @@ function SetStatus({ set }: { set: SessionExerciseSetData }) {
   if (set.status === 'completed') {
     return <span className="session-exercise__set-status session-exercise__set-status--completed"><SharedIcon name="check" /></span>;
   }
-  return <span className="session-exercise__set-status">{set.position + 1}</span>;
+  return <span className="session-exercise__set-status"><Text variant="footnote">{set.position + 1}</Text></span>;
 }
 
 function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, planMode: boolean): ReactNode | undefined {
