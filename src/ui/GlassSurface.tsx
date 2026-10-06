@@ -13,6 +13,7 @@ import {
 } from 'react';
 import {
   buildGlassVectorMap,
+  LIQUID_CONVEX_LIGHTING,
   resolveGlassFilterRegion,
   resolveGlassMaterial,
   resolveGlassRadius,
@@ -26,6 +27,10 @@ import './GlassSurface.css';
 export type GlassBezelHighlights = {
   topLeft?: number;
   bottomRight?: number;
+  /** Primary directional lobe for presets that provide contour-distributed bezel lighting. */
+  primary?: number;
+  /** Lobe opposite the primary directional highlight. */
+  opposite?: number;
 };
 
 type GlassCssProperties = CSSProperties & {
@@ -42,6 +47,24 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-border': string;
   '--ui-glass-surface-shadow': string;
   '--ui-glass-surface-filter': string;
+  '--ui-glass-surface-radius': string;
+  '--ui-glass-surface-edge-outset': string;
+  '--ui-glass-surface-edge-light-blur': string;
+  '--ui-glass-surface-edge-dark-blur': string;
+  '--ui-glass-surface-edge-light-x': string;
+  '--ui-glass-surface-edge-light-y': string;
+  '--ui-glass-surface-edge-dark-x': string;
+  '--ui-glass-surface-edge-dark-y': string;
+  '--ui-glass-surface-edge-light-base-alpha': string;
+  '--ui-glass-surface-edge-light-dir-alpha': string;
+  '--ui-glass-surface-edge-dark-alpha': string;
+  '--ui-glass-surface-specular-angle': string;
+  '--ui-glass-surface-specular-width': string;
+  '--ui-glass-surface-specular-softness': string;
+  '--ui-glass-surface-specular-primary-alpha': string;
+  '--ui-glass-surface-specular-primary-side-alpha': string;
+  '--ui-glass-surface-specular-opposite-alpha': string;
+  '--ui-glass-surface-specular-opposite-side-alpha': string;
 };
 
 const GLASS_VECTOR_MAP_CACHE_LIMIT = 4;
@@ -97,7 +120,10 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   contour?: string;
   /** Master visibility for bezel highlights only; the material border remains visible. */
   bezelOpacity?: number;
-  /** Independent multipliers for the built-in corner highlights. Contour highlights are owned by GlassContourBezel. */
+  /**
+   * Independent bezel multipliers. Existing topLeft/bottomRight controls remain compatible.
+   * Directional presets also accept primary/opposite aliases for their paired contour lobes.
+   */
   bezelHighlights?: GlassBezelHighlights;
   wrapContent?: boolean;
   active?: boolean;
@@ -131,6 +157,14 @@ export function GlassSurface({
   const highlightOpacity = Math.max(0, Math.min(1, bezelOpacity));
   const topLeftHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.topLeft ?? 1));
   const bottomRightHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.bottomRight ?? 1));
+  const primaryHighlightOpacity = Math.max(
+    0,
+    Math.min(1, bezelHighlights?.primary ?? bezelHighlights?.topLeft ?? 1),
+  );
+  const oppositeHighlightOpacity = Math.max(
+    0,
+    Math.min(1, bezelHighlights?.opposite ?? bezelHighlights?.bottomRight ?? 1),
+  );
   const hostMode = !wrapContent;
   const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
@@ -241,6 +275,38 @@ export function GlassSurface({
   };
 
   const radius = geometry?.radius ?? 0;
+  const isLiquidConvex = preset === 'liquidConvex';
+  const isCapsule = shape === 'capsule';
+  const liquidConvexScale = geometry
+    ? Math.max(0.34, Math.min(1.26, geometry.height / 150))
+    : 1;
+  const liquidConvexEdgeWidth = LIQUID_CONVEX_LIGHTING.edgeWidth * liquidConvexScale;
+  const liquidConvexEdgeOutset = LIQUID_CONVEX_LIGHTING.edgeOutset * liquidConvexScale;
+  const liquidConvexLightAngle = isCapsule
+    ? LIQUID_CONVEX_LIGHTING.capsuleLightAngle
+    : LIQUID_CONVEX_LIGHTING.rectangleLightAngle;
+  const liquidConvexBezelAngle = isCapsule
+    ? LIQUID_CONVEX_LIGHTING.capsuleBezelAngle
+    : LIQUID_CONVEX_LIGHTING.rectangleBezelAngle;
+  const liquidConvexLightRadians = liquidConvexLightAngle * Math.PI / 180;
+  const liquidConvexDirectionalOffset = liquidConvexEdgeWidth
+    * 0.28
+    * LIQUID_CONVEX_LIGHTING.directionality;
+  const liquidConvexLightX = Math.cos(liquidConvexLightRadians) * liquidConvexDirectionalOffset;
+  const liquidConvexLightY = Math.sin(liquidConvexLightRadians) * liquidConvexDirectionalOffset;
+  const liquidConvexDarkX = -liquidConvexLightX * 0.78;
+  const liquidConvexDarkY = -liquidConvexLightY * 0.78;
+  const liquidConvexBaseLightAlpha = LIQUID_CONVEX_LIGHTING.edgeLight
+    * (0.12 + (1 - LIQUID_CONVEX_LIGHTING.directionality) * 0.28);
+  const liquidConvexDirectionalLightAlpha = LIQUID_CONVEX_LIGHTING.edgeLight
+    * (0.16 + 0.54 * LIQUID_CONVEX_LIGHTING.directionality);
+  const liquidConvexDarkAlpha = LIQUID_CONVEX_LIGHTING.edgeDark
+    * (0.42 + 0.68 * LIQUID_CONVEX_LIGHTING.directionality);
+  const liquidConvexSpecularAlpha = material.bezel
+    * highlightOpacity
+    * (0.12 + 0.36 * LIQUID_CONVEX_LIGHTING.directionality);
+  const liquidConvexPrimaryAlpha = liquidConvexSpecularAlpha * primaryHighlightOpacity;
+  const liquidConvexOppositeAlpha = liquidConvexSpecularAlpha * oppositeHighlightOpacity;
   const activeVectorMapHref = optics ? vectorMapHref : null;
   const filterRegion = activeVectorMapHref && geometry
     ? resolveGlassFilterRegion(geometry, material)
@@ -261,13 +327,31 @@ export function GlassSurface({
     '--ui-glass-surface-border': String(material.border),
     '--ui-glass-surface-shadow': String(material.shadow),
     '--ui-glass-surface-filter': `url(#${filterId})`,
+    '--ui-glass-surface-radius': `${radius}px`,
+    '--ui-glass-surface-edge-outset': `${liquidConvexEdgeOutset}px`,
+    '--ui-glass-surface-edge-light-blur': `${liquidConvexEdgeWidth * 0.92}px`,
+    '--ui-glass-surface-edge-dark-blur': `${liquidConvexEdgeWidth * 2.25}px`,
+    '--ui-glass-surface-edge-light-x': `${liquidConvexLightX}px`,
+    '--ui-glass-surface-edge-light-y': `${liquidConvexLightY}px`,
+    '--ui-glass-surface-edge-dark-x': `${liquidConvexDarkX}px`,
+    '--ui-glass-surface-edge-dark-y': `${liquidConvexDarkY}px`,
+    '--ui-glass-surface-edge-light-base-alpha': String(liquidConvexBaseLightAlpha),
+    '--ui-glass-surface-edge-light-dir-alpha': String(liquidConvexDirectionalLightAlpha),
+    '--ui-glass-surface-edge-dark-alpha': String(liquidConvexDarkAlpha),
+    '--ui-glass-surface-specular-angle': `${liquidConvexBezelAngle}deg`,
+    '--ui-glass-surface-specular-width': `${LIQUID_CONVEX_LIGHTING.bezelWidth}px`,
+    '--ui-glass-surface-specular-softness': `${LIQUID_CONVEX_LIGHTING.bezelSoftness}px`,
+    '--ui-glass-surface-specular-primary-alpha': String(liquidConvexPrimaryAlpha),
+    '--ui-glass-surface-specular-primary-side-alpha': String(liquidConvexPrimaryAlpha * 0.28),
+    '--ui-glass-surface-specular-opposite-alpha': String(liquidConvexOppositeAlpha),
+    '--ui-glass-surface-specular-opposite-side-alpha': String(liquidConvexOppositeAlpha * 0.28),
   };
 
   return (
     <Component
       {...props}
       ref={setRootRef}
-      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''} ${className}`.trim()}
+      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''}${isLiquidConvex ? ' ui-glass-surface--liquid-convex' : ''} ${className}`.trim()}
       data-ui-glass-map-ready={activeVectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
