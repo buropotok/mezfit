@@ -103,15 +103,15 @@ export function BottomSheet({ isOpen, title, children, className = '', headerLea
   );
 }
 
-type FloatingActionButtonGlass = { preset?: GlassPresetName; optics?: boolean; blur?: number };
+type FloatingActionButtonGlass = { preset?: GlassPresetName; optics?: boolean };
 const FloatingActionButtonGlassContext = createContext<FloatingActionButtonGlass | null>(null);
 
 /** Shares the shell's glass settings with both navigation and page-owned FABs. */
-export function FloatingActionButtonGlassProvider({ preset, optics, blur, children }: FloatingActionButtonGlass & { children: ReactNode }) {
-  return <FloatingActionButtonGlassContext.Provider value={{ preset, optics, blur }}>{children}</FloatingActionButtonGlassContext.Provider>;
+export function FloatingActionButtonGlassProvider({ preset, optics, children }: FloatingActionButtonGlass & { children: ReactNode }) {
+  return <FloatingActionButtonGlassContext.Provider value={{ preset, optics }}>{children}</FloatingActionButtonGlassContext.Provider>;
 }
 
-export type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; glassPreset?: GlassPresetName; glassOptics?: boolean; glassBlur?: number; icon?: UiIconName; children?: ReactNode } & ({ mode?: 'default'; actions?: never } | { mode: 'metaball'; actions: readonly [FloatingActionButtonAction, FloatingActionButtonAction] });
+export type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; glassPreset?: GlassPresetName; glassOptics?: boolean; icon?: UiIconName; children?: ReactNode } & ({ mode?: 'default'; actions?: never } | { mode: 'metaball'; actions: readonly [FloatingActionButtonAction, FloatingActionButtonAction] });
 type FloatingActionButtonBehavior = { buttonProps: ButtonHTMLAttributes<HTMLButtonElement>; isShown: boolean };
 
 const FloatingActionButtonBehaviorContext = createContext<FloatingActionButtonBehavior | null>(null);
@@ -138,9 +138,9 @@ function FloatingActionButtonElement({ children, ...glassProps }: ComponentProps
   );
 }
 
-export function FloatingActionButton({ mode = 'default', actions, label, isShown = true, placement = 'right', glassPreset, glassOptics, glassBlur, icon, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+export function FloatingActionButton({ mode = 'default', actions, label, isShown = true, placement = 'right', glassPreset, glassOptics, icon, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   const glassSettings = useContext(FloatingActionButtonGlassContext);
-  if (mode === 'metaball' && actions) return <MetaballFab {...props} label={label} isShown={isShown} placement={placement} glassPreset={glassPreset ?? glassSettings?.preset} glassOptics={glassOptics ?? glassSettings?.optics ?? false} glassBlur={glassBlur ?? glassSettings?.blur} icon={icon} className={className} type={type} disabled={disabled} onClick={onClick} onPointerDown={onPointerDown} onKeyDown={onKeyDown} actions={actions}>{children}</MetaballFab>;
+  if (mode === 'metaball' && actions) return <MetaballFab {...props} label={label} isShown={isShown} placement={placement} glassPreset={glassPreset ?? glassSettings?.preset} glassOptics={glassOptics ?? glassSettings?.optics ?? false} icon={icon} className={className} type={type} disabled={disabled} onClick={onClick} onPointerDown={onPointerDown} onKeyDown={onKeyDown} actions={actions}>{children}</MetaballFab>;
   const buttonProps: ButtonHTMLAttributes<HTMLButtonElement> = {
     ...props,
     type,
@@ -159,7 +159,6 @@ export function FloatingActionButton({ mode = 'default', actions, label, isShown
         component={FloatingActionButtonElement}
         preset={glassPreset ?? glassSettings?.preset}
         optics={glassOptics ?? glassSettings?.optics ?? false}
-        blur={glassBlur ?? glassSettings?.blur}
         active={isShown}
         wrapContent={false}
         className={`ui-fab ui-text--body ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ${className}`.trim()}
