@@ -126,7 +126,7 @@ function ProgramRows({
     );
   }
 
-  return <div className="programs-card">{rows.map((row) => <div key={row.id}>{row.content}</div>)}</div>;
+  return <div className="programs-card programs-card--static">{rows.map((row) => <div key={row.id}>{row.content}</div>)}</div>;
 }
 
 function ownerName(group: ProgramOwnerGroup): string {

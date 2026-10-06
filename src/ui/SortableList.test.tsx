@@ -11,14 +11,13 @@ const items: SortableListItem[] = [
 afterEach(() => cleanup());
 
 describe('SortableList surfaces', () => {
-  it('renders every resting item on a GlassSurface without optics', () => {
+  it('renders one resting GlassSurface for the list and leaves resting items transparent', () => {
     const { container } = render(<SortableList items={items} onReorder={vi.fn()} />);
-    const surfaces = container.querySelectorAll('.ui-sortable-list__row > .ui-glass-surface');
+    const surface = container.querySelector('.ui-sortable-list__surface');
 
-    expect(surfaces).toHaveLength(2);
-    surfaces.forEach((surface) => {
-      expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
-    });
+    expect(surface?.classList.contains('ui-glass-surface')).toBe(true);
+    expect(surface?.getAttribute('data-ui-glass-map-ready')).toBe('false');
+    expect(container.querySelectorAll('.ui-sortable-list__row > .ui-glass-surface')).toHaveLength(0);
   });
 });
 

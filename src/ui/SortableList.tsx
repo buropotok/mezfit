@@ -43,7 +43,7 @@ function SortableRow({ item }: { item: SortableListItem }) {
       {...attributes}
       {...listeners}
     >
-      <GlassSurface preset="modalTuned" optics={false}>{item.content}</GlassSurface>
+      {item.content}
     </div>
   );
 }
@@ -73,11 +73,13 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragCancel={() => setActiveId(null)} onDragEnd={handleDragEnd}>
-      <div className={`ui-sortable-list${showSeparators ? '' : ' ui-sortable-list--no-separators'} ${className}`.trim()} role="list">
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          {items.map((item) => <SortableRow key={item.id} item={item} />)}
-        </SortableContext>
-      </div>
+      <GlassSurface preset="modalTuned" optics={false} className="ui-sortable-list__surface">
+        <div className={`ui-sortable-list${showSeparators ? '' : ' ui-sortable-list--no-separators'} ${className}`.trim()} role="list">
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            {items.map((item) => <SortableRow key={item.id} item={item} />)}
+          </SortableContext>
+        </div>
+      </GlassSurface>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
         {activeItem ? <div className="ui-sortable-list__overlay"><GlassSurface preset="modalTuned" optics={true}>{activeItem.content}</GlassSurface></div> : null}
       </DragOverlay>
