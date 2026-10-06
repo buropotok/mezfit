@@ -196,6 +196,54 @@ export const SMOKED_GLASS: Readonly<GlassMaterial> = Object.freeze({
   filterPadding: 51,
 });
 
+export const LIQUID_CONVEX_GLASS: Readonly<GlassMaterial> = Object.freeze({
+  tintR: 18,
+  tintG: 18,
+  tintB: 20,
+  tintA: 0.02,
+  blur: 0,
+  saturation: 1.02,
+  brightness: 1,
+  bezel: 0.89,
+  border: 0,
+  shadow: 0.08,
+  neutralEdge: 2.2,
+  rimWidth: 12,
+  rimStrength: 0.62,
+  trenchWidth: 2,
+  trenchStrength: 0.05,
+  refraction: 7,
+  filterPadding: 51,
+});
+
+export type LiquidConvexLighting = {
+  edgeWidth: number;
+  edgeOutset: number;
+  edgeLight: number;
+  edgeDark: number;
+  directionality: number;
+  rectangleLightAngle: number;
+  rectangleBezelAngle: number;
+  capsuleLightAngle: number;
+  capsuleBezelAngle: number;
+  bezelWidth: number;
+  bezelSoftness: number;
+};
+
+export const LIQUID_CONVEX_LIGHTING: Readonly<LiquidConvexLighting> = Object.freeze({
+  edgeWidth: 36,
+  edgeOutset: 2.5,
+  edgeLight: 0.25,
+  edgeDark: 0.65,
+  directionality: 1,
+  rectangleLightAngle: 360,
+  rectangleBezelAngle: 346,
+  capsuleLightAngle: 243,
+  capsuleBezelAngle: 346,
+  bezelWidth: 1.1,
+  bezelSoftness: 0.95,
+});
+
 export const GLASS_PRESETS = Object.freeze({
   modalTuned: MODAL_TUNED_GLASS,
   modal: MODAL_GLASS,
@@ -204,6 +252,7 @@ export const GLASS_PRESETS = Object.freeze({
   frosted: FROSTED_GLASS,
   blue: BLUE_GLASS,
   smoked: SMOKED_GLASS,
+  liquidConvex: LIQUID_CONVEX_GLASS,
 });
 
 export type GlassPresetName = keyof typeof GLASS_PRESETS;
