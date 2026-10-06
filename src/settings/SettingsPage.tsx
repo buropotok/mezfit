@@ -237,6 +237,7 @@ export function SettingsPage({
   const timePickerTargetRef = useRef<HTMLSpanElement | null>(null);
   const telegramWebApp = getTelegramWebApp();
   const hapticBackend = getSelectionHapticBackend(telegramWebApp);
+  const effectiveGlassBlur = glassSettings.blur ?? resolveGlassPresetBlur(glassSettings.preset);
   const runProbe = (kind: HapticProbeKind) => {
     setHapticProbe({ kind, result: runHapticProbe(kind, telegramWebApp) });
   };
@@ -332,14 +333,14 @@ export function SettingsPage({
 
           <div className="settings-page__glass-field">
             <label htmlFor="settings-glass-blur">
-              <Text variant="footnote">Blur · {glassSettings.blur}px</Text>
+              <Text variant="footnote">Blur · {effectiveGlassBlur}px</Text>
             </label>
             <Range
               inputId="settings-glass-blur"
               min={GLASS_BLUR_MIN}
               max={GLASS_BLUR_MAX}
               step={GLASS_BLUR_STEP}
-              value={glassSettings.blur}
+              value={effectiveGlassBlur}
               onChange={(event) => {
                 const blur = Number(event.target.value);
                 if (!Number.isFinite(blur)) return;
@@ -544,7 +545,7 @@ export function SettingsPage({
           onClose={() => setDatePickerOpen(false)}
           glassPreset={glassSettings.preset}
           glassOptics={glassSettings.optics}
-          glassBlur={glassSettings.blur}
+          glassBlur={effectiveGlassBlur}
         />
         <MezfitSidePanel
           side="right"
