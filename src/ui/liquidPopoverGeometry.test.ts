@@ -36,16 +36,14 @@ describe('LiquidPopover geometry contract', () => {
     },
   );
 
-  it('finishes consuming the tail at exactly the requested superellipse area and bottom offset', () => {
-    const motion = createLiquidMotion({ x: 60, y: 40, w: 88, h: 44 }, target);
-    const growthEnd = 0.8 / motion.time(1),
-      points = motion.contour(growthEnd)[0];
-    expect(area(points) / (target.w * target.h)).toBeCloseTo(0.65, 3);
-    expect(contourBounds([points]).bottom).toBeCloseTo(
-      target.y + target.h / 2 + 10,
-      3,
-    );
-    expect(motion.geometry(0.8).externalLength).toBe(0);
+  it('finishes the tail in a centered 35% superellipse before morphing', () => {
+    const motion = createLiquidMotion({ x: 60, y: 40, w: 88, h: 44 }, target),
+      points = motion.contour(motion.morphStart)[0],
+      bounds = contourBounds([points]);
+    expect(area(points) / (target.w * target.h)).toBeCloseTo(0.35, 3);
+    expect((bounds.left + bounds.right) / 2).toBeCloseTo(target.x, 3);
+    expect((bounds.top + bounds.bottom) / 2).toBeCloseTo(target.y, 3);
+    expect(motion.geometry(motion.morphStart).externalLength).toBe(0);
   });
 
   it('settles to the rectangle with the shared GlassSurface radius and no residual spring', () => {
@@ -58,6 +56,32 @@ describe('LiquidPopover geometry contract', () => {
     const roundedArea = target.w * target.h - (4 - Math.PI) * radius * radius;
     expect(area(points)).toBeCloseTo(roundedArea, -1);
     expect(motion.spring(0.45)).toBe(0);
+    expect(motion.totalSeconds).toBeCloseTo(0.65, 5);
+  });
+
+  it('settles asymmetric Apple-style edge overshoot to about 106%', () => {
+    const motion = createLiquidMotion({ x: 350, y: 50, w: 44, h: 44 }, target);
+    const samples = Array.from({ length: 121 }, (_, index) => {
+      const progress =
+          motion.morphStart +
+          ((1 - motion.morphStart) * index) / 120,
+        bounds = contourBounds(motion.contour(progress));
+      return {
+        progress,
+        bounds,
+        scale: Math.max(
+          (bounds.right - bounds.left) / target.w,
+          (bounds.bottom - bounds.top) / target.h,
+        ),
+      };
+    });
+    const peakScale = Math.max(...samples.map((sample) => sample.scale)),
+      bottomPeak = samples.reduce((best, sample) =>
+        sample.bounds.bottom > best.bounds.bottom ? sample : best),
+      topPeak = samples.reduce((best, sample) =>
+        sample.bounds.top < best.bounds.top ? sample : best);
+    expect(peakScale).toBeCloseTo(1.06, 2);
+    expect(bottomPeak.progress).toBeLessThan(topPeak.progress);
   });
 
   it('sanitizes malformed motion options without poisoning coordinates', () => {
