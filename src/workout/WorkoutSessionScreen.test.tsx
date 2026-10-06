@@ -262,6 +262,20 @@ describe('WorkoutSessionScreen', () => {
     expect(startMock).not.toHaveBeenCalled();
   });
 
+  it('renders sortable session exercises with a transparent owned surface', async () => {
+    initializeMock.mockResolvedValue({
+      session: {
+        ...programSession,
+        exercises: [exerciseData(42, 0, 'Жим лёжа')],
+      },
+    });
+
+    const { container } = renderScreen();
+
+    expect(await screen.findByText('Жим лёжа')).toBeTruthy();
+    expect(container.querySelector('.session-exercise--transparent')).not.toBeNull();
+  });
+
   it('rolls back repeated failed reorders to the last server-acknowledged order', async () => {
     initializeMock.mockResolvedValue({ session: orderedProgramSession });
     let rejectFirst: (reason?: unknown) => void = () => undefined;

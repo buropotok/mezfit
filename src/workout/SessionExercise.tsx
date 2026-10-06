@@ -125,6 +125,7 @@ export function SessionExercise(props: SessionExerciseProps) {
     data,
     collapsed: controlledCollapsed,
     defaultCollapsed = false,
+    surface = 'default',
     onCollapsedChange,
     onOpenExerciseMenu,
     onOpenHistory,
@@ -152,7 +153,7 @@ export function SessionExercise(props: SessionExerciseProps) {
   };
 
   return (
-    <article className="session-exercise" data-session-exercise-id={data.sessionExerciseId}>
+    <article className={`session-exercise${surface === 'transparent' ? ' session-exercise--transparent' : ''}`} data-session-exercise-id={data.sessionExerciseId}>
       <div className="session-exercise__header">
         <List className="session-exercise__header-list">
           <ListItem

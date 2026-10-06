@@ -7,6 +7,10 @@
   background: var(--ui-color-surface);
 }
 
+.session-exercise--transparent {
+  background: transparent;
+}
+
 .session-exercise__header {
   display: flex;
   align-items: center;

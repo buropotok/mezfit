@@ -46,6 +46,7 @@ interface SessionExerciseSharedProps {
   data: SessionExerciseData;
   collapsed?: boolean;
   defaultCollapsed?: boolean;
+  surface?: 'default' | 'transparent';
   onCollapsedChange?: (collapsed: boolean) => void;
   onOpenExerciseMenu?: (sessionExerciseId: number) => void;
   onOpenHistory?: (exerciseDefinitionId: number) => void;
