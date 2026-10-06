@@ -242,6 +242,7 @@ export function DatePicker({
           ref={yearTargetRef}
           preset={glassPreset}
           optics={glassOptics}
+          wrapContent={false}
           shape="capsule"
           className="ui-date-picker__year-trigger ui-text--body"
           aria-label={`Выбрать год, сейчас ${visibleYear}`}
