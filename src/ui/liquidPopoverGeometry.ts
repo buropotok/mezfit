@@ -230,7 +230,9 @@ export function createLiquidMotion(
   function geometry(t: number) {
     const shrinkEnd = Math.max(0.001, sourceShrinkEnd()),
       preMorph = Math.max(shrinkEnd + 0.001, morphStart),
-      shrink = smoother(clamp(t / shrinkEnd, 0, 1)),
+      shrink = centerRoute
+        ? smoother(clamp(t / shrinkEnd, 0, 1))
+        : smoother((t * options.duration) / options.sourceMorph),
       shellProgress = centerRoute
         ? clamp((t - shrinkEnd) / (preMorph - shrinkEnd), 0, 1)
         : clamp(t / morphStart, 0, 1);
