@@ -49,6 +49,7 @@ type IdentityActionBaseProps = {
   surfaceRef?: Ref<HTMLElement>;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
+  glassBlur?: number;
   glass?: GlassMaterialOverrides;
   glassBezelOpacity?: number;
   glassBezelHighlights?: GlassBezelHighlights;
@@ -96,6 +97,7 @@ export function IdentityAction(props: IdentityActionProps) {
     variant = 'labeled',
     glassPreset,
     glassOptics = false,
+    glassBlur,
     glass,
     glassBezelOpacity = 1,
     glassBezelHighlights,
@@ -196,6 +198,7 @@ export function IdentityAction(props: IdentityActionProps) {
         ref={setSurfaceRef}
         preset={glassPreset}
         optics={glassOptics}
+        blur={glassBlur}
         glass={glass}
         bezelOpacity={glassBezelOpacity}
         bezelHighlights={glassBezelHighlights}
@@ -253,6 +256,7 @@ export function IdentityAction(props: IdentityActionProps) {
       ref={setSurfaceRef}
       preset={glassPreset}
       optics={glassOptics}
+      blur={glassBlur}
       glass={glass}
       bezelOpacity={glassBezelOpacity}
       bezelHighlights={glassBezelHighlights}
