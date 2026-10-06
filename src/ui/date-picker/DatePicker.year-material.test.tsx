@@ -1,32 +1,35 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
-import { type ReactNode, type Ref } from 'react';
+import { type ElementType, type HTMLAttributes, type ReactNode, type Ref } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatePicker } from './DatePicker';
 
 vi.mock('../GlassSurface', () => ({
   GlassSurface: ({
+    component: Component = 'div',
     ref,
     preset,
     optics,
     className = '',
     children,
-  }: {
-    ref: Ref<HTMLDivElement>;
+    ...props
+  }: HTMLAttributes<HTMLElement> & {
+    component?: ElementType;
+    ref: Ref<HTMLElement>;
     preset: string;
     optics: boolean;
-    className?: string;
     children?: ReactNode;
   }) => (
-    <div
+    <Component
+      {...props}
       ref={ref}
       className={`ui-glass-surface ${className}`.trim()}
       data-preset={preset}
       data-optics={String(optics)}
     >
       {children}
-    </div>
+    </Component>
   ),
 }));
 
@@ -68,10 +71,12 @@ describe('DatePicker year material', () => {
 
     const trigger = screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' });
     const triggerSurface = trigger.closest<HTMLElement>('.ui-date-picker__year-trigger');
+    expect(triggerSurface).toBe(trigger);
     expect(triggerSurface?.getAttribute('data-preset')).toBe('smoked');
     expect(triggerSurface?.getAttribute('data-optics')).toBe('true');
 
     fireEvent.click(trigger);
+    expect(trigger.style.visibility).toBe('hidden');
 
     const popover = screen.getByRole('dialog', { name: 'Выберите год' });
     const popoverSurface = popover.querySelector<HTMLElement>('.ui-liquid-popover__glass');
