@@ -318,18 +318,18 @@ export function App() {
         enabled={state.activeRole === 'client'}
       >
         <NavigationShell
-        me={state.me}
-        activeRole={state.activeRole}
-        destination={destination}
-        context={shellContext}
-        onDestinationChange={changeDestination}
-        onRoleSwitch={switchRole}
-        floatingAction={workoutFloatingAction}
-        glassPreset={glassSettings.preset}
-        glassOptics={glassSettings.optics}
-      >
-        {workoutOpen ? (
-          <WorkoutSessionScreen
+          me={state.me}
+          activeRole={state.activeRole}
+          destination={destination}
+          context={shellContext}
+          onDestinationChange={changeDestination}
+          onRoleSwitch={switchRole}
+          floatingAction={workoutFloatingAction}
+          glassPreset={glassSettings.preset}
+          glassOptics={glassSettings.optics}
+        >
+          {workoutOpen ? (
+            <WorkoutSessionScreen
             initData={state.initData}
             onClose={closeWorkout}
             onNavigationContextChange={setWorkoutNestedNavigationContext}
@@ -357,7 +357,7 @@ export function App() {
             destination={clientDestination}
             onNavigationContextChange={handleNavigationContextChange}
           />
-        )}
+          )}
         </NavigationShell>
       </ClientCoachProvider>
     </GlassSurfaceProvider>
