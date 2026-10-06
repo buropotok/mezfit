@@ -17,6 +17,7 @@ export type MezfitSliderProps = {
   size: MezfitSliderSize;
   start: number;
   end: number;
+  ariaLabel?: string;
   onValueChange?: (value: number) => void;
 };
 
@@ -59,7 +60,13 @@ const SPECULAR_MAP = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAB4CAYA
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderProps) {
+export function MezfitSlider({
+  size,
+  start,
+  end,
+  ariaLabel = 'Slider',
+  onValueChange,
+}: MezfitSliderProps) {
   const scale = SIZE_SCALE[size];
   const min = Math.min(start, end);
   const max = Math.max(start, end);
@@ -70,6 +77,7 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
   const rootRef = useRef<HTMLDivElement | null>(null);
   const reactId = useId().replace(/:/g, '');
   const filterId = `mezfit-slider-optics-${reactId}`;
+  const inputId = `mezfit-slider-input-${reactId}`;
 
   const trackHeight = BASE_TRACK_HEIGHT * scale;
   const thumbWidth = BASE_THUMB_WIDTH * scale;
@@ -163,19 +171,26 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
         <div
           className="mezfit-slider__input-layer"
           role="slider"
+          aria-label={ariaLabel}
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={value}
           aria-disabled="true"
         />
       ) : (
-        <KonstaRange
-          className="mezfit-slider__input-layer"
-          min={min}
-          max={max}
-          value={value}
-          onInput={handleInput}
-        />
+        <>
+          <label className="mezfit-slider__a11y-label" htmlFor={inputId}>
+            {ariaLabel}
+          </label>
+          <KonstaRange
+            className="mezfit-slider__input-layer"
+            inputId={inputId}
+            min={min}
+            max={max}
+            value={value}
+            onInput={handleInput}
+          />
+        </>
       )}
 
       <div
