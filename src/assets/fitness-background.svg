@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" preserveAspectRatio="xMidYMid slice">
+  <rect width="720" height="1280" fill="#000"/>
+  <defs>
+    <g id="dumbbell" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 32h44"/><path d="M13 22l10 4v12l-10 4-7-8v-4z"/><path d="M67 22l-10 4v12l10 4 7-8v-4z"/>
+    </g>
+    <g id="barbell" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 36h80"/><path d="M12 20h8v32h-8zM4 25h8v22H4zM100 20h8v32h-8zM108 25h8v22h-8z"/>
+    </g>
+    <g id="kettlebell" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 28c0-13 8-20 18-20s18 7 18 20"/><path d="M29 28c0-7 4-11 11-11s11 4 11 11"/><path d="M17 34c4-7 12-10 23-10s19 3 23 10l-4 31c-1 8-7 12-19 12s-18-4-19-12z"/>
+    </g>
+    <g id="plate" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="32" cy="32" r="27"/><circle cx="32" cy="32" r="9"/><path d="M9 21c8-7 15-10 23-10M55 43c-7 7-15 10-23 10"/>
+    </g>
+    <g id="shaker" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 18h34l-4 58c-1 6-5 10-13 10s-12-4-13-10z"/><path d="M16 18h38l-5-9H21zM25 32h18M27 45h14M29 58h10"/>
+    </g>
+    <g id="bottle" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M27 7h19v12l7 9v49c0 7-5 11-16 11s-16-4-16-11V28l6-9z"/><path d="M26 19h21M28 36h18M28 69h18"/>
+    </g>
+    <g id="stopwatch" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="38" cy="43" r="28"/><path d="M31 7h14M38 15V7M57 18l7-7M38 43l12-10M38 43v-16"/>
+    </g>
+    <g id="heart" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M39 75C17 58 5 46 5 29 5 17 13 9 24 9c8 0 13 4 15 10 3-6 8-10 16-10 11 0 19 8 19 20 0 17-12 29-35 46z"/><path d="M16 39h13l5-11 8 22 6-11h13"/>
+    </g>
+    <g id="shoe" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 48c13-1 23-8 31-24l13 12c8 8 16 11 28 14 8 2 11 7 9 13-2 5-7 7-15 7H20C9 70 3 64 4 58c1-5 2-8 5-10z"/><path d="M37 32l9 7M32 39l10 7M18 60h65"/>
+    </g>
+    <g id="mat" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 55h54c12 0 22 7 22 16s-10 16-22 16H12z"/><ellipse cx="66" cy="71" rx="13" ry="10"/><path d="M12 55l42-28h34l-31 28"/>
+    </g>
+    <g id="medal" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 5l15 28M58 5L43 33"/><circle cx="38" cy="52" r="20"/><path d="M38 40l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z"/>
+    </g>
+    <g id="bike" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="22" cy="59" r="18"/><circle cx="82" cy="59" r="18"/><path d="M22 59l20-27 14 27H22zm34 0l18-29M42 32h18M70 30h13M56 59h26M46 40l24 19"/>
+    </g>
+    <g id="rope" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 19c12 15 11 45 23 59 9 10 25 10 34 0 12-14 11-44 23-59"/><path d="M8 8l14 14M90 22l14-14"/>
+    </g>
+    <g id="apple" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M40 26c8-8 20-8 28-1 10 10 6 38-4 51-7 9-14 12-24 7-10 5-17 2-24-7C6 63 2 35 12 25c8-7 20-7 28 1z"/><path d="M40 24c0-9 5-16 14-19M44 14c9-5 18-4 25 2"/>
+    </g>
+    <g id="leaf" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 66c20-31 44-45 72-50-3 30-20 50-48 54-10 1-18-1-24-4z"/><path d="M18 60c17-12 31-21 48-31"/>
+    </g>
+    <g id="runner" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="52" cy="16" r="9"/><path d="M46 28c-11 12-17 27-15 43l18 7 15-24 13 13M31 71L13 93M49 78l24 16M32 44l-18 10M42 41l22-9"/>
+    </g>
+    <g id="plank" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="93" cy="22" r="8"/><path d="M84 29L61 43 35 46 13 65M61 43l18 27M35 46L6 39M79 70h20"/>
+    </g>
+    <g id="lunge" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="43" cy="14" r="8"/><path d="M41 24l-5 32 20 20M36 45L17 57M36 56L19 87M56 76l29 8M19 87H7M85 84h12"/>
+    </g>
+    <g id="flex" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 63c5-19 16-31 32-36l5-17 10 6-2 17c11 4 18 12 21 24-13-7-24-7-33 0-10 7-21 9-33 6z"/><path d="M32 42c7-3 14-2 21 3"/>
+    </g>
+    <g id="drop" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 5C13 21 8 31 8 40c0 10 7 18 16 18s16-8 16-18c0-9-5-19-16-35z"/>
+    </g>
+  </defs>
+
+  <g color="#5a5a5a" opacity=".78">
+    <use href="#plank" transform="translate(26 48) scale(.95)"/>
+    <use href="#dumbbell" transform="translate(285 54) rotate(17 40 32) scale(1.2)"/>
+    <use href="#shoe" transform="translate(525 72) rotate(9 45 45) scale(.95)"/>
+    <use href="#plate" transform="translate(174 155) scale(.9)"/>
+    <use href="#barbell" transform="translate(390 154) rotate(8 58 36) scale(.95)"/>
+    <use href="#shaker" transform="translate(600 170) rotate(8 35 45) scale(.8)"/>
+    <use href="#rope" transform="translate(22 210) rotate(-12 55 45) scale(.72)"/>
+    <use href="#runner" transform="translate(276 244) scale(1.05)"/>
+    <use href="#kettlebell" transform="translate(520 250) scale(.88)"/>
+    <use href="#leaf" transform="translate(636 284) rotate(18 45 40) scale(.55)"/>
+    <use href="#bottle" transform="translate(72 355) rotate(7 36 45) scale(.78)"/>
+    <use href="#dumbbell" transform="translate(244 382) rotate(-20 40 32) scale(1.05)"/>
+    <use href="#heart" transform="translate(430 360) scale(.78)"/>
+    <use href="#mat" transform="translate(560 382) rotate(-7 50 60) scale(.72)"/>
+    <use href="#bike" transform="translate(30 505) rotate(-3 50 50) scale(.9)"/>
+    <use href="#medal" transform="translate(252 520) scale(.78)"/>
+    <use href="#barbell" transform="translate(430 535) rotate(4 58 36) scale(1.02)"/>
+    <use href="#lunge" transform="translate(596 505) scale(.75)"/>
+    <use href="#apple" transform="translate(110 650) scale(.65)"/>
+    <use href="#stopwatch" transform="translate(270 655) scale(.82)"/>
+    <use href="#flex" transform="translate(455 642) rotate(8 45 38) scale(.85)"/>
+    <use href="#drop" transform="translate(620 660) scale(.62)"/>
+    <use href="#plank" transform="translate(32 766) rotate(4 50 45) scale(.88)"/>
+    <use href="#shaker" transform="translate(250 760) rotate(-8 35 45) scale(.82)"/>
+    <use href="#kettlebell" transform="translate(450 760) scale(.85)"/>
+    <use href="#shoe" transform="translate(580 780) rotate(-11 45 45) scale(.78)"/>
+    <use href="#leaf" transform="translate(85 905) rotate(-24 45 40) scale(.7)"/>
+    <use href="#barbell" transform="translate(265 900) rotate(-10 58 36) scale(.92)"/>
+    <use href="#runner" transform="translate(510 900) rotate(2 48 52) scale(.92)"/>
+    <use href="#plate" transform="translate(620 936) scale(.72)"/>
+    <use href="#dumbbell" transform="translate(58 1050) rotate(20 40 32) scale(1)"/>
+    <use href="#mat" transform="translate(260 1036) rotate(8 50 60) scale(.8)"/>
+    <use href="#heart" transform="translate(500 1042) scale(.7)"/>
+    <use href="#bottle" transform="translate(626 1040) rotate(-5 36 45) scale(.67)"/>
+    <use href="#rope" transform="translate(90 1152) rotate(11 55 45) scale(.7)"/>
+    <use href="#stopwatch" transform="translate(290 1148) scale(.72)"/>
+    <use href="#medal" transform="translate(446 1155) scale(.68)"/>
+    <use href="#kettlebell" transform="translate(590 1150) scale(.7)"/>
+  </g>
+
+  <g fill="none" stroke="#4b4b4b" stroke-width="2.5" stroke-linecap="round" opacity=".58">
+    <path d="M126 116l14-9M137 129l19-2M660 136l15-10M673 150l17 2M104 304l15 8M90 314l11 13M470 278l11-13M484 281l17-4"/>
+    <path d="M173 466l14-11M185 480l18-2M654 455l15 9M646 469l11 12M196 614l15 5M184 625l10 11"/>
+    <path d="M543 620l14-12M559 628l16-2M150 856l15-11M164 869l18-1M650 864l14 8M641 877l11 12"/>
+    <path d="M168 1017l13-10M180 1030l18-1M561 1000l12-12M575 1010l16-3M200 1194l14 7M190 1207l10 12"/>
+  </g>
+</svg>
