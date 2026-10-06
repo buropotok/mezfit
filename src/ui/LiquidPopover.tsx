@@ -321,7 +321,8 @@ export function LiquidPopover({
       // Repaint from the positioned native rows. This makes the raster use the
       // exact same viewport, scroll position, row spacing, and bottom gap as
       // the live HTML that takes over during the handoff.
-      const texture = host.ownerDocument.createElement('canvas');
+      const texture =
+        sourceRef.current ?? host.ownerDocument.createElement('canvas');
       if (
         !paintContentTexture(
           texture,
@@ -335,6 +336,7 @@ export function LiquidPopover({
         finish();
         return;
       }
+      sourceRef.current = texture;
       const cropX = Math.floor(
         Math.max(0, Math.min(sourceBounds.left, destinationBounds.left) - 80),
       );
