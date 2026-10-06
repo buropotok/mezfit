@@ -64,10 +64,6 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
   const min = Math.min(start, end);
   const max = Math.max(start, end);
   const isStatic = min === max;
-  // Konsta 5.4.0 calculates thumb position by dividing by (max - min), even
-  // while disabled. Keep its private interaction range non-zero for a static
-  // slider without changing the public Start/End/Value semantics.
-  const interactionMax = isStatic ? min + 1 : max;
   const [value, setValue] = useState(() => clamp(start, min, max));
   const [isActive, setIsActive] = useState(false);
   const [measuredWidth, setMeasuredWidth] = useState(BASE_TRACK_WIDTH * scale);
@@ -163,15 +159,24 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
         </div>
       </div>
 
-      <KonstaRange
-        className="mezfit-slider__input-layer"
-        min={min}
-        max={interactionMax}
-        step="any"
-        value={value}
-        disabled={isStatic}
-        onInput={handleInput}
-      />
+      {isStatic ? (
+        <div
+          className="mezfit-slider__input-layer"
+          role="slider"
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={value}
+          aria-disabled="true"
+        />
+      ) : (
+        <KonstaRange
+          className="mezfit-slider__input-layer"
+          min={min}
+          max={max}
+          value={value}
+          onInput={handleInput}
+        />
+      )}
 
       <div
         className={`mezfit-slider__thumb-layout${isActive ? ' is-active' : ''}`}
@@ -212,7 +217,7 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
             <feColorMatrix
               in="displaced"
               type="saturate"
-              values={SPECULAR_SATURATION}
+              values={String(SPECULAR_SATURATION)}
               result="displaced_saturated"
             />
             <feImage

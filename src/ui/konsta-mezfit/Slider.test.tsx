@@ -91,18 +91,17 @@ describe('MezfitSlider', () => {
     expect(fill?.style.width).toBe('50%');
   });
 
-  it('keeps a static Start/End value disabled without exposing Konsta zero-range math', () => {
+  it('keeps static Start/End accessibility semantics exact without invoking Konsta zero-range math', () => {
     const view = renderSlider('small', 12, 12);
-    const input = view.container.querySelector<HTMLInputElement>('input[type="range"]');
+    const staticSlider = view.container.querySelector<HTMLElement>('[role="slider"][aria-disabled="true"]');
     const root = view.container.querySelector<HTMLElement>('.mezfit-slider');
 
-    expect(input?.disabled).toBe(true);
-    expect(input?.min).toBe('12');
-    expect(input?.value).toBe('12');
+    expect(view.container.querySelector('input[type="range"]')).toBeNull();
+    expect(staticSlider?.getAttribute('aria-valuemin')).toBe('12');
+    expect(staticSlider?.getAttribute('aria-valuemax')).toBe('12');
+    expect(staticSlider?.getAttribute('aria-valuenow')).toBe('12');
     expect(root?.dataset.value).toBe('12');
-
     expect(view.onValueChange).not.toHaveBeenCalled();
-    expect(root?.dataset.value).toBe('12');
   });
 
   it.each([
