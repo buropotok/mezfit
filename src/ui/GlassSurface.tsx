@@ -1,4 +1,6 @@
 import {
+  createContext,
+  useContext,
   useEffect,
   useId,
   useLayoutEffect,
@@ -67,6 +69,19 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-specular-opposite-side-alpha': string;
 };
 
+export type GlassSurfaceProviderProps = {
+  blur?: number;
+  children: ReactNode;
+};
+
+const GlassSurfaceContext = createContext<{ blur?: number }>({});
+
+/** Supplies shared GlassSurface material defaults to every descendant, including React portals. */
+export function GlassSurfaceProvider({ blur, children }: GlassSurfaceProviderProps) {
+  const value = useMemo(() => ({ blur }), [blur]);
+  return <GlassSurfaceContext.Provider value={value}>{children}</GlassSurfaceContext.Provider>;
+}
+
 const GLASS_VECTOR_MAP_CACHE_LIMIT = 4;
 const glassVectorMapCache = new Map<string, string>();
 
@@ -113,6 +128,8 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   component?: ElementType;
   ref?: Ref<HTMLElement>;
   preset?: GlassPresetName;
+  /** Public backdrop blur override in CSS pixels. Legacy glass.blur remains supported and takes precedence. */
+  blur?: number;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
   contentClassName?: string;
@@ -135,6 +152,7 @@ export function GlassSurface({
   component = 'div',
   ref,
   preset = 'modalTuned',
+  blur,
   glass,
   shape = 'auto',
   className = '',
@@ -151,9 +169,16 @@ export function GlassSurface({
 }: GlassSurfaceProps) {
   const rootRef = useRef<HTMLElement>(null);
   const workCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const inheritedGlass = useContext(GlassSurfaceContext);
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
-  const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
+  const material = useMemo(
+    () => resolveGlassMaterial(preset, {
+      ...glass,
+      blur: glass?.blur ?? blur ?? inheritedGlass.blur,
+    }),
+    [preset, glass, blur, inheritedGlass.blur],
+  );
   const highlightOpacity = Math.max(0, Math.min(1, bezelOpacity));
   const topLeftHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.topLeft ?? 1));
   const bottomRightHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.bottomRight ?? 1));
