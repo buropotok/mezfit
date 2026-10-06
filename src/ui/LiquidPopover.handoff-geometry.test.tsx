@@ -28,9 +28,10 @@ it('repaints the opening texture from positioned native row geometry', async () 
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
     window.setTimeout(() => callback(performance.now()), 16),
   );
-  vi.stubGlobal('cancelAnimationFrame', (id: number) =>
+  const cancelAnimationFrame = vi.fn((id: number) =>
     window.clearTimeout(id),
   );
+  vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrame);
   vi.spyOn(performance, 'now').mockImplementation(() => Date.now());
 
   const fillText = vi.fn(),
@@ -117,21 +118,22 @@ it('repaints the opening texture from positioned native row geometry', async () 
     },
   );
 
-  const origin = createRef<HTMLButtonElement>();
-  render(
-    <KonstaProvider theme="ios" dark>
-      <LiquidPopover
-        isOpen
-        onOpenChange={() => {}}
-        triggerRef={origin}
-        trigger={<button ref={origin}>Open</button>}
-        items={[
-          { id: 'first', label: 'First' },
-          { id: 'second', label: 'Second' },
-        ]}
-      />
-    </KonstaProvider>,
-  );
+  const origin = createRef<HTMLButtonElement>(),
+    renderPopover = () => (
+      <KonstaProvider theme="ios" dark>
+        <LiquidPopover
+          isOpen
+          onOpenChange={() => {}}
+          triggerRef={origin}
+          trigger={<button ref={origin}>Open</button>}
+          items={[
+            { id: 'first', label: 'First' },
+            { id: 'second', label: 'Second' },
+          ]}
+        />
+      </KonstaProvider>
+    ),
+    view = render(renderPopover());
 
   await act(async () => {
     vi.advanceTimersByTime(32);
@@ -148,4 +150,11 @@ it('repaints the opening texture from positioned native row geometry', async () 
   // 108.5 px; the opening texture must not retain that coordinate system.
   expect(finalBaseline).not.toBeCloseTo(108.5, 3);
   expect(drawImage).toHaveBeenCalled();
+
+  const cancellationsBeforeEquivalentRerender =
+    cancelAnimationFrame.mock.calls.length;
+  view.rerender(renderPopover());
+  expect(cancelAnimationFrame).toHaveBeenCalledTimes(
+    cancellationsBeforeEquivalentRerender,
+  );
 });
