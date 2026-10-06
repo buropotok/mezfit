@@ -186,7 +186,6 @@ interface Props {
   floatingAction?: NavigationFloatingAction | null;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
-  glassBlur?: number;
   children: ReactNode;
 }
 
@@ -200,7 +199,6 @@ export function NavigationShell({
   floatingAction,
   glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
   glassOptics = false,
-  glassBlur,
   children,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -373,7 +371,7 @@ export function NavigationShell({
   );
 
   return (
-    <FloatingActionButtonGlassProvider preset={glassPreset} optics={glassOptics} blur={glassBlur}>
+    <FloatingActionButtonGlassProvider preset={glassPreset} optics={glassOptics}>
     <NavigationBackTransitionContext.Provider value={requestBackTransition}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
@@ -390,7 +388,6 @@ export function NavigationShell({
             rightControlHidden={menuOpen}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
-            glassBlur={glassBlur}
             menuDisabled={menuOpen}
           />
         </div>
@@ -421,7 +418,6 @@ export function NavigationShell({
             onValueChange={(value) => chooseDestination(value as AppDestination)}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
-            glassBlur={glassBlur}
             fab={currentItem.showFab === false || !resolvedFloatingAction ? undefined : (
               <FloatingActionButton
                 label={resolvedFloatingAction.label}
@@ -446,7 +442,6 @@ export function NavigationShell({
           onClose={() => setCalendarOpen(false)}
           glassPreset={glassPreset}
           glassOptics={glassOptics}
-          glassBlur={glassBlur}
         />
         </main>
       </NavigationLevelContext.Provider>
