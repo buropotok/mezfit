@@ -56,6 +56,7 @@ export function createLiquidMotion(
     lengths: number[] = [],
     total = 1,
     appleOvershootGain = 1,
+    centerRoute = false,
     target = { x: 0, y: 0, a: 0, b: 0, n: 2 };
   const clamp = (x: number, a: number, b: number) =>
       Math.max(a, Math.min(b, x)),
@@ -71,6 +72,12 @@ export function createLiquidMotion(
       x = clamp(x, 0, 1);
       return Math.sin((x * Math.PI) / 2);
     };
+  function sourceShrinkEnd() {
+    return clamp(options.sourceMorph / options.duration, 0, morphStart * 0.9);
+  }
+  function centerShrinkEnd() {
+    return Math.abs(source.w - source.h) > 0.5 ? sourceShrinkEnd() : 0;
+  }
   function indexRoute() {
     lengths = [0];
     for (let i = 1; i < route.length; i++)
@@ -120,11 +127,16 @@ export function createLiquidMotion(
     };
     appleOvershootGain = resolveAppleOvershootGain();
     // Same aspect ratio as the rectangle; superellipse area is exactly ratio*w*h.
+    centerRoute =
+      source.x - source.w / 2 <= target.x &&
+      target.x <= source.x + source.w / 2;
     const side = target.x >= source.x ? 1 : -1;
-    const startPoint = {
-      x: source.x + side * Math.max(0, (source.w - source.h) / 2),
-      y: source.y,
-    };
+    const startPoint = centerRoute
+      ? { x: source.x, y: source.y }
+      : {
+          x: source.x + side * Math.max(0, (source.w - source.h) / 2),
+          y: source.y,
+        };
     const sx = startPoint.x,
       sy = startPoint.y;
     const vx = target.x >= sx ? 1 : -1,
@@ -139,6 +151,21 @@ export function createLiquidMotion(
         const u = i / n;
         route.push({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
       }
+    }
+    if (centerRoute) {
+      // Apple center behavior: once the source crosses the target centerline,
+      // it shrinks to a circle in place and then travels vertically. Any small
+      // horizontal correction happens only after that vertical leg.
+      line({ x: sx, y: sy }, { x: sx, y: target.y });
+      if (Math.abs(sx - target.x) > 0.001)
+        line({ x: sx, y: target.y }, { x: target.x, y: target.y });
+      route = route.filter(
+        (p, i, a) =>
+          !i || Math.hypot(p.x - a[i - 1].x, p.y - a[i - 1].y) > 0.0001,
+      );
+      if (route.length < 2) route.push({ ...route[0] });
+      indexRoute();
+      return;
     }
     if (Math.abs(target.x - sx) < 30 || Math.abs(target.y - sy) < 30) {
       // Near alignment still needs horizontal departure and vertical arrival.
@@ -204,12 +231,24 @@ export function createLiquidMotion(
     return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
   }
   function geometry(t: number) {
-    const shrink = smoother((t * options.duration) / options.sourceMorph),
-      baseRadius = source.h / 2 + (R - source.h / 2) * shrink,
-      baseTail =
-        source.w - source.h + (options.tail - (source.w - source.h)) * shrink,
-      shellProgress = clamp(t / morphStart, 0, 1);
+    const shrinkEnd = centerRoute ? centerShrinkEnd() : sourceShrinkEnd(),
+      preMorph = Math.max(shrinkEnd + 0.001, morphStart),
+      shrink = centerRoute
+        ? smoother(clamp(t / Math.max(0.001, shrinkEnd), 0, 1))
+        : smoother((t * options.duration) / options.sourceMorph),
+      shellProgress = centerRoute
+        ? clamp((t - shrinkEnd) / (preMorph - shrinkEnd), 0, 1)
+        : clamp(t / morphStart, 0, 1);
     const movement = flow(shellProgress),
+      sourceCircleRadius = Math.min(source.w, source.h) / 2,
+      baseRadius = centerRoute
+        ? sourceCircleRadius + (R - sourceCircleRadius) * movement
+        : source.h / 2 + (R - source.h / 2) * shrink,
+      baseTail = centerRoute
+        ? options.tail * movement
+        : source.w -
+          source.h +
+          (options.tail - (source.w - source.h)) * shrink,
       s = movement * total,
       head = at(s),
       delay = options.growthDelay,
@@ -321,6 +360,53 @@ export function createLiquidMotion(
     x = clamp(x, 0, 1);
     return x * x * x * (x * (x * 6 - 15) + 10);
   };
+  function sourceShrinkContour(t: number) {
+    const end = Math.max(0.001, centerShrinkEnd()),
+      u = smoother(clamp(t / end, 0, 1)),
+      diameter = Math.min(source.w, source.h),
+      width = source.w + (diameter - source.w) * u,
+      height = source.h + (diameter - source.h) * u,
+      radius = Math.min(width, height) / 2,
+      ps: Point[] = [];
+    if (width >= height) {
+      const halfStraight = Math.max(0, (width - height) / 2),
+        leftX = source.x - halfStraight,
+        rightX = source.x + halfStraight;
+      for (let i = 0; i < 32; i++) {
+        const angle = -Math.PI / 2 + (i / 31) * Math.PI;
+        ps.push({
+          x: rightX + radius * Math.cos(angle),
+          y: source.y + radius * Math.sin(angle),
+        });
+      }
+      for (let i = 0; i < 32; i++) {
+        const angle = Math.PI / 2 + (i / 31) * Math.PI;
+        ps.push({
+          x: leftX + radius * Math.cos(angle),
+          y: source.y + radius * Math.sin(angle),
+        });
+      }
+      return [ps];
+    }
+    const halfStraight = Math.max(0, (height - width) / 2),
+      topY = source.y - halfStraight,
+      bottomY = source.y + halfStraight;
+    for (let i = 0; i < 32; i++) {
+      const angle = (i / 31) * Math.PI;
+      ps.push({
+        x: source.x + radius * Math.cos(angle),
+        y: bottomY + radius * Math.sin(angle),
+      });
+    }
+    for (let i = 0; i < 32; i++) {
+      const angle = Math.PI + (i / 31) * Math.PI;
+      ps.push({
+        x: source.x + radius * Math.cos(angle),
+        y: topY + radius * Math.sin(angle),
+      });
+    }
+    return [ps];
+  }
   function resampleClosed(ps: Point[]) {
     const sums = [0],
       n = ps.length;
@@ -730,6 +816,8 @@ export function createLiquidMotion(
   }
   function animationContour(t: number) {
     const time = mainTime(t);
+    if (centerRoute && time < centerShrinkEnd())
+      return sourceShrinkContour(time);
     return time >= morphStart
       ? morphContour(time)
       : shellContour(geometry(time));

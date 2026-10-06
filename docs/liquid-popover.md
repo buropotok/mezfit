@@ -30,6 +30,17 @@ The trigger must forward normal button props and its ref. `triggerRef`
 points to the **whole** source surface, which can differ from the trigger itself
 (for example, the 88 × 44 Navbar capsule containing the 44 × 44 menu segment).
 Hide the source through its owner's state while open, retaining its layout.
+
+Route selection is automatic from the measured source and final popover bounds.
+If the source lies fully to the left or right of the final popover centerline,
+the existing side-entry path is used. If the source's horizontal bounds cross
+that centerline, an elongated source first compresses to a circle around its
+own center, then takes a strictly vertical main leg. If the source center is
+slightly offset from the popover center, the residual horizontal correction is
+deferred until the end of that pre-morph route; the normal asymmetric
+Apple-style morph then begins from the centered intermediate superellipse. A
+source that is already circular skips the empty compression phase and starts
+the vertical travel immediately. No route-selection prop is exposed.
 Navbar exposes `rightControlRef`, `rightControlHidden`, and `renderMenuControl`
 for this composition. Existing Navbar press activation remains unchanged through
 `triggerActivation="controlled"`; the owner calls `onOpenChange` after its press
