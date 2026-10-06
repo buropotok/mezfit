@@ -16,6 +16,14 @@ describe('glassSettings', () => {
     expect(loadGlassSettings(storage)).toEqual({ preset: 'clear', optics: true });
   });
 
+  it('accepts the liquid convex preset as a persisted glass setting', () => {
+    const storage = {
+      getItem: vi.fn(() => JSON.stringify({ preset: 'liquidConvex', optics: false })),
+    };
+
+    expect(loadGlassSettings(storage)).toEqual({ preset: 'liquidConvex', optics: false });
+  });
+
   it('falls back per field when persisted settings are invalid', () => {
     const storage = {
       getItem: vi.fn(() => JSON.stringify({ preset: 'unknown', optics: 'yes' })),
