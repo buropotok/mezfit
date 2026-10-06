@@ -5,6 +5,10 @@ const programsCss = readFileSync(
   new URL('./programs.css', import.meta.url),
   'utf8',
 );
+const programsPageSource = readFileSync(
+  new URL('./ProgramsPage.tsx', import.meta.url),
+  'utf8',
+);
 
 function ruleBody(selector) {
   const start = programsCss.indexOf(`${selector} {`);
@@ -30,5 +34,7 @@ describe('ProgramsPage CSS contract', () => {
     expect(programsCss).not.toContain('.programs-card--static');
     expect(programsCss).not.toContain('background:var(--ui-color-surface)');
     expect(programsCss).not.toContain('box-shadow:var(--ui-shadow-raised)');
+    expect(programsPageSource).not.toContain('programs-card--static');
+    expect(programsPageSource.match(/disabled=\{filter !== 'all' \|\| mutationBusy\}/g)).toHaveLength(2);
   });
 });
