@@ -389,9 +389,11 @@ export function GlassSurface({
   const radius = geometry?.radius ?? 0;
   const isLiquidConvex = preset === 'liquidConvex';
   const isBezelOnly = preset === 'bezelOnly';
-  const directionalLighting = isLiquidConvex || isBezelOnly
-    ? DIRECTIONAL_GLASS_LIGHTING[preset]
-    : null;
+  const directionalLighting = isLiquidConvex
+    ? DIRECTIONAL_GLASS_LIGHTING.liquidConvex
+    : isBezelOnly
+      ? DIRECTIONAL_GLASS_LIGHTING.bezelOnly
+      : null;
   const lighting = directionalLighting ?? DIRECTIONAL_GLASS_LIGHTING.liquidConvex;
   const isCapsule = shape === 'capsule' || (
     geometry !== null
