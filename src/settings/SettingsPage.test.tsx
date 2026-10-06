@@ -43,6 +43,7 @@ describe('SettingsPage glass settings', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'frosted' }));
+    expect(screen.getByText('bezelOnly')).toBeTruthy();
     fireEvent.click(screen.getByText('clear'));
 
     expect(onGlassSettingsChange).toHaveBeenLastCalledWith({
