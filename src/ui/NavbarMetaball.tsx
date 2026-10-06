@@ -34,7 +34,6 @@ type NavbarMetaballProps = {
   onIdentityClick?: () => void;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
-  glassBlur?: number;
 };
 
 const TRANSPARENT_GLASS: GlassMaterialOverrides = Object.freeze({
@@ -86,7 +85,6 @@ export function NavbarMetaball({
   onIdentityClick,
   glassPreset,
   glassOptics = false,
-  glassBlur,
 }: NavbarMetaballProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
@@ -215,7 +213,6 @@ export function NavbarMetaball({
         <GlassSurface
           className="ui-navbar-metaball__liquid"
           preset={glassPreset}
-          blur={glassBlur}
           bezelOpacity={0}
           contour={contour}
           shape={{ radius: 0 }}
@@ -248,7 +245,6 @@ export function NavbarMetaball({
             width="100%"
             glassPreset={glassPreset}
             glassOptics={movingOptics}
-            glassBlur={glassBlur}
             glass={movingIdentityGlass}
             glassBezelOpacity={1}
             glassBezelHighlights={identityBezelHighlights}
@@ -263,7 +259,6 @@ export function NavbarMetaball({
             width="100%"
             glassPreset={glassPreset}
             glassOptics={movingOptics}
-            glassBlur={glassBlur}
             glass={movingIdentityGlass}
             glassBezelOpacity={1}
             glassBezelHighlights={identityBezelHighlights}
@@ -291,7 +286,6 @@ export function NavbarMetaball({
           aria-label="Назад"
           glassPreset={glassPreset}
           glassOptics={atLevelTwo ? glassOptics : false}
-          glassBlur={glassBlur}
           glass={movingGlass}
           glassBezelOpacity={bezelReveal}
           onClick={level === 2 ? onBack : undefined}
