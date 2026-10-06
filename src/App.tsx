@@ -22,7 +22,7 @@ import { SettingsPage } from './settings/SettingsPage';
 import { TodayPage } from './schedule/TodayPage';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
-import { Button } from './ui';
+import { Button, GlassSurfaceProvider } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -311,12 +311,13 @@ export function App() {
   };
 
   return (
-    <ClientCoachProvider
-      initData={state.initData}
-      clientUserId={state.me.user.id}
-      enabled={state.activeRole === 'client'}
-    >
-      <NavigationShell
+    <GlassSurfaceProvider blur={glassSettings.blur}>
+      <ClientCoachProvider
+        initData={state.initData}
+        clientUserId={state.me.user.id}
+        enabled={state.activeRole === 'client'}
+      >
+        <NavigationShell
         me={state.me}
         activeRole={state.activeRole}
         destination={destination}
@@ -326,7 +327,6 @@ export function App() {
         floatingAction={workoutFloatingAction}
         glassPreset={glassSettings.preset}
         glassOptics={glassSettings.optics}
-        glassBlur={glassSettings.blur}
       >
         {workoutOpen ? (
           <WorkoutSessionScreen
@@ -358,7 +358,8 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
           />
         )}
-      </NavigationShell>
-    </ClientCoachProvider>
+        </NavigationShell>
+      </ClientCoachProvider>
+    </GlassSurfaceProvider>
   );
 }
