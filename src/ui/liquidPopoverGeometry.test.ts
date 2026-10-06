@@ -79,6 +79,14 @@ describe('LiquidPopover geometry contract', () => {
     expect(travel.head.y).toBeLessThan(target.y);
   });
 
+  it('moves a centered round trigger immediately without an empty shrink phase', () => {
+    const source = { x: target.x, y: 40, w: 44, h: 44 },
+      motion = createLiquidMotion(source, target),
+      early = motion.geometry(0.03);
+    expect(early.head.x).toBeCloseTo(source.x, 3);
+    expect(early.head.y).toBeGreaterThan(source.y);
+  });
+
   it('uses the same centered route when the source only touches the target centerline', () => {
     const source = { x: 170, y: 40, w: 80, h: 40 },
       motion = createLiquidMotion(source, target),
