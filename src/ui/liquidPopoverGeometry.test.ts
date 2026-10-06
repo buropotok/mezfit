@@ -18,6 +18,18 @@ const area = (points: Point[]) =>
   ) / 2;
 
 describe('LiquidPopover geometry contract', () => {
+  it('uses the tuned reference defaults without expanding the public motion options', () => {
+    expect(LIQUID_POPOVER_DEFAULTS).toEqual({
+      duration: 0.65,
+      sourceMorph: 0.055,
+      tail: 32,
+      ovalArea: 0.35,
+      exponent: 2.5,
+      growthDelay: 0.31,
+      curvature: 0.92,
+      smoothing: 1.3,
+    });
+  });
   it.each([
     { w: 88, h: 44 },
     { w: 44, h: 44 },
