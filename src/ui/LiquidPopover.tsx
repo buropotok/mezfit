@@ -91,6 +91,68 @@ const toLiquidRect = (rect: DOMRect): LiquidRect => ({
   h: rect.height,
 });
 
+function paintContentTexture(
+  canvas: HTMLCanvasElement,
+  container: HTMLElement,
+  rows: ReadonlyMap<string, HTMLElement>,
+  items: readonly LiquidPopoverItem[],
+  layout: LiquidPopoverLayout,
+  bounds = container.getBoundingClientRect(),
+) {
+  if (!bounds.width || !bounds.height) return false;
+  const context = canvas.getContext('2d');
+  if (!context) return false;
+  canvas.width = Math.max(1, Math.ceil(bounds.width));
+  canvas.height = Math.max(1, Math.ceil(bounds.height));
+  const containerStyle = getComputedStyle(container);
+  for (const item of items) {
+    const row = rows.get(item.id);
+    if (!row) continue;
+    const rect = row.getBoundingClientRect(),
+      style = getComputedStyle(row),
+      x = rect.left - bounds.left,
+      y = rect.top - bounds.top;
+    if (item.dividerBefore) {
+      context.globalAlpha = 1;
+      context.fillStyle = containerStyle.getPropertyValue('--ui-color-border');
+      context.fillRect(0, y - 9, canvas.width, 1);
+    }
+    context.globalAlpha = item.disabled ? 0.5 : 1;
+    context.fillStyle = style.color;
+    context.font =
+      `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    context.textBaseline = 'alphabetic';
+    const metrics = context.measureText(item.label),
+      ascent = metrics.fontBoundingBoxAscent ?? metrics.actualBoundingBoxAscent,
+      descent =
+        metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent,
+      baseline = y + rect.height / 2 + (ascent - descent) / 2,
+      spacing = Number.parseFloat(style.letterSpacing) || 0,
+      characters = Array.from(item.label),
+      textWidth = spacing
+        ? characters.reduce(
+            (width, character, index) =>
+              width +
+              context.measureText(character).width +
+              (index < characters.length - 1 ? spacing : 0),
+            0,
+          )
+        : metrics.width;
+    let cursor =
+      layout === 'grid'
+        ? x + (rect.width - textWidth) / 2
+        : x + (Number.parseFloat(style.paddingLeft) || 0);
+    if (!spacing) context.fillText(item.label, cursor, baseline);
+    else
+      for (const character of characters) {
+        context.fillText(character, cursor, baseline);
+        cursor += context.measureText(character).width + spacing;
+      }
+  }
+  context.globalAlpha = 1;
+  return true;
+}
+
 export function LiquidPopover({
   isOpen,
   onOpenChange,
@@ -117,7 +179,9 @@ export function LiquidPopover({
   const sceneRef = useRef<SVGSVGElement>(null),
     clipRef = useRef<SVGPathElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sourceRef = useRef<HTMLCanvasElement | null>(null);
+  const sourceRef = useRef<HTMLCanvasElement | null>(null),
+    itemsRef = useRef(items);
+  itemsRef.current = items;
   const [host, setHost] = useState<HTMLElement | null>(null),
     [settled, setSettled] = useState(false),
     [positioned, setPositioned] = useState(false);
@@ -149,63 +213,29 @@ export function LiquidPopover({
     ]),
   ]);
 
-  // This is an explicit text/button model, not a screenshot of arbitrary DOM.
-  // Read our own measured labels so font settings and native row spacing agree.
+  // Prewarm text/font measurement while closed. The opening frame repaints the
+  // same canvas from the positioned native rows so raster and HTML share one
+  // final coordinate system.
   useLayoutEffect(() => {
     const element = measureRef.current;
     if (!element || typeof CanvasRenderingContext2D === 'undefined') return;
     const prepare = () => {
-      centerActiveItem(element, activeItemId ? rowRefs.current.get(activeItemId) ?? null : null);
-      const bounds = element.getBoundingClientRect();
-      if (!bounds.width || !bounds.height) return;
-      const canvas = element.ownerDocument.createElement('canvas'),
-        context = canvas.getContext('2d');
-      if (!context) return;
-      canvas.width = Math.ceil(bounds.width);
-      canvas.height = Math.ceil(bounds.height);
-      for (const item of items) {
-        const row = rowRefs.current.get(item.id);
-        if (!row) continue;
-        const rect = row.getBoundingClientRect(),
-          style = getComputedStyle(row);
-        const x = rect.left - bounds.left,
-          y = rect.top - bounds.top;
-        if (item.dividerBefore) {
-          context.globalAlpha = 1;
-          context.fillStyle =
-            getComputedStyle(element).getPropertyValue('--ui-color-border');
-          context.fillRect(0, y - 9, canvas.width, 1);
-        }
-        context.globalAlpha = item.disabled ? 0.5 : 1;
-        context.fillStyle = style.color;
-        context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-        context.textBaseline = 'alphabetic';
-        const metrics = context.measureText(item.label);
-        const ascent =
-          metrics.fontBoundingBoxAscent ?? metrics.actualBoundingBoxAscent;
-        const descent =
-          metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent;
-        const baseline = y + rect.height / 2 + (ascent - descent) / 2;
-        const spacing = Number.parseFloat(style.letterSpacing) || 0;
-        const characters = Array.from(item.label);
-        const textWidth = spacing
-          ? characters.reduce(
-            (width, character, index) =>
-              width + context.measureText(character).width + (index < characters.length - 1 ? spacing : 0),
-            0,
-          )
-          : metrics.width;
-        let cursor = layout === 'grid'
-          ? x + (rect.width - textWidth) / 2
-          : x + Number.parseFloat(style.paddingLeft);
-        if (!spacing) context.fillText(item.label, cursor, baseline);
-        else
-          for (const character of characters) {
-            context.fillText(character, cursor, baseline);
-            cursor += context.measureText(character).width + spacing;
-          }
-      }
-      sourceRef.current = canvas;
+      centerActiveItem(
+        element,
+        activeItemId ? rowRefs.current.get(activeItemId) ?? null : null,
+      );
+      const canvas =
+        sourceRef.current ?? element.ownerDocument.createElement('canvas');
+      if (
+        paintContentTexture(
+          canvas,
+          element,
+          rowRefs.current,
+          itemsRef.current,
+          layout,
+        )
+      )
+        sourceRef.current = canvas;
     };
     prepare();
     const observer =
@@ -218,7 +248,7 @@ export function LiquidPopover({
       observer?.disconnect();
       element.ownerDocument.fonts?.removeEventListener('loadingdone', prepare);
     };
-  }, [activeItemId, centerActiveItem, contentKey, items]);
+  }, [activeItemId, centerActiveItem, contentKey, layout]);
 
   useLayoutEffect(() => {
     if (!isOpen || !host || !positioned) {
@@ -236,7 +266,12 @@ export function LiquidPopover({
       scene = sceneRef.current,
       canvas = canvasRef.current;
     if (!native || !glass || !scene || !canvas) return;
-    centerActiveItem(native, activeItemId ? nativeRowRefs.current.get(activeItemId) ?? null : null);
+    native.style.transform = 'none';
+    native.style.filter = 'none';
+    centerActiveItem(
+      native,
+      activeItemId ? nativeRowRefs.current.get(activeItemId) ?? null : null,
+    );
     let frame = 0,
       cancelled = false;
     let sizeObserver: ResizeObserver | null = null;
@@ -269,11 +304,9 @@ export function LiquidPopover({
     frame = requestAnimationFrame(() => {
       const sourceBounds = triggerRef.current?.getBoundingClientRect(),
         destinationBounds = host.getBoundingClientRect();
-      const source = sourceRef.current;
       if (
         !sourceBounds?.width ||
         !destinationBounds.width ||
-        !source ||
         typeof Path2D === 'undefined' ||
         !CSS.supports('mix-blend-mode', 'plus-lighter') ||
         window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -287,17 +320,25 @@ export function LiquidPopover({
           rect,
           options,
         );
-      // Available height may be smaller than the pre-rendered menu. Crop the
-      // texture to the same scroll viewport instead of squeezing its rows.
-      const texture = host.ownerDocument.createElement('canvas');
-      texture.width = Math.ceil(rect.w);
-      texture.height = Math.ceil(rect.h);
-      const textureContext = texture.getContext('2d');
-      if (!textureContext) {
+      // Repaint from the positioned native rows. This makes the raster use the
+      // exact same viewport, scroll position, row spacing, and bottom gap as
+      // the live HTML that takes over during the handoff.
+      const texture =
+        sourceRef.current ?? host.ownerDocument.createElement('canvas');
+      if (
+        !paintContentTexture(
+          texture,
+          native,
+          nativeRowRefs.current,
+          itemsRef.current,
+          layout,
+          destinationBounds,
+        )
+      ) {
         finish();
         return;
       }
-      textureContext.drawImage(source, 0, 0);
+      sourceRef.current = texture;
       const cropX = Math.floor(
         Math.max(0, Math.min(sourceBounds.left, destinationBounds.left) - 80),
       );
@@ -427,7 +468,17 @@ export function LiquidPopover({
         cancelAndFinish,
       );
     };
-  }, [activeItemId, centerActiveItem, isOpen, host, positioned, triggerRef, options, contentKey]);
+  }, [
+    activeItemId,
+    centerActiveItem,
+    contentKey,
+    host,
+    isOpen,
+    layout,
+    options,
+    positioned,
+    triggerRef,
+  ]);
 
   return (
     <>
