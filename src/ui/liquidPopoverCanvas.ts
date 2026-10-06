@@ -91,7 +91,7 @@ export function paintLiquidMesh(
 ) {
   context.resetTransform();
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-  const unfold = smoother((time - 0.8) / 0.2);
+  const unfold = clamp(time);
   if (time >= 1) {
     context.save();
     context.translate(rect.x, rect.y);
