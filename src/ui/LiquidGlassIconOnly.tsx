@@ -22,6 +22,7 @@ export type LiquidGlassIconOnlyProps = {
   hidden: boolean;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
+  glassBlur?: number;
   fab?: ReactNode;
 };
 
@@ -122,6 +123,7 @@ function Scene({
   onValueChange,
   glassPreset,
   glassOptics = false,
+  glassBlur,
   entrance,
 }: Omit<LiquidGlassIconOnlyProps, 'hidden' | 'fab'> & { entrance: boolean }) {
   const host = useRef<HTMLDivElement>(null);
@@ -187,6 +189,7 @@ function Scene({
                       <GlassSurface
                         preset={glassPreset}
                         optics={glassOptics}
+                        blur={glassBlur}
                         wrapContent={false}
                         className="toolbar-pane optical-toolbar-pane"
                         id="toolbar-pane"
@@ -287,6 +290,7 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
           onValueChange={props.onValueChange}
           glassPreset={props.glassPreset}
           glassOptics={props.glassOptics}
+          glassBlur={props.glassBlur}
           entrance={entrance}
         />
       )}
