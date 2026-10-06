@@ -88,6 +88,47 @@ describe('GlassSurface', () => {
       .toBeCloseTo(master);
   });
 
+  it('renders the liquid convex preset with scaled edge lighting and compatible split bezel controls', () => {
+    const view = render(
+      <GlassSurface
+        preset="liquidConvex"
+        bezelOpacity={0.5}
+        bezelHighlights={{ primary: 0, opposite: 1 }}
+      >
+        Convex
+      </GlassSurface>,
+    );
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.classList.contains('ui-glass-surface--liquid-convex')).toBe(true);
+    expect(surface.style.getPropertyValue('--ui-glass-surface-border')).toBe('0');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-specular-angle')).toBe('346deg');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-specular-width')).toBe('1.1px');
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-specular-primary-alpha'))).toBe(0);
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-specular-opposite-alpha'))).toBeGreaterThan(0);
+    expect(Number.parseFloat(surface.style.getPropertyValue('--ui-glass-surface-edge-outset'))).toBeGreaterThan(2.5);
+    expect(Number.parseFloat(surface.style.getPropertyValue('--ui-glass-surface-edge-light-x'))).toBeGreaterThan(0);
+    expect(Math.abs(Number.parseFloat(surface.style.getPropertyValue('--ui-glass-surface-edge-light-y'))))
+      .toBeLessThan(0.001);
+
+    view.rerender(
+      <GlassSurface
+        preset="liquidConvex"
+        shape="capsule"
+        bezelOpacity={0.5}
+        bezelHighlights={{ topLeft: 1, bottomRight: 0 }}
+      >
+        Capsule
+      </GlassSurface>,
+    );
+
+    expect(Number.parseFloat(surface.style.borderRadius)).toBeCloseTo(92, 1);
+    expect(Number.parseFloat(surface.style.getPropertyValue('--ui-glass-surface-edge-light-x'))).toBeLessThan(0);
+    expect(Number.parseFloat(surface.style.getPropertyValue('--ui-glass-surface-edge-light-y'))).toBeLessThan(0);
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-specular-primary-alpha'))).toBeGreaterThan(0);
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-specular-opposite-alpha'))).toBe(0);
+  });
+
   it('can replace an existing host element without changing its positioning or radius contract', () => {
     vi.spyOn(window, 'getComputedStyle').mockReturnValue({
       borderTopLeftRadius: '32px',
