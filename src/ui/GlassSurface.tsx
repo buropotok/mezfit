@@ -276,7 +276,10 @@ export function GlassSurface({
 
   const radius = geometry?.radius ?? 0;
   const isLiquidConvex = preset === 'liquidConvex';
-  const isCapsule = shape === 'capsule';
+  const isCapsule = shape === 'capsule' || (
+    geometry !== null
+    && Math.abs(radius - Math.min(geometry.width, geometry.height) / 2) < 0.1
+  );
   const liquidConvexScale = geometry
     ? Math.max(0.34, Math.min(1.26, geometry.height / 150))
     : 1;
