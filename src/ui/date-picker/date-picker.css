@@ -41,23 +41,15 @@
 }
 
 .ui-date-picker__year-trigger {
-  min-width: 5rem;
-  height: 2.5rem;
-  border-radius: 999px;
-  color: inherit;
-}
-
-.ui-date-picker__year-trigger-button {
   display: grid;
   place-items: center;
-  width: 100%;
-  height: 100%;
+  min-width: 5rem;
+  height: 2.5rem;
   padding: 0 var(--ui-space-3);
   border: 0;
-  border-radius: inherit;
+  border-radius: 999px;
   color: inherit;
-  background: transparent;
-  font-family: var(--ui-font-family);
+  appearance: none;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -75,7 +67,6 @@
 
 .ui-date-picker__month-title {
   margin: 0;
-  font-family: var(--ui-font-family);
 }
 
 .ui-date-picker__weekdays,
@@ -86,7 +77,6 @@
 
 .ui-date-picker__weekdays {
   color: var(--ui-color-surface-muted);
-  font-family: var(--ui-font-family);
   text-align: center;
 }
 
@@ -107,7 +97,6 @@
   border: 0;
   color: var(--ui-color-surface-text);
   background: transparent;
-  font-family: var(--ui-font-family);
   -webkit-tap-highlight-color: transparent;
 }
 
