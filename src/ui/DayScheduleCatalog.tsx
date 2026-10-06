@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Button } from 'konsta/react';
-import { Avatar } from './primitives';
+import { Avatar, Text } from './primitives';
 import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
 import { DayScheduleEventCard } from './DayScheduleEventCard';
 import { DatePicker, type LocalDate } from './date-picker/DatePicker';
@@ -95,41 +95,41 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
 
   return (
     <section className="ui-kit-day-schedule" aria-label="DaySchedule">
-      <h2>DaySchedule</h2>
-      <p>Только неделя и сетка дня. Navbar и его действия принадлежат экрану приложения.</p>
+      <h2><Text variant="title" className="ui-kit-day-schedule__text">DaySchedule</Text></h2>
+      <p><Text variant="body" tone="muted" className="ui-kit-day-schedule__text">Только неделя и сетка дня. Navbar и его действия принадлежат экрану приложения.</Text></p>
       <div className="ui-kit-day-schedule__controls">
         <Button onClick={() => setPickerOpen(true)}>Выбрать дату</Button>
         <Button onClick={() => setEmpty(previous => !previous)}>{empty ? 'Показать события' : 'Пустой день'}</Button>
         <Button href="/ui-kit-day-schedule.html">На весь экран</Button>
       </div>
       <div className="ui-kit-day-schedule__value" aria-live="polite">
-        <div>value.date: {value.date}</div>
-        <div>value.title для Navbar: {value.title}</div>
-        <div>value.weekdayIndex: {value.weekdayIndex} · value.isToday: {String(value.isToday)}</div>
-        <div>Последний onDateChange: {lastChange ?? 'ещё не вызван'}</div>
+        <div><Text variant="footnote" className="ui-kit-day-schedule__text">value.date: {value.date}</Text></div>
+        <div><Text variant="footnote" className="ui-kit-day-schedule__text">value.title для Navbar: {value.title}</Text></div>
+        <div><Text variant="footnote" className="ui-kit-day-schedule__text">value.weekdayIndex: {value.weekdayIndex} · value.isToday: {String(value.isToday)}</Text></div>
+        <div><Text variant="footnote" className="ui-kit-day-schedule__text">Последний onDateChange: {lastChange ?? 'ещё не вызван'}</Text></div>
       </div>
       {schedule}
       <DatePicker opened={pickerOpen} value={date} onChange={next => { setDate(next); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
       <div className="ui-kit-day-schedule__contract">
-        <h3>Входные параметры</h3>
+        <h3><Text variant="headline" className="ui-kit-day-schedule__text">Входные параметры</Text></h3>
         <dl>
-          <dt>date: LocalDate</dt><dd>Выбранная дата YYYY-MM-DD. Ею управляет родитель.</dd>
-          <dt>eventsByDate: Record&lt;LocalDate, Event[]&gt;</dt><dd>События по датам: id, startMinutes, durationMinutes и любые поля вашей карточки. Нужны соседние дни и дни соседних недель.</dd>
-          <dt>renderEvent(event, state)</dt><dd>Рендер события внутри рассчитанной рамки. state содержит compact, lifted, editing, height, startMinutes и durationMinutes; поэтому normal, lifted и resize-состояния используют одинаковый контент и типографику.</dd>
-          <dt>isEventEditable(event)?</dt><dd>Определяет возможность редактирования конкретного события. false оставляет карточку обычной и полностью исключает её из drag, resize и delete-flow. Если predicate не передан, поведение остаётся прежним.</dd>
-          <dt>onEventMove(move)?</dt><dd>Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут. Плитка у правого края перелистывает на следующий день, у левого — на предыдущий; после каждого перехода действует короткая пауза, а удержание в edge-zone продолжает перелистывание. Недельная линза следует за текущим DnD-днём. Если целевой слот пересекается с другим событием, drop отклоняется.</dd>
-          <dt>onEventResize(resize)?</dt><dd>После успешного DnD карточка входит в resize-режим. Верхняя правая точка меняет начало, нижняя левая — окончание. Resize работает по сетке 15 минут и не допускает пересечений с соседними событиями.</dd>
-          <dt>onEventDelete(delete)?</dt><dd>Добавляет в режим редактирования кнопку удаления. После подтверждения через MezfitDialog вызывает callback с eventId и date; удаление данных остаётся ответственностью родителя.</dd>
-          <dt>today?: LocalDate</dt><dd>Дата для индикатора текущего времени; по умолчанию локальная дата устройства.</dd>
-          <dt>className?: string</dt><dd>Класс контейнера, например для высоты под внешним Navbar. По умолчанию высота равна viewport.</dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">date: LocalDate</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Выбранная дата YYYY-MM-DD. Ею управляет родитель.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">eventsByDate: Record&lt;LocalDate, Event[]&gt;</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">События по датам: id, startMinutes, durationMinutes и любые поля вашей карточки. Нужны соседние дни и дни соседних недель.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">renderEvent(event, state)</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Рендер события внутри рассчитанной рамки. state содержит compact, lifted, editing, height, startMinutes и durationMinutes; поэтому normal, lifted и resize-состояния используют одинаковый контент и типографику.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">isEventEditable(event)?</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Определяет возможность редактирования конкретного события. false оставляет карточку обычной и полностью исключает её из drag, resize и delete-flow. Если predicate не передан, поведение остаётся прежним.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">onEventMove(move)?</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Включает long-press drag событий. Удержание активируется через 300 ms с допуском движения пальца 24 px; DnD привязывает новое startMinutes к сетке 15 минут. Плитка у правого края перелистывает на следующий день, у левого — на предыдущий; после каждого перехода действует короткая пауза, а удержание в edge-zone продолжает перелистывание. Недельная линза следует за текущим DnD-днём. Если целевой слот пересекается с другим событием, drop отклоняется.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">onEventResize(resize)?</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">После успешного DnD карточка входит в resize-режим. Верхняя правая точка меняет начало, нижняя левая — окончание. Resize работает по сетке 15 минут и не допускает пересечений с соседними событиями.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">onEventDelete(delete)?</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Добавляет в режим редактирования кнопку удаления. После подтверждения через MezfitDialog вызывает callback с eventId и date; удаление данных остаётся ответственностью родителя.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">today?: LocalDate</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Дата для индикатора текущего времени; по умолчанию локальная дата устройства.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">className?: string</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Класс контейнера, например для высоты под внешним Navbar. По умолчанию высота равна viewport.</Text></dd>
         </dl>
-        <h3>Выходные параметры</h3>
+        <h3><Text variant="headline" className="ui-kit-day-schedule__text">Выходные параметры</Text></h3>
         <dl>
-          <dt>onDateChange(nextDate)</dt><dd>Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</dd>
-          <dt>getDayScheduleValue(date, today?)</dt><dd>Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">onDateChange(nextDate)</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</Text></dd>
+          <dt><Text variant="footnote" className="ui-kit-day-schedule__text">getDayScheduleValue(date, today?)</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</Text></dd>
         </dl>
-        <p>Демо создаёт события для любой выбранной даты. Диапазон: 00:00–24:00, 64 px/час. Фон календаря использует фоновое изображение DaySchedule. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; режим редактирования делает карточку непрозрачной, показывает resize-точки и кнопку удаления. Тап вне выбранной карточки завершает режим редактирования.</p>
-        <pre>{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  isEventEditable={event => event.editable}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  onEventDelete={handleEventDelete}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} state={state} />\n  )}\n/>`}</pre>
+        <p><Text variant="footnote" className="ui-kit-day-schedule__text">Демо создаёт события для любой выбранной даты. Диапазон: 00:00–24:00, 64 px/час. Фон календаря — чистый чёрный canvas. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; режим редактирования делает карточку непрозрачной, показывает resize-точки и кнопку удаления. Тап вне выбранной карточки завершает режим редактирования.</Text></p>
+        <pre><Text variant="footnote" className="ui-kit-day-schedule__text">{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  isEventEditable={event => event.editable}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  onEventDelete={handleEventDelete}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} state={state} />\n  )}\n/>`}</Text></pre>
       </div>
     </section>
   );
