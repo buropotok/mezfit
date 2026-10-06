@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { List as KonstaList, ListItem as KonstaListItem, Radio as KonstaRadio } from 'konsta/react';
-import { Avatar, Badge, BottomSheet, Button, DatePicker, Divider, Dropdown, FloatingActionButton, GlassSurface, IconButton, IdentityAction, List, ListItem, Menu, MenuDivider, MenuItem, MezfitDialog, MezfitDialogButton, MezfitPopover, MezfitSearchbar, MezfitSidePanel, Modal, NumPicker, SearchInput, WeightRepsPicker, SortableList, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text, TimePicker, type BadgeColor, type DropdownOption, type GlassPresetName, type LocalDate, type LocalTime, type SortableListItem, type TimePickerLensMode } from './index';
+import { Avatar, Badge, BottomSheet, Button, DatePicker, Divider, Dropdown, FloatingActionButton, GlassSurface, IconButton, IdentityAction, List, ListItem, Menu, MenuDivider, MenuItem, MezfitDialog, MezfitDialogButton, MezfitPopover, MezfitSearchbar, MezfitSidePanel, MezfitSlider, Modal, NumPicker, SearchInput, WeightRepsPicker, SortableList, Surface, Tabs, TabsContent, TabsList, TabsTrigger, Text, TimePicker, type BadgeColor, type DropdownOption, type GlassPresetName, type LocalDate, type LocalTime, type SortableListItem, type TimePickerLensMode } from './index';
 import { ComponentTypographySettings, TypographyRoleAdmin, defaultTypographyValues, type TypographyAssignments, type TypographySlot } from './TypographyAdmin';
 import { typographyValueStyle, TypographySpecimen } from './TypographySpecimen';
 import { FormControlsCatalog } from './FormControlsCatalog';
@@ -20,6 +20,7 @@ const dropdownOptions: DropdownOption[] = [
   { value: 'recovery', label: 'Восстановление' }, { value: 'technique', label: 'Техника' }, { value: 'cardio', label: 'Кардио' }, { value: 'general', label: 'Общая подготовка' },
 ];
 const badgeColors: BadgeColor[] = ['green', 'yellow', 'blue', 'red', 'orange', 'purple', 'cyan', 'gray'];
+const sliderSizes = ['big', 'medium', 'small'] as const;
 const glassPresets: readonly { name: GlassPresetName; label: string; description: string }[] = [
   { name: 'modalTuned', label: 'Modal Tuned', description: 'Default · approved prototype' },
   { name: 'modal', label: 'Modal', description: 'Soft modal variant from prototype' },
@@ -80,6 +81,7 @@ export function UiKitPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [listActionMenuOpen, setListActionMenuOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [sliderValues, setSliderValues] = useState({ big: 0, medium: 0, small: 0 });
   const [exercises, setExercises] = useState(initialExercises);
   const [plainExercises, setPlainExercises] = useState(initialExercises);
   const [singleValue, setSingleValue] = useState<string | null>('strength');
@@ -106,6 +108,7 @@ export function UiKitPage() {
     <NestedBadgesCatalog values={typography} />
     <Surface as="section" className="ui-kit-section"><Text variant="title">Search</Text><Divider /><TypographySpecimen kind="search" slots={searchSlots} values={typography}><SearchInput aria-label="Поиск" placeholder="Поиск" value={search} onChange={(event) => setSearch(event.currentTarget.value)} onClear={() => setSearch('')} /></TypographySpecimen></Surface>
     <Surface as="section" className="ui-kit-section"><Text variant="title">Mezfit Searchbar</Text><Text variant="caption" tone="muted">Konsta Searchbar 5.4.0 mechanics with the Konsta Glass substrate replaced by GlassSurface. glassPreset / glassOptics accept the application glass settings.</Text><Divider /><MezfitSearchbar placeholder="Поиск" value={search} onChange={(event) => setSearch(event.currentTarget.value)} onClear={() => setSearch('')} disableButton glassPreset="frosted" glassOptics={false} /></Surface>
+    <Surface as="section" className="ui-kit-section"><Text variant="title">Mezfit Slider</Text><Text variant="caption" tone="muted">Konsta Range 5.4.0 mechanics with the Kube-derived liquid-glass lens encapsulated inside the UI Kit adapter. Big = prototype, Medium = 0.75×, Small = 0.5×.</Text><Divider /><div className="ui-kit-stack">{sliderSizes.map((size) => <div key={size} className="ui-kit-stack"><Text variant="footnote" tone="muted">{size} · Value {sliderValues[size]}</Text><MezfitSlider size={size} start={0} end={100} onValueChange={(value) => setSliderValues((current) => ({ ...current, [size]: value }))} /></div>)}</div></Surface>
     <FormControlsCatalog />
     <Surface as="section" className="ui-kit-section"><Text variant="title">Icon button & avatar</Text><Divider /><TypographySpecimen kind="avatar" slots={avatarSlots} values={typography}><div className="ui-kit-row"><IconButton label="Add item"><span aria-hidden="true">＋</span></IconButton><IconButton label="Disabled action" disabled><span aria-hidden="true">⋯</span></IconButton><Avatar name="Mezfit User" /></div></TypographySpecimen></Surface>
     <Surface as="section" className="ui-kit-section"><Text variant="title">Identity action</Text><Text variant="caption" tone="muted">Mezfit navbar action on GlassSurface. Labeled: avatar/icon + title. Single: 44×44. Double: one capsule with two independent icon actions.</Text><Divider /><div className="ui-kit-glass-stage"><div className="ui-kit-glass-stage__backdrop"><Text variant="footnote" tone="muted">Контент под glass-поверхностью</Text><Text>Профиль клиента</Text></div><div className="ui-kit-glass-stage__foreground"><div className="ui-kit-row"><IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" onClick={() => {}} /><IdentityAction avatar={{ name: 'Andrei Sokolov' }} title="Andrei Sokolov" variant="single" onClick={() => {}} /><IdentityAction variant="double" actions={[{ icon: 'dots-vertical', label: 'Меню', onClick: () => {} }, { icon: 'calendar', label: 'Календарь', onClick: () => {} }]} /><IdentityAction avatar={{ name: 'Disabled User' }} title="Disabled User" disabled /></div></div></div></Surface>
