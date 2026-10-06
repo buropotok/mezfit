@@ -37,6 +37,7 @@ export interface DatePickerProps {
   surface?: DatePickerSurface;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
+  glassBlur?: number;
 }
 
 function CloseIcon() {
@@ -120,6 +121,7 @@ export function DatePicker({
   surface = 'bare',
   glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
   glassOptics = false,
+  glassBlur,
 }: DatePickerProps) {
   const rangeIsValid = Number.isInteger(minYear) && Number.isInteger(maxYear) && minYear <= maxYear;
   const safeMinYear = rangeIsValid ? minYear : DEFAULT_MIN_YEAR;
@@ -242,6 +244,7 @@ export function DatePicker({
           ref={yearTargetRef}
           preset={glassPreset}
           optics={glassOptics}
+          blur={glassBlur}
           wrapContent={false}
           shape="capsule"
           className="ui-date-picker__year-trigger ui-text--body"
@@ -258,6 +261,7 @@ export function DatePicker({
       label="Выберите год"
       preset={glassPreset}
       optics={glassOptics}
+      blur={glassBlur}
       layout="grid"
       columns={4}
       role="dialog"
