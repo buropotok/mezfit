@@ -68,7 +68,7 @@ const data: SessionExerciseData = {
   ],
 };
 
-function renderExercise(overrides?: { context?: SessionExerciseContext; data?: SessionExerciseData; defaultCollapsed?: boolean }) {
+function renderExercise(overrides?: { context?: SessionExerciseContext; data?: SessionExerciseData; defaultCollapsed?: boolean; surface?: 'default' | 'transparent' }) {
   const onSaveSet = vi.fn(async () => undefined);
   const onOpenExerciseMenu = vi.fn();
   const onOpenHistory = vi.fn();
@@ -79,6 +79,7 @@ function renderExercise(overrides?: { context?: SessionExerciseContext; data?: S
       context={overrides?.context ?? context}
       data={overrides?.data ?? data}
       defaultCollapsed={overrides?.defaultCollapsed}
+      surface={overrides?.surface}
       onSaveSet={onSaveSet}
       onOpenExerciseMenu={onOpenExerciseMenu}
       onOpenHistory={onOpenHistory}
@@ -98,6 +99,7 @@ describe('SessionExercise rendering', () => {
     const card = container.querySelector('.session-exercise');
     expect(card).not.toBeNull();
     expect(card?.classList.contains('ui-surface')).toBe(false);
+    expect(card?.classList.contains('session-exercise--transparent')).toBe(false);
     expect(screen.getByText('Жим лёжа').closest('.ui-list-item')).not.toBeNull();
     expect(screen.getByText('Грудь · Штанга · 2 подхода')).toBeTruthy();
     expect(screen.getByText('1 / 2').className).toContain('ui-badge');
@@ -107,6 +109,11 @@ describe('SessionExercise rendering', () => {
     expect(screen.getByText('Пред.: 77,5 кг × 10')).toBeTruthy();
     expect(screen.getByText('RPE 8').className).toContain('ui-badge');
     expect(screen.getByText('50% выполнено')).toBeTruthy();
+  });
+
+  it('supports a transparent surface when an outer component owns the tile material', () => {
+    const { container } = renderExercise({ surface: 'transparent' });
+    expect(container.querySelector('.session-exercise')?.classList.contains('session-exercise--transparent')).toBe(true);
   });
 
   it('collapses and expands from a short header click', () => {

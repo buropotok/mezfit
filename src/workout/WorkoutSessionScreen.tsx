@@ -290,6 +290,7 @@ export function WorkoutSessionScreen({
               program: activeSession.program,
             }}
             data={exercise}
+            surface="transparent"
             collapsed={collapsedByExerciseId[exercise.sessionExerciseId] ?? false}
             onCollapsedChange={(collapsed) => {
               setCollapsedByExerciseId((current) => ({ ...current, [exercise.sessionExerciseId]: collapsed }));
