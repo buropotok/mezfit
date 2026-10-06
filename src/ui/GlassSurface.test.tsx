@@ -129,6 +129,41 @@ describe('GlassSurface', () => {
     expect(Number(surface.style.getPropertyValue('--ui-glass-surface-specular-opposite-alpha'))).toBe(0);
   });
 
+  it('renders bezel-only tuning with independent paired highlight controls', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300);
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(44);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 44,
+      width: 300,
+      height: 44,
+      toJSON: () => ({}),
+    });
+
+    const view = render(
+      <GlassSurface
+        preset="bezelOnly"
+        bezelHighlights={{ primary: 1, opposite: 0 }}
+      >
+        Bezel only
+      </GlassSurface>,
+    );
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.classList.contains('ui-glass-surface--directional')).toBe(true);
+    expect(surface.classList.contains('ui-glass-surface--bezel-only')).toBe(true);
+    expect(surface.style.getPropertyValue('--ui-glass-surface-border')).toBe('0');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-specular-angle')).toBe('350deg');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-edge-outset')).toBe('17.55px');
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-specular-primary-alpha'))).toBeGreaterThan(0);
+    expect(Number(surface.style.getPropertyValue('--ui-glass-surface-specular-opposite-alpha'))).toBe(0);
+    expect(surface.style.getPropertyValue('--ui-glass-surface-specular-gradient')).toContain('conic-gradient(');
+  });
+
   it('uses capsule lighting when auto geometry resolves to a compact pill', () => {
     vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(180);
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(44);
