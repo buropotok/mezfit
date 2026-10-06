@@ -179,7 +179,20 @@ export function MezfitSlider({
         />
       ) : (
         <>
-          <label className="mezfit-slider__a11y-label" htmlFor={inputId}>
+          <label
+            htmlFor={inputId}
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: 'hidden',
+              clipPath: 'inset(50%)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+          >
             {ariaLabel}
           </label>
           <KonstaRange
