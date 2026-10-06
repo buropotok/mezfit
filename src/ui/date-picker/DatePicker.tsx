@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type RefObject } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes } from 'react';
 import { Link, Navbar } from 'konsta/react';
 import { GlassSurface } from '../GlassSurface';
 import { LiquidPopover, type LiquidPopoverItem } from '../LiquidPopover';
@@ -103,39 +103,11 @@ const CalendarMonths = memo(function CalendarMonths({
   );
 });
 
-type YearTriggerProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  surfaceRef: RefObject<HTMLElement | null>;
-  preset: GlassPresetName;
-  optics: boolean;
-};
-
-function YearTrigger({
-  surfaceRef,
-  preset,
-  optics,
-  className = '',
-  children,
-  ...buttonProps
-}: YearTriggerProps) {
-  return (
-    <GlassSurface
-      ref={surfaceRef}
-      preset={preset}
-      optics={optics}
-      wrapContent={false}
-      shape="capsule"
-      className="ui-date-picker__year-trigger"
-    >
-      <button
-        type="button"
-        {...buttonProps}
-        className={`ui-date-picker__year-trigger-button ui-text--body ${className}`.trim()}
-      >
-        {children}
-      </button>
-    </GlassSurface>
-  );
-}
+const YearTriggerButton = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement>
+>((props, ref) => <button {...props} ref={ref} type="button" />);
+YearTriggerButton.displayName = 'DatePickerYearTrigger';
 
 export function DatePicker({
   opened,
@@ -265,14 +237,21 @@ export function DatePicker({
       isOpen={effectiveYearPopoverOpened}
       onOpenChange={setYearPopoverRequested}
       trigger={(
-        <YearTrigger
-          surfaceRef={yearTargetRef}
+        <GlassSurface
+          component={YearTriggerButton}
+          ref={yearTargetRef}
           preset={glassPreset}
           optics={glassOptics}
+          wrapContent={false}
+          shape="capsule"
+          className="ui-date-picker__year-trigger ui-text--body"
           aria-label={`Выбрать год, сейчас ${visibleYear}`}
+          style={{
+            visibility: effectiveYearPopoverOpened ? 'hidden' : undefined,
+          }}
         >
           {visibleYear}
-        </YearTrigger>
+        </GlassSurface>
       )}
       triggerRef={yearTargetRef}
       items={yearPopoverContentReady ? yearItems : []}
