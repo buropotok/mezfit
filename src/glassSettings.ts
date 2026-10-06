@@ -1,9 +1,14 @@
 import { GLASS_PRESETS, type GlassPresetName } from './ui/glassMaterial';
 import { MEZFIT_NAVBAR_GLASS_PRESET } from './ui/mezfitNavbarConfig';
 
+export const GLASS_BLUR_MIN = 0;
+export const GLASS_BLUR_MAX = 30;
+export const GLASS_BLUR_STEP = 1;
+
 export type GlassSettings = {
   preset: GlassPresetName;
   optics: boolean;
+  blur: number;
 };
 
 export function isGlassPresetName(value: unknown): value is GlassPresetName {
@@ -15,9 +20,14 @@ export const GLASS_PRESET_NAMES: readonly GlassPresetName[] = Object.freeze(
   Object.keys(GLASS_PRESETS).filter(isGlassPresetName),
 );
 
+export function resolveGlassPresetBlur(preset: GlassPresetName): number {
+  return GLASS_PRESETS[preset].blur;
+}
+
 export const DEFAULT_GLASS_SETTINGS: Readonly<GlassSettings> = Object.freeze({
   preset: MEZFIT_NAVBAR_GLASS_PRESET,
   optics: false,
+  blur: resolveGlassPresetBlur(MEZFIT_NAVBAR_GLASS_PRESET),
 });
 
 const GLASS_SETTINGS_STORAGE_KEY = 'mezfit.glassSettings';
@@ -34,10 +44,19 @@ export function loadGlassSettings(storage: Pick<Storage, 'getItem'>): GlassSetti
 
     const preset = Reflect.get(parsed, 'preset');
     const optics = Reflect.get(parsed, 'optics');
+    const blur = Reflect.get(parsed, 'blur');
+    const resolvedPreset = isGlassPresetName(preset) ? preset : DEFAULT_GLASS_SETTINGS.preset;
+    const resolvedBlur = typeof blur === 'number'
+      && Number.isFinite(blur)
+      && blur >= GLASS_BLUR_MIN
+      && blur <= GLASS_BLUR_MAX
+      ? blur
+      : resolveGlassPresetBlur(resolvedPreset);
 
     return {
-      preset: isGlassPresetName(preset) ? preset : DEFAULT_GLASS_SETTINGS.preset,
+      preset: resolvedPreset,
       optics: typeof optics === 'boolean' ? optics : DEFAULT_GLASS_SETTINGS.optics,
+      blur: resolvedBlur,
     };
   } catch {
     return { ...DEFAULT_GLASS_SETTINGS };
