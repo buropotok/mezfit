@@ -91,6 +91,44 @@ describe('MezfitSlider', () => {
     expect(fill?.style.width).toBe('50%');
   });
 
+  it('keeps a static Start/End value disabled without exposing Konsta zero-range math', () => {
+    const view = renderSlider('small', 12, 12);
+    const input = view.container.querySelector<HTMLInputElement>('input[type="range"]');
+    const root = view.container.querySelector<HTMLElement>('.mezfit-slider');
+
+    expect(input?.disabled).toBe(true);
+    expect(input?.min).toBe('12');
+    expect(input?.max).toBe('13');
+    expect(input?.value).toBe('12');
+    expect(root?.dataset.value).toBe('12');
+
+    fireEvent.input(input!, { target: { value: '13' } });
+    expect(view.onValueChange).toHaveBeenLastCalledWith(12);
+    expect(root?.dataset.value).toBe('12');
+  });
+
+  it.each([
+    ['big', 1, '3px', '14px'],
+    ['medium', 0.75, '2.25px', '10.5px'],
+    ['small', 0.5, '1.5px', '7px'],
+  ] as const)(
+    'scales %s shadow and optical displacement with the component geometry',
+    (size, scale, shadowY, shadowBlur) => {
+      const view = renderSlider(size);
+      const root = view.container.querySelector<HTMLElement>('.mezfit-slider');
+      const displacement = view.container.querySelector<SVGFEDisplacementMapElement>(
+        '[data-mezfit-slider-displacement="true"]',
+      );
+
+      expect(root?.style.getPropertyValue('--mezfit-slider-shadow-y')).toBe(shadowY);
+      expect(root?.style.getPropertyValue('--mezfit-slider-shadow-blur')).toBe(shadowBlur);
+      expect(Number(displacement?.getAttribute('scale'))).toBeCloseTo(
+        83.88118841653394 * scale * 0.4,
+        8,
+      );
+    },
+  );
+
   it('keeps the Kube optical chain private and switches refraction on press', () => {
     const view = renderSlider('big');
     const root = view.container.querySelector<HTMLElement>('.mezfit-slider');
