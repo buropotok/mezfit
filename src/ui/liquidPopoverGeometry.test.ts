@@ -48,6 +48,49 @@ describe('LiquidPopover geometry contract', () => {
     },
   );
 
+  it('shrinks a center-crossing capsule in place before travelling vertically', () => {
+    const source = { x: 190, y: 40, w: 80, h: 40 },
+      motion = createLiquidMotion(source, target),
+      shrinkEnd =
+        LIQUID_POPOVER_DEFAULTS.sourceMorph /
+        LIQUID_POPOVER_DEFAULTS.duration,
+      halfwayShrink = contourBounds(motion.contour(shrinkEnd / 2)),
+      circle = contourBounds(motion.contour(shrinkEnd)),
+      travel = motion.geometry((shrinkEnd + motion.morphStart) / 2);
+
+    expect((halfwayShrink.left + halfwayShrink.right) / 2).toBeCloseTo(
+      source.x,
+      3,
+    );
+    expect((halfwayShrink.top + halfwayShrink.bottom) / 2).toBeCloseTo(
+      source.y,
+      3,
+    );
+    expect(halfwayShrink.right - halfwayShrink.left).toBeLessThan(source.w);
+    expect(halfwayShrink.right - halfwayShrink.left).toBeGreaterThan(source.h);
+
+    expect(circle.right - circle.left).toBeCloseTo(source.h, 0);
+    expect(circle.bottom - circle.top).toBeCloseTo(source.h, 0);
+    expect((circle.left + circle.right) / 2).toBeCloseTo(source.x, 0);
+    expect((circle.top + circle.bottom) / 2).toBeCloseTo(source.y, 0);
+
+    expect(travel.head.x).toBeCloseTo(source.x, 3);
+    expect(travel.head.y).toBeGreaterThan(source.y);
+    expect(travel.head.y).toBeLessThan(target.y);
+  });
+
+  it('uses the same centered route when the source only touches the target centerline', () => {
+    const source = { x: 170, y: 40, w: 80, h: 40 },
+      motion = createLiquidMotion(source, target),
+      shrinkEnd =
+        LIQUID_POPOVER_DEFAULTS.sourceMorph /
+        LIQUID_POPOVER_DEFAULTS.duration,
+      travel = motion.geometry((shrinkEnd + motion.morphStart) / 2);
+    expect(source.x + source.w / 2).toBe(target.x);
+    expect(travel.head.x).toBeCloseTo(source.x, 3);
+    expect(travel.head.y).toBeGreaterThan(source.y);
+  });
+
   it('finishes the tail in a centered 35% superellipse before morphing', () => {
     const motion = createLiquidMotion({ x: 60, y: 40, w: 88, h: 44 }, target),
       points = motion.contour(motion.morphStart)[0],
