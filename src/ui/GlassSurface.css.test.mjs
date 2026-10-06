@@ -21,6 +21,20 @@ describe('GlassSurface bezel layers', () => {
     expect(bottomRightRule).not.toContain('inset 3px 3px 0 -3.5px');
   });
 
+  it('keeps liquid convex edge shading outside the lens and uses a thin symmetric contour bezel', () => {
+    const edgeRule = css.match(/\.ui-glass-surface--liquid-convex::before \{[\s\S]*?\n\}/)?.[0];
+    const bezelRule = css.match(/\.ui-glass-surface--liquid-convex::after \{[\s\S]*?\n\}/)?.[0];
+
+    expect(edgeRule).toContain('calc(0px - var(--ui-glass-surface-edge-outset))');
+    expect(edgeRule).toContain('--ui-glass-surface-edge-light-blur');
+    expect(edgeRule).toContain('--ui-glass-surface-edge-dark-blur');
+
+    expect(bezelRule).toContain('conic-gradient');
+    expect(bezelRule).toContain('--ui-glass-surface-specular-primary-alpha');
+    expect(bezelRule).toContain('--ui-glass-surface-specular-opposite-alpha');
+    expect(bezelRule).toContain('mask-composite: exclude');
+  });
+
   it('removes both built-in corner layers for contour surfaces', () => {
     const contourRule = css.match(/\.ui-glass-surface--contour::before,[\s\S]*?\n\}/)?.[0];
 
