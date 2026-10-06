@@ -13,15 +13,25 @@ export type LiquidMotionOptions = {
 };
 export const LIQUID_POPOVER_DEFAULTS: Readonly<LiquidMotionOptions> =
   Object.freeze({
-    duration: 0.5,
-    sourceMorph: 0.28,
-    tail: 35,
-    ovalArea: 0.65,
+    duration: 0.65,
+    sourceMorph: 0.055,
+    tail: 32,
+    ovalArea: 0.35,
     exponent: 2.5,
-    growthDelay: 0.25,
+    growthDelay: 0.31,
     curvature: 0.92,
     smoothing: 1.3,
   });
+
+const MORPH_DURATION_RATIO = 0.51 / 0.65;
+const MAX_GEOMETRY_SCALE = 1.06;
+const APPLE_EDGE_PROGRESS = {
+  top: [0, 0.368, 0.533, 0.717, 0.862, 0.954, 1.003, 1.02, 1.02, 1.016, 1.007, 1],
+  bottom: [0, 0.609, 0.898, 1.034, 1.076, 1.073, 1.055, 1.036, 1.018, 1.008, 1.003, 1],
+  left: [0, 0.512, 0.77, 0.921, 1.002, 1.037, 1.04, 1.032, 1.015, 1.007, 1.002, 1],
+  right: [0, 0.796, 0.903, 0.971, 1.01, 1.019, 1.019, 1.019, 1.019, 1.01, 1.01, 1],
+} as const;
+type AppleEdgeName = keyof typeof APPLE_EDGE_PROGRESS;
 type Geometry = {
   head: Point;
   a: number;
@@ -41,16 +51,25 @@ export function createLiquidMotion(
   options: LiquidMotionOptions = LIQUID_POPOVER_DEFAULTS,
 ) {
   const R = 13.5,
-    SPRING_SECONDS = 0.45;
+    morphStart = Math.max(0.05, Math.min(0.95, 1 - MORPH_DURATION_RATIO));
   let route: Point[] = [],
     lengths: number[] = [],
     total = 1,
+    appleOvershootGain = 1,
     target = { x: 0, y: 0, a: 0, b: 0, n: 2 };
   const clamp = (x: number, a: number, b: number) =>
       Math.max(a, Math.min(b, x)),
     smooth = (x: number) => {
       x = clamp(x, 0, 1);
       return x * x * (3 - 2 * x);
+    },
+    flow = (x: number) => {
+      x = clamp(x, 0, 1);
+      return x * x * (2 - x);
+    },
+    morphEase = (x: number) => {
+      x = clamp(x, 0, 1);
+      return Math.sin((x * Math.PI) / 2);
     };
   function indexRoute() {
     lengths = [0];
@@ -94,11 +113,12 @@ export function createLiquidMotion(
       scale = Math.sqrt((ratio * 4) / areaCoefficient(n));
     target = {
       x: rect.x,
-      y: rect.y + rect.h / 2 + 10 - (rect.h / 2) * scale,
+      y: rect.y,
       a: (rect.w / 2) * scale,
       b: (rect.h / 2) * scale,
       n,
     };
+    appleOvershootGain = resolveAppleOvershootGain();
     // Same aspect ratio as the rectangle; superellipse area is exactly ratio*w*h.
     const side = target.x >= source.x ? 1 : -1;
     const startPoint = {
@@ -187,13 +207,13 @@ export function createLiquidMotion(
     const shrink = smoother((t * options.duration) / options.sourceMorph),
       baseRadius = source.h / 2 + (R - source.h / 2) * shrink,
       baseTail =
-        source.w - source.h + (options.tail - (source.w - source.h)) * shrink;
-    t = clamp(t / 0.8, 0, 1);
-    const movement = smooth(t),
+        source.w - source.h + (options.tail - (source.w - source.h)) * shrink,
+      shellProgress = clamp(t / morphStart, 0, 1);
+    const movement = flow(shellProgress),
       s = movement * total,
       head = at(s),
       delay = options.growthDelay,
-      fill = smooth((t - delay) / (1 - delay));
+      fill = smooth((shellProgress - delay) / (1 - delay));
     const offset = {
       x: target.x - route[route.length - 1].x,
       y: target.y - route[route.length - 1].y,
@@ -546,71 +566,173 @@ export function createLiquidMotion(
   function shellContour(g: Geometry) {
     return pulledShell(g) || fairJoin(contours(g), g);
   }
-  function cornerRadius() {
-    return resolveGlassRadius(rect.w, rect.h);
+  function appleCurve(values: readonly number[], u: number) {
+    const n = values.length - 1,
+      x = clamp(u, 0, 1) * n,
+      i = Math.min(n - 1, Math.floor(x)),
+      s = x - i,
+      p0 = values[i],
+      p1 = values[i + 1],
+      m0 = i === 0 ? values[1] - values[0] : (values[i + 1] - values[i - 1]) * 0.5,
+      m1 = i + 1 === n ? 0 : (values[i + 2] - values[i]) * 0.5,
+      s2 = s * s,
+      s3 = s2 * s;
+    return (
+      (2 * s3 - 3 * s2 + 1) * p0 +
+      (s3 - 2 * s2 + s) * m0 +
+      (-2 * s3 + 3 * s2) * p1 +
+      (s3 - s2) * m1
+    );
   }
-  function roundedDistance(x: number, y: number) {
-    const r = cornerRadius(),
-      qx = Math.abs(x) - rect.w / 2 + r,
-      qy = Math.abs(y) - rect.h / 2 + r;
+  function appleScaledCurve(name: AppleEdgeName, u: number, gain = appleOvershootGain) {
+    const values = APPLE_EDGE_PROGRESS[name].map((value) =>
+      value <= 1 ? value : 1 + (value - 1) * gain,
+    );
+    return appleCurve(values, u);
+  }
+  function appleBoundsForGain(u: number, gain: number) {
+    const initial = {
+        left: rect.x - target.a,
+        right: rect.x + target.a,
+        top: rect.y - target.b,
+        bottom: rect.y + target.b,
+      },
+      final = {
+        left: rect.x - rect.w / 2,
+        right: rect.x + rect.w / 2,
+        top: rect.y - rect.h / 2,
+        bottom: rect.y + rect.h / 2,
+      };
+    const edge = (name: AppleEdgeName) =>
+      initial[name] +
+      (final[name] - initial[name]) * appleScaledCurve(name, u, gain);
+    return {
+      left: edge('left'),
+      right: edge('right'),
+      top: edge('top'),
+      bottom: edge('bottom'),
+    };
+  }
+  function maxGeometryScaleForGain(gain: number) {
+    let peak = 1;
+    for (let i = 0; i <= 120; i++) {
+      const bounds = appleBoundsForGain(i / 120, gain);
+      peak = Math.max(
+        peak,
+        (bounds.right - bounds.left) / rect.w,
+        (bounds.bottom - bounds.top) / rect.h,
+      );
+    }
+    return peak;
+  }
+  function resolveAppleOvershootGain() {
+    let lo = 0,
+      hi = 32;
+    for (let i = 0; i < 18; i++) {
+      const mid = (lo + hi) / 2;
+      if (maxGeometryScaleForGain(mid) < MAX_GEOMETRY_SCALE) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+  function appleMorphBounds(u: number) {
+    return appleBoundsForGain(u, appleOvershootGain);
+  }
+  function roundedDistanceInBounds(x: number, y: number, bounds: {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+  }) {
+    const width = bounds.right - bounds.left,
+      height = bounds.bottom - bounds.top,
+      centerX = (bounds.left + bounds.right) / 2,
+      centerY = (bounds.top + bounds.bottom) / 2,
+      radius = resolveGlassRadius(width, height),
+      qx = Math.abs(x - centerX) - width / 2 + radius,
+      qy = Math.abs(y - centerY) - height / 2 + radius;
     return (
       Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) +
       Math.min(Math.max(qx, qy), 0) -
-      r
+      radius
     );
   }
+  function morphTimeline(t: number) {
+    const u = clamp((t - morphStart) / Math.max(0.001, 1 - morphStart), 0, 1),
+      morph = morphEase(u),
+      remaining = 1 - morph,
+      shape = smoother(clamp(u / 0.36, 0, 1)),
+      bounds = appleMorphBounds(u),
+      startFill = geometry(morphStart).fill,
+      blurStart = 16 * (1 - 0.8 * startFill),
+      blur =
+        t < morphStart
+          ? 16 * (1 - 0.8 * geometry(t).fill)
+          : blurStart * remaining,
+      lens = t < morphStart ? 1 : remaining,
+      pre = morphStart > 0 ? clamp(t / morphStart, 0, 1) : 1,
+      opacity = t < morphStart ? smooth(pre / 0.65) : 1,
+      handoff = smoother((u - 0.92) / 0.08);
+    return {
+      u,
+      morph,
+      shape,
+      bounds,
+      remaining,
+      blur,
+      lens,
+      opacity,
+      handoff,
+    };
+  }
   function morphContour(t: number) {
-    const u = smoother((t - 0.8) / 0.2),
-      ps = [];
+    const timeline = morphTimeline(t),
+      bounds = timeline.bounds,
+      ps: Point[] = [],
+      centerX = (bounds.left + bounds.right) / 2,
+      centerY = (bounds.top + bounds.bottom) / 2,
+      a = (bounds.right - bounds.left) / 2,
+      b = (bounds.bottom - bounds.top) / 2,
+      cornerMorph = timeline.shape;
     for (let i = 0; i < 360; i++) {
       const angle = (i / 360) * Math.PI * 2,
         dx = Math.cos(angle),
-        dy = Math.sin(angle);
-      const er = 1 / superNorm(dx / target.a, dy / target.b, target.n);
+        dy = Math.sin(angle),
+        ellipseRadius = 1 / superNorm(dx / a, dy / b, target.n);
       let lo = 0,
-        hi = Math.hypot(rect.w, rect.h);
+        hi = Math.hypot(bounds.right - bounds.left, bounds.bottom - bounds.top);
       for (let j = 0; j < 25; j++) {
         const mid = (lo + hi) / 2;
-        if (roundedDistance(dx * mid, dy * mid) > 0) hi = mid;
+        if (
+          roundedDistanceInBounds(
+            centerX + dx * mid,
+            centerY + dy * mid,
+            bounds,
+          ) > 0
+        )
+          hi = mid;
         else lo = mid;
       }
-      const rr = (lo + hi) / 2;
+      const roundedRadius = (lo + hi) / 2,
+        radius = ellipseRadius + (roundedRadius - ellipseRadius) * cornerMorph;
       ps.push({
-        x: target.x + dx * er + (rect.x + dx * rr - target.x - dx * er) * u,
-        y: target.y + dy * er + (rect.y + dy * rr - target.y - dy * er) * u,
+        x: centerX + dx * radius,
+        y: centerY + dy * radius,
       });
     }
     return [ps];
   }
   function mainTime(t: number) {
-    return t * (1 + SPRING_SECONDS / options.duration);
+    return clamp(t, 0, 1);
   }
-  function springStretch(seconds: number) {
-    if (seconds <= 0 || seconds >= SPRING_SECONDS) return 0;
-    const fade = 1 - smoother((seconds - 0.28) / (0.45 - 0.28));
-    return (
-      0.045 *
-      Math.exp(-7 * seconds) *
-      Math.sin(2 * Math.PI * 4.5 * seconds) *
-      smooth(seconds / 0.04) *
-      fade
-    );
+  function springStretch(_seconds: number) {
+    return 0;
   }
   function animationContour(t: number) {
     const time = mainTime(t);
-    if (time >= 1) {
-      const stretch = springStretch((time - 1) * options.duration),
-        sy = 1 + stretch,
-        sx = 1 / sy;
-      return morphContour(1).map((loop) =>
-        loop.map((p) => ({
-          x: rect.x + (p.x - rect.x) * sx,
-          y: rect.y + (p.y - rect.y) * sy,
-        })),
-      );
-    }
-    if (time >= 0.8) return morphContour(time);
-    return shellContour(geometry(time));
+    return time >= morphStart
+      ? morphContour(time)
+      : shellContour(geometry(time));
   }
   function contourPath(loops: Point[][]) {
     return loops
@@ -646,7 +768,9 @@ export function createLiquidMotion(
     path: contourPath,
     time: mainTime,
     geometry,
+    timeline: morphTimeline,
     spring: springStretch,
-    totalSeconds: options.duration + SPRING_SECONDS,
+    morphStart,
+    totalSeconds: options.duration,
   };
 }

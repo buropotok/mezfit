@@ -20,8 +20,6 @@ import {
   clamp,
   contourBounds,
   paintLiquidMesh,
-  smooth,
-  smoother,
 } from './liquidPopoverCanvas';
 import {
   createLiquidMotion,
@@ -356,8 +354,8 @@ export function LiquidPopover({
         const progress = clamp(
           (now - started) / (animation.totalSeconds * 1000),
         );
-        const time = animation.time(progress),
-          loops = animation.contour(progress);
+        const loops = animation.contour(progress),
+          timeline = animation.timeline(progress);
         const bounds = contourBounds(loops),
           width = bounds.right - bounds.left,
           height = bounds.bottom - bounds.top;
@@ -383,27 +381,31 @@ export function LiquidPopover({
         );
         const canvasPath = animation.path(localLoops);
         clipRef.current?.setAttribute('d', canvasPath);
-        const stretch =
-          time >= 1 ? animation.spring((time - 1) * options.duration) : 0;
-        const strength = 1 - smoother((time - 0.8) / 0.2);
         paintLiquidMesh(
           context,
           texture,
           localLoops,
-          time,
+          timeline.shape,
           { ...rect, x: rect.x - cropX, y: rect.y - cropY },
-          stretch,
-          strength,
+          0,
+          timeline.lens,
+          progress >= 1,
         );
-        const fill = time >= 0.8 ? 1 : animation.geometry(time).fill;
-        const blur = 16 * (1 - 0.8 * fill) * (1 - progress),
-          opacity = smooth(progress / 0.5);
-        const handoff = smoother((progress - 0.9) / 0.1);
-        canvas.style.opacity = String(opacity * (1 - handoff));
-        canvas.style.filter = `blur(${blur}px)`;
-        native.style.opacity = String(opacity * handoff);
-        native.style.filter = `blur(${blur}px)`;
-        native.style.transform = `scale(${1 / (1 + stretch)}, ${1 + stretch})`;
+        const centerX = (bounds.left + bounds.right) / 2,
+          centerY = (bounds.top + bounds.bottom) / 2,
+          scaleX = width / rect.w,
+          scaleY = height / rect.h,
+          offsetX = centerX - rect.x,
+          offsetY = centerY - rect.y;
+        canvas.style.opacity = String(
+          timeline.opacity * (1 - timeline.handoff),
+        );
+        canvas.style.filter = `blur(${timeline.blur}px)`;
+        native.style.opacity = String(timeline.opacity * timeline.handoff);
+        native.style.filter = `blur(${timeline.blur}px)`;
+        native.style.transformOrigin = 'center center';
+        native.style.transform =
+          `translate(${offsetX}px, ${offsetY}px) scale(${scaleX}, ${scaleY})`;
         if (progress < 1) frame = requestAnimationFrame(draw);
         else finish();
       };
