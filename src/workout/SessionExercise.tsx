@@ -103,7 +103,7 @@ function SetStatus({ set }: { set: SessionExerciseSetData }) {
   if (set.status === 'completed') {
     return <span className="session-exercise__set-status session-exercise__set-status--completed"><SharedIcon name="check" /></span>;
   }
-  return <span className="session-exercise__set-status">{set.position + 1}</span>;
+  return <span className="session-exercise__set-status"><Text variant="footnote">{set.position + 1}</Text></span>;
 }
 
 function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, planMode: boolean): ReactNode | undefined {
@@ -153,7 +153,7 @@ export function SessionExercise(props: SessionExerciseProps) {
   };
 
   return (
-    <article className={`session-exercise${surface === 'transparent' ? ' session-exercise--transparent' : ''}`} data-session-exercise-id={data.sessionExerciseId}>
+    <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={data.sessionExerciseId}>
       <div className="session-exercise__header">
         <List className="session-exercise__header-list">
           <ListItem
