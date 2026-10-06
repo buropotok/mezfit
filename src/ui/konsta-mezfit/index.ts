@@ -3,3 +3,4 @@ export { MezfitPanel, MezfitSidePanel, type MezfitPanelProps, type MezfitSidePan
 export { MezfitPopover, type MezfitPopoverProps } from './Popover';
 
 export { MezfitSearchbar, type MezfitSearchbarProps } from './Searchbar';
+export { MezfitSlider, type MezfitSliderProps, type MezfitSliderSize } from './Slider';
