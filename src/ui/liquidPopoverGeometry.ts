@@ -75,6 +75,9 @@ export function createLiquidMotion(
   function sourceShrinkEnd() {
     return clamp(options.sourceMorph / options.duration, 0, morphStart * 0.9);
   }
+  function centerShrinkEnd() {
+    return Math.abs(source.w - source.h) > 0.5 ? sourceShrinkEnd() : 0;
+  }
   function indexRoute() {
     lengths = [0];
     for (let i = 1; i < route.length; i++)
@@ -228,10 +231,10 @@ export function createLiquidMotion(
     return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
   }
   function geometry(t: number) {
-    const shrinkEnd = Math.max(0.001, sourceShrinkEnd()),
+    const shrinkEnd = centerRoute ? centerShrinkEnd() : sourceShrinkEnd(),
       preMorph = Math.max(shrinkEnd + 0.001, morphStart),
       shrink = centerRoute
-        ? smoother(clamp(t / shrinkEnd, 0, 1))
+        ? smoother(clamp(t / Math.max(0.001, shrinkEnd), 0, 1))
         : smoother((t * options.duration) / options.sourceMorph),
       shellProgress = centerRoute
         ? clamp((t - shrinkEnd) / (preMorph - shrinkEnd), 0, 1)
@@ -357,7 +360,7 @@ export function createLiquidMotion(
     return x * x * x * (x * (x * 6 - 15) + 10);
   };
   function sourceShrinkContour(t: number) {
-    const end = Math.max(0.001, sourceShrinkEnd()),
+    const end = Math.max(0.001, centerShrinkEnd()),
       u = smoother(clamp(t / end, 0, 1)),
       diameter = Math.min(source.w, source.h),
       width = source.w + (diameter - source.w) * u,
@@ -812,7 +815,7 @@ export function createLiquidMotion(
   }
   function animationContour(t: number) {
     const time = mainTime(t);
-    if (centerRoute && time < sourceShrinkEnd())
+    if (centerRoute && time < centerShrinkEnd())
       return sourceShrinkContour(time);
     return time >= morphStart
       ? morphContour(time)
