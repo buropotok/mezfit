@@ -7,7 +7,6 @@ import {
   useState,
   type CSSProperties,
   type FormEvent,
-  type PointerEvent,
 } from 'react';
 import { Range as KonstaRange } from 'konsta/react';
 import './Slider.css';
@@ -65,6 +64,10 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
   const min = Math.min(start, end);
   const max = Math.max(start, end);
   const isStatic = min === max;
+  // Konsta 5.4.0 calculates thumb position by dividing by (max - min), even
+  // while disabled. Keep its private interaction range non-zero for a static
+  // slider without changing the public Start/End/Value semantics.
+  const interactionMax = isStatic ? min + 1 : max;
   const [value, setValue] = useState(() => clamp(start, min, max));
   const [isActive, setIsActive] = useState(false);
   const [measuredWidth, setMeasuredWidth] = useState(BASE_TRACK_WIDTH * scale);
@@ -126,7 +129,7 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
     onValueChange?.(nextValue);
   };
 
-  const handlePointerDown = (_event: PointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = () => {
     if (!isStatic) setIsActive(true);
   };
 
@@ -163,7 +166,7 @@ export function MezfitSlider({ size, start, end, onValueChange }: MezfitSliderPr
       <KonstaRange
         className="mezfit-slider__input-layer"
         min={min}
-        max={max}
+        max={interactionMax}
         step="any"
         value={value}
         disabled={isStatic}
