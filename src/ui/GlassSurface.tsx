@@ -113,6 +113,8 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   component?: ElementType;
   ref?: Ref<HTMLElement>;
   preset?: GlassPresetName;
+  /** Public backdrop blur override in CSS pixels. Legacy glass.blur remains supported and takes precedence. */
+  blur?: number;
   glass?: GlassMaterialOverrides;
   shape?: GlassShape;
   contentClassName?: string;
@@ -135,6 +137,7 @@ export function GlassSurface({
   component = 'div',
   ref,
   preset = 'modalTuned',
+  blur,
   glass,
   shape = 'auto',
   className = '',
@@ -153,7 +156,10 @@ export function GlassSurface({
   const workCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
-  const material = useMemo(() => resolveGlassMaterial(preset, glass), [preset, glass]);
+  const material = useMemo(
+    () => resolveGlassMaterial(preset, { ...glass, blur: glass?.blur ?? blur }),
+    [preset, glass, blur],
+  );
   const highlightOpacity = Math.max(0, Math.min(1, bezelOpacity));
   const topLeftHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.topLeft ?? 1));
   const bottomRightHighlightOpacity = Math.max(0, Math.min(1, bezelHighlights?.bottomRight ?? 1));
