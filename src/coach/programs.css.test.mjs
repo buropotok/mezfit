@@ -5,6 +5,10 @@ const programsCss = readFileSync(
   new URL('./programs.css', import.meta.url),
   'utf8',
 );
+const programsPageSource = readFileSync(
+  new URL('./ProgramsPage.tsx', import.meta.url),
+  'utf8',
+);
 
 function ruleBody(selector) {
   const start = programsCss.indexOf(`${selector} {`);
@@ -26,12 +30,11 @@ describe('ProgramsPage CSS contract', () => {
     expect(icon).not.toContain('background:');
   });
 
-  it('keeps the legacy surface scoped to non-sortable cards without reaching into SortableList internals', () => {
-    const staticCard = ruleBody('.programs-card--static');
-
-    expect(staticCard).toContain('background:var(--ui-color-surface)');
-    expect(staticCard).toContain('box-shadow:var(--ui-shadow-raised)');
-    expect(programsCss).toContain('.programs-card--static > div + div .programs-row::before');
-    expect(programsCss).not.toContain('.programs-card:not(.ui-sortable-list)');
+  it('has no legacy static program-card surface to swap in during mutations', () => {
+    expect(programsCss).not.toContain('.programs-card--static');
+    expect(programsCss).not.toContain('background:var(--ui-color-surface)');
+    expect(programsCss).not.toContain('box-shadow:var(--ui-shadow-raised)');
+    expect(programsPageSource).not.toContain('programs-card--static');
+    expect(programsPageSource.match(/disabled=\{filter !== 'all' \|\| mutationBusy\}/g)).toHaveLength(2);
   });
 });

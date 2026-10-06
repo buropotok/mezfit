@@ -21,6 +21,20 @@ describe('SortableList surfaces', () => {
   });
 });
 
+describe('SortableList disabled semantics', () => {
+  it('omits draggable attributes while preserving the mounted list surface', () => {
+    const { container } = render(<SortableList items={items} onReorder={vi.fn()} disabled />);
+    const rows = container.querySelectorAll('.ui-sortable-list__row');
+
+    expect(container.querySelector('.ui-sortable-list__surface')).not.toBeNull();
+    rows.forEach((row) => {
+      expect(row.getAttribute('role')).toBeNull();
+      expect(row.getAttribute('tabindex')).toBeNull();
+      expect(row.getAttribute('aria-disabled')).toBeNull();
+    });
+  });
+});
+
 describe('SortableList separators', () => {
   it('shows separators by default', () => {
     const { container } = render(<SortableList items={items} onReorder={vi.fn()} />);

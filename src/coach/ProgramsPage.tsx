@@ -94,14 +94,14 @@ function ProgramRow({ program, onOpen, onDuplicate, mutationBusy }: { program: P
 
 function ProgramRows({
   programs,
-  sortable,
+  disabled,
   onOpen,
   onDuplicate,
   mutationBusy,
   onReorder,
 }: {
   programs: ProgramListItem[];
-  sortable: boolean;
+  disabled: boolean;
   onOpen?: (program: ProgramListItem) => void;
   onDuplicate: (program: ProgramListItem) => void;
   mutationBusy: boolean;
@@ -113,20 +113,17 @@ function ProgramRows({
     content: <ProgramRow program={program} onOpen={onOpen} onDuplicate={onDuplicate} mutationBusy={mutationBusy} />,
   }));
 
-  if (sortable) {
-    return (
-      <SortableList
-        className="programs-card"
-        items={rows}
-        onReorder={(items) => {
-          const byId = new Map(programs.map((program) => [program.id, program]));
-          onReorder(items.map((item) => byId.get(Number(item.id))).filter((program): program is ProgramListItem => Boolean(program)));
-        }}
-      />
-    );
-  }
-
-  return <div className="programs-card programs-card--static">{rows.map((row) => <div key={row.id}>{row.content}</div>)}</div>;
+  return (
+    <SortableList
+      className="programs-card"
+      items={rows}
+      disabled={disabled}
+      onReorder={(items) => {
+        const byId = new Map(programs.map((program) => [program.id, program]));
+        onReorder(items.map((item) => byId.get(Number(item.id))).filter((program): program is ProgramListItem => Boolean(program)));
+      }}
+    />
+  );
 }
 
 function ownerName(group: ProgramOwnerGroup): string {
@@ -301,7 +298,7 @@ export function ProgramsPage({
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
             <ProgramRows
               programs={ownPrograms}
-              sortable={filter === 'all' && !mutationBusy}
+              disabled={filter !== 'all' || mutationBusy}
               onOpen={onOpenProgram}
               onDuplicate={(program) => { void duplicateProgram(program); }}
               mutationBusy={mutationBusy}
@@ -324,7 +321,7 @@ export function ProgramsPage({
                 </List>
                 <ProgramRows
                   programs={group.programs}
-                  sortable={filter === 'all' && !mutationBusy}
+                  disabled={filter !== 'all' || mutationBusy}
                   onOpen={onOpenProgram}
                   onDuplicate={(program) => { void duplicateProgram(program); }}
                   mutationBusy={mutationBusy}
