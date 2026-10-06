@@ -15,7 +15,7 @@ import {
 } from 'react';
 import {
   buildGlassVectorMap,
-  LIQUID_CONVEX_LIGHTING,
+  DIRECTIONAL_GLASS_LIGHTING,
   resolveGlassFilterRegion,
   resolveGlassMaterial,
   resolveGlassRadius,
@@ -67,6 +67,7 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-specular-primary-side-alpha': string;
   '--ui-glass-surface-specular-opposite-alpha': string;
   '--ui-glass-surface-specular-opposite-side-alpha': string;
+  '--ui-glass-surface-specular-gradient': string;
 };
 
 export type GlassSurfaceProviderProps = {
@@ -103,6 +104,92 @@ function cacheVectorMap(key: string, href: string) {
     if (oldestKey === undefined) break;
     glassVectorMapCache.delete(oldestKey);
   }
+}
+
+function makeSpecularLobe(
+  start: number,
+  peakEnd: number,
+  sideEnd: number,
+  fadeEnd: number,
+  alpha: number,
+  sideAlpha: number,
+) {
+  return [
+    `rgb(255 255 255 / ${alpha}) ${start}deg`,
+    `rgb(255 255 255 / ${alpha}) ${peakEnd}deg`,
+    `rgb(255 255 255 / ${sideAlpha}) ${sideEnd}deg`,
+    `rgb(255 255 255 / 0) ${fadeEnd}deg`,
+  ];
+}
+
+function buildBezelOnlySpecularGradient(
+  bezelAngle: number,
+  primaryAlpha: number,
+  oppositeAlpha: number,
+  primarySideAlpha: number,
+  oppositeSideAlpha: number,
+  isCapsule: boolean,
+  capsuleSpan: number,
+) {
+  const topStops = isCapsule
+    ? [0, 14 - 5 * capsuleSpan, 54 + 16 * capsuleSpan, 68 + 16 * capsuleSpan]
+    : [0, 10, 40, 78];
+  const bottomStops = isCapsule
+    ? [142 - 16 * capsuleSpan, 176 - 16 * capsuleSpan, 234 + 5 * capsuleSpan, 248]
+    : [140, 170, 220, 258];
+  const middleGap = isCapsule ? 92 + 6 * capsuleSpan : 102;
+  const bottomTail = isCapsule ? 272 - 10 * capsuleSpan : 282;
+  const wrapSide = isCapsule ? 306 - 16 * capsuleSpan : 320;
+  const wrapPeak = isCapsule ? 346 - 3 * capsuleSpan : 350;
+  const parts = [`from ${bezelAngle}deg`];
+
+  if (primaryAlpha > 0.0005) {
+    parts.push(...makeSpecularLobe(
+      topStops[0],
+      topStops[1],
+      topStops[2],
+      topStops[3],
+      primaryAlpha,
+      primarySideAlpha,
+    ));
+  } else {
+    parts.push('rgb(255 255 255 / 0) 0deg', `rgb(255 255 255 / 0) ${topStops[3]}deg`);
+  }
+
+  parts.push(`rgb(255 255 255 / 0) ${middleGap}deg`);
+
+  if (oppositeAlpha > 0.0005) {
+    parts.push(...makeSpecularLobe(
+      bottomStops[0],
+      bottomStops[1],
+      bottomStops[2],
+      bottomStops[3],
+      oppositeAlpha,
+      oppositeSideAlpha,
+    ));
+  } else {
+    parts.push(
+      `rgb(255 255 255 / 0) ${bottomStops[0]}deg`,
+      `rgb(255 255 255 / 0) ${bottomStops[3]}deg`,
+    );
+  }
+
+  parts.push(`rgb(255 255 255 / 0) ${bottomTail}deg`);
+
+  if (primaryAlpha > 0.0005) {
+    parts.push(
+      `rgb(255 255 255 / ${primarySideAlpha}) ${wrapSide}deg`,
+      `rgb(255 255 255 / ${primaryAlpha}) ${wrapPeak}deg`,
+      `rgb(255 255 255 / ${primaryAlpha}) 360deg`,
+    );
+  } else {
+    parts.push(
+      `rgb(255 255 255 / 0) ${wrapSide}deg`,
+      'rgb(255 255 255 / 0) 360deg',
+    );
+  }
+
+  return `conic-gradient(${parts.join(', ')})`;
 }
 
 function vectorMapCacheKey(
@@ -301,40 +388,87 @@ export function GlassSurface({
 
   const radius = geometry?.radius ?? 0;
   const isLiquidConvex = preset === 'liquidConvex';
+  const isBezelOnly = preset === 'bezelOnly';
+  const directionalLighting = isLiquidConvex || isBezelOnly
+    ? DIRECTIONAL_GLASS_LIGHTING[preset]
+    : null;
+  const lighting = directionalLighting ?? DIRECTIONAL_GLASS_LIGHTING.liquidConvex;
   const isCapsule = shape === 'capsule' || (
     geometry !== null
     && Math.abs(radius - Math.min(geometry.width, geometry.height) / 2) < 0.1
   );
-  const liquidConvexScale = geometry
+  const isSmallCapsule = isCapsule && geometry !== null && geometry.height <= 44.5;
+  const sizeScale = geometry
     ? Math.max(0.34, Math.min(1.26, geometry.height / 150))
     : 1;
-  const liquidConvexEdgeWidth = LIQUID_CONVEX_LIGHTING.edgeWidth * liquidConvexScale;
-  const liquidConvexEdgeOutset = LIQUID_CONVEX_LIGHTING.edgeOutset * liquidConvexScale;
-  const liquidConvexLightAngle = isCapsule
-    ? LIQUID_CONVEX_LIGHTING.capsuleLightAngle
-    : LIQUID_CONVEX_LIGHTING.rectangleLightAngle;
-  const liquidConvexBezelAngle = isCapsule
-    ? LIQUID_CONVEX_LIGHTING.capsuleBezelAngle
-    : LIQUID_CONVEX_LIGHTING.rectangleBezelAngle;
-  const liquidConvexLightRadians = liquidConvexLightAngle * Math.PI / 180;
-  const liquidConvexDirectionalOffset = liquidConvexEdgeWidth
-    * 0.28
-    * LIQUID_CONVEX_LIGHTING.directionality;
-  const liquidConvexLightX = Math.cos(liquidConvexLightRadians) * liquidConvexDirectionalOffset;
-  const liquidConvexLightY = Math.sin(liquidConvexLightRadians) * liquidConvexDirectionalOffset;
-  const liquidConvexDarkX = -liquidConvexLightX * 0.78;
-  const liquidConvexDarkY = -liquidConvexLightY * 0.78;
-  const liquidConvexBaseLightAlpha = LIQUID_CONVEX_LIGHTING.edgeLight
-    * (0.12 + (1 - LIQUID_CONVEX_LIGHTING.directionality) * 0.28);
-  const liquidConvexDirectionalLightAlpha = LIQUID_CONVEX_LIGHTING.edgeLight
-    * (0.16 + 0.54 * LIQUID_CONVEX_LIGHTING.directionality);
-  const liquidConvexDarkAlpha = LIQUID_CONVEX_LIGHTING.edgeDark
-    * (0.42 + 0.68 * LIQUID_CONVEX_LIGHTING.directionality);
-  const liquidConvexSpecularAlpha = material.bezel
+  const capsuleAspect = isCapsule && geometry
+    ? geometry.width / Math.max(geometry.height, 1)
+    : 1;
+  const capsuleSpan = isCapsule
+    ? Math.max(0, Math.min(1, (capsuleAspect - 2.7) / 4.1))
+    : 0;
+  const edgeScale = isBezelOnly && isCapsule && geometry
+    ? Math.max(0.72, Math.min(1, geometry.height / 62))
+    : sizeScale;
+  const outsetScale = isBezelOnly && isCapsule && geometry
+    ? Math.max(0.78, Math.min(1, geometry.height / 62))
+    : sizeScale;
+  const edgeWidth = lighting.edgeWidth * edgeScale;
+  const edgeOutset = lighting.edgeOutset * outsetScale;
+  const lightAngle = isCapsule
+    ? lighting.capsuleLightAngle
+    : lighting.rectangleLightAngle;
+  const bezelAngle = isCapsule
+    ? lighting.capsuleBezelAngle
+    : lighting.rectangleBezelAngle;
+  const lightRadians = lightAngle * Math.PI / 180;
+  const directionalOffset = edgeWidth * 0.28 * lighting.directionality;
+  const lightX = Math.cos(lightRadians) * directionalOffset;
+  const lightY = Math.sin(lightRadians) * directionalOffset;
+  const darkX = -lightX * 0.78;
+  const darkY = -lightY * 0.78;
+  const edgeGlowMultiplier = isBezelOnly && isCapsule
+    ? (isSmallCapsule ? 0.54 : 0.70)
+    : 1;
+  const darkMultiplier = isBezelOnly && isCapsule
+    ? (isSmallCapsule ? 0.82 : 0.90)
+    : 1;
+  const baseLightAlpha = lighting.edgeLight
+    * (0.12 + (1 - lighting.directionality) * 0.28)
+    * edgeGlowMultiplier;
+  const directionalLightAlpha = lighting.edgeLight
+    * (0.16 + 0.54 * lighting.directionality)
+    * edgeGlowMultiplier;
+  const darkAlpha = lighting.edgeDark
+    * (0.42 + 0.68 * lighting.directionality)
+    * darkMultiplier;
+  const capsuleSpecularMultiplier = isBezelOnly && isCapsule
+    ? (isSmallCapsule ? 1.18 : 1.08)
+    : 1;
+  const specularAlpha = material.bezel
     * highlightOpacity
-    * (0.12 + 0.36 * LIQUID_CONVEX_LIGHTING.directionality);
-  const liquidConvexPrimaryAlpha = liquidConvexSpecularAlpha * primaryHighlightOpacity;
-  const liquidConvexOppositeAlpha = liquidConvexSpecularAlpha * oppositeHighlightOpacity;
+    * (0.12 + 0.36 * lighting.directionality)
+    * capsuleSpecularMultiplier;
+  const primaryAlpha = specularAlpha
+    * lighting.primaryStrength
+    * primaryHighlightOpacity;
+  const oppositeAlpha = specularAlpha
+    * lighting.oppositeStrength
+    * oppositeHighlightOpacity;
+  const sideAlphaFactor = isBezelOnly && isCapsule
+    ? (isSmallCapsule ? 0.16 : 0.20)
+    : 0.28;
+  const primarySideAlpha = primaryAlpha * sideAlphaFactor;
+  const oppositeSideAlpha = oppositeAlpha * sideAlphaFactor;
+  const bezelOnlyGradient = buildBezelOnlySpecularGradient(
+    bezelAngle,
+    primaryAlpha,
+    oppositeAlpha,
+    primarySideAlpha,
+    oppositeSideAlpha,
+    isCapsule,
+    capsuleSpan,
+  );
   const activeVectorMapHref = optics ? vectorMapHref : null;
   const filterRegion = activeVectorMapHref && geometry
     ? resolveGlassFilterRegion(geometry, material)
@@ -356,30 +490,31 @@ export function GlassSurface({
     '--ui-glass-surface-shadow': String(material.shadow),
     '--ui-glass-surface-filter': `url(#${filterId})`,
     '--ui-glass-surface-radius': `${radius}px`,
-    '--ui-glass-surface-edge-outset': `${liquidConvexEdgeOutset}px`,
-    '--ui-glass-surface-edge-light-blur': `${liquidConvexEdgeWidth * 0.92}px`,
-    '--ui-glass-surface-edge-dark-blur': `${liquidConvexEdgeWidth * 2.25}px`,
-    '--ui-glass-surface-edge-light-x': `${liquidConvexLightX}px`,
-    '--ui-glass-surface-edge-light-y': `${liquidConvexLightY}px`,
-    '--ui-glass-surface-edge-dark-x': `${liquidConvexDarkX}px`,
-    '--ui-glass-surface-edge-dark-y': `${liquidConvexDarkY}px`,
-    '--ui-glass-surface-edge-light-base-alpha': String(liquidConvexBaseLightAlpha),
-    '--ui-glass-surface-edge-light-dir-alpha': String(liquidConvexDirectionalLightAlpha),
-    '--ui-glass-surface-edge-dark-alpha': String(liquidConvexDarkAlpha),
-    '--ui-glass-surface-specular-angle': `${liquidConvexBezelAngle}deg`,
-    '--ui-glass-surface-specular-width': `${LIQUID_CONVEX_LIGHTING.bezelWidth}px`,
-    '--ui-glass-surface-specular-softness': `${LIQUID_CONVEX_LIGHTING.bezelSoftness}px`,
-    '--ui-glass-surface-specular-primary-alpha': String(liquidConvexPrimaryAlpha),
-    '--ui-glass-surface-specular-primary-side-alpha': String(liquidConvexPrimaryAlpha * 0.28),
-    '--ui-glass-surface-specular-opposite-alpha': String(liquidConvexOppositeAlpha),
-    '--ui-glass-surface-specular-opposite-side-alpha': String(liquidConvexOppositeAlpha * 0.28),
+    '--ui-glass-surface-edge-outset': `${edgeOutset}px`,
+    '--ui-glass-surface-edge-light-blur': `${edgeWidth * 0.92}px`,
+    '--ui-glass-surface-edge-dark-blur': `${edgeWidth * 2.25}px`,
+    '--ui-glass-surface-edge-light-x': `${lightX}px`,
+    '--ui-glass-surface-edge-light-y': `${lightY}px`,
+    '--ui-glass-surface-edge-dark-x': `${darkX}px`,
+    '--ui-glass-surface-edge-dark-y': `${darkY}px`,
+    '--ui-glass-surface-edge-light-base-alpha': String(baseLightAlpha),
+    '--ui-glass-surface-edge-light-dir-alpha': String(directionalLightAlpha),
+    '--ui-glass-surface-edge-dark-alpha': String(darkAlpha),
+    '--ui-glass-surface-specular-angle': `${bezelAngle}deg`,
+    '--ui-glass-surface-specular-width': `${lighting.bezelWidth}px`,
+    '--ui-glass-surface-specular-softness': `${lighting.bezelSoftness}px`,
+    '--ui-glass-surface-specular-primary-alpha': String(primaryAlpha),
+    '--ui-glass-surface-specular-primary-side-alpha': String(primarySideAlpha),
+    '--ui-glass-surface-specular-opposite-alpha': String(oppositeAlpha),
+    '--ui-glass-surface-specular-opposite-side-alpha': String(oppositeSideAlpha),
+    '--ui-glass-surface-specular-gradient': bezelOnlyGradient,
   };
 
   return (
     <Component
       {...props}
       ref={setRootRef}
-      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''}${isLiquidConvex ? ' ui-glass-surface--liquid-convex' : ''} ${className}`.trim()}
+      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''}${directionalLighting ? ' ui-glass-surface--directional' : ''}${isLiquidConvex ? ' ui-glass-surface--liquid-convex' : ''}${isBezelOnly ? ' ui-glass-surface--bezel-only' : ''} ${className}`.trim()}
       data-ui-glass-map-ready={activeVectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
