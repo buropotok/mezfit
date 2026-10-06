@@ -262,7 +262,7 @@ describe('WorkoutSessionScreen', () => {
     expect(startMock).not.toHaveBeenCalled();
   });
 
-  it('renders sortable session exercises with a transparent owned surface', async () => {
+  it('renders sortable session exercises without the standalone surface layer', async () => {
     initializeMock.mockResolvedValue({
       session: {
         ...programSession,
@@ -273,7 +273,8 @@ describe('WorkoutSessionScreen', () => {
     const { container } = renderScreen();
 
     expect(await screen.findByText('Жим лёжа')).toBeTruthy();
-    expect(container.querySelector('.session-exercise--transparent')).not.toBeNull();
+    expect(container.querySelector('.session-exercise')).not.toBeNull();
+    expect(container.querySelector('.session-exercise--surface')).toBeNull();
   });
 
   it('rolls back repeated failed reorders to the last server-acknowledged order', async () => {
