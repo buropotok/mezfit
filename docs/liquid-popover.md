@@ -75,10 +75,13 @@ visible overshoot and settle, so it shares the same geometry as the glass shell.
 Canvas renders directly into a bounded visible surface, with compositor blur. Neither content nor vector maps are PNG
 encoded, base64 allocated, or SVG image decoded per frame. This mesh-based
 refraction approximates the previous pixel displacement, retaining its flat
-center and outward rim stretch. Raster text is prepared
-from the action model at one pixel per CSS pixel using the current semantic
-body font. Content opacity, blur, rim-lens strength, and the raster-to-native handoff are
-derived from the same morph timeline. The final 8% blends the contour-mapped
+center and outward rim stretch. Raster text is prewarmed from the action model, then repainted at animation
+start from the positioned native rows into the final popover viewport. Raster
+and live HTML therefore share the same row positions, scroll offset, spacing,
+and edge gaps before the mesh deforms that texture. It remains one pixel per
+CSS pixel using the current semantic body font. Content opacity, blur,
+rim-lens strength, and the raster-to-native handoff are derived from the same
+morph timeline. The final 8% blends the contour-mapped
 texture into live HTML using complementary alpha in an isolated
 `plus-lighter` group; native HTML follows the current asymmetric bounds during
 that handoff. Final content is interactive native HTML.
