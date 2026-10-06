@@ -316,7 +316,7 @@ export function SettingsPage({
         <Surface className="settings-page__section">
           <Text variant="title">Настройки стекла</Text>
           <Text variant="footnote" tone="muted">
-            Эти параметры применяются к GlassSurface в Navbar и Liquid Glass Icon Only.
+            Эти параметры применяются ко всем GlassSurface приложения. Локальные настройки компонента могут переопределить глобальное значение.
           </Text>
 
           <div className="settings-page__glass-field">
