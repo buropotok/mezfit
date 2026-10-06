@@ -41,8 +41,8 @@ function SortableRow({ item, disabled }: { item: SortableListItem; disabled: boo
       ref={setNodeRef}
       className={`ui-sortable-list__row${isDragging ? ' ui-sortable-list__row--dragging' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      {...attributes}
-      {...listeners}
+      {...(disabled ? {} : attributes)}
+      {...(disabled ? {} : listeners)}
     >
       {item.content}
     </div>
