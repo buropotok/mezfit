@@ -545,7 +545,6 @@ export function SettingsPage({
           onClose={() => setDatePickerOpen(false)}
           glassPreset={glassSettings.preset}
           glassOptics={glassSettings.optics}
-          glassBlur={effectiveGlassBlur}
         />
         <MezfitSidePanel
           side="right"
