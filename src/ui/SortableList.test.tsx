@@ -10,6 +10,18 @@ const items: SortableListItem[] = [
 
 afterEach(() => cleanup());
 
+describe('SortableList surfaces', () => {
+  it('renders every resting item on a GlassSurface without optics', () => {
+    const { container } = render(<SortableList items={items} onReorder={vi.fn()} />);
+    const surfaces = container.querySelectorAll('.ui-sortable-list__row > .ui-glass-surface');
+
+    expect(surfaces).toHaveLength(2);
+    surfaces.forEach((surface) => {
+      expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
+    });
+  });
+});
+
 describe('SortableList separators', () => {
   it('shows separators by default', () => {
     const { container } = render(<SortableList items={items} onReorder={vi.fn()} />);
