@@ -55,6 +55,7 @@ export interface LiquidPopoverProps {
   label?: string;
   preset?: GlassPresetName;
   optics?: boolean;
+  blur?: number;
   layout?: LiquidPopoverLayout;
   columns?: number;
   role?: LiquidPopoverRole;
@@ -101,6 +102,7 @@ export function LiquidPopover({
   triggerActivation = 'automatic',
   preset = 'frosted',
   optics = false,
+  blur,
   layout = 'menu',
   columns = 4,
   role = 'menu',
@@ -480,6 +482,7 @@ export function LiquidPopover({
           ref={glassRef}
           preset={preset}
           optics={optics}
+          blur={blur}
           className="ui-liquid-popover__glass"
           aria-hidden="true"
         />
