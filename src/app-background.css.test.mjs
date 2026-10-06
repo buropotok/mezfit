@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const themeCss = readFileSync(new URL('./theme.css', import.meta.url), 'utf8');
 const dayScheduleCss = readFileSync(new URL('./ui/day-schedule.css', import.meta.url), 'utf8');
+const dayScheduleCatalog = readFileSync(new URL('./ui/DayScheduleCatalog.tsx', import.meta.url), 'utf8');
 
 describe('app background CSS contract', () => {
   it('keeps every theme canvas black', () => {
@@ -18,5 +19,10 @@ describe('app background CSS contract', () => {
 
     expect(rootRule).toContain('background: #000;');
     expect(rootRule).not.toContain('url(');
+  });
+
+  it('documents the DaySchedule canvas as solid black', () => {
+    expect(dayScheduleCatalog).toContain('Фон календаря — чистый чёрный canvas.');
+    expect(dayScheduleCatalog).not.toContain('Фон календаря использует фоновое изображение DaySchedule.');
   });
 });
