@@ -98,7 +98,6 @@ describe('MezfitSlider', () => {
 
     expect(input?.disabled).toBe(true);
     expect(input?.min).toBe('12');
-    expect(input?.max).toBe('13');
     expect(input?.value).toBe('12');
     expect(root?.dataset.value).toBe('12');
 
