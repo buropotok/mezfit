@@ -19,7 +19,6 @@ export type MezfitNavbarProps = {
   renderMenuControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
-  glassBlur?: number;
   menuDisabled?: boolean;
   calendarDisabled?: boolean;
 };
@@ -36,7 +35,6 @@ export function MezfitNavbar({
   rightControlHidden = false,
   glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
   glassOptics = false,
-  glassBlur,
   menuDisabled = false,
   calendarDisabled = false,
 }: MezfitNavbarProps) {
@@ -76,7 +74,6 @@ export function MezfitNavbar({
             onIdentityClick={onIdentityClick}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
-            glassBlur={glassBlur}
           />
 
           <div className="ui-mezfit-navbar__side ui-mezfit-navbar__side--right" style={rightControlHidden ? { visibility: 'hidden' } : undefined}>
@@ -85,7 +82,6 @@ export function MezfitNavbar({
               surfaceRef={rightControlRef}
               glassPreset={glassPreset}
               glassOptics={glassOptics}
-              glassBlur={glassBlur}
               actions={[
                 {
                   icon: 'calendar',
