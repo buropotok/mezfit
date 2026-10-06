@@ -132,6 +132,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
         glassPreset="clear"
+        glassBlur={7}
       >
         <div>Today content</div>
       </NavigationShell>,
@@ -142,12 +143,12 @@ describe('NavigationShell MezfitNavbar integration', () => {
     ];
     expect(navbarSurfaces).toHaveLength(3);
     for (const surface of navbarSurfaces) {
-      expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+      expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
     }
 
     const primaryTabsSurface = getPrimaryTabsRoot(view.container).getElementById('toolbar-pane');
     expect(primaryTabsSurface?.classList.contains('ui-glass-surface')).toBe(true);
-    expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+    expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
   });
 
   it('shares shell material settings with both the tab-slot FAB and page-owned FABs', () => {
