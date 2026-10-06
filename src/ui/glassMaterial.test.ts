@@ -1,6 +1,8 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  BEZEL_ONLY_GLASS,
+  BEZEL_ONLY_LIGHTING,
   GLASS_PRESETS,
   LIQUID_CONVEX_GLASS,
   LIQUID_CONVEX_LIGHTING,
@@ -50,6 +52,7 @@ describe('glass material', () => {
       'blue',
       'smoked',
       'liquidConvex',
+      'bezelOnly',
     ]);
     expect(resolveGlassMaterial('modal').blur).toBe(16);
     expect(resolveGlassMaterial('clear').tintA).toBe(0.08);
@@ -60,6 +63,17 @@ describe('glass material', () => {
     expect(LIQUID_CONVEX_LIGHTING.rectangleBezelAngle).toBe(346);
     expect(LIQUID_CONVEX_LIGHTING.capsuleLightAngle).toBe(243);
     expect(LIQUID_CONVEX_LIGHTING.capsuleBezelAngle).toBe(346);
+    expect(resolveGlassMaterial('bezelOnly')).toEqual(BEZEL_ONLY_GLASS);
+    expect(BEZEL_ONLY_LIGHTING.edgeWidth).toBe(16);
+    expect(BEZEL_ONLY_LIGHTING.edgeOutset).toBe(22.5);
+    expect(BEZEL_ONLY_LIGHTING.edgeLight).toBe(0.43);
+    expect(BEZEL_ONLY_LIGHTING.edgeDark).toBe(0.55);
+    expect(BEZEL_ONLY_LIGHTING.rectangleLightAngle).toBe(354);
+    expect(BEZEL_ONLY_LIGHTING.rectangleBezelAngle).toBe(359);
+    expect(BEZEL_ONLY_LIGHTING.capsuleLightAngle).toBe(359);
+    expect(BEZEL_ONLY_LIGHTING.capsuleBezelAngle).toBe(350);
+    expect(BEZEL_ONLY_LIGHTING.primaryStrength).toBe(1.49);
+    expect(BEZEL_ONLY_LIGHTING.oppositeStrength).toBe(1.03);
   });
 
   it('anchors compact auto geometry at 44px -> 22px and preserves the tuned modal radius', () => {
