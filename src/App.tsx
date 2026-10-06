@@ -326,6 +326,7 @@ export function App() {
         floatingAction={workoutFloatingAction}
         glassPreset={glassSettings.preset}
         glassOptics={glassSettings.optics}
+        glassBlur={glassSettings.blur}
       >
         {workoutOpen ? (
           <WorkoutSessionScreen
