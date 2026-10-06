@@ -12,12 +12,12 @@ const ACTION_PADDING_INLINE = 10;
 export type FloatingActionButtonAction = { label: string; onClick: () => void; disabled?: boolean; icon?: UiIconName };
 export type MetaballFabProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   label: string; isShown: boolean; placement: 'left' | 'right';
-  glassPreset?: GlassPresetName; glassOptics?: boolean; icon?: UiIconName; children?: ReactNode;
+  glassPreset?: GlassPresetName; glassOptics?: boolean; glassBlur?: number; icon?: UiIconName; children?: ReactNode;
   /** Moving left action first, stationary right action second. */
   actions: readonly [FloatingActionButtonAction, FloatingActionButtonAction];
 };
 
-export function MetaballFab({ label, isShown, placement, glassPreset, glassOptics, icon, children, actions, className = '', style, disabled, onClick, onPointerDown, onKeyDown, type = 'button', ...props }: MetaballFabProps) {
+export function MetaballFab({ label, isShown, placement, glassPreset, glassOptics, glassBlur, icon, children, actions, className = '', style, disabled, onClick, onPointerDown, onKeyDown, type = 'button', ...props }: MetaballFabProps) {
   const root = useRef<HTMLDivElement>(null);
   const dayMeasure = useRef<HTMLSpanElement>(null);
   const phaseMeasure = useRef<HTMLSpanElement>(null);
@@ -117,9 +117,9 @@ export function MetaballFab({ label, isShown, placement, glassPreset, glassOptic
 
   return (
     <div ref={root} className={`ui-fab ui-fab--${placement}${isShown ? ' ui-fab--shown' : ' ui-fab--hidden'} ui-text--body ui-fab-metaball ui-fab-metaball--${placement} ${className}`.trim()} style={{ ...style, '--ui-fab-metaball-width': `${layout.width}px` } as CSSProperties} aria-hidden={!isShown || undefined} data-ui-fab-mode="metaball" data-disabled={disabled || undefined}>
-      {!expanded ? <GlassSurface className="ui-fab-metaball__source" contentClassName="ui-fab-metaball__source-content" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule">{artwork}</GlassSurface> : null}
-      {expanded && !settled ? <GlassSurface className="ui-fab-metaball__liquid" preset={glassPreset} active={isShown} bezelOpacity={0} contour={contour} shape={{ radius: 0 }} /> : null}
-      {settled ? [final.day, final.phase].map((shape, index) => <GlassSurface key={index} className="ui-fab-metaball__capsule" preset={glassPreset} optics={glassOptics} active={isShown} bezelOpacity={bezelReveal} shape="capsule" style={hitbox(shape.x, shape.width, 44)} />) : null}
+      {!expanded ? <GlassSurface className="ui-fab-metaball__source" contentClassName="ui-fab-metaball__source-content" preset={glassPreset} optics={glassOptics} blur={glassBlur} active={isShown} bezelOpacity={bezelReveal} shape="capsule">{artwork}</GlassSurface> : null}
+      {expanded && !settled ? <GlassSurface className="ui-fab-metaball__liquid" preset={glassPreset} blur={glassBlur} active={isShown} bezelOpacity={0} contour={contour} shape={{ radius: 0 }} /> : null}
+      {settled ? [final.day, final.phase].map((shape, index) => <GlassSurface key={index} className="ui-fab-metaball__capsule" preset={glassPreset} optics={glassOptics} blur={glassBlur} active={isShown} bezelOpacity={bezelReveal} shape="capsule" style={hitbox(shape.x, shape.width, 44)} />) : null}
       {isShown && (expanded || bezelReveal < 1) ? <div className="ui-fab-metaball__liquid">
         <GlassContourBezel contour={contour} highlights={fabBezelHighlights(geometry, time, rupture)} preset={glassPreset}
           opacity={moving ? 1 : 1 - bezelReveal} />
