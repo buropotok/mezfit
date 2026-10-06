@@ -4,17 +4,15 @@
   padding-block: var(--ui-space-4);
   color: var(--ui-color-canvas-text);
   background: var(--ui-color-canvas);
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-body);
-  line-height: var(--ui-line-height-body);
 }
 
 .ui-kit-day-schedule h2,
 .ui-kit-day-schedule h3 {
   margin: var(--ui-space-3) 0;
-  font-size: var(--ui-font-size-headline);
-  line-height: var(--ui-line-height-headline);
-  font-weight: var(--ui-font-weight-light);
+}
+
+.ui-kit-day-schedule__text {
+  color: inherit;
 }
 
 .ui-kit-day-schedule__controls {
@@ -28,8 +26,6 @@
 .ui-kit-day-schedule__contract {
   padding: var(--ui-space-3);
   overflow-wrap: anywhere;
-  font-size: var(--ui-font-size-footnote);
-  line-height: var(--ui-line-height-footnote);
 }
 
 .ui-kit-day-schedule__preview {
@@ -40,7 +36,6 @@
 
 .ui-kit-day-schedule dt {
   margin-top: var(--ui-space-3);
-  font-weight: var(--ui-font-weight-semibold);
 }
 
 .ui-kit-day-schedule dd {
@@ -49,9 +44,6 @@
 
 .ui-kit-day-schedule pre {
   white-space: pre-wrap;
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-footnote);
-  line-height: var(--ui-line-height-footnote);
 }
 
 
