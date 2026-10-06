@@ -50,6 +50,7 @@
   border-radius: 999px;
   color: inherit;
   appearance: none;
+  -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
 }
 
