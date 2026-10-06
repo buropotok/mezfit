@@ -1,16 +1,13 @@
 .session-exercise {
-  overflow: hidden;
   width: 100%;
   min-width: 0;
-  border-radius: var(--ui-radius-md);
   color: var(--ui-color-surface-text);
-  background: var(--ui-color-surface);
 }
 
-.session-exercise--transparent {
-  overflow: visible;
-  border-radius: 0;
-  background: transparent;
+.session-exercise--surface {
+  overflow: hidden;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface);
 }
 
 .session-exercise__header {
