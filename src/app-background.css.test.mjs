@@ -14,6 +14,13 @@ describe('app background CSS contract', () => {
     expect(backgrounds.every((background) => background === '#000000')).toBe(true);
   });
 
+  it('uses the shared fitness artwork on the application canvas', () => {
+    expect(themeCss).toContain("background-image: url('./assets/fitness-background.svg');");
+    expect(themeCss).toContain('background-position: center top;');
+    expect(themeCss).toContain('background-repeat: no-repeat;');
+    expect(themeCss).toContain('background-size: cover;');
+  });
+
   it('keeps the day schedule canvas black without a background image', () => {
     const rootRule = dayScheduleCss.match(/\.ui-day-schedule\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 
