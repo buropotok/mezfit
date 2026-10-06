@@ -57,7 +57,7 @@
   opacity: var(--ui-glass-surface-bezel-bottom-right);
 }
 
-.ui-glass-surface--liquid-convex::before {
+.ui-glass-surface--directional::before {
   inset: calc(0px - var(--ui-glass-surface-edge-outset));
   border-radius: calc(var(--ui-glass-surface-radius) + var(--ui-glass-surface-edge-outset));
   box-shadow:
@@ -72,10 +72,22 @@
   opacity: 1;
 }
 
-.ui-glass-surface--liquid-convex::after {
+.ui-glass-surface--directional::after {
   padding: var(--ui-glass-surface-specular-width);
   box-shadow: none;
   opacity: 1;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  filter: blur(var(--ui-glass-surface-specular-softness));
+}
+
+.ui-glass-surface--liquid-convex::after {
   background: conic-gradient(
     from var(--ui-glass-surface-specular-angle),
     rgb(255 255 255 / var(--ui-glass-surface-specular-primary-alpha)) 0deg,
@@ -93,15 +105,10 @@
     rgb(255 255 255 / var(--ui-glass-surface-specular-primary-alpha)) 350deg,
     rgb(255 255 255 / var(--ui-glass-surface-specular-primary-alpha)) 360deg
   );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  filter: blur(var(--ui-glass-surface-specular-softness));
+}
+
+.ui-glass-surface--bezel-only::after {
+  background: var(--ui-glass-surface-specular-gradient);
 }
 
 .ui-glass-surface__filter {
