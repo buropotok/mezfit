@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GlassSurface } from './GlassSurface';
+import { GlassSurface, GlassSurfaceProvider } from './GlassSurface';
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
@@ -172,6 +172,35 @@ describe('GlassSurface', () => {
     expect(surface.style.borderRadius).toBe('');
     expect(surface.querySelector('.ui-glass-surface__content')).toBeNull();
     expect(surface.querySelector('[data-testid="direct-child"]')?.parentElement).toBe(surface);
+  });
+
+  it('inherits global blur while direct and legacy overrides remain compatible', () => {
+    const view = render(
+      <GlassSurfaceProvider blur={7}>
+        <GlassSurface preset="frosted">Inherited blur</GlassSurface>
+      </GlassSurfaceProvider>,
+    );
+    const surface = view.container.querySelector('.ui-glass-surface') as HTMLElement;
+
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
+
+    view.rerender(
+      <GlassSurfaceProvider blur={7}>
+        <GlassSurface preset="frosted" blur={6}>Direct blur</GlassSurface>
+      </GlassSurfaceProvider>,
+    );
+
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('6px');
+
+    view.rerender(
+      <GlassSurfaceProvider blur={7}>
+        <GlassSurface preset="frosted" blur={6} glass={{ blur: 9 }}>
+          Legacy override
+        </GlassSurface>
+      </GlassSurfaceProvider>,
+    );
+
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('9px');
   });
 
   it('applies a named preset before public material overrides', () => {

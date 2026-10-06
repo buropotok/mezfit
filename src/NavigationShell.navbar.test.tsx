@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
-import { FloatingActionButton } from './ui';
+import { FloatingActionButton, GlassSurfaceProvider } from './ui';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
@@ -122,19 +122,21 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(onDestinationChange).toHaveBeenCalledWith('programs');
   });
 
-  it('forwards the shared glass preset to navbar and primary tabs', () => {
+  it('forwards the shared glass preset and inherits global blur in navbar and primary tabs', () => {
     const view = render(
-      <NavigationShell
-        me={me}
-        activeRole="client"
-        destination="today"
-        context={null}
-        onDestinationChange={vi.fn()}
-        onRoleSwitch={vi.fn()}
-        glassPreset="clear"
-      >
-        <div>Today content</div>
-      </NavigationShell>,
+      <GlassSurfaceProvider blur={7}>
+        <NavigationShell
+          me={me}
+          activeRole="client"
+          destination="today"
+          context={null}
+          onDestinationChange={vi.fn()}
+          onRoleSwitch={vi.fn()}
+          glassPreset="clear"
+        >
+          <div>Today content</div>
+        </NavigationShell>
+      </GlassSurfaceProvider>,
     );
 
     const navbarSurfaces = [
@@ -142,12 +144,12 @@ describe('NavigationShell MezfitNavbar integration', () => {
     ];
     expect(navbarSurfaces).toHaveLength(3);
     for (const surface of navbarSurfaces) {
-      expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+      expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
     }
 
     const primaryTabsSurface = getPrimaryTabsRoot(view.container).getElementById('toolbar-pane');
     expect(primaryTabsSurface?.classList.contains('ui-glass-surface')).toBe(true);
-    expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
+    expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
   });
 
   it('shares shell material settings with both the tab-slot FAB and page-owned FABs', () => {

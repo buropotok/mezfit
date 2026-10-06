@@ -22,7 +22,7 @@ import { SettingsPage } from './settings/SettingsPage';
 import { TodayPage } from './schedule/TodayPage';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
-import { Button } from './ui';
+import { Button, GlassSurfaceProvider } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -311,24 +311,25 @@ export function App() {
   };
 
   return (
-    <ClientCoachProvider
-      initData={state.initData}
-      clientUserId={state.me.user.id}
-      enabled={state.activeRole === 'client'}
-    >
-      <NavigationShell
-        me={state.me}
-        activeRole={state.activeRole}
-        destination={destination}
-        context={shellContext}
-        onDestinationChange={changeDestination}
-        onRoleSwitch={switchRole}
-        floatingAction={workoutFloatingAction}
-        glassPreset={glassSettings.preset}
-        glassOptics={glassSettings.optics}
+    <GlassSurfaceProvider blur={glassSettings.blur}>
+      <ClientCoachProvider
+        initData={state.initData}
+        clientUserId={state.me.user.id}
+        enabled={state.activeRole === 'client'}
       >
-        {workoutOpen ? (
-          <WorkoutSessionScreen
+        <NavigationShell
+          me={state.me}
+          activeRole={state.activeRole}
+          destination={destination}
+          context={shellContext}
+          onDestinationChange={changeDestination}
+          onRoleSwitch={switchRole}
+          floatingAction={workoutFloatingAction}
+          glassPreset={glassSettings.preset}
+          glassOptics={glassSettings.optics}
+        >
+          {workoutOpen ? (
+            <WorkoutSessionScreen
             initData={state.initData}
             onClose={closeWorkout}
             onNavigationContextChange={setWorkoutNestedNavigationContext}
@@ -356,8 +357,9 @@ export function App() {
             destination={clientDestination}
             onNavigationContextChange={handleNavigationContextChange}
           />
-        )}
-      </NavigationShell>
-    </ClientCoachProvider>
+          )}
+        </NavigationShell>
+      </ClientCoachProvider>
+    </GlassSurfaceProvider>
   );
 }
