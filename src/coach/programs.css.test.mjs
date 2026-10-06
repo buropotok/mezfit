@@ -21,6 +21,8 @@ describe('ProgramsPage CSS contract', () => {
 
     expect(card).not.toContain('background:');
     expect(card).not.toContain('box-shadow:');
+    expect(card).not.toContain('border-radius:');
+    expect(card).not.toContain('overflow:');
     expect(icon).not.toContain('background:');
   });
 
