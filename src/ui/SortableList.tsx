@@ -31,10 +31,11 @@ export type SortableListProps = {
   className?: string;
   longPressDelay?: number;
   showSeparators?: boolean;
+  disabled?: boolean;
 };
 
-function SortableRow({ item }: { item: SortableListItem }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+function SortableRow({ item, disabled }: { item: SortableListItem; disabled: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id, disabled });
   return (
     <div
       ref={setNodeRef}
@@ -48,7 +49,7 @@ function SortableRow({ item }: { item: SortableListItem }) {
   );
 }
 
-export function SortableList({ items, onReorder, className = '', longPressDelay = LONG_PRESS_DELAY_MS, showSeparators = true }: SortableListProps) {
+export function SortableList({ items, onReorder, className = '', longPressDelay = LONG_PRESS_DELAY_MS, showSeparators = true, disabled = false }: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const activationConstraint = { delay: longPressDelay, tolerance: DRAG_ACTIVATION_TOLERANCE };
   const sensors = useSensors(
@@ -76,7 +77,7 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
       <GlassSurface preset="modalTuned" optics={false} className="ui-sortable-list__surface">
         <div className={`ui-sortable-list${showSeparators ? '' : ' ui-sortable-list--no-separators'} ${className}`.trim()} role="list">
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-            {items.map((item) => <SortableRow key={item.id} item={item} />)}
+            {items.map((item) => <SortableRow key={item.id} item={item} disabled={disabled} />)}
           </SortableContext>
         </div>
       </GlassSurface>
