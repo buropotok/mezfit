@@ -23,13 +23,13 @@ afterEach(() => {
 });
 
 describe('SettingsPage glass settings', () => {
-  it('opens glass settings and emits preset and optics changes', () => {
+  it('opens glass settings and emits preset, blur and optics changes', () => {
     const onGlassSettingsChange = vi.fn();
     const onNavigationContextChange = vi.fn();
 
     render(
       <SettingsPage
-        glassSettings={{ preset: 'frosted', optics: false }}
+        glassSettings={{ preset: 'frosted', optics: false, blur: 14 }}
         onGlassSettingsChange={onGlassSettingsChange}
         onNavigationContextChange={onNavigationContextChange}
       />,
@@ -48,6 +48,15 @@ describe('SettingsPage glass settings', () => {
     expect(onGlassSettingsChange).toHaveBeenLastCalledWith({
       preset: 'clear',
       optics: false,
+      blur: 2,
+    });
+
+    fireEvent.change(screen.getByRole('slider', { name: /Blur/ }), { target: { value: '18' } });
+
+    expect(onGlassSettingsChange).toHaveBeenLastCalledWith({
+      preset: 'frosted',
+      optics: false,
+      blur: 18,
     });
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Optics/ }));
@@ -55,6 +64,7 @@ describe('SettingsPage glass settings', () => {
     expect(onGlassSettingsChange).toHaveBeenLastCalledWith({
       preset: 'frosted',
       optics: true,
+      blur: 14,
     });
   });
 });
