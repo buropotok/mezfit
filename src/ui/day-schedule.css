@@ -8,7 +8,7 @@
   height: 100dvh;
   overflow: hidden;
   color: var(--ui-color-canvas-text);
-  background: #000 url('../assets/day-schedule-background.jpg') center / cover no-repeat;
+  background: #000;
   font-family: var(--ui-font-family);
 }
 
