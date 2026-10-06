@@ -153,7 +153,7 @@ export function SessionExercise(props: SessionExerciseProps) {
   };
 
   return (
-    <article className={`session-exercise${surface === 'transparent' ? ' session-exercise--transparent' : ''}`} data-session-exercise-id={data.sessionExerciseId}>
+    <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={data.sessionExerciseId}>
       <div className="session-exercise__header">
         <List className="session-exercise__header-list">
           <ListItem
