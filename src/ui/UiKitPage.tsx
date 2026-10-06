@@ -30,6 +30,7 @@ const glassPresets: readonly { name: GlassPresetName; label: string; description
   { name: 'blue', label: 'Blue', description: 'Tinted · saturated glass' },
   { name: 'smoked', label: 'Smoked', description: 'Dark tint · stronger shadow' },
   { name: 'liquidConvex', label: 'Liquid Convex', description: 'Borderless · scaled convex edge and paired bezel' },
+  { name: 'bezelOnly', label: 'Bezel Only', description: 'Directional edge · tuned paired bezel highlights' },
 ];
 
 const buttonSlots: TypographySlot[] = [{ id: 'labels', label: 'Подписи', defaultRole: 'body', selector: '.ui-button', weightOverride: 500 }];
