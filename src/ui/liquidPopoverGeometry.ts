@@ -725,7 +725,7 @@ export function createLiquidMotion(
   function mainTime(t: number) {
     return clamp(t, 0, 1);
   }
-  function springStretch() {
+  function springStretch(_seconds: number) {
     return 0;
   }
   function animationContour(t: number) {
