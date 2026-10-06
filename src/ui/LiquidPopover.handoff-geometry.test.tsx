@@ -142,8 +142,8 @@ it('repaints the opening texture from positioned native row geometry', async () 
 
   const [, , finalBaseline] = secondCalls.at(-1)!;
   // Native row top is 204 and host top is 140, so y=64. With a 48 px row
-  // and mocked 12/3 font metrics, the exact native baseline is 96.5 px.
-  expect(finalBaseline).toBeCloseTo(96.5, 3);
+  // and mocked 12/3 font metrics, the exact native baseline is 92.5 px.
+  expect(finalBaseline).toBeCloseTo(92.5, 3);
   // Hidden prewarm geometry places the same row at y=80 and would produce
   // 108.5 px; the opening texture must not retain that coordinate system.
   expect(finalBaseline).not.toBeCloseTo(108.5, 3);
