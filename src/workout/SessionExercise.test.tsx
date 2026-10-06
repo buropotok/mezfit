@@ -99,7 +99,7 @@ describe('SessionExercise rendering', () => {
     const card = container.querySelector('.session-exercise');
     expect(card).not.toBeNull();
     expect(card?.classList.contains('ui-surface')).toBe(false);
-    expect(card?.classList.contains('session-exercise--transparent')).toBe(false);
+    expect(card?.classList.contains('session-exercise--surface')).toBe(true);
     expect(screen.getByText('Жим лёжа').closest('.ui-list-item')).not.toBeNull();
     expect(screen.getByText('Грудь · Штанга · 2 подхода')).toBeTruthy();
     expect(screen.getByText('1 / 2').className).toContain('ui-badge');
@@ -111,9 +111,12 @@ describe('SessionExercise rendering', () => {
     expect(screen.getByText('50% выполнено')).toBeTruthy();
   });
 
-  it('supports a transparent surface when an outer component owns the tile material', () => {
+  it('does not apply legacy surface geometry when an outer component owns the tile material', () => {
     const { container } = renderExercise({ surface: 'transparent' });
-    expect(container.querySelector('.session-exercise')?.classList.contains('session-exercise--transparent')).toBe(true);
+    const card = container.querySelector('.session-exercise');
+
+    expect(card).not.toBeNull();
+    expect(card?.classList.contains('session-exercise--surface')).toBe(false);
   });
 
   it('collapses and expands from a short header click', () => {
