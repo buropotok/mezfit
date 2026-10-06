@@ -28,6 +28,7 @@ const glassPresets: readonly { name: GlassPresetName; label: string; description
   { name: 'frosted', label: 'Frosted', description: 'High blur · soft material' },
   { name: 'blue', label: 'Blue', description: 'Tinted · saturated glass' },
   { name: 'smoked', label: 'Smoked', description: 'Dark tint · stronger shadow' },
+  { name: 'liquidConvex', label: 'Liquid Convex', description: 'Borderless · scaled convex edge and paired bezel' },
 ];
 
 const buttonSlots: TypographySlot[] = [{ id: 'labels', label: 'Подписи', defaultRole: 'body', selector: '.ui-button', weightOverride: 500 }];
