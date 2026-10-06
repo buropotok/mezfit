@@ -53,6 +53,7 @@ describe('MezfitSlider', () => {
     expect(mezfitInput).not.toBeNull();
     expect(mezfitInput?.className).toBe(konstaInput?.className);
     expect(mezfit.container.querySelector('.k-range.mezfit-slider__input-layer')).not.toBeNull();
+    expect(mezfit.getByRole('slider', { name: 'Slider' })).toBe(mezfitInput);
   });
 
   it.each([
@@ -100,6 +101,7 @@ describe('MezfitSlider', () => {
     expect(staticSlider?.getAttribute('aria-valuemin')).toBe('12');
     expect(staticSlider?.getAttribute('aria-valuemax')).toBe('12');
     expect(staticSlider?.getAttribute('aria-valuenow')).toBe('12');
+    expect(staticSlider?.getAttribute('aria-label')).toBe('Slider');
     expect(root?.dataset.value).toBe('12');
     expect(view.onValueChange).not.toHaveBeenCalled();
   });
