@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
 import { useNavigationFloatingAction } from '../NavigationShell';
-import { Avatar, Badge, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
+import { Avatar, Badge, GlassSurface, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -126,7 +126,11 @@ function ProgramRows({
     );
   }
 
-  return <div className="programs-card">{rows.map((row) => <div key={row.id}>{row.content}</div>)}</div>;
+  return (
+    <GlassSurface preset="modalTuned" optics={false} className="programs-card" contentClassName="programs-card__content">
+      {rows.map((row) => <div key={row.id}>{row.content}</div>)}
+    </GlassSurface>
+  );
 }
 
 function ownerName(group: ProgramOwnerGroup): string {
