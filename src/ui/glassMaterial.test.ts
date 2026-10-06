@@ -2,6 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   GLASS_PRESETS,
+  LIQUID_CONVEX_GLASS,
+  LIQUID_CONVEX_LIGHTING,
   MODAL_TUNED_GLASS,
   buildGlassVectorMap,
   resolveGlassMaterial,
@@ -47,11 +49,17 @@ describe('glass material', () => {
       'frosted',
       'blue',
       'smoked',
+      'liquidConvex',
     ]);
     expect(resolveGlassMaterial('modal').blur).toBe(16);
     expect(resolveGlassMaterial('clear').tintA).toBe(0.08);
     expect(resolveGlassMaterial('frosted').blur).toBe(14);
     expect(resolveGlassMaterial('smoked').shadow).toBe(0.28);
+    expect(resolveGlassMaterial('liquidConvex')).toEqual(LIQUID_CONVEX_GLASS);
+    expect(LIQUID_CONVEX_LIGHTING.rectangleLightAngle).toBe(360);
+    expect(LIQUID_CONVEX_LIGHTING.rectangleBezelAngle).toBe(346);
+    expect(LIQUID_CONVEX_LIGHTING.capsuleLightAngle).toBe(243);
+    expect(LIQUID_CONVEX_LIGHTING.capsuleBezelAngle).toBe(346);
   });
 
   it('anchors compact auto geometry at 44px -> 22px and preserves the tuned modal radius', () => {
