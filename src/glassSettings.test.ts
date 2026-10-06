@@ -8,12 +8,20 @@ import {
 } from './glassSettings';
 
 describe('glassSettings', () => {
-  it('loads a valid persisted preset and optics value', () => {
+  it('loads a valid persisted preset, optics and blur value', () => {
     const storage = {
-      getItem: vi.fn(() => JSON.stringify({ preset: 'clear', optics: true })),
+      getItem: vi.fn(() => JSON.stringify({ preset: 'clear', optics: true, blur: 18 })),
     };
 
-    expect(loadGlassSettings(storage)).toEqual({ preset: 'clear', optics: true });
+    expect(loadGlassSettings(storage)).toEqual({ preset: 'clear', optics: true, blur: 18 });
+  });
+
+  it('backfills blur from the selected preset for legacy stored settings', () => {
+    const storage = {
+      getItem: vi.fn(() => JSON.stringify({ preset: 'frosted', optics: false })),
+    };
+
+    expect(loadGlassSettings(storage)).toEqual({ preset: 'frosted', optics: false, blur: 14 });
   });
 
   it('accepts the liquid convex preset as a persisted glass setting', () => {
@@ -21,7 +29,7 @@ describe('glassSettings', () => {
       getItem: vi.fn(() => JSON.stringify({ preset: 'liquidConvex', optics: false })),
     };
 
-    expect(loadGlassSettings(storage)).toEqual({ preset: 'liquidConvex', optics: false });
+    expect(loadGlassSettings(storage)).toEqual({ preset: 'liquidConvex', optics: false, blur: 0 });
   });
 
   it('falls back per field when persisted settings are invalid', () => {
@@ -35,11 +43,11 @@ describe('glassSettings', () => {
   it('persists the typed glass settings payload', () => {
     const storage = { setItem: vi.fn() };
 
-    saveGlassSettings(storage, { preset: 'lens', optics: true });
+    saveGlassSettings(storage, { preset: 'lens', optics: true, blur: 7 });
 
     expect(storage.setItem).toHaveBeenCalledWith(
       'mezfit.glassSettings',
-      JSON.stringify({ preset: 'lens', optics: true }),
+      JSON.stringify({ preset: 'lens', optics: true, blur: 7 }),
     );
   });
 
@@ -51,7 +59,7 @@ describe('glassSettings', () => {
 
   it('ignores denied browser storage while persisting', () => {
     expect(() => saveBrowserGlassSettings(
-      { preset: 'clear', optics: true },
+      { preset: 'clear', optics: true, blur: 2 },
       () => {
         throw new DOMException('Denied', 'SecurityError');
       },
