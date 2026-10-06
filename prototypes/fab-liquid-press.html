@@ -134,7 +134,7 @@ body{min-height:100dvh;display:grid;place-items:center;overflow:hidden;touch-act
     render();
 
     const moving = Math.abs(scale.target - scale.value) > 0.0005 || Math.abs(scale.velocity) > 0.002 ||
-      Math.abs(deformation.value) > 0.0005 || Math.abs(deformation.velocity) > 0.002 || pressed;
+      Math.abs(deformation.value) > 0.0005 || Math.abs(deformation.velocity) > 0.002;
     if (moving) raf = requestAnimationFrame(tick);
     else { raf = 0; lastTime = 0; render(); }
   }
