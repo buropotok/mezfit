@@ -179,7 +179,9 @@ export function LiquidPopover({
   const sceneRef = useRef<SVGSVGElement>(null),
     clipRef = useRef<SVGPathElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sourceRef = useRef<HTMLCanvasElement | null>(null);
+  const sourceRef = useRef<HTMLCanvasElement | null>(null),
+    itemsRef = useRef(items);
+  itemsRef.current = items;
   const [host, setHost] = useState<HTMLElement | null>(null),
     [settled, setSettled] = useState(false),
     [positioned, setPositioned] = useState(false);
@@ -229,7 +231,7 @@ export function LiquidPopover({
           canvas,
           element,
           rowRefs.current,
-          items,
+          itemsRef.current,
           layout,
         )
       )
@@ -246,7 +248,7 @@ export function LiquidPopover({
       observer?.disconnect();
       element.ownerDocument.fonts?.removeEventListener('loadingdone', prepare);
     };
-  }, [activeItemId, centerActiveItem, contentKey, items, layout]);
+  }, [activeItemId, centerActiveItem, contentKey, layout]);
 
   useLayoutEffect(() => {
     if (!isOpen || !host || !positioned) {
@@ -328,7 +330,7 @@ export function LiquidPopover({
           texture,
           native,
           nativeRowRefs.current,
-          items,
+          itemsRef.current,
           layout,
           destinationBounds,
         )
@@ -472,7 +474,6 @@ export function LiquidPopover({
     contentKey,
     host,
     isOpen,
-    items,
     layout,
     options,
     positioned,
