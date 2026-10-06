@@ -87,10 +87,6 @@
   place-items: center;
   color: var(--ui-color-surface-muted);
   background: var(--ui-color-surface-raised);
-  font-family: var(--ui-font-family);
-  font-size: var(--ui-font-size-footnote);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-footnote);
 }
 
 .session-exercise__set-status--completed {
@@ -109,7 +105,6 @@
   overflow: hidden;
   min-width: 0;
   color: var(--ui-color-surface-text);
-  font-weight: var(--ui-font-weight-regular);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
