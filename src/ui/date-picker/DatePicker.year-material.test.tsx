@@ -11,6 +11,8 @@ vi.mock('../GlassSurface', () => ({
     ref,
     preset,
     optics,
+    shape: _shape,
+    wrapContent: _wrapContent,
     className = '',
     children,
     ...props
@@ -19,6 +21,8 @@ vi.mock('../GlassSurface', () => ({
     ref: Ref<HTMLElement>;
     preset: string;
     optics: boolean;
+    shape?: string;
+    wrapContent?: boolean;
     children?: ReactNode;
   }) => (
     <Component
