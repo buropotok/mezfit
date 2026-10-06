@@ -32,6 +32,14 @@ describe('glassSettings', () => {
     expect(loadGlassSettings(storage)).toEqual({ preset: 'liquidConvex', optics: false, blur: 0 });
   });
 
+  it('accepts the bezel-only preset as a persisted glass setting', () => {
+    const storage = {
+      getItem: vi.fn(() => JSON.stringify({ preset: 'bezelOnly', optics: false })),
+    };
+
+    expect(loadGlassSettings(storage)).toEqual({ preset: 'bezelOnly', optics: false, blur: 0 });
+  });
+
   it('falls back per field when persisted settings are invalid', () => {
     const storage = {
       getItem: vi.fn(() => JSON.stringify({ preset: 'unknown', optics: 'yes' })),
