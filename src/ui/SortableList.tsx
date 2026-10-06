@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { LiftedGlass } from './LiftedGlass';
+import { GlassSurface } from './GlassSurface';
 import { DRAG_ACTIVATION_TOLERANCE, LONG_PRESS_DELAY_MS, UiPointerSensor, UiTouchSensor } from './dndSensors';
 import './SortableList.css';
 
@@ -43,7 +43,7 @@ function SortableRow({ item }: { item: SortableListItem }) {
       {...attributes}
       {...listeners}
     >
-      {item.content}
+      <GlassSurface preset="modalTuned" optics={false}>{item.content}</GlassSurface>
     </div>
   );
 }
@@ -79,7 +79,7 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
         </SortableContext>
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
-        {activeItem ? <div className="ui-sortable-list__overlay"><LiftedGlass>{activeItem.content}</LiftedGlass></div> : null}
+        {activeItem ? <div className="ui-sortable-list__overlay"><GlassSurface preset="modalTuned" optics={true}>{activeItem.content}</GlassSurface></div> : null}
       </DragOverlay>
     </DndContext>
   );
