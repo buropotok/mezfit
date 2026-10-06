@@ -174,6 +174,25 @@ describe('GlassSurface', () => {
     expect(surface.querySelector('[data-testid="direct-child"]')?.parentElement).toBe(surface);
   });
 
+  it('exposes blur directly while preserving legacy glass.blur precedence', () => {
+    const view = render(
+      <GlassSurface preset="frosted" blur={6}>
+        Direct blur
+      </GlassSurface>,
+    );
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('6px');
+
+    view.rerender(
+      <GlassSurface preset="frosted" blur={6} glass={{ blur: 9 }}>
+        Legacy override
+      </GlassSurface>,
+    );
+
+    expect(surface.style.getPropertyValue('--ui-glass-surface-blur')).toBe('9px');
+  });
+
   it('applies a named preset before public material overrides', () => {
     const view = render(
       <GlassSurface
