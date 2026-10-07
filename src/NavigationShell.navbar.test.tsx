@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
+import { NavigationShell, useNavigationFloatingAction, useNavigationSurfaceFloatingAction } from './NavigationShell';
 import { FloatingActionButton, GlassSurfaceProvider } from './ui';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
@@ -46,6 +46,15 @@ const programFloatingAction = {
 
 function ProgramFloatingActionRegistration() {
   useNavigationFloatingAction('programs', programFloatingAction);
+  return null;
+}
+
+function SurfaceFloatingActionRegistration() {
+  useNavigationSurfaceFloatingAction({
+    label: 'Действие вложенной страницы',
+    onClick: vi.fn(),
+    icon: 'plus',
+  });
   return null;
 }
 
@@ -426,6 +435,29 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(doubleAction).not.toBeNull();
     expect(doubleAction?.classList.contains('ui-identity-action--animating')).toBe(true);
     expect(view.getByRole('menu', { name: 'Меню страницы' })).not.toBeNull();
+  });
+
+  it('renders a level-two surface FAB outside the page scroller and keeps root fallback hidden', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={{ title: 'Тренировка', scrollKey: 'workout:root', onBack: vi.fn() }}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+        floatingAction={{ label: 'Открыть тренировку', onClick: vi.fn(), icon: 'barbell' }}
+      >
+        <SurfaceFloatingActionRegistration />
+      </NavigationShell>,
+    );
+
+    const button = view.getByRole('button', { name: 'Действие вложенной страницы' });
+    const scroll = view.container.querySelector('.navigation-content');
+    expect(button.closest('.navigation-surface-fab-layer')).not.toBeNull();
+    expect(scroll?.contains(button)).toBe(false);
+    expect(view.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
+    expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
   });
 
   it('uses a contextual avatar identity and hides first-level tabs on level two', () => {
