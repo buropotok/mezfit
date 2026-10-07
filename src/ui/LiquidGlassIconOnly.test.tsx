@@ -2,7 +2,7 @@
 import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+import { LiquidGlassFloatingActionSlot, LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 
 const tabs:LiquidGlassIconOnlyTab[]=['Сегодня','Клиенты','Программы','Аналитика','Настройки'].map((label,i)=>({value:String(i),label,icon:{outline:<svg data-art={`${i}-outline`}/>,filled:<svg data-art={`${i}-filled`}/>}}));
 const namedTabs:LiquidGlassIconOnlyTab[]=[
@@ -321,6 +321,24 @@ describe('direct prototype adapter',()=>{
     }finally{
       Object.defineProperty(Element.prototype,'querySelectorAll',{configurable:true,value:nativeQuerySelectorAll});
     }
+  });
+
+  it('reuses the exact approved FAB coordinates in the standalone slot',()=>{
+    const reference=render(ui(false,'0',tabs,true));
+    const referenceSlot=reference.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
+    const expected={left:referenceSlot?.style.left,top:referenceSlot?.style.top};
+    reference.unmount();
+
+    const standalone=render(
+      <LiquidGlassFloatingActionSlot>
+        <button type="button">＋</button>
+      </LiquidGlassFloatingActionSlot>,
+    );
+    const standaloneSlot=standalone.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
+    expect(standalone.container.querySelector('[data-liquid-glass-floating-action-slot]')).not.toBeNull();
+    expect(standaloneSlot?.style.left).toBe(expected.left);
+    expect(standaloneSlot?.style.top).toBe(expected.top);
+    expect(standaloneSlot?.style.pointerEvents).toBe('auto');
   });
 
   it('places an independent FAB at the approved position without rebuilding the tabs',()=>{
