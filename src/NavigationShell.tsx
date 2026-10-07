@@ -13,6 +13,7 @@ import {
   MEZFIT_NAVBAR_GLASS_PRESET,
   MezfitNavbar,
   type GlassPresetName,
+  type DatePickerDayStatusEntry,
   type LocalDate,
   type MezfitNavbarIdentity,
   type UiIconName,
@@ -65,6 +66,7 @@ export interface NavigationContext {
   calendar?: {
     value: LocalDate;
     onChange: (date: LocalDate) => void;
+    dayStatuses?: readonly DatePickerDayStatusEntry[];
   };
   contentMode?: 'default' | 'viewport';
 }
@@ -246,6 +248,7 @@ export function NavigationShell({
   };
   const calendarValue = context?.calendar?.value ?? selectedDate;
   const onCalendarDateChange = context?.calendar?.onChange ?? setSelectedDate;
+  const calendarDayStatuses = context?.calendar?.dayStatuses;
   const viewportContent = context?.contentMode === 'viewport';
 
   useEffect(() => {
@@ -471,6 +474,7 @@ export function NavigationShell({
           onClose={() => setCalendarOpen(false)}
           glassPreset={glassPreset}
           glassOptics={glassOptics}
+          dayStatuses={calendarDayStatuses}
         />
         </main>
       </NavigationLevelContext.Provider>

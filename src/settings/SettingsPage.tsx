@@ -30,9 +30,15 @@ import {
   type TypographyRole,
   type TypographySettings,
 } from '../typographySettings';
-import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
+import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
+
+const datePickerStatusPreview: readonly DatePickerDayStatusEntry[] = [
+  { date: '2026-09-27', status: 'scheduled' },
+  { date: '2026-09-28', status: 'completed' },
+  { date: '2026-09-29', status: 'missed' },
+];
 
 const previewExercise: SessionExerciseData = {
   sessionExerciseId: -1,
@@ -548,6 +554,7 @@ export function SettingsPage({
           onClose={() => setDatePickerOpen(false)}
           glassPreset={glassSettings.preset}
           glassOptics={glassSettings.optics}
+          dayStatuses={datePickerStatusPreview}
         />
         <MezfitSidePanel
           side="right"
