@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import {
   createCoachProgramPhase,
@@ -12,7 +12,8 @@ import {
   type ProgramStatus,
 } from '../api';
 import { ProgramPhaseCard } from '../program/ProgramPhaseCard';
-import { Avatar, Badge, Button, FloatingActionButton, List, ListItem, Modal, Surface, Text } from '../ui';
+import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
+import { Avatar, Badge, Button, List, ListItem, Modal, Surface, Text } from '../ui';
 import { SessionExercise } from '../workout/SessionExercise';
 import type { SessionExerciseData, SessionExerciseSetData } from '../workout/sessionExerciseTypes';
 import './program-details.css';
@@ -175,11 +176,17 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
     [details],
   );
 
-  const openPhaseCreation = () => {
+  const openPhaseCreation = useCallback(() => {
     setPhaseName('');
     setPhaseCreateError('');
     setPhaseCreateOpen(true);
-  };
+  }, []);
+  const floatingAction = useMemo(() => details ? {
+    label: 'Добавить фазу',
+    icon: 'plus' as const,
+    onClick: openPhaseCreation,
+  } : null, [details, openPhaseCreation]);
+  useNavigationSurfaceFloatingAction(floatingAction);
 
   const closePhaseCreation = () => {
     if (phaseCreateBusy) return;
@@ -321,8 +328,6 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
           )}
         </section>
       </div>
-
-      <FloatingActionButton label="Добавить фазу" icon="plus" onClick={openPhaseCreation} />
 
       <Modal
         isOpen={phaseCreateOpen}
