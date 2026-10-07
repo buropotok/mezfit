@@ -219,6 +219,32 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(menuLabels).toEqual(['Упражнения', 'Календарь', 'Настройки', 'О приложении']);
   });
 
+  it('renders a level-one surface action through the same tab-bar FAB slot', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="training"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+        floatingAction={{
+          label: 'Начать тренировку',
+          onClick: vi.fn(),
+          isShown: false,
+          icon: 'barbell',
+        }}
+      >
+        <SurfaceFloatingActionRegistration />
+      </NavigationShell>,
+    );
+
+    const button = view.getByRole('button', { name: 'Действие вложенной страницы' });
+    expect(button.closest('[data-liquid-glass-fab-slot]')).not.toBeNull();
+    expect(button.closest('.navigation-primary-tabs')).not.toBeNull();
+    expect(view.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
+  });
+
   it('renders a page-owned primary action through the tab-bar FAB slot', () => {
     const view = render(
       <NavigationShell
@@ -484,7 +510,9 @@ describe('NavigationShell MezfitNavbar integration', () => {
 
     const button = view.getByRole('button', { name: 'Действие вложенной страницы' });
     const scroll = view.container.querySelector('.navigation-content');
-    expect(button.closest('.navigation-surface-fab-layer')).not.toBeNull();
+    expect(button.closest('[data-liquid-glass-floating-action-slot]')).not.toBeNull();
+    expect(button.closest('[data-liquid-glass-fab-slot]')).not.toBeNull();
+    expect(button.closest('.navigation-primary-tabs')).not.toBeNull();
     expect(button.classList.contains('ui-glass-surface')).toBe(true);
     expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
     expect(scroll?.contains(button)).toBe(false);
