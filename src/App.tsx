@@ -23,7 +23,7 @@ import { TodayPage } from './schedule/TodayPage';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
-import { WorkoutSessionScreen } from './workout';
+import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 
@@ -171,6 +171,7 @@ export function App() {
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
+  const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
 
@@ -304,7 +305,7 @@ export function App() {
     : navigationContext;
   const clientWorkoutFloatingAction: NavigationFloatingAction | null = state.activeRole === 'client'
     ? {
-        label: 'Открыть тренировку',
+        label: workoutStatus === 'active' ? 'Продолжить тренировку' : 'Начать тренировку',
         placement: 'left',
         isShown: destination !== 'training',
         onClick: () => changeDestination('training'),
@@ -335,6 +336,7 @@ export function App() {
               initData={state.initData}
               onClose={() => changeDestination('today')}
               onNavigationContextChange={handleNavigationContextChange}
+              onSessionLifecycleChange={({ status }) => setWorkoutStatus(status)}
             />
           ) : destination === 'settings' ? (
           <SettingsPage
