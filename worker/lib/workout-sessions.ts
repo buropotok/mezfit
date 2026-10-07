@@ -33,6 +33,13 @@ export interface WorkoutSetFactInput {
 export interface WorkoutProgramSummary { id: number; name: string }
 export interface WorkoutPhaseSummary { id: number; name: string }
 export interface WorkoutDaySummary { id: number; name: string; position: number }
+export interface WorkoutCreatorSummary {
+  id: number;
+  firstName: string;
+  lastName: string | null;
+  username: string | null;
+  photoUrl: string | null;
+}
 export interface WorkoutDayOption extends WorkoutDaySummary { completed: boolean }
 export interface SuggestedWorkoutDay extends WorkoutDaySummary {
   resolution: 'scheduled_today' | 'next_incomplete';
@@ -105,6 +112,7 @@ export interface ActiveWorkoutSession {
   program: WorkoutProgramSummary | null;
   phase: WorkoutPhaseSummary | null;
   day: WorkoutDaySummary | null;
+  creator?: WorkoutCreatorSummary;
   exercises: WorkoutSessionExerciseData[];
 }
 
@@ -172,6 +180,11 @@ interface ProjectionHeaderRow {
   day_name: string | null;
   day_position: number | null;
   coach_user_id: number | null;
+  creator_user_id?: number | null;
+  creator_first_name?: string | null;
+  creator_last_name?: string | null;
+  creator_username?: string | null;
+  creator_photo_url?: string | null;
 }
 
 interface ProjectionSetRow {
@@ -883,11 +896,18 @@ export async function getWorkoutSessionProjection(
         pd.id AS day_id,
         pd.name AS day_name,
         pd.position AS day_position,
-        COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) AS coach_user_id
+        COALESCE(tp.owner_coach_user_id, tp.created_by_user_id) AS coach_user_id,
+        creator.id AS creator_user_id,
+        creator.first_name AS creator_first_name,
+        creator.last_name AS creator_last_name,
+        creator.username AS creator_username,
+        creator.photo_url AS creator_photo_url
       FROM workout_session ws
       LEFT JOIN program_phase pp ON pp.id = ws.source_program_phase_id
       LEFT JOIN training_plan tp ON tp.id = pp.training_plan_id
       LEFT JOIN program_day pd ON pd.id = ws.source_program_day_id
+      LEFT JOIN app_user creator
+        ON creator.id = COALESCE(tp.owner_coach_user_id, tp.created_by_user_id, ws.user_id)
       WHERE ws.id = ? AND ws.user_id = ? AND ws.status IN ('active', 'completed')
       LIMIT 1
     `)
@@ -1051,6 +1071,17 @@ export async function getWorkoutSessionProjection(
     day: header.day_id !== null && header.day_name !== null && header.day_position !== null
       ? { id: header.day_id, name: header.day_name, position: header.day_position }
       : null,
+    ...(header.creator_user_id != null && header.creator_first_name
+      ? {
+          creator: {
+            id: header.creator_user_id,
+            firstName: header.creator_first_name,
+            lastName: header.creator_last_name ?? null,
+            username: header.creator_username ?? null,
+            photoUrl: header.creator_photo_url ?? null,
+          },
+        }
+      : {}),
     exercises: [...exerciseMap.values()],
   };
 }

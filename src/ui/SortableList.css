@@ -8,6 +8,25 @@
   position: relative;
 }
 
+.ui-sortable-list__header,
+.ui-sortable-list__footer {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-sortable-list__header {
+  min-height: 64px;
+  padding: 10px 14px;
+}
+
+.ui-sortable-list__footer {
+  min-height: 56px;
+  padding: 10px 14px 12px;
+}
+
 .ui-sortable-list__row {
   position: relative;
   z-index: 0;

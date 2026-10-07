@@ -32,6 +32,8 @@ export type SortableListProps = {
   longPressDelay?: number;
   showSeparators?: boolean;
   disabled?: boolean;
+  header?: ReactNode;
+  footer?: ReactNode;
 };
 
 function SortableRow({ item, disabled }: { item: SortableListItem; disabled: boolean }) {
@@ -49,7 +51,16 @@ function SortableRow({ item, disabled }: { item: SortableListItem; disabled: boo
   );
 }
 
-export function SortableList({ items, onReorder, className = '', longPressDelay = LONG_PRESS_DELAY_MS, showSeparators = true, disabled = false }: SortableListProps) {
+export function SortableList({
+  items,
+  onReorder,
+  className = '',
+  longPressDelay = LONG_PRESS_DELAY_MS,
+  showSeparators = true,
+  disabled = false,
+  header,
+  footer,
+}: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const activationConstraint = { delay: longPressDelay, tolerance: DRAG_ACTIVATION_TOLERANCE };
   const sensors = useSensors(
@@ -75,11 +86,13 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragCancel={() => setActiveId(null)} onDragEnd={handleDragEnd}>
       <GlassSurface preset="modalTuned" className="ui-sortable-list__surface">
+        {header != null ? <div className="ui-sortable-list__header">{header}</div> : null}
         <div className={`ui-sortable-list${showSeparators ? '' : ' ui-sortable-list--no-separators'} ${className}`.trim()} role="list">
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
             {items.map((item) => <SortableRow key={item.id} item={item} disabled={disabled} />)}
           </SortableContext>
         </div>
+        {footer != null ? <div className="ui-sortable-list__footer">{footer}</div> : null}
       </GlassSurface>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
         {activeItem ? <GlassSurface className="ui-sortable-list__overlay" preset="modalTuned" halo="lifted">{activeItem.content}</GlassSurface> : null}

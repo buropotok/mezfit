@@ -13,6 +13,63 @@
   padding: 2px 2px 4px;
 }
 
+
+.workout-session-screen__card-header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.workout-session-screen__card-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: var(--ui-color-surface-text);
+}
+
+.workout-session-screen__card-workout-name,
+.workout-session-screen__card-program-name {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workout-session-screen__card-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.workout-session-screen__card-progress {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.workout-session-screen__card-progress-track {
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ui-color-surface-raised);
+}
+
+.workout-session-screen__card-progress-value {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-color-primary);
+}
+
 .workout-session-screen__draft,
 .workout-session-screen__empty {
   display: flex;

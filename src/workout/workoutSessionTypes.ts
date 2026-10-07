@@ -17,6 +17,14 @@ export interface WorkoutDaySummary {
   position: number;
 }
 
+export interface WorkoutCreatorSummary {
+  id: number;
+  firstName: string;
+  lastName: string | null;
+  username: string | null;
+  photoUrl: string | null;
+}
+
 export interface WorkoutDayOption extends WorkoutDaySummary {
   completed: boolean;
 }
@@ -43,6 +51,7 @@ export interface ActiveWorkoutSession {
   program: WorkoutProgramSummary | null;
   phase: WorkoutPhaseSummary | null;
   day: WorkoutDaySummary | null;
+  creator?: WorkoutCreatorSummary;
   exercises: SessionExerciseData[];
 }
 
