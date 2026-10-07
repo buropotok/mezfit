@@ -14,6 +14,15 @@ import { WorkoutSessionScreen } from './WorkoutSessionScreen';
 import type { SessionExerciseData } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession, DraftWorkoutSession } from './workoutSessionTypes';
 
+const navigationMocks = vi.hoisted(() => ({
+  registerSurfaceAction: vi.fn(),
+}));
+
+vi.mock('../NavigationShell', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../NavigationShell')>();
+  return { ...actual, useNavigationSurfaceFloatingAction: navigationMocks.registerSurfaceAction };
+});
+
 vi.mock('../api', () => ({
   addWorkoutSessionExercises: vi.fn(),
   completeWorkoutSession: vi.fn(),
@@ -140,6 +149,7 @@ function renderScreen(overrides: Partial<React.ComponentProps<typeof WorkoutSess
 }
 
 beforeEach(() => {
+  navigationMocks.registerSurfaceAction.mockReset();
   addExercisesMock.mockReset();
   getExerciseOptionsMock.mockReset();
   initializeMock.mockReset();
@@ -252,7 +262,15 @@ describe('WorkoutSessionScreen', () => {
 
     renderScreen();
     await screen.findByText('Своя тренировка');
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
+    await waitFor(() => {
+      expect(navigationMocks.registerSurfaceAction.mock.calls.some(([action]) => action?.label === 'Добавить упражнение')).toBe(true);
+    });
+    const action = [...navigationMocks.registerSurfaceAction.mock.calls]
+      .reverse()
+      .map(([registered]) => registered)
+      .find((registered) => registered?.label === 'Добавить упражнение');
+    if (!action) throw new Error('Missing registered Add exercise action');
+    act(() => action.onClick());
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
     expect(await screen.findByText('Жим лёжа')).toBeTruthy();

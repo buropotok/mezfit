@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
-import { FloatingActionButton, GlassSurfaceProvider } from './ui';
+import { NavigationShell, useNavigationFloatingAction, useNavigationSurfaceFloatingAction } from './NavigationShell';
+import { GlassSurfaceProvider } from './ui';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
@@ -46,6 +46,17 @@ const programFloatingAction = {
 
 function ProgramFloatingActionRegistration() {
   useNavigationFloatingAction('programs', programFloatingAction);
+  return null;
+}
+
+const surfaceFloatingAction = {
+  label: 'Действие вложенной страницы',
+  onClick: vi.fn(),
+  icon: 'plus' as const,
+};
+
+function SurfaceFloatingActionRegistration() {
+  useNavigationSurfaceFloatingAction(surfaceFloatingAction);
   return null;
 }
 
@@ -152,7 +163,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
   });
 
-  it('shares shell material settings with both the tab-slot FAB and page-owned FABs', () => {
+  it('applies shell material settings to the tab-slot FAB', () => {
     const onClick = vi.fn();
     const view = render(
       <NavigationShell
@@ -166,16 +177,14 @@ describe('NavigationShell MezfitNavbar integration', () => {
         glassOptics={false}
         floatingAction={{ label: 'Действие навигации', onClick, content: '+' }}
       >
-        <FloatingActionButton label="Действие страницы">ОК</FloatingActionButton>
+        <div>Today content</div>
       </NavigationShell>,
     );
 
-    for (const label of ['Действие навигации', 'Действие страницы']) {
-      const button = view.getByRole('button', { name: label });
-      expect(button.classList.contains('ui-glass-surface')).toBe(true);
-      expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-    }
-    fireEvent.click(view.getByRole('button', { name: 'Действие навигации' }));
+    const button = view.getByRole('button', { name: 'Действие навигации' });
+    expect(button.classList.contains('ui-glass-surface')).toBe(true);
+    expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
+    fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -454,6 +463,33 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(doubleAction).not.toBeNull();
     expect(doubleAction?.classList.contains('ui-identity-action--animating')).toBe(true);
     expect(view.getByRole('menu', { name: 'Меню страницы' })).not.toBeNull();
+  });
+
+  it('renders a level-two surface FAB outside the page scroller and keeps root fallback hidden', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={{ title: 'Тренировка', scrollKey: 'workout:root', onBack: vi.fn() }}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+        floatingAction={{ label: 'Открыть тренировку', onClick: vi.fn(), icon: 'barbell' }}
+        glassPreset="frosted"
+        glassOptics={false}
+      >
+        <SurfaceFloatingActionRegistration />
+      </NavigationShell>,
+    );
+
+    const button = view.getByRole('button', { name: 'Действие вложенной страницы' });
+    const scroll = view.container.querySelector('.navigation-content');
+    expect(button.closest('.navigation-surface-fab-layer')).not.toBeNull();
+    expect(button.classList.contains('ui-glass-surface')).toBe(true);
+    expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
+    expect(scroll?.contains(button)).toBe(false);
+    expect(view.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
+    expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
   });
 
   it('uses a contextual avatar identity and hides first-level tabs on level two', () => {

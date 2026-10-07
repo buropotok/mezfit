@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ApiError,
   addWorkoutSessionExercises,
@@ -8,8 +8,8 @@ import {
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
-import { useNavigationBackTransition } from '../NavigationShell';
-import { Avatar, Button, FloatingActionButton, Icon, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
+import { useNavigationBackTransition, useNavigationSurfaceFloatingAction } from '../NavigationShell';
+import { Avatar, Button, Icon, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
@@ -158,6 +158,16 @@ export function WorkoutSessionScreen({
 
   const activeSession = session?.status === 'active' || session?.status === 'completed' ? session : null;
   const draftSession = session?.status === 'draft' ? session : null;
+  const floatingAction = useMemo(() => activeSession?.status === 'active' ? {
+    label: 'Добавить упражнение',
+    placement: 'right' as const,
+    icon: 'plus' as const,
+    onClick: () => {
+      setExerciseSelectionError('');
+      setExerciseSelectionOpen(true);
+    },
+  } : null, [activeSession?.status]);
+  useNavigationSurfaceFloatingAction(floatingAction);
 
   function nextMutationIntent() {
     mutationIntentVersionRef.current += 1;
@@ -247,12 +257,6 @@ export function WorkoutSessionScreen({
         setSession(acknowledgedSessionRef.current);
         setMessage(errorMessage(error, 'Не удалось сохранить порядок упражнений'));
       });
-  }
-
-  function openExerciseSelection() {
-    if (!activeSession || activeSession.status !== 'active') return;
-    setExerciseSelectionError('');
-    setExerciseSelectionOpen(true);
   }
 
   async function handleAddExercises(exerciseDefinitionIds: number[]) {
@@ -459,12 +463,6 @@ export function WorkoutSessionScreen({
           <div className="workout-session-screen__footer">
             <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
           </div>
-          <FloatingActionButton
-            placement="right"
-            label="Добавить упражнение"
-            icon="plus"
-            onClick={openExerciseSelection}
-          />
         </>
       ) : null}
 
