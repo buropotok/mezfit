@@ -1,10 +1,19 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
 
+const navigationMocks = vi.hoisted(() => ({
+  registerSurfaceAction: vi.fn(),
+}));
+
+vi.mock('../NavigationShell', () => ({
+  useNavigationSurfaceFloatingAction: navigationMocks.registerSurfaceAction,
+}));
+
 afterEach(() => {
   cleanup();
+  navigationMocks.registerSurfaceAction.mockReset();
   vi.unstubAllGlobals();
 });
 
@@ -67,8 +76,15 @@ describe('ProgramDetailsPage phase creation', () => {
 
     render(<ProgramDetailsPage initData="telegram-init" programId={5} />);
 
-    const addButton = await screen.findByRole('button', { name: 'Добавить фазу' });
-    fireEvent.click(addButton);
+    await waitFor(() => {
+      expect(navigationMocks.registerSurfaceAction.mock.calls.some(([action]) => action?.label === 'Добавить фазу')).toBe(true);
+    });
+    const action = [...navigationMocks.registerSurfaceAction.mock.calls]
+      .reverse()
+      .map(([registered]) => registered)
+      .find((registered) => registered?.label === 'Добавить фазу');
+    if (!action) throw new Error('Missing registered Add phase action');
+    act(() => action.onClick());
     expect(screen.getByRole('heading', { name: 'Добавить фазу' })).toBeTruthy();
     expect(screen.getByLabelText('Название')).toBeTruthy();
 
