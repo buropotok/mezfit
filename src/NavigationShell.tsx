@@ -42,7 +42,9 @@ export interface NavigationMenuAction {
 
 export interface NavigationFloatingAction {
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
+  /** Optional menu attached to this FAB; standard actions continue using onClick. */
+  popoverItems?: readonly LiquidPopoverItem[];
   content?: ReactNode;
   icon?: UiIconName;
   placement?: 'left' | 'right';
@@ -197,6 +199,42 @@ interface Props {
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
   children: ReactNode;
+}
+
+/** The navigation slot owns FAB placement; this component owns only its popover lifecycle. */
+function NavigationFloatingActionPopover({ action, glassPreset, glassOptics }: {
+  action: NavigationFloatingAction;
+  glassPreset: GlassPresetName;
+  glassOptics: boolean;
+}) {
+  const triggerRef = useRef<HTMLElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <LiquidPopover
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      triggerActivation="controlled"
+      triggerRef={triggerRef}
+      label={action.label}
+      items={action.popoverItems ?? []}
+      preset={glassPreset}
+      optics={glassOptics}
+      trigger={
+        <FloatingActionButton
+          ref={triggerRef}
+          label={action.label}
+          icon={action.icon}
+          placement={action.placement}
+          disabled={action.disabled}
+          isShown={action.isShown}
+          onClick={() => setIsOpen(true)}
+        >
+          {action.content}
+        </FloatingActionButton>
+      }
+    />
+  );
 }
 
 export function NavigationShell({
@@ -377,7 +415,13 @@ export function NavigationShell({
     dividerBefore: index === 0 && (activeRole === 'client' || me.roles.length > 1),
     onSelect: () => chooseDestination(item.id),
   }));
-  const renderFloatingAction = (action: NavigationFloatingAction) => (
+  const renderFloatingAction = (action: NavigationFloatingAction) => action.popoverItems ? (
+    <NavigationFloatingActionPopover
+      action={action}
+      glassPreset={glassPreset}
+      glassOptics={glassOptics}
+    />
+  ) : (
     <FloatingActionButton
       label={action.label}
       icon={action.icon}
