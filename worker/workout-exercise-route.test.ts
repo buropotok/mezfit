@@ -1,19 +1,45 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { addWorkoutExercises, listWorkoutExerciseOptions } from './lib/workout-exercise-actions';
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
+import { getOpenWorkoutSessionSummary } from './lib/workout-sessions';
 
 vi.mock('./lib/workout-exercise-actions', () => ({
   addWorkoutExercises: vi.fn(),
   listWorkoutExerciseOptions: vi.fn(),
 }));
 
+vi.mock('./lib/workout-sessions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./lib/workout-sessions')>();
+  return {
+    ...actual,
+    getOpenWorkoutSessionSummary: vi.fn(),
+  };
+});
+
 const listMock = vi.mocked(listWorkoutExerciseOptions);
 const addMock = vi.mocked(addWorkoutExercises);
+const currentWorkoutMock = vi.mocked(getOpenWorkoutSessionSummary);
 const db = {} as D1Database;
 
 beforeEach(() => {
   listMock.mockReset();
   addMock.mockReset();
+  currentWorkoutMock.mockReset();
+});
+
+describe('workout status route', () => {
+  it('returns the authenticated user current open workout without initializing a draft', async () => {
+    currentWorkoutMock.mockResolvedValue({ sessionId: 501, status: 'active' });
+    const request = new Request('https://mezfit.test/api/workout-sessions/current');
+
+    const response = await handleWorkoutSessionRoute(request, db, 7);
+
+    expect(response.status).toBe(200);
+    expect(currentWorkoutMock).toHaveBeenCalledWith(db, 7);
+    await expect(response.json()).resolves.toEqual({
+      session: { sessionId: 501, status: 'active' },
+    });
+  });
 });
 
 describe('workout exercise routes', () => {

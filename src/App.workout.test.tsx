@@ -1,13 +1,16 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getMe } from './api';
+import { getClientCoaches, getCurrentInvite, getCurrentWorkoutSession, getMe } from './api';
 import { App } from './App';
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>();
   return {
     ...actual,
+    getClientCoaches: vi.fn(),
+    getCurrentInvite: vi.fn(),
+    getCurrentWorkoutSession: vi.fn(),
     getMe: vi.fn(),
   };
 });
@@ -16,10 +19,31 @@ vi.mock('./coach/CoachShell', () => ({
   CoachShell: () => <div>Coach home</div>,
 }));
 
-vi.mock('./workout', () => ({
-  WorkoutSessionScreen: () => <div>Workout session</div>,
+vi.mock('./schedule/TodayPage', () => ({
+  TodayPage: () => <div>Client home</div>,
 }));
 
+vi.mock('./workout', () => ({
+  WorkoutSessionScreen: ({
+    onSessionLifecycleChange,
+  }: {
+    onSessionLifecycleChange?: (session: { sessionId: number; status: 'active' }) => void;
+  }) => (
+    <div>
+      Workout session
+      <button
+        type="button"
+        onClick={() => onSessionLifecycleChange?.({ sessionId: 1, status: 'active' })}
+      >
+        Mark workout active
+      </button>
+    </div>
+  ),
+}));
+
+const getClientCoachesMock = vi.mocked(getClientCoaches);
+const getCurrentInviteMock = vi.mocked(getCurrentInvite);
+const getCurrentWorkoutSessionMock = vi.mocked(getCurrentWorkoutSession);
 const getMeMock = vi.mocked(getMe);
 
 beforeEach(() => {
@@ -28,7 +52,13 @@ beforeEach(() => {
     disconnect() {}
   });
   window.localStorage.clear();
+  getClientCoachesMock.mockReset();
+  getCurrentInviteMock.mockReset();
+  getCurrentWorkoutSessionMock.mockReset();
   getMeMock.mockReset();
+  getClientCoachesMock.mockResolvedValue({ coaches: [] });
+  getCurrentInviteMock.mockResolvedValue({ invite: null });
+  getCurrentWorkoutSessionMock.mockResolvedValue({ session: null });
   getMeMock.mockResolvedValue({
     user: {
       id: 10,
@@ -58,17 +88,118 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('App workout launcher', () => {
-  it('opens the real workout surface from the global left-side FAB entry point', async () => {
-    render(<App />);
+function getPrimaryTabsRoot(container: HTMLElement): ShadowRoot {
+  const wrapper = container.querySelector<HTMLElement>('.navigation-primary-tabs > div');
+  const host = wrapper?.firstElementChild;
+  if (!(host instanceof HTMLElement) || !host.shadowRoot) {
+    throw new Error('LiquidGlassIconOnly must expose its production shadow scene');
+  }
+  return host.shadowRoot;
+}
+
+describe('App workout navigation', () => {
+  it('opens the real workout surface from the coach Training primary tab', async () => {
+    const view = render(<App />);
 
     expect(await screen.findByText('Coach home')).toBeTruthy();
-    const launcher = screen.getByRole('button', { name: 'Открыть тренировку' });
-    expect(launcher.className).toContain('ui-fab--left');
+    expect(screen.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
 
-    fireEvent.click(launcher);
+    const trainingTab = getPrimaryTabsRoot(view.container)
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Тренировка"]');
+    if (!trainingTab) throw new Error('Missing coach Training tab');
+
+    fireEvent.click(trainingTab);
 
     expect(await screen.findByText('Workout session')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
+  });
+
+  it('hydrates an already active client workout after reload before labeling the FAB', async () => {
+    getMeMock.mockResolvedValue({
+      user: {
+        id: 10,
+        telegramUserId: '100',
+        username: null,
+        firstName: 'Client',
+        lastName: null,
+        languageCode: 'ru',
+        photoUrl: null,
+        isPremium: false,
+      },
+      roles: ['client'],
+    });
+    getCurrentWorkoutSessionMock.mockResolvedValue({
+      session: { sessionId: 501, status: 'active' },
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText('Client home')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
+    expect(await screen.findByRole('button', { name: 'Продолжить тренировку' })).toBeTruthy();
+    expect(getCurrentWorkoutSessionMock).toHaveBeenCalledWith('telegram-init');
+  });
+
+  it('keeps a recoverable workout entry when status hydration fails transiently', async () => {
+    getMeMock.mockResolvedValue({
+      user: {
+        id: 10,
+        telegramUserId: '100',
+        username: null,
+        firstName: 'Client',
+        lastName: null,
+        languageCode: 'ru',
+        photoUrl: null,
+        isPremium: false,
+      },
+      roles: ['client'],
+    });
+    getCurrentWorkoutSessionMock.mockRejectedValueOnce(new Error('temporary network failure'));
+
+    render(<App />);
+
+    expect(await screen.findByText('Client home')).toBeTruthy();
+    const fallback = await screen.findByRole('button', { name: 'Открыть тренировку' });
+    expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Продолжить тренировку' })).toBeNull();
+
+    fireEvent.click(fallback);
+
+    expect(await screen.findByText('Workout session')).toBeTruthy();
+  });
+
+  it('keeps the client FAB as Continue after an active workout is left through primary navigation', async () => {
+    getMeMock.mockResolvedValue({
+      user: {
+        id: 10,
+        telegramUserId: '100',
+        username: null,
+        firstName: 'Client',
+        lastName: null,
+        languageCode: 'ru',
+        photoUrl: null,
+        isPremium: false,
+      },
+      roles: ['client'],
+    });
+
+    const view = render(<App />);
+    expect(await screen.findByText('Client home')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Начать тренировку' })).toBeTruthy();
+
+    const trainingTab = getPrimaryTabsRoot(view.container)
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Тренировка"]');
+    if (!trainingTab) throw new Error('Missing client Training tab');
+    fireEvent.click(trainingTab);
+
+    expect(await screen.findByText('Workout session')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Mark workout active' }));
+
+    const todayTab = getPrimaryTabsRoot(view.container)
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Сегодня"]');
+    if (!todayTab) throw new Error('Missing client Today tab');
+    fireEvent.click(todayTab);
+
+    expect(await screen.findByText('Client home')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Продолжить тренировку' })).toBeTruthy();
   });
 });

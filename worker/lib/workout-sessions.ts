@@ -397,6 +397,23 @@ async function openSession(db: D1Database, userId: number): Promise<WorkoutSessi
     .first<WorkoutSessionRow>();
 }
 
+export interface OpenWorkoutSessionSummary {
+  sessionId: number;
+  status: 'draft' | 'active';
+}
+
+export async function getOpenWorkoutSessionSummary(
+  db: D1Database,
+  userId: number,
+): Promise<OpenWorkoutSessionSummary | null> {
+  const session = await openSession(db, userId);
+  if (!session || session.status === 'completed') return null;
+  return {
+    sessionId: session.id,
+    status: session.status,
+  };
+}
+
 export async function initializeWorkoutSession(
   db: D1Database,
   userId: number,

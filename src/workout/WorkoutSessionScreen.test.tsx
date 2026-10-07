@@ -152,6 +152,20 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('WorkoutSessionScreen', () => {
+  it('recovers from initialization failure through the existing Retry action', async () => {
+    initializeMock
+      .mockRejectedValueOnce(new Error('temporary network failure'))
+      .mockResolvedValueOnce({ session: draft });
+
+    renderScreen();
+
+    expect(await screen.findByText('temporary network failure')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+
+    expect(await screen.findByText('День B')).toBeTruthy();
+    expect(initializeMock).toHaveBeenCalledTimes(2);
+  });
+
   it('creates the draft first and exposes its session id before a workout type is chosen', async () => {
     const onSessionLifecycleChange = vi.fn();
     initializeMock.mockResolvedValue({ session: draft });

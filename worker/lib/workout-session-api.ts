@@ -3,6 +3,7 @@ import type { ExerciseCategoryCode } from './exercises';
 import { parseCalendarDay } from './schedule';
 import {
   completeWorkoutSession,
+  getOpenWorkoutSessionSummary,
   initializeWorkoutSession,
   reorderWorkoutExercises,
   saveWorkoutSet,
@@ -114,6 +115,12 @@ function parseExerciseDefinitionIds(value: unknown): number[] | null {
 
 export async function handleWorkoutSessionRoute(request: Request, db: D1Database, userId: number): Promise<Response> {
   const url = new URL(request.url);
+
+  if (url.pathname === '/api/workout-sessions/current') {
+    if (request.method !== 'GET') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+    const session = await getOpenWorkoutSessionSummary(db, userId);
+    return jsonResponse({ session });
+  }
 
   if (url.pathname === '/api/workout-sessions/exercises') {
     if (request.method !== 'GET') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');

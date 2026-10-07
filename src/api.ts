@@ -1,6 +1,6 @@
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
-import type { ActiveWorkoutSession, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
+import type { ActiveWorkoutSession, OpenWorkoutSessionSummary, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
 
 export type Role = 'coach' | 'client';
 export type ExerciseScope = 'global' | 'coach' | 'client';
@@ -711,6 +711,31 @@ export async function addWorkoutSessionExercises(
     body: JSON.stringify({ exerciseDefinitionIds }),
   });
   return { session: localizeWorkoutSession(result.session) };
+}
+
+export async function getCurrentWorkoutSession(
+  initData: string,
+): Promise<{ session: OpenWorkoutSessionSummary | null }> {
+  const response = await apiRequest<unknown>(initData, '/api/workout-sessions/current');
+  if (!isRecord(response)) {
+    throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+  }
+  if (response.session === null) return { session: null };
+  if (
+    !isRecord(response.session)
+    || typeof response.session.sessionId !== 'number'
+    || !Number.isInteger(response.session.sessionId)
+    || response.session.sessionId <= 0
+    || (response.session.status !== 'draft' && response.session.status !== 'active')
+  ) {
+    throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+  }
+  return {
+    session: {
+      sessionId: response.session.sessionId,
+      status: response.session.status,
+    },
+  };
 }
 
 export async function initializeWorkoutSession(

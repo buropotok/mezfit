@@ -59,21 +59,29 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('workout FAB artwork', () => {
-  it('renders the shared outlined barbell in the left FAB and opens the workout', async () => {
-    render(<App />);
+function getPrimaryTabsRoot(container: HTMLElement): ShadowRoot {
+  const wrapper = container.querySelector<HTMLElement>('.navigation-primary-tabs > div');
+  const host = wrapper?.firstElementChild;
+  if (!(host instanceof HTMLElement) || !host.shadowRoot) {
+    throw new Error('LiquidGlassIconOnly must expose its production shadow scene');
+  }
+  return host.shadowRoot;
+}
+
+describe('workout primary-tab artwork', () => {
+  it('renders the shared outlined barbell in the coach Training tab and opens the workout', async () => {
+    const view = render(<App />);
 
     expect(await screen.findByText('Coach home')).toBeTruthy();
-    const launcher = screen.getByRole('button', { name: 'Открыть тренировку' });
-    const icon = launcher.querySelector<HTMLElement>('.ui-icon');
+    expect(screen.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
 
-    expect(launcher.className).toContain('ui-fab--left');
+    const trainingTab = getPrimaryTabsRoot(view.container)
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Тренировка"]');
+    if (!trainingTab) throw new Error('Missing coach Training tab');
+    const icon = trainingTab.querySelector<HTMLElement>('.tab-icon-outline .ui-icon');
+
     expect(icon?.style.maskImage).toContain(getUiIconAsset('barbell', 'outline'));
-    expect(icon?.style.width).toBe('36px');
-    expect(icon?.style.height).toBe('36px');
-    expect(launcher.querySelector('img')).toBeNull();
-
-    fireEvent.click(launcher);
+    fireEvent.click(trainingTab);
     expect(screen.getByText('Workout session')).toBeTruthy();
   });
 });
