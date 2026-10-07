@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cancelScheduleOccurrence, getScheduleOccurrences, rescheduleScheduleOccurrence, type ScheduleOccurrence } from '../api';
+import { NavigationShell, type NavigationContext } from '../NavigationShell';
+import { getUiIconAsset } from '../ui/icons/registry';
 import { TodayPage } from './TodayPage';
 
 vi.mock('../api', async (importOriginal) => {
@@ -194,15 +196,77 @@ function occurrence(date: string): ScheduleOccurrence {
   };
 }
 
+const coachMe = {
+  user: {
+    id: 7,
+    telegramUserId: '7',
+    username: null,
+    firstName: 'Тренер',
+    lastName: null,
+    languageCode: 'ru',
+    photoUrl: null,
+    isPremium: false,
+  },
+  roles: ['coach' as const],
+};
+
+function CoachTodayNavigationHarness() {
+  const [context, setContext] = useState<NavigationContext | null>(null);
+  return (
+    <NavigationShell
+      me={coachMe}
+      activeRole="coach"
+      destination="today"
+      context={context}
+      onDestinationChange={vi.fn()}
+      onRoleSwitch={vi.fn()}
+    >
+      <TodayPage
+        initData="telegram-init"
+        role="coach"
+        currentUserId={7}
+        onNavigationContextChange={setContext}
+      />
+    </NavigationShell>
+  );
+}
+
 beforeEach(() => {
   getScheduleMock.mockReset();
   rescheduleMock.mockReset();
   cancelMock.mockReset();
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    disconnect() {}
+  });
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  window.history.replaceState({}, '');
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  window.history.replaceState({}, '');
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe('TodayPage schedule loading', () => {
+  it('shows a plus FAB for the coach schedule and opens Event as level two', async () => {
+    getScheduleMock.mockResolvedValue({ occurrences: [] });
+    const view = render(<CoachTodayNavigationHarness />);
+
+    const fab = await screen.findByRole('button', { name: 'Добавить событие' });
+    const icon = fab.querySelector<HTMLElement>('.ui-icon');
+    expect(icon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
+
+    fireEvent.click(fab);
+
+    expect(await screen.findByRole('heading', { name: 'Событие' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Назад' })).toBeTruthy();
+    expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
+  });
+
   it('loads Today first, renders it, then warms a +/-31 day cache without blocking the first result', async () => {
     const today = localDateNow();
     let resolveToday: (value: { occurrences: ScheduleOccurrence[] }) => void = () => undefined;
