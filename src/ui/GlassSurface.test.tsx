@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GlassSurface, GlassSurfaceProvider } from './GlassSurface';
 
@@ -207,6 +207,29 @@ describe('GlassSurface', () => {
     expect(surface.style.borderRadius).toBe('');
     expect(surface.querySelector('.ui-glass-surface__content')).toBeNull();
     expect(surface.querySelector('[data-testid="direct-child"]')?.parentElement).toBe(surface);
+  });
+
+  it('inherits global optics while a direct override remains authoritative', async () => {
+    const view = render(
+      <GlassSurfaceProvider optics>
+        <GlassSurface>Inherited optics</GlassSurface>
+      </GlassSurfaceProvider>,
+    );
+
+    await waitFor(() => {
+      expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalled();
+    });
+
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockClear();
+
+    view.rerender(
+      <GlassSurfaceProvider optics>
+        <GlassSurface optics={false}>Direct optics override</GlassSurface>
+      </GlassSurfaceProvider>,
+    );
+
+    await Promise.resolve();
+    expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
   });
 
   it('inherits global blur while direct and legacy overrides remain compatible', () => {
