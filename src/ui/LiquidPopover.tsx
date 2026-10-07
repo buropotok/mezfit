@@ -47,7 +47,7 @@ type LiquidPresentationSnapshot = {
   items: readonly LiquidPopoverItem[];
   layout: LiquidPopoverLayout;
   columns: number;
-  role: LiquidPopoverProps['role'];
+  role: LiquidPopoverRole;
   label: string;
   preset: GlassPresetName;
   optics: boolean;
@@ -244,20 +244,24 @@ export function LiquidPopover({
   const gridStyle = layout === 'grid'
     ? ({ '--ui-liquid-popover-columns': String(resolvedColumns) } as CSSProperties)
     : undefined;
-  const currentPresentation: LiquidPresentationSnapshot = {
-    items,
-    layout,
-    columns: resolvedColumns,
-    role,
-    label,
-    preset,
-    optics,
-    options,
-  };
-  const presentationRef = useRef<LiquidPresentationSnapshot>(currentPresentation);
-  if (!presented || (isOpen && settled))
-    presentationRef.current = currentPresentation;
-  const presentation = presentationRef.current,
+  const currentPresentation = useMemo<LiquidPresentationSnapshot>(
+    () => ({
+      items,
+      layout,
+      columns: resolvedColumns,
+      role,
+      label,
+      preset,
+      optics,
+      options,
+    }),
+    [items, label, layout, optics, options, preset, resolvedColumns, role],
+  );
+  const presentationRef = useRef<LiquidPresentationSnapshot>(currentPresentation),
+    useCurrentPresentation = !presented || (isOpen && settled),
+    presentation = useCurrentPresentation
+      ? currentPresentation
+      : presentationRef.current,
     presentationGridStyle = presentation.layout === 'grid'
       ? ({ '--ui-liquid-popover-columns': String(presentation.columns) } as CSSProperties)
       : undefined,
@@ -293,6 +297,11 @@ export function LiquidPopover({
       item.dividerBefore,
     ]),
   ]);
+
+  useLayoutEffect(() => {
+    if (useCurrentPresentation)
+      presentationRef.current = currentPresentation;
+  }, [currentPresentation, useCurrentPresentation]);
 
   // Prewarm text/font measurement while closed. The opening frame repaints the
   // same canvas from the positioned native rows so raster and HTML share one
