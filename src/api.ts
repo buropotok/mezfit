@@ -716,10 +716,26 @@ export async function addWorkoutSessionExercises(
 export async function getCurrentWorkoutSession(
   initData: string,
 ): Promise<{ session: OpenWorkoutSessionSummary | null }> {
-  return apiRequest<{ session: OpenWorkoutSessionSummary | null }>(
-    initData,
-    '/api/workout-sessions/current',
-  );
+  const response = await apiRequest<unknown>(initData, '/api/workout-sessions/current');
+  if (!isRecord(response)) {
+    throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+  }
+  if (response.session === null) return { session: null };
+  if (
+    !isRecord(response.session)
+    || typeof response.session.sessionId !== 'number'
+    || !Number.isInteger(response.session.sessionId)
+    || response.session.sessionId <= 0
+    || (response.session.status !== 'draft' && response.session.status !== 'active')
+  ) {
+    throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+  }
+  return {
+    session: {
+      sessionId: response.session.sessionId,
+      status: response.session.status,
+    },
+  };
 }
 
 export async function initializeWorkoutSession(
