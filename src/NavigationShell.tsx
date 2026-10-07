@@ -40,17 +40,19 @@ export interface NavigationMenuAction {
   disabled?: boolean;
 }
 
-export interface NavigationFloatingAction {
+type NavigationFloatingActionBase = {
   label: string;
-  onClick?: () => void;
-  /** Optional menu attached to this FAB; standard actions continue using onClick. */
-  popoverItems?: readonly LiquidPopoverItem[];
   content?: ReactNode;
   icon?: UiIconName;
   placement?: 'left' | 'right';
   disabled?: boolean;
   isShown?: boolean;
-}
+};
+
+export type NavigationFloatingAction = NavigationFloatingActionBase & (
+  | { onClick: () => void; popoverItems?: never }
+  | { popoverItems: readonly LiquidPopoverItem[]; onClick?: never }
+);
 
 type RegisteredFloatingAction = {
   destination: AppDestination | null;
