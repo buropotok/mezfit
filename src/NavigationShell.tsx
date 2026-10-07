@@ -440,7 +440,7 @@ export function NavigationShell({
           {children}
         </section>
 
-        <div className="navigation-primary-tabs">
+        <div className="navigation-primary-tabs" style={level === 2 ? { pointerEvents: 'none' } : undefined}>
           <LiquidGlassIconOnly
             hidden={level !== 1}
             tabs={primaryItems.map((item) => ({
