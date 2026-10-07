@@ -50,7 +50,9 @@ describe('DatePicker top-panel surface', () => {
     const dialog = screen.getByRole('dialog', { name: 'Выбор даты' });
     expect(dialog.getAttribute('data-date-picker-surface')).toBe('top-panel');
     expect(dialog.getAttribute('aria-modal')).not.toBe('true');
-    expect(screen.getByText('Среда, 7 Октября')).toBeTruthy();
+    expect(screen.queryByText('Среда, 7 Октября')).toBeNull();
+    expect(screen.getByText('Октябрь', { selector: '.ui-date-picker__top-month' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Закрыть календарь' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Сегодня' })).toBeTruthy();
 
@@ -59,6 +61,10 @@ describe('DatePicker top-panel surface', () => {
 
     const scroll = view.container.querySelector<HTMLElement>('.ui-date-picker__scroll--horizontal');
     expect(scroll?.scrollLeft).toBe(9 * 390);
+    if (!scroll) throw new Error('Missing horizontal month scroller');
+    scroll.scrollLeft = 11 * 390;
+    fireEvent.scroll(scroll);
+    expect(screen.getByText('Декабрь', { selector: '.ui-date-picker__top-month' })).toBeTruthy();
 
     const selectedDay = dialog.querySelector<HTMLButtonElement>('button[aria-current="date"]');
     expect(selectedDay).not.toBeNull();
@@ -68,7 +74,7 @@ describe('DatePicker top-panel surface', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('jumps to today without closing and closes only from its explicit close action', () => {
+  it('jumps to today without closing and has no explicit close action', () => {
     const onChange = vi.fn();
     const onClose = vi.fn();
     render(
@@ -93,8 +99,6 @@ describe('DatePicker top-panel surface', () => {
     const scroll = document.querySelector<HTMLElement>('.ui-date-picker__scroll--horizontal');
     expect(scroll?.scrollLeft).toBe(todayDate.getMonth() * 390);
     expect(onClose).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть календарь' }));
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Закрыть календарь' })).toBeNull();
   });
 });

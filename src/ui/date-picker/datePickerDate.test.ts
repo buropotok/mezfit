@@ -3,7 +3,6 @@ import {
   buildMonthGrid,
   calculateCenteredScrollTop,
   formatLocalDate,
-  formatSelectedDateLabel,
   getTodayLocalDate,
   getWeekdayLabels,
   parseLocalDate,
@@ -45,11 +44,6 @@ describe('datePickerDate', () => {
       viewportHeight: 376,
       scrollHeight: 946,
     })).toBe(570);
-  });
-
-  it('formats the top-panel selected date with capitalized weekday and month', () => {
-    expect(formatSelectedDateLabel({ year: 2026, month: 10, day: 7 }, 'ru-RU'))
-      .toBe('Среда, 7 Октября');
   });
 
   it('formats today from local calendar parts without UTC conversion', () => {

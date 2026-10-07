@@ -21,6 +21,7 @@ export type MezfitNavbarProps = {
   glassOptics?: boolean;
   menuDisabled?: boolean;
   calendarDisabled?: boolean;
+  calendarOpen?: boolean;
 };
 
 export function MezfitNavbar({
@@ -37,6 +38,7 @@ export function MezfitNavbar({
   glassOptics = false,
   menuDisabled = false,
   calendarDisabled = false,
+  calendarOpen = false,
 }: MezfitNavbarProps) {
   const [entryPhase, setEntryPhase] = useState<'collapsed' | 'spread' | 'settled'>('collapsed');
 
@@ -87,7 +89,8 @@ export function MezfitNavbar({
                   icon: 'calendar',
                   iconVariant: 'outline',
                   iconSize: 32,
-                  label: 'Открыть календарь',
+                  label: calendarOpen ? 'Закрыть календарь' : 'Открыть календарь',
+                  'aria-expanded': calendarOpen,
                   onClick: onCalendar,
                   disabled: calendarDisabled,
                 },

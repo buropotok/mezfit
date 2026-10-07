@@ -132,18 +132,27 @@
 }
 
 .ui-date-picker__top-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: var(--ui-space-3);
   padding: 0 var(--ui-space-4);
 }
 
-.ui-date-picker__top-toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
+.ui-date-picker__top-toolbar-start {
   min-width: 0;
+  justify-self: start;
+}
+
+.ui-date-picker__top-toolbar-end {
+  min-width: 0;
+  justify-self: end;
+}
+
+.ui-date-picker__top-month {
+  justify-self: center;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .ui-date-picker__today-trigger {
@@ -159,30 +168,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.ui-date-picker__today-trigger[aria-disabled='true'],
-.ui-date-picker__top-close[aria-disabled='true'] {
+.ui-date-picker__today-trigger[aria-disabled='true'] {
   opacity: .45;
-}
-
-.ui-date-picker__top-close {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  min-width: 2.5rem;
-  height: 2.5rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  color: inherit;
-  appearance: none;
-  -webkit-appearance: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.ui-date-picker__selected-date {
-  display: block;
-  padding: 0 var(--ui-space-4);
-  text-align: center;
 }
 
 .ui-date-picker__scroll--horizontal {
@@ -209,7 +196,7 @@
   scroll-snap-stop: always;
 }
 
-.ui-date-picker__month--horizontal .ui-date-picker__month-title {
-  text-align: center;
+.ui-date-picker__month--horizontal .ui-date-picker__days {
+  row-gap: 0;
 }
 

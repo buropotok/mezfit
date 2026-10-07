@@ -13,7 +13,6 @@ import {
   formatDayLabel,
   formatLocalDate,
   formatMonthName,
-  formatSelectedDateLabel,
   getTodayLocalDate,
   getWeekdayLabels,
   parseLocalDate,
@@ -74,9 +73,11 @@ const CalendarMonths = memo(function CalendarMonths({
     <div className={`ui-date-picker__months${horizontal ? ' ui-date-picker__months--horizontal' : ''}`}>
       {Array.from({ length: MONTH_COUNT }, (_, monthIndex) => (
         <section className={`ui-date-picker__month${horizontal ? ' ui-date-picker__month--horizontal' : ''}`} data-month-index={monthIndex} key={monthIndex}>
-          <h2 className="ui-date-picker__month-title ui-text--title">
-            {formatMonthName(visibleYear, monthIndex, locale)}
-          </h2>
+          {horizontal ? null : (
+            <h2 className="ui-date-picker__month-title ui-text--title">
+              {formatMonthName(visibleYear, monthIndex, locale)}
+            </h2>
+          )}
           <div className="ui-date-picker__weekdays ui-text--footnote" aria-hidden="true">
             {weekdayLabels.map((label, index) => (
               <span key={`${label}-${index}`}>{label}</span>
@@ -144,6 +145,7 @@ export function DatePicker({
   const todayParts = parseLocalDate(todayDate) ?? safeSelectedDate;
 
   const [visibleYear, setVisibleYear] = useState(() => clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
+  const [visibleMonthIndex, setVisibleMonthIndex] = useState(() => safeSelectedDate.month - 1);
   const [surfaceContentReady, setSurfaceContentReady] = useState(false);
   const [surfaceReadyToOpen, setSurfaceReadyToOpen] = useState(false);
   const [yearPopoverRequested, setYearPopoverRequested] = useState(false);
@@ -201,6 +203,7 @@ export function DatePicker({
 
     const selectedMonthIndex = safeSelectedDate.month - 1;
     currentMonthIndexRef.current = selectedMonthIndex;
+    setVisibleMonthIndex(selectedMonthIndex);
     setVisibleYear(clampYear(safeSelectedDate.year, safeMinYear, safeMaxYear));
     setYearPopoverRequested(false);
 
@@ -241,11 +244,11 @@ export function DatePicker({
     throw new Error('DatePicker value must be inside the configured year range');
   }
 
-  const selectedDateLabel = surface === 'top-panel' ? formatSelectedDateLabel(selectedDate, locale) : '';
   const todayIsAvailable = todayParts.year >= safeMinYear && todayParts.year <= safeMaxYear;
 
   const scrollTopPanelToMonth = useCallback((monthIndex: number) => {
     currentMonthIndexRef.current = monthIndex;
+    setVisibleMonthIndex(monthIndex);
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         const scrollElement = monthScrollRef.current;
@@ -342,22 +345,6 @@ export function DatePicker({
     </GlassSurface>
   );
 
-  const topCloseAction = (
-    <GlassSurface
-      component={YearTriggerButton}
-      preset={glassPreset}
-      optics={glassOptics}
-      wrapContent={false}
-      shape="capsule"
-      className="ui-date-picker__top-close"
-      aria-disabled={yearPopoverRequested}
-      aria-label="Закрыть календарь"
-      onClick={yearPopoverRequested ? undefined : onClose}
-    >
-      <CloseIcon />
-    </GlassSurface>
-  );
-
   const calendarContent = (
     <div className="ui-date-picker__scroll" ref={monthScrollRef}>
       <div className="ui-date-picker__header-blur" aria-hidden="true" />
@@ -385,16 +372,16 @@ export function DatePicker({
   const topPanelContent = (
     <div className="ui-date-picker__top-content">
       <div className="ui-date-picker__top-toolbar">
-        <div className="ui-date-picker__top-toolbar-left">
+        <div className="ui-date-picker__top-toolbar-start">
           {yearTrigger}
+        </div>
+        <Text variant="title" className="ui-date-picker__top-month">
+          {formatMonthName(visibleYear, visibleMonthIndex, locale)}
+        </Text>
+        <div className="ui-date-picker__top-toolbar-end">
           {todayAction}
         </div>
-        {topCloseAction}
       </div>
-
-      <Text variant="title" className="ui-date-picker__selected-date">
-        {selectedDateLabel}
-      </Text>
 
       <div
         className="ui-date-picker__scroll ui-date-picker__scroll--horizontal"
@@ -402,10 +389,12 @@ export function DatePicker({
         onScroll={(event) => {
           const width = event.currentTarget.clientWidth;
           if (width <= 0) return;
-          currentMonthIndexRef.current = Math.max(
+          const monthIndex = Math.max(
             0,
             Math.min(MONTH_COUNT - 1, Math.round(event.currentTarget.scrollLeft / width)),
           );
+          currentMonthIndexRef.current = monthIndex;
+          setVisibleMonthIndex(monthIndex);
         }}
       >
         {surfaceContentReady ? (
