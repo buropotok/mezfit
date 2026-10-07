@@ -181,7 +181,7 @@ export function LiquidPopover({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceRef = useRef<HTMLCanvasElement | null>(null),
     itemsRef = useRef(items),
-    progressRef = useRef(isOpen ? 1 : 0);
+    progressRef = useRef(0);
   itemsRef.current = items;
   const [host, setHost] = useState<HTMLElement | null>(null),
     [settled, setSettled] = useState(false),
