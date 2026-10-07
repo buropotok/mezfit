@@ -9,7 +9,7 @@ import {
   startWorkoutSession,
 } from '../api';
 import { useNavigationBackTransition } from '../NavigationShell';
-import { Button, FloatingActionButton, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
+import { Avatar, Button, FloatingActionButton, Icon, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
@@ -38,6 +38,32 @@ function currentLocalDate(): string {
 function sessionMeta(session: ActiveWorkoutSession): string {
   if (!session.program) return 'Своя тренировка';
   return [session.program.name, session.phase?.name, session.day?.name].filter(Boolean).join(' · ');
+}
+
+function workoutTitle(session: ActiveWorkoutSession): string {
+  return session.day?.name ?? session.phase?.name ?? 'Своя тренировка';
+}
+
+function workoutProgramName(session: ActiveWorkoutSession): string {
+  return session.program?.name ?? 'Без программы';
+}
+
+function workoutCreatorName(session: ActiveWorkoutSession): string {
+  const creator = session.creator;
+  if (!creator) return 'Создатель тренировки';
+  const fullName = [creator.firstName, creator.lastName].filter(Boolean).join(' ').trim();
+  return fullName || creator.username || 'Создатель тренировки';
+}
+
+function workoutProgressPercent(session: ActiveWorkoutSession): number {
+  if (session.exercises.length === 0) return 0;
+  const progressSum = session.exercises.reduce((sum, exercise) => {
+    const totalSets = exercise.sets.length;
+    if (totalSets === 0) return sum;
+    const completedSets = exercise.sets.filter((set) => set.status === 'completed').length;
+    return sum + completedSets / totalSets;
+  }, 0);
+  return Math.round((progressSum / session.exercises.length) * 100);
 }
 
 function draftMeta(session: DraftWorkoutSession): string {
@@ -303,6 +329,7 @@ export function WorkoutSessionScreen({
         ),
       }))
     : [];
+  const workoutProgress = activeSession ? workoutProgressPercent(activeSession) : 0;
 
   if (initializationError) {
     return (
@@ -380,7 +407,48 @@ export function WorkoutSessionScreen({
       {activeSession?.status === 'active' ? (
         <>
           {sortableItems.length > 0 ? (
-            <SortableList items={sortableItems} onReorder={handleReorder} showSeparators={false} />
+            <SortableList
+              items={sortableItems}
+              onReorder={handleReorder}
+              showSeparators={false}
+              header={activeSession ? (
+                <div className="workout-session-screen__card-header">
+                  <span className="workout-session-screen__card-icon">
+                    <Icon name="barbell" variant="outline" />
+                  </span>
+                  <Text variant="body" className="workout-session-screen__card-workout-name">
+                    {workoutTitle(activeSession)}
+                  </Text>
+                  <Text variant="footnote" tone="muted" className="workout-session-screen__card-program-name">
+                    {workoutProgramName(activeSession)}
+                  </Text>
+                  <Avatar
+                    className="workout-session-screen__card-avatar"
+                    name={workoutCreatorName(activeSession)}
+                    src={activeSession.creator?.photoUrl ?? undefined}
+                  />
+                </div>
+              ) : null}
+              footer={activeSession ? (
+                <div className="workout-session-screen__card-progress">
+                  <Text variant="caption" tone="muted">Прогресс</Text>
+                  <div
+                    className="workout-session-screen__card-progress-track"
+                    role="progressbar"
+                    aria-label="Прогресс тренировки"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={workoutProgress}
+                  >
+                    <span
+                      className="workout-session-screen__card-progress-value"
+                      style={{ width: `${workoutProgress}%` }}
+                    />
+                  </div>
+                  <Text variant="caption" tone="muted">{workoutProgress}%</Text>
+                </div>
+              ) : null}
+            />
           ) : (
             <div className="workout-session-screen__empty">
               <Text tone="muted">Упражнений пока нет.</Text>
