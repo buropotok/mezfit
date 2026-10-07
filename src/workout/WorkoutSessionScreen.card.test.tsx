@@ -129,7 +129,7 @@ describe('WorkoutSessionScreen workout card', () => {
 
     const avatar = header.querySelector('.workout-session-screen__card-avatar');
     expect(avatar?.getAttribute('src')).toBe('https://example.com/coach.jpg');
-    expect(header.querySelector('.workout-session-screen__card-icon .ui-icon')).not.toBeNull();
+    expect(header.querySelector('.workout-session-screen__card-icon-artwork')).not.toBeNull();
 
     const progress = screen.getByRole('progressbar', { name: 'Прогресс тренировки' });
     expect(progress.getAttribute('aria-valuenow')).toBe('75');
