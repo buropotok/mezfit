@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   acceptCurrentInvite,
   addRole,
   getCurrentInvite,
+  getCurrentWorkoutSession,
   getMe,
   type ClientInvitePreview,
   type MeResponse,
@@ -171,7 +172,8 @@ export function App() {
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
-  const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
+  const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null | undefined>(undefined);
+  const workoutStatusVersionRef = useRef(0);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
 
@@ -224,6 +226,32 @@ export function App() {
 
     return () => { cancelled = true; };
   }, []);
+
+  const readyClientInitData = state.status === 'ready' && state.activeRole === 'client'
+    ? state.initData
+    : null;
+
+  useEffect(() => {
+    if (!readyClientInitData) return undefined;
+
+    let cancelled = false;
+    const requestVersion = workoutStatusVersionRef.current;
+    setWorkoutStatus(undefined);
+
+    getCurrentWorkoutSession(readyClientInitData)
+      .then(({ session }) => {
+        if (!cancelled && workoutStatusVersionRef.current === requestVersion) {
+          setWorkoutStatus(session?.status ?? null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled && workoutStatusVersionRef.current === requestVersion) {
+          setWorkoutStatus(null);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [readyClientInitData]);
 
   if (state.status === 'loading') return <main className="center"><p>Подключаем Mezfit…</p></main>;
 
@@ -307,7 +335,7 @@ export function App() {
     ? {
         label: workoutStatus === 'active' ? 'Продолжить тренировку' : 'Начать тренировку',
         placement: 'left',
-        isShown: destination !== 'training',
+        isShown: destination !== 'training' && workoutStatus !== undefined,
         onClick: () => changeDestination('training'),
         icon: 'barbell',
       }
@@ -336,7 +364,10 @@ export function App() {
               initData={state.initData}
               onClose={() => changeDestination('today')}
               onNavigationContextChange={handleNavigationContextChange}
-              onSessionLifecycleChange={({ status }) => setWorkoutStatus(status)}
+              onSessionLifecycleChange={({ status }) => {
+                workoutStatusVersionRef.current += 1;
+                setWorkoutStatus(status);
+              }}
             />
           ) : destination === 'settings' ? (
           <SettingsPage
