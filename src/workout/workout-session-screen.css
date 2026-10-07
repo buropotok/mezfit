@@ -16,7 +16,7 @@
 
 .workout-session-screen__card-header {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1fr) 44px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -29,6 +29,13 @@
   height: 44px;
   place-items: center;
   color: var(--ui-color-surface-text);
+}
+
+.workout-session-screen__card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .workout-session-screen__card-workout-name,
