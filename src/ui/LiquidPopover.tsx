@@ -226,8 +226,10 @@ export function LiquidPopover({
   const prewarmRef = useRef<HTMLCanvasElement | null>(null),
     animationSessionRef = useRef<LiquidAnimationSession | null>(null),
     itemsRef = useRef(items),
-    progressRef = useRef(0);
+    progressRef = useRef(0),
+    presentationChangeRef = useRef(onPresentationChange);
   itemsRef.current = items;
+  presentationChangeRef.current = onPresentationChange;
   const [host, setHost] = useState<HTMLElement | null>(null),
     [settled, setSettled] = useState(false),
     [positioned, setPositioned] = useState(false),
@@ -345,6 +347,13 @@ export function LiquidPopover({
   useLayoutEffect(() => {
     onPresentationChange?.(sourcePresented);
   }, [onPresentationChange, sourcePresented]);
+
+  useLayoutEffect(
+    () => () => {
+      presentationChangeRef.current?.(false);
+    },
+    [],
+  );
 
   useLayoutEffect(() => {
     const visible = isOpen || presented;
