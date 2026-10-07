@@ -335,6 +335,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const panel = view.container.querySelector<HTMLElement>('[data-date-picker-surface="top-panel"]');
     await waitFor(() => {
       expect(panel?.getAttribute('data-state')).toBe('opened');
+      expect(view.getByRole('button', { name: 'Закрыть календарь' }).getAttribute('aria-expanded')).toBe('true');
     });
 
     fireEvent.pointerDown(calendarButton, { pointerType: 'touch', button: 0 });
@@ -343,6 +344,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
 
     await waitFor(() => {
       expect(panel?.getAttribute('data-state')).toBe('closed');
+      expect(view.getByRole('button', { name: 'Открыть календарь' }).getAttribute('aria-expanded')).toBe('false');
     });
   });
 

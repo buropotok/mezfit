@@ -81,6 +81,29 @@ describe('MezfitNavbar', () => {
     expect(onCalendar).not.toHaveBeenCalled();
   });
 
+  it('describes the calendar action according to its open state', () => {
+    const props = {
+      level: 1 as const,
+      identity: { title: 'Сегодня', icon: 'calendar-event' as const },
+      onBack: vi.fn(),
+      onMenu: vi.fn(),
+      onCalendar: vi.fn(),
+    };
+    const view = renderWithKonsta(<MezfitNavbar {...props} calendarOpen={false} />);
+
+    const openCalendar = view.getByRole('button', { name: 'Открыть календарь' });
+    expect(openCalendar.getAttribute('aria-expanded')).toBe('false');
+
+    view.rerender(
+      <KonstaProvider theme="ios" dark>
+        <MezfitNavbar {...props} calendarOpen />
+      </KonstaProvider>,
+    );
+
+    const closeCalendar = view.getByRole('button', { name: 'Закрыть календарь' });
+    expect(closeCalendar.getAttribute('aria-expanded')).toBe('true');
+  });
+
   it('passes the configured navbar glass preset to every identity action', () => {
     const view = renderWithKonsta(
       <MezfitNavbar

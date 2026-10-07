@@ -38,6 +38,7 @@ export type IdentityActionItem = {
   iconVariant?: UiIconVariant;
   iconSize?: CSSProperties['width'];
   label: string;
+  'aria-expanded'?: boolean;
   onClick?: () => void;
   disabled?: boolean;
   renderControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
@@ -211,6 +212,7 @@ export function IdentityAction(props: IdentityActionProps) {
               className="ui-identity-action__segment"
               type="button"
               aria-label={action.label}
+              aria-expanded={action['aria-expanded']}
               disabled={disabled || action.disabled}
               onClick={() => queueActivation(action.onClick)}
             >
