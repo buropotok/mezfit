@@ -500,6 +500,55 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(view.getByRole('menu', { name: 'Меню страницы' })).not.toBeNull();
   });
 
+  it('uses configured glass for the program FAB popover, with two icon actions and hidden source', async () => {
+    const phaseAction = vi.fn();
+    const action = {
+      label: 'Добавить',
+      icon: 'plus' as const,
+      popoverItems: [
+        { id: 'day', icon: 'plus' as const, label: 'День' },
+        { id: 'phase', icon: 'plus' as const, label: 'Фаза', onSelect: phaseAction },
+      ],
+    };
+    function ProgramActionRegistration() {
+      useNavigationSurfaceFloatingAction(action);
+      return null;
+    }
+    const view = render(
+      <NavigationShell
+        me={{ ...me, roles: ['coach'] }}
+        activeRole="coach"
+        destination="programs"
+        context={{ level: 2, title: 'Детали программы' }}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+        glassPreset="smoked"
+        glassOptics={false}
+      >
+        <ProgramActionRegistration />
+      </NavigationShell>,
+    );
+
+    const button = view.getByRole('button', { name: 'Добавить' });
+    fireEvent.click(button);
+    const menu = view.getByRole('menu', { name: 'Добавить' });
+    expect(menu.querySelectorAll('.ui-menu-item__leading .ui-icon')).toHaveLength(2);
+    expect(view.getByRole('menuitem', { name: 'День' })).not.toBeNull();
+    expect(view.getByRole('menuitem', { name: 'Фаза' })).not.toBeNull();
+    expect(button.style.visibility).toBe('hidden');
+    const glass = menu.querySelector<HTMLElement>('.ui-liquid-popover__glass');
+    expect(glass?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('18px');
+
+    fireEvent.click(view.getByRole('menuitem', { name: 'День' }));
+    expect(phaseAction).not.toHaveBeenCalled();
+    await waitFor(() => expect(button.style.visibility).not.toBe('hidden'));
+
+    fireEvent.click(button);
+    fireEvent.click(view.getByRole('menuitem', { name: 'Фаза' }));
+    expect(phaseAction).toHaveBeenCalledOnce();
+    await waitFor(() => expect(button.style.visibility).not.toBe('hidden'));
+  });
+
   it('renders a level-two surface FAB outside the page scroller and keeps root fallback hidden', () => {
     const view = render(
       <NavigationShell
