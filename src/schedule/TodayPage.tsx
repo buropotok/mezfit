@@ -6,7 +6,7 @@ import {
   type Role,
   type ScheduleOccurrence,
 } from '../api';
-import type { NavigationContext } from '../NavigationShell';
+import { useNavigationFloatingAction, type NavigationContext, type NavigationFloatingAction } from '../NavigationShell';
 import {
   Avatar,
   DaySchedule,
@@ -144,12 +144,14 @@ export function TodayPage({
   role,
   currentUserId,
   onNavigationContextChange,
+  onCreateEvent,
   notice = '',
 }: {
   initData: string;
   role: Role;
   currentUserId?: number;
   onNavigationContextChange: (context: NavigationContext | null) => void;
+  onCreateEvent?: () => void;
   notice?: string;
 }) {
   const [date, setDate] = useState<LocalDate>(() => currentLocalDate());
@@ -162,6 +164,18 @@ export function TodayPage({
   const pendingRangesRef = useRef<DateRange[]>([]);
   const requestGenerationRef = useRef(0);
   const initialLoadSettledRef = useRef(false);
+
+  const createEventFloatingAction = useMemo<NavigationFloatingAction | null>(() => (
+    role === 'coach' && onCreateEvent
+      ? {
+          label: 'Создать событие',
+          onClick: onCreateEvent,
+          icon: 'plus',
+          placement: 'left',
+        }
+      : null
+  ), [onCreateEvent, role]);
+  useNavigationFloatingAction('today', createEventFloatingAction);
 
   useEffect(() => {
     const value = getDayScheduleValue(date);
