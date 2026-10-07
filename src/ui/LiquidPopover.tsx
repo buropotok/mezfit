@@ -499,8 +499,29 @@ export function LiquidPopover({
         return;
       }
 
-      const { sourceBounds, destinationBounds, texture } = session,
-        rect = toLiquidRect(destinationBounds),
+      const { sourceBounds, destinationBounds, texture } = session;
+
+      // A settled menu can be scrolled before close. Refresh only the raster
+      // payload from the frozen native snapshot so reverse starts from exactly
+      // what the user currently sees, while source/destination geometry stays
+      // locked to the animation session.
+      if (
+        targetProgress === 0 &&
+        progressRef.current >= 1 &&
+        !paintContentTexture(
+          texture,
+          native,
+          nativeRowRefs.current,
+          presentation.items,
+          presentation.layout,
+          destinationBounds,
+        )
+      ) {
+        finishTarget();
+        return;
+      }
+
+      const rect = toLiquidRect(destinationBounds),
         animation = createLiquidMotion(
           toLiquidRect(sourceBounds),
           rect,
