@@ -6,7 +6,7 @@ import {
   type Role,
   type ScheduleOccurrence,
 } from '../api';
-import type { NavigationContext } from '../NavigationShell';
+import { useNavigationFloatingAction, type NavigationContext } from '../NavigationShell';
 import {
   Avatar,
   DaySchedule,
@@ -153,6 +153,7 @@ export function TodayPage({
   notice?: string;
 }) {
   const [date, setDate] = useState<LocalDate>(() => currentLocalDate());
+  const [eventPlaceholderOpen, setEventPlaceholderOpen] = useState(false);
   const [occurrencesByDate, setOccurrencesByDate] = useState<Record<LocalDate, ScheduleOccurrence[]>>({});
   const [loadingToday, setLoadingToday] = useState(true);
   const [error, setError] = useState('');
@@ -163,7 +164,30 @@ export function TodayPage({
   const requestGenerationRef = useRef(0);
   const initialLoadSettledRef = useRef(false);
 
+  const scheduleFloatingAction = useMemo(() => (
+    role === 'coach' && !eventPlaceholderOpen
+      ? {
+          label: 'Добавить событие',
+          placement: 'left' as const,
+          icon: 'plus' as const,
+          onClick: () => setEventPlaceholderOpen(true),
+        }
+      : null
+  ), [eventPlaceholderOpen, role]);
+  useNavigationFloatingAction('today', scheduleFloatingAction);
+
   useEffect(() => {
+    if (eventPlaceholderOpen) {
+      onNavigationContextChange({
+        level: 2,
+        title: 'Событие',
+        scrollKey: 'schedule:event-placeholder',
+        identity: { title: 'Событие', icon: 'plus' },
+        onBack: () => setEventPlaceholderOpen(false),
+      });
+      return () => onNavigationContextChange(null);
+    }
+
     const value = getDayScheduleValue(date);
     onNavigationContextChange({
       level: 1,
@@ -174,7 +198,7 @@ export function TodayPage({
     });
 
     return () => onNavigationContextChange(null);
-  }, [date, onNavigationContextChange]);
+  }, [date, eventPlaceholderOpen, onNavigationContextChange]);
 
   useEffect(() => {
     const generation = requestGenerationRef.current + 1;
@@ -395,6 +419,15 @@ export function TodayPage({
       ]),
     ) as Record<LocalDate, TodayScheduleEvent[]>
   ), [occurrencesByDate]);
+
+  if (eventPlaceholderOpen) {
+    return (
+      <section className="global-placeholder" aria-label="Событие">
+        <Text variant="large-title" role="heading" aria-level={2}>Событие</Text>
+        <Text variant="body" tone="muted">Экран создания события будет реализован отдельной задачей.</Text>
+      </section>
+    );
+  }
 
   return (
     <section className="today-page" aria-label="Расписание" aria-busy={loadingToday || undefined}>
