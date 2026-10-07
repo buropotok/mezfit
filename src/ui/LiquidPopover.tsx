@@ -489,6 +489,10 @@ export function LiquidPopover({
         };
         animationSessionRef.current = session;
       }
+      if (!session) {
+        finishTarget();
+        return;
+      }
 
       if (
         typeof Path2D === 'undefined' ||
