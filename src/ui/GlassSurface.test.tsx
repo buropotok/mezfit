@@ -3,6 +3,18 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GlassSurface, GlassSurfaceProvider } from './GlassSurface';
 
+vi.mock('./glassMaterial', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./glassMaterial')>();
+  return {
+    ...actual,
+    buildGlassVectorMap: vi.fn((_canvas, geometry) => ({
+      href: 'data:image/png;base64,glass-provider-test',
+      width: geometry.width,
+      height: geometry.height,
+    })),
+  };
+});
+
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
@@ -215,12 +227,11 @@ describe('GlassSurface', () => {
         <GlassSurface>Inherited optics</GlassSurface>
       </GlassSurfaceProvider>,
     );
+    const surface = view.container.querySelector('.ui-glass-surface') as HTMLElement;
 
     await waitFor(() => {
-      expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalled();
+      expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('true');
     });
-
-    vi.mocked(HTMLCanvasElement.prototype.getContext).mockClear();
 
     view.rerender(
       <GlassSurfaceProvider optics>
@@ -228,8 +239,9 @@ describe('GlassSurface', () => {
       </GlassSurfaceProvider>,
     );
 
-    await Promise.resolve();
-    expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
+    });
   });
 
   it('inherits global blur while direct and legacy overrides remain compatible', () => {
