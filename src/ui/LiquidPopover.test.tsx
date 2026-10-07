@@ -37,18 +37,20 @@ afterEach(() => {
 function setup() {
   const triggerRef = createRef<HTMLButtonElement>(),
     select = vi.fn(),
-    change = vi.fn();
+    change = vi.fn(),
+    presentation = vi.fn();
   const props = {
     trigger: <button ref={triggerRef}>Открыть</button>,
     triggerRef,
     onOpenChange: change,
+    onPresentationChange: presentation,
     items: [
       { id: 'edit', label: 'Редактировать', onSelect: select },
       { id: 'disabled', label: 'Недоступно', disabled: true },
     ],
   };
   const view = render(<LiquidPopover {...props} isOpen={false} />);
-  return { ...view, props, select, change };
+  return { ...view, props, select, change, presentation };
 }
 
 describe('LiquidPopover lifecycle and menu ownership', () => {
@@ -190,6 +192,7 @@ it('finishes opening and fully reverses the same animation on close', async () =
 
   const trigger = screen.getByText('Открыть').closest('button')!;
   expect(trigger.style.visibility).toBe('hidden');
+  expect(view.presentation).toHaveBeenLastCalledWith(true);
 
   fireEvent.click(screen.getByRole('menuitem', { name: 'Редактировать' }));
   expect(view.select).toHaveBeenCalledOnce();
@@ -203,10 +206,12 @@ it('finishes opening and fully reverses the same animation on close', async () =
   expect(menu.querySelector('canvas')?.style.display).toBe('block');
   expect(native.hasAttribute('inert')).toBe(true);
   expect(trigger.style.visibility).toBe('hidden');
+  expect(view.presentation).toHaveBeenLastCalledWith(true);
 
   await act(async () => {
     vi.advanceTimersByTime(700);
   });
   expect(screen.queryByRole('menu')).toBeNull();
   expect(trigger.style.visibility).toBe('');
+  expect(view.presentation).toHaveBeenLastCalledWith(false);
 });
