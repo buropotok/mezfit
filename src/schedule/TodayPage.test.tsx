@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cancelScheduleOccurrence, getScheduleOccurrences, rescheduleScheduleOccurrence, type ScheduleOccurrence } from '../api';
+import { useNavigationFloatingAction } from '../NavigationShell';
 import { TodayPage } from './TodayPage';
 
 vi.mock('../api', async (importOriginal) => {
@@ -14,6 +15,10 @@ vi.mock('../api', async (importOriginal) => {
     cancelScheduleOccurrence: vi.fn(),
   };
 });
+
+vi.mock('../NavigationShell', () => ({
+  useNavigationFloatingAction: vi.fn(),
+}));
 
 vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
@@ -155,6 +160,7 @@ vi.mock('../ui', async (importOriginal) => {
 const getScheduleMock = vi.mocked(getScheduleOccurrences);
 const rescheduleMock = vi.mocked(rescheduleScheduleOccurrence);
 const cancelMock = vi.mocked(cancelScheduleOccurrence);
+const navigationFloatingActionMock = vi.mocked(useNavigationFloatingAction);
 
 function localDateNow(): string {
   const now = new Date();
@@ -198,11 +204,41 @@ beforeEach(() => {
   getScheduleMock.mockReset();
   rescheduleMock.mockReset();
   cancelMock.mockReset();
+  navigationFloatingActionMock.mockReset();
 });
 
 afterEach(cleanup);
 
 describe('TodayPage schedule loading', () => {
+  it('registers the coach schedule FAB as a left-side plus action', () => {
+    getScheduleMock.mockResolvedValue({ occurrences: [] });
+    const onCreateEvent = vi.fn();
+
+    render(
+      <TodayPage
+        initData="telegram-init"
+        role="coach"
+        currentUserId={7}
+        onNavigationContextChange={vi.fn()}
+        onCreateEvent={onCreateEvent}
+      />,
+    );
+
+    const registration = navigationFloatingActionMock.mock.calls.find(
+      ([destination, action]) => destination === 'today' && action !== null,
+    );
+    expect(registration).toBeDefined();
+    const action = registration?.[1];
+    expect(action).toMatchObject({
+      label: 'Создать событие',
+      icon: 'plus',
+      placement: 'left',
+    });
+
+    action?.onClick();
+    expect(onCreateEvent).toHaveBeenCalledTimes(1);
+  });
+
   it('loads Today first, renders it, then warms a +/-31 day cache without blocking the first result', async () => {
     const today = localDateNow();
     let resolveToday: (value: { occurrences: ScheduleOccurrence[] }) => void = () => undefined;
