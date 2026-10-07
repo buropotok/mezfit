@@ -22,11 +22,34 @@ vi.mock('./workout', () => ({
 
 const getMeMock = vi.mocked(getMe);
 
+function getPrimaryTab(container: HTMLElement, label: string): HTMLButtonElement {
+  const wrapper = container.querySelector<HTMLElement>('.navigation-primary-tabs > div');
+  const host = wrapper?.firstElementChild;
+  if (!(host instanceof HTMLElement) || !host.shadowRoot) {
+    throw new Error('LiquidGlassIconOnly must expose its production shadow scene');
+  }
+  const tab = host.shadowRoot.querySelector<HTMLButtonElement>(`[role="tab"][aria-label="${label}"]`);
+  if (!tab) throw new Error(`Missing primary tab: ${label}`);
+  return tab;
+}
+
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
     disconnect() {}
   });
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(390);
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function(this: HTMLElement) {
+    return this.classList.contains('tab-link') ? 78 : 390;
+  });
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(64);
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function(this: HTMLElement) {
+    const width = this.classList.contains('tab-link') ? 78 : 390;
+    const left = Number(this.dataset.index ?? 0) * 78;
+    return { x: left, y: 0, left, top: 0, right: left + width, bottom: 64, width, height: 64, toJSON: () => ({}) };
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   window.localStorage.clear();
   getMeMock.mockReset();
   getMeMock.mockResolvedValue({
@@ -55,20 +78,22 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   delete window.Telegram;
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
-describe('App workout launcher', () => {
-  it('opens the real workout surface from the global left-side FAB entry point', async () => {
-    render(<App />);
+describe('App workout navigation', () => {
+  it('opens the real workout surface as the coach first-level Training destination', async () => {
+    const view = render(<App />);
 
     expect(await screen.findByText('Coach home')).toBeTruthy();
-    const launcher = screen.getByRole('button', { name: 'Открыть тренировку' });
-    expect(launcher.className).toContain('ui-fab--left');
+    expect(screen.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
 
-    fireEvent.click(launcher);
+    fireEvent.click(getPrimaryTab(view.container, 'Тренировка'));
 
     expect(await screen.findByText('Workout session')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
+    expect(getPrimaryTab(view.container, 'Тренировка').getAttribute('aria-selected')).toBe('true');
+    expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(false);
+    expect(view.container.querySelector('.ui-mezfit-navbar__side--left')?.getAttribute('aria-hidden')).toBe('true');
   });
 });
