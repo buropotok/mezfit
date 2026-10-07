@@ -6,10 +6,15 @@ const sortableListCss = readFileSync(
   'utf8',
 );
 
-describe('SortableList CSS contract', () => {
-  it('uses the DaySchedule lift halo for the active DnD tile', () => {
-    expect(sortableListCss).toContain('border-radius: var(--ui-radius-md)');
-    expect(sortableListCss).toContain('0 0 18px rgb(255 255 255 / 0.16)');
-    expect(sortableListCss).toContain('0 0 36px rgb(170 205 255 / 0.10)');
+describe('SortableList lifted surface CSS contract', () => {
+  it('does not reintroduce a fixed overlay radius and keeps the lift halo', () => {
+    const overlayStart = sortableListCss.indexOf('.ui-sortable-list__overlay {');
+    expect(overlayStart).toBeGreaterThanOrEqual(0);
+    const overlayEnd = sortableListCss.indexOf('}', overlayStart);
+    const overlayRule = sortableListCss.slice(overlayStart, overlayEnd);
+
+    expect(overlayRule).not.toContain('border-radius:');
+    expect(overlayRule).toContain('drop-shadow(0 0 18px rgb(255 255 255 / 0.16))');
+    expect(overlayRule).toContain('drop-shadow(0 0 36px rgb(170 205 255 / 0.10))');
   });
 });

@@ -72,14 +72,15 @@ type GlassCssProperties = CSSProperties & {
 
 export type GlassSurfaceProviderProps = {
   blur?: number;
+  optics?: boolean;
   children: ReactNode;
 };
 
-const GlassSurfaceContext = createContext<{ blur?: number }>({});
+const GlassSurfaceContext = createContext<{ blur?: number; optics?: boolean }>({});
 
 /** Supplies shared GlassSurface material defaults to every descendant, including React portals. */
-export function GlassSurfaceProvider({ blur, children }: GlassSurfaceProviderProps) {
-  const value = useMemo(() => ({ blur }), [blur]);
+export function GlassSurfaceProvider({ blur, optics, children }: GlassSurfaceProviderProps) {
+  const value = useMemo(() => ({ blur, optics }), [blur, optics]);
   return <GlassSurfaceContext.Provider value={value}>{children}</GlassSurfaceContext.Provider>;
 }
 
@@ -249,7 +250,7 @@ export function GlassSurface({
   bezelHighlights,
   wrapContent = true,
   active = true,
-  optics = false,
+  optics,
   style,
   children,
   ...props
@@ -257,6 +258,7 @@ export function GlassSurface({
   const rootRef = useRef<HTMLElement>(null);
   const workCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const inheritedGlass = useContext(GlassSurfaceContext);
+  const resolvedOptics = optics ?? inheritedGlass.optics ?? false;
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-glass-surface-${reactId}`;
   const material = useMemo(
@@ -321,7 +323,7 @@ export function GlassSurface({
   }, [active, hostMode, shapeRadius]);
 
   useEffect(() => {
-    if (!optics) {
+    if (!resolvedOptics) {
       setVectorMapHref(null);
       return undefined;
     }
@@ -370,7 +372,7 @@ export function GlassSurface({
     };
   }, [
     active,
-    optics,
+    resolvedOptics,
     geometry,
     material.neutralEdge,
     material.rimWidth,
@@ -471,7 +473,7 @@ export function GlassSurface({
     isCapsule,
     capsuleSpan,
   );
-  const activeVectorMapHref = optics ? vectorMapHref : null;
+  const activeVectorMapHref = resolvedOptics ? vectorMapHref : null;
   const filterRegion = activeVectorMapHref && geometry
     ? resolveGlassFilterRegion(geometry, material)
     : null;

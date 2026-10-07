@@ -1,7 +1,19 @@
 /** @vitest-environment jsdom */
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GlassSurface, GlassSurfaceProvider } from './GlassSurface';
+
+vi.mock('./glassMaterial', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./glassMaterial')>();
+  return {
+    ...actual,
+    buildGlassVectorMap: vi.fn((_canvas, geometry) => ({
+      href: 'data:image/png;base64,glass-provider-test',
+      width: geometry.width,
+      height: geometry.height,
+    })),
+  };
+});
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
@@ -207,6 +219,29 @@ describe('GlassSurface', () => {
     expect(surface.style.borderRadius).toBe('');
     expect(surface.querySelector('.ui-glass-surface__content')).toBeNull();
     expect(surface.querySelector('[data-testid="direct-child"]')?.parentElement).toBe(surface);
+  });
+
+  it('inherits global optics while a direct override remains authoritative', async () => {
+    const view = render(
+      <GlassSurfaceProvider optics>
+        <GlassSurface>Inherited optics</GlassSurface>
+      </GlassSurfaceProvider>,
+    );
+    const surface = view.container.querySelector('.ui-glass-surface') as HTMLElement;
+
+    await waitFor(() => {
+      expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('true');
+    });
+
+    view.rerender(
+      <GlassSurfaceProvider optics>
+        <GlassSurface optics={false}>Direct optics override</GlassSurface>
+      </GlassSurfaceProvider>,
+    );
+
+    await waitFor(() => {
+      expect(surface.getAttribute('data-ui-glass-map-ready')).toBe('false');
+    });
   });
 
   it('inherits global blur while direct and legacy overrides remain compatible', () => {
