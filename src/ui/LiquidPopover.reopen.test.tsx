@@ -56,6 +56,7 @@ it('hides the previous HTML handoff until the reopened menu is positioned', asyn
   expect(glass.style.opacity).toBe('1');
 
   view.rerender(<LiquidPopover {...props} isOpen={false} />);
+  await act(async () => { vi.advanceTimersByTime(32); });
   expect(native.style.opacity).toBe('0');
   expect(glass.style.opacity).toBe('0');
   view.rerender(<LiquidPopover {...props} isOpen />);
