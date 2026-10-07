@@ -245,9 +245,7 @@ export function App() {
         }
       })
       .catch(() => {
-        if (!cancelled && workoutStatusVersionRef.current === requestVersion) {
-          setWorkoutStatus(null);
-        }
+        // Keep the FAB hidden while the canonical server state is unknown.
       });
 
     return () => { cancelled = true; };
