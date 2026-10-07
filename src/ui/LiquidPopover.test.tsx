@@ -103,7 +103,7 @@ describe('LiquidPopover lifecycle and menu ownership', () => {
   });
 });
 
-it('finishes the animated handoff with sharp interactive HTML', async () => {
+it('finishes opening and fully reverses the same animation on close', async () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
   vi.stubGlobal('CSS', { supports: () => true });
   vi.stubGlobal('CanvasRenderingContext2D', class {});
@@ -187,6 +187,26 @@ it('finishes the animated handoff with sharp interactive HTML', async () => {
   expect(native.style.filter).toBe('none');
   expect(native.style.opacity).toBe('1');
   expect(menu.querySelector('svg')?.style.display).toBe('none');
+
+  const trigger = screen.getByText('Открыть').closest('button')!;
+  expect(trigger.style.visibility).toBe('hidden');
+
   fireEvent.click(screen.getByRole('menuitem', { name: 'Редактировать' }));
   expect(view.select).toHaveBeenCalledOnce();
+  expect(view.change).toHaveBeenCalledWith(false);
+
+  view.rerender(<LiquidPopover {...view.props} isOpen={false} />);
+  await act(async () => {
+    vi.advanceTimersByTime(32);
+  });
+  expect(screen.getByRole('menu')).toBeTruthy();
+  expect(menu.querySelector('canvas')?.style.display).toBe('block');
+  expect(native.hasAttribute('inert')).toBe(true);
+  expect(trigger.style.visibility).toBe('hidden');
+
+  await act(async () => {
+    vi.advanceTimersByTime(700);
+  });
+  expect(screen.queryByRole('menu')).toBeNull();
+  expect(trigger.style.visibility).toBe('');
 });
