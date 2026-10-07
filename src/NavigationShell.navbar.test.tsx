@@ -49,12 +49,14 @@ function ProgramFloatingActionRegistration() {
   return null;
 }
 
+const surfaceFloatingAction = {
+  label: 'Действие вложенной страницы',
+  onClick: vi.fn(),
+  icon: 'plus' as const,
+};
+
 function SurfaceFloatingActionRegistration() {
-  useNavigationSurfaceFloatingAction({
-    label: 'Действие вложенной страницы',
-    onClick: vi.fn(),
-    icon: 'plus',
-  });
+  useNavigationSurfaceFloatingAction(surfaceFloatingAction);
   return null;
 }
 
