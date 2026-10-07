@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
+import { NavigationShell, useNavigationFloatingAction, useNavigationLevel } from './NavigationShell';
 import { FloatingActionButton, GlassSurfaceProvider } from './ui';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
@@ -47,6 +47,11 @@ const programFloatingAction = {
 function ProgramFloatingActionRegistration() {
   useNavigationFloatingAction('programs', programFloatingAction);
   return null;
+}
+
+function NavigationLevelProbe() {
+  const level = useNavigationLevel();
+  return <span data-testid="navigation-level">{level}</span>;
 }
 
 beforeEach(() => {
@@ -200,7 +205,30 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expectTabIcon(tabsRoot, 'Клиенты', 'users');
     expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
     expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
-    expectTabIcon(tabsRoot, 'Настройки', 'settings');
+    expectTabIcon(tabsRoot, 'Тренировка', 'barbell');
+  });
+
+  it('puts coach Settings immediately before About in the navbar popover', () => {
+    const coachMe = { ...me, roles: ['coach' as const] };
+    const view = render(
+      <NavigationShell
+        me={coachMe}
+        activeRole="coach"
+        destination="today"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Today content</div>
+      </NavigationShell>,
+    );
+
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
+
+    const labels = view.getAllByRole('menuitem').map((item) => item.textContent);
+    expect(labels).toEqual(['Упражнения', 'Календарь', 'Настройки', 'О приложении']);
   });
 
   it('renders a page-owned primary action through the tab-bar FAB slot', () => {
@@ -360,6 +388,30 @@ describe('NavigationShell MezfitNavbar integration', () => {
     );
 
     expect(view.container.querySelector('.ui-mezfit-navbar__identity .ui-avatar')).not.toBeNull();
+    expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
+    expect(view.getByRole('button', { name: 'Назад' })).not.toBeNull();
+  });
+
+  it('keeps logical level three while adapting the navbar primitive to its nested level-two presentation', () => {
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="settings"
+        context={{
+          level: 3,
+          title: 'Шрифты',
+          onBack: vi.fn(),
+        }}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <NavigationLevelProbe />
+      </NavigationShell>,
+    );
+
+    expect(view.getByTestId('navigation-level').textContent).toBe('3');
+    expect(view.container.querySelector('.ui-mezfit-navbar__layout')?.getAttribute('data-level')).toBe('2');
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
     expect(view.getByRole('button', { name: 'Назад' })).not.toBeNull();
   });
