@@ -537,7 +537,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(view.getByRole('menuitem', { name: 'Фаза' })).not.toBeNull();
     expect(button.style.visibility).toBe('hidden');
     const glass = menu.querySelector<HTMLElement>('.ui-liquid-popover__glass');
-    expect(glass?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('18px');
+    expect(glass?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('8px');
 
     fireEvent.click(view.getByRole('menuitem', { name: 'День' }));
     expect(phaseAction).not.toHaveBeenCalled();
