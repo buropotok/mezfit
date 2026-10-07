@@ -112,10 +112,10 @@ describe('LiquidPopover lifecycle and menu ownership', () => {
     );
 
     expect(sourceRef.current?.style.visibility).toBe('visible');
-    expect(
-      screen.getByRole('button', { name: 'Открыть внешний источник' }).style
-        .visibility,
-    ).toBe('hidden');
+    const trigger = screen
+      .getByText('Открыть внешний источник')
+      .closest('button');
+    expect(trigger?.style.visibility).toBe('hidden');
     expect(presentation).toHaveBeenLastCalledWith(true);
 
     view.unmount();
