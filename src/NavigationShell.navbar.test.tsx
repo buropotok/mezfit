@@ -241,7 +241,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
         floatingAction={{
-          label: 'Открыть тренировку',
+          label: 'Действие навигации',
           onClick: vi.fn(),
           content: <span>W</span>,
         }}
@@ -251,7 +251,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     );
 
     expect(view.getByRole('button', { name: 'Создать программу' })).not.toBeNull();
-    expect(view.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Действие навигации' })).toBeNull();
     expect(view.container.querySelector('[data-liquid-glass-fab-slot]')).not.toBeNull();
   });
 
@@ -265,7 +265,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
         floatingAction={{
-          label: 'Открыть тренировку',
+          label: 'Действие навигации',
           onClick: vi.fn(),
           content: <span>W</span>,
         }}
