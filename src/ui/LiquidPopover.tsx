@@ -159,6 +159,12 @@ function paintContentTexture(
       style = getComputedStyle(row),
       x = rect.left - bounds.left,
       y = rect.top - bounds.top;
+    if (item.dividerBefore) {
+      context.globalAlpha = 1;
+      context.fillStyle = containerStyle.getPropertyValue('--ui-color-border');
+      context.fillRect(0, y - 9, canvas.width, 1);
+    }
+    context.globalAlpha = item.disabled ? 0.5 : 1;
     const leading = item.icon && layout === 'menu'
       ? row.querySelector<HTMLElement>('.ui-menu-item__leading')
       : null;
@@ -177,12 +183,6 @@ function paintContentTexture(
         context.drawImage(tintCanvas, iconRect.left - bounds.left, iconRect.top - bounds.top);
       }
     }
-    if (item.dividerBefore) {
-      context.globalAlpha = 1;
-      context.fillStyle = containerStyle.getPropertyValue('--ui-color-border');
-      context.fillRect(0, y - 9, canvas.width, 1);
-    }
-    context.globalAlpha = item.disabled ? 0.5 : 1;
     context.fillStyle = style.color;
     context.font =
       `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
