@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe('ProgramDetailsPage phase creation', () => {
-  it('opens the phase modal from the FAB and appends the canonical created phase', async () => {
+  it('opens phase creation only from the FAB popover and appends the canonical created phase', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url === '/api/coach/programs/5' && (!init?.method || init.method === 'GET')) {
@@ -77,14 +77,30 @@ describe('ProgramDetailsPage phase creation', () => {
     render(<ProgramDetailsPage initData="telegram-init" programId={5} />);
 
     await waitFor(() => {
-      expect(navigationMocks.registerSurfaceAction.mock.calls.some(([action]) => action?.label === 'Добавить фазу')).toBe(true);
+      expect(navigationMocks.registerSurfaceAction.mock.calls.some(([action]) => action?.label === 'Добавить')).toBe(true);
     });
     const action = [...navigationMocks.registerSurfaceAction.mock.calls]
       .reverse()
       .map(([registered]) => registered)
-      .find((registered) => registered?.label === 'Добавить фазу');
-    if (!action) throw new Error('Missing registered Add phase action');
-    act(() => action.onClick());
+      .find((registered) => registered?.label === 'Добавить');
+    if (!action) throw new Error('Missing registered program actions');
+    expect(action.icon).toBe('plus');
+    expect(action.onClick).toBeUndefined();
+    expect(action.popoverItems?.map(({ icon, label }: { icon?: string; label: string }) => ({ icon, label }))).toEqual([
+      { icon: 'plus', label: 'День' },
+      { icon: 'plus', label: 'Фаза' },
+    ]);
+    expect(screen.queryByRole('heading', { name: 'Добавить фазу' })).toBeNull();
+
+    const day = action.popoverItems?.find(({ id }: { id: string }) => id === 'add-day');
+    const phase = action.popoverItems?.find(({ id }: { id: string }) => id === 'add-phase');
+    if (!day || !phase) throw new Error('Missing day or phase popover item');
+    expect(day.onSelect).toBeUndefined();
+    act(() => { day.onSelect?.(); });
+    expect(screen.queryByRole('heading', { name: 'Добавить фазу' })).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    act(() => { phase.onSelect?.(); });
     expect(screen.getByRole('heading', { name: 'Добавить фазу' })).toBeTruthy();
     expect(screen.getByLabelText('Название')).toBeTruthy();
 
