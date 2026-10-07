@@ -12,11 +12,7 @@ const [open, setOpen] = useState(false);
   isOpen={open}
   onOpenChange={setOpen}
   triggerRef={originRef}
-  trigger={
-    <button ref={originRef} style={{ visibility: open ? 'hidden' : undefined }}>
-      Действия
-    </button>
-  }
+  trigger={<button ref={originRef}>Действия</button>}
   items={[
     { id: 'edit', label: 'Редактировать', onSelect: edit },
     { id: 'copy', label: 'Создать копию', onSelect: copy },
@@ -29,7 +25,11 @@ const [open, setOpen] = useState(false);
 The trigger must forward normal button props and its ref. `triggerRef`
 points to the **whole** source surface, which can differ from the trigger itself
 (for example, the 88 × 44 Navbar capsule containing the 44 × 44 menu segment).
-Hide the source through its owner's state while open, retaining its layout.
+LiquidPopover automatically hides the cloned trigger while opening, open, and
+closing, retaining its layout so the source geometry stays measurable. If
+`triggerRef` intentionally points to a larger source surface than the trigger
+itself, that owner still controls visibility of the additional surrounding
+surface.
 
 Route selection is automatic from the measured source and final popover bounds.
 If the source lies fully to the left or right of the final popover centerline,
@@ -86,9 +86,16 @@ texture into live HTML using complementary alpha in an isolated
 `plus-lighter` group; native HTML follows the current asymmetric bounds during
 that handoff. Final content is interactive native HTML.
 
-Closing or unmounting cancels animation work. Viewport/font changes settle to
-live content; reduced motion and missing Canvas support skip the effect. UI Kit
-includes Navbar and round-button examples with a source compression control.
+Closing runs the same animation timeline in exact reverse from the current
+progress back to zero: native HTML hands back to the raster, the asymmetric
+popover geometry contracts through the same oval/path, and an elongated
+center-route source expands from the terminal circle back into its original
+button shape. The trigger remains hidden until the reverse reaches zero, then
+reappears as the custom popover is unpresented. Reopening during a close reverses
+again from the current progress instead of jumping to an endpoint. Unmounting
+cancels animation work. Viewport/font changes settle to the requested endpoint;
+reduced motion and missing Canvas support skip the effect. UI Kit includes
+Navbar and round-button examples with a source compression control.
 
 
 ## Shared presentation contract
