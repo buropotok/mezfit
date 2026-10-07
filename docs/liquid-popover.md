@@ -92,10 +92,13 @@ Closing runs the same animation timeline in exact reverse from the current
 progress back to zero: native HTML hands back to the raster, the asymmetric
 popover geometry contracts through the same oval/path, and an elongated
 center-route source expands from the terminal circle back into its original
-button shape. The direct trigger remains hidden until the reverse reaches zero, while external
-source owners receive the same timing through `onPresentationChange`.
-Reopening during a close reverses
-again from the current progress instead of jumping to an endpoint. Unmounting
+button shape. The presentation snapshot (items, layout, material, motion
+options, source/destination bounds, and active raster texture) is frozen for the
+whole animation session, so navigation/role changes cannot replace content or
+geometry mid-reverse. The direct trigger remains hidden until the reverse
+reaches zero, while external source owners receive the same timing through
+`onPresentationChange`. Reopening during a close reverses again from the
+current progress instead of jumping to an endpoint. Unmounting
 cancels animation work. Viewport/font changes settle to the requested endpoint;
 reduced motion and missing Canvas support skip the effect. UI Kit includes
 Navbar and round-button examples with a source compression control.
