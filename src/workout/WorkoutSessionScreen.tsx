@@ -416,12 +416,14 @@ export function WorkoutSessionScreen({
                   <span className="workout-session-screen__card-icon">
                     <Icon name="barbell" variant="outline" className="workout-session-screen__card-icon-artwork" />
                   </span>
-                  <Text variant="body" className="workout-session-screen__card-workout-name">
-                    {workoutTitle(activeSession)}
-                  </Text>
-                  <Text variant="footnote" tone="muted" className="workout-session-screen__card-program-name">
-                    {workoutProgramName(activeSession)}
-                  </Text>
+                  <div className="workout-session-screen__card-copy">
+                    <Text variant="body" className="workout-session-screen__card-workout-name">
+                      {workoutTitle(activeSession)}
+                    </Text>
+                    <Text variant="footnote" tone="muted" className="workout-session-screen__card-program-name">
+                      {workoutProgramName(activeSession)}
+                    </Text>
+                  </div>
                   <Avatar
                     className="workout-session-screen__card-avatar"
                     name={workoutCreatorName(activeSession)}
