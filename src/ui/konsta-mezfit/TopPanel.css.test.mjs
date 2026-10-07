@@ -9,6 +9,8 @@ const topPanelCss = readFileSync(
 describe('MezfitTopPanel CSS contract', () => {
   it('starts below the navigation frame and only dims the panel surface', () => {
     expect(topPanelCss).toContain('--navigation-content-start');
+    expect(topPanelCss).toContain('--k-safe-area-left');
+    expect(topPanelCss).toContain('--k-safe-area-right');
     expect(topPanelCss).toContain('z-index: 50');
     expect(topPanelCss).toContain('.ui-mezfit-top-panel__surface--bare');
     expect(topPanelCss).toContain('background: rgba(0, 0, 0, .56)');

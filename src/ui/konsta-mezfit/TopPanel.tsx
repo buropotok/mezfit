@@ -97,7 +97,7 @@ export function MezfitTopPanel({
       className={`ui-mezfit-top-panel ${className}`.trim()}
       data-state={opened ? 'opened' : 'closed'}
       data-material={hasMaterial ? 'glass' : 'default'}
-      aria-hidden={opened ? undefined : true}
+      inert={opened ? undefined : true}
       style={frameStyle}
       onPointerDownCapture={onPointerDownCapture}
       onPointerUpCapture={onPointerUpCapture}

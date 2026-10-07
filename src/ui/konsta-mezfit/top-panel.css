@@ -5,8 +5,17 @@
     --navigation-content-start,
     calc(max(1rem, var(--k-safe-area-top, 0px)) + 2.75rem + var(--space-3))
   );
-  left: 50%;
-  width: min(720px, 100%);
+  left: calc(
+    50% + (
+      var(--k-safe-area-left, 0px) - var(--k-safe-area-right, 0px)
+    ) / 2
+  );
+  width: min(
+    720px,
+    calc(
+      100% - var(--k-safe-area-left, 0px) - var(--k-safe-area-right, 0px)
+    )
+  );
   max-height: calc(
     100dvh - var(
       --navigation-content-start,

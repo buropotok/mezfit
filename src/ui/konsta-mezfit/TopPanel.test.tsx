@@ -75,6 +75,18 @@ describe('MezfitTopPanel', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('makes the closed subtree inert instead of exposing hidden focused controls', () => {
+    const view = render(
+      <MezfitTopPanel opened={false} onClose={() => {}} role="dialog" aria-label="Closed top panel">
+        <button type="button">Action</button>
+      </MezfitTopPanel>,
+    );
+
+    const panel = view.container.querySelector<HTMLElement>('.ui-mezfit-top-panel');
+    expect(panel?.hasAttribute('inert')).toBe(true);
+    expect(panel?.hasAttribute('aria-hidden')).toBe(false);
+  });
+
   it('lets the supplied material own blur instead of the standalone blur setting', () => {
     const view = render(
       <GlassSurfaceProvider blur={2}>

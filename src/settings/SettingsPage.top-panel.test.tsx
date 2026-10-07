@@ -30,6 +30,7 @@ describe('SettingsPage MezfitTopPanel module', () => {
     expect(dialog.getAttribute('data-material')).toBe('default');
 
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
-    expect(screen.queryByRole('dialog', { name: 'Mezfit Top Panel demo' })).toBeNull();
+    expect(dialog.getAttribute('data-state')).toBe('closed');
+    expect(dialog.hasAttribute('inert')).toBe(true);
   });
 });
