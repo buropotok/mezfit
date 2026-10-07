@@ -25,11 +25,11 @@ const [open, setOpen] = useState(false);
 The trigger must forward normal button props and its ref. `triggerRef`
 points to the **whole** source surface, which can differ from the trigger itself
 (for example, the 88 × 44 Navbar capsule containing the 44 × 44 menu segment).
-LiquidPopover automatically hides the cloned trigger while opening, open, and
-closing, retaining its layout so the source geometry stays measurable. If
-`triggerRef` intentionally points to a larger source surface than the trigger
-itself, that owner still controls visibility of the additional surrounding
-surface.
+LiquidPopover owns visibility of the explicit `triggerRef` source surface
+while opening, open, and closing. It uses `visibility`, not `display`, so
+layout and source geometry remain measurable through the full forward and
+reverse animation. The source reappears only after reverse progress reaches
+zero. Consumers do not need their own visibility timing for the source.
 
 Route selection is automatic from the measured source and final popover bounds.
 If the source lies fully to the left or right of the final popover centerline,
