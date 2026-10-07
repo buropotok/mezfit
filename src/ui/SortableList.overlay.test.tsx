@@ -111,6 +111,7 @@ describe('SortableList lifted overlay', () => {
 
     expect(overlay).not.toBeNull();
     expect(overlay?.classList.contains('ui-glass-surface')).toBe(true);
+    expect(overlay?.classList.contains('ui-glass-surface--halo-lifted')).toBe(true);
     expect(overlay?.parentElement).toBe(overlayHost);
     expect(overlay?.querySelector('.ui-glass-surface')).toBeNull();
     expect(overlay?.querySelector('[data-testid="first-content"]')).not.toBeNull();
