@@ -266,7 +266,7 @@ export function LiquidGlassFloatingActionSlot({ children }: { children: ReactNod
   return (
     <div
       data-liquid-glass-floating-action-slot=""
-      style={{ position: 'relative', width: '100%', height: 64, overflow: 'visible' }}
+      style={{ position: 'relative', width: '100%', height: 64, overflow: 'visible', pointerEvents: 'none' }}
     >
       <FabSlot>{children}</FabSlot>
     </div>
