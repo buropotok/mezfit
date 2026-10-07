@@ -82,7 +82,7 @@ export function SortableList({ items, onReorder, className = '', longPressDelay 
         </div>
       </GlassSurface>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
-        {activeItem ? <GlassSurface className="ui-sortable-list__overlay" preset="modalTuned">{activeItem.content}</GlassSurface> : null}
+        {activeItem ? <GlassSurface className="ui-sortable-list__overlay" preset="modalTuned" halo="lifted">{activeItem.content}</GlassSurface> : null}
       </DragOverlay>
     </DndContext>
   );
