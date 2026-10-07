@@ -37,5 +37,8 @@ describe('SettingsPage DatePicker module', () => {
     const dialog = screen.getByRole('dialog', { name: 'Выбор даты' });
     expect(dialog.getAttribute('data-date-picker-surface')).toBe('top-panel');
     expect(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' })).toBeTruthy();
+    expect(dialog.querySelector('[data-day-status="scheduled"]')).not.toBeNull();
+    expect(dialog.querySelector('[data-day-status="completed"]')).not.toBeNull();
+    expect(dialog.querySelector('[data-day-status="missed"]')).not.toBeNull();
   });
 });

@@ -28,6 +28,24 @@ const MONTH_COUNT = 12;
 const HEADER_SCROLL_OFFSET = 78;
 
 export type DatePickerSurface = 'bare' | 'panel' | 'top-panel';
+export type DatePickerDayStatus = 'scheduled' | 'completed' | 'missed';
+
+export interface DatePickerDayStatusEntry {
+  date: LocalDate;
+  status: DatePickerDayStatus;
+}
+
+const DAY_STATUS_ACCESSIBLE_LABELS: Record<DatePickerDayStatus, string> = {
+  scheduled: 'назначена тренировка',
+  completed: 'тренировочная сессия завершена',
+  missed: 'плановая тренировка пропущена',
+};
+
+const EMPTY_DAY_STATUSES: readonly DatePickerDayStatusEntry[] = [];
+
+function isDatePickerDayStatus(value: unknown): value is DatePickerDayStatus {
+  return value === 'scheduled' || value === 'completed' || value === 'missed';
+}
 
 export interface DatePickerProps {
   opened: boolean;
@@ -44,6 +62,7 @@ export interface DatePickerProps {
   topPanelMaterialPreset?: GlassPresetName;
   topPanelMaterial?: GlassMaterialOverrides;
   topPanelMaterialOptics?: boolean;
+  dayStatuses?: readonly DatePickerDayStatusEntry[];
 }
 
 function CloseIcon() {
@@ -61,6 +80,8 @@ const CalendarMonths = memo(function CalendarMonths({
   weekdayLabels,
   onChooseDate,
   horizontal,
+  todayDate,
+  dayStatusByDate,
 }: {
   visibleYear: number;
   selectedDate: LocalDateParts;
@@ -68,6 +89,8 @@ const CalendarMonths = memo(function CalendarMonths({
   weekdayLabels: readonly string[];
   onChooseDate: (monthIndex: number, day: number) => void;
   horizontal: boolean;
+  todayDate?: LocalDate;
+  dayStatusByDate?: ReadonlyMap<LocalDate, DatePickerDayStatus>;
 }) {
   return (
     <div className={`ui-date-picker__months${horizontal ? ' ui-date-picker__months--horizontal' : ''}`}>
@@ -90,16 +113,30 @@ const CalendarMonths = memo(function CalendarMonths({
                 return <span className="ui-date-picker__empty-day" aria-hidden="true" key={`empty-${cellIndex}`} />;
               }
 
+              const date = formatLocalDate(visibleYear, monthIndex + 1, day);
               const isSelected = selectedDate.year === visibleYear
                 && selectedDate.month === monthIndex + 1
                 && selectedDate.day === day;
+              const isToday = horizontal && date === todayDate;
+              const dayStatus = horizontal ? dayStatusByDate?.get(date) : undefined;
+              const statusClassName = dayStatus ? ` ui-date-picker__day--status-${dayStatus}` : '';
+              const accessibleQualifiers = [
+                isToday ? 'сегодня' : null,
+                dayStatus ? DAY_STATUS_ACCESSIBLE_LABELS[dayStatus] : null,
+              ].filter((label): label is string => label !== null);
+              const accessibleLabel = [
+                formatDayLabel(visibleYear, monthIndex, day, locale),
+                ...accessibleQualifiers,
+              ].join(', ');
 
               return (
                 <button
                   type="button"
-                  className={`ui-date-picker__day ui-text--body${isSelected ? ' ui-date-picker__day--selected' : ''}`}
-                  aria-label={formatDayLabel(visibleYear, monthIndex, day, locale)}
+                  className={`ui-date-picker__day ui-text--body${isSelected ? ' ui-date-picker__day--selected' : ''}${isToday ? ' ui-date-picker__day--today' : ''}${statusClassName}`}
+                  aria-label={accessibleLabel}
                   aria-current={isSelected ? 'date' : undefined}
+                  data-day-status={dayStatus}
+                  data-today={isToday ? 'true' : undefined}
                   onClick={() => onChooseDate(monthIndex, day)}
                   key={day}
                 >
@@ -135,6 +172,7 @@ export function DatePicker({
   topPanelMaterialPreset,
   topPanelMaterial,
   topPanelMaterialOptics = false,
+  dayStatuses = EMPTY_DAY_STATUSES,
 }: DatePickerProps) {
   const rangeIsValid = Number.isInteger(minYear) && Number.isInteger(maxYear) && minYear <= maxYear;
   const safeMinYear = rangeIsValid ? minYear : DEFAULT_MIN_YEAR;
@@ -169,6 +207,13 @@ export function DatePicker({
     () => Array.from({ length: safeMaxYear - safeMinYear + 1 }, (_, index) => safeMinYear + index),
     [safeMaxYear, safeMinYear],
   );
+  const dayStatusByDate = useMemo(() => {
+    const next = new Map<LocalDate, DatePickerDayStatus>();
+    dayStatuses.forEach(({ date, status }) => {
+      if (parseLocalDate(date) && isDatePickerDayStatus(status)) next.set(date, status);
+    });
+    return next;
+  }, [dayStatuses]);
   const effectiveSurfaceOpened = opened && surfaceReadyToOpen;
   const effectiveYearPopoverOpened = effectiveSurfaceOpened
     && yearPopoverRequested
@@ -405,6 +450,8 @@ export function DatePicker({
             weekdayLabels={weekdayLabels}
             onChooseDate={chooseDate}
             horizontal
+            todayDate={todayDate}
+            dayStatusByDate={dayStatusByDate}
           />
         ) : null}
       </div>

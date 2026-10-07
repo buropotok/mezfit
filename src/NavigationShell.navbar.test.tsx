@@ -354,7 +354,11 @@ describe('NavigationShell MezfitNavbar integration', () => {
           level: 1,
           title: 'Пн, 5 октября',
           identity: { title: 'Пн, 5 октября', icon: 'calendar-event' },
-          calendar: { value: '2026-10-05', onChange: onCalendarDateChange },
+          calendar: {
+            value: '2026-10-05',
+            onChange: onCalendarDateChange,
+            dayStatuses: [{ date: '2026-10-06', status: 'scheduled' }],
+          },
           contentMode: 'viewport',
         }}
         onDestinationChange={vi.fn()}
@@ -380,6 +384,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     await waitFor(() => {
       expect(panel?.getAttribute('data-state')).toBe('opened');
       expect(view.getByRole('button', { name: 'Закрыть календарь' }).getAttribute('aria-expanded')).toBe('true');
+      expect(view.container.querySelector('[data-day-status="scheduled"]')).not.toBeNull();
     });
 
     const closeCalendarButton = view.getByRole('button', { name: 'Закрыть календарь' });
