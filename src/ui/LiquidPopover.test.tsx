@@ -37,18 +37,20 @@ afterEach(() => {
 function setup() {
   const triggerRef = createRef<HTMLButtonElement>(),
     select = vi.fn(),
-    change = vi.fn();
+    change = vi.fn(),
+    presentation = vi.fn();
   const props = {
     trigger: <button ref={triggerRef}>Открыть</button>,
     triggerRef,
     onOpenChange: change,
+    onPresentationChange: presentation,
     items: [
       { id: 'edit', label: 'Редактировать', onSelect: select },
       { id: 'disabled', label: 'Недоступно', disabled: true },
     ],
   };
   const view = render(<LiquidPopover {...props} isOpen={false} />);
-  return { ...view, props, select, change };
+  return { ...view, props, select, change, presentation };
 }
 
 describe('LiquidPopover lifecycle and menu ownership', () => {
@@ -92,18 +94,48 @@ describe('LiquidPopover lifecycle and menu ownership', () => {
     ).toBeNull();
   });
 
-  it('releases viewport listeners on unmount', () => {
+  it('reports an external source lifecycle without mutating its visibility', () => {
+    const sourceRef = createRef<HTMLDivElement>(),
+      presentation = vi.fn();
+    const view = render(
+      <>
+        <div ref={sourceRef} style={{ visibility: 'visible' }} />
+        <LiquidPopover
+          isOpen
+          onOpenChange={() => {}}
+          onPresentationChange={presentation}
+          trigger={<button>Открыть внешний источник</button>}
+          triggerRef={sourceRef}
+          items={[{ id: 'action', label: 'Действие' }]}
+        />
+      </>,
+    );
+
+    expect(sourceRef.current?.style.visibility).toBe('visible');
+    const trigger = screen
+      .getByText('Открыть внешний источник')
+      .closest('button');
+    expect(trigger?.style.visibility).toBe('hidden');
+    expect(presentation).toHaveBeenLastCalledWith(true);
+
+    view.unmount();
+    expect(presentation).toHaveBeenLastCalledWith(false);
+  });
+
+  it('releases viewport listeners and presentation ownership on unmount', () => {
     const view = setup(),
       remove = vi.spyOn(window, 'removeEventListener');
     view.rerender(<LiquidPopover {...view.props} isOpen />);
+    expect(view.presentation).toHaveBeenLastCalledWith(true);
     view.unmount();
     expect(
       remove.mock.calls.some(([event]) => String(event) === 'resize'),
     ).toBe(true);
+    expect(view.presentation).toHaveBeenLastCalledWith(false);
   });
 });
 
-it('finishes the animated handoff with sharp interactive HTML', async () => {
+it('finishes opening and fully reverses the same animation on close', async () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
   vi.stubGlobal('CSS', { supports: () => true });
   vi.stubGlobal('CanvasRenderingContext2D', class {});
@@ -187,6 +219,46 @@ it('finishes the animated handoff with sharp interactive HTML', async () => {
   expect(native.style.filter).toBe('none');
   expect(native.style.opacity).toBe('1');
   expect(menu.querySelector('svg')?.style.display).toBe('none');
+
+  const trigger = screen.getByText('Открыть').closest('button')!;
+  expect(trigger.style.visibility).toBe('hidden');
+  expect(view.presentation).toHaveBeenLastCalledWith(true);
+
   fireEvent.click(screen.getByRole('menuitem', { name: 'Редактировать' }));
   expect(view.select).toHaveBeenCalledOnce();
+  expect(view.change).toHaveBeenCalledWith(false);
+
+  const replacementItems = [
+    { id: 'coach-action', label: 'Действие тренера' },
+    { id: 'coach-settings', label: 'Настройки тренера' },
+    { id: 'coach-clients', label: 'Клиенты тренера' },
+  ];
+  view.rerender(
+    <LiquidPopover
+      {...view.props}
+      isOpen={false}
+      items={replacementItems}
+    />,
+  );
+  await act(async () => {
+    vi.advanceTimersByTime(32);
+  });
+  expect(screen.getByRole('menu')).toBeTruthy();
+  expect(menu.querySelector('canvas')?.style.display).toBe('block');
+  expect(native.hasAttribute('inert')).toBe(true);
+  expect(trigger.style.visibility).toBe('hidden');
+  expect(view.presentation).toHaveBeenLastCalledWith(true);
+  expect(
+    screen.getByRole('menuitem', { name: 'Редактировать' }),
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole('menuitem', { name: 'Действие тренера' }),
+  ).toBeNull();
+
+  await act(async () => {
+    vi.advanceTimersByTime(700);
+  });
+  expect(screen.queryByRole('menu')).toBeNull();
+  expect(trigger.style.visibility).toBe('');
+  expect(view.presentation).toHaveBeenLastCalledWith(false);
 });

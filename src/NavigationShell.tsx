@@ -202,6 +202,7 @@ export function NavigationShell({
   children,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPresented, setMenuPresented] = useState(false);
   const menuOriginRef = useRef<HTMLElement>(null);
   const [coachSelectorOpen, setCoachSelectorOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -362,6 +363,7 @@ export function NavigationShell({
     <LiquidPopover
       isOpen={menuOpen}
       onOpenChange={(open) => { if (!open) setMenuOpen(false); }}
+      onPresentationChange={setMenuPresented}
       label="Меню страницы"
       triggerActivation="controlled"
       trigger={control}
@@ -385,10 +387,10 @@ export function NavigationShell({
             onCalendar={() => setCalendarOpen(true)}
             renderMenuControl={renderMenuControl}
             rightControlRef={menuOriginRef}
-            rightControlHidden={menuOpen}
+            rightControlHidden={menuOpen || menuPresented}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
-            menuDisabled={menuOpen}
+            menuDisabled={menuOpen || menuPresented}
           />
         </div>
 

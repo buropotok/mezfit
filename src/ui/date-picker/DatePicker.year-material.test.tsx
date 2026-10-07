@@ -57,7 +57,7 @@ afterEach(() => {
 });
 
 describe('DatePicker year material', () => {
-  it('passes the same preset and optics to the year trigger and LiquidPopover surface', () => {
+  it('keeps trigger optics but forces the year LiquidPopover surface optics off', () => {
     render(
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
@@ -85,6 +85,6 @@ describe('DatePicker year material', () => {
     const popover = screen.getByRole('dialog', { name: 'Выберите год' });
     const popoverSurface = popover.querySelector<HTMLElement>('.ui-liquid-popover__glass');
     expect(popoverSurface?.getAttribute('data-preset')).toBe('smoked');
-    expect(popoverSurface?.getAttribute('data-optics')).toBe('true');
+    expect(popoverSurface?.getAttribute('data-optics')).toBe('false');
   });
 });

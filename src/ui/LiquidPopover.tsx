@@ -43,6 +43,38 @@ export type LiquidPopoverItem = {
 export type LiquidPopoverLayout = 'menu' | 'grid';
 export type LiquidPopoverRole = 'menu' | 'dialog';
 
+type LiquidPresentationSnapshot = {
+  items: readonly LiquidPopoverItem[];
+  layout: LiquidPopoverLayout;
+  columns: number;
+  role: LiquidPopoverRole;
+  label: string;
+  preset: GlassPresetName;
+  optics: boolean;
+  options: LiquidMotionOptions;
+};
+
+type LiquidAnimationBounds = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+};
+
+type LiquidContentBounds = Pick<
+  LiquidAnimationBounds,
+  'left' | 'top' | 'width' | 'height'
+>;
+
+type LiquidAnimationSession = {
+  sourceBounds: LiquidAnimationBounds;
+  destinationBounds: LiquidAnimationBounds;
+  texture: HTMLCanvasElement;
+  presentationKey: string;
+};
+
 export interface LiquidPopoverProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -59,6 +91,8 @@ export interface LiquidPopoverProps {
   columns?: number;
   role?: LiquidPopoverRole;
   scrollActiveIntoView?: boolean;
+  /** Reports whether the source surface must remain visually hidden. */
+  onPresentationChange?: (presented: boolean) => void;
   motion?: Partial<LiquidMotionOptions>;
 }
 
@@ -84,11 +118,20 @@ export function resolveLiquidMotionOptions(
   return result;
 }
 
-const toLiquidRect = (rect: DOMRect): LiquidRect => ({
+const toLiquidRect = (rect: LiquidAnimationBounds): LiquidRect => ({
   x: rect.left + rect.width / 2,
   y: rect.top + rect.height / 2,
   w: rect.width,
   h: rect.height,
+});
+
+const snapshotBounds = (rect: DOMRect): LiquidAnimationBounds => ({
+  left: rect.left,
+  top: rect.top,
+  right: rect.right,
+  bottom: rect.bottom,
+  width: rect.width,
+  height: rect.height,
 });
 
 function paintContentTexture(
@@ -97,7 +140,7 @@ function paintContentTexture(
   rows: ReadonlyMap<string, HTMLElement>,
   items: readonly LiquidPopoverItem[],
   layout: LiquidPopoverLayout,
-  bounds = container.getBoundingClientRect(),
+  bounds: LiquidContentBounds = container.getBoundingClientRect(),
 ) {
   if (!bounds.width || !bounds.height) return false;
   const context = canvas.getContext('2d');
@@ -167,6 +210,7 @@ export function LiquidPopover({
   columns = 4,
   role = 'menu',
   scrollActiveIntoView = false,
+  onPresentationChange,
   motion,
 }: LiquidPopoverProps) {
   const id = useId().replace(/:/g, ''),
@@ -179,12 +223,17 @@ export function LiquidPopover({
   const sceneRef = useRef<SVGSVGElement>(null),
     clipRef = useRef<SVGPathElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sourceRef = useRef<HTMLCanvasElement | null>(null),
-    itemsRef = useRef(items);
+  const prewarmRef = useRef<HTMLCanvasElement | null>(null),
+    animationSessionRef = useRef<LiquidAnimationSession | null>(null),
+    itemsRef = useRef(items),
+    progressRef = useRef(0),
+    presentationChangeRef = useRef(onPresentationChange);
   itemsRef.current = items;
+  presentationChangeRef.current = onPresentationChange;
   const [host, setHost] = useState<HTMLElement | null>(null),
     [settled, setSettled] = useState(false),
-    [positioned, setPositioned] = useState(false);
+    [positioned, setPositioned] = useState(false),
+    [presented, setPresented] = useState(isOpen);
   const handlePositioned = useCallback(() => setPositioned(true), []);
   const contentRef = useCallback(
     (element: HTMLElement | null) => setHost(element),
@@ -195,7 +244,29 @@ export function LiquidPopover({
   const gridStyle = layout === 'grid'
     ? ({ '--ui-liquid-popover-columns': String(resolvedColumns) } as CSSProperties)
     : undefined;
-  const activeItemId = items.find((item) => item.active)?.id;
+  const currentPresentation = useMemo<LiquidPresentationSnapshot>(
+    () => ({
+      items,
+      layout,
+      columns: resolvedColumns,
+      role,
+      label,
+      preset,
+      optics,
+      options,
+    }),
+    [items, label, layout, optics, options, preset, resolvedColumns, role],
+  );
+  const presentationRef = useRef<LiquidPresentationSnapshot>(currentPresentation),
+    useCurrentPresentation = !presented || (isOpen && settled),
+    presentation = useCurrentPresentation
+      ? currentPresentation
+      : presentationRef.current,
+    presentationGridStyle = presentation.layout === 'grid'
+      ? ({ '--ui-liquid-popover-columns': String(presentation.columns) } as CSSProperties)
+      : undefined,
+    measureActiveItemId = items.find((item) => item.active)?.id,
+    activeItemId = presentation.items.find((item) => item.active)?.id;
   const centerActiveItem = useCallback((container: HTMLElement | null, item: HTMLElement | null) => {
     if (!scrollActiveIntoView || !container || !item) return;
     const target = item.offsetTop + item.offsetHeight / 2 - container.clientHeight / 2;
@@ -212,6 +283,25 @@ export function LiquidPopover({
       item.dividerBefore,
     ]),
   ]);
+  const presentationKey = JSON.stringify([
+    presentation.layout,
+    presentation.columns,
+    presentation.preset,
+    presentation.optics,
+    presentation.options,
+    presentation.items.map((item) => [
+      item.id,
+      item.label,
+      item.disabled,
+      item.active,
+      item.dividerBefore,
+    ]),
+  ]);
+
+  useLayoutEffect(() => {
+    if (useCurrentPresentation)
+      presentationRef.current = currentPresentation;
+  }, [currentPresentation, useCurrentPresentation]);
 
   // Prewarm text/font measurement while closed. The opening frame repaints the
   // same canvas from the positioned native rows so raster and HTML share one
@@ -222,10 +312,12 @@ export function LiquidPopover({
     const prepare = () => {
       centerActiveItem(
         element,
-        activeItemId ? rowRefs.current.get(activeItemId) ?? null : null,
+        measureActiveItemId
+          ? rowRefs.current.get(measureActiveItemId) ?? null
+          : null,
       );
       const canvas =
-        sourceRef.current ?? element.ownerDocument.createElement('canvas');
+        prewarmRef.current ?? element.ownerDocument.createElement('canvas');
       if (
         paintContentTexture(
           canvas,
@@ -235,7 +327,7 @@ export function LiquidPopover({
           layout,
         )
       )
-        sourceRef.current = canvas;
+        prewarmRef.current = canvas;
     };
     prepare();
     const observer =
@@ -248,34 +340,58 @@ export function LiquidPopover({
       observer?.disconnect();
       element.ownerDocument.fonts?.removeEventListener('loadingdone', prepare);
     };
-  }, [activeItemId, centerActiveItem, contentKey, layout]);
+  }, [
+    centerActiveItem,
+    contentKey,
+    layout,
+    measureActiveItemId,
+  ]);
 
   useLayoutEffect(() => {
-    if (!isOpen || !host || !positioned) {
-      // Clear the previous handoff before the browser can paint an opening
-      // surface, even while MezfitPopover is still measuring its position.
+    if (isOpen) setPresented(true);
+  }, [isOpen]);
+
+  const sourcePresented = isOpen || presented;
+
+  useLayoutEffect(() => {
+    onPresentationChange?.(sourcePresented);
+  }, [onPresentationChange, sourcePresented]);
+
+  useLayoutEffect(
+    () => () => {
+      presentationChangeRef.current?.(false);
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    const visible = isOpen || presented;
+    if (!visible || !host || !positioned) {
       if (nativeRef.current) nativeRef.current.style.opacity = '0';
       if (glassRef.current) glassRef.current.style.opacity = '0';
       if (canvasRef.current) canvasRef.current.style.opacity = '0';
-      if (!isOpen) setPositioned(false);
-      setSettled(false);
+      if (!isOpen) {
+        progressRef.current = 0;
+        setSettled(false);
+        setPositioned(false);
+        setPresented(false);
+      }
       return;
     }
+
     const native = nativeRef.current,
       glass = glassRef.current,
       scene = sceneRef.current,
       canvas = canvasRef.current;
     if (!native || !glass || !scene || !canvas) return;
-    native.style.transform = 'none';
-    native.style.filter = 'none';
-    centerActiveItem(
-      native,
-      activeItemId ? nativeRowRefs.current.get(activeItemId) ?? null : null,
-    );
+
     let frame = 0,
       cancelled = false;
     let sizeObserver: ResizeObserver | null = null;
-    const finish = () => {
+    const targetProgress = isOpen ? 1 : 0;
+
+    const finishOpen = () => {
+      progressRef.current = 1;
       scene.style.display = 'none';
       canvas.style.display = 'none';
       native.style.opacity = '1';
@@ -290,55 +406,132 @@ export function LiquidPopover({
       native.style.borderRadius = `${resolveGlassRadius(host.clientWidth, host.clientHeight)}px`;
       setSettled(true);
     };
+
+    const finishClose = () => {
+      progressRef.current = 0;
+      scene.style.display = 'none';
+      canvas.style.display = 'none';
+      canvas.style.opacity = '0';
+      native.style.opacity = '0';
+      native.style.filter = 'none';
+      native.style.transform = 'none';
+      glass.style.opacity = '0';
+      animationSessionRef.current = null;
+      setSettled(false);
+      setPositioned(false);
+      setPresented(false);
+    };
+
+    const finishTarget = () => {
+      if (targetProgress === 1) finishOpen();
+      else finishClose();
+    };
+
     const cancelAndFinish = () => {
       cancelAnimationFrame(frame);
-      if (!cancelled) finish();
+      animationSessionRef.current = null;
+      if (!cancelled) finishTarget();
     };
+
     setSettled(false);
-    native.style.opacity = '0';
     scene.style.display = 'block';
     canvas.style.display = 'block';
-    canvas.style.opacity = '0';
-    glass.style.opacity = '0';
+    if (progressRef.current <= 0) {
+      native.style.opacity = '0';
+      canvas.style.opacity = '0';
+      glass.style.opacity = '0';
+    }
+
     // Shared MezfitPopover owns placement; wait for its positioned frame.
     frame = requestAnimationFrame(() => {
-      const sourceBounds = triggerRef.current?.getBoundingClientRect(),
-        destinationBounds = host.getBoundingClientRect();
+      let session = animationSessionRef.current;
+      const shouldCreateSession =
+        !session ||
+        progressRef.current <= 0 ||
+        session.presentationKey !== presentationKey;
+      if (shouldCreateSession) {
+        const sourceRect = triggerRef.current?.getBoundingClientRect(),
+          destinationRect = host.getBoundingClientRect();
+        if (!sourceRect?.width || !destinationRect.width) {
+          finishTarget();
+          return;
+        }
+        const sourceBounds = snapshotBounds(sourceRect),
+          destinationBounds = snapshotBounds(destinationRect),
+          texture = host.ownerDocument.createElement('canvas');
+
+        // Reset transient transforms only in the same RAF where the current
+        // presentation snapshot is captured.
+        native.style.transform = 'none';
+        native.style.filter = 'none';
+        centerActiveItem(
+          native,
+          activeItemId ? nativeRowRefs.current.get(activeItemId) ?? null : null,
+        );
+        if (
+          !paintContentTexture(
+            texture,
+            native,
+            nativeRowRefs.current,
+            presentation.items,
+            presentation.layout,
+            destinationBounds,
+          )
+        ) {
+          finishTarget();
+          return;
+        }
+        session = {
+          sourceBounds,
+          destinationBounds,
+          texture,
+          presentationKey,
+        };
+        animationSessionRef.current = session;
+      }
+      if (!session) {
+        finishTarget();
+        return;
+      }
+
       if (
-        !sourceBounds?.width ||
-        !destinationBounds.width ||
         typeof Path2D === 'undefined' ||
         !CSS.supports('mix-blend-mode', 'plus-lighter') ||
         window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
       ) {
-        finish();
+        finishTarget();
         return;
       }
-      const rect = toLiquidRect(destinationBounds),
-        animation = createLiquidMotion(
-          toLiquidRect(sourceBounds),
-          rect,
-          options,
-        );
-      // Repaint from the positioned native rows. This makes the raster use the
-      // exact same viewport, scroll position, row spacing, and bottom gap as
-      // the live HTML that takes over during the handoff.
-      const texture =
-        sourceRef.current ?? host.ownerDocument.createElement('canvas');
+
+      const { sourceBounds, destinationBounds, texture } = session;
+
+      // A settled menu can be scrolled before close. Refresh only the raster
+      // payload from the frozen native snapshot so reverse starts from exactly
+      // what the user currently sees, while source/destination geometry stays
+      // locked to the animation session.
       if (
+        targetProgress === 0 &&
+        progressRef.current >= 1 &&
         !paintContentTexture(
           texture,
           native,
           nativeRowRefs.current,
-          itemsRef.current,
-          layout,
+          presentation.items,
+          presentation.layout,
           destinationBounds,
         )
       ) {
-        finish();
+        finishTarget();
         return;
       }
-      sourceRef.current = texture;
+
+      const rect = toLiquidRect(destinationBounds),
+        animation = createLiquidMotion(
+          toLiquidRect(sourceBounds),
+          rect,
+          presentation.options,
+        );
+
       const cropX = Math.floor(
         Math.max(0, Math.min(sourceBounds.left, destinationBounds.left) - 80),
       );
@@ -365,9 +558,10 @@ export function LiquidPopover({
       );
       const context = canvas.getContext('2d');
       if (!context) {
-        finish();
+        finishTarget();
         return;
       }
+
       const left = destinationBounds.left,
         top = destinationBounds.top;
       Object.assign(canvas.style, {
@@ -376,6 +570,7 @@ export function LiquidPopover({
         width: `${canvas.width}px`,
         height: `${canvas.height}px`,
       });
+
       if (typeof ResizeObserver !== 'undefined') {
         sizeObserver = new ResizeObserver(() => {
           const current = host.getBoundingClientRect();
@@ -389,12 +584,20 @@ export function LiquidPopover({
         });
         sizeObserver.observe(host);
       }
-      const started = performance.now();
+
+      const fromProgress = progressRef.current,
+        progressDistance = Math.abs(targetProgress - fromProgress),
+        durationMs = animation.totalSeconds * 1000 * progressDistance,
+        started = performance.now();
+
       const draw = (now: number) => {
         if (cancelled) return;
-        const progress = clamp(
-          (now - started) / (animation.totalSeconds * 1000),
-        );
+        const phase =
+            durationMs <= 0 ? 1 : clamp((now - started) / durationMs),
+          progress =
+            fromProgress + (targetProgress - fromProgress) * phase;
+        progressRef.current = progress;
+
         const loops = animation.contour(progress),
           timeline = animation.timeline(progress);
         const bounds = contourBounds(loops),
@@ -408,6 +611,7 @@ export function LiquidPopover({
             })),
           ),
         );
+
         Object.assign(glass.style, {
           left: `${bounds.left - left}px`,
           top: `${bounds.top - top}px`,
@@ -417,6 +621,7 @@ export function LiquidPopover({
           clipPath: `path('${localPath}')`,
           opacity: '1',
         });
+
         const localLoops = loops.map((loop) =>
           loop.map((point) => ({ x: point.x - cropX, y: point.y - cropY })),
         );
@@ -432,6 +637,7 @@ export function LiquidPopover({
           timeline.lens,
           progress >= 1,
         );
+
         const centerX = (bounds.left + bounds.right) / 2,
           centerY = (bounds.top + bounds.bottom) / 2,
           scaleX = width / rect.w,
@@ -447,13 +653,16 @@ export function LiquidPopover({
         native.style.transformOrigin = 'center center';
         native.style.transform =
           `translate(${offsetX}px, ${offsetY}px) scale(${scaleX}, ${scaleY})`;
-        if (progress < 1) frame = requestAnimationFrame(draw);
-        else finish();
+
+        if (phase < 1) frame = requestAnimationFrame(draw);
+        else finishTarget();
       };
+
       draw(started);
     });
+
     // A viewport/font change invalidates the prepared geometry. Settle safely
-    // instead of animating toward stale screen coordinates.
+    // to the requested endpoint instead of animating stale coordinates.
     window.addEventListener('resize', cancelAndFinish);
     window.visualViewport?.addEventListener('resize', cancelAndFinish);
     host.ownerDocument.fonts?.addEventListener('loadingdone', cancelAndFinish);
@@ -471,12 +680,10 @@ export function LiquidPopover({
   }, [
     activeItemId,
     centerActiveItem,
-    contentKey,
     host,
     isOpen,
-    layout,
-    options,
     positioned,
+    presentationKey,
     triggerRef,
   ]);
 
@@ -507,6 +714,12 @@ export function LiquidPopover({
       {cloneElement(trigger, {
         'aria-haspopup': role,
         'aria-expanded': isOpen,
+        style: {
+          ...trigger.props.style,
+          visibility: sourcePresented
+            ? 'hidden'
+            : trigger.props.style?.visibility,
+        },
         onClick: (event) => {
           trigger.props.onClick?.(event);
           if (triggerActivation === 'automatic' && !event.defaultPrevented)
@@ -514,23 +727,23 @@ export function LiquidPopover({
         },
       })}
       <MezfitPopover
-        opened={isOpen}
+        opened={isOpen || presented}
         target={triggerRef.current ?? undefined}
-        onBackdropClick={() => onOpenChange(false)}
+        onBackdropClick={isOpen ? () => onOpenChange(false) : undefined}
         presentation="custom"
         onPositioned={handlePositioned}
         portal
         ref={contentRef}
-        role={role}
-        aria-modal={role === 'dialog' ? 'true' : undefined}
-        aria-label={label}
-        className={`ui-liquid-popover${layout === 'grid' ? ' ui-liquid-popover--grid' : ''}`}
-        style={gridStyle}
+        role={presentation.role}
+        aria-modal={presentation.role === 'dialog' ? 'true' : undefined}
+        aria-label={presentation.label}
+        className={`ui-liquid-popover${presentation.layout === 'grid' ? ' ui-liquid-popover--grid' : ''}`}
+        style={presentationGridStyle}
       >
         <GlassSurface
           ref={glassRef}
-          preset={preset}
-          optics={optics}
+          preset={presentation.preset}
+          optics={presentation.optics}
           className="ui-liquid-popover__glass"
           aria-hidden="true"
         />
@@ -556,11 +769,11 @@ export function LiquidPopover({
           />
           <div
             ref={nativeRef}
-            className={`ui-liquid-popover__native${layout === 'grid' ? ' ui-liquid-popover__native--grid' : ''}`}
-            style={gridStyle}
+            className={`ui-liquid-popover__native${presentation.layout === 'grid' ? ' ui-liquid-popover__native--grid' : ''}`}
+            style={presentationGridStyle}
             inert={!settled}
           >
-            {items.map((item) => (
+            {presentation.items.map((item) => (
               <Fragment key={item.id}>
                 {item.dividerBefore ? (
                   <div role="separator" className="ui-menu-divider" />
@@ -571,7 +784,7 @@ export function LiquidPopover({
                     else nativeRowRefs.current.delete(item.id);
                   }}
                   type="button"
-                  role={role === 'menu' ? 'menuitem' : undefined}
+                  role={presentation.role === 'menu' ? 'menuitem' : undefined}
                   disabled={item.disabled}
                   data-disabled={item.disabled || undefined}
                   className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}

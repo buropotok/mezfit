@@ -15,6 +15,7 @@ export function LiquidPopoverCatalog() {
   const navbarRef = useRef<HTMLElement>(null),
     roundRef = useRef<HTMLElement>(null);
   const [navbarOpen, setNavbarOpen] = useState(false),
+    [navbarPresented, setNavbarPresented] = useState(false),
     [roundOpen, setRoundOpen] = useState(false);
   const [sourceMorph, setSourceMorph] = useState(
     LIQUID_POPOVER_DEFAULTS.sourceMorph,
@@ -56,8 +57,8 @@ export function LiquidPopoverCatalog() {
         onCalendar={() => setSelection('Календарь')}
         onMenu={() => setNavbarOpen(true)}
         rightControlRef={navbarRef}
-        rightControlHidden={navbarOpen}
-        menuDisabled={navbarOpen}
+        rightControlHidden={navbarOpen || navbarPresented}
+        menuDisabled={navbarOpen || navbarPresented}
         renderMenuControl={(control) => (
           <LiquidPopover
             trigger={control}
@@ -67,6 +68,7 @@ export function LiquidPopoverCatalog() {
             onOpenChange={(open) => {
               if (!open) setNavbarOpen(false);
             }}
+            onPresentationChange={setNavbarPresented}
             items={items(() => setNavbarOpen(false))}
             motion={motion}
             label="Живое меню Navbar"
@@ -99,7 +101,6 @@ export function LiquidPopoverCatalog() {
               style={{
                 width: 44,
                 height: 44,
-                visibility: roundOpen ? 'hidden' : undefined,
               }}
             >
               ⋯

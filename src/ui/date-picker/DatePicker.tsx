@@ -246,9 +246,6 @@ export function DatePicker({
           shape="capsule"
           className="ui-date-picker__year-trigger ui-text--body"
           aria-label={`Выбрать год, сейчас ${visibleYear}`}
-          style={{
-            visibility: effectiveYearPopoverOpened ? 'hidden' : undefined,
-          }}
         >
           {visibleYear}
         </GlassSurface>
@@ -257,7 +254,7 @@ export function DatePicker({
       items={yearPopoverContentReady ? yearItems : []}
       label="Выберите год"
       preset={glassPreset}
-      optics={glassOptics}
+      optics={false}
       layout="grid"
       columns={4}
       role="dialog"
