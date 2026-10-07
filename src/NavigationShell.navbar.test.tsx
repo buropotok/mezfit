@@ -389,8 +389,12 @@ describe('NavigationShell MezfitNavbar integration', () => {
       expect(panel?.getAttribute('data-state')).toBe('opened');
     });
 
-    fireEvent.click(view.getByRole('button', { name: 'Назад' }));
-    expect(panel?.getAttribute('data-state')).toBe('closed');
+    const navbarBack = view.getByRole('button', { name: 'Назад' });
+    fireEvent.click(navbarBack);
+    fireEvent.animationEnd(navbarBack);
+    await waitFor(() => {
+      expect(panel?.getAttribute('data-state')).toBe('closed');
+    });
   });
 
   it('opens the page menu immediately without waiting for the shared double-action animation', () => {
