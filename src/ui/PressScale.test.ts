@@ -9,7 +9,8 @@ afterEach(() => {
 describe('startPressScale', () => {
   it('keeps the shared default press scale and timing', () => {
     const element = document.createElement('button');
-    const animate = vi.spyOn(element, 'animate').mockReturnValue({ cancel: vi.fn() } as unknown as Animation);
+    const animate = vi.fn().mockReturnValue({ cancel: vi.fn() } as unknown as Animation);
+    Object.defineProperty(element, 'animate', { value: animate, configurable: true });
 
     startPressScale(element);
 
@@ -25,7 +26,8 @@ describe('startPressScale', () => {
 
   it('supports the FAB 1.5x peak without changing the timing', () => {
     const element = document.createElement('button');
-    const animate = vi.spyOn(element, 'animate').mockReturnValue({ cancel: vi.fn() } as unknown as Animation);
+    const animate = vi.fn().mockReturnValue({ cancel: vi.fn() } as unknown as Animation);
+    Object.defineProperty(element, 'animate', { value: animate, configurable: true });
 
     startPressScale(element, 1.5);
 
