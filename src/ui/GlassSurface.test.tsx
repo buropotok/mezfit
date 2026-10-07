@@ -221,6 +221,14 @@ describe('GlassSurface', () => {
     expect(surface.querySelector('[data-testid="direct-child"]')?.parentElement).toBe(surface);
   });
 
+  it('applies the lifted halo without adding another geometry wrapper', () => {
+    const view = render(<GlassSurface halo="lifted">Lifted</GlassSurface>);
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.classList.contains('ui-glass-surface--halo-lifted')).toBe(true);
+    expect(surface.querySelector('.ui-glass-surface')).toBeNull();
+  });
+
   it('inherits global optics while a direct override remains authoritative', async () => {
     const view = render(
       <GlassSurfaceProvider optics>
