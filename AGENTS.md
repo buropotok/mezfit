@@ -5,6 +5,8 @@
 
 Mandatory rules for all changes in `buropotok/mezfit`. Working behavior is necessary but not sufficient: changes must preserve domain boundaries, React ownership, typed contracts, backend authorization, D1 integrity, Telegram Mini App compatibility, and testability.
 
+Before performing **any task** in this repository, **read `docs/architecture/local-first-storage-sync.md`**. Treat it as the authoritative architecture contract for local persistence, repository/integration boundaries, synchronization scopes, retry/idempotency, ownership-sensitive synchronization, and local-first behavior. Where the generic data-flow guidance in this file is broader than that document, the local-first architecture document governs for those concerns.
+
 Before any UI work, **read `typography.md` in the repository root and follow it as the authoritative typography contract**. This is mandatory for new UI and for changes to existing screens/components.
 
 ## 1. Preserve architecture before adding behavior
