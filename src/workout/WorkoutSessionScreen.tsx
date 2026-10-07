@@ -414,7 +414,7 @@ export function WorkoutSessionScreen({
               header={activeSession ? (
                 <div className="workout-session-screen__card-header">
                   <span className="workout-session-screen__card-icon">
-                    <Icon name="barbell" variant="outline" />
+                    <Icon name="barbell" variant="outline" className="workout-session-screen__card-icon-artwork" />
                   </span>
                   <Text variant="body" className="workout-session-screen__card-workout-name">
                     {workoutTitle(activeSession)}
