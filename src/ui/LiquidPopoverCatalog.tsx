@@ -99,7 +99,6 @@ export function LiquidPopoverCatalog() {
               style={{
                 width: 44,
                 height: 44,
-                visibility: roundOpen ? 'hidden' : undefined,
               }}
             >
               ⋯
