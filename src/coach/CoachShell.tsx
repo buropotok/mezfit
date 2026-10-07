@@ -30,7 +30,6 @@ const tabs: Array<{ id: ClientTab; label: string }> = [
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
   analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика клиентов, тренировок и нагрузки.' },
   calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
-  settings: { title: 'Настройки', text: 'Системные настройки будут добавляться отдельными задачами.' },
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
 };
 
@@ -86,8 +85,8 @@ function Placeholder({ title, text }: { title: string; text: string }) {
 function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   return (
     <section className="global-placeholder">
-      <h2>{title}</h2>
-      <p>{text}</p>
+      <Text variant="large-title" role="heading" aria-level={2}>{title}</Text>
+      <Text variant="body">{text}</Text>
     </section>
   );
 }
@@ -221,6 +220,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const [programCreateBusy, setProgramCreateBusy] = useState(false);
   const [programCreateError, setProgramCreateError] = useState('');
   const [programRefreshKey, setProgramRefreshKey] = useState(0);
+  const [eventPlaceholderOpen, setEventPlaceholderOpen] = useState(false);
   const programClientRequestRef = useRef(0);
 
   const loadClients = useCallback(async () => {
@@ -260,6 +260,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   useEffect(() => {
     programClientRequestRef.current += 1;
     if (destination !== 'clients' && destination !== 'programs' && selectedClient) setSelectedClient(null);
+    if (destination !== 'today') setEventPlaceholderOpen(false);
     if (destination !== 'programs') {
       setSelectedProgram(null);
       setProgramDraft(null);
@@ -269,6 +270,17 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }, [destination, selectedClient]);
 
   useEffect(() => {
+    if (eventPlaceholderOpen && destination === 'today') {
+      onNavigationContextChange({
+        level: 2,
+        title: 'Событие',
+        scrollKey: 'event:new',
+        identity: { title: 'Событие', icon: 'calendar-event' },
+        onBack: () => setEventPlaceholderOpen(false),
+      });
+      return () => onNavigationContextChange(null);
+    }
+
     if (selectingProgramClient && destination === 'programs') {
       onNavigationContextChange({ title: 'Клиенты', scrollKey: 'program-client-selection', onBack: () => setSelectingProgramClient(false) });
       return () => onNavigationContextChange(null);
@@ -298,10 +310,14 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       onBack: () => setSelectedClient(null),
     });
     return () => onNavigationContextChange(null);
-  }, [destination, selectedClient, selectedProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [destination, eventPlaceholderOpen, selectedClient, selectedProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
     return <ClientWorkspace initData={initData} client={selectedClient} />;
+  }
+
+  if (eventPlaceholderOpen && destination === 'today') {
+    return <GlobalPlaceholder title="Событие" text="Экран события будет реализован отдельной задачей." />;
   }
 
   if (destination === 'today') {
@@ -310,6 +326,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         initData={initData}
         role="coach"
         onNavigationContextChange={onNavigationContextChange}
+        onCreateEvent={() => setEventPlaceholderOpen(true)}
       />
     );
   }
