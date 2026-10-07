@@ -86,7 +86,7 @@ const coachPrimaryItems: NavigationItem[] = [
   { id: 'clients', label: 'Клиенты', icon: 'users' },
   { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
   { id: 'analytics', label: 'Аналитика', icon: 'chart-dots-2', showFab: false },
-  { id: 'settings', label: 'Настройки', icon: 'settings', showFab: false },
+  { id: 'training', label: 'Тренировка', icon: 'barbell', showFab: false },
 ];
 
 const clientPrimaryItems: NavigationItem[] = [
@@ -100,6 +100,7 @@ const clientPrimaryItems: NavigationItem[] = [
 const coachSecondaryItems: NavigationItem[] = [
   { id: 'exercises', label: 'Упражнения', icon: 'barbell', section: 'secondary', showFab: false },
   { id: 'calendar', label: 'Календарь', icon: 'calendar', section: 'secondary', showFab: false },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
   { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary', showFab: false },
 ];
 
