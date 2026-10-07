@@ -63,10 +63,16 @@ type LiquidAnimationBounds = {
   height: number;
 };
 
+type LiquidContentBounds = Pick<
+  LiquidAnimationBounds,
+  'left' | 'top' | 'width' | 'height'
+>;
+
 type LiquidAnimationSession = {
   sourceBounds: LiquidAnimationBounds;
   destinationBounds: LiquidAnimationBounds;
   texture: HTMLCanvasElement;
+  presentationKey: string;
 };
 
 export interface LiquidPopoverProps {
@@ -134,7 +140,7 @@ function paintContentTexture(
   rows: ReadonlyMap<string, HTMLElement>,
   items: readonly LiquidPopoverItem[],
   layout: LiquidPopoverLayout,
-  bounds = container.getBoundingClientRect(),
+  bounds: LiquidContentBounds = container.getBoundingClientRect(),
 ) {
   if (!bounds.width || !bounds.height) return false;
   const context = canvas.getContext('2d');
@@ -253,6 +259,7 @@ export function LiquidPopover({
     presentationGridStyle = presentation.layout === 'grid'
       ? ({ '--ui-liquid-popover-columns': String(presentation.columns) } as CSSProperties)
       : undefined,
+    measureActiveItemId = items.find((item) => item.active)?.id,
     activeItemId = presentation.items.find((item) => item.active)?.id;
   const centerActiveItem = useCallback((container: HTMLElement | null, item: HTMLElement | null) => {
     if (!scrollActiveIntoView || !container || !item) return;
@@ -275,6 +282,7 @@ export function LiquidPopover({
     presentation.columns,
     presentation.preset,
     presentation.optics,
+    presentation.options,
     presentation.items.map((item) => [
       item.id,
       item.label,
@@ -293,7 +301,9 @@ export function LiquidPopover({
     const prepare = () => {
       centerActiveItem(
         element,
-        activeItemId ? rowRefs.current.get(activeItemId) ?? null : null,
+        measureActiveItemId
+          ? rowRefs.current.get(measureActiveItemId) ?? null
+          : null,
       );
       const canvas =
         prewarmRef.current ?? element.ownerDocument.createElement('canvas');
@@ -319,7 +329,12 @@ export function LiquidPopover({
       observer?.disconnect();
       element.ownerDocument.fonts?.removeEventListener('loadingdone', prepare);
     };
-  }, [activeItemId, centerActiveItem, contentKey, layout]);
+  }, [
+    centerActiveItem,
+    contentKey,
+    layout,
+    measureActiveItemId,
+  ]);
 
   useLayoutEffect(() => {
     if (isOpen) setPresented(true);
@@ -396,6 +411,7 @@ export function LiquidPopover({
 
     const cancelAndFinish = () => {
       cancelAnimationFrame(frame);
+      animationSessionRef.current = null;
       if (!cancelled) finishTarget();
     };
 
@@ -411,7 +427,10 @@ export function LiquidPopover({
     // Shared MezfitPopover owns placement; wait for its positioned frame.
     frame = requestAnimationFrame(() => {
       let session = animationSessionRef.current;
-      const shouldCreateSession = !session || progressRef.current <= 0;
+      const shouldCreateSession =
+        !session ||
+        progressRef.current <= 0 ||
+        session.presentationKey !== presentationKey;
       if (shouldCreateSession) {
         const sourceRect = triggerRef.current?.getBoundingClientRect(),
           destinationRect = host.getBoundingClientRect();
@@ -438,13 +457,18 @@ export function LiquidPopover({
             nativeRowRefs.current,
             presentation.items,
             presentation.layout,
-            destinationBounds as DOMRect,
+            destinationBounds,
           )
         ) {
           finishTarget();
           return;
         }
-        session = { sourceBounds, destinationBounds, texture };
+        session = {
+          sourceBounds,
+          destinationBounds,
+          texture,
+          presentationKey,
+        };
         animationSessionRef.current = session;
       }
 
