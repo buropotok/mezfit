@@ -22,7 +22,7 @@ export { MezfitDialog, MezfitDialogButton, MezfitPanel, MezfitPopover, MezfitSea
 export { BEZEL_ONLY_GLASS, BLUE_GLASS, CLEAR_GLASS, FROSTED_GLASS, GLASS_PRESETS, LENS_GLASS, LIQUID_CONVEX_GLASS, MODAL_GLASS, MODAL_TUNED_GLASS, SMOKED_GLASS, resolveGlassMaterial, resolveGlassRadius, type GlassMaterial, type GlassMaterialOverrides, type GlassPresetName, type GlassShape } from './glassMaterial';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
-export { LiquidGlassIconOnly, type LiquidGlassIconOnlyProps, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+export { LiquidGlassFloatingActionSlot, LiquidGlassIconOnly, type LiquidGlassIconOnlyProps, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 export { LiquidGlassTabsNoFab, type LiquidGlassTabsNoFabProps, type LiquidGlassTabsNoFabTab } from './LiquidGlassTabsNoFab';
 export type { LiquidGlassTextOnlyProps, LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
 export { DaySchedule, getDayScheduleValue, type DayScheduleValue, type DayScheduleEvent, type DayScheduleEventDelete, type DayScheduleEventMove, type DayScheduleEventResize, type DayScheduleProps, type DayScheduleRenderState } from './DaySchedule';
