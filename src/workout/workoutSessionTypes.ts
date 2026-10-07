@@ -48,6 +48,11 @@ export interface ActiveWorkoutSession {
 
 export type WorkoutSessionState = DraftWorkoutSession | ActiveWorkoutSession;
 
+export interface OpenWorkoutSessionSummary {
+  sessionId: number;
+  status: 'draft' | 'active';
+}
+
 export type WorkoutStartInput =
   | { type: 'own' }
   | { type: 'program'; programDayId: number; occurrenceId?: number };
