@@ -198,7 +198,18 @@ it('finishes opening and fully reverses the same animation on close', async () =
   expect(view.select).toHaveBeenCalledOnce();
   expect(view.change).toHaveBeenCalledWith(false);
 
-  view.rerender(<LiquidPopover {...view.props} isOpen={false} />);
+  const replacementItems = [
+    { id: 'coach-action', label: 'Действие тренера' },
+    { id: 'coach-settings', label: 'Настройки тренера' },
+    { id: 'coach-clients', label: 'Клиенты тренера' },
+  ];
+  view.rerender(
+    <LiquidPopover
+      {...view.props}
+      isOpen={false}
+      items={replacementItems}
+    />,
+  );
   await act(async () => {
     vi.advanceTimersByTime(32);
   });
@@ -207,6 +218,12 @@ it('finishes opening and fully reverses the same animation on close', async () =
   expect(native.hasAttribute('inert')).toBe(true);
   expect(trigger.style.visibility).toBe('hidden');
   expect(view.presentation).toHaveBeenLastCalledWith(true);
+  expect(
+    screen.getByRole('menuitem', { name: 'Редактировать' }),
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole('menuitem', { name: 'Действие тренера' }),
+  ).toBeNull();
 
   await act(async () => {
     vi.advanceTimersByTime(700);
