@@ -4,7 +4,6 @@
 .navigation-content--with-tabs { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
 .navigation-content--viewport { width: calc(100% + (var(--page-pad-x) * 2)); margin-inline: calc(var(--page-pad-x) * -1); overflow: hidden; padding-top: 0; padding-bottom: 0; scrollbar-width: none; }
 .navigation-primary-tabs { position: fixed; z-index: 30; left: 50%; bottom: max(0.75rem, env(safe-area-inset-bottom)); width: min(calc(100% - 1.5rem), 696px); transform: translateX(-50%); }
-.navigation-surface-fab-layer { pointer-events: none; position: fixed; z-index: 30; top: 0; bottom: env(safe-area-inset-bottom); left: 50%; width: min(720px, 100%); transform: translateX(-50%); }
 .global-placeholder { width: 100%; padding: var(--surface-pad); border: 1px solid var(--theme-border); border-radius: var(--radius-surface); color: var(--theme-surface-text); background: var(--theme-surface); }
 .global-placeholder h2 { margin-bottom: var(--space-2); }
 .global-placeholder p { margin-bottom: 0; color: var(--theme-surface-muted); }

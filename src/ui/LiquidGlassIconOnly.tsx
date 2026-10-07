@@ -262,6 +262,17 @@ function FabSlot({ children }: { children: ReactNode }) {
   );
 }
 
+export function LiquidGlassFloatingActionSlot({ children }: { children: ReactNode }) {
+  return (
+    <div
+      data-liquid-glass-floating-action-slot=""
+      style={{ position: 'relative', width: '100%', height: 64, overflow: 'visible', pointerEvents: 'none' }}
+    >
+      <FabSlot>{children}</FabSlot>
+    </div>
+  );
+}
+
 /** Approved no-FAB tab runtime, with an independently rendered optional FAB. */
 export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
   const previousHidden = useRef(props.hidden);
