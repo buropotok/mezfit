@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   acceptCurrentInvite,
   addRole,
@@ -16,14 +16,13 @@ import {
   NavigationShell,
   type AppDestination,
   type NavigationContext,
-  type NavigationFloatingAction,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
 import { TodayPage } from './schedule/TodayPage';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
-import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
+import { WorkoutSessionScreen } from './workout';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 
@@ -77,7 +76,6 @@ function reducer(state: State, action: Action): State {
 }
 
 const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
-  training: { title: 'Тренировка', text: 'Экран тренировки будет подключён к назначенной тренировке отдельной задачей.' },
   analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика тренировок, нагрузки и прогресса.' },
   exercises: { title: 'Упражнения', text: 'Здесь будет доступ к упражнениям и истории результатов по ним.' },
   history: { title: 'История', text: 'Здесь появятся завершённые тренировки и фактические результаты.' },
@@ -171,25 +169,36 @@ export function App() {
   const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
-  const [workoutOpen, setWorkoutOpen] = useState(false);
-  const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null>(null);
-  const [workoutNestedNavigationContext, setWorkoutNestedNavigationContext] = useState<NavigationContext | null>(null);
+  const settingsReturnDestinationRef = useRef<Record<Role, AppDestination>>({ coach: 'today', client: 'today' });
+  const destinationRef = useRef<AppDestination>('today');
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
   }, []);
-  const closeWorkout = useCallback(() => {
-    setWorkoutOpen(false);
-    setWorkoutNestedNavigationContext(null);
-  }, []);
-  const workoutRootNavigationContext = useMemo<NavigationContext>(() => ({
-    title: 'Тренировка',
-    scrollKey: 'workout:root',
-    identity: { title: 'Тренировка', icon: 'barbell' },
-    onBack: closeWorkout,
-  }), [closeWorkout]);
+  const readyRole = state.status === 'ready' ? state.activeRole : null;
+  const closeSettings = useCallback(() => {
+    if (!readyRole) return;
+    const next = settingsReturnDestinationRef.current[readyRole];
+    setNavigationContext(null);
+    if (readyRole === 'coach') setCoachDestination(next);
+    else setClientDestination(next);
+  }, [readyRole]);
+  const settingsRootContext = useMemo<NavigationContext | null>(() => readyRole ? ({
+    level: 2,
+    title: 'Настройки',
+    scrollKey: `settings:${readyRole}:root`,
+    identity: { title: 'Настройки', icon: 'settings' },
+    onBack: closeSettings,
+  }) : null, [closeSettings, readyRole]);
+  const handleSettingsNavigationContextChange = useCallback((context: NavigationContext | null) => {
+    if (destinationRef.current !== 'settings' || !settingsRootContext) {
+      setNavigationContext(null);
+      return;
+    }
+    setNavigationContext(context ? { ...context, level: 3 } : settingsRootContext);
+  }, [settingsRootContext]);
 
   useEffect(() => {
     saveBrowserGlassSettings(glassSettings);
@@ -287,28 +296,23 @@ export function App() {
   }
 
   const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
+  destinationRef.current = destination;
+
   const changeDestination = (next: AppDestination) => {
-    setWorkoutOpen(false);
-    setWorkoutNestedNavigationContext(null);
+    if (next === 'settings' && destination !== 'settings') {
+      settingsReturnDestinationRef.current[state.activeRole] = destination;
+    }
     setNavigationContext(null);
     if (state.activeRole === 'coach') setCoachDestination(next);
     else setClientDestination(next);
   };
   const switchRole = (role: Role) => {
-    setWorkoutOpen(false);
-    setWorkoutNestedNavigationContext(null);
     setNavigationContext(null);
     dispatch({ type: 'switch-role', role });
   };
-  const shellContext = workoutOpen ? workoutNestedNavigationContext ?? workoutRootNavigationContext : navigationContext;
-  const workoutFabLabel = workoutStatus === 'active' ? 'Продолжить тренировку' : 'Открыть тренировку';
-  const workoutFloatingAction: NavigationFloatingAction = {
-    label: workoutFabLabel,
-    placement: 'left',
-    isShown: !workoutOpen,
-    onClick: () => setWorkoutOpen(true),
-    icon: 'barbell',
-  };
+  const shellContext = destination === 'settings'
+    ? navigationContext ?? settingsRootContext
+    : navigationContext;
 
   return (
     <GlassSurfaceProvider blur={glassSettings.blur}>
@@ -324,24 +328,22 @@ export function App() {
           context={shellContext}
           onDestinationChange={changeDestination}
           onRoleSwitch={switchRole}
-          floatingAction={workoutFloatingAction}
           glassPreset={glassSettings.preset}
           glassOptics={glassSettings.optics}
         >
-          {workoutOpen ? (
+          {destination === 'training' ? (
             <WorkoutSessionScreen
-            initData={state.initData}
-            onClose={closeWorkout}
-            onNavigationContextChange={setWorkoutNestedNavigationContext}
-            onSessionLifecycleChange={({ status }) => setWorkoutStatus(status)}
-          />
-        ) : destination === 'settings' ? (
+              initData={state.initData}
+              onClose={() => changeDestination('today')}
+              onNavigationContextChange={handleNavigationContextChange}
+            />
+          ) : destination === 'settings' ? (
           <SettingsPage
             glassSettings={glassSettings}
             onGlassSettingsChange={setGlassSettings}
             typographySettings={typographySettings}
             onTypographySettingsChange={setTypographySettings}
-            onNavigationContextChange={handleNavigationContextChange}
+            onNavigationContextChange={handleSettingsNavigationContextChange}
           />
         ) : state.activeRole === 'coach' ? (
           <CoachShell
