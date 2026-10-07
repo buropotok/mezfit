@@ -139,6 +139,39 @@ describe('App workout navigation', () => {
     expect(getCurrentWorkoutSessionMock).toHaveBeenCalledWith('telegram-init');
   });
 
+  it('offers an explicit retry when workout-status hydration fails transiently', async () => {
+    getMeMock.mockResolvedValue({
+      user: {
+        id: 10,
+        telegramUserId: '100',
+        username: null,
+        firstName: 'Client',
+        lastName: null,
+        languageCode: 'ru',
+        photoUrl: null,
+        isPremium: false,
+      },
+      roles: ['client'],
+    });
+    getCurrentWorkoutSessionMock
+      .mockRejectedValueOnce(new Error('temporary network failure'))
+      .mockResolvedValueOnce({
+        session: { sessionId: 501, status: 'active' },
+      });
+
+    render(<App />);
+
+    expect(await screen.findByText('Client home')).toBeTruthy();
+    const retry = await screen.findByRole('button', { name: 'Повторить загрузку тренировки' });
+    expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Продолжить тренировку' })).toBeNull();
+
+    fireEvent.click(retry);
+
+    expect(await screen.findByRole('button', { name: 'Продолжить тренировку' })).toBeTruthy();
+    expect(getCurrentWorkoutSessionMock).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps the client FAB as Continue after an active workout is left through primary navigation', async () => {
     getMeMock.mockResolvedValue({
       user: {
