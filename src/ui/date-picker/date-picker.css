@@ -213,34 +213,3 @@
   text-align: center;
 }
 
-
-@media (max-height: 520px) {
-  .ui-date-picker__top-content {
-    gap: var(--ui-space-1);
-    padding-top: var(--ui-space-1);
-    padding-bottom: var(--ui-space-1);
-  }
-
-  .ui-date-picker__top-toolbar {
-    gap: var(--ui-space-2);
-  }
-
-  .ui-date-picker__month--horizontal {
-    gap: var(--ui-space-1);
-    padding-bottom: 0;
-  }
-
-  .ui-date-picker__days {
-    row-gap: 0;
-  }
-
-  .ui-date-picker__empty-day,
-  .ui-date-picker__day {
-    height: 1.75rem;
-  }
-
-  .ui-date-picker__day-label {
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-}
