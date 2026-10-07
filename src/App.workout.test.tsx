@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getClientCoaches, getCurrentInvite, getMe } from './api';
+import { getClientCoaches, getCurrentInvite, getCurrentWorkoutSession, getMe } from './api';
 import { App } from './App';
 
 vi.mock('./api', async (importOriginal) => {
@@ -10,6 +10,7 @@ vi.mock('./api', async (importOriginal) => {
     ...actual,
     getClientCoaches: vi.fn(),
     getCurrentInvite: vi.fn(),
+    getCurrentWorkoutSession: vi.fn(),
     getMe: vi.fn(),
   };
 });
@@ -42,6 +43,7 @@ vi.mock('./workout', () => ({
 
 const getClientCoachesMock = vi.mocked(getClientCoaches);
 const getCurrentInviteMock = vi.mocked(getCurrentInvite);
+const getCurrentWorkoutSessionMock = vi.mocked(getCurrentWorkoutSession);
 const getMeMock = vi.mocked(getMe);
 
 beforeEach(() => {
@@ -52,9 +54,11 @@ beforeEach(() => {
   window.localStorage.clear();
   getClientCoachesMock.mockReset();
   getCurrentInviteMock.mockReset();
+  getCurrentWorkoutSessionMock.mockReset();
   getMeMock.mockReset();
   getClientCoachesMock.mockResolvedValue({ coaches: [] });
   getCurrentInviteMock.mockResolvedValue({ invite: null });
+  getCurrentWorkoutSessionMock.mockResolvedValue({ session: null });
   getMeMock.mockResolvedValue({
     user: {
       id: 10,
@@ -109,6 +113,32 @@ describe('App workout navigation', () => {
     expect(await screen.findByText('Workout session')).toBeTruthy();
   });
 
+  it('hydrates an already active client workout after reload before labeling the FAB', async () => {
+    getMeMock.mockResolvedValue({
+      user: {
+        id: 10,
+        telegramUserId: '100',
+        username: null,
+        firstName: 'Client',
+        lastName: null,
+        languageCode: 'ru',
+        photoUrl: null,
+        isPremium: false,
+      },
+      roles: ['client'],
+    });
+    getCurrentWorkoutSessionMock.mockResolvedValue({
+      session: { sessionId: 501, status: 'active' },
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText('Client home')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
+    expect(await screen.findByRole('button', { name: 'Продолжить тренировку' })).toBeTruthy();
+    expect(getCurrentWorkoutSessionMock).toHaveBeenCalledWith('telegram-init');
+  });
+
   it('keeps the client FAB as Continue after an active workout is left through primary navigation', async () => {
     getMeMock.mockResolvedValue({
       user: {
@@ -126,7 +156,7 @@ describe('App workout navigation', () => {
 
     const view = render(<App />);
     expect(await screen.findByText('Client home')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Начать тренировку' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Начать тренировку' })).toBeTruthy();
 
     const trainingTab = getPrimaryTabsRoot(view.container)
       .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Тренировка"]');
