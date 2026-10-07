@@ -30,7 +30,7 @@ import {
   type TypographyRole,
   type TypographySettings,
 } from '../typographySettings';
-import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, Surface, Text, TextInput, TimePicker, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
+import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
 import './settings-page.css';
 
@@ -232,6 +232,7 @@ export function SettingsPage({
   const [timePickerLensMode, setTimePickerLensMode] = useState<TimePickerLensMode>('auto');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [emptyDatePickerOpen, setEmptyDatePickerOpen] = useState(false);
+  const [topPanelDemoOpen, setTopPanelDemoOpen] = useState(false);
   const [datePickerValue, setDatePickerValue] = useState<LocalDate>('2026-09-30');
   const [hapticProbe, setHapticProbe] = useState<{ kind: HapticProbeKind; result: HapticProbeResult } | null>(null);
   const timePickerTargetRef = useRef<HTMLSpanElement | null>(null);
@@ -245,6 +246,7 @@ export function SettingsPage({
     setTimePickerOpen(false);
     setDatePickerOpen(false);
     setEmptyDatePickerOpen(false);
+    setTopPanelDemoOpen(false);
     setModulesOpen(false);
   }, []);
   const closeGlassSettings = useCallback(() => {
@@ -540,6 +542,7 @@ export function SettingsPage({
         </span>
         <DatePicker
           opened={datePickerOpen}
+          surface="top-panel"
           value={datePickerValue}
           onChange={setDatePickerValue}
           onClose={() => setDatePickerOpen(false)}
@@ -556,6 +559,32 @@ export function SettingsPage({
           aria-modal="true"
           aria-label="Пустой Date picker"
         />
+      </section>
+
+      <section className="modules-gallery__example" aria-labelledby="module-top-panel-title">
+        <Text id="module-top-panel-title" variant="headline">Mezfit top panel</Text>
+        <Text variant="footnote" tone="muted">
+          Базовый UI Kit компонент: выезжает ниже navbar, не закрывается по нажатию снаружи и поддерживает swipe вверх.
+        </Text>
+        <span className="modules-gallery__trigger">
+          <Button onClick={() => setTopPanelDemoOpen(true)}>Открыть Top Panel</Button>
+        </span>
+        <MezfitTopPanel
+          opened={topPanelDemoOpen}
+          onClose={() => setTopPanelDemoOpen(false)}
+          role="dialog"
+          aria-label="Mezfit Top Panel demo"
+        >
+          <div className="modules-gallery__top-panel-demo">
+            <Text variant="headline">Mezfit top panel</Text>
+            <Text variant="body">
+              Демонстрация базовой панели без DatePicker. Закройте её кнопкой или свайпом вверх.
+            </Text>
+            <span className="modules-gallery__trigger">
+              <Button variant="secondary" onClick={() => setTopPanelDemoOpen(false)}>Закрыть</Button>
+            </span>
+          </div>
+        </MezfitTopPanel>
       </section>
 
       <section className="modules-gallery__example" aria-labelledby="module-session-exercise-title">

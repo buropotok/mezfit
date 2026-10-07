@@ -271,6 +271,7 @@ export function NavigationShell({
   const requestBack = useCallback(() => {
     const currentContext = contextRef.current;
     if (!currentContext) return;
+    setCalendarOpen(false);
     const historyEntry = historyEntryRef.current;
     if (historyEntry && historyHasToken(historyEntry.token)) {
       restoreScrollOnNextSurfaceRef.current = true;
@@ -285,6 +286,7 @@ export function NavigationShell({
     const onPopState = () => {
       const currentContext = contextRef.current;
       if (!currentContext?.onBack) return;
+      setCalendarOpen(false);
       historyEntryRef.current = null;
       requestBackTransition(currentContext.onBack);
     };
@@ -327,11 +329,13 @@ export function NavigationShell({
   }, []);
 
   const chooseDestination = (next: AppDestination) => {
+    setCalendarOpen(false);
     onDestinationChange(next);
     setMenuOpen(false);
   };
 
   const switchRole = (role: Role) => {
+    setCalendarOpen(false);
     onRoleSwitch(role);
     setMenuOpen(false);
   };
@@ -439,6 +443,7 @@ export function NavigationShell({
 
         <DatePicker
           opened={calendarOpen}
+          surface="top-panel"
           value={calendarValue}
           onChange={onCalendarDateChange}
           onClose={() => setCalendarOpen(false)}

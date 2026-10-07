@@ -1,0 +1,51 @@
+.ui-mezfit-top-panel {
+  position: fixed;
+  z-index: 50;
+  top: var(
+    --navigation-content-start,
+    calc(max(1rem, var(--k-safe-area-top, 0px)) + 2.75rem + var(--space-3))
+  );
+  left: 50%;
+  width: min(720px, 100%);
+  max-height: calc(
+    100dvh - var(
+      --navigation-content-start,
+      calc(max(1rem, var(--k-safe-area-top, 0px)) + 2.75rem + var(--space-3))
+    )
+  );
+  transform: translateX(-50%);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ui-mezfit-top-panel[data-state='opened'] {
+  pointer-events: auto;
+}
+
+.ui-mezfit-top-panel__surface {
+  width: 100%;
+  max-height: inherit;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: var(--radius-surface);
+  transform: translateY(calc(-100% - var(--ui-space-3)));
+  transition: transform 320ms cubic-bezier(.2, 0, 0, 1);
+  will-change: transform;
+  touch-action: pan-x;
+}
+
+.ui-mezfit-top-panel[data-state='opened'] .ui-mezfit-top-panel__surface {
+  transform: translateY(0);
+}
+
+.ui-mezfit-top-panel__surface--bare {
+  background: rgba(0, 0, 0, .56);
+  -webkit-backdrop-filter: blur(var(--ui-mezfit-top-panel-blur));
+  backdrop-filter: blur(var(--ui-mezfit-top-panel-blur));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-mezfit-top-panel__surface {
+    transition-duration: 1ms;
+  }
+}

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell, useNavigationFloatingAction } from './NavigationShell';
 import { FloatingActionButton, GlassSurfaceProvider } from './ui';
@@ -312,6 +312,85 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const identity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(identity?.getAttribute('aria-label')).toBe('Пн, 5 октября');
     expect(view.getByRole('button', { name: 'Открыть календарь' })).not.toBeNull();
+  });
+
+  it('closes the calendar when primary navigation changes', async () => {
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => (
+      window.setTimeout(() => callback(0), 0)
+    ));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={null}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Today content</div>
+      </NavigationShell>,
+    );
+
+    const calendarButton = view.getByRole('button', { name: 'Открыть календарь' });
+    const identityAction = view.container.querySelector<HTMLElement>('.ui-identity-action--double');
+    if (!identityAction) throw new Error('Missing double identity action');
+    fireEvent.pointerDown(calendarButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(calendarButton);
+    fireEvent.animationEnd(identityAction);
+
+    const panel = view.container.querySelector<HTMLElement>('[data-date-picker-surface="top-panel"]');
+    await waitFor(() => {
+      expect(panel?.getAttribute('data-state')).toBe('opened');
+    });
+
+    const programsTab = getPrimaryTabsRoot(view.container)
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Программы"]');
+    if (!programsTab) throw new Error('Missing Programs liquid glass tab');
+    fireEvent.click(programsTab);
+
+    expect(panel?.getAttribute('data-state')).toBe('closed');
+  });
+
+  it('closes the calendar before nested Back navigation', async () => {
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => (
+      window.setTimeout(() => callback(0), 0)
+    ));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+
+    const view = render(
+      <NavigationShell
+        me={me}
+        activeRole="client"
+        destination="today"
+        context={{
+          title: 'Детали',
+          identity: { title: 'Детали', icon: 'calendar-event' },
+          calendar: { value: '2026-10-05', onChange: vi.fn() },
+          onBack: vi.fn(),
+        }}
+        onDestinationChange={vi.fn()}
+        onRoleSwitch={vi.fn()}
+      >
+        <div>Nested content</div>
+      </NavigationShell>,
+    );
+
+    const calendarButton = view.getByRole('button', { name: 'Открыть календарь' });
+    const identityAction = view.container.querySelector<HTMLElement>('.ui-identity-action--double');
+    if (!identityAction) throw new Error('Missing double identity action');
+    fireEvent.pointerDown(calendarButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(calendarButton);
+    fireEvent.animationEnd(identityAction);
+
+    const panel = view.container.querySelector<HTMLElement>('[data-date-picker-surface="top-panel"]');
+    await waitFor(() => {
+      expect(panel?.getAttribute('data-state')).toBe('opened');
+    });
+
+    fireEvent.click(view.getByRole('button', { name: 'Назад' }));
+    expect(panel?.getAttribute('data-state')).toBe('closed');
   });
 
   it('opens the page menu immediately without waiting for the shared double-action animation', () => {

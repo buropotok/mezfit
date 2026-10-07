@@ -34,7 +34,8 @@ describe('SettingsPage DatePicker module', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать дату' }));
 
-    expect(screen.getByRole('dialog', { name: 'Выбор даты' })).toBeTruthy();
+    const dialog = screen.getByRole('dialog', { name: 'Выбор даты' });
+    expect(dialog.getAttribute('data-date-picker-surface')).toBe('top-panel');
     expect(screen.getByRole('button', { name: 'Выбрать год, сейчас 2026' })).toBeTruthy();
   });
 });
