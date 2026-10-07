@@ -1,6 +1,6 @@
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
-import type { ActiveWorkoutSession, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
+import type { ActiveWorkoutSession, OpenWorkoutSessionSummary, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
 
 export type Role = 'coach' | 'client';
 export type ExerciseScope = 'global' | 'coach' | 'client';
@@ -711,6 +711,15 @@ export async function addWorkoutSessionExercises(
     body: JSON.stringify({ exerciseDefinitionIds }),
   });
   return { session: localizeWorkoutSession(result.session) };
+}
+
+export async function getCurrentWorkoutSession(
+  initData: string,
+): Promise<{ session: OpenWorkoutSessionSummary | null }> {
+  return apiRequest<{ session: OpenWorkoutSessionSummary | null }>(
+    initData,
+    '/api/workout-sessions/current',
+  );
 }
 
 export async function initializeWorkoutSession(
