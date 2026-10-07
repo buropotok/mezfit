@@ -311,7 +311,7 @@ export function App() {
   };
 
   return (
-    <GlassSurfaceProvider blur={glassSettings.blur}>
+    <GlassSurfaceProvider blur={glassSettings.blur} optics={glassSettings.optics}>
       <ClientCoachProvider
         initData={state.initData}
         clientUserId={state.me.user.id}
