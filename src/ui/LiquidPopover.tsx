@@ -181,7 +181,12 @@ export function LiquidPopover({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceRef = useRef<HTMLCanvasElement | null>(null),
     itemsRef = useRef(items),
-    progressRef = useRef(0);
+    progressRef = useRef(0),
+    sourceVisibilityRef = useRef<{
+      element: HTMLElement;
+      value: string;
+      priority: string;
+    } | null>(null);
   itemsRef.current = items;
   const [host, setHost] = useState<HTMLElement | null>(null),
     [settled, setSettled] = useState(false),
@@ -255,6 +260,65 @@ export function LiquidPopover({
   useLayoutEffect(() => {
     if (isOpen) setPresented(true);
   }, [isOpen]);
+
+  useLayoutEffect(() => {
+    const source = triggerRef.current,
+      hidden = isOpen || presented,
+      previous = sourceVisibilityRef.current;
+    if (!source) return;
+
+    if (!hidden) {
+      if (previous?.element === source) {
+        if (previous.value)
+          source.style.setProperty(
+            'visibility',
+            previous.value,
+            previous.priority,
+          );
+        else source.style.removeProperty('visibility');
+      }
+      sourceVisibilityRef.current = {
+        element: source,
+        value: source.style.getPropertyValue('visibility'),
+        priority: source.style.getPropertyPriority('visibility'),
+      };
+      return;
+    }
+
+    if (!previous || previous.element !== source) {
+      if (previous) {
+        if (previous.value)
+          previous.element.style.setProperty(
+            'visibility',
+            previous.value,
+            previous.priority,
+          );
+        else previous.element.style.removeProperty('visibility');
+      }
+      sourceVisibilityRef.current = {
+        element: source,
+        value: source.style.getPropertyValue('visibility'),
+        priority: source.style.getPropertyPriority('visibility'),
+      };
+    }
+    source.style.setProperty('visibility', 'hidden');
+  }, [isOpen, presented, triggerRef]);
+
+  useLayoutEffect(
+    () => () => {
+      const previous = sourceVisibilityRef.current;
+      if (!previous) return;
+      if (previous.value)
+        previous.element.style.setProperty(
+          'visibility',
+          previous.value,
+          previous.priority,
+        );
+      else previous.element.style.removeProperty('visibility');
+      sourceVisibilityRef.current = null;
+    },
+    [],
+  );
 
   useLayoutEffect(() => {
     const visible = isOpen || presented;
@@ -565,13 +629,6 @@ export function LiquidPopover({
       {cloneElement(trigger, {
         'aria-haspopup': role,
         'aria-expanded': isOpen,
-        style: {
-          ...trigger.props.style,
-          visibility:
-            isOpen || presented
-              ? 'hidden'
-              : trigger.props.style?.visibility,
-        },
         onClick: (event) => {
           trigger.props.onClick?.(event);
           if (triggerActivation === 'automatic' && !event.defaultPrevented)
