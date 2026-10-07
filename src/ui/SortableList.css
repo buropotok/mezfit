@@ -36,9 +36,6 @@
 .ui-sortable-list__overlay {
   width: 100%;
   transform: scale(1.015);
-  filter:
-    drop-shadow(0 0 18px rgb(255 255 255 / 0.16))
-    drop-shadow(0 0 36px rgb(170 205 255 / 0.10));
   cursor: grabbing;
 }
 
