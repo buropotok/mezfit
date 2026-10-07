@@ -8,6 +8,7 @@ import {
   FloatingActionButtonGlassProvider,
   LiquidPopover,
   type LiquidPopoverItem,
+  LiquidGlassFloatingActionSlot,
   LiquidGlassIconOnly,
   MEZFIT_NAVBAR_GLASS_PRESET,
   MezfitNavbar,
@@ -233,7 +234,9 @@ export function NavigationShell({
   const level: NavigationLevel = nestedContext ? 2 : 1;
   const destinationFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
   const surfaceFloatingAction = registeredFloatingAction?.destination === null ? registeredFloatingAction.action : null;
-  const resolvedPrimaryFloatingAction = destinationFloatingAction ?? (currentItem.showFab === false ? null : floatingAction ?? null);
+  const resolvedPrimaryFloatingAction = level === 1
+    ? surfaceFloatingAction ?? destinationFloatingAction ?? (currentItem.showFab === false ? null : floatingAction ?? null)
+    : null;
   const resolvedSurfaceFloatingAction = level === 2 ? surfaceFloatingAction : null;
   const nestedScrollKey = nestedContext?.scrollKey ?? (nestedContext ? `nested:${nestedContext.title}` : 'root');
   const scrollSurfaceKey = `${activeRole}:${destination}:${nestedScrollKey}`;
@@ -374,7 +377,7 @@ export function NavigationShell({
     dividerBefore: index === 0 && (activeRole === 'client' || me.roles.length > 1),
     onSelect: () => chooseDestination(item.id),
   }));
-  const renderFloatingAction = (action: NavigationFloatingAction, viewportOwned = false) => (
+  const renderFloatingAction = (action: NavigationFloatingAction) => (
     <FloatingActionButton
       label={action.label}
       icon={action.icon}
@@ -382,7 +385,6 @@ export function NavigationShell({
       disabled={action.disabled}
       isShown={action.isShown}
       onClick={action.onClick}
-      style={viewportOwned ? { pointerEvents: 'auto' } : undefined}
     >
       {action.content}
     </FloatingActionButton>
@@ -452,13 +454,12 @@ export function NavigationShell({
             glassOptics={glassOptics}
             fab={resolvedPrimaryFloatingAction ? renderFloatingAction(resolvedPrimaryFloatingAction) : undefined}
           />
+          {resolvedSurfaceFloatingAction ? (
+            <LiquidGlassFloatingActionSlot>
+              {renderFloatingAction(resolvedSurfaceFloatingAction)}
+            </LiquidGlassFloatingActionSlot>
+          ) : null}
         </div>
-
-        {resolvedSurfaceFloatingAction ? (
-          <div className="navigation-surface-fab-layer">
-            {renderFloatingAction(resolvedSurfaceFloatingAction, true)}
-          </div>
-        ) : null}
 
         <ClientCoachSelectorModal isOpen={coachSelectorOpen} onClose={() => setCoachSelectorOpen(false)} />
 
