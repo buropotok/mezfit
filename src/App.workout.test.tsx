@@ -139,7 +139,7 @@ describe('App workout navigation', () => {
     expect(getCurrentWorkoutSessionMock).toHaveBeenCalledWith('telegram-init');
   });
 
-  it('offers an explicit retry when workout-status hydration fails transiently', async () => {
+  it('keeps a recoverable workout entry when status hydration fails transiently', async () => {
     getMeMock.mockResolvedValue({
       user: {
         id: 10,
@@ -153,23 +153,18 @@ describe('App workout navigation', () => {
       },
       roles: ['client'],
     });
-    getCurrentWorkoutSessionMock
-      .mockRejectedValueOnce(new Error('temporary network failure'))
-      .mockResolvedValueOnce({
-        session: { sessionId: 501, status: 'active' },
-      });
+    getCurrentWorkoutSessionMock.mockRejectedValueOnce(new Error('temporary network failure'));
 
     render(<App />);
 
     expect(await screen.findByText('Client home')).toBeTruthy();
-    const retry = await screen.findByRole('button', { name: 'Повторить загрузку тренировки' });
+    const fallback = await screen.findByRole('button', { name: 'Открыть тренировку' });
     expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Продолжить тренировку' })).toBeNull();
 
-    fireEvent.click(retry);
+    fireEvent.click(fallback);
 
-    expect(await screen.findByRole('button', { name: 'Продолжить тренировку' })).toBeTruthy();
-    expect(getCurrentWorkoutSessionMock).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText('Workout session')).toBeTruthy();
   });
 
   it('keeps the client FAB as Continue after an active workout is left through primary navigation', async () => {
