@@ -334,8 +334,10 @@ describe('direct prototype adapter',()=>{
         <button type="button">＋</button>
       </LiquidGlassFloatingActionSlot>,
     );
+    const standaloneFrame=standalone.container.querySelector<HTMLElement>('[data-liquid-glass-floating-action-slot]');
     const standaloneSlot=standalone.container.querySelector<HTMLElement>('[data-liquid-glass-fab-slot]');
-    expect(standalone.container.querySelector('[data-liquid-glass-floating-action-slot]')).not.toBeNull();
+    expect(standaloneFrame).not.toBeNull();
+    expect(standaloneFrame?.style.pointerEvents).toBe('none');
     expect(standaloneSlot?.style.left).toBe(expected.left);
     expect(standaloneSlot?.style.top).toBe(expected.top);
     expect(standaloneSlot?.style.pointerEvents).toBe('auto');
