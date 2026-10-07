@@ -13,6 +13,8 @@ import {
   type RefObject,
 } from 'react';
 import { GlassSurface } from './GlassSurface';
+import { Icon, type UiIconName } from './Icon';
+import { getUiIconAsset } from './icons/registry';
 import { MezfitPopover } from './konsta-mezfit/Popover';
 import './menu.css';
 import { resolveGlassRadius, type GlassPresetName } from './glassMaterial';
@@ -32,6 +34,7 @@ import './liquid-popover.css';
 export type LiquidPopoverItem = {
   id: string;
   label: string;
+  icon?: UiIconName;
   onSelect?: () => void;
   disabled?: boolean;
   active?: boolean;
@@ -141,6 +144,7 @@ function paintContentTexture(
   items: readonly LiquidPopoverItem[],
   layout: LiquidPopoverLayout,
   bounds: LiquidContentBounds = container.getBoundingClientRect(),
+  iconImages?: ReadonlyMap<UiIconName, HTMLImageElement>,
 ) {
   if (!bounds.width || !bounds.height) return false;
   const context = canvas.getContext('2d');
@@ -155,6 +159,24 @@ function paintContentTexture(
       style = getComputedStyle(row),
       x = rect.left - bounds.left,
       y = rect.top - bounds.top;
+    const leading = item.icon && layout === 'menu'
+      ? row.querySelector<HTMLElement>('.ui-menu-item__leading')
+      : null;
+    const image = item.icon ? iconImages?.get(item.icon) : undefined;
+    if (leading && image?.complete && image.naturalWidth > 0) {
+      const iconRect = leading.getBoundingClientRect();
+      const tintCanvas = canvas.ownerDocument.createElement('canvas');
+      tintCanvas.width = Math.max(1, Math.ceil(iconRect.width));
+      tintCanvas.height = Math.max(1, Math.ceil(iconRect.height));
+      const tint = tintCanvas.getContext('2d');
+      if (tint) {
+        tint.drawImage(image, 0, 0, tintCanvas.width, tintCanvas.height);
+        tint.globalCompositeOperation = 'source-in';
+        tint.fillStyle = getComputedStyle(leading).color;
+        tint.fillRect(0, 0, tintCanvas.width, tintCanvas.height);
+        context.drawImage(tintCanvas, iconRect.left - bounds.left, iconRect.top - bounds.top);
+      }
+    }
     if (item.dividerBefore) {
       context.globalAlpha = 1;
       context.fillStyle = containerStyle.getPropertyValue('--ui-color-border');
@@ -184,7 +206,8 @@ function paintContentTexture(
     let cursor =
       layout === 'grid'
         ? x + (rect.width - textWidth) / 2
-        : x + (Number.parseFloat(style.paddingLeft) || 0);
+        : x + (Number.parseFloat(style.paddingLeft) || 0)
+          + (leading ? leading.getBoundingClientRect().width + (Number.parseFloat(getComputedStyle(leading).marginRight) || 0) : 0);
     if (!spacing) context.fillText(item.label, cursor, baseline);
     else
       for (const character of characters) {
@@ -223,6 +246,7 @@ export function LiquidPopover({
   const sceneRef = useRef<SVGSVGElement>(null),
     clipRef = useRef<SVGPathElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const iconImagesRef = useRef(new Map<UiIconName, HTMLImageElement>());
   const prewarmRef = useRef<HTMLCanvasElement | null>(null),
     animationSessionRef = useRef<LiquidAnimationSession | null>(null),
     itemsRef = useRef(items),
@@ -278,6 +302,7 @@ export function LiquidPopover({
     items.map((item) => [
       item.id,
       item.label,
+      item.icon,
       item.disabled,
       item.active,
       item.dividerBefore,
@@ -292,6 +317,7 @@ export function LiquidPopover({
     presentation.items.map((item) => [
       item.id,
       item.label,
+      item.icon,
       item.disabled,
       item.active,
       item.dividerBefore,
@@ -325,10 +351,19 @@ export function LiquidPopover({
           rowRefs.current,
           itemsRef.current,
           layout,
+          undefined,
+          iconImagesRef.current,
         )
       )
         prewarmRef.current = canvas;
     };
+    for (const item of itemsRef.current) {
+      if (!item.icon || iconImagesRef.current.has(item.icon)) continue;
+      const image = element.ownerDocument.createElement('img');
+      image.onload = prepare;
+      image.src = getUiIconAsset(item.icon, 'outline');
+      iconImagesRef.current.set(item.icon, image);
+    }
     prepare();
     const observer =
       typeof ResizeObserver !== 'undefined'
@@ -338,6 +373,7 @@ export function LiquidPopover({
     element.ownerDocument.fonts?.addEventListener('loadingdone', prepare);
     return () => {
       observer?.disconnect();
+      for (const image of iconImagesRef.current.values()) image.onload = null;
       element.ownerDocument.fonts?.removeEventListener('loadingdone', prepare);
     };
   }, [
@@ -476,6 +512,7 @@ export function LiquidPopover({
             presentation.items,
             presentation.layout,
             destinationBounds,
+            iconImagesRef.current,
           )
         ) {
           finishTarget();
@@ -519,6 +556,7 @@ export function LiquidPopover({
           presentation.items,
           presentation.layout,
           destinationBounds,
+          iconImagesRef.current,
         )
       ) {
         finishTarget();
@@ -706,7 +744,10 @@ export function LiquidPopover({
               }}
               className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
             >
-              {item.label}
+              {item.icon && layout === 'menu' ? (
+                <span className="ui-menu-item__leading"><Icon name={item.icon} /></span>
+              ) : null}
+              <span className="ui-menu-item__label">{item.label}</span>
             </div>
           </Fragment>
         ))}
@@ -795,6 +836,9 @@ export function LiquidPopover({
                   aria-checked={item['aria-checked']}
                   aria-current={item['aria-current']}
                 >
+                  {item.icon && presentation.layout === 'menu' ? (
+                    <span className="ui-menu-item__leading"><Icon name={item.icon} /></span>
+                  ) : null}
                   <span className="ui-menu-item__label">{item.label}</span>
                 </button>
               </Fragment>
