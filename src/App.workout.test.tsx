@@ -58,17 +58,28 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('App workout launcher', () => {
-  it('opens the real workout surface from the global left-side FAB entry point', async () => {
-    render(<App />);
+function getPrimaryTabsRoot(container: HTMLElement): ShadowRoot {
+  const wrapper = container.querySelector<HTMLElement>('.navigation-primary-tabs > div');
+  const host = wrapper?.firstElementChild;
+  if (!(host instanceof HTMLElement) || !host.shadowRoot) {
+    throw new Error('LiquidGlassIconOnly must expose its production shadow scene');
+  }
+  return host.shadowRoot;
+}
+
+describe('App workout navigation', () => {
+  it('opens the real workout surface from the coach Training primary tab', async () => {
+    const view = render(<App />);
 
     expect(await screen.findByText('Coach home')).toBeTruthy();
-    const launcher = screen.getByRole('button', { name: 'Открыть тренировку' });
-    expect(launcher.className).toContain('ui-fab--left');
+    expect(screen.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
 
-    fireEvent.click(launcher);
+    const trainingTab = getPrimaryTabsRoot(view.container)
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Тренировка"]');
+    if (!trainingTab) throw new Error('Missing coach Training tab');
+
+    fireEvent.click(trainingTab);
 
     expect(await screen.findByText('Workout session')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
   });
 });
