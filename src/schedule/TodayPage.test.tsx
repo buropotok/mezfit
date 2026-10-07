@@ -7,6 +7,10 @@ import { NavigationShell, type NavigationContext } from '../NavigationShell';
 import { getUiIconAsset } from '../ui/icons/registry';
 import { TodayPage } from './TodayPage';
 
+vi.mock('../client/ClientCoachSelectorModal', () => ({
+  ClientCoachSelectorModal: () => null,
+}));
+
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>();
   return {
