@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell, useNavigationFloatingAction, useNavigationSurfaceFloatingAction } from './NavigationShell';
-import { FloatingActionButton, GlassSurfaceProvider } from './ui';
+import { GlassSurfaceProvider } from './ui';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({
@@ -163,7 +163,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
   });
 
-  it('shares shell material settings with both the tab-slot FAB and page-owned FABs', () => {
+  it('applies shell material settings to the tab-slot FAB', () => {
     const onClick = vi.fn();
     const view = render(
       <NavigationShell
@@ -177,16 +177,14 @@ describe('NavigationShell MezfitNavbar integration', () => {
         glassOptics={false}
         floatingAction={{ label: 'Действие навигации', onClick, content: '+' }}
       >
-        <FloatingActionButton label="Действие страницы">ОК</FloatingActionButton>
+        <div>Today content</div>
       </NavigationShell>,
     );
 
-    for (const label of ['Действие навигации', 'Действие страницы']) {
-      const button = view.getByRole('button', { name: label });
-      expect(button.classList.contains('ui-glass-surface')).toBe(true);
-      expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
-    }
-    fireEvent.click(view.getByRole('button', { name: 'Действие навигации' }));
+    const button = view.getByRole('button', { name: 'Действие навигации' });
+    expect(button.classList.contains('ui-glass-surface')).toBe(true);
+    expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
+    fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -449,6 +447,8 @@ describe('NavigationShell MezfitNavbar integration', () => {
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
         floatingAction={{ label: 'Открыть тренировку', onClick: vi.fn(), icon: 'barbell' }}
+        glassPreset="frosted"
+        glassOptics={false}
       >
         <SurfaceFloatingActionRegistration />
       </NavigationShell>,
@@ -457,6 +457,8 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const button = view.getByRole('button', { name: 'Действие вложенной страницы' });
     const scroll = view.container.querySelector('.navigation-content');
     expect(button.closest('.navigation-surface-fab-layer')).not.toBeNull();
+    expect(button.classList.contains('ui-glass-surface')).toBe(true);
+    expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
     expect(scroll?.contains(button)).toBe(false);
     expect(view.queryByRole('button', { name: 'Открыть тренировку' })).toBeNull();
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
