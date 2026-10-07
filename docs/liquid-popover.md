@@ -25,11 +25,13 @@ const [open, setOpen] = useState(false);
 The trigger must forward normal button props and its ref. `triggerRef`
 points to the **whole** source surface, which can differ from the trigger itself
 (for example, the 88 × 44 Navbar capsule containing the 44 × 44 menu segment).
-LiquidPopover owns visibility of the explicit `triggerRef` source surface
-while opening, open, and closing. It uses `visibility`, not `display`, so
-layout and source geometry remain measurable through the full forward and
-reverse animation. The source reappears only after reverse progress reaches
-zero. Consumers do not need their own visibility timing for the source.
+LiquidPopover hides its own cloned trigger with `visibility` while opening,
+open, and closing, so direct trigger geometry remains measurable. When
+`triggerRef` points to a larger surface owned by another component (for
+example the Navbar right capsule), LiquidPopover reports the same lifecycle
+through `onPresentationChange`; that source owner remains solely responsible
+for hiding its surface. The callback returns `false` only after reverse
+progress reaches zero.
 
 Route selection is automatic from the measured source and final popover bounds.
 If the source lies fully to the left or right of the final popover centerline,
@@ -90,8 +92,9 @@ Closing runs the same animation timeline in exact reverse from the current
 progress back to zero: native HTML hands back to the raster, the asymmetric
 popover geometry contracts through the same oval/path, and an elongated
 center-route source expands from the terminal circle back into its original
-button shape. The trigger remains hidden until the reverse reaches zero, then
-reappears as the custom popover is unpresented. Reopening during a close reverses
+button shape. The direct trigger remains hidden until the reverse reaches zero, while external
+source owners receive the same timing through `onPresentationChange`.
+Reopening during a close reverses
 again from the current progress instead of jumping to an endpoint. Unmounting
 cancels animation work. Viewport/font changes settle to the requested endpoint;
 reduced motion and missing Canvas support skip the effect. UI Kit includes
