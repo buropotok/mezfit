@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import {
   createClientExercise,
@@ -9,7 +9,8 @@ import {
   type TrackingType,
 } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
-import { Button, Dropdown, FloatingActionButton, List, ListItem, Modal, Text } from '../ui';
+import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
+import { Button, Dropdown, List, ListItem, Modal, Text } from '../ui';
 
 const trackingLabels: Record<TrackingType, string> = {
   weight_reps: 'Вес × повторы',
@@ -66,6 +67,12 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
   const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode | null>(null);
   const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode | null>(null);
   const [saving, setSaving] = useState(false);
+  const floatingAction = useMemo(() => ({
+    label: 'Добавить упражнение',
+    icon: 'plus' as const,
+    onClick: () => setShowCreate(true),
+  }), []);
+  useNavigationSurfaceFloatingAction(floatingAction);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,7 +165,6 @@ export function ExerciseCatalog({ initData, clientUserId }: Props) {
           </List>
         )}
       </div>
-      <FloatingActionButton label="Добавить упражнение" icon="plus" onClick={() => setShowCreate(true)} />
     </section>
 
     <Modal isOpen={showCreate} title="Новое упражнение" onClose={closeCreate} closeOnBackdrop={!saving} className="exercise-create-modal">
