@@ -174,7 +174,6 @@ export function App() {
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null | undefined>(undefined);
   const [workoutStatusLoadFailed, setWorkoutStatusLoadFailed] = useState(false);
-  const [workoutStatusRefreshKey, setWorkoutStatusRefreshKey] = useState(0);
   const workoutStatusVersionRef = useRef(0);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
@@ -255,7 +254,7 @@ export function App() {
       });
 
     return () => { cancelled = true; };
-  }, [readyClientInitData, workoutStatusRefreshKey]);
+  }, [readyClientInitData]);
 
   if (state.status === 'loading') return <main className="center"><p>Подключаем Mezfit…</p></main>;
 
@@ -338,15 +337,13 @@ export function App() {
   const clientWorkoutFloatingAction: NavigationFloatingAction | null = state.activeRole === 'client'
     ? {
         label: workoutStatusLoadFailed
-          ? 'Повторить загрузку тренировки'
+          ? 'Открыть тренировку'
           : workoutStatus === 'active'
             ? 'Продолжить тренировку'
             : 'Начать тренировку',
         placement: 'left',
         isShown: destination !== 'training' && (workoutStatus !== undefined || workoutStatusLoadFailed),
-        onClick: workoutStatusLoadFailed
-          ? () => setWorkoutStatusRefreshKey((value) => value + 1)
-          : () => changeDestination('training'),
+        onClick: () => changeDestination('training'),
         icon: 'barbell',
       }
     : null;
