@@ -257,7 +257,7 @@ export function DatePicker({
       items={yearPopoverContentReady ? yearItems : []}
       label="Выберите год"
       preset={glassPreset}
-      optics={glassOptics}
+      optics={false}
       layout="grid"
       columns={4}
       role="dialog"
