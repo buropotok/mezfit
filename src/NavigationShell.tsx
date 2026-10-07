@@ -30,7 +30,7 @@ export type AppDestination =
   | 'settings'
   | 'about';
 
-export type NavigationLevel = 1 | 2;
+export type NavigationLevel = 1 | 2 | 3;
 
 export interface NavigationMenuAction {
   id: string;
@@ -86,7 +86,7 @@ const coachPrimaryItems: NavigationItem[] = [
   { id: 'clients', label: 'Клиенты', icon: 'users' },
   { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
   { id: 'analytics', label: 'Аналитика', icon: 'chart-dots-2', showFab: false },
-  { id: 'settings', label: 'Настройки', icon: 'settings', showFab: false },
+  { id: 'training', label: 'Тренировка', icon: 'barbell', showFab: false },
 ];
 
 const clientPrimaryItems: NavigationItem[] = [
@@ -100,6 +100,7 @@ const clientPrimaryItems: NavigationItem[] = [
 const coachSecondaryItems: NavigationItem[] = [
   { id: 'exercises', label: 'Упражнения', icon: 'barbell', section: 'secondary', showFab: false },
   { id: 'calendar', label: 'Календарь', icon: 'calendar', section: 'secondary', showFab: false },
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
   { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary', showFab: false },
 ];
 
@@ -208,7 +209,8 @@ export function NavigationShell({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<LocalDate>(todayLocalDate);
   const [registeredFloatingAction, setRegisteredFloatingAction] = useState<RegisteredFloatingAction | null>(null);
-  const nestedContext = context && (context.level ?? 2) === 2 ? context : null;
+  const level: NavigationLevel = context?.level ?? (context ? 2 : 1);
+  const nestedContext = context && level > 1 ? context : null;
   const contextRef = useRef(nestedContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
@@ -223,7 +225,6 @@ export function NavigationShell({
   const primaryDestination = primaryItems.some((item) => item.id === destination) ? destination : null;
   const pageFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
   const resolvedFloatingAction = pageFloatingAction ?? floatingAction ?? null;
-  const level: NavigationLevel = nestedContext ? 2 : 1;
   const nestedScrollKey = nestedContext?.scrollKey ?? (nestedContext ? `nested:${nestedContext.title}` : 'root');
   const scrollSurfaceKey = `${activeRole}:${destination}:${nestedScrollKey}`;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
@@ -380,7 +381,7 @@ export function NavigationShell({
         <main className="app-shell navigation-shell">
         <div className="navigation-navbar-frame">
           <MezfitNavbar
-            level={level}
+            level={level === 1 ? 1 : 2}
             identity={identity}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
