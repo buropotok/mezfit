@@ -212,6 +212,8 @@ function vectorMapCacheKey(
   ].join(':');
 }
 
+export type GlassSurfaceHalo = 'none' | 'lifted';
+
 export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & {
   component?: ElementType;
   ref?: Ref<HTMLElement>;
@@ -233,6 +235,8 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   wrapContent?: boolean;
   active?: boolean;
   optics?: boolean;
+  /** Optional outer halo rendered by the same GlassSurface geometry. */
+  halo?: GlassSurfaceHalo;
   children?: ReactNode;
 };
 
@@ -251,6 +255,7 @@ export function GlassSurface({
   wrapContent = true,
   active = true,
   optics,
+  halo = 'none',
   style,
   children,
   ...props
@@ -518,7 +523,7 @@ export function GlassSurface({
     <Component
       {...props}
       ref={setRootRef}
-      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''}${directionalLighting ? ' ui-glass-surface--directional' : ''}${isLiquidConvex ? ' ui-glass-surface--liquid-convex' : ''}${isBezelOnly ? ' ui-glass-surface--bezel-only' : ''} ${className}`.trim()}
+      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''}${directionalLighting ? ' ui-glass-surface--directional' : ''}${isLiquidConvex ? ' ui-glass-surface--liquid-convex' : ''}${isBezelOnly ? ' ui-glass-surface--bezel-only' : ''}${halo !== 'none' ? ` ui-glass-surface--halo-${halo}` : ''} ${className}`.trim()}
       data-ui-glass-map-ready={activeVectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >
