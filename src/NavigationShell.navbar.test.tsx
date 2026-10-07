@@ -219,14 +219,15 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(menuLabels).toEqual(['Упражнения', 'Календарь', 'Настройки', 'О приложении']);
   });
 
-  it('renders a level-one surface action through the same tab-bar FAB slot', () => {
+  it('keeps level-one tabs interactive while rendering the surface action in the shared FAB slot', () => {
+    const onDestinationChange = vi.fn();
     const view = render(
       <NavigationShell
         me={me}
         activeRole="client"
         destination="training"
         context={null}
-        onDestinationChange={vi.fn()}
+        onDestinationChange={onDestinationChange}
         onRoleSwitch={vi.fn()}
         floatingAction={{
           label: 'Начать тренировку',
@@ -239,10 +240,18 @@ describe('NavigationShell MezfitNavbar integration', () => {
       </NavigationShell>,
     );
 
+    const frame = view.container.querySelector<HTMLElement>('.navigation-primary-tabs');
     const button = view.getByRole('button', { name: 'Действие вложенной страницы' });
+    expect(frame?.style.pointerEvents).toBe('');
     expect(button.closest('[data-liquid-glass-fab-slot]')).not.toBeNull();
-    expect(button.closest('.navigation-primary-tabs')).not.toBeNull();
+    expect(button.closest('.navigation-primary-tabs')).toBe(frame);
     expect(view.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
+
+    const tabsRoot = getPrimaryTabsRoot(view.container);
+    const todayTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Сегодня"]');
+    if (!todayTab) throw new Error('Missing Today tab');
+    fireEvent.click(todayTab);
+    expect(onDestinationChange).toHaveBeenCalledWith('today');
   });
 
   it('renders a page-owned primary action through the tab-bar FAB slot', () => {
@@ -510,9 +519,13 @@ describe('NavigationShell MezfitNavbar integration', () => {
 
     const button = view.getByRole('button', { name: 'Действие вложенной страницы' });
     const scroll = view.container.querySelector('.navigation-content');
-    expect(button.closest('[data-liquid-glass-floating-action-slot]')).not.toBeNull();
-    expect(button.closest('[data-liquid-glass-fab-slot]')).not.toBeNull();
-    expect(button.closest('.navigation-primary-tabs')).not.toBeNull();
+    const frame = button.closest<HTMLElement>('.navigation-primary-tabs');
+    const standalone = button.closest<HTMLElement>('[data-liquid-glass-floating-action-slot]');
+    const fabSlot = button.closest<HTMLElement>('[data-liquid-glass-fab-slot]');
+    expect(frame?.style.pointerEvents).toBe('none');
+    expect(standalone?.style.pointerEvents).toBe('none');
+    expect(fabSlot?.style.pointerEvents).toBe('auto');
+    expect(button.closest('.navigation-primary-tabs')).toBe(frame);
     expect(button.classList.contains('ui-glass-surface')).toBe(true);
     expect(button.style.getPropertyValue('--ui-glass-surface-blur')).toBe('14px');
     expect(scroll?.contains(button)).toBe(false);
@@ -542,7 +555,9 @@ describe('NavigationShell MezfitNavbar integration', () => {
     );
 
     expect(view.container.querySelector('.ui-mezfit-navbar__identity .ui-avatar')).not.toBeNull();
+    expect(view.container.querySelector<HTMLElement>('.navigation-primary-tabs')?.style.pointerEvents).toBe('none');
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
+    expect(view.container.querySelector('[data-liquid-glass-floating-action-slot]')).toBeNull();
     expect(view.getByRole('button', { name: 'Назад' })).not.toBeNull();
   });
 });
