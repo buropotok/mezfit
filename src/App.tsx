@@ -170,12 +170,36 @@ export function App() {
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const settingsReturnDestinationRef = useRef<Record<Role, AppDestination>>({ coach: 'today', client: 'today' });
+  const destinationRef = useRef<AppDestination>('today');
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
   }, []);
+  const readyRole = state.status === 'ready' ? state.activeRole : null;
+  const closeSettings = useCallback(() => {
+    if (!readyRole) return;
+    const next = settingsReturnDestinationRef.current[readyRole];
+    setNavigationContext(null);
+    if (readyRole === 'coach') setCoachDestination(next);
+    else setClientDestination(next);
+  }, [readyRole]);
+  const settingsRootContext = useMemo<NavigationContext | null>(() => readyRole ? ({
+    level: 2,
+    title: 'Настройки',
+    scrollKey: `settings:${readyRole}:root`,
+    identity: { title: 'Настройки', icon: 'settings' },
+    onBack: closeSettings,
+  }) : null, [closeSettings, readyRole]);
+  const handleSettingsNavigationContextChange = useCallback((context: NavigationContext | null) => {
+    if (destinationRef.current !== 'settings' || !settingsRootContext) {
+      setNavigationContext(null);
+      return;
+    }
+    setNavigationContext(context ? { ...context, level: 3 } : settingsRootContext);
+  }, [settingsRootContext]);
+
   useEffect(() => {
     saveBrowserGlassSettings(glassSettings);
   }, [glassSettings]);
@@ -272,7 +296,6 @@ export function App() {
   }
 
   const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
-  const destinationRef = useRef(destination);
   destinationRef.current = destination;
 
   const changeDestination = (next: AppDestination) => {
@@ -287,27 +310,6 @@ export function App() {
     setNavigationContext(null);
     dispatch({ type: 'switch-role', role });
   };
-  const closeSettings = useCallback(() => {
-    const role = state.activeRole;
-    const next = settingsReturnDestinationRef.current[role];
-    setNavigationContext(null);
-    if (role === 'coach') setCoachDestination(next);
-    else setClientDestination(next);
-  }, [state.activeRole]);
-  const settingsRootContext = useMemo<NavigationContext>(() => ({
-    level: 2,
-    title: 'Настройки',
-    scrollKey: `settings:${state.activeRole}:root`,
-    identity: { title: 'Настройки', icon: 'settings' },
-    onBack: closeSettings,
-  }), [closeSettings, state.activeRole]);
-  const handleSettingsNavigationContextChange = useCallback((context: NavigationContext | null) => {
-    if (destinationRef.current !== 'settings') {
-      setNavigationContext(null);
-      return;
-    }
-    setNavigationContext(context ? { ...context, level: 3 } : settingsRootContext);
-  }, [settingsRootContext]);
   const shellContext = destination === 'settings'
     ? navigationContext ?? settingsRootContext
     : navigationContext;
