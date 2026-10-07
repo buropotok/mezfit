@@ -128,8 +128,8 @@ describe('NavigationShell nested back behavior', () => {
 
       return (
         <NavigationShell
-          me={me}
-          activeRole="client"
+          me={{ ...me, roles: ['coach'] }}
+          activeRole="coach"
           destination="settings"
           context={context}
           onDestinationChange={vi.fn()}
