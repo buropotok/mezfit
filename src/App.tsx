@@ -173,6 +173,8 @@ export function App() {
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null | undefined>(undefined);
+  const [workoutStatusLoadFailed, setWorkoutStatusLoadFailed] = useState(false);
+  const [workoutStatusRefreshKey, setWorkoutStatusRefreshKey] = useState(0);
   const workoutStatusVersionRef = useRef(0);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
@@ -237,19 +239,23 @@ export function App() {
     let cancelled = false;
     const requestVersion = workoutStatusVersionRef.current;
     setWorkoutStatus(undefined);
+    setWorkoutStatusLoadFailed(false);
 
     getCurrentWorkoutSession(readyClientInitData)
       .then(({ session }) => {
         if (!cancelled && workoutStatusVersionRef.current === requestVersion) {
           setWorkoutStatus(session?.status ?? null);
+          setWorkoutStatusLoadFailed(false);
         }
       })
       .catch(() => {
-        // Keep the FAB hidden while the canonical server state is unknown.
+        if (!cancelled && workoutStatusVersionRef.current === requestVersion) {
+          setWorkoutStatusLoadFailed(true);
+        }
       });
 
     return () => { cancelled = true; };
-  }, [readyClientInitData]);
+  }, [readyClientInitData, workoutStatusRefreshKey]);
 
   if (state.status === 'loading') return <main className="center"><p>Подключаем Mezfit…</p></main>;
 
@@ -331,10 +337,16 @@ export function App() {
     : navigationContext;
   const clientWorkoutFloatingAction: NavigationFloatingAction | null = state.activeRole === 'client'
     ? {
-        label: workoutStatus === 'active' ? 'Продолжить тренировку' : 'Начать тренировку',
+        label: workoutStatusLoadFailed
+          ? 'Повторить загрузку тренировки'
+          : workoutStatus === 'active'
+            ? 'Продолжить тренировку'
+            : 'Начать тренировку',
         placement: 'left',
-        isShown: destination !== 'training' && workoutStatus !== undefined,
-        onClick: () => changeDestination('training'),
+        isShown: destination !== 'training' && (workoutStatus !== undefined || workoutStatusLoadFailed),
+        onClick: workoutStatusLoadFailed
+          ? () => setWorkoutStatusRefreshKey((value) => value + 1)
+          : () => changeDestination('training'),
         icon: 'barbell',
       }
     : null;
@@ -365,6 +377,7 @@ export function App() {
               onSessionLifecycleChange={({ status }) => {
                 workoutStatusVersionRef.current += 1;
                 setWorkoutStatus(status);
+                setWorkoutStatusLoadFailed(false);
               }}
             />
           ) : destination === 'settings' ? (
