@@ -94,14 +94,16 @@ describe('LiquidPopover lifecycle and menu ownership', () => {
     ).toBeNull();
   });
 
-  it('releases viewport listeners on unmount', () => {
+  it('releases viewport listeners and presentation ownership on unmount', () => {
     const view = setup(),
       remove = vi.spyOn(window, 'removeEventListener');
     view.rerender(<LiquidPopover {...view.props} isOpen />);
+    expect(view.presentation).toHaveBeenLastCalledWith(true);
     view.unmount();
     expect(
       remove.mock.calls.some(([event]) => String(event) === 'resize'),
     ).toBe(true);
+    expect(view.presentation).toHaveBeenLastCalledWith(false);
   });
 });
 
