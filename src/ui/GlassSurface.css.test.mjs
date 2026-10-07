@@ -38,6 +38,15 @@ describe('GlassSurface bezel layers', () => {
     expect(bezelOnlyRule).toContain('var(--ui-glass-surface-specular-gradient)');
   });
 
+  it('composes the lifted halo into the same GlassSurface box shadow', () => {
+    const baseRule = css.match(/\.ui-glass-surface,\n\.ui-glass-surface__contour-material \{[\s\S]*?\n\}/)?.[0];
+    const haloRule = css.match(/\.ui-glass-surface--halo-lifted \{[\s\S]*?\n\}/)?.[0];
+
+    expect(baseRule).toContain('var(--ui-glass-surface-halo-shadow)');
+    expect(haloRule).toContain('0 0 18px rgb(255 255 255 / 0.16)');
+    expect(haloRule).toContain('0 0 36px rgb(170 205 255 / 0.10)');
+  });
+
   it('removes both built-in corner layers for contour surfaces', () => {
     const contourRule = css.match(/\.ui-glass-surface--contour::before,[\s\S]*?\n\}/)?.[0];
 
