@@ -77,10 +77,11 @@ describe('workout primary-tab artwork', () => {
 
     const trainingTab = getPrimaryTabsRoot(view.container)
       .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Тренировка"]');
-    const icon = trainingTab?.querySelector<HTMLElement>('.tab-icon-outline .ui-icon');
+    if (!trainingTab) throw new Error('Missing coach Training tab');
+    const icon = trainingTab.querySelector<HTMLElement>('.tab-icon-outline .ui-icon');
 
     expect(icon?.style.maskImage).toContain(getUiIconAsset('barbell', 'outline'));
-    fireEvent.click(trainingTab as HTMLButtonElement);
+    fireEvent.click(trainingTab);
     expect(screen.getByText('Workout session')).toBeTruthy();
   });
 });
