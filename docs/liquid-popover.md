@@ -52,7 +52,7 @@ Dimensions come from measured text rows. Shared MezfitPopover retains its
 Konsta-derived placement calculation and backdrop dismissal. Native action
 buttons own selection and disabled states. No Radix menu is mounted. Long menus scroll at the available
 height. No menu action or navigation state is inferred from private DOM.
-`items` is deliberately a text/action model, not arbitrary HTML snapshotting.
+`items` is deliberately a typed action model, not arbitrary HTML snapshotting. Each item may include an optional `icon` from the shared `UiIconName` registry. In menu layout the icon is rendered in the leading slot alongside the label, and the opening/closing canvas texture draws a matching tinted icon when its bundled SVG asset has loaded. Grid layout retains text-only cells.
 
 The default opening lasts 650 ms with no spring phase. Source compression runs
 for 55 ms toward a 32 px spine. The centered intermediate superellipse has
