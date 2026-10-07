@@ -180,11 +180,13 @@ export function LiquidPopover({
     clipRef = useRef<SVGPathElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceRef = useRef<HTMLCanvasElement | null>(null),
-    itemsRef = useRef(items);
+    itemsRef = useRef(items),
+    progressRef = useRef(isOpen ? 1 : 0);
   itemsRef.current = items;
   const [host, setHost] = useState<HTMLElement | null>(null),
     [settled, setSettled] = useState(false),
-    [positioned, setPositioned] = useState(false);
+    [positioned, setPositioned] = useState(false),
+    [presented, setPresented] = useState(isOpen);
   const handlePositioned = useCallback(() => setPositioned(true), []);
   const contentRef = useCallback(
     (element: HTMLElement | null) => setHost(element),
@@ -251,31 +253,36 @@ export function LiquidPopover({
   }, [activeItemId, centerActiveItem, contentKey, layout]);
 
   useLayoutEffect(() => {
-    if (!isOpen || !host || !positioned) {
-      // Clear the previous handoff before the browser can paint an opening
-      // surface, even while MezfitPopover is still measuring its position.
+    if (isOpen) setPresented(true);
+  }, [isOpen]);
+
+  useLayoutEffect(() => {
+    const visible = isOpen || presented;
+    if (!visible || !host || !positioned) {
       if (nativeRef.current) nativeRef.current.style.opacity = '0';
       if (glassRef.current) glassRef.current.style.opacity = '0';
       if (canvasRef.current) canvasRef.current.style.opacity = '0';
-      if (!isOpen) setPositioned(false);
-      setSettled(false);
+      if (!visible) {
+        progressRef.current = 0;
+        setSettled(false);
+        setPositioned(false);
+      }
       return;
     }
+
     const native = nativeRef.current,
       glass = glassRef.current,
       scene = sceneRef.current,
       canvas = canvasRef.current;
     if (!native || !glass || !scene || !canvas) return;
-    native.style.transform = 'none';
-    native.style.filter = 'none';
-    centerActiveItem(
-      native,
-      activeItemId ? nativeRowRefs.current.get(activeItemId) ?? null : null,
-    );
+
     let frame = 0,
       cancelled = false;
     let sizeObserver: ResizeObserver | null = null;
-    const finish = () => {
+    const targetProgress = isOpen ? 1 : 0;
+
+    const finishOpen = () => {
+      progressRef.current = 1;
       scene.style.display = 'none';
       canvas.style.display = 'none';
       native.style.opacity = '1';
@@ -290,16 +297,40 @@ export function LiquidPopover({
       native.style.borderRadius = `${resolveGlassRadius(host.clientWidth, host.clientHeight)}px`;
       setSettled(true);
     };
+
+    const finishClose = () => {
+      progressRef.current = 0;
+      scene.style.display = 'none';
+      canvas.style.display = 'none';
+      canvas.style.opacity = '0';
+      native.style.opacity = '0';
+      native.style.filter = 'none';
+      native.style.transform = 'none';
+      glass.style.opacity = '0';
+      setSettled(false);
+      setPositioned(false);
+      setPresented(false);
+    };
+
+    const finishTarget = () => {
+      if (targetProgress === 1) finishOpen();
+      else finishClose();
+    };
+
     const cancelAndFinish = () => {
       cancelAnimationFrame(frame);
-      if (!cancelled) finish();
+      if (!cancelled) finishTarget();
     };
+
     setSettled(false);
-    native.style.opacity = '0';
     scene.style.display = 'block';
     canvas.style.display = 'block';
-    canvas.style.opacity = '0';
-    glass.style.opacity = '0';
+    if (progressRef.current <= 0) {
+      native.style.opacity = '0';
+      canvas.style.opacity = '0';
+      glass.style.opacity = '0';
+    }
+
     // Shared MezfitPopover owns placement; wait for its positioned frame.
     frame = requestAnimationFrame(() => {
       const sourceBounds = triggerRef.current?.getBoundingClientRect(),
@@ -311,18 +342,27 @@ export function LiquidPopover({
         !CSS.supports('mix-blend-mode', 'plus-lighter') ||
         window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
       ) {
-        finish();
+        finishTarget();
         return;
       }
+
       const rect = toLiquidRect(destinationBounds),
         animation = createLiquidMotion(
           toLiquidRect(sourceBounds),
           rect,
           options,
         );
-      // Repaint from the positioned native rows. This makes the raster use the
-      // exact same viewport, scroll position, row spacing, and bottom gap as
-      // the live HTML that takes over during the handoff.
+
+      // Reset transient reverse/forward transforms only inside the same RAF
+      // where the current progress is redrawn, so no untransformed frame can
+      // reach the screen.
+      native.style.transform = 'none';
+      native.style.filter = 'none';
+      centerActiveItem(
+        native,
+        activeItemId ? nativeRowRefs.current.get(activeItemId) ?? null : null,
+      );
+
       const texture =
         sourceRef.current ?? host.ownerDocument.createElement('canvas');
       if (
@@ -335,10 +375,11 @@ export function LiquidPopover({
           destinationBounds,
         )
       ) {
-        finish();
+        finishTarget();
         return;
       }
       sourceRef.current = texture;
+
       const cropX = Math.floor(
         Math.max(0, Math.min(sourceBounds.left, destinationBounds.left) - 80),
       );
@@ -365,9 +406,10 @@ export function LiquidPopover({
       );
       const context = canvas.getContext('2d');
       if (!context) {
-        finish();
+        finishTarget();
         return;
       }
+
       const left = destinationBounds.left,
         top = destinationBounds.top;
       Object.assign(canvas.style, {
@@ -376,6 +418,7 @@ export function LiquidPopover({
         width: `${canvas.width}px`,
         height: `${canvas.height}px`,
       });
+
       if (typeof ResizeObserver !== 'undefined') {
         sizeObserver = new ResizeObserver(() => {
           const current = host.getBoundingClientRect();
@@ -389,12 +432,20 @@ export function LiquidPopover({
         });
         sizeObserver.observe(host);
       }
-      const started = performance.now();
+
+      const fromProgress = progressRef.current,
+        progressDistance = Math.abs(targetProgress - fromProgress),
+        durationMs = animation.totalSeconds * 1000 * progressDistance,
+        started = performance.now();
+
       const draw = (now: number) => {
         if (cancelled) return;
-        const progress = clamp(
-          (now - started) / (animation.totalSeconds * 1000),
-        );
+        const phase =
+            durationMs <= 0 ? 1 : clamp((now - started) / durationMs),
+          progress =
+            fromProgress + (targetProgress - fromProgress) * phase;
+        progressRef.current = progress;
+
         const loops = animation.contour(progress),
           timeline = animation.timeline(progress);
         const bounds = contourBounds(loops),
@@ -408,6 +459,7 @@ export function LiquidPopover({
             })),
           ),
         );
+
         Object.assign(glass.style, {
           left: `${bounds.left - left}px`,
           top: `${bounds.top - top}px`,
@@ -417,6 +469,7 @@ export function LiquidPopover({
           clipPath: `path('${localPath}')`,
           opacity: '1',
         });
+
         const localLoops = loops.map((loop) =>
           loop.map((point) => ({ x: point.x - cropX, y: point.y - cropY })),
         );
@@ -432,6 +485,7 @@ export function LiquidPopover({
           timeline.lens,
           progress >= 1,
         );
+
         const centerX = (bounds.left + bounds.right) / 2,
           centerY = (bounds.top + bounds.bottom) / 2,
           scaleX = width / rect.w,
@@ -447,13 +501,16 @@ export function LiquidPopover({
         native.style.transformOrigin = 'center center';
         native.style.transform =
           `translate(${offsetX}px, ${offsetY}px) scale(${scaleX}, ${scaleY})`;
-        if (progress < 1) frame = requestAnimationFrame(draw);
-        else finish();
+
+        if (phase < 1) frame = requestAnimationFrame(draw);
+        else finishTarget();
       };
+
       draw(started);
     });
+
     // A viewport/font change invalidates the prepared geometry. Settle safely
-    // instead of animating toward stale screen coordinates.
+    // to the requested endpoint instead of animating stale coordinates.
     window.addEventListener('resize', cancelAndFinish);
     window.visualViewport?.addEventListener('resize', cancelAndFinish);
     host.ownerDocument.fonts?.addEventListener('loadingdone', cancelAndFinish);
@@ -477,6 +534,7 @@ export function LiquidPopover({
     layout,
     options,
     positioned,
+    presented,
     triggerRef,
   ]);
 
@@ -507,6 +565,13 @@ export function LiquidPopover({
       {cloneElement(trigger, {
         'aria-haspopup': role,
         'aria-expanded': isOpen,
+        style: {
+          ...trigger.props.style,
+          visibility:
+            isOpen || presented
+              ? 'hidden'
+              : trigger.props.style?.visibility,
+        },
         onClick: (event) => {
           trigger.props.onClick?.(event);
           if (triggerActivation === 'automatic' && !event.defaultPrevented)
@@ -514,9 +579,9 @@ export function LiquidPopover({
         },
       })}
       <MezfitPopover
-        opened={isOpen}
+        opened={isOpen || presented}
         target={triggerRef.current ?? undefined}
-        onBackdropClick={() => onOpenChange(false)}
+        onBackdropClick={isOpen ? () => onOpenChange(false) : undefined}
         presentation="custom"
         onPositioned={handlePositioned}
         portal
