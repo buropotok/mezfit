@@ -15,7 +15,6 @@ const LOCAL_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const monthFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const dayFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const weekdayFormatterCache = new Map<string, Intl.DateTimeFormat>();
-const selectedDateFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
 function getMonthFormatter(locale: string): Intl.DateTimeFormat {
   const cached = monthFormatterCache.get(locale);
@@ -53,25 +52,6 @@ function getWeekdayFormatter(locale: string): Intl.DateTimeFormat {
   return formatter;
 }
 
-function getSelectedDateFormatter(locale: string): Intl.DateTimeFormat {
-  const cached = selectedDateFormatterCache.get(locale);
-  if (cached) return cached;
-
-  const formatter = new Intl.DateTimeFormat(locale, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'UTC',
-  });
-  selectedDateFormatterCache.set(locale, formatter);
-  return formatter;
-}
-
-function capitalizeLocale(value: string, locale: string): string {
-  const [first = '', ...rest] = Array.from(value);
-  return `${first.toLocaleUpperCase(locale)}${rest.join('')}`;
-}
-
 export function prewarmDateFormatters(locale: string): void {
   getMonthFormatter(locale);
   getDayFormatter(locale);
@@ -101,17 +81,6 @@ export function formatLocalDate(year: number, month: number, day: number): Local
 
 export function getTodayLocalDate(now = new Date()): LocalDate {
   return formatLocalDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
-}
-
-export function formatSelectedDateLabel(date: LocalDateParts, locale: string): string {
-  const parts = getSelectedDateFormatter(locale).formatToParts(
-    new Date(Date.UTC(date.year, date.month - 1, date.day)),
-  );
-  const weekday = parts.find((part) => part.type === 'weekday')?.value ?? '';
-  const day = parts.find((part) => part.type === 'day')?.value ?? String(date.day);
-  const month = parts.find((part) => part.type === 'month')?.value ?? '';
-
-  return `${capitalizeLocale(weekday, locale)}, ${day} ${capitalizeLocale(month, locale)}`;
 }
 
 export function buildMonthGrid(year: number, monthIndex: number): MonthCell[] {

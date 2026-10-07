@@ -294,7 +294,12 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(pageAction).toHaveBeenCalledTimes(1);
   });
 
-  it('lets a level-one schedule own viewport layout and navbar calendar state', () => {
+  it('lets a level-one schedule own viewport layout and toggles the calendar from the navbar', async () => {
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => (
+      window.setTimeout(() => callback(0), 0)
+    ));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+
     const onCalendarDateChange = vi.fn();
     const view = render(
       <NavigationShell
@@ -318,7 +323,27 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(view.container.querySelector('.navigation-content')?.classList.contains('navigation-content--viewport')).toBe(true);
     const identity = view.container.querySelector('.ui-mezfit-navbar__identity .ui-identity-action');
     expect(identity?.getAttribute('aria-label')).toBe('Пн, 5 октября');
-    expect(view.getByRole('button', { name: 'Открыть календарь' })).not.toBeNull();
+
+    const calendarButton = view.getByRole('button', { name: 'Открыть календарь' });
+    const identityAction = view.container.querySelector<HTMLElement>('.ui-identity-action--double');
+    if (!identityAction) throw new Error('Missing double identity action');
+
+    fireEvent.pointerDown(calendarButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(calendarButton);
+    fireEvent.animationEnd(identityAction);
+
+    const panel = view.container.querySelector<HTMLElement>('[data-date-picker-surface="top-panel"]');
+    await waitFor(() => {
+      expect(panel?.getAttribute('data-state')).toBe('opened');
+    });
+
+    fireEvent.pointerDown(calendarButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(calendarButton);
+    fireEvent.animationEnd(identityAction);
+
+    await waitFor(() => {
+      expect(panel?.getAttribute('data-state')).toBe('closed');
+    });
   });
 
   it('closes the calendar when primary navigation changes', async () => {

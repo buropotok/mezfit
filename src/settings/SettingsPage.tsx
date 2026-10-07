@@ -537,7 +537,7 @@ export function SettingsPage({
           Реальный UI Kit DatePicker. Выбранная дата: {datePickerValue}.
         </Text>
         <span className="modules-gallery__trigger">
-          <Button onClick={() => setDatePickerOpen(true)}>Выбрать дату</Button>
+          <Button onClick={() => setDatePickerOpen((open) => !open)}>Выбрать дату</Button>
           <Button variant="secondary" onClick={() => setEmptyDatePickerOpen(true)}>Открыть пустой</Button>
         </span>
         <DatePicker

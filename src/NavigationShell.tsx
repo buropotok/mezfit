@@ -389,7 +389,7 @@ export function NavigationShell({
             identity={identity}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
-            onCalendar={() => setCalendarOpen(true)}
+            onCalendar={() => setCalendarOpen((open) => !open)}
             renderMenuControl={renderMenuControl}
             rightControlRef={menuOriginRef}
             rightControlHidden={menuOpen || menuPresented}
