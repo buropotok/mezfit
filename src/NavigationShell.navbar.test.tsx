@@ -516,7 +516,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     }
     const view = render(
       <NavigationShell
-        me={{ ...me, roles: ['coach'] }}
+        me={{ ...me, roles: ['coach' as const] }}
         activeRole="coach"
         destination="programs"
         context={{ level: 2, title: 'Детали программы' }}
