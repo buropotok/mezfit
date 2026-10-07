@@ -179,7 +179,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('preserves the approved five coach tab positions and icons', () => {
+  it('uses Training as the fifth coach tab and keeps Settings in the system menu before About', () => {
     const coachMe = { ...me, roles: ['coach' as const] };
     const view = render(
       <NavigationShell
@@ -200,7 +200,14 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expectTabIcon(tabsRoot, 'Клиенты', 'users');
     expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
     expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
-    expectTabIcon(tabsRoot, 'Настройки', 'settings');
+    expectTabIcon(tabsRoot, 'Тренировка', 'barbell');
+    expect(tabsRoot.querySelector('[role="tab"][aria-label="Настройки"]')).toBeNull();
+
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
+    const menuLabels = view.getAllByRole('menuitem').map((item) => item.textContent);
+    expect(menuLabels).toEqual(['Упражнения', 'Календарь', 'Настройки', 'О приложении']);
   });
 
   it('renders a page-owned primary action through the tab-bar FAB slot', () => {
