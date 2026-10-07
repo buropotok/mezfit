@@ -394,7 +394,7 @@ export async function getOpenWorkoutSessionSummary(
   userId: number,
 ): Promise<OpenWorkoutSessionSummary | null> {
   const session = await openSession(db, userId);
-  if (!session) return null;
+  if (!session || session.status === 'completed') return null;
   return {
     sessionId: session.id,
     status: session.status,
