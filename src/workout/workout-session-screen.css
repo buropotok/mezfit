@@ -31,11 +31,6 @@
   color: var(--ui-color-surface-text);
 }
 
-.workout-session-screen__card-icon-artwork {
-  width: 44px;
-  height: 44px;
-}
-
 .workout-session-screen__card-workout-name,
 .workout-session-screen__card-program-name {
   display: block;
