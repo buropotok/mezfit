@@ -94,6 +94,34 @@ describe('LiquidPopover lifecycle and menu ownership', () => {
     ).toBeNull();
   });
 
+  it('reports an external source lifecycle without mutating its visibility', () => {
+    const sourceRef = createRef<HTMLDivElement>(),
+      presentation = vi.fn();
+    const view = render(
+      <>
+        <div ref={sourceRef} style={{ visibility: 'visible' }} />
+        <LiquidPopover
+          isOpen
+          onOpenChange={() => {}}
+          onPresentationChange={presentation}
+          trigger={<button>Открыть внешний источник</button>}
+          triggerRef={sourceRef}
+          items={[{ id: 'action', label: 'Действие' }]}
+        />
+      </>,
+    );
+
+    expect(sourceRef.current?.style.visibility).toBe('visible');
+    expect(
+      screen.getByRole('button', { name: 'Открыть внешний источник' }).style
+        .visibility,
+    ).toBe('hidden');
+    expect(presentation).toHaveBeenLastCalledWith(true);
+
+    view.unmount();
+    expect(presentation).toHaveBeenLastCalledWith(false);
+  });
+
   it('releases viewport listeners and presentation ownership on unmount', () => {
     const view = setup(),
       remove = vi.spyOn(window, 'removeEventListener');
