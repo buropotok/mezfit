@@ -535,7 +535,6 @@ export function LiquidPopover({
     layout,
     options,
     positioned,
-    presented,
     triggerRef,
   ]);
 
