@@ -21,46 +21,43 @@ vi.mock('./glassMaterial', async (importOriginal) => {
   };
 });
 
-vi.mock('@dnd-kit/core', () => ({
-  DndContext: ({
-    children,
-    onDragStart,
-  }: {
-    children: ReactNode;
-    onDragStart: (event: { active: { id: string } }) => void;
-  }) => {
-    dndHarness.onDragStart = onDragStart;
-    return <>{children}</>;
-  },
-  DragOverlay: ({ children }: { children: ReactNode }) => (
-    <div data-testid="drag-overlay-host">{children}</div>
-  ),
-  closestCenter: vi.fn(),
-  useSensor: vi.fn(() => ({})),
-  useSensors: vi.fn(() => []),
-}));
-
-vi.mock('@dnd-kit/sortable', () => ({
-  SortableContext: ({ children }: { children: ReactNode }) => <>{children}</>,
-  arrayMove: <T,>(items: T[]) => items,
-  useSortable: ({ disabled }: { disabled: boolean }) => ({
-    attributes: disabled ? {} : { role: 'button', tabIndex: 0 },
-    listeners: {},
-    setNodeRef: vi.fn(),
-    transform: null,
-    transition: undefined,
-    isDragging: false,
-  }),
-  verticalListSortingStrategy: vi.fn(),
-}));
-
-vi.mock('@dnd-kit/utilities', () => ({
-  CSS: {
-    Transform: {
-      toString: () => undefined,
+vi.mock('@dnd-kit/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dnd-kit/core')>();
+  return {
+    ...actual,
+    DndContext: ({
+      children,
+      onDragStart,
+    }: {
+      children: ReactNode;
+      onDragStart: (event: { active: { id: string } }) => void;
+    }) => {
+      dndHarness.onDragStart = onDragStart;
+      return <>{children}</>;
     },
-  },
-}));
+    DragOverlay: ({ children }: { children: ReactNode }) => (
+      <div data-testid="drag-overlay-host">{children}</div>
+    ),
+    useSensor: vi.fn(() => ({})),
+    useSensors: vi.fn(() => []),
+  };
+});
+
+vi.mock('@dnd-kit/sortable', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dnd-kit/sortable')>();
+  return {
+    ...actual,
+    SortableContext: ({ children }: { children: ReactNode }) => <>{children}</>,
+    useSortable: ({ disabled }: { disabled: boolean }) => ({
+      attributes: disabled ? {} : { role: 'button', tabIndex: 0 },
+      listeners: {},
+      setNodeRef: vi.fn(),
+      transform: null,
+      transition: undefined,
+      isDragging: false,
+    }),
+  };
+});
 
 const items: SortableListItem[] = [
   { id: 'first', content: <div data-testid="first-content">Первый</div> },
