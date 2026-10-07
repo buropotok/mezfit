@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   completeWorkoutSession,
+  getOpenWorkoutSessionSummary,
   getWorkoutSessionProjection,
   initializeWorkoutSession,
   resolveWorkoutProgram,
@@ -26,6 +27,42 @@ describe('resolveWorkoutProgram', () => {
       ],
     });
     expect(prepare.mock.calls[0]?.[0]).not.toContain('tp.status');
+  });
+});
+
+describe('getOpenWorkoutSessionSummary', () => {
+  it('returns the canonical active-session identity without mutating persistence', async () => {
+    const first = vi.fn().mockResolvedValue({
+      id: 501,
+      user_id: 7,
+      source_program_phase_id: null,
+      source_program_day_id: null,
+      occurrence_id: null,
+      status: 'active',
+      started_at: '2026-10-07 10:00:00',
+      created_at: '2026-10-07 09:00:00',
+    });
+    const prepare = vi.fn(() => ({
+      bind: vi.fn().mockReturnValue({ first }),
+    }));
+    const batch = vi.fn();
+    const db = { prepare, batch } as unknown as D1Database;
+
+    await expect(getOpenWorkoutSessionSummary(db, 7)).resolves.toEqual({
+      sessionId: 501,
+      status: 'active',
+    });
+    expect(batch).not.toHaveBeenCalled();
+  });
+
+  it('returns null when there is no draft or active session', async () => {
+    const first = vi.fn().mockResolvedValue(null);
+    const prepare = vi.fn(() => ({
+      bind: vi.fn().mockReturnValue({ first }),
+    }));
+    const db = { prepare } as unknown as D1Database;
+
+    await expect(getOpenWorkoutSessionSummary(db, 7)).resolves.toBeNull();
   });
 });
 
