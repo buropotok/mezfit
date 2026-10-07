@@ -338,8 +338,9 @@ describe('NavigationShell MezfitNavbar integration', () => {
       expect(view.getByRole('button', { name: 'Закрыть календарь' }).getAttribute('aria-expanded')).toBe('true');
     });
 
-    fireEvent.pointerDown(calendarButton, { pointerType: 'touch', button: 0 });
-    fireEvent.click(calendarButton);
+    const closeCalendarButton = view.getByRole('button', { name: 'Закрыть календарь' });
+    fireEvent.pointerDown(closeCalendarButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(closeCalendarButton);
     fireEvent.animationEnd(identityAction);
 
     await waitFor(() => {
