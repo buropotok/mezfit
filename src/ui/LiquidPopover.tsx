@@ -262,10 +262,11 @@ export function LiquidPopover({
       if (nativeRef.current) nativeRef.current.style.opacity = '0';
       if (glassRef.current) glassRef.current.style.opacity = '0';
       if (canvasRef.current) canvasRef.current.style.opacity = '0';
-      if (!visible) {
+      if (!isOpen) {
         progressRef.current = 0;
         setSettled(false);
         setPositioned(false);
+        setPresented(false);
       }
       return;
     }
