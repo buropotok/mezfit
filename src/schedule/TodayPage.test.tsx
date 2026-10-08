@@ -273,6 +273,7 @@ describe('TodayPage schedule loading', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Событие' }));
 
     expect(await screen.findByRole('dialog', { name: 'Событие' })).toBeTruthy();
+    expect(view.container.querySelector('.today-page')?.classList.contains('today-page--sheet-open')).toBe(true);
     await waitFor(() => {
       expect(view.container.querySelector('.ui-mezfit-navbar__identity')?.textContent).toContain('Событие');
     });
