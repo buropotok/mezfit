@@ -182,9 +182,12 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
     setPhaseCreateOpen(true);
   }, []);
   const floatingAction = useMemo(() => details ? {
-    label: 'Добавить фазу',
+    label: 'Добавить',
     icon: 'plus' as const,
-    onClick: openPhaseCreation,
+    popoverItems: [
+      { id: 'add-day', icon: 'plus' as const, label: 'День' },
+      { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: openPhaseCreation },
+    ],
   } : null, [details, openPhaseCreation]);
   useNavigationSurfaceFloatingAction(floatingAction);
 

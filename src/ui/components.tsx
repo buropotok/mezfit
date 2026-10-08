@@ -1,4 +1,4 @@
-import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ComponentPropsWithRef, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ComponentPropsWithRef, type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode, type Ref } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import { Dialog as KonstaDialog, DialogButton } from 'konsta/react';
@@ -111,7 +111,7 @@ export function FloatingActionButtonGlassProvider({ preset, optics, children }: 
   return <FloatingActionButtonGlassContext.Provider value={{ preset, optics }}>{children}</FloatingActionButtonGlassContext.Provider>;
 }
 
-export type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; isShown?: boolean; placement?: 'left' | 'right'; glassPreset?: GlassPresetName; glassOptics?: boolean; icon?: UiIconName; children?: ReactNode } & ({ mode?: 'default'; actions?: never } | { mode: 'metaball'; actions: readonly [FloatingActionButtonAction, FloatingActionButtonAction] });
+export type FloatingActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { label: string; ref?: Ref<HTMLElement>; isShown?: boolean; placement?: 'left' | 'right'; glassPreset?: GlassPresetName; glassOptics?: boolean; icon?: UiIconName; children?: ReactNode } & ({ mode?: 'default'; actions?: never } | { mode: 'metaball'; actions: readonly [FloatingActionButtonAction, FloatingActionButtonAction] });
 type FloatingActionButtonBehavior = { buttonProps: ButtonHTMLAttributes<HTMLButtonElement>; isShown: boolean };
 
 const FloatingActionButtonBehaviorContext = createContext<FloatingActionButtonBehavior | null>(null);
@@ -138,7 +138,7 @@ function FloatingActionButtonElement({ children, ...glassProps }: ComponentProps
   );
 }
 
-export function FloatingActionButton({ mode = 'default', actions, label, isShown = true, placement = 'right', glassPreset, glassOptics, icon, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
+export function FloatingActionButton({ ref, mode = 'default', actions, label, isShown = true, placement = 'right', glassPreset, glassOptics, icon, className = '', type = 'button', children, disabled, onClick, onPointerDown, onKeyDown, ...props }: FloatingActionButtonProps) {
   const glassSettings = useContext(FloatingActionButtonGlassContext);
   if (mode === 'metaball' && actions) return <MetaballFab {...props} label={label} isShown={isShown} placement={placement} glassPreset={glassPreset ?? glassSettings?.preset} glassOptics={glassOptics ?? glassSettings?.optics ?? false} icon={icon} className={className} type={type} disabled={disabled} onClick={onClick} onPointerDown={onPointerDown} onKeyDown={onKeyDown} actions={actions}>{children}</MetaballFab>;
   const buttonProps: ButtonHTMLAttributes<HTMLButtonElement> = {
@@ -157,6 +157,7 @@ export function FloatingActionButton({ mode = 'default', actions, label, isShown
     <FloatingActionButtonBehaviorContext.Provider value={{ buttonProps, isShown }}>
       <GlassSurface
         component={FloatingActionButtonElement}
+        ref={ref}
         preset={glassPreset ?? glassSettings?.preset}
         optics={glassOptics ?? glassSettings?.optics ?? false}
         active={isShown}
