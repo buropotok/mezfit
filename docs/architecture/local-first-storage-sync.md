@@ -389,6 +389,10 @@ accept only when currentServerRevision == baseServerRevision
 
 On success the server increments the scope revision and returns it. On mismatch it returns a domain conflict such as `409 SCOPE_STALE` and applies nothing. Last-write-wins is never an implicit fallback.
 
+For a newly created scope, the write uses explicit create semantics (`baseServerRevision = null` / create-if-absent). The server accepts it only if that stable scope identity has never been created/tombstoned for a conflicting object, then returns the first revision. A deleted scope is never silently recreated with the same stable ID; a genuinely new business entity receives a new `sync_id`.
+
+A local hard-delete intent, where the domain permits hard deletion, is represented as a dirty tombstone carrying the last applied server revision. The server CAS-applies the tombstone and emits `deleted`. Domains that use archive/deprecate/cancel states continue to synchronize those states as ordinary active-scope snapshots instead.
+
 If the HTTP response is lost after the server may have committed, the client retries the exact frozen request with the same `requestId`. Server idempotency is keyed by authenticated actor + request ID and must return the original semantic result.
 
 After acknowledgement:
@@ -669,6 +673,8 @@ Rules:
 - if the device is offline with an expired lease, self-owned data and public/global reference data may remain available, but expired relationship-private data is gated;
 - a `revoked` feed event invalidates the lease immediately and triggers purge.
 
+A still-valid offline lease permits local work but is not a promise that a later server write will be accepted if authorization changed while the device was disconnected. When catch-up reveals revocation, server authorization wins; no manual retry may resurrect the relationship. Product UX may surface that unsynchronized work could not be submitted.
+
 This is a deliberate bounded-offline-access model. Immediate revocation while a device is completely offline is impossible without also forbidding all offline cached access; the lease defines that security/product boundary explicitly rather than leaving it accidental.
 
 ### Recipient-specific purge
@@ -679,6 +685,7 @@ Examples:
 
 - a coach who loses a client relationship purges that client's private replica and pair-owned scopes;
 - a client who loses a coach relationship purges coach-owned program/catalog data no longer authorized, but does not lose the client's own workout FACT/history merely because the coaching relationship ended;
+- retained client-owned history must not be left with dangling references: minimal reference/display metadata required to render retained FACT must either remain independently authorized or be materialized into the retained session/history projection;
 - globally shared exercise definitions remain;
 - data reachable through another still-valid entitlement remains.
 
@@ -749,6 +756,8 @@ If pending FACT cannot be committed, ownership does not transfer.
 After confirmation both users reconcile through the normal feed.
 
 The old owner immediately loses permission to push new FACT. Offline edits discovered after transfer are retained only as a local blocked diagnostic/conflict until the product decides how to present them; they cannot be force-synchronized by manual retry.
+
+The new owner must not enable FACT editing until its local workout-session scope reflects the confirmed new `ownership_epoch`.
 
 ## 15. Data plane versus control plane
 
