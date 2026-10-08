@@ -459,9 +459,9 @@ Examples:
 
 The client may optimistically reflect these derived occurrence statuses locally, but it must not create a second independent dirty day snapshot for the same server-derived lifecycle transition.
 
-## 10. Retry and manual synchronization
+## 10. Retry, backpressure and manual synchronization
 
-Retry is owned by Sync Engine.
+Retry/backpressure is owned by Sync Engine.
 
 Expected states include:
 
@@ -474,13 +474,60 @@ blocked
 conflict
 ```
 
-Temporary failures such as offline, timeout, 429 and retryable 5xx responses use bounded exponential backoff with jitter.
+Error classes are explicit:
+
+```text
+offline / timeout / retryable 5xx
+  → exponential backoff + jitter
+
+429
+  → respect server retry timing, then retry
+
+401 / authentication expired
+  → pause remote work and re-establish authenticated session
+
+authorization revoked / OWNER_CHANGED
+  → apply authorization/ownership lifecycle handling; do not retry as transport failure
+
+409 SCOPE_STALE
+  → reconcile or conflict; do not blind-retry same stale snapshot
+
+deleted / gone lifecycle
+  → tombstone handling
+
+400 / 422 invalid domain payload
+  → blocked; repeated transport retries are useless
+```
+
+### Backpressure
+
+The worker must not create a request storm after VPN/network recovery.
+
+Rules:
+
+- at most one inflight write per consistency scope;
+- a scope cannot overtake its own earlier frozen inflight state;
+- independent scopes may synchronize concurrently with a small bounded concurrency limit;
+- dirty scopes are coalesced to the newest safe snapshot before transmission;
+- blocked/conflicted scope A does not freeze unrelated scope B;
+- dependencies prevent dependent scopes from overtaking prerequisites;
+- transport batching may combine independent ready scopes without merging their CAS results.
+
+Suggested priority is product-aware:
+
+```text
+active workout / FACT
+visible calendar/current client
+ownership/control reconciliation
+program/catalog edits
+background history hydration
+```
+
+The exact concurrency number is an implementation/configuration detail.
 
 After automatic retry limits are exhausted, local user data remains intact.
 
-The user can explicitly request synchronization.
-
-A manual "Синхронизировать" action must wake/requeue Sync Engine. It must not create a second direct REST mutation path.
+A manual "Синхронизировать" action wakes/requeues the same Sync Engine. It does not create a second REST mutation path and never bypasses authorization, ownership, dependency or conflict checks.
 
 ## 11. Server sync API, scope state and durable change feed
 
