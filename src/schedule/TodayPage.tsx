@@ -439,7 +439,11 @@ export function TodayPage({
   ), [occurrencesByDate]);
 
   return (
-    <section className="today-page" aria-label="Расписание" aria-busy={loadingToday || undefined}>
+    <section
+      className={`today-page${creationSheet !== null ? ' today-page--sheet-open' : ''}`}
+      aria-label="Расписание"
+      aria-busy={loadingToday || undefined}
+    >
       <DaySchedule
         className="today-page__schedule"
         date={date}
