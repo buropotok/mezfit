@@ -11,6 +11,7 @@ import {
   Avatar,
   DaySchedule,
   DayScheduleEventCard,
+  MezfitBottomSheet,
   Text,
   getDayScheduleValue,
   type DayScheduleEvent,
@@ -26,6 +27,8 @@ const CACHE_RADIUS_DAYS = 31;
 type TodayScheduleEvent = DayScheduleEvent & {
   occurrence: ScheduleOccurrence;
 };
+
+type ScheduleCreationSheet = 'workout' | 'event';
 
 type DateRange = {
   from: LocalDate;
@@ -153,7 +156,7 @@ export function TodayPage({
   notice?: string;
 }) {
   const [date, setDate] = useState<LocalDate>(() => currentLocalDate());
-  const [eventPlaceholderOpen, setEventPlaceholderOpen] = useState(false);
+  const [creationSheet, setCreationSheet] = useState<ScheduleCreationSheet | null>(null);
   const [occurrencesByDate, setOccurrencesByDate] = useState<Record<LocalDate, ScheduleOccurrence[]>>({});
   const [loadingToday, setLoadingToday] = useState(true);
   const [error, setError] = useState('');
@@ -165,25 +168,40 @@ export function TodayPage({
   const initialLoadSettledRef = useRef(false);
 
   const scheduleFloatingAction = useMemo(() => (
-    role === 'coach' && !eventPlaceholderOpen
+    role === 'coach' && creationSheet === null
       ? {
-          label: 'Добавить событие',
+          label: 'Добавить',
           placement: 'left' as const,
           icon: 'plus' as const,
-          onClick: () => setEventPlaceholderOpen(true),
+          popoverItems: [
+            {
+              id: 'add-workout',
+              icon: 'plus' as const,
+              label: 'Тренировка',
+              onSelect: () => setCreationSheet('workout'),
+            },
+            {
+              id: 'add-event',
+              icon: 'plus' as const,
+              label: 'Событие',
+              onSelect: () => setCreationSheet('event'),
+            },
+          ],
         }
       : null
-  ), [eventPlaceholderOpen, role]);
+  ), [creationSheet, role]);
   useNavigationFloatingAction('today', scheduleFloatingAction);
 
   useEffect(() => {
-    if (eventPlaceholderOpen) {
+    if (creationSheet !== null) {
+      const title = creationSheet === 'workout' ? '+ Тренировка' : '+ Событие';
       onNavigationContextChange({
         level: 2,
-        title: 'Событие',
-        scrollKey: 'schedule:event-placeholder',
-        identity: { title: 'Событие', icon: 'plus' },
-        onBack: () => setEventPlaceholderOpen(false),
+        title,
+        scrollKey: `schedule:create:${creationSheet}`,
+        identity: { title, icon: 'plus' },
+        contentMode: 'viewport',
+        onBack: () => setCreationSheet(null),
       });
       return () => onNavigationContextChange(null);
     }
@@ -198,7 +216,7 @@ export function TodayPage({
     });
 
     return () => onNavigationContextChange(null);
-  }, [date, eventPlaceholderOpen, onNavigationContextChange]);
+  }, [creationSheet, date, onNavigationContextChange]);
 
   useEffect(() => {
     const generation = requestGenerationRef.current + 1;
@@ -420,15 +438,6 @@ export function TodayPage({
     ) as Record<LocalDate, TodayScheduleEvent[]>
   ), [occurrencesByDate]);
 
-  if (eventPlaceholderOpen) {
-    return (
-      <section className="global-placeholder" aria-label="Событие">
-        <Text variant="large-title" role="heading" aria-level={2}>Событие</Text>
-        <Text variant="body" tone="muted">Экран создания события будет реализован отдельной задачей.</Text>
-      </section>
-    );
-  }
-
   return (
     <section className="today-page" aria-label="Расписание" aria-busy={loadingToday || undefined}>
       <DaySchedule
@@ -471,6 +480,12 @@ export function TodayPage({
           </Text>
         </div>
       ) : null}
+
+      <MezfitBottomSheet
+        opened={creationSheet !== null}
+        label={creationSheet === 'workout' ? '+ Тренировка' : '+ Событие'}
+        onClose={() => setCreationSheet(null)}
+      />
     </section>
   );
 }
