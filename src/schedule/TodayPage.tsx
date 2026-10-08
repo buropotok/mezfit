@@ -473,7 +473,7 @@ export function TodayPage({
         }}
       />
 
-      {loadingToday || error || notice ? (
+      {creationSheet === null && (loadingToday || error || notice) ? (
         <div className="today-page__status" aria-live="polite">
           <Text variant="footnote" tone="muted">
             {error || notice || 'Загружаем расписание…'}
