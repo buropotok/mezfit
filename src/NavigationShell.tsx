@@ -205,7 +205,8 @@ interface Props {
   children: ReactNode;
 }
 
-const FAB_LIQUID_POPOVER_MOTION = Object.freeze({ sourceMorph: 0.12 });
+// LiquidPopover motion values are seconds; FAB compression is fixed at 120 ms.
+const FAB_LIQUID_POPOVER_MOTION = Object.freeze({ sourceMorph: 120 / 1000 });
 
 /** The navigation slot owns FAB placement; this component owns only its popover lifecycle. */
 function NavigationFloatingActionPopover({ action, glassPreset, glassOptics }: {

@@ -89,13 +89,16 @@ describe('ProgramDetailsPage phase creation', () => {
     expect(action.popoverItems?.map(({ icon, label }: { icon?: string; label: string }) => ({ icon, label }))).toEqual([
       { icon: 'plus', label: 'День' },
       { icon: 'plus', label: 'Фаза' },
+      { icon: 'plus', label: 'Упражнение' },
     ]);
     expect(screen.queryByRole('heading', { name: 'Добавить фазу' })).toBeNull();
 
     const day = action.popoverItems?.find(({ id }: { id: string }) => id === 'add-day');
     const phase = action.popoverItems?.find(({ id }: { id: string }) => id === 'add-phase');
-    if (!day || !phase) throw new Error('Missing day or phase popover item');
+    const exercise = action.popoverItems?.find(({ id }: { id: string }) => id === 'add-exercise');
+    if (!day || !phase || !exercise) throw new Error('Missing program FAB popover item');
     expect(day.onSelect).toBeUndefined();
+    expect(exercise.onSelect).toBeUndefined();
     act(() => { day.onSelect?.(); });
     expect(screen.queryByRole('heading', { name: 'Добавить фазу' })).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);

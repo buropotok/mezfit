@@ -256,19 +256,57 @@ afterEach(() => {
 });
 
 describe('TodayPage schedule loading', () => {
-  it('shows a plus FAB for the coach schedule and opens Event as level two', async () => {
+  it('opens coach schedule creation sheets from the FAB liquid popover', async () => {
     getScheduleMock.mockResolvedValue({ occurrences: [] });
     const view = render(<CoachTodayNavigationHarness />);
 
-    const fab = await screen.findByRole('button', { name: 'Добавить событие' });
+    const fab = await screen.findByRole('button', { name: 'Добавить' });
     const icon = fab.querySelector<HTMLElement>('.ui-icon');
     expect(icon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
 
     fireEvent.click(fab);
+    const addMenu = screen.getByRole('menu', { name: 'Добавить' });
+    expect(addMenu.querySelectorAll('.ui-menu-item__leading .ui-icon')).toHaveLength(2);
+    expect(screen.getByRole('menuitem', { name: 'Тренировка' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Событие' })).toBeTruthy();
 
-    expect(await screen.findByRole('heading', { name: 'Событие' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Событие' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Событие' })).toBeTruthy();
+    expect(view.container.querySelector('.today-page')?.classList.contains('today-page--sheet-open')).toBe(true);
+    await waitFor(() => {
+      expect(view.container.querySelector('.ui-mezfit-navbar__identity')?.textContent).toContain('Событие');
+    });
+    const eventNavbarIcon = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-icon');
+    expect(eventNavbarIcon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
     expect(screen.getByRole('button', { name: 'Назад' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Событие' })).toBeNull();
+    expect(screen.queryByText('Экран создания события будет реализован отдельной задачей.')).toBeNull();
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
+
+    expect(document.querySelector('.ui-mezfit-bottom-sheet__backdrop')).toBeNull();
+    await waitFor(() => {
+      expect(window.history.state?.__mezfitNavigationToken).toBeTruthy();
+    });
+    const historyBack = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+    const navbarBack = screen.getByRole('button', { name: 'Назад' });
+    fireEvent.click(navbarBack);
+    fireEvent.animationEnd(navbarBack);
+    expect(historyBack).toHaveBeenCalledTimes(1);
+    act(() => {
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    const restoredFab = await screen.findByRole('button', { name: 'Добавить' });
+    fireEvent.click(restoredFab);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Тренировка' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Тренировка' })).toBeTruthy();
+    await waitFor(() => {
+      expect(view.container.querySelector('.ui-mezfit-navbar__identity')?.textContent).toContain('Тренировка');
+    });
+    const workoutNavbarIcon = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-icon');
+    expect(workoutNavbarIcon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
   });
 
   it('loads Today first, renders it, then warms a +/-31 day cache without blocking the first result', async () => {

@@ -18,7 +18,7 @@ export { NestedBadges, type NestedBadgeItem, type NestedBadgesProps } from './Ne
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { LiftedGlass, type LiftedGlassProps } from './LiftedGlass';
 export { GlassSurface, GlassSurfaceProvider, type GlassBezelHighlights, type GlassSurfaceHalo, type GlassSurfaceProps, type GlassSurfaceProviderProps } from './GlassSurface';
-export { MezfitDialog, MezfitDialogButton, MezfitPanel, MezfitPopover, MezfitSearchbar, MezfitSidePanel, MezfitSlider, MezfitTopPanel, type MezfitDialogButtonProps, type MezfitDialogProps, type MezfitPanelProps, type MezfitPopoverProps, type MezfitSearchbarProps, type MezfitSidePanelProps, type MezfitSidePanelSurface, type MezfitSliderProps, type MezfitSliderSize, type MezfitTopPanelProps } from './konsta-mezfit';
+export { MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitPanel, MezfitPopover, MezfitSearchbar, MezfitSidePanel, MezfitSlider, MezfitTopPanel, type MezfitBottomSheetProps, type MezfitDialogButtonProps, type MezfitDialogProps, type MezfitPanelProps, type MezfitPopoverProps, type MezfitSearchbarProps, type MezfitSidePanelProps, type MezfitSidePanelSurface, type MezfitSliderProps, type MezfitSliderSize, type MezfitTopPanelProps } from './konsta-mezfit';
 export { BEZEL_ONLY_GLASS, BLUE_GLASS, CLEAR_GLASS, FROSTED_GLASS, GLASS_PRESETS, LENS_GLASS, LIQUID_CONVEX_GLASS, MODAL_GLASS, MODAL_TUNED_GLASS, SMOKED_GLASS, resolveGlassMaterial, resolveGlassRadius, type GlassMaterial, type GlassMaterialOverrides, type GlassPresetName, type GlassShape } from './glassMaterial';
 export { SortableList, type SortableListItem, type SortableListProps } from './SortableList';
 
