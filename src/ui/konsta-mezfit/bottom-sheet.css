@@ -1,27 +1,8 @@
-.ui-mezfit-bottom-sheet__backdrop {
-  position: fixed;
-  z-index: 38;
-  inset: 0;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  background: rgb(0 0 0 / 0.62);
-  transition:
-    opacity 400ms ease,
-    visibility 0s linear 400ms;
-}
-
-.ui-mezfit-bottom-sheet__backdrop[data-state='opened'] {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transition-delay: 0s;
-}
-
 .ui-mezfit-bottom-sheet {
-  z-index: 39 !important;
-  height: calc(100dvh - var(--navigation-navbar-bottom, 3.75rem));
-  max-height: calc(100dvh - var(--navigation-navbar-bottom, 3.75rem));
+  --ui-mezfit-bottom-sheet-halo-clearance: 36px;
+  z-index: 41 !important;
+  height: calc(100dvh - var(--navigation-navbar-bottom, 3.75rem) - var(--ui-mezfit-bottom-sheet-halo-clearance));
+  max-height: calc(100dvh - var(--navigation-navbar-bottom, 3.75rem) - var(--ui-mezfit-bottom-sheet-halo-clearance));
   min-height: 0;
   display: flex;
   flex-direction: column;
