@@ -16,6 +16,9 @@ describe('MezfitBottomSheet CSS contract', () => {
     expect(bottomSheetCss).toContain('max-height: calc(100vh - var(--navigation-navbar-bottom');
     expect(bottomSheetCss).toContain('max-height: calc(100dvh - var(--navigation-navbar-bottom');
     expect(bottomSheetCss).toContain('z-index: 41 !important');
+    expect(bottomSheetCss).toContain('width: calc(100vw - var(--k-safe-area-left, 0px) - var(--k-safe-area-right, 0px))');
+    expect(bottomSheetCss).toContain('max-width: 720px');
+    expect(bottomSheetCss).toContain('margin-inline: auto');
   });
 
   it('uses the requested opaque black canvas and the schedule DnD lifted halo without a dimming backdrop', () => {
