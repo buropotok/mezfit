@@ -1,536 +1,433 @@
 # Mezfit Local-First Storage and Synchronization Architecture
 
-**Status:** Accepted architectural direction  
-**Scope:** Telegram Mini App frontend, local persistence, integration layer, synchronization with Cloudflare Worker/D1  
-**Goal:** remove network latency from normal user interactions and establish a portable data architecture for future Android/iOS applications.
+**Status:** MVP architecture  
+**Scope:** Telegram Mini App local storage, frontend integration layer, and synchronization with Cloudflare Worker/D1  
+**Goal:** make normal product interaction independent of REST/VPN latency while keeping D1 as durable server storage.
 
-## 1. Core decision
+## 1. Core model
 
-Mezfit uses a local-first data flow.
+Mezfit is local-first.
 
-React UI does not directly use REST as its normal persistence path and does not depend on the physical storage implementation.
+Normal UI work goes through the local database:
 
-```text
-React UI
-    ↓
-Application / Domain Repository API
-    ↓
-Local Storage
-    ↓
-Sync Engine
-    ↓
-Remote Sync Gateway
-    ↓
-HTTP API
-    ↓
-Cloudflare Worker
-    ↓
-D1
-```
+    React UI
+       ↓
+    Repository / application service
+       ↓
+    IndexedDB
 
-For the Telegram Mini App, the physical local database is IndexedDB behind a replaceable adapter, initially expected to use Dexie.
+Server synchronization is separate:
 
-```text
-Repository API
-    ↓
-LocalStore
-    ↓
-IndexedDB adapter
-    ↓
-Dexie / IndexedDB
-```
+    IndexedDB
+       ↓
+    Sync Engine
+       ↓
+    HTTP API
+       ↓
+    Cloudflare Worker
+       ↓
+    D1
 
-Product components, hooks and domain repositories must not import Dexie or IndexedDB directly.
+The UI must not wait for REST for ordinary reads and ordinary editable data entry.
 
-A future native application can replace only the physical adapter:
+D1 remains durable server storage and the server trust boundary.
 
-```text
-Telegram Mini App → IndexedDB adapter
-Android / iOS     → SQLite adapter
-```
+For the Telegram Mini App, local persistence is IndexedDB through a replaceable adapter. Dexie is the preferred initial implementation.
 
-The repository contracts, sync engine, snapshot contracts and most React/domain code should remain unchanged.
+Product components must not import Dexie or IndexedDB directly.
 
-## 2. Role of local storage and D1
+This boundary also keeps future native ports simple:
 
-D1 remains authoritative durable server storage and the server trust boundary.
+    Telegram Mini App → IndexedDB adapter
+    Android / iOS     → SQLite adapter
 
-The local database is the device working copy and may temporarily contain newer user state than the last synchronized server state.
+Repository contracts and most React/domain code remain unchanged.
 
-Normal mutation flow:
+## 2. Integration layer
 
-```text
-UI action
-   ↓
-local transaction
-   ├── mutate domain data
-   └── mark sync scope dirty
-   ↓
-UI immediately observes the new local state
+The existing src/api.ts remains the remote HTTP transport layer.
 
-independently:
+Product components migrate from:
 
-Sync Engine
-   ↓
-snapshot
-   ↓
-server
-```
+    React component → src/api.ts → REST
 
-Network latency must not be on the critical path of ordinary user data entry.
+to:
 
-UI reads normal working data from local storage.
+    React component
+          ↓
+    Repository / application service
+          ↓
+    LocalStore
 
-## 3. Integration layer
+The Sync Engine is the normal path from locally edited domain data to the server.
 
-The existing `src/api.ts` remains the remote HTTP transport layer.
+Recommended structure:
 
-Product components must migrate away from directly calling persistence-oriented REST functions. The integration boundary becomes:
+    src/data/
+      repositories/
+      local/
+        indexedDb/
+      sync/
+      remote/
 
-```text
-React component
-      ↓
-Domain Repository
-      ↓
-LocalStore
-```
+Exact file names may evolve, but the architectural rule is fixed:
 
-Remote synchronization is separate:
+> React works with domain repositories, not with REST, Dexie, or IndexedDB directly.
 
-```text
-SyncEngine
-    ↓
-RemoteSyncGateway
-    ↓
-src/api.ts / sync HTTP API
-```
+## 3. Local database
 
-A component may call:
+The local database is a normalized working copy of the Mezfit domain, not a temporary screen cache.
 
-```ts
-workoutRepository.saveSet(sessionId, setId, fact)
-```
+Expected stores include:
 
-It must not call Dexie/IndexedDB directly and, after migration of that surface, must not call the old REST mutation directly.
+    users
+    coach_clients
 
-Recommended ownership:
+    exercise_definitions
+    exercise_definition_overrides
+    exercise_favourites
 
-```text
-src/data/
-  repositories/
-  local/
-    indexedDb/
-  sync/
-  remote/
-  react/
-```
+    training_plans
+    program_phases
+    program_days
+    program_exercises
+    program_sets
 
-Exact file names may evolve, but these architectural boundaries must remain explicit.
+    workout_occurrences
 
-## 4. Local data shape
+    workout_sessions
+    session_exercises
+    session_sets
 
-The local database stores normalized domain entities rather than one opaque JSON document.
+    sync_scopes
+    sync_remote_state
 
-Expected logical stores include the existing domain graph, for example:
+The exact IndexedDB schema is defined during implementation, but it must preserve the existing domain relationships.
 
-```text
-users
-coach_clients
+### What must be local
 
-training_plans
-program_phases
-program_days
-program_exercises
-program_sets
+Client Mode keeps the client's working domain data locally.
 
-workout_occurrences
+Coach Mode keeps the working data for all of the coach's clients locally, including historical workout execution required for Previous/Plan/Fact, charts and analytics.
 
-workout_sessions
-session_exercises
-session_sets
+The following surfaces must open from IndexedDB without waiting for REST after initial hydration:
 
-settings
+- client list;
+- calendar;
+- exercise catalogue;
+- programs already hydrated locally;
+- workout/session history;
+- analytics based on hydrated history.
 
-sync_scopes
-```
+Exercise selection must never require reloading the catalogue from the server on each open.
 
-The synchronization payload may be a larger JSON snapshot. Snapshot transport format must not dictate the physical local database schema.
+Media files are a separate cache concern. IndexedDB stores exercise metadata/reference URLs, not a required permanent copy of all images/video.
 
-```text
-normalized local DB
-        ↓
-SnapshotBuilder
-        ↓
-JSON snapshot
-        ↓
-server
-```
+## 4. Stable IDs
 
-## 5. Stable identity
-
-Entities that can be created locally before server synchronization need a stable client-generated synchronization identity, normally UUID-based.
-
-Existing D1 integer IDs may remain server-internal identities.
+Objects that can be created locally before the server sees them need a stable client-generated ID, normally UUID.
 
 Conceptually:
 
-```text
-id       // D1/internal server id where applicable
-sync_id  // stable cross-device identity
-```
+    sync_id    // stable identity across local DB, D1 and future native clients
+    server_id  // existing D1 integer ID where still useful
 
-This is required so local graphs can be created without temporary numeric IDs that later need relationship rewrites.
+Local relationships should use stable IDs so creating data offline does not require temporary numeric IDs followed by graph rewrites.
 
-The exact list of entities receiving `sync_id` is defined as each domain is migrated.
+## 5. Synchronization model
 
-## 6. Synchronization scopes
+Synchronization sends current snapshots, not a replay of every UI action.
 
-Synchronization is snapshot-based, not a replay of every CRUD event.
+The MVP does not need a generic event-sourcing system and does not need a universal merge engine.
 
-### Dynamic scope
+Each independently editable domain area has a synchronization scope. Examples:
 
-The primary dynamic scope is:
+    occurrence:{occurrenceSyncId}
+    workout-session:{sessionSyncId}
+    program:{programSyncId}
+    exercise-coach:{coachId}
+    exercise-client:{coachId}:{clientId}
 
-```text
-client + calendar day
-```
+A scope stores minimal synchronization metadata:
 
-Canonical conceptual key:
+    scope_key
+    scope_type
 
-```text
-client-day:{clientId}:{YYYY-MM-DD}
-```
+    local_revision
+    server_revision
 
-In Client Mode, `clientId` is the current client.
+    status              // clean | dirty | syncing | retry_wait | conflict
+    attempt_count
+    next_retry_at
+    last_error
 
-In Coach Mode, the selected client is explicit. A coach does not push all data for all clients when one client's day changes.
+    inflight_request_id
+    inflight_revision
+    remote_changed
 
-The day scope contains the current synchronized state belonging to that client/day, including relevant workout occurrences and workout execution state.
+A local mutation is one IndexedDB transaction:
 
-### Static scopes
+    BEGIN
 
-A program and all of its children are a separate static scope:
+    change domain data
+    increment local_revision
+    mark scope dirty
 
-```text
-program:{programId}
-```
+    COMMIT
 
-The program graph includes:
+The UI sees the result immediately.
 
-```text
-training_plan
-program_phases
-program_days
-program_exercises
-program_sets
-```
+### Snapshot write
 
-A program is not a calendar entity. Its date attributes do not make it part of a day scope.
+The Sync Engine sends the current scope snapshot with:
 
-Settings are also a separate static scope.
+    requestId
+    scopeKey
+    baseServerRevision
+    snapshot
 
-## 7. Dirty scopes instead of CRUD event replay
+For every snapshot write, the Worker first authenticates the actor, authorizes that actor for the specific scope and validates the payload. Only then does it compare baseServerRevision and apply the mutation.
 
-UI mutations may generate an internal dirty signal/event, but synchronization does not need to preserve and replay every intermediate field mutation.
+The server accepts the snapshot only if the current server revision still matches baseServerRevision, then increments it.
 
-The persistent sync state is scope-oriented.
+If the HTTP response is lost, the same request can be retried with the same requestId so the server can return the same result instead of applying the change twice.
 
-Conceptual `sync_scopes` data:
+When a write is acknowledged:
 
-```text
-scope_key
-scope_type
+- always update server_revision from the acknowledgement;
+- if remote_changed was recorded while the request was in flight, preserve that flag and pull the latest server snapshot before the scope may become clean;
+- otherwise, if local_revision still equals inflight_revision, mark the scope clean;
+- if the user changed the scope again while the request was in flight, keep the scope dirty and send the newer snapshot next.
 
-local_revision
-last_synced_revision
+If the server revision no longer matches baseServerRevision, the scope becomes conflict.
 
-status
+There is no automatic merge engine in MVP. Because Mezfit deliberately separates write ownership, conflicts should be exceptional rather than normal operation.
 
-attempt_count
-next_retry_at
-last_error
+### Network batching
 
-inflight_revision
-inflight_request_id
+Day/client/date-range payloads may still be used to reduce HTTP request count during hydration or synchronization.
 
-server_revision
-```
+Batching is only transport optimization. It does not change ownership or turn all data for a day into one shared revision.
 
-Each local domain mutation must atomically:
+## 6. Retry and manual synchronization
 
-```text
-BEGIN
-mutate local domain data
-increment scope local_revision
-mark scope dirty
-COMMIT
-```
+Temporary network failures do not make the local user action fail.
 
-If a user changes a value several times before synchronization, only the latest authoritative scope snapshot needs to reach the server.
+For offline, timeout, VPN failure, retryable 5xx or 429:
 
-## 8. Ordering and inflight synchronization
+    keep local data
+    ↓
+    keep scope dirty
+    ↓
+    retry with backoff
 
-A dirty scope has an ordered local revision.
+A failed scope does not block unrelated scopes.
 
-When Sync Engine sends revision N, it must remember which revision/request is inflight.
+If automatic retries are exhausted, the data remains local.
 
-If the HTTP result is ambiguous because a VPN/network connection drops after the server may have applied the request, the same logical request must be retryable idempotently.
+The user action Синхронизировать simply wakes the same Sync Engine and retries eligible dirty scopes. It does not create a second direct REST mutation path and does not bypass authorization or a real conflict.
 
-After acknowledgement:
+Only one request for the same scope is sent at a time.
 
-- if current local revision still equals the acknowledged revision, the scope can become clean;
-- if local revision advanced while the request was in flight, the acknowledged revision is recorded but the scope remains dirty and the newer snapshot is sent next.
 
-This prevents older state from overwriting newer state while still allowing intermediate local changes to collapse into a current snapshot.
+## 7. Receiving changes made on the server
 
-## 9. Retry and manual synchronization
+This is the mechanism that lets a client learn that a trainer changed a program.
 
-Retry is owned by Sync Engine.
+The reliable mechanism is a durable server change feed + cursor.
 
-Expected states include:
+Whenever a server-side change affects data that another user/device should refresh, the Worker records an invalidation:
 
-```text
-clean
-dirty
-syncing
-retry_wait
-blocked
-conflict
-```
+    change_id
+    recipient_user_id
+    scope_key
+    scope_revision
+    created_at
 
-Temporary failures such as offline, timeout, 429 and retryable 5xx responses use bounded exponential backoff with jitter.
+The local database stores:
 
-After automatic retry limits are exhausted, local user data remains intact.
+    remote_cursor
 
-The user can explicitly request synchronization.
+Catch-up:
 
-A manual "Синхронизировать" action must wake/requeue Sync Engine. It must not create a second direct REST mutation path.
+    remote_cursor = N
+    ↓
+    GET /api/sync/changes?after=N
+    ↓
+    receive changed scope keys
+    ↓
+    clean local scope → pull and apply current snapshot
+    dirty/syncing scope → set remote_changed; do not overwrite local data
+    ↓
+    advance remote_cursor
 
-## 10. Server sync API
+Example:
 
-The worker sends/receives scope snapshots rather than interpreting a client-side event log.
+    trainer edits program
+    ↓
+    program saved in D1
+    ↓
+    change_feed records program:{id} for the client
+    ↓
+    client polls after its cursor
+    ↓
+    client sees program:{id} changed
+    ↓
+    fresh program snapshot is loaded in background
+    ↓
+    IndexedDB updates
+    ↓
+    React updates from local DB
 
-Conceptually:
+### When catch-up runs
 
-```text
-PUT /api/sync/client-days/:clientId/:date
-GET /api/sync/client-days/:clientId/:date
+At minimum:
 
-PUT /api/sync/programs/:programSyncId
-GET /api/sync/programs/:programSyncId
-```
+- application startup;
+- Telegram foreground/activation;
+- network recovery;
+- periodic polling while the Mini App is open;
+- after successful relevant server control operations.
 
-Exact routes are implementation details and may differ.
+### Push/WebSocket
 
-The server applies snapshots to the existing relational D1 domain model. Snapshot JSON does not replace the relational server model.
+WebSocket may be added later as an optimization.
 
-Server-side validation and authorization remain mandatory.
+Its job is only to say:
 
-## 11. Authorization and trust
+    remote changes are available
 
-Local storage is never proof of identity, role, ownership or authorization.
+After that the client performs the same cursor catch-up.
 
-The Cloudflare Worker remains the trust boundary and must derive the authenticated actor from trusted authentication, then validate domain authorization before applying synchronization data.
+If remote_changed is set for a locally dirty scope, the next outbound CAS decides the local write result: success means that snapshot was accepted, while revision mismatch means conflict. The remote_changed marker is not cleared by that ACK; after the ACK, the client pulls the latest server snapshot and only then decides whether the scope is fully synchronized. Incoming synchronization never silently overwrites unsynchronized local edits.
 
-Local changes to IDs or ownership fields cannot grant permissions.
+Therefore correctness does not depend on WebSocket delivery. If Telegram is closed, VPN drops, or a push signal is missed, the next cursor catch-up still finds the program change.
 
-## 12. WorkoutSession FACT ownership
+For MVP, polling + cursor is sufficient.
 
-Workout execution is the only domain area where write ownership may move between users over the lifetime of a session.
+### Initial hydration
 
-There is still only one writer at a time.
+On a new or empty local database:
 
-Conceptually, a session distinguishes:
+    authenticate
+    ↓
+    obtain bootstrap cursor N
+    ↓
+    hydrate required local data
+    ↓
+    run change-feed catch-up after N
+    ↓
+    continue normal operation
 
-```text
-client/user whose workout this is
-user who started/created execution
-current FACT editor/owner
-```
+This prevents losing a server change that happens while the initial local copy is being populated.
 
-A coach may own FACT entry during an in-person workout and later explicitly transfer edit ownership to the client (or another authorized user).
+Hydration is progressive and must not block already available local UI.
 
-"Shared" FACT means sequential ownership across the session lifetime, not concurrent writes by multiple users.
+Recommended order for Coach Mode:
 
-The current owner is the only actor authorized to push new FACT mutations.
+    1. identity + client list
+    2. visible calendar/current workout state
+    3. exercise catalogue
+    4. current programs
+    5. remaining client history
 
-## 13. Ownership transfer is control plane
+## 8. Domain-specific exceptions
 
-WorkoutSession edit-ownership transfer is not an ordinary offline snapshot mutation.
+Most product mutations are local-first.
 
-It changes write authority and requires server coordination.
+A few operations intentionally remain server-confirmed because they establish an authoritative execution boundary.
 
-Therefore ownership transfer is a synchronous/server-confirmed control-plane operation.
+### Workout Start
 
-After confirmation, local state is reconciled through synchronization.
+Current workout Start remains server-confirmed because Start fresh-reads the selected PLAN, materializes the session snapshot and changes the persisted workout lifecycle.
 
-The old owner must no longer be allowed to push new FACT changes created after ownership has moved.
+After the response, the resulting session is written to IndexedDB and all further normal FACT editing reads/writes locally.
 
-## 14. Data plane versus control plane
+### WorkoutSession FACT ownership transfer
 
-Most domain data uses the local-first data plane:
+FACT has one writer at a time.
 
-```text
-UI → Local DB → asynchronous Sync Engine → server
-```
+A workout may start under the trainer and later be handed to the client, but editing is never parallel.
 
-Operations that change authentication, authorization relationships or exclusive write authority remain server-coordinated control-plane operations.
+Transfer flow:
 
-Examples include:
+    temporarily stop FACT editing on the old owner
+    ↓
+    sync the latest workout-session snapshot
+    ↓
+    server confirms ownership transfer
+    ↓
+    update the local session ownership
+    ↓
+    new owner may edit after receiving the updated session
 
-```text
-authentication
-coach/client relationship changes
-WorkoutSession FACT ownership transfer
-future operations that change exclusive write authority
-```
+If the latest FACT cannot be synchronized, ownership transfer does not complete.
 
-## 15. React behavior
+No universal shared-write merge is needed.
 
-React must render from local domain state.
+### Calendar lifecycle display
 
-A successful local transaction is a successful local user operation.
+Do not create a second independent optimistic write only to mirror workout lifecycle in workout_occurrence.
 
-Network synchronization state is separate from domain mutation success.
+For local UI, effective in_progress/completed state can be derived from the linked local workout_session while the server-side occurrence status catches up through the accepted lifecycle operation/synchronization.
 
-For example, saving a set while offline must update the workout immediately and may expose a separate sync indicator, but must not present the set entry itself as failed merely because the server is temporarily unreachable.
+## 9. Local analytics and performance
 
-Dexie live queries or an equivalent mechanism may be used inside the integration layer, but product components must not depend on Dexie-specific APIs.
+Coach analytics must be computed from local persisted history.
 
-## 16. Startup and refresh
+The local schema/indexes should support the main access patterns:
 
-When local data exists:
+    client
+    date/date range
+    exercise
+    workout session
 
-```text
-open app
-↓
-render local state
-↓
-background sync/refresh
-```
+If analytics later becomes expensive, rebuildable local projections may be added. They are caches derived from normalized local domain data, not new synchronization sources of truth.
 
-On a first installation or empty local database:
+The first product goal is straightforward:
 
-```text
-authenticate
-↓
-fetch required server scopes
-↓
-populate local DB
-↓
-render
-```
+> weeks and months of client history should be browsable and chartable without synchronous REST calls.
 
-Coach Mode must not eagerly download all historical data for every client. Load/synchronize the selected client and required visible scopes.
+## 10. Migration plan
 
-## 17. Sync triggers and Telegram WebView lifecycle
+Do not rewrite the entire application in one PR.
 
-The architecture must not assume JavaScript keeps running after Telegram closes/suspends the Mini App.
+First create the infrastructure:
 
-Sync triggers include:
+    IndexedDB/Dexie adapter
+    Repository contracts
+    sync_scopes
+    Sync Engine
+    RemoteSyncGateway
+    change-feed cursor
 
-```text
-local mutation
-application startup
-foreground/resume
-online/network recovery
-navigation into stale data
-manual sync
-periodic retry while the app is alive
-```
+Then migrate coherent product surfaces:
 
-Dirty state persists in IndexedDB and resumes synchronization on the next app activation.
+    1. client directory + initial hydration
+    2. exercise catalogue
+    3. calendar / workout occurrences
+    4. WorkoutSession / FACT
+    5. programs
+    6. remaining persistent data and analytics
 
-## 18. Worker implementation
+When a surface is migrated, its UI reads from IndexedDB and its normal mutations write to IndexedDB. The old direct REST mutation path for that surface is then removed.
 
-"Sync worker" is a logical responsibility.
+Implementation PRs should test the synchronization behavior they introduce, but this architecture does not require solving unrelated distributed-systems scenarios in advance.
 
-The first implementation may be an in-app async service. It does not have to be a browser Web Worker.
+## 11. Architectural invariant
 
-IndexedDB and HTTP are already asynchronous.
+Normal Mezfit behavior:
 
-A Dedicated Web Worker may be introduced later if profiling demonstrates a need. Service Worker background execution is not a required foundation of Mezfit synchronization.
+    UI → local DB
 
-## 19. Migration strategy
+Background replication:
 
-The migration is incremental by domain surface, not a single rewrite.
+    local DB ↔ Sync Engine ↔ D1
 
-First establish:
+Incoming server changes:
 
-```text
-Repository contracts
-LocalStore
-IndexedDB adapter
-SyncEngine
-sync metadata
-RemoteSyncGateway
-```
+    D1 change → change feed → cursor catch-up → local DB → UI
 
-Then migrate a complete vertical slice.
+The network is replication infrastructure, not part of the normal UI critical path.
 
-The first preferred slice is WorkoutSession / FACT because it has the highest latency sensitivity and exercises the important synchronization guarantees.
-
-Then migrate:
-
-```text
-client + day / calendar
-program static scopes
-settings
-remaining persistent surfaces
-```
-
-Once a domain surface is migrated, it must not have two competing mutation paths. Remove the obsolete direct REST mutation path for that surface.
-
-## 20. Native portability
-
-Storage is accessed behind platform-independent interfaces.
-
-Telegram:
-
-```text
-Repository
-   ↓
-LocalStore
-   ↓
-IndexedDbLocalStore
-```
-
-Future native application:
-
-```text
-Repository
-   ↓
-LocalStore
-   ↓
-SQLiteLocalStore
-```
-
-User data moves between platforms through server synchronization:
-
-```text
-IndexedDB
-   ↓ sync
-D1
-   ↓ sync
-SQLite
-```
-
-Direct export of Telegram IndexedDB into the native application is not required.
-
-## 21. Architectural invariant
-
-After migration, ordinary Mezfit persistence follows:
-
-```text
-UI → local domain storage
-```
-
-and synchronization follows independently:
-
-```text
-local domain storage ↔ Sync Engine ↔ server
-```
-
-REST is not part of the critical path for ordinary user data entry.
-
-Server-coordinated control-plane operations are the deliberate exception.
+Server-confirmed control operations are deliberate, small exceptions.
