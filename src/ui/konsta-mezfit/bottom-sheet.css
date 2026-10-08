@@ -5,7 +5,6 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  touch-action: none;
   background: rgb(0 0 0 / 0.62);
   transition:
     opacity 400ms ease,
