@@ -187,6 +187,7 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
     popoverItems: [
       { id: 'add-day', icon: 'plus' as const, label: 'День' },
       { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: openPhaseCreation },
+      { id: 'add-exercise', icon: 'plus' as const, label: 'Упражнение' },
     ],
   } : null, [details, openPhaseCreation]);
   useNavigationSurfaceFloatingAction(floatingAction);
