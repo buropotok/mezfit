@@ -23,6 +23,7 @@ describe('MezfitBottomSheet CSS contract', () => {
 
   it('uses the requested opaque black canvas and the schedule DnD lifted halo without a dimming backdrop', () => {
     expect(bottomSheetCss).toContain('background: #000 !important');
+    expect(bottomSheetCss).toContain('border-radius: var(--ui-radius-md) var(--ui-radius-md) 0 0 !important');
     expect(bottomSheetCss).toContain('0 0 18px rgb(255 255 255 / 0.16)');
     expect(bottomSheetCss).toContain('0 0 36px rgb(170 205 255 / 0.10)');
     expect(bottomSheetCss).not.toContain('backdrop');
