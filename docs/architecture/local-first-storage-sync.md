@@ -222,7 +222,7 @@ Every mutable consistency scope must satisfy all of the following:
 
 | Domain | Consistency scope | Writer / authority | Notes |
 | --- | --- | --- | --- |
-| Coach/client relationship | `relationship:{coachId}:{clientId}` | server-coordinated relationship state | Used to determine server-side authorization where the existing product model requires it |
+| Coach/client relationship | `relationship:{coachId}:{clientId}` | server-owned replicated state | Used by existing reads/authorization; this document does not define new relationship lifecycle operations |
 | Scheduled occurrence | `occurrence:{occurrenceSyncId}` | actor allowed by occurrence edit rules | Date/time are fields of the occurrence; cross-day reschedule remains one scope |
 | Workout execution | `workout-session:{sessionSyncId}` | current FACT owner | Contains frozen PLAN + exercises + sets + FACT; separate from calendar |
 | Program graph | `program:{programSyncId}` | program owner | Contains plan/phases/days/exercises/sets |
@@ -734,15 +734,15 @@ UI → Local DB → asynchronous Sync Engine → server
 
 Control-plane operations are those that establish identity, authorization, exclusive ownership, or require a fresh authoritative snapshot before execution.
 
-Current/future examples:
+Current examples:
 
 ```text
 authentication
-existing coach/client relationship flows
 WorkoutSession initialization/Start when fresh PLAN must be materialized
 WorkoutSession FACT ownership transfer
-other operations that change exclusive write authority
 ```
+
+Any future server-authoritative operation belongs here only after it exists in the product/domain model.
 
 A control-plane operation may still update local storage immediately after server confirmation so all subsequent UI reads continue to come from the local database.
 
