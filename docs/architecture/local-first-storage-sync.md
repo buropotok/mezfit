@@ -294,6 +294,8 @@ Client list and calendar are immediate-read surfaces. After the initial hydratio
 
 Analytics and chart queries are computed from local persisted history. Server-side aggregation may exist for other purposes, but ordinary coach analytics must not require a synchronous server request.
 
+IndexedDB indexes/read projections must support the hot analytical paths without scanning the whole replica. At minimum implementation design should support indexed lookup by client, workout date/range, exercise definition and session status. Rebuildable local materialized projections (for example exercise progress points) are allowed for performance; they are derived caches, not synchronization scopes, and must be reproducible from normalized local domain data.
+
 Media blobs are not part of this domain replica. Store media metadata/reference URLs in the local domain database and treat actual image/video caching as a separate concern.
 
 If a coach/client relationship is revoked or becomes inaccessible, the server must emit an authorization/revocation change and the client must purge locally retained private data that is no longer authorized.
@@ -663,19 +665,36 @@ Program edits after Start do not affect the session scope because PLAN was froze
 
 Adding an ad-hoc exercise or editing/reordering sets stays inside the workout-session scope. If the session references a newly created custom exercise not yet synchronized, the exercise dependency must be acknowledged first or included in a supported atomic group.
 
+### Timeout completion and offline FACT
+
+Server timeout completion must not discard legitimate FACT recorded locally while the device was offline.
+
+A timeout-only remote transition is a domain-reconcilable lifecycle change when the local dirty state was produced under the same ownership epoch. The session reconciler may apply the local FACT over the timeout transition and recompute canonical completion metadata from the latest accepted workout activity. An explicit ownership change/revocation is different and cannot be auto-rebased.
+
+### Historical correction
+
+Completed-session corrections continue to obey the same single-writer/ownership-epoch rule. If another authorized user must correct FACT, ownership/correction authority is transferred or granted explicitly by the server; completion does not create a free multi-writer state.
+
 ## 14. Ownership transfer is control plane
 
 WorkoutSession FACT ownership transfer changes write authority and is never an ordinary offline snapshot edit.
 
-The operation is synchronous/server-confirmed and atomically:
+The operation is synchronous/server-confirmed.
+
+Before ownership changes, the current owner's device must not leave unsynchronized FACT behind. Transfer therefore requires either a clean workout-session scope or an atomic transfer request that includes the current owner's latest frozen session snapshot and its `baseServerRevision`.
+
+The server atomically:
 
 ```text
-validate current owner/relationship
+validate current owner/relationship/ownership epoch
+CAS-apply included pending FACT snapshot when present
 increment ownership epoch
 set new fact owner
 increment workout-session server revision
 append recipient change-feed records
 ```
+
+If pending FACT cannot be committed, ownership does not transfer.
 
 After confirmation both users reconcile through the normal feed.
 
@@ -907,6 +926,27 @@ If leader failover races and two requests are sent anyway, server idempotency/CA
 
 A Dedicated Web Worker may be introduced later if profiling justifies it. Service Worker background execution is not required for correctness.
 
+### Storage durability and quota
+
+Because Coach Mode retains historical data for many clients, the local storage layer must monitor quota and request persistent browser storage when the environment supports it.
+
+Eviction policy is strict:
+
+```text
+never evict:
+  dirty
+  inflight
+  conflict
+  dependency metadata
+
+may evict under pressure:
+  clean historical scopes that are fully rehydratable
+  rebuildable analytics projections
+  media/browser caches
+```
+
+Evicting clean historical data changes hydration completeness, not synchronization correctness. UI must know whether a requested historical range is locally complete before presenting analytics as complete.
+
 ## 20. Migration strategy
 
 Migration is incremental by coherent ownership surface, not by individual REST function.
@@ -967,6 +1007,10 @@ The architecture is not considered implemented correctly unless these scenarios 
 | Two Mini App instances run | One sync leader; duplicate network work is harmless through CAS/idempotency |
 | Manual Sync pressed after retry exhaustion | Retries transport failures only; never bypasses auth/conflict/ownership checks |
 | Local schema upgrade fails | Unsynchronized data is preserved; destructive reset is forbidden while dirty state exists |
+| FACT ownership transfers while current owner has dirty sets | Pending session snapshot commits atomically with transfer or transfer fails |
+| Server timeout completes session while device has offline FACT | Same-ownership FACT is reconciled; timeout must not erase valid local results |
+| IndexedDB quota pressure occurs | Dirty/inflight data is never evicted; only clean rehydratable/derived data may be dropped |
+| Historical analytics range is partially evicted/not yet hydrated | UI knows completeness and hydrates missing clean scopes before claiming complete analytics |
 
 These are architecture-level acceptance cases. Implementation PRs should add automated tests for the subset they introduce.
 
