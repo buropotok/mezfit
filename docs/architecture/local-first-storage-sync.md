@@ -159,7 +159,6 @@ sync_scopes
 sync_groups
 sync_dependencies
 sync_remote_state
-authorization_leases
 ```
 
 The synchronization payload may be a larger JSON snapshot. Snapshot transport format must not dictate the physical local database schema.
@@ -223,7 +222,7 @@ Every mutable consistency scope must satisfy all of the following:
 
 | Domain | Consistency scope | Writer / authority | Notes |
 | --- | --- | --- | --- |
-| Coach/client relationship | `relationship:{coachId}:{clientId}` | server-coordinated control plane | Drives authorization/leases and revocation |
+| Coach/client relationship | `relationship:{coachId}:{clientId}` | server-coordinated relationship state | Used to determine server-side authorization where the existing product model requires it |
 | Scheduled occurrence | `occurrence:{occurrenceSyncId}` | actor allowed by occurrence edit rules | Date/time are fields of the occurrence; cross-day reschedule remains one scope |
 | Workout execution | `workout-session:{sessionSyncId}` | current FACT owner | Contains frozen PLAN + exercises + sets + FACT; separate from calendar |
 | Program graph | `program:{programSyncId}` | program owner | Contains plan/phases/days/exercises/sets |
@@ -298,7 +297,7 @@ IndexedDB indexes/read projections must support the hot analytical paths without
 
 Media blobs are not part of this domain replica. Store media metadata/reference URLs in the local domain database and treat actual image/video caching as a separate concern.
 
-If a coach/client relationship is revoked or becomes inaccessible, the server must emit an authorization/revocation change and the client must purge locally retained private data that is no longer authorized.
+Relationship/ownership changes are synchronized according to the existing product model. This document does not define new coach/client lifecycle actions.
 
 ## 8. Dirty scopes, atomic local writes and dependencies
 
@@ -490,8 +489,8 @@ offline / timeout / retryable 5xx
 401 / authentication expired
   → pause remote work and re-establish authenticated session
 
-authorization revoked / OWNER_CHANGED
-  → apply authorization/ownership lifecycle handling; do not retry as transport failure
+authorization denied / OWNER_CHANGED
+  → respect the existing server authorization/ownership result; do not retry as transport failure
 
 409 SCOPE_STALE
   → reconcile or conflict; do not blind-retry same stale snapshot
@@ -578,7 +577,7 @@ sync_change
   scope_key
   scope_type
   scope_revision
-  change_kind            // changed | deleted | revoked
+  change_kind            // changed | deleted
   target_identity
   created_at
 ```
@@ -587,9 +586,9 @@ Domain mutation, scope revision update and change-feed append must be one logica
 
 ### Recipient-specific change feed
 
-The feed is addressed to `recipient_user_id`, not authorized dynamically by the current scope relationship. This is essential for revocation: a user must still be able to receive the minimal `revoked` purge instruction after permission to read the underlying scope has already been removed.
+The feed is addressed to the authenticated recipient so each device only receives invalidations for data it can synchronize under the existing product rules.
 
-A revocation record contains purge identity/metadata only, never the now-private domain payload.
+The change feed does not create new authorization semantics. The server remains responsible for deciding whether a later snapshot read/write is allowed.
 
 ### Effective change pages
 
@@ -602,7 +601,7 @@ A revocation record contains purge identity/metadata only, never the now-private
 }
 ```
 
-Within the covered interval the server may coalesce repeated invalidations for the same scope to the latest effective revision/lifecycle state. A later `deleted` or `revoked` event supersedes earlier `changed` invalidations for that same scope.
+Within the covered interval the server may coalesce repeated invalidations for the same scope to the latest effective revision/lifecycle state. A later `deleted` event supersedes earlier `changed` invalidations for that same scope.
 
 The client may advance to `throughCursor` only after every effective change in the page is durably represented locally.
 
@@ -610,7 +609,7 @@ This prevents a sequence such as:
 
 ```text
 K     changed
-K + 1 revoked
+K + 1 deleted
 ```
 
 from deadlocking on an obsolete snapshot pull for K.
@@ -624,72 +623,38 @@ A pull for a known scope/change must normalize to one of:
 ```text
 snapshot(revision, payload)
 deleted(terminalRevision, targetIdentity)
-revoked(targetIdentity / purgeIdentity)
 ```
 
 A generic 404/403 is not enough for synchronization state machines.
 
-If a scope was deleted/revoked after the change page was produced but before the snapshot GET, the snapshot endpoint returns the terminal lifecycle result. The client applies tombstone/purge and can continue catch-up; a later duplicate destructive feed record is idempotent.
+If a scope was deleted after the change page was produced but before the snapshot GET, the snapshot endpoint returns the terminal deleted result. The client applies the tombstone/removal semantics and can continue catch-up; a later duplicate delete record is idempotent.
 
-### Deletion and revocation
+### Deletion
 
-- `deleted`: remove/tombstone the object from normal read models. If local unsynchronized edits exist, preserve them only as a blocked `remote_deleted` conflict payload; do not silently resurrect the object.
-- `revoked`: authorization loss wins. Purge locally retained data that this recipient no longer has an entitlement to retain, including dirty/inflight copies and conflict payloads for that entitlement.
-- Shared/reference data is removed only when no other active entitlement still authorizes it.
-- The cursor advances past destructive state only after the local tombstone/purge transaction commits.
+- `deleted`: remove/tombstone the object from normal local read models.
+- If local unsynchronized edits exist for the same object, preserve them as a blocked `remote_deleted` conflict payload rather than silently resurrecting or discarding them.
+- The cursor advances past deletion only after the local tombstone/removal transaction commits.
 
 ### Conditional writes
 
 Every snapshot write carries `requestId`, `scopeKey`, `schemaVersion` and `baseServerRevision`. Unsupported schema versions are rejected explicitly; clients must never interpret schema mismatch as an ordinary conflict.
 
-## 12. Authorization, authorization leases and cached private data
+## 12. Authorization and trust boundary
 
-Local storage is never proof of identity, role, relationship, ownership or authorization.
+Local storage is not proof of identity, role, relationship, ownership or authorization.
 
-The Cloudflare Worker is the trust boundary and derives the authenticated actor from trusted Telegram authentication before any sync read/write.
+The Cloudflare Worker remains the trust boundary for every remote read/write. It derives the authenticated actor from trusted Telegram authentication and applies the existing domain authorization rules before returning or accepting synchronized state.
 
-### Authorization manifest / lease
+Local-first availability has an explicit consequence: data that was already synchronized to this device remains available locally while the app is offline. This architecture does **not** introduce a new server lease, forced-online revalidation, or new coach/client relationship lifecycle solely for synchronization.
 
-To combine instant cached reads with revocation safety, relationship-protected local data is guarded by a server-issued authorization manifest/lease.
+If the product later introduces a requirement for immediate revocation/purge of previously cached relationship-private data, that is a separate security/product decision and must be designed explicitly because it trades off against offline availability.
 
-Conceptually:
+For the current architecture:
 
-```text
-authorization_leases
-  entitlement_key
-  relationship_id
-  subject ids
-  authorization_epoch
-  valid_until
-```
-
-Bootstrap/authentication returns the current manifest together with the initial change-feed boundary.
-
-Rules:
-
-- while a relationship entitlement lease is valid, cached authorized data may render immediately and work offline;
-- on online startup/foreground the app refreshes/catches up authorization in the background while valid leases permit immediate render;
-- if a protected entitlement lease has expired, relationship-protected data must not be rendered or mutated until authorization is refreshed;
-- if the device is offline with an expired lease, self-owned data and public/global reference data may remain available, but expired relationship-private data is gated;
-- a `revoked` feed event invalidates the lease immediately and triggers purge.
-
-A still-valid offline lease permits local work but is not a promise that a later server write will be accepted if authorization changed while the device was disconnected. When catch-up reveals revocation, server authorization wins; no manual retry may resurrect the relationship. Product UX may surface that unsynchronized work could not be submitted.
-
-This is a deliberate bounded-offline-access model. Immediate revocation while a device is completely offline is impossible without also forbidding all offline cached access; the lease defines that security/product boundary explicitly rather than leaving it accidental.
-
-### Recipient-specific purge
-
-Revocation purge is based on the recipient's entitlements, not a blanket deletion of every record mentioning the other user.
-
-Examples:
-
-- a coach who loses a client relationship purges that client's private replica and pair-owned scopes;
-- a client who loses a coach relationship purges coach-owned program/catalog data no longer authorized, but does not lose the client's own workout FACT/history merely because the coaching relationship ended;
-- retained client-owned history must not be left with dangling references: minimal reference/display metadata required to render retained FACT must either remain independently authorized or be materialized into the retained session/history projection;
-- globally shared exercise definitions remain;
-- data reachable through another still-valid entitlement remains.
-
-The local model must therefore retain enough ownership/entitlement metadata to compute purge safely.
+- server authorization always governs new remote reads and writes;
+- account-scoped IndexedDB prevents data from different authenticated Telegram users from sharing one replica;
+- existing relationship/ownership state is replicated as required by current product behavior;
+- synchronization must not invent new relationship actions or permissions that do not exist in the product model.
 
 ## 13. WorkoutSession scope and FACT ownership
 
@@ -726,7 +691,7 @@ Adding an ad-hoc exercise or editing/reordering sets stays inside the workout-se
 
 Server timeout completion must not discard legitimate FACT recorded locally while the device was offline.
 
-A timeout-only remote transition is a domain-reconcilable lifecycle change when the local dirty state was produced under the same ownership epoch. The session reconciler may apply the local FACT over the timeout transition and recompute canonical completion metadata from the latest accepted workout activity. An explicit ownership change/revocation is different and cannot be auto-rebased.
+A timeout-only remote transition is a domain-reconcilable lifecycle change when the local dirty state was produced under the same ownership epoch. The session reconciler may apply the local FACT over the timeout transition and recompute canonical completion metadata from the latest accepted workout activity. An explicit ownership change or server authorization rejection is different and cannot be auto-rebased.
 
 ### Historical correction
 
@@ -773,7 +738,7 @@ Current/future examples:
 
 ```text
 authentication
-coach/client invite/accept/deactivate/reactivate
+existing coach/client relationship flows
 WorkoutSession initialization/Start when fresh PLAN must be materialized
 WorkoutSession FACT ownership transfer
 other operations that change exclusive write authority
@@ -795,51 +760,33 @@ For example, saving a set while offline must update the workout immediately and 
 
 Dexie live queries or an equivalent mechanism may be used inside the integration layer, but product components must not depend on Dexie-specific APIs.
 
-## 17. Startup, hydration, authorization gating and immediate-read surfaces
+## 17. Startup, hydration and immediate-read surfaces
 
-Client list, calendar and exercise catalogue are immediate-read surfaces **when their cached entitlements are valid**.
+Client list, calendar and exercise catalogue are immediate local-read surfaces after they have been hydrated.
 
-### Normal launch with valid leases
+### Normal launch
 
 ```text
 open app
 ↓
 open account-scoped IndexedDB
 ↓
-validate cached authorization lease timestamps
+render available local state immediately
 ↓
-render authorized local state immediately
-↓
-background auth/feed catch-up + outbound sync
+background authentication/feed catch-up + outbound sync
 ```
 
-### Expired protected lease
-
-If relationship-protected cached data has no valid lease:
-
-```text
-open app
-↓
-do not render/mutate expired relationship-private scopes
-↓
-refresh authorization/bootstrap
-↓
-purge revoked entitlements
-↓
-unlock still-authorized local scopes
-```
-
-Self-owned/public/reference data can still render locally.
+A temporary network/VPN problem must not block already-synchronized working data.
 
 ### First installation / empty local database
 
-Bootstrap must establish both authorization and a change-feed boundary before baseline hydration.
+Bootstrap establishes identity and a change-feed boundary before baseline hydration.
 
-One bootstrap response should provide a consistent minimum envelope:
+One bootstrap response should provide:
 
 ```text
 authenticated user
-authorization manifest / lease set
+current relationship/ownership metadata required by existing product rules
 bootstrapStartCursor = N
 schema/version metadata
 ```
@@ -847,34 +794,34 @@ schema/version metadata
 Then:
 
 ```text
-persist manifest + N
+persist bootstrap metadata + N
 ↓
-hydrate authorized baseline scopes progressively
+hydrate baseline scopes progressively
 ↓
 run change-feed catch-up after N
 ↓
 declare replica current only after catch-up
 ```
 
-The implementation must never hydrate first and then set the cursor to the current feed head.
+The implementation must never hydrate first and then initialize the cursor to the current feed head.
 
 A mutation committed after N is either already present in a later hydration response or replayed by catch-up. Duplicate application is prevented by scope revisions.
 
-If a scope vanishes during hydration, its lifecycle response/feed event resolves it through normal deletion/revocation semantics.
+If a resource becomes unavailable during hydration, the server's synchronization lifecycle contract determines whether it is deleted/unavailable and catch-up continues without corrupting the local replica.
 
 ### Hydration priority
 
-Coach Mode intentionally retains the working history of all currently authorized clients, but hydration is progressive:
+Coach Mode intentionally retains the working history of all currently accessible clients, but hydration is progressive:
 
 ```text
-1. identity + authorization manifest + client directory
+1. identity + client directory
 2. visible calendar range + active/current sessions
 3. exercise catalogue
 4. current programs/program indexes
 5. remaining historical occurrence/session scopes
 ```
 
-History hydration never blocks an already-authorized UI surface that has local data.
+History hydration never blocks a UI surface that already has usable local data.
 
 The local database is account-scoped. Switching authenticated Telegram users never exposes another user's replica.
 
@@ -901,8 +848,6 @@ for each effective change:
       → persist pending remote revision + remote snapshot/lifecycle
   deleted
       → tombstone / remote_deleted conflict
-  revoked
-      → entitlement-aware purge
 ↓
 commit throughCursor only when all effective changes are durable locally
 ```
@@ -911,7 +856,7 @@ A dirty scope never blocks the global cursor merely because it cannot yet be mer
 
 ### Change disappears before pull
 
-If a `changed` invalidation races with deletion/revocation, the snapshot pull returns a terminal lifecycle result. The client does not loop forever on 404/403 waiting for a later feed record.
+If a `changed` invalidation races with deletion, the snapshot pull returns a terminal deleted lifecycle result. The client does not loop forever on a stale invalidation.
 
 ### Feed retention exceeded / RESET_REQUIRED
 
@@ -922,13 +867,13 @@ Required strategy:
 ```text
 freeze dirty/inflight local snapshots + dependencies
 ↓
-obtain fresh authorization manifest + bootstrap cursor
+obtain fresh bootstrap metadata + cursor
 ↓
 build a new baseline in a shadow local generation
 ↓
-purge pending work no longer authorized
+drop/reclassify pending work that the server no longer accepts under existing authorization rules
 ↓
-rebase still-authorized dirty scopes against new baseline
+rebase remaining dirty scopes against new baseline
    or mark conflict
 ↓
 atomically switch active local generation
@@ -960,7 +905,6 @@ local mutation
 application startup
 Telegram activated / foreground
 online/network recovery
-authorization lease refresh
 remote push hint
 periodic cursor poll while active
 manual sync
@@ -1018,7 +962,6 @@ LocalStore / IndexedDB schema
 stable sync IDs
 sync scope metadata + dirty bases
 dependencies / optional sync groups
-authorization manifest / leases
 bootstrap + durable change cursor
 SyncEngine + leader lease
 RemoteSyncGateway
@@ -1060,7 +1003,7 @@ The architecture is not considered implemented correctly unless these scenarios 
 | FACT ownership transfers coach → client | Ownership epoch changes atomically; old-owner pushes are rejected |
 | Session completes | Session transition is accepted once; linked occurrence completes atomically/server-side and emits its own invalidation |
 | Scope changes then is deleted before pull | Effective feed/lifecycle pull resolves to terminal delete; cursor cannot deadlock |
-| Relationship revoked while app sleeps | Expired/invalid lease prevents protected cached render; revoke purges recipient-specific unauthorized data |
+| Server later rejects access to a scope under existing authorization rules | Further remote reads/writes stop; local-first architecture does not invent a new relationship lifecycle |
 | WebSocket message is missed | Cursor catch-up still receives every durable change |
 | Change feed cursor expired | Shadow-generation resync preserves/rebases authorized dirty local work |
 | Two Mini App instances run | One sync leader; duplicate network work is harmless through CAS/idempotency |
@@ -1132,7 +1075,7 @@ UI/read model       → local normalized DB
 consistency         → independently versioned ownership scopes
 network efficiency  → client/day/range transport batches
 remote freshness    → durable recipient change feed + cursor
-authorization       → server truth + bounded local leases
+authorization       → existing server-side domain rules
 ```
 
 Transport batching must never redefine ownership or consistency boundaries.
