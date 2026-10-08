@@ -186,14 +186,18 @@ The Sync Engine sends the current scope snapshot with:
     baseServerRevision
     snapshot
 
+For every snapshot write, the Worker first authenticates the actor, authorizes that actor for the specific scope and validates the payload. Only then does it compare baseServerRevision and apply the mutation.
+
 The server accepts the snapshot only if the current server revision still matches baseServerRevision, then increments it.
 
 If the HTTP response is lost, the same request can be retried with the same requestId so the server can return the same result instead of applying the change twice.
 
 When a write is acknowledged:
 
-- if local_revision still equals inflight_revision, update server_revision and mark the scope clean;
-- if the user changed the scope again while the request was in flight, update server_revision but keep the scope dirty and send the newer snapshot next.
+- always update server_revision from the acknowledgement;
+- if remote_changed was recorded while the request was in flight, preserve that flag and pull the latest server snapshot before the scope may become clean;
+- otherwise, if local_revision still equals inflight_revision, mark the scope clean;
+- if the user changed the scope again while the request was in flight, keep the scope dirty and send the newer snapshot next.
 
 If the server revision no longer matches baseServerRevision, the scope becomes conflict.
 
@@ -295,7 +299,7 @@ Its job is only to say:
 
 After that the client performs the same cursor catch-up.
 
-If remote_changed is set for a locally dirty scope, the next outbound CAS decides the result: success means the local snapshot became the new server state; revision mismatch means conflict. Incoming synchronization never silently overwrites unsynchronized local edits.
+If remote_changed is set for a locally dirty scope, the next outbound CAS decides the local write result: success means that snapshot was accepted, while revision mismatch means conflict. The remote_changed marker is not cleared by that ACK; after the ACK, the client pulls the latest server snapshot and only then decides whether the scope is fully synchronized. Incoming synchronization never silently overwrites unsynchronized local edits.
 
 Therefore correctness does not depend on WebSocket delivery. If Telegram is closed, VPN drops, or a push signal is missed, the next cursor catch-up still finds the program change.
 
