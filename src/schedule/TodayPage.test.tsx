@@ -288,7 +288,9 @@ describe('TodayPage schedule loading', () => {
       expect(window.history.state?.__mezfitNavigationToken).toBeTruthy();
     });
     const historyBack = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
-    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    const navbarBack = screen.getByRole('button', { name: 'Назад' });
+    fireEvent.click(navbarBack);
+    fireEvent.animationEnd(navbarBack);
     expect(historyBack).toHaveBeenCalledTimes(1);
     act(() => {
       window.dispatchEvent(new PopStateEvent('popstate'));
