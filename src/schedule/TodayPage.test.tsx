@@ -256,19 +256,36 @@ afterEach(() => {
 });
 
 describe('TodayPage schedule loading', () => {
-  it('shows a plus FAB for the coach schedule and opens Event as level two', async () => {
+  it('opens coach schedule creation sheets from the FAB liquid popover', async () => {
     getScheduleMock.mockResolvedValue({ occurrences: [] });
     const view = render(<CoachTodayNavigationHarness />);
 
-    const fab = await screen.findByRole('button', { name: 'Добавить событие' });
+    const fab = await screen.findByRole('button', { name: 'Добавить' });
     const icon = fab.querySelector<HTMLElement>('.ui-icon');
     expect(icon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
 
     fireEvent.click(fab);
+    expect(screen.getByRole('menuitem', { name: 'Тренировка' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Событие' })).toBeTruthy();
 
-    expect(await screen.findByRole('heading', { name: 'Событие' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Событие' }));
+
+    expect(await screen.findByRole('dialog', { name: '+ Событие' })).toBeTruthy();
+    expect(screen.getByText('+ Событие')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Назад' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Событие' })).toBeNull();
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
+
+    const backdrop = document.querySelector<HTMLElement>('.ui-mezfit-bottom-sheet__backdrop');
+    if (!backdrop) throw new Error('Missing bottom sheet backdrop');
+    fireEvent.click(backdrop);
+
+    const restoredFab = await screen.findByRole('button', { name: 'Добавить' });
+    fireEvent.click(restoredFab);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Тренировка' }));
+
+    expect(await screen.findByRole('dialog', { name: '+ Тренировка' })).toBeTruthy();
+    expect(screen.getByText('+ Тренировка')).toBeTruthy();
   });
 
   it('loads Today first, renders it, then warms a +/-31 day cache without blocking the first result', async () => {
