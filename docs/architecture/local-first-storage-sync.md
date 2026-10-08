@@ -282,7 +282,10 @@ scope_key
 scope_type
 
 local_revision
-last_synced_revision
+last_synced_local_revision
+
+applied_server_revision
+pending_remote_revision
 
 status
 
@@ -292,8 +295,7 @@ last_error
 
 inflight_revision
 inflight_request_id
-
-server_revision
+inflight_base_server_revision
 ```
 
 Each local domain mutation must atomically:
@@ -308,20 +310,55 @@ COMMIT
 
 If a user changes a value several times before synchronization, only the latest authoritative scope snapshot needs to reach the server.
 
-## 9. Ordering and inflight synchronization
+`applied_server_revision` is the server revision already incorporated into the local working copy. If a remote change is observed while the scope is locally dirty or has an inflight write, it is recorded as `pending_remote_revision`; it must not be blindly applied over unsynchronized local data.
 
-A dirty scope has an ordered local revision.
+## 9. Ordering, conditional writes and conflict reconciliation
 
-When Sync Engine sends revision N, it must remember which revision/request is inflight.
+A dirty scope has an ordered local revision, while the server maintains an authoritative monotonic revision for that scope. These are different counters and must not be compared as if they were the same sequence.
 
-If the HTTP result is ambiguous because a VPN/network connection drops after the server may have applied the request, the same logical request must be retryable idempotently.
+When Sync Engine sends local revision N, it freezes:
 
-After acknowledgement:
+```text
+requestId
+localRevision = N
+baseServerRevision = applied_server_revision
+snapshot
+```
 
-- if current local revision still equals the acknowledged revision, the scope can become clean;
-- if local revision advanced while the request was in flight, the acknowledged revision is recorded but the scope remains dirty and the newer snapshot is sent next.
+The server write is compare-and-swap:
 
-This prevents older state from overwriting newer state while still allowing intermediate local changes to collapse into a current snapshot.
+```text
+accept only when currentServerRevision == baseServerRevision
+```
+
+If the comparison fails, the server returns a domain conflict such as `409 SCOPE_STALE` with the current server revision and applies nothing. Last-write-wins is not an implicit fallback.
+
+If the HTTP result is ambiguous because a VPN/network connection drops after the server may have applied the request, the client retries the same frozen snapshot with the same `requestId` and `baseServerRevision`. The server must make this request idempotent.
+
+After an accepted write:
+
+- the returned server revision becomes the new `applied_server_revision`;
+- if current local revision still equals the acknowledged local revision, the scope can become clean;
+- if local revision advanced while the request was in flight, the scope remains dirty, but the newer local state is now based on the newly acknowledged server revision and can be sent next.
+
+### Remote changes while local state is dirty
+
+Inbound synchronization must never replace a dirty or inflight working scope.
+
+When the change feed reports a newer server revision:
+
+- for a clean scope, pull and transactionally apply the remote snapshot, then update `applied_server_revision`;
+- for a dirty/inflight scope, persist `pending_remote_revision` and keep the local working data untouched.
+
+Before a dirty scope with `pending_remote_revision > applied_server_revision` can be pushed, it must reconcile with the newer remote state.
+
+The generic safe rule is **no silent merge and no silent overwrite**. A domain-specific reconciler may automatically rebase only when it can prove that the remote change and the local dirty state affect non-overlapping authoritative data. This is expected to be common because Mezfit deliberately separates write ownership between domains and uses a single FACT owner for an active `WorkoutSession`.
+
+If non-overlap cannot be proven, the scope enters `conflict`/blocked state. The local edit remains intact, the remote snapshot/revision remains available for resolution, and neither side is overwritten automatically.
+
+Examples that require conflict protection include the same coach editing the same mutable scope on two devices and concurrent edits to the same calendar occurrence.
+
+This prevents both failure modes: an inbound pull erasing offline local edits and a later stale outbound snapshot overwriting a newer server state.
 
 ## 10. Retry and manual synchronization
 
@@ -381,6 +418,8 @@ created_at
 ```
 
 The change feed contains invalidation/version metadata, not necessarily the full domain snapshot. The client uses it to decide which scope snapshot must be pulled.
+
+Snapshot writes must include `requestId` and `baseServerRevision`. The server applies a write only when the current scope revision equals `baseServerRevision`, then increments the server scope revision and appends the corresponding change-feed record as part of the same logical commit.
 
 Server-side validation and authorization remain mandatory.
 
@@ -514,12 +553,18 @@ GET /api/sync/changes?after=N
 ↓
 receive changed scope keys/revisions
 ↓
-pull and transactionally apply required snapshots
+for each change:
+  clean scope  → pull/apply snapshot
+  dirty scope  → persist pending_remote_revision, do not overwrite local data
 ↓
-advance local cursor only after successful local application
+advance cursor only after the change is durably represented locally
 ```
 
-A duplicate change or repeated pull is safe because scope revision/idempotency rules prevent regression.
+For a clean scope, "durably represented" means the remote snapshot has been transactionally applied. For a dirty/inflight scope, it means at least the pending remote revision/invalidation has been persisted so the conflict cannot be forgotten even if the app closes immediately afterward.
+
+The global cursor therefore does not have to stall behind one dirty scope, but it must never advance past a change that has neither been applied nor durably recorded as pending.
+
+A duplicate change or repeated pull is safe because server revisions, conditional writes and idempotency prevent regression.
 
 If a cursor is older than the retained change-feed window, the server returns a reset/full-resync requirement. The client rehydrates the authorized replica rather than guessing which changes were missed.
 
@@ -589,14 +634,15 @@ Then migrate complete vertical slices in an order that establishes immediate loc
 ```text
 1. identity/client directory bootstrap + remote change cursor
 2. exercise catalogue local replica
-3. calendar/local occurrence reads
+3. calendar/occurrence local reads + create/reschedule/cancel local mutations and outbound sync
 4. WorkoutSession / FACT local mutations and outbound sync
-5. client-day calendar mutations
-6. program static scopes
-7. settings and remaining persistent surfaces
+5. program static scopes
+6. settings and remaining persistent surfaces
 ```
 
-WorkoutSession / FACT remains the first high-frequency mutation slice because it has the highest latency sensitivity and exercises outbound ordering, retry and idempotency.
+Calendar read ownership and calendar mutations must move together. Once the calendar renders from IndexedDB, create/reschedule/cancel must also update the local authoritative calendar state immediately; a REST-only mutation path must not remain behind a local-read UI.
+
+WorkoutSession / FACT remains the highest-frequency mutation slice because it has the highest latency sensitivity and exercises outbound ordering, retry and idempotency.
 
 Once a domain surface is migrated, it must not have two competing mutation paths. Remove the obsolete direct REST mutation path for that surface.
 
