@@ -1,6 +1,6 @@
 .ui-mezfit-bottom-sheet {
   --ui-mezfit-bottom-sheet-halo-clearance: 36px;
-  z-index: 41 !important;
+  z-index: 39 !important;
   width: calc(100vw - var(--k-safe-area-left, 0px) - var(--k-safe-area-right, 0px));
   max-width: 720px;
   margin-inline: auto;
