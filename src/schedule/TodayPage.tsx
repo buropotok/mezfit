@@ -484,7 +484,6 @@ export function TodayPage({
       <MezfitBottomSheet
         opened={creationSheet !== null}
         label={creationSheet === 'workout' ? 'Тренировка' : 'Событие'}
-        onClose={() => setCreationSheet(null)}
       />
     </section>
   );
