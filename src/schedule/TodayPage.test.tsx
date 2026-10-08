@@ -273,7 +273,9 @@ describe('TodayPage schedule loading', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Событие' }));
 
     expect(await screen.findByRole('dialog', { name: 'Событие' })).toBeTruthy();
-    expect(await screen.findByText('Событие')).toBeTruthy();
+    await waitFor(() => {
+      expect(view.container.querySelector('.ui-mezfit-navbar__identity')?.textContent).toContain('Событие');
+    });
     const eventNavbarIcon = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-icon');
     expect(eventNavbarIcon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
     expect(screen.getByRole('button', { name: 'Назад' })).toBeTruthy();
@@ -290,7 +292,9 @@ describe('TodayPage schedule loading', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Тренировка' }));
 
     expect(await screen.findByRole('dialog', { name: 'Тренировка' })).toBeTruthy();
-    expect(await screen.findByText('Тренировка')).toBeTruthy();
+    await waitFor(() => {
+      expect(view.container.querySelector('.ui-mezfit-navbar__identity')?.textContent).toContain('Тренировка');
+    });
     const workoutNavbarIcon = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar__identity .ui-icon');
     expect(workoutNavbarIcon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
   });
