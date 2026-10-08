@@ -194,7 +194,7 @@ export function TodayPage({
 
   useEffect(() => {
     if (creationSheet !== null) {
-      const title = creationSheet === 'workout' ? '+ Тренировка' : '+ Событие';
+      const title = creationSheet === 'workout' ? 'Тренировка' : 'Событие';
       onNavigationContextChange({
         level: 2,
         title,
@@ -483,7 +483,7 @@ export function TodayPage({
 
       <MezfitBottomSheet
         opened={creationSheet !== null}
-        label={creationSheet === 'workout' ? '+ Тренировка' : '+ Событие'}
+        label={creationSheet === 'workout' ? 'Тренировка' : 'Событие'}
         onClose={() => setCreationSheet(null)}
       />
     </section>
