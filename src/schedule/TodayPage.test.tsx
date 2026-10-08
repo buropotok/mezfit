@@ -284,6 +284,9 @@ describe('TodayPage schedule loading', () => {
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
 
     expect(document.querySelector('.ui-mezfit-bottom-sheet__backdrop')).toBeNull();
+    await waitFor(() => {
+      expect(window.history.state?.__mezfitNavigationToken).toBeTruthy();
+    });
     const historyBack = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
     expect(historyBack).toHaveBeenCalledTimes(1);
