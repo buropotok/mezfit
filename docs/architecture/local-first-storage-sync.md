@@ -537,6 +537,7 @@ Exact routes are implementation details, but the conceptual API separates scope 
 GET  /api/sync/bootstrap
 GET  /api/sync/changes?after={cursor}
 GET  /api/sync/hydrate?clientId=...&from=...&to=...
+GET  /api/sync/scopes/:scopeKey       // canonical single-scope snapshot/lifecycle pull
 
 PUT  /api/sync/occurrences/:syncId
 PUT  /api/sync/workout-sessions/:syncId
@@ -611,6 +612,8 @@ K + 1 revoked
 from deadlocking on an obsolete snapshot pull for K.
 
 ### Snapshot pull lifecycle contract
+
+The generic single-scope pull (conceptually `GET /api/sync/scopes/:scopeKey`) is the canonical follow-up for a change-feed invalidation. Domain-specific read routes may delegate to the same contract.
 
 A pull for a known scope/change must normalize to one of:
 
