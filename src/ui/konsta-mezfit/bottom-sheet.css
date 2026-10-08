@@ -1,7 +1,9 @@
 .ui-mezfit-bottom-sheet {
   --ui-mezfit-bottom-sheet-halo-clearance: 36px;
   z-index: 41 !important;
+  height: calc(100vh - var(--navigation-navbar-bottom, 3.75rem) - var(--ui-mezfit-bottom-sheet-halo-clearance));
   height: calc(100dvh - var(--navigation-navbar-bottom, 3.75rem) - var(--ui-mezfit-bottom-sheet-halo-clearance));
+  max-height: calc(100vh - var(--navigation-navbar-bottom, 3.75rem) - var(--ui-mezfit-bottom-sheet-halo-clearance));
   max-height: calc(100dvh - var(--navigation-navbar-bottom, 3.75rem) - var(--ui-mezfit-bottom-sheet-halo-clearance));
   min-height: 0;
   display: flex;
