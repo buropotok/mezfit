@@ -11,6 +11,10 @@ describe('MezfitBottomSheet CSS contract', () => {
     expect(bottomSheetCss).toContain('--ui-mezfit-bottom-sheet-halo-clearance: 36px');
     expect(bottomSheetCss).toContain('var(--navigation-navbar-bottom');
     expect(bottomSheetCss).toContain('var(--ui-mezfit-bottom-sheet-halo-clearance)');
+    expect(bottomSheetCss).toContain('height: calc(100vh - var(--navigation-navbar-bottom');
+    expect(bottomSheetCss).toContain('height: calc(100dvh - var(--navigation-navbar-bottom');
+    expect(bottomSheetCss).toContain('max-height: calc(100vh - var(--navigation-navbar-bottom');
+    expect(bottomSheetCss).toContain('max-height: calc(100dvh - var(--navigation-navbar-bottom');
     expect(bottomSheetCss).toContain('z-index: 41 !important');
   });
 
