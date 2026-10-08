@@ -265,6 +265,8 @@ describe('TodayPage schedule loading', () => {
     expect(icon?.style.maskImage).toContain(getUiIconAsset('plus', 'outline'));
 
     fireEvent.click(fab);
+    const addMenu = screen.getByRole('menu', { name: 'Добавить' });
+    expect(addMenu.querySelectorAll('.ui-menu-item__leading .ui-icon')).toHaveLength(2);
     expect(screen.getByRole('menuitem', { name: 'Тренировка' })).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: 'Событие' })).toBeTruthy();
 
@@ -274,6 +276,7 @@ describe('TodayPage schedule loading', () => {
     expect(screen.getByText('+ Событие')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Назад' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Событие' })).toBeNull();
+    expect(screen.queryByText('Экран создания события будет реализован отдельной задачей.')).toBeNull();
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
 
     const backdrop = document.querySelector<HTMLElement>('.ui-mezfit-bottom-sheet__backdrop');
