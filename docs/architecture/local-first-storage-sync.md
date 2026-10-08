@@ -163,6 +163,7 @@ A scope stores minimal synchronization metadata:
 
     inflight_request_id
     inflight_revision
+    remote_changed
 
 A local mutation is one IndexedDB transaction:
 
@@ -189,11 +190,14 @@ The server accepts the snapshot only if the current server revision still matche
 
 If the HTTP response is lost, the same request can be retried with the same requestId so the server can return the same result instead of applying the change twice.
 
-If the server revision no longer matches, the scope becomes conflict.
+When a write is acknowledged:
 
-For MVP there is no generic automatic three-way merge. The conflicting scope is reconciled explicitly.
+- if local_revision still equals inflight_revision, update server_revision and mark the scope clean;
+- if the user changed the scope again while the request was in flight, update server_revision but keep the scope dirty and send the newer snapshot next.
 
-Because Mezfit deliberately separates write ownership, these conflicts should be exceptional rather than normal operation.
+If the server revision no longer matches baseServerRevision, the scope becomes conflict.
+
+There is no automatic merge engine in MVP. Because Mezfit deliberately separates write ownership, conflicts should be exceptional rather than normal operation.
 
 ### Network batching
 
@@ -221,7 +225,6 @@ The user action Синхронизировать simply wakes the same Sync Engi
 
 Only one request for the same scope is sent at a time.
 
-The MVP does not require browser leader election, Web Locks, cross-tab fencing, or a Service Worker.
 
 ## 7. Receiving changes made on the server
 
@@ -249,9 +252,8 @@ Catch-up:
     ↓
     receive changed scope keys
     ↓
-    pull the current snapshot for those scopes
-    ↓
-    write snapshots into IndexedDB
+    clean local scope → pull and apply current snapshot
+    dirty/syncing scope → set remote_changed; do not overwrite local data
     ↓
     advance remote_cursor
 
@@ -292,6 +294,8 @@ Its job is only to say:
     remote changes are available
 
 After that the client performs the same cursor catch-up.
+
+If remote_changed is set for a locally dirty scope, the next outbound CAS decides the result: success means the local snapshot became the new server state; revision mismatch means conflict. Incoming synchronization never silently overwrites unsynchronized local edits.
 
 Therefore correctness does not depend on WebSocket delivery. If Telegram is closed, VPN drops, or a push signal is missed, the next cursor catch-up still finds the program change.
 
