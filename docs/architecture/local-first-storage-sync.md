@@ -156,7 +156,10 @@ session_sets
 settings
 
 sync_scopes
+sync_groups
+sync_dependencies
 sync_remote_state
+authorization_leases
 ```
 
 The synchronization payload may be a larger JSON snapshot. Snapshot transport format must not dictate the physical local database schema.
@@ -188,79 +191,91 @@ This is required so local graphs can be created without temporary numeric IDs th
 
 The exact list of entities receiving `sync_id` is defined as each domain is migrated.
 
-## 6. Synchronization scopes
+## 6. Synchronization scopes, transport batches and read models
 
-Synchronization is snapshot-based, not a replay of every CRUD event.
-
-### Dynamic scopes
-
-Mutable synchronization scopes must follow the same boundary as write ownership and server authorization. A read model may aggregate several mutable scopes, but those scopes must not share one revision when their writers cannot read or reconcile each other's state.
-
-Scheduled coach/client day data is pair-owned:
+Synchronization remains snapshot-based: Mezfit does not replay every field-level CRUD event. However, three different concepts must not be conflated:
 
 ```text
-coach-client-day:{coachId}:{clientId}:{YYYY-MM-DD}
+consistency scope
+  = independently versioned/CAS-protected state
+
+transport / hydration batch
+  = several scopes moved in one HTTP request for efficiency
+
+local read model
+  = projection/aggregation used by UI and analytics
 ```
 
-This scope contains the calendar occurrences and related day/session state that belong to that specific coach/client relationship and date.
+A day or date range is an excellent **transport/hydration batch**, but it is not automatically a safe consistency scope.
 
-A client may have multiple active coaches. Each coach/client pair therefore has an independent snapshot and server revision. A mutation by coach A must never advance the revision used by coach B.
+### Scope invariants
 
-Client-owned day data that does not belong to a coach/client relationship, such as an unscheduled/self-originated workout session, uses a separate ownership scope:
+Every mutable consistency scope must satisfy all of the following:
 
-```text
-client-self-day:{clientId}:{YYYY-MM-DD}
-```
+1. Any actor allowed to write the scope is authorized to read the complete mutable state needed to reconcile that scope.
+2. The scope has exactly one server revision sequence.
+3. The scope does not mix data with different write-authority lifecycles.
+4. The scope key is based on stable identity/ownership, not a mutable placement attribute such as calendar date.
+5. Moving an entity between dates/collections must not require deleting one consistency scope and creating another if the entity itself is the atomic business object.
+6. Aggregated read models are never pushed back as one mutable snapshot.
 
-The **client calendar** is an aggregated local read model, not a mutable synchronization scope:
+### Domain scope map
+
+| Domain | Consistency scope | Writer / authority | Notes |
+| --- | --- | --- | --- |
+| Coach/client relationship | `relationship:{coachId}:{clientId}` | server-coordinated control plane | Drives authorization/leases and revocation |
+| Scheduled occurrence | `occurrence:{occurrenceSyncId}` | actor allowed by occurrence edit rules | Date/time are fields of the occurrence; cross-day reschedule remains one scope |
+| Workout execution | `workout-session:{sessionSyncId}` | current FACT owner | Contains frozen PLAN + exercises + sets + FACT; separate from calendar |
+| Program graph | `program:{programSyncId}` | program owner | Contains plan/phases/days/exercises/sets |
+| Program ordering | `program-index:{ownerActorId}:{subjectUserId}` | program collection owner | Ordered list of program IDs; avoids multi-program CAS for reorder |
+| Global exercises | `exercise-global` | server-owned | Replicated reference scope |
+| Coach exercise catalogue state | `exercise-coach:{coachId}` | coach | Coach definitions, overrides/favourites as appropriate |
+| Pair/client exercise state | `exercise-client:{coachId}:{clientId}` | authorized pair owner | Existing domain ownership includes both IDs |
+| User settings | `user-settings:{userId}` | user | Only for user-scoped settings that exist in the domain |
+
+The current global `app_setting` configuration is server configuration/reference data and must not be confused with future user-scoped settings.
+
+### Calendar read model
+
+Calendar is an aggregated local read model over occurrence scopes:
 
 ```text
 client calendar for date D
   =
-  all authorized coach-client-day:*:{clientId}:D scopes
-  +
-  client-self-day:{clientId}:D
+  occurrence scopes visible to that client where calendarDate = D
+
+coach calendar for date D
+  =
+  occurrence scopes visible to that coach where calendarDate = D
 ```
 
-In Coach Mode the calendar read model includes only scopes authorized for that coach. In Client Mode it may aggregate all currently authorized coach/client pair scopes plus the client's self-owned scope.
+A client with multiple coaches therefore sees all authorized occurrences without forcing those coaches to share a revision.
 
-This partitioning ensures CAS, change-feed invalidation and reconciliation always operate on state that the current writer is authorized to read in full.
+A cross-day reschedule updates the `calendarDate` field of one `occurrence:{id}` scope. It does not perform a source-day delete plus destination-day insert at the synchronization layer.
 
-### Static scopes
+### Day/range batching is still encouraged
 
-A program and all of its children are a separate static scope:
+The network may still hydrate or upload by client/date range to keep request counts low:
 
 ```text
-program:{programId}
+GET hydration(clientId, fromDate, toDate)
+  → occurrence snapshots + workout-session snapshots + revisions
+
+POST sync/batch
+  → several independently versioned scope snapshots
 ```
 
-The program graph includes:
+Each contained scope retains its own `baseServerRevision`, result and conflict state. One transport envelope must never create an implicit shared revision.
 
-```text
-training_plan
-program_phases
-program_days
-program_exercises
-program_sets
-```
+### Static and catalogue scopes
 
-A program is not a calendar entity. Its date attributes do not make it part of a day scope.
+A program remains independent of calendar placement. Its dates are program metadata; placing an occurrence on a calendar does not move the program into a day scope.
 
-Settings are also a separate static scope.
+The exercise catalogue is a first-class replicated domain, not a disposable request cache. Exercise selection, search, filters and categories must be satisfiable from local storage.
 
-Exercise data is a first-class replicated domain, not a disposable request cache. The local exercise catalogue must be sufficient to open exercise selection, search, filters and categories without a network request.
+A client catalogue may aggregate global, coach and pair-owned exercise scopes for display. That aggregate is read-only from the synchronization perspective.
 
-Conceptual exercise scopes:
-
-```text
-exercise-global
-exercise-coach:{coachId}
-exercise-client:{coachId}:{clientId}
-```
-
-The global catalogue is primarily server-owned replicated reference data. Coach-owned exercises, overrides and favourites belong to the coach scope. A client-scoped exercise is owned by the specific coach/client pair in the existing domain model, so its mutable scope key must include both IDs. A local client catalogue may expose an aggregated read model composed from global, coach-owned and pair-owned scopes, but that aggregated view is not itself a mutable synchronization scope.
-
-Coach/client relationships and the coach's client directory are also locally replicated so the client list can open immediately. Relationship mutation remains server-coordinated control plane, but its resulting state is replicated down to local storage.
+Coach/client relationships and the coach's client directory are locally replicated so the client list can open immediately. Relationship mutation itself remains server-coordinated control plane.
 
 ## 7. Local replica breadth versus mutation scope
 
@@ -283,11 +298,9 @@ Media blobs are not part of this domain replica. Store media metadata/reference 
 
 If a coach/client relationship is revoked or becomes inaccessible, the server must emit an authorization/revocation change and the client must purge locally retained private data that is no longer authorized.
 
-## 8. Dirty scopes instead of CRUD event replay
+## 8. Dirty scopes, atomic local writes and dependencies
 
-UI mutations may generate an internal dirty signal/event, but synchronization does not need to preserve and replay every intermediate field mutation.
-
-The persistent sync state is scope-oriented.
+The persistent synchronization state is scope-oriented.
 
 Conceptual `sync_scopes` data:
 
@@ -301,6 +314,9 @@ last_synced_local_revision
 applied_server_revision
 pending_remote_revision
 
+dirty_base_server_revision
+dirty_base_snapshot
+
 status
 
 attempt_count
@@ -310,69 +326,136 @@ last_error
 inflight_revision
 inflight_request_id
 inflight_base_server_revision
+inflight_payload
+```
+
+When a clean scope becomes dirty for the first time, the client preserves the clean base snapshot/revision. JSON snapshots are small enough that keeping this temporary base for dirty scopes is acceptable and gives deterministic three-way reconciliation:
+
+```text
+base
+local
+remote
 ```
 
 Each local domain mutation must atomically:
 
 ```text
 BEGIN
-mutate local domain data
-increment scope local_revision
+mutate normalized domain data
+increment affected scope.local_revision
+preserve dirty base if transition clean → dirty
 mark scope dirty
+write dependency/group metadata when required
 COMMIT
 ```
 
-If a user changes a value several times before synchronization, only the latest authoritative scope snapshot needs to reach the server.
+If the Mini App is killed immediately after commit, both the user data and the information needed to synchronize it survive together.
 
-`applied_server_revision` is the server revision already incorporated into the local working copy. If a remote change is observed while the scope is locally dirty or has an inflight write, it is recorded as `pending_remote_revision`; it must not be blindly applied over unsynchronized local data.
+### Cross-scope references
 
-## 9. Ordering, conditional writes and conflict reconciliation
+Stable `sync_id` values allow local entities to reference objects that have not reached D1 yet. The worker must still respect dependencies.
 
-A dirty scope has an ordered local revision, while the server maintains an authoritative monotonic revision for that scope. These are different counters and must not be compared as if they were the same sequence.
+Examples:
 
-When Sync Engine sends local revision N, it freezes:
+- a newly created custom exercise immediately added to a program;
+- a newly created custom exercise immediately added to an active workout session;
+- a locally created program referenced by another locally created object.
+
+A dependent scope must not be pushed before the referenced entity is remotely addressable, unless both changes are part of one supported atomic server operation.
+
+`sync_dependencies` stores these unresolved scope dependencies. The Sync Engine processes them topologically and returns `blocked` rather than creating dangling remote references.
+
+## 9. Ordering, CAS, reconciliation and cross-scope atomicity
+
+A local revision and a server revision are separate counters.
+
+For a single-scope write, Sync Engine freezes:
 
 ```text
 requestId
-localRevision = N
-baseServerRevision = applied_server_revision
+scopeKey
+localRevision
+baseServerRevision
 snapshot
 ```
 
-The server write is compare-and-swap:
+The server applies compare-and-swap:
 
 ```text
 accept only when currentServerRevision == baseServerRevision
 ```
 
-If the comparison fails, the server returns a domain conflict such as `409 SCOPE_STALE` with the current server revision and applies nothing. Last-write-wins is not an implicit fallback.
+On success the server increments the scope revision and returns it. On mismatch it returns a domain conflict such as `409 SCOPE_STALE` and applies nothing. Last-write-wins is never an implicit fallback.
 
-If the HTTP result is ambiguous because a VPN/network connection drops after the server may have applied the request, the client retries the same frozen snapshot with the same `requestId` and `baseServerRevision`. The server must make this request idempotent.
+If the HTTP response is lost after the server may have committed, the client retries the exact frozen request with the same `requestId`. Server idempotency is keyed by authenticated actor + request ID and must return the original semantic result.
 
-After an accepted write:
+After acknowledgement:
 
-- the returned server revision becomes the new `applied_server_revision`;
-- if current local revision still equals the acknowledged local revision, the scope can become clean;
-- if local revision advanced while the request was in flight, the scope remains dirty, but the newer local state is now based on the newly acknowledged server revision and can be sent next.
+- the returned server revision becomes `applied_server_revision`;
+- if no newer local mutation exists, the scope becomes clean and its dirty base is released;
+- if the local revision advanced, the scope remains dirty and the next snapshot is based on the acknowledged server revision.
 
-### Remote changes while local state is dirty
+### Remote change while local state is dirty
 
-Inbound synchronization must never replace a dirty or inflight working scope.
+Inbound synchronization never overwrites dirty/inflight state.
 
-When the change feed reports a newer server revision:
+When a newer remote revision exists:
 
-- for a clean scope, pull and transactionally apply the remote snapshot, then update `applied_server_revision`;
-- for a dirty/inflight scope, persist `pending_remote_revision` and keep the local working data untouched.
+- clean scope → pull and transactionally apply it;
+- dirty/inflight scope → persist `pending_remote_revision` and fetch/retain the remote snapshot for reconciliation without replacing local working state.
 
-Before a dirty scope with `pending_remote_revision > applied_server_revision` can be pushed, it must reconcile with the newer remote state.
+Reconciliation is three-way:
 
-The generic safe rule is **no silent merge and no silent overwrite**. A domain-specific reconciler may automatically rebase only when it can prove that the remote change and the local dirty state affect non-overlapping authoritative data. This is expected to be common because Mezfit deliberately separates write ownership between domains and uses a single FACT owner for an active `WorkoutSession`.
+```text
+dirty_base_snapshot
+current_local_snapshot
+current_remote_snapshot
+```
 
-If non-overlap cannot be proven, the scope enters `conflict`/blocked state. The local edit remains intact, the remote snapshot/revision remains available for resolution, and neither side is overwritten automatically.
+A domain reconciler may auto-rebase only when it can prove the local and remote mutations do not overlap semantically. Otherwise the scope becomes `conflict`. Both sides are retained; manual retry must not bypass the conflict with a forced overwrite.
 
-Examples that require conflict protection include the same coach editing the same mutable scope on two devices and concurrent edits to the same calendar occurrence within the same coach/client pair. Different coaches for the same client are isolated into different mutable day scopes and therefore do not conflict through a shared revision.
+Typical conflicts are the same actor editing the same occurrence/program/session from two devices.
 
-This prevents both failure modes: an inbound pull erasing offline local edits and a later stale outbound snapshot overwriting a newer server state.
+### Design away unnecessary multi-scope writes
+
+Scope boundaries should eliminate most atomicity problems:
+
+- moving an occurrence to another date is one `occurrence` scope;
+- editing sets/reordering exercises is one `workout-session` scope;
+- editing a program graph is one `program` scope;
+- reordering programs is one `program-index` scope.
+
+### Truly cross-scope business operations
+
+If a business operation must atomically change multiple independent scopes, it must use either:
+
+1. a server-coordinated control-plane command, or
+2. one `sync_group` committed all-or-nothing with CAS preconditions for every affected scope.
+
+A `sync_group` freezes:
+
+```text
+groupRequestId
+[
+  { scopeKey, baseServerRevision, localRevision, frozenPayload }
+]
+```
+
+The server checks every precondition first. If any scope is stale/unauthorized, nothing in the group is applied. On success all writes, revision increments and change-feed records commit atomically.
+
+No implementation may approximate an atomic move by sending two independent scope writes.
+
+### Lifecycle side effects
+
+Some lifecycle operations have a primary scope plus a deterministic server-side side effect.
+
+Examples:
+
+- Start workout: server-confirmed control plane creates/materializes the session and atomically moves the linked occurrence to `in_progress`.
+- Completing a linked workout session: the accepted `workout-session` lifecycle transition may atomically move its linked occurrence to `completed`; the server increments/emits the occurrence scope revision as a side effect.
+- FACT ownership transfer: server-confirmed control plane updates the workout-session owner/ownership epoch.
+
+The client may optimistically reflect these derived occurrence statuses locally, but it must not create a second independent dirty day snapshot for the same server-derived lifecycle transition.
 
 ## 10. Retry and manual synchronization
 
@@ -397,114 +480,230 @@ The user can explicitly request synchronization.
 
 A manual "Синхронизировать" action must wake/requeue Sync Engine. It must not create a second direct REST mutation path.
 
-## 11. Server sync API
+## 11. Server sync API, scope state and durable change feed
 
-The worker sends/receives scope snapshots rather than interpreting a client-side event log.
+Exact routes are implementation details, but the conceptual API separates scope snapshots, hydration batches and change-feed catch-up.
+
+```text
+GET  /api/sync/bootstrap
+GET  /api/sync/changes?after={cursor}
+GET  /api/sync/hydrate?clientId=...&from=...&to=...
+
+PUT  /api/sync/occurrences/:syncId
+PUT  /api/sync/workout-sessions/:syncId
+PUT  /api/sync/programs/:syncId
+PUT  /api/sync/program-index/...
+PUT  /api/sync/exercise-scopes/...
+
+POST /api/sync/batch
+POST /api/sync/groups
+```
+
+The server applies snapshots to the existing relational D1 domain model. Snapshot JSON does not replace the relational server model.
+
+### Server synchronization metadata
+
+The backend needs durable synchronization metadata conceptually equivalent to:
+
+```text
+sync_scope_state
+  scope_key
+  scope_type
+  revision
+  lifecycle_state        // active | deleted
+  schema_version
+
+sync_idempotency
+  actor_user_id
+  request_id
+  semantic_result
+
+sync_change
+  change_id
+  recipient_user_id
+  scope_key
+  scope_type
+  scope_revision
+  change_kind            // changed | deleted | revoked
+  target_identity
+  created_at
+```
+
+Domain mutation, scope revision update and change-feed append must be one logical atomic commit.
+
+### Recipient-specific change feed
+
+The feed is addressed to `recipient_user_id`, not authorized dynamically by the current scope relationship. This is essential for revocation: a user must still be able to receive the minimal `revoked` purge instruction after permission to read the underlying scope has already been removed.
+
+A revocation record contains purge identity/metadata only, never the now-private domain payload.
+
+### Effective change pages
+
+`GET /changes?after=N` returns a bounded effective page:
+
+```json
+{
+  "throughCursor": 18492,
+  "changes": []
+}
+```
+
+Within the covered interval the server may coalesce repeated invalidations for the same scope to the latest effective revision/lifecycle state. A later `deleted` or `revoked` event supersedes earlier `changed` invalidations for that same scope.
+
+The client may advance to `throughCursor` only after every effective change in the page is durably represented locally.
+
+This prevents a sequence such as:
+
+```text
+K     changed
+K + 1 revoked
+```
+
+from deadlocking on an obsolete snapshot pull for K.
+
+### Snapshot pull lifecycle contract
+
+A pull for a known scope/change must normalize to one of:
+
+```text
+snapshot(revision, payload)
+deleted(terminalRevision, targetIdentity)
+revoked(targetIdentity / purgeIdentity)
+```
+
+A generic 404/403 is not enough for synchronization state machines.
+
+If a scope was deleted/revoked after the change page was produced but before the snapshot GET, the snapshot endpoint returns the terminal lifecycle result. The client applies tombstone/purge and can continue catch-up; a later duplicate destructive feed record is idempotent.
+
+### Deletion and revocation
+
+- `deleted`: remove/tombstone the object from normal read models. If local unsynchronized edits exist, preserve them only as a blocked `remote_deleted` conflict payload; do not silently resurrect the object.
+- `revoked`: authorization loss wins. Purge locally retained data that this recipient no longer has an entitlement to retain, including dirty/inflight copies and conflict payloads for that entitlement.
+- Shared/reference data is removed only when no other active entitlement still authorizes it.
+- The cursor advances past destructive state only after the local tombstone/purge transaction commits.
+
+### Conditional writes
+
+Every snapshot write carries `requestId`, `scopeKey`, `schemaVersion` and `baseServerRevision`. Unsupported schema versions are rejected explicitly; clients must never interpret schema mismatch as an ordinary conflict.
+
+## 12. Authorization, authorization leases and cached private data
+
+Local storage is never proof of identity, role, relationship, ownership or authorization.
+
+The Cloudflare Worker is the trust boundary and derives the authenticated actor from trusted Telegram authentication before any sync read/write.
+
+### Authorization manifest / lease
+
+To combine instant cached reads with revocation safety, relationship-protected local data is guarded by a server-issued authorization manifest/lease.
 
 Conceptually:
 
 ```text
-PUT /api/sync/coach-client-days/:coachId/:clientId/:date
-GET /api/sync/coach-client-days/:coachId/:clientId/:date
-
-PUT /api/sync/client-self-days/:clientId/:date
-GET /api/sync/client-self-days/:clientId/:date
-
-PUT /api/sync/programs/:programSyncId
-GET /api/sync/programs/:programSyncId
-
-GET /api/sync/changes?after={cursor}
+authorization_leases
+  entitlement_key
+  relationship_id
+  subject ids
+  authorization_epoch
+  valid_until
 ```
 
-Exact routes are implementation details and may differ.
+Bootstrap/authentication returns the current manifest together with the initial change-feed boundary.
 
-The server applies snapshots to the existing relational D1 domain model. Snapshot JSON does not replace the relational server model.
+Rules:
 
-Every committed server-side mutation that can affect another authorized device/user must also append a durable change-feed record in the same logical commit/transaction as the domain mutation.
+- while a relationship entitlement lease is valid, cached authorized data may render immediately and work offline;
+- on online startup/foreground the app refreshes/catches up authorization in the background while valid leases permit immediate render;
+- if a protected entitlement lease has expired, relationship-protected data must not be rendered or mutated until authorization is refreshed;
+- if the device is offline with an expired lease, self-owned data and public/global reference data may remain available, but expired relationship-private data is gated;
+- a `revoked` feed event invalidates the lease immediately and triggers purge.
 
-Conceptual change record:
+This is a deliberate bounded-offline-access model. Immediate revocation while a device is completely offline is impossible without also forbidding all offline cached access; the lease defines that security/product boundary explicitly rather than leaving it accidental.
+
+### Recipient-specific purge
+
+Revocation purge is based on the recipient's entitlements, not a blanket deletion of every record mentioning the other user.
+
+Examples:
+
+- a coach who loses a client relationship purges that client's private replica and pair-owned scopes;
+- a client who loses a coach relationship purges coach-owned program/catalog data no longer authorized, but does not lose the client's own workout FACT/history merely because the coaching relationship ended;
+- globally shared exercise definitions remain;
+- data reachable through another still-valid entitlement remains.
+
+The local model must therefore retain enough ownership/entitlement metadata to compute purge safely.
+
+## 13. WorkoutSession scope and FACT ownership
+
+Workout execution has its own consistency scope:
 
 ```text
-change_id            // monotonic cursor/sequence
-recipient_user_id
-scope_key
-scope_type
-scope_revision
-change_kind          // changed | deleted | revoked
-target_identity       // enough identity to tombstone/purge without reading the removed resource
-created_at
+workout-session:{sessionSyncId}
 ```
 
-The change feed contains invalidation/version metadata, not necessarily the full domain snapshot. For `changed`, the client uses it to decide which scope snapshot must be pulled. For `deleted` and `revoked`, the change record itself must contain enough identity to perform the required local removal without fetching a resource that no longer exists or is no longer authorized.
+It is not embedded in a mutable day/calendar scope.
 
-Deletion semantics:
+The scope contains the session-owned frozen PLAN, session exercises, session sets and FACT needed to execute/review that workout. Calendar and analytics join this session locally through stable IDs/date fields.
 
-- `deleted`: transactionally tombstone/remove the affected entity/scope from the normal local read model. If the same scope has unsynchronized local edits, preserve those edits only as a blocked conflict payload (for example `remote_deleted`) rather than silently resurrecting or discarding them; the deleted entity must not remain visible as current server state.
-- `revoked`: authorization loss wins immediately. Transactionally purge the full locally retained private graph covered by the revoked relationship, including dirty/inflight snapshots, pending conflicts, scope metadata and derived/private projections that the user is no longer authorized to retain. No follow-up snapshot pull is attempted.
-- The remote cursor may advance past a `deleted` or `revoked` record only after the tombstone/conflict marker or purge has been durably committed locally.
+Workout FACT may be entered by different users over the lifetime of one session, but there is exactly one FACT writer at any instant.
 
-Snapshot writes must include `requestId` and `baseServerRevision`. The server applies a write only when the current scope revision equals `baseServerRevision`, then increments the server scope revision and appends the corresponding change-feed record as part of the same logical commit.
-
-Server-side validation and authorization remain mandatory.
-
-## 12. Authorization and trust
-
-Local storage is never proof of identity, role, ownership or authorization.
-
-The Cloudflare Worker remains the trust boundary and must derive the authenticated actor from trusted authentication, then validate domain authorization before applying synchronization data.
-
-Local changes to IDs or ownership fields cannot grant permissions.
-
-## 13. WorkoutSession FACT ownership
-
-Workout execution is the only domain area where write ownership may move between users over the lifetime of a session.
-
-There is still only one writer at a time.
-
-Conceptually, a session distinguishes:
+Conceptually a session distinguishes:
 
 ```text
 client/user whose workout this is
-user who started/created execution
-current FACT editor/owner
+started_by_user_id
+fact_owner_user_id
+ownership_epoch
 ```
 
-A coach may own FACT entry during an in-person workout and later explicitly transfer edit ownership to the client (or another authorized user).
+A coach may own FACT entry during an in-person workout and explicitly transfer it later to the client or another authorized user.
 
-"Shared" FACT means sequential ownership across the session lifetime, not concurrent writes by multiple users.
+All FACT snapshot writes carry the ownership epoch implicitly/explicitly as part of server authorization. If ownership changed while an old owner was offline, the stale owner write is rejected as `OWNER_CHANGED`; it is never merged automatically into the new owner's state.
 
-The current owner is the only actor authorized to push new FACT mutations.
+Program edits after Start do not affect the session scope because PLAN was frozen/materialized at Start.
+
+Adding an ad-hoc exercise or editing/reordering sets stays inside the workout-session scope. If the session references a newly created custom exercise not yet synchronized, the exercise dependency must be acknowledged first or included in a supported atomic group.
 
 ## 14. Ownership transfer is control plane
 
-WorkoutSession edit-ownership transfer is not an ordinary offline snapshot mutation.
+WorkoutSession FACT ownership transfer changes write authority and is never an ordinary offline snapshot edit.
 
-It changes write authority and requires server coordination.
+The operation is synchronous/server-confirmed and atomically:
 
-Therefore ownership transfer is a synchronous/server-confirmed control-plane operation.
+```text
+validate current owner/relationship
+increment ownership epoch
+set new fact owner
+increment workout-session server revision
+append recipient change-feed records
+```
 
-After confirmation, local state is reconciled through synchronization.
+After confirmation both users reconcile through the normal feed.
 
-The old owner must no longer be allowed to push new FACT changes created after ownership has moved.
+The old owner immediately loses permission to push new FACT. Offline edits discovered after transfer are retained only as a local blocked diagnostic/conflict until the product decides how to present them; they cannot be force-synchronized by manual retry.
 
 ## 15. Data plane versus control plane
 
-Most domain data uses the local-first data plane:
+Most ordinary domain editing uses the local-first data plane:
 
 ```text
 UI → Local DB → asynchronous Sync Engine → server
 ```
 
-Operations that change authentication, authorization relationships or exclusive write authority remain server-coordinated control-plane operations.
+Control-plane operations are those that establish identity, authorization, exclusive ownership, or require a fresh authoritative snapshot before execution.
 
-Examples include:
+Current/future examples:
 
 ```text
 authentication
-coach/client relationship changes
+coach/client invite/accept/deactivate/reactivate
+WorkoutSession initialization/Start when fresh PLAN must be materialized
 WorkoutSession FACT ownership transfer
-future operations that change exclusive write authority
+other operations that change exclusive write authority
 ```
+
+A control-plane operation may still update local storage immediately after server confirmation so all subsequent UI reads continue to come from the local database.
+
+Cross-scope atomic operations that do not change authority may remain asynchronous through `sync_group`; they do not automatically become control plane.
 
 ## 16. React behavior
 
@@ -518,175 +717,260 @@ For example, saving a set while offline must update the workout immediately and 
 
 Dexie live queries or an equivalent mechanism may be used inside the integration layer, but product components must not depend on Dexie-specific APIs.
 
-## 17. Startup, hydration and immediate-read surfaces
+## 17. Startup, hydration, authorization gating and immediate-read surfaces
 
-When local data exists:
+Client list, calendar and exercise catalogue are immediate-read surfaces **when their cached entitlements are valid**.
+
+### Normal launch with valid leases
 
 ```text
 open app
 ↓
-render local state immediately
+open account-scoped IndexedDB
 ↓
-background catch-up / hydration
+validate cached authorization lease timestamps
+↓
+render authorized local state immediately
+↓
+background auth/feed catch-up + outbound sync
 ```
 
-Client list, calendar and exercise catalogue are immediate-read surfaces. After initial hydration they must open from local storage without waiting for REST.
+### Expired protected lease
 
-On a first installation or an empty per-user local database, bootstrap must establish a change-feed boundary **before** baseline hydration so no mutation can fall into a gap between "snapshot loaded" and "cursor initialized".
-
-Required bootstrap sequence:
+If relationship-protected cached data has no valid lease:
 
 ```text
-authenticate
+open app
 ↓
-GET bootstrap metadata → bootstrapStartCursor = N
+do not render/mutate expired relationship-private scopes
 ↓
-persist N as the baseline catch-up cursor (do not advance it yet)
+refresh authorization/bootstrap
 ↓
-hydrate baseline scopes progressively
+purge revoked entitlements
 ↓
-run normal change-feed catch-up for changes after N
-↓
-advance remote cursor as those changes are durably represented locally
+unlock still-authorized local scopes
 ```
 
-A mutation committed after cursor N is therefore either already reflected by a later snapshot read or is replayed by the change feed after N; duplicates are harmless because scope revisions are monotonic. The implementation must never initialize the cursor to "current feed head" after hydration.
+Self-owned/public/reference data can still render locally.
 
-While baseline hydration is in progress, remote changes after N must not be discarded. The simplest v1 rule is to complete the baseline for the required scope set and then replay the feed from N before declaring initial hydration current.
+### First installation / empty local database
 
-The bootstrap metadata endpoint and hydration reads must obey the same authorization view. If a scope disappears during hydration, the subsequent `deleted`/`revoked` change record resolves it through the normal tombstone/purge semantics.
+Bootstrap must establish both authorization and a change-feed boundary before baseline hydration.
 
-Coach Mode deliberately hydrates and retains the working history of all currently linked clients, not only the selected client. Full hydration must be progressive and must never block an already-usable UI.
-
-Recommended priority:
+One bootstrap response should provide a consistent minimum envelope:
 
 ```text
-1. identity + client directory
-2. visible calendar window + current/active workout state
+authenticated user
+authorization manifest / lease set
+bootstrapStartCursor = N
+schema/version metadata
+```
+
+Then:
+
+```text
+persist manifest + N
+↓
+hydrate authorized baseline scopes progressively
+↓
+run change-feed catch-up after N
+↓
+declare replica current only after catch-up
+```
+
+The implementation must never hydrate first and then set the cursor to the current feed head.
+
+A mutation committed after N is either already present in a later hydration response or replayed by catch-up. Duplicate application is prevented by scope revisions.
+
+If a scope vanishes during hydration, its lifecycle response/feed event resolves it through normal deletion/revocation semantics.
+
+### Hydration priority
+
+Coach Mode intentionally retains the working history of all currently authorized clients, but hydration is progressive:
+
+```text
+1. identity + authorization manifest + client directory
+2. visible calendar range + active/current sessions
 3. exercise catalogue
-4. current programs
-5. remaining historical coach-client-day and client-self-day scopes
+4. current programs/program indexes
+5. remaining historical occurrence/session scopes
 ```
 
-After the first successful hydration, normal launches render from IndexedDB first and use background synchronization only to catch up changes.
+History hydration never blocks an already-authorized UI surface that has local data.
 
-The local database is account-scoped. Switching authenticated Telegram users must not expose another account's local replica.
+The local database is account-scoped. Switching authenticated Telegram users never exposes another user's replica.
 
-## 18. Remote change detection, catch-up and Telegram WebView lifecycle
+## 18. Remote change detection, catch-up, reset and Telegram lifecycle
 
-The architecture must not assume JavaScript keeps running after Telegram closes/suspends the Mini App.
+The architecture must not assume JavaScript keeps running after Telegram suspends/closes the Mini App.
 
-Reliable server-to-client synchronization uses a durable **change feed + cursor**. Push delivery is an acceleration mechanism only; it is never the sole source of correctness.
+Correctness uses durable change feed + cursor. Push/WebSocket is an acceleration mechanism only.
 
-Each local account stores a remote cursor in `sync_remote_state`.
+Each local account stores `sync_remote_state`.
 
-Catch-up flow:
+### Catch-up
 
 ```text
 local cursor = N
 ↓
-GET /api/sync/changes?after=N
+GET effective changes after N
 ↓
-for each change:
+for each effective change:
   changed + clean scope
-      → pull/apply snapshot
+      → pull lifecycle result
+      → apply snapshot OR terminal tombstone/purge
   changed + dirty/inflight scope
-      → persist pending_remote_revision; do not overwrite local data
+      → persist pending remote revision + remote snapshot/lifecycle
   deleted
-      → transactional tombstone/removal (or remote_deleted conflict if local edits exist)
+      → tombstone / remote_deleted conflict
   revoked
-      → transactional purge of the no-longer-authorized local private graph
+      → entitlement-aware purge
 ↓
-advance cursor only after the change is durably represented locally
+commit throughCursor only when all effective changes are durable locally
 ```
 
-For a clean `changed` scope, "durably represented" means the remote snapshot has been transactionally applied. For a dirty/inflight `changed` scope, it means at least the pending remote revision/invalidation has been persisted so the conflict cannot be forgotten even if the app closes immediately afterward. For `deleted` or `revoked`, it means the tombstone/conflict marker or purge transaction has committed.
+A dirty scope never blocks the global cursor merely because it cannot yet be merged: the pending remote state is durably recorded first.
 
-The global cursor therefore does not have to stall behind one dirty scope, but it must never advance past a change that has neither been applied nor durably recorded as pending.
+### Change disappears before pull
 
-A duplicate change or repeated pull is safe because server revisions, conditional writes and idempotency prevent regression.
+If a `changed` invalidation races with deletion/revocation, the snapshot pull returns a terminal lifecycle result. The client does not loop forever on 404/403 waiting for a later feed record.
 
-If a cursor is older than the retained change-feed window, the server returns a reset/full-resync requirement. The client rehydrates the authorized replica rather than guessing which changes were missed.
+### Feed retention exceeded / RESET_REQUIRED
+
+A full resync must not destroy unsynchronized local work.
+
+Required strategy:
+
+```text
+freeze dirty/inflight local snapshots + dependencies
+↓
+obtain fresh authorization manifest + bootstrap cursor
+↓
+build a new baseline in a shadow local generation
+↓
+purge pending work no longer authorized
+↓
+rebase still-authorized dirty scopes against new baseline
+   or mark conflict
+↓
+atomically switch active local generation
+↓
+catch up after bootstrap cursor
+```
+
+Never clear/recreate IndexedDB in place while dirty scopes exist.
+
+The same rule applies to local schema migrations: migration failure must not silently drop unsynchronized data. A destructive local reset is allowed only when no unsynced state exists or after it has been durably preserved.
 
 ### Push acceleration
 
-While the Mini App is active, an optional realtime channel may notify it that remote changes exist. The preferred future transport is a WebSocket endpoint, potentially backed by Cloudflare Durable Objects.
-
-A push message is only an invalidation/wake-up hint, for example:
+While active, an optional WebSocket channel may send only a wake-up hint such as:
 
 ```text
 remote changes available
 latest change id = 18492
 ```
 
-The client does not trust/apply domain state directly from the WebSocket message. It runs the normal cursor catch-up flow.
+The client always performs normal cursor catch-up. WebSocket disconnects, duplicate hints, VPN failures and process death therefore cannot lose state.
 
-Therefore WebSocket disconnects, duplicated messages, VPN failures, Telegram suspension and process death cannot lose domain changes.
-
-On WebSocket connect/reconnect the client always performs cursor catch-up. A low-frequency cursor poll may remain active as a health fallback even while WebSocket is connected.
-
-For the first implementation, correctness may use cursor polling without WebSocket. Adding WebSocket later improves freshness without changing synchronization semantics.
+On connect/reconnect and Telegram foreground/activation, run catch-up. A low-frequency cursor poll remains a valid fallback.
 
 ### Sync triggers
 
 ```text
 local mutation
 application startup
-Telegram activated / foreground-resume
+Telegram activated / foreground
 online/network recovery
+authorization lease refresh
 remote push hint
 periodic cursor poll while active
 manual sync
-periodic retry while the app is alive
+retry timer while app is alive
 ```
 
-Dirty local state and the remote cursor persist in IndexedDB. On the next activation/start, the app resumes both outbound synchronization and inbound catch-up.
+Human-facing Telegram notifications may be added separately but are never a replication mechanism.
 
-A Telegram/bot notification to the human user may be added for product notifications, but it is not a data replication mechanism and cannot be required for local database correctness.
+## 19. Sync Engine execution and multi-instance safety
 
-## 19. Worker implementation
+"Sync worker" is a logical responsibility. The first implementation may run as an in-app async service; it does not require a browser Web Worker.
 
-"Sync worker" is a logical responsibility.
+IndexedDB and HTTP are asynchronous and do not block rendering when used correctly.
 
-The first implementation may be an in-app async service. It does not have to be a browser Web Worker.
+### One network synchronizer per local account
 
-IndexedDB and HTTP are already asynchronous.
+Multiple browser/WebView instances can theoretically open the same origin/account database. Local repository writes remain transactional, but only one instance should actively drain outbound sync/catch-up at a time.
 
-A Dedicated Web Worker may be introduced later if profiling demonstrates a need. Service Worker background execution is not a required foundation of Mezfit synchronization.
+Use a renewable per-account synchronization lease/leader lock (Web Locks when available, otherwise an IndexedDB lease with expiry/owner instance ID).
+
+If leader failover races and two requests are sent anyway, server idempotency/CAS still guarantees correctness.
+
+A Dedicated Web Worker may be introduced later if profiling justifies it. Service Worker background execution is not required for correctness.
 
 ## 20. Migration strategy
 
-The migration is incremental by domain surface, not a single rewrite.
+Migration is incremental by coherent ownership surface, not by individual REST function.
 
-First establish:
+First establish the infrastructure:
 
 ```text
 Repository contracts
-LocalStore
-IndexedDB adapter
-SyncEngine
-sync metadata
+LocalStore / IndexedDB schema
+stable sync IDs
+sync scope metadata + dirty bases
+dependencies / optional sync groups
+authorization manifest / leases
+bootstrap + durable change cursor
+SyncEngine + leader lease
 RemoteSyncGateway
 ```
 
-Then migrate complete vertical slices in an order that establishes immediate local reads before broad mutation coverage:
+Then migrate complete vertical slices:
 
 ```text
-1. identity/client directory bootstrap + remote change cursor
-2. exercise catalogue local replica
-3. calendar/occurrence local reads + pair-owned create/reschedule/cancel mutations and outbound sync
-4. WorkoutSession / FACT local mutations and outbound sync
-5. program static scopes
-6. settings and remaining persistent surfaces
+1. identity/authorization/client-directory bootstrap
+2. exercise catalogue replica
+3. occurrence scopes + calendar local read model + create/reschedule/cancel
+4. workout-session scope + FACT editing + lifecycle reconciliation
+5. program scopes + program-index ordering
+6. user settings and remaining persistent surfaces
+7. analytics/projections built exclusively from local history
 ```
 
-Calendar read ownership and calendar mutations must move together. Once the calendar renders from IndexedDB, create/reschedule/cancel must also update the correct pair-owned local scope immediately; a REST-only mutation path must not remain behind a local-read UI. The rendered calendar is derived from the authorized local scopes and is never itself written as one shared client-day snapshot.
+Read ownership and mutation ownership move together. Once a product surface renders a migrated entity from IndexedDB, its ordinary mutations must update the same local authoritative model immediately; a competing REST-only mutation path must not remain.
 
-WorkoutSession / FACT remains the highest-frequency mutation slice because it has the highest latency sensitivity and exercises outbound ordering, retry and idempotency.
+Transport batching by client/day/range may be introduced at any stage, but batching must never merge independent revisions into one shared consistency scope.
 
-Once a domain surface is migrated, it must not have two competing mutation paths. Remove the obsolete direct REST mutation path for that surface.
+Once a domain surface is migrated, obsolete direct REST mutation paths for that surface are removed.
 
-## 21. Native portability
+## 21. Required scenario behavior
+
+The architecture is not considered implemented correctly unless these scenarios have deterministic behavior:
+
+| Scenario | Required behavior |
+| --- | --- |
+| Client has two coaches editing schedules | Independent occurrence scopes/revisions; aggregated calendar only |
+| Occurrence moves to another day | One occurrence CAS updates its date; no source/destination day split write |
+| Same occurrence edited on two devices | Second stale write receives conflict; base/local/remote are retained |
+| Different occurrences edited concurrently | No conflict merely because they share a day |
+| Coach edits program while client has active workout | Program syncs independently; active session keeps frozen PLAN |
+| New custom exercise is immediately used in program/session | Dependency ordering or supported atomic group prevents dangling reference |
+| App closes immediately after local edit | Domain change + dirty metadata survive in one IndexedDB transaction |
+| HTTP response is lost after commit | Same request ID retries idempotently and returns original result |
+| Workout starts from scheduled occurrence | Server-confirmed Start atomically freezes PLAN, creates/activates session and marks occurrence in-progress |
+| FACT ownership transfers coach → client | Ownership epoch changes atomically; old-owner pushes are rejected |
+| Session completes | Session transition is accepted once; linked occurrence completes atomically/server-side and emits its own invalidation |
+| Scope changes then is deleted before pull | Effective feed/lifecycle pull resolves to terminal delete; cursor cannot deadlock |
+| Relationship revoked while app sleeps | Expired/invalid lease prevents protected cached render; revoke purges recipient-specific unauthorized data |
+| WebSocket message is missed | Cursor catch-up still receives every durable change |
+| Change feed cursor expired | Shadow-generation resync preserves/rebases authorized dirty local work |
+| Two Mini App instances run | One sync leader; duplicate network work is harmless through CAS/idempotency |
+| Manual Sync pressed after retry exhaustion | Retries transport failures only; never bypasses auth/conflict/ownership checks |
+| Local schema upgrade fails | Unsynchronized data is preserved; destructive reset is forbidden while dirty state exists |
+
+These are architecture-level acceptance cases. Implementation PRs should add automated tests for the subset they introduce.
+
+## 22. Native portability
 
 Storage is accessed behind platform-independent interfaces.
 
@@ -722,7 +1006,7 @@ SQLite
 
 Direct export of Telegram IndexedDB into the native application is not required.
 
-## 22. Architectural invariant
+## 23. Architectural invariant
 
 After migration, ordinary Mezfit persistence follows:
 
@@ -738,4 +1022,16 @@ local domain storage ↔ Sync Engine ↔ server
 
 REST is not part of the critical path for ordinary user data entry.
 
-Server-coordinated control-plane operations are the deliberate exception.
+The final separation is:
+
+```text
+UI/read model       → local normalized DB
+consistency         → independently versioned ownership scopes
+network efficiency  → client/day/range transport batches
+remote freshness    → durable recipient change feed + cursor
+authorization       → server truth + bounded local leases
+```
+
+Transport batching must never redefine ownership or consistency boundaries.
+
+Server-coordinated control-plane operations are the deliberate exception to local-first mutation flow.
