@@ -241,10 +241,10 @@ Conceptual exercise scopes:
 ```text
 exercise-global
 exercise-coach:{coachId}
-exercise-client:{clientId}
+exercise-client:{coachId}:{clientId}
 ```
 
-The global catalogue is primarily server-owned replicated reference data. Coach/client custom exercises, user-specific overrides and favourites belong to the appropriate owner scope and synchronize as mutable domain state.
+The global catalogue is primarily server-owned replicated reference data. Coach-owned exercises, overrides and favourites belong to the coach scope. A client-scoped exercise is owned by the specific coach/client pair in the existing domain model, so its mutable scope key must include both IDs. A local client catalogue may expose an aggregated read model composed from global, coach-owned and pair-owned scopes, but that aggregated view is not itself a mutable synchronization scope.
 
 Coach/client relationships and the coach's client directory are also locally replicated so the client list can open immediately. Relationship mutation remains server-coordinated control plane, but its resulting state is replicated down to local storage.
 
@@ -414,10 +414,17 @@ scope_key
 scope_type
 scope_revision
 change_kind          // changed | deleted | revoked
+target_identity       // enough identity to tombstone/purge without reading the removed resource
 created_at
 ```
 
-The change feed contains invalidation/version metadata, not necessarily the full domain snapshot. The client uses it to decide which scope snapshot must be pulled.
+The change feed contains invalidation/version metadata, not necessarily the full domain snapshot. For `changed`, the client uses it to decide which scope snapshot must be pulled. For `deleted` and `revoked`, the change record itself must contain enough identity to perform the required local removal without fetching a resource that no longer exists or is no longer authorized.
+
+Deletion semantics:
+
+- `deleted`: transactionally tombstone/remove the affected entity/scope from the normal local read model. If the same scope has unsynchronized local edits, preserve those edits only as a blocked conflict payload (for example `remote_deleted`) rather than silently resurrecting or discarding them; the deleted entity must not remain visible as current server state.
+- `revoked`: authorization loss wins immediately. Transactionally purge the full locally retained private graph covered by the revoked relationship, including dirty/inflight snapshots, pending conflicts, scope metadata and derived/private projections that the user is no longer authorized to retain. No follow-up snapshot pull is attempted.
+- The remote cursor may advance past a `deleted` or `revoked` record only after the tombstone/conflict marker or purge has been durably committed locally.
 
 Snapshot writes must include `requestId` and `baseServerRevision`. The server applies a write only when the current scope revision equals `baseServerRevision`, then increments the server scope revision and appends the corresponding change-feed record as part of the same logical commit.
 
@@ -508,17 +515,29 @@ background catch-up / hydration
 
 Client list, calendar and exercise catalogue are immediate-read surfaces. After initial hydration they must open from local storage without waiting for REST.
 
-On a first installation or an empty per-user local database:
+On a first installation or an empty per-user local database, bootstrap must establish a change-feed boundary **before** baseline hydration so no mutation can fall into a gap between "snapshot loaded" and "cursor initialized".
+
+Required bootstrap sequence:
 
 ```text
 authenticate
 ↓
-bootstrap minimum shell/client-directory data
+GET bootstrap metadata → bootstrapStartCursor = N
 ↓
-render as soon as locally persisted data is available
+persist N as the baseline catch-up cursor (do not advance it yet)
 ↓
-continue full hydration in background
+hydrate baseline scopes progressively
+↓
+run normal change-feed catch-up for changes after N
+↓
+advance remote cursor as those changes are durably represented locally
 ```
+
+A mutation committed after cursor N is therefore either already reflected by a later snapshot read or is replayed by the change feed after N; duplicates are harmless because scope revisions are monotonic. The implementation must never initialize the cursor to "current feed head" after hydration.
+
+While baseline hydration is in progress, remote changes after N must not be discarded. The simplest v1 rule is to complete the baseline for the required scope set and then replay the feed from N before declaring initial hydration current.
+
+The bootstrap metadata endpoint and hydration reads must obey the same authorization view. If a scope disappears during hydration, the subsequent `deleted`/`revoked` change record resolves it through the normal tombstone/purge semantics.
 
 Coach Mode deliberately hydrates and retains the working history of all currently linked clients, not only the selected client. Full hydration must be progressive and must never block an already-usable UI.
 
@@ -551,16 +570,20 @@ local cursor = N
 ↓
 GET /api/sync/changes?after=N
 ↓
-receive changed scope keys/revisions
-↓
 for each change:
-  clean scope  → pull/apply snapshot
-  dirty scope  → persist pending_remote_revision, do not overwrite local data
+  changed + clean scope
+      → pull/apply snapshot
+  changed + dirty/inflight scope
+      → persist pending_remote_revision; do not overwrite local data
+  deleted
+      → transactional tombstone/removal (or remote_deleted conflict if local edits exist)
+  revoked
+      → transactional purge of the no-longer-authorized local private graph
 ↓
 advance cursor only after the change is durably represented locally
 ```
 
-For a clean scope, "durably represented" means the remote snapshot has been transactionally applied. For a dirty/inflight scope, it means at least the pending remote revision/invalidation has been persisted so the conflict cannot be forgotten even if the app closes immediately afterward.
+For a clean `changed` scope, "durably represented" means the remote snapshot has been transactionally applied. For a dirty/inflight `changed` scope, it means at least the pending remote revision/invalidation has been persisted so the conflict cannot be forgotten even if the app closes immediately afterward. For `deleted` or `revoked`, it means the tombstone/conflict marker or purge transaction has committed.
 
 The global cursor therefore does not have to stall behind one dirty scope, but it must never advance past a change that has neither been applied nor durably recorded as pending.
 
