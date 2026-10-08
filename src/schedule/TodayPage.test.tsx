@@ -284,7 +284,12 @@ describe('TodayPage schedule loading', () => {
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
 
     expect(document.querySelector('.ui-mezfit-bottom-sheet__backdrop')).toBeNull();
+    const historyBack = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    expect(historyBack).toHaveBeenCalledTimes(1);
+    act(() => {
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
 
     const restoredFab = await screen.findByRole('button', { name: 'Добавить' });
     fireEvent.click(restoredFab);
