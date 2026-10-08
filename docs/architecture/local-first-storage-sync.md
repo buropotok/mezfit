@@ -269,7 +269,7 @@ Media blobs are not part of this domain replica. Store media metadata/reference 
 
 If a coach/client relationship is revoked or becomes inaccessible, the server must emit an authorization/revocation change and the client must purge locally retained private data that is no longer authorized.
 
-## 9. Dirty scopes instead of CRUD event replay
+## 8. Dirty scopes instead of CRUD event replay
 
 UI mutations may generate an internal dirty signal/event, but synchronization does not need to preserve and replay every intermediate field mutation.
 
@@ -584,18 +584,19 @@ sync metadata
 RemoteSyncGateway
 ```
 
-Then migrate a complete vertical slice.
-
-The first preferred slice is WorkoutSession / FACT because it has the highest latency sensitivity and exercises the important synchronization guarantees.
-
-Then migrate:
+Then migrate complete vertical slices in an order that establishes immediate local reads before broad mutation coverage:
 
 ```text
-client + day / calendar
-program static scopes
-settings
-remaining persistent surfaces
+1. identity/client directory bootstrap + remote change cursor
+2. exercise catalogue local replica
+3. calendar/local occurrence reads
+4. WorkoutSession / FACT local mutations and outbound sync
+5. client-day calendar mutations
+6. program static scopes
+7. settings and remaining persistent surfaces
 ```
+
+WorkoutSession / FACT remains the first high-frequency mutation slice because it has the highest latency sensitivity and exercises outbound ordering, retry and idempotency.
 
 Once a domain surface is migrated, it must not have two competing mutation paths. Remove the obsolete direct REST mutation path for that surface.
 
