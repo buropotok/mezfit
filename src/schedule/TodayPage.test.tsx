@@ -283,9 +283,8 @@ describe('TodayPage schedule loading', () => {
     expect(screen.queryByText('Экран создания события будет реализован отдельной задачей.')).toBeNull();
     expect(view.container.querySelector('.navigation-primary-tabs > div')?.hasAttribute('hidden')).toBe(true);
 
-    const backdrop = document.querySelector<HTMLElement>('.ui-mezfit-bottom-sheet__backdrop');
-    if (!backdrop) throw new Error('Missing bottom sheet backdrop');
-    fireEvent.click(backdrop);
+    expect(document.querySelector('.ui-mezfit-bottom-sheet__backdrop')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
 
     const restoredFab = await screen.findByRole('button', { name: 'Добавить' });
     fireEvent.click(restoredFab);
