@@ -192,25 +192,39 @@ The exact list of entities receiving `sync_id` is defined as each domain is migr
 
 Synchronization is snapshot-based, not a replay of every CRUD event.
 
-### Dynamic scope
+### Dynamic scopes
 
-The primary dynamic scope is:
+Mutable synchronization scopes must follow the same boundary as write ownership and server authorization. A read model may aggregate several mutable scopes, but those scopes must not share one revision when their writers cannot read or reconcile each other's state.
 
-```text
-client + calendar day
-```
-
-Canonical conceptual key:
+Scheduled coach/client day data is pair-owned:
 
 ```text
-client-day:{clientId}:{YYYY-MM-DD}
+coach-client-day:{coachId}:{clientId}:{YYYY-MM-DD}
 ```
 
-In Client Mode, `clientId` is the current client.
+This scope contains the calendar occurrences and related day/session state that belong to that specific coach/client relationship and date.
 
-In Coach Mode, the selected client is explicit. A coach does not push all data for all clients when one client's day changes.
+A client may have multiple active coaches. Each coach/client pair therefore has an independent snapshot and server revision. A mutation by coach A must never advance the revision used by coach B.
 
-The day scope contains the current synchronized state belonging to that client/day, including relevant workout occurrences and workout execution state.
+Client-owned day data that does not belong to a coach/client relationship, such as an unscheduled/self-originated workout session, uses a separate ownership scope:
+
+```text
+client-self-day:{clientId}:{YYYY-MM-DD}
+```
+
+The **client calendar** is an aggregated local read model, not a mutable synchronization scope:
+
+```text
+client calendar for date D
+  =
+  all authorized coach-client-day:*:{clientId}:D scopes
+  +
+  client-self-day:{clientId}:D
+```
+
+In Coach Mode the calendar read model includes only scopes authorized for that coach. In Client Mode it may aggregate all currently authorized coach/client pair scopes plus the client's self-owned scope.
+
+This partitioning ensures CAS, change-feed invalidation and reconciliation always operate on state that the current writer is authorized to read in full.
 
 ### Static scopes
 
@@ -356,7 +370,7 @@ The generic safe rule is **no silent merge and no silent overwrite**. A domain-s
 
 If non-overlap cannot be proven, the scope enters `conflict`/blocked state. The local edit remains intact, the remote snapshot/revision remains available for resolution, and neither side is overwritten automatically.
 
-Examples that require conflict protection include the same coach editing the same mutable scope on two devices and concurrent edits to the same calendar occurrence.
+Examples that require conflict protection include the same coach editing the same mutable scope on two devices and concurrent edits to the same calendar occurrence within the same coach/client pair. Different coaches for the same client are isolated into different mutable day scopes and therefore do not conflict through a shared revision.
 
 This prevents both failure modes: an inbound pull erasing offline local edits and a later stale outbound snapshot overwriting a newer server state.
 
@@ -390,8 +404,11 @@ The worker sends/receives scope snapshots rather than interpreting a client-side
 Conceptually:
 
 ```text
-PUT /api/sync/client-days/:clientId/:date
-GET /api/sync/client-days/:clientId/:date
+PUT /api/sync/coach-client-days/:coachId/:clientId/:date
+GET /api/sync/coach-client-days/:coachId/:clientId/:date
+
+PUT /api/sync/client-self-days/:clientId/:date
+GET /api/sync/client-self-days/:clientId/:date
 
 PUT /api/sync/programs/:programSyncId
 GET /api/sync/programs/:programSyncId
@@ -548,7 +565,7 @@ Recommended priority:
 2. visible calendar window + current/active workout state
 3. exercise catalogue
 4. current programs
-5. remaining historical client-day scopes
+5. remaining historical coach-client-day and client-self-day scopes
 ```
 
 After the first successful hydration, normal launches render from IndexedDB first and use background synchronization only to catch up changes.
@@ -657,13 +674,13 @@ Then migrate complete vertical slices in an order that establishes immediate loc
 ```text
 1. identity/client directory bootstrap + remote change cursor
 2. exercise catalogue local replica
-3. calendar/occurrence local reads + create/reschedule/cancel local mutations and outbound sync
+3. calendar/occurrence local reads + pair-owned create/reschedule/cancel mutations and outbound sync
 4. WorkoutSession / FACT local mutations and outbound sync
 5. program static scopes
 6. settings and remaining persistent surfaces
 ```
 
-Calendar read ownership and calendar mutations must move together. Once the calendar renders from IndexedDB, create/reschedule/cancel must also update the local authoritative calendar state immediately; a REST-only mutation path must not remain behind a local-read UI.
+Calendar read ownership and calendar mutations must move together. Once the calendar renders from IndexedDB, create/reschedule/cancel must also update the correct pair-owned local scope immediately; a REST-only mutation path must not remain behind a local-read UI. The rendered calendar is derived from the authorized local scopes and is never itself written as one shared client-day snapshot.
 
 WorkoutSession / FACT remains the highest-frequency mutation slice because it has the highest latency sensitivity and exercises outbound ordering, retry and idempotency.
 
