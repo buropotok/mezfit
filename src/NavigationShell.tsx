@@ -205,6 +205,8 @@ interface Props {
   children: ReactNode;
 }
 
+const FAB_LIQUID_POPOVER_MOTION = Object.freeze({ sourceMorph: 0.12 });
+
 /** The navigation slot owns FAB placement; this component owns only its popover lifecycle. */
 function NavigationFloatingActionPopover({ action, glassPreset, glassOptics }: {
   action: NavigationFloatingAction;
@@ -224,6 +226,7 @@ function NavigationFloatingActionPopover({ action, glassPreset, glassOptics }: {
       items={action.popoverItems ?? []}
       preset={glassPreset}
       optics={glassOptics}
+      motion={FAB_LIQUID_POPOVER_MOTION}
       trigger={
         <FloatingActionButton
           ref={triggerRef}
