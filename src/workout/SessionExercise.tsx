@@ -235,6 +235,7 @@ export function SessionExercise(props: SessionExerciseProps) {
           <div className="session-exercise__add-set">
             <GlassSurface
               component="button"
+              wrapContent={false}
               className="session-exercise__add-set-button"
               data-no-dnd
               aria-label="Добавить подход"
