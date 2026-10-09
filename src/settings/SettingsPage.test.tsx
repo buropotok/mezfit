@@ -91,7 +91,7 @@ describe('SettingsPage modules gallery', () => {
     expect(screen.getByRole('region', { name: 'Liquid Popover — сравнение режимов' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Открыть SVG Popover' }));
     expect(screen.getByRole('menu', { name: 'SVG Popover' }).querySelector('canvas')?.style.clipPath)
-      .toMatch(/^url\\(/);
+      .toMatch(/^url\(/);
 
     fireEvent.click(screen.getByRole('button', { name: 'Открыть Canvas Popover' }));
     expect(screen.getByRole('menu', { name: 'Canvas Popover' }).querySelector('canvas')?.style.clipPath)
