@@ -68,31 +68,11 @@
 
 .mezfit-exercises__filter {
   flex: 0 0 auto;
-  min-height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 18px;
-  color: var(--ui-color-surface-muted);
-  background: var(--ui-color-surface-raised);
-  cursor: pointer;
-}
-
-.mezfit-exercises__filter--selected {
-  color: var(--ui-color-surface-text);
-  background: color-mix(in srgb, var(--color-accent) 24%, var(--ui-color-surface-raised));
-}
-
-.mezfit-exercises__filter:disabled {
-  opacity: .55;
-  cursor: default;
+  white-space: nowrap;
 }
 
 .mezfit-exercises__category-list {
   margin: 0;
-  background: transparent;
 }
 
 .mezfit-exercises__category-media {
@@ -116,10 +96,6 @@
 .mezfit-exercises__category-media > .ui-icon {
   width: 44px;
   height: 44px;
-}
-
-.mezfit-exercises__list {
-  background: transparent;
 }
 
 .mezfit-exercises__list .ui-icon {
