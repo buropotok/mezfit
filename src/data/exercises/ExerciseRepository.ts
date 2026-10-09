@@ -60,7 +60,7 @@ function definitionRow(exercise: ExerciseDefinition, now: string): LocalExercise
     referenceMediaUrl: exercise.reference_media_url,
     referenceOrder: null,
     sourceMetadataJson: null,
-    isArchived: false,
+    isArchived: exercise.is_archived ?? false,
     createdByUserId: null,
     createdAt: now,
     updatedAt: now,
