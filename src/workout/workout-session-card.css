@@ -36,13 +36,6 @@
   white-space: nowrap;
 }
 
-.workout-session-card__menu-trigger.ui-icon-button {
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
-  padding: 10px;
-}
-
 .workout-session-card__avatar {
   width: 44px;
   height: 44px;
