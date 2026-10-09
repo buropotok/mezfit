@@ -32,7 +32,7 @@ describe('MezfitTopPanel', () => {
     const onClose = vi.fn();
     const view = render(
       <MezfitTopPanel opened onClose={onClose} role="dialog" aria-label="Top panel">
-        <div>Content</div>
+        <button type="button">Content</button>
       </MezfitTopPanel>,
     );
 
@@ -46,14 +46,15 @@ describe('MezfitTopPanel', () => {
     fireEvent.click(document.body);
     expect(onClose).not.toHaveBeenCalled();
 
+    const gestureTarget = view.getByRole('button', { name: 'Content' });
     const setPointerCapture = vi.fn();
     const releasePointerCapture = vi.fn();
-    Object.defineProperties(panel, {
+    Object.defineProperties(gestureTarget, {
       setPointerCapture: { configurable: true, value: setPointerCapture },
       releasePointerCapture: { configurable: true, value: releasePointerCapture },
     });
 
-    fireEvent.pointerDown(panel, {
+    fireEvent.pointerDown(gestureTarget, {
       pointerId: 1,
       pointerType: 'touch',
       clientX: 120,
@@ -61,13 +62,13 @@ describe('MezfitTopPanel', () => {
     });
     expect(setPointerCapture).toHaveBeenCalledWith(1);
 
-    fireEvent.pointerMove(panel, {
+    fireEvent.pointerMove(gestureTarget, {
       pointerId: 1,
       pointerType: 'touch',
       clientX: 210,
       clientY: 176,
     });
-    fireEvent.pointerUp(panel, {
+    fireEvent.pointerUp(gestureTarget, {
       pointerId: 1,
       pointerType: 'touch',
       clientX: 210,
@@ -75,13 +76,13 @@ describe('MezfitTopPanel', () => {
     });
     expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.pointerDown(panel, {
+    fireEvent.pointerDown(gestureTarget, {
       pointerId: 2,
       pointerType: 'touch',
       clientX: 180,
       clientY: 220,
     });
-    fireEvent.pointerMove(panel, {
+    fireEvent.pointerMove(gestureTarget, {
       pointerId: 2,
       pointerType: 'touch',
       clientX: 184,
@@ -91,7 +92,7 @@ describe('MezfitTopPanel', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(releasePointerCapture).toHaveBeenCalledWith(2);
 
-    fireEvent.pointerUp(panel, {
+    fireEvent.pointerUp(gestureTarget, {
       pointerId: 2,
       pointerType: 'touch',
       clientX: 184,
