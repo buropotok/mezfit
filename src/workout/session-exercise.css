@@ -134,11 +134,12 @@
 }
 
 .session-exercise__add-set {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
   min-height: 44px;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3) 0;
+  column-gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-3) 0 var(--ui-space-4);
 }
 
 .session-exercise__add-set-hit {
@@ -146,7 +147,7 @@
   display: grid;
   width: 44px;
   height: 44px;
-  flex: 0 0 44px;
+  margin-inline-start: -6px;
   padding: 0;
   place-items: center;
   border: 0;
@@ -160,13 +161,18 @@
   width: 32px;
   height: 32px;
   place-items: center;
-  color: var(--ui-color-primary);
+  color: var(--ui-color-surface-text);
   pointer-events: none;
 }
 
 .session-exercise__add-set-icon {
   width: 20px;
   height: 20px;
+}
+
+.session-exercise__add-set-label {
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .session-exercise__summary {
