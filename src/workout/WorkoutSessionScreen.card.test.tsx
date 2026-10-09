@@ -140,5 +140,8 @@ describe('WorkoutSessionScreen workout card', () => {
     ).toBe('75%');
 
     expect(screen.getByTestId('workout-sortable-items').children).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: 'Меню тренировки' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Комментарий' })).toBeNull();
+    expect(screen.getByText(/^\d{2}:\d{2} — …$/)).toBeTruthy();
   });
 });
