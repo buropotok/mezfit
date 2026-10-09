@@ -114,6 +114,8 @@ const canonicalSession = {
   occurrenceId: null,
   status: 'active' as const,
   workoutDate: '2026-09-17',
+  startedAt: '2026-09-17T18:00:00Z',
+  completedAt: null,
   program: null,
   phase: null,
   day: null,
