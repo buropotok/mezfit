@@ -1,0 +1,201 @@
+.mezfit-exercises {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  color: var(--ui-color-surface-text);
+}
+
+.mezfit-exercises__view-header,
+.mezfit-exercises-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mezfit-exercises__view-header {
+  min-height: 44px;
+}
+
+.mezfit-exercises-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 100%;
+  padding: var(--space-3);
+  background: #000;
+}
+
+.mezfit-exercises-sheet__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  justify-content: space-between;
+  min-height: 48px;
+  background: #000;
+}
+
+.mezfit-exercises-sheet__notice,
+.mezfit-exercises-sheet__footer {
+  flex: 0 0 auto;
+}
+
+.mezfit-exercises-sheet__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: var(--space-2) 0 max(var(--space-2), env(safe-area-inset-bottom));
+  background: #000;
+}
+
+.mezfit-exercises__search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.mezfit-exercises__filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+}
+
+.mezfit-exercises__filters::-webkit-scrollbar {
+  display: none;
+}
+
+.mezfit-exercises__filter {
+  flex: 0 0 auto;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 18px;
+  color: var(--ui-color-surface-muted);
+  background: var(--ui-color-surface-2);
+  cursor: pointer;
+}
+
+.mezfit-exercises__filter--selected {
+  color: var(--ui-color-surface-text);
+  background: color-mix(in srgb, var(--color-accent) 24%, var(--ui-color-surface-2));
+}
+
+.mezfit-exercises__filter:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.mezfit-exercises__category-list {
+  margin: 0;
+  background: transparent;
+}
+
+.mezfit-exercises__category-media {
+  width: 80px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  color: var(--ui-color-surface-muted);
+  background: transparent;
+}
+
+.mezfit-exercises__category-media > .ui-icon {
+  width: 44px;
+  height: 44px;
+}
+
+.mezfit-exercises__list {
+  background: transparent;
+}
+
+.mezfit-exercises__list .ui-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.mezfit-exercises__empty {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-3);
+  text-align: center;
+}
+
+.mezfit-exercises__error {
+  color: var(--ui-color-danger);
+}
+
+.mezfit-exercises__detail-media {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+}
+
+.mezfit-exercises__detail-copy {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.mezfit-exercises__detail-actions,
+.mezfit-exercises__editor-actions,
+.mezfit-exercises__editor-save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.mezfit-exercises__editor-actions {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-4);
+}
+
+.mezfit-exercises__editor-save-actions {
+  justify-content: flex-end;
+}
+
+.mezfit-exercises__editor {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.mezfit-exercises__editor-media {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.mezfit-exercises__editor-media > .ui-icon {
+  width: 42px;
+  height: 42px;
+}
+
+.mezfit-exercises__editor-fields {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (max-width: 420px) {
+  .mezfit-exercises__search-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mezfit-exercises__editor {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .mezfit-exercises__editor-media {
+    width: 64px;
+    height: 64px;
+  }
+}
