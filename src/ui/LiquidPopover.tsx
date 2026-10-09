@@ -30,6 +30,10 @@ import {
   type LiquidRect,
 } from './liquidPopoverGeometry';
 import './liquid-popover.css';
+import {
+  resolveLiquidPopoverRenderMode,
+  type LiquidPopoverRenderMode,
+} from './liquidPopoverRenderMode';
 
 export type LiquidPopoverItem = {
   id: string;
@@ -97,6 +101,8 @@ export interface LiquidPopoverProps {
   /** Reports whether the source surface must remain visually hidden. */
   onPresentationChange?: (presented: boolean) => void;
   motion?: Partial<LiquidMotionOptions>;
+  /** Auto uses in-Canvas clipping on iOS; explicit modes support side-by-side demos. */
+  renderMode?: LiquidPopoverRenderMode;
 }
 
 export function resolveLiquidMotionOptions(
@@ -235,6 +241,7 @@ export function LiquidPopover({
   scrollActiveIntoView = false,
   onPresentationChange,
   motion,
+  renderMode = 'auto',
 }: LiquidPopoverProps) {
   const id = useId().replace(/:/g, ''),
     clipId = `liquid-clip-${id}`;
@@ -264,6 +271,7 @@ export function LiquidPopover({
     [],
   );
   const options = useMemo(() => resolveLiquidMotionOptions(motion), [motion]);
+  const resolvedRenderMode = resolveLiquidPopoverRenderMode(renderMode);
   const resolvedColumns = Math.max(1, Math.min(8, Math.floor(columns || 1)));
   const gridStyle = layout === 'grid'
     ? ({ '--ui-liquid-popover-columns': String(resolvedColumns) } as CSSProperties)
@@ -314,6 +322,7 @@ export function LiquidPopover({
     presentation.preset,
     presentation.optics,
     presentation.options,
+    resolvedRenderMode,
     presentation.items.map((item) => [
       item.id,
       item.label,
@@ -664,7 +673,8 @@ export function LiquidPopover({
           loop.map((point) => ({ x: point.x - cropX, y: point.y - cropY })),
         );
         const canvasPath = animation.path(localLoops);
-        clipRef.current?.setAttribute('d', canvasPath);
+        if (resolvedRenderMode === 'svg')
+          clipRef.current?.setAttribute('d', canvasPath);
         paintLiquidMesh(
           context,
           texture,
@@ -674,6 +684,7 @@ export function LiquidPopover({
           0,
           timeline.lens,
           progress >= 1,
+          resolvedRenderMode === 'canvas' ? new Path2D(canvasPath) : undefined,
         );
 
         const centerX = (bounds.left + bounds.right) / 2,
@@ -722,6 +733,7 @@ export function LiquidPopover({
     isOpen,
     positioned,
     presentationKey,
+    resolvedRenderMode,
     triggerRef,
   ]);
 
@@ -806,7 +818,9 @@ export function LiquidPopover({
             ref={canvasRef}
             aria-hidden="true"
             className="ui-liquid-popover__scene"
-            style={{ clipPath: `url(#${clipId})` }}
+            style={{
+              clipPath: resolvedRenderMode === 'svg' ? `url(#${clipId})` : 'none',
+            }}
           />
           <div
             ref={nativeRef}
