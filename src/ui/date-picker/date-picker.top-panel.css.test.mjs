@@ -47,6 +47,7 @@ describe('DatePicker compact top-panel CSS contract', () => {
     expect(declaration('.ui-date-picker__days', 'row-gap')).toBe('var(--ui-space-1)');
     expect(declaration('.ui-date-picker__top-content', 'gap')).toBe('var(--ui-space-1)');
     expect(normalizeZeroLengths(declaration('.ui-date-picker__top-content', 'padding'))).toBe('0');
+    expect(declaration('.ui-date-picker__scroll--horizontal', 'touch-action')).toBe('pan-x');
     expect(declaration('.ui-date-picker__months--horizontal', 'align-items')).toBe('flex-start');
     expect(declaration('.ui-date-picker__month--horizontal', 'align-self')).toBe('flex-start');
     expect(declaration('.ui-date-picker__month--horizontal', 'align-content')).toBe('start');

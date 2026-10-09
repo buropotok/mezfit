@@ -32,7 +32,7 @@ describe('MezfitTopPanel', () => {
     const onClose = vi.fn();
     const view = render(
       <MezfitTopPanel opened onClose={onClose} role="dialog" aria-label="Top panel">
-        <div>Content</div>
+        <button type="button">Content</button>
       </MezfitTopPanel>,
     );
 
@@ -46,13 +46,29 @@ describe('MezfitTopPanel', () => {
     fireEvent.click(document.body);
     expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.pointerDown(panel, {
+    const gestureTarget = view.getByRole('button', { name: 'Content' });
+    const setPointerCapture = vi.fn();
+    const releasePointerCapture = vi.fn();
+    Object.defineProperties(gestureTarget, {
+      setPointerCapture: { configurable: true, value: setPointerCapture },
+      releasePointerCapture: { configurable: true, value: releasePointerCapture },
+    });
+
+    fireEvent.pointerDown(gestureTarget, {
       pointerId: 1,
       pointerType: 'touch',
       clientX: 120,
       clientY: 180,
     });
-    fireEvent.pointerUp(panel, {
+    expect(setPointerCapture).toHaveBeenCalledWith(1);
+
+    fireEvent.pointerMove(gestureTarget, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 210,
+      clientY: 176,
+    });
+    fireEvent.pointerUp(gestureTarget, {
       pointerId: 1,
       pointerType: 'touch',
       clientX: 210,
@@ -60,19 +76,104 @@ describe('MezfitTopPanel', () => {
     });
     expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.pointerDown(panel, {
+    fireEvent.pointerDown(gestureTarget, {
       pointerId: 2,
       pointerType: 'touch',
       clientX: 180,
       clientY: 220,
     });
-    fireEvent.pointerUp(panel, {
+    fireEvent.pointerMove(gestureTarget, {
+      pointerId: 2,
+      pointerType: 'touch',
+      clientX: 184,
+      clientY: 160,
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(releasePointerCapture).toHaveBeenCalledWith(2);
+
+    fireEvent.pointerUp(gestureTarget, {
       pointerId: 2,
       pointerType: 'touch',
       clientX: 184,
       clientY: 140,
     });
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears an active gesture when closed so swipe works after reopening', () => {
+    const onClose = vi.fn();
+    const view = render(
+      <MezfitTopPanel opened onClose={onClose} role="dialog" aria-label="Lifecycle top panel">
+        <div>Content</div>
+      </MezfitTopPanel>,
+    );
+
+    const panel = view.getByRole('dialog', { name: 'Lifecycle top panel' });
+    fireEvent.pointerDown(panel, {
+      pointerId: 4,
+      pointerType: 'touch',
+      clientX: 180,
+      clientY: 220,
+    });
+
+    view.rerender(
+      <MezfitTopPanel opened={false} onClose={onClose} role="dialog" aria-label="Lifecycle top panel">
+        <div>Content</div>
+      </MezfitTopPanel>,
+    );
+    view.rerender(
+      <MezfitTopPanel opened onClose={onClose} role="dialog" aria-label="Lifecycle top panel">
+        <div>Content</div>
+      </MezfitTopPanel>,
+    );
+
+    fireEvent.pointerDown(panel, {
+      pointerId: 5,
+      pointerType: 'touch',
+      clientX: 180,
+      clientY: 220,
+    });
+    fireEvent.pointerMove(panel, {
+      pointerId: 5,
+      pointerType: 'touch',
+      clientX: 184,
+      clientY: 160,
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears a cancelled pointer gesture without closing', () => {
+    const onClose = vi.fn();
+    const view = render(
+      <MezfitTopPanel opened onClose={onClose} role="dialog" aria-label="Cancelled top panel">
+        <div>Content</div>
+      </MezfitTopPanel>,
+    );
+
+    const panel = view.getByRole('dialog', { name: 'Cancelled top panel' });
+    const releasePointerCapture = vi.fn();
+    Object.defineProperties(panel, {
+      setPointerCapture: { configurable: true, value: vi.fn() },
+      releasePointerCapture: { configurable: true, value: releasePointerCapture },
+    });
+
+    fireEvent.pointerDown(panel, {
+      pointerId: 3,
+      pointerType: 'touch',
+      clientX: 180,
+      clientY: 220,
+    });
+    fireEvent.pointerCancel(panel, {
+      pointerId: 3,
+      pointerType: 'touch',
+      clientX: 180,
+      clientY: 200,
+    });
+
+    expect(releasePointerCapture).toHaveBeenCalledWith(3);
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('makes the closed subtree inert instead of exposing hidden focused controls', () => {
