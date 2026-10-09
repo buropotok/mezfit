@@ -232,24 +232,26 @@ export function SessionExercise(props: SessionExerciseProps) {
         </List>
 
         {props.mode !== 'plan' && editable && onAddSet ? (
-          <button
-            type="button"
-            className="session-exercise__add-set"
-            data-no-dnd
-            aria-label="Добавить подход"
-            onClick={() => onAddSet(data.sessionExerciseId)}
-          >
-            <GlassSurface
-              component="span"
-              wrapContent={false}
-              shape="capsule"
-              className="session-exercise__add-set-button"
-              aria-hidden="true"
+          <div className="session-exercise__add-set">
+            <button
+              type="button"
+              className="session-exercise__add-set-hit"
+              data-no-dnd
+              aria-label="Добавить подход"
+              onClick={() => onAddSet(data.sessionExerciseId)}
             >
-              <Icon name="plus" variant="outline" className="session-exercise__add-set-icon" />
-            </GlassSurface>
+              <GlassSurface
+                component="span"
+                wrapContent={false}
+                shape="capsule"
+                className="session-exercise__add-set-button"
+                aria-hidden="true"
+              >
+                <Icon name="plus" variant="outline" className="session-exercise__add-set-icon" />
+              </GlassSurface>
+            </button>
             <Text variant="body">Добавить подход</Text>
-          </button>
+          </div>
         ) : null}
 
         <div className="session-exercise__summary">
