@@ -30,7 +30,7 @@ import {
   type TypographyRole,
   type TypographySettings,
 } from '../typographySettings';
-import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
+import { Button, DatePicker, Divider, Dropdown, GlassSurface, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
 import { SessionExercise, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import './settings-page.css';
@@ -653,16 +653,24 @@ export function SettingsPage({
           <Text variant="footnote" tone="muted">{workoutCardActionMessage}</Text>
         ) : null}
         <span className="settings-page__action">
-          <Button onClick={() => {
-            if (workoutCardMode === 'completed') {
-              setWorkoutCardMode(workoutCardSource === 'own' ? 'active-own' : 'active-program');
-              return;
-            }
-            setWorkoutCardSource(workoutCardMode === 'active-own' ? 'own' : 'program');
-            setWorkoutCardMode('completed');
-          }}>
-            {workoutCardMode === 'completed' ? 'Возобновить тренировку' : 'Завершить тренировку'}
-          </Button>
+          <GlassSurface
+            component="button"
+            wrapContent={false}
+            shape="capsule"
+            className="modules-gallery__workout-lifecycle"
+            onClick={() => {
+              if (workoutCardMode === 'completed') {
+                setWorkoutCardMode(workoutCardSource === 'own' ? 'active-own' : 'active-program');
+                return;
+              }
+              setWorkoutCardSource(workoutCardMode === 'active-own' ? 'own' : 'program');
+              setWorkoutCardMode('completed');
+            }}
+          >
+            <Text variant="body">
+              {workoutCardMode === 'completed' ? 'Возобновить тренировку' : 'Завершить тренировку'}
+            </Text>
+          </GlassSurface>
         </span>
       </section>
 
