@@ -11,7 +11,15 @@ type TopPanelCssProperties = CSSProperties & {
   '--ui-mezfit-top-panel-blur': string;
 };
 
-export type MezfitTopPanelProps = Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'onPointerDownCapture' | 'onPointerUpCapture' | 'onPointerCancelCapture'> & {
+export type MezfitTopPanelProps = Omit<
+  HTMLAttributes<HTMLDivElement>,
+  | 'children'
+  | 'onPointerDownCapture'
+  | 'onPointerMoveCapture'
+  | 'onPointerUpCapture'
+  | 'onPointerCancelCapture'
+  | 'onLostPointerCapture'
+> & {
   opened: boolean;
   onClose: () => void;
   blur?: number;
@@ -43,28 +51,67 @@ export function MezfitTopPanel({
     '--ui-mezfit-top-panel-blur': `${blur}px`,
   } as TopPanelCssProperties;
 
+  const releasePointerCapture = (element: HTMLDivElement, pointerId: number) => {
+    if (typeof element.releasePointerCapture !== 'function') return;
+    try {
+      element.releasePointerCapture(pointerId);
+    } catch {
+      // Pointer capture is an enhancement. Gesture tracking still works without it.
+    }
+  };
+
+  const finishGesture = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    finishWithoutClose: boolean,
+  ) => {
+    const start = gestureRef.current;
+    if (!opened || !start || start.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    const shouldClose = deltaY <= -SWIPE_UP_THRESHOLD_PX
+      && Math.abs(deltaY) >= Math.abs(deltaX) * SWIPE_AXIS_RATIO;
+
+    if (!shouldClose && !finishWithoutClose) return;
+
+    gestureRef.current = null;
+    releasePointerCapture(event.currentTarget, event.pointerId);
+    if (shouldClose) onClose();
+  };
+
   const onPointerDownCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!opened || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (!opened || gestureRef.current || (event.pointerType === 'mouse' && event.button !== 0)) return;
     gestureRef.current = {
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
     };
+
+    if (typeof event.currentTarget.setPointerCapture !== 'function') return;
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Older WKWebView builds may reject capture; pointer-move detection remains the fallback.
+    }
+  };
+
+  const onPointerMoveCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    finishGesture(event, false);
   };
 
   const onPointerUpCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const start = gestureRef.current;
-    gestureRef.current = null;
-    if (!opened || !start || start.pointerId !== event.pointerId) return;
+    finishGesture(event, true);
+  };
 
-    const deltaX = event.clientX - start.x;
-    const deltaY = event.clientY - start.y;
-    if (
-      deltaY <= -SWIPE_UP_THRESHOLD_PX
-      && Math.abs(deltaY) >= Math.abs(deltaX) * SWIPE_AXIS_RATIO
-    ) {
-      onClose();
-    }
+  const onPointerCancelCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = gestureRef.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    gestureRef.current = null;
+    releasePointerCapture(event.currentTarget, event.pointerId);
+  };
+
+  const onLostPointerCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (gestureRef.current?.pointerId === event.pointerId) gestureRef.current = null;
   };
 
   const surfaceClassName = [
@@ -100,10 +147,10 @@ export function MezfitTopPanel({
       inert={opened ? undefined : true}
       style={frameStyle}
       onPointerDownCapture={onPointerDownCapture}
+      onPointerMoveCapture={onPointerMoveCapture}
       onPointerUpCapture={onPointerUpCapture}
-      onPointerCancelCapture={() => {
-        gestureRef.current = null;
-      }}
+      onPointerCancelCapture={onPointerCancelCapture}
+      onLostPointerCapture={onLostPointerCapture}
     >
       {surface}
     </div>
