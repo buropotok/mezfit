@@ -63,7 +63,6 @@ const baseSession: ActiveWorkoutSession = {
   program: null,
   phase: null,
   day: null,
-  creator: null,
   exercises: [],
 };
 
@@ -71,6 +70,17 @@ const requiredProps = {
   onReorderExerciseIds: vi.fn(),
   onSaveSet: vi.fn(async () => undefined),
 };
+
+function actionButtonForField(field: HTMLElement, name: string): HTMLButtonElement {
+  let scope: HTMLElement | null = field.parentElement;
+  while (scope) {
+    const matches = Array.from(scope.querySelectorAll<HTMLButtonElement>('button'))
+      .filter((button) => button.textContent?.trim() === name);
+    if (matches.length === 1) return matches[0];
+    scope = scope.parentElement;
+  }
+  throw new Error(`Action "${name}" was not found in the field-owned dialog`);
+}
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
@@ -134,7 +144,7 @@ describe('WorkoutSessionCard capability ownership', () => {
 
     const input = await screen.findByDisplayValue('Старая тренировка');
     fireEvent.change(input, { target: { value: 'Новое название' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(actionButtonForField(input, 'Сохранить'));
 
     expect(onRename).toHaveBeenCalledWith('Новое название');
     expect(screen.getByText('Старая тренировка')).toBeTruthy();
@@ -176,7 +186,7 @@ describe('WorkoutSessionCard capability ownership', () => {
     expect((textarea as HTMLTextAreaElement).value).toBe('Исходный комментарий');
 
     fireEvent.change(textarea, { target: { value: 'Новый комментарий' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(actionButtonForField(textarea, 'Сохранить'));
     expect(onCommentChange).toHaveBeenCalledWith('Новый комментарий');
 
     await act(async () => resolveComment?.());

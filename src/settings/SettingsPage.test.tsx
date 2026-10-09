@@ -119,6 +119,22 @@ describe('SettingsPage modules gallery', () => {
     expect(within(menu).queryByText('Редактировать результаты')).toBeNull();
   });
 
+  it('preserves an own-workout identity across complete and resume in the module demo', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
+
+    const workoutCardModule = screen.getByRole('region', { name: 'Карточка тренировки' });
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Active · Own' }));
+    expect(within(workoutCardModule).getByText('Без программы')).toBeTruthy();
+
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Завершить тренировку' }));
+    expect(within(workoutCardModule).getByText('Без программы')).toBeTruthy();
+
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Возобновить тренировку' }));
+    expect(within(workoutCardModule).getByText('Без программы')).toBeTruthy();
+    expect(within(workoutCardModule).getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
+  });
+
   it('keeps a completed workout read-only while exposing completed actions', () => {
     render(<SettingsPage onNavigationContextChange={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
