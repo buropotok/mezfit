@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Range, Toggle } from 'konsta/react';
+import type { Role } from '../api';
+import { MezfitExercisesSheet } from '../exercises';
 import type { NavigationContext } from '../NavigationShell';
 import {
   DEFAULT_GLASS_SETTINGS,
@@ -151,6 +153,8 @@ const planPreviewExercise: SessionExerciseData = {
 };
 
 interface SettingsPageProps {
+  initData: string;
+  activeRole: Role;
   glassSettings?: Readonly<GlassSettings>;
   onGlassSettingsChange?: (settings: GlassSettings) => void;
   typographySettings?: Readonly<TypographySettings>;
@@ -241,6 +245,8 @@ function TypographyNumberField({
 }
 
 export function SettingsPage({
+  initData,
+  activeRole,
   glassSettings = DEFAULT_GLASS_SETTINGS,
   onGlassSettingsChange = () => {},
   typographySettings = defaultTypographySettings(),
@@ -248,6 +254,7 @@ export function SettingsPage({
   onNavigationContextChange,
 }: SettingsPageProps) {
   const [modulesOpen, setModulesOpen] = useState(false);
+  const [exercisesOpen, setExercisesOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
   const [typographySettingsOpen, setTypographySettingsOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
@@ -308,28 +315,51 @@ export function SettingsPage({
 
   if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen) {
     return (
-      <section className="settings-page" aria-label="Настройки">
-        <Surface className="settings-page__section">
-          <Text variant="title">Интерфейс</Text>
-          <Text variant="footnote" tone="muted">
-            Общие параметры материалов интерфейса.
-          </Text>
-          <div className="settings-page__actions">
-            <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
-            <Button variant="secondary" onClick={() => setTypographySettingsOpen(true)}>Шрифты</Button>
-          </div>
-        </Surface>
+      <>
+        <section className="settings-page" aria-label="Настройки">
+          {activeRole === 'coach' ? (
+            <Surface className="settings-page__section">
+              <Text variant="title">Упражнения</Text>
+              <Text variant="footnote" tone="muted">
+                Каталог упражнений тренера, фильтры и пользовательские упражнения.
+              </Text>
+              <span className="settings-page__action">
+                <Button onClick={() => setExercisesOpen(true)}>Открыть каталог</Button>
+              </span>
+            </Surface>
+          ) : null}
 
-        <Surface className="settings-page__section">
-          <Text variant="title">Разработка</Text>
-          <Text variant="footnote" tone="muted">
-            Временные инструменты для просмотра собранных интерфейсных модулей.
-          </Text>
-          <span className="settings-page__action">
-            <Button onClick={() => setModulesOpen(true)}>Модули</Button>
-          </span>
-        </Surface>
-      </section>
+          <Surface className="settings-page__section">
+            <Text variant="title">Интерфейс</Text>
+            <Text variant="footnote" tone="muted">
+              Общие параметры материалов интерфейса.
+            </Text>
+            <div className="settings-page__actions">
+              <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
+              <Button variant="secondary" onClick={() => setTypographySettingsOpen(true)}>Шрифты</Button>
+            </div>
+          </Surface>
+
+          <Surface className="settings-page__section">
+            <Text variant="title">Разработка</Text>
+            <Text variant="footnote" tone="muted">
+              Временные инструменты для просмотра собранных интерфейсных модулей.
+            </Text>
+            <span className="settings-page__action">
+              <Button onClick={() => setModulesOpen(true)}>Модули</Button>
+            </span>
+          </Surface>
+        </section>
+
+        {activeRole === 'coach' ? (
+          <MezfitExercisesSheet
+            opened={exercisesOpen}
+            initData={initData}
+            mode="manage"
+            onClose={() => setExercisesOpen(false)}
+          />
+        ) : null}
+      </>
     );
   }
 
