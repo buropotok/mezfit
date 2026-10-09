@@ -247,6 +247,38 @@ export function WorkoutSessionScreen({
     }
   }
 
+  function handleAddSet(_sessionExerciseId: number) {
+    // TODO(local-first): connect when WorkoutRepository exposes add-set.
+  }
+
+  function handleRenameWorkout(_title: string) {
+    // TODO(local-first): persist workout title through the public repository contract.
+  }
+
+  function handleTransferWorkout() {
+    // TODO(local-first): connect ownership transfer after the command contract is defined.
+  }
+
+  function handleEditResults() {
+    // TODO(local-first): connect completed-workout result editing.
+  }
+
+  function handleWorkoutHistory() {
+    // TODO(local-first): connect workout-level history navigation.
+  }
+
+  function handleShareWorkout() {
+    // TODO(local-first): connect workout sharing.
+  }
+
+  function handleWorkoutCommentChange(_comment: string) {
+    // TODO(local-first): persist workout comment through the public repository contract.
+  }
+
+  function handleResumeWorkout() {
+    // TODO(local-first): connect resume when WorkoutRepository exposes the command.
+  }
+
   async function handleComplete() {
     if (!activeSession || activeSession.status !== 'active') return;
     const sessionId = activeSession.sessionId;
@@ -352,6 +384,13 @@ export function WorkoutSessionScreen({
               setExerciseSelectionError('');
               setExerciseSelectionOpen(true);
             }}
+            onAddSet={handleAddSet}
+            onRename={handleRenameWorkout}
+            onTransfer={handleTransferWorkout}
+            onEditResults={handleEditResults}
+            onWorkoutHistory={handleWorkoutHistory}
+            onShare={handleShareWorkout}
+            onCommentChange={handleWorkoutCommentChange}
             onOpenExerciseMenu={onOpenExerciseMenu}
             onOpenExerciseHistory={onOpenHistory}
             onOpenChat={onOpenChat}
@@ -360,11 +399,7 @@ export function WorkoutSessionScreen({
             {activeSession.status === 'active' ? (
               <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
             ) : (
-              <Button onClick={() => {
-                // TODO(local-first): connect resume when WorkoutRepository exposes the command.
-              }}>
-                Возобновить тренировку
-              </Button>
+              <Button onClick={handleResumeWorkout}>Возобновить тренировку</Button>
             )}
           </div>
         </>
