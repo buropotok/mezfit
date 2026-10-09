@@ -106,6 +106,13 @@
   background: transparent;
 }
 
+.mezfit-exercises__category-image {
+  width: 76px;
+  height: 76px;
+  display: block;
+  object-fit: contain;
+}
+
 .mezfit-exercises__category-media > .ui-icon {
   width: 44px;
   height: 44px;
