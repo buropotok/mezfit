@@ -118,7 +118,6 @@ const workoutCardPreviewExercise: SessionExerciseData = {
   sets: previewExercise.sets.map((set, index) => ({
     ...set,
     sessionSetId: -110 - index,
-    position: set.position + 3,
   })),
 };
 
