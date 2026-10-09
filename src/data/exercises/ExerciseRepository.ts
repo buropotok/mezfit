@@ -166,7 +166,9 @@ export class ExerciseRepository {
       const definition = definitions[index];
       if (definition) result.push(exerciseView(definition, memberships[index]));
     }
-    return result;
+    return result.sort((left, right) => (
+      left.name.localeCompare(right.name, 'ru-RU', { sensitivity: 'base' })
+    ));
   }
 
   async refresh(dataset: ExerciseDataset): Promise<ExerciseDefinition[]> {
@@ -207,7 +209,22 @@ export class ExerciseRepository {
 
   async archive(exerciseId: number): Promise<void> {
     await archiveCoachExercise(this.initData, exerciseId);
-    await this.db.exerciseMemberships.delete(`coach-catalog:${exerciseId}`);
+    const exerciseDefinitionId = String(exerciseId);
+    await this.db.transaction(
+      'rw',
+      this.db.exerciseDefinitions,
+      this.db.exerciseMemberships,
+      async () => {
+        await this.db.exerciseMemberships
+          .where('exerciseDefinitionId')
+          .equals(exerciseDefinitionId)
+          .delete();
+        await this.db.exerciseDefinitions.update(exerciseDefinitionId, {
+          isArchived: true,
+          updatedAt: new Date().toISOString(),
+        });
+      },
+    );
   }
 }
 
