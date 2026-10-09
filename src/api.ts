@@ -476,7 +476,10 @@ function decodeExerciseCoachSyncState(value: unknown): ExerciseCoachSyncState {
   }
 
   const exercises = value.exercises.map(decodeExerciseDefinition);
-  if (exercises.some((exercise) => exercise === null)) {
+  if (
+    exercises.some((exercise) => exercise === null)
+    || exercises.some((exercise) => !exercise?.sync_id)
+  ) {
     throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
   }
 

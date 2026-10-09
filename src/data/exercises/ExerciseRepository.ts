@@ -171,9 +171,9 @@ async function markCoachScopeDirty(db: MezfitLocalDatabase): Promise<void> {
 
   await db.syncScopes.update(scope.scopeKey, {
     localRevision: scope.localRevision + 1,
-    status: 'dirty',
-    nextRetryAt: null,
-    lastError: null,
+    status: scope.status === 'conflict' ? 'conflict' : 'dirty',
+    nextRetryAt: scope.status === 'conflict' ? scope.nextRetryAt : null,
+    lastError: scope.status === 'conflict' ? scope.lastError : null,
     updatedAt: now,
   });
 }
