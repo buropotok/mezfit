@@ -1,3 +1,4 @@
+import { bumpExerciseCoachRevision } from './exercise-sync';
 import {
   archiveExerciseForCoach,
   createExerciseForCoach,
@@ -107,6 +108,7 @@ export async function handleCoachExerciseCatalogueRoute(
       if (input instanceof Response) return input;
       const exercise = await createExerciseForCoach(db, coachUserId, input);
       if (!exercise) return error(409, 'EXERCISE_EXISTS', 'An exercise with this name already exists in your catalogue');
+      await bumpExerciseCoachRevision(db, coachUserId);
       return json({ exercise }, { status: 201 });
     }
 
@@ -124,6 +126,7 @@ export async function handleCoachExerciseCatalogueRoute(
     }
     if (typeof body.favourite !== 'boolean') return error(400, 'INVALID_FAVOURITE', 'Favourite must be boolean');
     const ok = await setExerciseFavouriteForCoach(db, coachUserId, Number(favouriteMatch[1]), body.favourite);
+    if (ok) await bumpExerciseCoachRevision(db, coachUserId);
     return ok ? json({ ok: true }) : error(404, 'EXERCISE_NOT_FOUND', 'Exercise not found');
   }
 
@@ -142,11 +145,13 @@ export async function handleCoachExerciseCatalogueRoute(
     const result = await updateExerciseForCoach(db, coachUserId, exerciseId, input);
     if (result === 'forbidden') return error(403, 'EXERCISE_READ_ONLY', 'Bundled or another coach exercise cannot be edited');
     if (result === 'exists') return error(409, 'EXERCISE_EXISTS', 'An exercise with this name already exists in your catalogue');
+    await bumpExerciseCoachRevision(db, coachUserId);
     return json({ exercise: result });
   }
 
   if (request.method === 'DELETE') {
     const archived = await archiveExerciseForCoach(db, coachUserId, exerciseId);
+    if (archived) await bumpExerciseCoachRevision(db, coachUserId);
     return archived ? json({ ok: true }) : error(403, 'EXERCISE_READ_ONLY', 'Bundled or another coach exercise cannot be removed');
   }
 

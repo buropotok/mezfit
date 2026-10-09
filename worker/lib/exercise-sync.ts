@@ -48,8 +48,8 @@ export interface ExerciseCoachSyncDefinition {
   name: string;
   description: string | null;
   trackingType: TrackingType;
-  categoryCode: ExerciseCategoryCode;
-  equipmentCode: ExerciseEquipmentCode;
+  categoryCode: ExerciseCategoryCode | null;
+  equipmentCode: ExerciseEquipmentCode | null;
 }
 
 export interface ExerciseCoachSyncSnapshot {
@@ -60,6 +60,7 @@ export interface ExerciseCoachSyncSnapshot {
 
 export interface ExerciseCoachSyncRequest {
   requestId: string;
+  scopeKey: string;
   baseServerRevision: number;
   snapshot: ExerciseCoachSyncSnapshot;
 }
@@ -113,14 +114,16 @@ function cleanTrackingType(value: unknown): TrackingType {
   return value as TrackingType;
 }
 
-function cleanCategoryCode(value: unknown): ExerciseCategoryCode {
+function cleanCategoryCode(value: unknown): ExerciseCategoryCode | null {
+  if (value === null) return null;
   if (typeof value !== 'string' || !categoryCodes.has(value as ExerciseCategoryCode)) {
     throw new ExerciseCoachSyncInputError('INVALID_CATEGORY', 'Unsupported exercise category');
   }
   return value as ExerciseCategoryCode;
 }
 
-function cleanEquipmentCode(value: unknown): ExerciseEquipmentCode {
+function cleanEquipmentCode(value: unknown): ExerciseEquipmentCode | null {
+  if (value === null) return null;
   if (typeof value !== 'string' || !equipmentCodes.has(value as ExerciseEquipmentCode)) {
     throw new ExerciseCoachSyncInputError('INVALID_EQUIPMENT', 'Unsupported exercise equipment');
   }
@@ -134,6 +137,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function parseExerciseCoachSyncRequest(value: unknown): ExerciseCoachSyncRequest {
   if (!isRecord(value)) throw new ExerciseCoachSyncInputError('INVALID_SYNC_REQUEST', 'Sync request is invalid');
   const requestId = typeof value.requestId === 'string' ? value.requestId.trim() : '';
+  const requestedScopeKey = typeof value.scopeKey === 'string' ? value.scopeKey.trim() : '';
   if (!/^[A-Za-z0-9-]{8,100}$/.test(requestId)) {
     throw new ExerciseCoachSyncInputError('INVALID_REQUEST_ID', 'Sync request id is invalid');
   }
@@ -207,8 +211,13 @@ export function parseExerciseCoachSyncRequest(value: unknown): ExerciseCoachSync
     throw new ExerciseCoachSyncInputError('DUPLICATE_FAVOURITE', 'Exercise favourites must be unique');
   }
 
+  if (!/^exercise-coach:\d+$/.test(requestedScopeKey)) {
+    throw new ExerciseCoachSyncInputError('INVALID_SYNC_SCOPE', 'Sync scope is invalid');
+  }
+
   return {
     requestId,
+    scopeKey: requestedScopeKey,
     baseServerRevision: baseServerRevision as number,
     snapshot: { definitions, overrides, favourites },
   };
@@ -329,7 +338,6 @@ async function validateSnapshotTargets(
     if (
       row.scope === 'coach'
       && row.owner_coach_user_id === coachUserId
-      && row.is_archived === 0
       && !incomingIds.has(row.sync_id)
     ) {
       finalNames.add(row.name.normalize('NFKC').toLocaleLowerCase('ru-RU'));
@@ -376,6 +384,9 @@ export async function applyExerciseCoachSync(
   request: ExerciseCoachSyncRequest,
 ): Promise<{ ok: true; revision: number } | { ok: false; revision: number }> {
   const key = scopeKey(coachUserId);
+  if (request.scopeKey !== key) {
+    throw new ExerciseCoachSyncInputError('SYNC_SCOPE_FORBIDDEN', 'Sync scope is not owned by this coach');
+  }
   const existingRequest = await db.prepare(
     'SELECT response_revision FROM sync_request WHERE request_id = ? AND scope_key = ?',
   ).bind(request.requestId, key).first<{ response_revision: number }>();
