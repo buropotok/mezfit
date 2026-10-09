@@ -41,7 +41,7 @@ function exerciseVisibilitySql(): string {
 export async function listWorkoutExerciseOptions(
   db: D1Database,
   userId: number,
-  categoryCode: ExerciseCategoryCode,
+  categoryCode: ExerciseCategoryCode | null = null,
 ): Promise<WorkoutExerciseOption[]> {
   const result = await db.prepare(`
     SELECT
@@ -58,10 +58,9 @@ export async function listWorkoutExerciseOptions(
     FROM exercise_definition e
     WHERE e.is_archived = 0
       AND ${exerciseVisibilitySql()}
-      AND COALESCE(e.category_code, 'other') = ?
+      AND (? IS NULL OR COALESCE(e.category_code, 'other') = ?)
     ORDER BY e.name COLLATE NOCASE, e.id
-    LIMIT 250
-  `).bind(userId, userId, userId, categoryCode).all<ExerciseOptionRow>();
+  `).bind(userId, userId, userId, categoryCode, categoryCode).all<ExerciseOptionRow>();
 
   return result.results.map((row) => ({
     ...row,
