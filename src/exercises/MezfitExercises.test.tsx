@@ -16,6 +16,7 @@ const chestExercise: ExerciseDefinition = {
   reference_source: null,
   reference_key: 'bench-press',
   reference_media_url: null,
+  name_en: 'Barbell Bench Press',
   is_favourite: false,
   can_edit: false,
 };
@@ -38,12 +39,14 @@ const armExercise: ExerciseDefinition = {
   reference_key: 'biceps-curl',
 };
 
-const read = vi.fn();
-const refresh = vi.fn();
-const create = vi.fn();
-const update = vi.fn();
-const setFavourite = vi.fn();
-const archive = vi.fn();
+const repositoryMocks = vi.hoisted(() => ({
+  read: vi.fn(),
+  refresh: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  setFavourite: vi.fn(),
+  archive: vi.fn(),
+}));
 
 vi.mock('../data/exercises/ExerciseRepository', () => ({
   EXERCISE_CATEGORY_CODES: [
@@ -58,12 +61,12 @@ vi.mock('../data/exercises/ExerciseRepository', () => ({
     'other',
   ],
   createExerciseRepository: () => ({
-    read,
-    refresh,
-    create,
-    update,
-    setFavourite,
-    archive,
+    read: repositoryMocks.read,
+    refresh: repositoryMocks.refresh,
+    create: repositoryMocks.create,
+    update: repositoryMocks.update,
+    setFavourite: repositoryMocks.setFavourite,
+    archive: repositoryMocks.archive,
   }),
 }));
 
@@ -84,12 +87,12 @@ function renderCatalog() {
 
 beforeEach(() => {
   const exercises = [chestExercise, backExercise, armExercise];
-  read.mockReset().mockResolvedValue(exercises);
-  refresh.mockReset().mockResolvedValue(exercises);
-  create.mockReset();
-  update.mockReset();
-  setFavourite.mockReset();
-  archive.mockReset();
+  repositoryMocks.read.mockReset().mockResolvedValue(exercises);
+  repositoryMocks.refresh.mockReset().mockResolvedValue(exercises);
+  repositoryMocks.create.mockReset();
+  repositoryMocks.update.mockReset();
+  repositoryMocks.setFavourite.mockReset();
+  repositoryMocks.archive.mockReset();
 });
 
 afterEach(cleanup);
@@ -128,6 +131,16 @@ describe('MezfitExercisesContent', () => {
     fireEvent.change(screen.getByPlaceholderText('Поиск упражнения'), {
       target: { value: 'Жим' },
     });
+    expect(await screen.findByRole('button', { name: 'Жим лёжа' })).toBeTruthy();
+  });
+
+  it('matches the canonical English exercise name from the local dataset', async () => {
+    renderCatalog();
+
+    fireEvent.change(screen.getByPlaceholderText('Поиск упражнения'), {
+      target: { value: 'bench' },
+    });
+
     expect(await screen.findByRole('button', { name: 'Жим лёжа' })).toBeTruthy();
   });
 
