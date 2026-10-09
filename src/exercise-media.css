@@ -18,6 +18,13 @@
   border-radius: inherit;
 }
 
+.exercise-media-image-category {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
 .exercise-media-image-detail {
   width: min(100%, 420px);
   height: min(52vh, 430px);
@@ -29,6 +36,11 @@
 .exercise-media-fallback-editor {
   width: 38px;
   height: 38px;
+}
+
+.exercise-media-fallback-category {
+  width: 56px;
+  height: 56px;
 }
 
 .global-exercise-detail-media .exercise-media-fallback-detail {
