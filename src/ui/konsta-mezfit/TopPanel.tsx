@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties, type HTMLAttributes, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type HTMLAttributes, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { GlassSurface } from '../GlassSurface';
 import { resolveGlassMaterial, type GlassMaterialOverrides, type GlassPresetName } from '../glassMaterial';
 import './top-panel.css';
@@ -120,6 +120,14 @@ export function MezfitTopPanel({
   const onLostPointerCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (gestureRef.current?.pointerId === event.pointerId) gestureRef.current = null;
   };
+
+  useEffect(() => {
+    if (opened) return;
+
+    const gesture = gestureRef.current;
+    gestureRef.current = null;
+    if (gesture) releasePointerCapture(gesture.captureTarget, gesture.pointerId);
+  }, [opened]);
 
   const surfaceClassName = [
     'ui-mezfit-top-panel__surface',

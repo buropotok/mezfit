@@ -101,6 +101,49 @@ describe('MezfitTopPanel', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('clears an active gesture when closed so swipe works after reopening', () => {
+    const onClose = vi.fn();
+    const view = render(
+      <MezfitTopPanel opened onClose={onClose} role="dialog" aria-label="Lifecycle top panel">
+        <div>Content</div>
+      </MezfitTopPanel>,
+    );
+
+    const panel = view.getByRole('dialog', { name: 'Lifecycle top panel' });
+    fireEvent.pointerDown(panel, {
+      pointerId: 4,
+      pointerType: 'touch',
+      clientX: 180,
+      clientY: 220,
+    });
+
+    view.rerender(
+      <MezfitTopPanel opened={false} onClose={onClose} role="dialog" aria-label="Lifecycle top panel">
+        <div>Content</div>
+      </MezfitTopPanel>,
+    );
+    view.rerender(
+      <MezfitTopPanel opened onClose={onClose} role="dialog" aria-label="Lifecycle top panel">
+        <div>Content</div>
+      </MezfitTopPanel>,
+    );
+
+    fireEvent.pointerDown(panel, {
+      pointerId: 5,
+      pointerType: 'touch',
+      clientX: 180,
+      clientY: 220,
+    });
+    fireEvent.pointerMove(panel, {
+      pointerId: 5,
+      pointerType: 'touch',
+      clientX: 184,
+      clientY: 160,
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('clears a cancelled pointer gesture without closing', () => {
     const onClose = vi.fn();
     const view = render(
