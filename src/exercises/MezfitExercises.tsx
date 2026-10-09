@@ -331,6 +331,8 @@ export function MezfitExercisesContent({
   const [editorError, setEditorError] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
+  useEffect(() => () => repository.dispose(), [repository]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(normalizeSearch(searchInput)), 120);
     return () => window.clearTimeout(timer);
@@ -411,7 +413,7 @@ export function MezfitExercisesContent({
     try {
       let exercise: ExerciseDefinition;
       if (editing.mode === 'edit' && editing.seed?.can_edit) {
-        exercise = await repository.update(editing.seed.id, input);
+        exercise = await repository.update(editing.seed, input);
       } else {
         exercise = await repository.create(input);
       }
@@ -453,7 +455,7 @@ export function MezfitExercisesContent({
     setSaving(true);
     setEditorError('');
     try {
-      await repository.archive(editing.seed.id);
+      await repository.archive(editing.seed);
       await syncLocal();
       setDeleteConfirmOpen(false);
       setEditing(null);
