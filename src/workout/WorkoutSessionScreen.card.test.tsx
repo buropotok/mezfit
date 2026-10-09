@@ -20,9 +20,9 @@ vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
   type SortableListProps = React.ComponentProps<typeof actual.SortableList>;
 
-  function TestSortableList({ items, header, footer }: SortableListProps) {
+  function TestSortableList({ items, header, footer, disabled }: SortableListProps) {
     return (
-      <div data-testid="workout-sortable-card">
+      <div data-testid="workout-sortable-card" data-disabled={disabled ? 'true' : 'false'}>
         <div data-testid="workout-sortable-header">{header}</div>
         <div data-testid="workout-sortable-items">{items.map((item) => <div key={item.id}>{String(item.id)}</div>)}</div>
         <div data-testid="workout-sortable-footer">{footer}</div>
@@ -83,7 +83,7 @@ const session: ActiveWorkoutSession = {
   occurrenceId: null,
   status: 'active',
   workoutDate: '2026-10-07',
-  startedAt: '2026-10-07T18:00:00Z',
+  startedAt: '2026-10-08T00:30:00Z',
   completedAt: null,
   program: { id: 20, name: 'Силовой блок' },
   phase: { id: 30, name: 'Фаза 1' },
@@ -142,6 +142,24 @@ describe('WorkoutSessionScreen workout card', () => {
     expect(screen.getByTestId('workout-sortable-items').children).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Меню тренировки' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Комментарий' })).toBeNull();
+    expect(screen.getByText('8 октября 2026 г.')).toBeTruthy();
     expect(screen.getByText(/^\d{2}:\d{2} — …$/)).toBeTruthy();
+  });
+
+  it('renders a completed interval and disables workout reordering', async () => {
+    initializeMock.mockResolvedValue({
+      session: {
+        ...session,
+        status: 'completed',
+        completedAt: '2026-10-08T01:30:00Z',
+      },
+    });
+
+    render(<WorkoutSessionScreen initData="telegram-init" onClose={vi.fn()} />);
+
+    const card = await screen.findByTestId('workout-sortable-card');
+    expect(card.getAttribute('data-disabled')).toBe('true');
+    expect(screen.getByText(/^\d{2}:\d{2} — \d{2}:\d{2}$/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
   });
 });
