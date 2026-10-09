@@ -299,7 +299,7 @@ export function WorkoutSessionCard({
                 aria-label="Добавить упражнение"
                 onClick={() => onAddExercise?.()}
               >
-                <Icon name="plus" variant="outline" />
+                <Icon name="plus" variant="outline" className="workout-session-card__add-exercise-icon" />
                 <Text variant="body">Добавить упражнение</Text>
               </GlassSurface>
             ) : null}
