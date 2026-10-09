@@ -163,6 +163,39 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(primaryTabsSurface?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
   });
 
+  it('uses the selected system glass material for the navbar menu popover', () => {
+    const view = render(
+      <GlassSurfaceProvider blur={7}>
+        <NavigationShell
+          me={me}
+          activeRole="client"
+          destination="today"
+          context={null}
+          onDestinationChange={vi.fn()}
+          onRoleSwitch={vi.fn()}
+          glassPreset="smoked"
+          glassOptics
+        >
+          <div>Today content</div>
+        </NavigationShell>
+      </GlassSurfaceProvider>,
+    );
+
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
+
+    const navbarGlass = view.container.querySelector<HTMLElement>('.ui-mezfit-navbar .ui-glass-surface');
+    const menuGlass = document.querySelector<HTMLElement>('[role="menu"][aria-label="Меню страницы"] .ui-liquid-popover__glass');
+    expect(navbarGlass).not.toBeNull();
+    expect(menuGlass).not.toBeNull();
+    expect(menuGlass?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('7px');
+    expect(menuGlass?.style.getPropertyValue('--ui-glass-surface-tint-a'))
+      .toBe(navbarGlass?.style.getPropertyValue('--ui-glass-surface-tint-a'));
+    expect(menuGlass?.style.getPropertyValue('--ui-glass-surface-saturation'))
+      .toBe(navbarGlass?.style.getPropertyValue('--ui-glass-surface-saturation'));
+  });
+
   it('applies shell material settings to the tab-slot FAB', () => {
     const onClick = vi.fn();
     const view = render(
