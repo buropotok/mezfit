@@ -6,6 +6,7 @@ import {
   createExerciseForClient,
   hasActiveCoachClient,
   listExercisesForClient,
+  listPerformedExercisesForClient,
   type ExerciseCategoryCode,
   type ExerciseEquipmentCode,
   type TrackingType,
@@ -322,6 +323,23 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const auth = await requireUser(request, env);
     requireRole(auth, 'coach');
     return handleCoachExerciseCatalogueRoute(request, env.DB_BINDING, auth.row.id);
+  }
+
+  const exerciseHistoryMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercise-history$/);
+  if (exerciseHistoryMatch) {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    const clientUserId = Number(exerciseHistoryMatch[1]);
+    await requireCoachClient(env.DB_BINDING, auth.row.id, clientUserId);
+    if (request.method !== 'GET') {
+      throw new HttpError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+    }
+    const exercises = await listPerformedExercisesForClient(
+      env.DB_BINDING,
+      auth.row.id,
+      clientUserId,
+    );
+    return json({ exercises });
   }
 
   const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);
