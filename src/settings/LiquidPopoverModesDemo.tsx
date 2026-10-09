@@ -1,7 +1,11 @@
 import { useRef, useState } from 'react';
-import { IconButton, Text } from '../ui';
-import { LiquidPopover, type LiquidPopoverItem } from '../ui/LiquidPopover';
-import { resolveLiquidPopoverRenderMode } from '../ui/liquidPopoverRenderMode';
+import {
+  IconButton,
+  LiquidPopover,
+  Text,
+  resolveLiquidPopoverRenderMode,
+  type LiquidPopoverItem,
+} from '../ui';
 
 export function LiquidPopoverModesDemo() {
   const svgTriggerRef = useRef<HTMLButtonElement>(null);
