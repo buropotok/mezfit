@@ -166,7 +166,7 @@ export function WorkoutSessionCard({
             [exercise.sessionExerciseId]: collapsed,
           }));
         }}
-        onAddSet={active ? (sessionExerciseId) => onAddSet?.(sessionExerciseId) : undefined}
+        onAddSet={active ? onAddSet : undefined}
         onSaveSet={onSaveSet}
         onOpenExerciseMenu={active ? onOpenExerciseMenu : undefined}
         onOpenHistory={onOpenExerciseHistory}
