@@ -216,6 +216,8 @@ export interface ExerciseCoachSyncState {
   scopeKey: string;
   revision: number;
   exercises: ExerciseDefinition[];
+  overrides: ExerciseCoachSyncOverride[];
+  favourites: string[];
 }
 
 export type ExerciseCoachSyncResult =
@@ -478,10 +480,51 @@ function decodeExerciseCoachSyncState(value: unknown): ExerciseCoachSyncState {
     throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
   }
 
+  const rawOverrides = value.overrides;
+  const rawFavourites = value.favourites;
+  if (!Array.isArray(rawOverrides) || !Array.isArray(rawFavourites)) {
+    throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
+  }
+  const overrides: ExerciseCoachSyncOverride[] = [];
+  for (const raw of rawOverrides) {
+    if (
+      !isRecord(raw)
+      || typeof raw.exerciseSyncId !== 'string'
+      || !/^[A-Za-z0-9-]{1,80}$/.test(raw.exerciseSyncId)
+      || typeof raw.name !== 'string'
+      || raw.name.length === 0
+      || !isNullableString(raw.description)
+      || typeof raw.trackingType !== 'string'
+      || !exerciseTrackingTypes.has(raw.trackingType as TrackingType)
+      || typeof raw.categoryCode !== 'string'
+      || !exerciseCategoryCodes.has(raw.categoryCode as ExerciseCategoryCode)
+      || typeof raw.equipmentCode !== 'string'
+      || !exerciseEquipmentCodes.has(raw.equipmentCode as ExerciseEquipmentCode)
+    ) {
+      throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
+    }
+    overrides.push({
+      exerciseSyncId: raw.exerciseSyncId,
+      name: raw.name,
+      description: raw.description,
+      trackingType: raw.trackingType as TrackingType,
+      categoryCode: raw.categoryCode as ExerciseCategoryCode,
+      equipmentCode: raw.equipmentCode as ExerciseEquipmentCode,
+    });
+  }
+  const favourites = rawFavourites.filter(
+    (item): item is string => typeof item === 'string' && /^[A-Za-z0-9-]{1,80}$/.test(item),
+  );
+  if (favourites.length !== rawFavourites.length) {
+    throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
+  }
+
   return {
     scopeKey: value.scopeKey,
     revision: value.revision,
     exercises: (exercises as ExerciseDefinition[]).map(localizeExercise),
+    overrides,
+    favourites,
   };
 }
 
