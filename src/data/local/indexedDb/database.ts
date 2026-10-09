@@ -4,6 +4,7 @@ import type {
   LocalExerciseDefinitionOverrideRow,
   LocalExerciseDefinitionRow,
   LocalExerciseFavouriteRow,
+  LocalExerciseMembershipRow,
   LocalProgramDayRow,
   LocalProgramExerciseRow,
   LocalProgramPhaseRow,
@@ -20,7 +21,7 @@ import type {
 
 const DATABASE_PREFIX = 'mezfit-local';
 
-export const LOCAL_DATABASE_VERSION = 1;
+export const LOCAL_DATABASE_VERSION = 2;
 
 export const LOCAL_DATABASE_STORES_V1 = {
   users: '&serverId,&telegramUserId',
@@ -56,6 +57,11 @@ export const LOCAL_DATABASE_STORES_V1 = {
   syncRemoteState: '&id',
 } as const;
 
+export const LOCAL_DATABASE_STORES_V2 = {
+  ...LOCAL_DATABASE_STORES_V1,
+  exerciseMemberships: '&id,contextKey,exerciseDefinitionId,&[contextKey+exerciseDefinitionId]',
+} as const;
+
 export function localDatabaseName(telegramUserId: string): string {
   if (!/^[1-9]\d*$/.test(telegramUserId)) {
     throw new Error('INVALID_LOCAL_DATABASE_USER_ID');
@@ -79,6 +85,7 @@ export class MezfitLocalDatabase extends Dexie {
   exerciseDefinitions!: Table<LocalExerciseDefinitionRow, string>;
   exerciseDefinitionOverrides!: Table<LocalExerciseDefinitionOverrideRow, string>;
   exerciseFavourites!: Table<LocalExerciseFavouriteRow, string>;
+  exerciseMemberships!: Table<LocalExerciseMembershipRow, string>;
   trainingPlans!: Table<LocalTrainingPlanRow, string>;
   programPhases!: Table<LocalProgramPhaseRow, string>;
   programDays!: Table<LocalProgramDayRow, string>;
@@ -94,7 +101,8 @@ export class MezfitLocalDatabase extends Dexie {
   constructor(telegramUserId: string) {
     super(localDatabaseName(telegramUserId));
 
-    this.version(LOCAL_DATABASE_VERSION).stores(LOCAL_DATABASE_STORES_V1);
+    this.version(1).stores(LOCAL_DATABASE_STORES_V1);
+    this.version(LOCAL_DATABASE_VERSION).stores(LOCAL_DATABASE_STORES_V2);
   }
 }
 
