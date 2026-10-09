@@ -115,6 +115,11 @@ const workoutCardPreviewExercise: SessionExerciseData = {
     name: 'Жим гантелей лёжа',
     equipment_code: 'dumbbell_pair',
   },
+  sets: previewExercise.sets.map((set, index) => ({
+    ...set,
+    sessionSetId: -110 - index,
+    position: set.position + 3,
+  })),
 };
 
 const planCreateSet: SessionExerciseSetData = {
@@ -533,7 +538,10 @@ export function SettingsPage({
   const addWorkoutCardSet = (sessionExerciseId: number) => {
     setWorkoutCardExercises((current) => current.map((exercise) => {
       if (exercise.sessionExerciseId !== sessionExerciseId) return exercise;
-      const nextPosition = exercise.sets.length;
+      const nextPosition = exercise.sets.reduce(
+        (maxPosition, set) => Math.max(maxPosition, set.position),
+        -1,
+      ) + 1;
       const nextId = workoutCardIdRef.current--;
       return {
         ...exercise,
