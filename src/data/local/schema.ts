@@ -173,6 +173,11 @@ export interface LocalWorkoutSessionRow extends LocalServerBackedEntity {
   sourceProgramDayId: LocalEntityId | null;
   occurrenceId: LocalEntityId | null;
   startedByUserId: number;
+  /**
+   * Current FACT editor in the local domain model.
+   * The current server only allows the workout user to mutate FACT, so hydration maps this to userId.
+   * When server-side ownership transfer is implemented, this field must map the authoritative owner.
+   */
   factOwnerUserId: number;
   status: WorkoutSessionStatus;
   startedAt: string | null;
@@ -224,6 +229,7 @@ export type SyncScopeType =
   | 'occurrence'
   | 'workout_session'
   | 'program'
+  | 'exercise_global'
   | 'exercise_coach'
   | 'exercise_client';
 
