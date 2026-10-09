@@ -48,6 +48,8 @@ interface SessionExerciseSharedProps {
   defaultCollapsed?: boolean;
   surface?: 'default' | 'transparent';
   onCollapsedChange?: (collapsed: boolean) => void;
+  editable?: boolean;
+  onAddSet?: (sessionExerciseId: number) => void;
   onOpenExerciseMenu?: (sessionExerciseId: number) => void;
   onOpenHistory?: (exerciseDefinitionId: number) => void;
   onOpenChat?: () => void;
