@@ -282,6 +282,22 @@ describe('WorkoutSessionScreen', () => {
     expect(startMock).not.toHaveBeenCalled();
   });
 
+  it('does not expose resume until the repository provides that capability', async () => {
+    initializeMock.mockResolvedValue({
+      session: {
+        ...programSession,
+        status: 'completed',
+        completedAt: '2026-09-15T19:00:00Z',
+      },
+    });
+
+    renderScreen();
+
+    expect(await screen.findByText('Силовой блок · Фаза 1 · День B')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Возобновить тренировку' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
+  });
+
   it('renders sortable session exercises without the standalone surface layer', async () => {
     initializeMock.mockResolvedValue({
       session: {
