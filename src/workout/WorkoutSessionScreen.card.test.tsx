@@ -127,14 +127,14 @@ describe('WorkoutSessionScreen workout card', () => {
     expect(header.textContent).toContain('День B');
     expect(header.textContent).toContain('Силовой блок');
 
-    const avatar = header.querySelector('.workout-session-screen__card-avatar');
+    const avatar = header.querySelector('.workout-session-card__avatar');
     expect(avatar?.getAttribute('src')).toBe('https://example.com/coach.jpg');
-    expect(header.querySelector('.workout-session-screen__card-icon-artwork')).not.toBeNull();
+    expect(header.querySelector('.workout-session-card__icon-artwork')).not.toBeNull();
 
     const progress = screen.getByRole('progressbar', { name: 'Прогресс тренировки' });
     expect(progress.getAttribute('aria-valuenow')).toBe('75');
     expect(
-      container.querySelector<HTMLElement>('.workout-session-screen__card-progress-value')?.style.width,
+      container.querySelector<HTMLElement>('.workout-session-card__progress-value')?.style.width,
     ).toBe('75%');
 
     expect(screen.getByTestId('workout-sortable-items').children).toHaveLength(2);
