@@ -166,6 +166,7 @@ export interface ExerciseDefinition {
   reference_source: string | null;
   reference_key: string | null;
   reference_media_url: string | null;
+  is_archived?: boolean;
   is_favourite: boolean;
   can_edit: boolean;
 }
@@ -368,6 +369,7 @@ function decodeExerciseDefinition(value: unknown): ExerciseDefinition | null {
     || !isNullableString(value.reference_source)
     || !isNullableString(value.reference_key)
     || !isNullableString(value.reference_media_url)
+    || (value.is_archived !== undefined && typeof value.is_archived !== 'boolean')
     || typeof value.is_favourite !== 'boolean'
     || typeof value.can_edit !== 'boolean'
   ) return null;
@@ -384,6 +386,7 @@ function decodeExerciseDefinition(value: unknown): ExerciseDefinition | null {
     reference_source: value.reference_source,
     reference_key: value.reference_key,
     reference_media_url: value.reference_media_url,
+    is_archived: value.is_archived ?? false,
     is_favourite: value.is_favourite,
     can_edit: value.can_edit,
   };
