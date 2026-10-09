@@ -236,6 +236,7 @@ export function SessionExercise(props: SessionExerciseProps) {
             <GlassSurface
               component="button"
               wrapContent={false}
+              shape="capsule"
               className="session-exercise__add-set-button"
               data-no-dnd
               aria-label="Добавить подход"
