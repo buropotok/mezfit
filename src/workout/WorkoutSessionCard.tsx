@@ -303,6 +303,7 @@ export function WorkoutSessionCard({
               <GlassSurface
                 component="button"
                 wrapContent={false}
+                shape="capsule"
                 className="workout-session-card__add-exercise"
                 aria-label="Добавить упражнение"
                 onClick={() => onAddExercise?.()}
@@ -316,6 +317,7 @@ export function WorkoutSessionCard({
               <GlassSurface
                 component="button"
                 wrapContent={false}
+                shape="capsule"
                 className="workout-session-card__comment-button"
                 aria-label="Комментарий"
                 onClick={openComment}
