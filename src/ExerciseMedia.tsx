@@ -1,9 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import type { ExerciseDefinition } from './api';
 import { exerciseDisplayName } from './exerciseLocalization';
+import { useCachedMediaUrl } from './data/media/useCachedMediaUrl';
 import { gymKeeperIcons } from './gymKeeperIcons';
 
-export type ExerciseMediaVariant = 'thumbnail' | 'detail' | 'editor';
+export type ExerciseMediaVariant = 'thumbnail' | 'category' | 'detail' | 'editor';
 
 function iconStyle(url: string): CSSProperties {
   return { '--exercise-action-icon': url } as CSSProperties;
@@ -25,16 +26,17 @@ export function ExerciseMedia({
 }) {
   const [failed, setFailed] = useState(false);
   const mediaUrl = exerciseMediaUrl(exercise);
+  const cachedMediaUrl = useCachedMediaUrl(mediaUrl);
 
   useEffect(() => {
     setFailed(false);
   }, [exercise.id, mediaUrl]);
 
-  if (mediaUrl && !failed) {
+  if (cachedMediaUrl && !failed) {
     return (
       <img
         className={`exercise-media-image exercise-media-image-${variant}`}
-        src={mediaUrl}
+        src={cachedMediaUrl}
         alt={decorative ? '' : exerciseDisplayName(exercise)}
         loading={variant === 'detail' ? 'eager' : 'lazy'}
         decoding="async"
