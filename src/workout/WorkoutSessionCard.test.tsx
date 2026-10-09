@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
@@ -133,8 +133,10 @@ describe('WorkoutSessionCard capability ownership', () => {
     fireEvent.click(screen.getByTestId('finish-popover-presentation'));
 
     const input = await screen.findByDisplayValue('Старая тренировка');
+    const renameDialog = input.closest('[role="dialog"]');
+    expect(renameDialog).not.toBeNull();
     fireEvent.change(input, { target: { value: 'Новое название' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(within(renameDialog!).getByRole('button', { name: 'Сохранить' }));
 
     expect(onRename).toHaveBeenCalledWith('Новое название');
     expect(screen.getByText('Старая тренировка')).toBeTruthy();
@@ -173,10 +175,12 @@ describe('WorkoutSessionCard capability ownership', () => {
     expect(commentButton).not.toBeNull();
     fireEvent.click(commentButton!);
     const textarea = screen.getByPlaceholderText('Комментарий к тренировке');
+    const commentDialog = textarea.closest('[role="dialog"]');
+    expect(commentDialog).not.toBeNull();
     expect((textarea as HTMLTextAreaElement).value).toBe('Исходный комментарий');
 
     fireEvent.change(textarea, { target: { value: 'Новый комментарий' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(within(commentDialog!).getByRole('button', { name: 'Сохранить' }));
     expect(onCommentChange).toHaveBeenCalledWith('Новый комментарий');
 
     await act(async () => resolveComment?.());
