@@ -160,8 +160,9 @@ describe('SessionExercise rendering', () => {
     renderExercise({ onAddSet });
 
     const addSet = screen.getByRole('button', { name: 'Добавить подход' });
-    expect(addSet.classList.contains('session-exercise__add-set')).toBe(true);
+    expect(addSet.classList.contains('session-exercise__add-set-hit')).toBe(true);
     expect(addSet.querySelector('.session-exercise__add-set-button')).not.toBeNull();
+    expect(addSet.parentElement?.classList.contains('session-exercise__add-set')).toBe(true);
 
     fireEvent.click(addSet);
     expect(onAddSet).toHaveBeenCalledWith(200);
