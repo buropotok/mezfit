@@ -103,7 +103,7 @@ describe('global exercise catalogue', () => {
 
   it('builds client exercise history from completed FACT without excluding archived definitions', async () => {
     const db = new FakeDb();
-    db.rows = [{ ...globalRow, name: 'Исторический жим' }];
+    db.rows = [{ ...globalRow, name: 'Исторический жим', is_archived: 1 }];
 
     const result = await listPerformedExercisesForClient(
       db as unknown as D1Database,
@@ -112,6 +112,7 @@ describe('global exercise catalogue', () => {
     );
 
     expect(result.map((item) => item.id)).toEqual([1]);
+    expect(result[0].is_archived).toBe(true);
     const sql = normalizedSql(db.queries[0].sql);
     expect(sql).toContain("ss.status = 'completed'");
     expect(sql).toContain('ws.user_id = ?');
