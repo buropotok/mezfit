@@ -1,6 +1,7 @@
 export {
   createLocalDatabase,
   LOCAL_DATABASE_STORES_V1,
+  LOCAL_DATABASE_STORES_V2,
   LOCAL_DATABASE_VERSION,
   localDatabaseName,
   MezfitLocalDatabase,
@@ -13,6 +14,7 @@ export type {
   LocalExerciseDefinitionOverrideRow,
   LocalExerciseDefinitionRow,
   LocalExerciseFavouriteRow,
+  LocalExerciseMembershipRow,
   LocalProgramDayRow,
   LocalProgramExerciseRow,
   LocalProgramPhaseRow,
