@@ -31,7 +31,7 @@ import {
   type TypographySettings,
 } from '../typographySettings';
 import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
-import { SessionExercise, WorkoutSessionCard, type ActiveWorkoutSession, type SessionExerciseData, type SessionExerciseSetData, type WorkoutSessionCardMode } from '../workout';
+import { SessionExercise, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import './settings-page.css';
 
@@ -242,6 +242,9 @@ export function SettingsPage({
   const [topPanelDemoOpen, setTopPanelDemoOpen] = useState(false);
   const [workoutCardMode, setWorkoutCardMode] = useState<WorkoutSessionCardMode>('active-program');
   const [workoutCardExercises, setWorkoutCardExercises] = useState<SessionExerciseData[]>([previewExercise]);
+  const [workoutCardTitle, setWorkoutCardTitle] = useState('Своя тренировка');
+  const [workoutCardComment, setWorkoutCardComment] = useState('После тренировки — лёгкая заминка 10 минут.');
+  const [workoutCardActionMessage, setWorkoutCardActionMessage] = useState('');
   const workoutCardIdRef = useRef(-1000);
   const [datePickerValue, setDatePickerValue] = useState<LocalDate>('2026-09-30');
   const [hapticProbe, setHapticProbe] = useState<{ kind: HapticProbeKind; result: HapticProbeResult } | null>(null);
@@ -492,6 +495,8 @@ export function SettingsPage({
     occurrenceId: null,
     status: workoutCardMode === 'completed' ? 'completed' : 'active',
     workoutDate: '2026-10-09',
+    startedAt: '2026-10-09T18:05:00+03:00',
+    completedAt: workoutCardMode === 'completed' ? '2026-10-09T19:12:00+03:00' : null,
     program: workoutCardMode === 'active-own' ? null : { id: -901, name: 'Силовой блок' },
     phase: workoutCardMode === 'active-own' ? null : { id: -902, name: 'Фаза 1' },
     day: workoutCardMode === 'active-own' ? null : { id: -903, name: 'День B', position: 1 },
@@ -552,6 +557,18 @@ export function SettingsPage({
     ]);
   };
 
+  const saveWorkoutCardSet = async (input: SaveSessionSetInput) => {
+    setWorkoutCardExercises((current) => current.map((exercise) => {
+      if (exercise.sessionExerciseId !== input.sessionExerciseId) return exercise;
+      return {
+        ...exercise,
+        sets: exercise.sets.map((set) => set.sessionSetId === input.sessionSetId
+          ? { ...set, status: 'completed' as const, fact: input.fact }
+          : set),
+      };
+    }));
+  };
+
   return (
     <section className="settings-page modules-gallery" aria-label="Примеры модулей">
       <div className="modules-gallery__intro">
@@ -591,13 +608,22 @@ export function SettingsPage({
         </div>
         <WorkoutSessionCard
           session={workoutCardSession}
-          startedAt="2026-10-09T18:05:00+03:00"
-          completedAt={workoutCardMode === 'completed' ? '2026-10-09T19:12:00+03:00' : null}
+          title={workoutCardMode === 'active-own' ? workoutCardTitle : undefined}
+          comment={workoutCardComment}
           onReorderExerciseIds={reorderWorkoutCardExercises}
-          onSaveSet={async () => {}}
+          onSaveSet={saveWorkoutCardSet}
           onAddSet={addWorkoutCardSet}
           onAddExercise={addWorkoutCardExercise}
+          onRename={(title) => setWorkoutCardTitle(title)}
+          onTransfer={() => setWorkoutCardActionMessage('Передать тренировку')}
+          onEditResults={() => setWorkoutCardActionMessage('Редактировать результаты')}
+          onWorkoutHistory={() => setWorkoutCardActionMessage('История')}
+          onShare={() => setWorkoutCardActionMessage('Поделиться')}
+          onCommentChange={(comment) => setWorkoutCardComment(comment)}
         />
+        {workoutCardActionMessage ? (
+          <Text variant="footnote" tone="muted">{workoutCardActionMessage}</Text>
+        ) : null}
         <span className="settings-page__action">
           <Button onClick={() => setWorkoutCardMode(workoutCardMode === 'completed' ? 'active-program' : 'completed')}>
             {workoutCardMode === 'completed' ? 'Возобновить тренировку' : 'Завершить тренировку'}
