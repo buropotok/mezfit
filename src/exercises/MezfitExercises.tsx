@@ -13,6 +13,7 @@ import {
   type ExerciseDataset,
 } from '../data/exercises/ExerciseRepository';
 import { publicMediaCache } from '../data/media/MediaCache';
+import { useCachedMediaUrl } from '../data/media/useCachedMediaUrl';
 import { ExerciseMedia, exerciseMediaUrl } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import {
@@ -48,6 +49,18 @@ const categoryLabels: Record<ExerciseCategoryCode, string> = {
   full_body: 'Фулбоди',
   cardio: 'Кардио',
   other: 'Другое',
+};
+
+const categoryMediaUrls: Record<ExerciseCategoryCode, string> = {
+  chest: '/gym-keeper/categories/muscles_chest.svg',
+  arms: '/gym-keeper/categories/muscles_arm.svg',
+  back: '/gym-keeper/categories/muscles_back.svg',
+  legs: '/gym-keeper/categories/muscles_leg.svg',
+  shoulders: '/gym-keeper/categories/muscles_shoulders.svg',
+  core: '/gym-keeper/categories/muscles_core.svg',
+  full_body: '/gym-keeper/categories/muscles_fullbody.svg',
+  cardio: '/gym-keeper/categories/muscles_cardio.svg',
+  other: '/gym-keeper/categories/muscles_other.png',
 };
 
 const trackingLabels: Record<TrackingType, string> = {
@@ -111,6 +124,16 @@ function subgroupFor(exercise: ExerciseDefinition): string {
     return 'biceps';
   }
   return '';
+}
+
+function ExerciseCategoryMedia({
+  category,
+}: {
+  category: ExerciseCategoryCode;
+}) {
+  const src = useCachedMediaUrl(categoryMediaUrls[category]);
+  if (!src) return <Icon name="barbell" />;
+  return <img src={src} alt="" className="mezfit-exercises__category-image" decoding="async" />;
 }
 
 function normalizeSearch(value: string): string {
@@ -350,6 +373,7 @@ export function MezfitExercisesContent({
   }, [dataset, repository]);
 
   useEffect(() => {
+    void publicMediaCache.prefetch(Object.values(categoryMediaUrls));
     const urls = exercises
       .map(exerciseMediaUrl)
       .filter((url): url is string => Boolean(url));
@@ -363,17 +387,6 @@ export function MezfitExercisesContent({
       counts.set(category, (counts.get(category) ?? 0) + 1);
     }
     return counts;
-  }, [exercises]);
-
-  const categoryMedia = useMemo(() => {
-    const media = new Map<ExerciseCategoryCode, ExerciseDefinition>();
-    for (const exercise of exercises) {
-      const category = exercise.category_code ?? 'other';
-      if (!media.has(category) || (!exerciseMediaUrl(media.get(category)!) && exerciseMediaUrl(exercise))) {
-        media.set(category, exercise);
-      }
-    }
-    return media;
   }, [exercises]);
 
   const filteredExercises = useMemo(() => exercises.filter((exercise) => {
@@ -619,18 +632,12 @@ export function MezfitExercisesContent({
         <Text variant="body" tone="muted">Загружаем упражнения…</Text>
       ) : !showExerciseList ? (
         <KonstaList dividers className="mezfit-exercises__category-list" aria-label="Категории упражнений">
-          {categoryOptions.map((category) => {
-            const representative = categoryMedia.get(category.code);
-            return (
+          {categoryOptions.map((category) => (
               <KonstaListItem
                 key={category.code}
                 media={(
                   <span className="mezfit-exercises__category-media">
-                    {representative ? (
-                      <ExerciseMedia exercise={representative} variant="category" />
-                    ) : (
-                      <Icon name="barbell" />
-                    )}
+                    <ExerciseCategoryMedia category={category.code} />
                   </span>
                 )}
                 title={<Text variant="title">{category.label}</Text>}
@@ -647,8 +654,7 @@ export function MezfitExercisesContent({
                   },
                 }}
               />
-            );
-          })}
+          ))}
         </KonstaList>
       ) : filteredExercises.length === 0 ? (
         <div className="mezfit-exercises__empty">
