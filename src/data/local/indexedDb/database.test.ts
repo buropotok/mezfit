@@ -36,3 +36,19 @@ describe('LOCAL_DATABASE_STORES_V1', () => {
     ]);
   });
 });
+
+
+describe('LOCAL_DATABASE_STORES_V1 indexes', () => {
+  it('enforces one override and favourite per coach-exercise pair', () => {
+    expect(LOCAL_DATABASE_STORES_V1.exerciseDefinitionOverrides).toContain(
+      '&[coachUserId+exerciseDefinitionId]',
+    );
+    expect(LOCAL_DATABASE_STORES_V1.exerciseFavourites).toContain(
+      '&[coachUserId+exerciseDefinitionId]',
+    );
+  });
+
+  it('indexes workout history by user and start date', () => {
+    expect(LOCAL_DATABASE_STORES_V1.workoutSessions).toContain('[userId+startedAt]');
+  });
+});
