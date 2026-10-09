@@ -36,6 +36,11 @@
   white-space: nowrap;
 }
 
+.workout-session-card__menu-placeholder {
+  width: 44px;
+  height: 44px;
+}
+
 .workout-session-card__avatar {
   width: 44px;
   height: 44px;
@@ -132,4 +137,10 @@
   height: 100%;
   border-radius: inherit;
   background: var(--ui-color-primary);
+}
+
+.workout-session-card__dialog-content {
+  display: grid;
+  gap: var(--ui-space-2);
+  width: 100%;
 }
