@@ -13,6 +13,7 @@ export function useCachedMediaUrl(
       return undefined;
     }
 
+    setResolvedUrl(null);
     const controller = new AbortController();
     let active = true;
     let objectUrl: string | null = null;
