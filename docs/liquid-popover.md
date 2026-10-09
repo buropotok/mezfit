@@ -131,5 +131,8 @@ shared.
 The optional `renderMode="svg" | "canvas"` override is intended for
 controlled diagnostics, not as a user preference. Settings → Modules displays
 two identical real menus with the respective modes forced, even on the same
-device. Missing Canvas/`Path2D` support still follows the existing native
+device. The UI Kit → Liquid Popover catalog additionally presents the same
+round-button menu in Auto, SVG and Canvas modes. Each example is independent,
+shares the source-morph slider, and shows the platform-resolved Auto mode.
+Missing Canvas/`Path2D` support still follows the existing native
 content fallback. The iOS workaround does not affect the Konsta package.
