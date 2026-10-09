@@ -21,7 +21,6 @@ const workoutDateFormatter = new Intl.DateTimeFormat('ru-RU', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
-  timeZone: 'UTC',
 });
 const workoutTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   hour: '2-digit',
@@ -54,20 +53,28 @@ function workoutProgressPercent(session: ActiveWorkoutSession): number {
   return Math.round((progressSum / session.exercises.length) * 100);
 }
 
-function formatWorkoutDate(value: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return value;
-  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
-  return workoutDateFormatter.format(date);
-}
-
-function formatWorkoutTime(value: string | null | undefined): string | null {
+function parseWorkoutTimestamp(value: string | null | undefined): Date | null {
   if (!value) return null;
   const sqliteUtc = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)
     ? `${value.replace(' ', 'T')}Z`
     : value;
   const date = new Date(sqliteUtc);
-  return Number.isNaN(date.getTime()) ? null : workoutTimeFormatter.format(date);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatWorkoutDate(session: ActiveWorkoutSession): string {
+  const startedAt = parseWorkoutTimestamp(session.startedAt);
+  if (startedAt) return workoutDateFormatter.format(startedAt);
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(session.workoutDate);
+  if (!match) return session.workoutDate;
+  const fallbackDate = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return workoutDateFormatter.format(fallbackDate);
+}
+
+function formatWorkoutTime(value: string | null | undefined): string | null {
+  const date = parseWorkoutTimestamp(value);
+  return date ? workoutTimeFormatter.format(date) : null;
 }
 
 function workoutTimeRange(session: ActiveWorkoutSession): string {
@@ -355,7 +362,7 @@ export function WorkoutSessionCard({
                 </GlassSurface>
               ) : null}
               <div className="workout-session-card__time">
-                <Text variant="footnote" tone="muted">{formatWorkoutDate(session.workoutDate)}</Text>
+                <Text variant="footnote" tone="muted">{formatWorkoutDate(session)}</Text>
                 <Text variant="caption" tone="muted">{workoutTimeRange(session)}</Text>
               </div>
             </div>
