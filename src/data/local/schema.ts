@@ -81,6 +81,14 @@ export interface LocalExerciseFavouriteRow {
   createdAt: string;
 }
 
+export interface LocalExerciseMembershipRow {
+  id: string;
+  contextKey: string;
+  exerciseDefinitionId: LocalEntityId;
+  isFavourite: boolean;
+  canEdit: boolean;
+}
+
 export interface LocalTrainingPlanRow extends LocalServerBackedEntity {
   userId: number;
   ownerCoachUserId: number | null;
