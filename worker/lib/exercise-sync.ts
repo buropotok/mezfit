@@ -328,8 +328,7 @@ async function validateSnapshotTargets(
     SELECT id, sync_id, scope, owner_coach_user_id, is_archived, name
     FROM exercise_definition
     WHERE sync_id IS NOT NULL
-      AND (scope = 'global' OR (scope = 'coach' AND owner_coach_user_id = ?))
-  `).bind(coachUserId).all<VisibleSyncRow>();
+  `).all<VisibleSyncRow>();
   const bySyncId = new Map(rows.results.map((row) => [row.sync_id, row]));
 
   const incomingIds = new Set(snapshot.definitions.map((definition) => definition.syncId));
