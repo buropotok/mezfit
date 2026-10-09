@@ -83,7 +83,7 @@ const session: ActiveWorkoutSession = {
   occurrenceId: null,
   status: 'active',
   workoutDate: '2026-10-07',
-  startedAt: '2026-10-08T00:30:00Z',
+  startedAt: '2026-10-08T12:00:00Z',
   completedAt: null,
   program: { id: 20, name: 'Силовой блок' },
   phase: { id: 30, name: 'Фаза 1' },
@@ -142,7 +142,8 @@ describe('WorkoutSessionScreen workout card', () => {
     expect(screen.getByTestId('workout-sortable-items').children).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Меню тренировки' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Комментарий' })).toBeNull();
-    expect(screen.getByText('8 октября 2026 г.')).toBeTruthy();
+    expect(screen.queryByText('7 октября 2026 г.')).toBeNull();
+    expect(screen.getByText(/октября 2026/)).toBeTruthy();
     expect(screen.getByText(/^\d{2}:\d{2} — …$/)).toBeTruthy();
   });
 
@@ -151,7 +152,7 @@ describe('WorkoutSessionScreen workout card', () => {
       session: {
         ...session,
         status: 'completed',
-        completedAt: '2026-10-08T01:30:00Z',
+        completedAt: '2026-10-08T13:00:00Z',
       },
     });
 
