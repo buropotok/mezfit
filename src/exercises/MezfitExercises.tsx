@@ -162,6 +162,7 @@ function datasetFor(mode: MezfitExercisesMode, clientUserId?: number): ExerciseD
 interface ExerciseEditorState {
   mode: 'create' | 'edit';
   seed?: ExerciseDefinition;
+  defaultCategory?: ExerciseCategoryCode;
 }
 
 function ExerciseEditor({
@@ -183,7 +184,9 @@ function ExerciseEditor({
   const [name, setName] = useState(seed?.name ?? '');
   const [description, setDescription] = useState(seed?.description ?? '');
   const [trackingType, setTrackingType] = useState<TrackingType>(seed?.tracking_type ?? 'weight_reps');
-  const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode>(seed?.category_code ?? 'other');
+  const [categoryCode, setCategoryCode] = useState<ExerciseCategoryCode>(
+    seed?.category_code ?? state.defaultCategory ?? 'other',
+  );
   const [equipmentCode, setEquipmentCode] = useState<ExerciseEquipmentCode>(seed?.equipment_code ?? 'other');
 
   const submit = () => {
@@ -588,7 +591,7 @@ export function MezfitExercisesContent({
             size="compact"
             onClick={() => {
               setEditorError('');
-              setEditing({ mode: 'create' });
+              setEditing({ mode: 'create', defaultCategory: selectedCategory ?? undefined });
             }}
           >
             Добавить
