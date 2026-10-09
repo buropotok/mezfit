@@ -56,13 +56,23 @@ export const LOCAL_DATABASE_STORES_V1 = {
   syncRemoteState: '&id',
 } as const;
 
-export function localDatabaseName(appUserId: number): string {
-  if (!Number.isSafeInteger(appUserId) || appUserId <= 0) {
+export function localDatabaseName(telegramUserId: string): string {
+  if (!/^[1-9]\d*$/.test(telegramUserId)) {
     throw new Error('INVALID_LOCAL_DATABASE_USER_ID');
   }
-  return `${DATABASE_PREFIX}:${appUserId}`;
+  return `${DATABASE_PREFIX}:${telegramUserId}`;
 }
 
+/**
+ * D1 also has invariants that IndexedDB cannot express as direct partial/collated indexes:
+ * - one active phase per training plan;
+ * - unique active positions for program days/exercises/sets;
+ * - one draft/active workout session per user;
+ * - case-insensitive owner-scoped names for coach/client exercise definitions.
+ *
+ * Domain repositories must preserve these transactionally before marking a sync scope dirty.
+ * The Worker remains the final validation boundary.
+ */
 export class MezfitLocalDatabase extends Dexie {
   users!: Table<LocalUserRow, number>;
   coachClients!: Table<LocalCoachClientRow, number>;
@@ -81,13 +91,13 @@ export class MezfitLocalDatabase extends Dexie {
   syncScopes!: Table<LocalSyncScopeRow, string>;
   syncRemoteState!: Table<LocalSyncRemoteStateRow, 'default'>;
 
-  constructor(appUserId: number) {
-    super(localDatabaseName(appUserId));
+  constructor(telegramUserId: string) {
+    super(localDatabaseName(telegramUserId));
 
     this.version(LOCAL_DATABASE_VERSION).stores(LOCAL_DATABASE_STORES_V1);
   }
 }
 
-export function createLocalDatabase(appUserId: number): MezfitLocalDatabase {
-  return new MezfitLocalDatabase(appUserId);
+export function createLocalDatabase(telegramUserId: string): MezfitLocalDatabase {
+  return new MezfitLocalDatabase(telegramUserId);
 }

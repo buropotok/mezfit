@@ -2,15 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { LOCAL_DATABASE_STORES_V1, localDatabaseName } from './database';
 
 describe('localDatabaseName', () => {
-  it('scopes the IndexedDB database to the authenticated app user', () => {
-    expect(localDatabaseName(42)).toBe('mezfit-local:42');
-    expect(localDatabaseName(43)).toBe('mezfit-local:43');
+  it('scopes the IndexedDB database to the Telegram account without waiting for an app-user lookup', () => {
+    expect(localDatabaseName('42')).toBe('mezfit-local:42');
+    expect(localDatabaseName('43')).toBe('mezfit-local:43');
   });
 
   it('rejects invalid app user ids', () => {
-    expect(() => localDatabaseName(0)).toThrow('INVALID_LOCAL_DATABASE_USER_ID');
-    expect(() => localDatabaseName(-1)).toThrow('INVALID_LOCAL_DATABASE_USER_ID');
-    expect(() => localDatabaseName(1.5)).toThrow('INVALID_LOCAL_DATABASE_USER_ID');
+    expect(() => localDatabaseName('0')).toThrow('INVALID_LOCAL_DATABASE_USER_ID');
+    expect(() => localDatabaseName('-1')).toThrow('INVALID_LOCAL_DATABASE_USER_ID');
+    expect(() => localDatabaseName('1.5')).toThrow('INVALID_LOCAL_DATABASE_USER_ID');
+    expect(() => localDatabaseName('user-42')).toThrow('INVALID_LOCAL_DATABASE_USER_ID');
   });
 });
 
