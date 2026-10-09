@@ -68,7 +68,14 @@ const data: SessionExerciseData = {
   ],
 };
 
-function renderExercise(overrides?: { context?: SessionExerciseContext; data?: SessionExerciseData; defaultCollapsed?: boolean; surface?: 'default' | 'transparent' }) {
+function renderExercise(overrides?: {
+  context?: SessionExerciseContext;
+  data?: SessionExerciseData;
+  defaultCollapsed?: boolean;
+  surface?: 'default' | 'transparent';
+  editable?: boolean;
+  onAddSet?: (sessionExerciseId: number) => void;
+}) {
   const onSaveSet = vi.fn(async () => undefined);
   const onOpenExerciseMenu = vi.fn();
   const onOpenHistory = vi.fn();
@@ -80,6 +87,8 @@ function renderExercise(overrides?: { context?: SessionExerciseContext; data?: S
       data={overrides?.data ?? data}
       defaultCollapsed={overrides?.defaultCollapsed}
       surface={overrides?.surface}
+      editable={overrides?.editable}
+      onAddSet={overrides?.onAddSet}
       onSaveSet={onSaveSet}
       onOpenExerciseMenu={onOpenExerciseMenu}
       onOpenHistory={onOpenHistory}
@@ -144,6 +153,27 @@ describe('SessionExercise rendering', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Опции упражнения' }));
     expect(onOpenExerciseMenu).toHaveBeenCalledWith(200);
     expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
+  });
+
+  it('uses the full 44px row as the add-set action while keeping the glass plus as artwork', () => {
+    const onAddSet = vi.fn();
+    renderExercise({ onAddSet });
+
+    const addSet = screen.getByRole('button', { name: 'Добавить подход' });
+    expect(addSet.classList.contains('session-exercise__add-set-hit')).toBe(true);
+    expect(addSet.querySelector('.session-exercise__add-set-button')).not.toBeNull();
+    expect(addSet.parentElement?.classList.contains('session-exercise__add-set')).toBe(true);
+
+    fireEvent.click(addSet);
+    expect(onAddSet).toHaveBeenCalledWith(200);
+  });
+
+  it('removes structural and set editing actions when the exercise is read-only', () => {
+    renderExercise({ editable: false, onAddSet: vi.fn() });
+
+    expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Свернуть упражнение' })).toBeTruthy();
   });
 });
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ApiError,
   addWorkoutSessionExercises,
@@ -8,9 +8,9 @@ import {
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
-import { useNavigationBackTransition, useNavigationSurfaceFloatingAction } from '../NavigationShell';
-import { Avatar, Button, Icon, List, ListItem, Modal, SortableList, Text, type SortableListItem } from '../ui';
-import { SessionExercise } from './SessionExercise';
+import { useNavigationBackTransition } from '../NavigationShell';
+import { Button, List, ListItem, Modal, Text } from '../ui';
+import { WorkoutSessionCard } from './WorkoutSessionCard';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 import type {
@@ -38,32 +38,6 @@ function currentLocalDate(): string {
 function sessionMeta(session: ActiveWorkoutSession): string {
   if (!session.program) return 'Своя тренировка';
   return [session.program.name, session.phase?.name, session.day?.name].filter(Boolean).join(' · ');
-}
-
-function workoutTitle(session: ActiveWorkoutSession): string {
-  return session.day?.name ?? session.phase?.name ?? 'Своя тренировка';
-}
-
-function workoutProgramName(session: ActiveWorkoutSession): string {
-  return session.program?.name ?? 'Без программы';
-}
-
-function workoutCreatorName(session: ActiveWorkoutSession): string {
-  const creator = session.creator;
-  if (!creator) return 'Создатель тренировки';
-  const fullName = [creator.firstName, creator.lastName].filter(Boolean).join(' ').trim();
-  return fullName || creator.username || 'Создатель тренировки';
-}
-
-function workoutProgressPercent(session: ActiveWorkoutSession): number {
-  if (session.exercises.length === 0) return 0;
-  const progressSum = session.exercises.reduce((sum, exercise) => {
-    const totalSets = exercise.sets.length;
-    if (totalSets === 0) return sum;
-    const completedSets = exercise.sets.filter((set) => set.status === 'completed').length;
-    return sum + completedSets / totalSets;
-  }, 0);
-  return Math.round((progressSum / session.exercises.length) * 100);
 }
 
 function draftMeta(session: DraftWorkoutSession): string {
@@ -95,7 +69,6 @@ export function WorkoutSessionScreen({
   const requestBackTransition = useNavigationBackTransition();
   const [session, setSession] = useState<WorkoutSessionState | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
-  const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [initializationError, setInitializationError] = useState<string | null>(null);
@@ -158,17 +131,6 @@ export function WorkoutSessionScreen({
 
   const activeSession = session?.status === 'active' || session?.status === 'completed' ? session : null;
   const draftSession = session?.status === 'draft' ? session : null;
-  const floatingAction = useMemo(() => activeSession?.status === 'active' ? {
-    label: 'Добавить упражнение',
-    placement: 'right' as const,
-    icon: 'plus' as const,
-    onClick: () => {
-      setExerciseSelectionError('');
-      setExerciseSelectionOpen(true);
-    },
-  } : null, [activeSession?.status]);
-  useNavigationSurfaceFloatingAction(floatingAction);
-
   function nextMutationIntent() {
     mutationIntentVersionRef.current += 1;
     return {
@@ -235,10 +197,9 @@ export function WorkoutSessionScreen({
     if (isCurrentIntent(intent)) setSession(nextSession);
   }
 
-  function handleReorder(items: SortableListItem[]) {
+  function handleReorder(ids: number[]) {
     if (!activeSession || activeSession.status !== 'active') return;
     const sessionId = activeSession.sessionId;
-    const ids = items.map((item) => Number(item.id));
     const intent = nextMutationIntent();
     setSession((currentSession) => {
       if (!currentSession || currentSession.status !== 'active' || currentSession.sessionId !== sessionId) return currentSession;
@@ -301,39 +262,12 @@ export function WorkoutSessionScreen({
       setExerciseSelectionOpen(false);
       setCompleteConfirmOpen(false);
       lifecycleCallbackRef.current?.({ sessionId: nextSession.sessionId, status: nextSession.status });
-      requestBackTransition(onClose);
     } catch (error) {
       if (isCurrentIntent(intent)) setMessage(errorMessage(error, 'Не удалось завершить тренировку'));
     } finally {
       if (isCurrentGeneration(intent)) setBusyLabel(null);
     }
   }
-
-  const sortableItems: SortableListItem[] = activeSession
-    ? activeSession.exercises.map((exercise) => ({
-        id: exercise.sessionExerciseId,
-        content: (
-          <SessionExercise
-            context={{
-              workoutSessionId: activeSession.sessionId,
-              workoutDate: activeSession.workoutDate,
-              program: activeSession.program,
-            }}
-            data={exercise}
-            surface="transparent"
-            collapsed={collapsedByExerciseId[exercise.sessionExerciseId] ?? false}
-            onCollapsedChange={(collapsed) => {
-              setCollapsedByExerciseId((current) => ({ ...current, [exercise.sessionExerciseId]: collapsed }));
-            }}
-            onSaveSet={handleSaveSet}
-            onOpenExerciseMenu={onOpenExerciseMenu}
-            onOpenHistory={onOpenHistory}
-            onOpenChat={onOpenChat}
-          />
-        ),
-      }))
-    : [];
-  const workoutProgress = activeSession ? workoutProgressPercent(activeSession) : 0;
 
   if (initializationError) {
     return (
@@ -408,61 +342,25 @@ export function WorkoutSessionScreen({
         </div>
       ) : null}
 
-      {activeSession?.status === 'active' ? (
+      {activeSession ? (
         <>
-          {sortableItems.length > 0 ? (
-            <SortableList
-              items={sortableItems}
-              onReorder={handleReorder}
-              showSeparators={false}
-              header={activeSession ? (
-                <div className="workout-session-screen__card-header">
-                  <span className="workout-session-screen__card-icon">
-                    <Icon name="barbell" variant="outline" className="workout-session-screen__card-icon-artwork" />
-                  </span>
-                  <div className="workout-session-screen__card-copy">
-                    <Text variant="body" className="workout-session-screen__card-workout-name">
-                      {workoutTitle(activeSession)}
-                    </Text>
-                    <Text variant="footnote" tone="muted" className="workout-session-screen__card-program-name">
-                      {workoutProgramName(activeSession)}
-                    </Text>
-                  </div>
-                  <Avatar
-                    className="workout-session-screen__card-avatar"
-                    name={workoutCreatorName(activeSession)}
-                    src={activeSession.creator?.photoUrl ?? undefined}
-                  />
-                </div>
-              ) : null}
-              footer={activeSession ? (
-                <div className="workout-session-screen__card-progress">
-                  <Text variant="caption" tone="muted">Прогресс</Text>
-                  <div
-                    className="workout-session-screen__card-progress-track"
-                    role="progressbar"
-                    aria-label="Прогресс тренировки"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={workoutProgress}
-                  >
-                    <span
-                      className="workout-session-screen__card-progress-value"
-                      style={{ width: `${workoutProgress}%` }}
-                    />
-                  </div>
-                  <Text variant="caption" tone="muted">{workoutProgress}%</Text>
-                </div>
-              ) : null}
-            />
-          ) : (
-            <div className="workout-session-screen__empty">
-              <Text tone="muted">Упражнений пока нет.</Text>
+          <WorkoutSessionCard
+            session={activeSession}
+            onReorderExerciseIds={handleReorder}
+            onSaveSet={handleSaveSet}
+            onAddExercise={() => {
+              setExerciseSelectionError('');
+              setExerciseSelectionOpen(true);
+            }}
+            onOpenExerciseMenu={onOpenExerciseMenu}
+            onOpenExerciseHistory={onOpenHistory}
+            onOpenChat={onOpenChat}
+          />
+          {activeSession.status === 'active' ? (
+            <div className="workout-session-screen__footer">
+              <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
             </div>
-          )}
-          <div className="workout-session-screen__footer">
-            <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
-          </div>
+          ) : null}
         </>
       ) : null}
 

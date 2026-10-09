@@ -48,6 +48,8 @@ export interface ActiveWorkoutSession {
   occurrenceId: number | null;
   status: 'active' | 'completed';
   workoutDate: string;
+  startedAt: string | null;
+  completedAt: string | null;
   program: WorkoutProgramSummary | null;
   phase: WorkoutPhaseSummary | null;
   day: WorkoutDaySummary | null;

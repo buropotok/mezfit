@@ -14,15 +14,6 @@ import { WorkoutSessionScreen } from './WorkoutSessionScreen';
 import type { SessionExerciseData } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession, DraftWorkoutSession } from './workoutSessionTypes';
 
-const navigationMocks = vi.hoisted(() => ({
-  registerSurfaceAction: vi.fn(),
-}));
-
-vi.mock('../NavigationShell', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../NavigationShell')>();
-  return { ...actual, useNavigationSurfaceFloatingAction: navigationMocks.registerSurfaceAction };
-});
-
 vi.mock('../api', () => ({
   addWorkoutSessionExercises: vi.fn(),
   completeWorkoutSession: vi.fn(),
@@ -37,7 +28,7 @@ vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
   type SortableListProps = React.ComponentProps<typeof actual.SortableList>;
 
-  function TestSortableList({ items, onReorder }: SortableListProps) {
+  function TestSortableList({ items, onReorder, header, footer }: SortableListProps) {
     return (
       <div>
         <button
@@ -49,8 +40,10 @@ vi.mock('../ui', async (importOriginal) => {
         >
           Rotate exercises
         </button>
+        {header}
         <div data-testid="sortable-order">{items.map((item) => String(item.id)).join(',')}</div>
         {items.map((item) => <div key={item.id}>{item.content}</div>)}
+        {footer}
       </div>
     );
   }
@@ -83,6 +76,8 @@ const programSession: ActiveWorkoutSession = {
   occurrenceId: null,
   status: 'active',
   workoutDate: '2026-09-15',
+  startedAt: '2026-09-15T18:00:00Z',
+  completedAt: null,
   program: { id: 20, name: 'Силовой блок' },
   phase: { id: 30, name: 'Фаза 1' },
   day: { id: 40, name: 'День B', position: 1 },
@@ -94,6 +89,8 @@ const ownSession: ActiveWorkoutSession = {
   occurrenceId: null,
   status: 'active',
   workoutDate: '2026-09-15',
+  startedAt: '2026-09-15T18:00:00Z',
+  completedAt: null,
   program: null,
   phase: null,
   day: null,
@@ -149,7 +146,6 @@ function renderScreen(overrides: Partial<React.ComponentProps<typeof WorkoutSess
 }
 
 beforeEach(() => {
-  navigationMocks.registerSurfaceAction.mockReset();
   addExercisesMock.mockReset();
   getExerciseOptionsMock.mockReset();
   initializeMock.mockReset();
@@ -247,11 +243,11 @@ describe('WorkoutSessionScreen', () => {
     await waitFor(() => {
       expect(startMock).toHaveBeenCalledWith('telegram-init', 501, { type: 'own' });
     });
-    expect(await screen.findByText('Своя тренировка')).toBeTruthy();
-    expect(screen.getByText('Упражнений пока нет.')).toBeTruthy();
+    expect((await screen.findAllByText('Своя тренировка')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
   });
 
-  it('adds selected exercises from the workout FAB only after explicit OK confirmation', async () => {
+  it('adds selected exercises from the workout card only after explicit OK confirmation', async () => {
     const nextSession: ActiveWorkoutSession = {
       ...ownSession,
       exercises: [exerciseData(42, 0, 'Жим лёжа')],
@@ -261,16 +257,8 @@ describe('WorkoutSessionScreen', () => {
     addExercisesMock.mockResolvedValue({ session: nextSession });
 
     renderScreen();
-    await screen.findByText('Своя тренировка');
-    await waitFor(() => {
-      expect(navigationMocks.registerSurfaceAction.mock.calls.some(([action]) => action?.label === 'Добавить упражнение')).toBe(true);
-    });
-    const action = [...navigationMocks.registerSurfaceAction.mock.calls]
-      .reverse()
-      .map(([registered]) => registered)
-      .find((registered) => registered?.label === 'Добавить упражнение');
-    if (!action) throw new Error('Missing registered Add exercise action');
-    act(() => action.onClick());
+    await screen.findAllByText('Своя тренировка');
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
     expect(await screen.findByText('Жим лёжа')).toBeTruthy();
@@ -292,6 +280,22 @@ describe('WorkoutSessionScreen', () => {
 
     expect(await screen.findByText('Силовой блок · Фаза 1 · День B')).toBeTruthy();
     expect(startMock).not.toHaveBeenCalled();
+  });
+
+  it('does not expose resume until the repository provides that capability', async () => {
+    initializeMock.mockResolvedValue({
+      session: {
+        ...programSession,
+        status: 'completed',
+        completedAt: '2026-09-15T19:00:00Z',
+      },
+    });
+
+    renderScreen();
+
+    expect(await screen.findByText('Силовой блок · Фаза 1 · День B')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Возобновить тренировку' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
   });
 
   it('renders sortable session exercises without the standalone surface layer', async () => {
