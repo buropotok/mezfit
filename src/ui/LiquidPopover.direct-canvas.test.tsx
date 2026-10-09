@@ -40,6 +40,7 @@ it('renders moving text without serializing or decoding frame images', async () 
   );
   vi.spyOn(performance, 'now').mockImplementation(() => Date.now());
   const draws = vi.fn();
+  const clip = vi.fn();
   const readPixels = vi.fn(() => {
     throw new Error("Animation pixel readback forbidden");
   });
@@ -64,7 +65,7 @@ it('renders moving text without serializing or decoding frame images', async () 
         moveTo: vi.fn(),
         lineTo: vi.fn(),
         closePath: vi.fn(),
-        clip: vi.fn(),
+        clip,
         translate: vi.fn(),
         scale: vi.fn(),
         fill: vi.fn(),
@@ -104,6 +105,7 @@ it('renders moving text without serializing or decoding frame images', async () 
     <KonstaProvider theme="ios" dark>
       <LiquidPopover
         isOpen
+        renderMode="canvas"
         onOpenChange={change}
         triggerRef={origin}
         trigger={<button ref={origin}>Open</button>}
@@ -117,6 +119,7 @@ it('renders moving text without serializing or decoding frame images', async () 
   const menu = screen.getByRole('menu'),
     canvas = menu.querySelector('canvas')!;
   expect(canvas.style.display).toBe('block');
+  expect(canvas.style.clipPath).toBe('none');
   expect(menu.querySelector('image, feImage, feDisplacementMap')).toBeNull();
   await act(async () => {
     vi.advanceTimersByTime(1100);
@@ -124,6 +127,7 @@ it('renders moving text without serializing or decoding frame images', async () 
   expect(encode).not.toHaveBeenCalled();
   expect(readPixels).not.toHaveBeenCalled();
   expect(draws).toHaveBeenCalled();
+  expect(clip).toHaveBeenCalled();
   expect(canvas.style.display).toBe('none');
   fireEvent.click(screen.getByRole('menuitem', { name: 'Action' }));
   expect(select).toHaveBeenCalledOnce();
