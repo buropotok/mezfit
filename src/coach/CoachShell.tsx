@@ -279,7 +279,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     }
 
     if (!selectedClient) {
-      if (destination !== 'exercises' && destination !== 'today') onNavigationContextChange(null);
+      if (destination !== 'today') onNavigationContextChange(null);
       return undefined;
     }
 
