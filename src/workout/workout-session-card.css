@@ -71,7 +71,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.workout-session-card__add-exercise svg {
+.workout-session-card__add-exercise-icon {
   width: 20px;
   height: 20px;
   color: var(--ui-color-primary);
