@@ -83,6 +83,8 @@ const session: ActiveWorkoutSession = {
   occurrenceId: null,
   status: 'active',
   workoutDate: '2026-10-07',
+  startedAt: '2026-10-07T18:00:00Z',
+  completedAt: null,
   program: { id: 20, name: 'Силовой блок' },
   phase: { id: 30, name: 'Фаза 1' },
   day: { id: 40, name: 'День B', position: 1 },
