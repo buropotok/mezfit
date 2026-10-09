@@ -175,15 +175,7 @@ export class ExerciseRepository {
     } else if (dataset.kind === 'client-history') {
       ({ exercises } = await getClientExerciseHistory(this.initData, dataset.clientUserId));
     } else {
-      const batches = await Promise.all(
-        EXERCISE_CATEGORY_CODES.map((categoryCode) =>
-          getWorkoutExerciseOptions(this.initData, categoryCode)),
-      );
-      const byId = new Map<number, ExerciseDefinition>();
-      for (const batch of batches) {
-        for (const exercise of batch.exercises) byId.set(exercise.id, exercise);
-      }
-      exercises = [...byId.values()];
+      ({ exercises } = await getWorkoutExerciseOptions(this.initData));
     }
 
     await replaceDataset(this.db, datasetKey(dataset), exercises);
