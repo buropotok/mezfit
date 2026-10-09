@@ -158,6 +158,7 @@ export interface ExerciseDefinition {
   id: number;
   scope: ExerciseScope;
   name: string;
+  name_en?: string | null;
   description: string | null;
   tracking_type: TrackingType;
   category_code: ExerciseCategoryCode | null;
