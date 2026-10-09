@@ -275,6 +275,7 @@ export function WorkoutSessionCard({
                 <IconButton
                   ref={menuTriggerRef}
                   className="workout-session-card__menu-trigger"
+                  style={{ width: 44, height: 44, minHeight: 44, padding: 10 }}
                   icon="dots-vertical"
                   label="Меню тренировки"
                 />
@@ -346,7 +347,7 @@ export function WorkoutSessionCard({
             component="div"
             type="text"
             value={renameDraft}
-            onChange={(event) => setRenameDraft(event.target.value)}
+            onChange={(event) => setRenameDraft(event.currentTarget.value)}
           />
         )}
         buttons={(
@@ -368,7 +369,7 @@ export function WorkoutSessionCard({
             value={commentDraft}
             placeholder="Комментарий к тренировке"
             inputClassName="!h-20 resize-none"
-            onChange={(event) => setCommentDraft(event.target.value)}
+            onChange={(event) => setCommentDraft(event.currentTarget.value)}
           />
         )}
         buttons={(
