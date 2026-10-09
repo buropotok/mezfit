@@ -41,7 +41,12 @@ export function MezfitTopPanel({
   children,
   ...props
 }: MezfitTopPanelProps) {
-  const gestureRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+  const gestureRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    captureTarget: Element;
+  } | null>(null);
   const hasMaterial = materialPreset !== undefined || material !== undefined;
   const materialBlur = hasMaterial
     ? resolveGlassMaterial(materialPreset ?? 'modalTuned', material).blur
@@ -51,7 +56,7 @@ export function MezfitTopPanel({
     '--ui-mezfit-top-panel-blur': `${blur}px`,
   } as TopPanelCssProperties;
 
-  const releasePointerCapture = (element: HTMLDivElement, pointerId: number) => {
+  const releasePointerCapture = (element: Element, pointerId: number) => {
     if (typeof element.releasePointerCapture !== 'function') return;
     try {
       element.releasePointerCapture(pointerId);
@@ -75,21 +80,23 @@ export function MezfitTopPanel({
     if (!shouldClose && !finishWithoutClose) return;
 
     gestureRef.current = null;
-    releasePointerCapture(event.currentTarget, event.pointerId);
+    releasePointerCapture(start.captureTarget, event.pointerId);
     if (shouldClose) onClose();
   };
 
   const onPointerDownCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!opened || gestureRef.current || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    const captureTarget = event.target instanceof Element ? event.target : event.currentTarget;
     gestureRef.current = {
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
+      captureTarget,
     };
 
-    if (typeof event.currentTarget.setPointerCapture !== 'function') return;
+    if (typeof captureTarget.setPointerCapture !== 'function') return;
     try {
-      event.currentTarget.setPointerCapture(event.pointerId);
+      captureTarget.setPointerCapture(event.pointerId);
     } catch {
       // Older WKWebView builds may reject capture; pointer-move detection remains the fallback.
     }
@@ -107,7 +114,7 @@ export function MezfitTopPanel({
     const start = gestureRef.current;
     if (!start || start.pointerId !== event.pointerId) return;
     gestureRef.current = null;
-    releasePointerCapture(event.currentTarget, event.pointerId);
+    releasePointerCapture(start.captureTarget, event.pointerId);
   };
 
   const onLostPointerCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
