@@ -286,6 +286,9 @@ export function SettingsPage({
     setTopPanelDemoOpen(false);
     setModulesOpen(false);
   }, []);
+  const closeExercises = useCallback(() => {
+    setExercisesOpen(false);
+  }, []);
   const closeGlassSettings = useCallback(() => {
     setGlassSettingsOpen(false);
   }, []);
@@ -294,6 +297,16 @@ export function SettingsPage({
   }, []);
 
   useEffect(() => {
+    if (exercisesOpen) {
+      onNavigationContextChange({
+        title: 'Упражнения',
+        scrollKey: 'settings:exercises',
+        identity: { title: 'Упражнения', icon: 'barbell' },
+        onBack: closeExercises,
+      });
+      return () => onNavigationContextChange(null);
+    }
+
     if (typographySettingsOpen) {
       onNavigationContextChange({ title: 'Шрифты', scrollKey: 'settings:typography', onBack: closeTypographySettings });
       return () => onNavigationContextChange(null);
@@ -311,7 +324,17 @@ export function SettingsPage({
 
     onNavigationContextChange(null);
     return undefined;
-  }, [closeGlassSettings, closeModules, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, typographySettingsOpen]);
+  }, [
+    closeExercises,
+    closeGlassSettings,
+    closeModules,
+    closeTypographySettings,
+    exercisesOpen,
+    glassSettingsOpen,
+    modulesOpen,
+    onNavigationContextChange,
+    typographySettingsOpen,
+  ]);
 
   if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen) {
     return (
@@ -356,7 +379,7 @@ export function SettingsPage({
             opened={exercisesOpen}
             initData={initData}
             mode="manage"
-            onClose={() => setExercisesOpen(false)}
+            onClose={closeExercises}
           />
         ) : null}
       </>

@@ -60,6 +60,7 @@ export function WorkoutExerciseSelectionSheet({
       ) : undefined}
       footer={selectedIds.size > 0 ? (
         <Button
+          aria-label="Добавить выбранные упражнения"
           disabled={saving}
           onClick={() => onConfirm([...selectedIds])}
         >

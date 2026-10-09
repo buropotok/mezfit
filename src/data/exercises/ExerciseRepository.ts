@@ -105,6 +105,7 @@ function exerciseView(
     reference_source: definition.referenceSource,
     reference_key: definition.referenceKey,
     reference_media_url: definition.referenceMediaUrl,
+    is_archived: definition.isArchived,
     is_favourite: membership.isFavourite,
     can_edit: membership.canEdit,
   };
@@ -215,10 +216,16 @@ export class ExerciseRepository {
       this.db.exerciseDefinitions,
       this.db.exerciseMemberships,
       async () => {
-        await this.db.exerciseMemberships
+        const memberships = await this.db.exerciseMemberships
           .where('exerciseDefinitionId')
           .equals(exerciseDefinitionId)
-          .delete();
+          .toArray();
+        const activeMembershipIds = memberships
+          .filter((membership) => !membership.contextKey.startsWith('client-history:'))
+          .map((membership) => membership.id);
+        if (activeMembershipIds.length > 0) {
+          await this.db.exerciseMemberships.bulkDelete(activeMembershipIds);
+        }
         await this.db.exerciseDefinitions.update(exerciseDefinitionId, {
           isArchived: true,
           updatedAt: new Date().toISOString(),

@@ -13,6 +13,7 @@ import {
   type ExerciseDataset,
 } from '../data/exercises/ExerciseRepository';
 import { publicMediaCache } from '../data/media/MediaCache';
+import { categoryMediaUrls } from './exerciseCategoryMedia';
 import { useCachedMediaUrl } from '../data/media/useCachedMediaUrl';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
@@ -51,17 +52,7 @@ const categoryLabels: Record<ExerciseCategoryCode, string> = {
   other: 'Другое',
 };
 
-const categoryMediaUrls: Record<ExerciseCategoryCode, string> = {
-  chest: '/gym-keeper/categories/muscles_chest.svg',
-  arms: '/gym-keeper/categories/muscles_arm.svg',
-  back: '/gym-keeper/categories/muscles_back.svg',
-  legs: '/gym-keeper/categories/muscles_leg.svg',
-  shoulders: '/gym-keeper/categories/muscles_shoulders.svg',
-  core: '/gym-keeper/categories/muscles_core.svg',
-  full_body: '/gym-keeper/categories/muscles_fullbody.svg',
-  cardio: '/gym-keeper/categories/muscles_cardio.svg',
-  other: '/gym-keeper/categories/muscles_other.png',
-};
+
 
 const trackingLabels: Record<TrackingType, string> = {
   weight_reps: 'Вес и повторения',
@@ -684,6 +675,7 @@ export function MezfitExercisesContent({
                 key={exercise.id}
                 leadingShape="square"
                 leading={<ExerciseMedia exercise={exercise} />}
+                aria-label={exerciseDisplayName(exercise)}
                 title={exerciseDisplayName(exercise)}
                 subtitle={[
                   trackingLabels[exercise.tracking_type],
@@ -797,7 +789,7 @@ export function MezfitExercisesSheet({
     <MezfitBottomSheet opened={opened} label={title} contentClassName="mezfit-exercises-sheet">
       <div className="mezfit-exercises-sheet__header">
         <Text variant="headline">{title}</Text>
-        <IconButton label="Закрыть" icon="x" onClick={onClose} />
+        <IconButton label="Закрыть" icon="chevron-left" onClick={onClose} />
       </div>
       {notice ? <div className="mezfit-exercises-sheet__notice">{notice}</div> : null}
       <MezfitExercisesContent {...contentProps} />
