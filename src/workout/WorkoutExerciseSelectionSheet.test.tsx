@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 
@@ -13,8 +14,8 @@ vi.mock('../exercises', () => ({
   }: {
     selectedExerciseIds: ReadonlySet<number>;
     onToggleExercise: (id: number) => void;
-    footer?: React.ReactNode;
-    notice?: React.ReactNode;
+    footer?: ReactNode;
+    notice?: ReactNode;
     onClose: () => void;
   }) => (
     <div role="dialog" aria-label="Упражнения">
