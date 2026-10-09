@@ -22,7 +22,6 @@ import {
 export type AppDestination =
   | 'clients'
   | 'programs'
-  | 'exercises'
   | 'calendar'
   | 'today'
   | 'training'
