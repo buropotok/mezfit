@@ -153,8 +153,8 @@ const planPreviewExercise: SessionExerciseData = {
 };
 
 interface SettingsPageProps {
-  initData: string;
-  activeRole: Role;
+  initData?: string;
+  activeRole?: Role;
   glassSettings?: Readonly<GlassSettings>;
   onGlassSettingsChange?: (settings: GlassSettings) => void;
   typographySettings?: Readonly<TypographySettings>;
@@ -245,8 +245,8 @@ function TypographyNumberField({
 }
 
 export function SettingsPage({
-  initData,
-  activeRole,
+  initData = '',
+  activeRole = 'client',
   glassSettings = DEFAULT_GLASS_SETTINGS,
   onGlassSettingsChange = () => {},
   typographySettings = defaultTypographySettings(),
