@@ -61,7 +61,7 @@ describe('WorkoutExerciseSelectionSheet', () => {
     expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Тяга верхнего блока' }).getAttribute('aria-pressed')).toBe('true');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные · 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
     expect(onConfirm).toHaveBeenCalledWith([11, 22]);
   });
 
