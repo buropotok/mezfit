@@ -82,6 +82,8 @@ const initialSession: ActiveWorkoutSession = {
   occurrenceId: null,
   status: 'active',
   workoutDate: '2026-09-16',
+  startedAt: '2026-09-16T18:00:00Z',
+  completedAt: null,
   program: null,
   phase: null,
   day: null,
