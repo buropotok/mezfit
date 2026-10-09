@@ -32,6 +32,7 @@ import {
 } from '../typographySettings';
 import { Button, DatePicker, Divider, Dropdown, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
 import { SessionExercise, type SessionExerciseData, type SessionExerciseSetData } from '../workout';
+import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import './settings-page.css';
 
 const datePickerStatusPreview: readonly DatePickerDayStatusEntry[] = [
@@ -491,6 +492,8 @@ export function SettingsPage({
           Здесь отображаются реальные React-компоненты приложения на демонстрационных данных.
         </Text>
       </div>
+
+      <LiquidPopoverModesDemo />
 
       <section className="modules-gallery__example" aria-labelledby="module-time-picker-title">
         <Text id="module-time-picker-title" variant="headline">Time picker</Text>
