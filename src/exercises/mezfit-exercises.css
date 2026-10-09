@@ -93,16 +93,6 @@
   object-fit: contain;
 }
 
-.mezfit-exercises__category-media > .ui-icon {
-  width: 44px;
-  height: 44px;
-}
-
-.mezfit-exercises__list .ui-icon {
-  width: 20px;
-  height: 20px;
-}
-
 .mezfit-exercises__empty {
   display: grid;
   gap: var(--space-1);
@@ -156,11 +146,6 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-}
-
-.mezfit-exercises__editor-media > .ui-icon {
-  width: 42px;
-  height: 42px;
 }
 
 .mezfit-exercises__editor-fields {
