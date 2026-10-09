@@ -14,13 +14,19 @@ import clockUrl from './clock.svg';
 import dotsVerticalUrl from './dots-vertical.svg';
 import homeFilledUrl from './home-filled.svg';
 import homeUrl from './home.svg';
+import historyUrl from './history-outline.svg';
 import infoCircleUrl from './info-circle.svg';
 import menu2Url from './menu-2.svg';
+import messageCircleUrl from './message-circle-outline.svg';
+import pencilUrl from './pencil-outline.svg';
 import plusOutlineUrl from './plus-outline.svg';
 import textPlusUrl from './text-plus.svg';
 import userPlusUrl from './user-plus-outline.svg';
 import settingsFilledUrl from './liquid-glass-settings-filled.svg';
+import shareUrl from './share-outline.svg';
 import settingsOutlineUrl from './liquid-glass-settings-outline.svg';
+import userShareUrl from './user-share-outline.svg';
+import editUrl from './edit-outline.svg';
 import usersFilledUrl from './liquid-glass-users-filled.svg';
 import usersOutlineUrl from './liquid-glass-users-outline.svg';
 
@@ -35,12 +41,18 @@ const uiIconRegistry = {
   clock: { outline: clockUrl, filled: clockUrl },
   'dots-vertical': { outline: dotsVerticalUrl, filled: dotsVerticalUrl },
   home: { outline: homeUrl, filled: homeFilledUrl },
+  history: { outline: historyUrl, filled: historyUrl },
   'info-circle': { outline: infoCircleUrl, filled: infoCircleUrl },
   'menu-2': { outline: menu2Url, filled: menu2Url },
+  'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
+  pencil: { outline: pencilUrl, filled: pencilUrl },
   plus: { outline: plusOutlineUrl, filled: plusOutlineUrl },
   'text-plus': { outline: textPlusUrl, filled: textPlusUrl },
   'user-plus': { outline: userPlusUrl, filled: userPlusUrl },
   settings: { outline: settingsOutlineUrl, filled: settingsFilledUrl },
+  share: { outline: shareUrl, filled: shareUrl },
+  'user-share': { outline: userShareUrl, filled: userShareUrl },
+  edit: { outline: editUrl, filled: editUrl },
   users: { outline: usersOutlineUrl, filled: usersFilledUrl },
 } as const;
 
