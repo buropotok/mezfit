@@ -705,10 +705,13 @@ export async function cancelScheduleOccurrence(
 
 export async function getWorkoutExerciseOptions(
   initData: string,
-  categoryCode: ExerciseCategoryCode,
+  categoryCode?: ExerciseCategoryCode,
 ): Promise<{ exercises: ExerciseDefinition[] }> {
-  const query = new URLSearchParams({ category: categoryCode });
-  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/workout-sessions/exercises?${query.toString()}`);
+  const suffix = categoryCode ? `?category=${encodeURIComponent(categoryCode)}` : '';
+  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(
+    initData,
+    `/api/workout-sessions/exercises${suffix}`,
+  );
   return { exercises: result.exercises.map(localizeExercise) };
 }
 
