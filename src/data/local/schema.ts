@@ -85,6 +85,11 @@ export interface LocalExerciseMembershipRow {
   id: string;
   contextKey: string;
   exerciseDefinitionId: LocalEntityId;
+  name: string;
+  description: string | null;
+  trackingType: TrackingType;
+  categoryCode: ExerciseCategoryCode | null;
+  equipmentCode: ExerciseEquipmentCode | null;
   isFavourite: boolean;
   canEdit: boolean;
 }
