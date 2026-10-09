@@ -84,6 +84,64 @@ describe('SettingsPage modules gallery', () => {
     expect(onNavigationContextChange).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Модули' }));
   });
 
+  it('shows the active program workout-card capability matrix', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
+
+    const workoutCardModule = screen.getByRole('region', { name: 'Карточка тренировки' });
+    expect(within(workoutCardModule).getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
+    expect(within(workoutCardModule).getByRole('button', { name: 'Добавить подход' })).toBeTruthy();
+
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Меню тренировки' }));
+    const menu = screen.getByRole('menu', { name: 'Меню тренировки' });
+
+    expect(within(menu).getByText('Передать тренировку')).toBeTruthy();
+    expect(within(menu).getByText('История')).toBeTruthy();
+    expect(within(menu).getByText('Поделиться')).toBeTruthy();
+    expect(within(menu).getByText('Комментарий')).toBeTruthy();
+    expect(within(menu).queryByText('Изменить название')).toBeNull();
+    expect(within(menu).queryByText('Редактировать результаты')).toBeNull();
+  });
+
+  it('shows rename only for an active own workout', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
+
+    const workoutCardModule = screen.getByRole('region', { name: 'Карточка тренировки' });
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Active · Own' }));
+
+    expect(within(workoutCardModule).getByText('Без программы')).toBeTruthy();
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Меню тренировки' }));
+    const menu = screen.getByRole('menu', { name: 'Меню тренировки' });
+
+    expect(within(menu).getByText('Изменить название')).toBeTruthy();
+    expect(within(menu).getByText('Передать тренировку')).toBeTruthy();
+    expect(within(menu).queryByText('Редактировать результаты')).toBeNull();
+  });
+
+  it('keeps a completed workout read-only while exposing completed actions', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
+
+    const workoutCardModule = screen.getByRole('region', { name: 'Карточка тренировки' });
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Completed' }));
+
+    expect(within(workoutCardModule).queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
+    expect(within(workoutCardModule).queryByRole('button', { name: 'Добавить подход' })).toBeNull();
+    expect(within(workoutCardModule).queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
+    expect(within(workoutCardModule).getByRole('button', { name: 'Комментарий' })).toBeTruthy();
+
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Меню тренировки' }));
+    const menu = screen.getByRole('menu', { name: 'Меню тренировки' });
+
+    expect(within(menu).getByText('Редактировать результаты')).toBeTruthy();
+    expect(within(menu).getByText('История')).toBeTruthy();
+    expect(within(menu).getByText('Поделиться')).toBeTruthy();
+    expect(within(menu).getByText('Комментарий')).toBeTruthy();
+    expect(within(menu).queryByText('Передать тренировку')).toBeNull();
+    expect(within(menu).queryByText('Изменить название')).toBeNull();
+  });
+
   it('compares the original SVG and iOS Canvas LiquidPopover in Modules', () => {
     render(<SettingsPage onNavigationContextChange={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
