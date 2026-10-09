@@ -127,6 +127,10 @@ function ExerciseCategoryMedia({
   return <img src={src} alt="" className="mezfit-exercises__category-image" decoding="async" />;
 }
 
+function exerciseIdentity(exercise: ExerciseDefinition): string {
+  return exercise.sync_id ?? String(exercise.id);
+}
+
 function normalizeSearch(value: string): string {
   return value.normalize('NFKC').trim().toLocaleLowerCase('ru-RU');
 }
@@ -418,7 +422,9 @@ export function MezfitExercisesContent({
         exercise = await repository.create(input);
       }
       await syncLocal();
-      setSelectedInfo((current) => current?.id === exercise.id ? exercise : current);
+      setSelectedInfo((current) => (
+        current && exerciseIdentity(current) === exerciseIdentity(exercise) ? exercise : current
+      ));
       setEditing(null);
     } catch (reason) {
       setEditorError(reason instanceof Error ? reason.message : 'Не удалось сохранить упражнение');
@@ -435,7 +441,7 @@ export function MezfitExercisesContent({
     try {
       await repository.setFavourite(exercise, !exercise.is_favourite);
       await syncLocal();
-      setSelectedInfo((current) => current?.id === exercise.id
+      setSelectedInfo((current) => current && exerciseIdentity(current) === exerciseIdentity(exercise)
         ? { ...current, is_favourite: !exercise.is_favourite }
         : current);
     } catch (reason) {
@@ -459,7 +465,13 @@ export function MezfitExercisesContent({
       await syncLocal();
       setDeleteConfirmOpen(false);
       setEditing(null);
-      setSelectedInfo((current) => current?.id === editing.seed?.id ? null : current);
+      setSelectedInfo((current) => (
+        current
+        && editing.seed
+        && exerciseIdentity(current) === exerciseIdentity(editing.seed)
+          ? null
+          : current
+      ));
     } catch (reason) {
       setDeleteConfirmOpen(false);
       setEditorError(reason instanceof Error ? reason.message : 'Не удалось удалить упражнение');
@@ -674,7 +686,7 @@ export function MezfitExercisesContent({
                 };
             return (
               <ListItem
-                key={exercise.id}
+                key={exerciseIdentity(exercise)}
                 leadingShape="square"
                 leading={<ExerciseMedia exercise={exercise} />}
                 aria-label={exerciseDisplayName(exercise)}
@@ -688,7 +700,7 @@ export function MezfitExercisesContent({
                   : undefined}
                 trailingAction={mode === 'manage' ? (
                   <Menu
-                    isOpen={menuExercise?.id === exercise.id}
+                    isOpen={menuExercise ? exerciseIdentity(menuExercise) === exerciseIdentity(exercise) : false}
                     onOpenChange={(open) => setMenuExercise(open ? exercise : null)}
                     align="end"
                     label={`Действия: ${exerciseDisplayName(exercise)}`}
