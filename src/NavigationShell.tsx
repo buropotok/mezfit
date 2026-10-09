@@ -105,7 +105,6 @@ const clientPrimaryItems: NavigationItem[] = [
 ];
 
 const coachSecondaryItems: NavigationItem[] = [
-  { id: 'exercises', label: 'Упражнения', icon: 'barbell', section: 'secondary', showFab: false },
   { id: 'calendar', label: 'Календарь', icon: 'calendar', section: 'secondary', showFab: false },
   { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
   { id: 'about', label: 'О приложении', icon: 'info-circle', section: 'secondary', showFab: false },
