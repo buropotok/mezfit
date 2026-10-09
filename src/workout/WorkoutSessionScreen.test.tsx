@@ -37,7 +37,7 @@ vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
   type SortableListProps = React.ComponentProps<typeof actual.SortableList>;
 
-  function TestSortableList({ items, onReorder }: SortableListProps) {
+  function TestSortableList({ items, onReorder, header, footer }: SortableListProps) {
     return (
       <div>
         <button
@@ -49,8 +49,10 @@ vi.mock('../ui', async (importOriginal) => {
         >
           Rotate exercises
         </button>
+        {header}
         <div data-testid="sortable-order">{items.map((item) => String(item.id)).join(',')}</div>
         {items.map((item) => <div key={item.id}>{item.content}</div>)}
+        {footer}
       </div>
     );
   }
@@ -248,10 +250,10 @@ describe('WorkoutSessionScreen', () => {
       expect(startMock).toHaveBeenCalledWith('telegram-init', 501, { type: 'own' });
     });
     expect(await screen.findByText('Своя тренировка')).toBeTruthy();
-    expect(screen.getByText('Упражнений пока нет.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
   });
 
-  it('adds selected exercises from the workout FAB only after explicit OK confirmation', async () => {
+  it('adds selected exercises from the workout card only after explicit OK confirmation', async () => {
     const nextSession: ActiveWorkoutSession = {
       ...ownSession,
       exercises: [exerciseData(42, 0, 'Жим лёжа')],
@@ -262,15 +264,7 @@ describe('WorkoutSessionScreen', () => {
 
     renderScreen();
     await screen.findByText('Своя тренировка');
-    await waitFor(() => {
-      expect(navigationMocks.registerSurfaceAction.mock.calls.some(([action]) => action?.label === 'Добавить упражнение')).toBe(true);
-    });
-    const action = [...navigationMocks.registerSurfaceAction.mock.calls]
-      .reverse()
-      .map(([registered]) => registered)
-      .find((registered) => registered?.label === 'Добавить упражнение');
-    if (!action) throw new Error('Missing registered Add exercise action');
-    act(() => action.onClick());
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
     expect(await screen.findByText('Жим лёжа')).toBeTruthy();
