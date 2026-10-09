@@ -105,6 +105,18 @@ const previewExercise: SessionExerciseData = {
   ],
 };
 
+const workoutCardPreviewExercise: SessionExerciseData = {
+  ...previewExercise,
+  sessionExerciseId: -10,
+  workoutSessionId: -900,
+  exercise: {
+    ...previewExercise.exercise,
+    id: -10,
+    name: 'Жим гантелей лёжа',
+    equipment_code: 'dumbbell_pair',
+  },
+};
+
 const planCreateSet: SessionExerciseSetData = {
   sessionSetId: -204,
   sourceProgramSetId: null,
@@ -241,7 +253,7 @@ export function SettingsPage({
   const [emptyDatePickerOpen, setEmptyDatePickerOpen] = useState(false);
   const [topPanelDemoOpen, setTopPanelDemoOpen] = useState(false);
   const [workoutCardMode, setWorkoutCardMode] = useState<WorkoutSessionCardMode>('active-program');
-  const [workoutCardExercises, setWorkoutCardExercises] = useState<SessionExerciseData[]>([previewExercise]);
+  const [workoutCardExercises, setWorkoutCardExercises] = useState<SessionExerciseData[]>([workoutCardPreviewExercise]);
   const [workoutCardTitle, setWorkoutCardTitle] = useState('Своя тренировка');
   const [workoutCardComment, setWorkoutCardComment] = useState('После тренировки — лёгкая заминка 10 минут.');
   const [workoutCardActionMessage, setWorkoutCardActionMessage] = useState('');
@@ -543,12 +555,12 @@ export function SettingsPage({
     setWorkoutCardExercises((current) => [
       ...current,
       {
-        ...previewExercise,
+        ...workoutCardPreviewExercise,
         sessionExerciseId: nextId,
         workoutSessionId: -900,
         position: current.length,
         exercise: {
-          ...previewExercise.exercise,
+          ...workoutCardPreviewExercise.exercise,
           id: nextId,
           name: `Дополнительное упражнение ${current.length + 1}`,
         },
