@@ -28,8 +28,8 @@ export const LOCAL_DATABASE_STORES_V1 = {
   exerciseDefinitions:
     '&id,&serverId,scope,ownerCoachUserId,ownerClientUserId,[ownerCoachUserId+ownerClientUserId],name,categoryCode,trackingType,referenceOrder',
   exerciseDefinitionOverrides:
-    '&id,coachUserId,exerciseDefinitionId,[coachUserId+exerciseDefinitionId]',
-  exerciseFavourites: '&id,coachUserId,exerciseDefinitionId,[coachUserId+exerciseDefinitionId]',
+    '&id,coachUserId,exerciseDefinitionId,&[coachUserId+exerciseDefinitionId]',
+  exerciseFavourites: '&id,coachUserId,exerciseDefinitionId,&[coachUserId+exerciseDefinitionId]',
   trainingPlans: '&id,&serverId,userId,ownerCoachUserId,[ownerCoachUserId+userId],position',
   programPhases: '&id,&serverId,trainingPlanId,[trainingPlanId+position],status',
   programDays: '&id,&serverId,programPhaseId,[programPhaseId+position],status',
@@ -38,7 +38,8 @@ export const LOCAL_DATABASE_STORES_V1 = {
   programSets: '&id,&serverId,programExerciseId,[programExerciseId+position],status',
   workoutOccurrences:
     '&id,&serverId,coachUserId,clientUserId,calendarDateKey,[coachUserId+calendarDateKey],[clientUserId+calendarDateKey],programDayId,status',
-  workoutSessions: '&id,&serverId,userId,occurrenceId,status,startedAt,[userId+status]',
+  workoutSessions:
+    '&id,&serverId,userId,occurrenceId,status,startedAt,[userId+status],[userId+startedAt]',
   sessionExercises:
     '&id,&serverId,workoutSessionId,exerciseDefinitionId,[workoutSessionId+position],status',
   sessionSets: '&id,&serverId,sessionExerciseId,[sessionExerciseId+position],status',
