@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from 'react';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
-import { Badge, IconButton, List, ListItem, Text } from '../ui';
+import { Badge, GlassSurface, Icon, IconButton, List, ListItem, Text } from '../ui';
 import { SetEntry } from './SetEntry';
 import type { SetEntryProgramIdentity, SetMetrics } from './setEntryTypes';
 import type { SessionExerciseProps, SessionExerciseSetData } from './sessionExerciseTypes';
@@ -126,6 +126,8 @@ export function SessionExercise(props: SessionExerciseProps) {
     collapsed: controlledCollapsed,
     defaultCollapsed = false,
     surface = 'default',
+    editable = true,
+    onAddSet,
     onCollapsedChange,
     onOpenExerciseMenu,
     onOpenHistory,
@@ -201,7 +203,7 @@ export function SessionExercise(props: SessionExerciseProps) {
               planMode ? set.plan : set.fact?.metrics ?? null,
               data.exercise.tracking_type,
             );
-            const canOpenSet = !planMode || set.sourceProgramSetId === null;
+            const canOpenSet = planMode ? set.sourceProgramSetId === null : editable;
             return (
               <ListItem
                 key={set.sessionSetId}
@@ -228,6 +230,21 @@ export function SessionExercise(props: SessionExerciseProps) {
             );
           })}
         </List>
+
+        {props.mode !== 'plan' && editable && onAddSet ? (
+          <div className="session-exercise__add-set">
+            <GlassSurface
+              component="button"
+              className="session-exercise__add-set-button"
+              data-no-dnd
+              aria-label="Добавить подход"
+              onClick={() => onAddSet(data.sessionExerciseId)}
+            >
+              <Icon name="plus" variant="outline" />
+            </GlassSurface>
+            <Text variant="body">Добавить подход</Text>
+          </div>
+        ) : null}
 
         <div className="session-exercise__summary">
           <div
