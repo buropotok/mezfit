@@ -145,6 +145,7 @@ function matchesSearch(exercise: ExerciseDefinition, query: string): boolean {
   const haystack = normalizeSearch([
     exerciseDisplayName(exercise),
     exercise.name,
+    exercise.name_en ?? '',
     exercise.reference_key ?? '',
     exercise.description ?? '',
   ].join(' '));
@@ -738,9 +739,13 @@ export function MezfitExercisesContent({
           error={editorError}
           onCancel={() => setEditing(null)}
           onSave={(input) => void saveEditor(input)}
-          onRequestDelete={editing.mode === 'edit' && editing.seed?.can_edit
-            ? () => setDeleteConfirmOpen(true)
-            : undefined}
+          onRequestDelete={
+            editing.mode === 'edit'
+            && editing.seed?.can_edit
+            && editing.seed.scope === 'coach'
+              ? () => setDeleteConfirmOpen(true)
+              : undefined
+          }
         />
       ) : null}
 
