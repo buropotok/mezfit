@@ -14,7 +14,7 @@ import {
 } from '../data/exercises/ExerciseRepository';
 import { publicMediaCache } from '../data/media/MediaCache';
 import { useCachedMediaUrl } from '../data/media/useCachedMediaUrl';
-import { ExerciseMedia, exerciseMediaUrl } from '../ExerciseMedia';
+import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import {
   Button,
@@ -375,11 +375,7 @@ export function MezfitExercisesContent({
 
   useEffect(() => {
     void publicMediaCache.prefetch(Object.values(categoryMediaUrls));
-    const urls = exercises
-      .map(exerciseMediaUrl)
-      .filter((url): url is string => Boolean(url));
-    void publicMediaCache.prefetch(urls);
-  }, [exercises]);
+  }, []);
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<ExerciseCategoryCode, number>();
