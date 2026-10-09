@@ -4,11 +4,11 @@ export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulde
 export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
 export type ExerciseSort = 'alphabetical' | 'reference';
 
-interface ExerciseDefinitionDbRow { id:number; scope:ExerciseScope; owner_coach_user_id:number|null; name:string; name_en?:string|null; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; reference_order:number|null; is_favourite:number; }
-export interface ExerciseDefinitionRow { id:number; scope:ExerciseScope; name:string; name_en:string|null; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; is_favourite:boolean; can_edit:boolean; }
+interface ExerciseDefinitionDbRow { id:number; scope:ExerciseScope; owner_coach_user_id:number|null; name:string; name_en?:string|null; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; reference_order:number|null; is_archived?:number; is_favourite:number; }
+export interface ExerciseDefinitionRow { id:number; scope:ExerciseScope; name:string; name_en:string|null; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; is_archived:boolean; is_favourite:boolean; can_edit:boolean; }
 export interface CreateExerciseInput { scope:'coach'|'client'; name:string; description:string|null; trackingType:TrackingType; categoryCode:ExerciseCategoryCode; equipmentCode:ExerciseEquipmentCode; }
 export interface CoachExerciseFilters { search:string; categoryCode:ExerciseCategoryCode|''; trackingType:TrackingType|''; favouritesOnly:boolean; sort:ExerciseSort; }
-function exerciseView(row:ExerciseDefinitionDbRow,coachUserId:number):ExerciseDefinitionRow{return{id:row.id,scope:row.scope,name:row.name,name_en:row.name_en??null,description:row.description,tracking_type:row.tracking_type,category_code:row.category_code,equipment_code:row.equipment_code,reference_source:row.reference_source,reference_key:row.reference_key,reference_media_url:row.reference_media_url,is_favourite:row.is_favourite===1,can_edit:row.scope==='global'||(row.scope==='coach'&&row.owner_coach_user_id===coachUserId)}}
+function exerciseView(row:ExerciseDefinitionDbRow,coachUserId:number):ExerciseDefinitionRow{return{id:row.id,scope:row.scope,name:row.name,name_en:row.name_en??null,description:row.description,tracking_type:row.tracking_type,category_code:row.category_code,equipment_code:row.equipment_code,reference_source:row.reference_source,reference_key:row.reference_key,reference_media_url:row.reference_media_url,is_archived:row.is_archived===1,is_favourite:row.is_favourite===1,can_edit:row.scope==='global'||(row.scope==='coach'&&row.owner_coach_user_id===coachUserId)}}
 export function canCoachMutateExercise(scope:ExerciseScope,ownerCoachUserId:number|null,coachUserId:number):boolean{return scope==='coach'&&ownerCoachUserId===coachUserId}
 export async function hasActiveCoachClient(db:D1Database,coachUserId:number,clientUserId:number):Promise<boolean>{const row=await db.prepare(`SELECT 1 AS ok FROM coach_client WHERE coach_user_id=? AND client_user_id=? AND status='active'`).bind(coachUserId,clientUserId).first<{ok:number}>();return row?.ok===1}
 function normalizeSearch(value:string){return value.normalize('NFKC').toLocaleLowerCase('ru-RU')}
@@ -34,6 +34,7 @@ export async function listPerformedExercisesForClient(
       e.reference_key,
       e.reference_media_url,
       e.reference_order,
+      e.is_archived,
       CASE WHEN f.exercise_definition_id IS NULL THEN 0 ELSE 1 END AS is_favourite
     FROM exercise_definition e
     JOIN session_exercise se ON se.exercise_definition_id = e.id
