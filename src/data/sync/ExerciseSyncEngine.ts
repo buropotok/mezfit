@@ -20,6 +20,40 @@ function isRetryable(error: unknown): boolean {
   return error.status === 408 || error.status === 429 || error.status >= 500;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isTrackingType(value: unknown): value is ExerciseCoachSyncSnapshot['definitions'][number]['trackingType'] {
+  return value === 'weight_reps'
+    || value === 'time'
+    || value === 'time_distance'
+    || value === 'time_reps'
+    || value === 'time_weight';
+}
+
+function isCategoryCode(value: unknown): value is NonNullable<ExerciseCoachSyncSnapshot['definitions'][number]['categoryCode']> {
+  return value === 'chest'
+    || value === 'arms'
+    || value === 'back'
+    || value === 'legs'
+    || value === 'shoulders'
+    || value === 'core'
+    || value === 'full_body'
+    || value === 'cardio'
+    || value === 'other';
+}
+
+function isEquipmentCode(value: unknown): value is NonNullable<ExerciseCoachSyncSnapshot['definitions'][number]['equipmentCode']> {
+  return value === 'bodyweight'
+    || value === 'barbell'
+    || value === 'dumbbell_single'
+    || value === 'dumbbell_pair'
+    || value === 'cable'
+    || value === 'machine'
+    || value === 'other';
+}
+
 function parseInflightSnapshot(value: string): ExerciseCoachSyncSnapshot | null {
   let parsed: unknown;
   try {
@@ -27,14 +61,61 @@ function parseInflightSnapshot(value: string): ExerciseCoachSyncSnapshot | null 
   } catch {
     return null;
   }
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
-  const record = parsed as Record<string, unknown>;
+  if (!isRecord(parsed)) return null;
   if (
-    !Array.isArray(record.definitions)
-    || !Array.isArray(record.overrides)
-    || !Array.isArray(record.favourites)
+    !Array.isArray(parsed.definitions)
+    || !Array.isArray(parsed.overrides)
+    || !Array.isArray(parsed.favourites)
   ) return null;
-  return parsed as ExerciseCoachSyncSnapshot;
+
+  const definitions: ExerciseCoachSyncSnapshot['definitions'] = [];
+  for (const raw of parsed.definitions) {
+    if (
+      !isRecord(raw)
+      || typeof raw.syncId !== 'string'
+      || typeof raw.name !== 'string'
+      || (raw.description !== null && typeof raw.description !== 'string')
+      || !isTrackingType(raw.trackingType)
+      || (raw.categoryCode !== null && !isCategoryCode(raw.categoryCode))
+      || (raw.equipmentCode !== null && !isEquipmentCode(raw.equipmentCode))
+    ) return null;
+    definitions.push({
+      syncId: raw.syncId,
+      name: raw.name,
+      description: raw.description,
+      trackingType: raw.trackingType,
+      categoryCode: raw.categoryCode,
+      equipmentCode: raw.equipmentCode,
+    });
+  }
+
+  const overrides: ExerciseCoachSyncSnapshot['overrides'] = [];
+  for (const raw of parsed.overrides) {
+    if (
+      !isRecord(raw)
+      || typeof raw.exerciseSyncId !== 'string'
+      || typeof raw.name !== 'string'
+      || (raw.description !== null && typeof raw.description !== 'string')
+      || !isTrackingType(raw.trackingType)
+      || !isCategoryCode(raw.categoryCode)
+      || !isEquipmentCode(raw.equipmentCode)
+    ) return null;
+    overrides.push({
+      exerciseSyncId: raw.exerciseSyncId,
+      name: raw.name,
+      description: raw.description,
+      trackingType: raw.trackingType,
+      categoryCode: raw.categoryCode,
+      equipmentCode: raw.equipmentCode,
+    });
+  }
+
+  if (parsed.favourites.some((item) => typeof item !== 'string')) return null;
+  return {
+    definitions,
+    overrides,
+    favourites: parsed.favourites.filter((item): item is string => typeof item === 'string'),
+  };
 }
 
 async function buildSnapshot(db: MezfitLocalDatabase): Promise<ExerciseCoachSyncSnapshot> {
