@@ -74,6 +74,21 @@
   justify-self: start;
 }
 
+.modules-gallery__workout-lifecycle {
+  appearance: none;
+  display: flex;
+  width: auto;
+  height: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--ui-space-4);
+  color: var(--ui-color-surface-text);
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
 
 .modules-gallery__popover-comparison {
   display: flex;
