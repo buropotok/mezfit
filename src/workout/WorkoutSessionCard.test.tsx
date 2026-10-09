@@ -63,7 +63,6 @@ const baseSession: ActiveWorkoutSession = {
   program: null,
   phase: null,
   day: null,
-  creator: null,
   exercises: [],
 };
 
