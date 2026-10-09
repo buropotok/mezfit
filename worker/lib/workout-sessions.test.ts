@@ -645,6 +645,8 @@ describe('getWorkoutSessionProjection', () => {
       occurrence_id: null,
       status: 'active',
       workout_date: '2026-09-15',
+      started_at: '2026-09-15 18:00:00',
+      completed_at: null,
       program_id: 20,
       program_name: 'Силовой блок',
       phase_id: 30,
