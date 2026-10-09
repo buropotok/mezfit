@@ -60,18 +60,25 @@
   height: 44px;
   min-height: 44px;
   align-items: center;
-  justify-content: center;
-  gap: var(--ui-space-2);
+  justify-content: flex-start;
+  gap: var(--ui-space-3);
   padding: 0 var(--ui-space-4);
   color: var(--ui-color-surface-text);
   cursor: pointer;
+  white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
 
 .workout-session-card__add-exercise-icon {
   width: 20px;
   height: 20px;
-  color: var(--ui-color-primary);
+  flex: 0 0 20px;
+  color: var(--ui-color-surface-text);
+}
+
+.workout-session-card__add-exercise-label {
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .workout-session-card__footer-meta {

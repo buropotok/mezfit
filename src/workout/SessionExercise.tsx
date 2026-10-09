@@ -250,7 +250,7 @@ export function SessionExercise(props: SessionExerciseProps) {
                 <Icon name="plus" variant="outline" className="session-exercise__add-set-icon" />
               </GlassSurface>
             </button>
-            <Text variant="body">Добавить подход</Text>
+            <Text variant="body" className="session-exercise__add-set-label">Добавить подход</Text>
           </div>
         ) : null}
 

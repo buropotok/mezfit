@@ -9,7 +9,7 @@ import {
   startWorkoutSession,
 } from '../api';
 import { useNavigationBackTransition } from '../NavigationShell';
-import { Button, List, ListItem, Modal, Text } from '../ui';
+import { Button, GlassSurface, List, ListItem, Modal, Text } from '../ui';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
@@ -358,7 +358,15 @@ export function WorkoutSessionScreen({
           />
           {activeSession.status === 'active' ? (
             <div className="workout-session-screen__footer">
-              <Button onClick={() => setCompleteConfirmOpen(true)}>Завершить тренировку</Button>
+              <GlassSurface
+                component="button"
+                wrapContent={false}
+                shape="capsule"
+                className="workout-session-screen__lifecycle-button"
+                onClick={() => setCompleteConfirmOpen(true)}
+              >
+                <Text variant="body">Завершить тренировку</Text>
+              </GlassSurface>
             </div>
           ) : null}
         </>
