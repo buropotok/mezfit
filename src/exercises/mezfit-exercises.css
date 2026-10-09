@@ -76,13 +76,13 @@
   border: 0;
   border-radius: 18px;
   color: var(--ui-color-surface-muted);
-  background: var(--ui-color-surface-2);
+  background: var(--ui-color-surface-raised);
   cursor: pointer;
 }
 
 .mezfit-exercises__filter--selected {
   color: var(--ui-color-surface-text);
-  background: color-mix(in srgb, var(--color-accent) 24%, var(--ui-color-surface-2));
+  background: color-mix(in srgb, var(--color-accent) 24%, var(--ui-color-surface-raised));
 }
 
 .mezfit-exercises__filter:disabled {
@@ -128,7 +128,7 @@
 }
 
 .mezfit-exercises__error {
-  color: var(--ui-color-danger);
+  color: var(--color-danger);
 }
 
 .mezfit-exercises__detail-media {
