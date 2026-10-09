@@ -453,6 +453,8 @@ export function NavigationShell({
       trigger={control}
       triggerRef={menuOriginRef}
       items={menuItems}
+      preset={glassPreset}
+      optics={glassOptics}
     />
   );
 
