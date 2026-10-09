@@ -569,6 +569,17 @@ export async function getClientExercises(
   return { exercises };
 }
 
+export async function getClientExerciseHistory(
+  initData: string,
+  clientUserId: number,
+): Promise<{ exercises: ExerciseDefinition[] }> {
+  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(
+    initData,
+    `/api/coach/clients/${clientUserId}/exercise-history`,
+  );
+  return { exercises: result.exercises.map(localizeExercise) };
+}
+
 export function createClientExercise(
   initData: string,
   clientUserId: number,
