@@ -344,7 +344,7 @@ export function WorkoutSessionCard({
                 onClick={() => onAddExercise?.()}
               >
                 <Icon name="plus" variant="outline" className="workout-session-card__add-exercise-icon" />
-                <Text variant="body">Добавить упражнение</Text>
+                <Text variant="body" className="workout-session-card__add-exercise-label">Добавить упражнение</Text>
               </GlassSurface>
             ) : null}
 
