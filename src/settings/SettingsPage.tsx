@@ -257,6 +257,7 @@ export function SettingsPage({
   const [emptyDatePickerOpen, setEmptyDatePickerOpen] = useState(false);
   const [topPanelDemoOpen, setTopPanelDemoOpen] = useState(false);
   const [workoutCardMode, setWorkoutCardMode] = useState<WorkoutSessionCardMode>('active-program');
+  const [workoutCardSource, setWorkoutCardSource] = useState<'program' | 'own'>('program');
   const [workoutCardExercises, setWorkoutCardExercises] = useState<SessionExerciseData[]>([workoutCardPreviewExercise]);
   const [workoutCardTitle, setWorkoutCardTitle] = useState('Своя тренировка');
   const [workoutCardComment, setWorkoutCardComment] = useState('После тренировки — лёгкая заминка 10 минут.');
@@ -506,6 +507,8 @@ export function SettingsPage({
     );
   }
 
+  const workoutCardOwn = workoutCardMode === 'active-own'
+    || (workoutCardMode === 'completed' && workoutCardSource === 'own');
   const workoutCardSession: ActiveWorkoutSession = {
     sessionId: -900,
     occurrenceId: null,
@@ -513,9 +516,9 @@ export function SettingsPage({
     workoutDate: '2026-10-09',
     startedAt: '2026-10-09T18:05:00+03:00',
     completedAt: workoutCardMode === 'completed' ? '2026-10-09T19:12:00+03:00' : null,
-    program: workoutCardMode === 'active-own' ? null : { id: -901, name: 'Силовой блок' },
-    phase: workoutCardMode === 'active-own' ? null : { id: -902, name: 'Фаза 1' },
-    day: workoutCardMode === 'active-own' ? null : { id: -903, name: 'День B', position: 1 },
+    program: workoutCardOwn ? null : { id: -901, name: 'Силовой блок' },
+    phase: workoutCardOwn ? null : { id: -902, name: 'Фаза 1' },
+    day: workoutCardOwn ? null : { id: -903, name: 'День B', position: 1 },
     creator: {
       id: -904,
       firstName: 'Анна',
@@ -606,14 +609,20 @@ export function SettingsPage({
           <Button
             variant="secondary"
             selected={workoutCardMode === 'active-program'}
-            onClick={() => setWorkoutCardMode('active-program')}
+            onClick={() => {
+              setWorkoutCardSource('program');
+              setWorkoutCardMode('active-program');
+            }}
           >
             Active · Program
           </Button>
           <Button
             variant="secondary"
             selected={workoutCardMode === 'active-own'}
-            onClick={() => setWorkoutCardMode('active-own')}
+            onClick={() => {
+              setWorkoutCardSource('own');
+              setWorkoutCardMode('active-own');
+            }}
           >
             Active · Own
           </Button>
@@ -627,7 +636,7 @@ export function SettingsPage({
         </div>
         <WorkoutSessionCard
           session={workoutCardSession}
-          title={workoutCardMode === 'active-own' ? workoutCardTitle : undefined}
+          title={workoutCardOwn ? workoutCardTitle : undefined}
           comment={workoutCardComment}
           onReorderExerciseIds={reorderWorkoutCardExercises}
           onSaveSet={saveWorkoutCardSet}
@@ -644,7 +653,14 @@ export function SettingsPage({
           <Text variant="footnote" tone="muted">{workoutCardActionMessage}</Text>
         ) : null}
         <span className="settings-page__action">
-          <Button onClick={() => setWorkoutCardMode(workoutCardMode === 'completed' ? 'active-program' : 'completed')}>
+          <Button onClick={() => {
+            if (workoutCardMode === 'completed') {
+              setWorkoutCardMode(workoutCardSource === 'own' ? 'active-own' : 'active-program');
+              return;
+            }
+            setWorkoutCardSource(workoutCardMode === 'active-own' ? 'own' : 'program');
+            setWorkoutCardMode('completed');
+          }}>
             {workoutCardMode === 'completed' ? 'Возобновить тренировку' : 'Завершить тренировку'}
           </Button>
         </span>
