@@ -220,6 +220,25 @@ async function replaceCoachDataset(
       await db.exerciseDefinitionOverrides.clear();
       await db.exerciseFavourites.clear();
 
+      const activeCoachSyncIds = new Set(
+        state.exercises
+          .filter((exercise) => exercise.scope === 'coach')
+          .map(exerciseSyncId),
+      );
+      const existingCoachDefinitions = await db.exerciseDefinitions
+        .where('scope')
+        .equals('coach')
+        .toArray();
+      for (const definition of existingCoachDefinitions) {
+        if (!definition.isArchived && !activeCoachSyncIds.has(definition.id)) {
+          await db.exerciseDefinitions.put({
+            ...definition,
+            isArchived: true,
+            updatedAt: now,
+          });
+        }
+      }
+
       if (state.exercises.length > 0) {
         await db.exerciseDefinitions.bulkPut(
           state.exercises.map((exercise) => definitionRow(exercise, now, coachUserId)),
