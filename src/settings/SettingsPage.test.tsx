@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
 
@@ -78,9 +78,9 @@ describe('SettingsPage modules gallery', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
 
     expect(screen.getByText('Собранные модули')).toBeTruthy();
-    expect(screen.getByText('Карточка упражнения и подходов')).toBeTruthy();
-    expect(screen.getByText('Жим штанги лёжа')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
+    const sessionExerciseModule = screen.getByRole('region', { name: /^Карточка упражнения и подходов$/ });
+    expect(within(sessionExerciseModule).getByText('Жим штанги лёжа')).toBeTruthy();
+    expect(within(sessionExerciseModule).getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
     expect(onNavigationContextChange).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Модули' }));
   });
 
