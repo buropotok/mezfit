@@ -109,6 +109,8 @@ export interface ActiveWorkoutSession {
   occurrenceId: number | null;
   status: 'active' | 'completed';
   workoutDate: string;
+  startedAt: string | null;
+  completedAt: string | null;
   program: WorkoutProgramSummary | null;
   phase: WorkoutPhaseSummary | null;
   day: WorkoutDaySummary | null;
@@ -172,6 +174,8 @@ interface ProjectionHeaderRow {
   occurrence_id: number | null;
   status: 'active' | 'completed';
   workout_date: string;
+  started_at: string | null;
+  completed_at: string | null;
   program_id: number | null;
   program_name: string | null;
   phase_id: number | null;
@@ -906,6 +910,8 @@ export async function getWorkoutSessionProjection(
         ws.occurrence_id,
         ws.status,
         date(COALESCE(ws.started_at, ws.created_at)) AS workout_date,
+        ws.started_at,
+        ws.completed_at,
         tp.id AS program_id,
         tp.name AS program_name,
         pp.id AS phase_id,
@@ -1079,6 +1085,8 @@ export async function getWorkoutSessionProjection(
     occurrenceId: header.occurrence_id,
     status: header.status,
     workoutDate: header.workout_date,
+    startedAt: header.started_at ?? null,
+    completedAt: header.completed_at ?? null,
     program: header.program_id !== null && header.program_name !== null
       ? { id: header.program_id, name: header.program_name }
       : null,
