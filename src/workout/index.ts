@@ -1,5 +1,6 @@
 export { SetEntry } from './SetEntry';
 export { SessionExercise, formatSessionSetMetrics } from './SessionExercise';
+export { WorkoutSessionCard, type WorkoutSessionCardMode, type WorkoutSessionCardProps } from './WorkoutSessionCard';
 export { WorkoutSessionScreen } from './WorkoutSessionScreen';
 export {
   createSetEntryDraft,
