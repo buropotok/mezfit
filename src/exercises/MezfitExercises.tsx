@@ -132,7 +132,7 @@ function ExerciseCategoryMedia({
   category: ExerciseCategoryCode;
 }) {
   const src = useCachedMediaUrl(categoryMediaUrls[category]);
-  if (!src) return <Icon name="barbell" />;
+  if (!src) return <Icon name="barbell" style={{ width: 44, height: 44 }} />;
   return <img src={src} alt="" className="mezfit-exercises__category-image" decoding="async" />;
 }
 
@@ -209,7 +209,11 @@ function ExerciseEditor({
     >
       <div className="mezfit-exercises__editor">
         <Surface className="mezfit-exercises__editor-media">
-          {seed ? <ExerciseMedia exercise={seed} variant="editor" /> : <Icon name="barbell" />}
+          {seed ? (
+            <ExerciseMedia exercise={seed} variant="editor" />
+          ) : (
+            <Icon name="barbell" style={{ width: 42, height: 42 }} />
+          )}
         </Surface>
         <div className="mezfit-exercises__editor-fields">
           <TextInput
@@ -682,7 +686,9 @@ export function MezfitExercisesContent({
                   trackingLabels[exercise.tracking_type],
                   exercise.equipment_code ? equipmentLabels[exercise.equipment_code] : null,
                 ].filter(Boolean).join(' · ')}
-                trailing={mode === 'select' && selected ? <Icon name="check" /> : undefined}
+                trailing={mode === 'select' && selected
+                  ? <Icon name="check" style={{ width: 20, height: 20 }} />
+                  : undefined}
                 trailingAction={mode === 'manage' ? (
                   <Menu
                     isOpen={menuExercise?.id === exercise.id}
