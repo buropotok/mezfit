@@ -119,6 +119,7 @@ export function WorkoutSessionCard({
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = workoutTitle(session);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pendingDialog, setPendingDialog] = useState<'rename' | 'comment' | null>(null);
   const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Record<number, boolean>>({});
   const [displayTitle, setDisplayTitle] = useState(sourceTitle);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -181,7 +182,7 @@ export function WorkoutSessionCard({
       icon: 'pencil',
       onSelect: () => {
         setRenameDraft(displayTitle);
-        setRenameOpen(true);
+        setPendingDialog('rename');
       },
     });
   }
@@ -190,7 +191,7 @@ export function WorkoutSessionCard({
       id: 'transfer',
       label: 'Передать тренировку',
       icon: 'user-share',
-      onSelect: onTransfer,
+      onSelect: () => onTransfer?.(),
     });
   }
   if (mode === 'completed') {
@@ -198,7 +199,7 @@ export function WorkoutSessionCard({
       id: 'edit-results',
       label: 'Редактировать результаты',
       icon: 'edit',
-      onSelect: onEditResults,
+      onSelect: () => onEditResults?.(),
     });
   }
   menuItems.push(
@@ -207,13 +208,13 @@ export function WorkoutSessionCard({
       label: 'История',
       icon: 'history',
       dividerBefore: true,
-      onSelect: onWorkoutHistory,
+      onSelect: () => onWorkoutHistory?.(),
     },
     {
       id: 'share',
       label: 'Поделиться',
       icon: 'share',
-      onSelect: onShare,
+      onSelect: () => onShare?.(),
     },
     {
       id: 'comment',
@@ -221,7 +222,7 @@ export function WorkoutSessionCard({
       icon: 'message-circle',
       onSelect: () => {
         setCommentDraft(savedComment);
-        setCommentOpen(true);
+        setPendingDialog('comment');
       },
     },
   );
@@ -270,6 +271,12 @@ export function WorkoutSessionCard({
             <LiquidPopover
               isOpen={menuOpen}
               onOpenChange={setMenuOpen}
+              onPresentationChange={(presented) => {
+                if (presented || pendingDialog === null) return;
+                if (pendingDialog === 'rename') setRenameOpen(true);
+                else setCommentOpen(true);
+                setPendingDialog(null);
+              }}
               triggerRef={menuTriggerRef}
               trigger={(
                 <IconButton
