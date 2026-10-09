@@ -11,12 +11,13 @@ function iconStyle(url: string): CSSProperties {
 }
 
 export function exerciseMediaUrl(
-  exercise: Pick<ExerciseDefinition, 'reference_source' | 'reference_key' | 'reference_media_url'>,
+  exercise: Pick<ExerciseDefinition, 'reference_source' | 'reference_key'>
+    & Partial<Pick<ExerciseDefinition, 'reference_media_url'>>,
 ): string | null {
   if (exercise.reference_source === 'github_exercises_dataset' && exercise.reference_key) {
     return `/api/exercise-media/gym_keeper_apk/${encodeURIComponent(exercise.reference_key)}`;
   }
-  return exercise.reference_media_url;
+  return exercise.reference_media_url ?? null;
 }
 
 export function ExerciseMedia({
