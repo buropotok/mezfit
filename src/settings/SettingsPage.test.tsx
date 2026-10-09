@@ -84,6 +84,20 @@ describe('SettingsPage modules gallery', () => {
     expect(onNavigationContextChange).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Модули' }));
   });
 
+  it('compares the original SVG and iOS Canvas LiquidPopover in Modules', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
+
+    expect(screen.getByRole('region', { name: 'Liquid Popover — сравнение режимов' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть SVG Popover' }));
+    expect(screen.getByRole('menu', { name: 'SVG Popover' }).querySelector('canvas')?.style.clipPath)
+      .toMatch(/^url\\(/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть Canvas Popover' }));
+    expect(screen.getByRole('menu', { name: 'Canvas Popover' }).querySelector('canvas')?.style.clipPath)
+      .toBe('none');
+  });
+
   it('mounts the real TimePicker in the modules stand', () => {
     render(<SettingsPage onNavigationContextChange={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
