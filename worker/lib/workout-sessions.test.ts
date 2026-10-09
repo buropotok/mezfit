@@ -383,6 +383,8 @@ describe('startWorkoutSession', () => {
       occurrence_id: null,
       status: 'active',
       workout_date: '2026-09-15',
+      started_at: '2026-09-15 18:00:00',
+      completed_at: null,
       program_id: 20,
       program_name: 'Силовой блок',
       phase_id: 30,
@@ -669,6 +671,8 @@ describe('getWorkoutSessionProjection', () => {
     await expect(getWorkoutSessionProjection(db, 7, 501)).resolves.toMatchObject({
       sessionId: 501,
       status: 'active',
+      startedAt: '2026-09-15 18:00:00',
+      completedAt: null,
       exercises: [],
     });
 
