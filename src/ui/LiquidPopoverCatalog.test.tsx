@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { LiquidPopoverCatalog } from './LiquidPopoverCatalog';
@@ -39,7 +39,7 @@ it('exposes independently testable Auto, SVG and Canvas modes in the UI Kit cata
     const clipPath = menu.querySelector('canvas')?.style.clipPath;
     if (expected === 'canvas') expect(clipPath).toBe('none');
     else expect(clipPath).toMatch(/^url\(/);
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Редактировать' }));
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Редактировать' }));
     expect(screen.getByText(`${label}: Редактировать`)).toBeTruthy();
   }
 });
