@@ -1,5 +1,6 @@
 export {
   createLocalDatabase,
+  LOCAL_DATABASE_STORES_V1,
   LOCAL_DATABASE_VERSION,
   localDatabaseName,
   MezfitLocalDatabase,
