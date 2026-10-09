@@ -241,7 +241,7 @@ export function SessionExercise(props: SessionExerciseProps) {
               aria-label="Добавить подход"
               onClick={() => onAddSet(data.sessionExerciseId)}
             >
-              <Icon name="plus" variant="outline" />
+              <Icon name="plus" variant="outline" className="session-exercise__add-set-icon" />
             </GlassSurface>
             <Text variant="body">Добавить подход</Text>
           </div>
