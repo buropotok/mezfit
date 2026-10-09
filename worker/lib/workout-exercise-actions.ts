@@ -5,6 +5,7 @@ export interface WorkoutExerciseOption {
   id: number;
   scope: ExerciseScope;
   name: string;
+  name_en: string | null;
   description: string | null;
   tracking_type: TrackingType;
   category_code: ExerciseCategoryCode | null;
@@ -48,6 +49,7 @@ export async function listWorkoutExerciseOptions(
       e.id,
       e.scope,
       e.name,
+      e.name_en,
       e.description,
       e.tracking_type,
       e.category_code,
