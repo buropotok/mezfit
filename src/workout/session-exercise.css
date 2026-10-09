@@ -134,25 +134,29 @@
 }
 
 .session-exercise__add-set {
+  appearance: none;
   display: flex;
   align-items: center;
+  width: 100%;
   min-height: 44px;
   gap: var(--ui-space-2);
   padding: var(--ui-space-2) var(--ui-space-3) 0;
+  border: 0;
+  color: var(--ui-color-surface-text);
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .session-exercise__add-set-button {
-  appearance: none;
   display: grid;
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  padding: 0;
   place-items: center;
   color: var(--ui-color-primary);
-  font-family: var(--ui-font-family);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  pointer-events: none;
 }
 
 .session-exercise__add-set-icon {
