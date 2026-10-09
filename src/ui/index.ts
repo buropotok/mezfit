@@ -30,6 +30,8 @@ export { DayScheduleEventCard, type DayScheduleEventCardProps } from './DaySched
 
 export { LiquidPopover, resolveLiquidMotionOptions } from './LiquidPopover';
 export type { LiquidPopoverProps, LiquidPopoverItem, LiquidPopoverLayout, LiquidPopoverRole } from './LiquidPopover';
+export { resolveLiquidPopoverRenderMode } from './liquidPopoverRenderMode';
+export type { LiquidPopoverRenderMode, ResolvedLiquidPopoverRenderMode } from './liquidPopoverRenderMode';
 export { LIQUID_POPOVER_DEFAULTS } from './liquidPopoverGeometry';
 export type { LiquidMotionOptions } from './liquidPopoverGeometry';
 export type { FloatingActionButtonAction } from './MetaballFab';

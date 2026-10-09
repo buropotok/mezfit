@@ -117,3 +117,22 @@ and its existing iOS/material presentation remain the default.
 LiquidPopover uses these public Mezfit APIs. It does not style private Konsta
 nodes, copy a new placement/dismissal engine, or change any library files. The
 content SVG only supplies a clipping contour; there are no SVG image filters.
+
+## iOS Canvas clipping
+
+`LiquidPopover` defaults to `renderMode="auto"`. It uses in-Canvas
+`Path2D` clipping on iPhone/iPad (including iPadOS desktop user-agent mode),
+detected from the browser and Telegram's `WebApp.platform`. Other platforms
+retain the existing SVG `clip-path` on the visible Canvas. This changes only
+how the already-rendered texture is masked; geometry, timing, GlassSurface,
+native menu actions, placement, dismissal and close/reverse behavior remain
+shared.
+
+The optional `renderMode="svg" | "canvas"` override is intended for
+controlled diagnostics, not as a user preference. Settings → Modules displays
+two identical real menus with the respective modes forced, even on the same
+device. The UI Kit → Liquid Popover catalog additionally presents the same
+round-button menu in Auto, SVG and Canvas modes. Each example is independent,
+shares the source-morph slider, and shows the platform-resolved Auto mode.
+Missing Canvas/`Path2D` support still follows the existing native
+content fallback. The iOS workaround does not affect the Konsta package.

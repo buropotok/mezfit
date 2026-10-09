@@ -89,9 +89,16 @@ export function paintLiquidMesh(
   stretch: number,
   strength = 0,
   directFinal = time >= 1,
+  clipPath?: Path2D,
 ) {
   context.resetTransform();
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  // Clip the drawn pixels inside Canvas on iOS rather than compositing a
+  // Canvas layer through an SVG clipPath (unreliable in WebKit).
+  if (clipPath) {
+    context.save();
+    context.clip(clipPath);
+  }
   const unfold = clamp(time);
   if (directFinal) {
     context.save();
@@ -99,6 +106,7 @@ export function paintLiquidMesh(
     context.scale(1 / (1 + stretch), 1 + stretch);
     context.drawImage(source, -rect.w / 2, -rect.h / 2, rect.w, rect.h);
     context.restore();
+    if (clipPath) context.restore();
     return;
   }
   const bounds = contourBounds(loops),
@@ -154,6 +162,7 @@ export function paintLiquidMesh(
       triangle(context, source, a, b, d, A, B, D);
       triangle(context, source, b, e, d, B, E, D);
     }
+  if (clipPath) context.restore();
 }
 
 /** Sample only mesh vertices, rather than rasterizing a distance field.

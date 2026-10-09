@@ -75,6 +75,20 @@
 }
 
 
+.modules-gallery__popover-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-4);
+}
+
+.modules-gallery__popover-mode {
+  display: grid;
+  justify-items: start;
+  gap: var(--ui-space-2);
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
 .modules-gallery__haptic-probes {
   display: flex;
   flex-wrap: wrap;
