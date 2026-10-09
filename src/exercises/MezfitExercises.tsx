@@ -283,15 +283,16 @@ function FilterChip({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className={`mezfit-exercises__filter${selected ? ' mezfit-exercises__filter--selected' : ''}`}
-      aria-pressed={selected}
+    <Button
+      variant="secondary"
+      size="compact"
+      selected={selected}
+      className="mezfit-exercises__filter"
       disabled={disabled}
       onClick={onClick}
     >
-      <Text variant="body">{children}</Text>
-    </button>
+      {children}
+    </Button>
   );
 }
 
