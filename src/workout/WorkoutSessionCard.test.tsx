@@ -160,7 +160,7 @@ describe('WorkoutSessionCard capability ownership', () => {
       resolveComment = resolve;
     }));
 
-    render(
+    const { container } = render(
       <WorkoutSessionCard
         session={baseSession}
         comment="Исходный комментарий"
@@ -169,7 +169,9 @@ describe('WorkoutSessionCard capability ownership', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Комментарий' }));
+    const commentButton = container.querySelector<HTMLButtonElement>('.workout-session-card__comment-button');
+    expect(commentButton).not.toBeNull();
+    fireEvent.click(commentButton!);
     const textarea = screen.getByPlaceholderText('Комментарий к тренировке');
     expect((textarea as HTMLTextAreaElement).value).toBe('Исходный комментарий');
 
@@ -180,7 +182,7 @@ describe('WorkoutSessionCard capability ownership', () => {
     await act(async () => resolveComment?.());
     await waitFor(() => expect(screen.queryByDisplayValue('Новый комментарий')).toBeNull());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Комментарий' }));
+    fireEvent.click(commentButton!);
     expect((screen.getByPlaceholderText('Комментарий к тренировке') as HTMLTextAreaElement).value)
       .toBe('Исходный комментарий');
   });
