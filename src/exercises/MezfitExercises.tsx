@@ -435,7 +435,12 @@ export function MezfitExercisesContent({
   };
 
   const archiveEdited = async () => {
-    if (mode !== 'manage' || editing?.mode !== 'edit' || !editing.seed?.can_edit) return;
+    if (
+      mode !== 'manage'
+      || editing?.mode !== 'edit'
+      || !editing.seed?.can_edit
+      || editing.seed.scope !== 'coach'
+    ) return;
     setSaving(true);
     setEditorError('');
     try {
@@ -505,9 +510,13 @@ export function MezfitExercisesContent({
             error={editorError}
             onCancel={() => setEditing(null)}
             onSave={(input) => void saveEditor(input)}
-            onRequestDelete={editing.mode === 'edit' && editing.seed?.can_edit
-              ? () => setDeleteConfirmOpen(true)
-              : undefined}
+            onRequestDelete={
+              editing.mode === 'edit'
+              && editing.seed?.can_edit
+              && editing.seed.scope === 'coach'
+                ? () => setDeleteConfirmOpen(true)
+                : undefined
+            }
           />
         ) : null}
         <MezfitDialog
