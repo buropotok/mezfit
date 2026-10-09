@@ -173,6 +173,7 @@ export interface LocalWorkoutSessionRow extends LocalServerBackedEntity {
   sourceProgramDayId: LocalEntityId | null;
   occurrenceId: LocalEntityId | null;
   startedByUserId: number;
+  factOwnerUserId: number;
   status: WorkoutSessionStatus;
   startedAt: string | null;
   completedAt: string | null;
