@@ -140,7 +140,7 @@ describe('WorkoutSessionCard capability ownership', () => {
     expect(screen.getByText('Старая тренировка')).toBeTruthy();
 
     await act(async () => resolveRename?.());
-    await waitFor(() => expect(screen.queryByDisplayValue('Новое название')).toBeNull());
+    await waitFor(() => expect(screen.getByDisplayValue('Старая тренировка')).toBeTruthy());
     expect(screen.getByText('Старая тренировка')).toBeTruthy();
 
     view.rerender(
@@ -180,7 +180,10 @@ describe('WorkoutSessionCard capability ownership', () => {
     expect(onCommentChange).toHaveBeenCalledWith('Новый комментарий');
 
     await act(async () => resolveComment?.());
-    await waitFor(() => expect(screen.queryByDisplayValue('Новый комментарий')).toBeNull());
+    await waitFor(() => {
+      expect((screen.getByPlaceholderText('Комментарий к тренировке') as HTMLTextAreaElement).value)
+        .toBe('Исходный комментарий');
+    });
 
     fireEvent.click(commentButton!);
     expect((screen.getByPlaceholderText('Комментарий к тренировке') as HTMLTextAreaElement).value)
