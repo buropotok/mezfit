@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
@@ -72,6 +72,17 @@ const requiredProps = {
   onSaveSet: vi.fn(async () => undefined),
 };
 
+function actionButtonForField(field: HTMLElement, name: string): HTMLButtonElement {
+  let scope: HTMLElement | null = field.parentElement;
+  while (scope) {
+    const matches = Array.from(scope.querySelectorAll<HTMLButtonElement>('button'))
+      .filter((button) => button.textContent?.trim() === name);
+    if (matches.length === 1) return matches[0];
+    scope = scope.parentElement;
+  }
+  throw new Error(`Action "${name}" was not found in the field-owned dialog`);
+}
+
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
@@ -133,10 +144,8 @@ describe('WorkoutSessionCard capability ownership', () => {
     fireEvent.click(screen.getByTestId('finish-popover-presentation'));
 
     const input = await screen.findByDisplayValue('Старая тренировка');
-    const renameDialog = input.closest('[role="dialog"]');
-    expect(renameDialog).not.toBeNull();
     fireEvent.change(input, { target: { value: 'Новое название' } });
-    fireEvent.click(within(renameDialog!).getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(actionButtonForField(input, 'Сохранить'));
 
     expect(onRename).toHaveBeenCalledWith('Новое название');
     expect(screen.getByText('Старая тренировка')).toBeTruthy();
@@ -175,12 +184,10 @@ describe('WorkoutSessionCard capability ownership', () => {
     expect(commentButton).not.toBeNull();
     fireEvent.click(commentButton!);
     const textarea = screen.getByPlaceholderText('Комментарий к тренировке');
-    const commentDialog = textarea.closest('[role="dialog"]');
-    expect(commentDialog).not.toBeNull();
     expect((textarea as HTMLTextAreaElement).value).toBe('Исходный комментарий');
 
     fireEvent.change(textarea, { target: { value: 'Новый комментарий' } });
-    fireEvent.click(within(commentDialog!).getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(actionButtonForField(textarea, 'Сохранить'));
     expect(onCommentChange).toHaveBeenCalledWith('Новый комментарий');
 
     await act(async () => resolveComment?.());
