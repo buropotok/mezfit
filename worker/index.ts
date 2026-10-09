@@ -342,7 +342,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       } catch {
         throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
       }
-      let syncRequest;
+      let syncRequest: ReturnType<typeof parseExerciseCoachSyncRequest>;
       try {
         syncRequest = parseExerciseCoachSyncRequest(raw);
       } catch (error) {

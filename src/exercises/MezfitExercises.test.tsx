@@ -114,8 +114,8 @@ describe('MezfitExercisesContent', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Грудь' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Тяга верхнего блока' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Жим лёжа' })).toBeNull();
     });
-    expect(screen.queryByRole('button', { name: 'Жим лёжа' })).toBeNull();
   });
 
   it('keeps search scoped to the selected category', async () => {
