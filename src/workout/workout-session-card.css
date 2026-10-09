@@ -71,15 +71,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.workout-session-card__add-exercise .ui-glass-surface__content {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ui-space-2);
-}
-
 .workout-session-card__add-exercise svg {
   width: 20px;
   height: 20px;
@@ -108,14 +99,6 @@
   font-family: var(--ui-font-family);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-}
-
-.workout-session-card__comment-button .ui-glass-surface__content {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
 }
 
 .workout-session-card__time {
