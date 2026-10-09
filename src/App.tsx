@@ -379,6 +379,8 @@ export function App() {
             />
           ) : destination === 'settings' ? (
           <SettingsPage
+            initData={state.initData}
+            activeRole={state.activeRole}
             glassSettings={glassSettings}
             onGlassSettingsChange={setGlassSettings}
             typographySettings={typographySettings}
