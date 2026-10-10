@@ -95,22 +95,27 @@ export class SyncEngine {
   }
 
   async resumeAfterConflict(scopeKey: string, serverRevision: number): Promise<void> {
-    if (!Number.isInteger(serverRevision) || serverRevision < 0) {
+    if (!validRevision(serverRevision)) {
       throw new Error('SYNC_SERVER_REVISION_INVALID');
     }
-    await this.store.update(scopeKey, (current) => ({
-      ...current,
-      serverRevision,
-      status: 'dirty',
-      attemptCount: 0,
-      nextRetryAt: null,
-      lastError: null,
-      inflightRequestId: null,
-      inflightRevision: null,
-      inflightSnapshotJson: null,
-      remoteChanged: false,
-      updatedAt: this.now(),
-    }));
+    await this.withScopeLock(scopeKey, async () => {
+      await this.store.update(scopeKey, (current) => {
+        if (current.status !== 'conflict') return current;
+        return {
+          ...current,
+          serverRevision,
+          status: 'dirty',
+          attemptCount: 0,
+          nextRetryAt: null,
+          lastError: null,
+          inflightRequestId: null,
+          inflightRevision: null,
+          inflightSnapshotJson: null,
+          remoteChanged: false,
+          updatedAt: this.now(),
+        };
+      });
+    });
   }
 
   async flushAll(options: { force?: boolean } = {}): Promise<Map<string, SyncFlushOutcome | SyncPullOutcome>> {
@@ -203,8 +208,8 @@ export class SyncEngine {
       const result = await adapter.push(envelope);
       if (!result || !validRevision(result.serverRevision) ||
           (result.kind !== 'accepted' && result.kind !== 'conflict') ||
-          (result.kind === 'accepted' && result.serverRevision <= baseServerRevision) ||
-          (result.kind === 'conflict' && result.serverRevision < baseServerRevision)) {
+          (result.kind === 'accepted' && result.serverRevision !== baseServerRevision + 1) ||
+          (result.kind === 'conflict' && result.serverRevision === baseServerRevision)) {
         throw new SyncTransportError('Invalid push response', true, 'SYNC_PUSH_RESPONSE_INVALID');
       }
       if (result.kind === 'conflict') {
@@ -250,6 +255,11 @@ export class SyncEngine {
       if (shouldPull) {
         const pull = await this.pullUnlocked(scopeKey);
         if (pull.kind === 'failed') return { kind: 'failed', error: pull.error };
+        if (pull.kind !== 'applied') newerLocalChanges = true;
+      }
+      const latest = await this.store.get(scopeKey);
+      if (!latest || latest.status !== 'clean' || latest.remoteChanged) {
+        newerLocalChanges = true;
       }
       return {
         kind: 'accepted',
