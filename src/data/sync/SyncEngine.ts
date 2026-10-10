@@ -160,6 +160,11 @@ export class SyncEngine {
       if (row.remoteChanged) {
         const pull = await this.pullUnlocked(scopeKey);
         if (pull.kind === 'failed') return pull;
+        if (pull.kind !== 'applied') return { kind: 'skipped', reason: 'changed_during_snapshot' };
+        const latest = await this.store.get(scopeKey);
+        if (!latest || latest.status !== 'clean' || latest.remoteChanged) {
+          return { kind: 'skipped', reason: 'changed_during_snapshot' };
+        }
       }
       return { kind: 'clean' };
     }
