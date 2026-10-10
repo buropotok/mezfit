@@ -659,6 +659,37 @@ describe('SyncEngine', () => {
     });
   });
 
+  it('does not report clean when a remote pull is deferred by a local edit', async () => {
+    const pull = deferred<SyncPullResult>();
+    const store = new MemorySyncStateStore();
+    store.rows.set('program:1', scopeRow('program:1', {
+      status: 'clean',
+      localRevision: 0,
+      remoteChanged: true,
+    }));
+    const adapter = new FakeAdapter();
+    adapter.pull.mockImplementationOnce(() => pull.promise);
+    const engine = new SyncEngine(store, [adapter]);
+
+    const flushing = engine.flush('program:1');
+    await vi.waitFor(() => expect(adapter.pull).toHaveBeenCalledTimes(1));
+    const current = store.rows.get('program:1');
+    if (!current) throw new Error('missing scope');
+    store.rows.set('program:1', {
+      ...current,
+      status: 'dirty',
+      localRevision: current.localRevision + 1,
+    });
+    pull.resolve({ scopeKey: 'program:1', serverRevision: 4, snapshot: { remote: 4 } });
+
+    await expect(flushing).resolves.toEqual({
+      kind: 'skipped',
+      reason: 'changed_during_snapshot',
+    });
+    expect(store.rows.get('program:1')?.status).toBe('dirty');
+    expect(store.rows.get('program:1')?.remoteChanged).toBe(true);
+  });
+
   it('isolates a failed scope from unrelated scopes during flushAll', async () => {
     const store = new MemorySyncStateStore();
     store.rows.set('program:1', scopeRow('program:1'));
