@@ -46,7 +46,6 @@ const repositoryMocks = vi.hoisted(() => ({
   update: vi.fn(),
   setFavourite: vi.fn(),
   archive: vi.fn(),
-  dispose: vi.fn(),
 }));
 
 vi.mock('../data/exercises/ExerciseRepository', () => ({
@@ -68,7 +67,6 @@ vi.mock('../data/exercises/ExerciseRepository', () => ({
     update: repositoryMocks.update,
     setFavourite: repositoryMocks.setFavourite,
     archive: repositoryMocks.archive,
-    dispose: repositoryMocks.dispose,
   }),
 }));
 
@@ -95,7 +93,6 @@ beforeEach(() => {
   repositoryMocks.update.mockReset();
   repositoryMocks.setFavourite.mockReset();
   repositoryMocks.archive.mockReset();
-  repositoryMocks.dispose.mockReset();
 });
 
 afterEach(cleanup);
@@ -114,8 +111,8 @@ describe('MezfitExercisesContent', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Грудь' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Тяга верхнего блока' })).toBeTruthy();
-      expect(screen.queryByRole('button', { name: 'Жим лёжа' })).toBeNull();
     });
+    expect(screen.queryByRole('button', { name: 'Жим лёжа' })).toBeNull();
   });
 
   it('keeps search scoped to the selected category', async () => {

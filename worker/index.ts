@@ -1,13 +1,6 @@
 import { getGlobalTheme } from './lib/app-config';
 import { resolveInviteStartParam } from './lib/invite-launch';
 import { handleCoachExerciseCatalogueRoute } from './lib/coach-exercise-api';
-import {
-  applyExerciseCoachSync,
-  bumpExerciseCoachRevision,
-  ExerciseCoachSyncInputError,
-  getExerciseCoachSyncState,
-  parseExerciseCoachSyncRequest,
-} from './lib/exercise-sync';
 import { handleExerciseMediaRoute } from './lib/exercise-media';
 import {
   createExerciseForClient,
@@ -292,7 +285,6 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
     });
 
     if (!exercise) throw new HttpError(409, 'EXERCISE_EXISTS', 'An exercise with this name already exists in this scope');
-    if (body.scope === 'coach') await bumpExerciseCoachRevision(env.DB_BINDING, auth.row.id);
     return json({ exercise }, { status: 201 });
   }
 
@@ -325,43 +317,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       return new Response(null, { status: 404 });
     }
     return handleExerciseMediaRoute(request, env.DB_BINDING, env.R2_BINDING_MEZFIT, referenceKey);
-  }
-
-  if (url.pathname === '/api/sync/exercise-coach') {
-    const auth = await requireUser(request, env);
-    requireRole(auth, 'coach');
-
-    if (request.method === 'GET') {
-      return json(await getExerciseCoachSyncState(env.DB_BINDING, auth.row.id));
-    }
-
-    if (request.method === 'POST') {
-      let raw: unknown;
-      try {
-        raw = await request.json();
-      } catch {
-        throw new HttpError(400, 'INVALID_JSON', 'Request body must be valid JSON');
-      }
-      let syncRequest: ReturnType<typeof parseExerciseCoachSyncRequest>;
-      try {
-        syncRequest = parseExerciseCoachSyncRequest(raw);
-      } catch (error) {
-        if (error instanceof ExerciseCoachSyncInputError) {
-          throw new HttpError(400, error.code, error.message);
-        }
-        throw error;
-      }
-      try {
-        return json(await applyExerciseCoachSync(env.DB_BINDING, auth.row.id, syncRequest));
-      } catch (error) {
-        if (error instanceof ExerciseCoachSyncInputError) {
-          throw new HttpError(400, error.code, error.message);
-        }
-        throw error;
-      }
-    }
-
-    throw new HttpError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
   }
 
   if (url.pathname === '/api/coach/exercises' || /^\/api\/coach\/exercises\/\d+(?:\/favourite)?$/.test(url.pathname)) {

@@ -156,7 +156,6 @@ export interface PlannedSet extends PlannedSetInput {
 
 export interface ExerciseDefinition {
   id: number;
-  sync_id?: string;
   scope: ExerciseScope;
   name: string;
   name_en?: string | null;
@@ -187,43 +186,6 @@ export interface CoachExerciseFilters {
   favouritesOnly?: boolean;
   sort?: ExerciseSort;
 }
-
-export interface ExerciseCoachSyncDefinition {
-  syncId: string;
-  name: string;
-  description: string | null;
-  trackingType: TrackingType;
-  categoryCode: ExerciseCategoryCode | null;
-  equipmentCode: ExerciseEquipmentCode | null;
-}
-
-export interface ExerciseCoachSyncOverride {
-  exerciseSyncId: string;
-  name: string;
-  description: string | null;
-  trackingType: TrackingType;
-  categoryCode: ExerciseCategoryCode;
-  equipmentCode: ExerciseEquipmentCode;
-}
-
-export interface ExerciseCoachSyncSnapshot {
-  definitions: ExerciseCoachSyncDefinition[];
-  overrides: ExerciseCoachSyncOverride[];
-  favourites: string[];
-}
-
-export interface ExerciseCoachSyncState {
-  scopeKey: string;
-  revision: number;
-  exercises: ExerciseDefinition[];
-  overrides: ExerciseCoachSyncOverride[];
-  favourites: string[];
-}
-
-export type ExerciseCoachSyncResult =
-  | { ok: true; revision: number }
-  | { ok: false; revision: number };
-
 
 interface ApiErrorPayload {
   error?: {
@@ -377,13 +339,11 @@ function decodeExerciseDefinition(value: unknown): ExerciseDefinition | null {
   const categoryCode = value.category_code;
   const equipmentCode = value.equipment_code;
   const nameEn = value.name_en;
-  const syncId = value.sync_id;
 
   if (
     typeof value.id !== 'number'
     || !Number.isInteger(value.id)
     || value.id <= 0
-    || (syncId !== undefined && (typeof syncId !== 'string' || !/^[A-Za-z0-9-]{1,80}$/.test(syncId)))
     || typeof scope !== 'string'
     || !exerciseScopes.has(scope as ExerciseScope)
     || typeof value.name !== 'string'
@@ -416,7 +376,6 @@ function decodeExerciseDefinition(value: unknown): ExerciseDefinition | null {
 
   return {
     id: value.id,
-    sync_id: typeof syncId === 'string' ? syncId : undefined,
     scope: scope as ExerciseScope,
     name: value.name,
     name_en: nameEn === undefined ? null : nameEn,
@@ -460,88 +419,6 @@ function decodeOkResponse(value: unknown, message: string): { ok: true } {
     throw new ApiError(502, message, 'INVALID_API_RESPONSE');
   }
   return { ok: true };
-}
-
-function decodeExerciseCoachSyncState(value: unknown): ExerciseCoachSyncState {
-  if (
-    !isRecord(value)
-    || typeof value.scopeKey !== 'string'
-    || !/^exercise-coach:\d+$/.test(value.scopeKey)
-    || typeof value.revision !== 'number'
-    || !Number.isInteger(value.revision)
-    || value.revision < 0
-    || !Array.isArray(value.exercises)
-  ) {
-    throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
-  }
-
-  const exercises = value.exercises.map(decodeExerciseDefinition);
-  if (
-    exercises.some((exercise) => exercise === null)
-    || exercises.some((exercise) => !exercise?.sync_id)
-  ) {
-    throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
-  }
-
-  const rawOverrides = value.overrides;
-  const rawFavourites = value.favourites;
-  if (!Array.isArray(rawOverrides) || !Array.isArray(rawFavourites)) {
-    throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
-  }
-  const overrides: ExerciseCoachSyncOverride[] = [];
-  for (const raw of rawOverrides) {
-    if (
-      !isRecord(raw)
-      || typeof raw.exerciseSyncId !== 'string'
-      || !/^[A-Za-z0-9-]{1,80}$/.test(raw.exerciseSyncId)
-      || typeof raw.name !== 'string'
-      || raw.name.length === 0
-      || !isNullableString(raw.description)
-      || typeof raw.trackingType !== 'string'
-      || !exerciseTrackingTypes.has(raw.trackingType as TrackingType)
-      || typeof raw.categoryCode !== 'string'
-      || !exerciseCategoryCodes.has(raw.categoryCode as ExerciseCategoryCode)
-      || typeof raw.equipmentCode !== 'string'
-      || !exerciseEquipmentCodes.has(raw.equipmentCode as ExerciseEquipmentCode)
-    ) {
-      throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
-    }
-    overrides.push({
-      exerciseSyncId: raw.exerciseSyncId,
-      name: raw.name,
-      description: raw.description,
-      trackingType: raw.trackingType as TrackingType,
-      categoryCode: raw.categoryCode as ExerciseCategoryCode,
-      equipmentCode: raw.equipmentCode as ExerciseEquipmentCode,
-    });
-  }
-  const favourites = rawFavourites.filter(
-    (item): item is string => typeof item === 'string' && /^[A-Za-z0-9-]{1,80}$/.test(item),
-  );
-  if (favourites.length !== rawFavourites.length) {
-    throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
-  }
-
-  return {
-    scopeKey: value.scopeKey,
-    revision: value.revision,
-    exercises: (exercises as ExerciseDefinition[]).map(localizeExercise),
-    overrides,
-    favourites,
-  };
-}
-
-function decodeExerciseCoachSyncResult(value: unknown): ExerciseCoachSyncResult {
-  if (
-    !isRecord(value)
-    || typeof value.ok !== 'boolean'
-    || typeof value.revision !== 'number'
-    || !Number.isInteger(value.revision)
-    || value.revision < 0
-  ) {
-    throw new ApiError(502, 'Некорректный ответ синхронизации упражнений', 'INVALID_API_RESPONSE');
-  }
-  return { ok: value.ok, revision: value.revision };
 }
 
 function decodeSchedulePerson(value: unknown): SchedulePersonSummary | null {
@@ -865,29 +742,6 @@ export async function getCoachExercises(
   const response = await apiRequest<unknown>(initData, `/api/coach/exercises${suffix}`);
   const result = decodeExerciseListResponse(response);
   return { exercises: result.exercises.map(localizeExercise) };
-}
-
-export async function getExerciseCoachSyncState(
-  initData: string,
-): Promise<ExerciseCoachSyncState> {
-  const response = await apiRequest<unknown>(initData, '/api/sync/exercise-coach');
-  return decodeExerciseCoachSyncState(response);
-}
-
-export async function syncExerciseCoachSnapshot(
-  initData: string,
-  input: {
-    requestId: string;
-    scopeKey: string;
-    baseServerRevision: number;
-    snapshot: ExerciseCoachSyncSnapshot;
-  },
-): Promise<ExerciseCoachSyncResult> {
-  const response = await apiRequest<unknown>(initData, '/api/sync/exercise-coach', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-  return decodeExerciseCoachSyncResult(response);
 }
 
 export async function getCoachExercise(

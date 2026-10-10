@@ -3,7 +3,6 @@ import { getWorkoutSessionProjection, type ActiveWorkoutSession } from './workou
 
 export interface WorkoutExerciseOption {
   id: number;
-  sync_id: string;
   scope: ExerciseScope;
   name: string;
   name_en: string | null;
@@ -48,7 +47,6 @@ export async function listWorkoutExerciseOptions(
   const result = await db.prepare(`
     SELECT
       e.id,
-      e.sync_id,
       e.scope,
       e.name,
       e.name_en,

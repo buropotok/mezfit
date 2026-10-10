@@ -127,10 +127,6 @@ function ExerciseCategoryMedia({
   return <img src={src} alt="" className="mezfit-exercises__category-image" decoding="async" />;
 }
 
-function exerciseIdentity(exercise: ExerciseDefinition): string {
-  return exercise.sync_id ?? String(exercise.id);
-}
-
 function normalizeSearch(value: string): string {
   return value.normalize('NFKC').trim().toLocaleLowerCase('ru-RU');
 }
@@ -335,8 +331,6 @@ export function MezfitExercisesContent({
   const [editorError, setEditorError] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  useEffect(() => () => repository.dispose(), [repository]);
-
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(normalizeSearch(searchInput)), 120);
     return () => window.clearTimeout(timer);
@@ -417,14 +411,12 @@ export function MezfitExercisesContent({
     try {
       let exercise: ExerciseDefinition;
       if (editing.mode === 'edit' && editing.seed?.can_edit) {
-        exercise = await repository.update(editing.seed, input);
+        exercise = await repository.update(editing.seed.id, input);
       } else {
         exercise = await repository.create(input);
       }
       await syncLocal();
-      setSelectedInfo((current) => (
-        current && exerciseIdentity(current) === exerciseIdentity(exercise) ? exercise : current
-      ));
+      setSelectedInfo((current) => current?.id === exercise.id ? exercise : current);
       setEditing(null);
     } catch (reason) {
       setEditorError(reason instanceof Error ? reason.message : 'Не удалось сохранить упражнение');
@@ -441,7 +433,7 @@ export function MezfitExercisesContent({
     try {
       await repository.setFavourite(exercise, !exercise.is_favourite);
       await syncLocal();
-      setSelectedInfo((current) => current && exerciseIdentity(current) === exerciseIdentity(exercise)
+      setSelectedInfo((current) => current?.id === exercise.id
         ? { ...current, is_favourite: !exercise.is_favourite }
         : current);
     } catch (reason) {
@@ -461,17 +453,11 @@ export function MezfitExercisesContent({
     setSaving(true);
     setEditorError('');
     try {
-      await repository.archive(editing.seed);
+      await repository.archive(editing.seed.id);
       await syncLocal();
       setDeleteConfirmOpen(false);
       setEditing(null);
-      setSelectedInfo((current) => (
-        current
-        && editing.seed
-        && exerciseIdentity(current) === exerciseIdentity(editing.seed)
-          ? null
-          : current
-      ));
+      setSelectedInfo((current) => current?.id === editing.seed?.id ? null : current);
     } catch (reason) {
       setDeleteConfirmOpen(false);
       setEditorError(reason instanceof Error ? reason.message : 'Не удалось удалить упражнение');
@@ -686,7 +672,7 @@ export function MezfitExercisesContent({
                 };
             return (
               <ListItem
-                key={exerciseIdentity(exercise)}
+                key={exercise.id}
                 leadingShape="square"
                 leading={<ExerciseMedia exercise={exercise} />}
                 aria-label={exerciseDisplayName(exercise)}
@@ -700,7 +686,7 @@ export function MezfitExercisesContent({
                   : undefined}
                 trailingAction={mode === 'manage' ? (
                   <Menu
-                    isOpen={menuExercise ? exerciseIdentity(menuExercise) === exerciseIdentity(exercise) : false}
+                    isOpen={menuExercise?.id === exercise.id}
                     onOpenChange={(open) => setMenuExercise(open ? exercise : null)}
                     align="end"
                     label={`Действия: ${exerciseDisplayName(exercise)}`}
