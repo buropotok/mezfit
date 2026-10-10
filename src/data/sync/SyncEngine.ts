@@ -33,6 +33,10 @@ function serializeSnapshot(snapshot: unknown): string {
   return json;
 }
 
+function validRevision(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
 function parseSnapshot(json: string): unknown {
   return JSON.parse(json) as unknown;
 }
@@ -191,6 +195,12 @@ export class SyncEngine {
 
     try {
       const result = await adapter.push(envelope);
+      if (!result || !validRevision(result.serverRevision) ||
+          (result.kind !== 'accepted' && result.kind !== 'conflict') ||
+          (result.kind === 'accepted' && result.serverRevision <= baseServerRevision) ||
+          (result.kind === 'conflict' && result.serverRevision < baseServerRevision)) {
+        throw new SyncTransportError('Invalid push response', true, 'SYNC_PUSH_RESPONSE_INVALID');
+      }
       if (result.kind === 'conflict') {
         await this.store.update(scopeKey, (current) => {
           if (current.inflightRequestId !== prepared.requestId) return current;
@@ -231,7 +241,10 @@ export class SyncEngine {
         };
       });
 
-      if (shouldPull) await this.pullUnlocked(scopeKey);
+      if (shouldPull) {
+        const pull = await this.pullUnlocked(scopeKey);
+        if (pull.kind === 'failed') return { kind: 'failed', error: pull.error };
+      }
       return {
         kind: 'accepted',
         serverRevision: result.serverRevision,
@@ -403,6 +416,7 @@ export class SyncEngine {
     try {
       const remote: SyncPullResult = await adapter.pull(scopeKey);
       if (remote.scopeKey !== scopeKey) throw new Error('SYNC_REMOTE_SCOPE_MISMATCH');
+      if (!validRevision(remote.serverRevision)) throw new Error('SYNC_PULL_REVISION_INVALID');
       if (
         expectedServerRevision !== null
         && remote.serverRevision < expectedServerRevision
