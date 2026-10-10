@@ -397,18 +397,44 @@ export class SyncEngine {
 
     const adapter = this.adapterFor(row.scopeType);
     const expectedLocalRevision = row.localRevision;
+    const expectedServerRevision = row.serverRevision;
     const remoteChangeCounter = row.remoteChangeCounter;
 
     try {
       const remote: SyncPullResult = await adapter.pull(scopeKey);
       if (remote.scopeKey !== scopeKey) throw new Error('SYNC_REMOTE_SCOPE_MISMATCH');
-      if (row.serverRevision !== null && remote.serverRevision < row.serverRevision) {
+      if (
+        expectedServerRevision !== null
+        && remote.serverRevision < expectedServerRevision
+      ) {
         return { kind: 'stale' };
+      }
+
+      const latest = await this.store.get(scopeKey);
+      if (!latest) return { kind: 'missing_scope' };
+      if (
+        latest.status !== 'clean'
+        || latest.localRevision !== expectedLocalRevision
+        || latest.serverRevision !== expectedServerRevision
+      ) {
+        if (
+          latest.serverRevision !== null
+          && remote.serverRevision <= latest.serverRevision
+        ) {
+          return { kind: 'stale' };
+        }
+        await this.store.update(scopeKey, (current) => ({
+          ...current,
+          remoteChanged: true,
+          updatedAt: this.now(),
+        }));
+        return { kind: 'deferred' };
       }
 
       const applied = await adapter.applyRemoteSnapshotIfClean({
         scopeKey,
         expectedLocalRevision,
+        expectedServerRevision,
         serverRevision: remote.serverRevision,
         snapshot: remote.snapshot,
       });
@@ -421,13 +447,30 @@ export class SyncEngine {
         return { kind: 'deferred' };
       }
 
-      await this.store.update(scopeKey, (current) => ({
-        ...current,
-        serverRevision: remote.serverRevision,
-        remoteChanged: current.remoteChangeCounter !== remoteChangeCounter,
-        lastError: null,
-        updatedAt: this.now(),
-      }));
+      let staleAfterApply = false;
+      await this.store.update(scopeKey, (current) => {
+        if (
+          current.serverRevision !== null
+          && remote.serverRevision < current.serverRevision
+        ) {
+          staleAfterApply = true;
+          return current;
+        }
+
+        const changedLocally = current.status !== 'clean'
+          || current.localRevision !== expectedLocalRevision;
+        return {
+          ...current,
+          serverRevision: current.serverRevision === null
+            ? remote.serverRevision
+            : Math.max(current.serverRevision, remote.serverRevision),
+          remoteChanged: changedLocally
+            || current.remoteChangeCounter !== remoteChangeCounter,
+          lastError: null,
+          updatedAt: this.now(),
+        };
+      });
+      if (staleAfterApply) return { kind: 'stale' };
       return { kind: 'applied', serverRevision: remote.serverRevision };
     } catch (error) {
       await this.store.update(scopeKey, (current) => ({

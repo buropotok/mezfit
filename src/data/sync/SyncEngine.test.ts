@@ -562,6 +562,73 @@ describe('SyncEngine', () => {
     expect(store.rows.get('program:1')?.remoteChanged).toBe(true);
   });
 
+  it('does not let an older pull overwrite a newer server revision learned while the pull is in flight', async () => {
+    const pull = deferred<SyncPullResult>();
+    const store = new MemorySyncStateStore();
+    store.rows.set('program:1', scopeRow('program:1', {
+      status: 'clean',
+      localRevision: 0,
+      serverRevision: 3,
+      remoteChanged: true,
+    }));
+    const adapter = new FakeAdapter();
+    adapter.pull.mockImplementationOnce(() => pull.promise);
+    const engine = new SyncEngine(store, [adapter]);
+
+    const refresh = engine.refresh('program:1');
+    await vi.waitFor(() => expect(adapter.pull).toHaveBeenCalledTimes(1));
+
+    const current = store.rows.get('program:1');
+    if (!current) throw new Error('missing scope');
+    store.rows.set('program:1', {
+      ...current,
+      serverRevision: 5,
+      remoteChanged: false,
+    });
+
+    pull.resolve({
+      scopeKey: 'program:1',
+      serverRevision: 4,
+      snapshot: { remote: 4 },
+    });
+
+    await expect(refresh).resolves.toEqual({ kind: 'stale' });
+    expect(adapter.applyRemoteSnapshotIfClean).not.toHaveBeenCalled();
+    expect(store.rows.get('program:1')).toMatchObject({
+      serverRevision: 5,
+      remoteChanged: false,
+    });
+  });
+
+  it('passes the expected server revision into the atomic remote-apply guard', async () => {
+    const store = new MemorySyncStateStore();
+    store.rows.set('program:1', scopeRow('program:1', {
+      status: 'clean',
+      localRevision: 0,
+      serverRevision: 3,
+      remoteChanged: true,
+    }));
+    const adapter = new FakeAdapter();
+    adapter.remote = {
+      scopeKey: 'program:1',
+      serverRevision: 4,
+      snapshot: { remote: 4 },
+    };
+    const engine = new SyncEngine(store, [adapter]);
+
+    await expect(engine.refresh('program:1')).resolves.toEqual({
+      kind: 'applied',
+      serverRevision: 4,
+    });
+    expect(adapter.applyRemoteSnapshotIfClean).toHaveBeenCalledWith({
+      scopeKey: 'program:1',
+      expectedLocalRevision: 0,
+      expectedServerRevision: 3,
+      serverRevision: 4,
+      snapshot: { remote: 4 },
+    });
+  });
+
   it('does not clear a newer remote notification that arrives during a pull', async () => {
     const pull = deferred<SyncPullResult>();
     const store = new MemorySyncStateStore();

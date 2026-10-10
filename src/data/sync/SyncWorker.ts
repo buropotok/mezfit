@@ -1,16 +1,27 @@
 import type { SyncEngine } from './SyncEngine';
+import type { SyncFlushOutcome, SyncPullOutcome } from './types';
 
 export interface SyncWorkerOptions {
   intervalMs?: number;
   onError?: (error: unknown) => void;
 }
 
+export class SyncWorkerScopeError extends Error {
+  constructor(
+    readonly scopeKey: string,
+    readonly code: string,
+  ) {
+    super(`SYNC_SCOPE_FAILED:${scopeKey}:${code}`);
+    this.name = 'SyncWorkerScopeError';
+  }
+}
+
 export class SyncWorker {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private started = false;
   private running: Promise<void> | null = null;
-  private rerunRequested = false;
-  private rerunForce = false;
+  private pendingAutomatic = false;
+  private pendingForce = false;
   private readonly intervalMs: number;
   private readonly onError: (error: unknown) => void;
 
@@ -37,10 +48,8 @@ export class SyncWorker {
   stop(): void {
     if (!this.started) return;
     this.started = false;
-    if (this.timer !== null) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
+    this.pendingAutomatic = false;
+    this.clearTimer();
     if (typeof window !== 'undefined') {
       window.removeEventListener('online', this.onOnline);
     }
@@ -50,31 +59,70 @@ export class SyncWorker {
   }
 
   async wake(options: { force?: boolean } = {}): Promise<void> {
-    if (!this.started && !options.force) return;
-    if (this.running) {
-      this.rerunRequested = true;
-      this.rerunForce = this.rerunForce || Boolean(options.force);
-      await this.running;
-      return;
-    }
+    const force = Boolean(options.force);
+    if (!this.started && !force) return;
+
+    if (force) this.pendingForce = true;
+    else this.pendingAutomatic = true;
 
     this.clearTimer();
-    this.running = (async () => {
-      let force = Boolean(options.force);
-      do {
-        this.rerunRequested = false;
-        force = force || this.rerunForce;
-        this.rerunForce = false;
-        await this.engine.flushAll({ force });
-        force = false;
-      } while (this.rerunRequested);
-    })();
-
     try {
-      await this.running;
+      await this.drain();
     } finally {
-      this.running = null;
-      this.scheduleNext();
+      if (this.started && !this.running && !this.hasPendingPass()) {
+        this.scheduleNext();
+      }
+    }
+  }
+
+  private async drain(): Promise<void> {
+    while (true) {
+      const active = this.running;
+      if (active) {
+        await active;
+        continue;
+      }
+      if (!this.hasPendingPass()) return;
+
+      const run = this.runPendingPasses();
+      this.running = run;
+      try {
+        await run;
+      } finally {
+        if (this.running === run) this.running = null;
+      }
+    }
+  }
+
+  private async runPendingPasses(): Promise<void> {
+    while (this.hasPendingPass()) {
+      const force = this.pendingForce;
+      this.pendingForce = false;
+      this.pendingAutomatic = false;
+
+      const results = await this.engine.flushAll({ force });
+      this.reportScopeFailures(results);
+    }
+  }
+
+  private hasPendingPass(): boolean {
+    return this.pendingForce || (this.started && this.pendingAutomatic);
+  }
+
+  private reportScopeFailures(
+    results: Map<string, SyncFlushOutcome | SyncPullOutcome>,
+  ): void {
+    for (const [scopeKey, result] of results) {
+      if (result.kind !== 'failed') continue;
+      this.reportError(new SyncWorkerScopeError(scopeKey, result.error));
+    }
+  }
+
+  private reportError(error: unknown): void {
+    try {
+      this.onError(error);
+    } catch {
+      // Error reporting must never break synchronization.
     }
   }
 
@@ -88,7 +136,7 @@ export class SyncWorker {
 
   private triggerWake(options: { force?: boolean } = {}): void {
     void this.wake(options).catch((error: unknown) => {
-      this.onError(error);
+      this.reportError(error);
     });
   }
 

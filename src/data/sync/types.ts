@@ -11,12 +11,14 @@ export interface SyncScopeAdapter {
   push(envelope: SyncPushEnvelope): Promise<SyncPushResult>;
   pull(scopeKey: string): Promise<SyncPullResult>;
   /**
-   * Apply the remote snapshot atomically with a guard that the scope is still clean
-   * at expectedLocalRevision. Return false without mutating domain data when the guard fails.
+   * Apply the remote snapshot atomically with guards that the scope is still clean
+   * at expectedLocalRevision and still has expectedServerRevision. Return false
+   * without mutating domain data when either guard fails.
    */
   applyRemoteSnapshotIfClean(input: {
     scopeKey: string;
     expectedLocalRevision: number;
+    expectedServerRevision: number | null;
     serverRevision: number;
     snapshot: unknown;
   }): Promise<boolean>;
