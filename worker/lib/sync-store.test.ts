@@ -161,6 +161,18 @@ function envelope(scopeKey = 'program:1', value = 1) {
 describe('validateSyncEnvelopeMetadata', () => {
   it('rejects invalid request and scope identifiers before persistence', () => {
     expect(() => validateSyncEnvelopeMetadata({
+      requestId: 12345678 as unknown as string,
+      scopeKey: 'program:1',
+      baseServerRevision: 0,
+    })).toThrow('SYNC_REQUEST_ID_INVALID');
+
+    expect(() => validateSyncEnvelopeMetadata({
+      requestId: 'request-0001',
+      scopeKey: 12345678 as unknown as string,
+      baseServerRevision: 0,
+    })).toThrow('SYNC_SCOPE_KEY_INVALID');
+
+    expect(() => validateSyncEnvelopeMetadata({
       requestId: 'x',
       scopeKey: 'program:1',
       baseServerRevision: 0,
