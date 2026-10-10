@@ -112,6 +112,12 @@ export async function recordHydratedSyncScope(
   const changedRemotely = current.serverRevision !== null
     && current.serverRevision !== serverRevision;
 
+  const waitingForInitialBaseline = baselineMissing
+    && current.status === 'retry_wait'
+    && current.nextRetryAt === null
+    && current.lastError === 'SYNC_SERVER_REVISION_UNKNOWN'
+    && current.inflightRequestId === null;
+
   const next: LocalSyncScopeRow = clean
     ? {
         ...current,
@@ -123,6 +129,10 @@ export async function recordHydratedSyncScope(
     : {
         ...current,
         serverRevision: baselineMissing ? serverRevision : current.serverRevision,
+        status: waitingForInitialBaseline ? 'dirty' : current.status,
+        attemptCount: waitingForInitialBaseline ? 0 : current.attemptCount,
+        nextRetryAt: waitingForInitialBaseline ? null : current.nextRetryAt,
+        lastError: waitingForInitialBaseline ? null : current.lastError,
         remoteChanged: current.remoteChanged || changedRemotely,
         remoteChangeCounter: changedRemotely
           ? current.remoteChangeCounter + 1

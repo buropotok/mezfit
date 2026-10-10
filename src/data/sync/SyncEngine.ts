@@ -243,6 +243,24 @@ export class SyncEngine {
       let attemptCount = 0;
       await this.store.update(scopeKey, (current) => {
         if (current.inflightRequestId !== prepared.requestId) return current;
+        const newerLocalChanges = current.localRevision > prepared.inflightRevision;
+
+        if (!retryable && newerLocalChanges) {
+          attemptCount = 0;
+          nextRetryAt = null;
+          return {
+            ...current,
+            status: 'dirty',
+            attemptCount: 0,
+            nextRetryAt: null,
+            lastError: errorCode(error),
+            inflightRequestId: null,
+            inflightRevision: null,
+            inflightSnapshotJson: null,
+            updatedAt: this.now(),
+          };
+        }
+
         const previousAttempts = force ? 0 : current.attemptCount;
         attemptCount = previousAttempts + 1;
         const canRetryAutomatically = retryable

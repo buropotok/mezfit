@@ -156,6 +156,36 @@ describe('markSyncScopeDirty', () => {
       remoteChangeCounter: 0,
     });
   });
+
+  it('releases a manual-only retry when late hydration supplies the first server baseline', async () => {
+    const table = new FakeScopeTable();
+    table.rows.set('program:new', scopeRow('program:new', {
+      serverRevision: null,
+      status: 'retry_wait',
+      attemptCount: 1,
+      nextRetryAt: null,
+      lastError: 'SYNC_SERVER_REVISION_UNKNOWN',
+      inflightRequestId: null,
+      inflightRevision: null,
+      inflightSnapshotJson: null,
+    }));
+
+    const hydrated = await recordHydratedSyncScope(
+      table,
+      'program:new',
+      'program',
+      7,
+      2_000,
+    );
+
+    expect(hydrated).toMatchObject({
+      serverRevision: 7,
+      status: 'dirty',
+      attemptCount: 0,
+      nextRetryAt: null,
+      lastError: null,
+    });
+  });
 });
 
 describe('SyncEngine', () => {
@@ -267,6 +297,55 @@ describe('SyncEngine', () => {
       requestId: 'request-0002',
       scopeKey: 'program:1',
       baseServerRevision: 4,
+      snapshot: { value: 2 },
+    });
+  });
+
+  it('automatically sends a newer local correction after the older inflight snapshot is definitively rejected', async () => {
+    const first = deferred<SyncPushResult>();
+    const store = new MemorySyncStateStore();
+    store.rows.set('program:1', scopeRow('program:1'));
+    const adapter = new FakeAdapter();
+    adapter.push
+      .mockImplementationOnce(() => first.promise)
+      .mockResolvedValueOnce({ kind: 'accepted', serverRevision: 4 });
+    let requestNumber = 0;
+    const engine = new SyncEngine(store, [adapter], {
+      createRequestId: () => `request-000${++requestNumber}`,
+      now: () => 2_000,
+    });
+
+    const firstFlush = engine.flush('program:1');
+    await vi.waitFor(() => expect(adapter.push).toHaveBeenCalledTimes(1));
+
+    const current = store.rows.get('program:1');
+    if (!current) throw new Error('missing scope');
+    store.rows.set('program:1', {
+      ...current,
+      localRevision: 2,
+    });
+    adapter.snapshot = { value: 2 };
+
+    first.reject(new SyncTransportError('invalid', false, 'VALIDATION_REJECTED'));
+    await expect(firstFlush).resolves.toEqual({
+      kind: 'retry_wait',
+      nextRetryAt: null,
+      attemptCount: 0,
+    });
+    expect(store.rows.get('program:1')).toMatchObject({
+      status: 'dirty',
+      inflightRequestId: null,
+      inflightRevision: null,
+      inflightSnapshotJson: null,
+      lastError: 'VALIDATION_REJECTED',
+    });
+
+    await engine.flush('program:1');
+
+    expect(adapter.push).toHaveBeenNthCalledWith(2, {
+      requestId: 'request-0002',
+      scopeKey: 'program:1',
+      baseServerRevision: 3,
       snapshot: { value: 2 },
     });
   });
