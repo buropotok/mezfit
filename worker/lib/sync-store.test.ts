@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   applySyncBatch,
+  bumpSyncScopeRevision,
+  SYNC_REQUEST_RETENTION_REVISIONS,
   SyncRequestReuseError,
   validateSyncEnvelopeMetadata,
 } from './sync-store';
@@ -31,7 +33,12 @@ class FakeStatement {
 
 class FakeDb {
   readonly revisions = new Map<string, number>();
-  readonly requests = new Map<string, { scopeKey: string; revision: number }>();
+  readonly requests = new Map<string, {
+    scopeKey: string;
+    baseRevision: number;
+    fingerprint: string;
+    revision: number;
+  }>();
   domainMutationCount = 0;
   raceRevisionOnBatch: number | null = null;
 
@@ -76,8 +83,18 @@ class FakeDb {
           if (this.requests.has(requestId)) throw new Error('UNIQUE constraint failed');
           this.requests.set(requestId, {
             scopeKey: String(statement.args[1]),
-            revision: Number(statement.args[2]),
+            baseRevision: Number(statement.args[2]),
+            fingerprint: String(statement.args[3]),
+            revision: Number(statement.args[4]),
           });
+        } else if (sql.startsWith('DELETE FROM sync_request')) {
+          const scopeKey = String(statement.args[0]);
+          const cutoff = Number(statement.args[1]);
+          for (const [requestId, request] of this.requests) {
+            if (request.scopeKey === scopeKey && request.revision <= cutoff) {
+              this.requests.delete(requestId);
+            }
+          }
         }
       }
     } catch (error) {
@@ -102,11 +119,25 @@ class FakeDb {
 
   first(statement: FakeStatement): unknown {
     const sql = statement.sql.replace(/\s+/g, ' ').trim();
+    if (
+      sql.startsWith('INSERT INTO sync_scope_revision')
+      && sql.includes('RETURNING revision')
+    ) {
+      const scopeKey = String(statement.args[0]);
+      const revision = (this.revisions.get(scopeKey) ?? 0) + 1;
+      this.revisions.set(scopeKey, revision);
+      return { revision };
+    }
     if (sql.includes('FROM sync_request')) {
       const requestId = String(statement.args[0]);
       const request = this.requests.get(requestId);
       return request
-        ? { scope_key: request.scopeKey, response_revision: request.revision }
+        ? {
+            scope_key: request.scopeKey,
+            base_server_revision: request.baseRevision,
+            payload_fingerprint: request.fingerprint,
+            response_revision: request.revision,
+          }
         : null;
     }
     if (sql.includes('FROM sync_scope_revision')) {
@@ -118,11 +149,12 @@ class FakeDb {
   }
 }
 
-function envelope(scopeKey = 'program:1') {
+function envelope(scopeKey = 'program:1', value = 1) {
   return {
     requestId: 'request-0001',
     scopeKey,
     baseServerRevision: 0,
+    snapshot: { value },
   };
 }
 
@@ -155,10 +187,12 @@ describe('applySyncBatch', () => {
 
     expect(fake.domainMutationCount).toBe(1);
     expect(fake.revisions.get('program:1')).toBe(1);
-    expect(fake.requests.get('request-0001')).toEqual({
+    expect(fake.requests.get('request-0001')).toMatchObject({
       scopeKey: 'program:1',
+      baseRevision: 0,
       revision: 1,
     });
+    expect(fake.requests.get('request-0001')?.fingerprint).toHaveLength(64);
   });
 
   it('returns the original result for an idempotent retry without applying the domain twice', async () => {
@@ -201,6 +235,61 @@ describe('applySyncBatch', () => {
     });
 
     expect(fake.domainMutationCount).toBe(0);
+  });
+
+  it('rejects reuse of a request id when the base revision or snapshot changed', async () => {
+    const fake = new FakeDb();
+    const db = fake as unknown as D1Database;
+
+    await applySyncBatch(db, envelope(), []);
+
+    await expect(applySyncBatch(db, {
+      ...envelope(),
+      snapshot: { value: 2 },
+    }, [])).rejects.toBeInstanceOf(SyncRequestReuseError);
+
+    await expect(applySyncBatch(db, {
+      ...envelope(),
+      baseServerRevision: 1,
+    }, [])).rejects.toBeInstanceOf(SyncRequestReuseError);
+  });
+
+  it('keeps only a bounded revision window of idempotency records', async () => {
+    const fake = new FakeDb();
+    const db = fake as unknown as D1Database;
+    const total = SYNC_REQUEST_RETENTION_REVISIONS + 2;
+
+    for (let index = 0; index < total; index += 1) {
+      await applySyncBatch(db, {
+        requestId: `request-${String(index).padStart(4, '0')}`,
+        scopeKey: 'program:1',
+        baseServerRevision: index,
+        snapshot: { value: index },
+      }, []);
+    }
+
+    expect(fake.requests.size).toBe(SYNC_REQUEST_RETENTION_REVISIONS);
+    expect(fake.requests.has('request-0000')).toBe(false);
+    expect(fake.requests.has('request-0001')).toBe(false);
+
+    await expect(applySyncBatch(db, {
+      requestId: 'request-0000',
+      scopeKey: 'program:1',
+      baseServerRevision: 0,
+      snapshot: { value: 0 },
+    }, [])).resolves.toEqual({
+      kind: 'conflict',
+      serverRevision: total,
+    });
+  });
+
+  it('bumps and returns the scope revision in one statement', async () => {
+    const fake = new FakeDb();
+    const db = fake as unknown as D1Database;
+
+    await expect(bumpSyncScopeRevision(db, 'program:1')).resolves.toBe(1);
+    await expect(bumpSyncScopeRevision(db, 'program:1')).resolves.toBe(2);
+    expect(fake.revisions.get('program:1')).toBe(2);
   });
 
   it('does not allow one request id to be reused for another scope', async () => {

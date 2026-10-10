@@ -7,12 +7,14 @@ CREATE TABLE IF NOT EXISTS sync_scope_revision (
 CREATE TABLE IF NOT EXISTS sync_request (
   request_id TEXT PRIMARY KEY,
   scope_key TEXT NOT NULL,
+  base_server_revision INTEGER NOT NULL CHECK (base_server_revision >= 0),
+  payload_fingerprint TEXT NOT NULL,
   response_revision INTEGER NOT NULL CHECK (response_revision >= 0),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_sync_request_scope_created
-  ON sync_request(scope_key, created_at);
+CREATE INDEX IF NOT EXISTS idx_sync_request_scope_revision
+  ON sync_request(scope_key, response_revision);
 
 CREATE TABLE IF NOT EXISTS sync_cas_assert (
   request_id TEXT PRIMARY KEY,
