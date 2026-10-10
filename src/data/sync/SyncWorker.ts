@@ -45,10 +45,15 @@ export class SyncWorker {
     this.triggerWake();
   }
 
-  stop(): void {
-    if (!this.started) return;
+  /** Await this promise before disposing the owner's local database. */
+  async stop(): Promise<void> {
+    if (!this.started) {
+      if (this.running) await this.running;
+      return;
+    }
     this.started = false;
     this.pendingAutomatic = false;
+    this.pendingForce = false;
     this.clearTimer();
     if (typeof window !== 'undefined') {
       window.removeEventListener('online', this.onOnline);
@@ -56,6 +61,9 @@ export class SyncWorker {
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
+    // Inflight network requests cannot be cancelled safely after an ambiguous push.
+    // Wait for their persisted outcome before the owner closes its storage.
+    if (this.running) await this.running;
   }
 
   async wake(options: { force?: boolean } = {}): Promise<void> {
