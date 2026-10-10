@@ -4,18 +4,78 @@ export type ExerciseCategoryCode = 'chest' | 'arms' | 'back' | 'legs' | 'shoulde
 export type ExerciseEquipmentCode = 'bodyweight' | 'barbell' | 'dumbbell_single' | 'dumbbell_pair' | 'cable' | 'machine' | 'other';
 export type ExerciseSort = 'alphabetical' | 'reference';
 
-interface ExerciseDefinitionDbRow { id:number; scope:ExerciseScope; owner_coach_user_id:number|null; name:string; name_en?:string|null; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; reference_order:number|null; is_favourite:number; }
-export interface ExerciseDefinitionRow { id:number; scope:ExerciseScope; name:string; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; is_favourite:boolean; can_edit:boolean; }
+interface ExerciseDefinitionDbRow { id:number; scope:ExerciseScope; owner_coach_user_id:number|null; name:string; name_en?:string|null; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; reference_order:number|null; is_archived?:number; is_favourite:number; }
+export interface ExerciseDefinitionRow { id:number; scope:ExerciseScope; name:string; name_en:string|null; description:string|null; tracking_type:TrackingType; category_code:ExerciseCategoryCode|null; equipment_code:ExerciseEquipmentCode|null; reference_source:string|null; reference_key:string|null; reference_media_url:string|null; is_archived:boolean; is_favourite:boolean; can_edit:boolean; }
 export interface CreateExerciseInput { scope:'coach'|'client'; name:string; description:string|null; trackingType:TrackingType; categoryCode:ExerciseCategoryCode; equipmentCode:ExerciseEquipmentCode; }
 export interface CoachExerciseFilters { search:string; categoryCode:ExerciseCategoryCode|''; trackingType:TrackingType|''; favouritesOnly:boolean; sort:ExerciseSort; }
-function exerciseView(row:ExerciseDefinitionDbRow,coachUserId:number):ExerciseDefinitionRow{return{id:row.id,scope:row.scope,name:row.name,description:row.description,tracking_type:row.tracking_type,category_code:row.category_code,equipment_code:row.equipment_code,reference_source:row.reference_source,reference_key:row.reference_key,reference_media_url:row.reference_media_url,is_favourite:row.is_favourite===1,can_edit:row.scope==='global'||(row.scope==='coach'&&row.owner_coach_user_id===coachUserId)}}
+function exerciseView(row:ExerciseDefinitionDbRow,coachUserId:number):ExerciseDefinitionRow{return{id:row.id,scope:row.scope,name:row.name,name_en:row.name_en??null,description:row.description,tracking_type:row.tracking_type,category_code:row.category_code,equipment_code:row.equipment_code,reference_source:row.reference_source,reference_key:row.reference_key,reference_media_url:row.reference_media_url,is_archived:row.is_archived===1,is_favourite:row.is_favourite===1,can_edit:row.scope==='global'||(row.scope==='coach'&&row.owner_coach_user_id===coachUserId)}}
 export function canCoachMutateExercise(scope:ExerciseScope,ownerCoachUserId:number|null,coachUserId:number):boolean{return scope==='coach'&&ownerCoachUserId===coachUserId}
 export async function hasActiveCoachClient(db:D1Database,coachUserId:number,clientUserId:number):Promise<boolean>{const row=await db.prepare(`SELECT 1 AS ok FROM coach_client WHERE coach_user_id=? AND client_user_id=? AND status='active'`).bind(coachUserId,clientUserId).first<{ok:number}>();return row?.ok===1}
 function normalizeSearch(value:string){return value.normalize('NFKC').toLocaleLowerCase('ru-RU')}
 function matchesSearch(row:ExerciseDefinitionDbRow,search:string){if(!search)return true;const needle=normalizeSearch(search);return normalizeSearch(row.name).includes(needle)||normalizeSearch(row.name_en||'').includes(needle)}
 export async function listExercisesForClient(db:D1Database,coachUserId:number,clientUserId:number,search:string):Promise<ExerciseDefinitionRow[]>{const result=await db.prepare(`SELECT e.id,e.scope,e.owner_coach_user_id,CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END AS name,e.name_en,CASE WHEN o.exercise_definition_id IS NULL THEN e.description ELSE o.description END AS description,CASE WHEN o.exercise_definition_id IS NULL THEN e.tracking_type ELSE o.tracking_type END AS tracking_type,CASE WHEN o.exercise_definition_id IS NULL THEN e.category_code ELSE o.category_code END AS category_code,CASE WHEN o.exercise_definition_id IS NULL THEN e.equipment_code ELSE o.equipment_code END AS equipment_code,e.reference_source,e.reference_key,e.reference_media_url,e.reference_order,CASE WHEN f.exercise_definition_id IS NULL THEN 0 ELSE 1 END AS is_favourite FROM exercise_definition e LEFT JOIN exercise_definition_override o ON o.exercise_definition_id=e.id AND o.coach_user_id=? LEFT JOIN coach_exercise_favourite f ON f.exercise_definition_id=e.id AND f.coach_user_id=? WHERE e.is_archived=0 AND (e.scope='global' OR (e.scope='coach' AND e.owner_coach_user_id=?) OR (e.scope='client' AND e.owner_coach_user_id=? AND e.owner_client_user_id=?)) ORDER BY CASE e.scope WHEN 'client' THEN 0 WHEN 'coach' THEN 1 ELSE 2 END,CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END COLLATE NOCASE`).bind(coachUserId,coachUserId,coachUserId,coachUserId,clientUserId).all<ExerciseDefinitionDbRow>();return result.results.filter(row=>matchesSearch(row,search)).map(row=>exerciseView(row,coachUserId))}
+export async function listPerformedExercisesForClient(
+  db: D1Database,
+  coachUserId: number,
+  clientUserId: number,
+): Promise<ExerciseDefinitionRow[]> {
+  const result = await db.prepare(`
+    SELECT DISTINCT
+      e.id,
+      e.scope,
+      e.owner_coach_user_id,
+      CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END AS name,
+      e.name_en,
+      CASE WHEN o.exercise_definition_id IS NULL THEN e.description ELSE o.description END AS description,
+      CASE WHEN o.exercise_definition_id IS NULL THEN e.tracking_type ELSE o.tracking_type END AS tracking_type,
+      CASE WHEN o.exercise_definition_id IS NULL THEN e.category_code ELSE o.category_code END AS category_code,
+      CASE WHEN o.exercise_definition_id IS NULL THEN e.equipment_code ELSE o.equipment_code END AS equipment_code,
+      e.reference_source,
+      e.reference_key,
+      e.reference_media_url,
+      e.reference_order,
+      e.is_archived,
+      CASE WHEN f.exercise_definition_id IS NULL THEN 0 ELSE 1 END AS is_favourite
+    FROM exercise_definition e
+    JOIN session_exercise se ON se.exercise_definition_id = e.id
+    JOIN workout_session ws ON ws.id = se.workout_session_id
+    LEFT JOIN exercise_definition_override o
+      ON o.exercise_definition_id = e.id AND o.coach_user_id = ?
+    LEFT JOIN coach_exercise_favourite f
+      ON f.exercise_definition_id = e.id AND f.coach_user_id = ?
+    WHERE ws.user_id = ?
+      AND EXISTS (
+        SELECT 1
+        FROM session_set ss
+        WHERE ss.session_exercise_id = se.id
+          AND ss.status = 'completed'
+      )
+      AND (
+        e.scope = 'global'
+        OR (e.scope = 'coach' AND e.owner_coach_user_id = ?)
+        OR (
+          e.scope = 'client'
+          AND e.owner_coach_user_id = ?
+          AND e.owner_client_user_id = ?
+        )
+      )
+    ORDER BY
+      CASE e.scope WHEN 'client' THEN 0 WHEN 'coach' THEN 1 ELSE 2 END,
+      CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END COLLATE NOCASE
+  `).bind(
+    coachUserId,
+    coachUserId,
+    clientUserId,
+    coachUserId,
+    coachUserId,
+    clientUserId,
+  ).all<ExerciseDefinitionDbRow>();
+
+  return result.results.map((row) => exerciseView(row, coachUserId));
+}
+
 export async function listExercisesForCoach(db:D1Database,coachUserId:number,filters:CoachExerciseFilters):Promise<ExerciseDefinitionRow[]>{const favouriteFlag=filters.favouritesOnly?1:0;const result=await db.prepare(`SELECT e.id,e.scope,e.owner_coach_user_id,CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END AS name,e.name_en,CASE WHEN o.exercise_definition_id IS NULL THEN e.description ELSE o.description END AS description,CASE WHEN o.exercise_definition_id IS NULL THEN e.tracking_type ELSE o.tracking_type END AS tracking_type,CASE WHEN o.exercise_definition_id IS NULL THEN e.category_code ELSE o.category_code END AS category_code,CASE WHEN o.exercise_definition_id IS NULL THEN e.equipment_code ELSE o.equipment_code END AS equipment_code,e.reference_source,e.reference_key,e.reference_media_url,e.reference_order,CASE WHEN f.exercise_definition_id IS NULL THEN 0 ELSE 1 END AS is_favourite FROM exercise_definition e LEFT JOIN exercise_definition_override o ON o.exercise_definition_id=e.id AND o.coach_user_id=? LEFT JOIN coach_exercise_favourite f ON f.exercise_definition_id=e.id AND f.coach_user_id=? WHERE e.is_archived=0 AND (e.scope='global' OR (e.scope='coach' AND e.owner_coach_user_id=?)) AND (?='' OR CASE WHEN o.exercise_definition_id IS NULL THEN e.category_code ELSE o.category_code END=?) AND (?='' OR CASE WHEN o.exercise_definition_id IS NULL THEN e.tracking_type ELSE o.tracking_type END=?) AND (?=0 OR f.exercise_definition_id IS NOT NULL) ORDER BY CASE WHEN ?='reference' AND e.reference_order IS NULL THEN 1 ELSE 0 END,CASE WHEN ?='reference' THEN e.reference_order END,CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END COLLATE NOCASE`).bind(coachUserId,coachUserId,coachUserId,filters.categoryCode,filters.categoryCode,filters.trackingType,filters.trackingType,favouriteFlag,filters.sort,filters.sort).all<ExerciseDefinitionDbRow>();return result.results.filter(row=>matchesSearch(row,filters.search)).map(row=>exerciseView(row,coachUserId))}
-export async function getExerciseForCoach(db:D1Database,coachUserId:number,exerciseId:number):Promise<ExerciseDefinitionRow|null>{const row=await db.prepare(`SELECT e.id,e.scope,e.owner_coach_user_id,CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END AS name,CASE WHEN o.exercise_definition_id IS NULL THEN e.description ELSE o.description END AS description,CASE WHEN o.exercise_definition_id IS NULL THEN e.tracking_type ELSE o.tracking_type END AS tracking_type,CASE WHEN o.exercise_definition_id IS NULL THEN e.category_code ELSE o.category_code END AS category_code,CASE WHEN o.exercise_definition_id IS NULL THEN e.equipment_code ELSE o.equipment_code END AS equipment_code,e.reference_source,e.reference_key,e.reference_media_url,e.reference_order,CASE WHEN f.exercise_definition_id IS NULL THEN 0 ELSE 1 END AS is_favourite FROM exercise_definition e LEFT JOIN exercise_definition_override o ON o.exercise_definition_id=e.id AND o.coach_user_id=? LEFT JOIN coach_exercise_favourite f ON f.exercise_definition_id=e.id AND f.coach_user_id=? WHERE e.id=? AND e.is_archived=0 AND (e.scope='global' OR (e.scope='coach' AND e.owner_coach_user_id=?)) LIMIT 1`).bind(coachUserId,coachUserId,exerciseId,coachUserId).first<ExerciseDefinitionDbRow>();return row?exerciseView(row,coachUserId):null}
+export async function getExerciseForCoach(db:D1Database,coachUserId:number,exerciseId:number):Promise<ExerciseDefinitionRow|null>{const row=await db.prepare(`SELECT e.id,e.scope,e.owner_coach_user_id,CASE WHEN o.exercise_definition_id IS NULL THEN e.name ELSE o.name END AS name,e.name_en,CASE WHEN o.exercise_definition_id IS NULL THEN e.description ELSE o.description END AS description,CASE WHEN o.exercise_definition_id IS NULL THEN e.tracking_type ELSE o.tracking_type END AS tracking_type,CASE WHEN o.exercise_definition_id IS NULL THEN e.category_code ELSE o.category_code END AS category_code,CASE WHEN o.exercise_definition_id IS NULL THEN e.equipment_code ELSE o.equipment_code END AS equipment_code,e.reference_source,e.reference_key,e.reference_media_url,e.reference_order,CASE WHEN f.exercise_definition_id IS NULL THEN 0 ELSE 1 END AS is_favourite FROM exercise_definition e LEFT JOIN exercise_definition_override o ON o.exercise_definition_id=e.id AND o.coach_user_id=? LEFT JOIN coach_exercise_favourite f ON f.exercise_definition_id=e.id AND f.coach_user_id=? WHERE e.id=? AND e.is_archived=0 AND (e.scope='global' OR (e.scope='coach' AND e.owner_coach_user_id=?)) LIMIT 1`).bind(coachUserId,coachUserId,exerciseId,coachUserId).first<ExerciseDefinitionDbRow>();return row?exerciseView(row,coachUserId):null}
 async function findOwnedExercise(db:D1Database,coachUserId:number,exerciseId:number){return db.prepare(`SELECT id,scope,owner_coach_user_id FROM exercise_definition WHERE id=? AND is_archived=0 LIMIT 1`).bind(exerciseId).first<{id:number;scope:ExerciseScope;owner_coach_user_id:number|null}>()}
 async function coachNameExists(db:D1Database,coachUserId:number,name:string,excludeId?:number){return Boolean(await db.prepare(`SELECT id FROM exercise_definition WHERE scope='coach' AND owner_coach_user_id=? AND is_archived=0 AND lower(name)=lower(?) AND (? IS NULL OR id<>?) LIMIT 1`).bind(coachUserId,name,excludeId??null,excludeId??null).first())}
 export async function createExerciseForCoach(db:D1Database,coachUserId:number,input:Omit<CreateExerciseInput,'scope'>):Promise<ExerciseDefinitionRow|null>{if(await coachNameExists(db,coachUserId,input.name))return null;const result=await db.prepare(`INSERT INTO exercise_definition(scope,owner_coach_user_id,name,description,tracking_type,category_code,equipment_code,created_by_user_id) VALUES('coach',?,?,?,?,?,?,?) RETURNING id,scope,owner_coach_user_id,name,description,tracking_type,category_code,equipment_code,reference_source,reference_key,reference_media_url,reference_order,0 AS is_favourite`).bind(coachUserId,input.name,input.description,input.trackingType,input.categoryCode,input.equipmentCode,coachUserId).first<ExerciseDefinitionDbRow>();return result?exerciseView(result,coachUserId):null}

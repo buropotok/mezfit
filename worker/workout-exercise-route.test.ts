@@ -54,8 +54,19 @@ describe('workout exercise routes', () => {
     await expect(response.json()).resolves.toEqual({ exercises: [] });
   });
 
-  it('rejects a catalogue request without a supported category', async () => {
+  it('lists the complete visible catalogue when category is omitted for hydration', async () => {
+    listMock.mockResolvedValue([]);
     const request = new Request('https://mezfit.test/api/workout-sessions/exercises');
+
+    const response = await handleWorkoutSessionRoute(request, db, 7);
+
+    expect(response.status).toBe(200);
+    expect(listMock).toHaveBeenCalledWith(db, 7, null);
+    await expect(response.json()).resolves.toEqual({ exercises: [] });
+  });
+
+  it('still rejects an explicitly unsupported category', async () => {
+    const request = new Request('https://mezfit.test/api/workout-sessions/exercises?category=unknown');
 
     const response = await handleWorkoutSessionRoute(request, db, 7);
 

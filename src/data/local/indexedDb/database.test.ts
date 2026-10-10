@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOCAL_DATABASE_STORES_V1, localDatabaseName } from './database';
+import { LOCAL_DATABASE_STORES_V1, LOCAL_DATABASE_STORES_V2, LOCAL_DATABASE_VERSION, localDatabaseName } from './database';
 
 describe('localDatabaseName', () => {
   it('scopes the IndexedDB database to the Telegram account without waiting for an app-user lookup', () => {
@@ -117,6 +117,18 @@ describe('LOCAL_DATABASE_STORES_V1 server alignment', () => {
     );
     expect(LOCAL_DATABASE_STORES_V1.sessionSets).toContain(
       '[sessionExerciseId+status+position]',
+    );
+  });
+});
+
+
+describe('LOCAL_DATABASE_STORES_V2', () => {
+  it('adds context-scoped exercise memberships without changing the v1 migration contract', () => {
+    expect(LOCAL_DATABASE_VERSION).toBe(2);
+    expect(LOCAL_DATABASE_STORES_V1).not.toHaveProperty('exerciseMemberships');
+    expect(LOCAL_DATABASE_STORES_V2.exerciseMemberships).toContain('contextKey');
+    expect(LOCAL_DATABASE_STORES_V2.exerciseMemberships).toContain(
+      '&[contextKey+exerciseDefinitionId]',
     );
   });
 });

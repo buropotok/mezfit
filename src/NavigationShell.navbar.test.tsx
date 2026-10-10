@@ -249,7 +249,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
     fireEvent.click(menuButton);
     const menuLabels = view.getAllByRole('menuitem').map((item) => item.textContent);
-    expect(menuLabels).toEqual(['Упражнения', 'Календарь', 'Настройки', 'О приложении']);
+    expect(menuLabels).toEqual(['Календарь', 'Настройки', 'О приложении']);
   });
 
   it('keeps level-one tabs interactive while rendering the surface action in the shared FAB slot', () => {

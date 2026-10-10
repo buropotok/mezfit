@@ -143,9 +143,20 @@ describe('listWorkoutExerciseOptions', () => {
       expect.objectContaining({ id: 42, name: 'Жим лёжа' }),
     ]);
 
-    expect(preparedSql[0]).toContain("COALESCE(e.category_code, 'other') = ?");
+    expect(preparedSql[0]).toContain("(? IS NULL OR COALESCE(e.category_code, 'other') = ?)");
     expect(preparedSql[0]).not.toContain('LIKE');
-    expect(bindCalls[0]?.args).toEqual([7, 7, 7, 'chest']);
+    expect(preparedSql[0]).not.toContain('LIMIT 250');
+    expect(bindCalls[0]?.args).toEqual([7, 7, 7, 'chest', 'chest']);
+  });
+
+  it('loads the entire visible catalogue when no category is supplied', async () => {
+    const { db, bindCalls } = createDb({ exerciseRows: [benchPressRow] });
+
+    await expect(listWorkoutExerciseOptions(db, 7)).resolves.toEqual([
+      expect.objectContaining({ id: 42 }),
+    ]);
+
+    expect(bindCalls[0]?.args).toEqual([7, 7, 7, null, null]);
   });
 });
 

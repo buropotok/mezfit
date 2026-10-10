@@ -158,6 +158,7 @@ export interface ExerciseDefinition {
   id: number;
   scope: ExerciseScope;
   name: string;
+  name_en?: string | null;
   description: string | null;
   tracking_type: TrackingType;
   category_code: ExerciseCategoryCode | null;
@@ -165,6 +166,7 @@ export interface ExerciseDefinition {
   reference_source: string | null;
   reference_key: string | null;
   reference_media_url: string | null;
+  is_archived?: boolean;
   is_favourite: boolean;
   can_edit: boolean;
 }
@@ -294,6 +296,129 @@ function localizeWorkoutSession(session: ActiveWorkoutSession): ActiveWorkoutSes
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+const exerciseScopes = new Set<ExerciseScope>(['global', 'coach', 'client']);
+const exerciseTrackingTypes = new Set<TrackingType>([
+  'weight_reps',
+  'time',
+  'time_distance',
+  'time_reps',
+  'time_weight',
+]);
+const exerciseCategoryCodes = new Set<ExerciseCategoryCode>([
+  'chest',
+  'arms',
+  'back',
+  'legs',
+  'shoulders',
+  'core',
+  'full_body',
+  'cardio',
+  'other',
+]);
+const exerciseEquipmentCodes = new Set<ExerciseEquipmentCode>([
+  'bodyweight',
+  'barbell',
+  'dumbbell_single',
+  'dumbbell_pair',
+  'cable',
+  'machine',
+  'other',
+]);
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
+
+function decodeExerciseDefinition(value: unknown): ExerciseDefinition | null {
+  if (!isRecord(value)) return null;
+
+  const scope = value.scope;
+  const trackingType = value.tracking_type;
+  const categoryCode = value.category_code;
+  const equipmentCode = value.equipment_code;
+  const nameEn = value.name_en;
+
+  if (
+    typeof value.id !== 'number'
+    || !Number.isInteger(value.id)
+    || value.id <= 0
+    || typeof scope !== 'string'
+    || !exerciseScopes.has(scope as ExerciseScope)
+    || typeof value.name !== 'string'
+    || value.name.length === 0
+    || (nameEn !== undefined && !isNullableString(nameEn))
+    || !isNullableString(value.description)
+    || typeof trackingType !== 'string'
+    || !exerciseTrackingTypes.has(trackingType as TrackingType)
+    || (
+      categoryCode !== null
+      && (
+        typeof categoryCode !== 'string'
+        || !exerciseCategoryCodes.has(categoryCode as ExerciseCategoryCode)
+      )
+    )
+    || (
+      equipmentCode !== null
+      && (
+        typeof equipmentCode !== 'string'
+        || !exerciseEquipmentCodes.has(equipmentCode as ExerciseEquipmentCode)
+      )
+    )
+    || !isNullableString(value.reference_source)
+    || !isNullableString(value.reference_key)
+    || !isNullableString(value.reference_media_url)
+    || (value.is_archived !== undefined && typeof value.is_archived !== 'boolean')
+    || typeof value.is_favourite !== 'boolean'
+    || typeof value.can_edit !== 'boolean'
+  ) return null;
+
+  return {
+    id: value.id,
+    scope: scope as ExerciseScope,
+    name: value.name,
+    name_en: nameEn === undefined ? null : nameEn,
+    description: value.description,
+    tracking_type: trackingType as TrackingType,
+    category_code: categoryCode as ExerciseCategoryCode | null,
+    equipment_code: equipmentCode as ExerciseEquipmentCode | null,
+    reference_source: value.reference_source,
+    reference_key: value.reference_key,
+    reference_media_url: value.reference_media_url,
+    is_archived: value.is_archived ?? false,
+    is_favourite: value.is_favourite,
+    can_edit: value.can_edit,
+  };
+}
+
+function decodeExerciseListResponse(value: unknown): { exercises: ExerciseDefinition[] } {
+  if (!isRecord(value) || !Array.isArray(value.exercises)) {
+    throw new ApiError(502, 'Некорректный ответ каталога упражнений', 'INVALID_API_RESPONSE');
+  }
+  const exercises = value.exercises.map(decodeExerciseDefinition);
+  if (exercises.some((exercise) => exercise === null)) {
+    throw new ApiError(502, 'Некорректный ответ каталога упражнений', 'INVALID_API_RESPONSE');
+  }
+  return { exercises: exercises as ExerciseDefinition[] };
+}
+
+function decodeExerciseResponse(value: unknown): { exercise: ExerciseDefinition } {
+  if (!isRecord(value)) {
+    throw new ApiError(502, 'Некорректный ответ упражнения', 'INVALID_API_RESPONSE');
+  }
+  const exercise = decodeExerciseDefinition(value.exercise);
+  if (!exercise) {
+    throw new ApiError(502, 'Некорректный ответ упражнения', 'INVALID_API_RESPONSE');
+  }
+  return { exercise };
+}
+
+function decodeOkResponse(value: unknown, message: string): { ok: true } {
+  if (!isRecord(value) || value.ok !== true) {
+    throw new ApiError(502, message, 'INVALID_API_RESPONSE');
+  }
+  return { ok: true };
 }
 
 function decodeSchedulePerson(value: unknown): SchedulePersonSummary | null {
@@ -559,25 +684,48 @@ export async function getClientExercises(
   clientUserId: number,
   search = '',
 ): Promise<{ exercises: ExerciseDefinition[] }> {
-  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/coach/clients/${clientUserId}/exercises`);
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/coach/clients/${clientUserId}/exercises`,
+  );
+  const result = decodeExerciseListResponse(response);
   const needle = search.trim().toLocaleLowerCase('ru-RU');
-  const exercises = result.exercises.map(localizeExercise).filter((exercise, index) => {
+  const exercises = result.exercises.map(localizeExercise).filter((exercise) => {
     if (!needle) return true;
-    const sourceName = result.exercises[index]?.name.toLocaleLowerCase('en-US') ?? '';
-    return exercise.name.toLocaleLowerCase('ru-RU').includes(needle) || sourceName.includes(needle);
+    const englishName = exercise.name_en?.toLocaleLowerCase('en-US') ?? '';
+    return exercise.name.toLocaleLowerCase('ru-RU').includes(needle)
+      || englishName.includes(needle);
   });
   return { exercises };
 }
 
-export function createClientExercise(
+export async function getClientExerciseHistory(
+  initData: string,
+  clientUserId: number,
+): Promise<{ exercises: ExerciseDefinition[] }> {
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/coach/clients/${clientUserId}/exercise-history`,
+  );
+  const result = decodeExerciseListResponse(response);
+  return { exercises: result.exercises.map(localizeExercise) };
+}
+
+export async function createClientExercise(
   initData: string,
   clientUserId: number,
   input: ExerciseDefinitionInput & { scope: 'coach' | 'client' },
 ): Promise<{ exercise: ExerciseDefinition }> {
-  return apiRequest(initData, `/api/coach/clients/${clientUserId}/exercises`, {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/coach/clients/${clientUserId}/exercises`,
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
+  );
+  const result = decodeExerciseResponse(response);
+  return { exercise: localizeExercise(result.exercise) };
 }
 
 export async function getCoachExercises(
@@ -591,12 +739,17 @@ export async function getCoachExercises(
   if (filters.favouritesOnly) query.set('favourites', '1');
   if (filters.sort && filters.sort !== 'alphabetical') query.set('sort', filters.sort);
   const suffix = query.size ? `?${query.toString()}` : '';
-  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/coach/exercises${suffix}`);
+  const response = await apiRequest<unknown>(initData, `/api/coach/exercises${suffix}`);
+  const result = decodeExerciseListResponse(response);
   return { exercises: result.exercises.map(localizeExercise) };
 }
 
-export async function getCoachExercise(initData: string, exerciseId: number): Promise<{ exercise: ExerciseDefinition }> {
-  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`);
+export async function getCoachExercise(
+  initData: string,
+  exerciseId: number,
+): Promise<{ exercise: ExerciseDefinition }> {
+  const response = await apiRequest<unknown>(initData, `/api/coach/exercises/${exerciseId}`);
+  const result = decodeExerciseResponse(response);
   return { exercise: localizeExercise(result.exercise) };
 }
 
@@ -604,10 +757,11 @@ export async function createCoachExercise(
   initData: string,
   input: ExerciseDefinitionInput,
 ): Promise<{ exercise: ExerciseDefinition }> {
-  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, '/api/coach/exercises', {
+  const response = await apiRequest<unknown>(initData, '/api/coach/exercises', {
     method: 'POST',
     body: JSON.stringify(input),
   });
+  const result = decodeExerciseResponse(response);
   return { exercise: localizeExercise(result.exercise) };
 }
 
@@ -616,26 +770,44 @@ export async function updateCoachExercise(
   exerciseId: number,
   input: ExerciseDefinitionInput,
 ): Promise<{ exercise: ExerciseDefinition }> {
-  const result = await apiRequest<{ exercise: ExerciseDefinition }>(initData, `/api/coach/exercises/${exerciseId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/coach/exercises/${exerciseId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    },
+  );
+  const result = decodeExerciseResponse(response);
   return { exercise: localizeExercise(result.exercise) };
 }
 
-export function archiveCoachExercise(initData: string, exerciseId: number): Promise<{ ok: true }> {
-  return apiRequest(initData, `/api/coach/exercises/${exerciseId}`, { method: 'DELETE' });
+export async function archiveCoachExercise(
+  initData: string,
+  exerciseId: number,
+): Promise<{ ok: true }> {
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/coach/exercises/${exerciseId}`,
+    { method: 'DELETE' },
+  );
+  return decodeOkResponse(response, 'Некорректный ответ удаления упражнения');
 }
 
-export function setCoachExerciseFavourite(
+export async function setCoachExerciseFavourite(
   initData: string,
   exerciseId: number,
   favourite: boolean,
 ): Promise<{ ok: true }> {
-  return apiRequest(initData, `/api/coach/exercises/${exerciseId}/favourite`, {
-    method: 'PUT',
-    body: JSON.stringify({ favourite }),
-  });
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/coach/exercises/${exerciseId}/favourite`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ favourite }),
+    },
+  );
+  return decodeOkResponse(response, 'Некорректный ответ избранного');
 }
 
 export async function getScheduleOccurrences(
@@ -694,10 +866,14 @@ export async function cancelScheduleOccurrence(
 
 export async function getWorkoutExerciseOptions(
   initData: string,
-  categoryCode: ExerciseCategoryCode,
+  categoryCode?: ExerciseCategoryCode,
 ): Promise<{ exercises: ExerciseDefinition[] }> {
-  const query = new URLSearchParams({ category: categoryCode });
-  const result = await apiRequest<{ exercises: ExerciseDefinition[] }>(initData, `/api/workout-sessions/exercises?${query.toString()}`);
+  const suffix = categoryCode ? `?category=${encodeURIComponent(categoryCode)}` : '';
+  const response = await apiRequest<unknown>(
+    initData,
+    `/api/workout-sessions/exercises${suffix}`,
+  );
+  const result = decodeExerciseListResponse(response);
   return { exercises: result.exercises.map(localizeExercise) };
 }
 

@@ -125,13 +125,13 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
   if (url.pathname === '/api/workout-sessions/exercises') {
     if (request.method !== 'GET') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
     const category = url.searchParams.get('category');
-    if (!category || !exerciseCategoryCodes.has(category as ExerciseCategoryCode)) {
+    if (category !== null && !exerciseCategoryCodes.has(category as ExerciseCategoryCode)) {
       return errorResponse(400, 'INVALID_CATEGORY', 'Exercise category is invalid');
     }
     const exercises = await listWorkoutExerciseOptions(
       db,
       userId,
-      category as ExerciseCategoryCode,
+      category as ExerciseCategoryCode | null,
     );
     return jsonResponse({ exercises });
   }

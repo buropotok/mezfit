@@ -79,7 +79,6 @@ function reducer(state: State, action: Action): State {
 
 const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
   analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика тренировок, нагрузки и прогресса.' },
-  exercises: { title: 'Упражнения', text: 'Здесь будет доступ к упражнениям и истории результатов по ним.' },
   history: { title: 'История', text: 'Здесь появятся завершённые тренировки и фактические результаты.' },
   progress: { title: 'Прогресс', text: 'Здесь появятся замеры и производные показатели прогресса.' },
   settings: { title: 'Настройки', text: 'Настройки Mezfit будут добавляться по мере появления пользовательских параметров.' },
@@ -379,6 +378,8 @@ export function App() {
             />
           ) : destination === 'settings' ? (
           <SettingsPage
+            initData={state.initData}
+            activeRole={state.activeRole}
             glassSettings={glassSettings}
             onGlassSettingsChange={setGlassSettings}
             typographySettings={typographySettings}

@@ -10,8 +10,7 @@ import {
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
-import { ExerciseCatalog } from './ExerciseCatalog';
-import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
+import { ClientExercises } from '../exercises';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
@@ -104,7 +103,7 @@ function ClientWorkspace({ initData, client }: { initData: string; client: Coach
 
       <TabsContent value="overview"><Placeholder title="Обзор" text="Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера." /></TabsContent>
       <TabsContent value="program"><Placeholder title="Программа" text="Редактор назначенной программы будет следующим вертикальным срезом." /></TabsContent>
-      <TabsContent value="exercises"><ExerciseCatalog initData={initData} clientUserId={client.user.id} /></TabsContent>
+      <TabsContent value="exercises"><ClientExercises initData={initData} clientUserId={client.user.id} /></TabsContent>
       <TabsContent value="calendar"><Placeholder title="Календарь" text="Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence." /></TabsContent>
       <TabsContent value="progress"><Placeholder title="Прогресс" text="Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра." /></TabsContent>
       <TabsContent value="history"><Placeholder title="История" text="Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом." /></TabsContent>
@@ -280,7 +279,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     }
 
     if (!selectedClient) {
-      if (destination !== 'exercises' && destination !== 'today') onNavigationContextChange(null);
+      if (destination !== 'today') onNavigationContextChange(null);
       return undefined;
     }
 
@@ -312,10 +311,6 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         onNavigationContextChange={onNavigationContextChange}
       />
     );
-  }
-
-  if (destination === 'exercises') {
-    return <GlobalExerciseCatalog initData={initData} onNavigationContextChange={onNavigationContextChange} />;
   }
 
   if (destination === 'programs') {

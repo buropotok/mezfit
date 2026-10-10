@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { GlobalExerciseCatalog } from '../coach/GlobalExerciseCatalog';
-import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
-import { BottomSheet, FloatingActionButton, IconButton, Text } from '../ui';
+import { useEffect, useState } from 'react';
+import { MezfitExercisesSheet } from '../exercises';
+import type { NavigationContext } from '../NavigationShell';
+import { Button, Text } from '../ui';
 
 interface WorkoutExerciseSelectionSheetProps {
   initData: string;
@@ -20,9 +20,17 @@ export function WorkoutExerciseSelectionSheet({
   onClose,
   onNavigationContextChange,
 }: WorkoutExerciseSelectionSheetProps) {
-  const requestBackTransition = useNavigationBackTransition();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
-  const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
+
+  useEffect(() => {
+    onNavigationContextChange?.({
+      title: 'Упражнения',
+      scrollKey: 'workout-exercise-selection',
+      identity: { title: 'Упражнения', icon: 'barbell' },
+      onBack: onClose,
+    });
+    return () => onNavigationContextChange?.(null);
+  }, [onClose, onNavigationContextChange]);
 
   const toggleExercise = (exerciseDefinitionId: number) => {
     if (saving) return;
@@ -34,71 +42,31 @@ export function WorkoutExerciseSelectionSheet({
     });
   };
 
-  const close = useCallback(() => {
-    if (!saving) onClose();
-  }, [onClose, saving]);
-
-  const requestBack = useCallback(() => {
-    if (saving) return;
-    if (navigationContext?.onBack) requestBackTransition(navigationContext.onBack);
-    else onClose();
-  }, [navigationContext, onClose, requestBackTransition, saving]);
-
-  const externalNavigationTitle = navigationContext?.title ?? 'Упражнения';
-  const externalNavigationScrollKey = navigationContext?.scrollKey ?? 'root';
-  const externalNavigationContext = useMemo<NavigationContext>(() => ({
-    title: externalNavigationTitle,
-    scrollKey: `workout-exercise-selection:${externalNavigationScrollKey}`,
-    identity: { title: externalNavigationTitle, icon: 'barbell' },
-    onBack: requestBack,
-  }), [externalNavigationScrollKey, externalNavigationTitle, requestBack]);
-
-  useEffect(() => {
-    onNavigationContextChange?.(externalNavigationContext);
-  }, [externalNavigationContext, onNavigationContextChange]);
-
-  useEffect(() => () => {
-    onNavigationContextChange?.(null);
-  }, [onNavigationContextChange]);
-
-  const floatingAction = selectedIds.size > 0 ? (
-    <FloatingActionButton
-      placement="right"
-      label="Добавить выбранные упражнения"
-      disabled={saving}
-      onClick={() => onConfirm([...selectedIds])}
-    >
-      ОК
-    </FloatingActionButton>
-  ) : undefined;
-
   return (
-    <BottomSheet
-      isOpen
-      title={navigationContext?.title ?? 'Упражнения'}
-      headerLeading={navigationContext ? (
-        <IconButton label="Назад" disabled={saving} onClick={requestBack}>
-          <span aria-hidden="true">←</span>
-        </IconButton>
+    <MezfitExercisesSheet
+      opened
+      initData={initData}
+      mode="select"
+      selectedExerciseIds={selectedIds}
+      selectionDisabled={saving}
+      onToggleExercise={toggleExercise}
+      onClose={() => {
+        if (!saving) onClose();
+      }}
+      notice={actionError ? (
+        <Text variant="footnote" role="alert" className="mezfit-exercises__error">
+          {actionError}
+        </Text>
       ) : undefined}
-      floatingAction={floatingAction}
-      hasCloseButton={!saving && navigationContext === null}
-      closeOnBackdrop={!saving}
-      modalColor
-      inset
-      onClose={close}
-    >
-      <div style={{ padding: '0 1.5rem 1.5rem' }}>
-        {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
-        <GlobalExerciseCatalog
-          initData={initData}
-          mode="select"
-          selectedExerciseIds={selectedIds}
-          selectionDisabled={saving}
-          onToggleExercise={toggleExercise}
-          onNavigationContextChange={setNavigationContext}
-        />
-      </div>
-    </BottomSheet>
+      footer={selectedIds.size > 0 ? (
+        <Button
+          aria-label="Добавить выбранные упражнения"
+          disabled={saving}
+          onClick={() => onConfirm([...selectedIds])}
+        >
+          {saving ? 'Добавляем…' : `Добавить выбранные · ${selectedIds.size}`}
+        </Button>
+      ) : undefined}
+    />
   );
 }

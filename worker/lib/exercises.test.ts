@@ -5,6 +5,7 @@ import {
   getExerciseForCoach,
   listExercisesForClient,
   listExercisesForCoach,
+  listPerformedExercisesForClient,
   updateExerciseForCoach,
 } from './exercises';
 
@@ -98,6 +99,25 @@ describe('global exercise catalogue', () => {
     expect(result[0].name).toBe('Жим тренера');
     expect(normalizedSql(db.queries[0].sql)).toContain('o.coach_user_id=?');
     expect(db.queries[0].args.slice(0, 5)).toEqual([7, 7, 7, 7, 42]);
+  });
+
+  it('builds client exercise history from completed FACT without excluding archived definitions', async () => {
+    const db = new FakeDb();
+    db.rows = [{ ...globalRow, name: 'Исторический жим', is_archived: 1 }];
+
+    const result = await listPerformedExercisesForClient(
+      db as unknown as D1Database,
+      7,
+      42,
+    );
+
+    expect(result.map((item) => item.id)).toEqual([1]);
+    expect(result[0].is_archived).toBe(true);
+    const sql = normalizedSql(db.queries[0].sql);
+    expect(sql).toContain("ss.status = 'completed'");
+    expect(sql).toContain('ws.user_id = ?');
+    expect(sql).not.toContain('e.is_archived=0');
+    expect(db.queries[0].args).toEqual([7, 7, 42, 7, 7, 42]);
   });
 
   it('filters category and tracking type on effective override values', async () => {
