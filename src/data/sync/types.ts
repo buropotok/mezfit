@@ -50,6 +50,7 @@ export class SyncTransportError extends Error {
 }
 
 export type SyncFlushOutcome =
+  | { kind: 'failed'; error: string }
   | { kind: 'clean' }
   | { kind: 'accepted'; serverRevision: number; newerLocalChanges: boolean }
   | { kind: 'conflict'; serverRevision: number }
