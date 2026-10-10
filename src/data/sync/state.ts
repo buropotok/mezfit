@@ -97,6 +97,9 @@ export async function recordHydratedSyncScope(
   serverRevision: number,
   now = Date.now(),
 ): Promise<LocalSyncScopeRow> {
+  if (!Number.isSafeInteger(serverRevision) || serverRevision < 0) {
+    throw new Error('SYNC_SERVER_REVISION_INVALID');
+  }
   const raw = await table.get(scopeKey);
   if (!raw) {
     const created = createSyncScopeRow(scopeKey, scopeType, now, serverRevision);
