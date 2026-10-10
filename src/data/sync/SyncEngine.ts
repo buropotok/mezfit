@@ -158,7 +158,8 @@ export class SyncEngine {
 
     if (row.status === 'clean') {
       if (row.remoteChanged) {
-        await this.pullUnlocked(scopeKey);
+        const pull = await this.pullUnlocked(scopeKey);
+        if (pull.kind === 'failed') return pull;
       }
       return { kind: 'clean' };
     }
@@ -415,7 +416,7 @@ export class SyncEngine {
 
     try {
       const remote: SyncPullResult = await adapter.pull(scopeKey);
-      if (remote.scopeKey !== scopeKey) throw new Error('SYNC_REMOTE_SCOPE_MISMATCH');
+      if (!remote || typeof remote !== 'object' || remote.scopeKey !== scopeKey) throw new Error('SYNC_REMOTE_SCOPE_MISMATCH');
       if (!validRevision(remote.serverRevision)) throw new Error('SYNC_PULL_REVISION_INVALID');
       if (
         expectedServerRevision !== null
