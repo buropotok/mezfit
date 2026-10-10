@@ -64,11 +64,11 @@ describe('SyncWorker', () => {
     worker.start();
     await vi.waitFor(() => expect(flushAll).toHaveBeenCalledTimes(1));
 
-    window.dispatchEvent(new Event('online'));
+    const queuedAutomaticWake = worker.wake();
     worker.stop();
     first.resolve(new Map<string, never>());
     await first.promise;
-    await Promise.resolve();
+    await queuedAutomaticWake;
 
     expect(flushAll).toHaveBeenCalledTimes(1);
 
