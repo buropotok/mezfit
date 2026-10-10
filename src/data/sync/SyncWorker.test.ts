@@ -126,7 +126,7 @@ describe('SyncWorker', () => {
     await Promise.resolve();
     expect(stopped).toBe(false);
 
-    first.resolve(new Map());
+    first.resolve(new Map<string, never>());
     await Promise.all([stopping, pendingWake]);
     expect(stopped).toBe(true);
     expect(flushAll).toHaveBeenCalledTimes(1);
