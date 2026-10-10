@@ -246,7 +246,9 @@ export interface LocalSyncScopeRow {
   lastError: string | null;
   inflightRequestId: string | null;
   inflightRevision: number | null;
+  inflightSnapshotJson: string | null;
   remoteChanged: boolean;
+  remoteChangeCounter: number;
   updatedAt: number;
 }
 
