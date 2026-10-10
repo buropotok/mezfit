@@ -12,11 +12,12 @@ export class SyncRequestReuseError extends Error {
 export function validateSyncEnvelopeMetadata(
   envelope: Pick<SyncPushEnvelope, 'requestId' | 'scopeKey' | 'baseServerRevision'>,
 ): void {
-  if (!/^[A-Za-z0-9-]{8,100}$/.test(envelope.requestId)) {
+  if (typeof envelope.requestId !== 'string' || !/^[A-Za-z0-9-]{8,100}$/.test(envelope.requestId)) {
     throw new Error('SYNC_REQUEST_ID_INVALID');
   }
   if (
-    envelope.scopeKey.length < 3
+    typeof envelope.scopeKey !== 'string'
+    || envelope.scopeKey.length < 3
     || envelope.scopeKey.length > 200
     || !/^[A-Za-z0-9:_-]+$/.test(envelope.scopeKey)
   ) {
