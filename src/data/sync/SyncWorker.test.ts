@@ -113,6 +113,25 @@ describe('SyncWorker', () => {
     worker.stop();
   });
 
+  it('awaits an active flush before completing stop and drops queued passes', async () => {
+    const first = deferred<Map<string, never>>();
+    const flushAll = vi.fn().mockImplementationOnce(() => first.promise);
+    const worker = new SyncWorker({ flushAll } as unknown as SyncEngine, { intervalMs: 60_000 });
+
+    worker.start();
+    await vi.waitFor(() => expect(flushAll).toHaveBeenCalledTimes(1));
+    const pendingWake = worker.wake();
+    let stopped = false;
+    const stopping = worker.stop().then(() => { stopped = true; });
+    await Promise.resolve();
+    expect(stopped).toBe(false);
+
+    first.resolve(new Map());
+    await Promise.all([stopping, pendingWake]);
+    expect(stopped).toBe(true);
+    expect(flushAll).toHaveBeenCalledTimes(1);
+  });
+
   it('start and stop are idempotent', async () => {
     const flushAll = vi.fn().mockResolvedValue(new Map());
     const engine = { flushAll } as unknown as SyncEngine;
