@@ -195,6 +195,27 @@ describe('applySyncBatch', () => {
     expect(fake.requests.get('request-0001')?.fingerprint).toHaveLength(64);
   });
 
+  it('treats equivalent snapshots with different object key order as the same retry', async () => {
+    const fake = new FakeDb();
+    const db = fake as unknown as D1Database;
+    const original = {
+      requestId: 'request-0001',
+      scopeKey: 'program:1',
+      baseServerRevision: 0,
+      snapshot: { alpha: 1, nested: { beta: 2, gamma: 3 } },
+    };
+    const reordered = {
+      ...original,
+      snapshot: { nested: { gamma: 3, beta: 2 }, alpha: 1 },
+    };
+
+    await applySyncBatch(db, original, []);
+    await expect(applySyncBatch(db, reordered, [])).resolves.toEqual({
+      kind: 'accepted',
+      serverRevision: 1,
+    });
+  });
+
   it('returns the original result for an idempotent retry without applying the domain twice', async () => {
     const fake = new FakeDb();
     const db = fake as unknown as D1Database;

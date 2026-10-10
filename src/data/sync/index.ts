@@ -1,5 +1,9 @@
 export { SyncEngine, type SyncEngineOptions } from './SyncEngine';
-export { SyncWorker, type SyncWorkerOptions } from './SyncWorker';
+export {
+  SyncWorker,
+  SyncWorkerScopeError,
+  type SyncWorkerOptions,
+} from './SyncWorker';
 export {
   DexieSyncStateStore,
   createSyncScopeRow,

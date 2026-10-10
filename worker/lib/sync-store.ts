@@ -80,18 +80,26 @@ export async function readSyncScopeRevision(
  * A caller that mutates domain data at the same time must place that mutation
  * and the revision bump in one D1 batch/transaction.
  */
-export async function bumpSyncScopeRevision(
+export function prepareSyncScopeRevisionBump(
   db: D1Database,
   scopeKey: string,
-): Promise<number> {
-  const row = await db.prepare(`
+): D1PreparedStatement {
+  return db.prepare(`
     INSERT INTO sync_scope_revision(scope_key, revision, updated_at)
     VALUES (?, 1, CURRENT_TIMESTAMP)
     ON CONFLICT(scope_key) DO UPDATE SET
       revision = sync_scope_revision.revision + 1,
       updated_at = CURRENT_TIMESTAMP
     RETURNING revision
-  `).bind(scopeKey).first<{ revision: number }>();
+  `).bind(scopeKey);
+}
+
+export async function bumpSyncScopeRevision(
+  db: D1Database,
+  scopeKey: string,
+): Promise<number> {
+  const row = await prepareSyncScopeRevisionBump(db, scopeKey)
+    .first<{ revision: number }>();
   if (!row) throw new Error('SYNC_REVISION_BUMP_FAILED');
   return row.revision;
 }
