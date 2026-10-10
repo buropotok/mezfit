@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: mezfit-production-deploy
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -25,6 +30,15 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+      - name: Verify deployment commit is current main
+        shell: bash
+        run: |
+          git fetch origin main --depth=1
+          CURRENT_MAIN=$(git rev-parse origin/main)
+          if [ "$CURRENT_MAIN" != "$GITHUB_SHA" ]; then
+            echo "Refusing stale deploy: workflow commit $GITHUB_SHA is not current main $CURRENT_MAIN"
+            exit 1
+          fi
       - name: Resolve D1 database id
         shell: bash
         run: |
