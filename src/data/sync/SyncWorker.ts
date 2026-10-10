@@ -2,6 +2,7 @@ import type { SyncEngine } from './SyncEngine';
 
 export interface SyncWorkerOptions {
   intervalMs?: number;
+  onError?: (error: unknown) => void;
 }
 
 export class SyncWorker {
@@ -11,12 +12,14 @@ export class SyncWorker {
   private rerunRequested = false;
   private rerunForce = false;
   private readonly intervalMs: number;
+  private readonly onError: (error: unknown) => void;
 
   constructor(
     private readonly engine: SyncEngine,
     options: SyncWorkerOptions = {},
   ) {
     this.intervalMs = Math.max(1_000, options.intervalMs ?? 15_000);
+    this.onError = options.onError ?? (() => undefined);
   }
 
   start(): void {
@@ -28,7 +31,7 @@ export class SyncWorker {
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', this.onVisibilityChange);
     }
-    void this.wake();
+    this.triggerWake();
   }
 
   stop(): void {
@@ -76,12 +79,18 @@ export class SyncWorker {
   }
 
   private readonly onOnline = () => {
-    void this.wake();
+    this.triggerWake();
   };
 
   private readonly onVisibilityChange = () => {
-    if (document.visibilityState === 'visible') void this.wake();
+    if (document.visibilityState === 'visible') this.triggerWake();
   };
+
+  private triggerWake(options: { force?: boolean } = {}): void {
+    void this.wake(options).catch((error: unknown) => {
+      this.onError(error);
+    });
+  }
 
   private clearTimer(): void {
     if (this.timer !== null) {
@@ -95,7 +104,7 @@ export class SyncWorker {
     this.clearTimer();
     this.timer = setTimeout(() => {
       this.timer = null;
-      void this.wake();
+      this.triggerWake();
     }, this.intervalMs);
   }
 }

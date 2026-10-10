@@ -23,13 +23,26 @@ describe('SyncWorker', () => {
     await vi.waitFor(() => expect(flushAll).toHaveBeenCalledTimes(1));
 
     const manualWake = worker.wake({ force: true });
-    first.resolve(new Map());
+    first.resolve(new Map<string, never>());
     await manualWake;
 
     expect(flushAll).toHaveBeenCalledTimes(2);
     expect(flushAll).toHaveBeenNthCalledWith(1, { force: false });
     expect(flushAll).toHaveBeenNthCalledWith(2, { force: true });
 
+    worker.stop();
+  });
+
+  it('contains fire-and-forget wake failures at the worker boundary', async () => {
+    const failure = new Error('indexeddb unavailable');
+    const flushAll = vi.fn().mockRejectedValue(failure);
+    const onError = vi.fn();
+    const engine = { flushAll } as unknown as SyncEngine;
+    const worker = new SyncWorker(engine, { intervalMs: 60_000, onError });
+
+    worker.start();
+
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
     worker.stop();
   });
 

@@ -176,6 +176,7 @@ export class SyncEngine {
       return { kind: 'skipped', reason: 'server_revision_unknown' };
     }
 
+    const baseServerRevision = row.serverRevision;
     const adapter = this.adapterFor(row.scopeType);
     const prepared = await this.prepareInflight(row, adapter, force);
     if (!prepared) return { kind: 'skipped', reason: 'changed_during_snapshot' };
@@ -184,7 +185,7 @@ export class SyncEngine {
     const envelope: SyncPushEnvelope = {
       requestId: prepared.requestId,
       scopeKey,
-      baseServerRevision: row.serverRevision,
+      baseServerRevision,
       snapshot: prepared.snapshot,
     };
 
@@ -255,6 +256,9 @@ export class SyncEngine {
           attemptCount,
           nextRetryAt,
           lastError: errorCode(error),
+          inflightRequestId: retryable ? current.inflightRequestId : null,
+          inflightRevision: retryable ? current.inflightRevision : null,
+          inflightSnapshotJson: retryable ? current.inflightSnapshotJson : null,
           updatedAt: this.now(),
         };
       });

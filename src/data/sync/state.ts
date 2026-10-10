@@ -108,6 +108,7 @@ export async function recordHydratedSyncScope(
   if (current.scopeType !== scopeType) throw new Error('SYNC_SCOPE_TYPE_MISMATCH');
 
   const clean = current.status === 'clean' && current.inflightRequestId === null;
+  const baselineMissing = current.serverRevision === null;
   const changedRemotely = current.serverRevision !== null
     && current.serverRevision !== serverRevision;
 
@@ -121,6 +122,7 @@ export async function recordHydratedSyncScope(
       }
     : {
         ...current,
+        serverRevision: baselineMissing ? serverRevision : current.serverRevision,
         remoteChanged: current.remoteChanged || changedRemotely,
         remoteChangeCounter: changedRemotely
           ? current.remoteChangeCounter + 1
