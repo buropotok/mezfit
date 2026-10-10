@@ -690,6 +690,79 @@ describe('SyncEngine', () => {
     expect(store.rows.get('program:1')?.remoteChanged).toBe(true);
   });
 
+  it('does not reset an active push when conflict resolution is repeated', async () => {
+    const store = new MemorySyncStateStore();
+    store.rows.set('program:1', scopeRow('program:1', {
+      status: 'conflict',
+      serverRevision: 4,
+    }));
+    const adapter = new FakeAdapter();
+    const pending = deferred<SyncPushResult>();
+    adapter.push.mockImplementationOnce(() => pending.promise);
+    const engine = new SyncEngine(store, [adapter], {
+      createRequestId: () => 'request-0001',
+    });
+
+    await engine.resumeAfterConflict('program:1', 4);
+    const flushing = engine.flush('program:1');
+    await vi.waitFor(() => expect(adapter.push).toHaveBeenCalledTimes(1));
+    const repeated = engine.resumeAfterConflict('program:1', 4);
+    pending.resolve({ kind: 'accepted', serverRevision: 5 });
+    await flushing;
+    await repeated;
+
+    expect(store.rows.get('program:1')).toMatchObject({
+      status: 'clean',
+      serverRevision: 5,
+      inflightRequestId: null,
+    });
+  });
+
+  it('rejects a contradictory accepted revision without losing the inflight request', async () => {
+    const store = new MemorySyncStateStore();
+    store.rows.set('program:1', scopeRow('program:1'));
+    const adapter = new FakeAdapter();
+    adapter.push.mockResolvedValue({ kind: 'accepted', serverRevision: 103 });
+    const engine = new SyncEngine(store, [adapter], {
+      createRequestId: () => 'request-0001',
+    });
+
+    await expect(engine.flush('program:1')).resolves.toMatchObject({ kind: 'retry_wait' });
+    expect(store.rows.get('program:1')).toMatchObject({
+      serverRevision: 3,
+      inflightRequestId: 'request-0001',
+    });
+  });
+
+  it('keeps reconciliation pending when a local edit defers the post-ACK pull', async () => {
+    const pull = deferred<SyncPullResult>();
+    const store = new MemorySyncStateStore();
+    store.rows.set('program:1', scopeRow('program:1', { remoteChanged: true }));
+    const adapter = new FakeAdapter();
+    adapter.pull.mockImplementationOnce(() => pull.promise);
+    const engine = new SyncEngine(store, [adapter], {
+      createRequestId: () => 'request-0001',
+    });
+
+    const flushing = engine.flush('program:1');
+    await vi.waitFor(() => expect(adapter.pull).toHaveBeenCalledTimes(1));
+    const current = store.rows.get('program:1');
+    if (!current) throw new Error('missing scope');
+    store.rows.set('program:1', {
+      ...current,
+      localRevision: current.localRevision + 1,
+      status: 'dirty',
+    });
+    pull.resolve({ scopeKey: 'program:1', serverRevision: 4, snapshot: { remote: 4 } });
+
+    await expect(flushing).resolves.toEqual({
+      kind: 'accepted',
+      serverRevision: 4,
+      newerLocalChanges: true,
+    });
+    expect(store.rows.get('program:1')?.remoteChanged).toBe(true);
+  });
+
   it('isolates a failed scope from unrelated scopes during flushAll', async () => {
     const store = new MemorySyncStateStore();
     store.rows.set('program:1', scopeRow('program:1'));
