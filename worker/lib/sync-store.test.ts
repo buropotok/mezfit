@@ -19,9 +19,9 @@ class FakeStatement {
     return statement;
   }
 
-  async run(): Promise<D1Result<unknown>> {
+  async run(): Promise<unknown> {
     this.db.run(this);
-    return { success: true, results: [], meta: {} } as D1Result<unknown>;
+    return { success: true, results: [], meta: {} };
   }
 
   async first<T>(): Promise<T | null> {
@@ -39,7 +39,7 @@ class FakeDb {
     return new FakeStatement(this, sql) as unknown as D1PreparedStatement;
   }
 
-  async batch(statements: D1PreparedStatement[]): Promise<D1Result<unknown>[]> {
+  async batch(statements: D1PreparedStatement[]): Promise<unknown[]> {
     if (this.raceRevisionOnBatch !== null) {
       const assertion = statements[0] as unknown as FakeStatement;
       const scopeKey = String(assertion.args[2]);
@@ -89,9 +89,7 @@ class FakeDb {
       throw error;
     }
 
-    return statements.map(() => (
-      { success: true, results: [], meta: {} } as D1Result<unknown>
-    ));
+    return statements.map(() => ({ success: true, results: [], meta: {} }));
   }
 
   run(statement: FakeStatement): void {

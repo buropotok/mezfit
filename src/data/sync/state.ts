@@ -115,7 +115,7 @@ export async function recordHydratedSyncScope(
     ? {
         ...current,
         serverRevision,
-        remoteChanged: false,
+        remoteChanged: current.remoteChanged,
         lastError: null,
         updatedAt: now,
       }

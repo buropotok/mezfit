@@ -9,6 +9,7 @@ export class SyncWorker {
   private started = false;
   private running: Promise<void> | null = null;
   private rerunRequested = false;
+  private rerunForce = false;
   private readonly intervalMs: number;
 
   constructor(
@@ -49,15 +50,20 @@ export class SyncWorker {
     if (!this.started && !options.force) return;
     if (this.running) {
       this.rerunRequested = true;
+      this.rerunForce = this.rerunForce || Boolean(options.force);
       await this.running;
       return;
     }
 
     this.clearTimer();
     this.running = (async () => {
+      let force = Boolean(options.force);
       do {
         this.rerunRequested = false;
-        await this.engine.flushAll({ force: options.force });
+        force = force || this.rerunForce;
+        this.rerunForce = false;
+        await this.engine.flushAll({ force });
+        force = false;
       } while (this.rerunRequested);
     })();
 
