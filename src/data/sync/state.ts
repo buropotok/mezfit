@@ -139,6 +139,24 @@ export class DexieSyncStateStore implements SyncStateStore {
     return row ? normalizeScope(row) : null;
   }
 
+  async ensure(
+    scopeKey: string,
+    scopeType: SyncScopeType,
+    now: number,
+  ): Promise<LocalSyncScopeRow> {
+    return this.db.transaction('rw', this.db.syncScopes, async () => {
+      const existing = await this.db.syncScopes.get(scopeKey);
+      if (existing) {
+        const normalized = normalizeScope(existing);
+        if (normalized.scopeType !== scopeType) throw new Error('SYNC_SCOPE_TYPE_MISMATCH');
+        return normalized;
+      }
+      const created = createSyncScopeRow(scopeKey, scopeType, now, null);
+      await this.db.syncScopes.put(created);
+      return created;
+    });
+  }
+
   async update(
     scopeKey: string,
     updater: (current: LocalSyncScopeRow) => LocalSyncScopeRow,

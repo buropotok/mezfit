@@ -21,6 +21,21 @@ class MemorySyncStateStore implements SyncStateStore {
     return row ? { ...row } : null;
   }
 
+  async ensure(
+    scopeKey: string,
+    scopeType: SyncScopeType,
+    now: number,
+  ): Promise<LocalSyncScopeRow> {
+    const existing = this.rows.get(scopeKey);
+    if (existing) {
+      if (existing.scopeType !== scopeType) throw new Error('SYNC_SCOPE_TYPE_MISMATCH');
+      return { ...existing };
+    }
+    const created = createSyncScopeRow(scopeKey, scopeType, now, null);
+    this.rows.set(scopeKey, created);
+    return { ...created };
+  }
+
   async update(
     scopeKey: string,
     updater: (current: LocalSyncScopeRow) => LocalSyncScopeRow,
@@ -312,13 +327,37 @@ describe('SyncEngine', () => {
     });
   });
 
+  it('creates a missing local scope when a remote change arrives first', async () => {
+    const store = new MemorySyncStateStore();
+    const adapter = new FakeAdapter();
+    adapter.remote = {
+      scopeKey: 'program:new',
+      serverRevision: 1,
+      snapshot: { remote: 'new' },
+    };
+    const engine = new SyncEngine(store, [adapter], { now: () => 2_000 });
+
+    await engine.notifyRemoteChange('program:new', 'program');
+    await expect(engine.refresh('program:new')).resolves.toEqual({
+      kind: 'applied',
+      serverRevision: 1,
+    });
+
+    expect(store.rows.get('program:new')).toMatchObject({
+      scopeType: 'program',
+      serverRevision: 1,
+      status: 'clean',
+      remoteChanged: false,
+    });
+  });
+
   it('defers an incoming server snapshot while local data is dirty', async () => {
     const store = new MemorySyncStateStore();
     store.rows.set('program:1', scopeRow('program:1'));
     const adapter = new FakeAdapter();
     const engine = new SyncEngine(store, [adapter]);
 
-    await engine.notifyRemoteChange('program:1');
+    await engine.notifyRemoteChange('program:1', 'program');
     await expect(engine.refresh('program:1')).resolves.toEqual({ kind: 'deferred' });
 
     expect(adapter.pull).not.toHaveBeenCalled();
@@ -340,7 +379,7 @@ describe('SyncEngine', () => {
 
     const refresh = engine.refresh('program:1');
     await vi.waitFor(() => expect(adapter.pull).toHaveBeenCalledTimes(1));
-    await engine.notifyRemoteChange('program:1');
+    await engine.notifyRemoteChange('program:1', 'program');
     pull.resolve({
       scopeKey: 'program:1',
       serverRevision: 4,

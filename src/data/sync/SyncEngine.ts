@@ -80,7 +80,8 @@ export class SyncEngine {
     return this.withScopeLock(scopeKey, () => this.pullUnlocked(scopeKey));
   }
 
-  async notifyRemoteChange(scopeKey: string): Promise<void> {
+  async notifyRemoteChange(scopeKey: string, scopeType: SyncScopeType): Promise<void> {
+    await this.store.ensure(scopeKey, scopeType, this.now());
     await this.store.update(scopeKey, (current) => ({
       ...current,
       remoteChanged: true,

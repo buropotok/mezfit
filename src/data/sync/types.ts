@@ -24,6 +24,11 @@ export interface SyncScopeAdapter {
 
 export interface SyncStateStore {
   get(scopeKey: string): Promise<LocalSyncScopeRow | null>;
+  ensure(
+    scopeKey: string,
+    scopeType: SyncScopeType,
+    now: number,
+  ): Promise<LocalSyncScopeRow>;
   update(
     scopeKey: string,
     updater: (current: LocalSyncScopeRow) => LocalSyncScopeRow,
