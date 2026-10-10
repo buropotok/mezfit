@@ -109,8 +109,12 @@ export async function recordHydratedSyncScope(
 
   const clean = current.status === 'clean' && current.inflightRequestId === null;
   const baselineMissing = current.serverRevision === null;
+  const staleHydration = current.serverRevision !== null
+    && serverRevision < current.serverRevision;
+  if (staleHydration) return current;
+
   const changedRemotely = current.serverRevision !== null
-    && current.serverRevision !== serverRevision;
+    && serverRevision > current.serverRevision;
 
   const waitingForInitialBaseline = baselineMissing
     && current.status === 'retry_wait'

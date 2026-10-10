@@ -157,6 +157,52 @@ describe('markSyncScopeDirty', () => {
     });
   });
 
+  it('ignores stale hydration after a newer clean server revision is already known', async () => {
+    const table = new FakeScopeTable();
+    table.rows.set('program:1', createSyncScopeRow('program:1', 'program', 1_000, 5));
+
+    const hydrated = await recordHydratedSyncScope(
+      table,
+      'program:1',
+      'program',
+      4,
+      2_000,
+    );
+
+    expect(hydrated).toMatchObject({
+      serverRevision: 5,
+      status: 'clean',
+      remoteChanged: false,
+      remoteChangeCounter: 0,
+      updatedAt: 1_000,
+    });
+  });
+
+  it('does not mark a dirty scope remotely changed for a stale hydration response', async () => {
+    const table = new FakeScopeTable();
+    table.rows.set('program:1', scopeRow('program:1', {
+      serverRevision: 5,
+      status: 'dirty',
+      remoteChanged: false,
+      remoteChangeCounter: 0,
+    }));
+
+    const hydrated = await recordHydratedSyncScope(
+      table,
+      'program:1',
+      'program',
+      4,
+      2_000,
+    );
+
+    expect(hydrated).toMatchObject({
+      serverRevision: 5,
+      status: 'dirty',
+      remoteChanged: false,
+      remoteChangeCounter: 0,
+    });
+  });
+
   it('releases a manual-only retry when late hydration supplies the first server baseline', async () => {
     const table = new FakeScopeTable();
     table.rows.set('program:new', scopeRow('program:new', {
