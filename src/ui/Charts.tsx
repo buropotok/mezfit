@@ -204,32 +204,47 @@ export function MezfitLineChart<T extends object>({ label, data, series, xKey, h
 
 /** Category comparison. Caller owns metric normalization and units. */
 export function MezfitRadarChart<T extends object>({ label, data, series, angleKey, domain, height = 280, className }: MezfitRadarChartProps<T>) {
-  // Recharts treats missing radar values as zero radius. Never render incomplete polygons.
+  // Duplicated/blank labels collapse radar angles; missing numbers become misleading zeros.
+  const uniqueAxes = new Set<string>();
   const validAxes = data.length >= 3 && data.every((point) => {
     const category = point[angleKey];
-    return typeof category === 'string' ? category.length > 0 : isFiniteNumber(category);
+    if (!isValidCategory(category)) return false;
+    const name = String(category).trim();
+    if (uniqueAxes.has(name)) return false;
+    uniqueAxes.add(name);
+    return true;
   });
-  const visible = validAxes
-    ? series
-      .map((item, index) => ({ ...item, color: chartColor(item, index) }))
-      .filter((item) => data.every((point) => isFiniteNumber(point[item.dataKey])))
+  const preparedData = validAxes
+    ? data.map((point) => ({
+      ...point,
+      [angleKey]: typeof point[angleKey] === 'string' ? point[angleKey].trim() : point[angleKey],
+    }))
     : [];
+  const palette = resolveSeriesColors(series);
+  const visible = validAxes && palette.valid
+    ? palette.colored.filter((item) => preparedData.every((point) => isFiniteNumber(point[item.dataKey])))
+    : [];
+  const fullAxisLabels = preparedData
+    .map((point) => String(point[angleKey]))
+    .filter((name) => Array.from(name).length > RADAR_TICK_MAX_CHARS);
   return (
-    <ChartFrame label={label} height={height} className={className} empty={visible.length === 0} series={visible}>
+    <ChartFrame label={label} height={height} className={className} empty={visible.length === 0}
+      emptyMessage={palette.valid ? undefined : INVALID_PALETTE_MESSAGE}
+      fullAxisLabels={fullAxisLabels} series={visible}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-        <RechartsRadarChart data={[...data]} outerRadius="68%" margin={{ top: 18, right: 24, bottom: 18, left: 24 }}>
+        <RechartsRadarChart data={preparedData} outerRadius="68%" margin={{ top: 18, right: 24, bottom: 18, left: 24 }}>
           <PolarGrid stroke="var(--ui-color-border)" />
-          <PolarAngleAxis dataKey={angleKey} tick={AXIS_TICK} />
+          <PolarAngleAxis dataKey={angleKey} tick={AXIS_TICK} tickFormatter={radarTickLabel} />
           <PolarRadiusAxis tick={false} axisLine={false} domain={domain ? [...domain] : [0, 'auto']} allowDataOverflow={domain !== undefined} />
           <Tooltip contentStyle={TOOLTIP_STYLE} />
-          {visible.map((item, index) => (
+          {visible.map((item) => (
             <Radar
               key={item.dataKey}
               name={item.name}
               dataKey={item.dataKey}
-              stroke={chartColor(item, index)}
+              stroke={chartColor(item)}
               strokeWidth={2}
-              fill={chartColor(item, index)}
+              fill={chartColor(item)}
               fillOpacity={0.16}
               isAnimationActive={false}
             />
