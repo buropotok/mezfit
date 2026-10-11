@@ -51,7 +51,7 @@ describe('Dexie Cloud schema and access policy', () => {
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('sessionSetFactId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('sessionSetId');
-    expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('occurredAt');
+    expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('confirmedAt');
     expect(CLOUD_DATABASE_STORES_V1.realms).toBe('@realmId');
     expect(CLOUD_DATABASE_STORES_V1.members).toContain('@id');
     expect(CLOUD_DATABASE_STORES_V1.roles).toBe('[realmId+name]');
@@ -109,7 +109,7 @@ describe('Dexie Cloud schema and access policy', () => {
       'startedAt',
       'completedAt',
       'actorUserId',
-      'occurredAt',
+      'confirmedAt',
       'changedFields',
     ];
     for (const permissions of [cloudRoles.roles.coach.permissions, cloudRoles.roles.client.permissions]) {
