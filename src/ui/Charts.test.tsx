@@ -211,15 +211,19 @@ describe('UI Kit charts', () => {
     const html = renderToStaticMarkup(
       <MezfitLineChart
         label="Сравнение нагрузки"
-        data={[{ week: 'Н1', first: null, second: 70 }, { week: 'Н2', first: null, second: 72 }]}
+        data={[{ week: 'Н1', first: null, second: 70, third: 81 }, { week: 'Н2', first: null, second: 72, third: 83 }]}
         xKey="week"
-        series={[{ dataKey: 'first', name: 'Первая' }, { dataKey: 'second', name: 'Вторая' }]}
+        series={[{ dataKey: 'first', name: 'Первая' }, { dataKey: 'second', name: 'Вторая' }, { dataKey: 'third', name: 'Третья' }]}
       />,
     );
     expect(html).not.toContain('data-line-key="first"');
     expect(html).toContain('data-line-key="second"');
+    expect(html).toContain('data-line-key="third"');
     expect(html).toContain('data-stroke="#b2a0ff"');
+    expect(html).toContain('data-stroke="#63d9b0"');
+    expect(html).toContain('role="list"');
     expect(html).toContain('background-color:#b2a0ff');
+    expect(html).toContain('background-color:#63d9b0');
   });
 
   it('keeps a radar series color and the same theme when earlier data is missing', () => {
