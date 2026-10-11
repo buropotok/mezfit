@@ -27,8 +27,9 @@ authorized pilot bootstrap using the database URL from the checked-in
   deterministic `mmb...` IDs for the two members.
 - Verifies the installed **global** `coach` and `client` role permissions
   using `GET /public/roles`. Stops if the declared allowlists differ.
-- Checks the realm and all existing members through `/all` **before**
-  writing. Refuses any non-null realm owner, changed realm identity,
+- Checks realm-local role overrides, the realm and all existing members
+  through `/all` **before** writing. Rejects any realm-local roles (which could
+  shadow the global coach/client policy), non-null realm owner, changed identity,
   unexpected participant, extra member, changed role, direct permission,
   or non-accepted membership.
 - Creates a realm with `owner: null` and two accepted members with
