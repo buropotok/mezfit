@@ -97,7 +97,7 @@ Candidate scheduling policies:
 
 ### Shared FACT ownership
 
-Coach and client may record results into the same `WorkoutSession`. Persist actor/audit metadata on FACT mutations. Explicit historical correction is allowed; program edits are never a historical-correction mechanism.
+Coach and client may record results into the same `WorkoutSession`, normally in **different sets or exercises**: the coach records the initial part of a workout, then the client continues the remaining work after an informal handoff. This does not establish simultaneous or alternating editing of the same set as an MVP scenario. Technical persistence timestamps may be retained, but a trusted last-editor field or immutable per-mutation audit history is **not required for MVP**; client-supplied actor metadata must never be treated as proof of identity or authorization. Explicit historical correction remains allowed; program edits are never a historical-correction mechanism.
 
 ### Exercise scopes
 
