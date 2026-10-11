@@ -1,0 +1,482 @@
+{
+  "version": "0.1.0-review-draft",
+  "categories": {
+    "chest": "Грудь",
+    "back": "Спина",
+    "legs": "Ноги",
+    "arms": "Руки",
+    "shoulders": "Плечи",
+    "core": "Пресс и корпус",
+    "cardio": "Кардио",
+    "other": "Другое"
+  },
+  "muscles": {
+    "rectus_abdominis": {
+      "name_ru": "Прямая мышца живота",
+      "category": "core",
+      "kind": "muscle_or_muscle_region"
+    },
+    "abdominal_obliques": {
+      "name_ru": "Косые мышцы живота",
+      "category": "core",
+      "kind": "muscle_or_muscle_region"
+    },
+    "trunk_stabilizer_complex": {
+      "name_ru": "Стабилизаторы корпуса (группа)",
+      "category": "core",
+      "kind": "functional_group"
+    },
+    "pectoralis_major": {
+      "name_ru": "Большая грудная мышца",
+      "category": "chest",
+      "kind": "muscle_or_muscle_region"
+    },
+    "biceps_brachii": {
+      "name_ru": "Двуглавая мышца плеча",
+      "category": "arms",
+      "kind": "muscle_or_muscle_region"
+    },
+    "brachialis": {
+      "name_ru": "Плечевая мышца",
+      "category": "arms",
+      "kind": "muscle_or_muscle_region"
+    },
+    "triceps_brachii": {
+      "name_ru": "Трёхглавая мышца плеча",
+      "category": "arms",
+      "kind": "muscle_or_muscle_region"
+    },
+    "deltoid": {
+      "name_ru": "Дельтовидная мышца (в целом)",
+      "category": "shoulders",
+      "kind": "muscle_or_muscle_region"
+    },
+    "anterior_deltoid": {
+      "name_ru": "Передний пучок дельтовидной мышцы",
+      "category": "shoulders",
+      "kind": "muscle_or_muscle_region"
+    },
+    "middle_deltoid": {
+      "name_ru": "Средний пучок дельтовидной мышцы",
+      "category": "shoulders",
+      "kind": "muscle_or_muscle_region"
+    },
+    "posterior_deltoid": {
+      "name_ru": "Задний пучок дельтовидной мышцы",
+      "category": "shoulders",
+      "kind": "muscle_or_muscle_region"
+    },
+    "rotator_cuff": {
+      "name_ru": "Ротаторная манжета плеча (группа)",
+      "category": "shoulders",
+      "kind": "functional_group"
+    },
+    "latissimus_dorsi": {
+      "name_ru": "Широчайшая мышца спины",
+      "category": "back",
+      "kind": "muscle_or_muscle_region"
+    },
+    "upper_back_complex": {
+      "name_ru": "Мышцы верхней части спины (группа)",
+      "category": "back",
+      "kind": "functional_group"
+    },
+    "rhomboid_group": {
+      "name_ru": "Ромбовидные мышцы",
+      "category": "back",
+      "kind": "functional_group"
+    },
+    "erector_spinae": {
+      "name_ru": "Мышца, выпрямляющая позвоночник (группа)",
+      "category": "back",
+      "kind": "functional_group"
+    },
+    "trapezius": {
+      "name_ru": "Трапециевидная мышца",
+      "category": "back",
+      "kind": "muscle_or_muscle_region"
+    },
+    "serratus_anterior": {
+      "name_ru": "Передняя зубчатая мышца",
+      "category": "chest",
+      "kind": "muscle_or_muscle_region"
+    },
+    "quadriceps_femoris": {
+      "name_ru": "Четырёхглавая мышца бедра (группа)",
+      "category": "legs",
+      "kind": "functional_group"
+    },
+    "hamstring_group": {
+      "name_ru": "Мышцы задней поверхности бедра (группа)",
+      "category": "legs",
+      "kind": "functional_group"
+    },
+    "gluteus_maximus": {
+      "name_ru": "Большая ягодичная мышца",
+      "category": "legs",
+      "kind": "muscle_or_muscle_region"
+    },
+    "hip_abductor_group": {
+      "name_ru": "Отводящие мышцы бедра (группа)",
+      "category": "legs",
+      "kind": "functional_group"
+    },
+    "hip_adductor_group": {
+      "name_ru": "Приводящие мышцы бедра (группа)",
+      "category": "legs",
+      "kind": "functional_group"
+    },
+    "hip_flexor_group": {
+      "name_ru": "Сгибатели бедра (группа)",
+      "category": "legs",
+      "kind": "functional_group"
+    },
+    "calf_complex": {
+      "name_ru": "Икроножная и камбаловидная мышцы (группа)",
+      "category": "legs",
+      "kind": "functional_group"
+    },
+    "soleus": {
+      "name_ru": "Камбаловидная мышца",
+      "category": "legs",
+      "kind": "muscle_or_muscle_region"
+    },
+    "tibialis_anterior": {
+      "name_ru": "Передняя большеберцовая мышца",
+      "category": "legs",
+      "kind": "muscle_or_muscle_region"
+    },
+    "ankle_stabilizer_group": {
+      "name_ru": "Стабилизаторы голеностопного сустава (группа)",
+      "category": "legs",
+      "kind": "functional_group"
+    },
+    "forearm_complex": {
+      "name_ru": "Мышцы предплечья (группа)",
+      "category": "arms",
+      "kind": "functional_group"
+    },
+    "wrist_flexor_group": {
+      "name_ru": "Сгибатели запястья",
+      "category": "arms",
+      "kind": "functional_group"
+    },
+    "wrist_extensor_group": {
+      "name_ru": "Разгибатели запястья",
+      "category": "arms",
+      "kind": "functional_group"
+    },
+    "forearm_finger_flexors": {
+      "name_ru": "Сгибатели пальцев кисти",
+      "category": "arms",
+      "kind": "muscle_or_muscle_region"
+    },
+    "intrinsic_hand_muscles": {
+      "name_ru": "Собственные мышцы кисти",
+      "category": "arms",
+      "kind": "muscle_or_muscle_region"
+    },
+    "intrinsic_foot_muscles": {
+      "name_ru": "Собственные мышцы стопы",
+      "category": "legs",
+      "kind": "muscle_or_muscle_region"
+    },
+    "levator_scapulae": {
+      "name_ru": "Мышца, поднимающая лопатку",
+      "category": "other",
+      "kind": "muscle_or_muscle_region"
+    },
+    "sternocleidomastoid": {
+      "name_ru": "Грудино-ключично-сосцевидная мышца",
+      "category": "other",
+      "kind": "muscle_or_muscle_region"
+    }
+  },
+  "regions": {
+    "upper_chest_zone": {
+      "name_ru": "Верх груди (ключичная часть большой грудной)",
+      "parent_muscle_id": "pectoralis_major",
+      "kind": "training_zone"
+    },
+    "lower_chest_zone": {
+      "name_ru": "Низ груди (нижние грудинно-рёберные волокна большой грудной)",
+      "parent_muscle_id": "pectoralis_major",
+      "kind": "training_zone"
+    },
+    "triceps_long_head": {
+      "name_ru": "Длинная головка трицепса",
+      "parent_muscle_id": "triceps_brachii",
+      "kind": "anatomical_head"
+    },
+    "triceps_lateral_head": {
+      "name_ru": "Латеральная головка трицепса",
+      "parent_muscle_id": "triceps_brachii",
+      "kind": "anatomical_head"
+    },
+    "triceps_medial_head": {
+      "name_ru": "Медиальная головка трицепса",
+      "parent_muscle_id": "triceps_brachii",
+      "kind": "anatomical_head"
+    },
+    "biceps_long_head": {
+      "name_ru": "Длинная головка бицепса",
+      "parent_muscle_id": "biceps_brachii",
+      "kind": "anatomical_head"
+    },
+    "biceps_short_head": {
+      "name_ru": "Короткая головка бицепса",
+      "parent_muscle_id": "biceps_brachii",
+      "kind": "anatomical_head"
+    },
+    "anterior_deltoid": {
+      "name_ru": "Передний пучок дельты",
+      "parent_muscle_id": "deltoid",
+      "kind": "anatomical_region"
+    },
+    "middle_deltoid": {
+      "name_ru": "Средний пучок дельты",
+      "parent_muscle_id": "deltoid",
+      "kind": "anatomical_region"
+    },
+    "posterior_deltoid": {
+      "name_ru": "Задний пучок дельты",
+      "parent_muscle_id": "deltoid",
+      "kind": "anatomical_region"
+    },
+    "trapezius_upper": {
+      "name_ru": "Верхняя часть трапеции",
+      "parent_muscle_id": "trapezius",
+      "kind": "anatomical_region"
+    },
+    "trapezius_middle": {
+      "name_ru": "Средняя часть трапеции",
+      "parent_muscle_id": "trapezius",
+      "kind": "anatomical_region"
+    },
+    "trapezius_lower": {
+      "name_ru": "Нижняя часть трапеции",
+      "parent_muscle_id": "trapezius",
+      "kind": "anatomical_region"
+    },
+    "rectus_femoris": {
+      "name_ru": "Прямая мышца бедра",
+      "parent_muscle_id": "quadriceps_femoris",
+      "kind": "anatomical_muscle"
+    },
+    "vastus_lateralis": {
+      "name_ru": "Латеральная широкая мышца бедра",
+      "parent_muscle_id": "quadriceps_femoris",
+      "kind": "anatomical_muscle"
+    },
+    "vastus_medialis": {
+      "name_ru": "Медиальная широкая мышца бедра",
+      "parent_muscle_id": "quadriceps_femoris",
+      "kind": "anatomical_muscle"
+    },
+    "vastus_intermedius": {
+      "name_ru": "Промежуточная широкая мышца бедра",
+      "parent_muscle_id": "quadriceps_femoris",
+      "kind": "anatomical_muscle"
+    },
+    "biceps_femoris_long_head": {
+      "name_ru": "Длинная головка двуглавой мышцы бедра",
+      "parent_muscle_id": "hamstring_group",
+      "kind": "anatomical_head"
+    },
+    "biceps_femoris_short_head": {
+      "name_ru": "Короткая головка двуглавой мышцы бедра",
+      "parent_muscle_id": "hamstring_group",
+      "kind": "anatomical_head"
+    },
+    "semitendinosus": {
+      "name_ru": "Полусухожильная мышца",
+      "parent_muscle_id": "hamstring_group",
+      "kind": "anatomical_muscle"
+    },
+    "semimembranosus": {
+      "name_ru": "Полуперепончатая мышца",
+      "parent_muscle_id": "hamstring_group",
+      "kind": "anatomical_muscle"
+    },
+    "gluteus_medius": {
+      "name_ru": "Средняя ягодичная мышца",
+      "parent_muscle_id": "hip_abductor_group",
+      "kind": "anatomical_muscle"
+    },
+    "gluteus_minimus": {
+      "name_ru": "Малая ягодичная мышца",
+      "parent_muscle_id": "hip_abductor_group",
+      "kind": "anatomical_muscle"
+    },
+    "gastrocnemius_medial_head": {
+      "name_ru": "Медиальная головка икроножной мышцы",
+      "parent_muscle_id": "calf_complex",
+      "kind": "anatomical_head"
+    },
+    "gastrocnemius_lateral_head": {
+      "name_ru": "Латеральная головка икроножной мышцы",
+      "parent_muscle_id": "calf_complex",
+      "kind": "anatomical_head"
+    },
+    "soleus": {
+      "name_ru": "Камбаловидная мышца",
+      "parent_muscle_id": "calf_complex",
+      "kind": "anatomical_muscle"
+    },
+    "external_internal_obliques": {
+      "name_ru": "Наружная и внутренняя косые мышцы живота",
+      "parent_muscle_id": "abdominal_obliques",
+      "kind": "muscle_group"
+    }
+  },
+  "subcategories": {
+    "chest_general": {
+      "name_ru": "Грудь — без уточнения зоны",
+      "category": "chest"
+    },
+    "upper_chest": {
+      "name_ru": "Верх груди",
+      "category": "chest"
+    },
+    "lower_chest": {
+      "name_ru": "Низ груди",
+      "category": "chest"
+    },
+    "lats": {
+      "name_ru": "Широчайшие",
+      "category": "back"
+    },
+    "upper_back": {
+      "name_ru": "Верхняя часть спины",
+      "category": "back"
+    },
+    "trapezius": {
+      "name_ru": "Трапеции",
+      "category": "back"
+    },
+    "erector_spinae": {
+      "name_ru": "Разгибатели позвоночника",
+      "category": "back"
+    },
+    "quadriceps": {
+      "name_ru": "Квадрицепсы",
+      "category": "legs"
+    },
+    "hamstrings": {
+      "name_ru": "Задняя поверхность бедра",
+      "category": "legs"
+    },
+    "glutes": {
+      "name_ru": "Ягодичные мышцы",
+      "category": "legs"
+    },
+    "adductors": {
+      "name_ru": "Приводящие мышцы бедра",
+      "category": "legs"
+    },
+    "abductors": {
+      "name_ru": "Отводящие мышцы бедра",
+      "category": "legs"
+    },
+    "hip_abductors": {
+      "name_ru": "Отводящие мышцы бедра",
+      "category": "legs"
+    },
+    "calves": {
+      "name_ru": "Икроножные и камбаловидные",
+      "category": "legs"
+    },
+    "soleus": {
+      "name_ru": "Камбаловидная мышца",
+      "category": "legs"
+    },
+    "biceps": {
+      "name_ru": "Бицепсы",
+      "category": "arms"
+    },
+    "brachialis_brachioradialis_focus": {
+      "name_ru": "Плечевая и плечелучевая (акцент)",
+      "category": "arms"
+    },
+    "triceps": {
+      "name_ru": "Трицепсы",
+      "category": "arms"
+    },
+    "triceps_long_head_focus": {
+      "name_ru": "Длинная головка трицепса — акцент",
+      "category": "arms"
+    },
+    "forearms": {
+      "name_ru": "Предплечья",
+      "category": "arms"
+    },
+    "forearm_flexors": {
+      "name_ru": "Сгибатели предплечья",
+      "category": "arms"
+    },
+    "forearm_extensors": {
+      "name_ru": "Разгибатели предплечья",
+      "category": "arms"
+    },
+    "deltoids": {
+      "name_ru": "Дельтовидные",
+      "category": "shoulders"
+    },
+    "front_delts": {
+      "name_ru": "Передняя дельта",
+      "category": "shoulders"
+    },
+    "middle_delts": {
+      "name_ru": "Средняя дельта",
+      "category": "shoulders"
+    },
+    "rear_delts": {
+      "name_ru": "Задняя дельта",
+      "category": "shoulders"
+    },
+    "abdominals": {
+      "name_ru": "Прямая мышца живота и пресс",
+      "category": "core"
+    },
+    "obliques": {
+      "name_ru": "Косые мышцы живота",
+      "category": "core"
+    },
+    "serratus_anterior": {
+      "name_ru": "Передняя зубчатая",
+      "category": "chest"
+    },
+    "neck_musculature": {
+      "name_ru": "Мышцы шеи",
+      "category": "other"
+    },
+    "aerobic_conditioning": {
+      "name_ru": "Кардиореспираторная нагрузка",
+      "category": "cardio"
+    }
+  },
+  "notes": [
+    "A training zone is not a physically isolated muscle. Names distinguish anatomy from functional emphasis.",
+    "A group ID such as upper_back_complex intentionally does not assert which member produces most force.",
+    "Unknown relative activation is not estimated numerically.",
+    "Stretching targets and cardiovascular targets must not count as hypertrophy working sets.",
+    "An exercise may target multiple muscles; primary, secondary and stabilizer roles are contextual, not exclusive anatomical properties."
+  ],
+  "references": [
+    {
+      "title": "ACE Exercise Library — exercise anatomy and categories",
+      "url": "https://www.acefitness.org/resources/everyone/exercise-library/",
+      "scope": "taxonomy_background_not_per_exercise_verification"
+    },
+    {
+      "title": "Healthline — decline bench muscles (illustrative)",
+      "url": "https://www.healthline.com/health/decline-bench",
+      "scope": "illustration_not_exhaustive"
+    },
+    {
+      "title": "Hasan E. exercises-dataset",
+      "url": "https://github.com/hasaneyldrm/exercises-dataset",
+      "scope": "source_of_all_exercise_rows"
+    }
+  ]
+}
