@@ -1,8 +1,9 @@
 # Dexie Cloud coach-client relationship pilot bootstrap
 
-Status: **administrative pilot only**. This is not the production invitation or
-relationship API, and it does not migrate data from D1. The existing D1
-coach-client relationship remains untouched.
+Status: **administrative CLI pilot only**. Production invitation acceptance is
+now a separate privileged Worker implementation described in
+`docs/architecture/dexie-cloud-invitations.md`. The CLI does not migrate D1
+domain data or modify existing D1 relationships.
 
 ## Purpose and trust boundary
 
@@ -12,9 +13,11 @@ GLOBAL_WRITE to that account.**
 
 Dexie Cloud's `/all/realms` and `/all/members` administrative REST API
 requires a different token with `ACCESS_DB,GLOBAL_READ,GLOBAL_WRITE`.
-Use a separate database-manager/admin credential **only in an explicitly
-invoked local administrative command**, never in the browser or in a
-Cloudflare Worker route.
+For this **CLI**, use a dedicated local administrative credential, never in
+the browser. The production Worker uses a *different* dedicated membership
+service credential with a verified invitation-only route, as specified in
+`docs/architecture/dexie-cloud-invitations.md`. Never reuse the Telegram
+token service credential for administrative operations.
 
 `tools/dexie-cloud-relationship.mjs` performs a one-time, explicitly
 authorized pilot bootstrap using the database URL from the checked-in
