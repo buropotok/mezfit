@@ -11,9 +11,15 @@
 
 .mezfit-chart__empty {
   display: grid;
-  min-height: 176px;
+  box-sizing: border-box;
   place-items: center;
   padding: var(--ui-space-3);
+  text-align: center;
+}
+
+.mezfit-chart__axis-labels {
+  margin-top: var(--ui-space-2);
+  overflow-wrap: anywhere;
   text-align: center;
 }
 
