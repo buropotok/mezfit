@@ -5,7 +5,9 @@ import type { PropsWithChildren } from 'react';
 vi.mock('recharts', () => {
   const Container = ({ children }: PropsWithChildren) => <div data-chart-container>{children}</div>;
   const Plot = ({ children }: PropsWithChildren) => <div data-chart-plot>{children}</div>;
-  const Line = ({ dataKey, name }: { dataKey: string; name: string }) => <span data-line-key={dataKey} data-series-name={name} />;
+  const Line = ({ dataKey, name, dot }: { dataKey: string; name: string; dot: boolean | { r: number } }) => (
+    <span data-line-key={dataKey} data-series-name={name} data-dot={dot === false ? 'none' : 'visible'} />
+  );
   const Radar = ({ dataKey, name }: { dataKey: string; name: string }) => <span data-radar-key={dataKey} data-series-name={name} />;
   const Axis = () => null;
   return {
@@ -24,7 +26,7 @@ vi.mock('recharts', () => {
   };
 });
 
-import { MezfitLineChart, MezfitRadarChart } from './Charts';
+import { MezfitLineChart, MezfitRadarChart, type MezfitLineChartProps, type MezfitRadarChartProps } from './Charts';
 
 describe('UI Kit charts', () => {
   it('renders typed line-series mapping and accessible description', () => {
@@ -39,6 +41,7 @@ describe('UI Kit charts', () => {
     expect(html).toContain('aria-label="История веса"');
     expect(html).toContain('data-line-key="weight"');
     expect(html).toContain('data-line-key="reps"');
+    expect(html).toContain('data-dot="visible"');
     expect(html).toContain('role="list"');
     expect(html).toContain('ui-text--caption');
     expect(html).not.toContain('Нет данных');
@@ -59,7 +62,7 @@ describe('UI Kit charts', () => {
 
   it('shows the shared empty state when line data has no numeric values', () => {
     const html = renderToStaticMarkup(
-      <MezfitLineChart label="Нет результатов" xKey="week" data={[{ week: 'Н1', weight: null }]} series={[{ dataKey: 'weight', name: 'Вес' }]} />,
+      <MezfitLineChart<{ week: string; weight: number | null }> label="Нет результатов" xKey="week" data={[{ week: 'Н1', weight: null }]} series={[{ dataKey: 'weight', name: 'Вес' }]} />,
     );
     expect(html).toContain('Нет данных для графика');
     expect(html).not.toContain('data-chart-container');
@@ -71,4 +74,85 @@ describe('UI Kit charts', () => {
     );
     expect(html).toContain('Нет данных для графика');
   });
+  it('shows isolated finite line values instead of an invisible zero-length path', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Один результат"
+        data={[{ week: 'Н1', weight: null }, { week: 'Н2', weight: 72 }, { week: 'Н3', weight: null }]}
+        xKey="week"
+        series={[{ dataKey: 'weight', name: 'Вес' }]}
+      />,
+    );
+    expect(html).toContain('data-line-key="weight"');
+    expect(html).toContain('data-dot="visible"');
+    expect(html).not.toContain('Нет данных');
+  });
+
+  it('keeps regular line traces without persistent dots once three finite values exist', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="История"
+        data={[{ week: 'Н1', weight: 71 }, { week: 'Н2', weight: 72 }, { week: 'Н3', weight: 75 }]}
+        xKey="week"
+        series={[{ dataKey: 'weight', name: 'Вес' }]}
+      />,
+    );
+    expect(html).toContain('data-dot="none"');
+  });
+
+  it('does not draw a radar polygon when only two values are finite', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Недостаточно значений"
+        data={[{ axis: 'A', value: 70 }, { axis: 'B', value: null }, { axis: 'C', value: 80 }]}
+        angleKey="axis"
+        series={[{ dataKey: 'value', name: 'Показатель' }]}
+      />,
+    );
+    expect(html).toContain('Нет данных для графика');
+    expect(html).not.toContain('data-radar-key');
+  });
+
+  it('excludes incomplete radar series without hiding a valid series', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Несколько показателей"
+        data={[
+          { axis: 'A', full: 60, sparse: null },
+          { axis: 'B', full: 70, sparse: 52 },
+          { axis: 'C', full: 80, sparse: null },
+        ]}
+        angleKey="axis"
+        series={[{ dataKey: 'full', name: 'Полный' }, { dataKey: 'sparse', name: 'Неполный' }]}
+      />,
+    );
+    expect(html).toContain('data-radar-key="full"');
+    expect(html).not.toContain('data-radar-key="sparse"');
+    expect(html).not.toContain('Ряды графика');
+  });
+
+  it('constrains category and numeric metric keys using the data row type', () => {
+    type WorkoutRow = { week: string; weight: number | null; reps?: number; note: string };
+    const line: MezfitLineChartProps<WorkoutRow> = {
+      label: 'Тренировки',
+      data: [{ week: 'Н1', weight: 70, note: 'Тест' }],
+      xKey: 'week',
+      series: [{ dataKey: 'weight', name: 'Вес' }, { dataKey: 'reps', name: 'Повторения' }],
+    };
+    const radar: MezfitRadarChartProps<WorkoutRow> = {
+      ...line,
+      angleKey: 'week',
+    };
+    expect(line.xKey).toBe('week');
+    expect(radar.angleKey).toBe('week');
+
+    // @ts-expect-error — unknown category must be rejected
+    const missingAxis: MezfitLineChartProps<WorkoutRow>['xKey'] = 'missing';
+    // @ts-expect-error — text fields are not numeric series
+    const textSeries: MezfitLineChartProps<WorkoutRow>['series'] = [{ dataKey: 'note', name: 'Неверная метрика' }];
+    // @ts-expect-error — radar categories must exist on the row
+    const invalidRadarAxis: MezfitRadarChartProps<WorkoutRow>['angleKey'] = 'unknown';
+    expect([missingAxis, textSeries, invalidRadarAxis]).toHaveLength(3);
+  });
+
 });
