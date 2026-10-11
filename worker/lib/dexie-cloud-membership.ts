@@ -222,6 +222,13 @@ async function write(
   if (!response.ok) failUnavailable();
 }
 
+export function requireCloudMembershipConfiguration(env: CloudMembershipEnv): void {
+  if (!env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID || !env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET
+    || !env.DEXIE_CLOUD_CLIENT_ID || !env.DEXIE_CLOUD_CLIENT_SECRET) {
+    throw new CloudMembershipError('CLOUD_MEMBERSHIP_NOT_CONFIGURED', 503);
+  }
+}
+
 /**
  * Server-only invitation acceptance. A partially provisioned realm is resumed on retry.
  * Dexie Cloud membership is authoritative; the legacy D1 relationship projection is
@@ -234,10 +241,7 @@ export async function provisionInviteMembership(
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ realmId: string }> {
   // Reject missing secrets before any remote or legacy database mutation.
-  if (!env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID || !env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET
-    || !env.DEXIE_CLOUD_CLIENT_ID || !env.DEXIE_CLOUD_CLIENT_SECRET) {
-    throw new CloudMembershipError('CLOUD_MEMBERSHIP_NOT_CONFIGURED', 503);
-  }
+  requireCloudMembershipConfiguration(env);
 
   const { realm, members } = await relationshipMembership(coachTelegramId, clientTelegramId);
   const admin = await token(fetchImpl, {
