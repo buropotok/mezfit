@@ -129,6 +129,18 @@ async function listMembers(fetchImpl, dbUrl, bearer, realmId) {
   return value;
 }
 
+async function assertNoRealmRoleOverrides(fetchImpl, dbUrl, bearer, realmId) {
+  const response = await request(fetchImpl, dbUrl,
+    '/all/roles?realmId=' + encodeURIComponent(realmId), bearer);
+  assertStatus(response, 'LIST_REALM_ROLES');
+  const roles = await json(response, 'LIST_REALM_ROLES');
+  if (!Array.isArray(roles) || roles.some((role) => !isRecord(role)
+    || role.realmId !== realmId)) {
+    throw new Error('DEXIE_REALM_ROLES_INVALID_RESPONSE');
+  }
+  if (roles.length) throw new Error('REALM_LOCAL_ROLE_OVERRIDES_FORBIDDEN');
+}
+
 async function postRecords(fetchImpl, dbUrl, bearer, table, rows) {
   const response = await request(fetchImpl, dbUrl, '/all/' + table, bearer, 'POST', rows);
   assertStatus(response, 'WRITE_' + table.toUpperCase());
@@ -229,6 +241,7 @@ export async function provisionRelationship({ dbUrl, credentials, coachId, clien
   const userBearers = await Promise.all(plan.members.map((member) =>
     token(fetchImpl, dbUrl, credentials, USER_SCOPES, { sub: member.userId })));
 
+  await assertNoRealmRoleOverrides(fetchImpl, dbUrl, admin, plan.realm.realmId);
   const existingRealm = await getRealm(fetchImpl, dbUrl, admin, plan.realm.realmId, 'all');
   if (existingRealm) assertRealm(existingRealm, plan.realm);
   const existingMembers = await listMembers(fetchImpl, dbUrl, admin, plan.realm.realmId);
