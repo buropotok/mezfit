@@ -41,6 +41,7 @@ export function relationshipPlan(coachId, clientId) {
         id: 'mmb' + digest(realmId + ':coach'),
         realmId,
         userId: 'tg:' + coach,
+        owner: null,
         invite: false,
         accepted: true,
         roles: ['coach'],
@@ -49,6 +50,7 @@ export function relationshipPlan(coachId, clientId) {
         id: 'mmb' + digest(realmId + ':client'),
         realmId,
         userId: 'tg:' + client,
+        owner: null,
         invite: false,
         accepted: true,
         roles: ['client'],
@@ -165,7 +167,7 @@ function assertMembers(actual, desired) {
   for (const member of actual) {
     const expected = desired.find((candidate) => candidate.id === member.id);
     if (!expected || member.userId !== expected.userId || member.realmId !== expected.realmId
-      || !Array.isArray(member.roles) || member.roles.length !== 1
+      || member.owner !== null || !Array.isArray(member.roles) || member.roles.length !== 1
       || member.roles[0] !== expected.roles[0] || member.invite === true
       || !accepted(member.accepted)
       || (member.permissions != null && (!isRecord(member.permissions)
