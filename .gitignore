@@ -3,5 +3,5 @@ dist/
 .wrangler/
 .dev.vars
 
-# Dexie Cloud privileged CLI credentials
-dexie-cloud.key
+# Dexie Cloud / privileged service-account credentials
+*.key
