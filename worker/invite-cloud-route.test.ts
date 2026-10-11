@@ -27,36 +27,30 @@ const client = {
 };
 
 function fixture() {
-  let acceptedBy: number | null = null;
   let actor = client;
-  let linked = false;
-  let roles: Array<'coach' | 'client'> = [];
+  let available = true;
   let failProjection = false;
+  const connected = new Set<number>();
   const invite = {
     id: 41, coach_user_id: 1, coach_telegram_user_id: '101', label: null,
     expires_at: '2030-01-01T00:00:00Z',
     coach_first_name: 'Coach', coach_last_name: null, coach_username: null,
   };
+
   const prepare = vi.fn((sql: string) => ({
-    bind: (...args: unknown[]) => ({
+    bind: (..._args: unknown[]) => ({
       first: async () => {
         if (sql.includes('FROM app_user') && sql.includes('WHERE telegram_user_id = ?')) {
           return actor;
         }
         if (sql.includes('FROM coach_client_invite i')) {
-          if (linked || (acceptedBy !== null && acceptedBy !== actor.id)) return null;
-          return invite;
-        }
-        if (sql.includes('UPDATE coach_client_invite')) {
-          if (args[0] !== actor.id || (acceptedBy !== null && acceptedBy !== actor.id)) return null;
-          acceptedBy = actor.id;
-          return { id: invite.id };
+          return available ? invite : null;
         }
         throw Error('Unexpected SQL first: ' + sql);
       },
       all: async () => {
         if (sql === 'SELECT role FROM user_role WHERE user_id = ? ORDER BY role') {
-          return { results: roles.map((role) => ({ role })) };
+          return { results: connected.has(actor.id) ? [{ role: 'client' }] : [] };
         }
         throw Error('Unexpected SQL all: ' + sql);
       },
@@ -64,8 +58,7 @@ function fixture() {
   }));
   const batch = vi.fn(async () => {
     if (failProjection) throw Error('D1 unavailable');
-    linked = true;
-    roles = ['client'];
+    connected.add(actor.id);
     return [];
   });
   const env = {
@@ -79,9 +72,9 @@ function fixture() {
   } as unknown as Env;
   return {
     env, batch, prepare,
-    acceptedBy: () => acceptedBy,
-    isLinked: () => linked,
+    isLinked: (id = client.id) => connected.has(id),
     switchToOtherClient: () => { actor = { ...client, id: 3, telegram_user_id: '303' }; },
+    disableInvite: () => { available = false; },
     failD1Once: () => { failProjection = true; },
     restoreD1: () => { failProjection = false; },
   };
@@ -109,12 +102,11 @@ beforeEach(() => {
   provision.mockResolvedValue({ realmId: 'rlmtest' });
 });
 
-describe('accept a Telegram invitation into a real Dexie relationship', () => {
+describe('accept a reusable Telegram invitation into a Dexie relationship', () => {
   it('provisions the cloud pair before activating the D1 legacy view', async () => {
     const f = fixture();
     provision.mockImplementation(async () => {
       expect(f.batch).not.toHaveBeenCalled();
-      expect(f.acceptedBy()).toBe(client.id);
       return { realmId: 'rlmtest' };
     });
     const response = await worker.fetch(request(), f.env);
@@ -127,7 +119,7 @@ describe('accept a Telegram invitation into a real Dexie relationship', () => {
     expect(f.isLinked()).toBe(true);
   });
 
-  it('does not reserve an invitation or create an active link without configured secrets', async () => {
+  it('does not create an active link without configured cloud secrets', async () => {
     const f = fixture();
     checkConfiguration.mockImplementationOnce(() => {
       throw new CloudMembershipError('CLOUD_MEMBERSHIP_NOT_CONFIGURED', 503);
@@ -135,19 +127,17 @@ describe('accept a Telegram invitation into a real Dexie relationship', () => {
     const response = await worker.fetch(request(), f.env);
 
     expect(response.status).toBe(503);
-    expect(f.acceptedBy()).toBeNull();
     expect(f.batch).not.toHaveBeenCalled();
     expect(provision).not.toHaveBeenCalled();
   });
 
-  it('leaves no active D1 link when cloud provisioning fails and permits the same user to retry', async () => {
+  it('keeps the invitation available for retry when cloud provisioning fails', async () => {
     const f = fixture();
     provision.mockRejectedValueOnce(new CloudMembershipError('CLOUD_MEMBERSHIP_UNAVAILABLE', 502));
     const failed = await worker.fetch(request(), f.env);
     expect(failed.status).toBe(502);
     expect(f.isLinked()).toBe(false);
     expect(f.batch).not.toHaveBeenCalled();
-    expect(f.acceptedBy()).toBe(client.id);
 
     const preview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
     expect(preview.status).toBe(200);
@@ -159,11 +149,9 @@ describe('accept a Telegram invitation into a real Dexie relationship', () => {
     expect(provision).toHaveBeenCalledTimes(2);
   });
 
-  it('rejects a second Telegram client after another client reserved the invite', async () => {
+  it('allows the same invitation to connect different athletes', async () => {
     const f = fixture();
-    provision.mockRejectedValueOnce(new CloudMembershipError('CLOUD_MEMBERSHIP_UNAVAILABLE', 502));
-    expect((await worker.fetch(request(), f.env)).status).toBe(502);
-
+    expect((await worker.fetch(request(), f.env)).status).toBe(200);
     f.switchToOtherClient();
     identity.mockResolvedValue({
       user: { id: 303, first_name: 'Other Client' },
@@ -172,12 +160,34 @@ describe('accept a Telegram invitation into a real Dexie relationship', () => {
     });
 
     const response = await worker.fetch(request(), f.env);
+    expect(response.status).toBe(200);
+    expect(f.isLinked(2)).toBe(true);
+    expect(f.isLinked(3)).toBe(true);
+    expect(provision).toHaveBeenCalledTimes(2);
+    expect(provision).toHaveBeenNthCalledWith(1, f.env, '101', '202');
+    expect(provision).toHaveBeenNthCalledWith(2, f.env, '101', '303');
+  });
+
+  it('returns success on retry after the first success response was lost', async () => {
+    const f = fixture();
+    expect((await worker.fetch(request(), f.env)).status).toBe(200);
+    const retried = await worker.fetch(request(), f.env);
+    expect(retried.status).toBe(200);
+    await expect(retried.json()).resolves.toEqual({ ok: true, roles: ['client'] });
+    expect(f.batch).toHaveBeenCalledTimes(2);
+    expect(provision).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects an expired or revoked invitation before provisioning', async () => {
+    const f = fixture();
+    f.disableInvite();
+    const response = await worker.fetch(request(), f.env);
     expect(response.status).toBe(410);
-    expect(provision).toHaveBeenCalledTimes(1);
+    expect(provision).not.toHaveBeenCalled();
     expect(f.batch).not.toHaveBeenCalled();
   });
 
-  it('retries a verified cloud link if the legacy D1 projection failed', async () => {
+  it('retries an already provisioned cloud link after a legacy D1 projection failure', async () => {
     const f = fixture();
     f.failD1Once();
     const failed = await worker.fetch(request(), f.env);
