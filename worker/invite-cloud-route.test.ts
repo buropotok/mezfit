@@ -28,6 +28,7 @@ const client = {
 
 function fixture() {
   let acceptedBy: number | null = null;
+  let actor = client;
   let linked = false;
   let roles: Array<'coach' | 'client'> = [];
   let failProjection = false;
@@ -40,15 +41,15 @@ function fixture() {
     bind: (...args: unknown[]) => ({
       first: async () => {
         if (sql.includes('FROM app_user') && sql.includes('WHERE telegram_user_id = ?')) {
-          return client;
+          return actor;
         }
         if (sql.includes('FROM coach_client_invite i')) {
-          if (linked || (acceptedBy !== null && acceptedBy !== client.id)) return null;
+          if (linked || (acceptedBy !== null && acceptedBy !== actor.id)) return null;
           return invite;
         }
         if (sql.includes('UPDATE coach_client_invite')) {
-          if (args[0] !== client.id || (acceptedBy !== null && acceptedBy !== client.id)) return null;
-          acceptedBy = client.id;
+          if (args[0] !== actor.id || (acceptedBy !== null && acceptedBy !== actor.id)) return null;
+          acceptedBy = actor.id;
           return { id: invite.id };
         }
         throw Error('Unexpected SQL first: ' + sql);
@@ -80,6 +81,7 @@ function fixture() {
     env, batch, prepare,
     acceptedBy: () => acceptedBy,
     isLinked: () => linked,
+    switchToOtherClient: () => { actor = { ...client, id: 3, telegram_user_id: '303' }; },
     failD1Once: () => { failProjection = true; },
     restoreD1: () => { failProjection = false; },
   };
@@ -155,6 +157,24 @@ describe('accept a Telegram invitation into a real Dexie relationship', () => {
     expect(retry.status).toBe(200);
     expect(f.isLinked()).toBe(true);
     expect(provision).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects a second Telegram client after another client reserved the invite', async () => {
+    const f = fixture();
+    provision.mockRejectedValueOnce(new CloudMembershipError('CLOUD_MEMBERSHIP_UNAVAILABLE', 502));
+    expect((await worker.fetch(request(), f.env)).status).toBe(502);
+
+    f.switchToOtherClient();
+    identity.mockResolvedValue({
+      user: { id: 303, first_name: 'Other Client' },
+      authDate: new Date('2026-10-12T00:00:00Z'),
+      startParam: launch,
+    });
+
+    const response = await worker.fetch(request(), f.env);
+    expect(response.status).toBe(410);
+    expect(provision).toHaveBeenCalledTimes(1);
+    expect(f.batch).not.toHaveBeenCalled();
   });
 
   it('retries a verified cloud link if the legacy D1 projection failed', async () => {
