@@ -35,7 +35,8 @@ describe('Telegram-only cloud auth diagnostic', () => {
     expect(probeMock).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Проверить авторизацию' }));
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Успешно'));
-    expect(probeMock).toHaveBeenCalledExactlyOnceWith('signed-telegram-data');
+    expect(probeMock).toHaveBeenCalledTimes(1);
+    expect(probeMock).toHaveBeenCalledWith('signed-telegram-data');
     expect(screen.queryByText('signed-telegram-data')).toBeNull();
   });
 
