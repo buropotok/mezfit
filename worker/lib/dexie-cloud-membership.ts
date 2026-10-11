@@ -145,7 +145,7 @@ async function token(
     || (userId && (!isObject(value.claims) || value.claims.sub !== userId))) {
     failUnavailable();
   }
-  return value.accessToken as string;
+  return value.accessToken;
 }
 
 function sameStrings(value: unknown, expected: string[]): boolean {
@@ -222,7 +222,7 @@ async function write(
   if (!response.ok) failUnavailable();
 }
 
-export function requireCloudMembershipConfiguration(env: CloudMembershipEnv): void {
+export function requireCloudMembershipConfiguration(env: CloudMembershipEnv): asserts env is Required<CloudMembershipEnv> {
   if (!env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID || !env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET
     || !env.DEXIE_CLOUD_CLIENT_ID || !env.DEXIE_CLOUD_CLIENT_SECRET) {
     throw new CloudMembershipError('CLOUD_MEMBERSHIP_NOT_CONFIGURED', 503);
@@ -252,8 +252,8 @@ export async function provisionInviteMembership(
   // User impersonation belongs only to the narrow auth service account; never
   // give the administrative account IMPERSONATE or the auth account GLOBAL_*.
   const userTokens = await Promise.all(members.map((member) => token(fetchImpl, {
-    id: env.DEXIE_CLOUD_CLIENT_ID!,
-    secret: env.DEXIE_CLOUD_CLIENT_SECRET!,
+    id: env.DEXIE_CLOUD_CLIENT_ID,
+    secret: env.DEXIE_CLOUD_CLIENT_SECRET,
   }, ['ACCESS_DB'], member.userId)));
 
   assertRemoteRoles(await json(await upstream(fetchImpl, '/public/roles')));
