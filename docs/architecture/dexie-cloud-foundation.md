@@ -96,11 +96,14 @@ works offline through the addon once the data has synchronized.
 
 `sessionSetFactAudits` reserves an explicit server-authored event contract:
 `sessionSetFactId`, `sessionSetId`, `workoutSessionId`,
-`actorUserId`, `occurredAt` and the list of edited FACT fields. Its
+`actorUserId`, `confirmedAt` and the list of edited FACT fields. Its
 `realmId` matches the relationship realm. Neither coach nor client receives
 `add`, `update`, or `manage` on this audit table. The authoritative
 actor and timestamp must come from a **trusted server identity and clock**,
 not client JSON or writable `updatedByUserId`/`updatedAt` fields.
+`confirmedAt` is the **server-confirmation/commit time**. An offline edit
+may have happened earlier; a device-reported edit time can be stored as an
+optional non-authoritative hint later but must not be labeled server-verified.
 Initial creation can be attributed to the Worker-verified initiator.
 
 **This PR defines the contract, not an audit implementation.** Dexie Cloud
@@ -197,7 +200,7 @@ record ownership and database permissions must be verified using real
 10. Separate `sessionSets` and `sessionSetFacts` keys are accepted by the
     real Dexie Cloud schema, and one-to-one FACT materialization is idempotent.
 11. A trustworthy server-backed FACT audit source is verified and **every**
-    synchronized edit yields durable `actorUserId` + `occurredAt` metadata
+    synchronized edit yields durable `actorUserId` + `confirmedAt` metadata
     derived from authenticated/server identity, not from a writable field.
     Offline edits and conflicts must be covered, or activation remains blocked.
 
