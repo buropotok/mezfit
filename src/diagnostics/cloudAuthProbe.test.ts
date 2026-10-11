@@ -25,14 +25,15 @@ describe('one-shot Dexie Cloud auth probe', () => {
     expect(getTokensMock).toHaveBeenCalledTimes(1);
     const [initData, params] = getTokensMock.mock.calls[0];
     expect(initData).toBe('signed-telegram-init-data');
-    expect(params.public_key).toMatch(/^-----BEGIN PUBLIC KEY-----\n(?:[A-Za-z0-9+/]{1,64}\n)+-----END PUBLIC KEY-----$/);
+    expect(params.public_key).toMatch(/^-----BEGIN PUBLIC KEY-----\n(?:[A-Za-z0-9+/=]{1,64}\n)+-----END PUBLIC KEY-----$/);
 
     // Verify that the generated public key is valid rather than an arbitrary string.
     const encoded = params.public_key
       .replace('-----BEGIN PUBLIC KEY-----', '')
       .replace('-----END PUBLIC KEY-----', '')
       .replace(/\s/g, '');
-    const spki = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+    const spkiBytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+    const spki = spkiBytes.buffer.slice(spkiBytes.byteOffset, spkiBytes.byteOffset + spkiBytes.byteLength) as ArrayBuffer;
     const publicKey = await crypto.subtle.importKey(
       'spki', spki, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, true, ['verify'],
     );
