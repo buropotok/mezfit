@@ -192,7 +192,7 @@ function inviteTokenFromStartParam(startParam?: string): string | null {
   return /^[a-f0-9]{36}$/i.test(token) ? token.toLowerCase() : null;
 }
 
-async function findInvite(db: D1Database, token: string, clientUserId: number): Promise<InviteRow | null> {
+async function findInvite(db: D1Database, token: string): Promise<InviteRow | null> {
   const tokenHash = await sha256Hex(token);
   return db
     .prepare(`
@@ -208,15 +208,10 @@ async function findInvite(db: D1Database, token: string, clientUserId: number): 
       FROM coach_client_invite i
       JOIN app_user coach ON coach.id = i.coach_user_id
       WHERE i.token_hash = ?
-        AND (i.accepted_by_user_id IS NULL OR i.accepted_by_user_id = ?)
+        AND i.revoked_at IS NULL
         AND i.expires_at > CURRENT_TIMESTAMP
-        AND NOT EXISTS (
-          SELECT 1 FROM coach_client cc
-          WHERE cc.coach_user_id = i.coach_user_id
-            AND cc.client_user_id = ? AND cc.status = 'active'
-        )
     `)
-    .bind(tokenHash, clientUserId, clientUserId)
+    .bind(tokenHash)
     .first<InviteRow>();
 }
 
@@ -632,7 +627,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) return json({ invite: null });
 
-    const invite = await findInvite(env.DB_BINDING, token, auth.row.id);
+    const invite = await findInvite(env.DB_BINDING, token);
     if (!invite || invite.coach_user_id === auth.row.id) return json({ invite: null });
 
     return json({
@@ -653,26 +648,16 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
 
-    const invite = await findInvite(env.DB_BINDING, token, auth.row.id);
-    if (!invite) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is invalid, expired, or already used');
+    const invite = await findInvite(env.DB_BINDING, token);
+    if (!invite) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is invalid, revoked, or expired');
     if (invite.coach_user_id === auth.row.id) throw new HttpError(400, 'SELF_LINK', 'Coach cannot accept their own invite');
 
     requireCloudMembershipConfiguration(env);
 
-    // Reserve the existing one-use invite before contacting Dexie Cloud. Only
-    // this verified Telegram client can retry after a partial upstream failure.
-    // A concurrent different client cannot obtain a second membership.
-    const claim = await env.DB_BINDING.prepare(`
-      UPDATE coach_client_invite
-      SET accepted_by_user_id = ?, accepted_at = COALESCE(accepted_at, CURRENT_TIMESTAMP)
-      WHERE id = ? AND (accepted_by_user_id IS NULL OR accepted_by_user_id = ?)
-        AND expires_at > CURRENT_TIMESTAMP
-      RETURNING id
-    `).bind(auth.row.id, invite.id, auth.row.id).first<{ id: number }>();
-    if (!claim) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is no longer available');
-
-    // Dexie Cloud is authoritative for the new relationship. On failure the
-    // client can retry the same invite; D1 coach_client is not created first.
+    // A link remains reusable for other clients until expiration or revocation.
+    // Dexie Cloud is authoritative for each verified coach-client pair.
+    // Repeated acceptance by the same client is idempotent, even after a lost
+    // HTTP success response; the D1 projection is written only after cloud success.
     await provisionInviteMembership(env, invite.coach_telegram_user_id, auth.row.telegram_user_id);
 
     // Temporary legacy read-model: existing D1-backed coach/client screens
