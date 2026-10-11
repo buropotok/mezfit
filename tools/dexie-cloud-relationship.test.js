@@ -22,6 +22,7 @@ function createServer() {
   }));
   let failMembersOnce = false;
   let grantGlobal = true;
+  let grantImpersonation = true;
 
   const fetchImpl = vi.fn(async (resource, init = {}) => {
     const url = new URL(resource);
@@ -37,7 +38,8 @@ function createServer() {
         || body.client_secret !== credentials.clientSecret) {
         return Response.json({ error: 'invalid_credentials' }, { status: 401 });
       }
-      if (body.scopes.includes('GLOBAL_WRITE') && !grantGlobal) {
+      if ((body.scopes.includes('GLOBAL_WRITE') && !grantGlobal)
+        || (body.claims && !grantImpersonation)) {
         return Response.json({ error: 'scope_denied' }, { status: 403 });
       }
       return Response.json({
@@ -93,6 +95,7 @@ function createServer() {
     fetchImpl, calls, realms, members, remoteRoles,
     failNextMemberWrite: () => { failMembersOnce = true; },
     disableGlobalWrite: () => { grantGlobal = false; },
+    disableImpersonation: () => { grantImpersonation = false; },
   };
 }
 
@@ -187,6 +190,20 @@ describe('administrative Dexie relationship provisioning', () => {
     expect(server.members.size).toBe(2);
   });
 
+  it('resumes a partially provisioned pair by writing only the missing member', async () => {
+    const server = createServer();
+    const plan = relationshipPlan('101', '202');
+    server.realms.set(plan.realm.realmId, plan.realm);
+    server.members.set(plan.members[0].id, {
+      ...plan.members[0], accepted: { $t: 'Date', v: '2026-10-12T00:00:00Z' },
+    });
+    await operation(server);
+    const posts = server.calls.filter((call) => call.method === 'POST'
+      && call.path !== '/token');
+    expect(posts.map((call) => call.path)).toEqual(['/all/members']);
+    expect(server.members.size).toBe(2);
+  });
+
   it('rejects an existing realm with an owner rather than mutating permissions', async () => {
     const server = createServer();
     const { realm } = relationshipPlan('101', '202');
@@ -232,6 +249,14 @@ describe('administrative Dexie relationship provisioning', () => {
     expect(server.members.size).toBe(0);
   });
 
+  it('preflights IMPERSONATE before any realm/member writes', async () => {
+    const server = createServer();
+    server.disableImpersonation();
+    await expect(operation(server)).rejects.toThrow('DEXIE_TOKEN_HTTP_403');
+    expect(server.realms.size).toBe(0);
+    expect(server.members.size).toBe(0);
+  });
+
   it('does not expose privileged credentials or tokens in error messages', async () => {
     const server = createServer();
     server.disableGlobalWrite();
@@ -268,5 +293,10 @@ describe('installed role policy guard', () => {
     expect(() => assertRolePolicy(remote, localRoles)).not.toThrow();
     remote[1].permissions = { update: { sessionSetFacts: ['actualReps', 'owner'] } };
     expect(() => assertRolePolicy(remote, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
+    const localDrift = structuredClone(localRoles);
+    localDrift.coach.permissions.manage = ['members'];
+    expect(() => assertRolePolicy(['coach', 'client'].map((name) => ({
+      realmId: 'rlm-public', name, permissions: localRoles[name].permissions,
+    })), localDrift)).toThrow('CLOUD_ROLE_MISMATCH');
   });
 });
