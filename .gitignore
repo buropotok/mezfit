@@ -2,3 +2,6 @@ node_modules/
 dist/
 .wrangler/
 .dev.vars
+
+# Dexie Cloud privileged CLI credentials
+dexie-cloud.key
