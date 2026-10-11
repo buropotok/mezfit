@@ -86,9 +86,9 @@ function ChartFrame({ label, height, className, empty, series, children }: {
           <>
             <div className="mezfit-chart__plot" style={{ height }}>{children}</div>
             {series.length > 1 && (
-              <div className="mezfit-chart__legend" aria-label="Ряды графика">
+              <div className="mezfit-chart__legend" role="list" aria-label="Ряды графика">
                 {series.map((item, index) => (
-                  <span className="mezfit-chart__legend-item" key={item.dataKey}>
+                  <span className="mezfit-chart__legend-item" role="listitem" key={item.dataKey}>
                     <span className="mezfit-chart__swatch" style={{ backgroundColor: chartColor(item, index) }} aria-hidden="true" />
                     <Text variant="caption" tone="muted">{item.name}</Text>
                   </span>
