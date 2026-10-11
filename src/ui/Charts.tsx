@@ -166,26 +166,31 @@ function ChartFrame({ label, height, className, empty, emptyMessage, fullAxisLab
 
 /** Time/category series. Accepts already aggregated, domain-independent data. */
 export function MezfitLineChart<T extends object>({ label, data, series, xKey, height = 240, className }: MezfitLineChartProps<T>) {
-  const visible = series
-    .map((item, index) => ({ item, index, count: finitePointCount(data, item.dataKey) }))
-    .filter(({ count }) => count > 0);
+  const preparedData = prepareLineData(data, xKey, series);
+  const palette = resolveSeriesColors(series);
+  const visible = palette.valid
+    ? palette.colored
+      .map((item) => ({ item, count: finitePointCount(preparedData, item.dataKey) }))
+      .filter(({ count }) => count > 0)
+    : [];
   return (
-    <ChartFrame label={label} height={height} className={className} empty={visible.length === 0} series={visible.map(({ item, index }) => ({ ...item, color: chartColor(item, index) }))}>
+    <ChartFrame label={label} height={height} className={className} empty={visible.length === 0}
+      emptyMessage={palette.valid ? undefined : INVALID_PALETTE_MESSAGE} series={visible.map(({ item }) => item)}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-        <RechartsLineChart data={[...data]} margin={{ top: 12, right: 12, bottom: 4, left: 0 }}>
+        <RechartsLineChart data={preparedData} margin={{ top: 12, right: 12, bottom: 4, left: 0 }}>
           <CartesianGrid stroke="var(--ui-color-border)" vertical={false} strokeDasharray="3 5" />
           <XAxis dataKey={xKey} tick={AXIS_TICK} tickLine={false} axisLine={false} tickMargin={10} minTickGap={16} />
-          <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} domain={['auto', 'auto']} />
+          <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width="auto" domain={['auto', 'auto']} />
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: 'var(--ui-color-border)' }} />
-          {visible.map(({ item, count, index }) => (
+          {visible.map(({ item, count }) => (
             <Line
               key={item.dataKey}
               dataKey={item.dataKey}
               name={item.name}
               type="monotone"
-              stroke={chartColor(item, index)}
+              stroke={chartColor(item)}
               strokeWidth={2.5}
-              dot={count <= 2 || hasIsolatedPoint(data, item.dataKey) ? { r: 3 } : false}
+              dot={count <= 2 || hasIsolatedPoint(preparedData, item.dataKey) ? { r: 3 } : false}
               activeDot={{ r: 4 }}
               connectNulls={false}
               isAnimationActive={false}
