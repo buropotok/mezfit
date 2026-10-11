@@ -48,7 +48,9 @@ granted only through verified, idempotent invite acceptance.
 
 `cloud/roles.json` declares narrow, server-enforced permissions. Dexie Cloud
 grants visibility (read/sync) through membership in the relationship realm.
-Mutation permissions below are **additional** to that visibility:
+Mutation permissions below are **additional** to that visibility. The table
+applies specifically to the **Worker-created coach-client relationship realm**,
+not to a user's own private realm:
 
 | Table | Coach | Client | Owner/creation rule |
 | --- | --- | --- | --- |
@@ -73,6 +75,9 @@ requires them.
 
 The `sessionSetFacts.id` is the **same globally unique ID** as its
 `sessionSets.id`; their `realmId` and `workoutSessionId` must also match.
+Each immutable `sessionSets` snapshot also carries its parent `sessionExerciseId`;
+the corresponding `sessionExercises` snapshot table must be introduced by
+the workout-domain migration before this pilot schema is activated.
 The privileged Start operation is responsible for atomically creating
 the session, consistent PLAN snapshot, and initial FACT rows. Creation of
 additional exercises or sets during an active workout requires a separate,
@@ -87,6 +92,13 @@ role. The privileged Worker must also create relationship realms with
 alone must not grant rights beyond the declared roles. **Never grant an
 untrusted client ownership of the relationship realm**, since the realm
 owner has implicit full rights over every table in that realm.
+
+Dexie Cloud still permits a user to create and control **their own unrelated
+realms**. Lack of a role grant here does not disable Dexie Cloud's built-in
+personal ownership permissions. The app and the Worker must never treat a
+client-supplied realm ID, self-created realm, or self-assigned role as proof
+of an existing coach-client relationship. Only the Worker-maintained
+relationship registry and membership of its non-owned realm is trusted.
 
 Later PLAN child tables (phases/days/exercises/sets), occurrence controls,
 and session exercise snapshots require the **same explicit allowlist
@@ -125,8 +137,10 @@ record ownership and database permissions must be verified using real
 2. Worker creates a **non-owned** relationship realm and grants just
    coach/client roles. A client cannot read another client's realm or private
    coach catalogue by changing an ID.
-3. Coach can author and change PLAN. Client can read PLAN but direct sync
-   attempts to add/update/delete PLAN are **rejected by Dexie Cloud server**.
+3. Coach can author and change assigned PLAN within the approved relationship
+   realm. Client can read it, but direct sync attempts to add/update/delete
+   **the assigned PLAN in that realm** are rejected by Dexie Cloud server.
+   Self-created personal realms must not be mistaken for assigned programs.
 4. Both coach and client can update permitted FACT metrics on an existing
    `sessionSetFacts` record. Direct attempts to add/delete facts, move them
    between sessions or realms, or change `owner`, `id`, or other protected
@@ -136,8 +150,11 @@ record ownership and database permissions must be verified using real
    `trainingPlanId`, start/completion timestamps and frozen PLAN snapshots,
    are rejected by Dexie Cloud server; the authorized Worker retains
    server-confirmed lifecycle transitions.
-6. Neither coach nor client can alter `realms`, `members`, or `roles`
-   via ordinary sync, and no realm owner override grants hidden privileges.
+6. Neither coach nor client can change the **Worker-created relationship
+   realm**, its members or role assignments through ordinary sync. Dexie
+   Cloud may let them create separate realms that the application must not
+   interpret as approved relationships. No relationship realm owner override
+   may grant hidden privileges.
 7. FACT edits work offline and synchronize on reconnect from either member;
    unrelated set fields are not overwritten by stale whole-session snapshots.
 8. Closing or switching Telegram accounts doesn't expose prior user's local data.
