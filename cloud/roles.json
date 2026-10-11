@@ -1,0 +1,20 @@
+{
+  "roles": {
+    "coach": {
+      "displayName": "Coach",
+      "description": "Can author the shared training plan and edit workout facts",
+      "sortOrder": 1,
+      "permissions": {
+        "manage": ["trainingPlans", "workoutSessions"]
+      }
+    },
+    "client": {
+      "displayName": "Client",
+      "description": "Can read training plans and edit shared workout facts",
+      "sortOrder": 2,
+      "permissions": {
+        "manage": ["workoutSessions"]
+      }
+    }
+  }
+}
