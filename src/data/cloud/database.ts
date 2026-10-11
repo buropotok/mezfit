@@ -79,6 +79,9 @@ export interface CloudSessionSetFactRow extends CloudSharedRow {
  * any client-supplied payload. Never accept these values from a synced FACT
  * row or treat a local edit as a confirmed audit record.
  *
+ * confirmedAt is the trusted cloud-commit timestamp, not necessarily the
+ * physical time of an edit made offline and synchronized later.
+ *
  * The foundation does not yet implement an event recorder. Before enabling
  * cloud FACT writes, the runtime must prove a complete server-side mechanism
  * that captures all authorized edits, including edits synced after offline use.
@@ -88,7 +91,7 @@ export interface CloudSessionSetFactAuditRow extends CloudSharedRow {
   sessionSetId: string;
   workoutSessionId: string;
   actorUserId: string;
-  occurredAt: string;
+  confirmedAt: string;
   changedFields: Array<
     | 'actualReps'
     | 'actualWeightKg'
@@ -113,7 +116,7 @@ export const CLOUD_DATABASE_STORES_V1 = {
   // A deterministic key enforces 1:1 PLAN-to-FACT across devices. A distinct
   // `id` key (not `@id`) avoids cross-table prefix restrictions in Dexie Cloud.
   sessionSetFacts: 'id, realmId, sessionSetId, workoutSessionId',
-  sessionSetFactAudits: '@id, realmId, sessionSetFactId, sessionSetId, workoutSessionId, occurredAt',
+  sessionSetFactAudits: '@id, realmId, sessionSetFactId, sessionSetId, workoutSessionId, confirmedAt',
   realms: '@realmId',
   members: '@id, realmId, userId',
   roles: '[realmId+name]',
