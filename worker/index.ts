@@ -22,7 +22,7 @@ import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } fr
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
 import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
-import { CloudMembershipError, provisionInviteMembership } from './lib/dexie-cloud-membership';
+import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
 
 type Role = 'coach' | 'client';
 
@@ -656,6 +656,8 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const invite = await findInvite(env.DB_BINDING, token, auth.row.id);
     if (!invite) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is invalid, expired, or already used');
     if (invite.coach_user_id === auth.row.id) throw new HttpError(400, 'SELF_LINK', 'Coach cannot accept their own invite');
+
+    requireCloudMembershipConfiguration(env);
 
     // Reserve the existing one-use invite before contacting Dexie Cloud. Only
     // this verified Telegram client can retry after a partial upstream failure.
