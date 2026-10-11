@@ -78,7 +78,7 @@ function chartColor(series: ChartSeries): string {
 
 /** Four automatic colors; additional series must provide their own distinct colors. */
 function resolveSeriesColors<TKey extends string>(series: readonly ChartSeries<TKey>[]) {
-  const colored = series.map((item) => ({ ...item, color: item.color ?? SERIES_COLORS[index] }));
+  const colored = series.map((item, index) => ({ ...item, color: item.color ?? SERIES_COLORS[index] }));
   const valid = colored.every((item) => typeof item.color === 'string' && item.color.trim().length > 0)
     && new Set(colored.map((item) => item.color)).size === colored.length;
   return { colored, valid };
@@ -150,7 +150,7 @@ function ChartFrame({ label, height, className, empty, emptyMessage, fullAxisLab
             )}
             {series.length > 1 && (
               <div className="mezfit-chart__legend" role="list" aria-label="Ряды графика">
-                {series.map((item, index) => (
+                {series.map((item) => (
                   <span className="mezfit-chart__legend-item" role="listitem" key={item.dataKey}>
                     <span className="mezfit-chart__swatch" style={{ backgroundColor: chartColor(item) }} aria-hidden="true" />
                     <Text variant="caption" tone="muted">{item.name}</Text>
