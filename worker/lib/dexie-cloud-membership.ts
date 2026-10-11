@@ -218,7 +218,8 @@ async function list(
 async function write(
   fetchImpl: typeof fetch, accessToken: string, table: 'realms' | 'members', records: unknown[],
 ): Promise<void> {
-  await json(await upstream(fetchImpl, '/all/' + table, accessToken, 'POST', records));
+  const response = await upstream(fetchImpl, '/all/' + table, accessToken, 'POST', records);
+  if (!response.ok) failUnavailable();
 }
 
 /**
