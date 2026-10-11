@@ -29,6 +29,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+type CloudTokenFailureStage = 'fetch' | 'http' | 'json' | 'contract';
+
+/** Fixed operational fields only: never log upstream errors, payloads, headers or user details. */
+function logCloudTokenFailure(stage: CloudTokenFailureStage, upstreamStatus: number | null): void {
+  console.error('DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED', { stage, upstreamStatus });
+}
+
 /**
  * Privileged token exchange only. Domain writes must use Dexie Cloud Addon,
  * not the Worker. Never return or log the service-account credentials.
@@ -91,10 +98,12 @@ export async function handleDexieCloudTokenRoute(
       }),
     });
   } catch {
+    logCloudTokenFailure('fetch', null);
     return error(502, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication failed');
   }
 
   if (!upstream.ok) {
+    logCloudTokenFailure('http', upstream.status);
     return error(502, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication failed');
   }
 
@@ -102,6 +111,7 @@ export async function handleDexieCloudTokenRoute(
   try {
     token = await upstream.json();
   } catch {
+    logCloudTokenFailure('json', upstream.status);
     return error(502, 'INVALID_CLOUD_RESPONSE', 'Cloud authentication failed');
   }
 
@@ -110,6 +120,7 @@ export async function handleDexieCloudTokenRoute(
     || typeof token.accessTokenExpiration !== 'number'
     || !isRecord(token.claims) || token.claims.sub !== subject
     || !['demo', 'eval', 'prod', 'client'].includes(String(token.userType))) {
+    logCloudTokenFailure('contract', upstream.status);
     return error(502, 'INVALID_CLOUD_RESPONSE', 'Cloud authentication failed');
   }
 

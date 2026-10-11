@@ -166,6 +166,34 @@ bypass Telegram signature validation or show credentials as part of
 debugging. A GET request to the token endpoint is expected to return 405
 and does not exercise token issuance.
 
+### Reading Worker-side token exchange diagnostics
+
+When `POST /api/dexie-cloud/tokens` fails after Telegram validation and the
+upstream request begins, the Worker emits one `console.error` event named
+`DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED` with exactly two fixed fields:
+`stage` and `upstreamStatus`.
+
+| Stage | upstreamStatus | Meaning |
+| --- | --- | --- |
+| `fetch` | `null` | Fetching the Dexie Cloud token endpoint failed before an HTTP response |
+| `http` | HTTP status (for example `401`, `403` or `500`) | Dexie Cloud rejected the request or returned an unsuccessful HTTP status |
+| `json` | Normally `200` | Dexie Cloud returned a successful HTTP status, but the response was not valid JSON |
+| `contract` | Normally `200` | The decoded token response failed the expected contract, including the verified Telegram subject |
+
+These diagnostics **do not change API responses** (clients still receive
+`DEXIE_CLOUD_UNAVAILABLE` or `INVALID_CLOUD_RESPONSE`), and never include
+upstream response/request bodies, response headers, exceptions, credentials,
+tokens, public keys, Telegram `initData`, user IDs or names. Successful
+exchanges and pre-upstream validation failures do not produce this log.
+
+In Cloudflare Workers Logs, locate the corresponding
+`DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED` **console event** and share only its
+`stage` and `upstreamStatus` values. Cloudflare's separate automatic fetch
+event can include sensitive request headers such as `x-telegram-init-data`;
+do **not** forward or screenshot full raw request event logs. The upstream
+HTTP status identifies the failure category, not necessarily the underlying
+Dexie Cloud error message.
+
 This diagnostic is temporary for pre-MVP activation and should be removed
 when the actual Dexie Cloud Addon flow has been enabled and covered by
 integration checks.
