@@ -22,10 +22,10 @@ export function ChartsCatalog() {
       <Text variant="caption" tone="muted">Стандартные Line и Radar: готовые легенда, точки и подсказки Recharts.</Text>
       <Divider />
       <MezfitLineChart label="Динамика веса" data={progress} xKey="week"
-        series={[{ dataKey: 'current', name: 'Сейчас' }, { dataKey: 'previous', name: 'Раньше' }]} />
+        series={[{ dataKey: 'current', name: 'Сейчас', color: 'var(--ui-color-primary)' }, { dataKey: 'previous', name: 'Раньше', color: '#b2a0ff' }]} />
       <Divider />
       <MezfitRadarChart label="Профиль показателей" data={profile} angleKey="axis" domain={[0, 100]}
-        series={[{ dataKey: 'current', name: 'Сейчас' }, { dataKey: 'previous', name: 'Раньше' }]} />
+        series={[{ dataKey: 'current', name: 'Сейчас', color: 'var(--ui-color-primary)' }, { dataKey: 'previous', name: 'Раньше', color: '#b2a0ff' }]} />
     </Surface>
   );
 }
