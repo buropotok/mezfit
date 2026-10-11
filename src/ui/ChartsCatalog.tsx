@@ -12,7 +12,7 @@ const profile = [
   { axis: 'Сила', current: 86, previous: 71 },
   { axis: 'Техника', current: 92, previous: 77 },
   { axis: 'Баланс', current: 74, previous: 64 },
-  { axis: 'Мобильность', current: 79, previous: 69 },
+  { axis: 'Мобил.', current: 79, previous: 69 },
 ];
 
 export function ChartsCatalog() {
