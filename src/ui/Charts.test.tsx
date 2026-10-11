@@ -291,6 +291,157 @@ describe('UI Kit charts', () => {
     expect(html).toContain('data-radius-overflow="false"');
   });
 
+  it('drops rows with invalid X labels before computing visible line values', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Точки без категории"
+        data={[
+          { week: undefined, weight: 71 },
+          { week: '  ', weight: 72 },
+          { week: 'Н2', weight: 73 },
+          { week: 'Н3', weight: 74 },
+        ]}
+        xKey="week"
+        series={[{ dataKey: 'weight', name: 'Вес' }]}
+      />,
+    );
+    expect(html).toContain('data-chart-length="2"');
+    expect(html).toContain('data-line-key="weight"');
+  });
+
+  it('sanitizes NaN and infinities before passing line values to chart and tooltip', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Числовые пропуски"
+        data={[
+          { week: 'Н1', weight: 10 },
+          { week: 'Н2', weight: Infinity },
+          { week: 'Н3', weight: NaN },
+          { week: 'Н4', weight: -Infinity },
+          { week: 'Н5', weight: 20 },
+        ]}
+        xKey="week"
+        series={[{ dataKey: 'weight', name: 'Вес' }]}
+      />,
+    );
+    expect(html).toContain('data-chart-length="5"');
+    expect(html).toContain('data-chart-nonfinite="false"');
+    expect(html).toContain('data-chart-nulls=";weight;weight;weight;"');
+    expect(html).toContain('data-dot="visible"');
+  });
+
+  it('rejects duplicate radar categories after trimming, including whitespace-only labels', () => {
+    const duplicate = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Повторение оси"
+        data={[{ axis: ' A ', score: 40 }, { axis: 'A', score: 60 }, { axis: 'B', score: 80 }]}
+        angleKey="axis"
+        series={[{ dataKey: 'score', name: 'Оценка' }]}
+      />,
+    );
+    const blank = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Пустая ось"
+        data={[{ axis: 'A', score: 40 }, { axis: '  ', score: 60 }, { axis: 'B', score: 80 }]}
+        angleKey="axis"
+        series={[{ dataKey: 'score', name: 'Оценка' }]}
+      />,
+    );
+    expect(duplicate).toContain('Нет данных для графика');
+    expect(blank).toContain('Нет данных для графика');
+    expect(duplicate).not.toContain('data-radar-key');
+    expect(blank).not.toContain('data-radar-key');
+  });
+
+  it('reserves Y-axis width automatically for large or negative labels', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Крупные значения"
+        data={[{ week: 'Н1', value: -1000000 }, { week: 'Н2', value: 2000000 }]}
+        xKey="week"
+        series={[{ dataKey: 'value', name: 'Значение' }]}
+      />,
+    );
+    expect(html).toContain('data-axis-width="auto"');
+  });
+
+  it('shortens radar tick labels but exposes the complete category names', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Полные названия"
+        data={[
+          { axis: 'Выносливость', score: 80 },
+          { axis: 'Техника', score: 70 },
+          { axis: 'Мобильность', score: 90 },
+        ]}
+        angleKey="axis"
+        series={[{ dataKey: 'score', name: 'Показатель' }]}
+      />,
+    );
+    expect(html).toContain('data-formatted-radar-label="Выносли…"');
+    expect(html).toContain('Полные названия осей: Выносливость · Мобильность');
+    expect(html).toContain('data-radar-key="score"');
+  });
+
+  it('reports missing fifth-series color instead of reusing another series color', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Много рядов"
+        data={[{ step: 'A', a: 1, b: 2, c: 3, d: 4, e: 5 }]}
+        xKey="step"
+        series={[
+          { dataKey: 'a', name: 'A' },
+          { dataKey: 'b', name: 'B' },
+          { dataKey: 'c', name: 'C' },
+          { dataKey: 'd', name: 'D' },
+          { dataKey: 'e', name: 'E' },
+        ]}
+      />,
+    );
+    expect(html).toContain('Для каждого ряда необходим уникальный цвет');
+    expect(html).not.toContain('data-line-key');
+  });
+
+  it('accepts five series with a distinct fifth color and rejects duplicate explicit colors', () => {
+    const rows = [{ axis: 'А', a: 1, b: 2, c: 3, d: 4, e: 5 }, { axis: 'Б', a: 2, b: 3, c: 4, d: 5, e: 6 }, { axis: 'В', a: 3, b: 4, c: 5, d: 6, e: 7 }];
+    const regularSeries = [
+      { dataKey: 'a' as const, name: 'A' },
+      { dataKey: 'b' as const, name: 'B' },
+      { dataKey: 'c' as const, name: 'C' },
+      { dataKey: 'd' as const, name: 'D' },
+      { dataKey: 'e' as const, name: 'E', color: '#abcdef' },
+    ];
+    const good = renderToStaticMarkup(
+      <MezfitRadarChart label="Пять рядов" data={rows} angleKey="axis" series={regularSeries} />,
+    );
+    const duplicate = renderToStaticMarkup(
+      <MezfitRadarChart label="Повтор цвета" data={rows} angleKey="axis"
+        series={[...regularSeries.slice(0, 4), { dataKey: 'e', name: 'E', color: '#ffbf70' }]}
+      />,
+    );
+    expect(good).toContain('data-radar-key="e"');
+    expect(good).toContain('data-stroke="#abcdef"');
+    expect(duplicate).toContain('Для каждого ряда необходим уникальный цвет');
+    expect(duplicate).not.toContain('data-radar-key');
+  });
+
+  it('preserves the selected plot height for empty and non-empty charts', () => {
+    const empty = renderToStaticMarkup(
+      <MezfitRadarChart<{ axis: string; score: number | null }>
+        label="Пустой профиль" height={320} data={[]} angleKey="axis"
+        series={[{ dataKey: 'score', name: 'Оценка' }]}
+      />,
+    );
+    const populated = renderToStaticMarkup(
+      <MezfitRadarChart label="Полный профиль" height={320}
+        data={[{ axis: 'A', score: 3 }, { axis: 'B', score: 5 }, { axis: 'C', score: 7 }]}
+        angleKey="axis" series={[{ dataKey: 'score', name: 'Оценка' }]}
+      />,
+    );
+    expect(empty).toContain('style="height:320px"');
+    expect(populated).toContain('style="height:320px"');
+  });
+
   it('constrains category and numeric metric keys using the data row type', () => {
     type WorkoutRow = { week: string; weight: number | null; reps?: number; note: string };
     const line: MezfitLineChartProps<WorkoutRow> = {
