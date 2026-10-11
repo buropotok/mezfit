@@ -26,6 +26,11 @@ export type MezfitRadarChartProps<T extends object> = ChartProps<T> & {
   domain?: readonly [number, number];
 };
 
+// Keep Recharts keyboard navigation on pointer-precise devices; avoid SVG focus rings on touchscreens.
+const chartKeyboardNavigation = typeof window === 'undefined'
+  || typeof window.matchMedia !== 'function'
+  || !window.matchMedia('(pointer: coarse)').matches;
+
 const TICK = { fill: 'var(--ui-color-surface-muted)' };
 const TOOLTIP = {
   backgroundColor: 'var(--ui-color-surface-raised)',
@@ -39,7 +44,7 @@ export function MezfitLineChart<T extends object>({
   return (
     <div role="group" aria-label={label} className="ui-text ui-text--caption" style={{ width: '100%', minWidth: 0, height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={[...data]}>
+        <LineChart data={[...data]} accessibilityLayer={chartKeyboardNavigation}>
           <CartesianGrid stroke="var(--ui-color-border)" vertical={false} />
           <XAxis dataKey={xKey} tick={TICK} />
           <YAxis width="auto" tick={TICK} />
@@ -61,7 +66,7 @@ export function MezfitRadarChart<T extends object>({
   return (
     <div role="group" aria-label={label} className="ui-text ui-text--caption" style={{ width: '100%', minWidth: 0, height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={[...data]} outerRadius="55%" margin={{ top: 12, right: 16, bottom: 12, left: 16 }}>
+        <RadarChart data={[...data]} accessibilityLayer={chartKeyboardNavigation} outerRadius="55%" margin={{ top: 12, right: 16, bottom: 12, left: 16 }}>
           <PolarGrid stroke="var(--ui-color-border)" />
           <PolarAngleAxis dataKey={angleKey} tick={TICK} />
           <PolarRadiusAxis domain={domain ? [...domain] : undefined} tick={false} />
