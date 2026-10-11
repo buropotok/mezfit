@@ -15,7 +15,6 @@ vi.mock('recharts', () => {
     Line,
     Radar,
     CartesianGrid: Axis,
-    Legend: Axis,
     PolarAngleAxis: Axis,
     PolarGrid: Axis,
     PolarRadiusAxis: Axis,
@@ -40,6 +39,8 @@ describe('UI Kit charts', () => {
     expect(html).toContain('aria-label="История веса"');
     expect(html).toContain('data-line-key="weight"');
     expect(html).toContain('data-line-key="reps"');
+    expect(html).toContain('role="list"');
+    expect(html).toContain('ui-text--caption');
     expect(html).not.toContain('Нет данных');
   });
 
