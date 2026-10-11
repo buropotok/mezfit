@@ -35,20 +35,9 @@ export interface CloudWorkoutSessionRow extends CloudSharedRow {
   completedAt: string | null;
 }
 
-export interface CloudRealmRow {
-  realmId: string;
-  owner: null;
-  name?: string;
-}
-
-export interface CloudMemberRow {
-  id?: string;
-  realmId: string;
-  userId: string;
-  invite: false;
-  accepted: boolean;
-  roles: Array<'coach' | 'client'>;
-}
+// Dexie Cloud augments Dexie with strongly typed realms and members tables.
+// Do not redeclare them here: synced members use accepted?: Date (not boolean),
+// and privileged REST membership inputs are a separate contract.
 
 export const CLOUD_DATABASE_STORES_V1 = {
   trainingPlans: '@id, realmId, coachUserId, clientUserId, [realmId+position]',
@@ -68,8 +57,6 @@ export function cloudDatabaseName(telegramUserId: string): string {
 export class MezfitCloudDatabase extends Dexie {
   trainingPlans!: Table<CloudTrainingPlanRow, string>;
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
-  realms!: Table<CloudRealmRow, string>;
-  members!: Table<CloudMemberRow, string>;
 
   constructor(telegramUserId: string, initData: string) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
