@@ -29,12 +29,13 @@ authorized pilot bootstrap using the database URL from the checked-in
   using `GET /public/roles`. Stops if the declared allowlists differ.
 - Checks realm-local role overrides, the realm and all existing members
   through `/all` **before** writing. Rejects any realm-local roles (which could
-  shadow the global coach/client policy), non-null realm owner, changed identity,
+  shadow the global coach/client policy), non-null realm/member owner, changed identity,
   unexpected participant, extra member, changed role, direct permission,
   or non-accepted membership.
-- Creates a realm with `owner: null` and two accepted members with
-  `invite: false`, `roles: ['coach']` or `roles: ['client']`,
-  and **no direct permissions**.
+- Creates a realm with `owner: null` and two accepted members also explicitly
+  set to `owner: null`, `invite: false`, `roles: ['coach']` or `roles: ['client']`,
+  and **no direct permissions**. Membership ownership must never grant a client
+  authority to alter their own role or membership.
 - Confirms the result with read-back requests and separately minted
   `ACCESS_DB` user tokens for `tg:<coach ID>` and `tg:<client ID>`.
   Neither user token has any GLOBAL_* scope.
@@ -72,7 +73,9 @@ arguments, or use the Cloudflare Worker secrets for administrative writes.
 An authorized invocation returns only
 `{"realmId":"rlm...","applied":true,"membersVerified":2}`.
 If the remote schema is not installed or is inaccessible, the command fails
-before creating the realm. If the write fails after the realm is created,
+before creating the realm. If a membership read-back omits `owner` or returns
+an owner other than explicit `null`, the pilot fails closed and cannot report
+success; the live service must confirm this contract before rollout. If the write fails after the realm is created,
 repeat the **same** command for the **same ordered pair**: it checks existing
 records and resumes missing writes. It never deletes relationships or
 silently repairs conflicting or privileged members.
