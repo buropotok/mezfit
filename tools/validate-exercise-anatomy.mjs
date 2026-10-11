@@ -46,7 +46,7 @@ for (const exercise of data.exercises ?? []) {
   check(exercise.review?.status === 'needs_expert_review', `Unexpectedly approved without expert review: ${id}`);
   check(exercise.review?.external_match === 'unverified', `Unexpected external verification claim: ${id}`);
   check(typeof exercise.source_evidence?.instructions_en === 'string' && exercise.source_evidence.instructions_en.length > 0, `Missing source instructions: ${id}`);
-  check(Object.prototype.hasOwnProperty.call(taxonomy, exercise.subcategory) || (exercise.exercise_kind === 'conditioning' && exercise.subcategory === null), `Invalid subcategory: ${id}`);
+  check(Object.prototype.hasOwnProperty.call(taxonomy, exercise.subcategory) , `Invalid subcategory: ${id}`);
   const roleSets = ['primary', 'secondary', 'stabilizers'].map(role => ({
     role,
     ids: exercise.muscles?.[role]
