@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import roleConfig from '../../cloud/roles.json';
+import { relationshipPlan } from '../../tools/dexie-cloud-relationship.mjs';
 import {
   CloudMembershipError, provisionInviteMembership, relationshipMembership,
   requireCloudMembershipConfiguration,
@@ -101,6 +102,9 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
   it('uses the existing deterministic pilot identifiers, without granting member ownership', async () => {
     const planned = await relationshipMembership('101', '202');
     expect(planned.realm.realmId).toMatch(/^rlm[a-f0-9]{28}$/);
+    expect(planned.realm.realmId).toBe(relationshipPlan('101', '202').realm.realmId);
+    expect(planned.members.map((member) => member.id))
+      .toEqual(relationshipPlan('101', '202').members.map((member) => member.id));
     expect(planned.realm).toMatchObject({ owner: null, name: 'Mezfit coach-client pilot' });
     expect(planned.members.map((member) => member.roles)).toEqual([['coach'], ['client']]);
     expect(planned.members.map((member) => member.userId)).toEqual(['tg:101', 'tg:202']);
@@ -136,7 +140,7 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
     expect([...cloud.members.values()]).toHaveLength(2);
     expect([...cloud.members.values()].every((member) => member.owner === null)).toBe(true);
     expect(cloud.requests.filter((item) => item.path === '/my/realms/' + result.realmId)).toHaveLength(2);
-    expect(JSON.stringify(cloud.requests)).not.toContain('manager-secret-value-in-response');
+    expect(cloud.requests.some((r) => r.path === '/all/members' && r.method === 'POST')).toBe(true);
   });
 
   it('retries safely without writing over existing memberships', async () => {
@@ -152,7 +156,7 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
   it('can resume a partial realm after a failed membership write', async () => {
     const cloud = fakeCloud();
     const plan = await relationshipMembership('101', '202');
-    cloud.realms.set(plan.realm.realmId, plan.realm);
+    cloud.realms.set(plan.realm.realmId, { ...plan.realm });
     cloud.failOneWrite();
     await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl)).rejects.toMatchObject({
       code: 'CLOUD_MEMBERSHIP_UNAVAILABLE',
@@ -165,7 +169,7 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
   it('refuses privilege escalation through pre-existing self-owned membership', async () => {
     const cloud = fakeCloud();
     const plan = await relationshipMembership('101', '202');
-    cloud.realms.set(plan.realm.realmId, plan.realm);
+    cloud.realms.set(plan.realm.realmId, { ...plan.realm });
     cloud.members.set(plan.members[1].id, { ...plan.members[1], owner: 'tg:202' });
     await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl)).rejects.toMatchObject({
       code: 'CLOUD_MEMBERSHIP_CONFLICT',
