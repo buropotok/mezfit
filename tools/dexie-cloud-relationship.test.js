@@ -1,4 +1,6 @@
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import {
   assertRolePolicy,
@@ -132,6 +134,26 @@ describe('relationship bootstrap identity', () => {
       expect(() => telegramUserId(input)).toThrow('INVALID_TELEGRAM_ID');
     }
     expect(() => relationshipPlan('101', '101')).toThrow('SELF_RELATIONSHIP_FORBIDDEN');
+  });
+
+  it('runs the actual CLI dry-run from outside the repository with checked-in config', () => {
+    const script = fileURLToPath(new URL('./dexie-cloud-relationship.mjs', import.meta.url));
+    const outsideRepository = fileURLToPath(new URL('../../', import.meta.url));
+    const result = spawnSync(process.execPath, [
+      script, '--coach', '101', '--client', '202',
+    ], {
+      cwd: outsideRepository,
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(JSON.parse(result.stdout)).toEqual({
+      realmId: relationshipPlan('101', '202').realm.realmId,
+      applied: false,
+    });
   });
 
   it('does not access remote services or require a key in dry-run', async () => {
