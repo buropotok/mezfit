@@ -58,6 +58,7 @@ not to a user's own private realm:
 | `workoutSessions` (session identity, schedule & status) | Read only | Read only | Privileged Worker creates/transitions |
 | `sessionSets` (immutable planned set snapshot) | Read only | Read only | Privileged Worker materializes snapshot |
 | `sessionSetFacts` (measurements per snapshot set) | Update explicit FACT fields only | Update same fields only | Privileged Worker creates one row per snapshot set |
+| `sessionSetFactAudits` (verified attribution events) | Read only | Read only | Privileged recorder only; no client-side creation |
 | `realms`, `members`, `roles` | No direct role grants | No direct role grants | Privileged Worker/administrator only |
 
 Allowed updates to `sessionSetFacts` are exactly:
@@ -73,8 +74,14 @@ values, or mutating workout lifecycle status directly. These actions are
 handled by a narrowly authorized Worker operation when product behavior
 requires them.
 
-The `sessionSetFacts.id` is the **same globally unique ID** as its
-`sessionSets.id`; their `realmId` and `workoutSessionId` must also match.
+Each `sessionSetFacts` record has a **distinct, deterministic** ID
+(`fact:<sessionSetId>`) and a foreign key `sessionSetId` referencing its
+immutable `sessionSets` row. The FACT table deliberately declares a regular
+`id` primary key instead of `@id`: Dexie Cloud's `@id` enforces a
+table-specific ID prefix and does not allow reuse of `sessionSets` IDs.
+This deterministic key preserves one-to-one creation and idempotency across
+devices without assuming cloud-enforced uniqueness of secondary indexes.
+The linked rows' `realmId` and `workoutSessionId` must match.
 Each immutable `sessionSets` snapshot also carries its parent `sessionExerciseId`;
 the corresponding `sessionExercises` snapshot table must be introduced by
 the workout-domain migration before this pilot schema is activated.
@@ -84,6 +91,32 @@ additional exercises or sets during an active workout requires a separate,
 authorized operation; it is **not** implicitly granted to all clients by
 allowing arbitrary `add` into the FACT table. Editing existing FACT rows
 works offline through the addon once the data has synchronized.
+
+### Verified attribution is an activation prerequisite
+
+`sessionSetFactAudits` reserves an explicit server-authored event contract:
+`sessionSetFactId`, `sessionSetId`, `workoutSessionId`,
+`actorUserId`, `occurredAt` and the list of edited FACT fields. Its
+`realmId` matches the relationship realm. Neither coach nor client receives
+`add`, `update`, or `manage` on this audit table. The authoritative
+actor and timestamp must come from a **trusted server identity and clock**,
+not client JSON or writable `updatedByUserId`/`updatedAt` fields.
+Initial creation can be attributed to the Worker-verified initiator.
+
+**This PR defines the contract, not an audit implementation.** Dexie Cloud
+operations may contain an actor ID and operation timestamp, but it is **not
+yet established** that the managed service exposes a complete, durable,
+server-verified mutation log to the Worker. A client-side edit must **never**
+be presented as a confirmed audit event merely because it includes an
+author/time hint. Before FACT sync is activated, verify and implement a
+trusted audit-ingestion mechanism that covers delayed offline edits, both
+participants, conflicts, and historical corrections. If Dexie Cloud does
+not expose adequate verified provenance, the team must resolve this
+architecture/product trade-off **before activation** rather than silently
+implementing a forged or incomplete log. Do not introduce an alternative
+SyncEngine or move normal FACT edits to synchronous Worker CRUD just to
+mask this issue. The audit event schema remains unused until the proof
+of correctness is complete.
 
 All shared rows are created with explicit `owner: null`: otherwise Dexie
 Cloud's default ownership can give a creator full permissions regardless of
@@ -121,6 +154,7 @@ and the real two-account authorization tests succeed.
 
 - Coach/client role membership and invite redemption in Dexie Cloud.
 - Server-confirmed, atomic workout Start or PLAN snapshot creation.
+- Automatic trusted FACT mutation audit ingestion, including offline-delivered edits.
 - Mapped domain repositories for exercises, plans, calendar and sessions.
 - Replacement/deletion of D1 business APIs, custom SyncEngine or D1 schema.
 - React mounting and live sync before cloud roles/permissions are proven.
@@ -160,6 +194,12 @@ record ownership and database permissions must be verified using real
 8. Closing or switching Telegram accounts doesn't expose prior user's local data.
 9. No unverified multi-request replacement for the existing atomic Workout Start
    is enabled. Privileged creation is idempotent (including FACT/PLAN linkage).
+10. Separate `sessionSets` and `sessionSetFacts` keys are accepted by the
+    real Dexie Cloud schema, and one-to-one FACT materialization is idempotent.
+11. A trustworthy server-backed FACT audit source is verified and **every**
+    synchronized edit yields durable `actorUserId` + `occurredAt` metadata
+    derived from authenticated/server identity, not from a writable field.
+    Offline edits and conflicts must be covered, or activation remains blocked.
 
 The added tests check schema/role declarations and token exchange behavior,
 including forged client hints and upstream failures. They **do not** prove live
@@ -172,3 +212,4 @@ References:
 - https://dexie.org/docs/cloud/db.cloud.configure%28%29
 - https://dexie.org/docs/cloud/rest-api
 - https://dexie.org/docs/cloud/cli
+- https://dexie.org/docs/cloud/best-practices
