@@ -1,0 +1,18 @@
+.mezfit-chart {
+  width: 100%;
+  min-width: 0;
+  color: var(--ui-color-surface-text);
+}
+
+.mezfit-chart__plot {
+  width: 100%;
+  min-width: 0;
+}
+
+.mezfit-chart__empty {
+  display: grid;
+  min-height: 176px;
+  place-items: center;
+  padding: var(--ui-space-3);
+  text-align: center;
+}
