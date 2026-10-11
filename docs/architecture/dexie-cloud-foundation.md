@@ -46,23 +46,64 @@ Worker, not by client-controlled IDs. It must have `owner: null` so the
 realm creator does not acquire implicit superuser privileges. Membership is
 granted only through verified, idempotent invite acceptance.
 
-`cloud/roles.json` declares two roles:
+`cloud/roles.json` declares narrow, server-enforced permissions. Dexie Cloud
+grants visibility (read/sync) through membership in the relationship realm.
+Mutation permissions below are **additional** to that visibility:
 
-| Role | Training PLAN (`trainingPlans`) | Workout FACT (`workoutSessions`) | Realms/members |
+| Table | Coach | Client | Owner/creation rule |
 | --- | --- | --- | --- |
-| coach | Read and manage | Read and manage | No direct mutation permission |
-| client | Read only | Read and manage | No direct mutation permission |
+| `trainingPlans` (coach-authored PLAN) | `manage` | Read only | `owner: null`; coach manages plan content |
+| `workoutSessions` (session identity, schedule & status) | Read only | Read only | Privileged Worker creates/transitions |
+| `sessionSets` (immutable planned set snapshot) | Read only | Read only | Privileged Worker materializes snapshot |
+| `sessionSetFacts` (measurements per snapshot set) | Update explicit FACT fields only | Update same fields only | Privileged Worker creates one row per snapshot set |
+| `realms`, `members`, `roles` | No direct role grants | No direct role grants | Privileged Worker/administrator only |
 
-Both shared record types must explicitly set `owner: null`; otherwise
-the Dexie Cloud creator-ownership default can bypass the intended role policy.
-These constraints must be preserved as later PLAN child and FACT child tables
-are introduced. Other-client data must never appear in a client's local sync.
+Allowed updates to `sessionSetFacts` are exactly:
+`actualReps`, `actualWeightKg`, `actualDurationSeconds`,
+`actualDistanceMeters`, `setLabel`, `rpe`, `comment`, `bands`,
+`setStatus` (status of a **set result**, not the session lifecycle).
+
+No role has `manage` on workout sessions or FACT records, nor `add` for
+creating new FACT rows. This prevents an ordinary client — or coach acting
+through the ordinary synced UI — from deleting facts, impersonating a record
+owner, switching its realm, replacing its session ID, changing PLAN snapshot
+values, or mutating workout lifecycle status directly. These actions are
+handled by a narrowly authorized Worker operation when product behavior
+requires them.
+
+The `sessionSetFacts.id` is the **same globally unique ID** as its
+`sessionSets.id`; their `realmId` and `workoutSessionId` must also match.
+The privileged Start operation is responsible for atomically creating
+the session, consistent PLAN snapshot, and initial FACT rows. Creation of
+additional exercises or sets during an active workout requires a separate,
+authorized operation; it is **not** implicitly granted to all clients by
+allowing arbitrary `add` into the FACT table. Editing existing FACT rows
+works offline through the addon once the data has synchronized.
+
+All shared rows are created with explicit `owner: null`: otherwise Dexie
+Cloud's default ownership can give a creator full permissions regardless of
+role. The privileged Worker must also create relationship realms with
+`owner: null` and separately grant coach/client membership. Membership
+alone must not grant rights beyond the declared roles. **Never grant an
+untrusted client ownership of the relationship realm**, since the realm
+owner has implicit full rights over every table in that realm.
+
+Later PLAN child tables (phases/days/exercises/sets), occurrence controls,
+and session exercise snapshots require the **same explicit allowlist
+review** before they are introduced; avoid broad wildcard permissions.
+A client has no PLAN editing controls in UI, but only server-side
+permissions are a security boundary.
 
 **Configuration is not auto-applied by Git.** Once the branch is merged and
 the database/CLI credentials are available in the original secure Codespace,
 import the roles with `npx dexie-cloud import cloud/roles.json`. Verify the
 CLI is connected to the database URL above **before** importing. Importing
 permissions is a privileged operational step, not a browser operation.
+Because import is additive, export the resulting roles (`npx dexie-cloud export --roles`)
+and confirm neither role retains earlier broad permissions on
+`workoutSessions`, `sessionSets`, or `sessionSetFacts` before granting
+membership. Do not enable the new domain repositories until this check
+and the real two-account authorization tests succeed.
 
 ## What is intentionally not enabled in this foundation
 
@@ -80,16 +121,28 @@ record ownership and database permissions must be verified using real
 ## Verification matrix for the next activation step
 
 1. Signed Telegram users receive tokens whose `claims.sub` is stable
-   across devices, and tampered/expired initData is rejected.
-2. Worker creates a relationship realm and grants coach/client membership;
-   client A never sees another client's realm or private coach catalogue.
-3. Coach can create/update PLAN; client can read it but a direct malicious
-   client mutation is **rejected by Dexie Cloud server**.
-4. Both participants can edit FACT within their own shared realm; no
-   ownership default grants extra PLAN rights.
-5. Offline edit, reconnect and secondary device sync work in both roles.
-6. Closing or switching Telegram accounts doesn't expose prior user's local data.
-7. No unverified multi-request replacement for the existing atomic workout Start.
+   across devices; tampered/expired initData and forged identity hints are rejected.
+2. Worker creates a **non-owned** relationship realm and grants just
+   coach/client roles. A client cannot read another client's realm or private
+   coach catalogue by changing an ID.
+3. Coach can author and change PLAN. Client can read PLAN but direct sync
+   attempts to add/update/delete PLAN are **rejected by Dexie Cloud server**.
+4. Both coach and client can update permitted FACT metrics on an existing
+   `sessionSetFacts` record. Direct attempts to add/delete facts, move them
+   between sessions or realms, or change `owner`, `id`, or other protected
+   fields are rejected by Dexie Cloud server.
+5. Direct attempts by **either role** to create/change/delete
+   `workoutSessions` or `sessionSets`, including `status`,
+   `trainingPlanId`, start/completion timestamps and frozen PLAN snapshots,
+   are rejected by Dexie Cloud server; the authorized Worker retains
+   server-confirmed lifecycle transitions.
+6. Neither coach nor client can alter `realms`, `members`, or `roles`
+   via ordinary sync, and no realm owner override grants hidden privileges.
+7. FACT edits work offline and synchronize on reconnect from either member;
+   unrelated set fields are not overwritten by stale whole-session snapshots.
+8. Closing or switching Telegram accounts doesn't expose prior user's local data.
+9. No unverified multi-request replacement for the existing atomic Workout Start
+   is enabled. Privileged creation is idempotent (including FACT/PLAN linkage).
 
 The added tests check schema/role declarations and token exchange behavior,
 including forged client hints and upstream failures. They **do not** prove live
