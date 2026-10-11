@@ -48,12 +48,12 @@ export function CloudAuthDiagnostic() {
   return (
     <main className="center">
       <section className="card">
-        <h1><Text variant="title">Проверка Dexie Cloud</Text></h1>
-        <Text variant="body">Проверим авторизацию Telegram через Worker. Данные тренировок не затрагиваются.</Text>
+        <h1><Text variant="large-title">Проверка Dexie Cloud</Text></h1>
+        <p><Text variant="body">Проверим авторизацию Telegram через Worker. Данные тренировок не затрагиваются.</Text></p>
         <Button onClick={check} disabled={!webApp?.initData || status === 'pending'}>
           {status === 'pending' ? 'Проверяем…' : 'Проверить авторизацию'}
         </Button>
-        <Text variant="body" role="status" aria-live="polite">
+        <p role="status" aria-live="polite"><Text variant="body">
           {!webApp?.initData
             ? 'Запустите проверку внутри Telegram.'
             : status === 'success'
@@ -63,8 +63,8 @@ export function CloudAuthDiagnostic() {
                 : status === 'pending'
                   ? 'Запрашиваем токен…'
                   : 'Нажмите кнопку, чтобы начать проверку.'}
-        </Text>
-        <Text variant="footnote" tone="muted">Токены, ключи и Telegram initData не отображаются и не сохраняются.</Text>
+        </Text></p>
+        <p><Text variant="footnote" tone="muted">Токены, ключи и Telegram initData не отображаются и не сохраняются.</Text></p>
       </section>
     </main>
   );
