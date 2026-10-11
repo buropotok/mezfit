@@ -4,4 +4,6 @@ interface Env {
   R2_BINDING_MEZFIT: R2Bucket;
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_BOT_USERNAME: string;
+  DEXIE_CLOUD_CLIENT_ID?: string;
+  DEXIE_CLOUD_CLIENT_SECRET?: string;
 }

@@ -1,3 +1,4 @@
+import type { DexieCloudOptions } from 'dexie-cloud-addon';
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
 import type { ActiveWorkoutSession, OpenWorkoutSessionSummary, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
@@ -435,6 +436,34 @@ async function apiRequest<T>(initData: string, path: string, init?: RequestInit)
     );
   }
   return response.json<T>();
+}
+
+type CloudFetchTokens = NonNullable<DexieCloudOptions['fetchTokens']>;
+export type CloudTokenResponse = Awaited<ReturnType<CloudFetchTokens>>;
+
+function isCloudTokenResponse(value: unknown): value is CloudTokenResponse {
+  if (!isRecord(value) || !isRecord(value.claims)) return false;
+  return value.type === 'tokens'
+    && typeof value.claims.sub === 'string'
+    && typeof value.accessToken === 'string'
+    && value.accessToken.length > 0
+    && typeof value.accessTokenExpiration === 'number'
+    && ['demo', 'eval', 'prod', 'client'].includes(String(value.userType));
+}
+
+/** Privileged Telegram-authenticated token exchange; ordinary reads/writes use local Dexie. */
+export async function getDexieCloudTokens(
+  initData: string,
+  params: Parameters<CloudFetchTokens>[0],
+): Promise<CloudTokenResponse> {
+  const result = await apiRequest<unknown>(initData, '/api/dexie-cloud/tokens', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+  if (!isCloudTokenResponse(result)) {
+    throw new ApiError(502, 'Некорректный ответ авторизации Dexie Cloud', 'INVALID_API_RESPONSE');
+  }
+  return result;
 }
 
 export function getMe(initData: string): Promise<MeResponse> {
