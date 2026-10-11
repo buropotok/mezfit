@@ -3,9 +3,9 @@
 
 # AGENTS.md — Mezfit Engineering and Architecture Rules
 
-Mandatory rules for all changes in `buropotok/mezfit`. Working behavior is necessary but not sufficient: changes must preserve domain boundaries, React ownership, typed contracts, backend authorization, D1 integrity, Telegram Mini App compatibility, and testability.
+Mandatory rules for all changes in `buropotok/mezfit`. Working behavior is necessary but not sufficient: changes must preserve domain boundaries, React ownership, typed contracts, backend authorization, Dexie Cloud integrity, Telegram Mini App compatibility, and testability.
 
-Before performing **any task** in this repository, **read `docs/architecture/local-first-storage-sync.md`**. Treat it as the authoritative architecture contract for local persistence, repository/integration boundaries, synchronization scopes, retry/idempotency, ownership-sensitive synchronization, and local-first behavior. Where the generic data-flow guidance in this file is broader than that document, the local-first architecture document governs for those concerns.
+Before performing **any task** in this repository, **read `docs/architecture/local-first-storage-sync.md`**. Treat it as the authoritative architecture contract for local persistence, repository/integration boundaries, Dexie Cloud synchronization, offline behavior, realm isolation, access control, and local-first behavior. Where the generic data-flow guidance in this file is broader than that document, the local-first architecture document governs for those concerns.
 
 Before any UI work, **read `typography.md` in the repository root and follow it as the authoritative typography contract**. This is mandatory for new UI and for changes to existing screens/components.
 
@@ -21,17 +21,19 @@ React UI
   ├─ Coach experience
   └─ genuinely shared UI/domain
         ↓
-typed frontend domain + API client
+typed domain repositories / application services
         ↓
-HTTP API
-        ↓
-Cloudflare Worker
-  ├─ validation
-  ├─ authentication/authorization
-  ├─ domain operations
-  └─ persistence
-        ↓
-Cloudflare D1
+Dexie.js / IndexedDB (local-first)
+        ↕
+Dexie Cloud Addon
+        ↕
+Dexie Cloud (authoritative shared storage, realm-based access)
+
+Privileged operations:
+Telegram Mini App → Cloudflare Worker → Dexie Cloud
+  ├─ verified Telegram identity / token exchange
+  ├─ reusable invitations and realm membership
+  └─ server-confirmed control operations
 ```
 
 Dependencies normally point downward. React must not depend on persistence implementation details; Worker code must not depend on frontend implementation details.
@@ -42,11 +44,11 @@ Client and Coach are distinct product contexts. Client UI owns the athlete exper
 
 The Client Programs experience displays programs assigned to the client by a coach/backend. It is not a built-in Gym Keeper program catalog. Do not reintroduce template/catalog behavior into client mode unless the product requirement is explicitly changed.
 
-Coach mutations affecting a client must pass through backend authorization and persistence. Frontend state, hidden controls, routes, or supplied IDs are never proof of authorization.
+Coach mutations affecting a client require server-side authorization through Dexie Cloud permissions or privileged Worker operations. Frontend state, hidden controls, routes, or supplied IDs are never proof of authorization.
 
 ## 4. Single responsibility and ownership
 
-Every module/component has one coherent responsibility. Navigation belongs to navigation; API transport to the API client; authorization to Worker/backend; persistence to backend/D1; presentation state to the rendering component.
+Every module/component has one coherent responsibility. Navigation belongs to navigation; API transport to the API client; authorization to Worker/backend; persistence to domain repositories / Dexie Cloud; presentation state to the rendering component.
 
 Do not create dumping-ground modules such as `helpers.ts`, `fixes.ts`, `enhancements.ts`, or `misc.ts` for unrelated behavior.
 
@@ -63,7 +65,7 @@ Distinguish persistent server state, domain/application state, navigation state,
 React state is not authoritative persistence. Normal persistent flow:
 
 ```text
-UI intent → typed API → Worker validation/auth → domain/D1 mutation → canonical response → UI reconciliation
+UI intent → typed repository → local Dexie transaction → immediate UI update → Dexie Cloud Addon synchronization → authorized cloud state. Privileged operations use a typed Worker API.
 ```
 
 Optimistic updates must be explicit and have rollback/reconciliation behavior.
@@ -76,15 +78,15 @@ Do not use `any`, broad casts, or unsafe assertions to hide contract mismatches.
 
 ## 8. Frontend API boundary
 
-Components should use the established API client rather than ad hoc `fetch` calls for existing capabilities. The API layer owns route construction, serialization, transport/auth concerns, request/response typing, and common error normalization. UI owns user-facing pending/error presentation.
+Components use typed domain repositories for ordinary persistent reads/writes and the established typed API client for privileged Worker operations; do not add ad hoc `fetch` calls. The API layer owns route construction, serialization, transport/auth concerns, request/response typing, and common error normalization. UI owns user-facing pending/error presentation.
 
 Do not monkey-patch `fetch`, XHR, history, timers, Telegram APIs, or global event methods for local features.
 
-## 9. Worker is the trust boundary
+## 9. Server-side authorization is the trust boundary
 
-Never trust identity, role, ownership, resource IDs, or authorization decisions merely because the frontend supplied them. The Worker must establish the actor and verify authorization for protected resources.
+Never trust identity, role, ownership, resource IDs, or authorization decisions merely because the frontend supplied them. Dexie Cloud must enforce realm membership and permissions for ordinary synchronized records. The Worker must verify Telegram identity and independently authorize every privileged operation.
 
-A coach may mutate a client only when backend authorization proves that relationship. A client must not access another client's private data by changing an ID. Role restrictions are enforced server-side. Prefer deny-by-default when authorization cannot be established.
+A coach may mutate a client only when server-side authorization proves that relationship. A client must not access another client's private data by changing an ID. Realm membership and role restrictions are enforced server-side; UI filters are not access control. Prefer deny-by-default when authorization cannot be established.
 
 Keep authorization logic auditable and avoid subtly different duplicated checks.
 
@@ -92,17 +94,21 @@ Keep authorization logic auditable and avoid subtly different duplicated checks.
 
 Treat JSON bodies, query/route parameters, Telegram data, and legacy persisted data as untrusted. Validate before domain mutation. Use deliberate status codes and stable error shapes. Do not expose stack traces, SQL details, tokens, secrets, or unnecessary personal data.
 
-## 11. D1 persistence
+## 11. Dexie Cloud persistence and access
 
-D1 is authoritative server storage. Keep SQL out of React. Use parameterized queries. Preserve relational/domain invariants, define deletion semantics, and avoid race-prone read-modify-write flows where possible.
+Dexie Cloud is the sole authoritative business database; local IndexedDB is each user's offline-capable working subset, not a copy of all users' data. One Dexie Cloud database/environment is sufficient for pre-MVP. Keep storage-specific code inside adapters/repositories, never React components.
 
-Multi-record mutations must not leave inconsistent partial state. Stable IDs are identity; array positions and display labels are not.
+Use personal realms for private records and a separate shared realm per coach-client relationship for jointly visible data. Every nested program/workout record must carry the appropriate realmId; references do not grant access. A coach can see all their relationships, while a client must never see another client's private data. Design membership, record ownership, and permissions explicitly; ownership defaults must not bypass role restrictions. Public catalogue data may use a public realm. Media blobs may remain in R2; D1 is not a second business database.
 
-## 12. Database migrations
+PLAN authoring is coach-controlled and must be enforced by server-side permissions. FACT is intentionally editable by both participants in a shared relationship realm: handoff is a workflow convention, not a server-enforced single-writer lock. The product accepts rare same-field edit conflicts in pre-MVP. Prefer granular per-record/per-field updates; never replace an entire stale workout snapshot for an unrelated set change.
 
-Schema changes require versioned D1 migrations. Never manually mutate production schema as normal development practice. Preserve existing data unless destructive behavior is explicitly required. Include backfill/normalization when a new contract requires it.
+Preserve domain invariants, stable IDs, deletion semantics, and atomic local transactions. Do not implement a custom SyncEngine, change-feed cursor, shadow cloud database, or generic merge/locking system alongside Dexie Cloud Addon.
 
-Do not rewrite already-deployed migrations; add a new migration. Review Worker changes and migrations together and consider deployment compatibility between old/new code and schema.
+## 12. Schema evolution and rollout
+
+Version local Dexie/IndexedDB schemas deliberately and review Dexie Cloud access rules, realm membership, and compatible client releases together. Do not assume local schema changes automatically deploy server-side permissions. Document privileged cloud configuration changes; never expose secrets in client code. Pre-MVP has no production user data to migrate and no staging requirement; additional environments or migration require a new product decision.
+
+Existing D1 code/workflows may remain temporarily until implementation PRs replace them. This document defines the target architecture, not the already-deployed runtime.
 
 ## 13. Data contracts over presentation contracts
 
@@ -208,7 +214,7 @@ The PR workflow is configured to run these commands automatically after a PR is 
 
 `Never claim a check passed unless it actually ran` means exactly that: do not report typecheck, tests, or build as passed unless the corresponding command actually executed successfully. It does not prohibit creating a PR before those CI checks run. A PR with pending or unexecuted required checks must not be represented as ready to merge.
 
-For Worker/D1 changes also verify relevant Wrangler/local migration flows where feasible. Never claim a check passed unless it actually ran; document environmental limitations.
+For Worker/Cloud access changes, review Telegram auth, realm permissions, and privileged API behavior. GitHub Actions CI runs typecheck, tests, and build after PR creation. Never claim a check passed unless it actually ran; document environmental limitations.
 
 ## 26. Debugging and regressions
 
@@ -238,13 +244,13 @@ PR descriptions should state what changed, why, architectural decisions, migrati
 
 ## 30. PR review is system review
 
-Review every PR against the repository as a system, not only the local task. Check this `AGENTS.md`, original requirements, Client/Coach effects, TypeScript/API contracts, Worker authorization/security, D1 data/schema, navigation/platform effects, tests/failure behavior, and obsolete paths.
+Review every PR against the repository as a system, not only the local task. Check this `AGENTS.md`, original requirements, Client/Coach effects, TypeScript/API contracts, Worker authorization/security, Dexie Cloud realms/data/schema, navigation/platform effects, tests/failure behavior, and obsolete paths.
 
 Reject a PR that solves a local symptom by violating a system boundary. Review comments must identify the concrete problem and expected correction.
 
 ## 31. Definition of Done
 
-A change is done only when all applicable conditions hold: requested behavior works; ownership is correct; Client/Coach boundaries remain valid; types/contracts are coherent; API boundaries are respected; backend authorization is enforced; persistence/migrations preserve integrity; failure paths are handled; Telegram/mobile compatibility was considered; obsolete paths are removed; tests are updated; relevant verification passes or limitations are documented; and the complete diff has been reviewed for regressions.
+A change is done only when all applicable conditions hold: requested behavior works; ownership is correct; Client/Coach boundaries remain valid; types/contracts are coherent; API boundaries are respected; server-side authorization is enforced; persistence/schema evolution preserves integrity; failure paths are handled; Telegram/mobile compatibility was considered; obsolete paths are removed; tests are updated; relevant verification passes or limitations are documented; and the complete diff has been reviewed for regressions.
 
 ## 32. Safe existing-file updates through the GitHub connector
 
