@@ -5,11 +5,17 @@ import type { PropsWithChildren } from 'react';
 vi.mock('recharts', () => {
   const Container = ({ children }: PropsWithChildren) => <div data-chart-container>{children}</div>;
   const Plot = ({ children }: PropsWithChildren) => <div data-chart-plot>{children}</div>;
-  const Line = ({ dataKey, name, dot }: { dataKey: string; name: string; dot: boolean | { r: number } }) => (
-    <span data-line-key={dataKey} data-series-name={name} data-dot={dot === false ? 'none' : 'visible'} />
+  const Line = ({ dataKey, name, dot, stroke }: { dataKey: string; name: string; dot: boolean | { r: number }; stroke: string }) => (
+    <span data-line-key={dataKey} data-series-name={name} data-dot={dot === false ? 'none' : 'visible'} data-stroke={stroke} />
   );
-  const Radar = ({ dataKey, name }: { dataKey: string; name: string }) => <span data-radar-key={dataKey} data-series-name={name} />;
+  const Radar = ({ dataKey, name, stroke }: { dataKey: string; name: string; stroke: string }) => (
+    <span data-radar-key={dataKey} data-series-name={name} data-stroke={stroke} />
+  );
   const Axis = () => null;
+  const TickAxis = ({ tick }: { tick?: { fill?: string } }) => <span data-axis-tick-fill={tick?.fill ?? ''} />;
+  const RadiusAxis = ({ domain, allowDataOverflow }: { domain: (number | string)[]; allowDataOverflow?: boolean }) => (
+    <span data-radius-domain={domain.join(',')} data-radius-overflow={String(allowDataOverflow)} />
+  );
   return {
     ResponsiveContainer: Container,
     LineChart: Plot,
@@ -17,12 +23,12 @@ vi.mock('recharts', () => {
     Line,
     Radar,
     CartesianGrid: Axis,
-    PolarAngleAxis: Axis,
+    PolarAngleAxis: TickAxis,
     PolarGrid: Axis,
-    PolarRadiusAxis: Axis,
+    PolarRadiusAxis: RadiusAxis,
     Tooltip: Axis,
-    XAxis: Axis,
-    YAxis: Axis,
+    XAxis: TickAxis,
+    YAxis: TickAxis,
   };
 });
 
@@ -187,6 +193,83 @@ describe('UI Kit charts', () => {
     expect(html).not.toContain('data-radar-key="previous"');
     expect(html).not.toContain('Ряды графика');
     expect(html).not.toContain('Нет данных');
+  });
+
+  it('passes theme muted fill to both cartesian axes', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Ось прогресса"
+        data={[{ week: 'Н1', weight: 76 }]}
+        xKey="week"
+        series={[{ dataKey: 'weight', name: 'Вес' }]}
+      />,
+    );
+    expect(html.match(/data-axis-tick-fill="var\(--ui-color-surface-muted\)"/g)).toHaveLength(2);
+  });
+
+  it('keeps a line series color when an earlier series is filtered out', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Сравнение нагрузки"
+        data={[{ week: 'Н1', first: null, second: 70 }, { week: 'Н2', first: null, second: 72 }]}
+        xKey="week"
+        series={[{ dataKey: 'first', name: 'Первая' }, { dataKey: 'second', name: 'Вторая' }]}
+      />,
+    );
+    expect(html).not.toContain('data-line-key="first"');
+    expect(html).toContain('data-line-key="second"');
+    expect(html).toContain('data-stroke="#b2a0ff"');
+    expect(html).toContain('background-color:#b2a0ff');
+  });
+
+  it('keeps a radar series color and the same theme when earlier data is missing', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Сравнение профилей"
+        data={[
+          { axis: 'Сила', first: 45, second: 65 },
+          { axis: 'Техника', first: null, second: 75 },
+          { axis: 'Баланс', first: 60, second: 70 },
+        ]}
+        angleKey="axis"
+        series={[{ dataKey: 'first', name: 'Первая' }, { dataKey: 'second', name: 'Вторая' }]}
+      />,
+    );
+    expect(html).not.toContain('data-radar-key="first"');
+    expect(html).toContain('data-radar-key="second"');
+    expect(html).toContain('data-stroke="#b2a0ff"');
+    expect(html).toContain('data-axis-tick-fill="var(--ui-color-surface-muted)"');
+  });
+
+  it('locks an explicit radar domain even if the data exceeds its maximum', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Общая шкала"
+        data={[
+          { axis: 'A', score: 80 },
+          { axis: 'B', score: 120 },
+          { axis: 'C', score: 90 },
+        ]}
+        angleKey="axis"
+        domain={[0, 100]}
+        series={[{ dataKey: 'score', name: 'Значение' }]}
+      />,
+    );
+    expect(html).toContain('data-radius-domain="0,100"');
+    expect(html).toContain('data-radius-overflow="true"');
+  });
+
+  it('leaves the automatic radar range expandable without a supplied domain', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Автоматический диапазон"
+        data={[{ axis: 'A', value: 3 }, { axis: 'B', value: 5 }, { axis: 'C', value: 8 }]}
+        angleKey="axis"
+        series={[{ dataKey: 'value', name: 'Показатель' }]}
+      />,
+    );
+    expect(html).toContain('data-radius-domain="0,auto"');
+    expect(html).toContain('data-radius-overflow="false"');
   });
 
   it('constrains category and numeric metric keys using the data row type', () => {
