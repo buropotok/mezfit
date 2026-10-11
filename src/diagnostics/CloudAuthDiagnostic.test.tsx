@@ -14,6 +14,19 @@ afterEach(() => {
 });
 
 describe('Telegram-only cloud auth diagnostic', () => {
+  it('uses the screen heading preset and separates status from the safety note', () => {
+    render(<CloudAuthDiagnostic />);
+
+    const heading = screen.getByRole('heading', { level: 1, name: 'Проверка Dexie Cloud' });
+    expect(heading.querySelector('.ui-text--large-title')).not.toBeNull();
+
+    const status = screen.getByRole('status');
+    const note = screen.getByText('Токены, ключи и Telegram initData не отображаются и не сохраняются.');
+    expect(status.tagName).toBe('P');
+    expect(note.closest('p')).not.toBeNull();
+    expect(note.closest('p')).not.toBe(status);
+  });
+
   it('never runs without Telegram initData', () => {
     render(<CloudAuthDiagnostic />);
     expect(screen.getByText('Запустите проверку внутри Telegram.')).toBeTruthy();
