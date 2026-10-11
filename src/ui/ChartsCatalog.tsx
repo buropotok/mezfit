@@ -43,8 +43,8 @@ export function ChartsCatalog() {
       />
       <Divider />
       <Text variant="headline">Empty states</Text>
-      <MezfitLineChart label="Пустой линейный график" data={[]} xKey="week" series={[{ dataKey: 'weight', name: 'Вес' }]} />
-      <MezfitRadarChart label="Пустая радарная диаграмма" data={[]} angleKey="dimension" series={[{ dataKey: 'value', name: 'Значение' }]} />
+      <MezfitLineChart<{ week: string; weight: number | null }> label="Пустой линейный график" data={[]} xKey="week" series={[{ dataKey: 'weight', name: 'Вес' }]} />
+      <MezfitRadarChart<{ dimension: string; value: number | null }> label="Пустая радарная диаграмма" data={[]} angleKey="dimension" series={[{ dataKey: 'value', name: 'Значение' }]} />
     </Surface>
   );
 }
