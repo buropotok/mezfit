@@ -2,18 +2,45 @@
   "roles": {
     "coach": {
       "displayName": "Coach",
-      "description": "Can author the shared training plan and edit workout facts",
+      "description": "Can author assigned PLAN and edit set FACT; session lifecycle stays privileged",
       "sortOrder": 1,
       "permissions": {
-        "manage": ["trainingPlans", "workoutSessions"]
+        "manage": [
+          "trainingPlans"
+        ],
+        "update": {
+          "sessionSetFacts": [
+            "actualReps",
+            "actualWeightKg",
+            "actualDurationSeconds",
+            "actualDistanceMeters",
+            "setLabel",
+            "rpe",
+            "comment",
+            "bands",
+            "setStatus"
+          ]
+        }
       }
     },
     "client": {
       "displayName": "Client",
-      "description": "Can read training plans and edit shared workout facts",
+      "description": "Can read assigned PLAN and edit only set FACT; session lifecycle stays privileged",
       "sortOrder": 2,
       "permissions": {
-        "manage": ["workoutSessions"]
+        "update": {
+          "sessionSetFacts": [
+            "actualReps",
+            "actualWeightKg",
+            "actualDurationSeconds",
+            "actualDistanceMeters",
+            "setLabel",
+            "rpe",
+            "comment",
+            "bands",
+            "setStatus"
+          ]
+        }
       }
     }
   }
