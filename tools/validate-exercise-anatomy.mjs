@@ -66,6 +66,16 @@ for (const exercise of data.exercises ?? []) {
     check(muscleIds.has(muscle), `Unknown region ${muscle} in ${id}`);
     check(['zone', 'region', 'muscle', 'group'].includes(taxonomy[muscle]?.kind), `Invalid region ${muscle} in ${id}`);
   }
+  for (const [parent, details] of Object.entries(exercise.anatomical_parts ?? {})) {
+    check(muscleIds.has(parent), `Unknown anatomical parent: ${id} ${parent}`);
+    check(['primary', 'secondary', 'stabilizers'].includes(details.role), `Unknown role in anatomical parts: ${id}`);
+    check((exercise.muscles?.[details.role] ?? []).includes(parent), `Anatomical parent missing from declared role: ${id} ${parent}`);
+    check(Array.isArray(details.members) && details.members.length > 0, `Missing anatomical members: ${id} ${parent}`);
+    for (const child of details.members ?? []) {
+      check(muscleIds.has(child), `Unknown anatomical child: ${id} ${child}`);
+      check(taxonomy[child]?.parent === parent, `Anatomical child is not a direct member: ${id} ${child}`);
+    }
+  }
   if (exercise.exercise_kind === 'conditioning') check(exercise.muscles.primary.length === 0, `Cardio has invented primary muscle: ${id}`);
 }
 
