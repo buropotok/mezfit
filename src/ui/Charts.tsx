@@ -16,8 +16,6 @@ import {
 import { Text } from './primitives';
 import './charts.css';
 
-export type ChartDataPoint = Readonly<Record<string, string | number | null>>;
-
 /** Only fields containing numbers (optionally null/undefined) may be plotted. */
 export type ChartNumericKey<T extends object> = Extract<{
   [K in keyof T]-?: NonNullable<T[K]> extends number ? K : never;
@@ -73,11 +71,21 @@ function chartColor(series: ChartSeries, index: number): string {
   return series.color ?? SERIES_COLORS[index % SERIES_COLORS.length];
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 function finitePointCount<T extends object>(data: readonly T[], dataKey: ChartNumericKey<T>): number {
-  return data.reduce((count, point) => {
-    const value = point[dataKey];
-    return count + (typeof value === 'number' && Number.isFinite(value) ? 1 : 0);
-  }, 0);
+  return data.reduce((count, point) => count + (isFiniteNumber(point[dataKey]) ? 1 : 0), 0);
+}
+
+/** An isolated point has no finite neighbour: with connectNulls=false it cannot form a line segment. */
+function hasIsolatedPoint<T extends object>(data: readonly T[], dataKey: ChartNumericKey<T>): boolean {
+  return data.some((point, index) =>
+    isFiniteNumber(point[dataKey])
+    && (index === 0 || !isFiniteNumber(data[index - 1][dataKey]))
+    && (index === data.length - 1 || !isFiniteNumber(data[index + 1][dataKey]))
+  );
 }
 
 function ChartFrame({ label, height, className, empty, series, children }: {
@@ -132,7 +140,7 @@ export function MezfitLineChart<T extends object>({ label, data, series, xKey, h
               type="monotone"
               stroke={chartColor(item, index)}
               strokeWidth={2.5}
-              dot={count <= 2 ? { r: 3 } : false}
+              dot={count <= 2 || hasIsolatedPoint(data, item.dataKey) ? { r: 3 } : false}
               activeDot={{ r: 4 }}
               connectNulls={false}
               isAnimationActive={false}
@@ -146,7 +154,14 @@ export function MezfitLineChart<T extends object>({ label, data, series, xKey, h
 
 /** Category comparison. Caller owns metric normalization and units. */
 export function MezfitRadarChart<T extends object>({ label, data, series, angleKey, domain, height = 280, className }: MezfitRadarChartProps<T>) {
-  const visible = series.filter((item) => finitePointCount(data, item.dataKey) >= 3);
+  // Recharts treats missing radar values as zero radius. Never render incomplete polygons.
+  const validAxes = data.length >= 3 && data.every((point) => {
+    const category = point[angleKey];
+    return typeof category === 'string' ? category.length > 0 : isFiniteNumber(category);
+  });
+  const visible = validAxes
+    ? series.filter((item) => data.every((point) => isFiniteNumber(point[item.dataKey])))
+    : [];
   return (
     <ChartFrame label={label} height={height} className={className} empty={visible.length === 0} series={visible}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
