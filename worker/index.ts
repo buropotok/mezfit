@@ -711,7 +711,7 @@ export default {
         return json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
       }
       if (error instanceof CloudMembershipError) {
-        return json({ error: { code: error.code, message: 'Unable to complete cloud membership; try again' } },
+        return json({ error: { code: error.code, message: 'Не удалось подключиться к тренеру. Повторите попытку.' } },
           { status: error.status });
       }
       if (error instanceof HttpError) {
