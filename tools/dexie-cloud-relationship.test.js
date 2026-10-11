@@ -123,6 +123,7 @@ describe('relationship bootstrap identity', () => {
       expect.stringMatching(/^mmb[a-f0-9]{28}$/),
       expect.stringMatching(/^mmb[a-f0-9]{28}$/),
     ]);
+    expect(first.members.every((member) => member.owner === null)).toBe(true);
     expect(first.members[0].roles).toEqual(['coach']);
     expect(first.members[1].roles).toEqual(['client']);
     expect(first.members.every((m) => m.invite === false && m.accepted === true)).toBe(true);
@@ -203,6 +204,7 @@ describe('administrative Dexie relationship provisioning', () => {
       && call.path !== '/token')).toEqual([]);
     expect(server.members.size).toBe(2);
     expect(server.realms.size).toBe(1);
+    expect([...server.members.values()].every((member) => member.owner === null)).toBe(true);
   });
 
   it('resumes after partial failure without creating duplicate memberships', async () => {
@@ -215,6 +217,7 @@ describe('administrative Dexie relationship provisioning', () => {
     await operation(server);
     expect(server.realms.size).toBe(1);
     expect(server.members.size).toBe(2);
+    expect([...server.members.values()].every((member) => member.owner === null)).toBe(true);
   });
 
   it('resumes a partially provisioned pair by writing only the missing member', async () => {
@@ -239,6 +242,19 @@ describe('administrative Dexie relationship provisioning', () => {
     await expect(operation(server)).rejects.toThrow('REALM_OWNERSHIP_OR_IDENTITY_CONFLICT');
     expect(server.calls.filter((call) => call.path === '/all/realms'
       && call.method === 'POST')).toEqual([]);
+  });
+
+  it('rejects self-owned or ownerless-unknown existing membership before mutations', async () => {
+    for (const owner of ['tg:202', 'tg:101', undefined]) {
+      const server = createServer();
+      const plan = relationshipPlan('101', '202');
+      server.realms.set(plan.realm.realmId, plan.realm);
+      server.members.set(plan.members[1].id, { ...plan.members[1], owner });
+
+      await expect(operation(server)).rejects.toThrow('MEMBER_IDENTITY_OR_PERMISSIONS_CONFLICT');
+      expect(server.calls.filter((call) => call.method === 'POST'
+        && (call.path === '/all/realms' || call.path === '/all/members'))).toEqual([]);
+    }
   });
 
   it('rejects extra members and unexpected direct permissions without modifying them', async () => {
