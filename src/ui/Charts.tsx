@@ -98,7 +98,7 @@ function prepareLineData<T extends object>(
   series: readonly ChartSeries<ChartNumericKey<T>>[],
 ): Record<string, unknown>[] {
   return data.filter((point) => isValidCategory(point[xKey])).map((point) => {
-    const prepared: Record<string, unknown> = { ...point };
+    const prepared: Record<string, unknown> = Object.fromEntries(Object.entries(point));
     for (const item of series) {
       if (!isFiniteNumber(prepared[item.dataKey])) prepared[item.dataKey] = null;
     }
