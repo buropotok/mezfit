@@ -59,7 +59,10 @@ const SERIES_COLORS = [
   '#ffbf70',
 ] as const;
 
-const AXIS_TICK = { className: 'ui-text ui-text--caption ui-text--muted' };
+const AXIS_TICK = {
+  className: 'ui-text ui-text--caption ui-text--muted',
+  fill: 'var(--ui-color-surface-muted)',
+};
 const TOOLTIP_STYLE: CSSProperties = {
   backgroundColor: 'var(--ui-color-surface-raised)',
   border: '1px solid var(--ui-color-border)',
@@ -122,17 +125,17 @@ function ChartFrame({ label, height, className, empty, series, children }: {
 /** Time/category series. Accepts already aggregated, domain-independent data. */
 export function MezfitLineChart<T extends object>({ label, data, series, xKey, height = 240, className }: MezfitLineChartProps<T>) {
   const visible = series
-    .map((item) => ({ item, count: finitePointCount(data, item.dataKey) }))
+    .map((item, index) => ({ item, index, count: finitePointCount(data, item.dataKey) }))
     .filter(({ count }) => count > 0);
   return (
-    <ChartFrame label={label} height={height} className={className} empty={visible.length === 0} series={visible.map(({ item }) => item)}>
+    <ChartFrame label={label} height={height} className={className} empty={visible.length === 0} series={visible.map(({ item, index }) => ({ ...item, color: chartColor(item, index) }))}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
         <RechartsLineChart data={[...data]} margin={{ top: 12, right: 12, bottom: 4, left: 0 }}>
           <CartesianGrid stroke="var(--ui-color-border)" vertical={false} strokeDasharray="3 5" />
           <XAxis dataKey={xKey} tick={AXIS_TICK} tickLine={false} axisLine={false} tickMargin={10} minTickGap={16} />
           <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} domain={['auto', 'auto']} />
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: 'var(--ui-color-border)' }} />
-          {visible.map(({ item, count }, index) => (
+          {visible.map(({ item, count, index }) => (
             <Line
               key={item.dataKey}
               dataKey={item.dataKey}
@@ -160,7 +163,9 @@ export function MezfitRadarChart<T extends object>({ label, data, series, angleK
     return typeof category === 'string' ? category.length > 0 : isFiniteNumber(category);
   });
   const visible = validAxes
-    ? series.filter((item) => data.every((point) => isFiniteNumber(point[item.dataKey])))
+    ? series
+      .map((item, index) => ({ ...item, color: chartColor(item, index) }))
+      .filter((item) => data.every((point) => isFiniteNumber(point[item.dataKey])))
     : [];
   return (
     <ChartFrame label={label} height={height} className={className} empty={visible.length === 0} series={visible}>
@@ -168,7 +173,7 @@ export function MezfitRadarChart<T extends object>({ label, data, series, angleK
         <RechartsRadarChart data={[...data]} outerRadius="68%" margin={{ top: 18, right: 24, bottom: 18, left: 24 }}>
           <PolarGrid stroke="var(--ui-color-border)" />
           <PolarAngleAxis dataKey={angleKey} tick={AXIS_TICK} />
-          <PolarRadiusAxis tick={false} axisLine={false} domain={domain ? [...domain] : [0, 'auto']} />
+          <PolarRadiusAxis tick={false} axisLine={false} domain={domain ? [...domain] : [0, 'auto']} allowDataOverflow={domain !== undefined} />
           <Tooltip contentStyle={TOOLTIP_STYLE} />
           {visible.map((item, index) => (
             <Radar
