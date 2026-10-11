@@ -60,6 +60,7 @@ const SERIES_COLORS = [
 ] as const;
 const RADAR_TICK_MAX_CHARS = 8;
 const INVALID_PALETTE_MESSAGE = 'Для каждого ряда необходим уникальный цвет (после четвёртого задайте color)';
+const DUPLICATE_DATA_KEY_MESSAGE = 'Каждый ряд должен иметь уникальный dataKey';
 
 const AXIS_TICK = {
   className: 'ui-text ui-text--caption ui-text--muted',
@@ -79,9 +80,14 @@ function chartColor(series: ChartSeries): string {
 /** Four automatic colors; additional series must provide their own distinct colors. */
 function resolveSeriesColors<TKey extends string>(series: readonly ChartSeries<TKey>[]) {
   const colored = series.map((item, index) => ({ ...item, color: item.color ?? SERIES_COLORS[index] }));
-  const valid = colored.every((item) => typeof item.color === 'string' && item.color.trim().length > 0)
+  const validColors = colored.every((item) => typeof item.color === 'string' && item.color.trim().length > 0)
     && new Set(colored.map((item) => item.color)).size === colored.length;
-  return { colored, valid };
+  const uniqueKeys = new Set(series.map((item) => item.dataKey)).size === series.length;
+  return {
+    colored,
+    valid: validColors && uniqueKeys,
+    errorMessage: uniqueKeys ? INVALID_PALETTE_MESSAGE : DUPLICATE_DATA_KEY_MESSAGE,
+  };
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -175,7 +181,7 @@ export function MezfitLineChart<T extends object>({ label, data, series, xKey, h
     : [];
   return (
     <ChartFrame label={label} height={height} className={className} empty={visible.length === 0}
-      emptyMessage={palette.valid ? undefined : INVALID_PALETTE_MESSAGE} series={visible.map(({ item }) => item)}>
+      emptyMessage={palette.valid ? undefined : palette.errorMessage} series={visible.map(({ item }) => item)}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
         <RechartsLineChart data={preparedData} margin={{ top: 12, right: 12, bottom: 4, left: 0 }}>
           <CartesianGrid stroke="var(--ui-color-border)" vertical={false} strokeDasharray="3 5" />
@@ -229,7 +235,7 @@ export function MezfitRadarChart<T extends object>({ label, data, series, angleK
     .filter((name) => Array.from(name).length > RADAR_TICK_MAX_CHARS);
   return (
     <ChartFrame label={label} height={height} className={className} empty={visible.length === 0}
-      emptyMessage={palette.valid ? undefined : INVALID_PALETTE_MESSAGE}
+      emptyMessage={palette.valid ? undefined : palette.errorMessage}
       fullAxisLabels={fullAxisLabels} series={visible}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
         <RechartsRadarChart data={preparedData} outerRadius="68%" margin={{ top: 18, right: 24, bottom: 18, left: 24 }}>
