@@ -199,8 +199,7 @@ export function assertRolePolicy(remoteRoles, localRoles) {
   }
 }
 
-async function verifyUserVisibility(fetchImpl, dbUrl, credentials, member, expectedRealm) {
-  const userBearer = await token(fetchImpl, dbUrl, credentials, USER_SCOPES, { sub: member.userId });
+async function verifyUserVisibility(fetchImpl, dbUrl, userBearer, expectedRealm) {
   const visibleRealm = await getRealm(fetchImpl, dbUrl, userBearer, expectedRealm.realmId, 'my');
   if (visibleRealm === null) throw new Error('MEMBERSHIP_NOT_VISIBLE');
   assertRealm(visibleRealm, expectedRealm);
@@ -226,6 +225,9 @@ export async function provisionRelationship({ dbUrl, credentials, coachId, clien
   const remoteRolesResponse = await request(fetchImpl, dbUrl, '/public/roles', undefined);
   assertStatus(remoteRolesResponse, 'READ_ROLES');
   assertRolePolicy(await json(remoteRolesResponse, 'READ_ROLES'), localRoles);
+  // Confirm IMPERSONATE is available before any realm/member mutation.
+  const userBearers = await Promise.all(plan.members.map((member) =>
+    token(fetchImpl, dbUrl, credentials, USER_SCOPES, { sub: member.userId })));
 
   const existingRealm = await getRealm(fetchImpl, dbUrl, admin, plan.realm.realmId, 'all');
   if (existingRealm) assertRealm(existingRealm, plan.realm);
@@ -244,8 +246,8 @@ export async function provisionRelationship({ dbUrl, credentials, coachId, clien
   assertMembers(finalMembers, plan.members);
   if (finalMembers.length !== 2) throw new Error('INCOMPLETE_REALM_MEMBERSHIP');
 
-  for (const member of plan.members) {
-    await verifyUserVisibility(fetchImpl, dbUrl, credentials, member, plan.realm);
+  for (const userBearer of userBearers) {
+    await verifyUserVisibility(fetchImpl, dbUrl, userBearer, plan.realm);
   }
   return { realmId: plan.realm.realmId, applied: true, membersVerified: 2 };
 }
