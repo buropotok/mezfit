@@ -25,7 +25,8 @@
     "dexie-cloud-addon": "4.4.15",
     "konsta": "5.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "recharts": "3.10.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260916.1",
