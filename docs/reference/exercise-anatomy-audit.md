@@ -46,13 +46,13 @@ The upstream JSON was analyzed as an entire 1,324-record source. Names and muscl
 | `rule_draft` | 249 | Movement template leaves material variant details unresolved |
 | `legacy_draft` | 296 | Old automatic translation retained as **unapproved draft**; these contain known unnatural names |
 
-The 76 taxonomy identifiers include actual muscles, muscle groups, heads/regions and practical training zones. Category is compatible with existing nine-category codes, but there is **no production schema/UI change in this task**. Detailed categories are proposed data for a separate integration decision. User overrides and historical exercise references remain untouched.
+The 77 taxonomy identifiers include actual muscles, muscle groups, heads/regions and practical training zones. Category is compatible with existing nine-category codes, but there is **no production schema/UI change in this task**. Detailed categories are proposed data for a separate integration decision. User overrides and historical exercise references remain untouched.
 
 ## Interpretation and limitations
 
 1. **Strength**: source target is a starting hypothesis about the primary loaded tissue, not an objective EMG ranking; `secondary_muscles` does not itself distinguish dynamic synergy from stabilization. Roles derived from it are provisional.
 2. **Mobility**: `primary` is the **tissue being stretched** rather than a contracting prime mover. Do not aggregate mobility sessions into strength-volume totals.
-3. **Cardio**: cardiovascular system is not a skeletal-muscle ID; a particular muscle is deliberately not fabricated as `primary`.
+3. **Cardio**: the `cardiovascular_system` **system** subcategory is not a skeletal muscle. A particular skeletal muscle is deliberately not fabricated as `primary`.
 4. **Anatomical head membership**: `anatomical_parts` enumerates constituent structures (such as the three triceps heads) separately from any directional training emphasis. Do not treat membership alone as experimental activation data.\n5. **Stabilizers**: only an identifiable movement/stance context leads to an inferred stabilizer. Empty list means **not established**, not that no stabilizer participates.
 6. **Heads**: the triceps long head can be accentuated by an overhead position, but the lateral and medial heads also contribute; a head emphasis does not mean exclusive recruitment. Likewise lower chest is an emphasis zone, not a unique independent muscle.
 7. **Quantification**: `regional_emphasis` has no numeric weights. Actual relative loading depends on technique, range of motion, joint angles, training load, fatigue and anthropometry.
