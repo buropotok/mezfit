@@ -29,6 +29,7 @@ describe('Dexie Cloud schema and access policy', () => {
     expect(CLOUD_DATABASE_STORES_V1.sessionSets).toContain('@id');
     expect(CLOUD_DATABASE_STORES_V1.sessionSets).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSets).toContain('workoutSessionId');
+    expect(CLOUD_DATABASE_STORES_V1.sessionSets).toContain('[sessionExerciseId+position]');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('@id');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('workoutSessionId');
@@ -71,6 +72,7 @@ describe('Dexie Cloud schema and access policy', () => {
       'realmId',
       'owner',
       'workoutSessionId',
+      'sessionExerciseId',
       'sourceProgramSetId',
       'coachUserId',
       'clientUserId',
