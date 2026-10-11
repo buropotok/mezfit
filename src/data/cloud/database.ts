@@ -73,6 +73,35 @@ export interface CloudSessionSetFactRow extends CloudSharedRow {
   setStatus: 'pending' | 'completed' | 'skipped';
 }
 
+/**
+ * Persisted audit envelope. Rows are created by a privileged, authenticated
+ * server path only, using identity and timestamps verified independently from
+ * any client-supplied payload. Never accept these values from a synced FACT
+ * row or treat a local edit as a confirmed audit record.
+ *
+ * The foundation does not yet implement an event recorder. Before enabling
+ * cloud FACT writes, the runtime must prove a complete server-side mechanism
+ * that captures all authorized edits, including edits synced after offline use.
+ */
+export interface CloudSessionSetFactAuditRow extends CloudSharedRow {
+  sessionSetFactId: string;
+  sessionSetId: string;
+  workoutSessionId: string;
+  actorUserId: string;
+  occurredAt: string;
+  changedFields: Array<
+    | 'actualReps'
+    | 'actualWeightKg'
+    | 'actualDurationSeconds'
+    | 'actualDistanceMeters'
+    | 'setLabel'
+    | 'rpe'
+    | 'comment'
+    | 'bands'
+    | 'setStatus'
+  >;
+}
+
 // Dexie Cloud augments Dexie with strongly typed realms and members tables.
 // Do not redeclare them here: synced members use accepted?: Date (not boolean),
 // and privileged REST membership inputs are a separate contract.
@@ -84,6 +113,7 @@ export const CLOUD_DATABASE_STORES_V1 = {
   // A deterministic key enforces 1:1 PLAN-to-FACT across devices. A distinct
   // `id` key (not `@id`) avoids cross-table prefix restrictions in Dexie Cloud.
   sessionSetFacts: 'id, realmId, sessionSetId, workoutSessionId',
+  sessionSetFactAudits: '@id, realmId, sessionSetFactId, sessionSetId, workoutSessionId, occurredAt',
   realms: '@realmId',
   members: '@id, realmId, userId',
   roles: '[realmId+name]',
@@ -113,6 +143,7 @@ export class MezfitCloudDatabase extends Dexie {
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
   sessionSets!: Table<CloudSessionSetRow, string>;
   sessionSetFacts!: Table<CloudSessionSetFactRow, string>;
+  sessionSetFactAudits!: Table<CloudSessionSetFactAuditRow, string>;
 
   constructor(telegramUserId: string, initData: string) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
