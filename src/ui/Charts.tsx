@@ -58,6 +58,8 @@ const SERIES_COLORS = [
   '#63d9b0',
   '#ffbf70',
 ] as const;
+const RADAR_TICK_MAX_CHARS = 8;
+const INVALID_PALETTE_MESSAGE = 'Для каждого ряда необходим уникальный цвет (после четвёртого задайте color)';
 
 const AXIS_TICK = {
   className: 'ui-text ui-text--caption ui-text--muted',
@@ -70,20 +72,46 @@ const TOOLTIP_STYLE: CSSProperties = {
   color: 'var(--ui-color-surface-text)',
 };
 
-function chartColor(series: ChartSeries, index: number): string {
-  return series.color ?? SERIES_COLORS[index % SERIES_COLORS.length];
+function chartColor(series: ChartSeries): string {
+  return series.color ?? '';
+}
+
+/** Four automatic colors; additional series must provide their own distinct colors. */
+function resolveSeriesColors<TKey extends string>(series: readonly ChartSeries<TKey>[]) {
+  const colored = series.map((item) => ({ ...item, color: item.color ?? SERIES_COLORS[index] }));
+  const valid = colored.every((item) => typeof item.color === 'string' && item.color.trim().length > 0)
+    && new Set(colored.map((item) => item.color)).size === colored.length;
+  return { colored, valid };
 }
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function finitePointCount<T extends object>(data: readonly T[], dataKey: ChartNumericKey<T>): number {
+function isValidCategory(value: unknown): value is string | number {
+  return isFiniteNumber(value) || (typeof value === 'string' && value.trim().length > 0);
+}
+
+function prepareLineData<T extends object>(
+  data: readonly T[],
+  xKey: ChartCategoryKey<T>,
+  series: readonly ChartSeries<ChartNumericKey<T>>[],
+): Record<string, unknown>[] {
+  return data.filter((point) => isValidCategory(point[xKey])).map((point) => {
+    const prepared: Record<string, unknown> = { ...point };
+    for (const item of series) {
+      if (!isFiniteNumber(prepared[item.dataKey])) prepared[item.dataKey] = null;
+    }
+    return prepared;
+  });
+}
+
+function finitePointCount(data: readonly Record<string, unknown>[], dataKey: string): number {
   return data.reduce((count, point) => count + (isFiniteNumber(point[dataKey]) ? 1 : 0), 0);
 }
 
-/** An isolated point has no finite neighbour: with connectNulls=false it cannot form a line segment. */
-function hasIsolatedPoint<T extends object>(data: readonly T[], dataKey: ChartNumericKey<T>): boolean {
+/** An isolated point cannot form a line segment while connectNulls=false. */
+function hasIsolatedPoint(data: readonly Record<string, unknown>[], dataKey: string): boolean {
   return data.some((point, index) =>
     isFiniteNumber(point[dataKey])
     && (index === 0 || !isFiniteNumber(data[index - 1][dataKey]))
@@ -91,26 +119,40 @@ function hasIsolatedPoint<T extends object>(data: readonly T[], dataKey: ChartNu
   );
 }
 
-function ChartFrame({ label, height, className, empty, series, children }: {
+function radarTickLabel(value: string | number): string {
+  const chars = Array.from(String(value));
+  return chars.length > RADAR_TICK_MAX_CHARS
+    ? `${chars.slice(0, RADAR_TICK_MAX_CHARS - 1).join('')}…`
+    : chars.join('');
+}
+
+function ChartFrame({ label, height, className, empty, emptyMessage, fullAxisLabels, series, children }: {
   label: string;
   height: number;
   className?: string;
   empty: boolean;
+  emptyMessage?: string;
+  fullAxisLabels?: readonly string[];
   series: readonly ChartSeries[];
   children: ReactNode;
 }) {
   return (
     <div className={`mezfit-chart ui-text ui-text--caption${className ? ` ${className}` : ''}`} role="group" aria-label={label}>
       {empty
-        ? <div className="mezfit-chart__empty"><Text variant="footnote" tone="muted">Нет данных для графика</Text></div>
+        ? <div className="mezfit-chart__empty" style={{ height }}><Text variant="footnote" tone="muted">{emptyMessage ?? 'Нет данных для графика'}</Text></div>
         : (
           <>
             <div className="mezfit-chart__plot" style={{ height }}>{children}</div>
+            {fullAxisLabels && fullAxisLabels.length > 0 && (
+              <div className="mezfit-chart__axis-labels">
+                <Text variant="caption" tone="muted">Полные названия осей: {fullAxisLabels.join(' · ')}</Text>
+              </div>
+            )}
             {series.length > 1 && (
               <div className="mezfit-chart__legend" role="list" aria-label="Ряды графика">
                 {series.map((item, index) => (
                   <span className="mezfit-chart__legend-item" role="listitem" key={item.dataKey}>
-                    <span className="mezfit-chart__swatch" style={{ backgroundColor: chartColor(item, index) }} aria-hidden="true" />
+                    <span className="mezfit-chart__swatch" style={{ backgroundColor: chartColor(item) }} aria-hidden="true" />
                     <Text variant="caption" tone="muted">{item.name}</Text>
                   </span>
                 ))}
