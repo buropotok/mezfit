@@ -157,11 +157,14 @@ include them in logs. This is a one-time token-issuance check, **not** proof
 of realm membership, field permissions, refresh-token binding, offline sync,
 or full Dexie Cloud Addon operation.
 
-If the button reports `DEXIE_CLOUD_UNAVAILABLE (502)`, inspect the Worker
-secrets, service-account scopes, and Dexie Cloud response on the server side
-without sharing keys or token payloads. Do not bypass Telegram signature
-validation or show credentials as part of debugging. Confirm a failed GET
-to the token endpoint is expected (405) and does not exercise token issuance.
+If the button reports `DEXIE_CLOUD_UNAVAILABLE (503)`, the Worker is
+missing one or both required service-account secrets. Check its deployed
+Cloudflare Secrets. A `DEXIE_CLOUD_UNAVAILABLE (502)` means the Worker could
+not obtain a valid response from Dexie Cloud; check service-account scopes
+and the upstream connection without sharing keys or token payloads. Do not
+bypass Telegram signature validation or show credentials as part of
+debugging. A GET request to the token endpoint is expected to return 405
+and does not exercise token issuance.
 
 This diagnostic is temporary for pre-MVP activation and should be removed
 when the actual Dexie Cloud Addon flow has been enabled and covered by
