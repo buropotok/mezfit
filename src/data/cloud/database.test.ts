@@ -4,6 +4,7 @@ import {
   CLOUD_DATABASE_STORES_V1,
   type CloudSessionSetFactRow,
   cloudDatabaseName,
+  sessionSetFactId,
 } from './database';
 
 describe('cloudDatabaseName', () => {
@@ -20,6 +21,17 @@ describe('cloudDatabaseName', () => {
   });
 });
 
+describe('sessionSetFactId', () => {
+  it('creates a distinct, stable FACT primary key from each globally unique PLAN set ID', () => {
+    expect(sessionSetFactId('sesAb12_3')).toBe('fact:sesAb12_3');
+    expect(sessionSetFactId('sesAb12_3')).toBe(sessionSetFactId('sesAb12_3'));
+    expect(sessionSetFactId('sesOther')).not.toBe(sessionSetFactId('sesAb12_3'));
+    expect(sessionSetFactId('sesAb12_3')).not.toBe('sesAb12_3');
+    expect(() => sessionSetFactId('')).toThrow('INVALID_CLOUD_SESSION_SET_ID');
+    expect(() => sessionSetFactId('invalid/path')).toThrow('INVALID_CLOUD_SESSION_SET_ID');
+  });
+});
+
 describe('Dexie Cloud schema and access policy', () => {
   it('uses globally unique string IDs and explicit realm partition indexes', () => {
     expect(CLOUD_DATABASE_STORES_V1.trainingPlans).toContain('@id');
@@ -30,7 +42,9 @@ describe('Dexie Cloud schema and access policy', () => {
     expect(CLOUD_DATABASE_STORES_V1.sessionSets).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSets).toContain('workoutSessionId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSets).toContain('[sessionExerciseId+position]');
-    expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('@id');
+    expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toMatch(/^id,/);
+    expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).not.toContain('@id');
+    expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('sessionSetId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('workoutSessionId');
     expect(CLOUD_DATABASE_STORES_V1.realms).toBe('@realmId');
