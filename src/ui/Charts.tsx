@@ -64,11 +64,7 @@ export function MezfitRadarChart<T extends object>({
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={[...data]} outerRadius="55%" margin={{ top: 12, right: 16, bottom: 12, left: 16 }}>
           <PolarGrid stroke="var(--ui-color-border)" />
-          <PolarAngleAxis dataKey={angleKey} tick={TICK}
-            tickFormatter={(value: string | number) => {
-              const text = String(value);
-              return text.length > 8 ? `${text.slice(0, 7)}…` : text;
-            }} />
+          <PolarAngleAxis dataKey={angleKey} tick={TICK} />
           <PolarRadiusAxis domain={domain ? [...domain] : undefined} tick={false} />
           <Tooltip contentStyle={TOOLTIP} />
           <Legend />
