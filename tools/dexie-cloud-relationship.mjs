@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DB_CONFIG_PATH = new URL('../../dexie-cloud.json', import.meta.url);
-const ROLES_CONFIG_PATH = new URL('../../cloud/roles.json', import.meta.url);
+const DB_CONFIG_PATH = new URL('../dexie-cloud.json', import.meta.url);
+const ROLES_CONFIG_PATH = new URL('../cloud/roles.json', import.meta.url);
 const GLOBAL_SCOPES = ['ACCESS_DB', 'GLOBAL_READ', 'GLOBAL_WRITE'];
 const USER_SCOPES = ['ACCESS_DB'];
 const FACT_FIELDS = [
