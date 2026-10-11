@@ -32,9 +32,21 @@ vi.mock('recharts', () => {
   };
 });
 
-import { MezfitLineChart, MezfitRadarChart } from './Charts';
+import { MezfitLineChart, MezfitRadarChart, type MezfitLineChartProps } from './Charts';
 
 describe('UI Kit Recharts adapters', () => {
+  it('limits series keys to numeric data fields in the public TypeScript contract', () => {
+    type Row = { week: string; weight: number | null; reps?: number; note: string };
+    const valid: MezfitLineChartProps<Row> = {
+      label: 'Вес', data: [], xKey: 'week',
+      series: [{ dataKey: 'weight', name: 'Вес' }, { dataKey: 'reps', name: 'Повторения' }],
+    };
+    // @ts-expect-error — the X-axis category is not a numeric value to plot
+    const invalid: MezfitLineChartProps<Row>['series'] = [{ dataKey: 'week', name: 'Недопустимо' }];
+    expect(valid.series).toHaveLength(2);
+    expect(invalid).toHaveLength(1);
+  });
+
   it('passes line data and series to the native chart with native dots and legend', () => {
     const html = renderToStaticMarkup(
       <MezfitLineChart label="Вес" data={[{ week: 'Н1', weight: 70 }, { week: 'Н2', weight: 72 }]}
