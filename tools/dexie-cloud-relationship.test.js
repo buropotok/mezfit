@@ -20,6 +20,7 @@ function createServer() {
   const remoteRoles = ['coach', 'client'].map((name) => ({
     realmId: 'rlm-public', name, permissions: structuredClone(localRoles[name].permissions),
   }));
+  const realmRoles = [];
   let failMembersOnce = false;
   let grantGlobal = true;
   let grantImpersonation = true;
@@ -61,6 +62,10 @@ function createServer() {
       return realms.has(id) ? Response.json(realms.get(id))
         : Response.json({ error: 'not_found' }, { status: 404 });
     }
+    if (path === '/all/roles' && method === 'GET') {
+      const realmId = url.searchParams.get('realmId');
+      return Response.json(realmRoles.filter((role) => role.realmId === realmId));
+    }
     if (path === '/all/members' && method === 'GET') {
       const realmId = url.searchParams.get('realmId');
       return Response.json([...members.values()].filter((value) => value.realmId === realmId));
@@ -92,7 +97,7 @@ function createServer() {
   });
 
   return {
-    fetchImpl, calls, realms, members, remoteRoles,
+    fetchImpl, calls, realms, members, remoteRoles, realmRoles,
     failNextMemberWrite: () => { failMembersOnce = true; },
     disableGlobalWrite: () => { grantGlobal = false; },
     disableImpersonation: () => { grantImpersonation = false; },
@@ -237,6 +242,19 @@ describe('administrative Dexie relationship provisioning', () => {
     const server = createServer();
     server.remoteRoles.find((r) => r.name === 'client').permissions.manage = '*';
     await expect(operation(server)).rejects.toThrow('CLOUD_ROLE_MISMATCH');
+    expect(server.realms.size).toBe(0);
+    expect(server.members.size).toBe(0);
+  });
+
+  it('rejects realm-local roles that could shadow the global coach/client policies', async () => {
+    const server = createServer();
+    const plan = relationshipPlan('101', '202');
+    server.realmRoles.push({
+      realmId: plan.realm.realmId,
+      name: 'client',
+      permissions: { manage: '*' },
+    });
+    await expect(operation(server)).rejects.toThrow('REALM_LOCAL_ROLE_OVERRIDES_FORBIDDEN');
     expect(server.realms.size).toBe(0);
     expect(server.members.size).toBe(0);
   });
