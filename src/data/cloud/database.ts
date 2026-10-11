@@ -43,6 +43,8 @@ export interface CloudWorkoutSessionRow extends CloudSharedRow {
  */
 export interface CloudSessionSetRow extends CloudSharedRow {
   workoutSessionId: string;
+  // Stable parent from the immutable session exercise snapshot (added in the workout slice).
+  sessionExerciseId: string;
   sourceProgramSetId: string | null;
   position: number;
   plannedReps: number | null;
@@ -77,7 +79,7 @@ export interface CloudSessionSetFactRow extends CloudSharedRow {
 export const CLOUD_DATABASE_STORES_V1 = {
   trainingPlans: '@id, realmId, coachUserId, clientUserId, [realmId+position]',
   workoutSessions: '@id, realmId, clientUserId, trainingPlanId, status, startedAt',
-  sessionSets: '@id, realmId, workoutSessionId, sourceProgramSetId, position',
+  sessionSets: '@id, realmId, workoutSessionId, sessionExerciseId, [sessionExerciseId+position]',
   sessionSetFacts: '@id, realmId, workoutSessionId',
   realms: '@realmId',
   members: '@id, realmId, userId',
