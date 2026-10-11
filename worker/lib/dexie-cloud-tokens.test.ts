@@ -137,3 +137,90 @@ describe('cloudUserId', () => {
     expect(() => cloudUserId(0)).toThrow('INVALID_TELEGRAM_USER_ID');
   });
 });
+
+describe('safe Dexie Cloud upstream diagnostics', () => {
+  it('logs only the upstream HTTP status and fixed failure stage', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const upstream = vi.fn<typeof fetch>(async () => new Response(
+      'sensitive upstream response: test-client-secret user-access-token',
+      { status: 403 },
+    ));
+    const response = await handleDexieCloudTokenRoute(
+      request(await signedTelegramData()), tokenEnv, upstream,
+    );
+
+    expect(response.status).toBe(502);
+    expect(log.mock.calls).toEqual([[
+      'DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED',
+      { stage: 'http', upstreamStatus: 403 },
+    ]]);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('test-client-secret');
+    expect(JSON.stringify(log.mock.calls)).not.toContain('user-access-token');
+  });
+
+  it('logs a null upstream status for network errors without revealing exception details', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const upstream = vi.fn<typeof fetch>(async () => {
+      throw new Error('secret request data must stay private');
+    });
+    const response = await handleDexieCloudTokenRoute(
+      request(await signedTelegramData()), tokenEnv, upstream,
+    );
+
+    expect(response.status).toBe(502);
+    expect(log.mock.calls).toEqual([[
+      'DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED',
+      { stage: 'fetch', upstreamStatus: null },
+    ]]);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('secret request data');
+  });
+
+  it('distinguishes invalid upstream JSON from a rejected HTTP response', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const upstream = vi.fn<typeof fetch>(async () => new Response(
+      'not-json-sensitive-response-content',
+      { status: 200 },
+    ));
+    const response = await handleDexieCloudTokenRoute(
+      request(await signedTelegramData()), tokenEnv, upstream,
+    );
+
+    expect(response.status).toBe(502);
+    expect(log.mock.calls).toEqual([[
+      'DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED',
+      { stage: 'json', upstreamStatus: 200 },
+    ]]);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('not-json-sensitive-response-content');
+  });
+
+  it('identifies an invalid token envelope without logging tokens or identity', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const upstream = vi.fn<typeof fetch>(async () => tokenResponse('tg:999'));
+    const response = await handleDexieCloudTokenRoute(
+      request(await signedTelegramData()), tokenEnv, upstream,
+    );
+
+    expect(response.status).toBe(502);
+    expect(log.mock.calls).toEqual([[
+      'DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED',
+      { stage: 'contract', upstreamStatus: 200 },
+    ]]);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('tg:999');
+    expect(JSON.stringify(log.mock.calls)).not.toContain('user-access-token');
+  });
+
+  it('does not emit failure diagnostics for valid exchange or pre-upstream rejection', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const initData = await signedTelegramData();
+    const upstream = vi.fn<typeof fetch>(async () => tokenResponse());
+
+    expect((await handleDexieCloudTokenRoute(request(initData), tokenEnv, upstream)).status).toBe(200);
+    expect((await handleDexieCloudTokenRoute(request(''), tokenEnv, upstream)).status).toBe(401);
+    expect((await handleDexieCloudTokenRoute(
+      request(initData), { TELEGRAM_BOT_TOKEN: tokenEnv.TELEGRAM_BOT_TOKEN }, upstream,
+    )).status).toBe(503);
+    expect((await handleDexieCloudTokenRoute(request(initData, { public_key: 12 }), tokenEnv, upstream)).status).toBe(400);
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(log).not.toHaveBeenCalled();
+  });
+});
