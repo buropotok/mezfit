@@ -10,9 +10,10 @@ require an administrative CLI run from a user.
    are never used as identities.
 2. Worker validates the stored invitation and gets the coach's Telegram ID
    from the persisted server-side coach record.
-3. The existing single-use D1 invitation is atomically reserved for the
-   verified client. A different client cannot consume the same invite in a
-   concurrent request; the same client may retry.
+3. The reusable invitation is checked for expiration and revocation.
+   Multiple verified clients may accept the same coach link, while the
+   (coach, client) pair stays unique. Invitation tokens grant no permissions
+   without the Worker verifying the actor and provisioning their membership.
 4. A dedicated privileged Worker service creates or validates one deterministic
    relationship realm and accepted coach/client memberships in **Dexie Cloud**.
    All realm/member owners are explicitly `null`; only global roles
@@ -25,9 +26,12 @@ require an administrative CLI run from a user.
    normal PLAN/FACT business writes are not duplicated.
 
 If cloud provisioning fails or the legacy projection write fails, retry the
-**same Telegram invitation**. Reservation belongs to that specific Telegram
-user and the cloud operation is idempotent. No separate manual Dexie-accept
-operation exists. A cloud outage does not create an active D1 relationship.
+**same Telegram invitation**. The cloud operation and the D1 legacy projection
+are idempotent per coach-client pair. The same client receives success again
+even if the previous HTTP response was lost. A different client can independently
+accept the same invitation until expiry or revocation. No separate manual
+Dexie-accept operation exists. A cloud outage does not create an active
+D1 relationship.
 
 The temporary D1 `coach_client` representation must be removed when its
 consumers are migrated to typed Dexie Cloud repositories. During the
@@ -83,7 +87,14 @@ and neither user has global scopes. Verify idempotent retry, forbidden
 cross-user access, and PLAN/FACT permissions against the live service
 before migrating domain repositories.
 
-The current one-use D1 invitation lifecycle and D1-backed program/Workout
-runtime are not migrated by this PR. The client-owned personal PLAN/Workout
+Migration `0029_reusable_client_invites.sql` removes the legacy uniqueness
+constraint on `coach_client.invite_id` while preserving relationship IDs,
+invitation provenance, and the uniqueness of each (coach, client) pair.
+It also introduces `coach_client_invite.revoked_at` for explicit revocation
+metadata. The old `accepted_by_user_id` and `accepted_at` columns remain
+only as legacy history and are no longer used to gate acceptance. Exposing
+an administrative revocation UI is separate work.
+
+The D1-backed program/Workout runtime is not migrated by this PR. The client-owned personal PLAN/Workout
 read-sharing model is a separate domain migration and **is not granted** by
 the coach-client membership role itself.
