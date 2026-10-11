@@ -4,7 +4,16 @@ import type { PropsWithChildren } from 'react';
 
 vi.mock('recharts', () => {
   const Container = ({ children }: PropsWithChildren) => <div data-chart-container>{children}</div>;
-  const Plot = ({ children }: PropsWithChildren) => <div data-chart-plot>{children}</div>;
+  const Plot = ({ children, data }: PropsWithChildren<{ data?: readonly Record<string, unknown>[] }>) => (
+    <div
+      data-chart-plot
+      data-chart-length={data?.length}
+      data-chart-nonfinite={data?.some((row) => Object.values(row).some((value) => typeof value === 'number' && !Number.isFinite(value)))}
+      data-chart-nulls={data?.map((row) => Object.keys(row).filter((key) => row[key] === null).join(',')).join(';')}
+    >
+      {children}
+    </div>
+  );
   const Line = ({ dataKey, name, dot, stroke }: { dataKey: string; name: string; dot: boolean | { r: number }; stroke: string }) => (
     <span data-line-key={dataKey} data-series-name={name} data-dot={dot === false ? 'none' : 'visible'} data-stroke={stroke} />
   );
@@ -12,7 +21,13 @@ vi.mock('recharts', () => {
     <span data-radar-key={dataKey} data-series-name={name} data-stroke={stroke} />
   );
   const Axis = () => null;
-  const TickAxis = ({ tick }: { tick?: { fill?: string } }) => <span data-axis-tick-fill={tick?.fill ?? ''} />;
+  const TickAxis = ({ tick, width, tickFormatter }: {
+    tick?: { fill?: string };
+    width?: number | string;
+    tickFormatter?: (value: string) => string;
+  }) => (
+    <span data-axis-tick-fill={tick?.fill ?? ''} data-axis-width={width ?? ''} data-formatted-radar-label={tickFormatter?.('Выносливость') ?? ''} />
+  );
   const RadiusAxis = ({ domain, allowDataOverflow }: { domain: (number | string)[]; allowDataOverflow?: boolean }) => (
     <span data-radius-domain={domain.join(',')} data-radius-overflow={String(allowDataOverflow)} />
   );
