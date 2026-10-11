@@ -58,7 +58,6 @@ not to a user's own private realm:
 | `workoutSessions` (session identity, schedule & status) | Read only | Read only | Privileged Worker creates/transitions |
 | `sessionSets` (immutable planned set snapshot) | Read only | Read only | Privileged Worker materializes snapshot |
 | `sessionSetFacts` (measurements per snapshot set) | Update explicit FACT fields only | Update same fields only | Privileged Worker creates one row per snapshot set |
-| `sessionSetFactAudits` (verified attribution events) | Read only | Read only | Privileged recorder only; no client-side creation |
 | `realms`, `members`, `roles` | No direct role grants | No direct role grants | Privileged Worker/administrator only |
 
 Allowed updates to `sessionSetFacts` are exactly:
@@ -92,34 +91,20 @@ authorized operation; it is **not** implicitly granted to all clients by
 allowing arbitrary `add` into the FACT table. Editing existing FACT rows
 works offline through the addon once the data has synchronized.
 
-### Verified attribution is an activation prerequisite
+### Sequential FACT handoff (MVP)
 
-`sessionSetFactAudits` reserves an explicit server-authored event contract:
-`sessionSetFactId`, `sessionSetId`, `workoutSessionId`,
-`actorUserId`, `confirmedAt` and the list of edited FACT fields. Its
-`realmId` matches the relationship realm. Neither coach nor client receives
-`add`, `update`, or `manage` on this audit table. The authoritative
-actor and timestamp must come from a **trusted server identity and clock**,
-not client JSON or writable `updatedByUserId`/`updatedAt` fields.
-`confirmedAt` is the **server-confirmation/commit time**. An offline edit
-may have happened earlier; a device-reported edit time can be stored as an
-optional non-authoritative hint later but must not be labeled server-verified.
-Initial creation can be attributed to the Worker-verified initiator.
+The shared FACT permissions support a simple real-life workflow: the coach
+records the sets/exercises already performed together, and the client
+continues with **subsequent** sets/exercises. Alternating edits to one
+set are not a normal MVP scenario. Dexie Cloud handles ordinary offline
+synchronization; no custom per-set editor locks, ownership-transfer API,
+immutable edit history, or server-verified last-editor ledger is required.
 
-**This PR defines the contract, not an audit implementation.** Dexie Cloud
-operations may contain an actor ID and operation timestamp, but it is **not
-yet established** that the managed service exposes a complete, durable,
-server-verified mutation log to the Worker. A client-side edit must **never**
-be presented as a confirmed audit event merely because it includes an
-author/time hint. Before FACT sync is activated, verify and implement a
-trusted audit-ingestion mechanism that covers delayed offline edits, both
-participants, conflicts, and historical corrections. If Dexie Cloud does
-not expose adequate verified provenance, the team must resolve this
-architecture/product trade-off **before activation** rather than silently
-implementing a forged or incomplete log. Do not introduce an alternative
-SyncEngine or move normal FACT edits to synchronous Worker CRUD just to
-mask this issue. The audit event schema remains unused until the proof
-of correctness is complete.
+Technical persistence timestamps and optional diagnostics must not be used
+to authorize edits. The cloud role and relationship realm membership are
+the authoritative access-control boundary. A future full audit trail would
+require a separate business decision, not an assumption derived from both
+participants having FACT permissions.
 
 All shared rows are created with explicit `owner: null`: otherwise Dexie
 Cloud's default ownership can give a creator full permissions regardless of
@@ -157,7 +142,6 @@ and the real two-account authorization tests succeed.
 
 - Coach/client role membership and invite redemption in Dexie Cloud.
 - Server-confirmed, atomic workout Start or PLAN snapshot creation.
-- Automatic trusted FACT mutation audit ingestion, including offline-delivered edits.
 - Mapped domain repositories for exercises, plans, calendar and sessions.
 - Replacement/deletion of D1 business APIs, custom SyncEngine or D1 schema.
 - React mounting and live sync before cloud roles/permissions are proven.
@@ -199,10 +183,6 @@ record ownership and database permissions must be verified using real
    is enabled. Privileged creation is idempotent (including FACT/PLAN linkage).
 10. Separate `sessionSets` and `sessionSetFacts` keys are accepted by the
     real Dexie Cloud schema, and one-to-one FACT materialization is idempotent.
-11. A trustworthy server-backed FACT audit source is verified and **every**
-    synchronized edit yields durable `actorUserId` + `confirmedAt` metadata
-    derived from authenticated/server identity, not from a writable field.
-    Offline edits and conflicts must be covered, or activation remains blocked.
 
 The added tests check schema/role declarations and token exchange behavior,
 including forged client hints and upstream failures. They **do not** prove live
