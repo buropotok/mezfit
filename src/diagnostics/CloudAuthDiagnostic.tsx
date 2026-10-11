@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { Button } from 'konsta/react';
 import { ApiError } from '../api';
 import { getTelegramWebApp, prepareTelegramWebApp } from '../telegram';
-import { Button, Text } from '../ui';
+import { Text } from '../ui';
 import { runCloudAuthProbe } from './cloudAuthProbe';
 
 type ProbeStatus = 'idle' | 'pending' | 'success' | 'failed';
