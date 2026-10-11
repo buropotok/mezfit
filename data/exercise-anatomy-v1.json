@@ -436,6 +436,11 @@
       "label_ru": "Стабилизаторы голеностопа",
       "category": "legs",
       "kind": "group"
+    },
+    "cardiovascular_system": {
+      "label_ru": "Сердечно-сосудистая система",
+      "category": "cardio",
+      "kind": "system"
     }
   },
   "exercises": [
@@ -2078,7 +2083,7 @@
       "name_ru": "Прыжки ноги врозь",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -2137,7 +2142,7 @@
       "name_ru": "Шаги вперёд и назад",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -2599,10 +2604,11 @@
         "primary": [
           "rectus_abdominis"
         ],
-        "secondary": [
-          "erector_spinae"
-        ],
-        "stabilizers": []
+        "secondary": [],
+        "stabilizers": [
+          "erector_spinae",
+          "transversus_abdominis"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -2617,9 +2623,6 @@
         "status": "needs_expert_review",
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "terminology_edit_based_on_upstream_name_and_instructions",
-        "flags": [
-          "stabilizers_not_established"
-        ],
         "external_match": "unverified"
       }
     },
@@ -3168,17 +3171,18 @@
       "name_ru": "Горизонтальный жим Паллофа с эспандером",
       "name_status": "curated_rule",
       "category": "core",
-      "subcategory": "rectus_abdominis",
+      "subcategory": "transversus_abdominis",
       "exercise_kind": "strength",
       "muscles": {
         "primary": [
-          "rectus_abdominis"
-        ],
-        "secondary": [
           "external_obliques",
-          "gluteus_maximus"
+          "internal_obliques",
+          "transversus_abdominis"
         ],
-        "stabilizers": []
+        "secondary": [],
+        "stabilizers": [
+          "gluteus_maximus"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -3195,10 +3199,11 @@
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "terminology_edit_based_on_upstream_name_and_instructions",
         "flags": [
-          "stabilizers_not_established"
+          "anti_rotation_movement_primary_correction"
         ],
         "external_match": "unverified"
-      }
+      },
+      "regional_emphasis": []
     },
     {
       "source_id": "0981",
@@ -4935,17 +4940,18 @@
       "name_ru": "Вертикальный жим Паллофа с эспандером",
       "name_status": "curated_rule",
       "category": "core",
-      "subcategory": "rectus_abdominis",
+      "subcategory": "transversus_abdominis",
       "exercise_kind": "strength",
       "muscles": {
         "primary": [
-          "rectus_abdominis"
-        ],
-        "secondary": [
           "external_obliques",
-          "gluteus_maximus"
+          "internal_obliques",
+          "transversus_abdominis"
         ],
-        "stabilizers": []
+        "secondary": [],
+        "stabilizers": [
+          "gluteus_maximus"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -4962,10 +4968,11 @@
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "terminology_edit_based_on_upstream_name_and_instructions",
         "flags": [
-          "stabilizers_not_established"
+          "anti_rotation_movement_primary_correction"
         ],
         "external_match": "unverified"
-      }
+      },
+      "regional_emphasis": []
     },
     {
       "source_id": "1016",
@@ -5588,7 +5595,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -5617,14 +5624,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -6983,7 +6982,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -7012,14 +7011,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -7259,7 +7250,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -7288,14 +7279,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -7608,7 +7591,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": []
       },
@@ -7638,14 +7621,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -9161,7 +9136,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -9190,14 +9165,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -9603,10 +9570,11 @@
         "primary": [
           "rectus_abdominis"
         ],
-        "secondary": [
-          "erector_spinae"
-        ],
-        "stabilizers": []
+        "secondary": [],
+        "stabilizers": [
+          "erector_spinae",
+          "transversus_abdominis"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -9621,9 +9589,6 @@
         "status": "needs_expert_review",
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "terminology_edit_based_on_upstream_name_and_instructions",
-        "flags": [
-          "stabilizers_not_established"
-        ],
         "external_match": "unverified"
       }
     },
@@ -9643,7 +9608,9 @@
           "deltoid",
           "triceps_brachii"
         ],
-        "stabilizers": []
+        "stabilizers": [
+          "transversus_abdominis"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -9659,9 +9626,6 @@
         "status": "needs_expert_review",
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "terminology_edit_based_on_upstream_name_and_instructions",
-        "flags": [
-          "stabilizers_not_established"
-        ],
         "external_match": "unverified"
       },
       "anatomical_parts": {
@@ -10964,10 +10928,12 @@
           "rectus_abdominis"
         ],
         "secondary": [
-          "deltoid",
-          "erector_spinae"
+          "deltoid"
         ],
-        "stabilizers": []
+        "stabilizers": [
+          "erector_spinae",
+          "transversus_abdominis"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -10983,9 +10949,6 @@
         "status": "needs_expert_review",
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "terminology_edit_based_on_upstream_name_and_instructions",
-        "flags": [
-          "stabilizers_not_established"
-        ],
         "external_match": "unverified"
       },
       "anatomical_parts": {
@@ -12698,7 +12661,7 @@
       "name_ru": "Медвежья походка",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -13319,14 +13282,15 @@
       "name_ru": "Планка с собственным весом на наклонной скамье",
       "name_status": "rule_draft",
       "category": "core",
-      "subcategory": "rectus_abdominis",
+      "subcategory": "external_obliques",
       "exercise_kind": "strength",
       "muscles": {
         "primary": [
-          "rectus_abdominis"
+          "external_obliques",
+          "internal_obliques",
+          "transversus_abdominis"
         ],
         "secondary": [
-          "external_obliques",
           "deltoid"
         ],
         "stabilizers": []
@@ -14120,7 +14084,7 @@
       "name_ru": "Бёрпи",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -23278,7 +23242,7 @@
       "name_ru": "Эллиптический тренажёр",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -24869,7 +24833,7 @@
       "name_ru": "Бёрпи с гантелями",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -25074,7 +25038,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": []
       },
@@ -25104,14 +25068,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -29867,7 +29823,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -29896,14 +29852,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -31972,7 +31920,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -32001,14 +31949,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -37749,7 +37689,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -37778,14 +37718,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -40264,7 +40196,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": [
           "rotator_cuff"
@@ -40293,14 +40225,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -40643,7 +40567,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": []
       },
@@ -40673,14 +40597,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -42049,7 +41965,7 @@
       "name_ru": "Халф колено бендс",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -42768,7 +42684,7 @@
       "name_ru": "Верхний колено у у стены",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -44217,7 +44133,7 @@
       "name_ru": "Джакк бурпее",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -44298,7 +44214,7 @@
       "name_ru": "Джакк прыжок",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -44426,7 +44342,7 @@
       "name_ru": "Прыжки со скакалкой",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -52445,7 +52361,7 @@
       "name_ru": "Упражнение «Альпинист»",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -54373,7 +54289,7 @@
       "name_ru": "Жим к бег",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -55075,11 +54991,13 @@
       "name_ru": "Отжимания",
       "name_status": "rule_draft",
       "category": "core",
-      "subcategory": "rectus_abdominis",
+      "subcategory": "external_obliques",
       "exercise_kind": "strength",
       "muscles": {
         "primary": [
-          "rectus_abdominis"
+          "external_obliques",
+          "internal_obliques",
+          "transversus_abdominis"
         ],
         "secondary": [
           "deltoid",
@@ -56882,7 +56800,7 @@
       "name_ru": "Бег",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -56941,7 +56859,7 @@
       "name_ru": "Бег на беговой дорожке",
       "name_status": "curated_rule",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -57265,7 +57183,7 @@
       "name_ru": "Скиссор джумпс",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -57830,7 +57748,7 @@
       "name_ru": "Приседания",
       "name_status": "rule_candidate",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -57889,7 +57807,7 @@
       "name_ru": "Схорт стриде бег",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -59027,7 +58945,7 @@
       "name_ru": "Скатер хопс",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -59144,7 +59062,7 @@
       "name_ru": "Ски степ",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -60402,7 +60320,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": []
       },
@@ -60432,14 +60350,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -61180,7 +61090,7 @@
         ],
         "secondary": [
           "pectoralis_major",
-          "deltoid"
+          "anterior_deltoid"
         ],
         "stabilizers": []
       },
@@ -61210,14 +61120,6 @@
             "triceps_long_head",
             "triceps_lateral_head",
             "triceps_medial_head"
-          ]
-        },
-        "deltoid": {
-          "role": "secondary",
-          "members": [
-            "anterior_deltoid",
-            "lateral_deltoid",
-            "posterior_deltoid"
           ]
         }
       }
@@ -63761,10 +63663,12 @@
           "rectus_abdominis"
         ],
         "secondary": [
-          "erector_spinae",
           "deltoid"
         ],
-        "stabilizers": []
+        "stabilizers": [
+          "erector_spinae",
+          "transversus_abdominis"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -63780,9 +63684,6 @@
         "status": "needs_expert_review",
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "legacy_machine_translation",
-        "flags": [
-          "stabilizers_not_established"
-        ],
         "external_match": "unverified"
       },
       "anatomical_parts": {
@@ -63802,7 +63703,7 @@
       "name_ru": "Стар прыжок",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -63861,7 +63762,7 @@
       "name_ru": "Статионарй бике бег V. 3",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -63920,7 +63821,7 @@
       "name_ru": "Статионарй бике ходьба",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -64482,7 +64383,7 @@
       "name_ru": "Мах 360",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -65476,7 +65377,7 @@
       "name_ru": "Ходьба еллиптикал кросс траинер",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -65537,7 +65438,7 @@
       "name_ru": "Выпады",
       "name_status": "rule_candidate",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -65658,7 +65559,7 @@
       "name_ru": "Ходьба на наклонный треадмилл",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -65717,7 +65618,7 @@
       "name_ru": "Ходьба на степмилл",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
@@ -67550,10 +67451,11 @@
         "primary": [
           "rectus_abdominis"
         ],
-        "secondary": [
-          "erector_spinae"
-        ],
-        "stabilizers": []
+        "secondary": [],
+        "stabilizers": [
+          "erector_spinae",
+          "transversus_abdominis"
+        ]
       },
       "source_evidence": {
         "body_part": "waist",
@@ -67568,9 +67470,6 @@
         "status": "needs_expert_review",
         "muscle_basis": "source_metadata_plus_movement_rules",
         "name_basis": "terminology_edit_based_on_upstream_name_and_instructions",
-        "flags": [
-          "stabilizers_not_established"
-        ],
         "external_match": "unverified"
       }
     },
@@ -67580,7 +67479,7 @@
       "name_ru": "Ролик бег",
       "name_status": "legacy_draft",
       "category": "cardio",
-      "subcategory": null,
+      "subcategory": "cardiovascular_system",
       "exercise_kind": "conditioning",
       "muscles": {
         "primary": [],
