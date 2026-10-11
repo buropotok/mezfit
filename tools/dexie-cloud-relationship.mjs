@@ -181,7 +181,7 @@ export function assertRolePolicy(remoteRoles, localRoles) {
       && role.name === roleName && role.realmId === 'rlm-public');
     const local = localRoles[roleName];
     if (!remote || !isRecord(local) || !isRecord(remote.permissions)
-      || !isRecord(local.permissions)) {
+      || !isRecord(local.permissions) || !isRecord(local.permissions.update)) {
       throw new Error('CLOUD_ROLE_MISMATCH');
     }
     const permissionKeys = Object.keys(remote.permissions).sort();
