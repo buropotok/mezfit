@@ -38,7 +38,7 @@ export interface CloudWorkoutSessionRow extends CloudSharedRow {
 
 /**
  * An immutable PLAN snapshot captured by the privileged Workout Start operation.
- * A session set ID is globally unique and is also the key of its FACT counterpart.
+ * The related FACT has a deterministic, independent primary key derived from this ID.
  * Neither coach nor client can change these fields through ordinary sync.
  */
 export interface CloudSessionSetRow extends CloudSharedRow {
@@ -55,11 +55,12 @@ export interface CloudSessionSetRow extends CloudSharedRow {
 
 /**
  * Editable measurements only. The privileged Worker materializes the record
- * together with the snapshot (same id / realmId / workoutSessionId).
+ * together with the snapshot (matching sessionSetId / realmId / workoutSessionId).
  * Both roles can update a strict set of FACT fields, but cannot add/delete
  * records or change their identity, ownership, or workout association.
  */
 export interface CloudSessionSetFactRow extends CloudSharedRow {
+  sessionSetId: string;
   workoutSessionId: string;
   actualReps: number | null;
   actualWeightKg: number | null;
@@ -80,11 +81,25 @@ export const CLOUD_DATABASE_STORES_V1 = {
   trainingPlans: '@id, realmId, coachUserId, clientUserId, [realmId+position]',
   workoutSessions: '@id, realmId, clientUserId, trainingPlanId, status, startedAt',
   sessionSets: '@id, realmId, workoutSessionId, sessionExerciseId, [sessionExerciseId+position]',
-  sessionSetFacts: '@id, realmId, workoutSessionId',
+  // A deterministic key enforces 1:1 PLAN-to-FACT across devices. A distinct
+  // `id` key (not `@id`) avoids cross-table prefix restrictions in Dexie Cloud.
+  sessionSetFacts: 'id, realmId, sessionSetId, workoutSessionId',
   realms: '@realmId',
   members: '@id, realmId, userId',
   roles: '[realmId+name]',
 } as const;
+
+/**
+ * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
+ * reuse another table's prefix. An ordinary `id` key can safely be derived
+ * from the globally unique session set ID and used for idempotent creation.
+ */
+export function sessionSetFactId(sessionSetId: string): string {
+  if (!sessionSetId || !/^[A-Za-z0-9_-]+$/.test(sessionSetId)) {
+    throw new Error('INVALID_CLOUD_SESSION_SET_ID');
+  }
+  return `fact:${sessionSetId}`;
+}
 
 export function cloudDatabaseName(telegramUserId: string): string {
   if (!/^[1-9]\d*$/.test(telegramUserId)) {
