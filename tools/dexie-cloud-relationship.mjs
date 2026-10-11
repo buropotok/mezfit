@@ -187,7 +187,9 @@ export function assertRolePolicy(remoteRoles, localRoles) {
     const permissionKeys = Object.keys(remote.permissions).sort();
     const expectedKeys = roleName === 'coach' ? ['manage', 'update'] : ['update'];
     if (!equalItems(permissionKeys, expectedKeys)
-      || (roleName === 'coach' && !equalItems(remote.permissions.manage, ['trainingPlans']))
+      || !equalItems(Object.keys(local.permissions), expectedKeys)
+      || (roleName === 'coach' && (!equalItems(remote.permissions.manage, ['trainingPlans'])
+        || !equalItems(local.permissions.manage, ['trainingPlans'])))
       || !isRecord(remote.permissions.update)
       || !equalItems(Object.keys(remote.permissions.update), ['sessionSetFacts'])
       || !equalItems(remote.permissions.update.sessionSetFacts, FACT_FIELDS)
