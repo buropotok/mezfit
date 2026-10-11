@@ -425,6 +425,44 @@ describe('UI Kit charts', () => {
     expect(duplicate).not.toContain('data-radar-key');
   });
 
+  it('rejects duplicate series dataKey in line charts rather than rendering the same metric twice', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Дублирующиеся линии"
+        data={[{ week: 'Н1', weight: 72 }, { week: 'Н2', weight: 74 }]}
+        xKey="week"
+        series={[
+          { dataKey: 'weight', name: 'Текущий вес', color: '#123456' },
+          { dataKey: 'weight', name: 'Повторный вес', color: '#abcdef' },
+        ]}
+      />,
+    );
+    expect(html).toContain('Каждый ряд должен иметь уникальный dataKey');
+    expect(html).not.toContain('data-line-key');
+    expect(html).not.toContain('data-chart-container');
+  });
+
+  it('rejects duplicate radar dataKey before rendering polygons and legend', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Дублирующиеся показатели"
+        data={[
+          { axis: 'A', score: 70 },
+          { axis: 'B', score: 80 },
+          { axis: 'C', score: 90 },
+        ]}
+        angleKey="axis"
+        series={[
+          { dataKey: 'score', name: 'Показатель A' },
+          { dataKey: 'score', name: 'Показатель B' },
+        ]}
+      />,
+    );
+    expect(html).toContain('Каждый ряд должен иметь уникальный dataKey');
+    expect(html).not.toContain('data-radar-key');
+    expect(html).not.toContain('Ряды графика');
+  });
+
   it('preserves the selected plot height for empty and non-empty charts', () => {
     const empty = renderToStaticMarkup(
       <MezfitRadarChart<{ axis: string; score: number | null }>
