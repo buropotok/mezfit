@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 
 /** Thin UI Kit adapters: Recharts owns dots, legends, axes, tooltips and rendering. */
-export type ChartSeries<TKey extends string> = { dataKey: TKey; name: string; color?: string };
+export type ChartSeries<TKey extends string> = { dataKey: TKey; name: string; color: string };
 
 export type ChartNumericKey<T extends object> = Extract<{
   [K in keyof T]-?: NonNullable<T[K]> extends number ? K : never;
@@ -26,7 +26,6 @@ export type MezfitRadarChartProps<T extends object> = ChartProps<T> & {
   domain?: readonly [number, number];
 };
 
-const COLORS = ['var(--ui-color-primary)', '#b2a0ff', '#63d9b0', '#ffbf70'] as const;
 const TICK = { fill: 'var(--ui-color-surface-muted)' };
 const TOOLTIP = {
   backgroundColor: 'var(--ui-color-surface-raised)',
@@ -46,9 +45,9 @@ export function MezfitLineChart<T extends object>({
           <YAxis width="auto" tick={TICK} />
           <Tooltip contentStyle={TOOLTIP} />
           <Legend />
-          {series.map((item, index) => (
+          {series.map((item) => (
             <Line key={item.dataKey} dataKey={item.dataKey} name={item.name}
-              stroke={item.color ?? COLORS[index % COLORS.length]} />
+              stroke={item.color} />
           ))}
         </LineChart>
       </ResponsiveContainer>
@@ -68,10 +67,10 @@ export function MezfitRadarChart<T extends object>({
           <PolarRadiusAxis domain={domain ? [...domain] : undefined} tick={false} />
           <Tooltip contentStyle={TOOLTIP} />
           <Legend />
-          {series.map((item, index) => (
+          {series.map((item) => (
             <Radar key={item.dataKey} dataKey={item.dataKey} name={item.name}
-              stroke={item.color ?? COLORS[index % COLORS.length]}
-              fill={item.color ?? COLORS[index % COLORS.length]} fillOpacity={0.2} />
+              stroke={item.color}
+              fill={item.color} fillOpacity={0.2} />
           ))}
         </RadarChart>
       </ResponsiveContainer>
