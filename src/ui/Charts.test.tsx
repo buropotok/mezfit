@@ -131,6 +131,64 @@ describe('UI Kit charts', () => {
     expect(html).not.toContain('Ряды графика');
   });
 
+  it('keeps points visible when more than two finite values are isolated by gaps', () => {
+    const html = renderToStaticMarkup(
+      <MezfitLineChart
+        label="Прерывистый прогресс"
+        data={[
+          { week: 'Н1', weight: 71 },
+          { week: 'Н2', weight: null },
+          { week: 'Н3', weight: 73 },
+          { week: 'Н4', weight: null },
+          { week: 'Н5', weight: 76 },
+        ]}
+        xKey="week"
+        series={[{ dataKey: 'weight', name: 'Вес' }]}
+      />,
+    );
+    expect(html).toContain('data-line-key="weight"');
+    expect(html).toContain('data-dot="visible"');
+    expect(html).not.toContain('Нет данных');
+  });
+
+  it('rejects a radar with a missing axis value instead of treating it as zero', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Неполный профиль"
+        data={[
+          { axis: 'Сила', score: 80 },
+          { axis: 'Техника', score: 70 },
+          { axis: 'Баланс', score: 90 },
+          { axis: 'Гибкость', score: null },
+        ]}
+        angleKey="axis"
+        series={[{ dataKey: 'score', name: 'Результат' }]}
+      />,
+    );
+    expect(html).toContain('Нет данных для графика');
+    expect(html).not.toContain('data-radar-key="score"');
+  });
+
+  it('filters incomplete radar series while preserving a fully measured profile', () => {
+    const html = renderToStaticMarkup(
+      <MezfitRadarChart
+        label="Сравнение профилей"
+        data={[
+          { axis: 'Сила', current: 80, previous: 70 },
+          { axis: 'Техника', current: 0, previous: 60 },
+          { axis: 'Баланс', current: 90, previous: 75 },
+          { axis: 'Гибкость', current: 65, previous: null },
+        ]}
+        angleKey="axis"
+        series={[{ dataKey: 'current', name: 'Сейчас' }, { dataKey: 'previous', name: 'Раньше' }]}
+      />,
+    );
+    expect(html).toContain('data-radar-key="current"');
+    expect(html).not.toContain('data-radar-key="previous"');
+    expect(html).not.toContain('Ряды графика');
+    expect(html).not.toContain('Нет данных');
+  });
+
   it('constrains category and numeric metric keys using the data row type', () => {
     type WorkoutRow = { week: string; weight: number | null; reps?: number; note: string };
     const line: MezfitLineChartProps<WorkoutRow> = {
