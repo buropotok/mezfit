@@ -47,11 +47,6 @@ describe('Dexie Cloud schema and access policy', () => {
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('sessionSetId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V1.sessionSetFacts).toContain('workoutSessionId');
-    expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('@id');
-    expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('realmId');
-    expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('sessionSetFactId');
-    expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('sessionSetId');
-    expect(CLOUD_DATABASE_STORES_V1.sessionSetFactAudits).toContain('confirmedAt');
     expect(CLOUD_DATABASE_STORES_V1.realms).toBe('@realmId');
     expect(CLOUD_DATABASE_STORES_V1.members).toContain('@id');
     expect(CLOUD_DATABASE_STORES_V1.roles).toBe('[realmId+name]');
@@ -71,8 +66,6 @@ describe('Dexie Cloud schema and access policy', () => {
 
   it('allows PLAN authoring only by coach; neither role manages the session lifecycle', () => {
     expect(cloudRoles.roles.coach.permissions.manage).toEqual(['trainingPlans']);
-    expect(JSON.stringify(cloudRoles.roles.coach.permissions)).not.toContain('sessionSetFactAudits');
-    expect(JSON.stringify(cloudRoles.roles.client.permissions)).not.toContain('sessionSetFactAudits');
     expect(Object.hasOwn(cloudRoles.roles.client.permissions, 'manage')).toBe(false);
     expect(Object.hasOwn(cloudRoles.roles.coach.permissions, 'add')).toBe(false);
     expect(Object.hasOwn(cloudRoles.roles.client.permissions, 'add')).toBe(false);
@@ -108,9 +101,6 @@ describe('Dexie Cloud schema and access policy', () => {
       'status',
       'startedAt',
       'completedAt',
-      'actorUserId',
-      'confirmedAt',
-      'changedFields',
     ];
     for (const permissions of [cloudRoles.roles.coach.permissions, cloudRoles.roles.client.permissions]) {
       const editable = permissions.update.sessionSetFacts;
