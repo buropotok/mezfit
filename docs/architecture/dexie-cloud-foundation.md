@@ -138,6 +138,35 @@ and confirm neither role retains earlier broad permissions on
 membership. Do not enable the new domain repositories until this check
 and the real two-account authorization tests succeed.
 
+## Opt-in live Telegram token diagnostic
+
+After the dedicated Dexie Cloud service account is installed as Worker secrets,
+open `https://t.me/mezfit_bot?startapp=cloud_auth_check` **inside Telegram**.
+This launch parameter selects a standalone diagnostic screen instead of the
+normal Coach/Client application. It never mounts the Dexie Cloud database,
+opens IndexedDB, changes roles/realms, or reads/writes training records.
+
+Tap **Проверить авторизацию**. The screen generates a fresh, non-exportable
+RSA signing key (using the same PEM/SPKI public-key encoding as the addon) and
+calls the existing typed `POST /api/dexie-cloud/tokens` API with Telegram
+`initData`. Only the public key is sent; Worker verifies the Telegram
+signature, requests a token from Dexie Cloud and verifies the cloud subject.
+The diagnostic discards all token response fields and displays only a success
+message or a sanitized error code; it does not persist keys or tokens or
+include them in logs. This is a one-time token-issuance check, **not** proof
+of realm membership, field permissions, refresh-token binding, offline sync,
+or full Dexie Cloud Addon operation.
+
+If the button reports `DEXIE_CLOUD_UNAVAILABLE (502)`, inspect the Worker
+secrets, service-account scopes, and Dexie Cloud response on the server side
+without sharing keys or token payloads. Do not bypass Telegram signature
+validation or show credentials as part of debugging. Confirm a failed GET
+to the token endpoint is expected (405) and does not exercise token issuance.
+
+This diagnostic is temporary for pre-MVP activation and should be removed
+when the actual Dexie Cloud Addon flow has been enabled and covered by
+integration checks.
+
 ## What is intentionally not enabled in this foundation
 
 - Coach/client role membership and invite redemption in Dexie Cloud.
