@@ -22,6 +22,7 @@ import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } fr
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
 import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
+import { CloudMembershipError, provisionInviteMembership } from './lib/dexie-cloud-membership';
 
 type Role = 'coach' | 'client';
 
@@ -56,6 +57,7 @@ interface AuthContext {
 interface InviteRow {
   id: number;
   coach_user_id: number;
+  coach_telegram_user_id: string;
   label: string | null;
   expires_at: string;
   coach_first_name: string;
@@ -190,13 +192,14 @@ function inviteTokenFromStartParam(startParam?: string): string | null {
   return /^[a-f0-9]{36}$/i.test(token) ? token.toLowerCase() : null;
 }
 
-async function findInvite(db: D1Database, token: string): Promise<InviteRow | null> {
+async function findInvite(db: D1Database, token: string, clientUserId: number): Promise<InviteRow | null> {
   const tokenHash = await sha256Hex(token);
   return db
     .prepare(`
       SELECT
         i.id,
         i.coach_user_id,
+        coach.telegram_user_id AS coach_telegram_user_id,
         i.label,
         i.expires_at,
         coach.first_name AS coach_first_name,
@@ -205,10 +208,15 @@ async function findInvite(db: D1Database, token: string): Promise<InviteRow | nu
       FROM coach_client_invite i
       JOIN app_user coach ON coach.id = i.coach_user_id
       WHERE i.token_hash = ?
-        AND i.accepted_at IS NULL
+        AND (i.accepted_by_user_id IS NULL OR i.accepted_by_user_id = ?)
         AND i.expires_at > CURRENT_TIMESTAMP
+        AND NOT EXISTS (
+          SELECT 1 FROM coach_client cc
+          WHERE cc.coach_user_id = i.coach_user_id
+            AND cc.client_user_id = ? AND cc.status = 'active'
+        )
     `)
-    .bind(tokenHash)
+    .bind(tokenHash, clientUserId, clientUserId)
     .first<InviteRow>();
 }
 
@@ -624,7 +632,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) return json({ invite: null });
 
-    const invite = await findInvite(env.DB_BINDING, token);
+    const invite = await findInvite(env.DB_BINDING, token, auth.row.id);
     if (!invite || invite.coach_user_id === auth.row.id) return json({ invite: null });
 
     return json({
@@ -645,10 +653,29 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
 
-    const invite = await findInvite(env.DB_BINDING, token);
+    const invite = await findInvite(env.DB_BINDING, token, auth.row.id);
     if (!invite) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is invalid, expired, or already used');
     if (invite.coach_user_id === auth.row.id) throw new HttpError(400, 'SELF_LINK', 'Coach cannot accept their own invite');
 
+    // Reserve the existing one-use invite before contacting Dexie Cloud. Only
+    // this verified Telegram client can retry after a partial upstream failure.
+    // A concurrent different client cannot obtain a second membership.
+    const claim = await env.DB_BINDING.prepare(`
+      UPDATE coach_client_invite
+      SET accepted_by_user_id = ?, accepted_at = COALESCE(accepted_at, CURRENT_TIMESTAMP)
+      WHERE id = ? AND (accepted_by_user_id IS NULL OR accepted_by_user_id = ?)
+        AND expires_at > CURRENT_TIMESTAMP
+      RETURNING id
+    `).bind(auth.row.id, invite.id, auth.row.id).first<{ id: number }>();
+    if (!claim) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is no longer available');
+
+    // Dexie Cloud is authoritative for the new relationship. On failure the
+    // client can retry the same invite; D1 coach_client is not created first.
+    await provisionInviteMembership(env, invite.coach_telegram_user_id, auth.row.telegram_user_id);
+
+    // Temporary legacy read-model: existing D1-backed coach/client screens
+    // consume these IDs until their repositories migrate to Dexie Cloud.
+    // The active link is not written unless the cloud membership is verified.
     await env.DB_BINDING.batch([
       env.DB_BINDING
         .prepare(`
@@ -659,13 +686,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
             updated_at = CURRENT_TIMESTAMP
         `)
         .bind(invite.coach_user_id, auth.row.id, invite.id),
-      env.DB_BINDING
-        .prepare(`
-          UPDATE coach_client_invite
-          SET accepted_by_user_id = ?, accepted_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND accepted_at IS NULL
-        `)
-        .bind(auth.row.id, invite.id),
       env.DB_BINDING
         .prepare("INSERT OR IGNORE INTO user_role (user_id, role) VALUES (?, 'client')")
         .bind(auth.row.id),
@@ -687,6 +707,10 @@ export default {
     } catch (error) {
       if (error instanceof TelegramAuthError) {
         return json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
+      }
+      if (error instanceof CloudMembershipError) {
+        return json({ error: { code: error.code, message: 'Unable to complete cloud membership; try again' } },
+          { status: error.status });
       }
       if (error instanceof HttpError) {
         return json({ error: { code: error.code, message: error.message } }, { status: error.status });
