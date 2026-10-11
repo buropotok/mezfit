@@ -21,6 +21,7 @@ import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
+import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
 
 type Role = 'coach' | 'client';
 
@@ -292,6 +293,10 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+
+  if (url.pathname === '/api/dexie-cloud/tokens') {
+    return handleDexieCloudTokenRoute(request, env);
+  }
 
   if (url.pathname === '/api/config' && request.method === 'GET') {
     return json({ theme: await getGlobalTheme(env.DB_BINDING) });
