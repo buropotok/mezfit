@@ -1,7 +1,6 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart as RechartsLineChart,
   PolarAngleAxis,
@@ -71,18 +70,33 @@ function hasValues(data: readonly ChartDataPoint[], series: readonly ChartSeries
   }));
 }
 
-function ChartFrame({ label, height, className, empty, children }: {
+function ChartFrame({ label, height, className, empty, series, children }: {
   label: string;
   height: number;
   className?: string;
   empty: boolean;
-  children: React.ReactNode;
+  series: readonly ChartSeries[];
+  children: ReactNode;
 }) {
   return (
     <div className={`mezfit-chart ui-text ui-text--caption${className ? ` ${className}` : ''}`} role="group" aria-label={label}>
       {empty
         ? <div className="mezfit-chart__empty"><Text variant="footnote" tone="muted">Нет данных для графика</Text></div>
-        : <div className="mezfit-chart__plot" style={{ height }}>{children}</div>}
+        : (
+          <>
+            <div className="mezfit-chart__plot" style={{ height }}>{children}</div>
+            {series.length > 1 && (
+              <div className="mezfit-chart__legend" aria-label="Ряды графика">
+                {series.map((item, index) => (
+                  <span className="mezfit-chart__legend-item" key={item.dataKey}>
+                    <span className="mezfit-chart__swatch" style={{ backgroundColor: chartColor(item, index) }} aria-hidden="true" />
+                    <Text variant="caption" tone="muted">{item.name}</Text>
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
     </div>
   );
 }
@@ -91,14 +105,13 @@ function ChartFrame({ label, height, className, empty, children }: {
 export function MezfitLineChart({ label, data, series, xKey, height = 240, className }: MezfitLineChartProps) {
   const empty = data.length === 0 || series.length === 0 || !hasValues(data, series);
   return (
-    <ChartFrame label={label} height={height} className={className} empty={empty}>
+    <ChartFrame label={label} height={height} className={className} empty={empty} series={series}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
         <RechartsLineChart data={[...data]} margin={{ top: 12, right: 12, bottom: 4, left: 0 }}>
           <CartesianGrid stroke="var(--ui-color-border)" vertical={false} strokeDasharray="3 5" />
           <XAxis dataKey={xKey} tick={AXIS_TICK} tickLine={false} axisLine={false} tickMargin={10} minTickGap={16} />
           <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} domain={['auto', 'auto']} />
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: 'var(--ui-color-border)' }} />
-          {series.length > 1 && <Legend />}
           {series.map((item, index) => (
             <Line
               key={item.dataKey}
@@ -123,14 +136,13 @@ export function MezfitLineChart({ label, data, series, xKey, height = 240, class
 export function MezfitRadarChart({ label, data, series, angleKey, domain, height = 280, className }: MezfitRadarChartProps) {
   const empty = data.length < 3 || series.length === 0 || !hasValues(data, series);
   return (
-    <ChartFrame label={label} height={height} className={className} empty={empty}>
+    <ChartFrame label={label} height={height} className={className} empty={empty} series={series}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1}>
         <RechartsRadarChart data={[...data]} outerRadius="68%" margin={{ top: 18, right: 24, bottom: 18, left: 24 }}>
           <PolarGrid stroke="var(--ui-color-border)" />
           <PolarAngleAxis dataKey={angleKey} tick={AXIS_TICK} />
           <PolarRadiusAxis tick={false} axisLine={false} domain={domain ? [...domain] : [0, 'auto']} />
           <Tooltip contentStyle={TOOLTIP_STYLE} />
-          {series.length > 1 && <Legend />}
           {series.map((item, index) => (
             <Radar
               key={item.dataKey}
