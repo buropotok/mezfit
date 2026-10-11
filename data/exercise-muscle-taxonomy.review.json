@@ -190,6 +190,11 @@
       "name_ru": "Грудино-ключично-сосцевидная мышца",
       "category": "other",
       "kind": "muscle_or_muscle_region"
+    },
+    "brachioradialis": {
+      "name_ru": "Плечелучевая мышца",
+      "category": "arms",
+      "kind": "muscle_or_muscle_region"
     }
   },
   "regions": {
