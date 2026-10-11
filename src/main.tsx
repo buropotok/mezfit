@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadGlobalTheme } from './theme';
 import { applyTypographySettings, loadBrowserTypographySettings } from './typographySettings';
+import { getTelegramLaunchStartParam, getTelegramWebApp } from './telegram';
 import './ui/konsta.css';
 import './style.css';
 import './exercise.css';
@@ -34,7 +35,11 @@ async function bootstrap(): Promise<void> {
     window.location.pathname === '/ui-kit-day-schedule.html'
     || window.location.pathname === '/ui-kit-day-schedule'
   );
-  if (isFullscreenDayScheduleUiKit) {
+  const webApp = getTelegramWebApp();
+  if (webApp?.initData && getTelegramLaunchStartParam(webApp) === 'cloud_auth_check') {
+    const { CloudAuthDiagnostic } = await import('./diagnostics/CloudAuthDiagnostic');
+    content = <CloudAuthDiagnostic />;
+  } else if (isFullscreenDayScheduleUiKit) {
     const { DayScheduleCatalog } = await import('./ui/DayScheduleCatalog');
     content = <DayScheduleCatalog fullScreen />;
   } else if (window.location.pathname === '/ui-kit') {
