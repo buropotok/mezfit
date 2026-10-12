@@ -299,8 +299,8 @@ export function ProgramsPage({
       )}
 
       <section className="programs-section" aria-labelledby="cloud-programs-title">
-            <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы Dexie Cloud</Text>
-            {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем синхронизированные программы…</Text> : null}
+            <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+            {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем программы клиентов…</Text> : null}
             {cloud?.status === 'error' ? (
               <>
                 <Text variant="footnote" role="alert">{cloud.error}</Text>
@@ -323,7 +323,7 @@ export function ProgramsPage({
                       key={plan.id}
                       interactive={false}
                       title={plan.name}
-                      subtitle="Карточка программы · синхронизация Dexie Cloud"
+                      subtitle="Черновик программы"
                       trailing={statusBadge(plan.status)}
                     />
                   ))}
@@ -331,7 +331,7 @@ export function ProgramsPage({
               </div>
             ))}
             {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
-              <Text variant="footnote" tone="muted">В Dexie Cloud пока нет программ клиентов</Text>
+              <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
             ) : null}
           </section>
 
