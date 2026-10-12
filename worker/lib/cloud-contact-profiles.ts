@@ -136,7 +136,7 @@ async function validatedPair(
   const client = rows.find((row) => exactRole(row.roles, 'client'));
   if (!coach || !client || !userId(coach.userId) || !userId(client.userId)) return null;
   const expected = await relationshipMembership(coach.userId.slice(3), client.userId.slice(3));
-  if (expected.realm.realmId !== id
+  if (expected.realm.realmId !== id || coach.realmId !== id || client.realmId !== id
     || !validMember(coach, expected.members[0].id, expected.members[0].userId, 'coach')
     || !validMember(client, expected.members[1].id, expected.members[1].userId, 'client')) return null;
   return rows;
