@@ -7,29 +7,29 @@ vi.mock('./ClientCoachContext', () => ({
   useClientCoach: () => ({
     coaches: [
       {
-        relationshipId: 11,
+        relationshipId: 'rlm11',
         user: {
-          id: 7,
+          id: 'tg:700',
           telegramUserId: '700',
-          username: 'coach_anna',
+          username: null,
           firstName: 'Анна',
           lastName: 'Иванова',
           languageCode: 'ru',
-          photoUrl: 'https://example.com/coach-anna.jpg',
+          photoUrl: null,
           isPremium: false,
         },
       },
     ],
     selectedCoach: {
-      relationshipId: 11,
+      relationshipId: 'rlm11',
       user: {
-        id: 7,
+        id: 'tg:700',
         telegramUserId: '700',
-        username: 'coach_anna',
+        username: null,
         firstName: 'Анна',
         lastName: 'Иванова',
         languageCode: 'ru',
-        photoUrl: 'https://example.com/coach-anna.jpg',
+        photoUrl: null,
         isPremium: false,
       },
     },
@@ -41,7 +41,7 @@ vi.mock('./ClientCoachContext', () => ({
 }));
 
 describe('ClientCoachSelectorModal', () => {
-  it('uses the Mezfit dialog list composition and keeps coach avatars', () => {
+  it('uses the Mezfit dialog list composition and synced cloud coach labels', () => {
     const html = renderToStaticMarkup(
       <KonstaProvider theme="ios" dark>
         <ClientCoachSelectorModal isOpen onClose={() => undefined} />
@@ -50,8 +50,8 @@ describe('ClientCoachSelectorModal', () => {
 
     expect(html).toContain('ui-glass-surface');
     expect(html).toContain('Анна Иванова');
-    expect(html).toContain('@coach_anna');
-    expect(html).toContain('https://example.com/coach-anna.jpg');
+    expect(html).not.toContain('@coach_anna');
+    expect(html).not.toContain('https://example.com/coach-anna.jpg');
     expect(html).toContain('type="radio"');
     expect(html).toContain('checked=""');
   });
