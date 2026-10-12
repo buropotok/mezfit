@@ -178,10 +178,13 @@ export async function cloudMembershipAdminRead(
   return json(await upstream(fetchImpl, path, bearer));
 }
 
-export async function cloudMembershipAdminUpsert(
+export async function cloudMembershipAdminUpsertProfiles(
   fetchImpl: typeof fetch, bearer: string, rows: readonly Record<string, unknown>[],
 ): Promise<void> {
-  if (rows.length) await write(fetchImpl, bearer, 'members', [...rows]);
+  if (rows.length) {
+    const response = await upstream(fetchImpl, '/all/contactProfiles', bearer, 'POST', [...rows]);
+    if (!response.ok) failUnavailable();
+  }
 }
 
 function sameStrings(value: unknown, expected: string[]): boolean {
