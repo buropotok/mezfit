@@ -23,6 +23,12 @@ export function isApprovedAssignedPair(
       && member.userId === clientUserId && member.roles?.includes('client'));
 }
 
+/** Canonical order is persisted; generated cloud IDs are only tie-breakers. */
+export function sortAssignedPlans<T extends Pick<CloudTrainingPlanRow, 'position' | 'id'>>(plans: readonly T[]): T[] {
+  return [...plans].sort((left, right) =>
+    left.position - right.position || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
+}
+
 /** The only persistence owner for newly assigned PLAN headers. */
 export class AssignedProgramsRepository {
   private readonly db;
@@ -46,9 +52,9 @@ export class AssignedProgramsRepository {
       const ownerByRealm = new Map(realms.map((realm) => [realm.realmId, realm.owner]));
       // Membership and realm ownership, not client-supplied coach/client IDs,
       // determine whether this is a genuine shared assigned PLAN.
-      return plans.filter((plan) => isApprovedAssignedPair(
+      return sortAssignedPlans(plans.filter((plan) => isApprovedAssignedPair(
         ownerByRealm.get(plan.realmId), members, plan.realmId, plan.coachUserId, plan.clientUserId,
-      ));
+      )));
     }).subscribe({
       next: onChange,
       error: onError,
