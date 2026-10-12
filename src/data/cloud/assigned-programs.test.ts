@@ -1,57 +1,62 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { createCloudDatabase } from './database';
 import { AssignedProgramsRepository, isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
 
 vi.mock('./database', () => ({ createCloudDatabase: vi.fn() }));
-
 const createCloudDatabaseMock = vi.mocked(createCloudDatabase);
 
-function fixture() {
-  const records: Array<Record<string, unknown>> = [];
-  const roles = [
-    { userId: 'tg:101', realmId: 'rlm-valid', roles: ['coach'] },
-    { userId: 'tg:202', realmId: 'rlm-valid', roles: ['client'] },
-    { userId: 'tg:303', realmId: 'rlm-other', roles: ['client'] },
-  ];
+async function fixture() {
+  // Use the Worker contract, not a made-up realm/member ID in these tests.
+  const expected = await relationshipMembership('101', '202');
+  const realm = { ...expected.realm, owner: null as string | null };
+  const members = expected.members.map((member) => ({
+    ...member,
+    accepted: new Date('2026-10-12T00:00:00Z'),
+    roles: [...member.roles] as string[],
+    owner: null as string | null,
+    permissions: undefined as Record<string, unknown> | undefined,
+  }));
+  const rows: Array<Record<string, unknown>> = [];
   const add = vi.fn(async (record: Record<string, unknown>) => {
-    records.push(record);
+    rows.push(record);
     return 'tra-new';
   });
   const close = vi.fn();
-  const refresh = vi.fn(async () => undefined);
+  const sync = vi.fn(async () => undefined);
   const db = {
     members: {
-      where: () => ({
-        equals: (userId: string) => ({
-          toArray: async () => roles.filter((member) => member.userId === userId),
+      where: (index: string) => ({
+        equals: (value: string) => ({
+          toArray: async () => members.filter((member) =>
+            index === 'realmId' ? member.realmId === value : member.userId === value),
         }),
       }),
+      toArray: async () => members,
     },
     realms: {
-      get: vi.fn(async (id: string): Promise<{ realmId: string; owner: string | null }> => ({ realmId: id, owner: null })),
+      get: vi.fn(async (id: string) => id === realm.realmId ? realm : undefined),
+      toArray: async () => [realm],
     },
     trainingPlans: {
-      where: () => ({ equals: () => ({ count: async () => records.length }) }),
+      where: () => ({ equals: () => ({ count: async () => rows.length }) }),
       add,
+      toArray: async () => rows,
     },
-    cloud: { sync: refresh },
+    cloud: { sync },
     close,
   };
   createCloudDatabaseMock.mockReturnValue(db as unknown as ReturnType<typeof createCloudDatabase>);
-  return { db, add, roles, records, refresh, close };
+  return { db, realm, members, expected, rows, add, close, sync };
 }
 
-beforeEach(() => {
-  createCloudDatabaseMock.mockReset();
-});
+beforeEach(() => createCloudDatabaseMock.mockReset());
 
-describe('assigned PLAN order', () => {
-  it('uses persisted position and a stable ID tie-breaker without mutating local results', () => {
+describe('assigned PLAN ordering', () => {
+  it('sorts by persisted position and stable cloud ID without mutating local rows', () => {
     const plans = [
-      { id: 'tra-z', position: 2 },
-      { id: 'tra-b', position: 0 },
-      { id: 'tra-a', position: 0 },
-      { id: 'tra-c', position: 1 },
+      { id: 'tra-z', position: 2 }, { id: 'tra-b', position: 0 },
+      { id: 'tra-a', position: 0 }, { id: 'tra-c', position: 1 },
     ];
     expect(sortAssignedPlans(plans).map((plan) => plan.id))
       .toEqual(['tra-a', 'tra-b', 'tra-c', 'tra-z']);
@@ -59,65 +64,76 @@ describe('assigned PLAN order', () => {
   });
 });
 
-describe('assigned PLAN read scope', () => {
-  const members = [
-    { userId: 'tg:101', realmId: 'rlm-pair', roles: ['coach'] },
-    { userId: 'tg:202', realmId: 'rlm-pair', roles: ['client'] },
-  ];
+describe('canonical shared relationship PLAN access', () => {
+  it('accepts only the exact Worker-provisioned ownerless realm and its two accepted members', async () => {
+    const f = await fixture();
+    expect(await isApprovedAssignedPair(f.realm, f.members, 'tg:101', 'tg:202')).toBe(true);
+    expect(await isApprovedAssignedPair(
+      { ...f.realm, realmId: 'rlm-noncanonical' }, f.members, 'tg:101', 'tg:202',
+    )).toBe(false);
+    expect(await isApprovedAssignedPair(
+      { ...f.realm, owner: 'tg:101' }, f.members, 'tg:101', 'tg:202',
+    )).toBe(false);
+    expect(await isApprovedAssignedPair(
+      f.realm, f.members, 'tg:202', 'tg:101',
+    )).toBe(false);
+  });
 
-  it('accepts only an ownerless shared realm with the exact coach/client role pair', () => {
-    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:101', 'tg:202')).toBe(true);
-    expect(isApprovedAssignedPair('tg:202', members, 'rlm-pair', 'tg:101', 'tg:202')).toBe(false);
-    expect(isApprovedAssignedPair(undefined, members, 'tg:202', 'tg:101', 'tg:202')).toBe(false);
-    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:101', 'tg:303')).toBe(false);
-    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:202', 'tg:101')).toBe(false);
-    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:101', 'tg:101')).toBe(false);
+  it('rejects extra, owned, invited, unaccepted, privileged or incorrectly-role-assigned members', async () => {
+    const f = await fixture();
+    const approved = () => isApprovedAssignedPair(f.realm, f.members, 'tg:101', 'tg:202');
+    f.members.push({ ...f.members[1], id: 'mmb-intruder', userId: 'tg:303' });
+    expect(await approved()).toBe(false);
+    f.members.pop();
+    f.members[1].owner = 'tg:202';
+    expect(await approved()).toBe(false);
+    f.members[1].owner = null;
+    f.members[1].invite = true;
+    expect(await approved()).toBe(false);
+    f.members[1].invite = false;
+    f.members[1].accepted = new Date(NaN);
+    expect(await approved()).toBe(false);
+    f.members[1].accepted = new Date('2026-10-12T00:00:00Z');
+    f.members[1].permissions = { manage: ['trainingPlans'] };
+    expect(await approved()).toBe(false);
+    f.members[1].permissions = undefined;
+    f.members[1].roles = ['client', 'coach'];
+    expect(await approved()).toBe(false);
+    f.members[1].roles = ['client'];
+    f.members[1].id = 'mmb-forged';
+    expect(await approved()).toBe(false);
+    f.members[1].id = f.expected.members[1].id;
+    expect(await approved()).toBe(true);
   });
 });
 
 describe('assigned Dexie Cloud PLAN repository', () => {
-  it('creates an ownerless draft only in the pair realm using stable cloud identities', async () => {
-    const f = fixture();
+  it('creates an ownerless draft only in the Worker-provisioned pair realm', async () => {
+    const f = await fixture();
     const repository = new AssignedProgramsRepository('101', 'signed');
     const id = await repository.createAssigned('202', '  Тестовая программа  ');
     expect(id).toBe('tra-new');
     expect(createCloudDatabaseMock).toHaveBeenCalledWith('101', 'signed');
+    expect(f.db.realms.get).toHaveBeenCalledWith(f.expected.realm.realmId);
     expect(f.add).toHaveBeenCalledWith(expect.objectContaining({
-      realmId: 'rlm-valid',
-      owner: null,
-      coachUserId: 'tg:101',
-      clientUserId: 'tg:202',
-      name: 'Тестовая программа',
-      status: 'draft',
+      realmId: f.expected.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202',
+      name: 'Тестовая программа', status: 'draft',
     }));
     await repository.refresh();
-    expect(f.refresh).toHaveBeenCalledWith({ purpose: 'pull', wait: true });
+    expect(f.sync).toHaveBeenCalledWith({ purpose: 'pull', wait: true });
     repository.close();
     expect(f.close).toHaveBeenCalledTimes(1);
   });
 
-  it('does not create a plan for an unlinked client or itself', async () => {
-    const f = fixture();
+  it('refuses unlinked clients, wrong owners and malformed/self identities', async () => {
+    const f = await fixture();
     const repository = new AssignedProgramsRepository('101', 'signed');
     await expect(repository.createAssigned('303', 'Чужая программа')).rejects.toThrow('Связь');
     await expect(repository.createAssigned('101', 'Своя программа')).rejects.toThrow('самому себе');
     await expect(repository.createAssigned('abc', 'Некорректно')).rejects.toThrow('Некорректный клиент');
-    expect(f.add).not.toHaveBeenCalled();
-  });
-
-  it('fails closed when the supposed relationship realm has an owner', async () => {
-    const f = fixture();
-    f.db.realms.get.mockResolvedValue({ realmId: 'rlm-valid', owner: 'tg:101' });
-    const repository = new AssignedProgramsRepository('101', 'signed');
-    await expect(repository.createAssigned('202', 'Неавторизованно')).rejects.toThrow('Связь');
-    expect(f.add).not.toHaveBeenCalled();
-  });
-
-  it('ignores foreign coach membership, even for a shared client', async () => {
-    const f = fixture();
-    f.roles.splice(0, 1, { userId: 'tg:101', realmId: 'rlm-valid', roles: ['client'] });
-    const repository = new AssignedProgramsRepository('101', 'signed');
-    await expect(repository.createAssigned('202', 'Нельзя')).rejects.toThrow('Связь');
+    f.realm.owner = 'tg:101';
+    await expect(repository.createAssigned('202', 'Чужой realm')).rejects.toThrow('Связь');
     expect(f.add).not.toHaveBeenCalled();
   });
 });
