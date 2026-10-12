@@ -8,7 +8,7 @@ const allowed = new Map<string, Map<string, { userId: string; version: string | 
 
 vi.mock('dexie', () => ({
   default: class {
-    files = {
+    cachedFiles = {
       get: (key: string) => Promise.resolve(files.get(this.name)?.get(key)),
       toArray: () => Promise.resolve(Array.from(files.get(this.name)?.values() ?? [])),
       delete: (key: string) => Promise.resolve(files.get(this.name)?.delete(key)),
@@ -19,7 +19,7 @@ vi.mock('dexie', () => ({
         return Promise.resolve(row.userId);
       },
     };
-    allowed = {
+    cachedAllowed = {
       get: (key: string) => Promise.resolve(allowed.get(this.name)?.get(key)),
       toArray: () => Promise.resolve(Array.from(allowed.get(this.name)?.values() ?? [])),
       delete: (key: string) => Promise.resolve(allowed.get(this.name)?.delete(key)),
@@ -30,8 +30,17 @@ vi.mock('dexie', () => ({
         return Promise.resolve(row.userId);
       },
     };
+    files = this.cachedFiles;
+    allowed = this.cachedAllowed;
     constructor(private readonly name: string) {}
-    version() { return { stores: () => undefined }; }
+    version() {
+      return { stores: () => {
+        // Dexie binds tables when the subclass registers its schema. TypeScript
+        // class fields on the subclass can shadow the base mock until then.
+        this.files = this.cachedFiles;
+        this.allowed = this.cachedAllowed;
+      } };
+    }
     transaction(_mode: string, ...args: unknown[]) {
       const action = args[args.length - 1] as () => Promise<unknown>;
       return action();
