@@ -34,6 +34,7 @@ async function setup() {
   const pair = await relationshipMembership('101', '202');
   const members = pair.members.map((member) => ({ ...member, name: undefined as string | undefined, avatarVersion: undefined as string | null | undefined }));
   const store = new Map(members.map((member) => [member.id, member]));
+  const profiles = new Map<string, { id: string; realmId: string; owner: null; userId: string; name: string; avatarVersion: string | null }>();
   let photo = 'photo-one';
   let noPhoto = false;
   let postCount = 0;
@@ -54,6 +55,17 @@ async function setup() {
       rows.forEach((member) => store.set(member.id, member));
       return new Response(null, { status: 204 });
     }
+    if (url.pathname === '/all/contactProfiles' && method === 'GET') {
+      return Response.json([...profiles.values()].filter((profile) =>
+        url.searchParams.has('realmId') ? profile.realmId === url.searchParams.get('realmId')
+          : profile.userId === url.searchParams.get('userId')));
+    }
+    if (url.pathname === '/all/contactProfiles' && method === 'POST') {
+      postCount++;
+      const rows = JSON.parse(String(init?.body)) as Array<typeof profiles extends Map<string, infer P> ? P : never>;
+      rows.forEach((profile) => profiles.set(profile.id, profile));
+      return new Response(null, { status: 204 });
+    }
     if (url.pathname.startsWith('/all/realms/')) return Response.json(pair.realm);
     if (url.pathname.endsWith('/getUserProfilePhotos')) {
       return Response.json({ ok: true, result: {
@@ -70,7 +82,7 @@ async function setup() {
     throw new Error('unexpected test route');
   });
   return {
-    pair, store, fetchImpl, postCount: () => postCount, downloads: () => downloads,
+    pair, store, profiles, fetchImpl, postCount: () => postCount, downloads: () => downloads,
     setPhoto(value: string) { photo = value; },
     removePhoto() { noPhoto = true; },
   };
@@ -89,12 +101,14 @@ describe('privileged Telegram contact profile synchronization', () => {
       method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
     });
     expect((await syncOwnContactProfile(request, env, cloud.fetchImpl)).status).toBe(200);
-    const own = [...cloud.store.values()].find((member) => member.userId === 'tg:101')!;
+    const own = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(own.name).toBe('Новый Профиль');
     expect(own.avatarVersion).toMatch(/^[a-f0-9]{64}$/);
-    expect(own.roles).toEqual(['coach']);
-    expect(own.owner).toBeNull();
-    expect(own.accepted).toBe(true);
+    const membership = [...cloud.store.values()].find((member) => member.userId === 'tg:101')!;
+    expect(membership.roles).toEqual(['coach']);
+    expect(membership.owner).toBeNull();
+    expect(membership.accepted).toBe(true);
+    expect(membership.name).toBeUndefined();
     expect(cloud.postCount()).toBe(1);
     expect(cloud.downloads()).toBe(1);
 
@@ -117,7 +131,7 @@ describe('privileged Telegram contact profile synchronization', () => {
       authDate: new Date(),
     });
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
-    const current = [...cloud.store.values()].find((member) => member.userId === 'tg:101')!;
+    const current = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(current.name).toBe('Новое Имя');
     expect(cloud.downloads()).toBe(firstDownloads);
     expect(cloud.postCount()).toBe(firstWrites + 1);
@@ -129,11 +143,11 @@ describe('privileged Telegram contact profile synchronization', () => {
       method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
     });
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
-    const original = [...cloud.store.values()].find((member) => member.userId === 'tg:101')!;
+    const original = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     const version = original.avatarVersion;
     cloud.setPhoto('photo-two');
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
-    const updated = [...cloud.store.values()].find((member) => member.userId === 'tg:101')!;
+    const updated = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(updated.avatarVersion).not.toBe(version);
     expect(updated.name).toBe(original.name);
     expect(updated.realmId).toBe(original.realmId);
@@ -141,7 +155,7 @@ describe('privileged Telegram contact profile synchronization', () => {
 
     cloud.removePhoto();
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
-    const removed = [...cloud.store.values()].find((member) => member.userId === 'tg:101')!;
+    const removed = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(removed.avatarVersion).toBeNull();
     expect(cloud.downloads()).toBe(2);
   });
@@ -151,7 +165,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     await syncOwnContactProfile(new Request('https://mezfit.test/api/cloud/profile/sync', {
       method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
     }), env, cloud.fetchImpl);
-    const version = [...cloud.store.values()].find((member) => member.userId === 'tg:101')?.avatarVersion;
+    const version = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')?.avatarVersion;
     expect(version).toBeTruthy();
     const url = `https://mezfit.test/api/cloud/profile/avatar?userId=tg%3A101&realmId=${cloud.pair.realm.realmId}&version=${version}`;
     auth(202);
