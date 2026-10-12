@@ -1,8 +1,9 @@
 import { validateTelegramInitData, type TelegramInitUser } from './telegram';
+import { stableCloudRelationshipId } from '../../shared/relationship-id';
 import {
   cloudMembershipAdminRead,
   cloudMembershipAdminToken,
-  cloudMembershipAdminUpsert,
+  cloudMembershipAdminUpsertProfiles,
   relationshipMembership,
   type CloudMembershipEnv,
 } from './dexie-cloud-membership';
@@ -167,32 +168,57 @@ export async function syncOwnContactProfile(
   );
   if (!Array.isArray(own) || !own.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
 
-  const eligible: Row[] = [];
+  const eligible: Array<{ realmId: string; id: string }> = [];
   for (const member of own) {
     if (!realmId(member.realmId)) continue;
     const pair = await validatedPair(fetchImpl, bearer, member.realmId);
     const self = pair?.find((row) => row.userId === account && row.id === member.id);
-    if (self) eligible.push(self);
+    if (self) eligible.push({
+      realmId: member.realmId,
+      id: await stableCloudRelationshipId('prf', member.realmId + ':' + account),
+    });
   }
   if (eligible.length === 0) {
     return Response.json({ changed: false }, { headers: { 'cache-control': 'no-store' } });
   }
 
+  // Profile rows are separate from system-managed access memberships. REST upserts
+  // must never replace member records: doing so could resurrect a revoked grant.
+  const existing = await cloudMembershipAdminRead(
+    fetchImpl, bearer, '/all/contactProfiles?userId=' + encodeURIComponent(account),
+  );
+  if (!Array.isArray(existing) || !existing.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
+  const known = new Map(existing.filter((row) => typeof row.id === 'string')
+    .map((row) => [row.id as string, row]));
+
   const name = profileName(identity.user);
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
-  const hasNewVersion = photo !== undefined && eligible.some((row) => row.avatarVersion !== (photo?.version ?? null));
+  const hasNewVersion = photo !== undefined && eligible.some(({ id }) =>
+    known.get(id)?.avatarVersion !== (photo?.version ?? null));
   let newVersion: string | null | undefined;
   if (photo === null) newVersion = null;
   else if (photo && hasNewVersion) {
     if (await storeAvatarIfMissing(env, fetchImpl, account, photo)) newVersion = photo.version;
   }
-  const changed = eligible.filter((member) =>
-    member.name !== name || (newVersion !== undefined && member.avatarVersion !== newVersion));
-  await cloudMembershipAdminUpsert(fetchImpl, bearer, changed.map((member) => ({
-    ...member,
-    name,
-    ...(newVersion === undefined ? {} : { avatarVersion: newVersion }),
-  })));
+
+  const changed: Row[] = [];
+  for (const entry of eligible) {
+    const previous = known.get(entry.id);
+    if (previous && (previous.realmId !== entry.realmId || previous.userId !== account
+      || previous.owner !== null)) continue;
+    const avatarVersion = newVersion === undefined
+      ? (version(previous?.avatarVersion) ? previous.avatarVersion : null) : newVersion;
+    if (previous?.name === name && previous.avatarVersion === avatarVersion) continue;
+    changed.push({
+      id: entry.id,
+      realmId: entry.realmId,
+      owner: null,
+      userId: account,
+      name,
+      avatarVersion,
+    });
+  }
+  await cloudMembershipAdminUpsertProfiles(fetchImpl, bearer, changed);
   return Response.json({ changed: changed.length > 0 }, { headers: { 'cache-control': 'no-store' } });
 }
 
@@ -214,8 +240,17 @@ export async function getContactAvatar(
   const bearer = await cloudMembershipAdminToken(env, fetchImpl);
   const pair = await validatedPair(fetchImpl, bearer, realm);
   const me = pair?.find((member) => member.userId === 'tg:' + identity.user.id);
-  const peer = pair?.find((member) => member.userId === target);
-  if (!me || !peer || peer.avatarVersion !== expectedVersion) {
+  if (!me || !pair?.some((member) => member.userId === target)) {
+    return new Response(null, { status: 404 });
+  }
+  const profiles = await cloudMembershipAdminRead(
+    fetchImpl, bearer, '/all/contactProfiles?realmId=' + encodeURIComponent(realm),
+  );
+  const profileId = await stableCloudRelationshipId('prf', realm + ':' + target);
+  const profile = Array.isArray(profiles)
+    ? profiles.find((row: unknown) => record(row) && row.id === profileId) : undefined;
+  if (!record(profile) || profile.realmId !== realm || profile.userId !== target
+    || profile.owner !== null || profile.avatarVersion !== expectedVersion) {
     return new Response(null, { status: 404 });
   }
   const key = await avatarKey(target, expectedVersion);
