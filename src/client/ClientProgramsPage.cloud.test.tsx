@@ -10,10 +10,9 @@ vi.mock('./ClientCoachContext', () => ({ useClientCoach: vi.fn() }));
 
 const coach = {
   relationshipId: 'rlm1',
-  user: {
-    id: 'tg:202', telegramUserId: '202', firstName: 'Тренер', lastName: null,
-    username: null, languageCode: 'ru', photoUrl: null, isPremium: false,
-  },
+  userId: 'tg:202',
+  telegramUserId: '202',
+  displayName: 'Тренер',
 };
 
 beforeEach(() => {
