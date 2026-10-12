@@ -134,6 +134,15 @@ export function CloudConnectionsProvider({
   const [error, setError] = useState('');
   const alive = useRef(false);
   const initialPullSucceededRef = useRef(false);
+  const avatarPermissionsReadyRef = useRef<Promise<void>>(Promise.resolve());
+
+  const reconcileAvatarPermissions = useCallback((next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
+    // Serialize snapshots before media loads: stale asynchronous downloads cannot
+    // restore revoked portraits once the latest permissions have been persisted.
+    avatarPermissionsReadyRef.current = avatarPermissionsReadyRef.current
+      .then(() => pruneUnlinkedContactAvatars(telegramUserId, [...next.clients, ...next.coaches]))
+      .catch(() => {});
+  }, [telegramUserId]);
 
   useEffect(() => {
     alive.current = true;
@@ -147,13 +156,11 @@ export function CloudConnectionsProvider({
       locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
       if (!initialPullSucceededRef.current && !hasContacts) return;
+      reconcileAvatarPermissions(next);
       setClients(next.clients);
       setCoaches(next.coaches);
       setError('');
       setStatus('ready');
-      if (initialPullSucceededRef.current) {
-        void pruneUnlinkedContactAvatars(telegramUserId, [...next.clients, ...next.coaches]);
-      }
     };
 
     const readContacts = () => readContactSnapshot(db, actorUserId);
@@ -213,7 +220,7 @@ export function CloudConnectionsProvider({
       // Preserve Dexie 4 auto-open so the next liveQuery can reopen it.
       db.close({ disableAutoOpen: false });
     };
-  }, [db, actorUserId, telegramUserId]);
+  }, [db, actorUserId, reconcileAvatarPermissions]);
 
   // Profile writes are privileged and change-only; failures must not block offline lists.
   useEffect(() => {
@@ -226,8 +233,10 @@ export function CloudConnectionsProvider({
     return () => { active = false; };
   }, [db, initData]);
 
-  const loadAvatar = useCallback((peer: CloudContact) =>
-    loadContactAvatar(telegramUserId, initData, peer), [telegramUserId, initData]);
+  const loadAvatar = useCallback(async (peer: CloudContact) => {
+    await avatarPermissionsReadyRef.current;
+    return loadContactAvatar(telegramUserId, initData, peer);
+  }, [telegramUserId, initData]);
 
   const refresh = useCallback(async () => {
     try {
@@ -237,13 +246,11 @@ export function CloudConnectionsProvider({
       if (!alive.current) return;
       if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
       initialPullSucceededRef.current = true;
+      reconcileAvatarPermissions(snapshot.contacts);
       setClients(snapshot.contacts.clients);
       setCoaches(snapshot.contacts.coaches);
       setError('');
       setStatus('ready');
-      void pruneUnlinkedContactAvatars(telegramUserId, [
-        ...snapshot.contacts.clients, ...snapshot.contacts.coaches,
-      ]);
     } catch (reason) {
       if (alive.current) {
         setStatus('error');
@@ -251,7 +258,7 @@ export function CloudConnectionsProvider({
       }
       throw reason;
     }
-  }, [db, actorUserId, telegramUserId, initData]);
+  }, [db, actorUserId, initData, reconcileAvatarPermissions]);
 
   const value = useMemo<CloudConnectionsValue>(() => ({
     db, actorUserId, clients, coaches, status, error, refresh, loadAvatar,
