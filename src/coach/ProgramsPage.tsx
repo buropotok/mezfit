@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
-import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
+import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
 import { useNavigationFloatingAction } from '../NavigationShell';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { Avatar, Badge, Button, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
@@ -14,7 +15,7 @@ import trashUrl from '../ui/icons/trash.svg';
 import './programs.css';
 
 type Filter = 'all' | ProgramStatus;
-export type ProgramCreationOwner = { type: 'self' } | { type: 'client'; client: CoachClientListItem } | null;
+export type ProgramCreationOwner = { type: 'self' } | { type: 'client'; client: CloudContact } | null;
 export interface ProgramCreationDraft {
   name: string;
   owner: ProgramCreationOwner;
@@ -132,14 +133,14 @@ function ownerName(group: ProgramOwnerGroup): string {
   return [group.owner.firstName, group.owner.lastName].filter(Boolean).join(' ');
 }
 
-function clientName(client: CoachClientListItem): string {
-  return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
+function clientName(client: CloudContact): string {
+  return client.displayName;
 }
 
 interface ProgramsPageProps {
   initData: string;
-  clients?: CoachClientListItem[];
-  onSelectClient?: (userId: number) => Promise<void>;
+  clients?: CloudContact[];
+  onSelectClient?: (userId: string | number) => Promise<void>;
   onOpenProgram?: (program: ProgramListItem) => void;
   creationDraft?: ProgramCreationDraft | null;
   creationBusy?: boolean;
@@ -223,13 +224,13 @@ export function ProgramsPage({
   }
   const sharedPlans = [...grouped].map(([clientUserId, plans]) => ({
     clientUserId,
-    client: clients.find((item) => `tg:${item.user.telegramUserId}` === clientUserId) ?? null,
+    client: clients.find((item) => item.userId === clientUserId) ?? null,
     plans,
   })).filter(({ client }) =>
     !search.trim() || (client ? clientName(client) : 'Клиент')
       .toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
 
-  const selectClient = async (userId: number) => {
+  const selectClient = async (userId: string | number) => {
     if (!onSelectClient) return;
     setMessage('');
     try {
@@ -374,8 +375,8 @@ export function ProgramsPage({
               <List className="programs-client-list">
                 <ListItem
                   interactive={Boolean(client)}
-                  onClick={client ? () => { void selectClient(client.user.id); } : undefined}
-                  leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
+                  onClick={client ? () => { void selectClient(client.userId); } : undefined}
+                  leading={<Avatar name={client ? clientName(client) : 'Клиент'} />}
                   title={client ? clientName(client) : 'Клиент'}
                 />
               </List>
@@ -426,7 +427,7 @@ export function ProgramsPage({
             <List>
               <ListItem
                 onClick={() => onRequestClientSelection?.()}
-                leading={selectedClient ? <Avatar name={clientName(selectedClient)} src={selectedClient.user.photoUrl ?? undefined} /> : undefined}
+                leading={selectedClient ? <Avatar name={clientName(selectedClient)} /> : undefined}
                 title="Выбрать клиента"
                 subtitle={selectedClient ? clientName(selectedClient) : undefined}
               />

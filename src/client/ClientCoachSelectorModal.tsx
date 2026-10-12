@@ -27,23 +27,22 @@ export function ClientCoachSelectorModal({ isOpen, onClose }: ClientCoachSelecto
             <KonstaListItem title="Тренеров пока нет" subtitle="Примите приглашение тренера, чтобы он появился здесь." />
           ) : null}
           {status === 'ready' ? coaches.map((coach) => {
-            const name = [coach.user.firstName, coach.user.lastName].filter(Boolean).join(' ');
-            const selected = coach.user.id === selectedCoach?.user.id;
+            const name = coach.displayName;
+            const selected = coach.userId === selectedCoach?.userId;
             return (
               <KonstaListItem
                 key={coach.relationshipId}
                 label
-                media={<Avatar name={name} src={coach.user.photoUrl ?? undefined} />}
+                media={<Avatar name={name} />}
                 title={name}
-                subtitle={coach.user.username ? `@${coach.user.username}` : undefined}
                 after={(
                   <KonstaRadio
                     component="div"
                     name="client-coach"
-                    value={String(coach.user.id)}
+                    value={coach.userId}
                     checked={selected}
                     onChange={() => {
-                      selectCoach(coach.user.id);
+                      selectCoach(coach.userId);
                       onClose();
                     }}
                   />

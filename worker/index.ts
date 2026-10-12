@@ -172,12 +172,6 @@ async function requireCoachClient(db: D1Database, coachUserId: number, clientUse
   }
 }
 
-async function requireClientCoach(db: D1Database, clientUserId: number, coachUserId: number): Promise<void> {
-  if (!(await hasActiveCoachClient(db, coachUserId, clientUserId))) {
-    throw new HttpError(404, 'COACH_NOT_FOUND', 'Coach is not linked to this client');
-  }
-}
-
 async function requireProgramOwner(db: D1Database, coachUserId: number, programId: number): Promise<number> {
   const owner = await getProgramOwnerIds(db, programId);
   if (!owner || owner.coachUserId !== coachUserId) {
@@ -494,46 +488,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ ok: true });
   }
 
-  if (url.pathname === '/api/client/coaches' && request.method === 'GET') {
-    const auth = await requireUser(request, env);
-    requireRole(auth, 'client');
-
-    const result = await env.DB_BINDING
-      .prepare(`
-        SELECT
-          cc.id AS relationship_id,
-          coach.id,
-          coach.telegram_user_id,
-          coach.username,
-          coach.first_name,
-          coach.last_name,
-          coach.language_code,
-          coach.photo_url,
-          coach.is_premium
-        FROM coach_client cc
-        JOIN app_user coach ON coach.id = cc.coach_user_id
-        WHERE cc.client_user_id = ? AND cc.status = 'active'
-        ORDER BY COALESCE(coach.last_name, ''), coach.first_name, coach.id
-      `)
-      .bind(auth.row.id)
-      .all<UserRow & { relationship_id: number }>();
-
-    return json({
-      coaches: result.results.map((row) => ({ relationshipId: row.relationship_id, user: userView(row) })),
-    });
-  }
-
-  if (url.pathname === '/api/client/programs' && request.method === 'GET') {
-    const auth = await requireUser(request, env);
-    requireRole(auth, 'client');
-    const coachUserId = Number(url.searchParams.get('coachUserId'));
-    if (!Number.isInteger(coachUserId) || coachUserId <= 0) {
-      throw new HttpError(400, 'COACH_NOT_FOUND', 'Coach is required');
-    }
-    await requireClientCoach(env.DB_BINDING, auth.row.id, coachUserId);
-    return json({ programs: await listProgramsForUserByCoach(env.DB_BINDING, auth.row.id, coachUserId) });
-  }
-
   if (url.pathname === '/api/health' && request.method === 'GET') {
     const result = await env.DB_BINDING.prepare('SELECT 1 AS ok').first<{ ok: number }>();
     return json({
@@ -568,35 +522,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       .run();
 
     return json({ user: userView(auth.row), roles: await getRoles(env.DB_BINDING, auth.row.id) });
-  }
-
-  if (url.pathname === '/api/coach/clients' && request.method === 'GET') {
-    const auth = await requireUser(request, env);
-    requireRole(auth, 'coach');
-
-    const result = await env.DB_BINDING
-      .prepare(`
-        SELECT
-          cc.id AS relationship_id,
-          client.id,
-          client.telegram_user_id,
-          client.username,
-          client.first_name,
-          client.last_name,
-          client.language_code,
-          client.photo_url,
-          client.is_premium
-        FROM coach_client cc
-        JOIN app_user client ON client.id = cc.client_user_id
-        WHERE cc.coach_user_id = ? AND cc.status = 'active'
-        ORDER BY COALESCE(client.last_name, ''), client.first_name, client.id
-      `)
-      .bind(auth.row.id)
-      .all<UserRow & { relationship_id: number }>();
-
-    return json({
-      clients: result.results.map((row) => ({ relationshipId: row.relationship_id, user: userView(row) })),
-    });
   }
 
   if (url.pathname === '/api/coach/client-invites' && request.method === 'POST') {

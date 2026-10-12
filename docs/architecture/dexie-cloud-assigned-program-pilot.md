@@ -22,16 +22,19 @@ The card contains a title, `draft` status, coach/client cloud IDs and a stable
 - New assigned headers are created locally, so rendering does not require
   waiting for an API response. The addon handles push, pull and reconnect.
   Local success alone is **not** evidence of server acceptance.
-- The provider opens the cloud database only while the Programs destination is
-  active, uses the authenticated account's local DB name, and closes on cleanup.
-  The account ID key forces a remount on account change.
+- The account-scoped cloud provider opens a single Dexie database for
+  relationship directories on all screens. The PLAN subscription is active
+  only on the Programs destination while its rollout gate is enabled.
+  The account key forces a remount and closes subscriptions on account change.
 
 ## Explicit rollout gate (required)
 
-The cloud program pilot is **disabled by default**. Until the rollout gate is
-enabled, both coach and client retain their existing D1-backed program views
-and creating a client program follows the legacy D1 path. This avoids
-introducing an unverified cloud write path into the automatic production deploy.
+The cloud *assigned PLAN* pilot is **disabled by default**. The coach/client
+relationship lists use Dexie Cloud regardless of this flag. With the PLAN
+gate disabled, creating assigned programs is unavailable (never sent to D1)
+and the client's Programs page clearly reports the inactive cloud feature.
+The coach's personal legacy D1 programs remain independent until their own
+domain is converted. This avoids introducing unverified cloud PLAN writes.
 
 The gate is the build-time Vite variable
 `VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED=true`, sourced by
@@ -73,16 +76,17 @@ admin keys, Telegram initData or user tokens.
   a separate dedicated personal-realm migration. Client-owned personal
   programs must later have client-write / coach-read semantics and not receive
   coach-assigned PLAN permissions.
-- Previously created D1 *assigned* programs are not migrated or copied into
-  Dexie Cloud. While the rollout gate is off, the existing D1 list continues
-  working. While on, the client sees cloud assigned programs only; old D1
-  programs are not mislabeled as cloud records. Legacy D1 APIs remain for other
-  consumers during migration.
-- Legacy client/coach directory and selected-trainer metadata still come from
-  the D1-backed API. Cloud headers can render locally in the coach screen when
-  the old directory is unavailable (without display names), but complete
-  **offline client navigation** will require migration of that directory and
-  selection model. This pilot does not claim that offline UX is complete.
+- Previously created D1 *assigned* programs are neither migrated nor used:
+  the client Programs page shows cloud assigned plans only when enabled.
+  Unconverted personal programs, exercises, workout/schedule and role bootstrap
+  remain separate D1 domains pending replacement, without directory fallback.
+- The coach/client directories and chosen-trainer metadata now use locally
+  synced `members` and `realms`. Cloud member labels are filled from Telegram
+  on provisioning, with fallback names for older empty test relationships.
+  On a previously synced device, directory records remain available offline.
+  Fresh membership requires an online accepted invitation.
+- The client-scoped exercise tab in the coach's client workspace remains
+  deferred until its legacy numeric-ID dependency is converted to Dexie.
 - The app does not offer a server-confirmed sync-success indicator in this
   slice. Confirm cloud persistence with a second Telegram account or cloud
   read-only export.

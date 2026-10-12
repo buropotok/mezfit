@@ -1,6 +1,6 @@
 import { liveQuery } from 'dexie';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../../shared/relationship-id';
-import { createCloudDatabase, type CloudTrainingPlanRow } from './database';
+import { createCloudDatabase, type CloudTrainingPlanRow, type MezfitCloudDatabase } from './database';
 
 interface RelationshipRealm {
   realmId: string;
@@ -70,9 +70,9 @@ export class AssignedProgramsRepository {
   private readonly db;
   readonly actorUserId: string;
 
-  constructor(telegramUserId: string, initData: string) {
+  constructor(telegramUserId: string, initData: string, private readonly sharedDb?: MezfitCloudDatabase) {
     this.actorUserId = `tg:${telegramUserId}`;
-    this.db = createCloudDatabase(telegramUserId, initData);
+    this.db = sharedDb ?? createCloudDatabase(telegramUserId, initData);
   }
 
   observe(
@@ -141,6 +141,6 @@ export class AssignedProgramsRepository {
   }
 
   close(): void {
-    this.db.close();
+    if (!this.sharedDb) this.db.close();
   }
 }

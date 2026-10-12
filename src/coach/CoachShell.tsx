@@ -1,18 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { List as KonstaList, ListGroup, ListItem as KonstaListItem } from 'konsta/react';
 import {
   createClientInvite,
   createCoachProgram,
-  getCoachClients,
-  type CoachClientListItem,
-  type CreateCoachProgramOwner,
   type ProgramListItem,
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
-import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { TodayPage } from '../schedule/TodayPage';
@@ -36,8 +33,8 @@ const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text
   about: { title: 'О приложении', text: 'Mezfit — рабочее пространство тренера и клиента внутри Telegram.' },
 };
 
-function displayName(client: CoachClientListItem): string {
-  return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
+function displayName(client: CloudContact): string {
+  return client.displayName;
 }
 
 const clientNameCollator = new Intl.Collator(['ru-RU', 'en-US'], {
@@ -45,11 +42,11 @@ const clientNameCollator = new Intl.Collator(['ru-RU', 'en-US'], {
   numeric: true,
 });
 
-function clientSortName(client: CoachClientListItem): string {
-  return displayName(client).trim() || client.user.username?.trim() || 'Клиент Mezfit';
+function clientSortName(client: CloudContact): string {
+  return displayName(client).trim() || 'Клиент Mezfit';
 }
 
-function clientGroupTitle(client: CoachClientListItem): string {
+function clientGroupTitle(client: CloudContact): string {
   const [firstCharacter = ''] = Array.from(clientSortName(client).normalize('NFC'));
   if (!firstCharacter || !/^\p{L}$/u.test(firstCharacter)) return '#';
 
@@ -57,8 +54,8 @@ function clientGroupTitle(client: CoachClientListItem): string {
   return upperCharacter;
 }
 
-function groupClientsForContacts(clients: CoachClientListItem[]): Array<{ title: string; clients: CoachClientListItem[] }> {
-  const groups = new Map<string, CoachClientListItem[]>();
+function groupClientsForContacts(clients: CloudContact[]): Array<{ title: string; clients: CloudContact[] }> {
+  const groups = new Map<string, CloudContact[]>();
 
   for (const client of [...clients].sort((left, right) => clientNameCollator.compare(clientSortName(left), clientSortName(right)))) {
     const title = clientGroupTitle(client);
@@ -94,7 +91,7 @@ function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   );
 }
 
-function ClientWorkspace({ initData, client }: { initData: string; client: CoachClientListItem }) {
+function ClientWorkspace({ client }: { client: CloudContact }) {
   const [tab, setTab] = useState<ClientTab>('overview');
   const name = displayName(client);
 
@@ -106,7 +103,7 @@ function ClientWorkspace({ initData, client }: { initData: string; client: Coach
 
       <TabsContent value="overview"><Placeholder title="Обзор" text="Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера." /></TabsContent>
       <TabsContent value="program"><Placeholder title="Программа" text="Редактор назначенной программы будет следующим вертикальным срезом." /></TabsContent>
-      <TabsContent value="exercises"><ExerciseCatalog initData={initData} clientUserId={client.user.id} /></TabsContent>
+      <TabsContent value="exercises"><Placeholder title="Упражнения" text="Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud." /></TabsContent>
       <TabsContent value="calendar"><Placeholder title="Календарь" text="Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence." /></TabsContent>
       <TabsContent value="progress"><Placeholder title="Прогресс" text="Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра." /></TabsContent>
       <TabsContent value="history"><Placeholder title="История" text="Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом." /></TabsContent>
@@ -123,10 +120,10 @@ function ClientDirectory({
   busy = false,
   presentation = 'selection',
 }: {
-  clients: CoachClientListItem[] | null;
+  clients: CloudContact[] | null;
   error?: string;
   onRetry?: () => void;
-  onSelect: (client: CoachClientListItem) => void;
+  onSelect: (client: CloudContact) => void;
   onAdd?: () => void;
   busy?: boolean;
   presentation?: 'selection' | 'contacts';
@@ -168,9 +165,8 @@ function ClientDirectory({
                       contacts
                       link
                       chevron={false}
-                      media={<Avatar name={name} src={client.user.photoUrl ?? undefined} />}
+                      media={<Avatar name={name} />}
                       title={name}
-                      subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
                       linkComponent="button"
                       linkProps={{
                         type: 'button',
@@ -189,9 +185,8 @@ function ClientDirectory({
               <ListItem
                 key={client.relationshipId}
                 onClick={() => onSelect(client)}
-                leading={<Avatar name={displayName(client)} src={client.user.photoUrl ?? undefined} />}
+                leading={<Avatar name={displayName(client)} />}
                 title={displayName(client)}
-                subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
               />
             ))}
           </List>
@@ -211,12 +206,14 @@ interface CoachShellProps {
 export function CoachShell({ initData, destination, onNavigationContextChange }: CoachShellProps) {
   const requestBackTransition = useNavigationBackTransition();
   const cloudPrograms = useAssignedPrograms();
-  const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
-  const [selectedClient, setSelectedClient] = useState<CoachClientListItem | null>(null);
+  const cloudConnections = useCloudConnections();
+  const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteCopyError, setInviteCopyError] = useState('');
-  const [message, setMessage] = useState('');
+  const message = cloudConnections?.status === 'error' ? cloudConnections.error : '';
   const [inviteError, setInviteError] = useState('');
   const [busy, setBusy] = useState(false);
   const [programDraft, setProgramDraft] = useState<ProgramCreationDraft | null>(null);
@@ -224,18 +221,10 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const [programCreateBusy, setProgramCreateBusy] = useState(false);
   const [programCreateError, setProgramCreateError] = useState('');
   const [programRefreshKey, setProgramRefreshKey] = useState(0);
-  const programClientRequestRef = useRef(0);
 
-  const loadClients = useCallback(async () => {
-    setClients(null);
-    setMessage('');
-    try {
-      const { clients: next } = await getCoachClients(initData);
-      setClients(next);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось загрузить клиентов');
-    }
-  }, [initData]);
+  const loadClients = useCallback(() => {
+    void cloudConnections?.refresh().catch(() => undefined);
+  }, [cloudConnections]);
 
   const createInvite = useCallback(async () => {
     setBusy(true);
@@ -257,19 +246,14 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }, []);
 
   useEffect(() => {
-    if (destination === 'clients' || destination === 'programs') void loadClients();
-  }, [destination, loadClients]);
-
-  useEffect(() => {
-    programClientRequestRef.current += 1;
-    if (destination !== 'clients' && destination !== 'programs' && selectedClient) setSelectedClient(null);
+    if (destination !== 'clients' && destination !== 'programs' && selectedClientId) setSelectedClientId(null);
     if (destination !== 'programs') {
       setSelectedProgram(null);
       setProgramDraft(null);
       setSelectingProgramClient(false);
       setProgramCreateError('');
     }
-  }, [destination, selectedClient]);
+  }, [destination, selectedClientId]);
 
   useEffect(() => {
     if (selectingProgramClient && destination === 'programs') {
@@ -290,21 +274,20 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     const selectedClientName = displayName(selectedClient);
     onNavigationContextChange({
       title: selectedClientName,
-      scrollKey: `client:${selectedClient.user.id}`,
+      scrollKey: `client:${selectedClient.userId}`,
       identity: {
         title: selectedClientName,
         avatar: {
           name: selectedClientName,
-          src: selectedClient.user.photoUrl ?? undefined,
-        },
+                  },
       },
-      onBack: () => setSelectedClient(null),
+      onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
   }, [destination, selectedClient, selectedProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
-    return <ClientWorkspace initData={initData} client={selectedClient} />;
+    return <ClientWorkspace client={selectedClient} />;
   }
 
   if (destination === 'today') {
@@ -344,21 +327,10 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       );
     }
 
-    const selectProgramClient = async (userId: number) => {
-      const requestId = programClientRequestRef.current + 1;
-      programClientRequestRef.current = requestId;
-      const cached = clients?.find((item) => item.user.id === userId);
-      if (cached) {
-        if (programClientRequestRef.current === requestId) setSelectedClient(cached);
-        return;
-      }
-
-      const { clients: refreshedClients } = await getCoachClients(initData);
-      if (programClientRequestRef.current !== requestId) return;
-      setClients(refreshedClients);
-      const client = refreshedClients.find((item) => item.user.id === userId);
+    const selectProgramClient = async (userId: string | number) => {
+      const client = clients?.find((item) => item.userId === userId);
       if (!client) throw new Error('Клиент больше не связан с тренером');
-      setSelectedClient(client);
+      setSelectedClientId(client.userId);
     };
 
     const saveProgram = async () => {
@@ -366,17 +338,17 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       setProgramCreateBusy(true);
       setProgramCreateError('');
       try {
-        if (programDraft.owner.type === 'client' && CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
+        if (programDraft.owner.type === 'client') {
+          if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
+            throw new Error('Назначение программ будет доступно после активации Dexie Cloud');
+          }
           if (!cloudPrograms) throw new Error('Dexie Cloud недоступен');
           await cloudPrograms.repository.createAssigned(
-            programDraft.owner.client.user.telegramUserId,
+            programDraft.owner.client.telegramUserId,
             programDraft.name.trim(),
           );
         } else {
-          const owner: CreateCoachProgramOwner = programDraft.owner.type === 'self'
-            ? { type: 'self' }
-            : { type: 'client', clientUserId: programDraft.owner.client.user.id };
-          await createCoachProgram(initData, programDraft.name.trim(), owner);
+          await createCoachProgram(initData, programDraft.name.trim(), { type: 'self' });
         }
         setProgramDraft(null);
         setProgramRefreshKey((value) => value + 1);
@@ -448,7 +420,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         clients={clients}
         error={message}
         onRetry={() => { void loadClients(); }}
-        onSelect={setSelectedClient}
+        onSelect={(client) => setSelectedClientId(client.userId)}
         onAdd={createInvite}
         busy={busy}
         presentation="contacts"

@@ -21,29 +21,33 @@ or backward-compatibility layer.
 - There is no migration of old `coach_client` rows or user/program records:
   evaluation data can be cleared deliberately before cutover.
 
-## Required implementation order
+## Implementation progress
 
-1. **Membership display contract** (first safe prerequisite): write names into
-   accepted `members` records when Worker provisions the relationship.
-   This introduces no second directory API and does not change authorization.
-2. **Dependents of numeric D1 IDs:** replace the client-scoped exercise
-   catalog and other relevant consumers with cloud string IDs / repositories
-   *before* the directory switches. Do not add temporary numeric-ID bridges or
-   remove a working screen to make the directory migration appear complete.
-3. **Directory cutover:** use a single account-scoped cloud database lifecycle
-   for both plan and membership subscriptions; implement coach/client contact
-   lists and chosen-coach selection from synced memberships, with retry,
-   account switching, and graceful offline views of already-synced entries.
-   Remove the old `getCoachClients` and `getClientCoaches` UI dependencies in
-   the same cutover PR rather than carrying a feature flag or parallel API.
-4. **Retire privileged D1 projection after last legacy consumer:** once D1
-   workout/program/exercise authorization paths are replaced, stop writing
-   `coach_client` during invitation acceptance, remove D1-based relationship
-   queries and corresponding dead endpoints/types. Do not drop their table
-   while any live legacy feature still depends on it.
-5. **Finish identity cutover:** switch role/profile bootstrap to the verified
-   Telegram identity plus approved Dexie Cloud record/contracts, and delete
-   obsolete D1 business storage and migrations when no domain consumers remain.
+1. **Done (PR #400):** new Worker-provisioned memberships store verified
+   Telegram display names. Their cloud IDs and permissions are unchanged.
+2. **Coach/client directory cutover:** both lists and coach selection read
+   reactive `db.members` / `db.realms` through one account-scoped Dexie
+   Cloud database. The former D1 directory endpoints and numeric contact
+   contracts are removed, without a fallback or data import.
+3. **Next — exercise catalogue:** the old client-scoped exercise API requires
+   a numeric D1 user ID and cannot consume cloud IDs. Its tab in the coach's
+   client workspace displays a clear deferred message until the dedicated
+   Dexie exercise domain replaces it. Existing independent exercise screens
+   remain unchanged.
+4. **Remaining D1 consumers:** personal programs, calendar/workouts, roles
+   and invitation token bookkeeping still depend on D1. The Worker currently
+   maintains the legacy `coach_client` projection only for those unconverted
+   endpoints' authorization. It is **not** used for directory reads and must
+   be deleted with the last consumer, not preserved as a parallel directory.
+5. **Identity and remaining domains:** replace their repositories with cloud
+   IDs and remove their obsolete D1 routes and tables. No existing D1 business
+   rows are migrated.
+
+While cloud PLAN ACLs remain unverified, `VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED`
+still guards assigned PLAN writes. With the flag off, the UI does not send
+new assigned-program writes to D1; client programs clearly indicate that the
+cloud feature is not yet active. This is a security gate, not a compatibility
+fallback.
 
 ## Checks at each cutover
 
