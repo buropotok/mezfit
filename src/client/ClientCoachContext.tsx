@@ -22,12 +22,12 @@ function storedCoachUserId(clientTelegramUserId: string): string | null {
 }
 
 interface ClientCoachProviderProps {
-  clientUserId: string;
+  clientTelegramUserId: string;
   enabled: boolean;
   children: ReactNode;
 }
 
-export function ClientCoachProvider({ clientUserId, enabled, children }: ClientCoachProviderProps) {
+export function ClientCoachProvider({ clientTelegramUserId, enabled, children }: ClientCoachProviderProps) {
   const cloud = useCloudConnections();
   const [selectedCoachUserId, setSelectedCoachUserId] = useState<string | null>(null);
   const coaches = useMemo(() => enabled ? cloud?.coaches ?? [] : [], [cloud?.coaches, enabled]);
@@ -44,19 +44,19 @@ export function ClientCoachProvider({ clientUserId, enabled, children }: ClientC
       const available = (id: string | null): id is string =>
         id !== null && coaches.some((coach) => coach.userId === id);
       const next = available(current) ? current
-        : available(storedCoachUserId(clientUserId)) ? storedCoachUserId(clientUserId)
+        : available(storedCoachUserId(clientTelegramUserId)) ? storedCoachUserId(clientTelegramUserId)
           : coaches[0]?.userId ?? null;
-      if (next === null) window.localStorage.removeItem(storageKey(clientUserId));
-      else window.localStorage.setItem(storageKey(clientUserId), next);
+      if (next === null) window.localStorage.removeItem(storageKey(clientTelegramUserId));
+      else window.localStorage.setItem(storageKey(clientTelegramUserId), next);
       return next;
     });
-  }, [clientUserId, coaches, enabled, status]);
+  }, [clientTelegramUserId, coaches, enabled, status]);
 
   const selectCoach = useCallback((coachUserId: string) => {
     if (!coaches.some((coach) => coach.userId === coachUserId)) return;
     setSelectedCoachUserId(coachUserId);
-    window.localStorage.setItem(storageKey(clientUserId), coachUserId);
-  }, [clientUserId, coaches]);
+    window.localStorage.setItem(storageKey(clientTelegramUserId), coachUserId);
+  }, [clientTelegramUserId, coaches]);
 
   const refreshCoaches = useCallback(() => {
     if (enabled) void cloud?.refresh().catch(() => undefined);
