@@ -4,6 +4,7 @@ import { getMe } from '../api';
 import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/database';
 import { deriveCloudContacts } from '../data/cloud/CloudConnectionsProvider';
 import { Text } from '../ui';
+import { cloudSyncErrorCode } from './cloudSyncErrorCode';
 
 interface Snapshot {
   phase: string;
@@ -11,6 +12,8 @@ interface Snapshot {
   stage: 'identity' | 'opening' | 'observing' | 'failed';
   persisted: boolean;
   persistedError: boolean;
+  syncErrorCode: string | null;
+  persistedErrorCode: string | null;
   sameCloudAccount: boolean;
   realms: number | null;
   members: number | null;
@@ -27,6 +30,8 @@ const initial: Snapshot = {
   stage: 'identity',
   persisted: false,
   persistedError: false,
+  syncErrorCode: null,
+  persistedErrorCode: null,
   sameCloudAccount: false,
   realms: null,
   members: null,
@@ -66,10 +71,14 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         const cloudDb = db;
 
         subscriptions.push(cloudDb.cloud.syncState.subscribe((state) => {
-          update({ phase: state.phase, status: state.status });
+          update({ phase: state.phase, status: state.status, syncErrorCode: cloudSyncErrorCode(state.error) });
         }));
         subscriptions.push(cloudDb.cloud.persistedSyncState.subscribe((state) => {
-          update({ persisted: state?.timestamp != null, persistedError: Boolean(state?.error) });
+          update({
+            persisted: state?.timestamp != null,
+            persistedError: Boolean(state?.error),
+            persistedErrorCode: cloudSyncErrorCode(state?.error),
+          });
         }));
         subscriptions.push(cloudDb.cloud.currentUser.subscribe((user) => {
           update({ sameCloudAccount: user.userId === actorUserId });
@@ -132,6 +141,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
       <p><Text variant="body">Облачный пользователь подтверждён: {snapshot.sameCloudAccount ? 'да' : 'нет'}</Text></p>
       <p><Text variant="body">Сохранённая синхронизация: {snapshot.persisted ? 'да' : 'нет'}</Text></p>
       <p><Text variant="body">Ошибка облачной синхронизации: {snapshot.persistedError || snapshot.status === 'error' ? 'да' : 'нет'}</Text></p>
+      <p><Text variant="body">Код ошибки: {snapshot.syncErrorCode ?? snapshot.persistedErrorCode ?? 'не определён'}</Text></p>
       <p><Text variant="body">Локальные realms: {textCount(snapshot.realms)}</Text></p>
       <p><Text variant="body">Локальные members: {textCount(snapshot.members)}</Text></p>
       <p><Text variant="body">Мои membership: {textCount(snapshot.ownMembers)}</Text></p>
@@ -139,7 +149,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
       {snapshot.setupError || snapshot.readError
         ? <p role="alert"><Text variant="body">Диагностика обнаружила ошибку открытия или чтения локальной базы.</Text></p>
         : null}
-      <p><Text variant="footnote" tone="muted">Показаны только состояния и количества. Токены, Telegram ID, имена и записи не выводятся.</Text></p>
+      <p><Text variant="footnote" tone="muted">Показаны только состояния, количества и безопасный код ошибки. Полный текст ошибки, токены, Telegram ID и содержимое записей не выводятся.</Text></p>
     </section>
   );
 }
