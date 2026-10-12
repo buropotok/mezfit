@@ -23,6 +23,9 @@ export interface CloudTrainingPlanRow extends CloudSharedRow {
   clientUserId: string;
   name: string;
   position: number;
+  status: 'draft' | 'active' | 'finished';
+  startedAt: string | null;
+  finishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -109,7 +112,7 @@ export function cloudDatabaseName(telegramUserId: string): string {
 }
 
 export class MezfitCloudDatabase extends Dexie {
-  trainingPlans!: Table<CloudTrainingPlanRow, string>;
+  trainingPlans!: Table<CloudTrainingPlanRow, string, Omit<CloudTrainingPlanRow, 'id'>>;
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
   sessionSets!: Table<CloudSessionSetRow, string>;
   sessionSetFacts!: Table<CloudSessionSetFactRow, string>;
