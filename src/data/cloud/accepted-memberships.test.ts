@@ -32,7 +32,7 @@ describe('Dexie Cloud Worker acceptance contract', () => {
     for (const accepted of invalid) {
       const forged = [
         members[0],
-        { ...members[1], accepted },
+        { ...members[1], accepted: accepted as Date | boolean | undefined },
       ];
       expect(await isApprovedAssignedPair(realm, forged, 'tg:101', 'tg:202')).toBe(false);
     }
