@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
 import { getMe } from './api';
 import { App } from './App';
 import { getUiIconAsset } from './ui/icons/registry';
@@ -12,6 +13,14 @@ vi.mock('./api', async (importOriginal) => {
     getMe: vi.fn(),
   };
 });
+
+vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
+  CloudConnectionsProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useCloudConnections: () => ({
+    actorUserId: 'tg:100', clients: [], coaches: [], status: 'ready',
+    error: '', refresh: vi.fn(async () => undefined),
+  }),
+}));
 
 vi.mock('./coach/CoachShell', () => ({
   CoachShell: () => <div>Coach home</div>,
