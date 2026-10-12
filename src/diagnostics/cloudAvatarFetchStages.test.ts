@@ -9,7 +9,7 @@ afterEach(() => {
 describe('opt-in binary avatar transport stages', () => {
   it('reports successful HTTP, MIME and actual Blob validation without exposing credentials', async () => {
     const jpeg = new Uint8Array([255, 216, 255, ...Array(32).fill(0)]);
-    const request = vi.fn(async () => new Response(jpeg, {
+    const request = vi.fn<typeof fetch>(async () => new Response(jpeg, {
       status: 200, headers: { 'content-type': 'image/jpeg' },
     }));
     vi.stubGlobal('fetch', request);
