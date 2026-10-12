@@ -113,8 +113,8 @@ describe('cloud relationship initial hydration', () => {
     realmRows = [realm];
     memberRows = members;
     await act(async () => { pull.resolve(); await pull.promise; });
+    await waitFor(() => expect(screen.getByTestId('contacts').textContent).toContain('не прошла проверку'));
     expect(screen.getByTestId('contacts').textContent).toContain('error:');
-    expect(screen.getByTestId('contacts').textContent).toContain('не прошла проверку');
   });
 
   it('shows a genuinely empty directory after successful pull with no membership', async () => {
