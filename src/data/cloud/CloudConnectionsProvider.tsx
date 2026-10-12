@@ -91,16 +91,41 @@ export function CloudConnectionsProvider({
   useEffect(() => {
     alive.current = true;
     let active = true;
-    const subscription = liveQuery(async () => {
+    let initialPullFinished = false;
+    let locallyAvailable = false;
+
+    const publish = (next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
+      if (!active) return;
+      const hasContacts = next.clients.length > 0 || next.coaches.length > 0;
+      locallyAvailable = hasContacts;
+      // An empty IndexedDB is not evidence that the cloud has no relationships.
+      if (!initialPullFinished && !hasContacts) return;
+      setClients(next.clients);
+      setCoaches(next.coaches);
+      setError('');
+      setStatus('ready');
+    };
+
+    const readContacts = async () => {
       const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
-      return deriveCloudContacts(actorUserId, realms, members);
-    }).subscribe({
-      next: (next) => {
+      return {
+        contacts: await deriveCloudContacts(actorUserId, realms, members),
+        // A successfully synced but rejected relationship must not look like no invite.
+        hasRelationshipMembership: members.some((member) => member.userId === actorUserId
+          && (member.roles?.includes('coach') || member.roles?.includes('client'))),
+      };
+    };
+
+    const subscription = liveQuery(readContacts).subscribe({
+      next: ({ contacts, hasRelationshipMembership }) => {
         if (!active) return;
-        setClients(next.clients);
-        setCoaches(next.coaches);
-        setError('');
-        setStatus('ready');
+        if (initialPullFinished && hasRelationshipMembership
+          && contacts.clients.length === 0 && contacts.coaches.length === 0) {
+          setError('Облачная связь найдена, но не прошла проверку. Повторите синхронизацию.');
+          setStatus('error');
+          return;
+        }
+        publish(contacts);
       },
       error: (reason: unknown) => {
         if (!active) return;
@@ -108,6 +133,33 @@ export function CloudConnectionsProvider({
         setError(reason instanceof Error ? reason.message : 'Не удалось открыть список связей');
       },
     });
+
+    // The addon normally syncs eagerly, but the first local read can be empty.
+    // Explicit pull gives us a confirmed initial hydration or a real error.
+    void (async () => {
+      try {
+        await db.cloud.sync({ purpose: 'pull', wait: true });
+        if (!active) return;
+        const { contacts, hasRelationshipMembership } = await readContacts();
+        if (!active) return;
+        initialPullFinished = true;
+        if (hasRelationshipMembership && contacts.clients.length === 0 && contacts.coaches.length === 0) {
+          setError('Облачная связь найдена, но не прошла проверку. Повторите синхронизацию.');
+          setStatus('error');
+        } else {
+          publish(contacts);
+        }
+      } catch {
+        if (!active) return;
+        initialPullFinished = true;
+        // Previously synced contacts must stay usable without connectivity.
+        if (!locallyAvailable) {
+          setStatus('error');
+          setError('Не удалось синхронизировать связи с Dexie Cloud. Проверьте соединение и повторите.');
+        }
+      }
+    })();
+
     return () => {
       active = false;
       alive.current = false;
