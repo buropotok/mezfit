@@ -281,7 +281,7 @@ export function ProgramsPage({
         </TabsList>
       </Tabs>
 
-      {programs === null ? <Text tone="muted">Загружаем программы…</Text> : (
+      {programs === null ? <Text variant="footnote" tone="muted">Загружаем мои программы…</Text> : (
         <>
           <section className="programs-section" aria-labelledby="own-programs-title">
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
@@ -299,40 +299,40 @@ export function ProgramsPage({
       )}
 
       <section className="programs-section" aria-labelledby="cloud-programs-title">
-            <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
-            {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем программы клиентов…</Text> : null}
-            {cloud?.status === 'error' ? (
-              <>
-                <Text variant="footnote" role="alert">{cloud.error}</Text>
-                <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
-              </>
-            ) : null}
-            {sharedPlans.map(({ client, clientUserId, plans }) => (
-              <div className="programs-client" key={clientUserId}>
-                <List className="programs-client-list">
-                  <ListItem
-                    interactive={Boolean(client)}
-                    onClick={client ? () => { void selectClient(client.user.id); } : undefined}
-                    leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
-                    title={client ? clientName(client) : 'Клиент'}
-                  />
-                </List>
-                <List className="programs-card">
-                  {plans.map((plan) => (
-                    <ListItem
-                      key={plan.id}
-                      interactive={false}
-                      title={plan.name}
-                      subtitle="Черновик программы"
-                      trailing={statusBadge(plan.status)}
-                    />
-                  ))}
-                </List>
-              </div>
-            ))}
-            {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
-              <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
-            ) : null}
+        <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+        {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем программы клиентов…</Text> : null}
+        {cloud?.status === 'error' ? (
+          <>
+            <Text variant="footnote" role="alert">{cloud.error}</Text>
+            <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
+          </>
+        ) : null}
+        {sharedPlans.map(({ client, clientUserId, plans }) => (
+          <div className="programs-client" key={clientUserId}>
+            <List className="programs-client-list">
+              <ListItem
+                interactive={Boolean(client)}
+                onClick={client ? () => { void selectClient(client.user.id); } : undefined}
+                leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
+                title={client ? clientName(client) : 'Клиент'}
+              />
+            </List>
+            <List className="programs-card">
+              {plans.map((plan) => (
+                <ListItem
+                  key={plan.id}
+                  interactive={false}
+                  title={plan.name}
+                  subtitle="Программа клиента"
+                  trailing={statusBadge(plan.status)}
+                />
+              ))}
+            </List>
+          </div>
+        ))}
+        {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
+          <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
+        ) : null}
           </section>
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
