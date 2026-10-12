@@ -1,9 +1,9 @@
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
-import { Button, List, ListItem, Text } from '../ui';
+import { Button, List, ListItem } from '../ui';
 import { useClientCoach } from './ClientCoachContext';
 
 export function ClientProgramsPage() {
-  const { selectedCoach, status: coachStatus, error: coachError } = useClientCoach();
+  const { selectedCoach, status: coachStatus, error: coachError, refreshCoaches } = useClientCoach();
   const cloud = useAssignedPrograms();
 
   if (coachStatus === 'loading' || coachStatus === 'idle') {
@@ -11,7 +11,7 @@ export function ClientProgramsPage() {
   }
 
   if (coachStatus === 'error') {
-    return <List><ListItem interactive={false} title="Не удалось загрузить тренеров" subtitle={coachError} /></List>;
+    return <section><List><ListItem interactive={false} title="Не удалось загрузить тренеров" subtitle={coachError} /></List><Button onClick={refreshCoaches}>Повторить</Button></section>;
   }
 
   if (!selectedCoach) {
@@ -24,10 +24,10 @@ export function ClientProgramsPage() {
 
   if (cloud.status === 'error') {
     return (
-      <List>
-        <ListItem interactive={false} title="Не удалось загрузить программы" subtitle={cloud.error} />
+      <section>
+        <List><ListItem interactive={false} title="Не удалось загрузить программы" subtitle={cloud.error} /></List>
         <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
-      </List>
+      </section>
     );
   }
 
@@ -46,7 +46,7 @@ export function ClientProgramsPage() {
           key={program.id}
           interactive={false}
           title={program.name}
-          subtitle={<Text variant="footnote" tone="muted">{program.status === 'draft' ? 'Черновик' : program.status === 'active' ? 'Активная' : 'Завершена'}</Text>}
+          subtitle={program.status === 'draft' ? 'Черновик' : program.status === 'active' ? 'Активная' : 'Завершена'}
         />
       ))}
     </List>
