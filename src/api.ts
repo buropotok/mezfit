@@ -61,16 +61,6 @@ export interface MeResponse {
   roles: Role[];
 }
 
-export interface CoachClientListItem {
-  relationshipId: number;
-  user: AppUser;
-}
-
-export interface ClientCoachListItem {
-  relationshipId: number;
-  user: AppUser;
-}
-
 export interface ClientInvitePreview {
   label: string | null;
   expiresAt: string;
@@ -477,14 +467,6 @@ export function addRole(initData: string, role: Role): Promise<MeResponse> {
   });
 }
 
-export function getCoachClients(initData: string): Promise<{ clients: CoachClientListItem[] }> {
-  return apiRequest(initData, '/api/coach/clients');
-}
-
-export function getClientCoaches(initData: string): Promise<{ coaches: ClientCoachListItem[] }> {
-  return apiRequest(initData, '/api/client/coaches');
-}
-
 export function getCoachPrograms(
   initData: string,
 ): Promise<{ programs: ProgramListItem[]; clients: ProgramOwnerGroup[] }> {
@@ -548,11 +530,6 @@ export function reorderCoachPrograms(initData: string, programIds: number[]): Pr
     method: 'PUT',
     body: JSON.stringify({ programIds }),
   });
-}
-
-export function getClientPrograms(initData: string, coachUserId: number): Promise<{ programs: ProgramListItem[] }> {
-  const query = new URLSearchParams({ coachUserId: String(coachUserId) });
-  return apiRequest(initData, `/api/client/programs?${query.toString()}`);
 }
 
 export function createClientInvite(
