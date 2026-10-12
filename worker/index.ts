@@ -23,6 +23,7 @@ import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
 import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
+import { getContactAvatar, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 
 type Role = 'coach' | 'client';
 
@@ -300,6 +301,14 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === '/api/dexie-cloud/tokens') {
     return handleDexieCloudTokenRoute(request, env);
+  }
+
+  if (url.pathname === '/api/cloud/profile/sync') {
+    return syncOwnContactProfile(request, env);
+  }
+
+  if (url.pathname === '/api/cloud/profile/avatar') {
+    return getContactAvatar(request, env);
   }
 
   if (url.pathname === '/api/config' && request.method === 'GET') {
