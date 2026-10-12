@@ -11,6 +11,7 @@ import {
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
 import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
+import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from './data/cloud/pilot-activation';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
 import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
@@ -156,7 +157,7 @@ function ClientShell({
     );
   }
 
-  if (destination === 'programs') return <ClientProgramsPage />;
+  if (destination === 'programs') return <ClientProgramsPage initData={initData} />;
 
   const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
   return (
@@ -360,7 +361,7 @@ export function App() {
           key={state.me.user.telegramUserId}
           telegramUserId={state.me.user.telegramUserId}
           initData={state.initData}
-          enabled={destination === 'programs'}
+          enabled={CLOUD_ASSIGNED_PROGRAMS_ENABLED && destination === 'programs'}
         >
         <NavigationShell
           me={state.me}
