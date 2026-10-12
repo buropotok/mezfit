@@ -77,6 +77,8 @@ export async function relationshipMembership(
   const coach = telegramId(coachTelegramId);
   const client = telegramId(clientTelegramId);
   if (coach === client) failConflict();
+  const coachName = names ? memberName(names.coach) : undefined;
+  const clientName = names ? memberName(names.client) : undefined;
 
   // Must match the deterministic IDs in the existing administrative pilot.
   const realmId = await relationshipRealmId(coach, client);
@@ -87,7 +89,7 @@ export async function relationshipMembership(
         id: await stableCloudRelationshipId('mmb', realmId + ':coach'),
         realmId,
         userId: 'tg:' + coach,
-        ...(names && memberName(names.coach) ? { name: memberName(names.coach) } : {}),
+        ...(coachName ? { name: coachName } : {}),
         owner: null,
         invite: false,
         accepted: true,
@@ -97,7 +99,7 @@ export async function relationshipMembership(
         id: await stableCloudRelationshipId('mmb', realmId + ':client'),
         realmId,
         userId: 'tg:' + client,
-        ...(names && memberName(names.client) ? { name: memberName(names.client) } : {}),
+        ...(clientName ? { name: clientName } : {}),
         owner: null,
         invite: false,
         accepted: true,
