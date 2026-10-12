@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
-import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramStatus } from '../api';
+import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
 import { useNavigationFloatingAction } from '../NavigationShell';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { Avatar, Badge, Button, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
@@ -127,6 +128,10 @@ function ProgramRows({
   );
 }
 
+function ownerName(group: ProgramOwnerGroup): string {
+  return [group.owner.firstName, group.owner.lastName].filter(Boolean).join(' ');
+}
+
 function clientName(client: CoachClientListItem): string {
   return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
 }
@@ -164,6 +169,7 @@ export function ProgramsPage({
 }: ProgramsPageProps) {
   const cloud = useAssignedPrograms();
   const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
+  const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState('');
@@ -179,11 +185,13 @@ export function ProgramsPage({
       .then((result) => {
         if (!cancelled) {
           setPrograms(result.programs);
+          setClientGroups(result.clients);
         }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
           setPrograms([]);
+          setClientGroups([]);
           setMessage(error instanceof Error ? error.message : 'Не удалось загрузить программы');
         }
       });
@@ -194,6 +202,14 @@ export function ProgramsPage({
     () => (programs ?? []).filter((program) => filter === 'all' || program.status === filter),
     [programs, filter],
   );
+
+  const visibleClients = useMemo(() => {
+    const needle = search.trim().toLocaleLowerCase('ru-RU');
+    return clientGroups
+      .filter((group) => !needle || ownerName(group).toLocaleLowerCase('ru-RU').includes(needle))
+      .map((group) => ({ ...group, programs: group.programs.filter((program) => filter === 'all' || program.status === filter) }))
+      .filter((group) => group.programs.length > 0);
+  }, [clientGroups, filter, search]);
 
   // Synced PLAN headers remain visible offline even when the transitional
   // D1 client directory cannot supply display names.
@@ -253,6 +269,24 @@ export function ProgramsPage({
     }
   };
 
+  const reorderClientPrograms = async (ownerUserId: number, next: ProgramListItem[]) => {
+    if (mutationBusy) return;
+    const previous = clientGroups;
+    setReorderBusy(true);
+    setClientGroups((groups) => groups.map((group) => (
+      group.owner.id === ownerUserId ? { ...group, programs: next } : group
+    )));
+    setMessage('');
+    try {
+      await reorderCoachPrograms(initData, next.map((program) => program.id));
+    } catch (error) {
+      setClientGroups(previous);
+      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить порядок программ');
+    } finally {
+      setReorderBusy(false);
+    }
+  };
+
   const canSave = Boolean(creationDraft?.name.trim() && creationDraft.owner && !creationBusy);
   const selectedClient = creationDraft?.owner?.type === 'client' ? creationDraft.owner.client : null;
   const floatingAction = useMemo(() => onOpenCreation ? {
@@ -295,9 +329,37 @@ export function ProgramsPage({
             />
             {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
           </section>
+
+          {!CLOUD_ASSIGNED_PROGRAMS_ENABLED ? (
+            <section className="programs-section" aria-labelledby="client-programs-title">
+             <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+             {visibleClients.map((group) => (
+               <div className="programs-client" key={group.owner.id}>
+                 <List className="programs-client-list">
+                   <ListItem
+                     onClick={() => { void selectClient(group.owner.id); }}
+                     leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
+                     title={ownerName(group)}
+                     trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
+                   />
+                 </List>
+                 <ProgramRows
+                   programs={group.programs}
+                   disabled={filter !== 'all' || mutationBusy}
+                   onOpen={onOpenProgram}
+                   onDuplicate={(program) => { void duplicateProgram(program); }}
+                   mutationBusy={mutationBusy}
+                   onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
+                 />
+               </div>
+             ))}
+             {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
+                      </section>
+          ) : null}
         </>
       )}
 
+      {CLOUD_ASSIGNED_PROGRAMS_ENABLED ? (
       <section className="programs-section" aria-labelledby="cloud-programs-title">
         <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
         {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем программы клиентов…</Text> : null}
@@ -334,6 +396,7 @@ export function ProgramsPage({
           <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
         ) : null}
       </section>
+      ) : null}
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
       </div>
