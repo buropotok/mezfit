@@ -1,0 +1,13 @@
+/* Android WebView paints tap highlight around SVG paths, ticks and the chart surface. */
+@media (pointer: coarse) {
+  .ui-chart-touch,
+  .ui-chart-touch svg,
+  .ui-chart-touch svg * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ui-chart-touch svg:focus,
+  .ui-chart-touch svg *:focus {
+    outline: none;
+  }
+}
