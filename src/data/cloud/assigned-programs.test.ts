@@ -28,7 +28,7 @@ function fixture() {
       }),
     },
     realms: {
-      get: vi.fn(async (id: string) => ({ realmId: id, owner: null })),
+      get: vi.fn(async (id: string): Promise<{ realmId: string; owner: string | null }> => ({ realmId: id, owner: null })),
     },
     trainingPlans: {
       where: () => ({ equals: () => ({ count: async () => records.length }) }),
