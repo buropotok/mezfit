@@ -10,6 +10,7 @@ import {
   type Role,
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
 import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
@@ -355,6 +356,11 @@ export function App() {
         clientUserId={state.me.user.id}
         enabled={state.activeRole === 'client'}
       >
+        <AssignedProgramsProvider
+          telegramUserId={state.me.user.telegramUserId}
+          initData={state.initData}
+          enabled={destination === 'programs'}
+        >
         <NavigationShell
           me={state.me}
           activeRole={state.activeRole}
@@ -401,6 +407,7 @@ export function App() {
           />
           )}
         </NavigationShell>
+        </AssignedProgramsProvider>
       </ClientCoachProvider>
     </GlassSurfaceProvider>
   );
