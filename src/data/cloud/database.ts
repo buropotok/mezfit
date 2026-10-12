@@ -23,6 +23,8 @@ export interface CloudContactProfileRow extends CloudSharedRow {
   userId: string;
   name: string;
   avatarVersion: string | null;
+  /** Verified Telegram initData auth_date in Unix milliseconds. */
+  sourceAuthAt: number;
 }
 
 export interface CloudTrainingPlanRow extends CloudSharedRow {
