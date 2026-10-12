@@ -60,7 +60,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         const me = await getMe(initData);
         if (!active) return;
         const telegramUserId = me.user.telegramUserId;
-        if (!/^[1-9]\\d*$/.test(telegramUserId)) throw new Error('INVALID_AUTHENTICATED_ACCOUNT');
+        if (!/^[1-9][0-9]*$/.test(telegramUserId)) throw new Error('INVALID_AUTHENTICATED_ACCOUNT');
         const actorUserId = `tg:${telegramUserId}`;
         db = createCloudDatabase(telegramUserId, initData);
         const cloudDb = db;
