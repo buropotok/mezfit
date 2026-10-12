@@ -1,19 +1,27 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getClientCoaches, getCurrentInvite, getCurrentWorkoutSession, getMe } from './api';
+import { getCurrentInvite, getCurrentWorkoutSession, getMe } from './api';
 import { App } from './App';
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>();
   return {
     ...actual,
-    getClientCoaches: vi.fn(),
     getCurrentInvite: vi.fn(),
     getCurrentWorkoutSession: vi.fn(),
     getMe: vi.fn(),
   };
 });
+
+vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
+  CloudConnectionsProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useCloudConnections: () => ({
+    actorUserId: 'tg:100', clients: [], coaches: [], status: 'ready',
+    error: '', refresh: vi.fn(async () => undefined),
+  }),
+}));
 
 vi.mock('./coach/CoachShell', () => ({
   CoachShell: () => <div>Coach home</div>,
@@ -41,7 +49,6 @@ vi.mock('./workout', () => ({
   ),
 }));
 
-const getClientCoachesMock = vi.mocked(getClientCoaches);
 const getCurrentInviteMock = vi.mocked(getCurrentInvite);
 const getCurrentWorkoutSessionMock = vi.mocked(getCurrentWorkoutSession);
 const getMeMock = vi.mocked(getMe);
@@ -52,11 +59,9 @@ beforeEach(() => {
     disconnect() {}
   });
   window.localStorage.clear();
-  getClientCoachesMock.mockReset();
   getCurrentInviteMock.mockReset();
   getCurrentWorkoutSessionMock.mockReset();
   getMeMock.mockReset();
-  getClientCoachesMock.mockResolvedValue({ coaches: [] });
   getCurrentInviteMock.mockResolvedValue({ invite: null });
   getCurrentWorkoutSessionMock.mockResolvedValue({ session: null });
   getMeMock.mockResolvedValue({
