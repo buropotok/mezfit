@@ -23,10 +23,11 @@ const env = {
   R2_BINDING_MEZFIT: { head, put, get },
 } as unknown as ContactProfileEnv;
 
-const auth = (id: number) => {
+const FIRST_AUTH_AT = new Date('2026-10-12T19:00:00Z');
+const auth = (id: number, authDate = FIRST_AUTH_AT) => {
   vi.mocked(validateTelegramInitData).mockResolvedValue({
     user: { id, first_name: id === 101 ? 'Новый' : 'Клиент', last_name: 'Профиль' },
-    authDate: new Date(),
+    authDate,
   });
 };
 
@@ -34,7 +35,7 @@ async function setup() {
   const pair = await relationshipMembership('101', '202');
   const members = pair.members.map((member) => ({ ...member, name: undefined as string | undefined, avatarVersion: undefined as string | null | undefined }));
   const store = new Map(members.map((member) => [member.id, member]));
-  const profiles = new Map<string, { id: string; realmId: string; owner: null; userId: string; name: string; avatarVersion: string | null }>();
+  const profiles = new Map<string, { id: string; realmId: string; owner: null; userId: string; name: string; avatarVersion: string | null; sourceAuthAt: number }>();
   let photo = 'photo-one';
   let noPhoto = false;
   let postCount = 0;
@@ -65,7 +66,7 @@ async function setup() {
       postCount++;
       const rows = JSON.parse(String(init?.body)) as Array<{
         id: string; realmId: string; owner: null; userId: string;
-        name: string; avatarVersion: string | null;
+        name: string; avatarVersion: string | null; sourceAuthAt: number;
       }>;
       rows.forEach((profile) => profiles.set(profile.id, profile));
       return new Response(null, { status: 204 });
@@ -134,7 +135,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     const firstWrites = cloud.postCount();
     vi.mocked(validateTelegramInitData).mockResolvedValue({
       user: { id: 101, first_name: 'Новое', last_name: 'Имя' },
-      authDate: new Date(),
+      authDate: new Date('2026-10-12T19:01:00Z'),
     });
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
     const current = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
@@ -152,6 +153,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     const original = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     const version = original.avatarVersion;
     cloud.setPhoto('photo-two');
+    auth(101, new Date('2026-10-12T19:01:00Z'));
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
     const updated = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(updated.avatarVersion).not.toBe(version);
@@ -160,11 +162,77 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.downloads()).toBe(2);
 
     cloud.removePhoto();
+    auth(101, new Date('2026-10-12T19:02:00Z'));
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
     const removed = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(removed.avatarVersion).toBeNull();
     expect(cloud.downloads()).toBe(2);
     expect(cloud.memberWrites()).toBe(0);
+  });
+
+  it('does not restore an older verified Telegram name after a newer session saved it', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+
+    vi.mocked(validateTelegramInitData).mockResolvedValue({
+      user: { id: 101, first_name: 'Последнее', last_name: 'Имя' },
+      authDate: new Date('2026-10-12T19:02:00Z'),
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const writes = cloud.postCount();
+
+    vi.mocked(validateTelegramInitData).mockResolvedValue({
+      user: { id: 101, first_name: 'Устаревшее', last_name: 'Имя' },
+      authDate: new Date('2026-10-12T19:01:00Z'),
+    });
+    expect((await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json()))
+      .toEqual({ changed: false });
+    const saved = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
+    expect(saved.name).toBe('Последнее Имя');
+    expect(saved.sourceAuthAt).toBe(new Date('2026-10-12T19:02:00Z').getTime());
+    expect(cloud.postCount()).toBe(writes);
+    expect(cloud.memberWrites()).toBe(0);
+  });
+
+  it('rechecks the newest source timestamp when an older photo lookup finishes late', async () => {
+    const cloud = await setup();
+    let resumeOld: (() => void) | undefined;
+    const waitOld = new Promise<void>((resolve) => { resumeOld = resolve; });
+    let olderPhotoStarted = false;
+    const delayedFetch = vi.fn<typeof fetch>(async (input, init) => {
+      if (new URL(String(input)).pathname.endsWith('/getUserProfilePhotos') && !olderPhotoStarted) {
+        olderPhotoStarted = true;
+        await waitOld;
+      }
+      return cloud.fetchImpl(input, init);
+    });
+    vi.mocked(validateTelegramInitData).mockImplementation(async (initData) => ({
+      user: {
+        id: 101,
+        first_name: initData === 'old-session' ? 'Старое' : 'Новое',
+        last_name: 'Имя',
+      },
+      authDate: new Date(initData === 'old-session'
+        ? '2026-10-12T19:01:00Z' : '2026-10-12T19:02:00Z'),
+    }));
+    const oldRequest = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'old-session' },
+    });
+    const newerRequest = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'new-session' },
+    });
+    const pendingOlder = syncOwnContactProfile(oldRequest, env, delayedFetch);
+    await vi.waitFor(() => expect(olderPhotoStarted).toBe(true));
+    await syncOwnContactProfile(newerRequest, env, cloud.fetchImpl);
+    resumeOld?.();
+    expect((await (await pendingOlder).json())).toEqual({ changed: false });
+    const saved = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
+    expect(saved.name).toBe('Новое Имя');
+    expect(saved.sourceAuthAt).toBe(new Date('2026-10-12T19:02:00Z').getTime());
+    expect(cloud.postCount()).toBe(1);
   });
 
   it('serves a cached R2 photo only to real members of the linked canonical realm', async () => {
