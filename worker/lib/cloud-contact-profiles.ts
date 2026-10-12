@@ -180,7 +180,6 @@ export async function syncOwnContactProfile(
 
   const name = profileName(identity.user);
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
-  const previousVersion = eligible[0].avatarVersion;
   const hasNewVersion = photo !== undefined && eligible.some((row) => row.avatarVersion !== (photo?.version ?? null));
   let newVersion: string | null | undefined;
   if (photo === null) newVersion = null;
