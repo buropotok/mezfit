@@ -34,7 +34,7 @@ const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text
 };
 
 function displayName(client: CloudContact): string {
-  return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
+  return client.displayName;
 }
 
 const clientNameCollator = new Intl.Collator(['ru-RU', 'en-US'], {
@@ -43,7 +43,7 @@ const clientNameCollator = new Intl.Collator(['ru-RU', 'en-US'], {
 });
 
 function clientSortName(client: CloudContact): string {
-  return displayName(client).trim() || client.user.username?.trim() || 'Клиент Mezfit';
+  return displayName(client).trim() || 'Клиент Mezfit';
 }
 
 function clientGroupTitle(client: CloudContact): string {
@@ -165,9 +165,8 @@ function ClientDirectory({
                       contacts
                       link
                       chevron={false}
-                      media={<Avatar name={name} src={client.user.photoUrl ?? undefined} />}
+                      media={<Avatar name={name} />}
                       title={name}
-                      subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
                       linkComponent="button"
                       linkProps={{
                         type: 'button',
@@ -186,9 +185,8 @@ function ClientDirectory({
               <ListItem
                 key={client.relationshipId}
                 onClick={() => onSelect(client)}
-                leading={<Avatar name={displayName(client)} src={client.user.photoUrl ?? undefined} />}
+                leading={<Avatar name={displayName(client)} />}
                 title={displayName(client)}
-                subtitle={client.user.username ? `@${client.user.username}` : 'Клиент Mezfit'}
               />
             ))}
           </List>
@@ -211,7 +209,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const cloudConnections = useCloudConnections();
   const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const selectedClient = clients?.find((client) => client.user.id === selectedClientId) ?? null;
+  const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteCopyError, setInviteCopyError] = useState('');
@@ -276,13 +274,12 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     const selectedClientName = displayName(selectedClient);
     onNavigationContextChange({
       title: selectedClientName,
-      scrollKey: `client:${selectedClient.user.id}`,
+      scrollKey: `client:${selectedClient.userId}`,
       identity: {
         title: selectedClientName,
         avatar: {
           name: selectedClientName,
-          src: selectedClient.user.photoUrl ?? undefined,
-        },
+                  },
       },
       onBack: () => setSelectedClientId(null),
     });
@@ -331,9 +328,9 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     }
 
     const selectProgramClient = async (userId: string | number) => {
-      const client = clients?.find((item) => item.user.id === userId);
+      const client = clients?.find((item) => item.userId === userId);
       if (!client) throw new Error('Клиент больше не связан с тренером');
-      setSelectedClientId(client.user.id);
+      setSelectedClientId(client.userId);
     };
 
     const saveProgram = async () => {
@@ -347,7 +344,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
           }
           if (!cloudPrograms) throw new Error('Dexie Cloud недоступен');
           await cloudPrograms.repository.createAssigned(
-            programDraft.owner.client.user.telegramUserId,
+            programDraft.owner.client.telegramUserId,
             programDraft.name.trim(),
           );
         } else {
@@ -423,7 +420,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         clients={clients}
         error={message}
         onRetry={() => { void loadClients(); }}
-        onSelect={(client) => setSelectedClientId(client.user.id)}
+        onSelect={(client) => setSelectedClientId(client.userId)}
         onAdd={createInvite}
         busy={busy}
         presentation="contacts"
