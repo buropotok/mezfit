@@ -42,7 +42,8 @@ type MemberView = {
   name?: string;
   roles?: string[];
   owner?: unknown;
-  accepted?: Date;
+  // Raw synced memberships can expose the Worker's accepted:true marker.
+  accepted?: Date | boolean;
   invite?: boolean;
   permissions?: unknown;
 };

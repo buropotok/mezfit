@@ -14,7 +14,9 @@ interface RelationshipMember {
   userId?: string;
   owner?: unknown;
   roles?: string[];
-  accepted?: Date;
+  // The privileged Worker writes accepted:true. Some Dexie Cloud rows retain
+  // this accepted marker as a boolean; SDK-created invitations use a Date.
+  accepted?: Date | boolean;
   invite?: boolean;
   permissions?: unknown;
 }
@@ -26,10 +28,16 @@ function telegramId(userId: string): string | null {
     && String(Number(id)) === id ? id : null;
 }
 
+function isAcceptedMembership(value: RelationshipMember['accepted']): boolean {
+  // Only the explicitly accepted boolean or a valid acceptance timestamp is valid.
+  // Never admit false, undefined or an arbitrary truthy/untrusted string.
+  return value === true || (value instanceof Date && Number.isFinite(value.getTime()));
+}
+
 function approvedMember(member: RelationshipMember, id: string, userId: string, role: 'coach' | 'client'): boolean {
   return member.id === id && member.userId === userId && member.owner === null
     && member.roles?.length === 1 && member.roles[0] === role && member.invite !== true
-    && member.accepted instanceof Date && Number.isFinite(member.accepted.getTime())
+    && isAcceptedMembership(member.accepted)
     && (member.permissions == null
       || (typeof member.permissions === 'object' && !Array.isArray(member.permissions)
         && Object.keys(member.permissions).length === 0));
