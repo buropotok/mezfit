@@ -1,6 +1,28 @@
 import { liveQuery } from 'dexie';
 import { createCloudDatabase, type CloudTrainingPlanRow } from './database';
 
+interface RelationshipMember {
+  realmId: string;
+  userId?: string;
+  roles?: string[];
+}
+
+/** A matching user ID in a private realm is not proof of an assignment. */
+export function isApprovedAssignedPair(
+  realmOwner: unknown,
+  members: readonly RelationshipMember[],
+  realmId: string,
+  coachUserId: string,
+  clientUserId: string,
+): boolean {
+  return realmOwner === null
+    && coachUserId !== clientUserId
+    && members.some((member) => member.realmId === realmId
+      && member.userId === coachUserId && member.roles?.includes('coach'))
+    && members.some((member) => member.realmId === realmId
+      && member.userId === clientUserId && member.roles?.includes('client'));
+}
+
 /** The only persistence owner for newly assigned PLAN headers. */
 export class AssignedProgramsRepository {
   private readonly db;
@@ -15,7 +37,19 @@ export class AssignedProgramsRepository {
     onChange: (rows: CloudTrainingPlanRow[]) => void,
     onError: (error: unknown) => void,
   ): { unsubscribe(): void } {
-    return liveQuery(() => this.db.trainingPlans.toArray()).subscribe({
+    return liveQuery(async () => {
+      const [plans, realms, members] = await Promise.all([
+        this.db.trainingPlans.toArray(),
+        this.db.realms.toArray(),
+        this.db.members.toArray(),
+      ]);
+      const ownerByRealm = new Map(realms.map((realm) => [realm.realmId, realm.owner]));
+      // Membership and realm ownership, not client-supplied coach/client IDs,
+      // determine whether this is a genuine shared assigned PLAN.
+      return plans.filter((plan) => isApprovedAssignedPair(
+        ownerByRealm.get(plan.realmId), members, plan.realmId, plan.coachUserId, plan.clientUserId,
+      ));
+    }).subscribe({
       next: onChange,
       error: onError,
     });
@@ -32,12 +66,12 @@ export class AssignedProgramsRepository {
       this.db.members.where('userId').equals(this.actorUserId).toArray(),
       this.db.members.where('userId').equals(clientUserId).toArray(),
     ]);
-    const coachRealms = new Set(coaches.filter((member) =>
-      member.roles?.includes('coach')).map((member) => member.realmId));
+    const members = [...coaches, ...clients];
     for (const member of clients) {
-      if (!member.roles?.includes('client') || !coachRealms.has(member.realmId)) continue;
       const realm = await this.db.realms.get(member.realmId);
-      if (realm?.owner === null) return realm.realmId;
+      if (isApprovedAssignedPair(
+        realm?.owner, members, member.realmId, this.actorUserId, clientUserId,
+      )) return member.realmId;
     }
     throw new Error('Связь с клиентом ещё не синхронизирована. Подключитесь к сети и повторите.');
   }
