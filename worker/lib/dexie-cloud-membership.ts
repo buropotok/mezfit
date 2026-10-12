@@ -16,6 +16,8 @@ interface CloudMember {
   id: string;
   realmId: string;
   userId: string;
+  // Synced relationship display label sourced from verified Telegram identity.
+  name?: string;
   owner: null;
   roles: CloudMemberRole[];
   invite: false;
@@ -57,9 +59,20 @@ function telegramId(value: string): string {
   return value;
 }
 
+export interface RelationshipNames {
+  coach: string;
+  client: string;
+}
+
+function memberName(value: string): string | undefined {
+  const trimmed = value.trim().slice(0, 120);
+  return trimmed || undefined;
+}
+
 export async function relationshipMembership(
   coachTelegramId: string,
   clientTelegramId: string,
+  names?: RelationshipNames,
 ): Promise<{ realm: CloudRealm; members: [CloudMember, CloudMember] }> {
   const coach = telegramId(coachTelegramId);
   const client = telegramId(clientTelegramId);
@@ -74,6 +87,7 @@ export async function relationshipMembership(
         id: await stableCloudRelationshipId('mmb', realmId + ':coach'),
         realmId,
         userId: 'tg:' + coach,
+        ...(names && memberName(names.coach) ? { name: memberName(names.coach) } : {}),
         owner: null,
         invite: false,
         accepted: true,
@@ -83,6 +97,7 @@ export async function relationshipMembership(
         id: await stableCloudRelationshipId('mmb', realmId + ':client'),
         realmId,
         userId: 'tg:' + client,
+        ...(names && memberName(names.client) ? { name: memberName(names.client) } : {}),
         owner: null,
         invite: false,
         accepted: true,
@@ -234,11 +249,12 @@ export async function provisionInviteMembership(
   coachTelegramId: string,
   clientTelegramId: string,
   fetchImpl: typeof fetch = fetch,
+  names?: RelationshipNames,
 ): Promise<{ realmId: string }> {
   // Reject missing secrets before any remote or legacy database mutation.
   requireCloudMembershipConfiguration(env);
 
-  const { realm, members } = await relationshipMembership(coachTelegramId, clientTelegramId);
+  const { realm, members } = await relationshipMembership(coachTelegramId, clientTelegramId, names);
   const admin = await token(fetchImpl, {
     id: env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID,
     secret: env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET,
