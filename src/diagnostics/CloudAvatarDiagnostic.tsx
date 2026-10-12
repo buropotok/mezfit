@@ -38,7 +38,7 @@ async function decodeImage(url: string): Promise<boolean> {
 }
 
 /**
- * On-demand read-only diagnostic for the actual client avatar pipeline.
+ * On-demand read-only cloud diagnostic for the actual client avatar pipeline.
  * Never renders names, IDs, URLs, initData, raw errors or photo bytes as text.
  * It never creates cloud data or resets browser storage.
  */
@@ -135,6 +135,8 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
       const decoded = await decodeImage(url);
       if (!mounted.current) return;
       if (!decoded) {
+        URL.revokeObjectURL(url);
+        urlRef.current = null;
         setStage('WebView не смог декодировать изображение');
         setResult('failed');
         return;
