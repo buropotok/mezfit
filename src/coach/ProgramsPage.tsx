@@ -333,7 +333,7 @@ export function ProgramsPage({
         {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
           <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
         ) : null}
-          </section>
+      </section>
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
       </div>
