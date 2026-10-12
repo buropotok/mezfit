@@ -26,6 +26,43 @@ The card contains a title, `draft` status, coach/client cloud IDs and a stable
   active, uses the authenticated account's local DB name, and closes on cleanup.
   The account ID key forces a remount on account change.
 
+## Explicit rollout gate (required)
+
+The cloud program pilot is **disabled by default**. Until the rollout gate is
+enabled, both coach and client retain their existing D1-backed program views
+and creating a client program follows the legacy D1 path. This avoids
+introducing an unverified cloud write path into the automatic production deploy.
+
+The gate is the build-time Vite variable
+`VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED=true`, sourced by
+`.github/workflows/deploy.yml` from the GitHub Actions repository variable
+`VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED`. The deploy workflow never sets it
+automatically, and it must remain absent/false until the manual checklist
+below is satisfied. Changing this variable requires a **new deploy/build**;
+it does not enable the pilot on an already-built web application.
+
+Before enabling, in the privileged Dexie Cloud CLI environment:
+
+1. Confirm the intended database URL and export the currently installed roles.
+2. Install/reconcile `cloud/roles.json` and verify the **installed** coach
+   and client allowlists. Check for old or broader grants: additive role
+   imports do not reliably revoke them. Verify `coach` may manage only
+   assigned `trainingPlans`, `client` has no PLAN writes, and neither
+   role can administer relationship realm/members or reserved PLAN identity
+   fields through ordinary sync.
+3. With two separate Telegram identities and the Worker-created ownerless
+   realm, directly confirm allowed coach PLAN mutation, rejected client
+   mutation and cross-client isolation against the **real** cloud server.
+4. Only after these checks set the GitHub Actions variable to `true` and
+   deploy the app. Verify the same behaviors again through the app on both
+   devices. Set it back to `false` and redeploy if server ACLs or sync
+   behavior differ.
+
+This frontend gate controls **feature rollout only**, never authorization;
+Dexie Cloud server ACL is still the enforcement point. Successful local
+IndexedDB creation is not evidence of cloud acceptance. Do not log or share
+admin keys, Telegram initData or user tokens.
+
 ## Transitional limitations (intentional)
 
 - This slice does **not** migrate or expose phases, days, exercise definitions,
@@ -36,9 +73,11 @@ The card contains a title, `draft` status, coach/client cloud IDs and a stable
   a separate dedicated personal-realm migration. Client-owned personal
   programs must later have client-write / coach-read semantics and not receive
   coach-assigned PLAN permissions.
-- Previously created D1 *assigned* programs are not migrated, copied or listed
-  as if they were Dexie Cloud headers. Existing D1 domain APIs remain for other
-  legacy consumers during the migration.
+- Previously created D1 *assigned* programs are not migrated or copied into
+  Dexie Cloud. While the rollout gate is off, the existing D1 list continues
+  working. While on, the client sees cloud assigned programs only; old D1
+  programs are not mislabeled as cloud records. Legacy D1 APIs remain for other
+  consumers during migration.
 - Legacy client/coach directory and selected-trainer metadata still come from
   the D1-backed API. Cloud headers can render locally in the coach screen when
   the old directory is unavailable (without display names), but complete
