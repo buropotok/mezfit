@@ -11,6 +11,7 @@ import {
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
@@ -365,14 +366,16 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       setProgramCreateBusy(true);
       setProgramCreateError('');
       try {
-        if (programDraft.owner.type === 'client') {
+        if (programDraft.owner.type === 'client' && CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
           if (!cloudPrograms) throw new Error('Dexie Cloud недоступен');
           await cloudPrograms.repository.createAssigned(
             programDraft.owner.client.user.telegramUserId,
             programDraft.name.trim(),
           );
         } else {
-          const owner: CreateCoachProgramOwner = { type: 'self' };
+          const owner: CreateCoachProgramOwner = programDraft.owner.type === 'self'
+            ? { type: 'self' }
+            : { type: 'client', clientUserId: programDraft.owner.client.user.id };
           await createCoachProgram(initData, programDraft.name.trim(), owner);
         }
         setProgramDraft(null);
