@@ -38,6 +38,7 @@ async function setup() {
   let photo = 'photo-one';
   let noPhoto = false;
   let postCount = 0;
+  let memberWrites = 0;
   let downloads = 0;
   const fetchImpl = vi.fn<typeof fetch>(async (input, init) => {
     const url = new URL(String(input));
@@ -50,7 +51,7 @@ async function setup() {
       return Response.json(value);
     }
     if (url.pathname === '/all/members' && method === 'POST') {
-      postCount++;
+      memberWrites++;
       const rows = JSON.parse(String(init?.body)) as typeof members;
       rows.forEach((member) => store.set(member.id, member));
       return new Response(null, { status: 204 });
@@ -62,7 +63,10 @@ async function setup() {
     }
     if (url.pathname === '/all/contactProfiles' && method === 'POST') {
       postCount++;
-      const rows = JSON.parse(String(init?.body)) as Array<typeof profiles extends Map<string, infer P> ? P : never>;
+      const rows = JSON.parse(String(init?.body)) as Array<{
+        id: string; realmId: string; owner: null; userId: string;
+        name: string; avatarVersion: string | null;
+      }>;
       rows.forEach((profile) => profiles.set(profile.id, profile));
       return new Response(null, { status: 204 });
     }
@@ -82,7 +86,8 @@ async function setup() {
     throw new Error('unexpected test route');
   });
   return {
-    pair, store, profiles, fetchImpl, postCount: () => postCount, downloads: () => downloads,
+    pair, store, profiles, fetchImpl, postCount: () => postCount,
+    memberWrites: () => memberWrites, downloads: () => downloads,
     setPhoto(value: string) { photo = value; },
     removePhoto() { noPhoto = true; },
   };
@@ -109,6 +114,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(membership.owner).toBeNull();
     expect(membership.accepted).toBe(true);
     expect(membership.name).toBeUndefined();
+    expect(cloud.memberWrites()).toBe(0);
     expect(cloud.postCount()).toBe(1);
     expect(cloud.downloads()).toBe(1);
 
@@ -158,6 +164,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     const removed = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(removed.avatarVersion).toBeNull();
     expect(cloud.downloads()).toBe(2);
+    expect(cloud.memberWrites()).toBe(0);
   });
 
   it('serves a cached R2 photo only to real members of the linked canonical realm', async () => {
@@ -197,5 +204,6 @@ describe('privileged Telegram contact profile synchronization', () => {
     target.owner = 'tg:101' as never;
     await syncOwnContactProfile(outsider, env, cloud.fetchImpl);
     expect(cloud.postCount()).toBe(0);
+    expect(cloud.memberWrites()).toBe(0);
   });
 });
