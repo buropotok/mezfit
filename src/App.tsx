@@ -359,7 +359,7 @@ export function App() {
         initData={state.initData}
       >
       <ClientCoachProvider
-        clientUserId={state.me.user.telegramUserId}
+        clientTelegramUserId={state.me.user.telegramUserId}
         enabled={state.activeRole === 'client'}
       >
         <AssignedProgramsProvider
