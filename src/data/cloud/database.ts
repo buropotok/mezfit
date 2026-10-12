@@ -8,7 +8,7 @@ import { getDexieCloudTokens } from '../../api';
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 1;
+export const CLOUD_DATABASE_VERSION = 2;
 
 export interface CloudSharedRow {
   id: string;
@@ -16,6 +16,15 @@ export interface CloudSharedRow {
   // Explicit null prevents the creator's default ownership from bypassing
   // role-limited permissions in a shared coach-client realm.
   owner: null;
+}
+
+/** Materialized, read-only contact identity inside one authorized relationship realm. */
+export interface CloudContactProfileRow extends CloudSharedRow {
+  userId: string;
+  name: string;
+  avatarVersion: string | null;
+  /** Verified Telegram initData auth_date in Unix milliseconds. */
+  sourceAuthAt: number;
 }
 
 export interface CloudTrainingPlanRow extends CloudSharedRow {
@@ -77,7 +86,7 @@ export interface CloudSessionSetFactRow extends CloudSharedRow {
 }
 
 // Dexie Cloud augments Dexie with strongly typed realms and members tables.
-// Do not redeclare them here: synced members use accepted?: Date (not boolean),
+// Do not redeclare them here: synced members can expose accepted Date or boolean,
 // and privileged REST membership inputs are a separate contract.
 
 export const CLOUD_DATABASE_STORES_V1 = {
@@ -90,6 +99,11 @@ export const CLOUD_DATABASE_STORES_V1 = {
   realms: '@realmId',
   members: '@id, realmId, userId',
   roles: '[realmId+name]',
+} as const;
+
+export const CLOUD_DATABASE_STORES_V2 = {
+  ...CLOUD_DATABASE_STORES_V1,
+  contactProfiles: 'id, realmId, userId',
 } as const;
 
 /**
@@ -113,13 +127,15 @@ export function cloudDatabaseName(telegramUserId: string): string {
 
 export class MezfitCloudDatabase extends Dexie {
   trainingPlans!: Table<CloudTrainingPlanRow, string, Omit<CloudTrainingPlanRow, 'id'>>;
+  contactProfiles!: Table<CloudContactProfileRow, string>;
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
   sessionSets!: Table<CloudSessionSetRow, string>;
   sessionSetFacts!: Table<CloudSessionSetFactRow, string>;
 
   constructor(telegramUserId: string, initData: string) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
-    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V1);
+    this.version(1).stores(CLOUD_DATABASE_STORES_V1);
+    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V2);
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,

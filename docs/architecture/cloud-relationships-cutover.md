@@ -7,9 +7,9 @@ or backward-compatibility layer.
 
 - An accepted Worker-provisioned relationship realm and its two memberships
   are the only authoritative source for the coach–client relationship.
-- `member.name` is the supported Dexie Cloud display label. The Worker sets
-  both labels from already-verified Telegram identities when accepting an
-  invitation. Names are not authoritative for access control.
+- `contactProfiles.name` is the current server-verified Telegram display label,
+  materialized into each relationship realm; `member.name` is only a legacy
+  fallback for links without a profile. Names never authorize access.
 - Use `tg:<telegramUserId>` as the stable user identity and the deterministic
   `realmId` as the relationship identity. Never copy D1 numeric IDs into the
   cloud domain model.
@@ -69,3 +69,50 @@ Existing audit caveat **A-007**: the original D1 user bootstrap can retain
 stale verified Telegram display names. This prerequisite does not attempt to
 rewrite that independently tested profile policy; its fix is part of the
 dedicated identity/profile cutover. There is no production data migration.
+
+
+## Signed Telegram profile and private portrait projection
+
+The contact profile is **not** part of Dexie Cloud's system-managed `members`
+table. Worker REST upserts replace entire objects; upserting `members` for a
+cosmetic name/photo change could inadvertently restore a concurrently revoked
+membership. The separate, ownerless `contactProfiles` table is read-only to
+both ordinary roles; a privileged Worker writes only the verified user's
+per-relationship records.
+
+- Browser: the existing UIkit `Avatar` receives a private `blob:` URL from
+  an **account-scoped local IndexedDB media cache**. Its fallback initials,
+  mechanics and presentation remain unchanged.
+- A signed Telegram identity refresh on App entry compares the current name
+  and Telegram Bot API photo `file_unique_id` to cloud profile metadata. If
+  unchanged, neither the cloud record nor R2 image is rewritten.
+- New photos are validated as JPEG, capped at 2 MB, stored at immutable,
+  content-versioned keys in private Cloudflare R2. Cloud profiles store only
+  `avatarVersion`; photo bytes are *not* synchronized by Dexie Cloud.
+- Only an account that is a member of the same validated ownerless relationship
+  realm can obtain the image via the authenticated Worker endpoint. The Worker
+  checks canonical pair IDs/roles/acceptance and the requested current version.
+  Browser media cache entries are pruned after confirmed cloud synchronization
+  removes access or changes photo version.
+- If Telegram hides the photo or the Bot API is unavailable, avatars gracefully
+  fall back to initials. Cloud label refresh still operates if media fails.
+- A given person's profile is projected separately into each permitted realm
+  for server-enforced visibility. The source of truth is the **currently
+  signed Telegram identity**, not previously persisted D1 `app_user` fields.
+
+### Required schema deployment before enabling the frontend
+
+`CLOUD_DATABASE_VERSION` increases to 2, adding
+`contactProfiles: 'id, realmId, userId'`, without modifying the original v1
+table declarations or importing any old D1 data. In the existing privileged
+Dexie Cloud Codespace, while connected to the verified production database:
+
+```bash
+npx dexie-cloud import cloud/schema-contact-profiles.json
+npx dexie-cloud export --schema
+```
+
+Confirm the exported schema includes `contactProfiles` with primary key
+`id`. The import is additive; no role grant is added. **Import the schema
+before merging/deploying this frontend** when the server schema is sealed.
+Never paste the admin key or a complete user/data export into chat.

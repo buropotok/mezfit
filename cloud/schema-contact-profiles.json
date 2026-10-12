@@ -1,0 +1,5 @@
+{
+  "schema": {
+    "contactProfiles": "id, realmId, userId"
+  }
+}

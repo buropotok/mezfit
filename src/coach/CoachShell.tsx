@@ -6,7 +6,8 @@ import {
   type ProgramListItem,
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
-import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
+import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
+import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
@@ -165,7 +166,7 @@ function ClientDirectory({
                       contacts
                       link
                       chevron={false}
-                      media={<Avatar name={name} />}
+                      media={<CloudContactAvatar contact={client} />}
                       title={name}
                       linkComponent="button"
                       linkProps={{
@@ -185,7 +186,7 @@ function ClientDirectory({
               <ListItem
                 key={client.relationshipId}
                 onClick={() => onSelect(client)}
-                leading={<Avatar name={displayName(client)} />}
+                leading={<CloudContactAvatar contact={client} />}
                 title={displayName(client)}
               />
             ))}

@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
+import { stableCloudRelationshipId } from '../../../shared/relationship-id';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
+import { syncCloudContactProfile } from '../../api';
+import { loadContactAvatar, pruneUnlinkedContactAvatars } from './contact-avatar-cache';
 
 /** Telegram's verified identity, not the former D1 integer, is the contact ID. */
 export interface CloudContact {
@@ -9,6 +12,7 @@ export interface CloudContact {
   userId: string;
   telegramUserId: string;
   displayName: string;
+  avatarVersion?: string | null;
 }
 
 interface CloudConnectionsValue {
@@ -19,11 +23,12 @@ interface CloudConnectionsValue {
   status: 'loading' | 'ready' | 'error';
   error: string;
   refresh: () => Promise<void>;
+  loadAvatar: (contact: CloudContact) => Promise<Blob | null>;
 }
 
 const Context = createContext<CloudConnectionsValue | null>(null);
 
-function contact(realmId: string, member: { userId?: string; name?: string }, fallback: string): CloudContact | null {
+function contact(realmId: string, member: { userId?: string; name?: string; avatarVersion?: string | null }, fallback: string): CloudContact | null {
   const userId = member.userId;
   if (!userId || !/^tg:[1-9]\d*$/.test(userId)) return null;
   return {
@@ -31,6 +36,8 @@ function contact(realmId: string, member: { userId?: string; name?: string }, fa
     userId,
     telegramUserId: userId.slice(3),
     displayName: member.name?.trim() || fallback,
+    avatarVersion: typeof member.avatarVersion === 'string' && /^[a-f0-9]{64}$/.test(member.avatarVersion)
+      ? member.avatarVersion : null,
   };
 }
 
@@ -48,11 +55,21 @@ type MemberView = {
   permissions?: unknown;
 };
 
+type ProfileView = {
+  id: string;
+  realmId: string;
+  owner?: unknown;
+  userId: string;
+  name: string;
+  avatarVersion: string | null;
+};
+
 /** Derived presentation only: server-enforced memberships remain the access boundary. */
 export async function deriveCloudContacts(
   actorUserId: string,
   realms: readonly RealmView[],
   members: readonly MemberView[],
+  profiles: readonly ProfileView[] = [],
 ): Promise<{ clients: CloudContact[]; coaches: CloudContact[] }> {
   const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
   const own = members.filter((member) => member.userId === actorUserId);
@@ -68,7 +85,14 @@ export async function deriveCloudContacts(
     if (!await isApprovedAssignedPair(realmById.get(mine.realmId), members, coachUserId, clientUserId)) {
       return null;
     }
-    const peer = contact(mine.realmId, partner, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
+    const profileId = await stableCloudRelationshipId('prf', mine.realmId + ':' + partner.userId);
+    const profile = profiles.find((row) => row.id === profileId
+      && row.realmId === mine.realmId && row.userId === partner.userId && row.owner === null);
+    const peer = contact(mine.realmId, {
+      userId: partner.userId,
+      name: profile?.name || partner.name,
+      avatarVersion: profile?.avatarVersion,
+    }, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
     return peer ? { peer, asCoach } : null;
   }));
   const connections = links.filter((link): link is { peer: CloudContact; asCoach: boolean } => link !== null);
@@ -80,9 +104,13 @@ export async function deriveCloudContacts(
 
 /** One local snapshot; access control still belongs to Dexie Cloud server. */
 async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string) {
-  const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
+  const [realms, members, profiles] = await Promise.all([
+    db.realms.toArray(), db.members.toArray(),
+    // Missing/older profile projection must not hide an otherwise valid membership.
+    db.contactProfiles?.toArray() ?? Promise.resolve([]),
+  ]);
   return {
-    contacts: await deriveCloudContacts(actorUserId, realms, members),
+    contacts: await deriveCloudContacts(actorUserId, realms, members, profiles),
     hasRelationshipMembership: members.some((member) => member.userId === actorUserId
       && (member.roles?.includes('coach') || member.roles?.includes('client'))),
   };
@@ -106,6 +134,15 @@ export function CloudConnectionsProvider({
   const [error, setError] = useState('');
   const alive = useRef(false);
   const initialPullSucceededRef = useRef(false);
+  const avatarPermissionsReadyRef = useRef<Promise<void>>(Promise.resolve());
+
+  const reconcileAvatarPermissions = useCallback((next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
+    // Serialize snapshots before media loads: stale asynchronous downloads cannot
+    // restore revoked portraits once the latest permissions have been persisted.
+    avatarPermissionsReadyRef.current = avatarPermissionsReadyRef.current
+      .then(() => pruneUnlinkedContactAvatars(telegramUserId, [...next.clients, ...next.coaches]))
+      .catch(() => {});
+  }, [telegramUserId]);
 
   useEffect(() => {
     alive.current = true;
@@ -119,6 +156,7 @@ export function CloudConnectionsProvider({
       locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
       if (!initialPullSucceededRef.current && !hasContacts) return;
+      reconcileAvatarPermissions(next);
       setClients(next.clients);
       setCoaches(next.coaches);
       setError('');
@@ -182,15 +220,33 @@ export function CloudConnectionsProvider({
       // Preserve Dexie 4 auto-open so the next liveQuery can reopen it.
       db.close({ disableAutoOpen: false });
     };
-  }, [db, actorUserId]);
+  }, [db, actorUserId, reconcileAvatarPermissions]);
+
+  // Profile writes are privileged and change-only; failures must not block offline lists.
+  useEffect(() => {
+    let active = true;
+    void syncCloudContactProfile(initData)
+      .then((changed) => {
+        if (active && changed) void db.cloud.sync({ purpose: 'pull', wait: false }).catch(() => {});
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [db, initData]);
+
+  const loadAvatar = useCallback(async (peer: CloudContact) => {
+    await avatarPermissionsReadyRef.current;
+    return loadContactAvatar(telegramUserId, initData, peer);
+  }, [telegramUserId, initData]);
 
   const refresh = useCallback(async () => {
     try {
+      await syncCloudContactProfile(initData).catch(() => false);
       await db.cloud.sync({ purpose: 'pull', wait: true });
       const snapshot = await readContactSnapshot(db, actorUserId);
       if (!alive.current) return;
       if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
       initialPullSucceededRef.current = true;
+      reconcileAvatarPermissions(snapshot.contacts);
       setClients(snapshot.contacts.clients);
       setCoaches(snapshot.contacts.coaches);
       setError('');
@@ -202,11 +258,11 @@ export function CloudConnectionsProvider({
       }
       throw reason;
     }
-  }, [db, actorUserId]);
+  }, [db, actorUserId, initData, reconcileAvatarPermissions]);
 
   const value = useMemo<CloudConnectionsValue>(() => ({
-    db, actorUserId, clients, coaches, status, error, refresh,
-  }), [db, actorUserId, clients, coaches, status, error, refresh]);
+    db, actorUserId, clients, coaches, status, error, refresh, loadAvatar,
+  }), [db, actorUserId, clients, coaches, status, error, refresh, loadAvatar]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
