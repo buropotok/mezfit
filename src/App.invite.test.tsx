@@ -33,18 +33,16 @@ const getMeMock = vi.mocked(getMe);
 
 const oldCoach = {
   relationshipId: 'rlm-old',
-  user: {
-    id: 'tg:200', telegramUserId: '200', username: null,
-    firstName: 'Старый Тренер', lastName: null, photoUrl: null,
-  },
+  userId: 'tg:200',
+  telegramUserId: '200',
+  displayName: 'Старый Тренер',
 };
 
 const newCoach = {
   relationshipId: 'rlm-new',
-  user: {
-    id: 'tg:300', telegramUserId: '300', username: null,
-    firstName: 'Новый Тренер', lastName: null, photoUrl: null,
-  },
+  userId: 'tg:300',
+  telegramUserId: '300',
+  displayName: 'Новый Тренер',
 };
 
 const cloudRefresh = vi.fn();
@@ -79,7 +77,7 @@ vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
 beforeEach(() => {
   window.localStorage.clear();
   cloudRefresh.mockClear();
-  window.localStorage.setItem('mezfit.selectedCloudCoachUserId.100', String(oldCoach.user.id));
+  window.localStorage.setItem('mezfit.selectedCloudCoachUserId.100', String(oldCoach.userId));
   window.history.replaceState({}, '', `/?tgWebAppStartParam=invite_${'b'.repeat(36)}`);
 
   getMeMock.mockReset();
@@ -104,9 +102,9 @@ beforeEach(() => {
       label: null,
       expiresAt: '2026-10-22T00:00:00Z',
       coach: {
-        firstName: newCoach.user.firstName,
-        lastName: newCoach.user.lastName,
-        username: newCoach.user.username,
+        firstName: 'Новый',
+        lastName: 'Тренер',
+        username: null,
       },
     },
   });
@@ -153,6 +151,6 @@ describe('client invite launch', () => {
     });
 
     expect(window.localStorage.getItem('mezfit.selectedCloudCoachUserId.100'))
-      .toBe(String(oldCoach.user.id));
+      .toBe(String(oldCoach.userId));
   });
 });
