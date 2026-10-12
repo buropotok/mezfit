@@ -8,7 +8,7 @@ vi.mock('dexie', () => ({
   default: class {
     files: {
       get: (key: string) => Promise.resolve(files.get(this.name)?.get(key)),
-      toArray: () => Promise.resolve([...files.get(this.name)?.values() ?? []]),
+      toArray: () => Promise.resolve(Array.from(files.get(this.name)?.values() ?? [])),
       delete: (key: string) => Promise.resolve(files.get(this.name)?.delete(key)),
       put: (row: { userId: string; version: string; blob: Blob }) => {
         const entries = files.get(this.name) ?? new Map();
