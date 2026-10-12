@@ -466,8 +466,12 @@ export async function syncCloudContactProfile(initData: string): Promise<boolean
 }
 
 /** Authenticated binary read. Contact metadata comes from the synced cloud membership. */
+export type AvatarFetchStep = 'http-accepted' | 'mime-accepted' | 'blob-validated';
+
+/** Explicit, label-only tracing for the opt-in Telegram diagnostic. */
 export async function fetchCloudContactAvatar(
   initData: string, realmId: string, userId: string, version: string,
+  report?: (step: AvatarFetchStep) => void,
 ): Promise<Blob> {
   const query = new URLSearchParams({ realmId, userId, version });
   const response = await fetch('/api/cloud/profile/avatar?' + query, {
@@ -475,14 +479,17 @@ export async function fetchCloudContactAvatar(
     cache: 'no-store',
   });
   if (!response.ok) throw new ApiError(response.status, 'Аватар недоступен', 'AVATAR_UNAVAILABLE');
+  report?.('http-accepted');
   const length = Number(response.headers.get('content-length') || 0);
   if (length > 2_000_000 || !response.headers.get('content-type')?.startsWith('image/jpeg')) {
     throw new ApiError(502, 'Некорректное изображение', 'INVALID_AVATAR_RESPONSE');
   }
+  report?.('mime-accepted');
   const blob = await response.blob();
   if (blob.size < 16 || blob.size > 2_000_000) {
     throw new ApiError(502, 'Некорректное изображение', 'INVALID_AVATAR_RESPONSE');
   }
+  report?.('blob-validated');
   return blob;
 }
 
