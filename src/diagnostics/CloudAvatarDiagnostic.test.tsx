@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getMe } from '../api';
 import { loadContactAvatar } from '../data/cloud/contact-avatar-cache';
 import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/database';
+import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudAvatarDiagnostic } from './CloudAvatarDiagnostic';
 import { CloudAuthDiagnostic } from './CloudAuthDiagnostic';
 
@@ -38,7 +39,7 @@ const peer = {
   avatarVersion: 'f'.repeat(64),
 };
 
-let visibleContacts = [peer];
+let visibleContacts: CloudContact[] = [peer];
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -48,7 +49,7 @@ beforeEach(() => {
   } as Awaited<ReturnType<typeof getMe>>);
   vi.mocked(createCloudDatabase).mockReturnValue(db);
   vi.mocked(liveQuery).mockReturnValue({
-    subscribe: (observer: { next: (contacts: typeof peer[]) => void }) => {
+    subscribe: (observer: { next: (contacts: CloudContact[]) => void }) => {
       observer.next(visibleContacts);
       return { unsubscribe };
     },
@@ -116,7 +117,7 @@ describe('on-demand cloud avatar diagnostic', () => {
   });
 
   it('does not attempt downloads if synced contacts lack avatar metadata', async () => {
-    visibleContacts = [{ ...peer, avatarVersion: null }] as typeof peer[];
+    visibleContacts = [{ ...peer, avatarVersion: null }];
     render(<CloudAvatarDiagnostic initData="signed" />);
     await waitFor(() => expect(screen.getByText('С версией аватара: 0')).toBeTruthy());
     expect(screen.getByRole('button', { name: 'Проверить загрузку аватара' }).hasAttribute('disabled')).toBe(true);
