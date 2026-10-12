@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
+import { syncCloudContactProfile } from '../../api';
+import { loadContactAvatar } from './contact-avatar-cache';
 
 /** Telegram's verified identity, not the former D1 integer, is the contact ID. */
 export interface CloudContact {
@@ -9,6 +11,7 @@ export interface CloudContact {
   userId: string;
   telegramUserId: string;
   displayName: string;
+  avatarVersion?: string | null;
 }
 
 interface CloudConnectionsValue {
@@ -19,11 +22,12 @@ interface CloudConnectionsValue {
   status: 'loading' | 'ready' | 'error';
   error: string;
   refresh: () => Promise<void>;
+  loadAvatar: (contact: CloudContact) => Promise<Blob | null>;
 }
 
 const Context = createContext<CloudConnectionsValue | null>(null);
 
-function contact(realmId: string, member: { userId?: string; name?: string }, fallback: string): CloudContact | null {
+function contact(realmId: string, member: { userId?: string; name?: string; avatarVersion?: string | null }, fallback: string): CloudContact | null {
   const userId = member.userId;
   if (!userId || !/^tg:[1-9]\d*$/.test(userId)) return null;
   return {
@@ -31,6 +35,8 @@ function contact(realmId: string, member: { userId?: string; name?: string }, fa
     userId,
     telegramUserId: userId.slice(3),
     displayName: member.name?.trim() || fallback,
+    avatarVersion: typeof member.avatarVersion === 'string' && /^[a-f0-9]{64}$/.test(member.avatarVersion)
+      ? member.avatarVersion : null,
   };
 }
 
@@ -40,6 +46,7 @@ type MemberView = {
   realmId: string;
   userId?: string;
   name?: string;
+  avatarVersion?: string | null;
   roles?: string[];
   owner?: unknown;
   // Raw synced memberships can expose the Worker's accepted:true marker.
@@ -184,6 +191,20 @@ export function CloudConnectionsProvider({
     };
   }, [db, actorUserId]);
 
+  // Profile writes are privileged and change-only; failures must not block offline lists.
+  useEffect(() => {
+    let active = true;
+    void syncCloudContactProfile(initData)
+      .then((changed) => {
+        if (active && changed) void db.cloud.sync({ purpose: 'pull', wait: false }).catch(() => {});
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [db, initData]);
+
+  const loadAvatar = useCallback((peer: CloudContact) =>
+    loadContactAvatar(telegramUserId, initData, peer), [telegramUserId, initData]);
+
   const refresh = useCallback(async () => {
     try {
       await db.cloud.sync({ purpose: 'pull', wait: true });
@@ -205,8 +226,8 @@ export function CloudConnectionsProvider({
   }, [db, actorUserId]);
 
   const value = useMemo<CloudConnectionsValue>(() => ({
-    db, actorUserId, clients, coaches, status, error, refresh,
-  }), [db, actorUserId, clients, coaches, status, error, refresh]);
+    db, actorUserId, clients, coaches, status, error, refresh, loadAvatar,
+  }), [db, actorUserId, clients, coaches, status, error, refresh, loadAvatar]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
