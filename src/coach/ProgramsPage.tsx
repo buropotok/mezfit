@@ -281,7 +281,7 @@ export function ProgramsPage({
         </TabsList>
       </Tabs>
 
-      {programs === null ? <Text variant="footnote" tone="muted">Загружаем мои программы…</Text> : (
+      {programs === null ? <Text variant="footnote" tone="muted">Загружаем программы…</Text> : (
         <>
           <section className="programs-section" aria-labelledby="own-programs-title">
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
