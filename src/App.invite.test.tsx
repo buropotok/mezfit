@@ -53,7 +53,7 @@ const TestCloudContext = createContext({
   coaches: [] as typeof oldCoach[],
   status: 'ready' as const,
   error: '',
-  refresh: async () => undefined,
+  refresh: async (): Promise<void> => undefined,
 });
 
 function TestCloudProvider({ children }: { children: ReactNode }) {
