@@ -332,70 +332,70 @@ export function ProgramsPage({
 
           {!CLOUD_ASSIGNED_PROGRAMS_ENABLED ? (
             <section className="programs-section" aria-labelledby="client-programs-title">
-             <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
-             {visibleClients.map((group) => (
-               <div className="programs-client" key={group.owner.id}>
-                 <List className="programs-client-list">
-                   <ListItem
-                     onClick={() => { void selectClient(group.owner.id); }}
-                     leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
-                     title={ownerName(group)}
-                     trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
-                   />
-                 </List>
-                 <ProgramRows
-                   programs={group.programs}
-                   disabled={filter !== 'all' || mutationBusy}
-                   onOpen={onOpenProgram}
-                   onDuplicate={(program) => { void duplicateProgram(program); }}
-                   mutationBusy={mutationBusy}
-                   onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
-                 />
-               </div>
-             ))}
-             {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
-                      </section>
+              <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+              {visibleClients.map((group) => (
+                <div className="programs-client" key={group.owner.id}>
+                  <List className="programs-client-list">
+                    <ListItem
+                      onClick={() => { void selectClient(group.owner.id); }}
+                      leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
+                      title={ownerName(group)}
+                      trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
+                    />
+                  </List>
+                  <ProgramRows
+                    programs={group.programs}
+                    disabled={filter !== 'all' || mutationBusy}
+                    onOpen={onOpenProgram}
+                    onDuplicate={(program) => { void duplicateProgram(program); }}
+                    mutationBusy={mutationBusy}
+                    onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
+                  />
+                </div>
+              ))}
+              {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
+            </section>
           ) : null}
         </>
       )}
 
       {CLOUD_ASSIGNED_PROGRAMS_ENABLED ? (
-      <section className="programs-section" aria-labelledby="cloud-programs-title">
-        <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
-        {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем программы клиентов…</Text> : null}
-        {cloud?.status === 'error' ? (
-          <>
-            <Text variant="footnote" role="alert">{cloud.error}</Text>
-            <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
-          </>
-        ) : null}
-        {sharedPlans.map(({ client, clientUserId, plans }) => (
-          <div className="programs-client" key={clientUserId}>
-            <List className="programs-client-list">
-              <ListItem
-                interactive={Boolean(client)}
-                onClick={client ? () => { void selectClient(client.user.id); } : undefined}
-                leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
-                title={client ? clientName(client) : 'Клиент'}
-              />
-            </List>
-            <List className="programs-card">
-              {plans.map((plan) => (
+        <section className="programs-section" aria-labelledby="cloud-programs-title">
+          <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+          {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем программы клиентов…</Text> : null}
+          {cloud?.status === 'error' ? (
+            <>
+              <Text variant="footnote" role="alert">{cloud.error}</Text>
+              <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
+            </>
+          ) : null}
+          {sharedPlans.map(({ client, clientUserId, plans }) => (
+            <div className="programs-client" key={clientUserId}>
+              <List className="programs-client-list">
                 <ListItem
-                  key={plan.id}
-                  interactive={false}
-                  title={plan.name}
-                  subtitle="Программа клиента"
-                  trailing={statusBadge(plan.status)}
+                  interactive={Boolean(client)}
+                  onClick={client ? () => { void selectClient(client.user.id); } : undefined}
+                  leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
+                  title={client ? clientName(client) : 'Клиент'}
                 />
-              ))}
-            </List>
-          </div>
-        ))}
-        {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
-          <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
-        ) : null}
-      </section>
+              </List>
+              <List className="programs-card">
+                {plans.map((plan) => (
+                  <ListItem
+                    key={plan.id}
+                    interactive={false}
+                    title={plan.name}
+                    subtitle="Программа клиента"
+                    trailing={statusBadge(plan.status)}
+                  />
+                ))}
+              </List>
+            </div>
+          ))}
+          {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
+            <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
+          ) : null}
+        </section>
       ) : null}
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
