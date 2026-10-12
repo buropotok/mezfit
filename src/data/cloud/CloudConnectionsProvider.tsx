@@ -3,7 +3,7 @@ import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { syncCloudContactProfile } from '../../api';
-import { loadContactAvatar } from './contact-avatar-cache';
+import { loadContactAvatar, pruneUnlinkedContactAvatars } from './contact-avatar-cache';
 
 /** Telegram's verified identity, not the former D1 integer, is the contact ID. */
 export interface CloudContact {
@@ -130,6 +130,9 @@ export function CloudConnectionsProvider({
       setCoaches(next.coaches);
       setError('');
       setStatus('ready');
+      if (initialPullSucceededRef.current) {
+        void pruneUnlinkedContactAvatars(telegramUserId, [...next.clients, ...next.coaches]);
+      }
     };
 
     const readContacts = () => readContactSnapshot(db, actorUserId);
@@ -189,7 +192,7 @@ export function CloudConnectionsProvider({
       // Preserve Dexie 4 auto-open so the next liveQuery can reopen it.
       db.close({ disableAutoOpen: false });
     };
-  }, [db, actorUserId]);
+  }, [db, actorUserId, telegramUserId]);
 
   // Profile writes are privileged and change-only; failures must not block offline lists.
   useEffect(() => {
@@ -207,6 +210,7 @@ export function CloudConnectionsProvider({
 
   const refresh = useCallback(async () => {
     try {
+      await syncCloudContactProfile(initData).catch(() => false);
       await db.cloud.sync({ purpose: 'pull', wait: true });
       const snapshot = await readContactSnapshot(db, actorUserId);
       if (!alive.current) return;
@@ -216,6 +220,9 @@ export function CloudConnectionsProvider({
       setCoaches(snapshot.contacts.coaches);
       setError('');
       setStatus('ready');
+      void pruneUnlinkedContactAvatars(telegramUserId, [
+        ...snapshot.contacts.clients, ...snapshot.contacts.coaches,
+      ]);
     } catch (reason) {
       if (alive.current) {
         setStatus('error');
@@ -223,7 +230,7 @@ export function CloudConnectionsProvider({
       }
       throw reason;
     }
-  }, [db, actorUserId]);
+  }, [db, actorUserId, telegramUserId, initData]);
 
   const value = useMemo<CloudConnectionsValue>(() => ({
     db, actorUserId, clients, coaches, status, error, refresh, loadAvatar,
