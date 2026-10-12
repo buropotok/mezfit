@@ -4,6 +4,7 @@ import { ApiError } from '../api';
 import { getTelegramWebApp, prepareTelegramWebApp } from '../telegram';
 import { Text } from '../ui';
 import { runCloudAuthProbe } from './cloudAuthProbe';
+import { CloudSyncDiagnostic } from './CloudSyncDiagnostic';
 
 type ProbeStatus = 'idle' | 'pending' | 'success' | 'failed';
 
@@ -17,6 +18,7 @@ function safeErrorCode(error: unknown): string {
 export function CloudAuthDiagnostic() {
   const webApp = getTelegramWebApp();
   const [status, setStatus] = useState<ProbeStatus>('idle');
+  const [showSync, setShowSync] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const pendingRef = useRef(false);
   const mountedRef = useRef(false);
@@ -65,6 +67,10 @@ export function CloudAuthDiagnostic() {
                   : 'Нажмите кнопку, чтобы начать проверку.'}
         </Text></p>
         <p><Text variant="footnote" tone="muted">Токены, ключи и Telegram initData не отображаются и не сохраняются.</Text></p>
+        <Button onClick={() => setShowSync((value) => !value)} disabled={!webApp?.initData}>
+          {showSync ? 'Скрыть диагностику синхронизации' : 'Проверить синхронизацию'}
+        </Button>
+        {showSync && webApp?.initData ? <CloudSyncDiagnostic initData={webApp.initData} /> : null}
       </section>
     </main>
   );
