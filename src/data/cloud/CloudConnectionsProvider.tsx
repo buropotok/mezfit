@@ -77,6 +77,23 @@ export async function deriveCloudContacts(
   };
 }
 
+/** One local snapshot; access control still belongs to Dexie Cloud server. */
+async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string) {
+  const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
+  return {
+    contacts: await deriveCloudContacts(actorUserId, realms, members),
+    hasRelationshipMembership: members.some((member) => member.userId === actorUserId
+      && (member.roles?.includes('coach') || member.roles?.includes('client'))),
+  };
+}
+
+function hasRejectedContacts(snapshot: Awaited<ReturnType<typeof readContactSnapshot>>): boolean {
+  return snapshot.hasRelationshipMembership
+    && snapshot.contacts.clients.length === 0 && snapshot.contacts.coaches.length === 0;
+}
+
+const INVALID_CONTACTS_MESSAGE = 'Облачная связь найдена, но не прошла проверку. Повторите синхронизацию.';
+
 export function CloudConnectionsProvider({
   telegramUserId, initData, children,
 }: { telegramUserId: string; initData: string; children: ReactNode }) {
@@ -106,22 +123,13 @@ export function CloudConnectionsProvider({
       setStatus('ready');
     };
 
-    const readContacts = async () => {
-      const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
-      return {
-        contacts: await deriveCloudContacts(actorUserId, realms, members),
-        // A successfully synced but rejected relationship must not look like no invite.
-        hasRelationshipMembership: members.some((member) => member.userId === actorUserId
-          && (member.roles?.includes('coach') || member.roles?.includes('client'))),
-      };
-    };
+    const readContacts = () => readContactSnapshot(db, actorUserId);
 
     const subscription = liveQuery(readContacts).subscribe({
       next: ({ contacts, hasRelationshipMembership }) => {
         if (!active) return;
-        if (initialPullFinished && hasRelationshipMembership
-          && contacts.clients.length === 0 && contacts.coaches.length === 0) {
-          setError('Облачная связь найдена, но не прошла проверку. Повторите синхронизацию.');
+        if (initialPullFinished && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
+          setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
           return;
         }
@@ -143,8 +151,8 @@ export function CloudConnectionsProvider({
         const { contacts, hasRelationshipMembership } = await readContacts();
         if (!active) return;
         initialPullFinished = true;
-        if (hasRelationshipMembership && contacts.clients.length === 0 && contacts.coaches.length === 0) {
-          setError('Облачная связь найдена, но не прошла проверку. Повторите синхронизацию.');
+        if (hasRejectedContacts({ contacts, hasRelationshipMembership })) {
+          setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
         } else {
           publish(contacts);
@@ -173,11 +181,11 @@ export function CloudConnectionsProvider({
   const refresh = useCallback(async () => {
     try {
       await db.cloud.sync({ purpose: 'pull', wait: true });
-      const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
-      const next = await deriveCloudContacts(actorUserId, realms, members);
+      const snapshot = await readContactSnapshot(db, actorUserId);
       if (!alive.current) return;
-      setClients(next.clients);
-      setCoaches(next.coaches);
+      if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
+      setClients(snapshot.contacts.clients);
+      setCoaches(snapshot.contacts.coaches);
       setError('');
       setStatus('ready');
     } catch (reason) {
