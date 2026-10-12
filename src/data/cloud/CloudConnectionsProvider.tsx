@@ -104,11 +104,12 @@ export function CloudConnectionsProvider({
   const [status, setStatus] = useState<CloudConnectionsValue['status']>('loading');
   const [error, setError] = useState('');
   const alive = useRef(false);
+  const initialPullSucceededRef = useRef(false);
 
   useEffect(() => {
     alive.current = true;
     let active = true;
-    let initialPullSucceeded = false;
+    initialPullSucceededRef.current = false;
     let locallyAvailable = false;
 
     const publish = (next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
@@ -116,7 +117,7 @@ export function CloudConnectionsProvider({
       const hasContacts = next.clients.length > 0 || next.coaches.length > 0;
       locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
-      if (!initialPullSucceeded && !hasContacts) return;
+      if (!initialPullSucceededRef.current && !hasContacts) return;
       setClients(next.clients);
       setCoaches(next.coaches);
       setError('');
@@ -128,7 +129,7 @@ export function CloudConnectionsProvider({
     const subscription = liveQuery(readContacts).subscribe({
       next: ({ contacts, hasRelationshipMembership }) => {
         if (!active) return;
-        if (initialPullSucceeded && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
+        if (initialPullSucceededRef.current && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
           return;
@@ -146,11 +147,15 @@ export function CloudConnectionsProvider({
     // Explicit pull gives us a confirmed initial hydration or a real error.
     void (async () => {
       try {
+        // Await a real Dexie table read: this opens the database (and starts the
+        // cloud sync worker) before sending the first pull signal.
+        await db.realms.toArray();
+        if (!active) return;
         await db.cloud.sync({ purpose: 'pull', wait: true });
         if (!active) return;
         const { contacts, hasRelationshipMembership } = await readContacts();
         if (!active) return;
-        initialPullSucceeded = true;
+        initialPullSucceededRef.current = true;
         if (hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
@@ -161,7 +166,7 @@ export function CloudConnectionsProvider({
         if (!active) return;
         // A failed pull cannot authorize an empty-state claim on later local updates.
         // Previously synced contacts must stay usable without connectivity.
-        if (!locallyAvailable) {
+        if (!locallyAvailable && !initialPullSucceededRef.current) {
           setStatus('error');
           setError('Не удалось синхронизировать связи с Dexie Cloud. Проверьте соединение и повторите.');
         }
@@ -184,6 +189,7 @@ export function CloudConnectionsProvider({
       const snapshot = await readContactSnapshot(db, actorUserId);
       if (!alive.current) return;
       if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
+      initialPullSucceededRef.current = true;
       setClients(snapshot.contacts.clients);
       setCoaches(snapshot.contacts.coaches);
       setError('');
