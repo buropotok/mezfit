@@ -9,9 +9,9 @@ vi.mock('../data/cloud/AssignedProgramsProvider', () => ({ useAssignedPrograms: 
 vi.mock('./ClientCoachContext', () => ({ useClientCoach: vi.fn() }));
 
 const coach = {
-  relationshipId: 1,
+  relationshipId: 'rlm1',
   user: {
-    id: 25, telegramUserId: '202', firstName: 'Тренер', lastName: null,
+    id: 'tg:202', telegramUserId: '202', firstName: 'Тренер', lastName: null,
     username: null, languageCode: 'ru', photoUrl: null, isPremium: false,
   },
 };
@@ -41,7 +41,7 @@ beforeEach(() => {
 
 describe('client cloud-assigned programs', () => {
   it('shows only the verified account and currently selected coach program', () => {
-    const html = renderToStaticMarkup(<ClientProgramsPage initData="signed-init-data" />);
+    const html = renderToStaticMarkup(<ClientProgramsPage />);
     expect(html).toContain('Моя программа');
     expect(html).not.toContain('Другой тренер');
     expect(html).not.toContain('Другой клиент');
@@ -51,7 +51,7 @@ describe('client cloud-assigned programs', () => {
     const current = vi.mocked(useAssignedPrograms)();
     if (!current) throw new Error('Expected cloud context');
     vi.mocked(useAssignedPrograms).mockReturnValue({ ...current, status: 'error', error: 'offline' });
-    const html = renderToStaticMarkup(<ClientProgramsPage initData="signed-init-data" />);
+    const html = renderToStaticMarkup(<ClientProgramsPage />);
     expect(html).toContain('Не удалось загрузить программы');
     expect(html).toContain('Повторить');
     expect(html).not.toContain('Программ пока нет');
