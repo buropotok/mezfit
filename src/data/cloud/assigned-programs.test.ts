@@ -91,7 +91,7 @@ describe('assigned Dexie Cloud PLAN repository', () => {
       status: 'draft',
     }));
     await repository.refresh();
-    expect(f.refresh).toHaveBeenCalledWith({ purpose: 'pull' });
+    expect(f.refresh).toHaveBeenCalledWith({ purpose: 'pull', wait: true });
     repository.close();
     expect(f.close).toHaveBeenCalledTimes(1);
   });
