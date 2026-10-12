@@ -195,14 +195,23 @@ export function ProgramsPage({
     [programs, filter],
   );
 
-  const sharedPlans = clients.map((client) => ({
-    client,
-    plans: (cloud?.plans ?? []).filter((plan) =>
-      plan.coachUserId === cloud?.actorUserId
-      && plan.clientUserId === `tg:${client.user.telegramUserId}`
-      && (filter === 'all' || plan.status === filter)),
-  })).filter(({ client, plans }) => plans.length > 0
-    && clientName(client).toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
+  // Synced PLAN headers remain visible offline even when the transitional
+  // D1 client directory cannot supply display names.
+  const cloudPlans = (cloud?.plans ?? []).filter((plan) =>
+    plan.coachUserId === cloud?.actorUserId && (filter === 'all' || plan.status === filter));
+  const grouped = new Map<string, typeof cloudPlans>();
+  for (const plan of cloudPlans) {
+    const group = grouped.get(plan.clientUserId) ?? [];
+    group.push(plan);
+    grouped.set(plan.clientUserId, group);
+  }
+  const sharedPlans = [...grouped].map(([clientUserId, plans]) => ({
+    clientUserId,
+    client: clients.find((item) => `tg:${item.user.telegramUserId}` === clientUserId) ?? null,
+    plans,
+  })).filter(({ client }) =>
+    !search.trim() || (client ? clientName(client) : 'Клиент')
+      .toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
 
   const selectClient = async (userId: number) => {
     if (!onSelectClient) return;
@@ -298,13 +307,14 @@ export function ProgramsPage({
                 <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
               </>
             ) : null}
-            {sharedPlans.map(({ client, plans }) => (
-              <div className="programs-client" key={client.user.id}>
+            {sharedPlans.map(({ client, clientUserId, plans }) => (
+              <div className="programs-client" key={clientUserId}>
                 <List className="programs-client-list">
                   <ListItem
-                    onClick={() => { void selectClient(client.user.id); }}
-                    leading={<Avatar name={clientName(client)} src={client.user.photoUrl ?? undefined} />}
-                    title={clientName(client)}
+                    interactive={Boolean(client)}
+                    onClick={client ? () => { void selectClient(client.user.id); } : undefined}
+                    leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
+                    title={client ? clientName(client) : 'Клиент'}
                   />
                 </List>
                 <List className="programs-card">
