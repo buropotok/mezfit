@@ -23,7 +23,7 @@ describe('Dexie Cloud coach-client directory', () => {
 
     const coach = await deriveCloudContacts('tg:101', realms, members);
     expect(coach.coaches).toEqual([]);
-    expect(coach.clients.map((item) => [item.relationshipId, item.user.id, item.user.firstName]))
+    expect(coach.clients.map((item) => [item.relationshipId, item.userId, item.displayName]))
       .toEqual([
         [first.realm.realmId, 'tg:202', 'Борис'],
         [second.realm.realmId, 'tg:303', 'Вера'],
@@ -31,7 +31,7 @@ describe('Dexie Cloud coach-client directory', () => {
 
     const client = await deriveCloudContacts('tg:202', realms, members);
     expect(client.clients).toEqual([]);
-    expect(client.coaches.map((item) => item.user.id)).toEqual(['tg:101']);
+    expect(client.coaches.map((item) => item.userId)).toEqual(['tg:101']);
     expect((await deriveCloudContacts('tg:404', realms, members))).toEqual({ clients: [], coaches: [] });
   });
 
@@ -52,7 +52,7 @@ describe('Dexie Cloud coach-client directory', () => {
     const pair = await link('101', '202');
     delete pair.members[1].name;
     const { clients } = await deriveCloudContacts('tg:101', [pair.realm], pair.members);
-    expect(clients[0].user).toMatchObject({
+    expect(clients[0]).toMatchObject({
       id: 'tg:202', telegramUserId: '202', firstName: 'Клиент Mezfit',
     });
     expect(clients[0].relationshipId).toBe(pair.realm.realmId);
