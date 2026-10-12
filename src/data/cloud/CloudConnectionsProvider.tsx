@@ -44,6 +44,49 @@ function contact(realmId: string, member: { userId?: string; name?: string }, fa
   };
 }
 
+type RealmView = { realmId: string; name?: string; owner?: unknown };
+type MemberView = {
+  id: string;
+  realmId: string;
+  userId?: string;
+  name?: string;
+  roles?: string[];
+  owner?: unknown;
+  accepted?: Date;
+  invite?: boolean;
+  permissions?: unknown;
+};
+
+/** Derived presentation only: server-enforced memberships remain the access boundary. */
+export async function deriveCloudContacts(
+  actorUserId: string,
+  realms: readonly RealmView[],
+  members: readonly MemberView[],
+): Promise<{ clients: CloudContact[]; coaches: CloudContact[] }> {
+  const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
+  const own = members.filter((member) => member.userId === actorUserId);
+  const links = await Promise.all(own.map(async (mine) => {
+    const partner = members.find((member) => member.realmId === mine.realmId
+      && member.userId !== actorUserId);
+    if (!partner?.userId) return null;
+    const asCoach = mine.roles?.includes('coach') && partner.roles?.includes('client');
+    const asClient = mine.roles?.includes('client') && partner.roles?.includes('coach');
+    if (!asCoach && !asClient) return null;
+    const coachUserId = asCoach ? actorUserId : partner.userId;
+    const clientUserId = asCoach ? partner.userId : actorUserId;
+    if (!await isApprovedAssignedPair(realmById.get(mine.realmId), members, coachUserId, clientUserId)) {
+      return null;
+    }
+    const peer = contact(mine.realmId, partner, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
+    return peer ? { peer, asCoach } : null;
+  }));
+  const connections = links.filter((link): link is { peer: CloudContact; asCoach: boolean } => link !== null);
+  return {
+    clients: connections.filter((link) => link.asCoach).map((link) => link.peer),
+    coaches: connections.filter((link) => !link.asCoach).map((link) => link.peer),
+  };
+}
+
 export function CloudConnectionsProvider({
   telegramUserId, initData, children,
 }: { telegramUserId: string; initData: string; children: ReactNode }) {
@@ -58,28 +101,7 @@ export function CloudConnectionsProvider({
     let active = true;
     const subscription = liveQuery(async () => {
       const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
-      const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
-      const own = members.filter((member) => member.userId === actorUserId);
-      const links = await Promise.all(own.map(async (mine) => {
-        const partner = members.find((member) => member.realmId === mine.realmId
-          && member.userId !== actorUserId);
-        if (!partner?.userId) return null;
-        const asCoach = mine.roles?.includes('coach') && partner.roles?.includes('client');
-        const asClient = mine.roles?.includes('client') && partner.roles?.includes('coach');
-        if (!asCoach && !asClient) return null;
-        const coachUserId = asCoach ? actorUserId : partner.userId;
-        const clientUserId = asCoach ? partner.userId : actorUserId;
-        if (!await isApprovedAssignedPair(realmById.get(mine.realmId), members, coachUserId, clientUserId)) {
-          return null;
-        }
-        const peer = contact(mine.realmId, partner, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
-        return peer ? { peer, asCoach } : null;
-      }));
-      const connections = links.filter((link): link is { peer: CloudContact; asCoach: boolean } => link !== null);
-      return {
-        clients: connections.filter((link) => link.asCoach).map((link) => link.peer),
-        coaches: connections.filter((link) => !link.asCoach).map((link) => link.peer),
-      };
+      return deriveCloudContacts(actorUserId, realms, members);
     }).subscribe({
       next: (next) => {
         if (!active) return;
