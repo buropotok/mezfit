@@ -665,7 +665,10 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     // Dexie Cloud is authoritative for each verified coach-client pair.
     // Repeated acceptance by the same client is idempotent, even after a lost
     // HTTP success response; the D1 projection is written only after cloud success.
-    await provisionInviteMembership(env, invite.coach_telegram_user_id, auth.row.telegram_user_id);
+    await provisionInviteMembership(env, invite.coach_telegram_user_id, auth.row.telegram_user_id, fetch, {
+      coach: [invite.coach_first_name, invite.coach_last_name].filter(Boolean).join(' '),
+      client: [auth.row.first_name, auth.row.last_name].filter(Boolean).join(' '),
+    });
 
     // Temporary legacy read-model: existing D1-backed coach/client screens
     // consume these IDs until their repositories migrate to Dexie Cloud.
