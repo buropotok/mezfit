@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
@@ -86,8 +86,10 @@ export function CloudConnectionsProvider({
   const [coaches, setCoaches] = useState<CloudContact[]>([]);
   const [status, setStatus] = useState<CloudConnectionsValue['status']>('loading');
   const [error, setError] = useState('');
+  const alive = useRef(false);
 
   useEffect(() => {
+    alive.current = true;
     let active = true;
     const subscription = liveQuery(async () => {
       const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
@@ -108,6 +110,7 @@ export function CloudConnectionsProvider({
     });
     return () => {
       active = false;
+      alive.current = false;
       subscription.unsubscribe();
       db.close();
     };
@@ -116,12 +119,21 @@ export function CloudConnectionsProvider({
   const refresh = useCallback(async () => {
     try {
       await db.cloud.sync({ purpose: 'pull', wait: true });
+      const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
+      const next = await deriveCloudContacts(actorUserId, realms, members);
+      if (!alive.current) return;
+      setClients(next.clients);
+      setCoaches(next.coaches);
+      setError('');
+      setStatus('ready');
     } catch (reason) {
-      setStatus('error');
-      setError(reason instanceof Error ? reason.message : 'Не удалось синхронизировать связи');
+      if (alive.current) {
+        setStatus('error');
+        setError(reason instanceof Error ? reason.message : 'Не удалось синхронизировать связи');
+      }
       throw reason;
     }
-  }, [db]);
+  }, [db, actorUserId]);
 
   const value = useMemo<CloudConnectionsValue>(() => ({
     db, actorUserId, clients, coaches, status, error, refresh,
