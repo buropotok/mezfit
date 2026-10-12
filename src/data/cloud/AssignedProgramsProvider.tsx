@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AssignedProgramsRepository } from './assigned-programs';
 import type { CloudTrainingPlanRow } from './database';
+import { useCloudConnections } from './CloudConnectionsProvider';
 
 interface AssignedProgramsContextValue {
   repository: AssignedProgramsRepository;
@@ -16,10 +17,11 @@ const Context = createContext<AssignedProgramsContextValue | null>(null);
 export function AssignedProgramsProvider({
   telegramUserId, initData, enabled, children,
 }: { telegramUserId: string; initData: string; enabled: boolean; children: ReactNode }) {
+  const cloud = useCloudConnections();
   const [retryKey, setRetryKey] = useState(0);
   const repository = useMemo(
-    () => enabled ? new AssignedProgramsRepository(telegramUserId, initData) : null,
-    [telegramUserId, initData, enabled, retryKey],
+    () => enabled && cloud ? new AssignedProgramsRepository(telegramUserId, initData, cloud.db) : null,
+    [telegramUserId, initData, enabled, cloud?.db, retryKey],
   );
   const [plans, setPlans] = useState<CloudTrainingPlanRow[]>([]);
   const [status, setStatus] = useState<AssignedProgramsContextValue['status']>('loading');
