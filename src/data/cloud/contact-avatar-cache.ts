@@ -68,3 +68,21 @@ export async function loadContactAvatar(
     downloads.delete(key);
   }
 }
+
+/** After a confirmed cloud pull, evict portraits from revoked relationships or old versions. */
+export async function pruneUnlinkedContactAvatars(
+  telegramUserId: string,
+  contacts: readonly AvatarContactRef[],
+): Promise<void> {
+  const permitted = new Map(contacts.map((contact) => [contact.userId, contact.avatarVersion]));
+  const db = new AvatarCacheDatabase(telegramUserId);
+  try {
+    const rows = await db.files.toArray();
+    await Promise.all(rows.filter((row) => permitted.get(row.userId) !== row.version)
+      .map((row) => db.files.delete(row.userId)));
+  } catch {
+    // Media cleanup is best effort; never block a valid relationship list.
+  } finally {
+    db.close();
+  }
+}
