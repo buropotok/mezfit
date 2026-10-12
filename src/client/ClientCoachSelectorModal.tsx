@@ -1,5 +1,6 @@
 import { List as KonstaList, ListItem as KonstaListItem, Radio as KonstaRadio } from 'konsta/react';
-import { Avatar, MezfitDialog } from '../ui';
+import { MezfitDialog } from '../ui';
+import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useClientCoach } from './ClientCoachContext';
 
 interface ClientCoachSelectorModalProps {
@@ -36,7 +37,7 @@ export function ClientCoachSelectorModal({ isOpen, onClose }: ClientCoachSelecto
               <KonstaListItem
                 key={coach.relationshipId}
                 label
-                media={<Avatar name={name} />}
+                media={<CloudContactAvatar contact={coach} />}
                 title={name}
                 after={(
                   <KonstaRadio
