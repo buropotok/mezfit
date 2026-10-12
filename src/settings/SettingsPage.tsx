@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Range, Toggle } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import {
@@ -34,6 +34,9 @@ import { Button, DatePicker, Divider, Dropdown, GlassSurface, MezfitSidePanel, M
 import { SessionExercise, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import './settings-page.css';
+
+// Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
+const ChartsCatalog = lazy(() => import('../ui/ChartsCatalog').then(({ ChartsCatalog }) => ({ default: ChartsCatalog })));
 
 const datePickerStatusPreview: readonly DatePickerDayStatusEntry[] = [
   { date: '2026-09-27', status: 'scheduled' },
@@ -599,6 +602,10 @@ export function SettingsPage({
           Здесь отображаются реальные React-компоненты приложения на демонстрационных данных.
         </Text>
       </div>
+
+      <Suspense fallback={<Text variant="footnote" tone="muted">Загрузка графиков…</Text>}>
+        <ChartsCatalog />
+      </Suspense>
 
       <section className="modules-gallery__example" aria-labelledby="module-workout-card-title">
         <Text id="module-workout-card-title" variant="headline">Карточка тренировки</Text>
