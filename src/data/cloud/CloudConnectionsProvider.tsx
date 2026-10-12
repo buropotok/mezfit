@@ -112,7 +112,9 @@ export function CloudConnectionsProvider({
       active = false;
       alive.current = false;
       subscription.unsubscribe();
-      db.close();
+      // React StrictMode re-runs effects with the same memoized db instance.
+      // Preserve Dexie 4 auto-open so the next liveQuery can reopen it.
+      db.close({ disableAutoOpen: false });
     };
   }, [db, actorUserId]);
 
