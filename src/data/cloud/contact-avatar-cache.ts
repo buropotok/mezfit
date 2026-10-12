@@ -13,12 +13,19 @@ interface AvatarCacheEntry {
   blob: Blob;
 }
 
+interface AllowedAvatar {
+  userId: string;
+  version: string | null;
+}
+
 class AvatarCacheDatabase extends Dexie {
   files!: Table<AvatarCacheEntry, string>;
+  allowed!: Table<AllowedAvatar, string>;
 
   constructor(telegramUserId: string) {
     super('mezfit-avatar-cache:' + telegramUserId);
     this.version(1).stores({ files: '&userId' });
+    this.version(2).stores({ files: '&userId', allowed: '&userId' });
   }
 }
 
@@ -45,14 +52,25 @@ export async function loadContactAvatar(
   const task = (async () => {
     const db = new AvatarCacheDatabase(telegramUserId);
     try {
+      // The latest verified contact snapshot is authoritative for media caching.
+      const allowed = await db.allowed.get(contact.userId);
+      if (allowed?.version !== version) return null;
       const saved = await db.files.get(contact.userId);
       if (saved?.version === version && saved.blob instanceof Blob) return saved.blob;
 
       const image = await fetchCloudContactAvatar(
         initData, contact.relationshipId, contact.userId, version,
       );
-      await db.files.put({ userId: contact.userId, version, blob: image });
-      return image;
+      // A newer pull can revoke access or change the version during this fetch.
+      // Re-check and commit atomically with pruning to prevent reintroducing old bytes.
+      return db.transaction('rw', db.files, db.allowed, async () => {
+        const current = await db.allowed.get(contact.userId);
+        if (current?.version !== version) return null;
+        const latest = await db.files.get(contact.userId);
+        if (latest?.version === version && latest.blob instanceof Blob) return latest.blob;
+        await db.files.put({ userId: contact.userId, version, blob: image });
+        return image;
+      });
     } catch {
       // Missing network/media should never block the contact or reveal old photos.
       return null;
@@ -74,14 +92,26 @@ export async function pruneUnlinkedContactAvatars(
   telegramUserId: string,
   contacts: readonly AvatarContactRef[],
 ): Promise<void> {
-  const permitted = new Map(contacts.map((contact) => [contact.userId, contact.avatarVersion]));
+  const permitted = new Map(contacts
+    .filter((contact) => /^tg:[1-9][0-9]*$/.test(contact.userId))
+    .map((contact) => [contact.userId, contact.avatarVersion ?? null]));
   const db = new AvatarCacheDatabase(telegramUserId);
   try {
-    const rows = await db.files.toArray();
-    await Promise.all(rows.filter((row) => permitted.get(row.userId) !== row.version)
-      .map((row) => db.files.delete(row.userId)));
-  } catch {
-    // Media cleanup is best effort; never block a valid relationship list.
+    await db.transaction('rw', db.files, db.allowed, async () => {
+      const [files, previouslyAllowed] = await Promise.all([
+        db.files.toArray(), db.allowed.toArray(),
+      ]);
+      const known = new Map(previouslyAllowed.map((row) => [row.userId, row.version]));
+      for (const old of previouslyAllowed) {
+        if (!permitted.has(old.userId)) await db.allowed.delete(old.userId);
+      }
+      for (const [userId, version] of permitted) {
+        if (known.get(userId) !== version) await db.allowed.put({ userId, version });
+      }
+      for (const row of files) {
+        if (permitted.get(row.userId) !== row.version) await db.files.delete(row.userId);
+      }
+    });
   } finally {
     db.close();
   }
