@@ -106,7 +106,7 @@ export class AssignedProgramsRepository {
   }
 
   async refresh(): Promise<void> {
-    await this.db.cloud.sync({ purpose: 'pull' });
+    await this.db.cloud.sync({ purpose: 'pull', wait: true });
   }
 
   close(): void {
