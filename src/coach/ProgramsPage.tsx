@@ -134,7 +134,7 @@ function ownerName(group: ProgramOwnerGroup): string {
 }
 
 function clientName(client: CloudContact): string {
-  return [client.user.firstName, client.user.lastName].filter(Boolean).join(' ');
+  return client.displayName;
 }
 
 interface ProgramsPageProps {
@@ -224,7 +224,7 @@ export function ProgramsPage({
   }
   const sharedPlans = [...grouped].map(([clientUserId, plans]) => ({
     clientUserId,
-    client: clients.find((item) => `tg:${item.user.telegramUserId}` === clientUserId) ?? null,
+    client: clients.find((item) => item.userId === clientUserId) ?? null,
     plans,
   })).filter(({ client }) =>
     !search.trim() || (client ? clientName(client) : 'Клиент')
@@ -375,8 +375,8 @@ export function ProgramsPage({
               <List className="programs-client-list">
                 <ListItem
                   interactive={Boolean(client)}
-                  onClick={client ? () => { void selectClient(client.user.id); } : undefined}
-                  leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
+                  onClick={client ? () => { void selectClient(client.userId); } : undefined}
+                  leading={<Avatar name={client ? clientName(client) : 'Клиент'} />}
                   title={client ? clientName(client) : 'Клиент'}
                 />
               </List>
@@ -427,7 +427,7 @@ export function ProgramsPage({
             <List>
               <ListItem
                 onClick={() => onRequestClientSelection?.()}
-                leading={selectedClient ? <Avatar name={clientName(selectedClient)} src={selectedClient.user.photoUrl ?? undefined} /> : undefined}
+                leading={selectedClient ? <Avatar name={clientName(selectedClient)} /> : undefined}
                 title="Выбрать клиента"
                 subtitle={selectedClient ? clientName(selectedClient) : undefined}
               />
