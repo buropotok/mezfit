@@ -44,7 +44,7 @@ function fixture() {
           return actor;
         }
         if (sql.includes('FROM coach_client_invite i')) {
-          return available ? invite : null;
+          return available ? { ...invite, already_linked: connected.has(actor.id) ? 1 : 0 } : null;
         }
         throw Error('Unexpected SQL first: ' + sql);
       },
@@ -147,6 +147,32 @@ describe('accept a reusable Telegram invitation into a Dexie relationship', () =
     expect(retry.status).toBe(200);
     expect(f.isLinked()).toBe(true);
     expect(provision).toHaveBeenCalledTimes(2);
+  });
+
+  it('hides an accepted invite only for the already-connected client', async () => {
+    const f = fixture();
+
+    const initial = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(initial.status).toBe(200);
+    await expect(initial.json()).resolves.toMatchObject({ invite: { coach: { firstName: 'Coach' } } });
+
+    expect((await worker.fetch(request(), f.env)).status).toBe(200);
+    const repeatPreview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(repeatPreview.status).toBe(200);
+    await expect(repeatPreview.json()).resolves.toEqual({ invite: null });
+    expect(provision).toHaveBeenCalledTimes(1);
+
+    // The same reusable token must still show an invite to another client.
+    f.switchToOtherClient();
+    identity.mockResolvedValue({
+      user: { id: 303, first_name: 'Other Client' },
+      authDate: new Date('2026-10-12T00:00:00Z'),
+      startParam: launch,
+    });
+    const secondClient = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(secondClient.status).toBe(200);
+    await expect(secondClient.json()).resolves.toMatchObject({ invite: { coach: { firstName: 'Coach' } } });
+    expect(provision).toHaveBeenCalledTimes(1);
   });
 
   it('allows the same invitation to connect different athletes', async () => {
