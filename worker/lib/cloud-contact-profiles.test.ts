@@ -104,6 +104,25 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(put).toHaveBeenCalledTimes(1);
   });
 
+  it('updates only a changed Telegram name without downloading a new avatar', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const firstDownloads = cloud.downloads();
+    const firstWrites = cloud.postCount();
+    vi.mocked(validateTelegramInitData).mockResolvedValue({
+      user: { id: 101, first_name: 'Новое', last_name: 'Имя' },
+      authDate: new Date(),
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const current = [...cloud.store.values()].find((member) => member.userId === 'tg:101')!;
+    expect(current.name).toBe('Новое Имя');
+    expect(cloud.downloads()).toBe(firstDownloads);
+    expect(cloud.postCount()).toBe(firstWrites + 1);
+  });
+
   it('refreshes only the changed avatar version and preserves existing relationship metadata', async () => {
     const cloud = await setup();
     const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
