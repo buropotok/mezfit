@@ -7,7 +7,10 @@ import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/dat
 import { CloudAuthDiagnostic } from './CloudAuthDiagnostic';
 import { CloudSyncDiagnostic } from './CloudSyncDiagnostic';
 
-vi.mock('../api', () => ({ getMe: vi.fn() }));
+vi.mock('../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api')>();
+  return { ...actual, getMe: vi.fn() };
+});
 vi.mock('../data/cloud/database', () => ({ createCloudDatabase: vi.fn() }));
 vi.mock('dexie', async (importOriginal) => {
   const actual = await importOriginal<typeof import('dexie')>();
