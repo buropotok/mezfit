@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
 import { useNavigationFloatingAction } from '../NavigationShell';
-import { Avatar, Badge, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
+import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
+import { Avatar, Badge, Button, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -136,6 +138,7 @@ function clientName(client: CoachClientListItem): string {
 
 interface ProgramsPageProps {
   initData: string;
+  clients?: CoachClientListItem[];
   onSelectClient?: (userId: number) => Promise<void>;
   onOpenProgram?: (program: ProgramListItem) => void;
   creationDraft?: ProgramCreationDraft | null;
@@ -151,6 +154,7 @@ interface ProgramsPageProps {
 
 export function ProgramsPage({
   initData,
+  clients = [],
   onSelectClient,
   onOpenProgram,
   creationDraft = null,
@@ -163,6 +167,7 @@ export function ProgramsPage({
   onRequestClientSelection,
   onSaveCreation,
 }: ProgramsPageProps) {
+  const cloud = useAssignedPrograms();
   const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
   const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
@@ -205,6 +210,24 @@ export function ProgramsPage({
       .map((group) => ({ ...group, programs: group.programs.filter((program) => filter === 'all' || program.status === filter) }))
       .filter((group) => group.programs.length > 0);
   }, [clientGroups, filter, search]);
+
+  // Synced PLAN headers remain visible offline even when the transitional
+  // D1 client directory cannot supply display names.
+  const cloudPlans = (cloud?.plans ?? []).filter((plan) =>
+    plan.coachUserId === cloud?.actorUserId && (filter === 'all' || plan.status === filter));
+  const grouped = new Map<string, typeof cloudPlans>();
+  for (const plan of cloudPlans) {
+    const group = grouped.get(plan.clientUserId) ?? [];
+    group.push(plan);
+    grouped.set(plan.clientUserId, group);
+  }
+  const sharedPlans = [...grouped].map(([clientUserId, plans]) => ({
+    clientUserId,
+    client: clients.find((item) => `tg:${item.user.telegramUserId}` === clientUserId) ?? null,
+    plans,
+  })).filter(({ client }) =>
+    !search.trim() || (client ? clientName(client) : 'Клиент')
+      .toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
 
   const selectClient = async (userId: number) => {
     if (!onSelectClient) return;
@@ -292,7 +315,7 @@ export function ProgramsPage({
         </TabsList>
       </Tabs>
 
-      {programs === null ? <Text tone="muted">Загружаем программы…</Text> : (
+      {programs === null ? <Text variant="footnote" tone="muted">Загружаем программы…</Text> : (
         <>
           <section className="programs-section" aria-labelledby="own-programs-title">
             <Text id="own-programs-title" variant="caption" tone="muted" className="programs-section-label">Мои программы</Text>
@@ -307,32 +330,73 @@ export function ProgramsPage({
             {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
           </section>
 
-          <section className="programs-section" aria-labelledby="client-programs-title">
-            <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
-            {visibleClients.map((group) => (
-              <div className="programs-client" key={group.owner.id}>
-                <List className="programs-client-list">
-                  <ListItem
-                    onClick={() => { void selectClient(group.owner.id); }}
-                    leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
-                    title={ownerName(group)}
-                    trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
+          {!CLOUD_ASSIGNED_PROGRAMS_ENABLED ? (
+            <section className="programs-section" aria-labelledby="client-programs-title">
+              <Text id="client-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+              {visibleClients.map((group) => (
+                <div className="programs-client" key={group.owner.id}>
+                  <List className="programs-client-list">
+                    <ListItem
+                      onClick={() => { void selectClient(group.owner.id); }}
+                      leading={<Avatar name={ownerName(group)} src={group.owner.photoUrl ?? undefined} />}
+                      title={ownerName(group)}
+                      trailing={<MaskIcon src={chevronRightUrl} className="programs-chevron" />}
+                    />
+                  </List>
+                  <ProgramRows
+                    programs={group.programs}
+                    disabled={filter !== 'all' || mutationBusy}
+                    onOpen={onOpenProgram}
+                    onDuplicate={(program) => { void duplicateProgram(program); }}
+                    mutationBusy={mutationBusy}
+                    onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
                   />
-                </List>
-                <ProgramRows
-                  programs={group.programs}
-                  disabled={filter !== 'all' || mutationBusy}
-                  onOpen={onOpenProgram}
-                  onDuplicate={(program) => { void duplicateProgram(program); }}
-                  mutationBusy={mutationBusy}
-                  onReorder={(next) => { void reorderClientPrograms(group.owner.id, next); }}
-                />
-              </div>
-            ))}
-            {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
-          </section>
+                </div>
+              ))}
+              {visibleClients.length === 0 ? <Text variant="footnote" tone="muted">Нет программ клиентов с выбранным статусом</Text> : null}
+            </section>
+          ) : null}
         </>
       )}
+
+      {CLOUD_ASSIGNED_PROGRAMS_ENABLED ? (
+        <section className="programs-section" aria-labelledby="cloud-programs-title">
+          <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы клиентов</Text>
+          {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем программы клиентов…</Text> : null}
+          {cloud?.status === 'error' ? (
+            <>
+              <Text variant="footnote" role="alert">{cloud.error}</Text>
+              <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
+            </>
+          ) : null}
+          {sharedPlans.map(({ client, clientUserId, plans }) => (
+            <div className="programs-client" key={clientUserId}>
+              <List className="programs-client-list">
+                <ListItem
+                  interactive={Boolean(client)}
+                  onClick={client ? () => { void selectClient(client.user.id); } : undefined}
+                  leading={<Avatar name={client ? clientName(client) : 'Клиент'} src={client?.user.photoUrl ?? undefined} />}
+                  title={client ? clientName(client) : 'Клиент'}
+                />
+              </List>
+              <List className="programs-card">
+                {plans.map((plan) => (
+                  <ListItem
+                    key={plan.id}
+                    interactive={false}
+                    title={plan.name}
+                    subtitle="Программа клиента"
+                    trailing={statusBadge(plan.status)}
+                  />
+                ))}
+              </List>
+            </div>
+          ))}
+          {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
+            <Text variant="footnote" tone="muted">Программ клиентов пока нет</Text>
+          ) : null}
+        </section>
+      ) : null}
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
       </div>

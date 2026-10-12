@@ -10,6 +10,8 @@ import {
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Avatar, Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
+import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { ExerciseCatalog } from './ExerciseCatalog';
 import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
@@ -208,6 +210,7 @@ interface CoachShellProps {
 
 export function CoachShell({ initData, destination, onNavigationContextChange }: CoachShellProps) {
   const requestBackTransition = useNavigationBackTransition();
+  const cloudPrograms = useAssignedPrograms();
   const [clients, setClients] = useState<CoachClientListItem[] | null>(null);
   const [selectedClient, setSelectedClient] = useState<CoachClientListItem | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
@@ -360,13 +363,21 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
 
     const saveProgram = async () => {
       if (!programDraft?.name.trim() || !programDraft.owner || programCreateBusy) return;
-      const owner: CreateCoachProgramOwner = programDraft.owner.type === 'self'
-        ? { type: 'self' }
-        : { type: 'client', clientUserId: programDraft.owner.client.user.id };
       setProgramCreateBusy(true);
       setProgramCreateError('');
       try {
-        await createCoachProgram(initData, programDraft.name.trim(), owner);
+        if (programDraft.owner.type === 'client' && CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
+          if (!cloudPrograms) throw new Error('Dexie Cloud недоступен');
+          await cloudPrograms.repository.createAssigned(
+            programDraft.owner.client.user.telegramUserId,
+            programDraft.name.trim(),
+          );
+        } else {
+          const owner: CreateCoachProgramOwner = programDraft.owner.type === 'self'
+            ? { type: 'self' }
+            : { type: 'client', clientUserId: programDraft.owner.client.user.id };
+          await createCoachProgram(initData, programDraft.name.trim(), owner);
+        }
         setProgramDraft(null);
         setProgramRefreshKey((value) => value + 1);
       } catch (error) {
@@ -379,6 +390,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     return (
       <ProgramsPage
         initData={initData}
+        clients={clients ?? []}
         onSelectClient={selectProgramClient}
         onOpenProgram={setSelectedProgram}
         creationDraft={programDraft}
