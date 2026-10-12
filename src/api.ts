@@ -456,6 +456,36 @@ export async function getDexieCloudTokens(
   return result;
 }
 
+/** Privileged refresh checks verified Telegram identity; unchanged profiles are not rewritten. */
+export async function syncCloudContactProfile(initData: string): Promise<boolean> {
+  const payload = await apiRequest<unknown>(initData, '/api/cloud/profile/sync', { method: 'POST' });
+  if (!isRecord(payload) || typeof payload.changed !== 'boolean') {
+    throw new ApiError(502, 'Некорректный ответ обновления профиля', 'INVALID_API_RESPONSE');
+  }
+  return payload.changed;
+}
+
+/** Authenticated binary read. Contact metadata comes from the synced cloud membership. */
+export async function fetchCloudContactAvatar(
+  initData: string, realmId: string, userId: string, version: string,
+): Promise<Blob> {
+  const query = new URLSearchParams({ realmId, userId, version });
+  const response = await fetch('/api/cloud/profile/avatar?' + query, {
+    headers: { 'x-telegram-init-data': initData },
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new ApiError(response.status, 'Аватар недоступен', 'AVATAR_UNAVAILABLE');
+  const length = Number(response.headers.get('content-length') || 0);
+  if (length > 2_000_000 || !response.headers.get('content-type')?.startsWith('image/jpeg')) {
+    throw new ApiError(502, 'Некорректное изображение', 'INVALID_AVATAR_RESPONSE');
+  }
+  const blob = await response.blob();
+  if (blob.size < 16 || blob.size > 2_000_000) {
+    throw new ApiError(502, 'Некорректное изображение', 'INVALID_AVATAR_RESPONSE');
+  }
+  return blob;
+}
+
 export function getMe(initData: string): Promise<MeResponse> {
   return apiRequest(initData, '/api/me');
 }
