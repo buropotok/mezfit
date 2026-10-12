@@ -16,9 +16,10 @@ const Context = createContext<AssignedProgramsContextValue | null>(null);
 export function AssignedProgramsProvider({
   telegramUserId, initData, enabled, children,
 }: { telegramUserId: string; initData: string; enabled: boolean; children: ReactNode }) {
+  const [retryKey, setRetryKey] = useState(0);
   const repository = useMemo(
     () => enabled ? new AssignedProgramsRepository(telegramUserId, initData) : null,
-    [telegramUserId, initData, enabled],
+    [telegramUserId, initData, enabled, retryKey],
   );
   const [plans, setPlans] = useState<CloudTrainingPlanRow[]>([]);
   const [status, setStatus] = useState<AssignedProgramsContextValue['status']>('loading');
@@ -56,7 +57,7 @@ export function AssignedProgramsProvider({
     plans,
     status,
     error,
-    refresh: () => repository.refresh(),
+    refresh: async () => { setRetryKey((value) => value + 1); },
   }) : null, [repository, plans, status, error]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
