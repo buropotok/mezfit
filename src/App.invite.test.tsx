@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   acceptCurrentInvite,
-  getClientCoaches,
   getCurrentInvite,
   getMe,
 } from './api';
@@ -15,7 +14,6 @@ vi.mock('./api', async (importOriginal) => {
   return {
     ...actual,
     acceptCurrentInvite: vi.fn(),
-    getClientCoaches: vi.fn(),
     getCurrentInvite: vi.fn(),
     getMe: vi.fn(),
   };
@@ -30,47 +28,63 @@ vi.mock('./schedule/TodayPage', () => ({
 }));
 
 const acceptCurrentInviteMock = vi.mocked(acceptCurrentInvite);
-const getClientCoachesMock = vi.mocked(getClientCoaches);
 const getCurrentInviteMock = vi.mocked(getCurrentInvite);
 const getMeMock = vi.mocked(getMe);
 
 const oldCoach = {
-  relationshipId: 1,
+  relationshipId: 'rlm-old',
   user: {
-    id: 20,
-    telegramUserId: '200',
-    username: 'old_coach',
-    firstName: 'Старый',
-    lastName: 'Тренер',
-    languageCode: 'ru',
-    photoUrl: null,
-    isPremium: false,
+    id: 'tg:200', telegramUserId: '200', username: null,
+    firstName: 'Старый Тренер', lastName: null, photoUrl: null,
   },
 };
 
 const newCoach = {
-  relationshipId: 2,
+  relationshipId: 'rlm-new',
   user: {
-    id: 30,
-    telegramUserId: '300',
-    username: 'new_coach',
-    firstName: 'Новый',
-    lastName: 'Тренер',
-    languageCode: 'ru',
-    photoUrl: null,
-    isPremium: false,
+    id: 'tg:300', telegramUserId: '300', username: null,
+    firstName: 'Новый Тренер', lastName: null, photoUrl: null,
   },
 };
 
+const cloudRefresh = vi.fn();
+
+const TestCloudContext = createContext({
+  actorUserId: 'tg:100',
+  clients: [] as typeof oldCoach[],
+  coaches: [] as typeof oldCoach[],
+  status: 'ready' as const,
+  error: '',
+  refresh: async () => undefined,
+});
+
+function TestCloudProvider({ children }: { children: ReactNode }) {
+  const [coaches, setCoaches] = useState([oldCoach]);
+  const refresh = useCallback(async () => {
+    cloudRefresh();
+    setCoaches([oldCoach, newCoach]);
+  }, []);
+  return (
+    <TestCloudContext.Provider value={{ actorUserId: 'tg:100', clients: [], coaches, status: 'ready', error: '', refresh }}>
+      {children}
+    </TestCloudContext.Provider>
+  );
+}
+
+vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
+  CloudConnectionsProvider: ({ children }: { children: ReactNode }) => <TestCloudProvider>{children}</TestCloudProvider>,
+  useCloudConnections: () => useContext(TestCloudContext),
+}));
+
 beforeEach(() => {
   window.localStorage.clear();
-  window.localStorage.setItem('mezfit.selectedCoachUserId.10', String(oldCoach.user.id));
+  cloudRefresh.mockClear();
+  window.localStorage.setItem('mezfit.selectedCloudCoachUserId.100', String(oldCoach.user.id));
   window.history.replaceState({}, '', `/?tgWebAppStartParam=invite_${'b'.repeat(36)}`);
 
   getMeMock.mockReset();
   getCurrentInviteMock.mockReset();
   acceptCurrentInviteMock.mockReset();
-  getClientCoachesMock.mockReset();
 
   getMeMock.mockResolvedValue({
     user: {
@@ -97,10 +111,6 @@ beforeEach(() => {
     },
   });
   acceptCurrentInviteMock.mockResolvedValue({ ok: true, roles: ['client'] });
-  getClientCoachesMock
-    .mockResolvedValueOnce({ coaches: [oldCoach] })
-    .mockResolvedValue({ coaches: [oldCoach, newCoach] });
-
   window.Telegram = {
     WebApp: {
       initData: 'telegram-init',
@@ -139,10 +149,10 @@ describe('client invite launch', () => {
       );
     });
     await waitFor(() => {
-      expect(getClientCoachesMock).toHaveBeenCalledTimes(2);
+      expect(cloudRefresh).toHaveBeenCalledTimes(1);
     });
 
-    expect(window.localStorage.getItem('mezfit.selectedCoachUserId.10'))
+    expect(window.localStorage.getItem('mezfit.selectedCloudCoachUserId.100'))
       .toBe(String(oldCoach.user.id));
   });
 });
