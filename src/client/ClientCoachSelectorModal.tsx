@@ -8,7 +8,7 @@ interface ClientCoachSelectorModalProps {
 }
 
 export function ClientCoachSelectorModal({ isOpen, onClose }: ClientCoachSelectorModalProps) {
-  const { coaches, selectedCoach, status, error, selectCoach } = useClientCoach();
+  const { coaches, selectedCoach, status, error, selectCoach, refreshCoaches } = useClientCoach();
 
   return (
     <MezfitDialog
@@ -21,7 +21,10 @@ export function ClientCoachSelectorModal({ isOpen, onClose }: ClientCoachSelecto
             <KonstaListItem title="Загружаем тренеров…" />
           ) : null}
           {status === 'error' ? (
-            <KonstaListItem title="Не удалось загрузить тренеров" subtitle={error} />
+            <>
+              <KonstaListItem title="Не удалось загрузить тренеров" subtitle={error} />
+              <KonstaListItem title="Повторить" link onClick={refreshCoaches} />
+            </>
           ) : null}
           {status === 'ready' && coaches.length === 0 ? (
             <KonstaListItem title="Тренеров пока нет" subtitle="Примите приглашение тренера, чтобы он появился здесь." />
