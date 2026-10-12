@@ -357,6 +357,7 @@ export function App() {
         enabled={state.activeRole === 'client'}
       >
         <AssignedProgramsProvider
+          key={state.me.user.telegramUserId}
           telegramUserId={state.me.user.telegramUserId}
           initData={state.initData}
           enabled={destination === 'programs'}
