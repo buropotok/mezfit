@@ -96,8 +96,8 @@ async function storeAvatarIfMissing(
   env: ContactProfileEnv, fetchImpl: typeof fetch, account: string, photo: Exclude<Photo, null>,
 ): Promise<boolean> {
   const key = await avatarKey(account, photo.version);
-  if (await env.R2_BINDING_MEZFIT.head(key)) return true;
   try {
+    if (await env.R2_BINDING_MEZFIT.head(key)) return true;
     const result = await getJson(fetchImpl, `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getFile`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
