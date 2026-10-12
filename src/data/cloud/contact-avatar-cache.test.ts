@@ -6,7 +6,7 @@ import { loadContactAvatar, pruneUnlinkedContactAvatars } from './contact-avatar
 const files = new Map<string, Map<string, { userId: string; version: string; blob: Blob }>>();
 vi.mock('dexie', () => ({
   default: class {
-    files: {
+    files = {
       get: (key: string) => Promise.resolve(files.get(this.name)?.get(key)),
       toArray: () => Promise.resolve(Array.from(files.get(this.name)?.values() ?? [])),
       delete: (key: string) => Promise.resolve(files.get(this.name)?.delete(key)),
