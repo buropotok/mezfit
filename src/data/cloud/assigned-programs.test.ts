@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCloudDatabase } from './database';
-import { AssignedProgramsRepository, isApprovedAssignedPair } from './assigned-programs';
+import { AssignedProgramsRepository, isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
 
 vi.mock('./database', () => ({ createCloudDatabase: vi.fn() }));
 
@@ -43,6 +43,20 @@ function fixture() {
 
 beforeEach(() => {
   createCloudDatabaseMock.mockReset();
+});
+
+describe('assigned PLAN order', () => {
+  it('uses persisted position and a stable ID tie-breaker without mutating local results', () => {
+    const plans = [
+      { id: 'tra-z', position: 2 },
+      { id: 'tra-b', position: 0 },
+      { id: 'tra-a', position: 0 },
+      { id: 'tra-c', position: 1 },
+    ];
+    expect(sortAssignedPlans(plans).map((plan) => plan.id))
+      .toEqual(['tra-a', 'tra-b', 'tra-c', 'tra-z']);
+    expect(plans.map((plan) => plan.id)).toEqual(['tra-z', 'tra-b', 'tra-a', 'tra-c']);
+  });
 });
 
 describe('assigned PLAN read scope', () => {
