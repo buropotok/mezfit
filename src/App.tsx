@@ -11,6 +11,7 @@ import {
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
 import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
+import { CloudConnectionsProvider } from './data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from './data/cloud/pilot-activation';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
@@ -352,9 +353,13 @@ export function App() {
 
   return (
     <GlassSurfaceProvider blur={glassSettings.blur} optics={glassSettings.optics}>
-      <ClientCoachProvider
+      <CloudConnectionsProvider
+        key={state.me.user.telegramUserId}
+        telegramUserId={state.me.user.telegramUserId}
         initData={state.initData}
-        clientUserId={state.me.user.id}
+      >
+      <ClientCoachProvider
+        clientUserId={state.me.user.telegramUserId}
         enabled={state.activeRole === 'client'}
       >
         <AssignedProgramsProvider
@@ -411,6 +416,7 @@ export function App() {
         </NavigationShell>
         </AssignedProgramsProvider>
       </ClientCoachProvider>
+      </CloudConnectionsProvider>
     </GlassSurfaceProvider>
   );
 }
