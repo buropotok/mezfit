@@ -1,4 +1,4 @@
-import { liveQuery, type Subscription } from 'dexie';
+import { liveQuery } from 'dexie';
 import { createCloudDatabase, type CloudTrainingPlanRow } from './database';
 
 /** The only persistence owner for newly assigned PLAN headers. */
@@ -14,7 +14,7 @@ export class AssignedProgramsRepository {
   observe(
     onChange: (rows: CloudTrainingPlanRow[]) => void,
     onError: (error: unknown) => void,
-  ): Subscription {
+  ): { unsubscribe(): void } {
     return liveQuery(() => this.db.trainingPlans.toArray()).subscribe({
       next: onChange,
       error: onError,
@@ -24,7 +24,7 @@ export class AssignedProgramsRepository {
   /** Membership is read from the authenticated user's synced cloud subset.
    * Supplied client IDs are selectors, never authorization proof. */
   private async relationshipRealm(clientTelegramId: string): Promise<string> {
-    if (!/^[1-9]\\d*$/.test(clientTelegramId)) throw new Error('Некорректный клиент');
+    if (!/^[1-9]\d*$/.test(clientTelegramId)) throw new Error('Некорректный клиент');
     const clientUserId = `tg:${clientTelegramId}`;
     if (clientUserId === this.actorUserId) throw new Error('Нельзя назначить программу самому себе');
 
