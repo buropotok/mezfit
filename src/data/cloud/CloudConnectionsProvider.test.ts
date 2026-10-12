@@ -53,7 +53,7 @@ describe('Dexie Cloud coach-client directory', () => {
     delete pair.members[1].name;
     const { clients } = await deriveCloudContacts('tg:101', [pair.realm], pair.members);
     expect(clients[0]).toMatchObject({
-      id: 'tg:202', telegramUserId: '202', firstName: 'Клиент Mezfit',
+      userId: 'tg:202', telegramUserId: '202', displayName: 'Клиент Mezfit',
     });
     expect(clients[0].relationshipId).toBe(pair.realm.realmId);
   });
