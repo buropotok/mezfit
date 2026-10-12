@@ -55,7 +55,7 @@ The card contains a title, `draft` status, coach/client cloud IDs and a stable
    accepted memberships.
 2. Open Coach A > Programs > Create program, choose B, enter a unique test
    name and save. Check that the header appears on the coach list under
-   `Программы Dexie Cloud` (not the old private D1 list).
+   `Программы клиентов` (not the old private D1 list).
 3. Open Client B > Programs with coach A selected. Verify the same name
    appears after sync/reopen, and that changing the selected coach hides it.
    Verify C and unrelated accounts do not see B's program.
