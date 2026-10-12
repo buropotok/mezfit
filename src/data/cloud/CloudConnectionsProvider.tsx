@@ -6,14 +6,9 @@ import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 /** Telegram's verified identity, not the former D1 integer, is the contact ID. */
 export interface CloudContact {
   relationshipId: string;
-  user: {
-    id: string;
-    telegramUserId: string;
-    firstName: string;
-    lastName: null;
-    username: null;
-    photoUrl: null;
-  };
+  userId: string;
+  telegramUserId: string;
+  displayName: string;
 }
 
 interface CloudConnectionsValue {
@@ -33,14 +28,9 @@ function contact(realmId: string, member: { userId?: string; name?: string }, fa
   if (!userId || !/^tg:[1-9]\d*$/.test(userId)) return null;
   return {
     relationshipId: realmId,
-    user: {
-      id: userId,
-      telegramUserId: userId.slice(3),
-      firstName: member.name?.trim() || fallback,
-      lastName: null,
-      username: null,
-      photoUrl: null,
-    },
+    userId,
+    telegramUserId: userId.slice(3),
+    displayName: member.name?.trim() || fallback,
   };
 }
 
