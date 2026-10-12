@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchCloudContactAvatar } from '../../api';
-import { loadContactAvatar } from './contact-avatar-cache';
+import { loadContactAvatar, pruneUnlinkedContactAvatars } from './contact-avatar-cache';
 
-const files = new Map<string, Map<string, { version: string; blob: Blob }>>();
+const files = new Map<string, Map<string, { userId: string; version: string; blob: Blob }>>();
 vi.mock('dexie', () => ({
   default: class {
     files: {
       get: (key: string) => Promise.resolve(files.get(this.name)?.get(key)),
+      toArray: () => Promise.resolve([...files.get(this.name)?.values() ?? []]),
+      delete: (key: string) => Promise.resolve(files.get(this.name)?.delete(key)),
       put: (row: { userId: string; version: string; blob: Blob }) => {
         const entries = files.get(this.name) ?? new Map();
         entries.set(row.userId, row);
@@ -59,6 +61,17 @@ describe('local-first contact avatar cache', () => {
     expect(await loadContactAvatar('101', 'signed', { ...contact, avatarVersion: null })).toBeNull();
     expect(await loadContactAvatar('101', 'signed', { ...contact, relationshipId: 'invalid' })).toBeNull();
     expect(fetchCloudContactAvatar).toHaveBeenCalledTimes(2);
+  });
+
+  it('evicts revoked and outdated portraits only after the caller confirms cloud access', async () => {
+    await loadContactAvatar('101', 'signed', contact);
+    await loadContactAvatar('101', 'signed', { ...contact, userId: 'tg:303' });
+    expect(files.get('mezfit-avatar-cache:101')?.size).toBe(2);
+    await pruneUnlinkedContactAvatars('101', [contact]);
+    expect(files.get('mezfit-avatar-cache:101')?.size).toBe(1);
+    expect(files.get('mezfit-avatar-cache:101')?.has('tg:202')).toBe(true);
+    await pruneUnlinkedContactAvatars('101', [{ ...contact, avatarVersion: 'c'.repeat(64) }]);
+    expect(files.get('mezfit-avatar-cache:101')?.size).toBe(0);
   });
 
   it('falls back safely when the protected photo is not yet available', async () => {
