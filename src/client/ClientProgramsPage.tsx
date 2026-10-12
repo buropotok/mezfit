@@ -1,42 +1,10 @@
-import { useEffect, useState } from 'react';
-import { getClientPrograms, type ProgramListItem } from '../api';
-import { List, ListItem } from '../ui';
+import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import { Button, List, ListItem, Text } from '../ui';
 import { useClientCoach } from './ClientCoachContext';
 
-function programStatusLabel(program: ProgramListItem): string {
-  if (program.status === 'active') return 'Активная';
-  if (program.status === 'finished') return 'Завершена';
-  return 'Черновик';
-}
-
-export function ClientProgramsPage({ initData }: { initData: string }) {
+export function ClientProgramsPage() {
   const { selectedCoach, status: coachStatus, error: coachError } = useClientCoach();
-  const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    if (!selectedCoach) {
-      setPrograms([]);
-      setMessage('');
-      return undefined;
-    }
-
-    let cancelled = false;
-    setPrograms(null);
-    setMessage('');
-
-    getClientPrograms(initData, selectedCoach.user.id)
-      .then((result) => {
-        if (!cancelled) setPrograms(result.programs);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        setPrograms([]);
-        setMessage(error instanceof Error ? error.message : 'Не удалось загрузить программы');
-      });
-
-    return () => { cancelled = true; };
-  }, [initData, selectedCoach]);
+  const cloud = useAssignedPrograms();
 
   if (coachStatus === 'loading' || coachStatus === 'idle') {
     return <List><ListItem interactive={false} title="Загружаем тренеров…" /></List>;
@@ -50,13 +18,22 @@ export function ClientProgramsPage({ initData }: { initData: string }) {
     return <List><ListItem interactive={false} title="Нет выбранного тренера" subtitle="Подключитесь к тренеру, чтобы увидеть назначенные программы." /></List>;
   }
 
-  if (programs === null) {
+  if (!cloud || cloud.status === 'loading') {
     return <List><ListItem interactive={false} title="Загружаем программы…" /></List>;
   }
 
-  if (message) {
-    return <List><ListItem interactive={false} title="Не удалось загрузить программы" subtitle={message} /></List>;
+  if (cloud.status === 'error') {
+    return (
+      <List>
+        <ListItem interactive={false} title="Не удалось загрузить программы" subtitle={cloud.error} />
+        <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
+      </List>
+    );
   }
+
+  const programs = cloud.plans.filter((plan) =>
+    plan.coachUserId === `tg:${selectedCoach.user.telegramUserId}`
+    && plan.clientUserId === cloud.actorUserId);
 
   if (programs.length === 0) {
     return <List><ListItem interactive={false} title="Программ пока нет" subtitle="У выбранного тренера пока нет назначенной вам программы." /></List>;
@@ -69,7 +46,7 @@ export function ClientProgramsPage({ initData }: { initData: string }) {
           key={program.id}
           interactive={false}
           title={program.name}
-          subtitle={programStatusLabel(program)}
+          subtitle={<Text variant="footnote" tone="muted">{program.status === 'draft' ? 'Черновик' : program.status === 'active' ? 'Активная' : 'Завершена'}</Text>}
         />
       ))}
     </List>
