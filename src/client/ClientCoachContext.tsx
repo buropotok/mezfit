@@ -42,7 +42,7 @@ export function ClientCoachProvider({ clientUserId, enabled, children }: ClientC
     if (status !== 'ready') return;
     setSelectedCoachUserId((current) => {
       const available = (id: string | null): id is string =>
-        id !== null && coaches.some((coach) => coach.user.id === id);
+        id !== null && coaches.some((coach) => coach.userId === id);
       const next = available(current) ? current
         : available(storedCoachUserId(clientUserId)) ? storedCoachUserId(clientUserId)
           : coaches[0]?.user.id ?? null;
@@ -53,7 +53,7 @@ export function ClientCoachProvider({ clientUserId, enabled, children }: ClientC
   }, [clientUserId, coaches, enabled, status]);
 
   const selectCoach = useCallback((coachUserId: string) => {
-    if (!coaches.some((coach) => coach.user.id === coachUserId)) return;
+    if (!coaches.some((coach) => coach.userId === coachUserId)) return;
     setSelectedCoachUserId(coachUserId);
     window.localStorage.setItem(storageKey(clientUserId), coachUserId);
   }, [clientUserId, coaches]);
@@ -63,7 +63,7 @@ export function ClientCoachProvider({ clientUserId, enabled, children }: ClientC
   }, [cloud, enabled]);
 
   const selectedCoach = useMemo(
-    () => coaches.find((coach) => coach.user.id === selectedCoachUserId) ?? null,
+    () => coaches.find((coach) => coach.userId === selectedCoachUserId) ?? null,
     [coaches, selectedCoachUserId],
   );
 
