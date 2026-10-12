@@ -92,6 +92,9 @@ describe('cloud relationship initial hydration', () => {
     await act(async () => { pull.reject(new Error('NETWORK_DOWN')); await pull.promise.catch(() => undefined); });
     expect(screen.getByTestId('contacts').textContent).toContain('error:');
     expect(screen.getByTestId('contacts').textContent).toContain('Не удалось синхронизировать связи');
+    // Unrelated local-table changes must not convert a failed cloud sync to "no trainers".
+    act(() => sendLocal?.({ contacts: { clients: [], coaches: [] }, hasRelationshipMembership: false }));
+    expect(screen.getByTestId('contacts').textContent).toContain('error:');
   });
 
   it('keeps previously synced contacts visible when the remote pull fails offline', async () => {
