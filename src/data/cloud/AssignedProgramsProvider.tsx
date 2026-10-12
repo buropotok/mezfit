@@ -14,17 +14,21 @@ interface AssignedProgramsContextValue {
 const Context = createContext<AssignedProgramsContextValue | null>(null);
 
 export function AssignedProgramsProvider({
-  telegramUserId, initData, children,
-}: { telegramUserId: string; initData: string; children: ReactNode }) {
+  telegramUserId, initData, enabled, children,
+}: { telegramUserId: string; initData: string; enabled: boolean; children: ReactNode }) {
   const repository = useMemo(
-    () => new AssignedProgramsRepository(telegramUserId, initData),
-    [telegramUserId, initData],
+    () => enabled ? new AssignedProgramsRepository(telegramUserId, initData) : null,
+    [telegramUserId, initData, enabled],
   );
   const [plans, setPlans] = useState<CloudTrainingPlanRow[]>([]);
   const [status, setStatus] = useState<AssignedProgramsContextValue['status']>('loading');
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!repository) return undefined;
+    setStatus('loading');
+    setPlans([]);
+    setError('');
     let active = true;
     const subscription = repository.observe(
       (rows) => {
@@ -46,14 +50,14 @@ export function AssignedProgramsProvider({
     };
   }, [repository]);
 
-  const value = useMemo<AssignedProgramsContextValue>(() => ({
+  const value = useMemo<AssignedProgramsContextValue | null>(() => repository ? ({
     repository,
     actorUserId: repository.actorUserId,
     plans,
     status,
     error,
     refresh: () => repository.refresh(),
-  }), [repository, plans, status, error]);
+  }) : null, [repository, plans, status, error]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
