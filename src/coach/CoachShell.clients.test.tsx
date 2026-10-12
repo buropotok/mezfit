@@ -11,10 +11,10 @@ const cloudConnections = {
   status: 'ready',
   error: '',
   clients: [
-    { relationshipId: 'rlm4', user: { id: 'tg:104', telegramUserId: '104', firstName: '李', lastName: null, username: null, photoUrl: null } },
-    { relationshipId: 'rlm3', user: { id: 'tg:103', telegramUserId: '103', firstName: 'Борис Петров', lastName: null, username: null, photoUrl: null } },
-    { relationshipId: 'rlm2', user: { id: 'tg:102', telegramUserId: '102', firstName: 'Анна Иванова', lastName: null, username: null, photoUrl: null } },
-    { relationshipId: 'rlm1', user: { id: 'tg:101', telegramUserId: '101', firstName: 'Андрей Соколов', lastName: null, username: null, photoUrl: null } },
+    { relationshipId: 'rlm4', userId: 'tg:104', telegramUserId: '104', displayName: '李' },
+    { relationshipId: 'rlm3', userId: 'tg:103', telegramUserId: '103', displayName: 'Борис Петров' },
+    { relationshipId: 'rlm2', userId: 'tg:102', telegramUserId: '102', displayName: 'Анна Иванова' },
+    { relationshipId: 'rlm1', userId: 'tg:101', telegramUserId: '101', displayName: 'Андрей Соколов' },
   ],
   refresh: vi.fn(async () => undefined),
 };
