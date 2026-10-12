@@ -160,6 +160,30 @@ async function token(
   return value.accessToken;
 }
 
+/** Trusted server-only administration; this token must never reach the browser. */
+export async function cloudMembershipAdminToken(
+  env: CloudMembershipEnv,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string> {
+  requireCloudMembershipConfiguration(env);
+  return token(fetchImpl, {
+    id: env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID,
+    secret: env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET,
+  }, ['ACCESS_DB', 'GLOBAL_READ', 'GLOBAL_WRITE']);
+}
+
+export async function cloudMembershipAdminRead(
+  fetchImpl: typeof fetch, bearer: string, path: string,
+): Promise<unknown> {
+  return json(await upstream(fetchImpl, path, bearer));
+}
+
+export async function cloudMembershipAdminUpsert(
+  fetchImpl: typeof fetch, bearer: string, rows: readonly Record<string, unknown>[],
+): Promise<void> {
+  if (rows.length) await write(fetchImpl, bearer, 'members', [...rows]);
+}
+
 function sameStrings(value: unknown, expected: string[]): boolean {
   return Array.isArray(value) && value.length === expected.length
     && expected.every((item) => value.includes(item))
@@ -257,10 +281,7 @@ export async function provisionInviteMembership(
   requireCloudMembershipConfiguration(env);
 
   const { realm, members } = await relationshipMembership(coachTelegramId, clientTelegramId, names);
-  const admin = await token(fetchImpl, {
-    id: env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID,
-    secret: env.DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET,
-  }, ['ACCESS_DB', 'GLOBAL_READ', 'GLOBAL_WRITE']);
+  const admin = await cloudMembershipAdminToken(env, fetchImpl);
 
   // User impersonation belongs only to the narrow auth service account; never
   // give the administrative account IMPERSONATE or the auth account GLOBAL_*.
