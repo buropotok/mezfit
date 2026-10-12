@@ -286,8 +286,10 @@ export function ProgramsPage({
             />
             {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
           </section>
+        </>
+      )}
 
-          <section className="programs-section" aria-labelledby="cloud-programs-title">
+      <section className="programs-section" aria-labelledby="cloud-programs-title">
             <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы Dexie Cloud</Text>
             {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем синхронизированные программы…</Text> : null}
             {cloud?.status === 'error' ? (
@@ -322,10 +324,6 @@ export function ProgramsPage({
               <Text variant="footnote" tone="muted">В Dexie Cloud пока нет программ клиентов</Text>
             ) : null}
           </section>
-
-
-        </>
-      )}
 
       {message ? <Text className="programs-error" role="alert">{message}</Text> : null}
       </div>
