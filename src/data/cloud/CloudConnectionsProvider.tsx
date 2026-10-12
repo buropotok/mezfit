@@ -69,8 +69,8 @@ export async function deriveCloudContacts(
     const partner = members.find((member) => member.realmId === mine.realmId
       && member.userId !== actorUserId);
     if (!partner?.userId) return null;
-    const asCoach = mine.roles?.includes('coach') && partner.roles?.includes('client');
-    const asClient = mine.roles?.includes('client') && partner.roles?.includes('coach');
+    const asCoach = mine.roles?.includes('coach') === true && partner.roles?.includes('client') === true;
+    const asClient = mine.roles?.includes('client') === true && partner.roles?.includes('coach') === true;
     if (!asCoach && !asClient) return null;
     const coachUserId = asCoach ? actorUserId : partner.userId;
     const clientUserId = asCoach ? partner.userId : actorUserId;
