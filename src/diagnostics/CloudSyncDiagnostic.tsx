@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { liveQuery, type Subscription } from 'dexie';
+import { liveQuery } from 'dexie';
 import { getMe } from '../api';
 import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/database';
 import { deriveCloudContacts } from '../data/cloud/CloudConnectionsProvider';
@@ -60,6 +60,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         const me = await getMe(initData);
         if (!active) return;
         const telegramUserId = me.user.telegramUserId;
+        if (!/^[1-9]\\d*$/.test(telegramUserId)) throw new Error('INVALID_AUTHENTICATED_ACCOUNT');
         const actorUserId = `tg:${telegramUserId}`;
         db = createCloudDatabase(telegramUserId, initData);
         const cloudDb = db;
