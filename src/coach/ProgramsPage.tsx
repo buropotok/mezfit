@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type CoachClientListItem, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
 import { useNavigationFloatingAction } from '../NavigationShell';
-import { Avatar, Badge, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
+import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
+import { Avatar, Badge, Button, IconButton, List, ListItem, Menu, MenuItem, Modal, SearchInput, SortableList, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import programIconUrl from '../ui/icons/Untitled_20260914_023702.svg';
 import chevronRightUrl from '../ui/icons/chevron-right.svg';
 import copyUrl from '../ui/icons/copy.svg';
@@ -136,6 +137,7 @@ function clientName(client: CoachClientListItem): string {
 
 interface ProgramsPageProps {
   initData: string;
+  clients?: CoachClientListItem[];
   onSelectClient?: (userId: number) => Promise<void>;
   onOpenProgram?: (program: ProgramListItem) => void;
   creationDraft?: ProgramCreationDraft | null;
@@ -151,6 +153,7 @@ interface ProgramsPageProps {
 
 export function ProgramsPage({
   initData,
+  clients = [],
   onSelectClient,
   onOpenProgram,
   creationDraft = null,
@@ -163,6 +166,7 @@ export function ProgramsPage({
   onRequestClientSelection,
   onSaveCreation,
 }: ProgramsPageProps) {
+  const cloud = useAssignedPrograms();
   const [programs, setPrograms] = useState<ProgramListItem[] | null>(null);
   const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
@@ -205,6 +209,14 @@ export function ProgramsPage({
       .map((group) => ({ ...group, programs: group.programs.filter((program) => filter === 'all' || program.status === filter) }))
       .filter((group) => group.programs.length > 0);
   }, [clientGroups, filter, search]);
+
+  const sharedPlans = clients.map((client) => ({
+    client,
+    plans: (cloud?.plans ?? []).filter((plan) =>
+      plan.coachUserId === cloud?.actorUserId
+      && plan.clientUserId === `tg:${client.user.telegramUserId}`
+      && (filter === 'all' || plan.status === filter)),
+  })).filter(({ plans }) => plans.length > 0);
 
   const selectClient = async (userId: number) => {
     if (!onSelectClient) return;
@@ -305,6 +317,42 @@ export function ProgramsPage({
               onReorder={(next) => { void reorderOwnPrograms(next); }}
             />
             {ownPrograms.length === 0 ? <Text variant="footnote" tone="muted">Нет программ с выбранным статусом</Text> : null}
+          </section>
+
+          <section className="programs-section" aria-labelledby="cloud-programs-title">
+            <Text id="cloud-programs-title" variant="caption" tone="muted" className="programs-section-label">Программы Dexie Cloud</Text>
+            {cloud?.status === 'loading' ? <Text variant="footnote" tone="muted">Загружаем синхронизированные программы…</Text> : null}
+            {cloud?.status === 'error' ? (
+              <>
+                <Text variant="footnote" role="alert">{cloud.error}</Text>
+                <Button onClick={() => { void cloud.refresh().catch(() => undefined); }}>Повторить</Button>
+              </>
+            ) : null}
+            {sharedPlans.map(({ client, plans }) => (
+              <div className="programs-client" key={client.user.id}>
+                <List className="programs-client-list">
+                  <ListItem
+                    interactive={false}
+                    leading={<Avatar name={clientName(client)} src={client.user.photoUrl ?? undefined} />}
+                    title={clientName(client)}
+                  />
+                </List>
+                <List className="programs-card">
+                  {plans.map((plan) => (
+                    <ListItem
+                      key={plan.id}
+                      interactive={false}
+                      title={plan.name}
+                      subtitle="Карточка программы · синхронизация Dexie Cloud"
+                      trailing={statusBadge(plan.status)}
+                    />
+                  ))}
+                </List>
+              </div>
+            ))}
+            {cloud?.status === 'ready' && sharedPlans.length === 0 ? (
+              <Text variant="footnote" tone="muted">В Dexie Cloud пока нет программ клиентов</Text>
+            ) : null}
           </section>
 
           <section className="programs-section" aria-labelledby="client-programs-title">
