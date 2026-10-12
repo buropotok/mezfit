@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCloudDatabase } from './database';
-import { AssignedProgramsRepository } from './assigned-programs';
+import { AssignedProgramsRepository, isApprovedAssignedPair } from './assigned-programs';
 
 vi.mock('./database', () => ({ createCloudDatabase: vi.fn() }));
 
@@ -43,6 +43,22 @@ function fixture() {
 
 beforeEach(() => {
   createCloudDatabaseMock.mockReset();
+});
+
+describe('assigned PLAN read scope', () => {
+  const members = [
+    { userId: 'tg:101', realmId: 'rlm-pair', roles: ['coach'] },
+    { userId: 'tg:202', realmId: 'rlm-pair', roles: ['client'] },
+  ];
+
+  it('accepts only an ownerless shared realm with the exact coach/client role pair', () => {
+    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:101', 'tg:202')).toBe(true);
+    expect(isApprovedAssignedPair('tg:202', members, 'rlm-pair', 'tg:101', 'tg:202')).toBe(false);
+    expect(isApprovedAssignedPair(undefined, members, 'tg:202', 'tg:101', 'tg:202')).toBe(false);
+    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:101', 'tg:303')).toBe(false);
+    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:202', 'tg:101')).toBe(false);
+    expect(isApprovedAssignedPair(null, members, 'rlm-pair', 'tg:101', 'tg:101')).toBe(false);
+  });
 });
 
 describe('assigned Dexie Cloud PLAN repository', () => {
