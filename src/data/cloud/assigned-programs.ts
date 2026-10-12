@@ -1,26 +1,62 @@
 import { liveQuery } from 'dexie';
+import { relationshipRealmId, stableCloudRelationshipId } from '../../../shared/relationship-id';
 import { createCloudDatabase, type CloudTrainingPlanRow } from './database';
 
-interface RelationshipMember {
+interface RelationshipRealm {
   realmId: string;
-  userId?: string;
-  roles?: string[];
+  owner?: unknown;
+  name?: string;
 }
 
-/** A matching user ID in a private realm is not proof of an assignment. */
-export function isApprovedAssignedPair(
-  realmOwner: unknown,
+interface RelationshipMember {
+  id: string;
+  realmId: string;
+  userId?: string;
+  owner?: unknown;
+  roles?: string[];
+  accepted?: Date;
+  invite?: boolean;
+  permissions?: unknown;
+}
+
+function telegramId(userId: string): string | null {
+  if (!userId.startsWith('tg:')) return null;
+  const id = userId.slice(3);
+  return /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id))
+    && String(Number(id)) === id ? id : null;
+}
+
+function approvedMember(member: RelationshipMember, id: string, userId: string, role: 'coach' | 'client'): boolean {
+  return member.id === id && member.userId === userId && member.owner === null
+    && member.roles?.length === 1 && member.roles[0] === role && member.invite !== true
+    && member.accepted instanceof Date && Number.isFinite(member.accepted.getTime())
+    && (member.permissions == null
+      || (typeof member.permissions === 'object' && !Array.isArray(member.permissions)
+        && Object.keys(member.permissions).length === 0));
+}
+
+/** Fail closed on extra/unaccepted/owned members or any non-Worker realm. */
+export async function isApprovedAssignedPair(
+  realm: RelationshipRealm | undefined,
   members: readonly RelationshipMember[],
-  realmId: string,
   coachUserId: string,
   clientUserId: string,
-): boolean {
-  return realmOwner === null
-    && coachUserId !== clientUserId
-    && members.some((member) => member.realmId === realmId
-      && member.userId === coachUserId && member.roles?.includes('coach'))
-    && members.some((member) => member.realmId === realmId
-      && member.userId === clientUserId && member.roles?.includes('client'));
+): Promise<boolean> {
+  const coach = telegramId(coachUserId);
+  const client = telegramId(clientUserId);
+  if (!coach || !client || coach === client || !realm) return false;
+  const expectedRealmId = await relationshipRealmId(coach, client);
+  if (realm.realmId !== expectedRealmId || realm.owner !== null
+    || realm.name !== 'Mezfit coach-client pilot') return false;
+
+  const pairMembers = members.filter((member) => member.realmId === expectedRealmId);
+  if (pairMembers.length !== 2) return false;
+  const [coachMemberId, clientMemberId] = await Promise.all([
+    stableCloudRelationshipId('mmb', expectedRealmId + ':coach'),
+    stableCloudRelationshipId('mmb', expectedRealmId + ':client'),
+  ]);
+  return pairMembers.some((member) => approvedMember(member, coachMemberId, coachUserId, 'coach'))
+    && pairMembers.some((member) => approvedMember(member, clientMemberId, clientUserId, 'client'));
 }
 
 /** Canonical order is persisted; generated cloud IDs are only tie-breakers. */
@@ -49,36 +85,31 @@ export class AssignedProgramsRepository {
         this.db.realms.toArray(),
         this.db.members.toArray(),
       ]);
-      const ownerByRealm = new Map(realms.map((realm) => [realm.realmId, realm.owner]));
-      // Membership and realm ownership, not client-supplied coach/client IDs,
-      // determine whether this is a genuine shared assigned PLAN.
-      return sortAssignedPlans(plans.filter((plan) => isApprovedAssignedPair(
-        ownerByRealm.get(plan.realmId), members, plan.realmId, plan.coachUserId, plan.clientUserId,
-      )));
+      const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
+      const permitted = await Promise.all(plans.map(async (plan) =>
+        (await isApprovedAssignedPair(
+          realmById.get(plan.realmId), members, plan.coachUserId, plan.clientUserId,
+        )) ? plan : null));
+      return sortAssignedPlans(permitted.filter((plan): plan is CloudTrainingPlanRow => plan !== null));
     }).subscribe({
       next: onChange,
       error: onError,
     });
   }
 
-  /** Membership is read from the authenticated user's synced cloud subset.
-   * Supplied client IDs are selectors, never authorization proof. */
+  /** The Worker-provisioned canonical realm and exactly two accepted members
+   * are required; user IDs supplied by UI remain selectors, not proof. */
   private async relationshipRealm(clientTelegramId: string): Promise<string> {
-    if (!/^[1-9]\d*$/.test(clientTelegramId)) throw new Error('Некорректный клиент');
     const clientUserId = `tg:${clientTelegramId}`;
+    if (!telegramId(clientUserId)) throw new Error('Некорректный клиент');
     if (clientUserId === this.actorUserId) throw new Error('Нельзя назначить программу самому себе');
 
-    const [coaches, clients] = await Promise.all([
-      this.db.members.where('userId').equals(this.actorUserId).toArray(),
-      this.db.members.where('userId').equals(clientUserId).toArray(),
+    const realmId = await relationshipRealmId(this.actorUserId.slice(3), clientTelegramId);
+    const [realm, members] = await Promise.all([
+      this.db.realms.get(realmId),
+      this.db.members.where('realmId').equals(realmId).toArray(),
     ]);
-    const members = [...coaches, ...clients];
-    for (const member of clients) {
-      const realm = await this.db.realms.get(member.realmId);
-      if (isApprovedAssignedPair(
-        realm?.owner, members, member.realmId, this.actorUserId, clientUserId,
-      )) return member.realmId;
-    }
+    if (await isApprovedAssignedPair(realm, members, this.actorUserId, clientUserId)) return realmId;
     throw new Error('Связь с клиентом ещё не синхронизирована. Подключитесь к сети и повторите.');
   }
 
