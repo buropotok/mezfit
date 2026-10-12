@@ -4,6 +4,7 @@ import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { useClientCoach } from './ClientCoachContext';
 import { ClientProgramsPage } from './ClientProgramsPage';
 
+vi.mock('../data/cloud/pilot-activation', () => ({ CLOUD_ASSIGNED_PROGRAMS_ENABLED: true }));
 vi.mock('../data/cloud/AssignedProgramsProvider', () => ({ useAssignedPrograms: vi.fn() }));
 vi.mock('./ClientCoachContext', () => ({ useClientCoach: vi.fn() }));
 
