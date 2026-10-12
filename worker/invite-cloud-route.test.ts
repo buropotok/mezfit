@@ -114,7 +114,9 @@ describe('accept a reusable Telegram invitation into a Dexie relationship', () =
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, roles: ['client'] });
     expect(checkConfiguration).toHaveBeenCalledWith(f.env);
-    expect(provision).toHaveBeenCalledWith(f.env, '101', '202');
+    expect(provision).toHaveBeenCalledWith(f.env, '101', '202', expect.any(Function), {
+      coach: 'Coach', client: 'Client',
+    });
     expect(f.batch).toHaveBeenCalledTimes(1);
     expect(f.isLinked()).toBe(true);
   });
@@ -190,8 +192,12 @@ describe('accept a reusable Telegram invitation into a Dexie relationship', () =
     expect(f.isLinked(2)).toBe(true);
     expect(f.isLinked(3)).toBe(true);
     expect(provision).toHaveBeenCalledTimes(2);
-    expect(provision).toHaveBeenNthCalledWith(1, f.env, '101', '202');
-    expect(provision).toHaveBeenNthCalledWith(2, f.env, '101', '303');
+    expect(provision).toHaveBeenNthCalledWith(1, f.env, '101', '202', expect.any(Function), {
+      coach: 'Coach', client: 'Client',
+    });
+    expect(provision).toHaveBeenNthCalledWith(2, f.env, '101', '303', expect.any(Function), {
+      coach: 'Coach', client: 'Client',
+    });
   });
 
   it('returns success on retry after the first success response was lost', async () => {
