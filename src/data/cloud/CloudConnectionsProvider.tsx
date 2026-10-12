@@ -108,7 +108,7 @@ export function CloudConnectionsProvider({
   useEffect(() => {
     alive.current = true;
     let active = true;
-    let initialPullFinished = false;
+    let initialPullSucceeded = false;
     let locallyAvailable = false;
 
     const publish = (next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
@@ -116,7 +116,7 @@ export function CloudConnectionsProvider({
       const hasContacts = next.clients.length > 0 || next.coaches.length > 0;
       locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
-      if (!initialPullFinished && !hasContacts) return;
+      if (!initialPullSucceeded && !hasContacts) return;
       setClients(next.clients);
       setCoaches(next.coaches);
       setError('');
@@ -128,7 +128,7 @@ export function CloudConnectionsProvider({
     const subscription = liveQuery(readContacts).subscribe({
       next: ({ contacts, hasRelationshipMembership }) => {
         if (!active) return;
-        if (initialPullFinished && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
+        if (initialPullSucceeded && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
           return;
@@ -150,7 +150,7 @@ export function CloudConnectionsProvider({
         if (!active) return;
         const { contacts, hasRelationshipMembership } = await readContacts();
         if (!active) return;
-        initialPullFinished = true;
+        initialPullSucceeded = true;
         if (hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
@@ -159,7 +159,7 @@ export function CloudConnectionsProvider({
         }
       } catch {
         if (!active) return;
-        initialPullFinished = true;
+        // A failed pull cannot authorize an empty-state claim on later local updates.
         // Previously synced contacts must stay usable without connectivity.
         if (!locallyAvailable) {
           setStatus('error');
