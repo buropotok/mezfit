@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
+import { stableCloudRelationshipId } from '../../../shared/relationship-id';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { syncCloudContactProfile } from '../../api';
 import { loadContactAvatar, pruneUnlinkedContactAvatars } from './contact-avatar-cache';
@@ -46,7 +47,6 @@ type MemberView = {
   realmId: string;
   userId?: string;
   name?: string;
-  avatarVersion?: string | null;
   roles?: string[];
   owner?: unknown;
   // Raw synced memberships can expose the Worker's accepted:true marker.
@@ -55,11 +55,21 @@ type MemberView = {
   permissions?: unknown;
 };
 
+type ProfileView = {
+  id: string;
+  realmId: string;
+  owner?: unknown;
+  userId: string;
+  name: string;
+  avatarVersion: string | null;
+};
+
 /** Derived presentation only: server-enforced memberships remain the access boundary. */
 export async function deriveCloudContacts(
   actorUserId: string,
   realms: readonly RealmView[],
   members: readonly MemberView[],
+  profiles: readonly ProfileView[] = [],
 ): Promise<{ clients: CloudContact[]; coaches: CloudContact[] }> {
   const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
   const own = members.filter((member) => member.userId === actorUserId);
@@ -75,7 +85,14 @@ export async function deriveCloudContacts(
     if (!await isApprovedAssignedPair(realmById.get(mine.realmId), members, coachUserId, clientUserId)) {
       return null;
     }
-    const peer = contact(mine.realmId, partner, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
+    const profileId = await stableCloudRelationshipId('prf', mine.realmId + ':' + partner.userId);
+    const profile = profiles.find((row) => row.id === profileId
+      && row.realmId === mine.realmId && row.userId === partner.userId && row.owner === null);
+    const peer = contact(mine.realmId, {
+      userId: partner.userId,
+      name: profile?.name || partner.name,
+      avatarVersion: profile?.avatarVersion,
+    }, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
     return peer ? { peer, asCoach } : null;
   }));
   const connections = links.filter((link): link is { peer: CloudContact; asCoach: boolean } => link !== null);
@@ -87,9 +104,13 @@ export async function deriveCloudContacts(
 
 /** One local snapshot; access control still belongs to Dexie Cloud server. */
 async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string) {
-  const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
+  const [realms, members, profiles] = await Promise.all([
+    db.realms.toArray(), db.members.toArray(),
+    // Missing/older profile projection must not hide an otherwise valid membership.
+    db.contactProfiles?.toArray() ?? Promise.resolve([]),
+  ]);
   return {
-    contacts: await deriveCloudContacts(actorUserId, realms, members),
+    contacts: await deriveCloudContacts(actorUserId, realms, members, profiles),
     hasRelationshipMembership: members.some((member) => member.userId === actorUserId
       && (member.roles?.includes('coach') || member.roles?.includes('client'))),
   };
