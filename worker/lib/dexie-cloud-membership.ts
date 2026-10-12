@@ -1,5 +1,6 @@
 import cloudConfig from '../../dexie-cloud.json';
 import roleConfig from '../../cloud/roles.json';
+import { relationshipRealmId, stableCloudRelationshipId } from '../../shared/relationship-id';
 
 export interface CloudMembershipEnv {
   // This is a dedicated backend-only credential. Never reuse the Telegram token service account.
@@ -56,12 +57,6 @@ function telegramId(value: string): string {
   return value;
 }
 
-async function stableId(prefix: 'rlm' | 'mmb', input: string): Promise<string> {
-  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-  return prefix + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('').slice(0, 28);
-}
-
 export async function relationshipMembership(
   coachTelegramId: string,
   clientTelegramId: string,
@@ -71,12 +66,12 @@ export async function relationshipMembership(
   if (coach === client) failConflict();
 
   // Must match the deterministic IDs in the existing administrative pilot.
-  const realmId = await stableId('rlm', 'mezfit-relationship-v1:' + coach + ':' + client);
+  const realmId = await relationshipRealmId(coach, client);
   return {
     realm: { realmId, name: 'Mezfit coach-client pilot', owner: null },
     members: [
       {
-        id: await stableId('mmb', realmId + ':coach'),
+        id: await stableCloudRelationshipId('mmb', realmId + ':coach'),
         realmId,
         userId: 'tg:' + coach,
         owner: null,
@@ -85,7 +80,7 @@ export async function relationshipMembership(
         roles: ['coach'],
       },
       {
-        id: await stableId('mmb', realmId + ':client'),
+        id: await stableCloudRelationshipId('mmb', realmId + ':client'),
         realmId,
         userId: 'tg:' + client,
         owner: null,
