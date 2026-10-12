@@ -91,7 +91,7 @@ function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   );
 }
 
-function ClientWorkspace({ initData, client }: { initData: string; client: CloudContact }) {
+function ClientWorkspace({ client }: { client: CloudContact }) {
   const [tab, setTab] = useState<ClientTab>('overview');
   const name = displayName(client);
 
@@ -290,7 +290,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }, [destination, selectedClient, selectedProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
-    return <ClientWorkspace initData={initData} client={selectedClient} />;
+    return <ClientWorkspace client={selectedClient} />;
   }
 
   if (destination === 'today') {
