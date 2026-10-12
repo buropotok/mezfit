@@ -206,8 +206,9 @@ export async function syncOwnContactProfile(
     const previous = known.get(entry.id);
     if (previous && (previous.realmId !== entry.realmId || previous.userId !== account
       || previous.owner !== null)) continue;
+    const previousVersion = previous?.avatarVersion;
     const avatarVersion = newVersion === undefined
-      ? (version(previous?.avatarVersion) ? previous.avatarVersion : null) : newVersion;
+      ? (version(previousVersion) ? previousVersion : null) : newVersion;
     if (previous?.name === name && previous.avatarVersion === avatarVersion) continue;
     changed.push({
       id: entry.id,
