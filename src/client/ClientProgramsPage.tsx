@@ -33,7 +33,7 @@ function CloudClientProgramsPage() {
   }
 
   const programs = cloud.plans.filter((plan) =>
-    plan.coachUserId === `tg:${selectedCoach.user.telegramUserId}`
+    plan.coachUserId === selectedCoach.userId
     && plan.clientUserId === cloud.actorUserId);
 
   if (programs.length === 0) {
