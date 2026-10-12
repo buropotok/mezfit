@@ -37,10 +37,12 @@ let memberRows: typeof members = [];
 let pull: ReturnType<typeof deferred>;
 let sendLocal: ((value: Snapshot) => void) | undefined;
 let cloudDb: MezfitCloudDatabase;
+let refreshContacts: (() => Promise<void>) | undefined;
 const unsubscribe = vi.fn();
 
 function Status() {
   const cloud = useCloudConnections();
+  refreshContacts = cloud?.refresh;
   return <div data-testid="contacts">{cloud?.status}:{cloud?.clients.map((client) => client.displayName).join(',')}:{cloud?.error}</div>;
 }
 
@@ -54,6 +56,7 @@ beforeEach(() => {
   realmRows = [];
   memberRows = [];
   sendLocal = undefined;
+  refreshContacts = undefined;
   cloudDb = {
     close: vi.fn(),
     cloud: { sync: vi.fn(() => pull.promise) },
@@ -77,7 +80,9 @@ describe('cloud relationship initial hydration', () => {
     mount();
     act(() => sendLocal?.({ contacts: { clients: [], coaches: [] }, hasRelationshipMembership: false }));
     expect(screen.getByTestId('contacts').textContent).toBe('loading::');
-    expect(cloudDb.cloud.sync).toHaveBeenCalledWith({ purpose: 'pull', wait: true });
+    await waitFor(() => expect(cloudDb.cloud.sync).toHaveBeenCalledWith({ purpose: 'pull', wait: true }));
+    expect(vi.mocked(cloudDb.realms.toArray).mock.invocationCallOrder[0])
+      .toBeLessThan(vi.mocked(cloudDb.cloud.sync).mock.invocationCallOrder[0]);
 
     realmRows = [realm];
     memberRows = members;
@@ -118,6 +123,30 @@ describe('cloud relationship initial hydration', () => {
     await act(async () => { pull.resolve(); await pull.promise; });
     await waitFor(() => expect(screen.getByTestId('contacts').textContent).toContain('не прошла проверку'));
     expect(screen.getByTestId('contacts').textContent).toContain('error:');
+  });
+
+  it('allows an empty update after a successful retry following initial pull failure', async () => {
+    mount();
+    await waitFor(() => expect(cloudDb.cloud.sync).toHaveBeenCalledTimes(1));
+    await act(async () => { pull.reject(new Error('OFFLINE')); await pull.promise.catch(() => undefined); });
+    expect(screen.getByTestId('contacts').textContent).toContain('error:');
+
+    pull = deferred();
+    realmRows = [realm];
+    memberRows = members;
+    await act(async () => {
+      const retry = refreshContacts?.();
+      expect(retry).toBeDefined();
+      pull.resolve();
+      await retry;
+    });
+    expect(screen.getByTestId('contacts').textContent).toBe('ready:Клиент:');
+
+    // Once hydration was recovered, liveQuery must be allowed to remove the last contact.
+    act(() => sendLocal?.({
+      contacts: { clients: [], coaches: [] }, hasRelationshipMembership: false,
+    }));
+    expect(screen.getByTestId('contacts').textContent).toBe('ready::');
   });
 
   it('shows a genuinely empty directory after successful pull with no membership', async () => {
