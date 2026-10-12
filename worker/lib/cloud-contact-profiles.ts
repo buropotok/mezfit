@@ -143,6 +143,12 @@ async function validatedPair(
   return rows;
 }
 
+/** Later verified Telegram launches take precedence over older still-valid initData. */
+function hasNewerOrSameSource(row: Row | undefined, sourceAuthAt: number): boolean {
+  return typeof row?.sourceAuthAt === 'number' && Number.isSafeInteger(row.sourceAuthAt)
+    && row.sourceAuthAt >= sourceAuthAt;
+}
+
 function profileName(user: TelegramInitUser): string {
   return [user.first_name, user.last_name].filter(Boolean).join(' ').trim().slice(0, 120);
 }
@@ -162,6 +168,10 @@ export async function syncOwnContactProfile(
     request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
   );
   const account = 'tg:' + identity.user.id;
+  const sourceAuthAt = identity.authDate.getTime();
+  if (!Number.isSafeInteger(sourceAuthAt) || sourceAuthAt <= 0) {
+    return error(401, 'INVALID_PROFILE_SOURCE');
+  }
   const bearer = await cloudMembershipAdminToken(env, fetchImpl);
   const own = await cloudMembershipAdminRead(
     fetchImpl, bearer, '/all/members?userId=' + encodeURIComponent(account),
@@ -191,9 +201,15 @@ export async function syncOwnContactProfile(
   const known = new Map(existing.filter((row) => typeof row.id === 'string')
     .map((row) => [row.id as string, row]));
 
+  const eligibleForSession = eligible.filter(({ id }) =>
+    !hasNewerOrSameSource(known.get(id), sourceAuthAt));
+  if (eligibleForSession.length === 0) {
+    return Response.json({ changed: false }, { headers: { 'cache-control': 'no-store' } });
+  }
+
   const name = profileName(identity.user);
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
-  const hasNewVersion = photo !== undefined && eligible.some(({ id }) =>
+  const hasNewVersion = photo !== undefined && eligibleForSession.some(({ id }) =>
     known.get(id)?.avatarVersion !== (photo?.version ?? null));
   let newVersion: string | null | undefined;
   if (photo === null) newVersion = null;
@@ -201,9 +217,20 @@ export async function syncOwnContactProfile(
     if (await storeAvatarIfMissing(env, fetchImpl, account, photo)) newVersion = photo.version;
   }
 
+  // The Bot API / R2 calls above may take time. Re-read cloud timestamps
+  // just before committing so a slower, older Mini App session does not
+  // restore a name that a newer session has already persisted.
+  const latest = await cloudMembershipAdminRead(
+    fetchImpl, bearer, '/all/contactProfiles?userId=' + encodeURIComponent(account),
+  );
+  if (!Array.isArray(latest) || !latest.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
+  const current = new Map(latest.filter((row) => typeof row.id === 'string')
+    .map((row) => [row.id as string, row]));
+
   const changed: Row[] = [];
-  for (const entry of eligible) {
-    const previous = known.get(entry.id);
+  for (const entry of eligibleForSession) {
+    const previous = current.get(entry.id);
+    if (hasNewerOrSameSource(previous, sourceAuthAt)) continue;
     if (previous && (previous.realmId !== entry.realmId || previous.userId !== account
       || previous.owner !== null)) continue;
     const previousVersion = previous?.avatarVersion;
@@ -217,6 +244,7 @@ export async function syncOwnContactProfile(
       userId: account,
       name,
       avatarVersion,
+      sourceAuthAt,
     });
   }
   await cloudMembershipAdminUpsertProfiles(fetchImpl, bearer, changed);
