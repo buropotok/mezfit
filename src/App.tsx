@@ -158,7 +158,7 @@ function ClientShell({
     );
   }
 
-  if (destination === 'programs') return <ClientProgramsPage initData={initData} />;
+  if (destination === 'programs') return <ClientProgramsPage />;
 
   const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
   return (
