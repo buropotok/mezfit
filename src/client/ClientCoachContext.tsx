@@ -45,7 +45,7 @@ export function ClientCoachProvider({ clientUserId, enabled, children }: ClientC
         id !== null && coaches.some((coach) => coach.userId === id);
       const next = available(current) ? current
         : available(storedCoachUserId(clientUserId)) ? storedCoachUserId(clientUserId)
-          : coaches[0]?.user.id ?? null;
+          : coaches[0]?.userId ?? null;
       if (next === null) window.localStorage.removeItem(storageKey(clientUserId));
       else window.localStorage.setItem(storageKey(clientUserId), next);
       return next;
