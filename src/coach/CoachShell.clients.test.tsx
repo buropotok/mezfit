@@ -7,76 +7,29 @@ vi.mock('../schedule/TodayPage', () => ({
   TodayPage: () => <div>Coach Today</div>,
 }));
 
+const cloudConnections = {
+  status: 'ready',
+  error: '',
+  clients: [
+    { relationshipId: 'rlm4', user: { id: 'tg:104', telegramUserId: '104', firstName: '李', lastName: null, username: null, photoUrl: null } },
+    { relationshipId: 'rlm3', user: { id: 'tg:103', telegramUserId: '103', firstName: 'Борис Петров', lastName: null, username: null, photoUrl: null } },
+    { relationshipId: 'rlm2', user: { id: 'tg:102', telegramUserId: '102', firstName: 'Анна Иванова', lastName: null, username: null, photoUrl: null } },
+    { relationshipId: 'rlm1', user: { id: 'tg:101', telegramUserId: '101', firstName: 'Андрей Соколов', lastName: null, username: null, photoUrl: null } },
+  ],
+  refresh: vi.fn(async () => undefined),
+};
+
+vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
+  useCloudConnections: () => cloudConnections,
+}));
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
 
 describe('CoachShell client contacts', () => {
-  it('groups clients alphabetically and keeps avatar/name/Telegram username rows selectable', async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url === '/api/coach/clients') {
-        return new Response(JSON.stringify({
-          clients: [
-            {
-              relationshipId: 4,
-              user: {
-                id: 104,
-                telegramUserId: '104',
-                username: 'li',
-                firstName: '李',
-                lastName: '',
-                languageCode: 'zh',
-                photoUrl: null,
-                isPremium: false,
-              },
-            },
-            {
-              relationshipId: 3,
-              user: {
-                id: 103,
-                telegramUserId: '103',
-                username: 'boris',
-                firstName: 'Борис',
-                lastName: 'Петров',
-                languageCode: 'ru',
-                photoUrl: null,
-                isPremium: false,
-              },
-            },
-            {
-              relationshipId: 2,
-              user: {
-                id: 102,
-                telegramUserId: '102',
-                username: 'anna',
-                firstName: 'Анна',
-                lastName: 'Иванова',
-                languageCode: 'ru',
-                photoUrl: null,
-                isPremium: false,
-              },
-            },
-            {
-              relationshipId: 1,
-              user: {
-                id: 101,
-                telegramUserId: '101',
-                username: 'sokolag',
-                firstName: 'Андрей',
-                lastName: 'Соколов',
-                languageCode: 'ru',
-                photoUrl: 'https://example.com/andrei.jpg',
-                isPremium: false,
-              },
-            },
-          ],
-        }), { status: 200, headers: { 'content-type': 'application/json' } });
-      }
-      throw new Error(`Unexpected fetch: ${url}`);
-    });
-    vi.stubGlobal('fetch', fetchMock);
+  it('groups synced cloud clients alphabetically and keeps named rows selectable', async () => {
     vi.stubGlobal('ResizeObserver', class {
       observe() {}
       unobserve() {}
@@ -100,8 +53,8 @@ describe('CoachShell client contacts', () => {
     const groupB = screen.getByText('Б', { selector: 'li' });
     const groupLi = screen.getByText('李', { selector: 'li' });
 
-    expect(screen.getByText('@sokolag')).toBeTruthy();
-    expect(document.querySelector('img[src="https://example.com/andrei.jpg"]')).not.toBeNull();
+    expect(screen.queryByText('@sokolag')).toBeNull();
+    expect(document.querySelector('img[src="https://example.com/andrei.jpg"]')).toBeNull();
     expect(groupA.compareDocumentPosition(andrei) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(andrei.compareDocumentPosition(anna) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(anna.compareDocumentPosition(groupB) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -118,7 +71,7 @@ describe('CoachShell client contacts', () => {
 
 
 describe('CoachShell Today loading', () => {
-  it('does not preload the client directory on the Today cold path', async () => {
+  it('does not issue a legacy D1 client-directory fetch from the Today screen', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
