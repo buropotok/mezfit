@@ -15,6 +15,7 @@ async function fixture() {
     accepted: new Date('2026-10-12T00:00:00Z'),
     roles: [...member.roles] as string[],
     owner: null as string | null,
+    invite: false as boolean,
     permissions: undefined as Record<string, unknown> | undefined,
   }));
   const rows: Array<Record<string, unknown>> = [];
