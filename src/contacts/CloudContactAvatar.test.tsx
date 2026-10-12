@@ -18,10 +18,11 @@ const peer = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubGlobal('URL', Object.assign(URL, {
-    createObjectURL: vi.fn(() => 'blob:mezfit-portrait'),
-    revokeObjectURL: vi.fn(),
-  }));
+  const NativeURL = URL;
+  vi.stubGlobal('URL', class extends NativeURL {
+    static createObjectURL = vi.fn(() => 'blob:mezfit-portrait');
+    static revokeObjectURL = vi.fn();
+  });
 });
 
 afterEach(() => {
