@@ -15,6 +15,7 @@ import { CloudConnectionsProvider } from './data/cloud/CloudConnectionsProvider'
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from './data/cloud/pilot-activation';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
+import { PublicExercises } from './exercises/PublicExercises';
 import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
 import {
   NavigationShell,
@@ -159,6 +160,7 @@ function ClientShell({
   }
 
   if (destination === 'programs') return <ClientProgramsPage />;
+  if (destination === 'exercises') return <PublicExercises onNavigationContextChange={onNavigationContextChange} />;
 
   const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };
   return (
