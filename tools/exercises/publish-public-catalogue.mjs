@@ -69,14 +69,14 @@ export async function openPublicSession({ dbUrl, rawKey, mode, fetchFn = fetch }
   const headers = { authorization: `Bearer ${token.accessToken}` };
   return {
     async list(table) {
-      if (!(table in EXPECTED_COUNTS)) error('Forbidden public catalogue table');
+      if (!Object.hasOwn(EXPECTED_COUNTS, table)) error('Forbidden public catalogue table');
       const response = await fetchFn(
         `${dbUrl}/all/${table}?realmId=${encodeURIComponent(REALM)}`,
         { method: 'GET', headers, signal: AbortSignal.timeout(30000) });
       return parseResponseRows(await asJson(response, table), table);
     },
     async put(table, rows) {
-      if (mode !== 'publish' || !(table in EXPECTED_COUNTS) ||
+      if (mode !== 'publish' || !Object.hasOwn(EXPECTED_COUNTS, table) ||
           !Array.isArray(rows) || rows.length === 0 || rows.length > BATCH_SIZE
           || rows.some(row => !record(row) || typeof row.id !== 'string' ||
             row.realmId !== REALM || row.owner !== null)) error('Unsafe publication write');
