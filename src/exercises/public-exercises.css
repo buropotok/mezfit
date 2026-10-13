@@ -21,11 +21,12 @@
   justify-content: space-between;
   align-items: center;
 }
-.mezfit-public-exercises__category-image {
+.mezfit-public-exercises__category-fallback {
+  display: flex;
   width: 72px;
   height: 72px;
-  display: block;
-  object-fit: contain;
+  justify-content: center;
+  align-items: center;
 }
 .mezfit-public-exercises__exercise-fallback {
   display: flex;
