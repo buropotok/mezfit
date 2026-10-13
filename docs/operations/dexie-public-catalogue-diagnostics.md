@@ -8,18 +8,20 @@ reports public catalogue readiness without modifying schema, roles or data.
 
 Workflow: `.github/workflows/dexie-public-catalogue-diagnostics.yml`.
 
-- Exports the current cloud schema and role definitions, plus **only** `rlm-public`.
-- Checks the three public exercise table declarations, counts exported records,
-  the expected publication manifest, and obvious public-table/wildcard references
-  in ordinary coach/client role permissions.
+- Authenticates with only `ACCESS_DB` and `GLOBAL_READ` via `POST /token`.
+- Uses `GET /all/<table>?realmId=rlm-public` on just the three public exercise tables.
+- Counts returned records and checks publication manifest metadata.
+- **Cannot inspect server schema declarations or permission roles** with these scopes.
+  Those require a separate administrator review before publishing.
 - Summarizes only table names, counts, and booleans. **The report is not a full
   integrity verification or a server-authorized permissions test.**
-- Does not call Dexie Cloud `import`, `authorize`, `clear-*`, `delete`, or
-  any other write operation.
+- Does not run administrative Dexie CLI export or call `import`, `authorize`,
+  `clear-*`, `delete`, or any write operation.
 - Does not use Cloudflare/R2 credentials. The source JSON may already be in R2,
   but this workflow does **not** attest its presence or hash.
-- Does not upload full exports or secrets as CI artifacts. This repository is
-  public; publishing private data through workflow logs/artifacts is forbidden.
+- Does not write raw records or secrets to disk or upload them as CI artifacts.
+  All JSON responses are processed in memory; the output is a safe aggregate report.
+  This repository is public: private data is never written to workflow logs/artifacts.
 
 ## One-time service account setup (database manager only)
 
@@ -43,8 +45,9 @@ entire JSON contents of `dexie-cloud-diagnostics.key`, including its mapping
 from database URL to `clientId` and `clientSecret`.
 
 The Actions job checks that this mapping matches the checked-in database URL.
-The secret is written to a temporary `dexie-cloud.key` with owner-only access
-and removed after the run. The `*.key` pattern is gitignored.
+The credentials and short-lived token remain in process memory. No key or raw
+export file is written to disk. The `*.key` pattern remains gitignored for
+manual administrator operations.
 
 **Do not grant `GLOBAL_WRITE`, `MANAGE_DB`, `DELETE_DB`, `IMPERSONATE`
 or wildcard scopes to this diagnostic account.** A future publication workflow
@@ -71,15 +74,21 @@ The result is visible in the GitHub Actions run summary and in a short-lived
 
 ### Interpret the result
 
-- Missing cloud table: review the remote schema; changing local Dexie versions
-  does not automatically install server schema/ACLs.
-- 0 exercise/taxonomy rows: public realm has not been staged or is not
-  readable under this credential.
+- Table query `unavailable` (HTTP 404): cannot confirm whether the table exists
+  or is configured; **not** equivalent to zero rows. The admin must review schema.
+- 0 exercise/taxonomy rows after a successful query: no records were found in
+  `rlm-public` for the relevant table.
 - Missing manifest: the public release has not been activated.
 - 1324/69 rows and matching manifest: only *aggregate state* is present;
   this alone does not confirm record-level consistency or access control.
-- Any suspicious ordinary role permission: inspect and resolve it before
-  introducing write access or activation.
+- Any HTTP 401/403, malformed response or unexpected record realm is a failed
+  diagnostic, not a successful empty catalogue.
+
+Server-side schema and permissions require a separate admin review. The older
+`tools/exercises/report-public-catalogue.mjs` remains an **offline-only helper**
+for manually obtained privileged CLI exports and is not used by this workflow.
+This distinction is intentional: old offline tests remain relevant, but the
+GitHub workflow does not request administrative export scopes.
 
 ## Next phase: separately approved publishing
 
