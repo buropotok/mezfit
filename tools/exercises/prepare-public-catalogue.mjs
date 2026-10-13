@@ -7,6 +7,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 const EXPECTED_SOURCE_SHA256 = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 const SOURCE_CATALOGUE = 'mezfit.exercise_catalog.ru_anatomy';
@@ -88,7 +89,7 @@ export function diffExerciseRecords(existing, nextRecords) {
     if (!(id in existing)) { added.push(id); continue; }
     const earlier = normalizeExportedRow(id, existing[id]);
     if (earlier && Object.entries(row).every(([key, value]) =>
-      JSON.stringify(earlier[key]) === JSON.stringify(value))) unchanged.push(id);
+      isDeepStrictEqual(earlier[key], value))) unchanged.push(id);
     else changed.push(id);
   }
   for (const id of Object.keys(existing)) if (!(id in nextRecords)) missing.push(id);
@@ -171,7 +172,21 @@ async function main() {
       || matchingExercises.some(([id]) => !expectedIds.has(id))
       || matchingTaxonomy.some(([id]) => !(id in taxonomy)))
       fail(`Remote export incomplete: ${matchingExercises.length} exercises, ${matchingTaxonomy.length} taxonomy`);
-    console.log('Remote export covers 1324 exercises and 69 taxonomy nodes for expected source hash.');
+    // Counts and a self-reported source hash are insufficient: independently
+    // verify every canonical field before allowing manifest activation.
+    for (const row of exercises) {
+      const exported = normalizeExportedRow(row.id, remoteExercises[row.id]);
+      if (!exported || exported.sourceSha256 !== digest || Object.entries(row).some(
+        ([key, value]) => !isDeepStrictEqual(exported[key], value),
+      )) fail(`Remote exercise content mismatch: ${row.id}`);
+    }
+    for (const [id, node] of Object.entries(taxonomy)) {
+      const exported = normalizeExportedRow(id, remoteTaxonomy[id]);
+      if (!exported || exported.sourceSha256 !== digest || Object.entries(node).some(
+        ([key, value]) => !isDeepStrictEqual(exported[key], value),
+      )) fail(`Remote taxonomy content mismatch: ${id}`);
+    }
+    console.log('Remote export content verified: 1324 exercises and 69 taxonomy nodes.');
     return;
   }
   if (!opt['out-dir']) fail('Specify --out-dir');
