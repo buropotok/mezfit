@@ -44,8 +44,10 @@ function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: P
       <Surface className="mezfit-public-exercises__detail-section">
         <Text variant="headline">Инструкция</Text>
         {row.instruction_steps.ru.length ? (
-          <ol>{row.instruction_steps.ru.map((step, i) => <li key={`${row.id}-${i}`}>{step}</li>)}</ol>
-        ) : <p>{row.instructions.ru}</p>}
+          <ol>{row.instruction_steps.ru.map((step, i) => (
+            <li key={`${row.id}-${i}`}><Text variant="body">{step}</Text></li>
+          ))}</ol>
+        ) : <p><Text variant="body">{row.instructions.ru}</Text></p>}
       </Surface>
       <Surface className="mezfit-public-exercises__detail-section">
         <Text variant="headline">Анатомия</Text>
