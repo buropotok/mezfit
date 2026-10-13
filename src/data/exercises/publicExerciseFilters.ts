@@ -96,6 +96,8 @@ export function filterOptions(
       .map((node) => ({ id: node.id, label: node.subcategory_ru }))
       .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   }
+  // Narrow to scalar indexed fields; muscle groups are handled above.
+  if (group !== 'subcategory' && group !== 'equipment' && group !== 'movement_type') return [];
   const labels: Record<string, string> = group === 'subcategory' ? subcategoryLabels
     : group === 'equipment' ? EQUIPMENT_LABELS : MOVEMENT_LABELS;
   return [...new Set(exercises.map((row) => row[group]))].sort((a, b) => a.localeCompare(b, 'ru'))
