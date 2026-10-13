@@ -83,12 +83,14 @@ export function isPublicExerciseRow(value: unknown): value is PublicExerciseRow 
     && typeof row.sourceSha256 === 'string' && /^[a-f0-9]{64}$/.test(row.sourceSha256)
     && typeof row.name === 'string' && typeof row.name_ru === 'string'
     && typeof row.name_en === 'string' && typeof row.category === 'string'
-    && typeof row.subcategory === 'string' && typeof row.movement_type === 'string'
+    && typeof row.subcategory === 'string' && typeof row.subcategory_ru === 'string'
+    && typeof row.movement_type === 'string'
     && typeof row.equipment === 'string' && typeof row.attribution === 'string'
     && typeof row.image === 'string' && typeof row.gif_url === 'string'
     && typeof row.media_id === 'string' && typeof row.created_at === 'string'
     && typeof row.body_part === 'string' && typeof row.target === 'string'
     && typeof row.muscle_group === 'string' && Array.isArray(row.secondary_muscles)
+    && row.secondary_muscles.every((item: unknown) => typeof item === 'string')
     && typeof muscles === 'object' && muscles !== null
     && ['primary', 'secondary', 'stabilizers', 'emphasis'].every((field) => Array.isArray(muscles[field])
       && (muscles[field] as unknown[]).every((item) => typeof item === 'string'))
@@ -104,4 +106,40 @@ export function isPublicExerciseRow(value: unknown): value is PublicExerciseRow 
     && typeof (row.anatomy_evidence as Record<string, unknown>).classification_family === 'string'
     && typeof (row.anatomy_evidence as Record<string, unknown>).basis === 'string'
     && typeof (row.anatomy_evidence as Record<string, unknown>).external_individual_match === 'boolean';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isStringMap(value: unknown): value is Record<string, string> {
+  return isRecord(value) && Object.values(value).every((item) => typeof item === 'string');
+}
+
+/** Dexie tables are typed at compile-time, but synced rows still cross a trust boundary. */
+export function isPublicTaxonomyRow(value: unknown): value is PublicTaxonomyRow {
+  if (!isRecord(value)) return false;
+  return typeof value.id === 'string' && value.id.length > 0
+    && value.realmId === 'rlm-public' && value.owner === null
+    && typeof value.sourceSha256 === 'string' && /^[a-f0-9]{64}$/.test(value.sourceSha256)
+    && typeof value.category_ru === 'string'
+    && typeof value.subcategory_ru === 'string'
+    && typeof value.anatomical_description_ru === 'string'
+    && typeof value.kind === 'string'
+    && ['muscle', 'group', 'head', 'part', 'zone', 'function'].includes(value.kind)
+    && (value.parent_id === null || typeof value.parent_id === 'string');
+}
+
+export function isPublicCatalogueRow(value: unknown): value is PublicExerciseCatalogueRow {
+  if (!isRecord(value)) return false;
+  return value.id === 'mezfit:exercise-catalogue'
+    && value.realmId === 'rlm-public' && value.owner === null
+    && value.schemaVersion === '2.0.0'
+    && value.catalogue === 'mezfit.exercise_catalog.ru_anatomy'
+    && typeof value.sourceSha256 === 'string' && /^[a-f0-9]{64}$/.test(value.sourceSha256)
+    && value.exerciseCount === 1324 && value.taxonomyCount === 69
+    && isStringMap(value.subcategoryLabelsRu)
+    && isStringMap(value.movementFamilyReferences)
+    && isRecord(value.metadata)
+    && typeof value.publishedAt === 'string' && value.publishedAt.length > 0;
 }
