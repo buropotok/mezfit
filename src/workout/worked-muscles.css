@@ -1,0 +1,88 @@
+.worked-muscles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  background: #fff;
+  color: #20242b;
+}
+
+.worked-muscles__title,
+.worked-muscles__view-title {
+  display: block;
+  width: 100%;
+  text-align: center;
+  color: inherit;
+}
+
+.worked-muscles__filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.worked-muscles__filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #20242b;
+}
+
+.worked-muscles__views {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.worked-muscles__view {
+  width: min(100%, 540px);
+}
+
+.worked-muscles__image-wrap {
+  position: relative;
+  width: 100%;
+  background: #fff;
+}
+
+.worked-muscles__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+
+.worked-muscles__tooltip {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 85%;
+  padding: 8px 12px;
+  transform: translate(-50%, -105%);
+  border: 1px solid #d8dde5;
+  border-radius: 12px;
+  background: #fff;
+  color: #20242b;
+  box-shadow: 0 4px 18px #0002;
+  pointer-events: none;
+}
+
+.worked-muscles__error {
+  display: block;
+  margin-top: 6px;
+  text-align: center;
+  color: #b42318;
+}
