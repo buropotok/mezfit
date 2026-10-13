@@ -113,11 +113,11 @@ export function publicationPlan(current, prepared) {
     const actual = mapById(current[name]);
     const required = expected[name];
     for (const [id, value] of Object.entries(actual)) {
-      if (!(id in required)) error(`Unexpected existing public row in ${name}; refusing changes`);
+      if (!Object.hasOwn(required, id)) error(`Unexpected existing public row in ${name}; refusing changes`);
       if (!matchesExpected(value, required[id]))
         error(`Conflicting existing public row in ${name}; refusing overwrite`);
     }
-    missing[name] = Object.values(required).filter(row => !(row.id in actual));
+    missing[name] = Object.values(required).filter(row => !Object.hasOwn(actual, row.id));
   }
   const manifests = current.publicExerciseCatalogues;
   if (manifests.length > 1 || manifests.some(row => row.id !== MANIFEST_ID))
