@@ -172,8 +172,12 @@ export async function runPublicCatalogue({ sourceBytes, dbUrl, rawKey, mode,
   }
   if (mode === 'backup') return { status: 'backup', payload: previousExport(current),
     counts: plan.existingCounts };
-  if (mode !== 'publish' || !backupApproved) error('Publishing requires confirmed private R2 backup');
+  if (mode !== 'publish') error('Invalid catalogue publication operation');
+  return executePreparedPublication({ session, prepared, plan, backupApproved });
+}
 
+export async function executePreparedPublication({ session, prepared, plan, backupApproved }) {
+  if (!backupApproved) error('Publishing requires confirmed private R2 backup');
   if (!plan.alreadyActive) {
     for (const name of STAGE_TABLES) {
       for (let i = 0; i < plan.missing[name].length; i += BATCH_SIZE) {
