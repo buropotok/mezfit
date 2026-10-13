@@ -1,0 +1,75 @@
+.mezfit-public-exercises {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  color: var(--ui-color-surface-text);
+}
+.mezfit-public-exercises__toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+.mezfit-public-exercises__chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.mezfit-public-exercises__results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mezfit-public-exercises__category-image {
+  width: 72px;
+  height: 72px;
+  display: block;
+  object-fit: contain;
+}
+.mezfit-public-exercises__exercise-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+}
+.mezfit-public-exercises__detail {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.mezfit-public-exercises__detail-section {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+.mezfit-public-exercises__detail-section ol {
+  padding-inline-start: 1.5rem;
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.mezfit-public-exercises__anatomy-line {
+  display: grid;
+  gap: var(--space-1);
+}
+.mezfit-public-exercises__media-placeholder {
+  height: 190px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+}
+.mezfit-public-exercises__filter-options {
+  max-height: 55vh;
+  overflow: auto;
+  display: grid;
+  gap: var(--space-2);
+}
+.mezfit-public-exercises__filter-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+}
