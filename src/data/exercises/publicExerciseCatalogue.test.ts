@@ -31,6 +31,10 @@ describe('public catalogue publication boundary', () => {
     expect(resolvePublicExerciseSnapshot(undefined, [row('0001')], [node('muscle')]).status)
       .toBe('unpublished');
   });
+  it('rejects invalid publication metadata before reading synced rows', () => {
+    const malformed = { ...manifest, subcategoryLabelsRu: null };
+    expect(resolvePublicExerciseSnapshot(malformed, [], []).status).toBe('invalid');
+  });
   it('never displays a partial import', () => {
     expect(resolvePublicExerciseSnapshot(manifest, [row('0001')], [node('muscle')]).status)
       .toBe('incomplete');
@@ -39,6 +43,9 @@ describe('public catalogue publication boundary', () => {
     const exercises = Array.from({ length: 1324 }, (_, n) => row(String(n).padStart(4, '0')));
     const taxonomy = Array.from({ length: 69 }, (_, n) => node(`muscle-${n}`));
     expect(resolvePublicExerciseSnapshot(manifest, exercises, taxonomy).status).toBe('ready');
+    const invalidTaxonomy = [...taxonomy];
+    invalidTaxonomy[0] = { ...taxonomy[0], kind: 'INVALID' as PublicTaxonomyRow['kind'] };
+    expect(resolvePublicExerciseSnapshot(manifest, exercises, invalidTaxonomy).status).toBe('incomplete');
     exercises[0] = { ...exercises[0], sourceSha256: 'b'.repeat(64) };
     expect(resolvePublicExerciseSnapshot(manifest, exercises, taxonomy).status).toBe('incomplete');
   });
