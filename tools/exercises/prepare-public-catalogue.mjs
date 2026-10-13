@@ -176,13 +176,15 @@ async function main() {
     // verify every canonical field before allowing manifest activation.
     for (const row of exercises) {
       const exported = normalizeExportedRow(row.id, remoteExercises[row.id]);
-      if (!exported || exported.sourceSha256 !== digest || Object.entries(row).some(
+      if (!exported || exported.owner !== null || (exported.realmId !== undefined && exported.realmId !== 'rlm-public')
+        || exported.sourceSha256 !== digest || Object.entries(row).some(
         ([key, value]) => !isDeepStrictEqual(exported[key], value),
       )) fail(`Remote exercise content mismatch: ${row.id}`);
     }
     for (const [id, node] of Object.entries(taxonomy)) {
       const exported = normalizeExportedRow(id, remoteTaxonomy[id]);
-      if (!exported || exported.sourceSha256 !== digest || Object.entries(node).some(
+      if (!exported || exported.owner !== null || (exported.realmId !== undefined && exported.realmId !== 'rlm-public')
+        || exported.sourceSha256 !== digest || Object.entries(node).some(
         ([key, value]) => !isDeepStrictEqual(exported[key], value),
       )) fail(`Remote taxonomy content mismatch: ${id}`);
     }
