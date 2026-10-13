@@ -1,22 +1,25 @@
 import { liveQuery } from 'dexie';
 import type { MezfitCloudDatabase } from '../cloud/database';
-import { isPublicExerciseRow, type PublicExerciseCatalogueRow, type PublicExerciseRow, type PublicTaxonomyRow } from './publicExerciseTypes';
+import { isPublicCatalogueRow, isPublicExerciseRow, isPublicTaxonomyRow, type PublicExerciseCatalogueRow, type PublicExerciseRow, type PublicTaxonomyRow } from './publicExerciseTypes';
 
 export type PublicExerciseSnapshot =
   | { status: 'unpublished'; exercises: PublicExerciseRow[]; taxonomy: PublicTaxonomyRow[]; catalogue: null }
+  | { status: 'invalid'; exercises: PublicExerciseRow[]; taxonomy: PublicTaxonomyRow[]; catalogue: null }
   | { status: 'ready'; exercises: PublicExerciseRow[]; taxonomy: PublicTaxonomyRow[]; catalogue: PublicExerciseCatalogueRow }
   | { status: 'incomplete'; exercises: PublicExerciseRow[]; taxonomy: PublicTaxonomyRow[]; catalogue: PublicExerciseCatalogueRow };
 
 export function resolvePublicExerciseSnapshot(
-  manifest: PublicExerciseCatalogueRow | undefined,
+  manifest: unknown,
   rawExercises: unknown[],
-  rawTaxonomy: PublicTaxonomyRow[],
+  rawTaxonomy: unknown[],
 ): PublicExerciseSnapshot {
-  if (!manifest) return { status: 'unpublished', exercises: [], taxonomy: [], catalogue: null };
+  if (manifest == null) return { status: 'unpublished', exercises: [], taxonomy: [], catalogue: null };
+  if (!isPublicCatalogueRow(manifest)) return { status: 'invalid', exercises: [], taxonomy: [], catalogue: null };
   // Do not accidentally present a partially imported or mixed-release catalogue.
   const exercises = rawExercises.filter(isPublicExerciseRow)
     .filter((row) => row.sourceSha256 === manifest.sourceSha256);
-  const taxonomy = rawTaxonomy.filter((row) => row.realmId === 'rlm-public'
+  const taxonomy = rawTaxonomy.filter(isPublicTaxonomyRow)
+    .filter((row) => row.realmId === 'rlm-public'
     && row.owner === null && row.sourceSha256 === manifest.sourceSha256);
   if (manifest.realmId !== 'rlm-public' || manifest.owner !== null
     || manifest.schemaVersion !== '2.0.0' || !/^[a-f0-9]{64}$/.test(manifest.sourceSha256)
