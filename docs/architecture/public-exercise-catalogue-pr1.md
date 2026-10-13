@@ -28,7 +28,7 @@
 - `rlm-public` permits unauthenticated reads at Dexie Cloud level. This PR does not add anonymous entry into the Telegram Mini App, which still authenticates for its private flows.
 - On an already-synced device, catalogue reads, search and taxonomy filtering are local and continue offline.
 - A newly installed device needs online sync. Missing initial sync and intentionally unpublished catalogue must not be misrepresented as an empty exercise library.
-- Category images reuse existing shipped `/gym-keeper/categories` illustrations. Exercise-specific copyrighted Gym visual media is **not** loaded.
+- Category images from `/gym-keeper/categories` and exercise-specific Gym visual media are **not loaded** until their reuse rights have been established. Category and exercise rows use existing UIkit icon fallback.
 
 ## Deferred
 
