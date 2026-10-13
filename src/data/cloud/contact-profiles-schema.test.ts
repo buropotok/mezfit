@@ -3,7 +3,7 @@ import roles from '../../../cloud/roles.json';
 import schema from '../../../cloud/schema-contact-profiles.json';
 import { CLOUD_DATABASE_VERSION, CLOUD_DATABASE_STORES_V1, CLOUD_DATABASE_STORES_V2, CLOUD_DATABASE_STORES_V3 } from './database';
 
-describe('contact profile cloud schema v2', () => {
+describe('Dexie Cloud schema evolution: v2 contact profiles and v3 public exercises', () => {
   it('adds profile records without altering existing tables or database ownership', () => {
     for (const [table, declaration] of Object.entries(CLOUD_DATABASE_STORES_V1)) {
       expect(CLOUD_DATABASE_STORES_V2[table as keyof typeof CLOUD_DATABASE_STORES_V1]).toBe(declaration);
