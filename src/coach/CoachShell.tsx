@@ -11,7 +11,7 @@ import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
-import { GlobalExerciseCatalog } from './GlobalExerciseCatalog';
+import { PublicExercises } from '../exercises/PublicExercises';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
@@ -302,7 +302,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }
 
   if (destination === 'exercises') {
-    return <GlobalExerciseCatalog initData={initData} onNavigationContextChange={onNavigationContextChange} />;
+    return <PublicExercises onNavigationContextChange={onNavigationContextChange} />;
   }
 
   if (destination === 'programs') {
