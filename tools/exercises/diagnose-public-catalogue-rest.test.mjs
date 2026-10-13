@@ -9,7 +9,7 @@ const dbUrl = 'https://zjv60oxag.dexie.cloud';
 const credentials = { clientId: 'test-client', clientSecret: 'test-very-private' };
 const sha = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 
-function fakeServer({ missing = [], badTable = null, tokenStatus = 200, tableStatus = 200 } = {}) {
+function fakeServer({ missing = [], empty = [], badTable = null, tokenStatus = 200, tableStatus = 200 } = {}) {
   const calls = [];
   const fetchFn = async (url, options) => {
     calls.push({ url, options });
@@ -23,6 +23,7 @@ function fakeServer({ missing = [], badTable = null, tokenStatus = 200, tableSta
     if (missing.includes(table)) return { ok: false, status: 404 };
     if (tableStatus !== 200) return { ok: false, status: tableStatus };
     if (badTable === table) return { ok: true, status: 200, json: async () => ({ unknown: 12 }) };
+    if (empty.includes(table)) return { ok: true, status: 200, json: async () => [] };
     const rows = table === 'publicExerciseDefinitions'
       ? Array.from({ length: 1324 }, (_, i) => ({ id: String(i).padStart(4, '0'), realmId: 'rlm-public' }))
       : table === 'publicExerciseTaxonomy'
@@ -70,6 +71,14 @@ describe('Dexie public catalogue GLOBAL_READ REST diagnostics', () => {
     expect(result.manifest).toBe('unknown');
     expect(result.countsMatch).toBe(false);
     expect(renderPublicCatalogueRestReport(result)).toContain('unknown');
+  });
+
+  it('distinguishes a successful empty table from an unavailable (404) table', async () => {
+    const { fetchFn } = fakeServer({ empty: ['publicExerciseDefinitions', 'publicExerciseCatalogues'] });
+    const result = await diagnosePublicCatalogueRest({ dbUrl, credentials, fetchFn });
+    expect(result.tables.publicExerciseDefinitions).toEqual({ status: 'ok', count: 0 });
+    expect(result.manifest).toBe('absent');
+    expect(result.countsMatch).toBe(false);
   });
 
   it('fails closed on permission failures and unexpected data', async () => {
