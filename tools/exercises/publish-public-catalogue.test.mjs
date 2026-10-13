@@ -75,6 +75,9 @@ describe('guarded public catalogue publication', () => {
     expect(() => publicationPlan({
       ...normal, publicExerciseDefinitions: [{ id: 'foreign', realmId: REALM }],
     }, prepared)).toThrow('Unexpected existing public row');
+    expect(() => publicationPlan({
+      ...normal, publicExerciseDefinitions: [{ id: 'constructor', realmId: REALM }],
+    }, prepared)).toThrow('Unexpected existing public row');
   });
 
   it('writes only missing canonical rows, verifies both tables and writes the manifest last', async () => {
