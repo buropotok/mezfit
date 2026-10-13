@@ -263,6 +263,7 @@ export function PublicExercises({
   }
   if (error || (cloud.status === 'error' && !ready)) return <Surface><Text role="alert">{error || cloud.error || 'Нет подключения к каталогу'}</Text></Surface>;
   if (snapshot.status === 'unpublished') return <Surface><Text>Глобальный каталог ещё не опубликован или не синхронизирован.</Text></Surface>;
+  if (snapshot.status === 'invalid') return <Surface><Text role="alert">Не удалось проверить опубликованный каталог. Данные некорректны.</Text></Surface>;
   if (snapshot.status === 'incomplete') return <Surface><Text role="alert">Публикация каталога неполная. Показывать частичные данные небезопасно.</Text></Surface>;
   return <>
     {cloud.status === 'error' ? <Text variant="footnote" tone="muted">Офлайн: показаны сохранённые упражнения</Text> : null}
