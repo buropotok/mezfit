@@ -14,18 +14,6 @@ import {
 } from '../ui';
 import './public-exercises.css';
 
-const categoryImages: Record<string, string> = {
-  chest: '/gym-keeper/categories/muscles_chest.svg',
-  arms: '/gym-keeper/categories/muscles_arm.svg',
-  back: '/gym-keeper/categories/muscles_back.svg',
-  legs: '/gym-keeper/categories/muscles_leg.svg',
-  shoulders: '/gym-keeper/categories/muscles_shoulders.svg',
-  core: '/gym-keeper/categories/muscles_core.svg',
-  full_body: '/gym-keeper/categories/muscles_fullbody.svg',
-  cardio: '/gym-keeper/categories/muscles_cardio.svg',
-  other: '/gym-keeper/categories/muscles_other.png',
-};
-
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
 const PAGE_SIZE = 80;
 
@@ -194,7 +182,7 @@ function ExerciseCatalogContent({
               title={label}
               subtitle={`${exercises.filter((row) => row.category === id).length} упражнений`}
               leadingShape="square"
-              leading={<img alt="" className="mezfit-public-exercises__category-image" src={categoryImages[id]} />}
+              leading={<span className="mezfit-public-exercises__category-fallback"><Icon name="barbell" /></span>}
               onClick={() => { setCategory(id); setVisibleLimit(PAGE_SIZE); }}
             />
           ))}
