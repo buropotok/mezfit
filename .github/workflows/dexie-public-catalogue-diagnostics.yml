@@ -25,7 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      OUT_DIR: ${{ runner.temp }}/dexie-public-diagnostics
+      # Job-level env expressions cannot access the runner context.
+      OUT_DIR: .dexie-public-diagnostics
     steps:
       - uses: actions/checkout@v4
         with:
