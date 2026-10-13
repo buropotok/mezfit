@@ -172,6 +172,40 @@ describe('guarded public catalogue publication', () => {
     expect(seen).toHaveLength(2);
   });
 
+  it('rejects active manifest for another source and rejects missing rows under an active manifest', () => {
+    const { prepared, definitions, taxonomy, manifest } = canonicalFixture();
+    const base = {
+      publicExerciseDefinitions: Object.values(definitions),
+      publicExerciseTaxonomy: Object.values(taxonomy),
+    };
+    expect(() => publicationPlan({
+      ...base, publicExerciseCatalogues: [{ ...manifest, sourceSha256: 'another-release' }],
+    }, prepared)).toThrow('Existing active catalogue differs');
+    expect(() => publicationPlan({
+      ...base, publicExerciseTaxonomy: [], publicExerciseCatalogues: [manifest],
+    }, prepared)).toThrow('Published catalogue is missing records');
+  });
+
+  it('rejects unknown tables, token rejection, wrong realm and malformed public records', async () => {
+    const requests = [];
+    const tokenServer = async (url, options) => {
+      requests.push({ url, options });
+      return { ok: false, status: 403 };
+    };
+    await expect(openPublicSession({
+      dbUrl, rawKey, mode: 'preview', fetchFn: tokenServer,
+    })).rejects.toThrow('Dexie token failed with HTTP 403');
+    expect(requests).toHaveLength(1);
+    const badRowsServer = async (url) => url.endsWith('/token')
+      ? { ok: true, status: 200, json: async () => ({ accessToken: 'test-token' }) }
+      : { ok: true, status: 200, json: async () => [{ id: '0001', realmId: 'rlm-other' }] };
+    const session = await openPublicSession({
+      dbUrl, rawKey, mode: 'preview', fetchFn: badRowsServer,
+    });
+    await expect(session.list('privateClients')).rejects.toThrow('Forbidden public catalogue table');
+    await expect(session.list('publicExerciseDefinitions')).rejects.toThrow('Invalid public rows');
+  });
+
   it('rejects untrusted source bytes and wrong DB before any network access', async () => {
     const calls = [];
     const fetchFn = async (...args) => { calls.push(args); throw new Error('Should not call'); };
