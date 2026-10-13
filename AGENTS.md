@@ -176,7 +176,7 @@ Avoid mutable `window.*` state and global registries. If a platform-level global
 
 ## 21. Security and secrets
 
-Never put bot tokens, API keys, Cloudflare credentials, signing secrets, or privileged credentials in browser code or committed source. Secrets belong in server/Cloudflare secret storage.
+Never put bot tokens, API keys, Cloudflare credentials, signing secrets, or privileged credentials in browser code or committed source. Secrets belong in server/Cloudflare secret storage. The sole approved GitHub Actions exception for Dexie Cloud catalogue publication is the dedicated `DEXIE_CLOUD_WRITE_KEY` **environment secret** in `dexie-production`, configured with required reviewers and restricted to `main`. It may be consumed only by an explicitly dispatched, owner-restricted, reviewer-approved catalogue publication job; it must never be a repository-level secret, appear in PR/push jobs, or share credentials with browser/Worker token exchange. Read-only diagnostics continue to use their separate least-privilege account.
 
 Do not log authorization headers, tokens, secrets, sensitive Telegram auth payloads, or unnecessary personal data. Return only data the caller needs.
 
