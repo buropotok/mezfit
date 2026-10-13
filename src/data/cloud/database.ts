@@ -3,12 +3,13 @@ import dexieCloud from 'dexie-cloud-addon';
 import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import { getDexieCloudTokens } from '../../api';
+import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
 
 /**
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 2;
+export const CLOUD_DATABASE_VERSION = 3;
 
 export interface CloudSharedRow {
   id: string;
@@ -106,6 +107,13 @@ export const CLOUD_DATABASE_STORES_V2 = {
   contactProfiles: 'id, realmId, userId',
 } as const;
 
+export const CLOUD_DATABASE_STORES_V3 = {
+  ...CLOUD_DATABASE_STORES_V2,
+  publicExerciseDefinitions: 'id, realmId, category, subcategory, movement_type, equipment',
+  publicExerciseTaxonomy: 'id, realmId, kind, parent_id',
+  publicExerciseCatalogues: 'id, realmId, sourceSha256',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -131,11 +139,15 @@ export class MezfitCloudDatabase extends Dexie {
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
   sessionSets!: Table<CloudSessionSetRow, string>;
   sessionSetFacts!: Table<CloudSessionSetFactRow, string>;
+  publicExerciseDefinitions!: Table<PublicExerciseRow, string>;
+  publicExerciseTaxonomy!: Table<PublicTaxonomyRow, string>;
+  publicExerciseCatalogues!: Table<PublicExerciseCatalogueRow, string>;
 
   constructor(telegramUserId: string, initData: string) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
     this.version(1).stores(CLOUD_DATABASE_STORES_V1);
-    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V2);
+    this.version(2).stores(CLOUD_DATABASE_STORES_V2);
+    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V3);
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
