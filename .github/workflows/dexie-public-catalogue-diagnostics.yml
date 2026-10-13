@@ -1,0 +1,78 @@
+name: Diagnose Dexie public catalogue
+
+# Runs on the default branch only. The issue-comment route allows the connected
+# GitHub operator to request diagnostics without a workflow_dispatch API tool.
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dexie-public-catalogue-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.actor == github.repository_owner &&
+       github.event.issue.pull_request == null &&
+       github.event.comment.body == '/dexie-public diagnose')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OUT_DIR: ${{ runner.temp }}/dexie-public-diagnostics
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install temporary read-only Dexie credentials
+        env:
+          DEXIE_CLOUD_KEY_JSON: ${{ secrets.DEXIE_CLOUD_KEY_JSON }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const raw = process.env.DEXIE_CLOUD_KEY_JSON;
+          if (!raw) throw new Error('GitHub secret DEXIE_CLOUD_KEY_JSON is not configured');
+          const { dbUrl } = JSON.parse(readFileSync('dexie-cloud.json', 'utf8'));
+          const keys = JSON.parse(raw);
+          const key = keys?.[dbUrl];
+          if (!key || typeof key.clientId !== 'string' || !key.clientId ||
+              typeof key.clientSecret !== 'string' || !key.clientSecret) {
+            throw new Error('Dexie service-account secret does not match the configured database');
+          }
+          writeFileSync('dexie-cloud.key', raw, { mode: 0o600, flag: 'wx' });
+          NODE
+      - name: Export existing schema, roles and public realm (read only)
+        run: |
+          mkdir -p "$OUT_DIR"
+          npx --yes dexie-cloud@3.0.7 export --schema "$OUT_DIR/schema.json"
+          npx --yes dexie-cloud@3.0.7 export --roles "$OUT_DIR/roles.json"
+          npx --yes dexie-cloud@3.0.7 export --legacy --realmId rlm-public "$OUT_DIR/public.json"
+      - name: Produce non-sensitive diagnostic summary
+        run: |
+          node tools/exercises/report-public-catalogue.mjs \
+            "$OUT_DIR/schema.json" "$OUT_DIR/roles.json" "$OUT_DIR/public.json" \
+            "$OUT_DIR/report.md"
+          cat "$OUT_DIR/report.md" >> "$GITHUB_STEP_SUMMARY"
+      # mezfit is a public GitHub repository. Never upload raw Dexie exports:
+      # even a realm-scoped dump or full schema would become a public artifact.
+      - name: Upload safe summary only
+        uses: actions/upload-artifact@v4
+        with:
+          name: dexie-public-catalogue-diagnostics
+          path: ${{ env.OUT_DIR }}/report.md
+          retention-days: 3
+          if-no-files-found: error
+      - name: Remove temporary credentials and exports
+        if: always()
+        run: |
+          rm -f dexie-cloud.key
+          rm -rf "$OUT_DIR"
