@@ -1,126 +1,66 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getCoachExercises, getWorkoutExerciseOptions, type ExerciseDefinition } from '../api';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
-  return {
-    ...actual,
-    getCoachExercises: vi.fn(),
-    getWorkoutExerciseOptions: vi.fn(),
-  };
-});
-
-const chestExercise: ExerciseDefinition = {
-  id: 11,
-  scope: 'global',
-  name: 'Жим лёжа',
-  description: null,
-  tracking_type: 'weight_reps',
-  category_code: 'chest',
-  equipment_code: 'barbell',
-  reference_source: null,
-  reference_key: null,
-  reference_media_url: null,
-  is_favourite: false,
-  can_edit: false,
-};
-
-const backExercise: ExerciseDefinition = {
-  ...chestExercise,
-  id: 22,
-  name: 'Тяга верхнего блока',
-  category_code: 'back',
-  equipment_code: 'cable',
-};
+vi.mock('../exercises/PublicExercises', () => ({
+  PublicExercises: ({ selectedIds, onToggle, selectionDisabled }: {
+    selectedIds: ReadonlySet<string>;
+    onToggle: (id: string) => void;
+    selectionDisabled?: boolean;
+  }) => (
+    <div aria-label="Общий каталог Dexie Cloud">
+      {['0001', '0002'].map((id) => (
+        <button key={id} type="button" disabled={selectionDisabled}
+          aria-pressed={selectedIds.has(id)} onClick={() => onToggle(id)}>{id}</button>
+      ))}
+    </div>
+  ),
+}));
 
 afterEach(cleanup);
 
-beforeEach(() => {
-  vi.mocked(getCoachExercises).mockReset();
-  vi.mocked(getWorkoutExerciseOptions).mockReset();
-  vi.mocked(getWorkoutExerciseOptions).mockImplementation(async (_initData, categoryCode) => ({
-    exercises: categoryCode === 'chest' ? [chestExercise] : categoryCode === 'back' ? [backExercise] : [],
-  }));
-});
-
-describe('WorkoutExerciseSelectionSheet', () => {
-  it('reuses the exercise catalog in select mode and keeps selection across categories', async () => {
+describe('WorkoutExerciseSelectionSheet on canonical Dexie catalogue', () => {
+  it('uses MezfitBottomSheet and selects immutable string IDs, not D1 numeric IDs', () => {
     const onConfirm = vi.fn();
-    const onNavigationContextChange = vi.fn();
-
     render(
-      <WorkoutExerciseSelectionSheet
-        initData="init-data"
-        saving={false}
-        onConfirm={onConfirm}
-        onClose={vi.fn()}
-        onNavigationContextChange={onNavigationContextChange}
-      />,
+      <WorkoutExerciseSelectionSheet initData="telegram-test" saving={false}
+        onConfirm={onConfirm} onClose={vi.fn()} />,
     );
-
-    const dialog = screen.getByRole('dialog', { name: 'Упражнения' });
-    expect(dialog).toBeTruthy();
-    expect(dialog.closest('.ui-bottom-sheet')?.className).toContain('ui-bottom-sheet--inset');
-    expect(screen.queryByRole('button', { name: 'Поиск' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Только избранные' })).toBeNull();
-    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-    await waitFor(() => expect(getWorkoutExerciseOptions).toHaveBeenCalledWith('init-data', 'chest'));
-    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Грудь' })));
-    expect(getCoachExercises).not.toHaveBeenCalled();
-
-    const chestRow = await screen.findByRole('button', { name: 'Жим лёжа' });
-    expect(chestRow.getAttribute('aria-pressed')).toBe('false');
-    const menuTrigger = screen.getByRole('button', { name: 'Действия: Жим лёжа' });
-    expect(chestRow.contains(menuTrigger)).toBe(false);
-
-    fireEvent.click(chestRow);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true'));
-    expect(screen.getByRole('button', { name: 'Добавить выбранные упражнения' })).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
-    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
-    fireEvent.click(screen.getByRole('button', { name: 'Спина' }));
-    const backRow = await screen.findByRole('button', { name: 'Тяга верхнего блока' });
-    fireEvent.click(backRow);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Тяга верхнего блока' }).getAttribute('aria-pressed')).toBe('true'));
-    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true'));
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
-    expect(onConfirm).toHaveBeenCalledWith([11, 22]);
+    expect(screen.getByRole('dialog', { name: 'Выбор упражнений для тренировки' })).toBeTruthy();
+    expect(screen.getByLabelText('Общий каталог Dexie Cloud')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '0001' }));
+    fireEvent.click(screen.getByRole('button', { name: '0002' }));
+    expect(screen.getByRole('button', { name: '0001' }).getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнения (2)' }));
+    expect(onConfirm).toHaveBeenCalledWith(['0001', '0002']);
   });
 
-  it('keeps the sheet open with its current selection when confirmation reports an error', async () => {
-    const { rerender } = render(
-      <WorkoutExerciseSelectionSheet
-        initData="init-data"
-        saving={false}
-        onConfirm={vi.fn()}
-        onClose={vi.fn()}
-      />,
+  it('shows the error without resetting selection and prevents duplicate submission', () => {
+    const onConfirm = vi.fn();
+    const view = (saving: boolean, actionError = '') => (
+      <WorkoutExerciseSelectionSheet initData="telegram-test" saving={saving}
+        actionError={actionError} onConfirm={onConfirm} onClose={vi.fn()} />
     );
+    const { rerender } = render(view(false));
+    fireEvent.click(screen.getByRole('button', { name: '0001' }));
+    rerender(view(true, 'Ошибка сохранения'));
+    expect(screen.getByRole('alert').textContent).toContain('Ошибка сохранения');
+    expect(screen.getByRole('button', { name: '0001' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Добавляем…' }).hasAttribute('disabled')).toBe(true);
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Жим лёжа' }));
-
-    rerender(
-      <WorkoutExerciseSelectionSheet
-        initData="init-data"
-        saving={false}
-        actionError="Не удалось добавить упражнения"
-        onConfirm={vi.fn()}
-        onClose={vi.fn()}
-      />,
+  it('closes only when not saving', () => {
+    const onClose = vi.fn();
+    const view = (saving: boolean) => (
+      <WorkoutExerciseSelectionSheet initData="telegram-test" saving={saving}
+        onConfirm={vi.fn()} onClose={onClose} />
     );
-
-    expect(screen.getByRole('alert').textContent).toContain('Не удалось добавить упражнения');
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
+    const { rerender } = render(view(true));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(onClose).not.toHaveBeenCalled();
+    rerender(view(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
