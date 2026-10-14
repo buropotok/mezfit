@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ApiError,
-  addWorkoutSessionExercises,
+  addWorkoutSessionPublicExercises,
   completeWorkoutSession,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
@@ -220,17 +220,17 @@ export function WorkoutSessionScreen({
       });
   }
 
-  async function handleAddExercises(exerciseDefinitionIds: number[]) {
-    if (!activeSession || activeSession.status !== 'active' || exerciseDefinitionIds.length === 0) return;
+  async function handleAddExercises(publicExerciseIds: string[]) {
+    if (!activeSession || activeSession.status !== 'active' || publicExerciseIds.length === 0) return;
     const sessionId = activeSession.sessionId;
     const intent = nextMutationIntent();
     setAddingExercises(true);
     setExerciseSelectionError('');
     try {
-      const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionExercises(
+      const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionPublicExercises(
         initData,
         sessionId,
-        exerciseDefinitionIds,
+        publicExerciseIds,
       ));
       if (!isCurrentGeneration(intent)) return;
       acknowledgedSessionRef.current = nextSession;
@@ -378,7 +378,7 @@ export function WorkoutSessionScreen({
           saving={addingExercises}
           actionError={exerciseSelectionError}
           onNavigationContextChange={onNavigationContextChange}
-          onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
+          onConfirm={(publicExerciseIds) => void handleAddExercises(publicExerciseIds)}
           onClose={() => {
             if (addingExercises) return;
             requestBackTransition(() => {
