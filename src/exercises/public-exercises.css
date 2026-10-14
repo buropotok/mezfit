@@ -62,6 +62,19 @@
   justify-items: center;
   gap: var(--space-2);
 }
+.mezfit-public-exercises__media-image {
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+}
+.mezfit-public-exercises__media-image--thumbnail {
+  width: 58px;
+  height: 58px;
+}
+.mezfit-public-exercises__media-image--detail {
+  width: min(100%, 320px);
+  max-height: 190px;
+}
 .mezfit-public-exercises__filter-options {
   max-height: 55vh;
   overflow: auto;
