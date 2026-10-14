@@ -1,0 +1,75 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PublicExerciseMedia, publicExerciseMediaUrl } from './PublicExerciseMedia';
+
+vi.mock('../ui', () => ({
+  Icon: ({ name }: { name: string }) => <span data-testid="fallback-icon">{name}</span>,
+  Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+}));
+
+const sha = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
+const row = {
+  id: '0001',
+  name: 'Press',
+  name_ru: 'Жим',
+  sourceSha256: sha,
+  gif_url: 'exercises/0001/press.gif',
+};
+
+afterEach(cleanup);
+
+describe('public Dexie catalogue media / R2 boundary', () => {
+  it('never serves GIFs by default before rights approval', () => {
+    expect(publicExerciseMediaUrl(row)).toBeNull();
+    render(<PublicExerciseMedia row={row} variant="detail" />);
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(screen.getByText('Медиа появится после подтверждения прав')).toBeTruthy();
+  });
+
+  it('resolves a verified source to the existing same-origin R2 Worker path when approved', () => {
+    expect(publicExerciseMediaUrl(row, true)).toBe('/api/exercise-media/gym_keeper_apk/0001');
+    render(<PublicExerciseMedia row={row} variant="detail" approved />);
+    const picture = screen.getByRole('img', { name: 'Жим' });
+    expect(picture.getAttribute('src')).toBe('/api/exercise-media/gym_keeper_apk/0001');
+    expect(picture.getAttribute('loading')).toBe('eager');
+    expect(picture.getAttribute('decoding')).toBe('async');
+  });
+
+  it('rejects external, malformed and cross-release identifiers even when enabled', () => {
+    expect(publicExerciseMediaUrl({ ...row, id: '../clients' }, true)).toBeNull();
+    expect(publicExerciseMediaUrl({ ...row, id: '00001' }, true)).toBeNull();
+    expect(publicExerciseMediaUrl({ ...row, sourceSha256: 'a'.repeat(64) }, true)).toBeNull();
+    expect(publicExerciseMediaUrl({ ...row, gif_url: '' }, true)).toBeNull();
+    expect(publicExerciseMediaUrl(row, false)).toBeNull();
+  });
+
+  it('renders lazy decorative thumbnail and falls back if Worker/R2 returns an error', () => {
+    render(<PublicExerciseMedia row={row} variant="thumbnail" approved />);
+    const picture = screen.getByRole('img', { hidden: true });
+    expect(picture.getAttribute('alt')).toBe('');
+    expect(picture.getAttribute('loading')).toBe('lazy');
+    fireEvent.error(picture);
+    expect(screen.queryByRole('img', { hidden: true })).toBeNull();
+    expect(screen.getByTestId('fallback-icon').textContent).toBe('barbell');
+  });
+
+  it('shows a non-sensitive detail fallback after missing R2 media', () => {
+    render(<PublicExerciseMedia row={row} variant="detail" approved />);
+    fireEvent.error(screen.getByRole('img', { name: 'Жим' }));
+    expect(screen.getByText('Медиа недоступно')).toBeTruthy();
+    expect(screen.queryByRole('img')).toBeNull();
+  });
+
+  it('remounts an exercise image when navigating to a different item', () => {
+    const view = ({ entry }: { entry: typeof row }) => (
+      <PublicExerciseMedia key={entry.id} row={entry} variant="detail" approved />
+    );
+    const rendered = render(view({ entry: row }));
+    fireEvent.error(screen.getByRole('img', { name: 'Жим' }));
+    expect(screen.getByText('Медиа недоступно')).toBeTruthy();
+    rendered.rerender(view({ entry: { ...row, id: '0002', name_ru: 'Приседание' } }));
+    expect(screen.getByRole('img', { name: 'Приседание' }).getAttribute('src'))
+      .toBe('/api/exercise-media/gym_keeper_apk/0002');
+  });
+});
