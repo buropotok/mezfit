@@ -1,3 +1,5 @@
+export { WorkedMuscles, type WorkedMusclesProps } from './WorkedMuscles';
+export { WORKED_MUSCLES, type WorkedMuscleId } from './workedMuscleData';
 export { SetEntry } from './SetEntry';
 export { SessionExercise, formatSessionSetMetrics } from './SessionExercise';
 export { WorkoutSessionCard, type WorkoutSessionCardMode, type WorkoutSessionCardProps } from './WorkoutSessionCard';
