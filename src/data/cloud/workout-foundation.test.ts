@@ -93,14 +93,27 @@ async function fixture() {
       }),
     }),
   });
-  const phases = [phase, { ...phase, id: 'pha-stray', trainingPlanId: 'tra-other' }];
-  const days = [day, { ...day, id: 'day-stray', programPhaseId: 'pha-stray' }];
+  const phases = [
+    phase,
+    { ...phase, id: 'pha-stray', trainingPlanId: 'tra-other' },
+    { ...phase, id: 'pha-ownerful', owner: 'tg:101' },
+  ];
+  const days = [
+    day,
+    { ...day, id: 'day-stray', programPhaseId: 'pha-stray' },
+    { ...day, id: 'day-owned', owner: 'tg:202' },
+  ];
   const exercises = [
     exercise,
     { ...exercise, id: 'pex-stray', programDayId: 'day-stray' },
     { ...exercise, id: 'pex-other-realm', realmId: 'rlm-foreign' },
+    { ...exercise, id: 'pex-owned', owner: 'tg:101' },
   ];
-  const sets = [set, { ...set, id: 'pst-stray', programExerciseId: 'pex-stray' }];
+  const sets = [
+    set,
+    { ...set, id: 'pst-stray', programExerciseId: 'pex-stray' },
+    { ...set, id: 'pst-owned', owner: 'tg:202' },
+  ];
 
   const db = {
     trainingPlans: { get: planGet },
@@ -115,7 +128,7 @@ async function fixture() {
 }
 
 describe('read-only shared workout PLAN repository', () => {
-  it('projects canonical nested PLAN and discards dangling or foreign-realm children', async () => {
+  it('projects PLAN without dangling, foreign-realm or ownerful children', async () => {
     const f = await fixture();
     const repo = new WorkoutFoundationRepository(f.db, 'tg:101');
     const result = await repo.getProgramOutline(f.plan.id);
