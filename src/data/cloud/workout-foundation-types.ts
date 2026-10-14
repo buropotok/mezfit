@@ -1,3 +1,4 @@
+import type { TrackingType } from '../../api';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { CloudSharedRow } from './database';
 
@@ -8,8 +9,29 @@ export interface CloudWorkoutExerciseSnapshot {
   scope: 'public' | 'coach' | 'client';
   name: string;
   nameEn: string | null;
-  trackingType: string;
+  trackingType: TrackingType;
   mediaUrl: string | null;
+}
+
+/** Keep the runtime values aligned with the shared TrackingType contract. */
+const TRACKING_TYPES: Record<TrackingType, true> = {
+  weight_reps: true,
+  time: true,
+  time_distance: true,
+  time_reps: true,
+  time_weight: true,
+};
+
+/** Synced IndexedDB records remain untrusted even when Dexie tables are typed. */
+export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkoutExerciseSnapshot {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const snapshot = value as Record<string, unknown>;
+  return typeof snapshot.exerciseDefinitionId === 'string' && snapshot.exerciseDefinitionId.length > 0
+    && (snapshot.scope === 'public' || snapshot.scope === 'coach' || snapshot.scope === 'client')
+    && typeof snapshot.name === 'string' && snapshot.name.trim().length > 0
+    && (snapshot.nameEn === null || typeof snapshot.nameEn === 'string')
+    && typeof snapshot.trackingType === 'string' && Object.hasOwn(TRACKING_TYPES, snapshot.trackingType)
+    && (snapshot.mediaUrl === null || typeof snapshot.mediaUrl === 'string');
 }
 
 export interface CloudProgramPhaseRow extends CloudSharedRow {

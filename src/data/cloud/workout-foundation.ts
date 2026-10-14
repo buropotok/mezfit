@@ -1,4 +1,5 @@
 import { liveQuery } from 'dexie';
+import { isWorkoutExerciseSnapshot } from './workout-foundation-types';
 import { isApprovedAssignedPair } from './assigned-programs';
 import type { MezfitCloudDatabase } from './database';
 import type {
@@ -53,6 +54,13 @@ export class WorkoutFoundationRepository {
     const dayIds = new Set(days.map((d) => d.id));
     const exercises = ordered(exerciseRows.filter((e) =>
       e.realmId === plan.realmId && e.owner === null && dayIds.has(e.programDayId)));
+    // Reject a malformed synced snapshot explicitly; silently dropping an exercise
+    // would hide assigned sets and could make the workout appear complete.
+    for (const { exercise } of exercises) {
+      if (!isWorkoutExerciseSnapshot(exercise)) {
+        throw new Error('INVALID_CLOUD_WORKOUT_EXERCISE_SNAPSHOT');
+      }
+    }
     const exerciseIds = new Set(exercises.map((e) => e.id));
     const sets = ordered(setRows.filter((s) =>
       s.realmId === plan.realmId && s.owner === null && exerciseIds.has(s.programExerciseId)));

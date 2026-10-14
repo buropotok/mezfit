@@ -124,7 +124,7 @@ async function fixture() {
     programExercises: table(exercises),
     programSets: table(sets),
   } as unknown as MezfitCloudDatabase;
-  return { db, plan, realm, realmId, members, planGet, realmGet };
+  return { db, plan, realm, realmId, members, planGet, realmGet, exercises };
 }
 
 describe('read-only shared workout PLAN repository', () => {
@@ -138,6 +138,32 @@ describe('read-only shared workout PLAN repository', () => {
     expect(result?.phases[0].days[0].exercises).toHaveLength(1);
     expect(result?.phases[0].days[0].exercises[0].sets).toHaveLength(1);
     expect(result?.phases[0].days[0].exercises[0].exercise.exercise.exerciseDefinitionId).toBe('0001');
+  });
+
+  it('rejects unsupported synced exercise tracking types instead of exposing invalid metrics', async () => {
+    const f = await fixture();
+    const repo = new WorkoutFoundationRepository(f.db, 'tg:101');
+    Object.assign(f.exercises[0].exercise, { trackingType: 'legacy_unknown' });
+    await expect(repo.getProgramOutline(f.plan.id))
+      .rejects.toThrow('INVALID_CLOUD_WORKOUT_EXERCISE_SNAPSHOT');
+  });
+
+  it('rejects incomplete synced exercise snapshots', async () => {
+    const f = await fixture();
+    const repo = new WorkoutFoundationRepository(f.db, 'tg:101');
+    Object.assign(f.exercises[0], { exercise: { trackingType: 'time' } });
+    await expect(repo.getProgramOutline(f.plan.id))
+      .rejects.toThrow('INVALID_CLOUD_WORKOUT_EXERCISE_SNAPSHOT');
+  });
+
+  it('accepts each canonical tracking type in a synced exercise snapshot', async () => {
+    const f = await fixture();
+    const repo = new WorkoutFoundationRepository(f.db, 'tg:101');
+    for (const trackingType of ['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight']) {
+      Object.assign(f.exercises[0].exercise, { trackingType });
+      const result = await repo.getProgramOutline(f.plan.id);
+      expect(result?.phases[0].days[0].exercises[0].exercise.exercise.trackingType).toBe(trackingType);
+    }
   });
 
   it('allows the accepted client to read the same outline without authoring capabilities', async () => {
