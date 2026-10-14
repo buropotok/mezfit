@@ -9,12 +9,12 @@ const row = (id: number, category = 'chest'): PublicExerciseRow => ({
 } as PublicExerciseRow);
 
 describe('background image cache warm-up', () => {
-  it('selects up to three videos in each category instead of downloading the entire library', () => {
+  it('selects just one GIF per category before opening the catalogue', () => {
     const records = Array.from({ length: 40 }, (_, i) => row(i + 1, i % 2 ? 'chest' : 'back'));
     const urls = initialExerciseMediaUrls(records);
-    expect(urls).toHaveLength(6);
+    expect(urls).toHaveLength(2);
     expect(urls[0]).toContain('/api/exercise-media/gym_keeper_apk/0001?v=');
-    expect(urls[5]).toContain('/api/exercise-media/gym_keeper_apk/0006?v=');
+    expect(urls[1]).toContain('/api/exercise-media/gym_keeper_apk/0002?v=');
   });
 
   it('ignores rows with wrong source revisions', () => {
@@ -34,7 +34,7 @@ describe('background image cache warm-up', () => {
       return new Response(null, { status: 200 });
     }) as unknown as typeof fetch;
     await warmExerciseMedia(Array.from({ length: 20 }, (_, i) => `/media/${i}`), new AbortController().signal, fetchFn);
-    expect(peak).toBeLessThanOrEqual(3);
+    expect(peak).toBeLessThanOrEqual(2);
   });
 
   it('does not start prefetch after cancellation', async () => {
