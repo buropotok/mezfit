@@ -1,0 +1,12 @@
+{
+  "schema": {
+    "programPhases": "@id",
+    "programDays": "@id",
+    "programExercises": "@id",
+    "programSets": "@id",
+    "workoutOccurrences": "@id",
+    "sessionExercises": "@id",
+    "sessionFactExercises": "@id",
+    "sessionFactSets": "@id"
+  }
+}
