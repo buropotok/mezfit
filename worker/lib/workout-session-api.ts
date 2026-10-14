@@ -186,7 +186,7 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
     if (body && Object.hasOwn(body, 'publicExerciseIds')) {
       const ids = body.publicExerciseIds;
       if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100
-        || !ids.every((id) => typeof id === 'string' && /^\\d{4}$/.test(id))
+        || !ids.every((id) => typeof id === 'string' && /^\d{4}$/.test(id))
         || new Set(ids).size !== ids.length || Object.hasOwn(body, 'exerciseDefinitionIds')) {
         return errorResponse(400, 'INVALID_EXERCISE', 'Public exercise ids are invalid');
       }
