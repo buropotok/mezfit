@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PublicExercises } from '../exercises/PublicExercises';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import { Button, IconButton, MezfitBottomSheet, Text } from '../ui';
+import './workout-exercise-selection.css';
 
 interface WorkoutExerciseSelectionSheetProps {
   initData: string;
