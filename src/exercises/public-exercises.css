@@ -43,6 +43,13 @@
   width: 58px;
   height: 58px;
 }
+.mezfit-public-exercises__selected-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ui-color-primary);
+}
 .mezfit-public-exercises__detail {
   display: grid;
   gap: var(--space-3);
