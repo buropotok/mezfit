@@ -28,36 +28,33 @@ pre-existing GIF index for the existing Worker endpoint only. The workout
 catalogue, taxonomy and manifest remain authoritative in Dexie Cloud.
 No additional background sync and no client-side media URL database exist.
 
-## Licensing gate — disabled by default
+## Owner authorization and automatic rollout
 
-`docs/architecture/public-exercise-catalogue-pr1.md` intentionally keeps
-the media surfaces as placeholders until redistribution permissions are
-verified. Merely having third-party GIF objects in private R2 does **not**
-establish the right to publicly serve them.
+On 2026-10-13 the product owner explicitly confirmed that the previously
+uploaded GIF library belongs to them ("Это мои гиф") and approved reuse in
+Mezfit without reuploading the files. This records the product owner's
+authorization for the **existing exercise GIF collection in R2**, not for
+unrelated Gym Keeper category illustrations or third-party media downloads.
+No independent legal or third-party licence verification is asserted here.
 
-This PR wires the UI but remains disabled by default. Only after the product
-owner has verified rights/permission and the approved media source should the
-operator set the GitHub Actions **repository variable**
-`VITE_PUBLIC_EXERCISE_MEDIA_APPROVED=true` and redeploy the application.
-The variable is evaluated at build time by Vite; changing it alone without a
-new deployment will not update the running application. Setting the flag is
-an explicit operator rights approval, **not** an automatic consequence of
-merging the PR.
+The production UI requests an exercise GIF **automatically** when the synced
+row has the approved immutable release SHA, a valid four-digit ID and a
+nonempty `gif_url`. There is **no build-time approval flag** and no manual
+repository variable to configure. After PR merge and successful normal
+`main` deployment, the UI uses the same-origin Worker endpoint.
 
-Before enabling, verify that the old D1 index and existing private R2
-objects still correspond to the same 1324-record source. Confirm the deployed
-Worker returns a valid `image/gif` for representative IDs (including IDs
-from different categories). A missing object results in the existing barbell
-fallback rather than a broken image.
+The existing Worker media route is public independently of this UI change;
+frontend gating is not a security control. Before interpreting an absent GIF
+as a UI regression, check that the existing D1 media index and private R2
+objects still correspond to the previously imported 1324-record source. The
+Worker must return a valid `image/gif` for representative IDs. Missing
+objects return 404 and display the fallback icon or "Медиа недоступно" —
+the catalogue text and navigation remain unaffected.
 
-The flag must remain unset/false until permissions are established.
-This is a **UI rollout switch, not authorization**: the pre-existing Worker
-media route is independently public and requires its own licensing/security
-review. Disabling the new UI does not make that existing endpoint private.
-No images are uploaded by the PR. Thumbnails use lazy loading; the detail
-GIF loads eagerly. No third-party host URLs are exposed to browsers. GIFs
-remain external to the IndexedDB local-first catalogue; offline exercise text
-continues to work even if uncached media cannot be displayed.
+No images are uploaded by this PR. Thumbnails use lazy loading; the detail
+GIF loads eagerly. No direct R2 URLs or third-party hosts are exposed to
+browsers. GIF bytes remain outside the IndexedDB local-first store; offline
+exercise text continues to work even when the GIF is uncached.
 
 The existing Worker and original `ExerciseMedia` component for legacy
 surfaces remain unchanged. Once a future approved media source or
