@@ -70,6 +70,9 @@
   gap: 10px;
   margin-top: 6px;
   text-align: center;
+}
+
+.worked-muscles__error-message {
   color: #fca5a5;
 }
 
