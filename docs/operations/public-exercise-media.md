@@ -16,17 +16,43 @@ unrestricted media proxy.
   `/api/exercise-media/gym_keeper_apk/<four-digit id>`.
 - The Worker looks up the same canonical dataset ID under
   `exercise_definition.reference_source = 'github_exercises_dataset'`
-  in the legacy D1 media index, resolves its validated active import version
-  and reads the corresponding R2 GIF at
-  `exercise-media/github_exercises_dataset/versions/<import-sha>/<id>.gif`.
-  The Worker returns 404 if the media is missing or unapproved by its
-  own index. The new catalogue never constructs a raw R2 URL or trusts the
+  in the legacy D1 media index, verifies the **exact** approved import version
+  supplied as `?v=7455efae41b330c265e7cd4b78dfa848e7ce5ebd`, then reads
+  the R2 GIF at
+  `exercise-media/github_exercises_dataset/versions/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/<id>.gif`.
+  The Worker returns 404 if the requested version is not the active D1
+  version, or if its R2 object is absent. The new catalogue never constructs a raw R2 URL or trusts the
   metadata `gif_url` as a downloadable external address.
 
 This **does not reintroduce D1 as the business database**: D1 remains the
 pre-existing GIF index for the existing Worker endpoint only. The workout
 catalogue, taxonomy and manifest remain authoritative in Dexie Cloud.
 No additional background sync and no client-side media URL database exist.
+
+## Preventing silent upstream version changes
+
+The pinned 40-character media import commit is
+`7455efae41b330c265e7cd4b78dfa848e7ce5ebd`, read from
+`shared/approved-exercise-media.json`. The last verified successful
+import (GitHub Actions run #34648109940, 2026-09-11) activated all 1324
+GIFs from this commit. Re-running the importer does **not** fetch a moving
+upstream HEAD: it checks out this revision explicitly and refuses a
+different SHA.
+
+`.github/workflows/import-exercise-media.yml` no longer runs on
+`Deploy Mezfit` completion. An import requires manual `workflow_dispatch`
+by the repository owner on `main`, with confirmation
+`IMPORT_PINNED_1324`. A later dataset version needs a separate reviewed
+PR updating the approved commit, source mapping, rights and corresponding
+Dexie catalogue. The frontend will not silently switch if the D1 media
+index somehow activates a different revision; the Worker responds 404
+and the UI uses a fallback.
+
+This change relies on the last successful import log to identify the
+previously activated version. It does **not** independently audit the current
+private R2 bucket or D1 table contents. If the media endpoint returns 404
+for representative IDs, confirm those backing records match the pinned
+revision before considering a new import.
 
 ## Owner authorization and automatic rollout
 
