@@ -28,6 +28,14 @@
   justify-content: center;
   align-items: center;
 }
+.mezfit-public-exercises__category-fallback > img,
+.mezfit-public-exercises__category-fallback > svg {
+  display: block;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
 .mezfit-public-exercises__exercise-fallback {
   display: flex;
   align-items: center;
