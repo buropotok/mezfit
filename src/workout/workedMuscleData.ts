@@ -266,8 +266,8 @@ export const WORKED_MUSCLE_LABELS: Readonly<Record<string, string>> = Object.fro
 /** Numeric mask IDs are view-specific: never combine the two numeric tables. */
 export const WORKED_MUSCLE_VIEWS = {
   "front": {
-    "width": 1134,
-    "height": 1387,
+    "width": 1024,
+    "height": 1536,
     "image": "anatomy/male-front.png",
     "mask": "anatomy/male-front.mezmask",
     "indices": {
