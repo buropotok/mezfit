@@ -63,28 +63,25 @@
   touch-action: manipulation;
 }
 
-.worked-muscles__tooltip {
-  position: absolute;
-  z-index: 1;
+.worked-muscles__error {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  max-width: 85%;
-  padding: 8px 12px;
-  transform: translate(-50%, -105%);
-  border: 1px solid var(--ui-border-color, #354252);
-  border-radius: 12px;
-  background: #111720;
-  color: inherit;
-  box-shadow: 0 4px 18px #0008;
-  pointer-events: none;
-}
-
-.worked-muscles__error {
-  display: block;
+  align-items: center;
+  gap: 10px;
   margin-top: 6px;
   text-align: center;
-  color: #b42318;
+  color: #fca5a5;
+}
+
+.worked-muscles__tap-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  width: 100%;
+  background: transparent;
+  border-bottom: 1px solid var(--ui-border-color, #354252);
 }
 
 .worked-muscles__loading {
