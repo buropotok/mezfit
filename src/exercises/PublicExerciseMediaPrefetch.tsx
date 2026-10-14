@@ -6,11 +6,11 @@ import { publicExerciseMediaUrl } from './PublicExerciseMedia';
 
 /**
  * Warm the browser's HTTP image cache after login, before any catalogue page
- * mounts. Intentionally bounded: preloading 1324 GIFs would waste bandwidth
+ * mounts. Intentionally bounded to one GIF per category: preloading 1324 GIFs would waste bandwidth
  * and freeze mobile WebViews. Cache-Control on the versioned Worker URL is
  * authoritative; no parallel IndexedDB media store is introduced.
  */
-export function initialExerciseMediaUrls(rows: PublicExerciseRow[], perCategory = 3): string[] {
+export function initialExerciseMediaUrls(rows: PublicExerciseRow[], perCategory = 1): string[] {
   const counts = new Map<string, number>();
   const urls: string[] = [];
   for (const row of rows) {
@@ -21,12 +21,12 @@ export function initialExerciseMediaUrls(rows: PublicExerciseRow[], perCategory 
     urls.push(url);
     counts.set(row.category, used + 1);
   }
-  return urls.slice(0, 27);
+  return urls.slice(0, 9);
 }
 
 export async function warmExerciseMedia(urls: string[], signal: AbortSignal, fetchFn: typeof fetch = fetch): Promise<void> {
   let cursor = 0;
-  await Promise.all(Array.from({ length: Math.min(3, urls.length) }, async () => {
+  await Promise.all(Array.from({ length: Math.min(2, urls.length) }, async () => {
     while (!signal.aborted && cursor < urls.length) {
       const url = urls[cursor++];
       try {
