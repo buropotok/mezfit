@@ -25,21 +25,24 @@ a selection mode with stable cloud IDs, multi-selection across categories,
 selection indicators, an explicit confirmation, and a 100-item request cap.
 The sheet itself no longer fetches the legacy D1 catalogue from REST.
 
-The current workout mutation still uses the existing D1 session engine.
-As a **narrow transitional write adapter only**, the Worker accepts
-`publicExerciseIds: string[]`, validates four-digit unique IDs, resolves
-them via the existing archived-aware
-`exercise_definition(reference_source='github_exercises_dataset', reference_key)`
-index into numeric D1 IDs, then invokes the unchanged authorized
-`addWorkoutExercises()` mutation. Missing, duplicate or ambiguous mappings
-reject the whole request; the existing workout ownership and state checks
-remain in effect. This adapter does not make D1 a new catalogue authority.
-It should be removed when the workout persistence migration reaches Dexie
-Cloud string IDs end to end.
+The **workout exercise selection is currently UI-only**. On confirmation,
+the screen displays an explicit message that adding exercises will be connected
+in the next stage; the selection remains visible in the open sheet. Neither
+Dexie Cloud nor D1 is mutated by this action. The workout domain has not yet
+been migrated to local-first Dexie persistence, so selected canonical IDs are
+not represented as newly saved session exercises.
 
-Older callers using `exerciseDefinitionIds: number[]` still work until
-their explicitly separate migration. No D1 data migration, new REST list
-endpoint, R2 import, or changes to UIkit primitive mechanics are needed.
+The D1 `publicExerciseIds` write adapter introduced in the earlier transitional
+implementation is still present in Worker/API code, but **this picker no longer
+calls it**. It resolves string IDs to legacy numeric exercise IDs and is not the
+target persistence architecture. Evaluate remaining consumers and retire the
+unused bridge in a separately reviewed cleanup; do not revive it as an implicit
+fallback for the Dexie picker. Other existing workout operations retain their
+current D1 behavior until their own migration. This PR changes neither their
+authorization nor their transport.
+
+No new Dexie session table, D1 migration, REST catalogue endpoint, R2 import,
+or UIkit primitive modification is introduced by this UI-only stage.
 
 ## Source reviews
 
