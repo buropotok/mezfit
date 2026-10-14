@@ -30,7 +30,8 @@ export async function warmExerciseMedia(urls: string[], signal: AbortSignal, fet
     while (!signal.aborted && cursor < urls.length) {
       const url = urls[cursor++];
       try {
-        await fetchFn(url, { method: 'GET', cache: 'force-cache', signal });
+        const response = await fetchFn(url, { method: 'GET', cache: 'force-cache', signal });
+        if (response.ok) await response.arrayBuffer(); // Drain the body so HTTP cache can commit it.
       } catch {
         // Optional media failures must not affect authentication or app startup.
       }
