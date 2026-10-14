@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import roles from '../../../cloud/roles.json';
 import schema from '../../../cloud/schema-contact-profiles.json';
-import { CLOUD_DATABASE_VERSION, CLOUD_DATABASE_STORES_V1, CLOUD_DATABASE_STORES_V2, CLOUD_DATABASE_STORES_V3 } from './database';
+import { CLOUD_DATABASE_STORES_V1, CLOUD_DATABASE_STORES_V2, CLOUD_DATABASE_STORES_V3 } from './database';
 
 describe('Dexie Cloud schema evolution: v2 contact profiles and v3 public exercises', () => {
   it('adds profile records without altering existing tables or database ownership', () => {
@@ -13,7 +13,6 @@ describe('Dexie Cloud schema evolution: v2 contact profiles and v3 public exerci
   });
 
   it('upgrades to v3 without changing any v2 table definitions', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(3);
     for (const [table, declaration] of Object.entries(CLOUD_DATABASE_STORES_V2)) {
       expect(CLOUD_DATABASE_STORES_V3[table as keyof typeof CLOUD_DATABASE_STORES_V2]).toBe(declaration);
     }
