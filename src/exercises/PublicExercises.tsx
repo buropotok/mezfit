@@ -65,10 +65,13 @@ function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: P
 }
 
 function ExerciseCatalogContent({
-  snapshot, onNavigationContextChange,
+  snapshot, onNavigationContextChange, selectedIds, onToggle, selectionDisabled = false,
 }: {
   snapshot: PublishedSnapshot;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
+  selectedIds?: ReadonlySet<string>;
+  onToggle?: (id: string) => void;
+  selectionDisabled?: boolean;
 }) {
   const { exercises, taxonomy, catalogue } = snapshot;
   const [category, setCategory] = useState<string | null>(null);
@@ -143,7 +146,7 @@ function ExerciseCatalogContent({
     setVisibleLimit(PAGE_SIZE);
   };
 
-  if (selected) return <ExerciseDetail row={selected} taxonomy={taxonomy} />;
+  if (selected && !onToggle) return <ExerciseDetail row={selected} taxonomy={taxonomy} />;
   return (
     <section className="mezfit-public-exercises stack">
       <div className="mezfit-public-exercises__toolbar">
@@ -211,7 +214,10 @@ function ExerciseCatalogContent({
                   </span>}
                   title={row.name_ru || row.name}
                   subtitle={row.name_en || row.subcategory_ru}
-                  onClick={() => setSelectedId(row.id)}
+                  aria-pressed={onToggle ? Boolean(selectedIds?.has(row.id)) : undefined}
+                  disabled={selectionDisabled}
+                  trailing={onToggle && selectedIds?.has(row.id) ? 'Выбрано' : undefined}
+                  onClick={() => { if (onToggle) onToggle(row.id); else setSelectedId(row.id); }}
                 />
               ))}
             </List>
@@ -247,8 +253,13 @@ function ExerciseCatalogContent({
 
 /** Shared read-only surface: Coach and Client see the same public Dexie Cloud catalogue. */
 export function PublicExercises({
-  onNavigationContextChange,
-}: { onNavigationContextChange?: (context: NavigationContext | null) => void }) {
+  onNavigationContextChange, selectedIds, onToggle, selectionDisabled,
+}: {
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+  selectedIds?: ReadonlySet<string>;
+  onToggle?: (id: string) => void;
+  selectionDisabled?: boolean;
+}) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud ? new PublicExerciseCatalogueRepository(cloud.db) : null, [cloud?.db]);
   const [snapshot, setSnapshot] = useState<PublicExerciseSnapshot | null>(null);
@@ -276,6 +287,7 @@ export function PublicExercises({
   if (snapshot.status === 'incomplete') return <Surface><Text role="alert">Публикация каталога неполная. Показывать частичные данные небезопасно.</Text></Surface>;
   return <>
     {cloud.status === 'error' ? <Text variant="footnote" tone="muted">Офлайн: показаны сохранённые упражнения</Text> : null}
-    <ExerciseCatalogContent snapshot={snapshot} onNavigationContextChange={onNavigationContextChange} />
+    <ExerciseCatalogContent snapshot={snapshot} onNavigationContextChange={onNavigationContextChange}
+      selectedIds={selectedIds} onToggle={onToggle} selectionDisabled={selectionDisabled} />
   </>;
 }
