@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PublicExerciseRow } from '../data/exercises/publicExerciseTypes';
+import approvedMediaRelease from '../../shared/approved-exercise-media.json';
 import { Icon, Text } from '../ui';
 
 /** Only the approved immutable Dexie catalogue may reference the existing media library. */
@@ -13,6 +14,8 @@ type Variant = 'thumbnail' | 'detail';
  * A verified Dexie row identifies a previously imported canonical dataset GIF
  * by its stable four-digit ID, never by treating gif_url as a remote URL.
  * The existing Worker authorizes the D1 media mapping and loads the R2 bytes.
+ * A pinned query version prevents routine imports from silently swapping the
+ * image behind an immutable Dexie Cloud exercise ID.
  * Product owner confirmed the existing GIF library is theirs and approved its use.
  */
 export function publicExerciseMediaUrl(
@@ -21,7 +24,7 @@ export function publicExerciseMediaUrl(
   if (!/^\d{4}$/.test(row.id)
     || row.sourceSha256 !== PUBLIC_CATALOGUE_SHA
     || typeof row.gif_url !== 'string' || !row.gif_url.trim()) return null;
-  return `/api/exercise-media/gym_keeper_apk/${row.id}`;
+  return `/api/exercise-media/gym_keeper_apk/${row.id}?v=${approvedMediaRelease.datasetGitRevision}`;
 }
 
 /** Shared rendering for list thumbnails and the full exercise detail. */
