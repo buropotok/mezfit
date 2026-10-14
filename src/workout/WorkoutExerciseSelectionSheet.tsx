@@ -68,8 +68,9 @@ export function WorkoutExerciseSelectionSheet({
         <div className="workout-exercise-selection__catalog">
           {actionError ? <Text variant="footnote" role="alert">{actionError}</Text> : null}
           <PublicExercises
-            selectedIds={selectedIds}
-            onToggle={toggleExercise}
+            mode="select"
+            selectedExerciseIds={selectedIds}
+            onToggleExercise={toggleExercise}
             selectionDisabled={saving}
             onNavigationContextChange={setNavigationContext}
           />

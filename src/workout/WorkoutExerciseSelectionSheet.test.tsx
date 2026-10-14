@@ -4,15 +4,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 
 vi.mock('../exercises/PublicExercises', () => ({
-  PublicExercises: ({ selectedIds, onToggle, selectionDisabled }: {
-    selectedIds: ReadonlySet<string>;
-    onToggle: (id: string) => void;
+  PublicExercises: ({ mode, selectedExerciseIds, onToggleExercise, selectionDisabled }: {
+    mode: 'browse' | 'select';
+    selectedExerciseIds: ReadonlySet<string>;
+    onToggleExercise: (id: string) => void;
     selectionDisabled?: boolean;
   }) => (
-    <div aria-label="Общий каталог Dexie Cloud">
+    <div aria-label="Общий каталог Dexie Cloud" data-mode={mode}>
       {['0001', '0002'].map((id) => (
         <button key={id} type="button" disabled={selectionDisabled}
-          aria-pressed={selectedIds.has(id)} onClick={() => onToggle(id)}>{id}</button>
+          aria-pressed={selectedExerciseIds.has(id)} onClick={() => onToggleExercise(id)}>{id}</button>
       ))}
     </div>
   ),
@@ -28,7 +29,7 @@ describe('WorkoutExerciseSelectionSheet on canonical Dexie catalogue', () => {
         onConfirm={onConfirm} onClose={vi.fn()} />,
     );
     expect(screen.getByRole('dialog', { name: 'Выбор упражнений для тренировки' })).toBeTruthy();
-    expect(screen.getByLabelText('Общий каталог Dexie Cloud')).toBeTruthy();
+    expect(screen.getByLabelText('Общий каталог Dexie Cloud').getAttribute('data-mode')).toBe('select');
     fireEvent.click(screen.getByRole('button', { name: '0001' }));
     fireEvent.click(screen.getByRole('button', { name: '0002' }));
     expect(screen.getByRole('button', { name: '0001' }).getAttribute('aria-pressed')).toBe('true');

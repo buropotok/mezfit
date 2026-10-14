@@ -2,9 +2,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  addWorkoutSessionExercises,
+  addWorkoutSessionPublicExercises,
   completeWorkoutSession,
-  getWorkoutExerciseOptions,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
   saveWorkoutSessionSet,
@@ -15,13 +14,24 @@ import type { SessionExerciseData } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession, DraftWorkoutSession } from './workoutSessionTypes';
 
 vi.mock('../api', () => ({
-  addWorkoutSessionExercises: vi.fn(),
+  addWorkoutSessionPublicExercises: vi.fn(),
   completeWorkoutSession: vi.fn(),
-  getWorkoutExerciseOptions: vi.fn(),
   initializeWorkoutSession: vi.fn(),
   reorderWorkoutSessionExercises: vi.fn(),
   saveWorkoutSessionSet: vi.fn(),
   startWorkoutSession: vi.fn(),
+}));
+
+vi.mock('../exercises/PublicExercises', () => ({
+  PublicExercises: ({ selectedExerciseIds, onToggleExercise, selectionDisabled }: {
+    selectedExerciseIds?: ReadonlySet<string>;
+    onToggleExercise?: (id: string) => void;
+    selectionDisabled?: boolean;
+  }) => (
+    <button type="button" disabled={selectionDisabled}
+      aria-pressed={Boolean(selectedExerciseIds?.has('0001'))}
+      onClick={() => onToggleExercise?.('0001')}>Жим лёжа</button>
+  ),
 }));
 
 vi.mock('../ui', async (importOriginal) => {
@@ -51,8 +61,7 @@ vi.mock('../ui', async (importOriginal) => {
   return { ...actual, SortableList: TestSortableList };
 });
 
-const addExercisesMock = vi.mocked(addWorkoutSessionExercises);
-const getExerciseOptionsMock = vi.mocked(getWorkoutExerciseOptions);
+const addExercisesMock = vi.mocked(addWorkoutSessionPublicExercises);
 const initializeMock = vi.mocked(initializeWorkoutSession);
 const startMock = vi.mocked(startWorkoutSession);
 const saveSetMock = vi.mocked(saveWorkoutSessionSet);
@@ -147,7 +156,6 @@ function renderScreen(overrides: Partial<React.ComponentProps<typeof WorkoutSess
 
 beforeEach(() => {
   addExercisesMock.mockReset();
-  getExerciseOptionsMock.mockReset();
   initializeMock.mockReset();
   startMock.mockReset();
   saveSetMock.mockReset();
@@ -253,22 +261,20 @@ describe('WorkoutSessionScreen', () => {
       exercises: [exerciseData(42, 0, 'Жим лёжа')],
     };
     initializeMock.mockResolvedValue({ session: ownSession });
-    getExerciseOptionsMock.mockResolvedValue({ exercises: [nextSession.exercises[0].exercise] });
     addExercisesMock.mockResolvedValue({ session: nextSession });
 
     renderScreen();
     await screen.findAllByText('Своя тренировка');
     fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-    expect(await screen.findByText('Жим лёжа')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /^Жим лёжа/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Жим лёжа' }));
+    expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
     expect(addExercisesMock).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнения (1)' }));
 
     await waitFor(() => {
-      expect(addExercisesMock).toHaveBeenCalledWith('telegram-init', 501, [42]);
+      expect(addExercisesMock).toHaveBeenCalledWith('telegram-init', 501, ['0001']);
     });
     expect((await screen.findByTestId('sortable-order')).textContent).toBe('42');
   });
