@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { ButtonHTMLAttributes, ChangeEvent, ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseCatalogContent } from './ExerciseCatalogContent';
@@ -9,21 +10,21 @@ vi.mock('../NavigationShell', () => ({
 }));
 
 vi.mock('../ui', () => ({
-  Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
-  IconButton: ({ children, label, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) => <button aria-label={label} {...props}>{children}</button>,
-  List: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ListItem: ({ title, subtitle, leading, leadingShape, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { title: React.ReactNode; subtitle?: React.ReactNode; leading?: React.ReactNode; leadingShape?: string }) => <button {...props}>{leading}{title}{subtitle}</button>,
-  Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  Surface: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  MezfitSearchbar: ({ value, onChange, onDisable }: { value: string; onChange: (event: React.ChangeEvent<HTMLInputElement>) => void; onDisable: () => void }) => <><input aria-label="Найти упражнение" value={value} onChange={onChange} /><button onClick={onDisable}>Закрыть поиск</button></>,
-  LiquidPopover: ({ trigger }: { trigger: React.ReactNode }) => <div>{trigger}</div>,
+  Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
+  IconButton: ({ children, label, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) => <button aria-label={label} {...props}>{children}</button>,
+  List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ListItem: ({ title, subtitle, leading, leadingShape, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { title: ReactNode; subtitle?: ReactNode; leading?: ReactNode; leadingShape?: string }) => <button {...props}>{leading}{title}{subtitle}</button>,
+  Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Surface: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  MezfitSearchbar: ({ value, onChange, onDisable }: { value: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void; onDisable: () => void }) => <><input aria-label="Найти упражнение" value={value} onChange={onChange} /><button onClick={onDisable}>Закрыть поиск</button></>,
+  LiquidPopover: ({ trigger }: { trigger: ReactNode }) => <div>{trigger}</div>,
   MezfitDialog: () => null,
   MezfitDialogButton: () => null,
 }));
 
 vi.mock('konsta/react', () => ({
   Checkbox: () => null,
-  Chip: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  Chip: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock('./PublicExerciseMedia', () => ({
