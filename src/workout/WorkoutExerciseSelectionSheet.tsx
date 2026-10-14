@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { GlobalExerciseCatalog } from '../coach/GlobalExerciseCatalog';
+import { PublicExercises } from '../exercises/PublicExercises';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
-import { BottomSheet, FloatingActionButton, IconButton, Text } from '../ui';
+import { Button, IconButton, MezfitBottomSheet, Text } from '../ui';
 
 interface WorkoutExerciseSelectionSheetProps {
   initData: string;
   saving: boolean;
   actionError?: string;
-  onConfirm: (exerciseDefinitionIds: number[]) => void;
+  onConfirm: (publicExerciseIds: string[]) => void;
   onClose: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
+/**
+ * One shared Dexie Cloud catalogue for browsing and selecting.
+ * The legacy workout write translates stable cloud IDs on the Worker boundary.
+ */
 export function WorkoutExerciseSelectionSheet({
-  initData,
   saving,
   actionError = '',
   onConfirm,
@@ -21,84 +24,61 @@ export function WorkoutExerciseSelectionSheet({
   onNavigationContextChange,
 }: WorkoutExerciseSelectionSheetProps) {
   const requestBackTransition = useNavigationBackTransition();
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
 
-  const toggleExercise = (exerciseDefinitionId: number) => {
+  const toggleExercise = useCallback((id: string) => {
     if (saving) return;
     setSelectedIds((current) => {
       const next = new Set(current);
-      if (next.has(exerciseDefinitionId)) next.delete(exerciseDefinitionId);
-      else next.add(exerciseDefinitionId);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
-  };
+  }, [saving]);
 
-  const close = useCallback(() => {
-    if (!saving) onClose();
-  }, [onClose, saving]);
-
+  const close = useCallback(() => { if (!saving) onClose(); }, [onClose, saving]);
   const requestBack = useCallback(() => {
     if (saving) return;
     if (navigationContext?.onBack) requestBackTransition(navigationContext.onBack);
-    else onClose();
-  }, [navigationContext, onClose, requestBackTransition, saving]);
+    else close();
+  }, [navigationContext, requestBackTransition, saving, close]);
 
-  const externalNavigationTitle = navigationContext?.title ?? 'Упражнения';
-  const externalNavigationScrollKey = navigationContext?.scrollKey ?? 'root';
-  const externalNavigationContext = useMemo<NavigationContext>(() => ({
-    title: externalNavigationTitle,
-    scrollKey: `workout-exercise-selection:${externalNavigationScrollKey}`,
-    identity: { title: externalNavigationTitle, icon: 'barbell' },
+  const title = navigationContext?.title ?? 'Упражнения';
+  const scrollKey = navigationContext?.scrollKey ?? 'root';
+  const parentNavigationContext = useMemo<NavigationContext>(() => ({
+    title,
+    scrollKey: `workout-exercise-selection:${scrollKey}`,
+    identity: { title, icon: 'barbell' },
     onBack: requestBack,
-  }), [externalNavigationScrollKey, externalNavigationTitle, requestBack]);
+  }), [title, scrollKey, requestBack]);
 
-  useEffect(() => {
-    onNavigationContextChange?.(externalNavigationContext);
-  }, [externalNavigationContext, onNavigationContextChange]);
-
-  useEffect(() => () => {
-    onNavigationContextChange?.(null);
-  }, [onNavigationContextChange]);
-
-  const floatingAction = selectedIds.size > 0 ? (
-    <FloatingActionButton
-      placement="right"
-      label="Добавить выбранные упражнения"
-      disabled={saving}
-      onClick={() => onConfirm([...selectedIds])}
-    >
-      ОК
-    </FloatingActionButton>
-  ) : undefined;
+  useEffect(() => { onNavigationContextChange?.(parentNavigationContext); }, [onNavigationContextChange, parentNavigationContext]);
+  useEffect(() => () => { onNavigationContextChange?.(null); }, [onNavigationContextChange]);
 
   return (
-    <BottomSheet
-      isOpen
-      title={navigationContext?.title ?? 'Упражнения'}
-      headerLeading={navigationContext ? (
-        <IconButton label="Назад" disabled={saving} onClick={requestBack}>
-          <span aria-hidden="true">←</span>
-        </IconButton>
-      ) : undefined}
-      floatingAction={floatingAction}
-      hasCloseButton={!saving && navigationContext === null}
-      closeOnBackdrop={!saving}
-      modalColor
-      inset
-      onClose={close}
-    >
-      <div style={{ padding: '0 1.5rem 1.5rem' }}>
-        {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
-        <GlobalExerciseCatalog
-          initData={initData}
-          mode="select"
-          selectedExerciseIds={selectedIds}
-          selectionDisabled={saving}
-          onToggleExercise={toggleExercise}
-          onNavigationContextChange={setNavigationContext}
-        />
-      </div>
-    </BottomSheet>
+    <MezfitBottomSheet opened label="Выбор упражнений для тренировки">
+      <section className="workout-exercise-selection">
+        <header className="workout-exercise-selection__header">
+          {navigationContext ? <IconButton icon="chevron-left" label="Назад" disabled={saving} onClick={requestBack} /> : null}
+          <Text variant="headline">{title}</Text>
+          <IconButton icon="x" label="Закрыть" disabled={saving} onClick={close} />
+        </header>
+        <div className="workout-exercise-selection__catalog">
+          {actionError ? <Text variant="footnote" role="alert">{actionError}</Text> : null}
+          <PublicExercises
+            selectedIds={selectedIds}
+            onToggle={toggleExercise}
+            selectionDisabled={saving}
+            onNavigationContextChange={setNavigationContext}
+          />
+        </div>
+        <footer className="workout-exercise-selection__footer">
+          <Button disabled={saving || selectedIds.size === 0} onClick={() => onConfirm([...selectedIds])}>
+            {saving ? 'Добавляем…' : `Добавить упражнения (${selectedIds.size})`}
+          </Button>
+        </footer>
+      </section>
+    </MezfitBottomSheet>
   );
 }
