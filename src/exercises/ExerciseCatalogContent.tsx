@@ -10,7 +10,7 @@ import { PublicExerciseMedia } from './PublicExerciseMedia';
 import { publicExerciseCategoryArtwork } from './publicExerciseCategoryArtwork';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import {
-  Button, Icon, IconButton, LiquidPopover, List, ListItem,
+  Button, IconButton, LiquidPopover, List, ListItem,
   MezfitDialog, MezfitDialogButton, MezfitSearchbar, Surface, Text,
 } from '../ui';
 import './public-exercises.css';
@@ -72,10 +72,15 @@ function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: P
 }
 
 export function ExerciseCatalogContent({
-  snapshot, onNavigationContextChange,
+  snapshot, onNavigationContextChange, mode = 'browse',
+  selectedExerciseIds, onToggleExercise, selectionDisabled = false,
 }: {
   snapshot: PublishedSnapshot;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
+  mode?: 'browse' | 'select';
+  selectedExerciseIds?: ReadonlySet<string>;
+  onToggleExercise?: (exerciseId: string) => void;
+  selectionDisabled?: boolean;
 }) {
   const { exercises, taxonomy, catalogue } = snapshot;
   const [category, setCategory] = useState<string | null>(null);
@@ -220,7 +225,12 @@ export function ExerciseCatalogContent({
                   </span>}
                   title={row.name_ru || row.name}
                   subtitle={row.name_en || row.subcategory_ru}
-                  onClick={() => setSelectedId(row.id)}
+                  aria-pressed={mode === 'select' ? Boolean(selectedExerciseIds?.has(row.id)) : undefined}
+                  disabled={mode === 'select' && selectionDisabled}
+                  onClick={() => {
+                    if (mode === 'select') onToggleExercise?.(row.id);
+                    else setSelectedId(row.id);
+                  }}
                 />
               ))}
             </List>
