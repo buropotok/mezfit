@@ -33,7 +33,7 @@ export function WorkoutExerciseSelectionSheet({
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else if (next.size < 100) next.add(id); // Match the server's bounded mutation contract.
       return next;
     });
   }, [saving]);
@@ -75,6 +75,7 @@ export function WorkoutExerciseSelectionSheet({
           />
         </div>
         <footer className="workout-exercise-selection__footer">
+          {selectedIds.size === 100 ? <Text variant="footnote" tone="muted">Максимум 100 упражнений за раз</Text> : null}
           <Button disabled={saving || selectedIds.size === 0} onClick={() => onConfirm([...selectedIds])}>
             {saving ? 'Добавляем…' : `Добавить упражнения (${selectedIds.size})`}
           </Button>
