@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { Toggle } from 'konsta/react';
+import { Button, Toggle } from 'konsta/react';
 import { Text } from '../ui';
 import { WORKED_MUSCLE_LABELS, WORKED_MUSCLE_VIEWS, type WorkedMuscleView } from './workedMuscleData';
-import { createNeutralWorkedMusclePixels, decodeWorkedMuscleMask, renderWorkedMusclePixels } from './workedMuscleMask';
+import { loadWorkedMuscleAtlas, muscleIdAtPixel, type WorkedMuscleAtlasAssets } from './workedMuscleAtlas';
 import './worked-muscles.css';
 
 export type WorkedMusclesProps = {
@@ -11,74 +11,7 @@ export type WorkedMusclesProps = {
   className?: string;
 };
 
-type ViewAssets = {
-  source: Uint8ClampedArray;
-  neutral: Uint8ClampedArray;
-  mask: Uint8Array;
-  width: number;
-  height: number;
-};
-
-type MuscleTooltip = {
-  name: string;
-  category: string;
-  left: number;
-  top: number;
-};
-
-function assetUrl(path: string): string {
-  const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
-  return new URL(`${base}${path}`, window.location.origin).href;
-}
-
-function loadImage(src: string, signal: AbortSignal): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    const cleanup = () => {
-      image.onload = null;
-      image.onerror = null;
-      signal.removeEventListener('abort', abort);
-    };
-    const abort = () => {
-      cleanup();
-      reject(new DOMException('Aborted', 'AbortError'));
-    };
-    image.onload = () => { cleanup(); resolve(image); };
-    image.onerror = () => { cleanup(); reject(new Error('Не удалось загрузить анатомическое изображение')); };
-    if (signal.aborted) { abort(); return; }
-    signal.addEventListener('abort', abort, { once: true });
-    image.src = src;
-  });
-}
-
-async function loadViewAssets(view: WorkedMuscleView, signal: AbortSignal): Promise<ViewAssets> {
-  const config = WORKED_MUSCLE_VIEWS[view];
-  const [image, response] = await Promise.all([
-    loadImage(assetUrl(config.image), signal),
-    fetch(assetUrl(config.mask), { signal }),
-  ]);
-  if (!response.ok) throw new Error(`Не удалось загрузить маску: ${response.status}`);
-  const mask = decodeWorkedMuscleMask(await response.arrayBuffer(), view);
-  if (image.naturalWidth !== config.width || image.naturalHeight !== config.height) {
-    throw new Error('Размер изображения не совпадает с маской');
-  }
-
-  const sourceCanvas = document.createElement('canvas');
-  sourceCanvas.width = config.width;
-  sourceCanvas.height = config.height;
-  const context = sourceCanvas.getContext('2d', { willReadFrequently: true });
-  if (!context) throw new Error('Canvas недоступен');
-  context.drawImage(image, 0, 0);
-  const source = context.getImageData(0, 0, config.width, config.height).data;
-  const smoothingPercent = view === 'front' ? 84 : 59;
-  return {
-    source,
-    neutral: createNeutralWorkedMusclePixels(source, mask, smoothingPercent),
-    mask,
-    width: config.width,
-    height: config.height,
-  };
-}
+type MuscleDetail = { name: string; category: string };
 
 type AnatomyViewProps = {
   view: WorkedMuscleView;
@@ -90,150 +23,115 @@ type AnatomyViewProps = {
 
 function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: AnatomyViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [assets, setAssets] = useState<ViewAssets | null>(null);
+  const [assets, setAssets] = useState<WorkedMuscleAtlasAssets | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [tooltip, setTooltip] = useState<MuscleTooltip | null>(null);
+  const [retry, setRetry] = useState(0);
+  const [detail, setDetail] = useState<MuscleDetail | null>(null);
   const { indices } = WORKED_MUSCLE_VIEWS[view];
   const viewLabel = view === 'front' ? 'Вид спереди' : 'Вид сзади';
 
   useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError(null);
-    setAssets(null);
-    loadViewAssets(view, controller.signal).then((loaded) => {
-      if (!controller.signal.aborted) { setAssets(loaded); setLoading(false); }
+    let active = true;
+    loadWorkedMuscleAtlas(view).then((loaded) => {
+      if (active) { setAssets(loaded); setError(null); }
     }).catch((reason: unknown) => {
-      if (!controller.signal.aborted) { setError(reason instanceof Error ? reason.message : 'Ошибка загрузки'); setLoading(false); }
+      if (active) {
+        setError(reason instanceof Error ? reason.message : 'Ошибка загрузки анатомии');
+      }
     });
-    return () => controller.abort();
-  }, [view]);
+    return () => { active = false; };
+  }, [view, retry]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !assets) return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
     canvas.width = assets.width;
     canvas.height = assets.height;
-    const context = canvas.getContext('2d', { alpha: false });
-    if (!context) return;
-    const frame = renderWorkedMusclePixels(
-      assets.source,
-      assets.mask,
-      indices,
-      primary,
-      secondary,
-      showPrimary,
-      showSecondary,
-      assets.neutral,
-    );
-    context.putImageData(new ImageData(new Uint8ClampedArray(frame), assets.width, assets.height), 0, 0);
-
-    // The approved HTML applies glow to a separate blurred mask, not to the
-    // muscle texture. Restore the sharp selected pixels after the glow pass.
-    const roles = new Uint8Array(256);
-    for (const [numericId, muscleId] of Object.entries(indices)) {
-      const id = Number(numericId);
-      if (showPrimary && primary.has(muscleId)) roles[id] = 1;
-      else if (showSecondary && secondary.has(muscleId)) roles[id] = 2;
+    context.clearRect(0, 0, assets.width, assets.height);
+    context.drawImage(assets.neutral, 0, 0);
+    const primarySprites: number[] = [];
+    const secondarySprites: number[] = [];
+    for (const [rawId, muscleId] of Object.entries(indices)) {
+      const id = Number(rawId);
+      if (!assets.sprites[id]) continue;
+      if (showPrimary && primary.has(muscleId)) primarySprites.push(id);
+      else if (showSecondary && secondary.has(muscleId)) secondarySprites.push(id);
     }
-    if (!roles.some(Boolean)) return;
-    const glowPixels = new Uint8ClampedArray(frame.length);
-    const selectedPixels = new Uint8ClampedArray(frame.length);
-    let hasSelected = false;
-    for (let pixel = 0, offset = 0; pixel < assets.mask.length; pixel += 1, offset += 4) {
-      const role = roles[assets.mask[pixel]];
-      if (!role || assets.source[offset + 3] === 0) continue;
-      hasSelected = true;
-      glowPixels[offset] = 74;
-      glowPixels[offset + 1] = 199;
-      glowPixels[offset + 2] = 255;
-      glowPixels[offset + 3] = role === 1 ? 190 : 110;
-      selectedPixels[offset] = frame[offset];
-      selectedPixels[offset + 1] = frame[offset + 1];
-      selectedPixels[offset + 2] = frame[offset + 2];
-      selectedPixels[offset + 3] = frame[offset + 3];
-    }
-    if (!hasSelected) return;
-    const createLayer = (pixels: Uint8ClampedArray) => {
-      const layer = document.createElement('canvas');
-      layer.width = assets.width;
-      layer.height = assets.height;
-      const layerContext = layer.getContext('2d');
-      if (!layerContext) return null;
-      layerContext.putImageData(
-        new ImageData(new Uint8ClampedArray(pixels), assets.width, assets.height), 0, 0,
-      );
-      return layer;
+    const draw = (image: HTMLImageElement, ids: readonly number[], alpha: number) => {
+      context.save();
+      context.globalAlpha = alpha;
+      for (const id of ids) {
+        const sprite = assets.sprites[id];
+        context.drawImage(
+          image,
+          sprite.atlasX, sprite.atlasY, sprite.width, sprite.height,
+          sprite.targetX, sprite.targetY, sprite.width, sprite.height,
+        );
+      }
+      context.restore();
     };
-    const glowLayer = createLayer(glowPixels);
-    const selectedLayer = createLayer(selectedPixels);
-    if (!glowLayer || !selectedLayer) return;
-    context.save();
-    context.globalAlpha = 0.24;
-    context.filter = 'blur(8px)';
-    context.drawImage(glowLayer, 0, 0);
-    context.restore();
-    context.drawImage(selectedLayer, 0, 0);
+    // Glow was blurred when building PNGs; rendering is only image compositing.
+    draw(assets.glowAtlas, secondarySprites, 0.6);
+    draw(assets.glowAtlas, primarySprites, 1);
+    draw(assets.colorAtlas, secondarySprites, 0.54);
+    draw(assets.colorAtlas, primarySprites, 1);
   }, [assets, indices, primary, secondary, showPrimary, showSecondary]);
-
-  useEffect(() => {
-    if (!tooltip) return;
-    const timeout = window.setTimeout(() => setTooltip(null), 3000);
-    return () => window.clearTimeout(timeout);
-  }, [tooltip]);
 
   const onTap = (event: MouseEvent<HTMLCanvasElement>) => {
     if (!assets) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
+    if (rect.width <= 0 || rect.height <= 0) return;
     const fx = (event.clientX - rect.left) / rect.width;
     const fy = (event.clientY - rect.top) / rect.height;
-    const x = Math.max(0, Math.min(assets.width - 1, Math.floor(fx * assets.width)));
-    const y = Math.max(0, Math.min(assets.height - 1, Math.floor(fy * assets.height)));
-    const numericId = assets.mask[y * assets.width + x];
+    if (fx < 0 || fx >= 1 || fy < 0 || fy >= 1) return;
+    const x = Math.floor(fx * assets.width), y = Math.floor(fy * assets.height);
+    const numericId = muscleIdAtPixel(assets.mask, assets.width, assets.height, x, y);
     const muscleId = (indices as Readonly<Record<number, string>>)[numericId];
-    if (!muscleId) { setTooltip(null); return; }
+    if (!muscleId) { setDetail(null); return; }
     const category = showPrimary && primary.has(muscleId) ? 'Основная мышца'
       : showSecondary && secondary.has(muscleId) ? 'Вспомогательная мышца'
-        : 'Не отображается в тренировке';
-    setTooltip({
-      name: WORKED_MUSCLE_LABELS[muscleId] ?? muscleId,
-      category,
-      left: Math.min(82, Math.max(18, fx * 100)),
-      top: Math.min(90, Math.max(12, fy * 100)),
-    });
+        : 'Не задействована в тренировке';
+    // Mobile tap replaces hover. Text persists under the figure, never floats
+    // over or interferes with the next tap.
+    setDetail({ name: WORKED_MUSCLE_LABELS[muscleId] ?? muscleId, category });
   };
 
   return (
     <section className="worked-muscles__view" aria-label={viewLabel}>
       <Text variant="headline" className="worked-muscles__view-title">{viewLabel}</Text>
-      <div className="worked-muscles__image-wrap" aria-busy={loading}>
-        {loading ? <Text variant="footnote" className="worked-muscles__loading" role="status">Загрузка анатомии…</Text> : null}
+      <div className="worked-muscles__image-wrap" aria-busy={!assets && !error}>
+        {!assets && !error ? (
+          <Text variant="footnote" className="worked-muscles__loading" role="status">Загрузка анатомии…</Text>
+        ) : null}
         <canvas
           ref={canvasRef}
           className="worked-muscles__canvas"
           onClick={onTap}
           role="img"
-          aria-label={`${viewLabel}, мышцы после тренировки. Нажмите на мышцу, чтобы узнать название`}
+          aria-label={viewLabel + '. Коснитесь мышцы, чтобы увидеть название'}
         />
-        {tooltip ? (
-          <div
-            className="worked-muscles__tooltip"
-            style={{ left: `${tooltip.left}%`, top: `${tooltip.top}%` }}
-            role="status"
-          >
-            <Text variant="body">{tooltip.name}</Text>
-            <Text variant="caption" tone="muted">{tooltip.category}</Text>
-          </div>
-        ) : null}
       </div>
-      {error ? <Text variant="footnote" className="worked-muscles__error" role="alert">{error}</Text> : null}
+      {detail ? (
+        <div className="worked-muscles__tap-detail" role="status">
+          <Text variant="body">{detail.name}</Text>
+          <Text variant="caption" tone="muted">{detail.category}</Text>
+        </div>
+      ) : null}
+      {error ? (
+        <div className="worked-muscles__error">
+          <Text variant="footnote" role="alert">{error}</Text>
+          <Button onClick={() => { setError(null); setAssets(null); setRetry((value) => value + 1); }}>
+            Повторить
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-/** Read-only training summary: only the two visibility toggles mutate local presentation state. */
+/** Read-only training summary; only role visibility toggles mutate presentation state. */
 export function WorkedMuscles({ primaryMuscleIds, secondaryMuscleIds, className = '' }: WorkedMusclesProps) {
   const [showPrimary, setShowPrimary] = useState(true);
   const [showSecondary, setShowSecondary] = useState(true);
@@ -241,7 +139,7 @@ export function WorkedMuscles({ primaryMuscleIds, secondaryMuscleIds, className 
   const secondary = useMemo(() => new Set(secondaryMuscleIds), [secondaryMuscleIds]);
 
   return (
-    <section className={`worked-muscles ${className}`.trim()}>
+    <section className={'worked-muscles ' + className}>
       <Text variant="title" className="worked-muscles__title">Проработанные мышцы</Text>
       <div className="worked-muscles__filters">
         <label className="worked-muscles__filter">
