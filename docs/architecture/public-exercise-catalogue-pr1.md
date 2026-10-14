@@ -8,7 +8,7 @@
 - Dexie Cloud: tables `publicExerciseDefinitions`, `publicExerciseTaxonomy`, `publicExerciseCatalogues` in `rlm-public`. The ordinary browser has **no write grant** to this realm.
 - Dexie Addon owns syncing to local IndexedDB. React accesses local data only via `PublicExerciseCatalogueRepository`.
 - No numeric D1 exercise IDs, coach/private overrides, clients, PLAN or FACT in this scope.
-- No new exercise JPEG/GIF uploads until Gym visual media redistribution rights are confirmed. Keep the canonical media paths and attribution as metadata; display fallback artwork.
+- No new exercise JPEG/GIF uploads are part of this rollout. For existing R2 GIFs, the product owner confirmed on 2026-10-13 that these are their GIFs and approved their reuse in Mezfit. Retain original source paths and attribution metadata; show fallback artwork if media is missing.
 
 ## Operator-controlled rollout
 
@@ -28,7 +28,7 @@
 - `rlm-public` permits unauthenticated reads at Dexie Cloud level. This PR does not add anonymous entry into the Telegram Mini App, which still authenticates for its private flows.
 - On an already-synced device, catalogue reads, search and taxonomy filtering are local and continue offline.
 - A newly installed device needs online sync. Missing initial sync and intentionally unpublished catalogue must not be misrepresented as an empty exercise library.
-- Category images from `/gym-keeper/categories` and exercise-specific Gym visual media are **not loaded** until their reuse rights have been established. Category and exercise rows use existing UIkit icon fallback.
+- Category images from `/gym-keeper/categories` remain deferred pending their own rights review. Existing owner-approved exercise GIFs are served via the established Worker/R2 route for the pinned Dexie Cloud catalogue; absent media still uses the UIkit icon fallback. No new media are imported by this integration.
 
 ## Deferred
 
