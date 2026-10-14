@@ -25,6 +25,52 @@ export function decodeWorkedMuscleMask(buffer: ArrayBuffer, view: WorkedMuscleVi
   return bytes.subarray(HEADER_BYTES);
 }
 
+/** Neutralize the inactive anatomy with the approved front/rear tone settings.
+ * Local variation survives as fibre detail; no image or mask bytes are changed.
+ */
+export function createNeutralWorkedMusclePixels(
+  source: Uint8ClampedArray,
+  mask: Uint8Array,
+  smoothingPercent: number,
+): Uint8ClampedArray {
+  if (source.length !== mask.length * 4) throw new Error('Маска и изображение имеют разные размеры');
+  const smooth = Math.max(0, Math.min(100, smoothingPercent)) / 100;
+  const sums = new Float64Array(256);
+  const counts = new Uint32Array(256);
+  const gray = new Uint8Array(mask.length);
+  for (let i = 0, p = 0; i < mask.length; i += 1, p += 4) {
+    if (source[p + 3] === 0) continue;
+    const y = Math.round(0.299 * source[p] + 0.587 * source[p + 1] + 0.114 * source[p + 2]);
+    gray[i] = y;
+    const id = mask[i];
+    if (id !== 0) { sums[id] += y; counts[id] += 1; }
+  }
+  const means = new Float32Array(256);
+  for (let id = 1; id < 256; id += 1) {
+    if (counts[id] !== 0) means[id] = sums[id] / counts[id];
+  }
+  const strength = 0.12 + smooth * 0.83;
+  const detailScale = 0.72 - smooth * 0.34;
+  const baseContrast = 0.93 - smooth * 0.08;
+  const baseLift = 182 + smooth * 6;
+  const output = new Uint8ClampedArray(source.length);
+  for (let i = 0, p = 0; i < mask.length; i += 1, p += 4) {
+    const alpha = source[p + 3];
+    output[p + 3] = alpha;
+    if (alpha === 0) continue;
+    const y = gray[i];
+    const id = mask[i];
+    const base = (y - 128) * baseContrast + baseLift;
+    const equalized = id && counts[id] ? 186 + (y - means[id]) * detailScale : base;
+    const tone = id && counts[id] ? base * (1 - strength) + equalized * strength : base;
+    const value = Math.max(0, Math.min(255, Math.round(tone)));
+    output[p] = value;
+    output[p + 1] = value;
+    output[p + 2] = value;
+  }
+  return output;
+}
+
 /** Kept pure so displaying a workout never mutates the original image or mask. */
 export function renderWorkedMusclePixels(
   source: Uint8ClampedArray,
