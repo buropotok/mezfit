@@ -7,6 +7,7 @@ import {
   type FilterGroup, type SelectedFilters,
 } from '../data/exercises/publicExerciseFilters';
 import type { PublicExerciseRow, PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import { PublicExerciseMedia } from './PublicExerciseMedia';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import {
   Button, Icon, IconButton, LiquidPopover, List, ListItem,
@@ -34,9 +35,8 @@ function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: P
   ];
   return (
     <section className="mezfit-public-exercises__detail" aria-label="Детали упражнения">
-      <Surface className="mezfit-public-exercises__media-placeholder" aria-label="Изображение упражнения недоступно">
-        <Icon name="barbell" />
-        <Text tone="muted">Медиа появится после подтверждения прав</Text>
+      <Surface className="mezfit-public-exercises__media-placeholder">
+        <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />
       </Surface>
       <Text variant="headline">{row.name_ru || row.name}</Text>
       {row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
@@ -201,7 +201,9 @@ function ExerciseCatalogContent({
                 <ListItem
                   key={row.id}
                   leadingShape="square"
-                  leading={<span className="mezfit-public-exercises__exercise-fallback"><Icon name="barbell" /></span>}
+                  leading={<span className="mezfit-public-exercises__exercise-fallback">
+                    <PublicExerciseMedia key={`thumbnail:${row.id}:${row.sourceSha256}`} row={row} variant="thumbnail" />
+                  </span>}
                   title={row.name_ru || row.name}
                   subtitle={row.name_en || row.subcategory_ru}
                   onClick={() => setSelectedId(row.id)}
