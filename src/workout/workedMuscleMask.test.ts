@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { WORKED_MUSCLE_VIEWS } from './workedMuscleData';
-import { decodeWorkedMuscleMask, renderWorkedMusclePixels } from './workedMuscleMask';
+import { createNeutralWorkedMusclePixels, decodeWorkedMuscleMask, renderWorkedMusclePixels } from './workedMuscleMask';
 
 function makeMask(view: 'front' | 'rear') {
   const { width, height } = WORKED_MUSCLE_VIEWS[view];
@@ -74,5 +74,44 @@ describe('WorkedMuscles display roles', () => {
     expect(output[0]).toBe(240);
     const secondaryOnly = renderWorkedMusclePixels(pixels, mask, indices, primary, new Set(['primary']), false, true);
     expect(secondaryOnly[0]).not.toBe(240);
+  });
+});
+
+
+describe('WorkedMuscles approved inactive anatomy tone', () => {
+  it('normalizes different muscle color groups without erasing local fiber contrast', () => {
+    const source = new Uint8ClampedArray([
+      210, 25, 25, 255,
+      150, 15, 15, 255,
+      15, 25, 220, 255,
+      8, 10, 125, 255,
+    ]);
+    const mask = new Uint8Array([1, 1, 2, 2]);
+    const sourceCopy = source.slice();
+    const maskCopy = mask.slice();
+    const inactive = createNeutralWorkedMusclePixels(source, mask, 84);
+    for (let i = 0; i < 4; i += 1) {
+      expect(inactive[i * 4]).toBe(inactive[i * 4 + 1]);
+      expect(inactive[i * 4 + 1]).toBe(inactive[i * 4 + 2]);
+    }
+    expect(inactive[0]).not.toBe(inactive[4]);
+    expect(inactive[8]).not.toBe(inactive[12]);
+    expect(Array.from(source)).toEqual(Array.from(sourceCopy));
+    expect(Array.from(mask)).toEqual(Array.from(maskCopy));
+    const rendered = renderWorkedMusclePixels(
+      source, mask, { 1: 'one', 2: 'two' }, new Set(['one']), new Set(), true, true, inactive,
+    );
+    expect(Array.from(rendered.slice(0, 4))).toEqual(Array.from(source.slice(0, 4)));
+    expect(Array.from(rendered.slice(8, 12))).toEqual(Array.from(inactive.slice(8, 12)));
+  });
+
+  it('uses the selected smoothing strength and preserves alpha', () => {
+    const source = new Uint8ClampedArray([230, 20, 20, 255, 130, 30, 20, 255, 0, 0, 0, 0]);
+    const mask = new Uint8Array([1, 1, 0]);
+    const soft = createNeutralWorkedMusclePixels(source, mask, 59);
+    const strong = createNeutralWorkedMusclePixels(source, mask, 84);
+    expect(Array.from(soft)).not.toEqual(Array.from(strong));
+    expect(soft[11]).toBe(0);
+    expect(strong[11]).toBe(0);
   });
 });
