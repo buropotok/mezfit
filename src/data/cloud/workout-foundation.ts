@@ -24,7 +24,8 @@ export class WorkoutFoundationRepository {
   async getProgramOutline(programId: string): Promise<CloudProgramOutline | null> {
     if (!programId || !/^tg:[1-9]\d*$/.test(this.actorUserId)) return null;
     const plan = await this.db.trainingPlans.get(programId);
-    if (!plan || (plan.coachUserId !== this.actorUserId && plan.clientUserId !== this.actorUserId)) {
+    if (!plan || plan.owner !== null
+      || (plan.coachUserId !== this.actorUserId && plan.clientUserId !== this.actorUserId)) {
       return null;
     }
 
@@ -45,16 +46,16 @@ export class WorkoutFoundationRepository {
       this.db.programSets.where('realmId').equals(plan.realmId).toArray(),
     ]);
     const phases = ordered(phaseRows.filter((p) =>
-      p.trainingPlanId === plan.id && p.realmId === plan.realmId));
+      p.trainingPlanId === plan.id && p.realmId === plan.realmId && p.owner === null));
     const phaseIds = new Set(phases.map((p) => p.id));
     const days = ordered(dayRows.filter((d) =>
-      d.realmId === plan.realmId && phaseIds.has(d.programPhaseId)));
+      d.realmId === plan.realmId && d.owner === null && phaseIds.has(d.programPhaseId)));
     const dayIds = new Set(days.map((d) => d.id));
     const exercises = ordered(exerciseRows.filter((e) =>
-      e.realmId === plan.realmId && dayIds.has(e.programDayId)));
+      e.realmId === plan.realmId && e.owner === null && dayIds.has(e.programDayId)));
     const exerciseIds = new Set(exercises.map((e) => e.id));
     const sets = ordered(setRows.filter((s) =>
-      s.realmId === plan.realmId && exerciseIds.has(s.programExerciseId)));
+      s.realmId === plan.realmId && s.owner === null && exerciseIds.has(s.programExerciseId)));
 
     const setsByExercise = new Map<string, CloudProgramSetRow[]>();
     for (const set of sets) {
