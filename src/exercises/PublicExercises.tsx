@@ -8,6 +8,7 @@ import {
 } from '../data/exercises/publicExerciseFilters';
 import type { PublicExerciseRow, PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
 import { PublicExerciseMedia } from './PublicExerciseMedia';
+import { publicExerciseCategoryArtwork } from './publicExerciseCategoryArtwork';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import {
   Button, Icon, IconButton, LiquidPopover, List, ListItem,
@@ -184,7 +185,11 @@ function ExerciseCatalogContent({
               title={label}
               subtitle={`${exercises.filter((row) => row.category === id).length} упражнений`}
               leadingShape="square"
-              leading={<span className="mezfit-public-exercises__category-fallback"><Icon name="barbell" /></span>}
+              leading={<span className="mezfit-public-exercises__category-fallback">
+                {publicExerciseCategoryArtwork(id)
+                  ? <img src={publicExerciseCategoryArtwork(id)!} alt="" width={72} height={72} decoding="async" />
+                  : <Icon name="barbell" />}
+              </span>}
               onClick={() => { setCategory(id); setVisibleLimit(PAGE_SIZE); }}
             />
           ))}
