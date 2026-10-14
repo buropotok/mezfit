@@ -22,7 +22,7 @@ export class WorkoutFoundationRepository {
   ) {}
 
   async getProgramOutline(programId: string): Promise<CloudProgramOutline | null> {
-    if (!programId || !/^tg:[1-9]\\d*$/.test(this.actorUserId)) return null;
+    if (!programId || !/^tg:[1-9]\d*$/.test(this.actorUserId)) return null;
     const plan = await this.db.trainingPlans.get(programId);
     if (!plan || (plan.coachUserId !== this.actorUserId && plan.clientUserId !== this.actorUserId)) {
       return null;
