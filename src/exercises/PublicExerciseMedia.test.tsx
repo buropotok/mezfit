@@ -45,12 +45,13 @@ describe('public Dexie catalogue media / R2 boundary', () => {
   });
 
   it('renders lazy decorative thumbnail and falls back if Worker/R2 returns an error', () => {
-    render(<PublicExerciseMedia row={row} variant="thumbnail" approved />);
-    const picture = screen.getByRole('img', { hidden: true });
-    expect(picture.getAttribute('alt')).toBe('');
-    expect(picture.getAttribute('loading')).toBe('lazy');
+    const { container } = render(<PublicExerciseMedia row={row} variant="thumbnail" approved />);
+    const picture = container.querySelector('img');
+    expect(picture?.getAttribute('alt')).toBe('');
+    expect(picture?.getAttribute('loading')).toBe('lazy');
+    if (!picture) throw new Error('Decorative GIF should render as an img element');
     fireEvent.error(picture);
-    expect(screen.queryByRole('img', { hidden: true })).toBeNull();
+    expect(container.querySelector('img')).toBeNull();
     expect(screen.getByTestId('fallback-icon').textContent).toBe('barbell');
   });
 
