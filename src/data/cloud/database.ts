@@ -4,12 +4,16 @@ import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
+import type {
+  CloudProgramPhaseRow, CloudProgramDayRow, CloudProgramExerciseRow, CloudProgramSetRow,
+  CloudWorkoutOccurrenceRow, CloudSessionExerciseRow, CloudSessionFactExerciseRow, CloudSessionFactSetRow,
+} from './workout-foundation-types';
 
 /**
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 3;
+export const CLOUD_DATABASE_VERSION = 4;
 
 export interface CloudSharedRow {
   id: string;
@@ -115,6 +119,23 @@ export const CLOUD_DATABASE_STORES_V3 = {
 } as const;
 
 /**
+ * Workout PLAN structure and FACT-only additions are distinct tables. None of
+ * these tables receives write permission until the installed cloud ACL and
+ * Worker lifecycle policy have been verified with two real identities.
+ */
+export const CLOUD_DATABASE_STORES_V4 = {
+  ...CLOUD_DATABASE_STORES_V3,
+  programPhases: '@id, realmId, trainingPlanId, [trainingPlanId+position]',
+  programDays: '@id, realmId, programPhaseId, [programPhaseId+position]',
+  programExercises: '@id, realmId, programDayId, [programDayId+position]',
+  programSets: '@id, realmId, programExerciseId, [programExerciseId+position]',
+  workoutOccurrences: '@id, realmId, clientUserId, programDayId, calendarDate, status, [realmId+calendarDate]',
+  sessionExercises: '@id, realmId, workoutSessionId, [workoutSessionId+position]',
+  sessionFactExercises: '@id, realmId, workoutSessionId, [workoutSessionId+position]',
+  sessionFactSets: '@id, realmId, sessionFactExerciseId, [sessionFactExerciseId+position]',
+} as const;
+
+/**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
  * from the globally unique session set ID and used for idempotent creation.
@@ -135,6 +156,14 @@ export function cloudDatabaseName(telegramUserId: string): string {
 
 export class MezfitCloudDatabase extends Dexie {
   trainingPlans!: Table<CloudTrainingPlanRow, string, Omit<CloudTrainingPlanRow, 'id'>>;
+  programPhases!: Table<CloudProgramPhaseRow, string, Omit<CloudProgramPhaseRow, 'id'>>;
+  programDays!: Table<CloudProgramDayRow, string, Omit<CloudProgramDayRow, 'id'>>;
+  programExercises!: Table<CloudProgramExerciseRow, string, Omit<CloudProgramExerciseRow, 'id'>>;
+  programSets!: Table<CloudProgramSetRow, string, Omit<CloudProgramSetRow, 'id'>>;
+  workoutOccurrences!: Table<CloudWorkoutOccurrenceRow, string, Omit<CloudWorkoutOccurrenceRow, 'id'>>;
+  sessionExercises!: Table<CloudSessionExerciseRow, string, Omit<CloudSessionExerciseRow, 'id'>>;
+  sessionFactExercises!: Table<CloudSessionFactExerciseRow, string, Omit<CloudSessionFactExerciseRow, 'id'>>;
+  sessionFactSets!: Table<CloudSessionFactSetRow, string, Omit<CloudSessionFactSetRow, 'id'>>;
   contactProfiles!: Table<CloudContactProfileRow, string>;
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
   sessionSets!: Table<CloudSessionSetRow, string>;
@@ -147,7 +176,8 @@ export class MezfitCloudDatabase extends Dexie {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
     this.version(1).stores(CLOUD_DATABASE_STORES_V1);
     this.version(2).stores(CLOUD_DATABASE_STORES_V2);
-    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V3);
+    this.version(3).stores(CLOUD_DATABASE_STORES_V3);
+    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V4);
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
