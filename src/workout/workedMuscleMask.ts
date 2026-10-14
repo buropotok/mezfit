@@ -80,8 +80,10 @@ export function renderWorkedMusclePixels(
   secondaryIds: ReadonlySet<string>,
   showPrimary: boolean,
   showSecondary: boolean,
+  neutral?: Uint8ClampedArray,
 ): Uint8ClampedArray {
   if (source.length !== mask.length * 4) throw new Error('Маска и изображение имеют разные размеры');
+  if (neutral && neutral.length !== source.length) throw new Error('Некорректный нейтральный слой');
 
   const roles = new Uint8Array(256);
   for (const [indexText, muscleId] of Object.entries(indices)) {
@@ -99,9 +101,12 @@ export function renderWorkedMusclePixels(
     const b = source[offset + 2];
     const gray = Math.round(r * 0.2126 + g * 0.7152 + b * 0.0722);
 
-    output[offset] = role === 1 ? r : role === 2 ? Math.round(gray * 0.46 + r * 0.54) : gray;
-    output[offset + 1] = role === 1 ? g : role === 2 ? Math.round(gray * 0.46 + g * 0.54) : gray;
-    output[offset + 2] = role === 1 ? b : role === 2 ? Math.round(gray * 0.46 + b * 0.54) : gray;
+    const inactiveR = neutral ? neutral[offset] : gray;
+    const inactiveG = neutral ? neutral[offset + 1] : gray;
+    const inactiveB = neutral ? neutral[offset + 2] : gray;
+    output[offset] = role === 1 ? r : role === 2 ? Math.round(inactiveR * 0.46 + r * 0.54) : inactiveR;
+    output[offset + 1] = role === 1 ? g : role === 2 ? Math.round(inactiveG * 0.46 + g * 0.54) : inactiveG;
+    output[offset + 2] = role === 1 ? b : role === 2 ? Math.round(inactiveB * 0.46 + b * 0.54) : inactiveB;
     output[offset + 3] = source[offset + 3];
   }
   return output;
