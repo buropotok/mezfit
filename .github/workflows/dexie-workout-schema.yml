@@ -1,0 +1,75 @@
+name: Apply Dexie Cloud workout schema
+
+# No push/PR triggers: schema mutation is separate and protected.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        description: 'Preview remote schema or apply additive workout v4 schema'
+        required: true
+        default: preview
+        options: [preview, apply]
+      confirmation:
+        type: string
+        description: 'For apply enter APPLY_WORKOUT_V4_SCHEMA'
+        required: false
+
+permissions:
+  contents: read
+
+# Serialize alongside the existing publisher.
+concurrency:
+  group: dexie-public-catalogue-publishing
+  cancel-in-progress: false
+
+jobs:
+  schema:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      (inputs.operation == 'preview' ||
+       (inputs.operation == 'apply' && inputs.confirmation == 'APPLY_WORKOUT_V4_SCHEMA'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      # Configure required reviewers and main-only protection in GitHub Settings.
+      name: dexie-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare isolated Dexie CLI credentials
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/dexie-schema/manage.mjs prepare
+      - name: Read remote schema and roles (no changes)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
+      - name: Validate additive-only plan
+        id: plan
+        run: node tools/dexie-schema/manage.mjs plan
+      - name: Import only missing tables
+        if: inputs.operation == 'apply' && steps.plan.outputs.missing_count != '0'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud import schema-only-import.json
+      - name: Verify schema and roles are unchanged
+        if: inputs.operation == 'apply'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
+          cd "$GITHUB_WORKSPACE"
+          node tools/dexie-schema/manage.mjs verify
+      - name: Remove temporary credentials and exports
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
