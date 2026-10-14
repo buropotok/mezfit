@@ -84,6 +84,18 @@ describe('SettingsPage modules gallery', () => {
     expect(onNavigationContextChange).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Модули' }));
   });
 
+  it('shows the real WorkedMuscles with front and rear views and visibility toggles', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
+
+    const workedMusclesModule = screen.getByRole('region', { name: 'WorkedMuscles' });
+    expect(within(workedMusclesModule).getByText('Проработанные мышцы')).toBeTruthy();
+    expect(within(workedMusclesModule).getByRole('region', { name: 'Вид спереди' })).toBeTruthy();
+    expect(within(workedMusclesModule).getByRole('region', { name: 'Вид сзади' })).toBeTruthy();
+    expect(within(workedMusclesModule).getAllByRole('img')).toHaveLength(2);
+    expect(within(workedMusclesModule).getAllByRole('checkbox')).toHaveLength(2);
+  });
+
   it('shows the active program workout-card capability matrix', () => {
     render(<SettingsPage onNavigationContextChange={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));

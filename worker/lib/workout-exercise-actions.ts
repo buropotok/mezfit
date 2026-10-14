@@ -70,6 +70,32 @@ export async function listWorkoutExerciseOptions(
   }));
 }
 
+/** Bridge the published Dexie string IDs to the legacy D1 workout mutation IDs.
+ * This is a server-only transition adapter, not a second catalogue reader.
+ * Existing workout permission checks still apply in addWorkoutExercises().
+ */
+export async function resolvePublicWorkoutExerciseIds(
+  db: D1Database,
+  publicIds: string[],
+): Promise<number[] | null> {
+  const placeholders = publicIds.map(() => '?').join(', ');
+  const result = await db.prepare(`
+    SELECT id, reference_key
+    FROM exercise_definition
+    WHERE reference_source = 'github_exercises_dataset'
+      AND is_archived = 0
+      AND reference_key IN (${placeholders})
+  `).bind(...publicIds).all<{ id: number; reference_key: string }>();
+  const mapped = new Map<string, number>();
+  for (const row of result.results) {
+    if (mapped.has(row.reference_key)) return null;
+    mapped.set(row.reference_key, row.id);
+  }
+  const ids = publicIds.map((id) => mapped.get(id));
+  return ids.every((id): id is number => typeof id === 'number' && Number.isSafeInteger(id) && id > 0)
+    ? ids : null;
+}
+
 function selectedValuesSql(count: number): string {
   return Array.from({ length: count }, (_, index) => `(?, ${index})`).join(', ');
 }

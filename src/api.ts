@@ -756,6 +756,29 @@ export async function addWorkoutSessionExercises(
   return { session: localizeWorkoutSession(result.session) };
 }
 
+/** Privileged legacy workout write; canonical IDs originate in synced Dexie rows. */
+export async function addWorkoutSessionPublicExercises(
+  initData: string,
+  workoutSessionId: number,
+  publicExerciseIds: string[],
+): Promise<{ session: ActiveWorkoutSession }> {
+  const result = await apiRequest<unknown>(initData, `/api/workout-sessions/${workoutSessionId}/exercises`, {
+    method: 'POST',
+    body: JSON.stringify({ publicExerciseIds }),
+  });
+  if (!isRecord(result) || !isRecord(result.session)
+    || result.session.status !== 'active' || result.session.sessionId !== workoutSessionId
+    || !Array.isArray(result.session.exercises)
+    || result.session.exercises.some((entry: unknown) =>
+      !isRecord(entry) || !isRecord(entry.exercise)
+      || typeof entry.exercise.id !== 'number'
+      || typeof entry.exercise.name !== 'string'
+      || !Array.isArray(entry.sets))) {
+    throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+  }
+  return { session: localizeWorkoutSession(result.session as unknown as ActiveWorkoutSession) };
+}
+
 export async function getCurrentWorkoutSession(
   initData: string,
 ): Promise<{ session: OpenWorkoutSessionSummary | null }> {

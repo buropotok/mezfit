@@ -16,21 +16,11 @@ import {
 import './public-exercises.css';
 
 function TablerFilter() {
-  return <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227" />
-  </svg>;
+  return <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v2.172a2 2 0 0 1-.586 1.414L14 13v7l-4-2v-5L4.586 7.586A2 2 0 0 1 4 6.172V4z" /></svg>;
 }
 
 function TablerBarbell() {
-  return <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 12h1" />
-    <path d="M6 8h-2a1 1 0 0 0 -1 1v6a1 1 0 0 0 1 1h2" />
-    <path d="M6 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1" />
-    <path d="M9 12h6" />
-    <path d="M15 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1" />
-    <path d="M18 8h2a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-2" />
-    <path d="M22 12h-1" />
-  </svg>;
+  return <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h2m2 0h12m2 0h2M4 9v6m2-9v12m12-12v12m2-9v6" /></svg>;
 }
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
@@ -234,8 +224,7 @@ export function ExerciseCatalogContent({
                   </span>}
                   title={row.name_ru || row.name}
                   subtitle={row.name_en || row.subcategory_ru}
-                  trailing={mode === 'select' && selectedExerciseIds?.has(row.id)
-                    ? <span className="mezfit-public-exercises__selected-dot" aria-hidden="true" /> : null}
+                  trailing={mode === 'select' && selectedExerciseIds?.has(row.id) ? '✓' : undefined}
                   aria-pressed={mode === 'select' ? Boolean(selectedExerciseIds?.has(row.id)) : undefined}
                   disabled={mode === 'select' && selectionDisabled}
                   onClick={() => {

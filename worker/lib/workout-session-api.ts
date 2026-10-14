@@ -1,4 +1,4 @@
-import { addWorkoutExercises, listWorkoutExerciseOptions } from './workout-exercise-actions';
+import { addWorkoutExercises, listWorkoutExerciseOptions, resolvePublicWorkoutExerciseIds } from './workout-exercise-actions';
 import type { ExerciseCategoryCode } from './exercises';
 import { parseCalendarDay } from './schedule';
 import {
@@ -182,7 +182,21 @@ export async function handleWorkoutSessionRoute(request: Request, db: D1Database
   if (addExerciseMatch) {
     if (request.method !== 'POST') return errorResponse(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
     const body = await readJsonObject(request);
-    const exerciseDefinitionIds = body ? parseExerciseDefinitionIds(body.exerciseDefinitionIds) : null;
+    let exerciseDefinitionIds: number[] | null = null;
+    if (body && Object.hasOwn(body, 'publicExerciseIds')) {
+      const ids = body.publicExerciseIds;
+      if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100
+        || !ids.every((id) => typeof id === 'string' && /^\d{4}$/.test(id))
+        || new Set(ids).size !== ids.length || Object.hasOwn(body, 'exerciseDefinitionIds')) {
+        return errorResponse(400, 'INVALID_EXERCISE', 'Public exercise ids are invalid');
+      }
+      exerciseDefinitionIds = await resolvePublicWorkoutExerciseIds(db, ids);
+      if (!exerciseDefinitionIds) {
+        return errorResponse(404, 'EXERCISE_NOT_FOUND', 'Public exercise is not available in the current workout engine');
+      }
+    } else {
+      exerciseDefinitionIds = body ? parseExerciseDefinitionIds(body.exerciseDefinitionIds) : null;
+    }
     if (!exerciseDefinitionIds) {
       return errorResponse(400, 'INVALID_EXERCISE', 'Exercise ids are invalid');
     }

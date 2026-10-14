@@ -28,27 +28,12 @@
   justify-content: center;
   align-items: center;
 }
-.mezfit-public-exercises__category-fallback > img,
-.mezfit-public-exercises__category-fallback > svg {
-  display: block;
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
-  object-fit: contain;
-}
 .mezfit-public-exercises__exercise-fallback {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 58px;
   height: 58px;
-}
-.mezfit-public-exercises__selected-dot {
-  display: block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--ui-color-primary);
 }
 .mezfit-public-exercises__detail {
   display: grid;

@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  addWorkoutSessionPublicExercises,
   completeWorkoutSession,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
@@ -13,6 +14,7 @@ import type { SessionExerciseData } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession, DraftWorkoutSession } from './workoutSessionTypes';
 
 vi.mock('../api', () => ({
+  addWorkoutSessionPublicExercises: vi.fn(),
   completeWorkoutSession: vi.fn(),
   initializeWorkoutSession: vi.fn(),
   reorderWorkoutSessionExercises: vi.fn(),
@@ -21,13 +23,15 @@ vi.mock('../api', () => ({
 }));
 
 vi.mock('../exercises/PublicExercises', () => ({
-  PublicExercises: ({
-    onToggleExercise, selectedExerciseIds,
-  }: {
-    onToggleExercise?: (exerciseId: string) => void;
+  PublicExercises: ({ selectedExerciseIds, onToggleExercise, selectionDisabled }: {
     selectedExerciseIds?: ReadonlySet<string>;
-  }) => <button type="button" aria-pressed={selectedExerciseIds?.has('0001') ?? false}
-    onClick={() => onToggleExercise?.('0001')}>Жим лёжа</button>,
+    onToggleExercise?: (id: string) => void;
+    selectionDisabled?: boolean;
+  }) => (
+    <button type="button" disabled={selectionDisabled}
+      aria-pressed={Boolean(selectedExerciseIds?.has('0001'))}
+      onClick={() => onToggleExercise?.('0001')}>Жим лёжа</button>
+  ),
 }));
 
 vi.mock('../ui', async (importOriginal) => {
@@ -57,6 +61,7 @@ vi.mock('../ui', async (importOriginal) => {
   return { ...actual, SortableList: TestSortableList };
 });
 
+const addExercisesMock = vi.mocked(addWorkoutSessionPublicExercises);
 const initializeMock = vi.mocked(initializeWorkoutSession);
 const startMock = vi.mocked(startWorkoutSession);
 const saveSetMock = vi.mocked(saveWorkoutSessionSet);
@@ -150,6 +155,7 @@ function renderScreen(overrides: Partial<React.ComponentProps<typeof WorkoutSess
 }
 
 beforeEach(() => {
+  addExercisesMock.mockReset();
   initializeMock.mockReset();
   startMock.mockReset();
   saveSetMock.mockReset();
@@ -249,23 +255,26 @@ describe('WorkoutSessionScreen', () => {
     expect(screen.getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
   });
 
-  it('prepares canonical selected exercises without claiming the workout was saved', async () => {
+  it('prepares canonical exercise IDs without claiming a workout save before Dexie persistence exists', async () => {
     initializeMock.mockResolvedValue({ session: ownSession });
 
     renderScreen();
     await screen.findAllByText('Своя тренировка');
     fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
 
-    const exercise = screen.getByRole('button', { name: 'Жим лёжа' });
-    expect(exercise.getAttribute('aria-pressed')).toBe('false');
-    fireEvent.click(exercise);
-    expect(exercise.getAttribute('aria-pressed')).toBe('true');
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
-
-    expect(screen.getByRole('alert').textContent).toContain('Добавление в тренировку будет подключено');
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Жим лёжа' }));
     expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
-    expect(screen.queryByTestId('sortable-order')?.textContent).not.toContain('0001');
+    expect(addExercisesMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнения (1)' }));
+
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Упражнения выбраны. Добавление в тренировку будет подключено на следующем этапе.',
+    );
+    expect(screen.getByRole('dialog', { name: 'Выбор упражнений для тренировки' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('sortable-order').textContent).toBe('');
+    expect(addExercisesMock).not.toHaveBeenCalled();
   });
 
   it('resumes an already active session without calling start again', async () => {

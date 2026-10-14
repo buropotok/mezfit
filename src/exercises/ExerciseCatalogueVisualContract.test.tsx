@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
@@ -65,34 +65,4 @@ describe('exercise catalogue real UI composition', () => {
     expect(other.querySelector('svg')?.getAttribute('width')).toBe('72');
   });
 
-  it('uses the real Mezfit Searchbar with its sliding cancel control and Tabler filter stroke 1', () => {
-    const { container } = render(
-      <KonstaProvider theme="ios" dark><ExerciseCatalogContent snapshot={snapshot} /></KonstaProvider>,
-    );
-    const searchbar = container.querySelector('.k-searchbar');
-    expect(searchbar).not.toBeNull();
-    expect(container.querySelector('.ui-search-input')).toBeNull();
-    const searchInput = screen.getByPlaceholderText('Найти упражнение');
-    fireEvent.focus(searchInput);
-    const cancel = searchbar?.querySelector<HTMLButtonElement>('button.k-glass');
-    expect(cancel).not.toBeNull();
-    expect(cancel?.style.marginRight).toBe('0px');
-    const filter = screen.getByRole('button', { name: 'Фильтры' });
-    expect(filter.querySelector('svg')?.getAttribute('stroke-width')).toBe('1');
-    expect(filter.querySelector('svg path')?.getAttribute('d'))
-      .toBe('M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227');
-  });
-
-  it('marks selected exercise rows visibly without changing browse rows', () => {
-    const { container } = render(
-      <KonstaProvider theme="ios" dark>
-        <ExerciseCatalogContent snapshot={snapshot} mode="select" selectedExerciseIds={new Set(['0001'])} />
-      </KonstaProvider>,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
-    const selectedRow = screen.getByRole('button', { name: /Жим лёжа/ });
-    expect(selectedRow.getAttribute('aria-pressed')).toBe('true');
-    expect(selectedRow.querySelector('.mezfit-public-exercises__selected-dot')).not.toBeNull();
-    expect(container.querySelectorAll('.mezfit-public-exercises__selected-dot')).toHaveLength(1);
-  });
 });

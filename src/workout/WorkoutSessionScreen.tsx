@@ -345,11 +345,12 @@ export function WorkoutSessionScreen({
 
       {exerciseSelectionOpen ? (
         <WorkoutExerciseSelectionSheet
+          initData={initData}
           saving={false}
           actionError={exerciseSelectionError}
           onNavigationContextChange={onNavigationContextChange}
-          onConfirm={(exerciseIds) => {
-            if (exerciseIds.length > 0) {
+          onConfirm={(publicExerciseIds) => {
+            if (publicExerciseIds.length > 0 && activeSession?.status === 'active') {
               setExerciseSelectionError('Упражнения выбраны. Добавление в тренировку будет подключено на следующем этапе.');
             }
           }}
