@@ -11,7 +11,7 @@ export type WorkedMusclesProps = {
   className?: string;
 };
 
-type MuscleDetail = { name: string; category: string };
+type MuscleDetail = { muscleId: string };
 
 type AnatomyViewProps = {
   view: WorkedMuscleView;
@@ -90,12 +90,9 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
     const numericId = muscleIdAtPixel(assets.mask, assets.width, assets.height, x, y);
     const muscleId = (indices as Readonly<Record<number, string>>)[numericId];
     if (!muscleId) { setDetail(null); return; }
-    const category = showPrimary && primary.has(muscleId) ? 'Основная мышца'
-      : showSecondary && secondary.has(muscleId) ? 'Вспомогательная мышца'
-        : 'Не задействована в тренировке';
     // Mobile tap replaces hover. Text persists under the figure, never floats
     // over or interferes with the next tap.
-    setDetail({ name: WORKED_MUSCLE_LABELS[muscleId] ?? muscleId, category });
+    setDetail({ muscleId });
   };
 
   return (
@@ -115,8 +112,12 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
       </div>
       {detail ? (
         <div className="worked-muscles__tap-detail" role="status">
-          <Text variant="body">{detail.name}</Text>
-          <Text variant="caption" tone="muted">{detail.category}</Text>
+          <Text variant="body">{WORKED_MUSCLE_LABELS[detail.muscleId] ?? detail.muscleId}</Text>
+          <Text variant="caption" tone="muted">{
+            showPrimary && primary.has(detail.muscleId) ? 'Основная мышца'
+              : showSecondary && secondary.has(detail.muscleId) ? 'Вспомогательная мышца'
+                : 'Не задействована в тренировке'
+          }</Text>
         </div>
       ) : null}
       {error ? (
