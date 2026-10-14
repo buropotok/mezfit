@@ -198,7 +198,6 @@ export function ExerciseCatalogContent({
               key={id}
               title={label}
               subtitle={`${exercises.filter((row) => row.category === id).length} упражнений`}
-              leadingShape="square"
               leading={<span className="mezfit-public-exercises__category-fallback">
                 {publicExerciseCategoryArtwork(id)
                   ? <img src={publicExerciseCategoryArtwork(id)!} alt="" width={72} height={72} decoding="async" />
