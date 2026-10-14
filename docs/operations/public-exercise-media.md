@@ -51,6 +51,9 @@ from different categories). A missing object results in the existing barbell
 fallback rather than a broken image.
 
 The flag must remain unset/false until permissions are established.
+This is a **UI rollout switch, not authorization**: the pre-existing Worker
+media route is independently public and requires its own licensing/security
+review. Disabling the new UI does not make that existing endpoint private.
 No images are uploaded by the PR. Thumbnails use lazy loading; the detail
 GIF loads eagerly. No third-party host URLs are exposed to browsers. GIFs
 remain external to the IndexedDB local-first catalogue; offline exercise text
