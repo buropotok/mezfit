@@ -1,0 +1,25 @@
+.workout-exercise-selection {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.workout-exercise-selection__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+.workout-exercise-selection__header > :last-child {
+  margin-left: auto;
+}
+.workout-exercise-selection__catalog {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--space-3) var(--space-3);
+}
+.workout-exercise-selection__footer {
+  padding: var(--space-3);
+  flex-shrink: 0;
+}
