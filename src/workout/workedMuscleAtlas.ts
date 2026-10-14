@@ -80,6 +80,7 @@ export function parseAtlasManifest(
   const config = WORKED_MUSCLE_VIEWS[view];
   if (!objectRecord(raw)
     || raw.view !== view
+    || raw.version !== versions[view].split('-')[1]
     || raw.width !== config.width
     || raw.height !== config.height
     || raw.atlasWidth !== atlasWidth
