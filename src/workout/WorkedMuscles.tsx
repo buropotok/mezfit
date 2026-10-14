@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { Toggle } from 'konsta/react';
 import { Text } from '../ui';
 import { WORKED_MUSCLE_LABELS, WORKED_MUSCLE_VIEWS, type WorkedMuscleView } from './workedMuscleData';
-import { decodeWorkedMuscleMask, renderWorkedMusclePixels } from './workedMuscleMask';
+import { createNeutralWorkedMusclePixels, decodeWorkedMuscleMask, renderWorkedMusclePixels } from './workedMuscleMask';
 import './worked-muscles.css';
 
 export type WorkedMusclesProps = {
@@ -13,6 +13,7 @@ export type WorkedMusclesProps = {
 
 type ViewAssets = {
   source: Uint8ClampedArray;
+  neutral: Uint8ClampedArray;
   mask: Uint8Array;
   width: number;
   height: number;
@@ -68,8 +69,11 @@ async function loadViewAssets(view: WorkedMuscleView, signal: AbortSignal): Prom
   const context = sourceCanvas.getContext('2d', { willReadFrequently: true });
   if (!context) throw new Error('Canvas недоступен');
   context.drawImage(image, 0, 0);
+  const source = context.getImageData(0, 0, config.width, config.height).data;
+  const smoothingPercent = view === 'front' ? 84 : 59;
   return {
-    source: context.getImageData(0, 0, config.width, config.height).data,
+    source,
+    neutral: createNeutralWorkedMusclePixels(source, mask, smoothingPercent),
     mask,
     width: config.width,
     height: config.height,
@@ -88,16 +92,20 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [assets, setAssets] = useState<ViewAssets | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [tooltip, setTooltip] = useState<MuscleTooltip | null>(null);
   const { indices } = WORKED_MUSCLE_VIEWS[view];
   const viewLabel = view === 'front' ? 'Вид спереди' : 'Вид сзади';
 
   useEffect(() => {
     const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    setAssets(null);
     loadViewAssets(view, controller.signal).then((loaded) => {
-      if (!controller.signal.aborted) setAssets(loaded);
+      if (!controller.signal.aborted) { setAssets(loaded); setLoading(false); }
     }).catch((reason: unknown) => {
-      if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : 'Ошибка загрузки');
+      if (!controller.signal.aborted) { setError(reason instanceof Error ? reason.message : 'Ошибка загрузки'); setLoading(false); }
     });
     return () => controller.abort();
   }, [view]);
@@ -117,8 +125,9 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
       secondary,
       showPrimary,
       showSecondary,
+      assets.neutral,
     );
-    context.putImageData(new ImageData(frame, assets.width, assets.height), 0, 0);
+    context.putImageData(new ImageData(new Uint8ClampedArray(frame), assets.width, assets.height), 0, 0);
   }, [assets, indices, primary, secondary, showPrimary, showSecondary]);
 
   useEffect(() => {
@@ -152,7 +161,8 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
   return (
     <section className="worked-muscles__view" aria-label={viewLabel}>
       <Text variant="headline" className="worked-muscles__view-title">{viewLabel}</Text>
-      <div className="worked-muscles__image-wrap">
+      <div className="worked-muscles__image-wrap" aria-busy={loading}>
+        {loading ? <Text variant="footnote" className="worked-muscles__loading" role="status">Загрузка анатомии…</Text> : null}
         <canvas
           ref={canvasRef}
           className="worked-muscles__canvas"
