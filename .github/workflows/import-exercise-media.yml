@@ -1,10 +1,14 @@
 name: Import Full Exercise Dataset
 
+# This legacy D1/R2 media cutover must never run after a normal app deployment.
+# It can change the active media version referenced by immutable Dexie rows.
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Deploy Mezfit"]
-    types: [completed]
+    inputs:
+      confirmation:
+        description: 'Type IMPORT_PINNED_1324 to reimport the reviewed immutable GIF dataset'
+        type: string
+        required: true
 
 concurrency:
   group: mezfit-full-exercise-dataset-import
@@ -12,7 +16,11 @@ concurrency:
 
 jobs:
   import:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      inputs.confirmation == 'IMPORT_PINNED_1324'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -20,7 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          ref: main
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
