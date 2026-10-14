@@ -8,6 +8,7 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { deflateSync, inflateSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const ANATOMY = join(ROOT, 'public', 'anatomy');
@@ -15,6 +16,11 @@ const PNG_MAGIC = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const MASK_MAGIC = Buffer.from('MEZMASK1');
 const ATLAS_LIMIT = 2048;
 const EDGE_PADDING = 22;
+const APPROVED_INPUT_HASHES = {
+  front: { image: 'a40235876c81f56a08b72c3aac0621e6b6299f65be76262d30740e7a72bf240d', mask: 'b169f36b9cb8e584541dafc0d06053831b306ee05f71f52a80f5c9807c059556' },
+  rear: { image: '87b5341ca63fe843d394c8508650894fd2ee4f5bf5db7c6cb7195ca9bfa72d91', mask: '4b8b101755cee680a66d54ead45479ef2650a7767b372aedc1daeaf9e1142971' },
+};
+
 
 const crcTable = Array.from({ length: 256 }, (_, i) => {
   let c = i;
@@ -187,9 +193,16 @@ function packRegions(bounds) {
 }
 
 async function buildView(view, width, height, tonePercent, version, indices, muscleNames) {
-  const source = decodePng(await readFile(join(ANATOMY, `male-${view}.png`)));
+  const imageBytes = await readFile(join(ANATOMY, `male-${view}.png`));
+  const maskBytes = await readFile(join(ANATOMY, `male-${view}.mezmask`));
+  const expected = APPROVED_INPUT_HASHES[view];
+  if (createHash('sha256').update(imageBytes).digest('hex') !== expected.image
+    || createHash('sha256').update(maskBytes).digest('hex') !== expected.mask) {
+    throw Error(`Approved anatomy input for ${view} changed: regenerate and version the atlas deliberately`);
+  }
+  const source = decodePng(imageBytes);
   if (source.width !== width || source.height !== height) throw Error(`Image mismatch: ${view}`);
-  const mask = loadMask(await readFile(join(ANATOMY, `male-${view}.mezmask`)), width, height);
+  const mask = loadMask(maskBytes, width, height);
   if (view === 'front') applyApprovedFrontCorrection(mask, width);
   const output = join(ANATOMY, 'atlas', `${view}-${version}`);
   await mkdir(output, { recursive: true });
