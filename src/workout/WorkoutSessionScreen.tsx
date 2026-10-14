@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ApiError,
-  addWorkoutSessionExercises,
   completeWorkoutSession,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
@@ -75,7 +74,6 @@ export function WorkoutSessionScreen({
   const [message, setMessage] = useState<string | null>(null);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
   const [exerciseSelectionOpen, setExerciseSelectionOpen] = useState(false);
-  const [addingExercises, setAddingExercises] = useState(false);
   const [exerciseSelectionError, setExerciseSelectionError] = useState('');
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
@@ -220,33 +218,6 @@ export function WorkoutSessionScreen({
       });
   }
 
-  async function handleAddExercises(exerciseDefinitionIds: number[]) {
-    if (!activeSession || activeSession.status !== 'active' || exerciseDefinitionIds.length === 0) return;
-    const sessionId = activeSession.sessionId;
-    const intent = nextMutationIntent();
-    setAddingExercises(true);
-    setExerciseSelectionError('');
-    try {
-      const { session: nextSession } = await enqueueMutation(() => addWorkoutSessionExercises(
-        initData,
-        sessionId,
-        exerciseDefinitionIds,
-      ));
-      if (!isCurrentGeneration(intent)) return;
-      acknowledgedSessionRef.current = nextSession;
-      if (!isCurrentIntent(intent)) return;
-      setSession(nextSession);
-      requestBackTransition(() => {
-        setExerciseSelectionOpen(false);
-        setExerciseSelectionError('');
-      });
-    } catch (error) {
-      if (isCurrentIntent(intent)) setExerciseSelectionError(errorMessage(error, 'Не удалось добавить упражнения'));
-    } finally {
-      if (isCurrentGeneration(intent)) setAddingExercises(false);
-    }
-  }
-
   async function handleComplete() {
     if (!activeSession || activeSession.status !== 'active') return;
     const sessionId = activeSession.sessionId;
@@ -374,13 +345,15 @@ export function WorkoutSessionScreen({
 
       {exerciseSelectionOpen ? (
         <WorkoutExerciseSelectionSheet
-          initData={initData}
-          saving={addingExercises}
+          saving={false}
           actionError={exerciseSelectionError}
           onNavigationContextChange={onNavigationContextChange}
-          onConfirm={(exerciseDefinitionIds) => void handleAddExercises(exerciseDefinitionIds)}
+          onConfirm={(exerciseIds) => {
+            if (exerciseIds.length > 0) {
+              setExerciseSelectionError('Упражнения выбраны. Добавление в тренировку будет подключено на следующем этапе.');
+            }
+          }}
           onClose={() => {
-            if (addingExercises) return;
             requestBackTransition(() => {
               setExerciseSelectionOpen(false);
               setExerciseSelectionError('');
