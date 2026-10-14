@@ -122,7 +122,7 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
       ) : null}
       {error ? (
         <div className="worked-muscles__error">
-          <Text variant="footnote" role="alert">{error}</Text>
+          <Text variant="footnote" className="worked-muscles__error-message" role="alert">{error}</Text>
           <Button onClick={() => { setError(null); setAssets(null); setRetry((value) => value + 1); }}>
             Повторить
           </Button>
