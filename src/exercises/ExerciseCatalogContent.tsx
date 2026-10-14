@@ -224,6 +224,8 @@ export function ExerciseCatalogContent({
                   </span>}
                   title={row.name_ru || row.name}
                   subtitle={row.name_en || row.subcategory_ru}
+                  trailing={mode === 'select' && selectedExerciseIds?.has(row.id)
+                    ? <span className="mezfit-public-exercises__selected-dot" aria-hidden="true" /> : null}
                   aria-pressed={mode === 'select' ? Boolean(selectedExerciseIds?.has(row.id)) : undefined}
                   disabled={mode === 'select' && selectionDisabled}
                   onClick={() => {
