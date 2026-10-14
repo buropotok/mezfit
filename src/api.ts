@@ -756,6 +756,19 @@ export async function addWorkoutSessionExercises(
   return { session: localizeWorkoutSession(result.session) };
 }
 
+/** Privileged legacy workout write; canonical IDs originate in synced Dexie rows. */
+export async function addWorkoutSessionPublicExercises(
+  initData: string,
+  workoutSessionId: number,
+  publicExerciseIds: string[],
+): Promise<{ session: ActiveWorkoutSession }> {
+  const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/exercises`, {
+    method: 'POST',
+    body: JSON.stringify({ publicExerciseIds }),
+  });
+  return { session: localizeWorkoutSession(result.session) };
+}
+
 export async function getCurrentWorkoutSession(
   initData: string,
 ): Promise<{ session: OpenWorkoutSessionSummary | null }> {
