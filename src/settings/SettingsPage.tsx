@@ -31,7 +31,7 @@ import {
   type TypographySettings,
 } from '../typographySettings';
 import { Button, DatePicker, Divider, Dropdown, GlassSurface, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
-import { SessionExercise, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkoutSessionCardMode } from '../workout';
+import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkedMuscleId, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import './settings-page.css';
 
@@ -43,6 +43,9 @@ const datePickerStatusPreview: readonly DatePickerDayStatusEntry[] = [
   { date: '2026-09-28', status: 'completed' },
   { date: '2026-09-29', status: 'missed' },
 ];
+
+const previewPrimaryMuscleIds = ['pectoralis_sternal', 'latissimus_dorsi', 'gluteus_maximus'] as const satisfies readonly WorkedMuscleId[];
+const previewSecondaryMuscleIds = ['deltoid_anterior', 'vastus_lateralis', 'triceps_long_head', 'gastrocnemius_medial'] as const satisfies readonly WorkedMuscleId[];
 
 const previewExercise: SessionExerciseData = {
   sessionExerciseId: -1,
@@ -816,6 +819,17 @@ export function SettingsPage({
           onOpenExerciseMenu={() => {}}
           onOpenHistory={() => {}}
           onOpenChat={() => {}}
+        />
+      </section>
+
+      <section className="modules-gallery__example" aria-labelledby="module-worked-muscles-title">
+        <Text id="module-worked-muscles-title" variant="headline">WorkedMuscles</Text>
+        <Text variant="footnote" tone="muted">
+          Анатомия спереди и сзади на демонстрационных данных. Переключатели управляют только отображением мышц.
+        </Text>
+        <WorkedMuscles
+          primaryMuscleIds={previewPrimaryMuscleIds}
+          secondaryMuscleIds={previewSecondaryMuscleIds}
         />
       </section>
     </section>
