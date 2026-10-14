@@ -5,8 +5,8 @@
   gap: 16px;
   width: 100%;
   padding: 16px;
-  background: #fff;
-  color: #20242b;
+  background: transparent;
+  color: inherit;
 }
 
 .worked-muscles__title,
@@ -31,9 +31,9 @@
   justify-content: space-between;
   gap: 12px;
   padding: 9px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ui-border-color, #354252);
   border-radius: 12px;
-  color: #20242b;
+  color: inherit;
 }
 
 .worked-muscles__views {
@@ -51,15 +51,15 @@
 .worked-muscles__image-wrap {
   position: relative;
   width: 100%;
-  background: #fff;
+  background: #030507;
 }
 
 .worked-muscles__canvas {
   display: block;
   width: 100%;
   height: auto;
-  background: #fff;
-  cursor: crosshair;
+  background: #030507;
+  cursor: pointer;
   touch-action: manipulation;
 }
 
@@ -72,11 +72,11 @@
   max-width: 85%;
   padding: 8px 12px;
   transform: translate(-50%, -105%);
-  border: 1px solid #d8dde5;
+  border: 1px solid var(--ui-border-color, #354252);
   border-radius: 12px;
-  background: #fff;
-  color: #20242b;
-  box-shadow: 0 4px 18px #0002;
+  background: #111720;
+  color: inherit;
+  box-shadow: 0 4px 18px #0008;
   pointer-events: none;
 }
 
@@ -85,4 +85,16 @@
   margin-top: 6px;
   text-align: center;
   color: #b42318;
+}
+
+.worked-muscles__loading {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  color: inherit;
+  background: #030507;
 }
