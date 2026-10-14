@@ -20,7 +20,7 @@ function TablerFilter() {
 }
 
 function TablerBarbell() {
-  return <svg aria-hidden="true" width="58" height="58" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h2m2 0h12m2 0h2M4 9v6m2-9v12m12-12v12m2-9v6" /></svg>;
+  return <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h2m2 0h12m2 0h2M4 9v6m2-9v12m12-12v12m2-9v6" /></svg>;
 }
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
