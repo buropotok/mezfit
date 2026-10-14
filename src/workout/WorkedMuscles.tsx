@@ -128,6 +128,53 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
       assets.neutral,
     );
     context.putImageData(new ImageData(new Uint8ClampedArray(frame), assets.width, assets.height), 0, 0);
+
+    // The approved HTML applies glow to a separate blurred mask, not to the
+    // muscle texture. Restore the sharp selected pixels after the glow pass.
+    const roles = new Uint8Array(256);
+    for (const [numericId, muscleId] of Object.entries(indices)) {
+      const id = Number(numericId);
+      if (showPrimary && primary.has(muscleId)) roles[id] = 1;
+      else if (showSecondary && secondary.has(muscleId)) roles[id] = 2;
+    }
+    if (!roles.some(Boolean)) return;
+    const glowPixels = new Uint8ClampedArray(frame.length);
+    const selectedPixels = new Uint8ClampedArray(frame.length);
+    let hasSelected = false;
+    for (let pixel = 0, offset = 0; pixel < assets.mask.length; pixel += 1, offset += 4) {
+      const role = roles[assets.mask[pixel]];
+      if (!role || assets.source[offset + 3] === 0) continue;
+      hasSelected = true;
+      glowPixels[offset] = 74;
+      glowPixels[offset + 1] = 199;
+      glowPixels[offset + 2] = 255;
+      glowPixels[offset + 3] = role === 1 ? 190 : 110;
+      selectedPixels[offset] = frame[offset];
+      selectedPixels[offset + 1] = frame[offset + 1];
+      selectedPixels[offset + 2] = frame[offset + 2];
+      selectedPixels[offset + 3] = frame[offset + 3];
+    }
+    if (!hasSelected) return;
+    const createLayer = (pixels: Uint8ClampedArray) => {
+      const layer = document.createElement('canvas');
+      layer.width = assets.width;
+      layer.height = assets.height;
+      const layerContext = layer.getContext('2d');
+      if (!layerContext) return null;
+      layerContext.putImageData(
+        new ImageData(new Uint8ClampedArray(pixels), assets.width, assets.height), 0, 0,
+      );
+      return layer;
+    };
+    const glowLayer = createLayer(glowPixels);
+    const selectedLayer = createLayer(selectedPixels);
+    if (!glowLayer || !selectedLayer) return;
+    context.save();
+    context.globalAlpha = 0.24;
+    context.filter = 'blur(8px)';
+    context.drawImage(glowLayer, 0, 0);
+    context.restore();
+    context.drawImage(selectedLayer, 0, 0);
   }, [assets, indices, primary, secondary, showPrimary, showSecondary]);
 
   useEffect(() => {
