@@ -9,7 +9,14 @@ import { Surface, Text } from '../ui';
 
 export function PublicExercises({
   onNavigationContextChange,
-}: { onNavigationContextChange?: (context: NavigationContext | null) => void }) {
+  mode = 'browse', selectedExerciseIds, onToggleExercise, selectionDisabled = false,
+}: {
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+  mode?: 'browse' | 'select';
+  selectedExerciseIds?: ReadonlySet<string>;
+  onToggleExercise?: (id: string) => void;
+  selectionDisabled?: boolean;
+}) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud ? new PublicExerciseCatalogueRepository(cloud.db) : null, [cloud?.db]);
   const [snapshot, setSnapshot] = useState<PublicExerciseSnapshot | null>(null);
@@ -37,6 +44,8 @@ export function PublicExercises({
   if (snapshot.status === 'incomplete') return <Surface><Text role="alert">Публикация каталога неполная. Показывать частичные данные небезопасно.</Text></Surface>;
   return <>
     {cloud.status === 'error' ? <Text variant="footnote" tone="muted">Офлайн: показаны сохранённые упражнения</Text> : null}
-    <ExerciseCatalogContent snapshot={snapshot} onNavigationContextChange={onNavigationContextChange} />
+    <ExerciseCatalogContent snapshot={snapshot} onNavigationContextChange={onNavigationContextChange}
+      mode={mode} selectedExerciseIds={selectedExerciseIds} onToggleExercise={onToggleExercise}
+      selectionDisabled={selectionDisabled} />
   </>;
 }

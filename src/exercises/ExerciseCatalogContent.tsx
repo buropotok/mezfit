@@ -225,6 +225,7 @@ export function ExerciseCatalogContent({
                   </span>}
                   title={row.name_ru || row.name}
                   subtitle={row.name_en || row.subcategory_ru}
+                  trailing={mode === 'select' && selectedExerciseIds?.has(row.id) ? '✓' : undefined}
                   aria-pressed={mode === 'select' ? Boolean(selectedExerciseIds?.has(row.id)) : undefined}
                   disabled={mode === 'select' && selectionDisabled}
                   onClick={() => {

@@ -257,6 +257,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
         marginLeft: isEnabled ? '16px' : 0,
       }}
       className={cls('k-glass touch-none', themedClass(c.cancelButton))}
+      aria-label="Закрыть поиск"
       preset={glassPreset}
       optics={glassOptics}
       wrapContent={false}
@@ -306,7 +307,7 @@ export function MezfitSearchbar(props: MezfitSearchbarProps) {
           onBlur={handleBlur}
         />
         {value && clearButton ? (
-          <button className={themedClass(c.clearButton)} onClick={onClear} type="button">
+          <button className={themedClass(c.clearButton)} onClick={onClear} type="button" aria-label="Очистить поиск">
             <DeleteIcon theme={theme} className={themedClass(c.deleteIcon)} />
           </button>
         ) : null}
