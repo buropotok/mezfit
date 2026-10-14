@@ -762,11 +762,21 @@ export async function addWorkoutSessionPublicExercises(
   workoutSessionId: number,
   publicExerciseIds: string[],
 ): Promise<{ session: ActiveWorkoutSession }> {
-  const result = await apiRequest<{ session: ActiveWorkoutSession }>(initData, `/api/workout-sessions/${workoutSessionId}/exercises`, {
+  const result = await apiRequest<unknown>(initData, `/api/workout-sessions/${workoutSessionId}/exercises`, {
     method: 'POST',
     body: JSON.stringify({ publicExerciseIds }),
   });
-  return { session: localizeWorkoutSession(result.session) };
+  if (!isRecord(result) || !isRecord(result.session)
+    || result.session.status !== 'active' || result.session.sessionId !== workoutSessionId
+    || !Array.isArray(result.session.exercises)
+    || result.session.exercises.some((entry: unknown) =>
+      !isRecord(entry) || !isRecord(entry.exercise)
+      || typeof entry.exercise.id !== 'number'
+      || typeof entry.exercise.name !== 'string'
+      || !Array.isArray(entry.sets))) {
+    throw new ApiError(502, 'Некорректный ответ тренировки', 'INVALID_API_RESPONSE');
+  }
+  return { session: localizeWorkoutSession(result.session as unknown as ActiveWorkoutSession) };
 }
 
 export async function getCurrentWorkoutSession(
