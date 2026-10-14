@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { GlobalExerciseCatalog } from '../coach/GlobalExerciseCatalog';
+import { PublicExercises } from '../exercises/PublicExercises';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import { BottomSheet, FloatingActionButton, IconButton, Text } from '../ui';
 
 interface WorkoutExerciseSelectionSheetProps {
-  initData: string;
   saving: boolean;
   actionError?: string;
-  onConfirm: (exerciseDefinitionIds: number[]) => void;
+  onConfirm: (exerciseIds: string[]) => void;
   onClose: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
 export function WorkoutExerciseSelectionSheet({
-  initData,
   saving,
   actionError = '',
   onConfirm,
@@ -21,15 +19,15 @@ export function WorkoutExerciseSelectionSheet({
   onNavigationContextChange,
 }: WorkoutExerciseSelectionSheetProps) {
   const requestBackTransition = useNavigationBackTransition();
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
 
-  const toggleExercise = (exerciseDefinitionId: number) => {
+  const toggleExercise = (exerciseId: string) => {
     if (saving) return;
     setSelectedIds((current) => {
       const next = new Set(current);
-      if (next.has(exerciseDefinitionId)) next.delete(exerciseDefinitionId);
-      else next.add(exerciseDefinitionId);
+      if (next.has(exerciseId)) next.delete(exerciseId);
+      else next.add(exerciseId);
       return next;
     });
   };
@@ -90,8 +88,7 @@ export function WorkoutExerciseSelectionSheet({
     >
       <div style={{ padding: '0 1.5rem 1.5rem' }}>
         {actionError ? <Text variant="footnote" tone="muted" role="alert">{actionError}</Text> : null}
-        <GlobalExerciseCatalog
-          initData={initData}
+        <PublicExercises
           mode="select"
           selectedExerciseIds={selectedIds}
           selectionDisabled={saving}
