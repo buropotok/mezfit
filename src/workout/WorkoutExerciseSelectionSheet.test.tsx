@@ -1,126 +1,101 @@
 // @vitest-environment jsdom
+import { useEffect, useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getCoachExercises, getWorkoutExerciseOptions, type ExerciseDefinition } from '../api';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { PublicExercisesProps } from '../exercises/PublicExercises';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
-  return {
-    ...actual,
-    getCoachExercises: vi.fn(),
-    getWorkoutExerciseOptions: vi.fn(),
-  };
-});
+vi.mock('../NavigationShell', () => ({
+  useNavigationBackTransition: () => (callback: () => void) => callback(),
+}));
 
-const chestExercise: ExerciseDefinition = {
-  id: 11,
-  scope: 'global',
-  name: 'Жим лёжа',
-  description: null,
-  tracking_type: 'weight_reps',
-  category_code: 'chest',
-  equipment_code: 'barbell',
-  reference_source: null,
-  reference_key: null,
-  reference_media_url: null,
-  is_favourite: false,
-  can_edit: false,
-};
-
-const backExercise: ExerciseDefinition = {
-  ...chestExercise,
-  id: 22,
-  name: 'Тяга верхнего блока',
-  category_code: 'back',
-  equipment_code: 'cable',
-};
+/** Isolate the sheet contract without duplicating the real catalogue's Dexie/filter tests. */
+vi.mock('../exercises/PublicExercises', () => ({
+  PublicExercises: ({
+    mode, selectedExerciseIds, selectionDisabled, onToggleExercise, onNavigationContextChange,
+  }: PublicExercisesProps) => {
+    const [category, setCategory] = useState<'chest' | 'back' | null>(null);
+    useEffect(() => {
+      if (category === null) {
+        onNavigationContextChange?.(null);
+        return;
+      }
+      onNavigationContextChange?.({
+        title: category === 'chest' ? 'Грудь' : 'Спина',
+        scrollKey: category,
+        onBack: () => setCategory(null),
+      });
+    }, [category, onNavigationContextChange]);
+    const exercise = category === 'chest'
+      ? { id: '0001', name: 'Жим лёжа' }
+      : { id: '0022', name: 'Тяга верхнего блока' };
+    return <div data-testid="public-catalogue" data-mode={mode}>
+      {category === null ? <>
+        <button type="button" onClick={() => setCategory('chest')}>Грудь</button>
+        <button type="button" onClick={() => setCategory('back')}>Спина</button>
+      </> : <button type="button"
+        aria-pressed={selectedExerciseIds?.has(exercise.id) ?? false}
+        disabled={selectionDisabled}
+        onClick={() => onToggleExercise?.(exercise.id)}
+      >{exercise.name}</button>}
+    </div>;
+  },
+}));
 
 afterEach(cleanup);
 
-beforeEach(() => {
-  vi.mocked(getCoachExercises).mockReset();
-  vi.mocked(getWorkoutExerciseOptions).mockReset();
-  vi.mocked(getWorkoutExerciseOptions).mockImplementation(async (_initData, categoryCode) => ({
-    exercises: categoryCode === 'chest' ? [chestExercise] : categoryCode === 'back' ? [backExercise] : [],
-  }));
-});
-
 describe('WorkoutExerciseSelectionSheet', () => {
-  it('reuses the exercise catalog in select mode and keeps selection across categories', async () => {
+  it('reuses the new public catalogue and sends multiple canonical string IDs after OK', async () => {
     const onConfirm = vi.fn();
     const onNavigationContextChange = vi.fn();
+    render(<WorkoutExerciseSelectionSheet saving={false} onConfirm={onConfirm}
+      onClose={vi.fn()} onNavigationContextChange={onNavigationContextChange} />);
 
-    render(
-      <WorkoutExerciseSelectionSheet
-        initData="init-data"
-        saving={false}
-        onConfirm={onConfirm}
-        onClose={vi.fn()}
-        onNavigationContextChange={onNavigationContextChange}
-      />,
-    );
-
-    const dialog = screen.getByRole('dialog', { name: 'Упражнения' });
-    expect(dialog).toBeTruthy();
-    expect(dialog.closest('.ui-bottom-sheet')?.className).toContain('ui-bottom-sheet--inset');
-    expect(screen.queryByRole('button', { name: 'Поиск' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Только избранные' })).toBeNull();
-    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
+    expect(screen.getByTestId('public-catalogue').getAttribute('data-mode')).toBe('select');
+    expect(screen.queryByRole('button', { name: 'Добавить выбранные упражнения' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-    await waitFor(() => expect(getWorkoutExerciseOptions).toHaveBeenCalledWith('init-data', 'chest'));
-    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Грудь' })));
-    expect(getCoachExercises).not.toHaveBeenCalled();
-
-    const chestRow = await screen.findByRole('button', { name: 'Жим лёжа' });
-    expect(chestRow.getAttribute('aria-pressed')).toBe('false');
-    const menuTrigger = screen.getByRole('button', { name: 'Действия: Жим лёжа' });
-    expect(chestRow.contains(menuTrigger)).toBe(false);
-
-    fireEvent.click(chestRow);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true'));
-    expect(screen.getByRole('button', { name: 'Добавить выбранные упражнения' })).toBeTruthy();
+    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Грудь' }),
+    ));
+    fireEvent.click(screen.getByRole('button', { name: 'Жим лёжа' }));
+    expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
-    await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'Упражнения' })));
     fireEvent.click(screen.getByRole('button', { name: 'Спина' }));
-    const backRow = await screen.findByRole('button', { name: 'Тяга верхнего блока' });
-    fireEvent.click(backRow);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Тяга верхнего блока' }).getAttribute('aria-pressed')).toBe('true'));
+    fireEvent.click(screen.getByRole('button', { name: 'Тяга верхнего блока' }));
     fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
+    expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true'));
+    expect(onConfirm).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
-    expect(onConfirm).toHaveBeenCalledWith([11, 22]);
+    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(onConfirm).toHaveBeenCalledWith(['0001', '0022']);
   });
 
-  it('keeps the sheet open with its current selection when confirmation reports an error', async () => {
-    const { rerender } = render(
-      <WorkoutExerciseSelectionSheet
-        initData="init-data"
-        saving={false}
-        onConfirm={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    );
+  it('preserves selection and stays open after confirmation yields an error', () => {
+    const onConfirm = vi.fn();
+    const { rerender } = render(<WorkoutExerciseSelectionSheet saving={false}
+      onConfirm={onConfirm} onClose={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Жим лёжа' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Жим лёжа' }));
+    rerender(<WorkoutExerciseSelectionSheet saving={false} actionError="Сохранение пока недоступно"
+      onConfirm={onConfirm} onClose={vi.fn()} />);
 
-    rerender(
-      <WorkoutExerciseSelectionSheet
-        initData="init-data"
-        saving={false}
-        actionError="Не удалось добавить упражнения"
-        onConfirm={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByRole('alert').textContent).toContain('Не удалось добавить упражнения');
+    expect(screen.getByRole('alert').textContent).toContain('Сохранение пока недоступно');
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('prevents modifying and confirming selection when saving', () => {
+    const onConfirm = vi.fn();
+    render(<WorkoutExerciseSelectionSheet saving={true} onConfirm={onConfirm} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
+    const entry = screen.getByRole('button', { name: 'Жим лёжа' });
+    expect((entry as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Добавить выбранные упражнения' })).toBeNull();
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 });
