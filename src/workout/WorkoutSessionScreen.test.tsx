@@ -2,9 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  addWorkoutSessionExercises,
   completeWorkoutSession,
-  getWorkoutExerciseOptions,
   initializeWorkoutSession,
   reorderWorkoutSessionExercises,
   saveWorkoutSessionSet,
@@ -15,13 +13,21 @@ import type { SessionExerciseData } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession, DraftWorkoutSession } from './workoutSessionTypes';
 
 vi.mock('../api', () => ({
-  addWorkoutSessionExercises: vi.fn(),
   completeWorkoutSession: vi.fn(),
-  getWorkoutExerciseOptions: vi.fn(),
   initializeWorkoutSession: vi.fn(),
   reorderWorkoutSessionExercises: vi.fn(),
   saveWorkoutSessionSet: vi.fn(),
   startWorkoutSession: vi.fn(),
+}));
+
+vi.mock('../exercises/PublicExercises', () => ({
+  PublicExercises: ({
+    onToggleExercise, selectedExerciseIds,
+  }: {
+    onToggleExercise?: (exerciseId: string) => void;
+    selectedExerciseIds?: ReadonlySet<string>;
+  }) => <button type="button" aria-pressed={selectedExerciseIds?.has('0001') ?? false}
+    onClick={() => onToggleExercise?.('0001')}>Жим лёжа</button>,
 }));
 
 vi.mock('../ui', async (importOriginal) => {
@@ -51,8 +57,6 @@ vi.mock('../ui', async (importOriginal) => {
   return { ...actual, SortableList: TestSortableList };
 });
 
-const addExercisesMock = vi.mocked(addWorkoutSessionExercises);
-const getExerciseOptionsMock = vi.mocked(getWorkoutExerciseOptions);
 const initializeMock = vi.mocked(initializeWorkoutSession);
 const startMock = vi.mocked(startWorkoutSession);
 const saveSetMock = vi.mocked(saveWorkoutSessionSet);
@@ -146,8 +150,6 @@ function renderScreen(overrides: Partial<React.ComponentProps<typeof WorkoutSess
 }
 
 beforeEach(() => {
-  addExercisesMock.mockReset();
-  getExerciseOptionsMock.mockReset();
   initializeMock.mockReset();
   startMock.mockReset();
   saveSetMock.mockReset();
@@ -247,30 +249,23 @@ describe('WorkoutSessionScreen', () => {
     expect(screen.getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
   });
 
-  it('adds selected exercises from the workout card only after explicit OK confirmation', async () => {
-    const nextSession: ActiveWorkoutSession = {
-      ...ownSession,
-      exercises: [exerciseData(42, 0, 'Жим лёжа')],
-    };
+  it('prepares canonical selected exercises without claiming the workout was saved', async () => {
     initializeMock.mockResolvedValue({ session: ownSession });
-    getExerciseOptionsMock.mockResolvedValue({ exercises: [nextSession.exercises[0].exercise] });
-    addExercisesMock.mockResolvedValue({ session: nextSession });
 
     renderScreen();
     await screen.findAllByText('Своя тренировка');
     fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-    expect(await screen.findByText('Жим лёжа')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /^Жим лёжа/ }));
-    expect(addExercisesMock).not.toHaveBeenCalled();
-
+    const exercise = screen.getByRole('button', { name: 'Жим лёжа' });
+    expect(exercise.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(exercise);
+    expect(exercise.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(screen.getByRole('button', { name: 'Добавить выбранные упражнения' }));
 
-    await waitFor(() => {
-      expect(addExercisesMock).toHaveBeenCalledWith('telegram-init', 501, [42]);
-    });
-    expect((await screen.findByTestId('sortable-order')).textContent).toBe('42');
+    expect(screen.getByRole('alert').textContent).toContain('Добавление в тренировку будет подключено');
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.queryByTestId('sortable-order')?.textContent).not.toContain('0001');
   });
 
   it('resumes an already active session without calling start again', async () => {
