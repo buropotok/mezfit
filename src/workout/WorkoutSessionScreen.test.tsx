@@ -255,13 +255,8 @@ describe('WorkoutSessionScreen', () => {
     expect(screen.getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
   });
 
-  it('adds selected exercises from the workout card only after explicit OK confirmation', async () => {
-    const nextSession: ActiveWorkoutSession = {
-      ...ownSession,
-      exercises: [exerciseData(42, 0, 'Жим лёжа')],
-    };
+  it('prepares canonical exercise IDs without claiming a workout save before Dexie persistence exists', async () => {
     initializeMock.mockResolvedValue({ session: ownSession });
-    addExercisesMock.mockResolvedValue({ session: nextSession });
 
     renderScreen();
     await screen.findAllByText('Своя тренировка');
@@ -273,10 +268,13 @@ describe('WorkoutSessionScreen', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Добавить упражнения (1)' }));
 
-    await waitFor(() => {
-      expect(addExercisesMock).toHaveBeenCalledWith('telegram-init', 501, ['0001']);
-    });
-    expect((await screen.findByTestId('sortable-order')).textContent).toBe('42');
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Упражнения выбраны. Добавление в тренировку будет подключено на следующем этапе.',
+    );
+    expect(screen.getByRole('dialog', { name: 'Выбор упражнений для тренировки' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Жим лёжа' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('sortable-order').textContent).toBe('');
+    expect(addExercisesMock).not.toHaveBeenCalled();
   });
 
   it('resumes an already active session without calling start again', async () => {

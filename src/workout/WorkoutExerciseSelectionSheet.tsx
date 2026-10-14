@@ -15,7 +15,7 @@ interface WorkoutExerciseSelectionSheetProps {
 
 /**
  * One shared Dexie Cloud catalogue for browsing and selecting.
- * The legacy workout write translates stable cloud IDs on the Worker boundary.
+ * Workout persistence to Dexie Cloud is not implemented yet; confirmation is selection-only.
  */
 export function WorkoutExerciseSelectionSheet({
   saving,
@@ -33,7 +33,7 @@ export function WorkoutExerciseSelectionSheet({
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
-      else if (next.size < 100) next.add(id); // Match the server's bounded mutation contract.
+      else if (next.size < 100) next.add(id); // Bound selections while local-first workout persistence is pending.
       return next;
     });
   }, [saving]);
