@@ -63,7 +63,7 @@ export function WorkoutExerciseSelectionSheet({
         <header className="workout-exercise-selection__header">
           {navigationContext ? <IconButton icon="chevron-left" label="Назад" disabled={saving} onClick={requestBack} /> : null}
           <Text variant="headline">{title}</Text>
-          <IconButton icon="x" label="Закрыть" disabled={saving} onClick={close} />
+          <Button variant="secondary" size="compact" disabled={saving} onClick={close}>Закрыть</Button>
         </header>
         <div className="workout-exercise-selection__catalog">
           {actionError ? <Text variant="footnote" role="alert">{actionError}</Text> : null}
