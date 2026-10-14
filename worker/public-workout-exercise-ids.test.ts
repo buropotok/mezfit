@@ -16,7 +16,7 @@ function fakeDB(records: Array<{ id: number; reference_key: string }>) {
   const bound = vi.fn((...ids: string[]) => ({
     all: async () => ({ results: records.filter((r) => ids.includes(r.reference_key)) }),
   }));
-  const prepare = vi.fn(() => ({ bind: bound }));
+  const prepare = vi.fn((_sql: string) => ({ bind: bound }));
   return { db: { prepare } as unknown as D1Database, prepare, bound };
 }
 
