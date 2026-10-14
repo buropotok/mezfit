@@ -16,6 +16,7 @@ import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from './data/cloud/pilot-activation';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
 import { PublicExercises } from './exercises/PublicExercises';
+import { PublicExerciseMediaPrefetch } from './exercises/PublicExerciseMediaPrefetch';
 import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
 import {
   NavigationShell,
@@ -360,6 +361,7 @@ export function App() {
         telegramUserId={state.me.user.telegramUserId}
         initData={state.initData}
       >
+      <PublicExerciseMediaPrefetch />
       <ClientCoachProvider
         clientTelegramUserId={state.me.user.telegramUserId}
         enabled={state.activeRole === 'client'}
