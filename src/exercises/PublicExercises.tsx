@@ -5,11 +5,18 @@ import { ExerciseCatalogContent } from './ExerciseCatalogContent';
 import type { NavigationContext } from '../NavigationShell';
 import { Surface, Text } from '../ui';
 
-/** Shared read-only surface: Coach and Client see the same public Dexie Cloud catalogue. */
+/** The same locally synced public catalogue powers browsing and workout selection. */
+export interface PublicExercisesProps {
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+  mode?: 'browse' | 'select';
+  selectedExerciseIds?: ReadonlySet<string>;
+  onToggleExercise?: (exerciseId: string) => void;
+  selectionDisabled?: boolean;
+}
 
 export function PublicExercises({
-  onNavigationContextChange,
-}: { onNavigationContextChange?: (context: NavigationContext | null) => void }) {
+  onNavigationContextChange, mode = 'browse', selectedExerciseIds, onToggleExercise, selectionDisabled = false,
+}: PublicExercisesProps) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud ? new PublicExerciseCatalogueRepository(cloud.db) : null, [cloud?.db]);
   const [snapshot, setSnapshot] = useState<PublicExerciseSnapshot | null>(null);
@@ -37,6 +44,13 @@ export function PublicExercises({
   if (snapshot.status === 'incomplete') return <Surface><Text role="alert">Публикация каталога неполная. Показывать частичные данные небезопасно.</Text></Surface>;
   return <>
     {cloud.status === 'error' ? <Text variant="footnote" tone="muted">Офлайн: показаны сохранённые упражнения</Text> : null}
-    <ExerciseCatalogContent snapshot={snapshot} onNavigationContextChange={onNavigationContextChange} />
+    <ExerciseCatalogContent
+      snapshot={snapshot}
+      onNavigationContextChange={onNavigationContextChange}
+      mode={mode}
+      selectedExerciseIds={selectedExerciseIds}
+      onToggleExercise={onToggleExercise}
+      selectionDisabled={selectionDisabled}
+    />
   </>;
 }
