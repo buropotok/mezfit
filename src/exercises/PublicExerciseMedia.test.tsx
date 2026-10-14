@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PublicExerciseMedia, publicExerciseMediaUrl } from './PublicExerciseMedia';
+import mediaRelease from '../../shared/approved-exercise-media.json';
 
 vi.mock('../ui', () => ({
   Icon: ({ name }: { name: string }) => <span data-testid="fallback-icon">{name}</span>,
@@ -20,18 +21,25 @@ const row = {
 afterEach(cleanup);
 
 describe('public Dexie catalogue media / R2 boundary', () => {
+  it('pins each GIF to the previously verified 1324-file import revision', () => {
+    expect(mediaRelease.datasetGitRevision)
+      .toBe('7455efae41b330c265e7cd4b78dfa848e7ce5ebd');
+    expect(publicExerciseMediaUrl(row))
+      .toContain(`?v=${mediaRelease.datasetGitRevision}`);
+  });
+
   it('automatically resolves owner-supplied GIFs without a rollout flag', () => {
-    expect(publicExerciseMediaUrl(row)).toBe('/api/exercise-media/gym_keeper_apk/0001');
+    expect(publicExerciseMediaUrl(row)).toBe('/api/exercise-media/gym_keeper_apk/0001?v=7455efae41b330c265e7cd4b78dfa848e7ce5ebd');
     render(<PublicExerciseMedia row={row} variant="detail" />);
     expect(screen.getByRole('img', { name: 'Жим' }).getAttribute('src'))
-      .toBe('/api/exercise-media/gym_keeper_apk/0001');
+      .toBe('/api/exercise-media/gym_keeper_apk/0001?v=7455efae41b330c265e7cd4b78dfa848e7ce5ebd');
   });
 
   it('resolves a verified source to the existing same-origin R2 Worker path by default', () => {
-    expect(publicExerciseMediaUrl(row)).toBe('/api/exercise-media/gym_keeper_apk/0001');
+    expect(publicExerciseMediaUrl(row)).toBe('/api/exercise-media/gym_keeper_apk/0001?v=7455efae41b330c265e7cd4b78dfa848e7ce5ebd');
     render(<PublicExerciseMedia row={row} variant="detail" />);
     const picture = screen.getByRole('img', { name: 'Жим' });
-    expect(picture.getAttribute('src')).toBe('/api/exercise-media/gym_keeper_apk/0001');
+    expect(picture.getAttribute('src')).toBe('/api/exercise-media/gym_keeper_apk/0001?v=7455efae41b330c265e7cd4b78dfa848e7ce5ebd');
     expect(picture.getAttribute('loading')).toBe('eager');
     expect(picture.getAttribute('decoding')).toBe('async');
   });
@@ -70,6 +78,6 @@ describe('public Dexie catalogue media / R2 boundary', () => {
     expect(screen.getByText('Медиа недоступно')).toBeTruthy();
     rendered.rerender(view({ entry: { ...row, id: '0002', name_ru: 'Приседание' } }));
     expect(screen.getByRole('img', { name: 'Приседание' }).getAttribute('src'))
-      .toBe('/api/exercise-media/gym_keeper_apk/0002');
+      .toBe('/api/exercise-media/gym_keeper_apk/0002?v=7455efae41b330c265e7cd4b78dfa848e7ce5ebd');
   });
 });
