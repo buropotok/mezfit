@@ -30,6 +30,7 @@ import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypo
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
+import { WorkedMuscleAtlasPreload } from './workout/WorkedMuscleAtlasPreload';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 
@@ -362,6 +363,7 @@ export function App() {
         initData={state.initData}
       >
       <PublicExerciseMediaPrefetch />
+      <WorkedMuscleAtlasPreload />
       <ClientCoachProvider
         clientTelegramUserId={state.me.user.telegramUserId}
         enabled={state.activeRole === 'client'}
