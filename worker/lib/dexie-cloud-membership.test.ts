@@ -175,11 +175,13 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
 
   it('accepts legacy Coach headers-only policy while rolling out phase permissions', async () => {
     const cloud = fakeCloud();
-    cloud.installedRoles[0].permissions.manage = ['trainingPlans'];
+    Object.assign(cloud.installedRoles[0].permissions, { manage: ['trainingPlans'] });
     await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
       .resolves.toMatchObject({ realmId: expect.any(String) });
     expect(cloud.members.size).toBe(2);
-    cloud.installedRoles[0].permissions.manage = ['trainingPlans', 'programPhases', 'programDays'];
+    Object.assign(cloud.installedRoles[0].permissions, {
+      manage: ['trainingPlans', 'programPhases', 'programDays'],
+    });
     await expect(provisionInviteMembership(env, '101', '203', cloud.fetchImpl))
       .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
   });
