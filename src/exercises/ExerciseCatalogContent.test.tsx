@@ -31,6 +31,14 @@ vi.mock('./PublicExerciseMedia', () => ({
   PublicExerciseMedia: () => <span aria-hidden="true">GIF</span>,
 }));
 
+vi.mock('../workout/WorkedMuscles', () => ({
+  WorkedMuscles: ({ primaryMuscleIds, secondaryMuscleIds }: {
+    primaryMuscleIds: readonly string[];
+    secondaryMuscleIds: readonly string[];
+  }) => <div data-testid="worked-muscles" data-primary={primaryMuscleIds.join(',')}
+    data-secondary={secondaryMuscleIds.join(',')} />,
+}));
+
 const sourceSha256 = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 const row = {
   id: '0001', name: 'Bench press', name_ru: 'Жим лёжа', name_en: 'Bench press',
@@ -60,6 +68,47 @@ describe('shared public exercise catalogue', () => {
     fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
     fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
     expect(screen.getByText('Инструкция')).toBeTruthy();
+  });
+
+  it('places the anatomy module after exercise text and maps only known muscles', () => {
+    const exercise = {
+      ...row,
+      muscles: {
+        ...row.muscles,
+        primary: ['pectoralis_sternal', 'unknown_taxonomy_id'],
+        emphasis: ['deltoid_anterior', 'pectoralis_sternal'],
+        secondary: ['biceps_long_head', 'pectoralis_sternal'],
+        stabilizers: ['forearm_grip', 'deltoid_anterior', 'biceps_long_head'],
+      },
+    };
+    render(<ExerciseCatalogContent snapshot={{ ...snapshot, exercises: [exercise] }} />);
+    fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    const anatomy = screen.getByTestId('worked-muscles');
+    expect(anatomy.getAttribute('data-primary')).toBe('pectoralis_sternal,deltoid_anterior');
+    expect(anatomy.getAttribute('data-secondary')).toBe('biceps_long_head,forearm_grip');
+    expect(screen.getByText('Инструкция').compareDocumentPosition(anatomy)
+      & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('renders the module when only emphasis or stabilizers contain supported muscles', () => {
+    const exercise = {
+      ...row,
+      muscles: { ...row.muscles, emphasis: ['soleus'], stabilizers: ['rhomboids'] },
+    };
+    render(<ExerciseCatalogContent snapshot={{ ...snapshot, exercises: [exercise] }} />);
+    fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    const anatomy = screen.getByTestId('worked-muscles');
+    expect(anatomy.getAttribute('data-primary')).toBe('soleus');
+    expect(anatomy.getAttribute('data-secondary')).toBe('rhomboids');
+  });
+
+  it('does not show an empty anatomy module for exercises without mapped muscles', () => {
+    render(<ExerciseCatalogContent snapshot={snapshot} />);
+    fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    expect(screen.queryByTestId('worked-muscles')).toBeNull();
   });
 
   it('supports canonical string-ID multi-select without taking ownership of selection', () => {

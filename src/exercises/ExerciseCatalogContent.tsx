@@ -8,6 +8,8 @@ import {
 import type { PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import { PublicExerciseMedia } from './PublicExerciseMedia';
+import { WorkedMuscles } from '../workout/WorkedMuscles';
+import { WORKED_MUSCLE_LABELS } from '../workout/workedMuscleData';
 import { publicExerciseCategoryArtwork } from './publicExerciseCategoryArtwork';
 import { CoachExerciseCatalogFab } from './CoachExerciseCatalogFab';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
@@ -50,11 +52,22 @@ function uniqueMuscles(ids: readonly string[], taxonomy: readonly PublicTaxonomy
   return [...new Set(ids)].map((id) => labels.get(id) ?? id).join(', ') || 'Не указано';
 }
 
+/** Atlas zone IDs are canonical taxonomy IDs; never infer matches from display labels. */
+function anatomyMuscleIds(ids: readonly string[]): string[] {
+  return [...new Set(ids.filter((id) =>
+    Object.prototype.hasOwnProperty.call(WORKED_MUSCLE_LABELS, id),
+  ))];
+}
+
 function ExerciseDetail({ row, taxonomy, onEdit }: {
   row: CatalogueExerciseRow;
   taxonomy: PublicTaxonomyRow[];
   onEdit?: () => void;
 }) {
+  const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
+  const primaryIds = new Set(primary);
+  const secondary = anatomyMuscleIds([...row.muscles.secondary, ...row.muscles.stabilizers])
+    .filter((id) => !primaryIds.has(id));
   const sections: Array<[string, readonly string[]]> = [
     ['Основные мышцы', row.muscles.primary],
     ['Вспомогательные мышцы', row.muscles.secondary],
@@ -92,6 +105,9 @@ function ExerciseDetail({ row, taxonomy, onEdit }: {
         ) : null)}
       </GlassSurface>
       <Text variant="footnote" tone="muted">{row.attribution}</Text>
+      {primary.length || secondary.length ? (
+        <WorkedMuscles primaryMuscleIds={primary} secondaryMuscleIds={secondary} />
+      ) : null}
     </section>
   );
 }
