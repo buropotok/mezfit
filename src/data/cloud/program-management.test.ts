@@ -34,7 +34,11 @@ function mockTable<T extends Row>(initial: T[], prefix: string) {
         }),
       });
       if (typeof field === 'string') {
-        return { equals: (value: string) => collection((row) => Reflect.get(row, field) === value) };
+        const compound = /^\[([^+]+)\+([^\]]+)\]$/.exec(field);
+        return { equals: (value: string | readonly string[]) => collection((row) =>
+          compound && Array.isArray(value)
+            ? Reflect.get(row, compound[1]) === value[0] && Reflect.get(row, compound[2]) === value[1]
+            : Reflect.get(row, field) === value) };
       }
       return collection((row) => Object.entries(field).every(([key, value]) =>
         Reflect.get(row, key) === value));
@@ -105,6 +109,18 @@ describe('local-first program/phase management', () => {
     expect((await f.repo.details('tra-1'))?.phases[0].id).toBe(phaseId);
   });
 
+  it('rejects forged PLAN ownership even when a relationship identifier matches', async () => {
+    const f = fixture();
+    f.plans[0].owner = 'tg:999';
+    expect((await f.repo.listReadable()).length).toBe(0);
+    await expect(f.repo.renameProgram('tra-1', 'Недоступно')).rejects.toThrow();
+    f.plans[0].owner = user;
+    const phaseId = await f.repo.createPhase('tra-1');
+    f.phases[0].owner = 'tg:999';
+    expect((await f.repo.details('tra-1'))?.phases).toHaveLength(0);
+    expect(phaseId).toBeTruthy();
+  });
+
   it('creates a personal plan for the athlete without inventing a client relationship', async () => {
     const f = fixture();
     const id = await f.repo.createPersonal('Новая программа');
@@ -112,7 +128,7 @@ describe('local-first program/phase management', () => {
     expect(f.plans).toHaveLength(2);
     expect(row?.id).not.toBe('tra-1');
     expect(row).toMatchObject({
-      owner: null, realmId: user, athleteUserId: user,
+      owner: user, realmId: user, athleteUserId: user,
       coachUserId: null, clientUserId: null, status: 'draft',
     });
   });
@@ -121,7 +137,7 @@ describe('local-first program/phase management', () => {
     const f = fixture();
     const id = await f.repo.createPhase('tra-1');
     expect(f.phases[0]).toMatchObject({
-      id, name: 'Фаза 1', status: 'draft', durationWeeks: 10,
+      id, owner: user, name: 'Фаза 1', status: 'draft', durationWeeks: 10,
     });
     await f.repo.publishPhase('tra-1', id);
     expect(f.phases[0].status).toBe('pending');
@@ -240,7 +256,9 @@ describe('local-first program/phase management', () => {
     expect(f.plans[1].status).toBe('draft');
     expect(f.plans[1].id).not.toBe(f.plans[0].id);
     expect(f.phases).toHaveLength(2);
-    expect(f.phases[1]).toMatchObject({ status: 'draft', name: 'Фаза 1', durationWeeks: 10 });
+    expect(f.phases[1]).toMatchObject({
+      owner: user, status: 'draft', name: 'Фаза 1', durationWeeks: 10,
+    });
     expect(f.phases[1].trainingPlanId).toBe(f.plans[1].id);
   });
 
