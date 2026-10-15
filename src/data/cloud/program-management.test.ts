@@ -4,7 +4,7 @@ import type { CloudProgramPhaseRow } from './workout-foundation-types';
 import { ProgramManagementRepository, clientVisiblePhases } from './program-management';
 
 const user = 'tg:101';
-type Row = { id: string; realmId: string; [key: string]: unknown };
+type Row = { id: string; realmId: string };
 function mockTable<T extends Row>(initial: T[], prefix: string) {
   const data: T[] = initial.map((item) => ({ ...item }));
   let next = 1;
