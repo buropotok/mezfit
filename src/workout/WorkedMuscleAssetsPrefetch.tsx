@@ -15,7 +15,7 @@ export function WorkedMuscleAssetsPrefetch() {
     };
     if ('requestIdleCallback' in window && typeof window.requestIdleCallback === 'function') {
       const id = window.requestIdleCallback(prefetch, { timeout: 4000 });
-      return () => window.cancelIdleCallback(id);
+      return () => { if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(id); };
     }
     // iOS WKWebView builds without requestIdleCallback still warm after paint.
     const id = window.setTimeout(prefetch, 800);
