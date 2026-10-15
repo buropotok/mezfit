@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
 import {
   resolveCoachExerciseCatalogue, type CoachExercisePersonalSnapshot,
@@ -53,7 +52,7 @@ export function CoachExercises({ onNavigationContextChange }: {
     }
   }, [repository, merged]);
 
-  const create = useCallback(() => setEditorRequest({ mode: 'create', category: null }), []);
+  const create = useCallback((category: string | null) => setEditorRequest({ mode: 'create', category }), []);
   const edit = useCallback((exerciseId: string) => setEditorRequest({ mode: 'edit', exerciseId }), []);
 
   const ready = snapshot?.status === 'ready';
