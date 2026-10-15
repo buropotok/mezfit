@@ -244,8 +244,9 @@ export class ProgramManagementRepository {
       const current = await this.db.trainingPlans.get(id);
       if (!phase || !current || !belongs(phase, current) || current.realmId !== plan.realmId)
         throw new Error('Фаза не найдена');
+      const wasActive = phase.status === 'active';
       await this.db.programPhases.update(phaseId, { status });
-      if (phase.status === 'active' && current.status === 'active') {
+      if (wasActive && current.status === 'active') {
         // pending has no program equivalent: the parent becomes a draft.
         const nextProgramStatus: CloudProgramStatus = status === 'pending' ? 'draft' : status;
         await this.db.trainingPlans.update(id, {
