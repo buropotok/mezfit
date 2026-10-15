@@ -94,10 +94,14 @@ export class AssignedProgramsRepository {
         this.db.members.toArray(),
       ]);
       const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
-      const permitted = await Promise.all(plans.map(async (plan) =>
-        (await isApprovedAssignedPair(
+      const permitted = await Promise.all(plans.map(async (plan) => {
+        if (plan.realmId === this.actorUserId && plan.athleteUserId === this.actorUserId
+          && plan.coachUserId === null && plan.clientUserId === null) return plan;
+        if (!plan.coachUserId || !plan.clientUserId) return null;
+        return await isApprovedAssignedPair(
           realmById.get(plan.realmId), members, plan.coachUserId, plan.clientUserId,
-        )) ? plan : null));
+        ) ? plan : null;
+      }));
       return sortAssignedPlans(permitted.filter((plan): plan is CloudTrainingPlanRow => plan !== null));
     }).subscribe({
       next: onChange,
@@ -134,6 +138,7 @@ export class AssignedProgramsRepository {
       owner: null,
       coachUserId: this.actorUserId,
       clientUserId: `tg:${clientTelegramId}`,
+      athleteUserId: `tg:${clientTelegramId}`,
       name,
       position,
       status: 'draft',
