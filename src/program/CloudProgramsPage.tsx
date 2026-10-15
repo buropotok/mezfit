@@ -231,8 +231,7 @@ export function CloudProgramsPage({
       confirmLabel: 'Удалить',
       onConfirm: async () => { await repository.deleteProgram(plan.id); setDialog(null); },
     });
-    if (key === 'activate') void requestActivation(plan).catch((reason: unknown) =>
-      setError(reason instanceof Error ? reason.message : 'Не удалось выбрать фазу'));
+    if (key === 'activate') void run(() => requestActivation(plan));
     if (key === 'status') setDialog({
       kind: 'select', title: 'Сменить статус программы',
       initial: plan.status, options: STATES,

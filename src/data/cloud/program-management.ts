@@ -178,12 +178,16 @@ export class ProgramManagementRepository {
 
   async createPersonal(rawName: string): Promise<string> {
     const name = validName(rawName), now = new Date().toISOString();
-    const position = await this.db.trainingPlans.where('realmId').equals(this.actorUserId).count();
-    // Built-in personal Dexie Cloud realm uses the authenticated user's cloud ID.
-    return this.db.trainingPlans.add({
-      realmId: this.actorUserId, owner: this.actorUserId, athleteUserId: this.actorUserId,
-      coachUserId: null, clientUserId: null, name, position,
-      status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
+    // Keep allocation and insertion atomic on this device, including rapid creates.
+    return this.db.transaction('rw', ['trainingPlans'], async () => {
+      const plans = await this.db.trainingPlans.where('realmId').equals(this.actorUserId).toArray();
+      const position = plans.reduce((max, plan) => Math.max(max, plan.position), -1) + 1;
+      // Built-in personal Dexie Cloud realm uses the authenticated user's cloud ID.
+      return this.db.trainingPlans.add({
+        realmId: this.actorUserId, owner: this.actorUserId, athleteUserId: this.actorUserId,
+        coachUserId: null, clientUserId: null, name, position,
+        status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
+      });
     });
   }
   async createAssigned(athleteUserId: string, rawName: string): Promise<string> {
@@ -197,11 +201,16 @@ export class ProgramManagementRepository {
         this.actorUserId, athleteUserId)) { realmId = realm.realmId; break; }
     }
     if (!realmId) throw new Error('Связь с атлетом ещё не синхронизирована');
-    const position = await this.db.trainingPlans.where('realmId').equals(realmId).count();
-    const now = new Date().toISOString();
-    return this.db.trainingPlans.add({
-      realmId, owner: this.actorUserId, athleteUserId, coachUserId: this.actorUserId, clientUserId: athleteUserId,
-      name, position, status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
+    const assignedRealmId = realmId;
+    return this.db.transaction('rw', ['trainingPlans'], async () => {
+      const plans = await this.db.trainingPlans.where('realmId').equals(assignedRealmId).toArray();
+      const position = plans.reduce((max, plan) => Math.max(max, plan.position), -1) + 1;
+      const now = new Date().toISOString();
+      return this.db.trainingPlans.add({
+        realmId: assignedRealmId, owner: this.actorUserId, athleteUserId,
+        coachUserId: this.actorUserId, clientUserId: athleteUserId,
+        name, position, status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
+      });
     });
   }
   async renameProgram(id: string, name: string): Promise<void> {

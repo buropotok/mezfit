@@ -165,18 +165,17 @@ export function CloudProgramDetailsPage({
       setDialog(null);
     }
   };
-  const confirmActivation = (phaseId: string, previousPhaseStatus?: 'draft' | 'finished' | 'cancelled') => {
+  const confirmActivation = async (phaseId: string, previousPhaseStatus?: 'draft' | 'finished' | 'cancelled') => {
     if (details?.program.status !== 'active') {
       setDialog({
         kind: 'confirm', title: 'Программа будет активирована.',
         onConfirm: async () => { await activate(phaseId, previousPhaseStatus); },
       });
     } else {
-      void activate(phaseId, previousPhaseStatus).catch((reason: unknown) =>
-        setError(reason instanceof Error ? reason.message : 'Не удалось активировать фазу'));
+      await activate(phaseId, previousPhaseStatus);
     }
   };
-  const requestActivation = (phase: CloudProgramPhaseRow) => {
+  const requestActivation = async (phase: CloudProgramPhaseRow) => {
     const previous = details?.phases.find((item) => item.id !== phase.id && item.status === 'active');
     if (previous) {
       setDialog({
@@ -185,7 +184,7 @@ export function CloudProgramDetailsPage({
         onConfirm: async (value) =>
           confirmActivation(phase.id, value as 'draft' | 'finished' | 'cancelled'),
       });
-    } else confirmActivation(phase.id);
+    } else await confirmActivation(phase.id);
   };
 
   const action = (key: string, phase: CloudProgramPhaseRow) => {
@@ -219,14 +218,14 @@ export function CloudProgramDetailsPage({
         },
       });
     } else if (key === 'activate') {
-      requestActivation(phase);
+      void run(() => requestActivation(phase));
     } else if (key === 'status') {
       setDialog({
         kind: 'select', title: 'Сменить статус фазы', options: PHASE_STATUSES,
         initial: phase.status,
         onConfirm: async (value) => {
           if (value === 'active') {
-            requestActivation(phase);
+            await requestActivation(phase);
           } else if (value === 'draft' && phase.status !== 'draft'
             && details.program.status === 'active') {
             setDialog({

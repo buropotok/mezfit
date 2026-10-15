@@ -138,6 +138,32 @@ describe('local-first program/phase management', () => {
     });
   });
 
+  it.each(['personal', 'assigned'] as const)(
+    'appends a new %s program after the maximum position when deletion leaves a gap', async (scope) => {
+      const f = fixture();
+      if (scope === 'assigned') {
+        const pair = await relationshipMembership('101', '202');
+        f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
+        f.memberRows.push(...pair.members);
+      }
+      const create = (name: string) => scope === 'personal'
+        ? f.repo.createPersonal(name) : f.repo.createAssigned('tg:202', name);
+      const first = await create('Первая');
+      const middle = await create('Средняя');
+      const last = await create('Последняя');
+      const lastPlan = f.plans.find((plan) => plan.id === last);
+      if (!lastPlan) throw new Error('Expected last program');
+      const lastPosition = lastPlan.position;
+      await f.repo.deleteProgram(middle);
+      // A different realm's order must not influence this allocation.
+      f.plans.push({ ...f.plans[0], id: 'foreign', realmId: 'another-realm', position: 999 });
+      const appended = await create('Новая');
+      expect(f.plans.find((plan) => plan.id === appended)?.position).toBe(lastPosition + 1);
+      expect(f.plans.find((plan) => plan.id === first)?.position).toBeLessThan(lastPosition);
+      expect(f.transaction).toHaveBeenCalledWith('rw', ['trainingPlans'], expect.any(Function));
+    },
+  );
+
   it('creates a draft phase with ten weeks and publishes it while empty', async () => {
     const f = fixture();
     const id = await f.repo.createPhase('tra-1');
