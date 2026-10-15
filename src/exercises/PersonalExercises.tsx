@@ -109,16 +109,25 @@ export function PersonalExercises({
     }
   }, [personalIds, assignedIds]);
 
+  const closeEditor = useCallback(() => {
+    const wasEditing = request?.mode === 'edit';
+    setRequest(null);
+    if (wasEditing) {
+      setInitialTab('mine');
+      setCatalogueKey(previous => previous + 1);
+    }
+  }, [request?.mode]);
+
   const editingId = request?.mode === 'edit' ? request.exerciseId : null;
   useEffect(() => {
     if (!editingId) return undefined;
     onNavigationContextChange({
       title: 'Изменить упражнение',
       scrollKey: `my-exercise:edit:${editingId}`,
-      onBack: () => setRequest(null),
+      onBack: closeEditor,
     });
     return () => onNavigationContextChange(null);
-  }, [editingId, onNavigationContextChange]);
+  }, [editingId, onNavigationContextChange, closeEditor]);
 
   const ready = snapshot?.status === 'ready';
   if (error || personalError || assignedError || (cloud?.status === 'error' && !ready)) {
@@ -167,7 +176,7 @@ export function PersonalExercises({
         setInitialTab('mine');
         setCatalogueKey(previous => previous + 1);
       }}
-      onClose={() => setRequest(null)}
+      onClose={closeEditor}
     />
   </>;
 }
