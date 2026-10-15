@@ -5,6 +5,8 @@ export type CatalogueExerciseRow = PublicExercise & {
   realmId: string;
   owner: string | null;
   sourceSha256: string;
+  copiedFromExerciseId?: string;
+  copiedFromScope?: 'public' | 'coach';
 };
 
 export type CoachExerciseChanges = Partial<Pick<PublicExercise,
@@ -27,8 +29,6 @@ export type CoachExerciseDefinitionRow = CatalogueExerciseRow & {
   sourceSha256: 'coach-custom';
   updatedAt: string;
   archivedAt: string | null;
-  copiedFromExerciseId?: string;
-  copiedFromScope?: 'public' | 'coach';
 };
 
 export interface CoachExerciseFavouriteRow {
