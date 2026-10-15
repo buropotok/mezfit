@@ -93,7 +93,7 @@ function AthleteProgramPage({
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, actorUserId, coachUserId, retryKey]);
-  if (error || (cloudStatus === 'error' && !loaded)) return (
+  if (error || (cloudStatus === 'error' && !data)) return (
     <section className="cloud-client-program">
       <Text variant="footnote" role="alert">{error || cloudError || 'Не удалось синхронизировать программу'}</Text>
       <CloudButton onClick={() => {
