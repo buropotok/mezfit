@@ -130,6 +130,22 @@ describe('local-first program/phase management', () => {
     expect(f.phases.find((phase) => phase.id === second)?.status).toBe('active');
   });
 
+  it('replaces a prior active athlete program only after choosing its disposition', async () => {
+    const f = fixture();
+    const firstPhase = await f.repo.createPhase('tra-1');
+    await f.repo.activate('tra-1', firstPhase);
+    const secondPlan = await f.repo.createPersonal('Другая программа');
+    const secondPhase = await f.repo.createPhase(secondPlan);
+    await expect(f.repo.activate(secondPlan, secondPhase))
+      .rejects.toThrow('PREVIOUS_PROGRAM_STATUS_REQUIRED');
+    expect(f.plans[0].status).toBe('active');
+    await f.repo.activate(secondPlan, secondPhase, { previousProgramStatus: 'finished' });
+    expect(f.plans[0].status).toBe('finished');
+    expect(f.phases.find((phase) => phase.id === firstPhase)?.status).toBe('finished');
+    expect(f.plans.find((plan) => plan.id === secondPlan)?.status).toBe('active');
+    expect(f.phases.find((phase) => phase.id === secondPhase)?.status).toBe('active');
+  });
+
   it('deactivating an active phase updates the program in the same transaction', async () => {
     const f = fixture();
     const phaseId = await f.repo.createPhase('tra-1');
