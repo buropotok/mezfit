@@ -48,11 +48,11 @@ beforeEach(() => {
     .mockImplementation((_actor, coachId, next, error) => {
       if (coachId === 'tg:202') { onOldChange = next; next(details('202')); }
       else onNewError = error;
-      return { unsubscribe };
+      return { unsubscribe, closed: false };
     });
   vi.spyOn(ProgramManagementRepository.prototype, 'observePersonal').mockImplementation((next) => {
     next([]);
-    return { unsubscribe: vi.fn() };
+    return { unsubscribe: vi.fn(), closed: false };
   });
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
