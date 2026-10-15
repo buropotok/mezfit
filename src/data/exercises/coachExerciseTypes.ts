@@ -1,4 +1,4 @@
-import type { PublicExercise, PublicExerciseRow } from './publicExerciseTypes';
+import { isPublicExerciseRow, type PublicExercise, type PublicExerciseRow } from './publicExerciseTypes';
 
 /** Shared display model: public catalogue rows or coach-owned definitions. */
 export type CatalogueExerciseRow = PublicExercise & {
