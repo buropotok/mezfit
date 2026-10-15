@@ -24,7 +24,12 @@ export function isCloudPlanRow(value: unknown): value is CloudTrainingPlanRow {
     && typeof value.position === 'number' && Number.isSafeInteger(value.position) && value.position >= 0
     && (value.coachUserId === null || typeof value.coachUserId === 'string')
     && (value.clientUserId === null || typeof value.clientUserId === 'string')
-    && (value.athleteUserId === undefined || typeof value.athleteUserId === 'string')
+    && (value.athleteUserId === undefined
+      || (typeof value.athleteUserId === 'string' && value.athleteUserId.length > 0))
+    // Legacy assigned rows may omit athleteUserId. An explicit value must
+    // match the relationship client; otherwise active-program scope diverges.
+    && (value.clientUserId === null || value.athleteUserId === undefined
+      || value.athleteUserId === value.clientUserId)
     && (value.startedAt === null || typeof value.startedAt === 'string')
     && (value.finishedAt === null || typeof value.finishedAt === 'string')
     && typeof value.createdAt === 'string' && typeof value.updatedAt === 'string';
