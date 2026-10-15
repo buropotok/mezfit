@@ -40,7 +40,7 @@ function PhaseHeading({
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const glass = loadBrowserGlassSettings();
-  const menu: LiquidPopoverItem[] = [
+  const menu: LiquidPopoverItem[] = ([
     { id: 'rename', label: 'Переименовать', icon: 'pencil' },
     { id: 'weeks', label: 'Изменить длительность', icon: 'clock' },
     { id: 'duplicate', label: 'Дублировать', icon: 'copy' },
@@ -49,7 +49,7 @@ function PhaseHeading({
       { id: 'activate', label: 'Сделать активной', icon: 'check' as const },
     ]),
     { id: 'status', label: 'Сменить статус', icon: 'edit' },
-  ].map((item) => ({
+  ] satisfies LiquidPopoverItem[]).map((item) => ({
     ...item, disabled,
     onSelect: () => { setOpen(false); onAction(item.id, phase); },
   }));
@@ -242,9 +242,11 @@ export function CloudProgramDetailsPage({
         </Badge>
       </div>
       <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-summary">
-        <Text variant="headline">Программа тренировок</Text>
-        <Text variant="footnote" tone="muted">Атлет: {athleteOf(details.program) ?? 'Не указан'}</Text>
-        <Text variant="body">Фаз: {details.phases.length}</Text>
+        <div className="cloud-plan-summary-content">
+          <Text variant="headline">Программа тренировок</Text>
+          <Text variant="footnote" tone="muted">Атлет: {athleteOf(details.program) ?? 'Не указан'}</Text>
+          <Text variant="body">Фаз: {details.phases.length}</Text>
+        </div>
       </GlassSurface>
       <Text variant="footnote" tone="muted" className="cloud-plan-visibility-tip">
         Клиент видит только активную программу и её фазы, кроме черновиков.
