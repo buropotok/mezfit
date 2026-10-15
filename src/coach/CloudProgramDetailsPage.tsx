@@ -58,7 +58,7 @@ function PhaseHeading({
   return (
     <section className="cloud-plan-phase" aria-label={phase.name}>
       <div className="cloud-plan-phase-heading">
-        <Text variant="title">{phase.name}</Text>
+        <div className="cloud-plan-phase-title"><Text variant="title">{phase.name}</Text></div>
         <Badge color={label.color}>{label.label}</Badge>
         <Text variant="footnote" className="cloud-plan-phase-weeks">{weeks} недель</Text>
         <LiquidPopover
@@ -234,7 +234,7 @@ export function CloudProgramDetailsPage({
   return (
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
       <div className="cloud-plan-title-row">
-        <Text variant="large-title">{details.program.name}</Text>
+        <div className="cloud-plan-main-title"><Text variant="large-title">{details.program.name}</Text></div>
         <Badge color={details.program.status === 'active' ? 'green' : 'gray'}>
           {details.program.status === 'active' ? 'Активная' :
             details.program.status === 'draft' ? 'Черновик' :
