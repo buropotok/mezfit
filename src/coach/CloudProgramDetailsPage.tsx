@@ -134,6 +134,7 @@ export function CloudProgramDetailsPage({
   const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'finished' | 'cancelled') => {
     if (!details) return;
     const other = (await repository.listReadable()).find((plan) => plan.id !== planId
+      && plan.realmId === details.program.realmId
       && plan.status === 'active' && athleteOf(plan) === athleteOf(details.program));
     if (other) {
       setDialog({
