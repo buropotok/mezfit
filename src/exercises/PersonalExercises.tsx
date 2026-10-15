@@ -37,6 +37,7 @@ export function PersonalExercises({
   const [assignedError, setAssignedError] = useState('');
   const [actionError, setActionError] = useState('');
   const [request, setRequest] = useState<PersonalExerciseEditorRequest | null>(null);
+  const [catalogueNavigation, setCatalogueNavigation] = useState<NavigationContext | null>(null);
   const [catalogueKey, setCatalogueKey] = useState(0);
   const [initialTab, setInitialTab] = useState<'all' | 'mine'>('all');
   const pendingFavourites = useRef(new Set<string>());
@@ -120,16 +121,32 @@ export function PersonalExercises({
     }
   }, [request?.mode]);
 
-  const editingId = request?.mode === 'edit' ? request.exerciseId : null;
-  useEffect(() => {
-    if (!editingId) return undefined;
-    onNavigationContextChange({
+  // The screen owns the effective nested navigation. A dialog overrides the
+  // catalogue's detail/category context without discarding it; dismissing the
+  // dialog restores the prior Back target instead of navigating underneath it.
+  const editorNavigation = useMemo<NavigationContext | null>(() => {
+    if (!request) return null;
+    if (request.mode === 'edit') return {
       title: 'Изменить упражнение',
-      scrollKey: `my-exercise:edit:${editingId}`,
+      scrollKey: `my-exercise:edit:${request.exerciseId}`,
       onBack: closeEditor,
-    });
+    };
+    if (request.mode === 'create') return {
+      title: 'Новое упражнение',
+      scrollKey: `my-exercise:create:${request.category ?? 'all'}`,
+      onBack: closeEditor,
+    };
+    return {
+      title: 'Создать мою копию',
+      scrollKey: `my-exercise:copy:${request.source}:${request.exerciseId}`,
+      onBack: closeEditor,
+    };
+  }, [request, closeEditor]);
+
+  useEffect(() => {
+    onNavigationContextChange(editorNavigation ?? catalogueNavigation);
     return () => onNavigationContextChange(null);
-  }, [editingId, onNavigationContextChange, closeEditor]);
+  }, [editorNavigation, catalogueNavigation, onNavigationContextChange]);
 
   const ready = snapshot?.status === 'ready';
   if (error || personalError || (cloud?.status === 'error' && !ready)) {
@@ -167,7 +184,7 @@ export function PersonalExercises({
       onToggleFavourite={id => { void toggleFavourite(id); }}
       onCreateExercise={category => setRequest({ mode: 'create', category })}
       onEditExercise={edit}
-      onNavigationContextChange={onNavigationContextChange}
+      onNavigationContextChange={setCatalogueNavigation}
     /> : null}
     <PersonalExerciseEditorGateway
       request={request}
@@ -176,6 +193,7 @@ export function PersonalExercises({
       selectedCoachUserId={selectedCoachUserId}
       onCreated={() => {
         setRequest(null);
+        setCatalogueNavigation(null);
         setInitialTab('mine');
         setCatalogueKey(previous => previous + 1);
       }}
