@@ -59,25 +59,18 @@
   width: 100%;
   height: auto;
   background: #030507;
-  cursor: pointer;
   touch-action: manipulation;
 }
 
-.worked-muscles__tooltip {
-  position: absolute;
-  z-index: 1;
+.worked-muscles__tap-result {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-width: 85%;
-  padding: 8px 12px;
-  transform: translate(-50%, -105%);
+  width: 100%;
+  padding: 10px 12px;
   border: 1px solid var(--ui-border-color, #354252);
   border-radius: 12px;
   background: #111720;
-  color: inherit;
-  box-shadow: 0 4px 18px #0008;
-  pointer-events: none;
 }
 
 .worked-muscles__error {

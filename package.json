@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/assemble-anatomy-atlas.mjs && vite",
     "dev:worker": "wrangler dev",
-    "build": "vite build",
+    "build": "node scripts/assemble-anatomy-atlas.mjs && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "cf:typegen": "wrangler types",
