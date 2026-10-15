@@ -1,5 +1,6 @@
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
+import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
 import type { CloudProgramStatus, CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramPhaseRow } from './workout-foundation-types';
 
@@ -17,7 +18,7 @@ export function isCloudPlanRow(value: unknown): value is CloudTrainingPlanRow {
   if (!record(value)) return false;
   return typeof value.id === 'string' && value.id.length > 0
     && typeof value.realmId === 'string' && value.realmId.length > 0
-    && value.owner === null
+    && (value.owner === null || (typeof value.owner === 'string' && value.owner.length > 0))
     && typeof value.name === 'string' && value.name.trim().length > 0
     && typeof value.status === 'string' && PROGRAM_STATUSES.includes(value.status)
     && typeof value.position === 'number' && Number.isSafeInteger(value.position) && value.position >= 0
@@ -32,7 +33,7 @@ export function isCloudPhaseRow(value: unknown): value is CloudProgramPhaseRow {
   if (!record(value)) return false;
   return typeof value.id === 'string' && value.id.length > 0
     && typeof value.realmId === 'string' && value.realmId.length > 0
-    && value.owner === null
+    && (value.owner === null || (typeof value.owner === 'string' && value.owner.length > 0))
     && typeof value.trainingPlanId === 'string' && value.trainingPlanId.length > 0
     && typeof value.name === 'string' && value.name.trim().length > 0
     && typeof value.position === 'number' && Number.isSafeInteger(value.position) && value.position >= 0
@@ -78,19 +79,21 @@ function ordered<T extends { id: string; position: number }>(rows: T[]): T[] {
   return rows.sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
 }
 function belongs(phase: CloudProgramPhaseRow, plan: CloudTrainingPlanRow): boolean {
-  return phase.trainingPlanId === plan.id && phase.realmId === plan.realmId && phase.owner === null;
+  return phase.trainingPlanId === plan.id && phase.realmId === plan.realmId
+    && isExpectedPhaseOwner(phase, plan);
 }
 
-/** Single local-first PLAN owner. Shared rows remain owner:null for server role enforcement. */
+/** Local-first PLAN authoring: ownerless legacy or addon-owned author headers. */
 export class ProgramManagementRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {}
 
   private own(plan: CloudTrainingPlanRow): boolean {
     return plan.realmId === this.actorUserId && plan.athleteUserId === this.actorUserId
-      && plan.coachUserId === null && plan.clientUserId === null && plan.owner === null;
+      && plan.coachUserId === null && plan.clientUserId === null
+      && isExpectedPlanOwner(plan);
   }
   private async readable(plan: CloudTrainingPlanRow): Promise<boolean> {
-    if (!isCloudPlanRow(plan)) return false;
+    if (!isCloudPlanRow(plan) || !isExpectedPlanOwner(plan)) return false;
     if (this.own(plan)) return true;
     if (!plan.coachUserId || !plan.clientUserId ||
       (plan.coachUserId !== this.actorUserId && plan.clientUserId !== this.actorUserId)) return false;
@@ -263,7 +266,7 @@ export class ProgramManagementRepository {
       if (!current || current.realmId !== plan.realmId) throw new Error('Программа изменилась');
       // The indexed relationship is replayed against the server's current snapshot
       // and also affects phases that another offline client created or activated.
-      await this.db.programPhases.where({ trainingPlanId: id, status: 'active' })
+      await this.db.programPhases.where('[trainingPlanId+status]').equals([id, 'active'])
         .modify({ status });
       const now = new Date().toISOString();
       await this.db.trainingPlans.update(id, {
@@ -291,7 +294,7 @@ export class ProgramManagementRepository {
         throw new Error('Фаза программы не найдена');
 
       const activePhases = await this.db.programPhases
-        .where({ trainingPlanId: id, status: 'active' }).toArray();
+        .where('[trainingPlanId+status]').equals([id, 'active']).toArray();
       if (activePhases.some((phase) => phase.id !== phaseId) && !options.previousPhaseStatus)
         throw new Error('PREVIOUS_PHASE_STATUS_REQUIRED');
 
@@ -302,11 +305,11 @@ export class ProgramManagementRepository {
       // than inaccurately claiming that an unseen program was completed.
       const priorPhaseStatus = options.previousPhaseStatus ?? 'draft';
       const priorProgramStatus = options.previousProgramStatus ?? 'draft';
-      await this.db.programPhases.where({ trainingPlanId: id, status: 'active' })
+      await this.db.programPhases.where('[trainingPlanId+status]').equals([id, 'active'])
         .modify({ status: priorPhaseStatus });
-      await this.db.programPhases.where({ realmId: current.realmId, status: 'active' })
+      await this.db.programPhases.where('[realmId+status]').equals([current.realmId, 'active'])
         .modify({ status: priorProgramStatus });
-      await this.db.trainingPlans.where({ realmId: current.realmId, status: 'active' })
+      await this.db.trainingPlans.where('[realmId+status]').equals([current.realmId, 'active'])
         .modify({
           status: priorProgramStatus,
           updatedAt: now,
