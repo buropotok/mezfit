@@ -3,6 +3,7 @@ import { liveQuery } from 'dexie';
 import { athleteOf, clientVisiblePhases, ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { Badge, GlassSurface, Text } from '../ui';
+import './client-programs-cloud.css';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { Button, List, ListItem } from '../ui';
@@ -96,9 +97,11 @@ function AthleteProgramPage({
   const visiblePhases = clientVisiblePhases(data.phases);
   return (
     <section className="cloud-client-program" aria-label="Активная программа">
-      <GlassSurface preset="modalTuned" optics={false}>
-        <Text variant="large-title">{data.program.name}</Text>
-        <Badge color="green">Активная</Badge>
+      <GlassSurface preset="modalTuned" optics={false} className="cloud-client-program-summary">
+        <div className="cloud-client-program-summary-content">
+          <Text variant="large-title">{data.program.name}</Text>
+          <Badge color="green">Активная</Badge>
+        </div>
       </GlassSurface>
       <Text variant="title">Фазы программы</Text>
       {visiblePhases.map((phase) => (
