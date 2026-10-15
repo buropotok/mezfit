@@ -25,17 +25,21 @@ export class WorkoutFoundationRepository {
   async getProgramOutline(programId: string): Promise<CloudProgramOutline | null> {
     if (!programId || !/^tg:[1-9]\d*$/.test(this.actorUserId)) return null;
     const plan = await this.db.trainingPlans.get(programId);
-    if (!plan || plan.owner !== null
-      || (plan.coachUserId !== this.actorUserId && plan.clientUserId !== this.actorUserId)) {
-      return null;
-    }
-
-    const [realm, members] = await Promise.all([
-      this.db.realms.get(plan.realmId),
-      this.db.members.where('realmId').equals(plan.realmId).toArray(),
-    ]);
-    if (!await isApprovedAssignedPair(realm, members, plan.coachUserId, plan.clientUserId)) {
-      return null;
+    if (!plan || plan.owner !== null) return null;
+    const personal = plan.realmId === this.actorUserId
+      && plan.athleteUserId === this.actorUserId
+      && plan.coachUserId === null && plan.clientUserId === null;
+    if (!personal && (plan.coachUserId !== this.actorUserId
+      && plan.clientUserId !== this.actorUserId)) return null;
+    if (!personal) {
+      if (!plan.coachUserId || !plan.clientUserId) return null;
+      const [realm, members] = await Promise.all([
+        this.db.realms.get(plan.realmId),
+        this.db.members.where('realmId').equals(plan.realmId).toArray(),
+      ]);
+      if (!await isApprovedAssignedPair(realm, members, plan.coachUserId, plan.clientUserId)) {
+        return null;
+      }
     }
 
     // One realm-scoped query per table: all joins are checked again locally so
