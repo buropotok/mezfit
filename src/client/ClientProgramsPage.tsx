@@ -57,7 +57,9 @@ function CloudClientProgramsPage() {
           key={program.id}
           interactive={false}
           title={program.name}
-          subtitle={program.status === 'draft' ? 'Черновик' : program.status === 'active' ? 'Активная' : 'Завершена'}
+          subtitle={program.status === 'draft' ? 'Черновик'
+            : program.status === 'active' ? 'Активная'
+              : program.status === 'cancelled' ? 'Отменена' : 'Завершена'}
         />
       ))}
     </List>
