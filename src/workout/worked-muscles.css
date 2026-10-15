@@ -9,8 +9,7 @@
   color: inherit;
 }
 
-.worked-muscles__title,
-.worked-muscles__view-title {
+.worked-muscles__title {
   display: block;
   width: 100%;
   text-align: center;
@@ -19,20 +18,18 @@
 
 .worked-muscles__filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 12px;
+  gap: 24px;
   width: 100%;
 }
 
 .worked-muscles__filter {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 9px 12px;
-  border: 1px solid var(--ui-border-color, #354252);
-  border-radius: 12px;
+  justify-content: center;
+  gap: 8px;
   color: inherit;
 }
 
@@ -46,20 +43,32 @@
 
 .worked-muscles__view {
   width: min(100%, 540px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .worked-muscles__image-wrap {
   position: relative;
   width: 100%;
-  background: #030507;
+  display: flex;
+  justify-content: center;
 }
 
 .worked-muscles__canvas {
   display: block;
-  width: 100%;
   height: auto;
-  background: #030507;
+  background: transparent;
   touch-action: manipulation;
+}
+
+/* Match displayed heights, not native pixel widths: 1536/1024 vs 1402/1122. */
+.worked-muscles__canvas--front {
+  width: 83.3%;
+}
+
+.worked-muscles__canvas--rear {
+  width: 100%;
 }
 
 .worked-muscles__tap-result {
@@ -67,10 +76,8 @@
   flex-direction: column;
   gap: 3px;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--ui-border-color, #354252);
-  border-radius: 12px;
-  background: #111720;
+  padding: 0;
+  text-align: center;
 }
 
 .worked-muscles__error {
