@@ -67,14 +67,18 @@ function CloudClientProgramsPage() {
 }
 
 function AthleteProgramPage({
-  repository, actorUserId, coachUserId, cloudStatus, cloudError, onRetry,
+  repository, actorUserId, coachUserId, cloudStatus, cloudError,
+  syncStatus, syncError, onRetry, onRetrySync,
 }: {
   repository: ProgramManagementRepository;
   actorUserId: string;
   coachUserId: string;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
+  syncStatus: CloudSyncStatus;
+  syncError: string;
   onRetry: () => Promise<void>;
+  onRetrySync: () => Promise<void>;
 }) {
   const [data, setData] = useState<ProgramDetails | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -95,26 +99,64 @@ function AthleteProgramPage({
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, actorUserId, coachUserId, retryKey]);
+  const syncWarning = syncStatus === 'error'
+    ? syncError || 'Не удалось синхронизировать программу'
+    : syncStatus === 'offline'
+      ? syncError || 'Облако недоступно. Показана локальная копия.'
+      : syncStatus === 'pending'
+        ? 'Синхронизация программы ещё не подтверждена.' : '';
+  const retry = () => {
+    void (async () => {
+      if (cloudStatus === 'error') await onRetry();
+      if (syncStatus === 'error' || syncStatus === 'offline') await onRetrySync();
+    })().catch(() => {}).finally(() => setRetryKey((key) => key + 1));
+  };
   if (error || (cloudStatus === 'error' && !data)) return (
     <section className="cloud-client-program">
       <Text variant="footnote" role="alert">{error || cloudError || 'Не удалось синхронизировать программу'}</Text>
-      <CloudButton onClick={() => {
-        void onRetry().catch(() => {}).finally(() => setRetryKey((key) => key + 1));
-      }}>Повторить</CloudButton>
+      <CloudButton onClick={retry}>Повторить</CloudButton>
     </section>
   );
   if (!loaded || cloudStatus === 'loading') return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
-  if (!data) return (
+  if (!data) return syncWarning ? (
+    <section className="cloud-plan-error">
+      <Text variant="footnote" role={syncStatus === 'pending' ? 'status' : 'alert'}>
+        {syncWarning}
+      </Text>
+      <Text variant="footnote" tone="muted">
+        Пока нет подтверждения от облака, нельзя утверждать, что активная программа отсутствует.
+      </Text>
+      {syncStatus !== 'pending' ? (
+        <CloudButton variant="secondary" onClick={retry}>Повторить</CloudButton>
+      ) : null}
+    </section>
+  ) : (
     <List><ListItem interactive={false} title="Нет активной программы"
       subtitle="Активная программа появится здесь после назначения или активации." /></List>
   );
   const visiblePhases = data.phases;
   return (
     <section className="cloud-client-program" aria-label="Активная программа">
-      {cloudStatus === 'error' ? (
+      {cloudStatus === 'error' || syncWarning ? (
         <div className="cloud-plan-error">
-          <Text variant="footnote" role="alert">{cloudError || 'Облако временно недоступно. Показана локальная копия.'}</Text>
-          <CloudButton onClick={() => { void onRetry().catch(() => {}); }}>Повторить</CloudButton>
+          {cloudStatus === 'error' ? (
+            <Text variant="footnote" role="alert">
+              {cloudError || 'Не удалось синхронизировать список тренеров'}
+            </Text>
+          ) : null}
+          {syncWarning ? (
+            <Text variant="footnote" role={syncStatus === 'pending' ? 'status' : 'alert'}>
+              {syncWarning}
+            </Text>
+          ) : null}
+          {syncStatus !== 'synced' ? (
+            <Text variant="footnote" tone="muted">
+              Изменения могут оставаться только на этом устройстве до завершения синхронизации.
+            </Text>
+          ) : null}
+          {(cloudStatus === 'error' || syncStatus === 'error' || syncStatus === 'offline') ? (
+            <CloudButton variant="secondary" onClick={retry}>Повторить синхронизацию</CloudButton>
+          ) : null}
         </div>
       ) : null}
       <GlassSurface preset="modalTuned" optics={false} className="cloud-client-program-summary">
@@ -185,12 +227,16 @@ function CloudClientProgramsWorkspace({
       </Tabs>
       {source === 'personal' ? (
         <CloudProgramsPage repository={repository} personalOnly clients={[]}
-          cloudStatus={cloudStatus} cloudError={cloudError} onRetryCloud={onRetry}
+          cloudStatus={cloudStatus} cloudError={cloudError}
+          syncStatus={syncStatus} syncError={syncError}
+          onRetryCloud={onRetry} onRetrySync={onRetrySync}
           onOpen={setSelectedPersonal} />
       ) : selectedCoach ? (
         <AthleteProgramPage repository={repository}
           actorUserId={repository.actorUserId} coachUserId={selectedCoach.userId}
-          cloudStatus={cloudStatus} cloudError={cloudError} onRetry={onRetry} />
+          cloudStatus={cloudStatus} cloudError={cloudError}
+          syncStatus={syncStatus} syncError={syncError}
+          onRetry={onRetry} onRetrySync={onRetrySync} />
       ) : coachStatus === 'error' || cloudStatus === 'error' ? (
         <section className="cloud-plan-error">
           <Text variant="footnote" role="alert">
