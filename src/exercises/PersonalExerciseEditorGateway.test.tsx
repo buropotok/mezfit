@@ -89,6 +89,25 @@ describe('personal exercise edit/copy gateway', () => {
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
   });
 
+  it('retries the same draft after a failed save without reopening the editor', async () => {
+    const repository = api(), close = vi.fn();
+    repository.updateExercise.mockRejectedValueOnce(new Error('Локальное сохранение не удалось'));
+    render(<PersonalExerciseEditorGateway
+      request={{ mode: 'edit', exerciseId: customId }}
+      repository={repository as unknown as CoachExerciseCatalogueRepository}
+      rows={[own]} selectedCoachUserId={null} onCreated={vi.fn()} onClose={close} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Название' }),
+      { target: { value: 'Название после ошибки' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.getByText('Локальное сохранение не удалось')).toBeTruthy());
+    expect(close).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(repository.updateExercise).toHaveBeenCalledTimes(2));
+    expect(repository.updateExercise).toHaveBeenLastCalledWith(customId,
+      expect.objectContaining({ name_ru: 'Название после ошибки' }));
+    await waitFor(() => expect(close).toHaveBeenCalledOnce());
+  });
+
   it('creates an independent personal exercise without any coach', async () => {
     const repository = api(), created = vi.fn();
     render(<PersonalExerciseEditorGateway
