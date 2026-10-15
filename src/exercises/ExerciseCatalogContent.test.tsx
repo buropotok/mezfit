@@ -76,17 +76,32 @@ describe('shared public exercise catalogue', () => {
       muscles: {
         ...row.muscles,
         primary: ['pectoralis_sternal', 'unknown_taxonomy_id'],
+        emphasis: ['deltoid_anterior', 'pectoralis_sternal'],
         secondary: ['biceps_long_head', 'pectoralis_sternal'],
+        stabilizers: ['forearm_grip', 'deltoid_anterior', 'biceps_long_head'],
       },
     };
     render(<ExerciseCatalogContent snapshot={{ ...snapshot, exercises: [exercise] }} />);
     fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
     fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
     const anatomy = screen.getByTestId('worked-muscles');
-    expect(anatomy.getAttribute('data-primary')).toBe('pectoralis_sternal');
-    expect(anatomy.getAttribute('data-secondary')).toBe('biceps_long_head');
+    expect(anatomy.getAttribute('data-primary')).toBe('pectoralis_sternal,deltoid_anterior');
+    expect(anatomy.getAttribute('data-secondary')).toBe('biceps_long_head,forearm_grip');
     expect(screen.getByText('Инструкция').compareDocumentPosition(anatomy)
       & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('renders the module when only emphasis or stabilizers contain supported muscles', () => {
+    const exercise = {
+      ...row,
+      muscles: { ...row.muscles, emphasis: ['soleus'], stabilizers: ['rhomboids'] },
+    };
+    render(<ExerciseCatalogContent snapshot={{ ...snapshot, exercises: [exercise] }} />);
+    fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    const anatomy = screen.getByTestId('worked-muscles');
+    expect(anatomy.getAttribute('data-primary')).toBe('soleus');
+    expect(anatomy.getAttribute('data-secondary')).toBe('rhomboids');
   });
 
   it('does not show an empty anatomy module for exercises without mapped muscles', () => {
