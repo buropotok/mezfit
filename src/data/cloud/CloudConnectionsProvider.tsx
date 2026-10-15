@@ -15,6 +15,25 @@ export interface CloudContact {
   avatarVersion?: string | null;
 }
 
+export type CloudSyncStatus = 'pending' | 'synced' | 'offline' | 'error';
+
+/** Dexie Addon sync is independent from whether a cached contacts list is readable. */
+export function projectCloudSyncState(state: MezfitCloudDatabase['cloud']['syncState']['value']): {
+  status: CloudSyncStatus;
+  error: string;
+} {
+  if (state.phase === 'error' || state.status === 'error') {
+    return { status: 'error', error: state.error?.message || 'Синхронизация с Dexie Cloud завершилась ошибкой.' };
+  }
+  if (state.phase === 'offline' || state.status === 'offline') {
+    return { status: 'offline', error: 'Облако недоступно. Изменения остаются на этом устройстве до синхронизации.' };
+  }
+  if (state.phase === 'in-sync' && state.status === 'connected') {
+    return { status: 'synced', error: '' };
+  }
+  return { status: 'pending', error: '' };
+}
+
 interface CloudConnectionsValue {
   db: MezfitCloudDatabase;
   actorUserId: string;
@@ -22,7 +41,11 @@ interface CloudConnectionsValue {
   coaches: CloudContact[];
   status: 'loading' | 'ready' | 'error';
   error: string;
+  /** Real Dexie Cloud upload/download state; contacts can be ready while sync is offline. */
+  syncStatus: CloudSyncStatus;
+  syncError: string;
   refresh: () => Promise<void>;
+  retrySync: () => Promise<void>;
   loadAvatar: (contact: CloudContact) => Promise<Blob | null>;
 }
 
@@ -132,6 +155,8 @@ export function CloudConnectionsProvider({
   const [coaches, setCoaches] = useState<CloudContact[]>([]);
   const [status, setStatus] = useState<CloudConnectionsValue['status']>('loading');
   const [error, setError] = useState('');
+  const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>('pending');
+  const [syncError, setSyncError] = useState('');
   const alive = useRef(false);
   const initialPullSucceededRef = useRef(false);
   const avatarPermissionsReadyRef = useRef<Promise<void>>(Promise.resolve());
@@ -222,6 +247,25 @@ export function CloudConnectionsProvider({
     };
   }, [db, actorUserId, reconcileAvatarPermissions]);
 
+  // Observe actual Addon push/pull state, not cached-contact hydration.
+  // This subscription does not affect the lifetime of the memoized Dexie instance.
+  useEffect(() => {
+    setSyncStatus('pending');
+    setSyncError('');
+    const subscription = db.cloud.syncState?.subscribe({
+      next: (state) => {
+        const next = projectCloudSyncState(state);
+        setSyncStatus(next.status);
+        setSyncError(next.error);
+      },
+      error: (reason: unknown) => {
+        setSyncStatus('error');
+        setSyncError(reason instanceof Error ? reason.message : 'Не удалось отследить синхронизацию Dexie Cloud.');
+      },
+    });
+    return () => subscription?.unsubscribe();
+  }, [db]);
+
   // Profile writes are privileged and change-only; failures must not block offline lists.
   useEffect(() => {
     let active = true;
@@ -260,9 +304,26 @@ export function CloudConnectionsProvider({
     }
   }, [db, actorUserId, initData, reconcileAvatarPermissions]);
 
+  const retrySync = useCallback(async () => {
+    setSyncStatus('pending');
+    setSyncError('');
+    try {
+      // Contacts-only pull does not retry queued PLAN writes.
+      await db.cloud.sync({ purpose: 'push', wait: true });
+      await db.cloud.sync({ purpose: 'pull', wait: true });
+      // Wait for db.cloud.syncState to confirm 'in-sync'; do not fabricate success.
+    } catch (reason) {
+      setSyncStatus('error');
+      setSyncError(reason instanceof Error ? reason.message : 'Не удалось повторить синхронизацию Dexie Cloud.');
+      throw reason;
+    }
+  }, [db]);
+
   const value = useMemo<CloudConnectionsValue>(() => ({
-    db, actorUserId, clients, coaches, status, error, refresh, loadAvatar,
-  }), [db, actorUserId, clients, coaches, status, error, refresh, loadAvatar]);
+    db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
+    refresh, retrySync, loadAvatar,
+  }), [db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
+    refresh, retrySync, loadAvatar]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
