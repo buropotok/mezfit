@@ -8,6 +8,8 @@ import {
 import type { PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import { PublicExerciseMedia } from './PublicExerciseMedia';
+import { WorkedMuscles } from '../workout/WorkedMuscles';
+import { WORKED_MUSCLE_LABELS } from '../workout/workedMuscleData';
 import { publicExerciseCategoryArtwork } from './publicExerciseCategoryArtwork';
 import { CoachExerciseCatalogFab } from './CoachExerciseCatalogFab';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
@@ -50,11 +52,33 @@ function uniqueMuscles(ids: readonly string[], taxonomy: readonly PublicTaxonomy
   return [...new Set(ids)].map((id) => labels.get(id) ?? id).join(', ') || 'Не указано';
 }
 
+/**
+ * Exercise taxonomy and sprite atlas are separate catalogues. Only confirmed
+ * ID/label matches may be highlighted; guessing anatomical synonyms would
+ * misrepresent which muscle an exercise trains.
+ */
+function anatomyMuscleIds(ids: readonly string[], taxonomy: readonly PublicTaxonomyRow[]): string[] {
+  const taxonomyLabels = new Map(taxonomy.map((node) => [node.id, node.subcategory_ru]));
+  const atlasByLabel = new Map(
+    Object.entries(WORKED_MUSCLE_LABELS).map(([id, label]) => [label.trim().toLocaleLowerCase('ru'), id]),
+  );
+  const result = new Set<string>();
+  for (const id of ids) {
+    const matched = Object.hasOwn(WORKED_MUSCLE_LABELS, id)
+      ? id : atlasByLabel.get(taxonomyLabels.get(id)?.trim().toLocaleLowerCase('ru') ?? '');
+    if (matched) result.add(matched);
+  }
+  return [...result];
+}
+
 function ExerciseDetail({ row, taxonomy, onEdit }: {
   row: CatalogueExerciseRow;
   taxonomy: PublicTaxonomyRow[];
   onEdit?: () => void;
 }) {
+  const primary = anatomyMuscleIds(row.muscles.primary, taxonomy);
+  const secondary = anatomyMuscleIds(row.muscles.secondary, taxonomy)
+    .filter((id) => !primary.includes(id));
   const sections: Array<[string, readonly string[]]> = [
     ['Основные мышцы', row.muscles.primary],
     ['Вспомогательные мышцы', row.muscles.secondary],
@@ -92,6 +116,9 @@ function ExerciseDetail({ row, taxonomy, onEdit }: {
         ) : null)}
       </GlassSurface>
       <Text variant="footnote" tone="muted">{row.attribution}</Text>
+      {primary.length || secondary.length ? (
+        <WorkedMuscles primaryMuscleIds={primary} secondaryMuscleIds={secondary} />
+      ) : null}
     </section>
   );
 }
