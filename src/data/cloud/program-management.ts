@@ -261,10 +261,10 @@ export class ProgramManagementRepository {
     await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
       const current = await this.db.trainingPlans.get(id);
       if (!current || current.realmId !== plan.realmId) throw new Error('Программа изменилась');
-      for (const phase of await this.db.programPhases.where('trainingPlanId').equals(id).toArray()) {
-        if (belongs(phase, current) && phase.status === 'active')
-          await this.db.programPhases.update(phase.id, { status });
-      }
+      // The indexed relationship is replayed against the server's current snapshot
+      // and also affects phases that another offline client created or activated.
+      await this.db.programPhases.where({ trainingPlanId: id, status: 'active' })
+        .modify({ status });
       const now = new Date().toISOString();
       await this.db.trainingPlans.update(id, {
         status, updatedAt: now, finishedAt: status === 'finished' ? now : null,
@@ -276,6 +276,8 @@ export class ProgramManagementRepository {
     previousProgramStatus?: InactiveStatus;
   } = {}): Promise<void> {
     const plan = await this.writable(id);
+    // Client prompts use locally visible state; the actual mutation below does
+    // not rely on which other program / phase IDs were present in that snapshot.
     const other = (await this.listReadable()).find((p) =>
       isOtherActiveProgramInScope(p, plan));
     if (other) {
@@ -283,38 +285,34 @@ export class ProgramManagementRepository {
       if (!options.previousProgramStatus) throw new Error('PREVIOUS_PROGRAM_STATUS_REQUIRED');
     }
     await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.db.trainingPlans.get(id), target = await this.db.programPhases.get(phaseId);
+      const current = await this.db.trainingPlans.get(id);
+      const target = await this.db.programPhases.get(phaseId);
       if (!current || !target || current.realmId !== plan.realmId || !belongs(target, current))
         throw new Error('Фаза программы не найдена');
-      const activeOthers = (await this.db.trainingPlans.toArray()).filter((p) =>
-        isOtherActiveProgramInScope(p, current));
-      if (activeOthers.some((p) => p.id !== other?.id))
-        throw new Error('Активная программа изменилась');
-      if (other) {
-        const previousStatus = options.previousProgramStatus;
-        if (!previousStatus) throw new Error('PREVIOUS_PROGRAM_STATUS_REQUIRED');
-        const previous = await this.db.trainingPlans.get(other.id);
-        if (!previous || previous.status !== 'active') throw new Error('Активная программа изменилась');
-        for (const phase of await this.db.programPhases.where('trainingPlanId').equals(other.id).toArray())
-          if (belongs(phase, previous) && phase.status === 'active')
-            await this.db.programPhases.update(phase.id, { status: previousStatus });
-        await this.db.trainingPlans.update(other.id, {
-          status: previousStatus,
-          updatedAt: new Date().toISOString(),
-          finishedAt: previousStatus === 'finished' ? new Date().toISOString() : null,
-        });
-      }
-      const active = (await this.db.programPhases.where('trainingPlanId').equals(id).toArray())
-        .filter((phase) => belongs(phase, current) && phase.status === 'active' && phase.id !== phaseId);
-      if (active.length > 0 && !options.previousPhaseStatus)
+
+      const activePhases = await this.db.programPhases
+        .where({ trainingPlanId: id, status: 'active' }).toArray();
+      if (activePhases.some((phase) => phase.id !== phaseId) && !options.previousPhaseStatus)
         throw new Error('PREVIOUS_PHASE_STATUS_REQUIRED');
-      for (const phase of active) {
-        const previousStatus = options.previousPhaseStatus;
-        if (!previousStatus) throw new Error('PREVIOUS_PHASE_STATUS_REQUIRED');
-        await this.db.programPhases.update(phase.id, { status: previousStatus });
-      }
-      await this.db.programPhases.update(phaseId, { status: 'active' });
+
       const now = new Date().toISOString();
+      // Both where predicates are intentionally declarative: Dexie Cloud
+      // replays them against the server's canonical state, unlike bulk ID updates.
+      // A hidden concurrent activation uses 'draft' as the safe fallback rather
+      // than inaccurately claiming that an unseen program was completed.
+      const priorPhaseStatus = options.previousPhaseStatus ?? 'draft';
+      const priorProgramStatus = options.previousProgramStatus ?? 'draft';
+      await this.db.programPhases.where({ trainingPlanId: id, status: 'active' })
+        .modify({ status: priorPhaseStatus });
+      await this.db.programPhases.where({ realmId: current.realmId, status: 'active' })
+        .modify({ status: priorProgramStatus });
+      await this.db.trainingPlans.where({ realmId: current.realmId, status: 'active' })
+        .modify({
+          status: priorProgramStatus,
+          updatedAt: now,
+          finishedAt: priorProgramStatus === 'finished' ? now : null,
+        });
+      await this.db.programPhases.update(phaseId, { status: 'active' });
       await this.db.trainingPlans.update(id, {
         status: 'active', startedAt: current.startedAt ?? now, finishedAt: null, updatedAt: now,
       });
