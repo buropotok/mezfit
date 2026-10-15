@@ -77,6 +77,21 @@ export class CoachExerciseCatalogueRepository {
     return id;
   }
 
+  async updateExercise(id: string, changes: CoachExerciseChanges): Promise<void> {
+    const previous = await this.db.coachExerciseDefinitions.get(id);
+    if (!isCoachExerciseDefinition(previous, this.actorUserId) || previous.archivedAt !== null) {
+      throw new Error('EXERCISE_NOT_FOUND');
+    }
+    if (!isCoachExerciseChanges(changes) || Object.keys(changes).length === 0) {
+      throw new Error('INVALID_CUSTOM_EXERCISE');
+    }
+    const updated = { ...previous, ...changes, updatedAt: new Date().toISOString() };
+    if (!isCoachExerciseDefinition(updated, this.actorUserId)) {
+      throw new Error('INVALID_CUSTOM_EXERCISE');
+    }
+    await this.db.coachExerciseDefinitions.put(updated);
+  }
+
   async archiveExercise(id: string): Promise<void> {
     const row = await this.db.coachExerciseDefinitions.get(id);
     if (!isCoachExerciseDefinition(row, this.actorUserId)) throw new Error('EXERCISE_NOT_FOUND');
