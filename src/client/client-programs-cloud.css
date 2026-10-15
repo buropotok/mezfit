@@ -22,7 +22,7 @@
   gap: var(--ui-space-2);
   min-width: 0;
 }
-.cloud-client-program-phase .ui-text:first-child {
+.cloud-client-program-phase-title {
   min-width: 0;
   overflow-wrap: anywhere;
 }
