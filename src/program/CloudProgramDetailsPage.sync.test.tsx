@@ -28,26 +28,41 @@ describe('PLAN details cloud connection status', () => {
     });
     const repository = { observeDetails } as unknown as ProgramManagementRepository;
     const retry = vi.fn(async () => undefined);
-    const page = (status: 'ready' | 'error') => (
+    const page = (
+      syncStatus: 'synced' | 'pending' | 'offline' | 'error',
+      cloudStatus: 'ready' | 'error' = 'ready',
+    ) => (
       <CloudProgramDetailsPage
         repository={repository} planId={personalPlan.id}
-        cloudStatus={status} cloudError={status === 'error' ? 'Облако недоступно' : ''}
+        cloudStatus={cloudStatus} cloudError={cloudStatus === 'error' ? 'Контакты недоступны' : ''}
+        syncStatus={syncStatus} syncError={syncStatus === 'error' ? 'Изменение отклонено сервером' : ''}
         onRetryCloud={retry}
       />
     );
 
-    const view = render(page('ready'));
+    const view = render(page('synced'));
     expect(await screen.findByText('Моя программа')).toBeTruthy();
-    expect(screen.queryByText('Облако недоступно')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
 
+    // Contacts are still ready but the actual PLAN push failed.
     view.rerender(page('error'));
-    expect(screen.getByRole('alert').textContent).toContain('Облако недоступно');
+    expect(screen.getByRole('alert').textContent).toContain('Изменение отклонено сервером');
     expect(screen.getByText(/Изменения могут оставаться только на этом устройстве/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Повторить синхронизацию' }));
     await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
 
-    view.rerender(page('ready'));
-    expect(screen.queryByText('Облако недоступно')).toBeNull();
+    view.rerender(page('offline'));
+    expect(screen.getByRole('alert').textContent).toContain('Нет соединения с Dexie Cloud');
+
+    view.rerender(page('pending'));
+    expect(screen.getByRole('status').textContent).toContain('не подтверждена');
     expect(screen.queryByRole('button', { name: 'Повторить синхронизацию' })).toBeNull();
+
+    view.rerender(page('synced'));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+
+    view.rerender(page('synced', 'error'));
+    expect(screen.getByRole('alert').textContent).toContain('Контакты недоступны');
   });
 });
