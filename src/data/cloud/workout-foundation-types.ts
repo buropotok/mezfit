@@ -38,7 +38,9 @@ export interface CloudProgramPhaseRow extends CloudSharedRow {
   trainingPlanId: string;
   name: string;
   position: number;
-  status: 'pending' | 'active' | 'finished';
+  status: 'draft' | 'pending' | 'active' | 'finished' | 'cancelled';
+  /** Suggested duration; does not imply dates or calendar scheduling. */
+  durationWeeks?: number;
   plannedStartDate: string | null;
   plannedEndDate: string | null;
 }
