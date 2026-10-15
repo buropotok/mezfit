@@ -5,3 +5,6 @@ dist/
 
 # Dexie Cloud / privileged service-account credentials
 *.key
+
+# Built once from immutable approved full-quality color-atlas chunks.
+/public/anatomy/front/color-atlas.png
