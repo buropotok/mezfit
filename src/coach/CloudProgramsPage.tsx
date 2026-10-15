@@ -80,7 +80,7 @@ function ProgramRow({
 }
 
 export function CloudProgramsPage({
-  repository, clients, onOpen, cloudStatus, cloudError, onRetryCloud,
+  repository, clients, onOpen, cloudStatus, cloudError, onRetryCloud, personalOnly = false,
 }: {
   repository: ProgramManagementRepository;
   clients: readonly CloudContact[];
@@ -88,6 +88,7 @@ export function CloudProgramsPage({
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
   onRetryCloud: () => Promise<void>;
+  personalOnly?: boolean;
 }) {
   const [programs, setPrograms] = useState<CloudTrainingPlanRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +105,7 @@ export function CloudProgramsPage({
   useEffect(() => {
     let active = true;
     setLoading(true);
-    const subscription = repository.observeAuthored((rows) => {
+    const subscription = (personalOnly ? repository.observePersonal.bind(repository) : repository.observeAuthored.bind(repository))((rows) => {
       if (!active) return;
       setPrograms(rows);
       setLoading(false);
@@ -115,11 +116,14 @@ export function CloudProgramsPage({
       setLoading(false);
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, retryKey]);
+  }, [repository, retryKey, personalOnly]);
 
   const groups = useMemo(() => {
     const byAthlete = new Map<string, CloudTrainingPlanRow[]>();
     for (const plan of programs) {
+      if (personalOnly && !(plan.realmId === repository.actorUserId
+        && plan.athleteUserId === repository.actorUserId
+        && plan.coachUserId === null && plan.clientUserId === null)) continue;
       if (filter !== 'all' && plan.status !== filter) continue;
       const athlete = athleteOf(plan);
       if (!athlete) continue;
@@ -136,7 +140,7 @@ export function CloudProgramsPage({
     })).filter((group) => group.athleteName.toLocaleLowerCase('ru-RU')
       .includes(search.trim().toLocaleLowerCase('ru-RU')) || group.plans.some((plan) =>
         plan.name.toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU'))));
-  }, [programs, filter, search, clients, repository.actorUserId]);
+  }, [programs, filter, search, clients, repository.actorUserId, personalOnly]);
 
   const floatingAction = useMemo(() => ({
     label: 'Создать программу', icon: 'text-plus' as const,
@@ -187,7 +191,7 @@ export function CloudProgramsPage({
       options: details.phases.map((phase) => ({ value: phase.id, label: phase.name })),
       onConfirm: async (phaseId) => {
         const active = programs.find((item) => item.id !== plan.id && item.status === 'active'
-          && athleteOf(item) === athleteOf(plan));
+          && item.realmId === plan.realmId && athleteOf(item) === athleteOf(plan));
         if (active) {
           setDialog({
             kind: 'select', title: 'Выберите статус для текущей активной программы',
@@ -295,13 +299,13 @@ export function CloudProgramsPage({
             onClick={() => setCreateAthlete(repository.actorUserId)}
             after={<Radio component="div" checked={createAthlete === repository.actorUserId}
               onChange={() => setCreateAthlete(repository.actorUserId)} />} />
-          {clients.map((client) => (
+          {!personalOnly ? clients.map((client) => (
             <KonstaListItem key={client.userId} label link title={client.displayName}
               media={<Avatar name={client.displayName} />}
               onClick={() => setCreateAthlete(client.userId)}
               after={<Radio component="div" checked={createAthlete === client.userId}
                 onChange={() => setCreateAthlete(client.userId)} />} />
-          ))}
+          )) : null}
         </KonstaList>
         {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
       </MezfitDialog>
