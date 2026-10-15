@@ -64,14 +64,16 @@ function ExerciseDetail({ row, taxonomy, onEdit }: {
   ];
   return (
     <section className="mezfit-public-exercises__detail" aria-label="Детали упражнения">
-      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__media-placeholder">
+      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__media-placeholder"
+        contentClassName="mezfit-public-exercises__media-content">
         <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />
       </GlassSurface>
       <Text variant="headline">{row.name_ru || row.name}</Text>
       {row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
       <Text variant="footnote">{categories[row.category] ?? row.category} · {row.subcategory_ru} · {row.equipment}</Text>
       {onEdit ? <div className="mezfit-public-exercises__detail-actions"><Button onClick={onEdit}>Изменить</Button></div> : null}
-      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section">
+      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
+        contentClassName="mezfit-public-exercises__detail-section-content">
         <Text variant="headline">Инструкция</Text>
         {row.instruction_steps.ru.length ? (
           <ol>{row.instruction_steps.ru.map((step, i) => (
@@ -79,7 +81,8 @@ function ExerciseDetail({ row, taxonomy, onEdit }: {
           ))}</ol>
         ) : <p><Text variant="body">{row.instructions.ru}</Text></p>}
       </GlassSurface>
-      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section">
+      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
+        contentClassName="mezfit-public-exercises__detail-section-content">
         <Text variant="headline">Анатомия</Text>
         {sections.map(([title, ids]) => ids.length ? (
           <div key={title} className="mezfit-public-exercises__anatomy-line">
