@@ -370,10 +370,13 @@ export class ProgramManagementRepository {
     await this.db.transaction('rw', [this.db.trainingPlans, this.db.programPhases, this.db.programDays,
       this.db.programExercises, this.db.programSets, this.db.workoutOccurrences, this.db.workoutSessions],
       async () => {
-        if (plan.status === 'active') throw new Error('Сначала смените статус активной программы');
+        const current = await this.db.trainingPlans.get(id);
+        if (!current || current.realmId !== plan.realmId || current.owner !== null)
+          throw new Error('Программа изменилась. Повторите действие.');
+        if (current.status === 'active') throw new Error('Сначала смените статус активной программы');
         if (await this.db.workoutSessions.where('trainingPlanId').equals(id).count())
           throw new Error('Программу с историей тренировок удалять нельзя');
-        const tree = await this.tree(plan);
+        const tree = await this.tree(current);
         if ((await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray())
           .some((occ) => tree.days.some((day) => day.id === occ.programDayId)))
           throw new Error('Программа уже содержит запланированные тренировки');
