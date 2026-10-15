@@ -41,7 +41,7 @@ function ProgramRow({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const glass = loadBrowserGlassSettings();
-  const entries: LiquidPopoverItem[] = [
+  const entries: LiquidPopoverItem[] = ([
     { id: 'rename', label: 'Переименовать', icon: 'pencil' },
     { id: 'duplicate', label: 'Дублировать', icon: 'copy' },
     { id: 'delete', label: 'Удалить', icon: 'trash' },
@@ -50,7 +50,7 @@ function ProgramRow({
     ]),
     { id: 'status', label: 'Сменить статус', icon: 'edit' },
     { id: 'statistics', label: 'Статистика', icon: 'chart-dots-2' },
-  ].map((entry) => ({
+  ] satisfies LiquidPopoverItem[]).map((entry) => ({
     ...entry,
     disabled: busy || entry.id === 'statistics',
     onSelect: () => { setOpen(false); onAction(entry.id, plan); },
