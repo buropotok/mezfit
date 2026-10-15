@@ -176,7 +176,7 @@ export class ProgramManagementRepository {
     const position = await this.db.trainingPlans.where('realmId').equals(this.actorUserId).count();
     // Built-in personal Dexie Cloud realm uses the authenticated user's cloud ID.
     return this.db.trainingPlans.add({
-      realmId: this.actorUserId, owner: null, athleteUserId: this.actorUserId,
+      realmId: this.actorUserId, owner: this.actorUserId, athleteUserId: this.actorUserId,
       coachUserId: null, clientUserId: null, name, position,
       status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
     });
@@ -195,7 +195,7 @@ export class ProgramManagementRepository {
     const position = await this.db.trainingPlans.where('realmId').equals(realmId).count();
     const now = new Date().toISOString();
     return this.db.trainingPlans.add({
-      realmId, owner: null, athleteUserId, coachUserId: this.actorUserId, clientUserId: athleteUserId,
+      realmId, owner: this.actorUserId, athleteUserId, coachUserId: this.actorUserId, clientUserId: athleteUserId,
       name, position, status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
     });
   }
@@ -224,7 +224,7 @@ export class ProgramManagementRepository {
       let n = 1;
       while (used.has(`Фаза ${n}`)) n++;
       return this.db.programPhases.add({
-        realmId: plan.realmId, owner: null, trainingPlanId: id,
+        realmId: plan.realmId, owner: this.actorUserId, trainingPlanId: id,
         name: `Фаза ${n}`, status: 'draft', durationWeeks: DEFAULT_PHASE_WEEKS,
         position: phases.reduce((max, phase) => Math.max(max, phase.position), -1) + 1,
         plannedStartDate: null, plannedEndDate: null,
@@ -337,7 +337,7 @@ export class ProgramManagementRepository {
   /** This PR can duplicate phase headers only; descendant ACL comes with day authoring. */
   private async copyPhase(source: CloudProgramPhaseRow, planId: string, position: number) {
     return this.db.programPhases.add({
-      realmId: source.realmId, owner: null, trainingPlanId: planId,
+      realmId: source.realmId, owner: this.actorUserId, trainingPlanId: planId,
       name: source.name, position, status: 'draft',
       durationWeeks: source.durationWeeks ?? DEFAULT_PHASE_WEEKS,
       plannedStartDate: source.plannedStartDate, plannedEndDate: source.plannedEndDate,
@@ -366,7 +366,7 @@ export class ProgramManagementRepository {
         const plans = await this.db.trainingPlans.where('realmId').equals(plan.realmId).toArray();
         const now = new Date().toISOString();
         const nextId = await this.db.trainingPlans.add({
-          realmId: plan.realmId, owner: null, athleteUserId: athleteOf(plan) ?? undefined,
+          realmId: plan.realmId, owner: this.actorUserId, athleteUserId: athleteOf(plan) ?? undefined,
           coachUserId: plan.coachUserId, clientUserId: plan.clientUserId,
           name: validName(`${plan.name.slice(0, 111)} (копия)`),
           position: plans.reduce((max, row) => Math.max(max, row.position), -1) + 1,
@@ -396,7 +396,7 @@ export class ProgramManagementRepository {
       'programExercises', 'programSets', 'workoutOccurrences', 'workoutSessions'],
       async () => {
         const current = await this.db.trainingPlans.get(id);
-        if (!current || current.realmId !== plan.realmId || current.owner !== null)
+        if (!current || current.realmId !== plan.realmId || !isExpectedPlanOwner(current))
           throw new Error('Программа изменилась. Повторите действие.');
         if (current.status === 'active') throw new Error('Сначала смените статус активной программы');
         if (await this.db.workoutSessions.where('trainingPlanId').equals(id).count())
