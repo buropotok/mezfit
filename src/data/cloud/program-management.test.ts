@@ -182,6 +182,22 @@ describe('local-first program/phase management', () => {
     expect(f.phases.find((phase) => phase.id === secondPhase)?.status).toBe('active');
   });
 
+  it('requires assigned PLAN athlete identity to match the relationship client', () => {
+    const personal = fixture().plans[0];
+    const assigned: CloudTrainingPlanRow = {
+      ...personal, id: 'assigned-valid', realmId: 'relationship-a',
+      owner: 'tg:201', coachUserId: 'tg:201', clientUserId: user,
+      athleteUserId: user,
+    };
+    expect(isCloudPlanRow(assigned)).toBe(true);
+    // Older assigned headers intentionally do not have the newer identity field.
+    expect(isCloudPlanRow({ ...assigned, athleteUserId: undefined })).toBe(true);
+    expect(isCloudPlanRow({ ...assigned, athleteUserId: '' })).toBe(false);
+    expect(isCloudPlanRow({ ...assigned, athleteUserId: 'tg:303' })).toBe(false);
+    expect(isCloudPlanRow({ ...assigned, athleteUserId: 'tg:303', status: 'active' }))
+      .toBe(false);
+  });
+
   it('permits independent active programs from two coaches for the same athlete', () => {
     const base = fixture().plans[0];
     const coachA: CloudTrainingPlanRow = {
