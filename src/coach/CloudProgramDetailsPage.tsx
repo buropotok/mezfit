@@ -214,6 +214,16 @@ export function CloudProgramDetailsPage({
         onConfirm: async (value) => {
           if (value === 'active') {
             requestActivation(phase);
+          } else if (value === 'draft' && phase.status !== 'draft'
+            && details.program.status === 'active') {
+            setDialog({
+              kind: 'confirm', title: 'Скрыть фазу от клиента?',
+              description: 'Фаза перестанет отображаться у клиента, пока остаётся черновиком.',
+              onConfirm: async () => {
+                await repository.setPhaseStatus(planId, phase.id, 'draft');
+                setDialog(null);
+              },
+            });
           } else {
             await repository.setPhaseStatus(planId, phase.id,
               value as 'draft' | 'pending' | 'finished' | 'cancelled');
