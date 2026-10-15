@@ -98,7 +98,7 @@ export class ProgramManagementRepository {
   }
   async createAssigned(athleteUserId: string, rawName: string): Promise<string> {
     const name = validName(rawName);
-    if (!/^tg:[1-9]\\d*$/.test(athleteUserId) || athleteUserId === this.actorUserId)
+    if (!/^tg:[1-9]\d*$/.test(athleteUserId) || athleteUserId === this.actorUserId)
       throw new Error('Некорректный атлет');
     const [realms, members] = await Promise.all([this.db.realms.toArray(), this.db.members.toArray()]);
     let realmId: string | null = null;
