@@ -16,6 +16,7 @@ import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { CloudProgramsPage } from './CloudProgramsPage';
 import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
+import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
@@ -320,7 +321,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }
 
   if (destination === 'programs') {
-    if (programRepository) {
+    if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && programRepository) {
       if (selectedCloudProgram) return (
         <CloudProgramDetailsPage repository={programRepository} planId={selectedCloudProgram.id} />
       );
