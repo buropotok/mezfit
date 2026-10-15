@@ -156,22 +156,21 @@ export class ProgramManagementRepository {
     });
   }
   async setPhaseStatus(id: string, phaseId: string, status: Exclude<PhaseStatus, 'active'>): Promise<void> {
-    if (status === 'pending') {
-      const phase = await this.db.programPhases.get(phaseId);
-      if (phase?.status === 'active') throw new Error('Активную фазу нельзя перевести в ожидание');
-    }
     const plan = await this.writable(id);
     await this.db.transaction('rw', this.db.trainingPlans, this.db.programPhases, async () => {
       const phase = await this.db.programPhases.get(phaseId);
       const current = await this.db.trainingPlans.get(id);
       if (!phase || !current || !belongs(phase, current) || current.realmId !== plan.realmId)
         throw new Error('Фаза не найдена');
-      if (phase.status === 'active' && status === 'pending') throw new Error('Недоступный переход');
       await this.db.programPhases.update(phaseId, { status });
-      if (phase.status === 'active' && current.status === 'active' && status !== 'pending') await this.db.trainingPlans.update(id, {
-        status, updatedAt: new Date().toISOString(),
-        finishedAt: status === 'finished' ? new Date().toISOString() : null,
-      });
+      if (phase.status === 'active' && current.status === 'active') {
+        // pending has no program equivalent: the parent becomes a draft.
+        const nextProgramStatus: CloudProgramStatus = status === 'pending' ? 'draft' : status;
+        await this.db.trainingPlans.update(id, {
+          status: nextProgramStatus, updatedAt: new Date().toISOString(),
+          finishedAt: status === 'finished' ? new Date().toISOString() : null,
+        });
+      }
     });
   }
   async setProgramStatus(id: string, status: InactiveStatus): Promise<void> {
