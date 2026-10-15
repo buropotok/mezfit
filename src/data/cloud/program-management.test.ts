@@ -128,6 +128,15 @@ describe('local-first program/phase management', () => {
     expect(f.phases[0].status).toBe('cancelled');
   });
 
+  it('deactivates the program to draft when its active phase returns to pending', async () => {
+    const f = fixture();
+    const id = await f.repo.createPhase('tra-1');
+    await f.repo.activate('tra-1', id);
+    await f.repo.setPhaseStatus('tra-1', id, 'pending');
+    expect(f.plans[0].status).toBe('draft');
+    expect(f.phases[0].status).toBe('pending');
+  });
+
   it('hides only draft phases from the active athlete program', async () => {
     const f = fixture();
     const first = await f.repo.createPhase('tra-1');
