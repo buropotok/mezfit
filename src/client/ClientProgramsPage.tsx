@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { liveQuery } from 'dexie';
-import { athleteOf, clientVisiblePhases, ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
+import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
 import { Badge, Button as CloudButton, GlassSurface, Text } from '../ui';
@@ -71,22 +70,15 @@ function AthleteProgramPage({
   useEffect(() => {
     let active = true;
     setLoaded(false);
-    const subscription = liveQuery(async () => {
-      const activePlan = (await repository.listReadable()).find((plan) =>
-        athleteOf(plan) === actorUserId && plan.status === 'active');
-      return activePlan ? repository.details(activePlan.id) : null;
-    }).subscribe({
-      next: (current) => {
-        if (!active) return;
-        setData(current);
-        setLoaded(true);
-        setError('');
-      },
-      error: (reason) => {
-        if (!active) return;
-        setError(reason instanceof Error ? reason.message : 'Не удалось загрузить программу');
-        setLoaded(true);
-      },
+    const subscription = repository.observeActiveForAthlete(actorUserId, (current) => {
+      if (!active) return;
+      setData(current);
+      setLoaded(true);
+      setError('');
+    }, (reason) => {
+      if (!active) return;
+      setError(reason instanceof Error ? reason.message : 'Не удалось загрузить программу');
+      setLoaded(true);
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, actorUserId, retryKey]);
@@ -103,7 +95,7 @@ function AthleteProgramPage({
     <List><ListItem interactive={false} title="Нет активной программы"
       subtitle="Активная программа появится здесь после назначения или активации." /></List>
   );
-  const visiblePhases = clientVisiblePhases(data.phases);
+  const visiblePhases = data.phases;
   return (
     <section className="cloud-client-program" aria-label="Активная программа">
       <GlassSurface preset="modalTuned" optics={false} className="cloud-client-program-summary">
