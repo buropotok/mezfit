@@ -22,7 +22,7 @@
   min-width: 0;
   gap: var(--ui-space-1);
 }
-.cloud-plan-program-row > .ui-list-item {
+.cloud-plan-program-main {
   min-width: 0;
   flex: 1;
 }
@@ -34,8 +34,8 @@
   gap: var(--ui-space-2);
   min-width: 0;
 }
-.cloud-plan-title-row .ui-text:first-child,
-.cloud-plan-phase-heading .ui-text:first-child {
+.cloud-plan-main-title,
+.cloud-plan-phase-title {
   min-width: 0;
   overflow-wrap: anywhere;
 }
