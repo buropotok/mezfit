@@ -34,13 +34,24 @@ Older relationship plan rows without `athleteUserId` are read using
 `clientUserId` as a compatibility fallback. Older phases missing
 `durationWeeks` display 10 weeks.
 
-Multi-record program and phase status transitions use one local Dexie
-transaction and existing Dexie Cloud synchronization. Exactly one active phase
-is required in an active program. Changing an active phase to an inactive
-status also deactivates the parent program; switching programs deactivates the
-previous program and its active phase. Deletion blocks if an active phase,
-workout history or scheduled occurrences would be invalidated. Deep duplication
-copies existing descendants and resets every copied phase/program to draft.
+Program/phase activation uses declarative Dexie Cloud `where(...).modify(...)`
+predicates, not locally enumerated row IDs. This allows a later offline client
+to replay the intention against its server snapshot so that only one program
+and one phase are active per relationship realm. If another device activated
+an unseen program, the stale program and its active phase revert to
+`draft` (rather than falsely claiming they were finished).
+Known previous active programs/phases still require the coach's explicit
+disposition in the UI.
+
+This increment deliberately copies and deletes only program and phase
+**headers without days**, because Coach is not granted permissions for
+`programDays`, `programExercises`, or `programSets` yet. Duplicate and
+delete refuse to mutate any program/phase containing days. Empty program
+deletion uses `programPhases.where('trainingPlanId').equals(id).delete()`
+and a parent predicate, so an offline-added phase header is included
+when the operation is later replayed on the server. Full descendant
+copy/cascade/history guards must be added alongside the day editor and its
+explicit server ACL permissions, not silently simulated in this PR.
 
 ## UI primitives
 
@@ -64,6 +75,16 @@ The existing protected GitHub Actions `dexie-production` write key is
 restricted by `AGENTS.md` §21 to public-catalogue and additive schema tasks.
 Neither its existing workflow nor a generic PR workflow may import roles.
 Do not modify those workflows or reuse that credential for role changes.
+
+Staged production rollout order matters: (1) deploy the compatibility Worker
+that accepts only the exact old `manage: ['trainingPlans']` and new
+`manage: ['trainingPlans', 'programPhases']` Coach policies; Client FACT
+permissions must match the existing exact whitelist throughout; (2) use an
+owner-approved separate process to import the new ACL; (3) verify role
+membership and Coach/Client authoring with real accounts; (4) enable the
+frontend flag. **Never import ACL ahead of the compatible Worker**, since the
+older Worker would reject invitations after the ACL change. Remove temporary
+legacy-role acceptance after the rollout is complete and confirmed.
 
 New Coach/Client program screens remain OFF by default behind
 `VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED=true`. Enable only after an authorized
