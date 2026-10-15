@@ -52,7 +52,7 @@ export class CoachExerciseCatalogueRepository {
 
   /** Global base exercises are immutable. The only supported edit path is a private copy. */
   async duplicatePublicExercise(sourceExerciseId: string): Promise<string> {
-    if (!/^\\d{4}$/.test(sourceExerciseId)) throw new Error('EXERCISE_NOT_FOUND');
+    if (!/^\d{4}$/.test(sourceExerciseId)) throw new Error('EXERCISE_NOT_FOUND');
     const source = await this.db.publicExerciseDefinitions.get(sourceExerciseId);
     if (!isPublicExerciseRow(source)) throw new Error('EXERCISE_NOT_FOUND');
     const { id: _id, realmId: _realmId, owner: _owner, sourceSha256: _sha, ...data } = source;
