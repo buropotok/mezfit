@@ -22,7 +22,6 @@ type AnatomyViewProps = {
 type LastTap = {
   readonly label: string;
   readonly status: string;
-  readonly numericId: number;
 };
 
 function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: AnatomyViewProps) {
@@ -46,7 +45,7 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!atlas || !canvas) return;
-    const context = canvas.getContext('2d', { alpha: false });
+    const context = canvas.getContext('2d', { alpha: true });
     if (!context) return;
     context.globalAlpha = 1;
     context.clearRect(0, 0, atlas.width, atlas.height);
@@ -92,18 +91,16 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
         : 'Не задействована в этой тренировке';
     setLastTap({
       label: WORKED_MUSCLE_LABELS[muscleId] ?? muscleId,
-      numericId,
       status,
     });
   };
 
   return (
     <section className="worked-muscles__view" aria-label={viewLabel}>
-      <Text variant="headline" className="worked-muscles__view-title">{viewLabel}</Text>
       <div className="worked-muscles__image-wrap" aria-busy={!atlas && !error}>
         <canvas
           ref={canvasRef}
-          className="worked-muscles__canvas"
+          className={`worked-muscles__canvas worked-muscles__canvas--${view}`}
           width={config.width}
           height={config.height}
           onClick={onTap}
@@ -120,7 +117,7 @@ function AnatomyView({ view, primary, secondary, showPrimary, showSecondary }: A
         <div className="worked-muscles__tap-result" role="status">
           <Text variant="body">{lastTap.label}</Text>
           <Text variant="caption" tone="muted">
-            {'ID ' + lastTap.numericId + ' · ' + lastTap.status}
+            {lastTap.status}
           </Text>
         </div>
       ) : null}
@@ -141,12 +138,12 @@ export function WorkedMuscles({ primaryMuscleIds, secondaryMuscleIds, className 
       <Text variant="title" className="worked-muscles__title">Проработанные мышцы</Text>
       <div className="worked-muscles__filters">
         <label className="worked-muscles__filter">
-          <Text variant="body">Основные</Text>
           <Toggle component="div" checked={showPrimary} onChange={() => setShowPrimary((current) => !current)} />
+          <Text variant="footnote">Основные</Text>
         </label>
         <label className="worked-muscles__filter">
-          <Text variant="body">Вспомогательные</Text>
           <Toggle component="div" checked={showSecondary} onChange={() => setShowSecondary((current) => !current)} />
+          <Text variant="footnote">Вспомогательные</Text>
         </label>
       </div>
       <div className="worked-muscles__views">
