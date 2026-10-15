@@ -7,6 +7,8 @@ import type { CoachExerciseDefinitionRow } from '../data/exercises/coachExercise
 import { PersonalExerciseEditorGateway } from './PersonalExerciseEditorGateway';
 
 vi.mock('../ui', () => ({
+  Button: ({ children, onClick, disabled }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) =>
+    <button onClick={onClick} disabled={disabled}>{children}</button>,
   MezfitDialog: ({ opened, title, content, buttons }: {
     opened: boolean; title: ReactNode; content: ReactNode; buttons: ReactNode;
   }) => opened ? <section role="dialog" aria-label="editor">{title}{content}{buttons}</section> : null,
@@ -79,6 +81,7 @@ describe('personal exercise edit/copy gateway', () => {
       rows={[own]} selectedCoachUserId={null} onCreated={vi.fn()} onClose={close} />);
     expect(screen.getByText('Изменить моё упражнение')).toBeTruthy();
     expect(screen.queryByText('Создать мою копию?')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.change(screen.getByRole('textbox', { name: 'Название' }), { target: { value: 'Новое название' } });
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(repository.updateExercise)
