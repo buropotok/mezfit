@@ -52,7 +52,10 @@ jobs:
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
-      - name: Report all remote tables and role definitions (no business data)\n        if: inputs.operation == 'preview'\n        run: node tools/dexie-schema/manage.mjs report\n      - name: Validate additive-only plan
+      - name: Report all remote tables and role definitions (no business data)
+        if: inputs.operation == 'preview'
+        run: node tools/dexie-schema/manage.mjs report
+      - name: Validate additive-only plan
         id: plan
         run: node tools/dexie-schema/manage.mjs plan
       - name: Import only missing tables
