@@ -69,7 +69,7 @@ export function formatCloudStructureReport(schemaExport, rolesExport) {
     'Roles (' + Object.keys(roles).length + '):',
     JSON.stringify(roles, null, 2),
     'NOTE: This is schema and role configuration, not a live per-user permission or realm membership audit.',
-  ].join('\\n');
+  ].join('\n');
 }
 
 const workdir = () => {
