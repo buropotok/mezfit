@@ -87,6 +87,7 @@ function EditPersonalExercise({
   const [equipment, setEquipment] = useState(row.equipment);
   const [instructions, setInstructions] = useState(row.instructions.ru);
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState('');
 
   const save = async () => {
