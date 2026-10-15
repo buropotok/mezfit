@@ -131,11 +131,11 @@ export class AssignedProgramsRepository {
     const realmId = await this.relationshipRealm(clientTelegramId);
     const now = new Date().toISOString();
     const position = await this.db.trainingPlans.where('realmId').equals(realmId).count();
-    // @id generates a globally unique key. Explicit owner:null prevents
-    // creator ownership from overriding the coach/client PLAN permission split.
+    // @id creates a unique key. PLAN headers are owned by their authorized
+    // Coach author; Client still has no shared-realm PLAN write permissions.
     return this.db.trainingPlans.add({
       realmId,
-      owner: null,
+      owner: this.actorUserId,
       coachUserId: this.actorUserId,
       clientUserId: `tg:${clientTelegramId}`,
       athleteUserId: `tg:${clientTelegramId}`,
