@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
-import type { CloudProgramPhaseRow } from './workout-foundation-types';
+import type { CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
 import {
   ProgramManagementRepository, clientVisiblePhases, isCloudPlanRow, isCloudPhaseRow,
   isOtherActiveProgramInScope, selectedCoachActiveProgram,
@@ -16,12 +16,29 @@ function mockTable<T extends Row>(initial: T[], prefix: string) {
     data,
     get: vi.fn(read),
     toArray: vi.fn(async () => [...data]),
-    where: (field: string) => ({
-      equals: (value: string) => ({
-        toArray: async () => data.filter((row) => Reflect.get(row, field) === value),
-        count: async () => data.filter((row) => Reflect.get(row, field) === value).length,
-      }),
-    }),
+    where: (field: string | Record<string, unknown>) => {
+      const collection = (matches: (row: T) => boolean) => ({
+        toArray: async () => data.filter(matches),
+        count: async () => data.filter(matches).length,
+        modify: vi.fn(async (changes: Partial<T>) => {
+          const affected = data.filter(matches);
+          for (const row of affected) Object.assign(row, changes);
+          return affected.length;
+        }),
+        delete: vi.fn(async () => {
+          let deleted = 0;
+          for (let i = data.length - 1; i >= 0; i--) {
+            if (matches(data[i])) { data.splice(i, 1); deleted++; }
+          }
+          return deleted;
+        }),
+      });
+      if (typeof field === 'string') {
+        return { equals: (value: string) => collection((row) => Reflect.get(row, field) === value) };
+      }
+      return collection((row) => Object.entries(field).every(([key, value]) =>
+        Reflect.get(row, key) === value));
+    },
     count: vi.fn(async () => data.length),
     add: vi.fn(async (partial: Omit<T, 'id'>) => {
       const id = `${prefix}-${next++}`;
@@ -56,7 +73,7 @@ function fixture() {
   };
   const trainingPlans = mockTable<CloudTrainingPlanRow>([initial], 'tra');
   const programPhases = mockTable<CloudProgramPhaseRow>([], 'pha');
-  const programDays = mockTable([], 'day');
+  const programDays = mockTable<CloudProgramDayRow>([], 'day');
   const programExercises = mockTable([], 'pex');
   const programSets = mockTable([], 'pst');
   const workoutSessions = mockTable([], 'ses');
@@ -73,7 +90,7 @@ function fixture() {
   } as unknown as MezfitCloudDatabase;
   return {
     repo: new ProgramManagementRepository(db, user),
-    plans: trainingPlans.data, phases: programPhases.data,
+    plans: trainingPlans.data, phases: programPhases.data, days: programDays.data,
     transaction: db.transaction,
   };
 }
@@ -225,6 +242,48 @@ describe('local-first program/phase management', () => {
     expect(f.phases).toHaveLength(2);
     expect(f.phases[1]).toMatchObject({ status: 'draft', name: 'Фаза 1', durationWeeks: 10 });
     expect(f.phases[1].trainingPlanId).toBe(f.plans[1].id);
+  });
+
+  it('keeps activation exclusive within the selected relationship realm', async () => {
+    const f = fixture();
+    const first = await f.repo.createPhase('tra-1');
+    await f.repo.activate('tra-1', first);
+    const second = await f.repo.createPersonal('Ещё одна');
+    const secondPhase = await f.repo.createPhase(second);
+    await f.repo.activate(second, secondPhase, { previousProgramStatus: 'finished' });
+    expect(f.plans.filter((plan) => plan.realmId === user && plan.status === 'active'))
+      .toHaveLength(1);
+    expect(f.phases.filter((phase) => phase.realmId === user && phase.status === 'active'))
+      .toHaveLength(1);
+    expect(f.plans[0].status).toBe('finished');
+    expect(f.phases.find((phase) => phase.id === first)?.status).toBe('finished');
+  });
+
+  it('deletes phase headers using collection predicates and rejects nonempty trees', async () => {
+    const f = fixture();
+    const phase = await f.repo.createPhase('tra-1');
+    const second = await f.repo.createPhase('tra-1');
+    await f.repo.deletePhase('tra-1', phase);
+    expect(f.phases.map((row) => row.id)).toEqual([second]);
+    f.days.push({
+      id: 'day-1', realmId: user, owner: null,
+      programPhaseId: second, name: 'День 1', position: 0, status: 'active',
+    });
+    await expect(f.repo.duplicatePhase('tra-1', second)).rejects.toThrow('с днями');
+    await expect(f.repo.deletePhase('tra-1', second)).rejects.toThrow('с днями');
+    await expect(f.repo.duplicateProgram('tra-1')).rejects.toThrow('с днями');
+    await expect(f.repo.deleteProgram('tra-1')).rejects.toThrow('с днями');
+    expect(f.phases).toHaveLength(1);
+    expect(f.days).toHaveLength(1);
+  });
+
+  it('consistently deletes all matching phase headers together with a program', async () => {
+    const f = fixture();
+    await f.repo.createPhase('tra-1');
+    await f.repo.createPhase('tra-1');
+    await f.repo.deleteProgram('tra-1');
+    expect(f.plans).toHaveLength(0);
+    expect(f.phases).toHaveLength(0);
   });
 
   it('rejects invalid duration values', async () => {
