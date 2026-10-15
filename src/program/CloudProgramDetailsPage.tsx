@@ -198,7 +198,7 @@ export function CloudProgramDetailsPage({
     } else if (key === 'delete') {
       setDialog({
         kind: 'confirm', title: 'Удалить фазу?', destructive: true,
-        description: 'Фаза и все её запланированные дни и подходы будут удалены.',
+        description: 'Будет удалена только фаза без дней. Фазу с днями удалить пока нельзя.',
         confirmLabel: 'Удалить',
         onConfirm: async () => {
           await repository.deletePhase(planId, phase.id);
