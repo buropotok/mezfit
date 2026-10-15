@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { liveQuery } from 'dexie';
 import { athleteOf, clientVisiblePhases, ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
+import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
 import { Badge, GlassSurface, Text } from '../ui';
 import './client-programs-cloud.css';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
@@ -129,7 +130,7 @@ export function ClientProgramsPage() {
   const repository = useMemo(() => cloud
     ? new ProgramManagementRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
-  if (repository && cloud) {
+  if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
     return <AthleteProgramPage repository={repository} actorUserId={cloud.actorUserId}
       cloudReady={cloud.status === 'ready'} />;
   }
