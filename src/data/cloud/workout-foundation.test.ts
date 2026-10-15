@@ -39,14 +39,19 @@ describe('Dexie Cloud v4 workout foundation', () => {
     }
   });
 
-  it('does not grant Coach or Client mutations on new PLAN, snapshots, or FACT-only additions', () => {
-    for (const role of [currentRoles.roles.coach, currentRoles.roles.client]) {
-      const allowed = JSON.stringify(role.permissions);
-      for (const table of newTables) expect(allowed).not.toContain('"' + table + '"');
-      expect(role.permissions.update.sessionSetFacts).not.toContain('*');
+  it('grants coach authoring only for phase headers and keeps Client and execution tables read-only', () => {
+    const coach = currentRoles.roles.coach.permissions;
+    const client = currentRoles.roles.client.permissions;
+    expect(coach.manage).toEqual(['trainingPlans', 'programPhases']);
+    for (const table of newTables.filter((name) => name !== 'programPhases')) {
+      expect(JSON.stringify(coach)).not.toContain('"' + table + '"');
     }
-    expect(currentRoles.roles.coach.permissions.manage).toEqual(['trainingPlans']);
-    expect(Object.hasOwn(currentRoles.roles.client.permissions, 'manage')).toBe(false);
+    for (const table of newTables) {
+      expect(JSON.stringify(client)).not.toContain('"' + table + '"');
+    }
+    expect(coach.update.sessionSetFacts).not.toContain('*');
+    expect(client.update.sessionSetFacts).not.toContain('*');
+    expect(Object.hasOwn(client, 'manage')).toBe(false);
   });
 });
 
