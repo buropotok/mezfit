@@ -109,6 +109,7 @@ function EditPersonalExercise({
     } catch (cause) {
       setError(message(cause));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };
