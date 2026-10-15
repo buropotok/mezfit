@@ -326,7 +326,9 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
         <CloudProgramDetailsPage repository={programRepository} planId={selectedCloudProgram.id}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
-          onRetryCloud={cloudConnections?.refresh ?? (async () => {})} />
+          syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+          syncError={cloudConnections?.syncError ?? ''}
+          onRetryCloud={cloudConnections?.retrySync ?? (async () => {})} />
       );
       return (
         <CloudProgramsPage repository={programRepository} clients={clients ?? []}
