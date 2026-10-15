@@ -58,13 +58,15 @@ function ProgramRow({
   const status = label(plan.status);
   return (
     <div className="cloud-plan-program-row">
-      <ListItem
-        title={plan.name}
-        subtitle="Программа тренировок"
-        trailing={<Badge color={status.color}>{status.text}</Badge>}
-        onClick={() => onOpen(plan)}
-        disabled={busy}
-      />
+      <div className="cloud-plan-program-main">
+        <ListItem
+          title={plan.name}
+          subtitle="Программа тренировок"
+          trailing={<Badge color={status.color}>{status.text}</Badge>}
+          onClick={() => onOpen(plan)}
+          disabled={busy}
+        />
+      </div>
       <LiquidPopover isOpen={open} onOpenChange={setOpen}
         triggerRef={triggerRef}
         trigger={<IconButton ref={triggerRef} icon="dots-vertical"
