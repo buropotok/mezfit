@@ -15,7 +15,7 @@ export interface CloudWorkoutExerciseSnapshot {
   mediaUrl: string | null;
   /** Immutable full definition captured when a coach assigns a private exercise. */
   catalogueDefinition?: PublicExercise;
-  /** Origin actor copied into the program row, cross-checked against the accepted relationship. */
+  /** Original author; must match the selected, accepted relationship coach. */
   catalogueCoachUserId?: string;
 }
 
@@ -61,11 +61,14 @@ export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkout
     ));
 }
 
-export interface CloudProgramPhaseRow extends CloudSharedRow {
+export interface CloudProgramPhaseRow extends Omit<CloudSharedRow, 'owner'> {
+  owner: string | null;
   trainingPlanId: string;
   name: string;
   position: number;
-  status: 'pending' | 'active' | 'finished';
+  status: 'draft' | 'pending' | 'active' | 'finished' | 'cancelled';
+  /** Suggested duration; does not imply dates or calendar scheduling. */
+  durationWeeks?: number;
   plannedStartDate: string | null;
   plannedEndDate: string | null;
 }

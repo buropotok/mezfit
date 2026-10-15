@@ -1,0 +1,92 @@
+/* Composition only: GlassSurface, Konsta controls and typography own their visuals. */
+.cloud-plan-list,
+.cloud-plan-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  padding-bottom: 5rem;
+}
+.cloud-plan-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+.cloud-plan-group-surface {
+  min-width: 0;
+}
+.cloud-plan-program-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: var(--ui-space-1);
+}
+.cloud-plan-program-main {
+  min-width: 0;
+  flex: 1;
+}
+.cloud-plan-title-row,
+.cloud-plan-phase-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+.cloud-plan-main-title,
+.cloud-plan-phase-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cloud-plan-summary {
+  display: flex;
+  min-width: 0;
+}
+.cloud-plan-summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3);
+}
+.cloud-plan-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}
+.cloud-plan-phase-heading {
+  align-self: stretch;
+}
+.cloud-plan-phase-heading > :last-child {
+  margin-inline-start: auto;
+}
+.cloud-plan-phase-weeks {
+  white-space: nowrap;
+}
+.cloud-plan-visibility-tip {
+  display: block;
+}
+.cloud-plan-dialog-duration {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+.cloud-plan-dialog-duration > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.cloud-plan-error,
+.cloud-plan-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-space-2);
+}
+@media (max-width: 390px) {
+  .cloud-plan-phase-heading {
+    column-gap: var(--ui-space-1);
+    row-gap: var(--ui-space-2);
+  }
+}

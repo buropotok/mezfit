@@ -109,6 +109,13 @@ describe('client visible exercises assigned by the selected coach', () => {
     const repo = new AssignedCoachExercisesRepository(db, client);
     expect((await repo.read(coach)).map(row => row.id)).toEqual([customId]);
     expect(await repo.read('tg:303')).toEqual([]);
+    // v6 headers authored through Dexie Cloud may be owned by the coach.
+    plan.owner = coach;
+    expect((await repo.read(coach)).map(row => row.id)).toEqual([customId]);
+    // A client-owned PLAN in the coach relationship is not a valid assignment.
+    plan.owner = client;
+    expect(await repo.read(coach)).toEqual([]);
+    plan.owner = coach;
     members[1].accepted = false;
     expect(await repo.read(coach)).toEqual([]);
   });

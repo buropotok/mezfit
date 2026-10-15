@@ -1,6 +1,7 @@
 import { liveQuery } from 'dexie';
 import type { MezfitCloudDatabase } from '../cloud/database';
 import { WorkoutFoundationRepository } from '../cloud/workout-foundation';
+import { isExpectedPlanOwner } from '../cloud/program-ownership';
 import {
   isAssignedCoachExerciseSnapshot,
   type CloudProgramOutline,
@@ -43,7 +44,8 @@ export function projectAssignedCoachExercises(
 /**
  * Client access comes only from plans tied to this client and the selected coach.
  * WorkoutFoundationRepository checks the canonical realm, BOTH accepted members,
- * ownerless shared records, and every parent-child realm link before projection.
+ * author-validated PLAN/phase headers, ownerless shared child records,
+ * and every parent-child realm link before projection.
  * No query ever touches the coach's private exercise definitions.
  */
 export class AssignedCoachExercisesRepository {
@@ -55,7 +57,7 @@ export class AssignedCoachExercisesRepository {
     if (!/^tg:[1-9]\d*$/.test(coachUserId) || coachUserId === this.actorUserId) return [];
     const plans = (await this.db.trainingPlans.where('clientUserId').equals(this.actorUserId).toArray())
       .filter(plan => plan.clientUserId === this.actorUserId
-        && plan.coachUserId === coachUserId && plan.owner === null);
+        && plan.coachUserId === coachUserId && isExpectedPlanOwner(plan));
     const foundation = new WorkoutFoundationRepository(this.db, this.actorUserId);
     const outlines = await Promise.all(plans.map(plan => foundation.getProgramOutline(plan.id)));
     return projectAssignedCoachExercises(

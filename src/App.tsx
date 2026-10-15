@@ -161,7 +161,9 @@ function ClientShell({
     );
   }
 
-  if (destination === 'programs') return <ClientProgramsPage />;
+  if (destination === 'programs') return (
+    <ClientProgramsPage onNavigationContextChange={onNavigationContextChange} />
+  );
   if (destination === 'exercises') return <PersonalExercises role="client"
     selectedCoachUserId={selectedCoach?.userId ?? null}
     onNavigationContextChange={onNavigationContextChange} />;
