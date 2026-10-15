@@ -109,6 +109,17 @@ export function PersonalExercises({
     }
   }, [personalIds, assignedIds]);
 
+  const editingId = request?.mode === 'edit' ? request.exerciseId : null;
+  useEffect(() => {
+    if (!editingId) return undefined;
+    onNavigationContextChange({
+      title: 'Изменить упражнение',
+      scrollKey: `my-exercise:edit:${editingId}`,
+      onBack: () => setRequest(null),
+    });
+    return () => onNavigationContextChange(null);
+  }, [editingId, onNavigationContextChange]);
+
   const ready = snapshot?.status === 'ready';
   if (error || personalError || assignedError || (cloud?.status === 'error' && !ready)) {
     return <Surface><Text role="alert">{error || personalError || assignedError || cloud?.error || 'Не удалось открыть каталог'}</Text></Surface>;
@@ -131,7 +142,7 @@ export function PersonalExercises({
     {cloud.status === 'error'
       ? <Text variant="footnote" tone="muted">Офлайн: отображаются сохранённые упражнения</Text> : null}
     {actionError ? <Text role="alert" variant="footnote">{actionError}</Text> : null}
-    <ExerciseCatalogContent
+    {request?.mode !== 'edit' ? <ExerciseCatalogContent
       key={catalogueKey}
       snapshot={snapshot}
       scope={role}
@@ -145,7 +156,7 @@ export function PersonalExercises({
       onCreateExercise={category => setRequest({ mode: 'create', category })}
       onEditExercise={edit}
       onNavigationContextChange={onNavigationContextChange}
-    />
+    /> : null}
     <PersonalExerciseEditorGateway
       request={request}
       repository={repository}
