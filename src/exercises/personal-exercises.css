@@ -1,0 +1,6 @@
+.mezfit-personal-exercise-editor {
+  display: grid;
+  gap: var(--space-3);
+  max-height: 58vh;
+  overflow-y: auto;
+}
