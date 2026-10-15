@@ -77,7 +77,7 @@ export class CoachExerciseCatalogueRepository {
   }
 
   /** Blank personal item for FAB create. Does not require a trainer relationship. */
-  async createBlankExercise(category: string | null = null, name: string): Promise<string> {
+  async createBlankExercise(category: string | null, name: string): Promise<string> {
     const title = name.trim();
     if (!title || title.length > 120) throw new Error('INVALID_CUSTOM_EXERCISE_NAME');
     return this.createExercise({
