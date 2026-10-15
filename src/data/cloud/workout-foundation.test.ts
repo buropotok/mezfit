@@ -18,7 +18,8 @@ const newTables = [
 
 describe('Dexie Cloud v4 workout foundation', () => {
   it('adds eight ownerless relationship domain tables with globally unique keys', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(4);
+    // Workout v4 remains intact even after the additive coach-catalogue v5 upgrade.
+    expect(CLOUD_DATABASE_VERSION).toBe(5);
     expect(Object.keys(CLOUD_DATABASE_STORES_V4)).toEqual([
       ...Object.keys(CLOUD_DATABASE_STORES_V3), ...newTables,
     ]);

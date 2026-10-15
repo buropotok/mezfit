@@ -1,4 +1,5 @@
-import type { PublicExerciseRow, PublicTaxonomyRow } from './publicExerciseTypes';
+import type { PublicTaxonomyRow } from './publicExerciseTypes';
+import type { CatalogueExerciseRow } from './coachExerciseTypes';
 
 export const PUBLIC_EXERCISE_CATEGORIES = [
   ['chest', 'Грудь'], ['arms', 'Руки'], ['back', 'Спина'],
@@ -39,7 +40,7 @@ export function normalizeExerciseSearch(value: string): string {
   return value.normalize('NFKC').toLocaleLowerCase('ru-RU').trim();
 }
 
-function muscleIds(row: PublicExerciseRow, group: FilterGroup, zones: ReadonlySet<string>): string[] {
+function muscleIds(row: CatalogueExerciseRow, group: FilterGroup, zones: ReadonlySet<string>): string[] {
   switch (group) {
     case 'primary': return row.muscles.primary;
     case 'secondary': return row.muscles.secondary;
@@ -60,12 +61,12 @@ function muscleIds(row: PublicExerciseRow, group: FilterGroup, zones: ReadonlySe
 
 /** Exact IDs: no implicit parent/child expansion. OR inside each group, AND across groups. */
 export function filterPublicExercises(
-  rows: readonly PublicExerciseRow[],
+  rows: readonly CatalogueExerciseRow[],
   taxonomy: readonly PublicTaxonomyRow[],
   filters: SelectedFilters,
   query: string,
   categoryContext: string | null = null,
-): PublicExerciseRow[] {
+): CatalogueExerciseRow[] {
   const search = normalizeExerciseSearch(query);
   const zones = new Set(taxonomy.filter((row) => row.kind === 'zone').map((row) => row.id));
   const selected = FILTER_GROUPS.flatMap(({ id }) => filters[id]?.length ? [[id, new Set(filters[id])]] as const : []);
@@ -85,7 +86,7 @@ export function filterPublicExercises(
 
 export function filterOptions(
   group: FilterGroup,
-  exercises: readonly PublicExerciseRow[],
+  exercises: readonly CatalogueExerciseRow[],
   taxonomy: readonly PublicTaxonomyRow[],
   subcategoryLabels: Readonly<Record<string, string>>,
 ): FilterOption[] {
