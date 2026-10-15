@@ -3,7 +3,7 @@ import { liveQuery } from 'dexie';
 import { athleteOf, clientVisiblePhases, ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
-import { Badge, GlassSurface, Text } from '../ui';
+import { Badge, Button as CloudButton, GlassSurface, Text } from '../ui';
 import './client-programs-cloud.css';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
@@ -62,11 +62,12 @@ function CloudClientProgramsPage() {
 }
 
 function AthleteProgramPage({
-  repository, actorUserId, cloudReady,
-}: { repository: ProgramManagementRepository; actorUserId: string; cloudReady: boolean }) {
+  repository, actorUserId, cloudReady, onRetry,
+}: { repository: ProgramManagementRepository; actorUserId: string; cloudReady: boolean; onRetry: () => Promise<void> }) {
   const [data, setData] = useState<ProgramDetails | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
   useEffect(() => {
     let active = true;
     setLoaded(false);
@@ -88,8 +89,15 @@ function AthleteProgramPage({
       },
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, actorUserId]);
-  if (error) return <Text variant="footnote" role="alert">{error}</Text>;
+  }, [repository, actorUserId, retryKey]);
+  if (error) return (
+    <section className="cloud-client-program">
+      <Text variant="footnote" role="alert">{error}</Text>
+      <CloudButton onClick={() => {
+        void onRetry().catch(() => {}).finally(() => setRetryKey((key) => key + 1));
+      }}>Повторить</CloudButton>
+    </section>
+  );
   if (!loaded || !cloudReady) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
   if (!data) return (
     <List><ListItem interactive={false} title="Нет активной программы"
@@ -132,7 +140,7 @@ export function ClientProgramsPage() {
   [cloud?.db, cloud?.actorUserId]);
   if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
     return <AthleteProgramPage repository={repository} actorUserId={cloud.actorUserId}
-      cloudReady={cloud.status === 'ready'} />;
+      cloudReady={cloud.status === 'ready'} onRetry={cloud.refresh} />;
   }
   // Compatibility for installations not yet provisioned with Dexie Cloud.
   if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
