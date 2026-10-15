@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { List as KonstaList, ListInput, ListItem as KonstaListItem, Radio } from 'konsta/react';
 import type { CloudTrainingPlanRow, CloudProgramStatus } from '../data/cloud/database';
-import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
+import type { CloudContact, CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { athleteOf, isOtherActiveProgramInScope, type ProgramManagementRepository } from '../data/cloud/program-management';
 import { useNavigationFloatingAction } from '../NavigationShell';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -80,14 +80,18 @@ function ProgramRow({
 }
 
 export function CloudProgramsPage({
-  repository, clients, onOpen, cloudStatus, cloudError, onRetryCloud, personalOnly = false,
+  repository, clients, onOpen, cloudStatus, cloudError, syncStatus, syncError,
+  onRetryCloud, onRetrySync, personalOnly = false,
 }: {
   repository: ProgramManagementRepository;
   clients: readonly CloudContact[];
   onOpen: (plan: CloudTrainingPlanRow) => void;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
+  syncStatus: CloudSyncStatus;
+  syncError: string;
   onRetryCloud: () => Promise<void>;
+  onRetrySync: () => Promise<void>;
   personalOnly?: boolean;
 }) {
   const [programs, setPrograms] = useState<CloudTrainingPlanRow[]>([]);
@@ -121,6 +125,15 @@ export function CloudProgramsPage({
       : repository.observeAuthored(onChange, onError);
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retryKey, personalOnly]);
+
+  const syncWarning = syncStatus === 'error'
+    ? syncError || 'Ошибка синхронизации с Dexie Cloud'
+    : syncStatus === 'offline'
+      ? syncError || 'Нет соединения с Dexie Cloud'
+      : syncStatus === 'pending'
+        ? 'Синхронизация с облаком ещё не подтверждена.' : '';
+  const needsRetry = Boolean(error) || cloudStatus === 'error'
+    || syncStatus === 'error' || syncStatus === 'offline';
 
   const groups = useMemo(() => {
     const byAthlete = new Map<string, CloudTrainingPlanRow[]>();
@@ -257,7 +270,7 @@ export function CloudProgramsPage({
       {loading || cloudStatus === 'loading' ? (
         <Text variant="footnote" tone="muted">Загружаем программы…</Text>
       ) : null}
-      {!loading && cloudStatus === 'ready' && groups.length === 0 ? (
+      {!loading && cloudStatus === 'ready' && syncStatus === 'synced' && groups.length === 0 ? (
         <Text variant="footnote" tone="muted">Программ с выбранными параметрами нет</Text>
       ) : null}
       {groups.map((group) => (
@@ -272,12 +285,31 @@ export function CloudProgramsPage({
           </GlassSurface>
         </section>
       ))}
-      {error || cloudStatus === 'error' ? (
+      {error || cloudStatus === 'error' || syncWarning ? (
         <div className="cloud-plan-error">
-          <Text variant="footnote" role="alert">{error || cloudError || 'Нет соединения с облаком'}</Text>
-          <Button variant="secondary" onClick={() => {
-            void onRetryCloud().catch(() => {}).finally(() => setRetryKey((n) => n + 1));
-          }}>Повторить</Button>
+          {error || cloudStatus === 'error' ? (
+            <Text variant="footnote" role="alert">
+              {error || cloudError || 'Не удалось загрузить облачные данные'}
+            </Text>
+          ) : null}
+          {syncWarning ? (
+            <>
+              <Text variant="footnote" role={syncStatus === 'pending' ? 'status' : 'alert'}>
+                {syncWarning}
+              </Text>
+              <Text variant="footnote" tone="muted">
+                Изменения могут оставаться только на этом устройстве до завершения синхронизации.
+              </Text>
+            </>
+          ) : null}
+          {needsRetry ? (
+            <Button variant="secondary" onClick={() => {
+              void (async () => {
+                if (cloudStatus === 'error') await onRetryCloud();
+                if (syncStatus === 'error' || syncStatus === 'offline') await onRetrySync();
+              })().catch(() => {}).finally(() => setRetryKey((n) => n + 1));
+            }}>Повторить синхронизацию</Button>
+          ) : null}
         </div>
       ) : null}
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
