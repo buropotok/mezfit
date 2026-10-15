@@ -104,9 +104,15 @@ Only then set the GitHub Actions variable
 `.github/workflows/deploy.yml` forwards to the production Vite build.
 When unset, the feature stays disabled by default.
 
-While editing PLAN from an already cached local copy, the details screen
-keeps an explicit sync warning and retry action if the Cloud connection fails.
-A successful local edit must never be presented as confirmed cloud persistence.
+The PLAN detail editor reads the Addon's `db.cloud.syncState` directly through
+the shared `CloudConnectionsProvider` (distinct from cached-contact readiness).
+Its `pending`, `offline` and `error` phases warn that PLAN changes are not yet
+confirmed in Dexie Cloud, even when contacts are still locally readable. A
+retry requests `push` for queued PLAN writes followed by `pull`; only the
+Addon reporting `in-sync` with a connected session confirms sync. Failed
+initial coach-directory hydration displays an error and Retry rather than
+claiming the client has no coach. A successful local edit must never be
+presented as confirmed cloud persistence.
 
 Do not remove current D1 routes or their tests while a production rollout
 still depends on the disabled fallback. A subsequent cutover cleanup may delete
