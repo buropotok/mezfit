@@ -84,8 +84,14 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId,
-}: { repository: ProgramManagementRepository; planId: string }) {
+  repository, planId, cloudStatus, cloudError, onRetryCloud,
+}: {
+  repository: ProgramManagementRepository;
+  planId: string;
+  cloudStatus: 'loading' | 'ready' | 'error';
+  cloudError: string;
+  onRetryCloud: () => Promise<void>;
+}) {
   const [details, setDetails] = useState<ProgramDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -243,6 +249,19 @@ export function CloudProgramDetailsPage({
   );
   return (
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
+      {cloudStatus === 'error' ? (
+        <div className="cloud-plan-error">
+          <Text variant="footnote" role="alert">
+            {cloudError || 'Нет соединения с облаком'}
+          </Text>
+          <Text variant="footnote" tone="muted">
+            Изменения могут оставаться только на этом устройстве до восстановления синхронизации.
+          </Text>
+          <Button variant="secondary" onClick={() => { void onRetryCloud().catch(() => {}); }}>
+            Повторить синхронизацию
+          </Button>
+        </div>
+      ) : null}
       <div className="cloud-plan-title-row">
         <div className="cloud-plan-main-title"><Text variant="large-title">{details.program.name}</Text></div>
         <Badge color={details.program.status === 'active' ? 'green' : 'gray'}>
