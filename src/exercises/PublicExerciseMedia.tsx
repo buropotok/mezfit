@@ -6,7 +6,7 @@ import { Icon, Text } from '../ui';
 /** Only the approved immutable Dexie catalogue may reference the existing media library. */
 const PUBLIC_CATALOGUE_SHA = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 
-type MediaIdentity = Pick<CatalogueExerciseRow, 'id' | 'sourceSha256' | 'gif_url' | 'media_id' | 'copiedFromExerciseId' | 'copiedFromScope'>;
+type MediaIdentity = Pick<CatalogueExerciseRow, 'id' | 'sourceSha256' | 'gif_url'> & Partial<Pick<CatalogueExerciseRow, 'media_id' | 'copiedFromExerciseId' | 'copiedFromScope'>>;
 type MediaExercise = MediaIdentity & Pick<CatalogueExerciseRow, 'name' | 'name_ru'>;
 type Variant = 'thumbnail' | 'detail';
 
