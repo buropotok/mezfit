@@ -24,7 +24,13 @@ export function PersonalExercises({
   [role, cloud?.db, cloud?.actorUserId]);
 
   const [personal, setPersonal] = useState<CoachExercisePersonalSnapshot | null>(null);
-  const [assigned, setAssigned] = useState<AssignedCoachExerciseRow[] | null>(null);
+  const [assignedState, setAssignedState] = useState<{
+    coachUserId: string | null;
+    exercises: AssignedCoachExerciseRow[];
+  } | null>(null);
+  // A coach switch must never display the previous coach's records, even for one render.
+  const assigned = role === 'coach' ? [] : assignedState?.coachUserId === selectedCoachUserId
+    ? assignedState.exercises : null;
   const [personalError, setPersonalError] = useState('');
   const [assignedError, setAssignedError] = useState('');
   const [actionError, setActionError] = useState('');
@@ -46,12 +52,12 @@ export function PersonalExercises({
   }, [repository]);
 
   useEffect(() => {
-    setAssigned(role === 'coach' ? [] : null);
+    setAssignedState(role === 'coach' ? { coachUserId: null, exercises: [] } : null);
     setAssignedError('');
     if (!assignedRepository) return undefined;
     let active = true;
     const observer = assignedRepository.observe(selectedCoachUserId,
-      next => { if (active) { setAssigned(next); setAssignedError(''); } },
+      next => { if (active) { setAssignedState({ coachUserId: selectedCoachUserId, exercises: next }); setAssignedError(''); } },
       cause => { if (active) setAssignedError(cause instanceof Error ? cause.message : 'Ошибка тренерских упражнений'); },
     );
     return () => { active = false; observer.unsubscribe(); };
