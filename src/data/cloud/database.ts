@@ -32,12 +32,17 @@ export interface CloudContactProfileRow extends CloudSharedRow {
   sourceAuthAt: number;
 }
 
+export type CloudProgramStatus = 'draft' | 'active' | 'finished' | 'cancelled';
+
 export interface CloudTrainingPlanRow extends CloudSharedRow {
-  coachUserId: string;
-  clientUserId: string;
+  /** Explicit athlete identity; missing only on pre-rollout relationship headers. */
+  athleteUserId?: string;
+  /** Null for a standalone athlete's private program. */
+  coachUserId: string | null;
+  clientUserId: string | null;
   name: string;
   position: number;
-  status: 'draft' | 'active' | 'finished';
+  status: CloudProgramStatus;
   startedAt: string | null;
   finishedAt: string | null;
   createdAt: string;
