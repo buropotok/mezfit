@@ -107,7 +107,7 @@ function AthleteProgramPage({
       <Text variant="title">Фазы программы</Text>
       {visiblePhases.map((phase) => (
         <div key={phase.id} className="cloud-client-program-phase">
-          <Text variant="headline">{phase.name}</Text>
+          <div className="cloud-client-program-phase-title"><Text variant="headline">{phase.name}</Text></div>
           <Text variant="footnote" tone="muted">{phase.durationWeeks ?? 10} недель</Text>
           <Badge color={phase.status === 'active' ? 'green' :
             phase.status === 'finished' ? 'blue' :
