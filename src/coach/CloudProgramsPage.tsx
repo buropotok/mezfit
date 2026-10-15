@@ -105,16 +105,20 @@ export function CloudProgramsPage({
   useEffect(() => {
     let active = true;
     setLoading(true);
-    const subscription = (personalOnly ? repository.observePersonal.bind(repository) : repository.observeAuthored.bind(repository))((rows) => {
+    const onChange = (rows: CloudTrainingPlanRow[]) => {
       if (!active) return;
       setPrograms(rows);
       setLoading(false);
       setError('');
-    }, (reason) => {
+    };
+    const onError = (reason: unknown) => {
       if (!active) return;
       setError(reason instanceof Error ? reason.message : 'Не удалось загрузить программы');
       setLoading(false);
-    });
+    };
+    const subscription = personalOnly
+      ? repository.observePersonal(onChange, onError)
+      : repository.observeAuthored(onChange, onError);
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retryKey, personalOnly]);
 
