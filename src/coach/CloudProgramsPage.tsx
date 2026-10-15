@@ -167,6 +167,10 @@ export function CloudProgramsPage({
     } finally { setBusy(false); }
   };
   const requestActivation = async (plan: CloudTrainingPlanRow) => {
+    if (plan.status === 'active') {
+      setDialog(null);
+      return;
+    }
     const details = await repository.details(plan.id);
     if (!details || details.phases.length === 0) {
       setDialog(null);
@@ -290,6 +294,7 @@ export function CloudProgramsPage({
                 onChange={() => setCreateAthlete(client.userId)} />} />
           ))}
         </KonstaList>
+        {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
       </MezfitDialog>
     </section>
   );
