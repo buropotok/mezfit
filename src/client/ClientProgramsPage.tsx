@@ -61,8 +61,14 @@ function CloudClientProgramsPage() {
 }
 
 function AthleteProgramPage({
-  repository, actorUserId, cloudReady, onRetry,
-}: { repository: ProgramManagementRepository; actorUserId: string; cloudReady: boolean; onRetry: () => Promise<void> }) {
+  repository, actorUserId, cloudStatus, cloudError, onRetry,
+}: {
+  repository: ProgramManagementRepository;
+  actorUserId: string;
+  cloudStatus: 'loading' | 'ready' | 'error';
+  cloudError: string;
+  onRetry: () => Promise<void>;
+}) {
   const [data, setData] = useState<ProgramDetails | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
@@ -82,15 +88,15 @@ function AthleteProgramPage({
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, actorUserId, retryKey]);
-  if (error) return (
+  if (error || (cloudStatus === 'error' && !loaded)) return (
     <section className="cloud-client-program">
-      <Text variant="footnote" role="alert">{error}</Text>
+      <Text variant="footnote" role="alert">{error || cloudError || 'Не удалось синхронизировать программу'}</Text>
       <CloudButton onClick={() => {
         void onRetry().catch(() => {}).finally(() => setRetryKey((key) => key + 1));
       }}>Повторить</CloudButton>
     </section>
   );
-  if (!loaded || !cloudReady) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
+  if (!loaded || cloudStatus === 'loading') return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
   if (!data) return (
     <List><ListItem interactive={false} title="Нет активной программы"
       subtitle="Активная программа появится здесь после назначения или активации." /></List>
@@ -98,6 +104,12 @@ function AthleteProgramPage({
   const visiblePhases = data.phases;
   return (
     <section className="cloud-client-program" aria-label="Активная программа">
+      {cloudStatus === 'error' ? (
+        <div className="cloud-plan-error">
+          <Text variant="footnote" role="alert">{cloudError || 'Облако временно недоступно. Показана локальная копия.'}</Text>
+          <CloudButton onClick={() => { void onRetry().catch(() => {}); }}>Повторить</CloudButton>
+        </div>
+      ) : null}
       <GlassSurface preset="modalTuned" optics={false} className="cloud-client-program-summary">
         <div className="cloud-client-program-summary-content">
           <Text variant="large-title">{data.program.name}</Text>
@@ -132,7 +144,7 @@ export function ClientProgramsPage() {
   [cloud?.db, cloud?.actorUserId]);
   if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
     return <AthleteProgramPage repository={repository} actorUserId={cloud.actorUserId}
-      cloudReady={cloud.status === 'ready'} onRetry={cloud.refresh} />;
+      cloudStatus={cloud.status} cloudError={cloud.error} onRetry={cloud.refresh} />;
   }
   // Compatibility for installations not yet provisioned with Dexie Cloud.
   if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
