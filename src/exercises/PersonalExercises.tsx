@@ -29,8 +29,10 @@ export function PersonalExercises({
     exercises: AssignedCoachExerciseRow[];
   } | null>(null);
   // A coach switch must never display the previous coach's records, even for one render.
-  const assigned = role === 'coach' ? [] : assignedState?.coachUserId === selectedCoachUserId
-    ? assignedState.exercises : null;
+  // A coach change invalidates the old projection synchronously. Never block the
+  // personal/public catalogue while the selected coach's assignment query loads.
+  const assigned = role === 'client' && assignedState?.coachUserId === selectedCoachUserId
+    ? assignedState.exercises : [];
   const [personalError, setPersonalError] = useState('');
   const [assignedError, setAssignedError] = useState('');
   const [actionError, setActionError] = useState('');
@@ -130,11 +132,11 @@ export function PersonalExercises({
   }, [editingId, onNavigationContextChange, closeEditor]);
 
   const ready = snapshot?.status === 'ready';
-  if (error || personalError || assignedError || (cloud?.status === 'error' && !ready)) {
+  if (error || personalError || (cloud?.status === 'error' && !ready)) {
     return <Surface><Text role="alert">{error || personalError || assignedError || cloud?.error || 'Не удалось открыть каталог'}</Text></Surface>;
   }
   if (!cloud || (cloud.status === 'loading' && !ready)
-    || snapshot === null || personal === null || assigned === null) {
+    || snapshot === null || personal === null) {
     return <Text tone="muted">Загружаем каталог упражнений…</Text>;
   }
   if (snapshot.status === 'unpublished') {
@@ -150,6 +152,7 @@ export function PersonalExercises({
   return <>
     {cloud.status === 'error'
       ? <Text variant="footnote" tone="muted">Офлайн: отображаются сохранённые упражнения</Text> : null}
+    {assignedError ? <Text role="alert" variant="footnote">Не удалось открыть тренерские упражнения: {assignedError}</Text> : null}
     {actionError ? <Text role="alert" variant="footnote">{actionError}</Text> : null}
     {request?.mode !== 'edit' ? <ExerciseCatalogContent
       key={catalogueKey}
