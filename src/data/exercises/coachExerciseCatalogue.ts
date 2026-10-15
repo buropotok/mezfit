@@ -27,7 +27,7 @@ export class CoachExerciseCatalogueRepository {
     }).subscribe({ next: onChange, error: onError });
   }
 
-  async setFavourite(exerciseId: string, favourite: boolean): Promise<void> {
+  async setFavourite(exerciseId: string, favourite: boolean, assignedCoachUserId?: string): Promise<void> {
     const id = coachFavouriteId(this.actorUserId, exerciseId);
     // The reference must belong to the public catalogue or to this coach.
     if (/^\d{4}$/.test(exerciseId)) {
@@ -36,8 +36,12 @@ export class CoachExerciseCatalogueRepository {
       }
     } else {
       const row = await this.db.coachExerciseDefinitions.get(exerciseId);
-      if (!isCoachExerciseDefinition(row, this.actorUserId) || row.archivedAt !== null) {
-        throw new Error('EXERCISE_NOT_FOUND');
+      const own = isCoachExerciseDefinition(row, this.actorUserId) && row.archivedAt === null;
+      if (!own) {
+        const assigned = assignedCoachUserId
+          ? await new AssignedCoachExercisesRepository(this.db, this.actorUserId).read(assignedCoachUserId)
+          : [];
+        if (!assigned.some(item => item.id === exerciseId)) throw new Error('EXERCISE_NOT_ASSIGNED');
       }
     }
     if (favourite) {
