@@ -200,10 +200,14 @@ export function assertRolePolicy(remoteRoles, localRoles) {
     }
     const permissionKeys = Object.keys(remote.permissions).sort();
     const expectedKeys = roleName === 'coach' ? ['manage', 'update'] : ['update'];
+    // During the staged ACL rollout, the installed Coach policy may be either
+    // exact legacy headers-only or exact phase-header authoring. No other writes.
+    const coachRemoteCompatible = equalItems(remote.permissions.manage, ['trainingPlans'])
+      || equalItems(remote.permissions.manage, ['trainingPlans', 'programPhases']);
     if (!equalItems(permissionKeys, expectedKeys)
       || !equalItems(Object.keys(local.permissions), expectedKeys)
-      || (roleName === 'coach' && (!equalItems(remote.permissions.manage, ['trainingPlans'])
-        || !equalItems(local.permissions.manage, ['trainingPlans'])))
+      || (roleName === 'coach' && (!coachRemoteCompatible
+        || !equalItems(local.permissions.manage, ['trainingPlans', 'programPhases'])))
       || !isRecord(remote.permissions.update)
       || !equalItems(Object.keys(remote.permissions.update), ['sessionSetFacts'])
       || !equalItems(remote.permissions.update.sessionSetFacts, FACT_FIELDS)

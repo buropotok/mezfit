@@ -161,7 +161,9 @@ function ClientShell({
     );
   }
 
-  if (destination === 'programs') return <ClientProgramsPage />;
+  if (destination === 'programs') return (
+    <ClientProgramsPage onNavigationContextChange={onNavigationContextChange} />
+  );
   if (destination === 'exercises') return <PublicExercises onNavigationContextChange={onNavigationContextChange} />;
 
   const placeholder = clientPlaceholderCopy[destination] ?? { title: 'Раздел', text: 'Этот раздел будет реализован отдельной задачей.' };

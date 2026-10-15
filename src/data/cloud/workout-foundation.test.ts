@@ -4,6 +4,7 @@ import serverSchema from '../../../cloud/schema-workout-foundation.json';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import {
   CLOUD_DATABASE_VERSION, CLOUD_DATABASE_STORES_V3, CLOUD_DATABASE_STORES_V4,
+  CLOUD_DATABASE_STORES_V5, CLOUD_DATABASE_STORES_V6,
   type CloudTrainingPlanRow, type MezfitCloudDatabase,
 } from './database';
 import { WorkoutFoundationRepository } from './workout-foundation';
@@ -18,8 +19,13 @@ const newTables = [
 
 describe('Dexie Cloud v4 workout foundation', () => {
   it('adds eight ownerless relationship domain tables with globally unique keys', () => {
-    // Workout v4 remains intact even after the additive coach-catalogue v5 upgrade.
-    expect(CLOUD_DATABASE_VERSION).toBe(5);
+    expect(CLOUD_DATABASE_VERSION).toBe(6);
+    // v5's coach-private catalogue survives PLAN v6.
+    expect(Object.keys(CLOUD_DATABASE_STORES_V5)).toContain('coachExerciseDefinitions');
+    expect(Object.keys(CLOUD_DATABASE_STORES_V6)).toEqual(Object.keys(CLOUD_DATABASE_STORES_V5));
+    expect(CLOUD_DATABASE_STORES_V6.trainingPlans).toContain('[realmId+status]');
+    expect(CLOUD_DATABASE_STORES_V6.programPhases).toContain('[trainingPlanId+status]');
+    expect(CLOUD_DATABASE_STORES_V6.programPhases).toContain('[realmId+status]');
     expect(Object.keys(CLOUD_DATABASE_STORES_V4)).toEqual([
       ...Object.keys(CLOUD_DATABASE_STORES_V3), ...newTables,
     ]);
@@ -40,14 +46,19 @@ describe('Dexie Cloud v4 workout foundation', () => {
     }
   });
 
-  it('does not grant Coach or Client mutations on new PLAN, snapshots, or FACT-only additions', () => {
-    for (const role of [currentRoles.roles.coach, currentRoles.roles.client]) {
-      const allowed = JSON.stringify(role.permissions);
-      for (const table of newTables) expect(allowed).not.toContain('"' + table + '"');
-      expect(role.permissions.update.sessionSetFacts).not.toContain('*');
+  it('grants coach authoring only for phase headers and keeps Client and execution tables read-only', () => {
+    const coach = currentRoles.roles.coach.permissions;
+    const client = currentRoles.roles.client.permissions;
+    expect(coach.manage).toEqual(['trainingPlans', 'programPhases']);
+    for (const table of newTables.filter((name) => name !== 'programPhases')) {
+      expect(JSON.stringify(coach)).not.toContain('"' + table + '"');
     }
-    expect(currentRoles.roles.coach.permissions.manage).toEqual(['trainingPlans']);
-    expect(Object.hasOwn(currentRoles.roles.client.permissions, 'manage')).toBe(false);
+    for (const table of newTables) {
+      expect(JSON.stringify(client)).not.toContain('"' + table + '"');
+    }
+    expect(coach.update.sessionSetFacts).not.toContain('*');
+    expect(client.update.sessionSetFacts).not.toContain('*');
+    expect(Object.hasOwn(client, 'manage')).toBe(false);
   });
 });
 
@@ -97,7 +108,7 @@ async function fixture() {
   const phases = [
     phase,
     { ...phase, id: 'pha-stray', trainingPlanId: 'tra-other' },
-    { ...phase, id: 'pha-ownerful', owner: 'tg:101' },
+    { ...phase, id: 'pha-forged-owner', owner: 'tg:303' },
   ];
   const days = [
     day,
@@ -125,11 +136,11 @@ async function fixture() {
     programExercises: table(exercises),
     programSets: table(sets),
   } as unknown as MezfitCloudDatabase;
-  return { db, plan, realm, realmId, members, planGet, realmGet, exercises };
+  return { db, plan, phase, realm, realmId, members, planGet, realmGet, exercises };
 }
 
 describe('read-only shared workout PLAN repository', () => {
-  it('projects PLAN without dangling, foreign-realm or ownerful children', async () => {
+  it('projects PLAN without dangling, foreign-realm or unauthorized-owner children', async () => {
     const f = await fixture();
     const repo = new WorkoutFoundationRepository(f.db, 'tg:101');
     const result = await repo.getProgramOutline(f.plan.id);
@@ -139,6 +150,18 @@ describe('read-only shared workout PLAN repository', () => {
     expect(result?.phases[0].days[0].exercises).toHaveLength(1);
     expect(result?.phases[0].days[0].exercises[0].sets).toHaveLength(1);
     expect(result?.phases[0].days[0].exercises[0].exercise.exercise.exerciseDefinitionId).toBe('0001');
+  });
+
+  it('accepts authorized coach-owned program and phase headers', async () => {
+    const f = await fixture();
+    f.plan.owner = 'tg:101';
+    f.phase.owner = 'tg:101';
+    const repo = new WorkoutFoundationRepository(f.db, 'tg:202');
+    const outline = await repo.getProgramOutline(f.plan.id);
+    expect(outline?.phases[0].phase.owner).toBe('tg:101');
+    expect(outline?.phases[0].days).toHaveLength(1);
+    f.phase.owner = 'tg:303';
+    expect((await repo.getProgramOutline(f.plan.id))?.phases).toHaveLength(0);
   });
 
   it('rejects unsupported synced exercise tracking types instead of exposing invalid metrics', async () => {

@@ -94,10 +94,14 @@ export class AssignedProgramsRepository {
         this.db.members.toArray(),
       ]);
       const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
-      const permitted = await Promise.all(plans.map(async (plan) =>
-        (await isApprovedAssignedPair(
+      const permitted = await Promise.all(plans.map(async (plan) => {
+        if (plan.realmId === this.actorUserId && plan.athleteUserId === this.actorUserId
+          && plan.coachUserId === null && plan.clientUserId === null) return plan;
+        if (!plan.coachUserId || !plan.clientUserId) return null;
+        return await isApprovedAssignedPair(
           realmById.get(plan.realmId), members, plan.coachUserId, plan.clientUserId,
-        )) ? plan : null));
+        ) ? plan : null;
+      }));
       return sortAssignedPlans(permitted.filter((plan): plan is CloudTrainingPlanRow => plan !== null));
     }).subscribe({
       next: onChange,
@@ -127,13 +131,15 @@ export class AssignedProgramsRepository {
     const realmId = await this.relationshipRealm(clientTelegramId);
     const now = new Date().toISOString();
     const position = await this.db.trainingPlans.where('realmId').equals(realmId).count();
-    // @id generates a globally unique key. Explicit owner:null prevents
-    // creator ownership from overriding the coach/client PLAN permission split.
+    // Maintain the ownerless input contract of this pilot adapter. The
+    // installed Addon may implicitly assign ownership to the authorized
+    // Coach creator; domain readers accept either exact representation.
     return this.db.trainingPlans.add({
       realmId,
       owner: null,
       coachUserId: this.actorUserId,
       clientUserId: `tg:${clientTelegramId}`,
+      athleteUserId: `tg:${clientTelegramId}`,
       name,
       position,
       status: 'draft',

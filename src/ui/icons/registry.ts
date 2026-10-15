@@ -11,6 +11,10 @@ import chevronLeftUrl from './chevron-left.svg';
 import clipboardListFilledUrl from './liquid-glass-clipboard-list-filled.svg';
 import clipboardListOutlineUrl from './liquid-glass-clipboard-list-outline.svg';
 import clockUrl from './clock.svg';
+import copyUrl from './copy.svg';
+import trashUrl from './trash.svg';
+import alertCircleUrl from './alert-circle.svg';
+import checkUrl from './check.svg';
 import dotsVerticalUrl from './dots-vertical.svg';
 import homeFilledUrl from './home-filled.svg';
 import homeUrl from './home.svg';
@@ -39,6 +43,10 @@ const uiIconRegistry = {
   'chevron-left': { outline: chevronLeftUrl, filled: chevronLeftUrl },
   'clipboard-list': { outline: clipboardListOutlineUrl, filled: clipboardListFilledUrl },
   clock: { outline: clockUrl, filled: clockUrl },
+  copy: { outline: copyUrl, filled: copyUrl },
+  trash: { outline: trashUrl, filled: trashUrl },
+  'alert-circle': { outline: alertCircleUrl, filled: alertCircleUrl },
+  check: { outline: checkUrl, filled: checkUrl },
   'dots-vertical': { outline: dotsVerticalUrl, filled: dotsVerticalUrl },
   home: { outline: homeUrl, filled: homeFilledUrl },
   history: { outline: historyUrl, filled: historyUrl },
