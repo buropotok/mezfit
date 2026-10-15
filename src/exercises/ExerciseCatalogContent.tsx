@@ -52,23 +52,11 @@ function uniqueMuscles(ids: readonly string[], taxonomy: readonly PublicTaxonomy
   return [...new Set(ids)].map((id) => labels.get(id) ?? id).join(', ') || 'Не указано';
 }
 
-/**
- * Exercise taxonomy and sprite atlas are separate catalogues. Only confirmed
- * ID/label matches may be highlighted; guessing anatomical synonyms would
- * misrepresent which muscle an exercise trains.
- */
-function anatomyMuscleIds(ids: readonly string[], taxonomy: readonly PublicTaxonomyRow[]): string[] {
-  const taxonomyLabels = new Map(taxonomy.map((node) => [node.id, node.subcategory_ru]));
-  const atlasByLabel = new Map(
-    Object.entries(WORKED_MUSCLE_LABELS).map(([id, label]) => [label.trim().toLocaleLowerCase('ru'), id]),
-  );
-  const result = new Set<string>();
-  for (const id of ids) {
-    const matched = Object.prototype.hasOwnProperty.call(WORKED_MUSCLE_LABELS, id)
-      ? id : atlasByLabel.get(taxonomyLabels.get(id)?.trim().toLocaleLowerCase('ru') ?? '');
-    if (matched) result.add(matched);
-  }
-  return [...result];
+/** Atlas zone IDs are canonical taxonomy IDs; never infer matches from display labels. */
+function anatomyMuscleIds(ids: readonly string[]): string[] {
+  return [...new Set(ids.filter((id) =>
+    Object.prototype.hasOwnProperty.call(WORKED_MUSCLE_LABELS, id),
+  ))];
 }
 
 function ExerciseDetail({ row, taxonomy, onEdit }: {
@@ -76,9 +64,10 @@ function ExerciseDetail({ row, taxonomy, onEdit }: {
   taxonomy: PublicTaxonomyRow[];
   onEdit?: () => void;
 }) {
-  const primary = anatomyMuscleIds(row.muscles.primary, taxonomy);
-  const secondary = anatomyMuscleIds(row.muscles.secondary, taxonomy)
-    .filter((id) => !primary.includes(id));
+  const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
+  const primaryIds = new Set(primary);
+  const secondary = anatomyMuscleIds([...row.muscles.secondary, ...row.muscles.stabilizers])
+    .filter((id) => !primaryIds.has(id));
   const sections: Array<[string, readonly string[]]> = [
     ['Основные мышцы', row.muscles.primary],
     ['Вспомогательные мышцы', row.muscles.secondary],
