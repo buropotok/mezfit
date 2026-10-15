@@ -26,7 +26,7 @@ function TablerFilter() {
 function TablerStar({ filled }: { filled: boolean }) {
   return <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"
     fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5"
-    strokeLinecap="round" strokeLinejoin="round"><path d="m12 17.75-5.56 3.26 1.49-6.37-4.93-4.28 6.49-.55L12 3.8l2.51 6.01 6.49.55-4.93 4.28 1.49 6.37z" /></svg>;
+    strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" /></svg>;
 }
 
 const COACH_CATALOG_TABS = [
