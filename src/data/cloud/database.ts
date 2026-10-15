@@ -4,6 +4,7 @@ import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
+import type { CoachExerciseOverrideRow, CoachExerciseDefinitionRow, CoachExerciseFavouriteRow } from '../exercises/coachExerciseTypes';
 import type {
   CloudProgramPhaseRow, CloudProgramDayRow, CloudProgramExerciseRow, CloudProgramSetRow,
   CloudWorkoutOccurrenceRow, CloudSessionExerciseRow, CloudSessionFactExerciseRow, CloudSessionFactSetRow,
@@ -13,7 +14,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 4;
+export const CLOUD_DATABASE_VERSION = 5;
 
 export interface CloudSharedRow {
   id: string;
@@ -135,6 +136,14 @@ export const CLOUD_DATABASE_STORES_V4 = {
   sessionFactSets: '@id, realmId, sessionFactExerciseId, [sessionFactExerciseId+position]',
 } as const;
 
+/** Private coach catalogue storage. Personal realm = authenticated Dexie Cloud user ID. */
+export const CLOUD_DATABASE_STORES_V5 = {
+  ...CLOUD_DATABASE_STORES_V4,
+  coachExerciseOverrides: 'id, realmId, sourceExerciseId',
+  coachExerciseDefinitions: 'id, realmId, category, subcategory, equipment',
+  coachExerciseFavourites: 'id, realmId, exerciseId',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -171,13 +180,17 @@ export class MezfitCloudDatabase extends Dexie {
   publicExerciseDefinitions!: Table<PublicExerciseRow, string>;
   publicExerciseTaxonomy!: Table<PublicTaxonomyRow, string>;
   publicExerciseCatalogues!: Table<PublicExerciseCatalogueRow, string>;
+  coachExerciseOverrides!: Table<CoachExerciseOverrideRow, string>;
+  coachExerciseDefinitions!: Table<CoachExerciseDefinitionRow, string>;
+  coachExerciseFavourites!: Table<CoachExerciseFavouriteRow, string>;
 
   constructor(telegramUserId: string, initData: string) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
     this.version(1).stores(CLOUD_DATABASE_STORES_V1);
     this.version(2).stores(CLOUD_DATABASE_STORES_V2);
     this.version(3).stores(CLOUD_DATABASE_STORES_V3);
-    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V4);
+    this.version(4).stores(CLOUD_DATABASE_STORES_V4);
+    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V5);
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
