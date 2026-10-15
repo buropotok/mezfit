@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
-import { athleteOf, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
+import { athleteOf, isOtherActiveProgramInScope, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
 import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
 import { Badge, Button, GlassSurface, IconButton, LiquidPopover, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -133,9 +133,8 @@ export function CloudProgramDetailsPage({
 
   const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'finished' | 'cancelled') => {
     if (!details) return;
-    const other = (await repository.listReadable()).find((plan) => plan.id !== planId
-      && plan.realmId === details.program.realmId
-      && plan.status === 'active' && athleteOf(plan) === athleteOf(details.program));
+    const other = (await repository.listReadable()).find((plan) =>
+      isOtherActiveProgramInScope(plan, details.program));
     if (other) {
       setDialog({
         kind: 'select', title: 'Выберите статус для текущей активной программы',
