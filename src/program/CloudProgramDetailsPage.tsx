@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
+import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { athleteOf, isOtherActiveProgramInScope, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
 import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
 import { Badge, Button, GlassSurface, IconButton, LiquidPopover, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
@@ -84,12 +85,14 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, cloudStatus, cloudError, onRetryCloud,
+  repository, planId, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud,
 }: {
   repository: ProgramManagementRepository;
   planId: string;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
+  syncStatus: CloudSyncStatus;
+  syncError: string;
   onRetryCloud: () => Promise<void>;
 }) {
   const [details, setDetails] = useState<ProgramDetails | null>(null);
@@ -240,6 +243,15 @@ export function CloudProgramDetailsPage({
     }
   };
 
+  const syncing = syncStatus === 'pending';
+  const syncWarning = syncStatus === 'error'
+    ? syncError || 'Ошибка синхронизации с Dexie Cloud'
+    : syncStatus === 'offline'
+      ? syncError || 'Нет соединения с Dexie Cloud'
+      : cloudStatus === 'error'
+        ? cloudError || 'Не удалось синхронизировать облачные данные'
+        : syncing ? 'Синхронизация с облаком ещё не подтверждена.' : '';
+
   if (loading) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
   if (!details) return (
     <section className="cloud-plan-loading">
@@ -249,17 +261,19 @@ export function CloudProgramDetailsPage({
   );
   return (
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
-      {cloudStatus === 'error' ? (
+      {syncWarning ? (
         <div className="cloud-plan-error">
-          <Text variant="footnote" role="alert">
-            {cloudError || 'Нет соединения с облаком'}
+          <Text variant="footnote" role={syncing ? 'status' : 'alert'}>
+            {syncWarning}
           </Text>
           <Text variant="footnote" tone="muted">
             Изменения могут оставаться только на этом устройстве до восстановления синхронизации.
           </Text>
-          <Button variant="secondary" onClick={() => { void onRetryCloud().catch(() => {}); }}>
-            Повторить синхронизацию
-          </Button>
+          {!syncing ? (
+            <Button variant="secondary" onClick={() => { void onRetryCloud().catch(() => {}); }}>
+              Повторить синхронизацию
+            </Button>
+          ) : null}
         </div>
       ) : null}
       <div className="cloud-plan-title-row">
