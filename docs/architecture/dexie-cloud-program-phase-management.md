@@ -20,22 +20,28 @@ Publishing empty pending phases must remain supported permanently.
 
 ## Dexie Cloud identity and domains
 
-Do not write an athlete ID into the reserved `owner` property. `owner:null`
-is deliberate on shared records, so the creator does not bypass role-limited
-permissions. `athleteUserId` identifies the actual athlete. Relationship
-programs use an existing Worker-verified coach/client realm and preserve both
-role IDs; personal programs use the actor's built-in private realm and
+Do not use the reserved `owner` property as athlete identity. Dexie Cloud Addon
+may automatically assign an inserted record to its creator, even when `owner:null`
+was passed. New personal PLAN headers therefore belong to the athlete, while
+new assigned PLAN headers belong to the authorized coach. Existing Worker-created
+ownerless headers remain readable; a client-owned assigned PLAN is rejected by
+the repository. `athleteUserId` identifies the athlete independently of ownership.
+Relationship plans use an existing Worker-verified coach/client realm and preserve
+both role IDs; personal programs use the actor's built-in private realm and
 `coachUserId:null, clientUserId:null`, without a dummy client.
 
-The new repository operates on the existing v4 `trainingPlans` and
-`programPhases` tables. New `durationWeeks` and `athleteUserId` properties
-are regular, non-indexed attributes; no v5 table or index migration is needed.
-Older relationship plan rows without `athleteUserId` are read using
-`clientUserId` as a compatibility fallback. Older phases missing
-`durationWeeks` display 10 weeks.
+The new repository uses existing `trainingPlans` and `programPhases` records.
+Existing Dexie **v5** belongs to the coach-private exercise catalogue and stays
+unchanged. Dexie **v6** adds indexed PLAN status predicates:
+`trainingPlans.[realmId+status]` and both `programPhases.[trainingPlanId+status]`
+and `programPhases.[realmId+status]`. Version 6 preserves all coach exercise
+tables and the older v1–v5 upgrade history. `durationWeeks` and `athleteUserId`
+are ordinary attributes; older relationship plan rows without `athleteUserId`
+fall back to `clientUserId`, and older phases display 10 weeks.
 
-Program/phase activation uses declarative Dexie Cloud `where(...).modify(...)`
-predicates, not locally enumerated row IDs. This allows a later offline client
+Program/phase activation uses native compound-index ranges with
+`where('[realmId+status]')` / `where('[trainingPlanId+status]').equals(...).modify(...)`,
+not locally enumerated row IDs. This allows a later offline client
 to replay the intention against its server snapshot so that only one program
 and one phase are active per relationship realm. If another device activated
 an unseen program, the stale program and its active phase revert to
