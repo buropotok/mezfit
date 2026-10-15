@@ -80,11 +80,14 @@ function ProgramRow({
 }
 
 export function CloudProgramsPage({
-  repository, clients, onOpen,
+  repository, clients, onOpen, cloudStatus, cloudError, onRetryCloud,
 }: {
   repository: ProgramManagementRepository;
   clients: readonly CloudContact[];
   onOpen: (plan: CloudTrainingPlanRow) => void;
+  cloudStatus: 'loading' | 'ready' | 'error';
+  cloudError: string;
+  onRetryCloud: () => Promise<void>;
 }) {
   const [programs, setPrograms] = useState<CloudTrainingPlanRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -244,8 +247,10 @@ export function CloudProgramsPage({
           <TabsTrigger value="cancelled">Отменённые</TabsTrigger>
         </TabsList>
       </Tabs>
-      {loading ? <Text variant="footnote" tone="muted">Загружаем программы…</Text> : null}
-      {!loading && groups.length === 0 ? (
+      {loading || cloudStatus === 'loading' ? (
+        <Text variant="footnote" tone="muted">Загружаем программы…</Text>
+      ) : null}
+      {!loading && cloudStatus === 'ready' && groups.length === 0 ? (
         <Text variant="footnote" tone="muted">Программ с выбранными параметрами нет</Text>
       ) : null}
       {groups.map((group) => (
@@ -260,10 +265,12 @@ export function CloudProgramsPage({
           </GlassSurface>
         </section>
       ))}
-      {error ? (
+      {error || cloudStatus === 'error' ? (
         <div className="cloud-plan-error">
-          <Text variant="footnote" role="alert">{error}</Text>
-          <Button variant="secondary" onClick={() => setRetryKey((n) => n + 1)}>Повторить</Button>
+          <Text variant="footnote" role="alert">{error || cloudError || 'Нет соединения с облаком'}</Text>
+          <Button variant="secondary" onClick={() => {
+            void onRetryCloud().catch(() => {}).finally(() => setRetryKey((n) => n + 1));
+          }}>Повторить</Button>
         </div>
       ) : null}
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
