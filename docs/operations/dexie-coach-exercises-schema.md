@@ -8,9 +8,20 @@ The app's local Dexie v5 adds three private coach tables. The live Dexie Cloud s
 | coachExerciseDefinitions | id | Original coach-created exercises |
 | coachExerciseFavourites | id | Per-coach favourites referencing public/private IDs |
 
-The additive-only reviewed schema payload is **cloud/schema-coach-exercises.json**. Verify the target Dexie Cloud URL is the existing approved database, compare a fresh schema/roles export with the manifest, back up metadata as required by the database administrator, and apply ONLY the three schema declarations with an authorized database manager account. After import, export schema and roles again: the new tables must have primary key id; all prior keys and global roles must remain unchanged. Do not import roles or business data.
+The exact allowlisted schema manifest is **cloud/schema-coach-exercises.json**.
 
-**Do not reuse the workout-v4 workflow to import arbitrary tables.** The existing publisher write key is allowlisted for operations in AGENTS.md §21. This requires a separate administrator-approved cloud configuration step, never an application PR/push action.
+## Protected GitHub Actions publishing (no manual Dexie CLI)
+
+After merging the reviewed workflow into `main`, open **Actions → Apply Dexie Cloud coach exercise schema** (`.github/workflows/dexie-coach-exercises-schema.yml`).
+
+1. Select branch **main**, operation **preview**, leave confirmation blank. Run the workflow, approve the protected `dexie-production` environment, and review the log's list of missing tables. No cloud changes occur in preview.
+2. When the missing-table plan is correct, start a new run on **main** with operation **apply** and confirmation **APPLY_COACH_EXERCISES_V5_SCHEMA**. Approve the protected environment.
+3. The workflow exports schema/roles before import, imports **only missing allowlisted tables**, then re-exports schema/roles and fails unless the three `id`-keyed tables are present, every earlier table/key remains unchanged, roles remain identical and `sealed` has not changed.
+4. Repeat operation **preview** and expect `Missing tables (0)`. The apply operation is safe to repeat: no already-installed table is re-keyed or re-imported.
+
+Only the repository owner may dispatch this workflow. There are **no** PR/push triggers, no new credentials, no role imports and no user data imports. The environment secret `DEXIE_CLOUD_WRITE_KEY` is consumed by the same isolated credential-preparation routine as the workout schema workflow. Both workflows share one concurrency group.
+
+**Do not use the workout-v4 workflow to import arbitrary tables.** The new workflow's separate three-table allowlist is approved explicitly under AGENTS.md §21; other new schema or permission changes need a fresh review.
 
 ## Access boundary
 
@@ -20,8 +31,8 @@ The public realm rlm-public is immutable. An override applies a patch while pres
 
 ## Deployment order
 
-1. Review and deploy the three server tables with administrator approval.
-2. Verify the server schema/roles export and private realm read/write isolation using two real identities.
+1. Merge the protected schema workflow and run preview/apply through GitHub Actions, with production environment approval.
+2. Verify the exported server schema/roles and private realm read/write isolation using two real identities.
 3. Only then release the Dexie v5 client; local writes must not be represented as cloud-synced before that.
 4. Rework the legacy D1 editor in a follow-up PR and connect it through the prepared coach editor gateway.
 
