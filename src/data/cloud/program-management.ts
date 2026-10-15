@@ -331,41 +331,26 @@ export class ProgramManagementRepository {
       .filter((set) => set.owner === null && exercises.some((exercise) => exercise.id === set.programExerciseId));
     return { phases: ordered(phases), days, exercises, sets };
   }
-  private async copyPhase(source: CloudProgramPhaseRow, planId: string, position: number,
-    tree: Awaited<ReturnType<ProgramManagementRepository['tree']>>) {
-    const phaseId = await this.db.programPhases.add({
+  /** This PR can duplicate phase headers only; descendant ACL comes with day authoring. */
+  private async copyPhase(source: CloudProgramPhaseRow, planId: string, position: number) {
+    return this.db.programPhases.add({
       realmId: source.realmId, owner: null, trainingPlanId: planId,
-      name: source.name, position, status: 'draft', durationWeeks: source.durationWeeks ?? DEFAULT_PHASE_WEEKS,
+      name: source.name, position, status: 'draft',
+      durationWeeks: source.durationWeeks ?? DEFAULT_PHASE_WEEKS,
       plannedStartDate: source.plannedStartDate, plannedEndDate: source.plannedEndDate,
     });
-    for (const day of ordered(tree.days.filter((row) => row.programPhaseId === source.id))) {
-      const dayId = await this.db.programDays.add({
-        realmId: day.realmId, owner: null, programPhaseId: phaseId,
-        position: day.position, name: day.name, status: day.status,
-      });
-      for (const exercise of ordered(tree.exercises.filter((row) => row.programDayId === day.id))) {
-        const exerciseId = await this.db.programExercises.add({
-          realmId: exercise.realmId, owner: null, programDayId: dayId,
-          position: exercise.position, status: exercise.status, notes: exercise.notes,
-          exercise: { ...exercise.exercise },
-        });
-        for (const set of ordered(tree.sets.filter((row) => row.programExerciseId === exercise.id)))
-          await this.db.programSets.add({
-            realmId: set.realmId, owner: null, programExerciseId: exerciseId,
-            position: set.position, status: set.status,
-            plannedReps: set.plannedReps, plannedWeightKg: set.plannedWeightKg,
-            plannedDurationSeconds: set.plannedDurationSeconds, plannedDistanceMeters: set.plannedDistanceMeters,
-          });
-      }
-    }
   }
+
   async duplicatePhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
     await this.db.transaction('rw', ['programPhases', 'programDays',
       'programExercises', 'programSets'], async () => {
         const tree = await this.tree(plan), source = tree.phases.find((phase) => phase.id === phaseId);
         if (!source) throw new Error('Фаза не найдена');
-        await this.copyPhase(source, id, tree.phases.reduce((max, phase) => Math.max(max, phase.position), -1) + 1, tree);
+        if (tree.days.some((day) => day.programPhaseId === phaseId))
+          throw new Error('Дублирование фазы с днями будет доступно после реализации редактора дней');
+        await this.copyPhase(source, id,
+          tree.phases.reduce((max, phase) => Math.max(max, phase.position), -1) + 1);
       });
   }
   async duplicateProgram(id: string): Promise<string> {
@@ -373,6 +358,8 @@ export class ProgramManagementRepository {
     return this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
       'programExercises', 'programSets'], async () => {
         const tree = await this.tree(plan);
+        if (tree.days.length > 0)
+          throw new Error('Дублирование программы с днями будет доступно после реализации редактора дней');
         const plans = await this.db.trainingPlans.where('realmId').equals(plan.realmId).toArray();
         const now = new Date().toISOString();
         const nextId = await this.db.trainingPlans.add({
@@ -382,29 +369,23 @@ export class ProgramManagementRepository {
           position: plans.reduce((max, row) => Math.max(max, row.position), -1) + 1,
           status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
         });
-        for (const phase of tree.phases) await this.copyPhase(phase, nextId, phase.position, tree);
+        for (const phase of tree.phases) await this.copyPhase(phase, nextId, phase.position);
         return nextId;
       });
   }
   async deletePhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['programPhases', 'programDays', 'programExercises',
-      'programSets', 'workoutOccurrences'], async () => {
-        const phase = await this.db.programPhases.get(phaseId);
-        if (!phase || !belongs(phase, plan)) throw new Error('Фаза не найдена');
-        if (phase.status === 'active') throw new Error('Сначала смените статус активной фазы');
-        const tree = await this.tree(plan);
-        const days = tree.days.filter((day) => day.programPhaseId === phaseId);
-        if ((await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray())
-          .some((occ) => days.some((day) => day.id === occ.programDayId)))
-          throw new Error('Фаза уже содержит запланированные тренировки');
-        const exercises = tree.exercises.filter((exercise) => days.some((day) => day.id === exercise.programDayId));
-        await this.db.programSets.bulkDelete(tree.sets.filter((set) => exercises.some((exercise) =>
-          exercise.id === set.programExerciseId)).map((set) => set.id));
-        await this.db.programExercises.bulkDelete(exercises.map((row) => row.id));
-        await this.db.programDays.bulkDelete(days.map((row) => row.id));
-        await this.db.programPhases.delete(phaseId);
-      });
+    await this.db.transaction('rw', ['programPhases', 'programDays',
+      'programExercises', 'programSets', 'workoutOccurrences'], async () => {
+      const phase = await this.db.programPhases.get(phaseId);
+      if (!phase || !belongs(phase, plan)) throw new Error('Фаза не найдена');
+      if (phase.status === 'active') throw new Error('Сначала смените статус активной фазы');
+      const tree = await this.tree(plan);
+      if (tree.days.some((day) => day.programPhaseId === phaseId))
+        throw new Error('Нельзя удалить фазу с днями до реализации синхронизируемого каскада');
+      // A collection predicate survives late syncs, unlike deleting locally known IDs.
+      await this.db.programPhases.where('id').equals(phaseId).delete();
+    });
   }
   async deleteProgram(id: string): Promise<void> {
     const plan = await this.writable(id);
@@ -418,14 +399,14 @@ export class ProgramManagementRepository {
         if (await this.db.workoutSessions.where('trainingPlanId').equals(id).count())
           throw new Error('Программу с историей тренировок удалять нельзя');
         const tree = await this.tree(current);
-        if ((await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray())
-          .some((occ) => tree.days.some((day) => day.id === occ.programDayId)))
-          throw new Error('Программа уже содержит запланированные тренировки');
-        await this.db.programSets.bulkDelete(tree.sets.map((row) => row.id));
-        await this.db.programExercises.bulkDelete(tree.exercises.map((row) => row.id));
-        await this.db.programDays.bulkDelete(tree.days.map((row) => row.id));
-        await this.db.programPhases.bulkDelete(tree.phases.map((row) => row.id));
-        await this.db.trainingPlans.delete(id);
+        if (tree.days.length > 0)
+          throw new Error('Нельзя удалить программу с днями до реализации синхронизируемого каскада');
+        // Dexie Cloud replays these parent predicates even for phases added while
+        // this device was offline. Child days are deliberately outside this PR's
+        // write permissions and prevent deletion entirely if present.
+        await this.db.programPhases.where('trainingPlanId').equals(id).delete();
+        await this.db.trainingPlans.where('id').equals(id).delete();
       });
   }
+
 }
