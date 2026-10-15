@@ -1,3 +1,8 @@
+import { useEffect, useMemo, useState } from 'react';
+import { liveQuery } from 'dexie';
+import { athleteOf, clientVisiblePhases, ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
+import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
+import { Badge, GlassSurface, Text } from '../ui';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { Button, List, ListItem } from '../ui';
@@ -54,9 +59,81 @@ function CloudClientProgramsPage() {
   );
 }
 
+function AthleteProgramPage({
+  repository, actorUserId, cloudReady,
+}: { repository: ProgramManagementRepository; actorUserId: string; cloudReady: boolean }) {
+  const [data, setData] = useState<ProgramDetails | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    setLoaded(false);
+    const subscription = liveQuery(async () => {
+      const activePlan = (await repository.listReadable()).find((plan) =>
+        athleteOf(plan) === actorUserId && plan.status === 'active');
+      return activePlan ? repository.details(activePlan.id) : null;
+    }).subscribe({
+      next: (current) => {
+        if (!active) return;
+        setData(current);
+        setLoaded(true);
+        setError('');
+      },
+      error: (reason) => {
+        if (!active) return;
+        setError(reason instanceof Error ? reason.message : 'Не удалось загрузить программу');
+        setLoaded(true);
+      },
+    });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [repository, actorUserId]);
+  if (error) return <Text variant="footnote" role="alert">{error}</Text>;
+  if (!loaded || !cloudReady) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
+  if (!data) return (
+    <List><ListItem interactive={false} title="Нет активной программы"
+      subtitle="Активная программа появится здесь после назначения или активации." /></List>
+  );
+  const visiblePhases = clientVisiblePhases(data.phases);
+  return (
+    <section className="cloud-client-program" aria-label="Активная программа">
+      <GlassSurface preset="modalTuned" optics={false}>
+        <Text variant="large-title">{data.program.name}</Text>
+        <Badge color="green">Активная</Badge>
+      </GlassSurface>
+      <Text variant="title">Фазы программы</Text>
+      {visiblePhases.map((phase) => (
+        <div key={phase.id} className="cloud-client-program-phase">
+          <Text variant="headline">{phase.name}</Text>
+          <Text variant="footnote" tone="muted">{phase.durationWeeks ?? 10} недель</Text>
+          <Badge color={phase.status === 'active' ? 'green' :
+            phase.status === 'finished' ? 'blue' :
+              phase.status === 'cancelled' ? 'red' : 'yellow'}>
+            {phase.status === 'active' ? 'Активная' :
+              phase.status === 'finished' ? 'Завершена' :
+                phase.status === 'cancelled' ? 'Отменена' : 'В ожидании'}
+          </Badge>
+        </div>
+      ))}
+      {visiblePhases.length === 0 ? <Text variant="footnote" tone="muted">
+        В активной программе ещё нет подготовленных фаз.
+      </Text> : null}
+    </section>
+  );
+}
+
 export function ClientProgramsPage() {
+  const cloud = useCloudConnections();
+  const repository = useMemo(() => cloud
+    ? new ProgramManagementRepository(cloud.db, cloud.actorUserId) : null,
+  [cloud?.db, cloud?.actorUserId]);
+  if (repository && cloud) {
+    return <AthleteProgramPage repository={repository} actorUserId={cloud.actorUserId}
+      cloudReady={cloud.status === 'ready'} />;
+  }
+  // Compatibility for installations not yet provisioned with Dexie Cloud.
   if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
     return <List><ListItem interactive={false} title="Программы пока недоступны" subtitle="Для назначения программ необходимо активировать проверенные права Dexie Cloud." /></List>;
   }
   return <CloudClientProgramsPage />;
 }
+
