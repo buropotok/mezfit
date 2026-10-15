@@ -13,7 +13,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 4;
+export const CLOUD_DATABASE_VERSION = 5;
 
 export interface CloudSharedRow {
   id: string;
@@ -34,7 +34,9 @@ export interface CloudContactProfileRow extends CloudSharedRow {
 
 export type CloudProgramStatus = 'draft' | 'active' | 'finished' | 'cancelled';
 
-export interface CloudTrainingPlanRow extends CloudSharedRow {
+/** Program headers created by the Addon may be owned by their author. */
+export interface CloudTrainingPlanRow extends Omit<CloudSharedRow, 'owner'> {
+  owner: string | null;
   /** Explicit athlete identity; missing only on pre-rollout relationship headers. */
   athleteUserId?: string;
   /** Null for a standalone athlete's private program. */
@@ -140,6 +142,13 @@ export const CLOUD_DATABASE_STORES_V4 = {
   sessionFactSets: '@id, realmId, sessionFactExerciseId, [sessionFactExerciseId+position]',
 } as const;
 
+/** Indexed predicates on both dimensions are required for sync-consistent status transitions. */
+export const CLOUD_DATABASE_STORES_V5 = {
+  ...CLOUD_DATABASE_STORES_V4,
+  trainingPlans: '@id, realmId, coachUserId, clientUserId, [realmId+position], [realmId+status]',
+  programPhases: '@id, realmId, trainingPlanId, [trainingPlanId+position], [trainingPlanId+status], [realmId+status]',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -182,7 +191,8 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(1).stores(CLOUD_DATABASE_STORES_V1);
     this.version(2).stores(CLOUD_DATABASE_STORES_V2);
     this.version(3).stores(CLOUD_DATABASE_STORES_V3);
-    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V4);
+    this.version(4).stores(CLOUD_DATABASE_STORES_V4);
+    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V5);
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
