@@ -99,7 +99,14 @@ approved owner-controlled route and verified the installed roles and isolated
 write/read behavior with real Coach A / Client B / Client C identities.
 Test that clients cannot modify PLAN, and that a coach can create and rename
 a phase in an assigned realm. Confirm private-realm programs still work.
-Only then enable the flag in the deployed build configuration.
+Only then set the GitHub Actions variable
+`VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED=true`, which
+`.github/workflows/deploy.yml` forwards to the production Vite build.
+When unset, the feature stays disabled by default.
+
+While editing PLAN from an already cached local copy, the details screen
+keeps an explicit sync warning and retry action if the Cloud connection fails.
+A successful local edit must never be presented as confirmed cloud persistence.
 
 Do not remove current D1 routes or their tests while a production rollout
 still depends on the disabled fallback. A subsequent cutover cleanup may delete
