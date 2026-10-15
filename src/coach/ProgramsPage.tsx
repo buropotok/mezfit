@@ -55,7 +55,8 @@ function ProgramMenu({ program, onDuplicate, busy }: { program: ProgramListItem;
   );
 }
 
-function statusBadge(status: ProgramStatus) {
+function statusBadge(status: ProgramStatus | 'cancelled') {
+  if (status === 'cancelled') return <Badge color="red">Отменена</Badge>;
   if (status === 'active') return <Badge color="green">Активный</Badge>;
   if (status === 'finished') return <Badge color="blue">Завершен</Badge>;
   return <Badge color="yellow">Черновик</Badge>;
@@ -218,6 +219,7 @@ export function ProgramsPage({
     plan.coachUserId === cloud?.actorUserId && (filter === 'all' || plan.status === filter));
   const grouped = new Map<string, typeof cloudPlans>();
   for (const plan of cloudPlans) {
+    if (!plan.clientUserId) continue;
     const group = grouped.get(plan.clientUserId) ?? [];
     group.push(plan);
     grouped.set(plan.clientUserId, group);
