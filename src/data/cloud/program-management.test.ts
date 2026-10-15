@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramPhaseRow } from './workout-foundation-types';
-import { ProgramManagementRepository, clientVisiblePhases, isCloudPlanRow, isCloudPhaseRow } from './program-management';
+import {
+  ProgramManagementRepository, clientVisiblePhases, isCloudPlanRow, isCloudPhaseRow,
+  isOtherActiveProgramInScope, selectedCoachActiveProgram,
+} from './program-management';
 
 const user = 'tg:101';
 type Row = { id: string; realmId: string };
@@ -144,6 +147,43 @@ describe('local-first program/phase management', () => {
     expect(f.phases.find((phase) => phase.id === firstPhase)?.status).toBe('finished');
     expect(f.plans.find((plan) => plan.id === secondPlan)?.status).toBe('active');
     expect(f.phases.find((phase) => phase.id === secondPhase)?.status).toBe('active');
+  });
+
+  it('permits independent active programs from two coaches for the same athlete', () => {
+    const base = fixture().plans[0];
+    const coachA: CloudTrainingPlanRow = {
+      ...base, id: 'assigned-a', realmId: 'relationship-a', athleteUserId: user,
+      coachUserId: 'tg:201', clientUserId: user, status: 'active',
+    };
+    const coachB: CloudTrainingPlanRow = {
+      ...coachA, id: 'assigned-b', realmId: 'relationship-b', coachUserId: 'tg:301',
+    };
+    const anotherA: CloudTrainingPlanRow = { ...coachA, id: 'assigned-a2', status: 'active' };
+    expect(isOtherActiveProgramInScope(coachB, coachA)).toBe(false);
+    expect(isOtherActiveProgramInScope(anotherA, coachA)).toBe(true);
+    expect(isOtherActiveProgramInScope(base, coachA)).toBe(false);
+    expect(selectedCoachActiveProgram([coachB, coachA], user, 'tg:201')?.id)
+      .toBe('assigned-a');
+    expect(selectedCoachActiveProgram([coachB, coachA], user, 'tg:301')?.id)
+      .toBe('assigned-b');
+    expect(selectedCoachActiveProgram([coachB, coachA], user, 'tg:999'))
+      .toBeUndefined();
+  });
+
+  it('allows client-created personal PLAN updates without granting assigned PLAN writes', async () => {
+    const f = fixture();
+    const personal = await f.repo.createPersonal('Моя самостоятельная программа');
+    await f.repo.renameProgram(personal, 'План клиента');
+    const phase = await f.repo.createPhase(personal);
+    await f.repo.publishPhase(personal, phase);
+    expect(f.plans.find((plan) => plan.id === personal)?.name).toBe('План клиента');
+    expect(f.phases.find((row) => row.id === phase)?.status).toBe('pending');
+    const assigned: CloudTrainingPlanRow = {
+      ...f.plans[0], id: 'assigned',
+      realmId: 'unapproved-realm', coachUserId: 'tg:201', clientUserId: user,
+    };
+    f.plans.push(assigned);
+    await expect(f.repo.renameProgram('assigned', 'Нельзя')).rejects.toThrow();
   });
 
   it('deactivating an active phase updates the program in the same transaction', async () => {
