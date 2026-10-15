@@ -126,6 +126,24 @@ export class ProgramManagementRepository {
     return liveQuery(() => this.details(id)).subscribe({ next: onChange, error: onError });
   }
 
+  /** Client projection owns Dexie subscription and never exposes draft-only programs. */
+  observeActiveForAthlete(
+    athleteUserId: string,
+    onChange: (data: ProgramDetails | null) => void,
+    onError: (reason: unknown) => void,
+  ) {
+    if (athleteUserId !== this.actorUserId) {
+      throw new Error('Чужая программа недоступна');
+    }
+    return liveQuery(async () => {
+      const plans = await this.listReadable();
+      const active = plans.find((plan) => athleteOf(plan) === athleteUserId && plan.status === 'active');
+      if (!active) return null;
+      const details = await this.details(active.id);
+      return details ? { ...details, phases: clientVisiblePhases(details.phases) } : null;
+    }).subscribe({ next: onChange, error: onError });
+  }
+
   async createPersonal(rawName: string): Promise<string> {
     const name = validName(rawName), now = new Date().toISOString();
     const position = await this.db.trainingPlans.where('realmId').equals(this.actorUserId).count();
