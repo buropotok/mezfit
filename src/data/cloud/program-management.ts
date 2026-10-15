@@ -8,6 +8,41 @@ export type InactiveStatus = Exclude<CloudProgramStatus, 'active'>;
 export type ProgramDetails = { program: CloudTrainingPlanRow; phases: CloudProgramPhaseRow[] };
 export const DEFAULT_PHASE_WEEKS = 10;
 
+function record(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+const PROGRAM_STATUSES: readonly string[] = ['draft', 'active', 'finished', 'cancelled'];
+const PHASE_STATUSES: readonly string[] = ['draft', 'pending', 'active', 'finished', 'cancelled'];
+export function isCloudPlanRow(value: unknown): value is CloudTrainingPlanRow {
+  if (!record(value)) return false;
+  return typeof value.id === 'string' && value.id.length > 0
+    && typeof value.realmId === 'string' && value.realmId.length > 0
+    && value.owner === null
+    && typeof value.name === 'string' && value.name.trim().length > 0
+    && typeof value.status === 'string' && PROGRAM_STATUSES.includes(value.status)
+    && typeof value.position === 'number' && Number.isSafeInteger(value.position) && value.position >= 0
+    && (value.coachUserId === null || typeof value.coachUserId === 'string')
+    && (value.clientUserId === null || typeof value.clientUserId === 'string')
+    && (value.athleteUserId === undefined || typeof value.athleteUserId === 'string')
+    && (value.startedAt === null || typeof value.startedAt === 'string')
+    && (value.finishedAt === null || typeof value.finishedAt === 'string')
+    && typeof value.createdAt === 'string' && typeof value.updatedAt === 'string';
+}
+export function isCloudPhaseRow(value: unknown): value is CloudProgramPhaseRow {
+  if (!record(value)) return false;
+  return typeof value.id === 'string' && value.id.length > 0
+    && typeof value.realmId === 'string' && value.realmId.length > 0
+    && value.owner === null
+    && typeof value.trainingPlanId === 'string' && value.trainingPlanId.length > 0
+    && typeof value.name === 'string' && value.name.trim().length > 0
+    && typeof value.position === 'number' && Number.isSafeInteger(value.position) && value.position >= 0
+    && typeof value.status === 'string' && PHASE_STATUSES.includes(value.status)
+    && (value.durationWeeks === undefined
+      || (typeof value.durationWeeks === 'number' && isValidDurationWeeks(value.durationWeeks)))
+    && (value.plannedStartDate === null || typeof value.plannedStartDate === 'string')
+    && (value.plannedEndDate === null || typeof value.plannedEndDate === 'string');
+}
+
 export function athleteOf(plan: CloudTrainingPlanRow): string | null {
   return plan.athleteUserId ?? plan.clientUserId;
 }
@@ -38,7 +73,7 @@ export class ProgramManagementRepository {
       && plan.coachUserId === null && plan.clientUserId === null && plan.owner === null;
   }
   private async readable(plan: CloudTrainingPlanRow): Promise<boolean> {
-    if (plan.owner !== null) return false;
+    if (!isCloudPlanRow(plan)) return false;
     if (this.own(plan)) return true;
     if (!plan.coachUserId || !plan.clientUserId ||
       (plan.coachUserId !== this.actorUserId && plan.clientUserId !== this.actorUserId)) return false;
@@ -73,7 +108,12 @@ export class ProgramManagementRepository {
   async details(id: string): Promise<ProgramDetails | null> {
     const plan = await this.db.trainingPlans.get(id);
     if (!plan || !await this.readable(plan)) return null;
-    const phases = (await this.db.programPhases.where('trainingPlanId').equals(id).toArray())
+    const candidatePhases = await this.db.programPhases.where('trainingPlanId').equals(id).toArray();
+    for (const phase of candidatePhases) {
+      if (phase.realmId === plan.realmId && !isCloudPhaseRow(phase))
+        throw new Error('INVALID_CLOUD_PROGRAM_PHASE');
+    }
+    const phases = candidatePhases
       .filter((phase) => belongs(phase, plan))
       .map((phase) => ({
         ...phase,
