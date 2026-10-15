@@ -42,7 +42,7 @@ export function PlanActionDialog({
     dialog.kind === 'confirm' ||
     (dialog.kind === 'text' && value.trim().length > 0 && value.trim().length <= 120) ||
     (dialog.kind === 'weeks' && /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value))) ||
-    (dialog.kind === 'select' && dialog.options?.some((item) => item.value === value)
+    (dialog.kind === 'select' && dialog.options?.some((item) => item.value === value))
   ));
   return (
     <MezfitDialog
