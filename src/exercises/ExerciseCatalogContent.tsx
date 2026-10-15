@@ -64,7 +64,7 @@ function anatomyMuscleIds(ids: readonly string[], taxonomy: readonly PublicTaxon
   );
   const result = new Set<string>();
   for (const id of ids) {
-    const matched = Object.hasOwn(WORKED_MUSCLE_LABELS, id)
+    const matched = Object.prototype.hasOwnProperty.call(WORKED_MUSCLE_LABELS, id)
       ? id : atlasByLabel.get(taxonomyLabels.get(id)?.trim().toLocaleLowerCase('ru') ?? '');
     if (matched) result.add(matched);
   }
