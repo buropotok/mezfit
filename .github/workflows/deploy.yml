@@ -29,6 +29,8 @@ jobs:
           # Disabled by default. Enable GitHub Actions variable only after importing
           # cloud/roles.json and verifying Coach/Client ACL in Dexie Cloud.
           VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED: ${{ vars.VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED }}
+          # Remains false unless explicitly enabled after phase-role deployment and checks.
+          VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED: ${{ vars.VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED }}
       - name: Resolve D1 database id
         shell: bash
         run: |
