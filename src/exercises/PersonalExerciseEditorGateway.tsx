@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
 import type { CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
-import { MezfitDialog, MezfitDialogButton, Text, TextArea, TextInput } from '../ui';
+import { Button, MezfitDialog, MezfitDialogButton, Text, TextArea, TextInput } from '../ui';
 import './personal-exercises.css';
 
 export type PersonalExerciseEditorRequest =
@@ -109,12 +109,10 @@ function EditPersonalExercise({
   };
 
   return (
-    <MezfitDialog
-      opened
-      title="Изменить моё упражнение"
-      onBackdropClick={() => { if (!busy) onClose(); }}
-      content={<div className="mezfit-personal-exercise-editor">
-        <Text variant="footnote" tone="muted">Пользовательское упражнение</Text>
+    <section className="mezfit-personal-exercise-page" aria-label="Редактирование моего упражнения">
+      <Text variant="headline">Изменить моё упражнение</Text>
+      <Text variant="footnote" tone="muted">Пользовательское упражнение</Text>
+      <div className="mezfit-personal-exercise-editor">
         <TextInput label="Название" value={nameRu} maxLength={120}
           onChange={event => setNameRu(event.currentTarget.value)} />
         <TextInput label="Название на английском" value={nameEn}
@@ -124,13 +122,12 @@ function EditPersonalExercise({
         <TextArea label="Инструкция" rows={4} value={instructions}
           onChange={event => setInstructions(event.currentTarget.value)} />
         {error ? <Text role="alert" variant="footnote">{error}</Text> : null}
-      </div>}
-      buttons={<>
-        <MezfitDialogButton onClick={onClose} disabled={busy}>Отмена</MezfitDialogButton>
-        <MezfitDialogButton strong onClick={() => { void save(); }}
-          disabled={busy || !nameRu.trim()}>Сохранить</MezfitDialogButton>
-      </>}
-    />
+      </div>
+      <div className="mezfit-personal-exercise-actions">
+        <Button variant="secondary" onClick={onClose} disabled={busy}>Отмена</Button>
+        <Button onClick={() => { void save(); }} disabled={busy || !nameRu.trim()}>Сохранить</Button>
+      </div>
+    </section>
   );
 }
 
@@ -152,9 +149,9 @@ export function PersonalExerciseEditorGateway({
       onCreated={onCreated} onClose={onClose} />;
   }
   const row = rows.find(item => item.id === request.exerciseId && item.archivedAt === null);
-  if (!row) return <MezfitDialog opened title="Упражнение недоступно"
-    content={<Text>Это упражнение больше не входит в вашу личную библиотеку.</Text>}
-    buttons={<MezfitDialogButton onClick={onClose}>Закрыть</MezfitDialogButton>}
-    onBackdropClick={onClose} />;
+  if (!row) return <section className="mezfit-personal-exercise-page" role="alert">
+    <Text>Это упражнение больше не входит в вашу личную библиотеку.</Text>
+    <Button onClick={onClose}>Закрыть</Button>
+  </section>;
   return <EditPersonalExercise key={row.id} row={row} repository={repository} onClose={onClose} />;
 }
