@@ -56,7 +56,7 @@ export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkout
     && (snapshot.mediaUrl === null || typeof snapshot.mediaUrl === 'string')
     && (snapshot.catalogueDefinition === undefined || (
       typeof snapshot.catalogueCoachUserId === 'string'
-      && /^tg:[1-9]\\d*$/.test(snapshot.catalogueCoachUserId)
+      && /^tg:[1-9]\d*$/.test(snapshot.catalogueCoachUserId)
       && isAssignedCoachExerciseSnapshot(value as CloudWorkoutExerciseSnapshot, snapshot.catalogueCoachUserId)
     ));
 }
