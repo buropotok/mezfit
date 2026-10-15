@@ -74,7 +74,11 @@ describe('phase activation async ownership', () => {
       fireEvent.click(within(dialog).getByRole('button', { name: 'Подтвердить' }));
       await waitFor(() => expect(activate).toHaveBeenCalledTimes(2));
       await act(async () => resolve());
-      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      // Konsta retains a closed shell for transitions; the working dialog must close.
+      await waitFor(() => expect(screen.queryByRole('dialog', {
+        name: 'Выберите статус для текущей активной фазы',
+      })).toBeNull());
+      expect(screen.queryByText('Не удалось активировать фазу')).toBeNull();
     },
   );
 });
