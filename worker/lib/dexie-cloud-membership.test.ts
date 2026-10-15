@@ -186,6 +186,7 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
       .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
   });
 
+  it('fails closed on a drifted global role policy', async () => {
     const cloud = fakeCloud();
     cloud.installedRoles[1].permissions.update.sessionSetFacts.push('owner');
     await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl)).rejects.toMatchObject({
