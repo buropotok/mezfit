@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { PublicExerciseCatalogueRepository, type PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
 import { ExerciseCatalogContent } from './ExerciseCatalogContent';
+import { usePublishedExerciseCatalogue } from './usePublishedExerciseCatalogue';
 import type { NavigationContext } from '../NavigationShell';
 import { Surface, Text } from '../ui';
 
@@ -17,22 +15,7 @@ export function PublicExercises({
   onToggleExercise?: (id: string) => void;
   selectionDisabled?: boolean;
 }) {
-  const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud ? new PublicExerciseCatalogueRepository(cloud.db) : null, [cloud?.db]);
-  const [snapshot, setSnapshot] = useState<PublicExerciseSnapshot | null>(null);
-  const [error, setError] = useState('');
-  useEffect(() => {
-    setSnapshot(null);
-    setError('');
-    if (!repository) return undefined;
-    let active = true;
-    const observer = repository.observe(
-      (next) => { if (active) { setSnapshot(next); setError(''); } },
-      (cause) => { if (active) setError(cause instanceof Error ? cause.message : 'Ошибка локальной базы'); },
-    );
-    return () => { active = false; observer.unsubscribe(); };
-  }, [repository]);
-
+  const { cloud, snapshot, error } = usePublishedExerciseCatalogue();
   const ready = snapshot?.status === 'ready';
   // Publication state is only authoritative after the account's initial cloud pull.
   if (!cloud || (cloud.status === 'loading' && !ready) || snapshot === null) {

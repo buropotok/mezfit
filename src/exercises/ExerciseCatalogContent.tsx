@@ -5,9 +5,13 @@ import {
   FILTER_GROUPS, PUBLIC_EXERCISE_CATEGORIES, filterOptions, filterPublicExercises,
   type FilterGroup, type SelectedFilters,
 } from '../data/exercises/publicExerciseFilters';
-import type { PublicExerciseRow, PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import type { PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import { PublicExerciseMedia } from './PublicExerciseMedia';
 import { publicExerciseCategoryArtwork } from './publicExerciseCategoryArtwork';
+import { CoachExerciseCatalogFab } from './CoachExerciseCatalogFab';
+import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
+import { GlassSurface } from '../ui/GlassSurface';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import {
   Button, IconButton, LiquidPopover, List, ListItem,
@@ -18,6 +22,19 @@ import './public-exercises.css';
 function TablerFilter() {
   return <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v2.172a2 2 0 0 1-.586 1.414L14 13v7l-4-2v-5L4.586 7.586A2 2 0 0 1 4 6.172V4z" /></svg>;
 }
+
+function TablerStar({ filled }: { filled: boolean }) {
+  return <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"
+    fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5"
+    strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" /></svg>;
+}
+
+const COACH_CATALOG_TABS = [
+  { value: 'main', label: 'Основные' },
+  { value: 'favourites', label: 'Избранное' },
+  { value: 'all', label: 'Вся база' },
+] as const;
+const EMPTY_FAVOURITES: ReadonlySet<string> = new Set();
 
 function TablerBarbell() {
   return <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h2m2 0h12m2 0h2M4 9v6m2-9v12m12-12v12m2-9v6" /></svg>;
@@ -33,7 +50,11 @@ function uniqueMuscles(ids: readonly string[], taxonomy: readonly PublicTaxonomy
   return [...new Set(ids)].map((id) => labels.get(id) ?? id).join(', ') || 'Не указано';
 }
 
-function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: PublicTaxonomyRow[] }) {
+function ExerciseDetail({ row, taxonomy, onEdit }: {
+  row: CatalogueExerciseRow;
+  taxonomy: PublicTaxonomyRow[];
+  onEdit?: () => void;
+}) {
   const sections: Array<[string, readonly string[]]> = [
     ['Основные мышцы', row.muscles.primary],
     ['Вспомогательные мышцы', row.muscles.secondary],
@@ -43,21 +64,25 @@ function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: P
   ];
   return (
     <section className="mezfit-public-exercises__detail" aria-label="Детали упражнения">
-      <Surface className="mezfit-public-exercises__media-placeholder">
+      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__media-placeholder"
+        contentClassName="mezfit-public-exercises__media-content">
         <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />
-      </Surface>
+      </GlassSurface>
       <Text variant="headline">{row.name_ru || row.name}</Text>
       {row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
       <Text variant="footnote">{categories[row.category] ?? row.category} · {row.subcategory_ru} · {row.equipment}</Text>
-      <Surface className="mezfit-public-exercises__detail-section">
+      {onEdit ? <div className="mezfit-public-exercises__detail-actions"><Button onClick={onEdit}>Изменить</Button></div> : null}
+      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
+        contentClassName="mezfit-public-exercises__detail-section-content">
         <Text variant="headline">Инструкция</Text>
         {row.instruction_steps.ru.length ? (
           <ol>{row.instruction_steps.ru.map((step, i) => (
             <li key={`${row.id}-${i}`}><Text variant="body">{step}</Text></li>
           ))}</ol>
         ) : <p><Text variant="body">{row.instructions.ru}</Text></p>}
-      </Surface>
-      <Surface className="mezfit-public-exercises__detail-section">
+      </GlassSurface>
+      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
+        contentClassName="mezfit-public-exercises__detail-section-content">
         <Text variant="headline">Анатомия</Text>
         {sections.map(([title, ids]) => ids.length ? (
           <div key={title} className="mezfit-public-exercises__anatomy-line">
@@ -65,7 +90,7 @@ function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: P
             <Text>{uniqueMuscles(ids, taxonomy)}</Text>
           </div>
         ) : null)}
-      </Surface>
+      </GlassSurface>
       <Text variant="footnote" tone="muted">{row.attribution}</Text>
     </section>
   );
@@ -74,6 +99,8 @@ function ExerciseDetail({ row, taxonomy }: { row: PublicExerciseRow; taxonomy: P
 export function ExerciseCatalogContent({
   snapshot, onNavigationContextChange, mode = 'browse',
   selectedExerciseIds, onToggleExercise, selectionDisabled = false,
+  scope = 'public', catalogueExercises, favouriteIds = EMPTY_FAVOURITES,
+  onToggleFavourite, onCreateExercise, onEditExercise,
 }: {
   snapshot: PublishedSnapshot;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -81,8 +108,16 @@ export function ExerciseCatalogContent({
   selectedExerciseIds?: ReadonlySet<string>;
   onToggleExercise?: (exerciseId: string) => void;
   selectionDisabled?: boolean;
+  scope?: 'public' | 'coach';
+  catalogueExercises?: readonly CatalogueExerciseRow[];
+  favouriteIds?: ReadonlySet<string>;
+  onToggleFavourite?: (exerciseId: string) => void;
+  onCreateExercise?: (category: string | null) => void;
+  onEditExercise?: (exerciseId: string) => void;
 }) {
-  const { exercises, taxonomy, catalogue } = snapshot;
+  const { taxonomy, catalogue } = snapshot;
+  const exercises = catalogueExercises ?? snapshot.exercises;
+  const isCoach = scope === 'coach' && mode === 'browse';
   const [category, setCategory] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -91,6 +126,7 @@ export function ExerciseCatalogContent({
   const [filterDialogGroup, setFilterDialogGroup] = useState<FilterGroup | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
+  const [tab, setTab] = useState<'main' | 'favourites' | 'all'>('all');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const requestBackTransition = useNavigationBackTransition();
 
@@ -125,9 +161,11 @@ export function ExerciseCatalogContent({
       return { group: id, value, label: `${label}: ${option?.label ?? value}` };
     }));
 
-  const visibleExercises = useMemo(() => filterPublicExercises(
-    exercises, taxonomy, filters, query, category,
-  ), [exercises, taxonomy, filters, query, category]);
+  const visibleExercises = useMemo(() => {
+    const filtered = filterPublicExercises(exercises, taxonomy, filters, query, category);
+    return isCoach && tab === 'favourites'
+      ? filtered.filter(row => favouriteIds.has(row.id)) : filtered;
+  }, [exercises, taxonomy, filters, query, category, isCoach, tab, favouriteIds]);
 
   const groupOptions = filterDialogGroup ? filterOptions(
     filterDialogGroup, exercises, taxonomy, catalogue.subcategoryLabelsRu,
@@ -155,9 +193,20 @@ export function ExerciseCatalogContent({
     setVisibleLimit(PAGE_SIZE);
   };
 
-  if (selected) return <ExerciseDetail row={selected} taxonomy={taxonomy} />;
+  if (selected) return <ExerciseDetail row={selected} taxonomy={taxonomy}
+    onEdit={isCoach && onEditExercise ? () => onEditExercise(selected.id) : undefined} />;
   return (
     <section className="mezfit-public-exercises stack">
+      {isCoach && onCreateExercise ? <CoachExerciseCatalogFab onCreate={() => onCreateExercise(category)} /> : null}
+      {isCoach ? <div className="mezfit-public-exercises__tabs">
+        <LiquidGlassTextOnly tabs={COACH_CATALOG_TABS} value={tab} hidden={false}
+          onValueChange={(value) => {
+            if (value !== 'main' && value !== 'favourites' && value !== 'all') return;
+            setTab(value);
+            setCategory(null);
+            setVisibleLimit(PAGE_SIZE);
+          }} />
+      </div> : null}
       <div className="mezfit-public-exercises__toolbar">
         <MezfitSearchbar
           placeholder="Найти упражнение"
@@ -191,7 +240,9 @@ export function ExerciseCatalogContent({
         </div>
       ) : null}
 
-      {!category && !query.trim() && selectedEntries.length === 0 ? (
+      {isCoach && tab === 'main' ? (
+        <Surface><Text variant="body">Раздел «Основные» будет доступен позже.</Text></Surface>
+      ) : !category && !query.trim() && selectedEntries.length === 0 && (!isCoach || tab === 'all') ? (
         <List className="mezfit-public-exercises__category-list">
           {PUBLIC_EXERCISE_CATEGORIES.map(([id, label]) => (
             <ListItem
@@ -225,6 +276,14 @@ export function ExerciseCatalogContent({
                   title={row.name_ru || row.name}
                   subtitle={row.name_en || row.subcategory_ru}
                   trailing={mode === 'select' && selectedExerciseIds?.has(row.id) ? '✓' : undefined}
+                  trailingAction={isCoach && onToggleFavourite ? (
+                    <IconButton
+                      label={favouriteIds.has(row.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                      aria-pressed={favouriteIds.has(row.id)}
+                      selected={favouriteIds.has(row.id)}
+                      onClick={() => onToggleFavourite(row.id)}
+                    ><TablerStar filled={favouriteIds.has(row.id)} /></IconButton>
+                  ) : undefined}
                   aria-pressed={mode === 'select' ? Boolean(selectedExerciseIds?.has(row.id)) : undefined}
                   disabled={mode === 'select' && selectionDisabled}
                   onClick={() => {
@@ -234,7 +293,7 @@ export function ExerciseCatalogContent({
                 />
               ))}
             </List>
-          ) : <Surface><Text>По выбранным условиям упражнений нет.</Text></Surface>}
+          ) : <Surface><Text>{isCoach && tab === 'favourites' ? 'В избранном пока нет упражнений.' : 'По выбранным условиям упражнений нет.'}</Text></Surface>}
           {visibleExercises.length > visibleLimit ? (
             <Button variant="secondary" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
               Показать ещё

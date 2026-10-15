@@ -1,0 +1,75 @@
+name: Apply Dexie Cloud coach exercise schema
+
+# Production schema changes only through explicit owner dispatch and protected reviewers.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        description: 'Preview three coach exercise tables or apply their additive schema'
+        required: true
+        default: preview
+        options: [preview, apply]
+      confirmation:
+        type: string
+        description: 'For apply enter APPLY_COACH_EXERCISES_V5_SCHEMA'
+        required: false
+
+permissions:
+  contents: read
+
+# No concurrent privileged Dexie imports alongside the workout schema/publisher.
+concurrency:
+  group: dexie-public-catalogue-publishing
+  cancel-in-progress: false
+
+jobs:
+  coach-schema:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      (inputs.operation == 'preview' ||
+       (inputs.operation == 'apply' && inputs.confirmation == 'APPLY_COACH_EXERCISES_V5_SCHEMA'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: dexie-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare isolated Dexie Cloud credentials
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/dexie-schema/manage.mjs prepare
+      - name: Export schema and roles before import
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
+      - name: Validate strict additive schema allowlist
+        id: plan
+        run: node tools/dexie-schema/coach.mjs plan
+      - name: Import only missing coach exercise tables
+        if: inputs.operation == 'apply' && steps.plan.outputs.missing_count != '0'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud import schema-only-import.json
+      - name: Export schema and roles after import
+        if: inputs.operation == 'apply'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
+      - name: Verify additive-only changes and unchanged roles
+        if: inputs.operation == 'apply'
+        run: node tools/dexie-schema/coach.mjs verify
+      - name: Remove temporary credentials and exports
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"

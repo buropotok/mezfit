@@ -40,10 +40,14 @@
   gap: var(--space-3);
   min-width: 0;
 }
-.mezfit-public-exercises__detail-section {
+.mezfit-public-exercises__detail-section-content {
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
+}
+.mezfit-public-exercises__detail-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 .mezfit-public-exercises__detail-section ol {
   padding-inline-start: 1.5rem;
@@ -57,6 +61,9 @@
 }
 .mezfit-public-exercises__media-placeholder {
   height: 190px;
+}
+.mezfit-public-exercises__media-content {
+  height: 100%;
   display: grid;
   place-content: center;
   justify-items: center;

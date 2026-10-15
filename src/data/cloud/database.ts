@@ -4,6 +4,7 @@ import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
+import type { CoachExerciseOverrideRow, CoachExerciseDefinitionRow, CoachExerciseFavouriteRow } from '../exercises/coachExerciseTypes';
 import type {
   CloudProgramPhaseRow, CloudProgramDayRow, CloudProgramExerciseRow, CloudProgramSetRow,
   CloudWorkoutOccurrenceRow, CloudSessionExerciseRow, CloudSessionFactExerciseRow, CloudSessionFactSetRow,
@@ -13,7 +14,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 5;
+export const CLOUD_DATABASE_VERSION = 6;
 
 export interface CloudSharedRow {
   id: string;
@@ -34,12 +35,12 @@ export interface CloudContactProfileRow extends CloudSharedRow {
 
 export type CloudProgramStatus = 'draft' | 'active' | 'finished' | 'cancelled';
 
-/** Program headers created by the Addon may be owned by their author. */
 export interface CloudTrainingPlanRow extends Omit<CloudSharedRow, 'owner'> {
+  /** The Addon may assign PLAN headers to their authorized author. */
   owner: string | null;
-  /** Explicit athlete identity; missing only on pre-rollout relationship headers. */
+  /** Explicit athlete identity, independent of reserved Dexie ownership. */
   athleteUserId?: string;
-  /** Null for a standalone athlete's private program. */
+  /** Null for standalone personal programs. */
   coachUserId: string | null;
   clientUserId: string | null;
   name: string;
@@ -142,9 +143,17 @@ export const CLOUD_DATABASE_STORES_V4 = {
   sessionFactSets: '@id, realmId, sessionFactExerciseId, [sessionFactExerciseId+position]',
 } as const;
 
-/** Indexed predicates on both dimensions are required for sync-consistent status transitions. */
+/** Private coach catalogue storage. Personal realm = authenticated Dexie Cloud user ID. */
 export const CLOUD_DATABASE_STORES_V5 = {
   ...CLOUD_DATABASE_STORES_V4,
+  coachExerciseOverrides: 'id, realmId, sourceExerciseId',
+  coachExerciseDefinitions: 'id, realmId, category, subcategory, equipment',
+  coachExerciseFavourites: 'id, realmId, exerciseId',
+} as const;
+
+/** Native compound indexes preserve cloud sync criteria on PLAN state changes. */
+export const CLOUD_DATABASE_STORES_V6 = {
+  ...CLOUD_DATABASE_STORES_V5,
   trainingPlans: '@id, realmId, coachUserId, clientUserId, [realmId+position], [realmId+status]',
   programPhases: '@id, realmId, trainingPlanId, [trainingPlanId+position], [trainingPlanId+status], [realmId+status]',
 } as const;
@@ -185,6 +194,9 @@ export class MezfitCloudDatabase extends Dexie {
   publicExerciseDefinitions!: Table<PublicExerciseRow, string>;
   publicExerciseTaxonomy!: Table<PublicTaxonomyRow, string>;
   publicExerciseCatalogues!: Table<PublicExerciseCatalogueRow, string>;
+  coachExerciseOverrides!: Table<CoachExerciseOverrideRow, string>;
+  coachExerciseDefinitions!: Table<CoachExerciseDefinitionRow, string>;
+  coachExerciseFavourites!: Table<CoachExerciseFavouriteRow, string>;
 
   constructor(telegramUserId: string, initData: string) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
@@ -192,7 +204,8 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(2).stores(CLOUD_DATABASE_STORES_V2);
     this.version(3).stores(CLOUD_DATABASE_STORES_V3);
     this.version(4).stores(CLOUD_DATABASE_STORES_V4);
-    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V5);
+    this.version(5).stores(CLOUD_DATABASE_STORES_V5);
+    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V6);
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
