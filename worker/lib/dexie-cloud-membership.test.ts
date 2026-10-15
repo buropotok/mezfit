@@ -173,7 +173,17 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
     expect(cloud.requests.some((r) => r.method === 'POST' && r.path === '/all/members')).toBe(false);
   });
 
-  it('fails closed on a drifted global role policy', async () => {
+  it('accepts legacy Coach headers-only policy while rolling out phase permissions', async () => {
+    const cloud = fakeCloud();
+    cloud.installedRoles[0].permissions.manage = ['trainingPlans'];
+    await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
+      .resolves.toMatchObject({ realmId: expect.any(String) });
+    expect(cloud.members.size).toBe(2);
+    cloud.installedRoles[0].permissions.manage = ['trainingPlans', 'programPhases', 'programDays'];
+    await expect(provisionInviteMembership(env, '101', '203', cloud.fetchImpl))
+      .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
+  });
+
     const cloud = fakeCloud();
     cloud.installedRoles[1].permissions.update.sessionSetFacts.push('owner');
     await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl)).rejects.toMatchObject({
