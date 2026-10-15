@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
+import type { PublicExerciseRow } from '../data/exercises/publicExerciseTypes';
 import { ExerciseCatalogContent } from './ExerciseCatalogContent';
 
 vi.mock('../NavigationShell', () => ({
@@ -48,7 +49,7 @@ vi.mock('./PublicExerciseMedia', () => ({
   PublicExerciseMedia: () => <span>Media</span>,
 }));
 
-const publicRow: CatalogueExerciseRow = {
+const publicRow: PublicExerciseRow = {
   id: '0001', name: 'Public', name_ru: 'Общий жим', name_en: '',
   category: 'chest', subcategory: 'chest', subcategory_ru: 'Грудь', movement_type: 'resistance',
   muscles: { primary: [], secondary: [], stabilizers: [], emphasis: [] },
@@ -65,7 +66,7 @@ const trainer = { ...publicRow, id: 'custom:22222222-2222-4222-8222-222222222222
   name: 'Trainer', name_ru: 'Авторское тренера', owner: null, realmId: 'rlm-selected',
   sourceSha256: 'assigned-coach-snapshot' };
 const snapshot: Extract<PublicExerciseSnapshot, { status: 'ready' }> = {
-  status: 'ready', exercises: [publicRow as typeof publicRow & { realmId: 'rlm-public'; owner: null }],
+  status: 'ready', exercises: [publicRow],
   taxonomy: [],
   catalogue: {
     id: 'mezfit:exercise-catalogue', realmId: 'rlm-public', owner: null,
