@@ -1,6 +1,7 @@
 import { liveQuery } from 'dexie';
 import { isWorkoutExerciseSnapshot } from './workout-foundation-types';
 import { isApprovedAssignedPair } from './assigned-programs';
+import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
 import type { MezfitCloudDatabase } from './database';
 import type {
   CloudProgramOutline, CloudProgramDayRow, CloudProgramExerciseRow,
@@ -25,7 +26,7 @@ export class WorkoutFoundationRepository {
   async getProgramOutline(programId: string): Promise<CloudProgramOutline | null> {
     if (!programId || !/^tg:[1-9]\d*$/.test(this.actorUserId)) return null;
     const plan = await this.db.trainingPlans.get(programId);
-    if (!plan || plan.owner !== null) return null;
+    if (!plan || !isExpectedPlanOwner(plan)) return null;
     const personal = plan.realmId === this.actorUserId
       && plan.athleteUserId === this.actorUserId
       && plan.coachUserId === null && plan.clientUserId === null;
@@ -51,7 +52,7 @@ export class WorkoutFoundationRepository {
       this.db.programSets.where('realmId').equals(plan.realmId).toArray(),
     ]);
     const phases = ordered(phaseRows.filter((p) =>
-      p.trainingPlanId === plan.id && p.realmId === plan.realmId && p.owner === null));
+      p.trainingPlanId === plan.id && p.realmId === plan.realmId && isExpectedPhaseOwner(p, plan)));
     const phaseIds = new Set(phases.map((p) => p.id));
     const days = ordered(dayRows.filter((d) =>
       d.realmId === plan.realmId && d.owner === null && phaseIds.has(d.programPhaseId)));
