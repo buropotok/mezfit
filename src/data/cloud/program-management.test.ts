@@ -7,7 +7,7 @@ const user = 'tg:101';
 type Row = { id: string; realmId: string };
 function mockTable<T extends Row>(initial: T[], prefix: string) {
   const data: T[] = initial.map((item) => ({ ...item }));
-  let next = 1;
+  let next = initial.length + 1;
   const read = async (key: string) => data.find((item) => item.id === key);
   return {
     data,
@@ -89,6 +89,8 @@ describe('local-first program/phase management', () => {
     const f = fixture();
     const id = await f.repo.createPersonal('Новая программа');
     const row = f.plans.find((plan) => plan.id === id);
+    expect(f.plans).toHaveLength(2);
+    expect(row?.id).not.toBe('tra-1');
     expect(row).toMatchObject({
       owner: null, realmId: user, athleteUserId: user,
       coachUserId: null, clientUserId: null, status: 'draft',
@@ -163,6 +165,7 @@ describe('local-first program/phase management', () => {
     await f.repo.duplicateProgram('tra-1');
     expect(f.plans).toHaveLength(2);
     expect(f.plans[1].status).toBe('draft');
+    expect(f.plans[1].id).not.toBe(f.plans[0].id);
     expect(f.phases).toHaveLength(2);
     expect(f.phases[1]).toMatchObject({ status: 'draft', name: 'Фаза 1', durationWeeks: 10 });
     expect(f.phases[1].trainingPlanId).toBe(f.plans[1].id);
