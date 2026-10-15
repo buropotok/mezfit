@@ -168,7 +168,7 @@ export class ProgramManagementRepository {
         throw new Error('Фаза не найдена');
       if (phase.status === 'active' && status === 'pending') throw new Error('Недоступный переход');
       await this.db.programPhases.update(phaseId, { status });
-      if (phase.status === 'active' && current.status === 'active') await this.db.trainingPlans.update(id, {
+      if (phase.status === 'active' && current.status === 'active' && status !== 'pending') await this.db.trainingPlans.update(id, {
         status, updatedAt: new Date().toISOString(),
         finishedAt: status === 'finished' ? new Date().toISOString() : null,
       });
@@ -209,23 +209,28 @@ export class ProgramManagementRepository {
       if (activeOthers.some((p) => p.id !== other?.id))
         throw new Error('Активная программа изменилась');
       if (other) {
+        const previousStatus = options.previousProgramStatus;
+        if (!previousStatus) throw new Error('PREVIOUS_PROGRAM_STATUS_REQUIRED');
         const previous = await this.db.trainingPlans.get(other.id);
         if (!previous || previous.status !== 'active') throw new Error('Активная программа изменилась');
         for (const phase of await this.db.programPhases.where('trainingPlanId').equals(other.id).toArray())
           if (belongs(phase, previous) && phase.status === 'active')
-            await this.db.programPhases.update(phase.id, { status: options.previousProgramStatus });
+            await this.db.programPhases.update(phase.id, { status: previousStatus });
         await this.db.trainingPlans.update(other.id, {
-          status: options.previousProgramStatus,
+          status: previousStatus,
           updatedAt: new Date().toISOString(),
-          finishedAt: options.previousProgramStatus === 'finished' ? new Date().toISOString() : null,
+          finishedAt: previousStatus === 'finished' ? new Date().toISOString() : null,
         });
       }
       const active = (await this.db.programPhases.where('trainingPlanId').equals(id).toArray())
         .filter((phase) => belongs(phase, current) && phase.status === 'active' && phase.id !== phaseId);
       if (active.length > 0 && !options.previousPhaseStatus)
         throw new Error('PREVIOUS_PHASE_STATUS_REQUIRED');
-      for (const phase of active)
-        await this.db.programPhases.update(phase.id, { status: options.previousPhaseStatus });
+      for (const phase of active) {
+        const previousStatus = options.previousPhaseStatus;
+        if (!previousStatus) throw new Error('PREVIOUS_PHASE_STATUS_REQUIRED');
+        await this.db.programPhases.update(phase.id, { status: previousStatus });
+      }
       await this.db.programPhases.update(phaseId, { status: 'active' });
       const now = new Date().toISOString();
       await this.db.trainingPlans.update(id, {
