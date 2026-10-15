@@ -56,11 +56,11 @@ export function CoachExercises({ onNavigationContextChange }: {
   const edit = useCallback((exerciseId: string) => setEditorRequest({ mode: 'edit', exerciseId }), []);
 
   const ready = snapshot?.status === 'ready';
+  if (error || personalError || (cloud?.status === 'error' && !ready)) {
+    return <Surface><Text role="alert">{error || personalError || cloud?.error || 'Не удалось открыть каталог'}</Text></Surface>;
+  }
   if (!cloud || (cloud.status === 'loading' && !ready) || snapshot === null || personal === null) {
     return <Text tone="muted">Загружаем каталог тренера…</Text>;
-  }
-  if (error || personalError || (cloud.status === 'error' && !ready)) {
-    return <Surface><Text role="alert">{error || personalError || cloud.error || 'Не удалось открыть каталог'}</Text></Surface>;
   }
   if (snapshot.status === 'unpublished') return <Surface><Text>Публичный каталог ещё не синхронизирован.</Text></Surface>;
   if (snapshot.status === 'invalid' || snapshot.status === 'incomplete') {
