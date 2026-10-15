@@ -327,6 +327,9 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       );
       return (
         <CloudProgramsPage repository={programRepository} clients={clients ?? []}
+          cloudStatus={cloudConnections?.status ?? 'loading'}
+          cloudError={cloudConnections?.error ?? ''}
+          onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
           onOpen={setSelectedCloudProgram} />
       );
     }
