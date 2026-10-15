@@ -171,7 +171,7 @@ export class ProgramManagementRepository {
   }
   async createPhase(id: string): Promise<string> {
     const plan = await this.writable(id);
-    return this.db.transaction('rw', [this.db.trainingPlans, this.db.programPhases], async () => {
+    return this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
       const current = await this.db.trainingPlans.get(id);
       if (!current || current.realmId !== plan.realmId) throw new Error('Программа изменилась');
       const phases = await this.db.programPhases.where('trainingPlanId').equals(id).toArray();
@@ -188,7 +188,7 @@ export class ProgramManagementRepository {
   }
   async publishPhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', [this.db.programPhases], async () => {
+    await this.db.transaction('rw', ['programPhases'], async () => {
       const phase = await this.db.programPhases.get(phaseId);
       if (!phase || !belongs(phase, plan) || phase.status !== 'draft')
         throw new Error('Завершить заполнение можно только у черновика');
@@ -197,7 +197,7 @@ export class ProgramManagementRepository {
   }
   async setPhaseStatus(id: string, phaseId: string, status: Exclude<PhaseStatus, 'active'>): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', [this.db.trainingPlans, this.db.programPhases], async () => {
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
       const phase = await this.db.programPhases.get(phaseId);
       const current = await this.db.trainingPlans.get(id);
       if (!phase || !current || !belongs(phase, current) || current.realmId !== plan.realmId)
@@ -215,7 +215,7 @@ export class ProgramManagementRepository {
   }
   async setProgramStatus(id: string, status: InactiveStatus): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', [this.db.trainingPlans, this.db.programPhases], async () => {
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
       const current = await this.db.trainingPlans.get(id);
       if (!current || current.realmId !== plan.realmId) throw new Error('Программа изменилась');
       for (const phase of await this.db.programPhases.where('trainingPlanId').equals(id).toArray()) {
@@ -239,7 +239,7 @@ export class ProgramManagementRepository {
       await this.author(other);
       if (!options.previousProgramStatus) throw new Error('PREVIOUS_PROGRAM_STATUS_REQUIRED');
     }
-    await this.db.transaction('rw', [this.db.trainingPlans, this.db.programPhases], async () => {
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
       const current = await this.db.trainingPlans.get(id), target = await this.db.programPhases.get(phaseId);
       if (!current || !target || current.realmId !== plan.realmId || !belongs(target, current))
         throw new Error('Фаза программы не найдена');
@@ -320,8 +320,8 @@ export class ProgramManagementRepository {
   }
   async duplicatePhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', [this.db.programPhases, this.db.programDays,
-      this.db.programExercises, this.db.programSets], async () => {
+    await this.db.transaction('rw', ['programPhases', 'programDays',
+      'programExercises', 'programSets'], async () => {
         const tree = await this.tree(plan), source = tree.phases.find((phase) => phase.id === phaseId);
         if (!source) throw new Error('Фаза не найдена');
         await this.copyPhase(source, id, tree.phases.reduce((max, phase) => Math.max(max, phase.position), -1) + 1, tree);
@@ -329,8 +329,8 @@ export class ProgramManagementRepository {
   }
   async duplicateProgram(id: string): Promise<string> {
     const plan = await this.writable(id);
-    return this.db.transaction('rw', [this.db.trainingPlans, this.db.programPhases, this.db.programDays,
-      this.db.programExercises, this.db.programSets], async () => {
+    return this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
+      'programExercises', 'programSets'], async () => {
         const tree = await this.tree(plan);
         const plans = await this.db.trainingPlans.where('realmId').equals(plan.realmId).toArray();
         const now = new Date().toISOString();
@@ -347,8 +347,8 @@ export class ProgramManagementRepository {
   }
   async deletePhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', [this.db.programPhases, this.db.programDays, this.db.programExercises,
-      this.db.programSets, this.db.workoutOccurrences], async () => {
+    await this.db.transaction('rw', ['programPhases', 'programDays', 'programExercises',
+      'programSets', 'workoutOccurrences'], async () => {
         const phase = await this.db.programPhases.get(phaseId);
         if (!phase || !belongs(phase, plan)) throw new Error('Фаза не найдена');
         if (phase.status === 'active') throw new Error('Сначала смените статус активной фазы');
@@ -367,8 +367,8 @@ export class ProgramManagementRepository {
   }
   async deleteProgram(id: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', [this.db.trainingPlans, this.db.programPhases, this.db.programDays,
-      this.db.programExercises, this.db.programSets, this.db.workoutOccurrences, this.db.workoutSessions],
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
+      'programExercises', 'programSets', 'workoutOccurrences', 'workoutSessions'],
       async () => {
         const current = await this.db.trainingPlans.get(id);
         if (!current || current.realmId !== plan.realmId || current.owner !== null)
