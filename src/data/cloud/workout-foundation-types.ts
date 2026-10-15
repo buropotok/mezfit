@@ -34,7 +34,8 @@ export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkout
     && (snapshot.mediaUrl === null || typeof snapshot.mediaUrl === 'string');
 }
 
-export interface CloudProgramPhaseRow extends CloudSharedRow {
+export interface CloudProgramPhaseRow extends Omit<CloudSharedRow, 'owner'> {
+  owner: string | null;
   trainingPlanId: string;
   name: string;
   position: number;
