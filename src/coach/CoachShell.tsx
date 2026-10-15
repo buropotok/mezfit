@@ -13,8 +13,8 @@ import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConne
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { PublicExercises } from '../exercises/PublicExercises';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
-import { CloudProgramsPage } from './CloudProgramsPage';
-import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
+import { CloudProgramsPage } from '../program/CloudProgramsPage';
+import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';

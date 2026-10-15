@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
-import { CloudProgramsPage } from '../coach/CloudProgramsPage';
-import { CloudProgramDetailsPage } from '../coach/CloudProgramDetailsPage';
+import { CloudProgramsPage } from '../program/CloudProgramsPage';
+import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import type { NavigationContext } from '../NavigationShell';
 import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
