@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { CloudTrainingPlanRow } from '../data/cloud/database';
+import { CloudProgramsPage } from '../coach/CloudProgramsPage';
+import { CloudProgramDetailsPage } from '../coach/CloudProgramDetailsPage';
+import type { NavigationContext } from '../NavigationShell';
 import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
-import { Badge, Button as CloudButton, GlassSurface, Text } from '../ui';
+import { Badge, Button as CloudButton, GlassSurface, Tabs, TabsList, TabsTrigger, Text } from '../ui';
 import './client-programs-cloud.css';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
@@ -61,10 +65,11 @@ function CloudClientProgramsPage() {
 }
 
 function AthleteProgramPage({
-  repository, actorUserId, cloudStatus, cloudError, onRetry,
+  repository, actorUserId, coachUserId, cloudStatus, cloudError, onRetry,
 }: {
   repository: ProgramManagementRepository;
   actorUserId: string;
+  coachUserId: string;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
   onRetry: () => Promise<void>;
@@ -76,7 +81,7 @@ function AthleteProgramPage({
   useEffect(() => {
     let active = true;
     setLoaded(false);
-    const subscription = repository.observeActiveForAthlete(actorUserId, (current) => {
+    const subscription = repository.observeActiveForAthlete(actorUserId, coachUserId, (current) => {
       if (!active) return;
       setData(current);
       setLoaded(true);
@@ -87,7 +92,7 @@ function AthleteProgramPage({
       setLoaded(true);
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, actorUserId, retryKey]);
+  }, [repository, actorUserId, coachUserId, retryKey]);
   if (error || (cloudStatus === 'error' && !loaded)) return (
     <section className="cloud-client-program">
       <Text variant="footnote" role="alert">{error || cloudError || 'Не удалось синхронизировать программу'}</Text>
@@ -137,14 +142,69 @@ function AthleteProgramPage({
   );
 }
 
-export function ClientProgramsPage() {
+function CloudClientProgramsWorkspace({
+  repository, cloudStatus, cloudError, onRetry,
+  onNavigationContextChange,
+}: {
+  repository: ProgramManagementRepository;
+  cloudStatus: 'loading' | 'ready' | 'error';
+  cloudError: string;
+  onRetry: () => Promise<void>;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+}) {
+  const { selectedCoach } = useClientCoach();
+  const [source, setSource] = useState<'coach' | 'personal'>('coach');
+  const [selectedPersonal, setSelectedPersonal] = useState<CloudTrainingPlanRow | null>(null);
+
+  useEffect(() => {
+    onNavigationContextChange?.(selectedPersonal ? {
+      title: 'Детали программы',
+      scrollKey: `personal-program:${selectedPersonal.id}`,
+      onBack: () => setSelectedPersonal(null),
+    } : null);
+    return () => onNavigationContextChange?.(null);
+  }, [selectedPersonal?.id, onNavigationContextChange]);
+
+  if (selectedPersonal) {
+    return <CloudProgramDetailsPage repository={repository} planId={selectedPersonal.id} />;
+  }
+  return (
+    <section className="cloud-client-programs-workspace">
+      <Tabs value={source} onValueChange={(value) => setSource(value as 'coach' | 'personal')}>
+        <TabsList aria-label="Источник программы">
+          <TabsTrigger value="coach">От тренера</TabsTrigger>
+          <TabsTrigger value="personal">Мои программы</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {source === 'personal' ? (
+        <CloudProgramsPage repository={repository} personalOnly clients={[]}
+          cloudStatus={cloudStatus} cloudError={cloudError} onRetryCloud={onRetry}
+          onOpen={setSelectedPersonal} />
+      ) : selectedCoach ? (
+        <AthleteProgramPage repository={repository}
+          actorUserId={repository.actorUserId} coachUserId={selectedCoach.userId}
+          cloudStatus={cloudStatus} cloudError={cloudError} onRetry={onRetry} />
+      ) : (
+        <List><ListItem interactive={false} title="Нет выбранного тренера"
+          subtitle="Выберите тренера для просмотра назначенной программы или перейдите в «Мои программы»." /></List>
+      )}
+    </section>
+  );
+}
+
+export function ClientProgramsPage({
+  onNavigationContextChange,
+}: {
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+} = {}) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud
     ? new ProgramManagementRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
-    return <AthleteProgramPage repository={repository} actorUserId={cloud.actorUserId}
-      cloudStatus={cloud.status} cloudError={cloud.error} onRetry={cloud.refresh} />;
+    return <CloudClientProgramsWorkspace repository={repository}
+      cloudStatus={cloud.status} cloudError={cloud.error} onRetry={cloud.refresh}
+      onNavigationContextChange={onNavigationContextChange} />;
   }
   // Compatibility for installations not yet provisioned with Dexie Cloud.
   if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
