@@ -139,3 +139,30 @@ The program screens are disabled behind the rollout flag until protected server
 permissions have been reviewed and applied. Creating personal programs does
 not require broadening shared-realm Client rights: the athlete is already
 authorized to manage their own personal realm.
+
+
+## System review follow-up
+
+All authoring and read-only PLAN surfaces use `PlanSyncNotice`: program list,
+phase editor and the selected coach program. It observes the same Addon sync
+projection, never treats a local successful mutation as cloud confirmation, and
+retries queued writes. Failed contact hydration is retried separately even when
+pushing fails, so a contact error cannot suppress a PLAN retry or remain stuck
+behind a successful push. Observer errors can re-subscribe without reloading the app.
+
+The selected coach and selected program key their respective working surfaces.
+Changing selection destroys the previous subscription and dialog state; a late
+callback cannot show a previous coach's plan after the new selection.
+
+Header copy/delete guards inspect all same-realm child days regardless of `owner`.
+They deliberately do not reuse the owner-filtered UI projection. Malformed phase
+headers stop a copy/delete rather than silently losing part of a plan. Child writes
+recheck the parent identity inside their local transaction, preventing orphan phase
+creation if the parent was deleted between authorization and the write.
+
+Regression coverage includes an accepted Worker-generated coach/client relationship,
+all client attempts to mutate its assigned PLAN, unrelated-user reads, parent deletion
+before child writes, Addon-owned days, both Client tabs, selection changes with late
+observer callbacks, offline/error/pending/recovery, and duplicate retry taps. Mocked
+repository tests do not replace live cloud authorization and multi-device validation;
+those remain required before enabling the feature flag as specified above.

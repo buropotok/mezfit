@@ -323,12 +323,13 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   if (destination === 'programs') {
     if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && programRepository) {
       if (selectedCloudProgram) return (
-        <CloudProgramDetailsPage repository={programRepository} planId={selectedCloudProgram.id}
+        <CloudProgramDetailsPage key={selectedCloudProgram.id} repository={programRepository} planId={selectedCloudProgram.id}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
           syncStatus={cloudConnections?.syncStatus ?? 'pending'}
           syncError={cloudConnections?.syncError ?? ''}
-          onRetryCloud={cloudConnections?.retrySync ?? (async () => {})} />
+          onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
+          onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       );
       return (
         <CloudProgramsPage repository={programRepository} clients={clients ?? []}

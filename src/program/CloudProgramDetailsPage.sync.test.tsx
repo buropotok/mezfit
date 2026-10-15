@@ -36,7 +36,7 @@ describe('PLAN details cloud connection status', () => {
         repository={repository} planId={personalPlan.id}
         cloudStatus={cloudStatus} cloudError={cloudStatus === 'error' ? 'Контакты недоступны' : ''}
         syncStatus={syncStatus} syncError={syncStatus === 'error' ? 'Изменение отклонено сервером' : ''}
-        onRetryCloud={retry}
+        onRetryCloud={retry} onRetrySync={retry}
       />
     );
 

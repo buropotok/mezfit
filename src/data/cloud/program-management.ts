@@ -205,31 +205,39 @@ export class ProgramManagementRepository {
     });
   }
   async renameProgram(id: string, name: string): Promise<void> {
-    await this.writable(id);
-    await this.db.trainingPlans.update(id, { name: validName(name), updatedAt: new Date().toISOString() });
+    const plan = await this.writable(id);
+    await this.db.transaction('rw', ['trainingPlans'], async () => {
+      await this.currentParent(plan);
+      await this.db.trainingPlans.update(id, { name: validName(name), updatedAt: new Date().toISOString() });
+    });
   }
   async renamePhase(id: string, phaseId: string, name: string): Promise<void> {
-    const plan = await this.writable(id), phase = await this.db.programPhases.get(phaseId);
-    if (!phase || !belongs(phase, plan)) throw new Error('Фаза не найдена');
-    await this.db.programPhases.update(phaseId, { name: validName(name) });
+    const plan = await this.writable(id);
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
+      const current = await this.currentParent(plan), phase = await this.db.programPhases.get(phaseId);
+      if (!phase || !isCloudPhaseRow(phase) || !belongs(phase, current)) throw new Error('Фаза не найдена');
+      await this.db.programPhases.update(phaseId, { name: validName(name) });
+    });
   }
   async duration(id: string, phaseId: string, weeks: number): Promise<void> {
     if (!isValidDurationWeeks(weeks)) throw new Error('Укажите положительное целое количество недель');
-    const plan = await this.writable(id), phase = await this.db.programPhases.get(phaseId);
-    if (!phase || !belongs(phase, plan)) throw new Error('Фаза не найдена');
-    await this.db.programPhases.update(phaseId, { durationWeeks: weeks });
+    const plan = await this.writable(id);
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
+      const current = await this.currentParent(plan), phase = await this.db.programPhases.get(phaseId);
+      if (!phase || !isCloudPhaseRow(phase) || !belongs(phase, current)) throw new Error('Фаза не найдена');
+      await this.db.programPhases.update(phaseId, { durationWeeks: weeks });
+    });
   }
   async createPhase(id: string): Promise<string> {
     const plan = await this.writable(id);
     return this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.db.trainingPlans.get(id);
-      if (!current || current.realmId !== plan.realmId) throw new Error('Программа изменилась');
+      const current = await this.currentParent(plan);
       const phases = await this.db.programPhases.where('trainingPlanId').equals(id).toArray();
       const used = new Set(phases.map((phase) => phase.name));
       let n = 1;
       while (used.has(`Фаза ${n}`)) n++;
       return this.db.programPhases.add({
-        realmId: plan.realmId, owner: this.actorUserId, trainingPlanId: id,
+        realmId: current.realmId, owner: this.actorUserId, trainingPlanId: id,
         name: `Фаза ${n}`, status: 'draft', durationWeeks: DEFAULT_PHASE_WEEKS,
         position: phases.reduce((max, phase) => Math.max(max, phase.position), -1) + 1,
         plannedStartDate: null, plannedEndDate: null,
@@ -238,7 +246,8 @@ export class ProgramManagementRepository {
   }
   async publishPhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['programPhases'], async () => {
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
+      await this.currentParent(plan);
       const phase = await this.db.programPhases.get(phaseId);
       if (!phase || !belongs(phase, plan) || phase.status !== 'draft')
         throw new Error('Завершить заполнение можно только у черновика');
@@ -249,8 +258,8 @@ export class ProgramManagementRepository {
     const plan = await this.writable(id);
     await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
       const phase = await this.db.programPhases.get(phaseId);
-      const current = await this.db.trainingPlans.get(id);
-      if (!phase || !current || !belongs(phase, current) || current.realmId !== plan.realmId)
+      const current = await this.currentParent(plan);
+      if (!phase || !isCloudPhaseRow(phase) || !belongs(phase, current))
         throw new Error('Фаза не найдена');
       const wasActive = phase.status === 'active';
       await this.db.programPhases.update(phaseId, { status });
@@ -267,8 +276,7 @@ export class ProgramManagementRepository {
   async setProgramStatus(id: string, status: InactiveStatus): Promise<void> {
     const plan = await this.writable(id);
     await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.db.trainingPlans.get(id);
-      if (!current || current.realmId !== plan.realmId) throw new Error('Программа изменилась');
+      await this.currentParent(plan);
       // The indexed relationship is replayed against the server's current snapshot
       // and also affects phases that another offline client created or activated.
       await this.db.programPhases.where('[trainingPlanId+status]').equals([id, 'active'])
@@ -293,9 +301,9 @@ export class ProgramManagementRepository {
       if (!options.previousProgramStatus) throw new Error('PREVIOUS_PROGRAM_STATUS_REQUIRED');
     }
     await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.db.trainingPlans.get(id);
+      const current = await this.currentParent(plan);
       const target = await this.db.programPhases.get(phaseId);
-      if (!current || !target || current.realmId !== plan.realmId || !belongs(target, current))
+      if (!target || !isCloudPhaseRow(target) || !belongs(target, current))
         throw new Error('Фаза программы не найдена');
 
       const activePhases = await this.db.programPhases
@@ -327,17 +335,28 @@ export class ProgramManagementRepository {
     });
   }
 
-  /** Collect only same-realm descendants for safe deep copy / deletion. */
+  /** Destructive/copy guards inspect persisted descendants, not the UI projection. */
   private async tree(plan: CloudTrainingPlanRow) {
     const phases = (await this.db.programPhases.where('trainingPlanId').equals(plan.id).toArray())
-      .filter((phase) => belongs(phase, plan));
+      .filter((phase) => phase.realmId === plan.realmId);
+    if (phases.some((phase) => !isCloudPhaseRow(phase) || !belongs(phase, plan)))
+      throw new Error('INVALID_CLOUD_PROGRAM_PHASE');
+    const phaseIds = new Set(phases.map((phase) => phase.id));
+    // Addon-created descendants can have a non-null owner. They still prevent
+    // deleting/copying headers until the full day cascade is implemented.
     const days = (await this.db.programDays.where('realmId').equals(plan.realmId).toArray())
-      .filter((day) => day.owner === null && phases.some((phase) => phase.id === day.programPhaseId));
-    const exercises = (await this.db.programExercises.where('realmId').equals(plan.realmId).toArray())
-      .filter((exercise) => exercise.owner === null && days.some((day) => day.id === exercise.programDayId));
-    const sets = (await this.db.programSets.where('realmId').equals(plan.realmId).toArray())
-      .filter((set) => set.owner === null && exercises.some((exercise) => exercise.id === set.programExerciseId));
-    return { phases: ordered(phases), days, exercises, sets };
+      .filter((day) => phaseIds.has(day.programPhaseId));
+    return { phases: ordered(phases), days };
+  }
+
+  /** Recheck the parent inside the same transaction that writes its children. */
+  private async currentParent(plan: CloudTrainingPlanRow): Promise<CloudTrainingPlanRow> {
+    const current = await this.db.trainingPlans.get(plan.id);
+    if (!current || !isCloudPlanRow(current) || !isExpectedPlanOwner(current)
+      || current.realmId !== plan.realmId || current.coachUserId !== plan.coachUserId
+      || current.clientUserId !== plan.clientUserId || athleteOf(current) !== athleteOf(plan))
+      throw new Error('Программа изменилась. Повторите действие.');
+    return current;
   }
   /** This PR can duplicate phase headers only; descendant ACL comes with day authoring. */
   private async copyPhase(source: CloudProgramPhaseRow, planId: string, position: number) {
@@ -351,9 +370,9 @@ export class ProgramManagementRepository {
 
   async duplicatePhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['programPhases', 'programDays',
-      'programExercises', 'programSets'], async () => {
-        const tree = await this.tree(plan), source = tree.phases.find((phase) => phase.id === phaseId);
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
+        const current = await this.currentParent(plan);
+        const tree = await this.tree(current), source = tree.phases.find((phase) => phase.id === phaseId);
         if (!source) throw new Error('Фаза не найдена');
         if (tree.days.some((day) => day.programPhaseId === phaseId))
           throw new Error('Дублирование фазы с днями будет доступно после реализации редактора дней');
@@ -362,9 +381,9 @@ export class ProgramManagementRepository {
       });
   }
   async duplicateProgram(id: string): Promise<string> {
-    const plan = await this.writable(id);
-    return this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
-      'programExercises', 'programSets'], async () => {
+    const original = await this.writable(id);
+    return this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
+        const plan = await this.currentParent(original);
         const tree = await this.tree(plan);
         if (tree.days.length > 0)
           throw new Error('Дублирование программы с днями будет доступно после реализации редактора дней');
@@ -383,8 +402,8 @@ export class ProgramManagementRepository {
   }
   async deletePhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['programPhases', 'programDays',
-      'programExercises', 'programSets', 'workoutOccurrences'], async () => {
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
+      await this.currentParent(plan);
       const phase = await this.db.programPhases.get(phaseId);
       if (!phase || !belongs(phase, plan)) throw new Error('Фаза не найдена');
       if (phase.status === 'active') throw new Error('Сначала смените статус активной фазы');
@@ -400,9 +419,7 @@ export class ProgramManagementRepository {
     await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
       'programExercises', 'programSets', 'workoutOccurrences', 'workoutSessions'],
       async () => {
-        const current = await this.db.trainingPlans.get(id);
-        if (!current || current.realmId !== plan.realmId || !isExpectedPlanOwner(current))
-          throw new Error('Программа изменилась. Повторите действие.');
+        const current = await this.currentParent(plan);
         if (current.status === 'active') throw new Error('Сначала смените статус активной программы');
         if (await this.db.workoutSessions.where('trainingPlanId').equals(id).count())
           throw new Error('Программу с историей тренировок удалять нельзя');

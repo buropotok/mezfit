@@ -6,10 +6,11 @@ import { athleteOf, isOtherActiveProgramInScope, type ProgramManagementRepositor
 import { useNavigationFloatingAction } from '../NavigationShell';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import {
-  Avatar, Badge, Button, GlassSurface, IconButton, LiquidPopover, List, ListItem,
+  Avatar, Badge, GlassSurface, IconButton, LiquidPopover, List, ListItem,
   MezfitDialog, MezfitDialogButton, SearchInput, Tabs, TabsList, TabsTrigger, Text,
   type BadgeColor, type LiquidPopoverItem,
 } from '../ui';
+import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogOption, type PlanDialogState } from './PlanActionDialog';
 import './cloud-plan-management.css';
 
@@ -125,15 +126,6 @@ export function CloudProgramsPage({
       : repository.observeAuthored(onChange, onError);
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retryKey, personalOnly]);
-
-  const syncWarning = syncStatus === 'error'
-    ? syncError || 'Ошибка синхронизации с Dexie Cloud'
-    : syncStatus === 'offline'
-      ? syncError || 'Нет соединения с Dexie Cloud'
-      : syncStatus === 'pending'
-        ? 'Синхронизация с облаком ещё не подтверждена.' : '';
-  const needsRetry = Boolean(error) || cloudStatus === 'error'
-    || syncStatus === 'error' || syncStatus === 'offline';
 
   const groups = useMemo(() => {
     const byAthlete = new Map<string, CloudTrainingPlanRow[]>();
@@ -285,33 +277,10 @@ export function CloudProgramsPage({
           </GlassSurface>
         </section>
       ))}
-      {error || cloudStatus === 'error' || syncWarning ? (
-        <div className="cloud-plan-error">
-          {error || cloudStatus === 'error' ? (
-            <Text variant="footnote" role="alert">
-              {error || cloudError || 'Не удалось загрузить облачные данные'}
-            </Text>
-          ) : null}
-          {syncWarning ? (
-            <>
-              <Text variant="footnote" role={syncStatus === 'pending' ? 'status' : 'alert'}>
-                {syncWarning}
-              </Text>
-              <Text variant="footnote" tone="muted">
-                Изменения могут оставаться только на этом устройстве до завершения синхронизации.
-              </Text>
-            </>
-          ) : null}
-          {needsRetry ? (
-            <Button variant="secondary" onClick={() => {
-              void (async () => {
-                if (cloudStatus === 'error') await onRetryCloud();
-                if (syncStatus === 'error' || syncStatus === 'offline') await onRetrySync();
-              })().catch(() => {}).finally(() => setRetryKey((n) => n + 1));
-            }}>Повторить синхронизацию</Button>
-          ) : null}
-        </div>
-      ) : null}
+      <PlanSyncNotice cloudStatus={cloudStatus} cloudError={cloudError}
+        syncStatus={syncStatus} syncError={syncError}
+        onRetryCloud={onRetryCloud} onRetrySync={onRetrySync}
+        localError={error} onRetryLocal={() => setRetryKey((n) => n + 1)} />
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
       <MezfitDialog
         opened={createOpen}

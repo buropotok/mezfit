@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
 import {
@@ -82,20 +83,24 @@ function fixture() {
   const programSets = mockTable([], 'pst');
   const workoutSessions = mockTable([], 'ses');
   const workoutOccurrences = mockTable([], 'occ');
+  const transaction = vi.fn(async (...args: unknown[]) => {
+    const callback = args.at(-1);
+    if (typeof callback !== 'function') throw new Error('Missing transaction callback');
+    return callback();
+  });
+  const realms = mockTable<Row>([], 'realm');
+  const members = mockTable<Row>([], 'member');
   const db = {
     trainingPlans, programPhases, programDays, programExercises, programSets,
     workoutSessions, workoutOccurrences,
-    realms: mockTable([], 'realm'), members: mockTable([], 'member'),
-    transaction: vi.fn(async (...args: unknown[]) => {
-      const callback = args.at(-1);
-      if (typeof callback !== 'function') throw new Error('Missing transaction callback');
-      return callback();
-    }),
+    realms, members,
+    transaction,
   } as unknown as MezfitCloudDatabase;
   return {
     repo: new ProgramManagementRepository(db, user),
     plans: trainingPlans.data, phases: programPhases.data, days: programDays.data,
-    transaction: db.transaction,
+    transaction,
+    db, realmRows: realms.data, memberRows: members.data,
   };
 }
 
@@ -235,6 +240,37 @@ describe('local-first program/phase management', () => {
     await expect(f.repo.renameProgram('assigned', 'Нельзя')).rejects.toThrow();
   });
 
+  it('allows a real relationship coach to author while its accepted client only reads', async () => {
+    const f = fixture();
+    const pair = await relationshipMembership('101', '202');
+    f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
+    f.memberRows.push(...pair.members);
+    const assigned = await f.repo.createAssigned('tg:202', 'Назначенная программа');
+    const phase = await f.repo.createPhase(assigned);
+    await f.repo.publishPhase(assigned, phase);
+    const client = new ProgramManagementRepository(f.db, 'tg:202');
+    expect((await client.details(assigned))?.phases[0].id).toBe(phase);
+    const before = structuredClone({ plans: f.plans, phases: f.phases });
+    for (const mutation of [
+      () => client.renameProgram(assigned, 'Подмена'),
+      () => client.renamePhase(assigned, phase, 'Подмена'),
+      () => client.duration(assigned, phase, 12),
+      () => client.createPhase(assigned),
+      () => client.publishPhase(assigned, phase),
+      () => client.activate(assigned, phase),
+      () => client.setProgramStatus(assigned, 'finished'),
+      () => client.setPhaseStatus(assigned, phase, 'cancelled'),
+      () => client.duplicateProgram(assigned),
+      () => client.duplicatePhase(assigned, phase),
+      () => client.deleteProgram(assigned),
+      () => client.deletePhase(assigned, phase),
+    ]) await expect(mutation()).rejects.toThrow('Недостаточно прав');
+    expect({ plans: f.plans, phases: f.phases }).toEqual(before);
+    const unrelated = new ProgramManagementRepository(f.db, 'tg:303');
+    expect(await unrelated.details(assigned)).toBeNull();
+    expect(await unrelated.listReadable()).toEqual([]);
+  });
+
   it('deactivating an active phase updates the program in the same transaction', async () => {
     const f = fixture();
     const phaseId = await f.repo.createPhase('tra-1');
@@ -310,6 +346,47 @@ describe('local-first program/phase management', () => {
     expect(f.phases).toHaveLength(1);
     expect(f.days).toHaveLength(1);
   });
+
+  it('blocks header deletion and duplication for addon-owned days too', async () => {
+    const f = fixture();
+    const phaseId = await f.repo.createPhase('tra-1');
+    const persistedDay = {
+      id: 'owned-day', realmId: user, owner: user,
+      programPhaseId: phaseId, name: 'День', position: 0, status: 'active',
+    };
+    // These are raw synced rows; CloudProgramDayRow currently models legacy ownerless rows.
+    Object.assign(f.days, { 0: persistedDay });
+    await expect(f.repo.deleteProgram('tra-1')).rejects.toThrow('с днями');
+    await expect(f.repo.deletePhase('tra-1', phaseId)).rejects.toThrow('с днями');
+    await expect(f.repo.duplicateProgram('tra-1')).rejects.toThrow('с днями');
+    await expect(f.repo.duplicatePhase('tra-1', phaseId)).rejects.toThrow('с днями');
+    expect(f.plans).toHaveLength(1);
+    expect(f.phases).toHaveLength(1);
+  });
+
+  it.each(['createPhase', 'duplicatePhase', 'duplicateProgram', 'publishPhase', 'renamePhase', 'duration'] as const)(
+    'rejects %s if the parent was deleted before its write transaction', async (operation) => {
+      const f = fixture();
+      const phase = await f.repo.createPhase('tra-1');
+      f.transaction.mockImplementationOnce(async (...args: unknown[]) => {
+        f.plans.splice(0);
+        const callback = args.at(-1);
+        if (typeof callback !== 'function') throw new Error('Missing transaction callback');
+        return callback();
+      });
+      const tasks = {
+        createPhase: () => f.repo.createPhase('tra-1'),
+        duplicatePhase: () => f.repo.duplicatePhase('tra-1', phase),
+        duplicateProgram: () => f.repo.duplicateProgram('tra-1'),
+        publishPhase: () => f.repo.publishPhase('tra-1', phase),
+        renamePhase: () => f.repo.renamePhase('tra-1', phase, 'Новое имя'),
+        duration: () => f.repo.duration('tra-1', phase, 12),
+      };
+      await expect(tasks[operation]()).rejects.toThrow('Программа изменилась');
+      expect(f.phases).toHaveLength(1);
+      expect(f.phases[0]).toMatchObject({ name: 'Фаза 1', status: 'draft', durationWeeks: 10 });
+    },
+  );
 
   it('consistently deletes all matching phase headers together with a program', async () => {
     const f = fixture();

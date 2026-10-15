@@ -5,6 +5,7 @@ import { athleteOf, isOtherActiveProgramInScope, type ProgramDetails, type Progr
 import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
 import { Badge, Button, GlassSurface, IconButton, LiquidPopover, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
+import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogState, type PlanDialogOption } from './PlanActionDialog';
 import './cloud-plan-management.css';
 
@@ -85,7 +86,7 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud,
+  repository, planId, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync,
 }: {
   repository: ProgramManagementRepository;
   planId: string;
@@ -94,6 +95,7 @@ export function CloudProgramDetailsPage({
   syncStatus: CloudSyncStatus;
   syncError: string;
   onRetryCloud: () => Promise<void>;
+  onRetrySync: () => Promise<void>;
 }) {
   const [details, setDetails] = useState<ProgramDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,6 +107,8 @@ export function CloudProgramDetailsPage({
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setDetails(null);
+    setDialog(null);
     setError('');
     const subscription = repository.observeDetails(planId, (value) => {
       if (!active) return;
@@ -243,39 +247,22 @@ export function CloudProgramDetailsPage({
     }
   };
 
-  const syncing = syncStatus === 'pending';
-  const syncWarning = syncStatus === 'error'
-    ? syncError || 'Ошибка синхронизации с Dexie Cloud'
-    : syncStatus === 'offline'
-      ? syncError || 'Нет соединения с Dexie Cloud'
-      : cloudStatus === 'error'
-        ? cloudError || 'Не удалось синхронизировать облачные данные'
-        : syncing ? 'Синхронизация с облаком ещё не подтверждена.' : '';
+  const syncNotice = <PlanSyncNotice cloudStatus={cloudStatus} cloudError={cloudError}
+    syncStatus={syncStatus} syncError={syncError}
+    onRetryCloud={onRetryCloud} onRetrySync={onRetrySync}
+    localError={!details ? error : ''} onRetryLocal={() => setRetryKey((n) => n + 1)} />;
 
   if (loading) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
   if (!details) return (
     <section className="cloud-plan-loading">
-      <Text variant="headline">{error || 'Программа не найдена'}</Text>
+      {syncNotice}
+      <Text variant="headline">{error || (syncStatus === 'synced' ? 'Программа не найдена' : 'Программа ещё не загружена на устройство')}</Text>
       <Button onClick={() => setRetryKey((n) => n + 1)}>Повторить</Button>
     </section>
   );
   return (
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
-      {syncWarning ? (
-        <div className="cloud-plan-error">
-          <Text variant="footnote" role={syncing ? 'status' : 'alert'}>
-            {syncWarning}
-          </Text>
-          <Text variant="footnote" tone="muted">
-            Изменения могут оставаться только на этом устройстве до восстановления синхронизации.
-          </Text>
-          {!syncing ? (
-            <Button variant="secondary" onClick={() => { void onRetryCloud().catch(() => {}); }}>
-              Повторить синхронизацию
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
+      {syncNotice}
       <div className="cloud-plan-title-row">
         <div className="cloud-plan-main-title"><Text variant="large-title">{details.program.name}</Text></div>
         <Badge color={details.program.status === 'active' ? 'green' : 'gray'}>
