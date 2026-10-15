@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramPhaseRow } from './workout-foundation-types';
-import { ProgramManagementRepository, clientVisiblePhases } from './program-management';
+import { ProgramManagementRepository, clientVisiblePhases, isCloudPlanRow, isCloudPhaseRow } from './program-management';
 
 const user = 'tg:101';
 type Row = { id: string; realmId: string };
@@ -76,6 +76,15 @@ function fixture() {
 }
 
 describe('local-first program/phase management', () => {
+  it('rejects unsupported cloud statuses before they enter the domain', async () => {
+    const f = fixture();
+    expect(isCloudPlanRow({ ...f.plans[0], status: 'archived' })).toBe(false);
+    const phaseId = await f.repo.createPhase('tra-1');
+    expect(isCloudPhaseRow({ ...f.phases[0], status: 'archived' })).toBe(false);
+    expect(isCloudPhaseRow({ ...f.phases[0], durationWeeks: -10 })).toBe(false);
+    expect((await f.repo.details('tra-1'))?.phases[0].id).toBe(phaseId);
+  });
+
   it('creates a personal plan for the athlete without inventing a client relationship', async () => {
     const f = fixture();
     const id = await f.repo.createPersonal('Новая программа');
