@@ -268,8 +268,11 @@ export const WORKED_MUSCLE_VIEWS = {
   "front": {
     "width": 1024,
     "height": 1536,
-    "image": "anatomy/male-front.png",
-    "mask": "anatomy/male-front.mezmask",
+    "manifest": "anatomy/front/manifest.json",
+    "neutral": "anatomy/front/neutral.png",
+    "colorAtlas": "anatomy/front/color-atlas.png",
+    "glowAtlas": "anatomy/front/glow-atlas.png",
+    "mask": "anatomy/front/mask.mezmask",
     "indices": {
       "1": "pectoralis_clavicular",
       "2": "pectoralis_sternal",
@@ -300,8 +303,11 @@ export const WORKED_MUSCLE_VIEWS = {
   "rear": {
     "width": 1122,
     "height": 1402,
-    "image": "anatomy/male-rear.png",
-    "mask": "anatomy/male-rear.mezmask",
+    "manifest": "anatomy/rear/manifest.json",
+    "neutral": "anatomy/rear/neutral.png",
+    "colorAtlas": "anatomy/rear/color-atlas.png",
+    "glowAtlas": "anatomy/rear/glow-atlas.png",
+    "mask": "anatomy/rear/mask.mezmask",
     "indices": {
       "1": "cervical_extensors",
       "2": "levator_scapulae",
