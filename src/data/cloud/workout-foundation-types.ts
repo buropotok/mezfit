@@ -1,4 +1,6 @@
 import type { TrackingType } from '../../api';
+import { isCoachExerciseDefinition } from '../exercises/coachExerciseTypes';
+import type { PublicExercise } from '../exercises/publicExerciseTypes';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { CloudSharedRow } from './database';
 
@@ -11,6 +13,26 @@ export interface CloudWorkoutExerciseSnapshot {
   nameEn: string | null;
   trackingType: TrackingType;
   mediaUrl: string | null;
+  /** Immutable full definition captured when a coach assigns a private exercise. */
+  catalogueDefinition?: PublicExercise;
+  /** Origin actor copied into the program row, cross-checked against the accepted relationship. */
+  catalogueCoachUserId?: string;
+}
+
+/** Only a complete, self-contained relationship snapshot may populate 'Тренерские'. */
+export function isAssignedCoachExerciseSnapshot(
+  value: CloudWorkoutExerciseSnapshot,
+  coachUserId: string,
+): value is CloudWorkoutExerciseSnapshot & { catalogueDefinition: PublicExercise } {
+  const candidate = value.catalogueDefinition;
+  return value.scope === 'coach'
+    && value.catalogueCoachUserId === coachUserId
+    && typeof candidate === 'object' && candidate !== null
+    && candidate.id === value.exerciseDefinitionId
+    && isCoachExerciseDefinition({
+      ...candidate, realmId: coachUserId, owner: coachUserId,
+      sourceSha256: 'coach-custom', updatedAt: 'snapshot', archivedAt: null,
+    }, coachUserId);
 }
 
 /** Keep the runtime values aligned with the shared TrackingType contract. */
@@ -31,7 +53,12 @@ export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkout
     && typeof snapshot.name === 'string' && snapshot.name.trim().length > 0
     && (snapshot.nameEn === null || typeof snapshot.nameEn === 'string')
     && typeof snapshot.trackingType === 'string' && Object.hasOwn(TRACKING_TYPES, snapshot.trackingType)
-    && (snapshot.mediaUrl === null || typeof snapshot.mediaUrl === 'string');
+    && (snapshot.mediaUrl === null || typeof snapshot.mediaUrl === 'string')
+    && (snapshot.catalogueDefinition === undefined || (
+      typeof snapshot.catalogueCoachUserId === 'string'
+      && /^tg:[1-9]\\d*$/.test(snapshot.catalogueCoachUserId)
+      && isAssignedCoachExerciseSnapshot(value as CloudWorkoutExerciseSnapshot, snapshot.catalogueCoachUserId)
+    ));
 }
 
 export interface CloudProgramPhaseRow extends CloudSharedRow {
