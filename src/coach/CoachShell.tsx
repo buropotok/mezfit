@@ -13,6 +13,10 @@ import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConne
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { PublicExercises } from '../exercises/PublicExercises';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
+import { CloudProgramsPage } from './CloudProgramsPage';
+import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
+import { ProgramManagementRepository } from '../data/cloud/program-management';
+import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
 
@@ -208,10 +212,14 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   const requestBackTransition = useNavigationBackTransition();
   const cloudPrograms = useAssignedPrograms();
   const cloudConnections = useCloudConnections();
+  const programRepository = useMemo(() => cloudConnections
+    ? new ProgramManagementRepository(cloudConnections.db, cloudConnections.actorUserId)
+    : null, [cloudConnections?.db, cloudConnections?.actorUserId]);
   const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
+  const [selectedCloudProgram, setSelectedCloudProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteCopyError, setInviteCopyError] = useState('');
   const message = cloudConnections?.status === 'error' ? cloudConnections.error : '';
@@ -250,6 +258,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
     if (destination !== 'clients' && destination !== 'programs' && selectedClientId) setSelectedClientId(null);
     if (destination !== 'programs') {
       setSelectedProgram(null);
+      setSelectedCloudProgram(null);
       setProgramDraft(null);
       setSelectingProgramClient(false);
       setProgramCreateError('');
@@ -259,6 +268,11 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   useEffect(() => {
     if (selectingProgramClient && destination === 'programs') {
       onNavigationContextChange({ title: 'Клиенты', scrollKey: 'program-client-selection', onBack: () => setSelectingProgramClient(false) });
+      return () => onNavigationContextChange(null);
+    }
+
+    if (selectedCloudProgram && destination === 'programs') {
+      onNavigationContextChange({ title: 'Детали программы', scrollKey: `cloud-plan:${selectedCloudProgram.id}`, onBack: () => setSelectedCloudProgram(null) });
       return () => onNavigationContextChange(null);
     }
 
@@ -285,7 +299,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [destination, selectedClient, selectedProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [destination, selectedClient, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
     return <ClientWorkspace client={selectedClient} />;
@@ -306,6 +320,16 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   }
 
   if (destination === 'programs') {
+    if (programRepository) {
+      if (selectedCloudProgram) return (
+        <CloudProgramDetailsPage repository={programRepository} planId={selectedCloudProgram.id} />
+      );
+      return (
+        <CloudProgramsPage repository={programRepository} clients={clients ?? []}
+          onOpen={setSelectedCloudProgram} />
+      );
+    }
+
     if (selectedProgram) {
       return <ProgramDetailsPage initData={initData} programId={selectedProgram.id} />;
     }
