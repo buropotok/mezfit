@@ -166,7 +166,8 @@ function CloudClientProgramsWorkspace({
   }, [selectedPersonal?.id, onNavigationContextChange]);
 
   if (selectedPersonal) {
-    return <CloudProgramDetailsPage repository={repository} planId={selectedPersonal.id} />;
+    return <CloudProgramDetailsPage repository={repository} planId={selectedPersonal.id}
+      cloudStatus={cloudStatus} cloudError={cloudError} onRetryCloud={onRetry} />;
   }
   return (
     <section className="cloud-client-programs-workspace">
