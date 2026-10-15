@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
 import type { CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
 import { Button, MezfitDialog, MezfitDialogButton, Text, TextArea, TextInput } from '../ui';
@@ -24,10 +24,12 @@ function CopyOrCreate({
 }) {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState('');
 
   const confirm = async () => {
-    if (busy || (request.mode === 'create' && !name.trim())) return;
+    if (inFlight.current || (request.mode === 'create' && !name.trim())) return;
+    inFlight.current = true;
     setBusy(true);
     setError('');
     try {
@@ -43,6 +45,7 @@ function CopyOrCreate({
     } catch (cause) {
       setError(message(cause));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };
@@ -87,7 +90,8 @@ function EditPersonalExercise({
   const [error, setError] = useState('');
 
   const save = async () => {
-    if (busy || !nameRu.trim()) return;
+    if (inFlight.current || !nameRu.trim()) return;
+    inFlight.current = true;
     setBusy(true);
     setError('');
     try {
