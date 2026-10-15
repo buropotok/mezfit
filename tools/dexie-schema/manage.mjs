@@ -53,6 +53,25 @@ export function verifyAdditiveSchema(manifest, before, after, rolesBefore, roles
     || !isDeepStrictEqual(rolesBefore.roles, rolesAfter.roles)) fail('ROLE_PERMISSIONS_CHANGED');
 }
 
+/** Report complete schema/role maps without exporting business records or credential metadata. */
+export function formatCloudStructureReport(schemaExport, rolesExport) {
+  if (!record(schemaExport) || !record(schemaExport.schema) || !record(rolesExport)
+    || !record(rolesExport.roles)) fail('INVALID_CLOUD_STRUCTURE_EXPORT');
+  const schema = schemaExport.schema;
+  const roles = rolesExport.roles;
+  if (Object.entries(schema).some(([key, value]) => !key || typeof value !== 'string')
+    || Object.keys(roles).some(key => !key)) fail('INVALID_CLOUD_STRUCTURE_EXPORT');
+  return [
+    'DEXIE CLOUD STRUCTURE (read-only; no business records)',
+    'Tables (' + Object.keys(schema).length + '):',
+    JSON.stringify(schema, null, 2),
+    'Schema sealed: ' + JSON.stringify(schemaExport.sealed ?? null),
+    'Roles (' + Object.keys(roles).length + '):',
+    JSON.stringify(roles, null, 2),
+    'NOTE: This is schema and role configuration, not a live per-user permission or realm membership audit.',
+  ].join('\\n');
+}
+
 const workdir = () => {
   if (!process.env.RUNNER_TEMP || !process.env.GITHUB_RUN_ID || !process.env.GITHUB_RUN_ATTEMPT) {
     fail('GITHUB_RUNNER_REQUIRED');
@@ -64,7 +83,7 @@ const load = async file => JSON.parse(await readFile(file, 'utf8'));
 
 async function main() {
   const mode = process.argv[2];
-  if (!['prepare', 'plan', 'verify'].includes(mode) || process.argv.length !== 3) {
+  if (!['prepare', 'plan', 'verify', 'report'].includes(mode) || process.argv.length !== 3) {
     fail('INVALID_OPERATION');
   }
   const config = await load('dexie-cloud.json');
@@ -86,6 +105,13 @@ async function main() {
     await writeFile(join(directory, 'dexie-cloud.json'),
       JSON.stringify(config), { flag: 'wx', mode: 0o600 });
     console.log('Isolated Dexie Cloud CLI configuration ready.');
+    return;
+  }
+
+  if (mode === 'report') {
+    console.log(formatCloudStructureReport(
+      await load(join(directory, 'before-schema.json')),
+      await load(join(directory, 'before-roles.json'))));
     return;
   }
 
