@@ -6,7 +6,7 @@ on:
     inputs:
       operation:
         type: choice
-        description: 'Preview remote schema or apply additive workout v4 schema'
+        description: 'Report full remote schema/roles or apply additive workout v4 schema'
         required: true
         default: preview
         options: [preview, apply]
@@ -52,6 +52,9 @@ jobs:
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
+      - name: Report all remote tables and role definitions (no business data)
+        if: inputs.operation == 'preview'
+        run: node tools/dexie-schema/manage.mjs report
       - name: Validate additive-only plan
         id: plan
         run: node tools/dexie-schema/manage.mjs plan

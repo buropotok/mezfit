@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EXPECTED_TABLES, planAdditiveSchema, validateManifest, verifyAdditiveSchema } from './manage.mjs';
+import { EXPECTED_TABLES, formatCloudStructureReport, planAdditiveSchema, validateManifest, verifyAdditiveSchema } from './manage.mjs';
 
 const manifest = { schema: Object.fromEntries(EXPECTED_TABLES.map(name => [name, '@id'])) };
 const remote = { schema: { trainingPlans: '@id', realms: '@realmId' }, sealed: true };
@@ -46,5 +46,26 @@ describe('protected Dexie Cloud schema workflow', () => {
     expect(() => verifyAdditiveSchema(manifest, remote, after, roles,
       { roles: { coach: { permissions: { manage: '*' } } } }))
       .toThrow('ROLE_PERMISSIONS_CHANGED');
+  });
+});
+
+
+describe('complete read-only Dexie Cloud structure report', () => {
+  it('includes every remote table and role, not only workout v4', () => {
+    const report = formatCloudStructureReport(
+      { schema: { ...remote.schema, ...manifest.schema, exerciseDefinitionOverrides: '@id' }, sealed: true, secret: 'DO_NOT_PRINT' },
+      { roles: { ...roles.roles, client: { permissions: { read: ['trainingPlans'] } } }, token: 'DO_NOT_PRINT' },
+    );
+    expect(report).toContain('exerciseDefinitionOverrides');
+    expect(report).toContain('trainingPlans');
+    expect(report).toContain('client');
+    expect(report).toContain('Schema sealed: true');
+    expect(report).not.toContain('DO_NOT_PRINT');
+  });
+
+  it('rejects malformed exports instead of silently showing incomplete structure', () => {
+    expect(() => formatCloudStructureReport({ schema: [] }, roles)).toThrow('INVALID_CLOUD_STRUCTURE_EXPORT');
+    expect(() => formatCloudStructureReport(remote, { roles: null })).toThrow('INVALID_CLOUD_STRUCTURE_EXPORT');
+    expect(() => formatCloudStructureReport({ schema: { bad: null } }, roles)).toThrow('INVALID_CLOUD_STRUCTURE_EXPORT');
   });
 });
