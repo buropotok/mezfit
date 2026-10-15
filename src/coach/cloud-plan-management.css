@@ -43,7 +43,7 @@
   display: flex;
   min-width: 0;
 }
-.cloud-plan-summary .ui-glass-surface__content {
+.cloud-plan-summary-content {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-2);
