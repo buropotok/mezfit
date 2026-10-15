@@ -46,6 +46,23 @@ export function isCloudPhaseRow(value: unknown): value is CloudProgramPhaseRow {
 export function athleteOf(plan: CloudTrainingPlanRow): string | null {
   return plan.athleteUserId ?? plan.clientUserId;
 }
+/** Activation exclusivity belongs to one relationship realm, not every coach of an athlete. */
+export function isOtherActiveProgramInScope(
+  candidate: CloudTrainingPlanRow,
+  target: CloudTrainingPlanRow,
+): boolean {
+  return candidate.id !== target.id && candidate.realmId === target.realmId
+    && athleteOf(candidate) === athleteOf(target) && candidate.status === 'active';
+}
+/** A client's assigned PLAN must belong to the currently selected coach. */
+export function selectedCoachActiveProgram(
+  programs: readonly CloudTrainingPlanRow[],
+  athleteUserId: string,
+  coachUserId: string,
+): CloudTrainingPlanRow | undefined {
+  return programs.find((plan) => plan.status === 'active'
+    && plan.clientUserId === athleteUserId && plan.coachUserId === coachUserId);
+}
 export function clientVisiblePhases(phases: readonly CloudProgramPhaseRow[]): CloudProgramPhaseRow[] {
   return phases.filter((phase) => phase.status !== 'draft');
 }
@@ -144,9 +161,7 @@ export class ProgramManagementRepository {
     }
     return liveQuery(async () => {
       const plans = await this.listReadable();
-      const active = plans.find((plan) =>
-        plan.clientUserId === athleteUserId && plan.coachUserId === coachUserId
-        && plan.status === 'active');
+      const active = selectedCoachActiveProgram(plans, athleteUserId, coachUserId);
       if (!active) return null;
       const details = await this.details(active.id);
       return details ? { ...details, phases: clientVisiblePhases(details.phases) } : null;
@@ -261,8 +276,7 @@ export class ProgramManagementRepository {
   } = {}): Promise<void> {
     const plan = await this.writable(id);
     const other = (await this.listReadable()).find((p) =>
-      p.id !== id && p.status === 'active' && p.realmId === plan.realmId
-      && athleteOf(p) === athleteOf(plan));
+      isOtherActiveProgramInScope(p, plan));
     if (other) {
       await this.author(other);
       if (!options.previousProgramStatus) throw new Error('PREVIOUS_PROGRAM_STATUS_REQUIRED');
@@ -272,8 +286,7 @@ export class ProgramManagementRepository {
       if (!current || !target || current.realmId !== plan.realmId || !belongs(target, current))
         throw new Error('Фаза программы не найдена');
       const activeOthers = (await this.db.trainingPlans.toArray()).filter((p) =>
-        p.id !== id && p.status === 'active' && p.realmId === current.realmId
-        && athleteOf(p) === athleteOf(current));
+        isOtherActiveProgramInScope(p, current));
       if (activeOthers.some((p) => p.id !== other?.id))
         throw new Error('Активная программа изменилась');
       if (other) {
