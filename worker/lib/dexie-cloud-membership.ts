@@ -204,7 +204,7 @@ function assertRemoteRoles(value: unknown): void {
     const permissions = remote.permissions;
     const keys = name === 'coach' ? ['manage', 'update'] : ['update'];
     if (!sameStrings(Object.keys(permissions), keys)
-      || (name === 'coach' && !sameStrings(permissions.manage, ['trainingPlans']))
+      || (name === 'coach' && !sameStrings(permissions.manage, ['trainingPlans', 'programPhases']))
       || !isObject(permissions.update)
       || !sameStrings(Object.keys(permissions.update), ['sessionSetFacts'])
       || !sameStrings(permissions.update.sessionSetFacts, expectedFacts)) failUnavailable();
