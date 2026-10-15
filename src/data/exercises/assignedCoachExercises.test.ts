@@ -98,17 +98,14 @@ describe('client visible exercises assigned by the selected coach', () => {
         }) }),
       },
       realms: { get: async (id: string) => id === realmId ? realm : undefined },
-      members: { where: () => ({ equals: async (_id: string) => members,
-        toArray: async () => members }) },
+      members: { where: () => ({ equals: (_id: string) => ({
+        toArray: async () => members,
+      }) }) },
       programPhases: table([{ ...phase, realmId }]),
       programDays: table([{ ...day, realmId }]),
       programExercises: table([exerciseRow]),
       programSets: table([]),
     } as unknown as MezfitCloudDatabase;
-    // Dexie where().equals().toArray() contract; no private table is provided.
-    db.members.where = () => ({
-      equals: (_id: string) => ({ toArray: async () => members }),
-    }) as typeof db.members.where;
     const repo = new AssignedCoachExercisesRepository(db, client);
     expect((await repo.read(coach)).map(row => row.id)).toEqual([customId]);
     expect(await repo.read('tg:303')).toEqual([]);
