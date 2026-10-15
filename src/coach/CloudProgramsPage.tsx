@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { List as KonstaList, ListInput, ListItem as KonstaListItem, Radio } from 'konsta/react';
 import type { CloudTrainingPlanRow, CloudProgramStatus } from '../data/cloud/database';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
-import { athleteOf, type ProgramManagementRepository } from '../data/cloud/program-management';
+import { athleteOf, isOtherActiveProgramInScope, type ProgramManagementRepository } from '../data/cloud/program-management';
 import { useNavigationFloatingAction } from '../NavigationShell';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import {
@@ -194,8 +194,7 @@ export function CloudProgramsPage({
       kind: 'select', title: 'Выберите фазу для активации',
       options: details.phases.map((phase) => ({ value: phase.id, label: phase.name })),
       onConfirm: async (phaseId) => {
-        const active = programs.find((item) => item.id !== plan.id && item.status === 'active'
-          && item.realmId === plan.realmId && athleteOf(item) === athleteOf(plan));
+        const active = programs.find((item) => isOtherActiveProgramInScope(item, plan));
         if (active) {
           setDialog({
             kind: 'select', title: 'Выберите статус для текущей активной программы',
