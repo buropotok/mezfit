@@ -78,11 +78,24 @@ Do not remove current D1 routes or their tests while a production rollout
 still depends on the disabled fallback. A subsequent cutover cleanup may delete
 those obsolete paths only after the cloud editor is live and verified.
 
-## Known cross-realm boundary
+## Client personal programs and multi-coach behavior
 
-The current repository ensures one active program among the actor's
-**locally visible and writable** athlete programs. An athlete belonging
-to multiple unrelated coach realms requires an explicitly authorized
-cross-realm coordinator for a *global* single-active-program invariant.
-Do not claim this invariant is server-global before that backend
-capability exists. Resolve before multi-coach simultaneous activation rollout.
+The Client Programs screen has two surfaces:
+
+- **От тренера** — read-only, displays the active program assigned by the
+  **currently selected coach** and its non-draft phases. It does not show
+  programs from other coaches or the client's personal programs.
+- **Мои программы** — edits programs the athlete created inside their
+  personal realm using the same program/phase editor as Coach Mode. These
+  are completely independent of assigned coach-controlled PLAN records.
+  Client writes must not grant any additional shared-realm PLAN rights.
+
+The one-active-program invariant is scoped to the **one shared realm for the
+coach-client relationship**; one athlete may have one active program with Coach A
+and another with Coach B. The athlete's private realm has its own independent
+one-active-program limit. No cross-realm activation coordinator is required.
+
+The program screens are disabled behind the rollout flag until protected server
+permissions have been reviewed and applied. Creating personal programs does
+not require broadening shared-realm Client rights: the athlete is already
+authorized to manage their own personal realm.
