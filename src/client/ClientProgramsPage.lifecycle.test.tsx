@@ -5,6 +5,16 @@ import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConne
 import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useClientCoach } from './ClientCoachContext';
 import { ClientProgramsPage } from './ClientProgramsPage';
+import type { LiquidGlassTextOnlyProps } from '../ui/LiquidGlassTextOnly';
+
+// Keep this integration test focused on subscriptions/retries; the optical tabs
+// have their own interaction coverage and render inside a shadow root.
+vi.mock('../ui/LiquidGlassTextOnly', () => ({
+  LiquidGlassTextOnly: ({ tabs, value, onValueChange }: LiquidGlassTextOnlyProps) => (
+    <div role="tablist">{tabs.map((tab) => <button key={tab.value} role="tab"
+      aria-selected={tab.value === value} onClick={() => onValueChange(tab.value)}>{tab.label}</button>)}</div>
+  ),
+}));
 
 vi.mock('../data/cloud/program-management-activation', () => ({ CLOUD_PROGRAM_MANAGEMENT_ENABLED: true }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: vi.fn() }));
@@ -65,7 +75,7 @@ describe('client PLAN workspace integration', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Повторить синхронизацию' }));
     await waitFor(() => expect(retrySync).toHaveBeenCalledTimes(1));
     expect(refresh).not.toHaveBeenCalled();
-    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Мои программы' }), { button: 0, ctrlKey: false });
+    fireEvent.click(screen.getByRole('tab', { name: 'Мои программы' }));
     expect(await screen.findByText('Нет сети')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Повторить синхронизацию' }));
     await waitFor(() => expect(retrySync).toHaveBeenCalledTimes(2));

@@ -14,6 +14,7 @@ import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation'
 import { CoachExercises } from '../exercises/CoachExercises';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { CloudProgramsPage } from '../program/CloudProgramsPage';
+import type { ProgramActor } from '../program/ProgramSummary';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
@@ -204,12 +205,13 @@ function ClientDirectory({
 }
 
 interface CoachShellProps {
+  actor?: ProgramActor;
   initData: string;
   destination: AppDestination;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
 
-export function CoachShell({ initData, destination, onNavigationContextChange }: CoachShellProps) {
+export function CoachShell({ initData, actor, destination, onNavigationContextChange }: CoachShellProps) {
   const requestBackTransition = useNavigationBackTransition();
   const cloudPrograms = useAssignedPrograms();
   const cloudConnections = useCloudConnections();
@@ -323,7 +325,7 @@ export function CoachShell({ initData, destination, onNavigationContextChange }:
   if (destination === 'programs') {
     if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && programRepository) {
       if (selectedCloudProgram) return (
-        <CloudProgramDetailsPage key={selectedCloudProgram.id} repository={programRepository} planId={selectedCloudProgram.id}
+        <CloudProgramDetailsPage actor={actor} viewerRole="coach" key={selectedCloudProgram.id} repository={programRepository} planId={selectedCloudProgram.id}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
           syncStatus={cloudConnections?.syncStatus ?? 'pending'}

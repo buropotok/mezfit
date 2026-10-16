@@ -5,6 +5,7 @@ import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/dat
 import { deriveCloudContacts } from '../data/cloud/CloudConnectionsProvider';
 import { Text } from '../ui';
 import { cloudSyncErrorCode } from './cloudSyncErrorCode';
+import { globalCoachPhasePermission } from './cloudPhasePermissions';
 
 interface Snapshot {
   phase: string;
@@ -22,6 +23,7 @@ interface Snapshot {
   clients: number | null;
   readError: boolean;
   setupError: boolean;
+  coachPhasePermission: boolean | null;
 }
 
 const initial: Snapshot = {
@@ -40,6 +42,7 @@ const initial: Snapshot = {
   clients: null,
   readError: false,
   setupError: false,
+  coachPhasePermission: null,
 };
 
 function textCount(count: number | null): string {
@@ -89,9 +92,10 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         if (!active) return;
 
         const localSubscription = liveQuery(async () => {
-          const [realms, members] = await Promise.all([
+          const [realms, members, roles] = await Promise.all([
             cloudDb.realms.toArray(),
             cloudDb.members.toArray(),
+            cloudDb.table<unknown>('roles').toArray(),
           ]);
           let clients: number | null = null;
           let coaches: number | null = null;
@@ -110,6 +114,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
             clients,
             coaches,
             readError,
+            coachPhasePermission: globalCoachPhasePermission(roles),
           };
         }).subscribe({
           next: (counts) => update(counts),
@@ -145,6 +150,8 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
       <p><Text variant="body">Локальные realms: {textCount(snapshot.realms)}</Text></p>
       <p><Text variant="body">Локальные members: {textCount(snapshot.members)}</Text></p>
       <p><Text variant="body">Мои membership: {textCount(snapshot.ownMembers)}</Text></p>
+      <p><Text variant="body">Общая роль тренера разрешает programPhases: {snapshot.coachPhasePermission === null
+        ? 'ещё не прочитано' : snapshot.coachPhasePermission ? 'да' : 'нет'}</Text></p>
       <p><Text variant="body">Подтверждённые связи: тренеры {textCount(snapshot.coaches)}, клиенты {textCount(snapshot.clients)}</Text></p>
       {snapshot.setupError || snapshot.readError
         ? <p role="alert"><Text variant="body">Диагностика обнаружила ошибку открытия или чтения локальной базы.</Text></p>

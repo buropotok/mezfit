@@ -11,6 +11,8 @@ Phase lifecycle: `draft`, `pending`, `active`, `finished`, `cancelled`.
 `pending` means the coach has published the phase, even when no days exist.
 Programs are `draft`, `active`, `finished` or `cancelled`; clients display
 only their one active program and non-draft phases of that program.
+Finishing a phase keeps its parent program active so completed phases remain
+visible in that projection. Finishing the entire program is a separate action.
 
 Activating an empty phase is **temporarily permitted**, solely to exercise
 status flows during development. [Issue #424](https://github.com/buropotok/mezfit/issues/424)
@@ -97,6 +99,10 @@ New Coach/Client program screens remain OFF by default behind
 human operator has reviewed/deployed the minimum role change through an
 approved owner-controlled route and verified the installed roles and isolated
 write/read behavior with real Coach A / Client B / Client C identities.
+The read-only sync diagnostic also reports whether the synced global Coach
+role permits `programPhases`; a connected session alone does not prove that
+permission. A missing permission requires the owner-controlled ACL import,
+not a frontend workaround or a different local store.
 Test that clients cannot modify PLAN, and that a coach can create and rename
 a phase in an assigned realm. Confirm private-realm programs still work.
 Only then set the GitHub Actions variable

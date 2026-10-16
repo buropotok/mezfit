@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { PlanSyncNotice } from '../program/PlanSyncNotice';
+import { ProgramSummary, type ProgramActor } from '../program/ProgramSummary';
+import { weekLabel } from '../program/programPresentation';
+import { ProgramToolbar, type ProgramControls, type ProgramFilter, type ProgramSource } from '../program/ProgramToolbar';
 import { CloudProgramsPage } from '../program/CloudProgramsPage';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import type { NavigationContext } from '../NavigationShell';
 import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections, type CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
-import { Badge, Button as CloudButton, GlassSurface, Tabs, TabsList, TabsTrigger, Text } from '../ui';
+import { Badge, Button as CloudButton, Text } from '../ui';
 import './client-programs-cloud.css';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
@@ -69,10 +72,12 @@ function CloudClientProgramsPage() {
 
 function AthleteProgramPage({
   repository, actorUserId, coachUserId, cloudStatus, cloudError,
-  syncStatus, syncError, onRetry, onRetrySync,
+  syncStatus, syncError, onRetry, onRetrySync, actor, controls,
 }: {
   repository: ProgramManagementRepository;
   actorUserId: string;
+  actor?: ProgramActor;
+  controls: ProgramControls;
   coachUserId: string;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
@@ -121,21 +126,25 @@ function AthleteProgramPage({
     <List><ListItem interactive={false} title="Нет активной программы"
       subtitle="Активная программа появится здесь после назначения или активации." /></List>
   );
+  const query = controls.search.trim().toLocaleLowerCase('ru-RU');
+  if ((controls.filter !== 'all' && data.program.status !== controls.filter)
+    || (query && ![data.program.name, actor?.name ?? ''].some((name) =>
+      name.toLocaleLowerCase('ru-RU').includes(query)))) return (
+    <section className="cloud-client-program">{syncNotice}
+      <Text variant="body">Программ с выбранными параметрами нет</Text>
+    </section>
+  );
   const visiblePhases = data.phases;
   return (
     <section className="cloud-client-program" aria-label="Активная программа">
       {syncNotice}
-      <GlassSurface preset="modalTuned" optics={false} className="cloud-client-program-summary">
-        <div className="cloud-client-program-summary-content">
-          <Text variant="large-title">{data.program.name}</Text>
-          <Badge color="green">Активная</Badge>
-        </div>
-      </GlassSurface>
+      <ProgramSummary program={data.program} phaseCount={data.phases.length}
+        actorUserId={actorUserId} actor={actor} showName />
       <Text variant="title">Фазы программы</Text>
       {visiblePhases.map((phase) => (
         <div key={phase.id} className="cloud-client-program-phase">
           <div className="cloud-client-program-phase-title"><Text variant="headline">{phase.name}</Text></div>
-          <Text variant="footnote" tone="muted">{phase.durationWeeks ?? 10} недель</Text>
+          <Text variant="footnote" tone="muted">{phase.durationWeeks ?? 10} {weekLabel(phase.durationWeeks ?? 10)}</Text>
           <Badge color={phase.status === 'active' ? 'green' :
             phase.status === 'finished' ? 'blue' :
               phase.status === 'cancelled' ? 'red' : 'yellow'}>
@@ -154,8 +163,9 @@ function AthleteProgramPage({
 
 function CloudClientProgramsWorkspace({
   repository, cloudStatus, cloudError, syncStatus, syncError, onRetry, onRetrySync,
-  onNavigationContextChange,
+  onNavigationContextChange, actor,
 }: {
+  actor?: ProgramActor;
   repository: ProgramManagementRepository;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
@@ -166,7 +176,10 @@ function CloudClientProgramsWorkspace({
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }) {
   const { selectedCoach, status: coachStatus, error: coachError } = useClientCoach();
-  const [source, setSource] = useState<'coach' | 'personal'>('coach');
+  const [source, setSource] = useState<ProgramSource>('coach');
+  const [filter, setFilter] = useState<ProgramFilter>('all');
+  const [search, setSearch] = useState('');
+  const controls: ProgramControls = { filter, onFilterChange: setFilter, search, onSearchChange: setSearch };
   const [selectedPersonal, setSelectedPersonal] = useState<CloudTrainingPlanRow | null>(null);
 
   useEffect(() => {
@@ -179,26 +192,21 @@ function CloudClientProgramsWorkspace({
   }, [selectedPersonal?.id, onNavigationContextChange]);
 
   if (selectedPersonal) {
-    return <CloudProgramDetailsPage key={selectedPersonal.id} repository={repository} planId={selectedPersonal.id}
+    return <CloudProgramDetailsPage viewerRole="client" actor={actor} key={selectedPersonal.id} repository={repository} planId={selectedPersonal.id}
       cloudStatus={cloudStatus} cloudError={cloudError}
       syncStatus={syncStatus} syncError={syncError} onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
   }
   return (
     <section className="cloud-client-programs-workspace">
-      <Tabs value={source} onValueChange={(value) => setSource(value as 'coach' | 'personal')}>
-        <TabsList aria-label="Источник программы">
-          <TabsTrigger value="coach">От тренера</TabsTrigger>
-          <TabsTrigger value="personal">Мои программы</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <ProgramToolbar controls={controls} source={source} onSourceChange={setSource} />
       {source === 'personal' ? (
-        <CloudProgramsPage repository={repository} personalOnly clients={[]}
+        <CloudProgramsPage repository={repository} personalOnly clients={[]} controls={controls} hideToolbar
           cloudStatus={cloudStatus} cloudError={cloudError}
           syncStatus={syncStatus} syncError={syncError}
           onRetryCloud={onRetry} onRetrySync={onRetrySync}
           onOpen={setSelectedPersonal} />
       ) : selectedCoach ? (
-        <AthleteProgramPage key={selectedCoach.userId} repository={repository}
+        <AthleteProgramPage key={selectedCoach.userId} repository={repository} actor={actor} controls={controls}
           actorUserId={repository.actorUserId} coachUserId={selectedCoach.userId}
           cloudStatus={cloudStatus} cloudError={cloudError}
           syncStatus={syncStatus} syncError={syncError}
@@ -223,8 +231,9 @@ function CloudClientProgramsWorkspace({
 }
 
 export function ClientProgramsPage({
-  onNavigationContextChange,
+  onNavigationContextChange, actor,
 }: {
+  actor?: ProgramActor;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 } = {}) {
   const cloud = useCloudConnections();
@@ -232,7 +241,7 @@ export function ClientProgramsPage({
     ? new ProgramManagementRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
-    return <CloudClientProgramsWorkspace repository={repository}
+    return <CloudClientProgramsWorkspace repository={repository} actor={actor}
       cloudStatus={cloud.status} cloudError={cloud.error}
       syncStatus={cloud.syncStatus} syncError={cloud.syncError}
       onRetry={cloud.refresh} onRetrySync={cloud.retrySync}

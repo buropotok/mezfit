@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { List, ListInput, ListItem, Radio } from 'konsta/react';
 import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { programMutationMessage, weekLabel } from './programPresentation';
 
 export type PlanDialogOption = { value: string; label: string };
 export type PlanDialogState = {
@@ -33,7 +34,7 @@ export function PlanActionDialog({
     try {
       await dialog.onConfirm(value);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить изменения');
+      setError(programMutationMessage(reason));
     } finally {
       setBusy(false);
     }
@@ -89,7 +90,7 @@ export function PlanActionDialog({
               onChange={(event) => setValue(event.target.value)}
             />
           </List>
-          <Text variant="body">недель</Text>
+          <Text variant="body">{weekLabel(Number(value))}</Text>
         </div>
       ) : null}
       {dialog?.kind === 'select' ? (
