@@ -101,7 +101,7 @@
 
 .tab-link {
   appearance: none;
-  flex: 0 0 auto;
+  flex: 1 0 auto;
   width: max-content;
   height: 100%;
   padding: 0 13px;
