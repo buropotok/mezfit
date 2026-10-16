@@ -4,6 +4,14 @@
   min-width: 0;
   color: var(--ui-color-surface-text);
 }
+/* Widen the Text Only host inside the page gutters, without clipping its glass effects. */
+.mezfit-public-exercises__tabs {
+  min-width: 0;
+}
+.mezfit-public-exercises__tabs-content {
+  width: min(110%, calc(100% + 2 * var(--page-pad-x)));
+  margin-inline-start: max(-5%, calc(var(--page-pad-x) * -1));
+}
 .mezfit-public-exercises__toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
