@@ -40,6 +40,10 @@
   overflow: visible;
 }
 
+.text-only-stage--full-width {
+  width: 100%;
+}
+
 .optical-tabs-playground {
   position: relative;
   width: 100%;
