@@ -359,10 +359,10 @@ export function CloudProgramsPage({
         </KonstaList>
         {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
       </MezfitDialog>
-      {pickerOpen ? <ProgramClientPicker clients={clients} loading={cloudStatus === 'loading'}
+      <ProgramClientPicker opened={pickerOpen} clients={clients} loading={cloudStatus === 'loading'}
         onClose={() => setPickerOpen(false)} onSelect={(client) => {
           setCreateAthlete(client.userId); setPickerOpen(false);
-        }} /> : null}
+        }} />
     </section>
   );
 }

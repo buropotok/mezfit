@@ -343,25 +343,24 @@ export function WorkoutSessionScreen({
         </>
       ) : null}
 
-      {exerciseSelectionOpen ? (
-        <WorkoutExerciseSelectionSheet
-          initData={initData}
-          saving={false}
-          actionError={exerciseSelectionError}
-          onNavigationContextChange={onNavigationContextChange}
-          onConfirm={(publicExerciseIds) => {
-            if (publicExerciseIds.length > 0 && activeSession?.status === 'active') {
-              setExerciseSelectionError('Упражнения выбраны. Добавление в тренировку будет подключено на следующем этапе.');
-            }
-          }}
-          onClose={() => {
-            requestBackTransition(() => {
-              setExerciseSelectionOpen(false);
-              setExerciseSelectionError('');
-            });
-          }}
-        />
-      ) : null}
+      <WorkoutExerciseSelectionSheet
+        opened={exerciseSelectionOpen}
+        initData={initData}
+        saving={false}
+        actionError={exerciseSelectionError}
+        onNavigationContextChange={onNavigationContextChange}
+        onConfirm={(publicExerciseIds) => {
+          if (publicExerciseIds.length > 0 && activeSession?.status === 'active') {
+            setExerciseSelectionError('Упражнения выбраны. Добавление в тренировку будет подключено на следующем этапе.');
+          }
+        }}
+        onClose={() => {
+          requestBackTransition(() => {
+            setExerciseSelectionOpen(false);
+            setExerciseSelectionError('');
+          });
+        }}
+      />
 
       <Modal
         isOpen={loading || busyLabel !== null}

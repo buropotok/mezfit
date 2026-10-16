@@ -6,6 +6,7 @@ import './workout-exercise-selection.css';
 
 interface WorkoutExerciseSelectionSheetProps {
   initData: string;
+  opened?: boolean;
   saving: boolean;
   actionError?: string;
   onConfirm: (publicExerciseIds: string[]) => void;
@@ -18,6 +19,7 @@ interface WorkoutExerciseSelectionSheetProps {
  * Workout persistence to Dexie Cloud is not implemented yet; confirmation is selection-only.
  */
 export function WorkoutExerciseSelectionSheet({
+  opened = true,
   saving,
   actionError = '',
   onConfirm,
@@ -54,11 +56,20 @@ export function WorkoutExerciseSelectionSheet({
     onBack: requestBack,
   }), [title, scrollKey, requestBack]);
 
-  useEffect(() => { onNavigationContextChange?.(parentNavigationContext); }, [onNavigationContextChange, parentNavigationContext]);
-  useEffect(() => () => { onNavigationContextChange?.(null); }, [onNavigationContextChange]);
+  useEffect(() => {
+    if (opened) onNavigationContextChange?.(parentNavigationContext);
+  }, [opened, onNavigationContextChange, parentNavigationContext]);
+  useEffect(() => {
+    if (!opened) return;
+    return () => { onNavigationContextChange?.(null); };
+  }, [opened, onNavigationContextChange]);
 
   return (
-    <MezfitBottomSheet opened label="Выбор упражнений для тренировки">
+    <MezfitBottomSheet opened={opened} label="Выбор упражнений для тренировки"
+      lazyMount onClosed={() => {
+        setSelectedIds(new Set());
+        setNavigationContext(null);
+      }}>
       <section className="workout-exercise-selection">
         <header className="workout-exercise-selection__header">
           {navigationContext ? <IconButton icon="chevron-left" label="Назад" disabled={saving} onClick={requestBack} /> : null}

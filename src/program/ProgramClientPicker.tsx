@@ -3,7 +3,8 @@ import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudContactsList } from '../contacts/CloudContactsList';
 import { Button, MezfitBottomSheet, MezfitSearchbar, Text } from '../ui';
 
-export function ProgramClientPicker({ clients, loading, onSelect, onClose }: {
+export function ProgramClientPicker({ opened, clients, loading, onSelect, onClose }: {
+  opened: boolean;
   clients: readonly CloudContact[];
   loading: boolean;
   onSelect: (client: CloudContact) => void;
@@ -12,7 +13,8 @@ export function ProgramClientPicker({ clients, loading, onSelect, onClose }: {
   const [query, setQuery] = useState('');
   const search = query.trim().toLocaleLowerCase('ru-RU');
   const visible = clients.filter((client) => client.displayName.toLocaleLowerCase('ru-RU').includes(search));
-  return <MezfitBottomSheet opened label="Выбрать клиента">
+  return <MezfitBottomSheet opened={opened} label="Выбрать клиента"
+    lazyMount onClosed={() => setQuery('')}>
     <div className="cloud-plan-client-picker">
       <div className="cloud-plan-title-row">
         <Text variant="headline">Выбрать клиента</Text>
