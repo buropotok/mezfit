@@ -104,7 +104,10 @@ beforeEach(() => {
     return 390;
   });
   vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(function(this: HTMLElement) {
-    if (this.id === 'tab-strip') return tabs.reduce((sum, tab) => sum + (widths.get(tab.label) ?? 84), 0);
+    if (this.id === 'tab-strip') {
+      return Array.from(this.querySelectorAll<HTMLButtonElement>('.tab-link'))
+        .reduce((sum, link) => sum + tabWidth(link), 0);
+    }
     return this.clientWidth;
   });
   vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function(this: HTMLElement) {
@@ -171,6 +174,28 @@ describe('LiquidGlassTextOnly', () => {
 
     view.rerender(ui());
     expect(stage?.classList.contains('text-only-stage--full-width')).toBe(false);
+  });
+
+  it.each([
+    { name: 'less than', slots: tabs.slice(0, 2), target: 1, scrolls: false },
+    { name: 'equal to', slots: [tabs[1], tabs[3], tabs[6]], target: 2, scrolls: false },
+    { name: 'greater than', slots: tabs, target: 6, scrolls: true },
+  ])('fills spare width without shrinking when natural slot widths are $name the container', ({ slots, target, scrolls }) => {
+    const view = render(<LiquidGlassTextOnly hidden={false} tabs={slots}
+      value={slots[0].value} onValueChange={changed} fullWidth />);
+    const root = getScene(view.container);
+    const css = root.querySelector('style')?.textContent ?? '';
+    // jsdom has no flex layout: verify the browser layout contract instead of
+    // mocking expanded widths, then exercise the existing overflow/selection path.
+    expect(css).toMatch(/\\.tab-link\\s*\\{[^}]*flex:\\s*1 0 auto;[^}]*width:\\s*max-content;/s);
+    expect(css).toMatch(/\\.tab-strip\\s*\\{[^}]*overflow-x:\\s*auto;/s);
+    const strip = element(root, 'tab-strip');
+    const naturalWidth = slots.reduce((sum, slot) => sum + (widths.get(slot.label) ?? 84), 0);
+    expect(Math.sign(naturalWidth - strip.clientWidth)).toBe(scrolls ? 1 : slots.length === 2 ? -1 : 0);
+    fireEvent.click(button(root, target));
+    expect(changed).toHaveBeenCalledExactlyOnceWith(slots[target].value);
+    act(() => vi.advanceTimersByTime(340));
+    expect(strip.scrollLeft > 0).toBe(scrolls);
   });
 
   it('selects on tap and moves scroll + lens in the same travel window', () => {
