@@ -4,8 +4,14 @@
   min-width: 0;
   color: var(--ui-color-surface-text);
 }
-/* The Text Only glass stage is 1/1.1 of its host; compensate only on this screen. */
+/* Keep layout within the scroll viewport while compensating the Text Only stage width. */
 .mezfit-public-exercises__tabs {
+  min-width: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  overflow-clip-margin: 28px;
+}
+.mezfit-public-exercises__tabs-content {
   width: 110%;
   margin-inline-start: -5%;
 }
