@@ -31,14 +31,14 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
       <div className="cloud-plan-summary-content">
         <div className="cloud-plan-summary-owner">
           <div className="cloud-plan-summary-text">
-            <Text variant="body">{showName ? program.name : 'Программа тренировок'}</Text>
+            <Text variant={showName ? "body" : "headline"}>{showName ? program.name : 'Программа тренировок'}</Text>
             <Text variant="body">Владелец: {owner.name}</Text>
           </div>
           <div aria-label={`Аватар владельца: ${owner.name}`}>{avatar(owner)}</div>
         </div>
         <div className="cloud-plan-person-row">
-          {avatar(athlete)}
           <Text variant="body">Атлет: {athlete.name}</Text>
+          {avatar(athlete)}
         </div>
         <Text variant="body">Фаз: {phaseCount}</Text>
       </div>
