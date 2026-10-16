@@ -211,6 +211,14 @@ describe('local-first program/phase management', () => {
     expect(clientVisiblePhases(f.phases)).toHaveLength(1);
   });
 
+  it('persists a named phase and rejects an empty explicit name', async () => {
+    const f = fixture();
+    const id = await f.repo.createPhase('tra-1', '  Силовая фаза  ');
+    expect(f.phases.find((phase) => phase.id === id)?.name).toBe('Силовая фаза');
+    await expect(f.repo.createPhase('tra-1', '  ')).rejects.toThrow();
+    expect(f.phases).toHaveLength(1);
+  });
+
   it('intentionally permits activation of an empty phase until issue #424', async () => {
     const f = fixture();
     const phaseId = await f.repo.createPhase('tra-1');
