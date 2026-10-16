@@ -80,17 +80,21 @@ function repository(rows: CloudTrainingPlanRow[]) {
 }
 
 describe('program workspace regressions', () => {
-  it('explains the required program name before the first save attempt', async () => {
+  it('keeps save enabled and validates an empty program name only after tapping save', async () => {
     const repo = repository([]);
     render(<CloudProgramsPage repository={repo as unknown as ProgramManagementRepository}
       clients={[]} onOpen={() => {}} {...connection} />);
     // Invoke the action registered with the navigation owner, not a parallel button.
     act(() => actions.create?.());
     const prompt = screen.getByRole('dialog', { name: 'Создать программу' });
-    expect(within(prompt).getByText('Введите название программы, чтобы сохранить её.')).toBeTruthy();
-    expect(within(prompt).getByRole('button', { name: 'Сохранить' }).hasAttribute('disabled')).toBe(true);
-    fireEvent.change(within(prompt).getByRole('textbox', { name: /Название — обязательно/ }), { target: { value: 'Новая' } });
-    expect(within(prompt).getByRole('button', { name: 'Сохранить' }).hasAttribute('disabled')).toBe(false);
+    const save = within(prompt).getByRole('button', { name: 'Сохранить' });
+    expect(save.hasAttribute('disabled')).toBe(false);
+    expect(within(prompt).queryByText('Обязательно к заполнению')).toBeNull();
+    fireEvent.click(save);
+    expect(within(prompt).getByText('Обязательно к заполнению')).toBeTruthy();
+    fireEvent.change(within(prompt).getByRole('textbox', { name: 'Название' }), { target: { value: 'Новая' } });
+    expect(within(prompt).queryByText('Обязательно к заполнению')).toBeNull();
+    expect(save.hasAttribute('disabled')).toBe(false);
   });
 
   it('shows a failed local phase write alongside an unconfirmed cloud sync', async () => {
@@ -99,9 +103,17 @@ describe('program workspace regressions', () => {
       planId="Программа" {...connection} syncStatus="pending" />);
     await screen.findByText('Программа тренировок');
     act(() => actions.addPhase?.());
-    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Фаза не сохранена');
+    const prompt = screen.getByRole('dialog', { name: 'Добавить фазу' });
+    const save = within(prompt).getByRole('button', { name: 'Сохранить' });
+    expect(save.hasAttribute('disabled')).toBe(false);
+    fireEvent.click(save);
+    expect(within(prompt).getByText('Обязательно к заполнению')).toBeTruthy();
+    expect(repo.createPhase).not.toHaveBeenCalled();
+    fireEvent.change(within(prompt).getByRole('textbox', { name: 'Название' }), { target: { value: 'Новая фаза' } });
+    fireEvent.click(save);
+    expect(await within(prompt).findByRole('alert')).toHaveProperty('textContent', 'Фаза не сохранена');
     expect(screen.getByRole('status').textContent).toContain('ещё не подтверждена');
-    expect(repo.createPhase).toHaveBeenCalledWith('Программа');
+    expect(repo.createPhase).toHaveBeenCalledWith('Программа', 'Новая фаза');
   });
 
   it('puts personal programs first and filters individual titles or athlete names', async () => {

@@ -237,7 +237,7 @@ export class ProgramManagementRepository {
       await this.db.programPhases.update(phaseId, { durationWeeks: weeks });
     });
   }
-  async createPhase(id: string): Promise<string> {
+  async createPhase(id: string, rawName?: string): Promise<string> {
     const plan = await this.writable(id);
     return this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
       const current = await this.currentParent(plan);
@@ -245,9 +245,10 @@ export class ProgramManagementRepository {
       const used = new Set(phases.map((phase) => phase.name));
       let n = 1;
       while (used.has(`Фаза ${n}`)) n++;
+      const name = rawName === undefined ? `Фаза ${n}` : validName(rawName);
       return this.db.programPhases.add({
         realmId: current.realmId, owner: this.actorUserId, trainingPlanId: id,
-        name: `Фаза ${n}`, status: 'draft', durationWeeks: DEFAULT_PHASE_WEEKS,
+        name, status: 'draft', durationWeeks: DEFAULT_PHASE_WEEKS,
         position: phases.reduce((max, phase) => Math.max(max, phase.position), -1) + 1,
         plannedStartDate: null, plannedEndDate: null,
       });

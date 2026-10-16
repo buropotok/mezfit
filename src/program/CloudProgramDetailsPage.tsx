@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { List as KonstaList, ListInput } from 'konsta/react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { isOtherActiveProgramInScope, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
 import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
-import { Badge, Button, IconButton, LiquidPopover, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
+import { Badge, Button, IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { ProgramSummary, type ProgramActor } from './ProgramSummary';
 import { programMutationMessage, weekLabel } from './programPresentation';
@@ -107,6 +108,11 @@ export function CloudProgramDetailsPage({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<PlanDialogState | null>(null);
+  const [phaseCreateOpen, setPhaseCreateOpen] = useState(false);
+  const [phaseName, setPhaseName] = useState('');
+  const [phaseNameRequired, setPhaseNameRequired] = useState(false);
+  const [phaseCreateBusy, setPhaseCreateBusy] = useState(false);
+  const [phaseCreateError, setPhaseCreateError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
@@ -114,6 +120,7 @@ export function CloudProgramDetailsPage({
     setLoading(true);
     setDetails(null);
     setDialog(null);
+    setPhaseCreateOpen(false);
     setError('');
     const subscription = repository.observeDetails(planId, (value) => {
       if (!active) return;
@@ -137,16 +144,40 @@ export function CloudProgramDetailsPage({
     } finally { setBusy(false); }
   }, [busy]);
 
-  const addPhase = useCallback(() => { void run(() => repository.createPhase(planId)); },
-    [run, repository, planId]);
-  const floatingAction = useMemo(() => details ? {
+  const addPhase = useCallback(() => {
+    setPhaseName('');
+    setPhaseNameRequired(false);
+    setPhaseCreateError('');
+    setPhaseCreateOpen(true);
+  }, []);
+  const savePhase = async () => {
+    if (busy || phaseCreateBusy) return;
+    const name = phaseName.trim();
+    if (!name) {
+      setPhaseNameRequired(true);
+      return;
+    }
+    setPhaseCreateBusy(true);
+    setPhaseCreateError('');
+    setError('');
+    try {
+      await repository.createPhase(planId, name);
+      setPhaseCreateOpen(false);
+    } catch (reason) {
+      const message = programMutationMessage(reason);
+      setPhaseCreateError(message);
+    } finally {
+      setPhaseCreateBusy(false);
+    }
+  };
+  const floatingAction = useMemo(() => details && coachGuidance ? {
     label: 'Добавить',
     icon: 'plus' as const,
     popoverItems: [
-      { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: addPhase, disabled: busy },
+      { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: addPhase, disabled: busy || phaseCreateBusy },
       { id: 'add-day', icon: 'plus' as const, label: 'День', disabled: true },
     ],
-  } : null, [details, addPhase, busy]);
+  } : null, [details, coachGuidance, addPhase, busy, phaseCreateBusy]);
   useNavigationSurfaceFloatingAction(floatingAction);
 
   const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled') => {
@@ -300,6 +331,35 @@ export function CloudProgramDetailsPage({
           })}
         />
       )) : <Text variant="footnote" tone="muted">Добавьте первую фазу через кнопку «Добавить».</Text>}
+      <MezfitDialog
+        opened={phaseCreateOpen}
+        title="Добавить фазу"
+        onBackdropClick={!phaseCreateBusy ? () => setPhaseCreateOpen(false) : undefined}
+        role="dialog" aria-modal="true" aria-label="Добавить фазу"
+        buttons={(
+          <>
+            <MezfitDialogButton disabled={phaseCreateBusy}
+              onClick={() => setPhaseCreateOpen(false)}>Отмена</MezfitDialogButton>
+            <MezfitDialogButton strong disabled={phaseCreateBusy || busy}
+              onClick={() => { void savePhase(); }}>
+              {phaseCreateBusy ? 'Сохранение…' : 'Сохранить'}
+            </MezfitDialogButton>
+          </>
+        )}
+      >
+        <KonstaList nested>
+          <ListInput floatingLabel inputId="cloud-phase-name"
+            label={<label htmlFor="cloud-phase-name">Название</label>}
+            value={phaseName} maxLength={120} disabled={phaseCreateBusy}
+            error={phaseNameRequired ? 'Обязательно к заполнению' : undefined}
+            onChange={(event) => {
+              setPhaseName(event.target.value);
+              setPhaseNameRequired(false);
+              setPhaseCreateError('');
+            }} />
+        </KonstaList>
+        {phaseCreateError ? <Text variant="footnote" role="alert">{phaseCreateError}</Text> : null}
+      </MezfitDialog>
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
     </section>
   );

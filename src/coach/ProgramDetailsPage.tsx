@@ -201,7 +201,11 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
 
   const savePhase = async () => {
     const name = phaseName.trim();
-    if (!name || phaseCreateBusy) return;
+    if (phaseCreateBusy) return;
+    if (!name) {
+      setPhaseCreateError('Обязательно к заполнению');
+      return;
+    }
     setPhaseCreateBusy(true);
     setPhaseCreateError('');
     try {
@@ -260,7 +264,6 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
   }
 
   const name = ownerName(details);
-  const canCreatePhase = Boolean(phaseName.trim() && !phaseCreateBusy);
   const exercisePreviewPhase = details.phases.find((phase) => phase.id === exercisePreviewPhaseId) ?? null;
   const selectedExercise = exercisePreviewPhase?.exercises.find(
     (exercise) => exercise.programExerciseId === exercisePreviewProgramExerciseId,
@@ -341,14 +344,14 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
         onClose={closePhaseCreation}
         actions={[
           { id: 'cancel', label: 'Отмена', onClick: closePhaseCreation, disabled: phaseCreateBusy },
-          { id: 'save', label: phaseCreateBusy ? 'Добавление…' : 'Добавить', tone: 'primary', onClick: () => { void savePhase(); }, disabled: !canCreatePhase },
+          { id: 'save', label: phaseCreateBusy ? 'Добавление…' : 'Добавить', tone: 'primary', onClick: () => { void savePhase(); }, disabled: phaseCreateBusy },
         ]}
       >
         <form
           className="program-details-phase-create-form"
           onSubmit={(event) => {
             event.preventDefault();
-            if (canCreatePhase) void savePhase();
+            void savePhase();
           }}
         >
           <KonstaList nested>
@@ -358,13 +361,15 @@ export function ProgramDetailsPage({ initData, programId }: { initData: string; 
               label={<label htmlFor="program-phase-name">Название</label>}
               value={phaseName}
               maxLength={120}
+              error={phaseCreateError === 'Обязательно к заполнению' ? phaseCreateError : undefined}
               onChange={(event) => {
                 setPhaseName(event.target.value);
                 if (phaseCreateError) setPhaseCreateError('');
               }}
             />
           </KonstaList>
-          {phaseCreateError ? <Text variant="footnote" role="alert">{phaseCreateError}</Text> : null}
+          {phaseCreateError && phaseCreateError !== 'Обязательно к заполнению'
+            ? <Text variant="footnote" role="alert">{phaseCreateError}</Text> : null}
           <button type="submit" hidden aria-hidden="true" />
         </form>
       </Modal>

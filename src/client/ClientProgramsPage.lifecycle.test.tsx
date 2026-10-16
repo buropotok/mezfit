@@ -60,23 +60,23 @@ beforeEach(() => {
       else onNewError = error;
       return { unsubscribe, closed: false };
     });
-  vi.spyOn(ProgramManagementRepository.prototype, 'observePersonal').mockImplementation((next) => {
-    next([]);
-    return { unsubscribe: vi.fn(), closed: false };
-  });
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('client PLAN workspace integration', () => {
-  it('shows real sync failures and retries queued writes on both client tabs', async () => {
+  it('shows real sync failures and retries queued writes without source tabs or search', async () => {
     render(<ClientProgramsPage />);
     expect(await screen.findByText('Программа 202')).toBeTruthy();
     expect(screen.getByText('Нет сети')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Повторить синхронизацию' }));
     await waitFor(() => expect(retrySync).toHaveBeenCalledTimes(1));
     expect(refresh).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('tab', { name: 'Мои программы' }));
-    expect(await screen.findByText('Нет сети')).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'Мои программы' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'От тренера' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Поиск программ' })).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Активные' }));
+    expect(await screen.findByText('Программа 202')).toBeTruthy();
+    expect(screen.getByText('Нет сети')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Повторить синхронизацию' }));
     await waitFor(() => expect(retrySync).toHaveBeenCalledTimes(2));
   });

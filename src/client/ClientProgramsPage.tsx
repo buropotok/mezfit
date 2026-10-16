@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { PlanSyncNotice } from '../program/PlanSyncNotice';
 import { ProgramSummary, type ProgramActor } from '../program/ProgramSummary';
 import { weekLabel } from '../program/programPresentation';
-import { ProgramToolbar, type ProgramControls, type ProgramFilter, type ProgramSource } from '../program/ProgramToolbar';
-import { CloudProgramsPage } from '../program/CloudProgramsPage';
-import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
+import { ProgramToolbar, type ProgramControls, type ProgramFilter } from '../program/ProgramToolbar';
 import type { NavigationContext } from '../NavigationShell';
 import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
 import { useCloudConnections, type CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
@@ -176,36 +173,16 @@ function CloudClientProgramsWorkspace({
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }) {
   const { selectedCoach, status: coachStatus, error: coachError } = useClientCoach();
-  const [source, setSource] = useState<ProgramSource>('coach');
   const [filter, setFilter] = useState<ProgramFilter>('all');
-  const [search, setSearch] = useState('');
-  const controls: ProgramControls = { filter, onFilterChange: setFilter, search, onSearchChange: setSearch };
-  const [selectedPersonal, setSelectedPersonal] = useState<CloudTrainingPlanRow | null>(null);
+  const controls: ProgramControls = { filter, onFilterChange: setFilter, search: '', onSearchChange: () => {} };
 
   useEffect(() => {
-    onNavigationContextChange?.(selectedPersonal ? {
-      title: 'Детали программы',
-      scrollKey: `personal-program:${selectedPersonal.id}`,
-      onBack: () => setSelectedPersonal(null),
-    } : null);
-    return () => onNavigationContextChange?.(null);
-  }, [selectedPersonal?.id, onNavigationContextChange]);
-
-  if (selectedPersonal) {
-    return <CloudProgramDetailsPage viewerRole="client" actor={actor} key={selectedPersonal.id} repository={repository} planId={selectedPersonal.id}
-      cloudStatus={cloudStatus} cloudError={cloudError}
-      syncStatus={syncStatus} syncError={syncError} onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
-  }
+    onNavigationContextChange?.(null);
+  }, [onNavigationContextChange]);
   return (
     <section className="cloud-client-programs-workspace">
-      <ProgramToolbar controls={controls} source={source} onSourceChange={setSource} />
-      {source === 'personal' ? (
-        <CloudProgramsPage repository={repository} personalOnly clients={[]} controls={controls} hideToolbar
-          cloudStatus={cloudStatus} cloudError={cloudError}
-          syncStatus={syncStatus} syncError={syncError}
-          onRetryCloud={onRetry} onRetrySync={onRetrySync}
-          onOpen={setSelectedPersonal} />
-      ) : selectedCoach ? (
+      <ProgramToolbar controls={controls} showSearch={false} />
+      {selectedCoach ? (
         <AthleteProgramPage key={selectedCoach.userId} repository={repository} actor={actor} controls={controls}
           actorUserId={repository.actorUserId} coachUserId={selectedCoach.userId}
           cloudStatus={cloudStatus} cloudError={cloudError}
@@ -224,7 +201,7 @@ function CloudClientProgramsWorkspace({
         <Text variant="footnote" tone="muted">Загружаем тренеров…</Text>
       ) : (
         <List><ListItem interactive={false} title="Нет выбранного тренера"
-          subtitle="Выберите тренера для просмотра назначенной программы или перейдите в «Мои программы»." /></List>
+          subtitle="Выберите тренера для просмотра назначенной программы." /></List>
       )}
     </section>
   );

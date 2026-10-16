@@ -106,9 +106,15 @@ describe('ProgramDetailsPage phase creation', () => {
     act(() => { phase.onSelect?.(); });
     expect(screen.getByRole('heading', { name: 'Добавить фазу' })).toBeTruthy();
     expect(screen.getByLabelText('Название')).toBeTruthy();
+    const save = screen.getByRole('button', { name: 'Добавить' });
+    expect(save.hasAttribute('disabled')).toBe(false);
+    fireEvent.click(save);
+    expect(screen.getByText('Обязательно к заполнению')).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Базовая фаза' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить' }));
+    expect(screen.queryByText('Обязательно к заполнению')).toBeNull();
+    fireEvent.click(save);
 
     await waitFor(() => expect(screen.getByText('Базовая фаза')).toBeTruthy());
     expect(fetchMock).toHaveBeenCalledTimes(2);
