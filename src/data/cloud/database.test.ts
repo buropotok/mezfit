@@ -65,7 +65,9 @@ describe('Dexie Cloud schema and access policy', () => {
   ];
 
   it('allows PLAN authoring only by coach; neither role manages the session lifecycle', () => {
-    expect(cloudRoles.roles.coach.permissions.manage).toEqual(['trainingPlans', 'programPhases']);
+    expect(cloudRoles.roles.coach.permissions.manage).toEqual([
+      'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
+    ]);
     expect(Object.hasOwn(cloudRoles.roles.client.permissions, 'manage')).toBe(false);
     expect(Object.hasOwn(cloudRoles.roles.coach.permissions, 'add')).toBe(false);
     expect(Object.hasOwn(cloudRoles.roles.client.permissions, 'add')).toBe(false);

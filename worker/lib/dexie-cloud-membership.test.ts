@@ -186,6 +186,13 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
       .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
   });
 
+  it('accepts the exact previously deployed phase policy during descendant rollout', async () => {
+    const cloud = fakeCloud();
+    Object.assign(cloud.installedRoles[0].permissions, { manage: ['trainingPlans', 'programPhases'] });
+    await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
+      .resolves.toMatchObject({ realmId: expect.any(String) });
+  });
+
   it('fails closed on a drifted global role policy', async () => {
     const cloud = fakeCloud();
     cloud.installedRoles[1].permissions.update.sessionSetFacts.push('owner');

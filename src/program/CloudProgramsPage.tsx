@@ -272,7 +272,7 @@ export function CloudProgramsPage({
     if (key === 'duplicate') void run(() => repository.duplicateProgram(plan.id));
     if (key === 'delete') setDialog({
       kind: 'confirm', title: 'Удалить программу?', destructive: true,
-      description: 'Программа и её фазы без дней будут удалены. Программу с днями удалить пока нельзя.',
+      description: 'Программа, фазы и дни будут удалены из списка. История выполненных тренировок сохранится.',
       confirmLabel: 'Удалить',
       onConfirm: async () => { await repository.deleteProgram(plan.id); setDialog(null); },
     });

@@ -61,8 +61,13 @@ export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkout
     ));
 }
 
-export interface CloudProgramPhaseRow extends Omit<CloudSharedRow, 'owner'> {
+export interface CloudPlanChildRow extends Omit<CloudSharedRow, 'owner'> {
+  /** PLAN belongs to its authorized author, including Addon-created rows. */
   owner: string | null;
+}
+
+export interface CloudProgramPhaseRow extends CloudPlanChildRow {
+  deletedAt?: string | null;
   trainingPlanId: string;
   name: string;
   position: number;
@@ -73,14 +78,16 @@ export interface CloudProgramPhaseRow extends Omit<CloudSharedRow, 'owner'> {
   plannedEndDate: string | null;
 }
 
-export interface CloudProgramDayRow extends CloudSharedRow {
+export interface CloudProgramDayRow extends CloudPlanChildRow {
   programPhaseId: string;
   name: string;
+  category?: string | null;
+  comment?: string | null;
   position: number;
   status: 'active' | 'deprecated';
 }
 
-export interface CloudProgramExerciseRow extends CloudSharedRow {
+export interface CloudProgramExerciseRow extends CloudPlanChildRow {
   programDayId: string;
   exercise: CloudWorkoutExerciseSnapshot;
   position: number;
@@ -88,10 +95,14 @@ export interface CloudProgramExerciseRow extends CloudSharedRow {
   notes: string | null;
 }
 
-export interface CloudProgramSetRow extends CloudSharedRow {
+export interface CloudProgramSetRow extends CloudPlanChildRow {
   programExerciseId: string;
   position: number;
   status: 'active' | 'deprecated';
+  setLabel?: SetLabel | null;
+  comment?: string | null;
+  materialLinks?: string[];
+  chatLinks?: string[];
   plannedReps: number | null;
   plannedWeightKg: number | null;
   plannedDurationSeconds: number | null;
@@ -146,18 +157,20 @@ export interface CloudSessionFactSetRow extends CloudSharedRow {
   setStatus: 'pending' | 'completed' | 'skipped';
 }
 
-/** Read shape; write operations are deliberately absent until live ACL validation. */
+export interface CloudProgramDayOutline {
+  day: CloudProgramDayRow;
+  exercises: readonly {
+    exercise: CloudProgramExerciseRow;
+    sets: readonly CloudProgramSetRow[];
+  }[];
+}
+
+/** Typed PLAN projection, distinct from an executing workout session. */
 export interface CloudProgramOutline {
   planId: string;
   realmId: string;
   phases: readonly {
     phase: CloudProgramPhaseRow;
-    days: readonly {
-      day: CloudProgramDayRow;
-      exercises: readonly {
-        exercise: CloudProgramExerciseRow;
-        sets: readonly CloudProgramSetRow[];
-      }[];
-    }[];
+    days: readonly CloudProgramDayOutline[];
   }[];
 }
