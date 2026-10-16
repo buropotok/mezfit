@@ -25,12 +25,17 @@ let animateMock: ReturnType<typeof vi.fn>;
 function ui(hidden = false, value = 'today', list = tabs) {
   return <LiquidGlassTextOnly hidden={hidden} tabs={list} value={value} onValueChange={changed} />;
 }
-function Controlled({ initialValue = 'today' }: { initialValue?: string }) {
+function Controlled({ initialValue = 'today', list = tabs, fullWidth = false }: {
+  initialValue?: string;
+  list?: readonly LiquidGlassTextOnlyTab[];
+  fullWidth?: boolean;
+}) {
   const [value, setValue] = useState(initialValue);
   return (
     <LiquidGlassTextOnly
       hidden={false}
-      tabs={tabs}
+      tabs={list}
+      fullWidth={fullWidth}
       value={value}
       onValueChange={(next) => {
         changed(next);
@@ -181,8 +186,7 @@ describe('LiquidGlassTextOnly', () => {
     { name: 'equal to', slots: [tabs[1], tabs[3], tabs[6]], target: 2, relation: 0, scrolls: false },
     { name: 'greater than', slots: tabs, target: 6, relation: 1, scrolls: true },
   ])('fills spare width without shrinking when natural slot widths are $name the container', ({ slots, target, relation, scrolls }) => {
-    const view = render(<LiquidGlassTextOnly hidden={false} tabs={slots}
-      value={slots[0].value} onValueChange={changed} fullWidth />);
+    const view = render(<Controlled initialValue={slots[0].value} list={slots} fullWidth />);
     const root = getScene(view.container);
     // jsdom does not compute flex-grow; the real CSS declaration is checked
     // separately in LiquidGlassTextOnly.css.test.mjs.
