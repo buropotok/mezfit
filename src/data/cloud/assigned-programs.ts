@@ -1,4 +1,4 @@
-import { liveQuery } from 'dexie';
+import Dexie, { liveQuery } from 'dexie';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../../shared/relationship-id';
 import { createCloudDatabase, type CloudTrainingPlanRow, type MezfitCloudDatabase } from './database';
 
@@ -53,16 +53,18 @@ export async function isApprovedAssignedPair(
   const coach = telegramId(coachUserId);
   const client = telegramId(clientUserId);
   if (!coach || !client || coach === client || !realm) return false;
-  const expectedRealmId = await relationshipRealmId(coach, client);
+  // WebCrypto is external to Dexie. Preserve the liveQuery observation context
+  // so table reads after this authorization check still subscribe to changes.
+  const expectedRealmId = await Dexie.waitFor(relationshipRealmId(coach, client));
   if (realm.realmId !== expectedRealmId || realm.owner !== null
     || realm.name !== 'Mezfit coach-client pilot') return false;
 
   const pairMembers = members.filter((member) => member.realmId === expectedRealmId);
   if (pairMembers.length !== 2) return false;
-  const [coachMemberId, clientMemberId] = await Promise.all([
+  const [coachMemberId, clientMemberId] = await Dexie.waitFor(Promise.all([
     stableCloudRelationshipId('mmb', expectedRealmId + ':coach'),
     stableCloudRelationshipId('mmb', expectedRealmId + ':client'),
-  ]);
+  ]));
   return pairMembers.some((member) => approvedMember(member, coachMemberId, coachUserId, 'coach'))
     && pairMembers.some((member) => approvedMember(member, clientMemberId, clientUserId, 'client'));
 }
