@@ -5,8 +5,11 @@ import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import type { ProgramDetails, ProgramManagementRepository } from '../data/cloud/program-management';
 import type { LiquidGlassTextOnlyProps } from '../ui/LiquidGlassTextOnly';
 import type { LiquidPopoverProps } from '../ui/LiquidPopover';
+import { GlassSurfaceProvider } from '../ui/GlassSurface';
+import { resolveGlassMaterial } from '../ui/glassMaterial';
 import { CloudProgramsPage } from './CloudProgramsPage';
 import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
+import { ProgramToolbar } from './ProgramToolbar';
 
 const actions = vi.hoisted(() => ({
   create: undefined as (() => void) | undefined,
@@ -22,8 +25,8 @@ vi.mock('../NavigationShell', () => ({
 }));
 
 vi.mock('../ui/LiquidGlassTextOnly', () => ({
-  LiquidGlassTextOnly: ({ tabs, value, onValueChange }: LiquidGlassTextOnlyProps) => (
-    <div role="tablist">{tabs.map((tab) => <button key={tab.value} role="tab"
+  LiquidGlassTextOnly: ({ tabs, value, onValueChange, fullWidth }: LiquidGlassTextOnlyProps) => (
+    <div role="tablist" data-full-width={fullWidth ? 'true' : 'false'}>{tabs.map((tab) => <button key={tab.value} role="tab"
       aria-selected={tab.value === value} onClick={() => onValueChange(tab.value)}>{tab.label}</button>)}</div>
   ),
 }));
@@ -80,6 +83,40 @@ function repository(rows: CloudTrainingPlanRow[]) {
 }
 
 describe('program workspace regressions', () => {
+  it('keeps status tabs full width and the coach search below them without a shared glass backdrop', () => {
+    const controls = {
+      filter: 'all' as const,
+      onFilterChange: vi.fn(),
+      search: '',
+      onSearchChange: vi.fn(),
+    };
+    const view = render(<GlassSurfaceProvider blur={21} optics={true}>
+      <ProgramToolbar controls={controls} />
+    </GlassSurfaceProvider>);
+    const toolbar = view.container.querySelector('.cloud-plan-toolbar');
+    expect(toolbar?.children).toHaveLength(2);
+    expect(toolbar?.children[0].classList.contains('cloud-plan-toolbar-tabs')).toBe(true);
+    expect(toolbar?.children[1].classList.contains('cloud-plan-toolbar-search-action')).toBe(true);
+    expect(toolbar?.classList.contains('ui-glass-surface')).toBe(false);
+    expect(screen.getByRole('tablist').getAttribute('data-full-width')).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Поиск программ' }));
+    expect(toolbar?.children).toHaveLength(2);
+    expect(toolbar?.children[1].classList.contains('cloud-plan-search-reveal')).toBe(true);
+    const searchField = screen.getByLabelText('Поиск программы или атлета');
+    const searchGlass = searchField.closest<HTMLElement>('.ui-glass-surface');
+    const expected = resolveGlassMaterial('modalTuned', { blur: 21 });
+    expect(searchGlass?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('21px');
+    expect(searchGlass?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe(String(expected.tintA));
+
+    view.rerender(<GlassSurfaceProvider blur={21} optics={true}>
+      <ProgramToolbar controls={controls} showSearch={false} />
+    </GlassSurfaceProvider>);
+    expect(toolbar?.children).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Поиск программ' })).toBeNull();
+    expect(screen.queryByLabelText('Поиск программы или атлета')).toBeNull();
+  });
+
   it('keeps save enabled and validates an empty program name only after tapping save', async () => {
     const repo = repository([]);
     render(<CloudProgramsPage repository={repo as unknown as ProgramManagementRepository}

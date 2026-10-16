@@ -25,12 +25,17 @@ let animateMock: ReturnType<typeof vi.fn>;
 function ui(hidden = false, value = 'today', list = tabs) {
   return <LiquidGlassTextOnly hidden={hidden} tabs={list} value={value} onValueChange={changed} />;
 }
-function Controlled({ initialValue = 'today' }: { initialValue?: string }) {
+function Controlled({ initialValue = 'today', list = tabs, fullWidth = false }: {
+  initialValue?: string;
+  list?: readonly LiquidGlassTextOnlyTab[];
+  fullWidth?: boolean;
+}) {
   const [value, setValue] = useState(initialValue);
   return (
     <LiquidGlassTextOnly
       hidden={false}
-      tabs={tabs}
+      tabs={list}
+      fullWidth={fullWidth}
       value={value}
       onValueChange={(next) => {
         changed(next);
@@ -104,7 +109,10 @@ beforeEach(() => {
     return 390;
   });
   vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(function(this: HTMLElement) {
-    if (this.id === 'tab-strip') return tabs.reduce((sum, tab) => sum + (widths.get(tab.label) ?? 84), 0);
+    if (this.id === 'tab-strip') {
+      return Array.from(this.querySelectorAll<HTMLButtonElement>('.tab-link'))
+        .reduce((sum, link) => sum + tabWidth(link), 0);
+    }
     return this.clientWidth;
   });
   vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function(this: HTMLElement) {
@@ -171,6 +179,24 @@ describe('LiquidGlassTextOnly', () => {
 
     view.rerender(ui());
     expect(stage?.classList.contains('text-only-stage--full-width')).toBe(false);
+  });
+
+  it.each([
+    { name: 'less than', slots: tabs.slice(0, 2), target: 1, relation: -1, scrolls: false },
+    { name: 'equal to', slots: [tabs[1], tabs[3], tabs[6]], target: 2, relation: 0, scrolls: false },
+    { name: 'greater than', slots: tabs, target: 6, relation: 1, scrolls: true },
+  ])('fills spare width without shrinking when natural slot widths are $name the container', ({ slots, target, relation, scrolls }) => {
+    const view = render(<Controlled initialValue={slots[0].value} list={slots} fullWidth />);
+    const root = getScene(view.container);
+    // jsdom does not compute flex-grow; the real CSS declaration is checked
+    // separately in LiquidGlassTextOnly.css.test.mjs.
+    const strip = element(root, 'tab-strip');
+    const naturalWidth = slots.reduce((sum, slot) => sum + (widths.get(slot.label) ?? 84), 0);
+    expect(Math.sign(naturalWidth - strip.clientWidth)).toBe(relation);
+    fireEvent.click(button(root, target));
+    expect(changed).toHaveBeenCalledExactlyOnceWith(slots[target].value);
+    act(() => vi.advanceTimersByTime(340));
+    expect(strip.scrollLeft > 0).toBe(scrolls);
   });
 
   it('selects on tap and moves scroll + lens in the same travel window', () => {
