@@ -130,6 +130,24 @@ export class ProgramManagementRepository {
   async listPersonal(): Promise<CloudTrainingPlanRow[]> {
     return (await this.listReadable()).filter((plan) => this.own(plan));
   }
+  /** Personal authoring and every published assignment, across all connected coaches. */
+  async listForAthlete(): Promise<CloudTrainingPlanRow[]> {
+    return (await this.listReadable()).filter((plan) => this.own(plan)
+      || (plan.clientUserId === this.actorUserId && plan.status !== 'draft'));
+  }
+  observeForAthlete(onChange: (rows: CloudTrainingPlanRow[]) => void, onError: (reason: unknown) => void) {
+    return liveQuery(() => this.listForAthlete()).subscribe({ next: onChange, error: onError });
+  }
+  async athleteDetails(id: string): Promise<ProgramDetails | null> {
+    const details = await this.details(id);
+    if (!details) return null;
+    if (this.own(details.program)) return details;
+    if (details.program.clientUserId !== this.actorUserId || details.program.status === 'draft') return null;
+    return { ...details, phases: clientVisiblePhases(details.phases) };
+  }
+  observeAthleteDetails(id: string, onChange: (data: ProgramDetails | null) => void, onError: (reason: unknown) => void) {
+    return liveQuery(() => this.athleteDetails(id)).subscribe({ next: onChange, error: onError });
+  }
   observePersonal(onChange: (rows: CloudTrainingPlanRow[]) => void, onError: (reason: unknown) => void) {
     return liveQuery(() => this.listPersonal()).subscribe({ next: onChange, error: onError });
   }

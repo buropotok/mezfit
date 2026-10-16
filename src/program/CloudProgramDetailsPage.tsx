@@ -35,10 +35,11 @@ function status(phase: CloudProgramPhaseRow): { label: string; color: BadgeColor
 }
 
 function PhaseHeading({
-  phase, disabled, onAction, onPublish,
+  phase, disabled, readOnly, onAction, onPublish,
 }: {
   phase: CloudProgramPhaseRow;
   disabled: boolean;
+  readOnly: boolean;
   onAction: (action: string, phase: CloudProgramPhaseRow) => void;
   onPublish: (phase: CloudProgramPhaseRow) => void;
 }) {
@@ -66,7 +67,7 @@ function PhaseHeading({
         <div className="cloud-plan-phase-title"><Text variant="title">{phase.name}</Text></div>
         <Badge color={label.color}>{label.label}</Badge>
         <Text variant="footnote" className="cloud-plan-phase-weeks">{weeks} {weekLabel(weeks)}</Text>
-        <LiquidPopover
+        {!readOnly ? <LiquidPopover
           isOpen={open}
           onOpenChange={setOpen}
           triggerRef={triggerRef}
@@ -76,10 +77,10 @@ function PhaseHeading({
           label={`Действия с фазой ${phase.name}`}
           preset={glass.preset}
           optics={glass.optics}
-        />
+        /> : null}
       </div>
-      <Text variant="footnote" tone="muted">Дни и упражнения появятся в следующей итерации.</Text>
-      {phase.status === 'draft' ? (
+      {!readOnly ? <Text variant="footnote" tone="muted">Дни и упражнения появятся в следующей итерации.</Text> : null}
+      {!readOnly && phase.status === 'draft' ? (
         <Button variant="secondary" disabled={disabled} onClick={() => onPublish(phase)}>
           Завершить заполнение фазы
         </Button>
@@ -89,11 +90,12 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, viewerRole = 'coach', actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync,
+  repository, planId, viewerRole = 'coach', readOnly = false, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync,
 }: {
   repository: ProgramManagementRepository;
   planId: string;
   viewerRole?: 'coach' | 'client';
+  readOnly?: boolean;
   actor?: ProgramActor;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
@@ -122,7 +124,8 @@ export function CloudProgramDetailsPage({
     setDialog(null);
     setPhaseCreateOpen(false);
     setError('');
-    const subscription = repository.observeDetails(planId, (value) => {
+    const observe = readOnly ? repository.observeAthleteDetails.bind(repository) : repository.observeDetails.bind(repository);
+    const subscription = observe(planId, (value) => {
       if (!active) return;
       setDetails(value);
       setLoading(false);
@@ -132,17 +135,17 @@ export function CloudProgramDetailsPage({
       setError(reason instanceof Error ? reason.message : 'Не удалось открыть программу');
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, planId, retryKey]);
+  }, [repository, planId, retryKey, readOnly]);
 
   const run = useCallback(async (task: () => Promise<unknown>) => {
-    if (busy) return;
+    if (busy || readOnly) return;
     setBusy(true);
     setError('');
     try { await task(); }
     catch (reason) {
       setError(programMutationMessage(reason));
     } finally { setBusy(false); }
-  }, [busy]);
+  }, [busy, readOnly]);
 
   const addPhase = useCallback(() => {
     setPhaseName('');
@@ -151,7 +154,7 @@ export function CloudProgramDetailsPage({
     setPhaseCreateOpen(true);
   }, []);
   const savePhase = async () => {
-    if (busy || phaseCreateBusy) return;
+    if (readOnly || busy || phaseCreateBusy) return;
     const name = phaseName.trim();
     if (!name) {
       setPhaseNameRequired(true);
@@ -170,14 +173,14 @@ export function CloudProgramDetailsPage({
       setPhaseCreateBusy(false);
     }
   };
-  const floatingAction = useMemo(() => details && coachGuidance ? {
+  const floatingAction = useMemo(() => details && !readOnly ? {
     label: 'Добавить',
     icon: 'plus' as const,
     popoverItems: [
       { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: addPhase, disabled: busy || phaseCreateBusy },
       { id: 'add-day', icon: 'plus' as const, label: 'День', disabled: true },
     ],
-  } : null, [details, coachGuidance, addPhase, busy, phaseCreateBusy]);
+  } : null, [details, readOnly, addPhase, busy, phaseCreateBusy]);
   useNavigationSurfaceFloatingAction(floatingAction);
 
   const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled') => {
@@ -311,18 +314,18 @@ export function CloudProgramDetailsPage({
         actorUserId={repository.actorUserId} actor={actor} />
       {coachGuidance && details.program.clientUserId !== null ? (
         <Text variant="footnote" tone="muted" className="cloud-plan-visibility-tip">
-          Клиент видит только активную программу и её фазы, кроме черновиков.
+          Клиент видит опубликованные программы и их фазы, кроме черновиков.
           Чтобы подготовленная фаза появилась у клиента, завершите её заполнение.
         </Text>
       ) : null}
       <Text variant="title">Фазы</Text>
       {details.phases.length ? details.phases.map((phase) => (
-        <PhaseHeading key={phase.id} phase={phase} disabled={busy}
+        <PhaseHeading key={phase.id} phase={phase} disabled={busy} readOnly={readOnly}
           onAction={action}
           onPublish={(item) => setDialog({
             kind: 'confirm', title: 'Завершить заполнение фазы?',
             description: coachGuidance && details.program.clientUserId !== null
-              ? 'Фаза перейдёт в статус «В ожидании». Клиент увидит её в активной программе. Редактирование останется доступным.'
+              ? 'Фаза перейдёт в статус «В ожидании». Клиент увидит её, если программа не является черновиком. Редактирование останется доступным.'
               : 'Фаза перейдёт в статус «В ожидании». Редактирование останется доступным.',
             onConfirm: async () => {
               await repository.publishPhase(planId, item.id);
@@ -330,7 +333,7 @@ export function CloudProgramDetailsPage({
             },
           })}
         />
-      )) : <Text variant="footnote" tone="muted">Добавьте первую фазу через кнопку «Добавить».</Text>}
+      )) : <Text variant="footnote" tone="muted">{readOnly ? 'В программе пока нет подготовленных фаз.' : 'Добавьте первую фазу через кнопку «Добавить».'}</Text>}
       <MezfitDialog
         opened={phaseCreateOpen}
         title="Добавить фазу"

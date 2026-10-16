@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { List as KonstaList, ListGroup, ListItem as KonstaListItem } from 'konsta/react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -8,6 +7,7 @@ import {
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
+import { CloudContactsList } from '../contacts/CloudContactsList';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
@@ -42,41 +42,6 @@ const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text
 
 function displayName(client: CloudContact): string {
   return client.displayName;
-}
-
-const clientNameCollator = new Intl.Collator(['ru-RU', 'en-US'], {
-  sensitivity: 'base',
-  numeric: true,
-});
-
-function clientSortName(client: CloudContact): string {
-  return displayName(client).trim() || 'Клиент Mezfit';
-}
-
-function clientGroupTitle(client: CloudContact): string {
-  const [firstCharacter = ''] = Array.from(clientSortName(client).normalize('NFC'));
-  if (!firstCharacter || !/^\p{L}$/u.test(firstCharacter)) return '#';
-
-  const [upperCharacter = firstCharacter] = Array.from(firstCharacter.toLocaleUpperCase('ru-RU'));
-  return upperCharacter;
-}
-
-function groupClientsForContacts(clients: CloudContact[]): Array<{ title: string; clients: CloudContact[] }> {
-  const groups = new Map<string, CloudContact[]>();
-
-  for (const client of [...clients].sort((left, right) => clientNameCollator.compare(clientSortName(left), clientSortName(right)))) {
-    const title = clientGroupTitle(client);
-    const group = groups.get(title);
-    if (group) group.push(client);
-    else groups.set(title, [client]);
-  }
-
-  return Array.from(groups, ([title, groupedClients]) => ({ title, clients: groupedClients }))
-    .sort((left, right) => {
-      if (left.title === '#') return 1;
-      if (right.title === '#') return -1;
-      return clientNameCollator.compare(left.title, right.title);
-    });
 }
 
 function Placeholder({ title, text }: { title: string; text: string }) {
@@ -135,7 +100,6 @@ function ClientDirectory({
   busy?: boolean;
   presentation?: 'selection' | 'contacts';
 }) {
-  const contactGroups = presentation === 'contacts' && clients ? groupClientsForContacts(clients) : [];
   const floatingAction = useMemo(() => onAdd ? {
     label: 'Добавить клиента',
     onClick: onAdd,
@@ -156,36 +120,7 @@ function ClientDirectory({
         ) : clients === null ? <p className="directory-message">Загружаем клиентов…</p> : clients.length === 0 ? (
           <div className="empty-state directory-empty"><strong>Пока нет клиентов</strong><p>Создайте персональную ссылку и отправьте её клиенту в Telegram.</p></div>
         ) : presentation === 'contacts' ? (
-          <KonstaList dividers={false}>
-            {contactGroups.map((group) => (
-              <ListGroup key={group.title}>
-                <KonstaListItem
-                  title={group.title}
-                  groupTitle
-                  className="sticky top-0"
-                />
-                {group.clients.map((client) => {
-                  const name = displayName(client);
-                  return (
-                    <KonstaListItem
-                      key={client.relationshipId}
-                      contacts
-                      link
-                      chevron={false}
-                      media={<CloudContactAvatar contact={client} />}
-                      title={name}
-                      linkComponent="button"
-                      linkProps={{
-                        type: 'button',
-                        'aria-label': `Открыть клиента ${name}`,
-                        onClick: () => onSelect(client),
-                      }}
-                    />
-                  );
-                })}
-              </ListGroup>
-            ))}
-          </KonstaList>
+          <CloudContactsList contacts={clients} onSelect={onSelect} />
         ) : (
           <List className="compact-client-list">
             {clients.map((client) => (
@@ -335,6 +270,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       );
       return (
         <CloudProgramsPage repository={programRepository} clients={clients ?? []}
+          onNavigationContextChange={onNavigationContextChange}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
           syncStatus={cloudConnections?.syncStatus ?? 'pending'}

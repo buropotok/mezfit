@@ -105,6 +105,31 @@ function fixture() {
 }
 
 describe('local-first program/phase management', () => {
+  it('lists personal programs and published assignments from every coach, never assigned drafts', async () => {
+    const f = fixture();
+    for (const coachId of ['101', '303']) {
+      const pair = await relationshipMembership(coachId, '202');
+      f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
+      f.memberRows.push(...pair.members);
+      const coach = new ProgramManagementRepository(f.db, `tg:${coachId}`);
+      const assigned = await coach.createAssigned('tg:202', `Программа ${coachId}`);
+      f.plans.find((plan) => plan.id === assigned)!.status = coachId === '101' ? 'active' : 'finished';
+      await coach.createAssigned('tg:202', `Черновик ${coachId}`);
+    }
+    const client = new ProgramManagementRepository(f.db, 'tg:202');
+    await client.createPersonal('Личная');
+    expect((await client.listForAthlete()).map((plan) => plan.name).sort()).toEqual([
+      'Личная', 'Программа 101', 'Программа 303',
+    ]);
+    const draft = f.plans.find((plan) => plan.name === 'Черновик 101')!;
+    expect(await client.athleteDetails(draft.id)).toBeNull();
+    const assigned = f.plans.find((plan) => plan.name === 'Программа 101')!;
+    const hidden = await f.repo.createPhase(assigned.id);
+    const published = await f.repo.createPhase(assigned.id);
+    await f.repo.publishPhase(assigned.id, published);
+    expect((await client.athleteDetails(assigned.id))?.phases.map((phase) => phase.id)).toEqual([published]);
+    expect((await f.repo.details(assigned.id))?.phases.map((phase) => phase.id)).toContain(hidden);
+  });
   it('creates assigned phases locally without calling a cloud sync transport', async () => {
     const f = fixture();
     const pair = await relationshipMembership('101', '202');

@@ -44,10 +44,10 @@ beforeEach(() => {
   vi.mocked(useClientCoach).mockReturnValue(coachContext);
 });
 
-describe('client program coach selector failures', () => {
-  it('shows retry instead of pretending no coach was selected after sync failure', () => {
+describe('client program directory initial states', () => {
+  it('shows cloud failure and retry without a coach selection gate', () => {
     const markup = renderToStaticMarkup(<ClientProgramsPage />);
-    expect(markup).toContain('Не удалось загрузить тренеров');
+    expect(markup).toContain('Нет соединения с облаком');
     expect(markup).toContain('Повторить');
     expect(markup).not.toContain('Нет выбранного тренера');
   });
@@ -56,15 +56,17 @@ describe('client program coach selector failures', () => {
     vi.mocked(useCloudConnections).mockReturnValue({ ...cloud, status: 'loading' });
     vi.mocked(useClientCoach).mockReturnValue({ ...coachContext, status: 'loading', error: '' });
     const markup = renderToStaticMarkup(<ClientProgramsPage />);
-    expect(markup).toContain('Загружаем тренеров');
+    expect(markup).toContain('Загружаем программы');
     expect(markup).not.toContain('Нет выбранного тренера');
   });
 
-  it('shows the empty coach-selection state only after confirmed hydration', () => {
+  it('renders both directory sections without a selected coach', () => {
     vi.mocked(useCloudConnections).mockReturnValue({ ...cloud, status: 'ready', error: '' });
     vi.mocked(useClientCoach).mockReturnValue({ ...coachContext, status: 'ready', error: '' });
     const markup = renderToStaticMarkup(<ClientProgramsPage />);
-    expect(markup).toContain('Нет выбранного тренера');
+    expect(markup).toContain('Мои программы');
+    expect(markup).toContain('Тренерские программы');
+    expect(markup).not.toContain('Нет выбранного тренера');
     expect(markup).not.toContain('Не удалось загрузить тренеров');
   });
 });

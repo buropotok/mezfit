@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { PlanSyncNotice } from '../program/PlanSyncNotice';
-import { ProgramSummary, type ProgramActor } from '../program/ProgramSummary';
-import { weekLabel } from '../program/programPresentation';
-import { ProgramToolbar, type ProgramControls, type ProgramFilter } from '../program/ProgramToolbar';
+import type { ProgramActor } from '../program/ProgramSummary';
+import type { CloudTrainingPlanRow } from '../data/cloud/database';
+import { CloudProgramsPage } from '../program/CloudProgramsPage';
+import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
+import type { ProgramControls, ProgramFilter } from '../program/ProgramToolbar';
 import type { NavigationContext } from '../NavigationShell';
-import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/program-management';
-import { useCloudConnections, type CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
+import { ProgramManagementRepository } from '../data/cloud/program-management';
+import { useCloudConnections, type CloudContact, type CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-management-activation';
-import { Badge, Button as CloudButton, Text } from '../ui';
-import './client-programs-cloud.css';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { Button, List, ListItem } from '../ui';
@@ -67,102 +66,12 @@ function CloudClientProgramsPage() {
   );
 }
 
-function AthleteProgramPage({
-  repository, actorUserId, coachUserId, cloudStatus, cloudError,
-  syncStatus, syncError, onRetry, onRetrySync, actor, controls,
-}: {
-  repository: ProgramManagementRepository;
-  actorUserId: string;
-  actor?: ProgramActor;
-  controls: ProgramControls;
-  coachUserId: string;
-  cloudStatus: 'loading' | 'ready' | 'error';
-  cloudError: string;
-  syncStatus: CloudSyncStatus;
-  syncError: string;
-  onRetry: () => Promise<void>;
-  onRetrySync: () => Promise<void>;
-}) {
-  const [data, setData] = useState<ProgramDetails | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState('');
-  const [retryKey, setRetryKey] = useState(0);
-  useEffect(() => {
-    let active = true;
-    setLoaded(false);
-    setData(null);
-    setError('');
-    const subscription = repository.observeActiveForAthlete(actorUserId, coachUserId, (current) => {
-      if (!active) return;
-      setData(current);
-      setLoaded(true);
-      setError('');
-    }, (reason) => {
-      if (!active) return;
-      setError(reason instanceof Error ? reason.message : 'Не удалось загрузить программу');
-      setLoaded(true);
-    });
-    return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, actorUserId, coachUserId, retryKey]);
-  const syncNotice = <PlanSyncNotice cloudStatus={cloudStatus} cloudError={cloudError}
-    syncStatus={syncStatus} syncError={syncError}
-    onRetryCloud={onRetry} onRetrySync={onRetrySync}
-    localError={error} onRetryLocal={() => setRetryKey((key) => key + 1)} />;
-  if (error || (cloudStatus === 'error' && !data)) return (
-    <section className="cloud-client-program">{syncNotice}</section>
-  );
-  if (!loaded || cloudStatus === 'loading') return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
-  if (!data) return syncStatus !== 'synced' ? (
-    <section className="cloud-plan-error">
-      {syncNotice}
-      <Text variant="footnote" tone="muted">
-        Пока нет подтверждения от облака, нельзя утверждать, что активная программа отсутствует.
-      </Text>
-    </section>
-  ) : (
-    <List><ListItem interactive={false} title="Нет активной программы"
-      subtitle="Активная программа появится здесь после назначения или активации." /></List>
-  );
-  const query = controls.search.trim().toLocaleLowerCase('ru-RU');
-  if ((controls.filter !== 'all' && data.program.status !== controls.filter)
-    || (query && ![data.program.name, actor?.name ?? ''].some((name) =>
-      name.toLocaleLowerCase('ru-RU').includes(query)))) return (
-    <section className="cloud-client-program">{syncNotice}
-      <Text variant="body">Программ с выбранными параметрами нет</Text>
-    </section>
-  );
-  const visiblePhases = data.phases;
-  return (
-    <section className="cloud-client-program" aria-label="Активная программа">
-      {syncNotice}
-      <ProgramSummary program={data.program} phaseCount={data.phases.length}
-        actorUserId={actorUserId} actor={actor} showName />
-      <Text variant="title">Фазы программы</Text>
-      {visiblePhases.map((phase) => (
-        <div key={phase.id} className="cloud-client-program-phase">
-          <div className="cloud-client-program-phase-title"><Text variant="headline">{phase.name}</Text></div>
-          <Text variant="footnote" tone="muted">{phase.durationWeeks ?? 10} {weekLabel(phase.durationWeeks ?? 10)}</Text>
-          <Badge color={phase.status === 'active' ? 'green' :
-            phase.status === 'finished' ? 'blue' :
-              phase.status === 'cancelled' ? 'red' : 'yellow'}>
-            {phase.status === 'active' ? 'Активная' :
-              phase.status === 'finished' ? 'Завершена' :
-                phase.status === 'cancelled' ? 'Отменена' : 'В ожидании'}
-          </Badge>
-        </div>
-      ))}
-      {visiblePhases.length === 0 ? <Text variant="footnote" tone="muted">
-        В активной программе ещё нет подготовленных фаз.
-      </Text> : null}
-    </section>
-  );
-}
-
 function CloudClientProgramsWorkspace({
   repository, cloudStatus, cloudError, syncStatus, syncError, onRetry, onRetrySync,
-  onNavigationContextChange, actor,
+  onNavigationContextChange, actor, coaches,
 }: {
   actor?: ProgramActor;
+  coaches: readonly CloudContact[];
   repository: ProgramManagementRepository;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
@@ -172,39 +81,24 @@ function CloudClientProgramsWorkspace({
   onRetrySync: () => Promise<void>;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }) {
-  const { selectedCoach, status: coachStatus, error: coachError } = useClientCoach();
+  const [selected, setSelected] = useState<CloudTrainingPlanRow | null>(null);
   const [filter, setFilter] = useState<ProgramFilter>('all');
   const controls: ProgramControls = { filter, onFilterChange: setFilter, search: '', onSearchChange: () => {} };
-
   useEffect(() => {
-    onNavigationContextChange?.(null);
-  }, [onNavigationContextChange]);
-  return (
-    <section className="cloud-client-programs-workspace">
-      <ProgramToolbar controls={controls} showSearch={false} />
-      {selectedCoach ? (
-        <AthleteProgramPage key={selectedCoach.userId} repository={repository} actor={actor} controls={controls}
-          actorUserId={repository.actorUserId} coachUserId={selectedCoach.userId}
-          cloudStatus={cloudStatus} cloudError={cloudError}
-          syncStatus={syncStatus} syncError={syncError}
-          onRetry={onRetry} onRetrySync={onRetrySync} />
-      ) : coachStatus === 'error' || cloudStatus === 'error' ? (
-        <section className="cloud-plan-error">
-          <Text variant="footnote" role="alert">
-            {coachError || cloudError || 'Не удалось загрузить список тренеров'}
-          </Text>
-          <CloudButton variant="secondary" onClick={() => {
-            void onRetry().catch(() => {});
-          }}>Повторить</CloudButton>
-        </section>
-      ) : coachStatus === 'loading' || coachStatus === 'idle' || cloudStatus === 'loading' ? (
-        <Text variant="footnote" tone="muted">Загружаем тренеров…</Text>
-      ) : (
-        <List><ListItem interactive={false} title="Нет выбранного тренера"
-          subtitle="Выберите тренера для просмотра назначенной программы." /></List>
-      )}
-    </section>
-  );
+    onNavigationContextChange?.(selected ? {
+      title: 'Детали программы', scrollKey: `client-program:${selected.id}`,
+      onBack: () => setSelected(null),
+    } : null);
+    return () => onNavigationContextChange?.(null);
+  }, [selected?.id, onNavigationContextChange]);
+  if (selected) return <CloudProgramDetailsPage key={selected.id} repository={repository}
+    planId={selected.id} viewerRole="client" readOnly={selected.coachUserId !== null} actor={actor}
+    cloudStatus={cloudStatus} cloudError={cloudError} syncStatus={syncStatus} syncError={syncError}
+    onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
+  return <CloudProgramsPage repository={repository} viewerRole="client" clients={[]} coaches={coaches}
+    controls={controls} onOpen={setSelected} onNavigationContextChange={onNavigationContextChange}
+    cloudStatus={cloudStatus} cloudError={cloudError} syncStatus={syncStatus} syncError={syncError}
+    onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
 }
 
 export function ClientProgramsPage({
@@ -218,7 +112,7 @@ export function ClientProgramsPage({
     ? new ProgramManagementRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
-    return <CloudClientProgramsWorkspace repository={repository} actor={actor}
+    return <CloudClientProgramsWorkspace key={cloud.actorUserId} repository={repository} actor={actor} coaches={cloud.coaches}
       cloudStatus={cloud.status} cloudError={cloud.error}
       syncStatus={cloud.syncStatus} syncError={cloud.syncError}
       onRetry={cloud.refresh} onRetrySync={cloud.retrySync}

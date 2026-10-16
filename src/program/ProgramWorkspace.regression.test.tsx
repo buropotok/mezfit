@@ -134,6 +134,27 @@ describe('program workspace regressions', () => {
     expect(save.hasAttribute('disabled')).toBe(false);
   });
 
+  it('selects a client from a searchable contact sheet and preserves the program draft', async () => {
+    const createAssigned = vi.fn(async () => 'new');
+    const repo = { ...repository([]), createAssigned };
+    render(<CloudProgramsPage repository={repo as unknown as ProgramManagementRepository}
+      clients={[...clients, { userId: 'tg:303', telegramUserId: '303', relationshipId: 'other', displayName: 'Борис' }]}
+      onOpen={() => {}} {...connection} />);
+    act(() => actions.create?.());
+    let prompt = screen.getByRole('dialog', { name: 'Создать программу' });
+    fireEvent.change(within(prompt).getByRole('textbox', { name: 'Название' }), { target: { value: 'Сохранённый черновик' } });
+    fireEvent.click(within(prompt).getByText('Выбрать клиента'));
+    const sheet = screen.getByRole('dialog', { name: 'Выбрать клиента' });
+    fireEvent.change(within(sheet).getByRole('textbox', { name: 'Поиск клиента' }), { target: { value: 'анн' } });
+    expect(within(sheet).queryByText('Борис')).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Выбрать клиента Анна' }));
+    prompt = screen.getByRole('dialog', { name: 'Создать программу' });
+    expect((within(prompt).getByRole('textbox', { name: 'Название' }) as HTMLInputElement).value).toBe('Сохранённый черновик');
+    expect(within(prompt).getByText('Анна')).toBeTruthy();
+    fireEvent.click(within(prompt).getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(createAssigned).toHaveBeenCalledWith('tg:202', 'Сохранённый черновик'));
+  });
+
   it('shows a failed local phase write alongside an unconfirmed cloud sync', async () => {
     const repo = { ...repository([plan('Программа')]), createPhase: vi.fn(async () => { throw new Error('Фаза не сохранена'); }) };
     render(<CloudProgramDetailsPage repository={repo as unknown as ProgramManagementRepository}
@@ -158,7 +179,7 @@ describe('program workspace regressions', () => {
     render(<CloudProgramsPage repository={repo as unknown as ProgramManagementRepository}
       clients={clients} onOpen={() => {}} {...connection} />);
     const headings = await screen.findAllByRole('heading', { level: 2 });
-    expect(headings.map((node) => node.textContent)).toEqual(['Мои программы', 'Анна']);
+    expect(headings.map((node) => node.textContent)).toEqual(['Мои программы', 'Программы клиентов']);
     expect(screen.queryByLabelText('Поиск программы или атлета')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Поиск программ' }));
     const search = screen.getByLabelText('Поиск программы или атлета');
@@ -204,7 +225,7 @@ describe('program workspace regressions', () => {
     expect(await screen.findByText('Владелец: Андрей')).toBeTruthy();
     expect(screen.getByLabelText('Аватар владельца: Андрей').querySelector('img')?.getAttribute('src')).toBe('/avatar.jpg');
     expect(screen.queryByText(/tg:202/)).toBeNull();
-    expect(screen.queryByText(/Клиент видит только/) !== null).toBe(viewerRole === 'coach');
+    expect(screen.queryByText(/Клиент видит опубликованные/) !== null).toBe(viewerRole === 'coach');
     fireEvent.click(screen.getByRole('button', { name: 'Действия с фазой Первая фаза: status' }));
     const prompt = screen.getByRole('dialog', { name: 'Сменить статус фазы' });
     fireEvent.click(within(prompt).getByText('Черновик'));
