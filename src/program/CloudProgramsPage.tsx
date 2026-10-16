@@ -306,7 +306,8 @@ export function CloudProgramsPage({
       >
         {!createName.trim() ? <Text variant="footnote">Введите название программы, чтобы сохранить её.</Text> : null}
         <KonstaList nested>
-          <ListInput floatingLabel inputId="cloud-plan-name" label="Название — обязательно" required
+          <ListInput floatingLabel inputId="cloud-plan-name" required
+            label={<label htmlFor="cloud-plan-name"><Text variant="footnote">Название — обязательно</Text></label>}
             value={createName} maxLength={120} disabled={busy}
             onChange={(event) => setCreateName(event.target.value)} />
           <KonstaListItem label link title="Моя программа"

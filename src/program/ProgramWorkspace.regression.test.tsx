@@ -132,6 +132,8 @@ describe('program workspace regressions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Меню программы Новая: activate' }));
     const prompt = await screen.findByRole('dialog', { name: 'Выберите статус для текущей активной программы' });
     expect(screen.queryByRole('dialog', { name: 'Выберите фазу для активации' })).toBeNull();
+    fireEvent.click(within(prompt).getByText('Завершена'));
+    await waitFor(() => expect(within(prompt).getByRole('button', { name: 'Подтвердить' }).hasAttribute('disabled')).toBe(false));
     fireEvent.click(within(prompt).getByRole('button', { name: 'Подтвердить' }));
     await waitFor(() => expect(repo.activate).toHaveBeenCalledWith('Новая', 'phase', { previousProgramStatus: 'finished' }));
   });
