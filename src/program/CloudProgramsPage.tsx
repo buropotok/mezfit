@@ -114,6 +114,7 @@ export function CloudProgramsPage({
   const [dialog, setDialog] = useState<PlanDialogState | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState('');
+  const [createNameError, setCreateNameError] = useState(false);
   const [createAthlete, setCreateAthlete] = useState(repository.actorUserId);
 
   useEffect(() => {
@@ -167,6 +168,7 @@ export function CloudProgramsPage({
     label: 'Создать программу', icon: 'text-plus' as const,
     onClick: () => {
       setCreateName('');
+      setCreateNameError(false);
       setCreateAthlete(repository.actorUserId);
       setCreateOpen(true);
       setError('');
@@ -184,11 +186,15 @@ export function CloudProgramsPage({
   };
   const create = async () => {
     if (busy) return;
+    const name = createName.trim();
+    if (!name) {
+      setCreateNameError(true);
+      return;
+    }
     setBusy(true);
     setError('');
     try {
-      const name = createName.trim();
-      if (!name || name.length > 120) throw new Error('Введите название программы');
+      if (name.length > 120) throw new Error('Введите название программы');
       if (createAthlete === repository.actorUserId) await repository.createPersonal(name);
       else await repository.createAssigned(createAthlete, name);
       setCreateOpen(false);
@@ -299,17 +305,17 @@ export function CloudProgramsPage({
         buttons={(
           <>
             <MezfitDialogButton disabled={busy} onClick={() => setCreateOpen(false)}>Отмена</MezfitDialogButton>
-            <MezfitDialogButton strong disabled={busy || !createName.trim()}
+            <MezfitDialogButton strong disabled={busy}
               onClick={() => { void create(); }}>Сохранить</MezfitDialogButton>
           </>
         )}
       >
-        {!createName.trim() ? <Text variant="footnote">Введите название программы, чтобы сохранить её.</Text> : null}
         <KonstaList nested>
           <ListInput floatingLabel inputId="cloud-plan-name" required
-            label={<label htmlFor="cloud-plan-name"><Text variant="footnote">Название — обязательно</Text></label>}
+            label={<label htmlFor="cloud-plan-name"><Text variant="footnote">Название</Text></label>}
             value={createName} maxLength={120} disabled={busy}
-            onChange={(event) => setCreateName(event.target.value)} />
+            error={createNameError ? 'Обязательно к заполнению' : undefined}
+            onChange={(event) => { setCreateName(event.target.value); setCreateNameError(false); }} />
           <KonstaListItem label link title="Моя программа"
             onClick={() => setCreateAthlete(repository.actorUserId)}
             after={<Radio component="div" checked={createAthlete === repository.actorUserId}
