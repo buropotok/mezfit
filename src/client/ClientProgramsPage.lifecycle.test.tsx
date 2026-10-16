@@ -60,10 +60,6 @@ beforeEach(() => {
       else onNewError = error;
       return { unsubscribe, closed: false };
     });
-  vi.spyOn(ProgramManagementRepository.prototype, 'observePersonal').mockImplementation((next) => {
-    next([]);
-    return { unsubscribe: vi.fn(), closed: false };
-  });
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
