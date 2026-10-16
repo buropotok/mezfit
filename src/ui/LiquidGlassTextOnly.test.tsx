@@ -184,11 +184,8 @@ describe('LiquidGlassTextOnly', () => {
     const view = render(<LiquidGlassTextOnly hidden={false} tabs={slots}
       value={slots[0].value} onValueChange={changed} fullWidth />);
     const root = getScene(view.container);
-    const css = root.querySelector('style')?.textContent ?? '';
-    // jsdom has no flex layout: verify the browser layout contract instead of
-    // mocking expanded widths, then exercise the existing overflow/selection path.
-    expect(css).toMatch(/\.tab-link\s*\{[^}]*flex:\s*1 0 auto;[^}]*width:\s*max-content;/s);
-    expect(css).toMatch(/\.tab-strip\s*\{[^}]*overflow-x:\s*auto;/s);
+    // jsdom does not compute flex-grow; the real CSS declaration is checked
+    // separately in LiquidGlassTextOnly.css.test.mjs.
     const strip = element(root, 'tab-strip');
     const naturalWidth = slots.reduce((sum, slot) => sum + (widths.get(slot.label) ?? 84), 0);
     expect(Math.sign(naturalWidth - strip.clientWidth)).toBe(relation);
