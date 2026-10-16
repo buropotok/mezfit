@@ -374,7 +374,11 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
     };
 
     const saveProgram = async () => {
-      if (!programDraft?.name.trim() || !programDraft.owner || programCreateBusy) return;
+      if (!programDraft?.name.trim() || programCreateBusy) return;
+      if (!programDraft.owner) {
+        setProgramCreateError('Выберите клиента или «Моя программа»');
+        return;
+      }
       setProgramCreateBusy(true);
       setProgramCreateError('');
       try {
