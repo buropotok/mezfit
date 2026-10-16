@@ -5,6 +5,8 @@ import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import type { ProgramDetails, ProgramManagementRepository } from '../data/cloud/program-management';
 import type { LiquidGlassTextOnlyProps } from '../ui/LiquidGlassTextOnly';
 import type { LiquidPopoverProps } from '../ui/LiquidPopover';
+import { GlassSurfaceProvider } from '../ui/GlassSurface';
+import { resolveGlassMaterial } from '../ui/glassMaterial';
 import { CloudProgramsPage } from './CloudProgramsPage';
 import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
 import { ProgramToolbar } from './ProgramToolbar';
@@ -88,7 +90,9 @@ describe('program workspace regressions', () => {
       search: '',
       onSearchChange: vi.fn(),
     };
-    const view = render(<ProgramToolbar controls={controls} />);
+    const view = render(<GlassSurfaceProvider blur={21} optics={true}>
+      <ProgramToolbar controls={controls} />
+    </GlassSurfaceProvider>);
     const toolbar = view.container.querySelector('.cloud-plan-toolbar');
     expect(toolbar?.children).toHaveLength(2);
     expect(toolbar?.children[0].classList.contains('cloud-plan-toolbar-tabs')).toBe(true);
@@ -99,9 +103,15 @@ describe('program workspace regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Поиск программ' }));
     expect(toolbar?.children).toHaveLength(2);
     expect(toolbar?.children[1].classList.contains('cloud-plan-search-reveal')).toBe(true);
-    expect(screen.getByLabelText('Поиск программы или атлета')).toBeTruthy();
+    const searchField = screen.getByLabelText('Поиск программы или атлета');
+    const searchGlass = searchField.closest<HTMLElement>('.ui-glass-surface');
+    const expected = resolveGlassMaterial('modalTuned', { blur: 21 });
+    expect(searchGlass?.style.getPropertyValue('--ui-glass-surface-blur')).toBe('21px');
+    expect(searchGlass?.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe(String(expected.tintA));
 
-    view.rerender(<ProgramToolbar controls={controls} showSearch={false} />);
+    view.rerender(<GlassSurfaceProvider blur={21} optics={true}>
+      <ProgramToolbar controls={controls} showSearch={false} />
+    </GlassSurfaceProvider>);
     expect(toolbar?.children).toHaveLength(1);
     expect(screen.queryByRole('button', { name: 'Поиск программ' })).toBeNull();
     expect(screen.queryByLabelText('Поиск программы или атлета')).toBeNull();
