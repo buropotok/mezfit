@@ -166,7 +166,6 @@ export function CloudProgramDetailsPage({
     } catch (reason) {
       const message = programMutationMessage(reason);
       setPhaseCreateError(message);
-      setError(message);
     } finally {
       setPhaseCreateBusy(false);
     }
