@@ -60,7 +60,7 @@ function Scene({ tabs, value, onValueChange, fullWidth = false }: Omit<LiquidGla
         <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
           <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
         </svg>
-        <div className={fullWidth ? "text-only-stage text-only-stage--full-width" : "text-only-stage"}>
+        <div className={fullWidth ? 'text-only-stage text-only-stage--full-width' : 'text-only-stage'}>
           <div className="optical-tabs-playground" id="playground">
             <div className="toolbar-pane" id="toolbar-pane">
               <div className="selector-mask" id="selector-mask">
