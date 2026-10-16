@@ -4,16 +4,13 @@
   min-width: 0;
   color: var(--ui-color-surface-text);
 }
-/* Keep layout within the scroll viewport while compensating the Text Only stage width. */
+/* Widen the Text Only host inside the page gutters, without clipping its glass effects. */
 .mezfit-public-exercises__tabs {
   min-width: 0;
-  overflow-x: clip;
-  overflow-y: visible;
-  overflow-clip-margin: 28px;
 }
 .mezfit-public-exercises__tabs-content {
-  width: 110%;
-  margin-inline-start: -5%;
+  width: min(110%, calc(100% + 2 * var(--page-pad-x)));
+  margin-inline-start: max(-5%, calc(var(--page-pad-x) * -1));
 }
 .mezfit-public-exercises__toolbar {
   display: grid;
