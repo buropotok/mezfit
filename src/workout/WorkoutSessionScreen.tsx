@@ -343,8 +343,8 @@ export function WorkoutSessionScreen({
         </>
       ) : null}
 
-      {exerciseSelectionOpen ? (
-        <WorkoutExerciseSelectionSheet
+      <WorkoutExerciseSelectionSheet
+          opened={exerciseSelectionOpen}
           initData={initData}
           saving={false}
           actionError={exerciseSelectionError}
@@ -360,8 +360,7 @@ export function WorkoutSessionScreen({
               setExerciseSelectionError('');
             });
           }}
-        />
-      ) : null}
+      />
 
       <Modal
         isOpen={loading || busyLabel !== null}
