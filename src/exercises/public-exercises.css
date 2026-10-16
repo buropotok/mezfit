@@ -4,6 +4,11 @@
   min-width: 0;
   color: var(--ui-color-surface-text);
 }
+/* The Text Only glass stage is 1/1.1 of its host; compensate only on this screen. */
+.mezfit-public-exercises__tabs {
+  width: 110%;
+  margin-inline-start: -5%;
+}
 .mezfit-public-exercises__toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
