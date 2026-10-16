@@ -177,10 +177,10 @@ describe('LiquidGlassTextOnly', () => {
   });
 
   it.each([
-    { name: 'less than', slots: tabs.slice(0, 2), target: 1, scrolls: false },
-    { name: 'equal to', slots: [tabs[1], tabs[3], tabs[6]], target: 2, scrolls: false },
-    { name: 'greater than', slots: tabs, target: 6, scrolls: true },
-  ])('fills spare width without shrinking when natural slot widths are $name the container', ({ slots, target, scrolls }) => {
+    { name: 'less than', slots: tabs.slice(0, 2), target: 1, relation: -1, scrolls: false },
+    { name: 'equal to', slots: [tabs[1], tabs[3], tabs[6]], target: 2, relation: 0, scrolls: false },
+    { name: 'greater than', slots: tabs, target: 6, relation: 1, scrolls: true },
+  ])('fills spare width without shrinking when natural slot widths are $name the container', ({ slots, target, relation, scrolls }) => {
     const view = render(<LiquidGlassTextOnly hidden={false} tabs={slots}
       value={slots[0].value} onValueChange={changed} fullWidth />);
     const root = getScene(view.container);
@@ -191,7 +191,7 @@ describe('LiquidGlassTextOnly', () => {
     expect(css).toMatch(/\.tab-strip\s*\{[^}]*overflow-x:\s*auto;/s);
     const strip = element(root, 'tab-strip');
     const naturalWidth = slots.reduce((sum, slot) => sum + (widths.get(slot.label) ?? 84), 0);
-    expect(Math.sign(naturalWidth - strip.clientWidth)).toBe(scrolls ? 1 : slots.length === 2 ? -1 : 0);
+    expect(Math.sign(naturalWidth - strip.clientWidth)).toBe(relation);
     fireEvent.click(button(root, target));
     expect(changed).toHaveBeenCalledExactlyOnceWith(slots[target].value);
     act(() => vi.advanceTimersByTime(340));
