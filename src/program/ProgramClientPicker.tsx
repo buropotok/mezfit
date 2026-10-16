@@ -1,19 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudContactsList } from '../contacts/CloudContactsList';
 import { Button, MezfitBottomSheet, MezfitSearchbar, Text } from '../ui';
 
-export function ProgramClientPicker({ clients, loading, onSelect, onClose }: {
+export function ProgramClientPicker({ opened, clients, loading, onSelect, onClose }: {
+  opened: boolean;
   clients: readonly CloudContact[];
   loading: boolean;
   onSelect: (client: CloudContact) => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
+  const [contentMounted, setContentMounted] = useState(opened);
+
+  useEffect(() => { if (opened) setContentMounted(true); }, [opened]);
   const search = query.trim().toLocaleLowerCase('ru-RU');
   const visible = clients.filter((client) => client.displayName.toLocaleLowerCase('ru-RU').includes(search));
-  return <MezfitBottomSheet opened label="Выбрать клиента">
-    <div className="cloud-plan-client-picker">
+  return <MezfitBottomSheet opened={opened} label="Выбрать клиента"
+    onTransitionEnd={(event) => {
+      if (event.target !== event.currentTarget || opened) return;
+      setContentMounted(false);
+      setQuery('');
+    }}>
+    {opened || contentMounted ? <div className="cloud-plan-client-picker">
       <div className="cloud-plan-title-row">
         <Text variant="headline">Выбрать клиента</Text>
         <Button variant="secondary" onClick={onClose}>Назад</Button>
@@ -25,6 +34,6 @@ export function ProgramClientPicker({ clients, loading, onSelect, onClose }: {
       {loading ? <Text variant="body">Загружаем клиентов…</Text>
         : visible.length ? <CloudContactsList contacts={visible} onSelect={onSelect} actionLabel="Выбрать клиента" />
           : <Text variant="body">{search ? 'Клиенты не найдены' : 'Нет доступных клиентов'}</Text>}
-    </div>
+    </div> : null}
   </MezfitBottomSheet>;
 }
