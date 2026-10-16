@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import type { PublicExerciseRow } from '../data/exercises/publicExerciseTypes';
+import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import approvedMediaRelease from '../../shared/approved-exercise-media.json';
 import { Icon, Text } from '../ui';
 
 /** Only the approved immutable Dexie catalogue may reference the existing media library. */
 const PUBLIC_CATALOGUE_SHA = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 
-type MediaIdentity = Pick<PublicExerciseRow, 'id' | 'sourceSha256' | 'gif_url'>;
-type MediaExercise = MediaIdentity & Pick<PublicExerciseRow, 'name' | 'name_ru'>;
+type MediaIdentity = Pick<CatalogueExerciseRow, 'id' | 'sourceSha256' | 'gif_url'> & Partial<Pick<CatalogueExerciseRow, 'media_id' | 'copiedFromExerciseId' | 'copiedFromScope'>>;
+type MediaExercise = MediaIdentity & Pick<CatalogueExerciseRow, 'name' | 'name_ru'>;
 type Variant = 'thumbnail' | 'detail';
 
 /**
@@ -21,10 +21,15 @@ type Variant = 'thumbnail' | 'detail';
 export function publicExerciseMediaUrl(
   row: MediaIdentity,
 ): string | null {
-  if (!/^\d{4}$/.test(row.id)
-    || row.sourceSha256 !== PUBLIC_CATALOGUE_SHA
-    || typeof row.gif_url !== 'string' || !row.gif_url.trim()) return null;
-  return `/api/exercise-media/gym_keeper_apk/${row.id}?v=${approvedMediaRelease.datasetGitRevision}`;
+  const publicId = /^\d{4}$/.test(row.id) && row.sourceSha256 === PUBLIC_CATALOGUE_SHA
+    ? row.id : row.sourceSha256 === 'coach-custom'
+      && row.copiedFromScope === 'public'
+      && typeof row.copiedFromExerciseId === 'string'
+      && /^\d{4}$/.test(row.copiedFromExerciseId)
+      && row.media_id === row.copiedFromExerciseId
+      ? row.copiedFromExerciseId : null;
+  if (!publicId || typeof row.gif_url !== 'string' || !row.gif_url.trim()) return null;
+  return `/api/exercise-media/gym_keeper_apk/${publicId}?v=${approvedMediaRelease.datasetGitRevision}`;
 }
 
 /** Shared rendering for list thumbnails and the full exercise detail. */

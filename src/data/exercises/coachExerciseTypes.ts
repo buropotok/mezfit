@@ -5,6 +5,8 @@ export type CatalogueExerciseRow = PublicExercise & {
   realmId: string;
   owner: string | null;
   sourceSha256: string;
+  copiedFromExerciseId?: string;
+  copiedFromScope?: 'public' | 'coach';
 };
 
 export type CoachExerciseChanges = Partial<Pick<PublicExercise,
@@ -101,17 +103,9 @@ export function resolveCoachExerciseCatalogue(
   personal: CoachExercisePersonalSnapshot,
   actorUserId: string,
 ): { exercises: CatalogueExerciseRow[]; favouriteIds: ReadonlySet<string> } {
-  const allowedOverrides = new Map<string, CoachExerciseChanges>();
-  for (const row of personal.overrides) {
-    if (row.realmId !== actorUserId || row.owner !== actorUserId
-      || !/^\d{4}$/.test(row.sourceExerciseId)
-      || row.id !== coachOverrideId(actorUserId, row.sourceExerciseId)
-      || !isCoachExerciseChanges(row.changes)) continue;
-    allowedOverrides.set(row.sourceExerciseId, row.changes);
-  }
-  const exercises: CatalogueExerciseRow[] = publicExercises.map(row => ({
-    ...row, ...(allowedOverrides.get(row.id) ?? {}),
-  }));
+  // Superseded business rule: global catalogue records are immutable in every view.
+  // Legacy coachExerciseOverrides rows may exist locally but must never shadow the base.
+  const exercises: CatalogueExerciseRow[] = publicExercises.map(row => ({ ...row }));
   const ids = new Set(exercises.map(row => row.id));
   for (const row of personal.definitions) {
     if (!isCoachExerciseDefinition(row, actorUserId) || row.archivedAt !== null || ids.has(row.id)) continue;

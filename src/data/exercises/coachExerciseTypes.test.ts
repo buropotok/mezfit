@@ -37,7 +37,7 @@ describe('Dexie v5 coach catalogue declaration', () => {
 });
 
 describe('coach-private exercise view', () => {
-  it('applies an override without changing public IDs or mutating the public row', () => {
+  it('ignores deprecated overrides and keeps the shared catalogue immutable', () => {
     const personal = empty();
     personal.overrides.push({
       id: coachOverrideId(actor, '0001'), realmId: actor, owner: actor,
@@ -45,9 +45,10 @@ describe('coach-private exercise view', () => {
       updatedAt: '2026-10-15',
     });
     const result = resolveCoachExerciseCatalogue([publicExercise], personal, actor);
-    expect(result.exercises[0].name_ru).toBe('Жим тренера');
+    expect(result.exercises[0].name_ru).toBe('Жим лёжа');
     expect(result.exercises[0].id).toBe('0001');
     expect(result.exercises[0].sourceSha256).toBe(sha);
+    expect(result.exercises[0]).not.toBe(publicExercise);
     expect(publicExercise.name_ru).toBe('Жим лёжа');
   });
 

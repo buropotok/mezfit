@@ -1,0 +1,19 @@
+.mezfit-personal-exercise-editor {
+  display: grid;
+  gap: var(--space-3);
+  max-height: 58vh;
+  overflow-y: auto;
+}
+
+.mezfit-personal-exercise-page {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.mezfit-personal-exercise-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

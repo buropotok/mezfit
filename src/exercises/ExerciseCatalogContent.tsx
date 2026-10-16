@@ -31,9 +31,17 @@ function TablerStar({ filled }: { filled: boolean }) {
     strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" /></svg>;
 }
 
-const COACH_CATALOG_TABS = [
+const PERSONAL_CATALOG_TABS = [
   { value: 'main', label: 'Основные' },
   { value: 'favourites', label: 'Избранное' },
+  { value: 'mine', label: 'Мои упражнения' },
+  { value: 'all', label: 'Вся база' },
+] as const;
+const CLIENT_CATALOG_TABS = [
+  { value: 'main', label: 'Основные' },
+  { value: 'favourites', label: 'Избранное' },
+  { value: 'mine', label: 'Мои упражнения' },
+  { value: 'trainer', label: 'Тренерские' },
   { value: 'all', label: 'Вся база' },
 ] as const;
 const EMPTY_FAVOURITES: ReadonlySet<string> = new Set();
@@ -59,10 +67,11 @@ function anatomyMuscleIds(ids: readonly string[]): string[] {
   ))];
 }
 
-function ExerciseDetail({ row, taxonomy, onEdit }: {
+function ExerciseDetail({ row, taxonomy, onEdit, origin }: {
   row: CatalogueExerciseRow;
   taxonomy: PublicTaxonomyRow[];
   onEdit?: () => void;
+  origin?: 'personal' | 'trainer' | null;
 }) {
   const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
   const primaryIds = new Set(primary);
@@ -82,6 +91,9 @@ function ExerciseDetail({ row, taxonomy, onEdit }: {
         <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />
       </GlassSurface>
       <Text variant="headline">{row.name_ru || row.name}</Text>
+      {origin ? <Text variant="caption" tone="muted">
+        {origin === 'personal' ? 'Пользовательское' : 'Тренерское'}
+      </Text> : null}
       {row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
       <Text variant="footnote">{categories[row.category] ?? row.category} · {row.subcategory_ru} · {row.equipment}</Text>
       {onEdit ? <div className="mezfit-public-exercises__detail-actions"><Button onClick={onEdit}>Изменить</Button></div> : null}
@@ -116,6 +128,8 @@ export function ExerciseCatalogContent({
   snapshot, onNavigationContextChange, mode = 'browse',
   selectedExerciseIds, onToggleExercise, selectionDisabled = false,
   scope = 'public', catalogueExercises, favouriteIds = EMPTY_FAVOURITES,
+  personalIds = EMPTY_FAVOURITES, assignedIds = EMPTY_FAVOURITES,
+  selectedCoachUserId = null, initialTab = 'all',
   onToggleFavourite, onCreateExercise, onEditExercise,
 }: {
   snapshot: PublishedSnapshot;
@@ -124,16 +138,20 @@ export function ExerciseCatalogContent({
   selectedExerciseIds?: ReadonlySet<string>;
   onToggleExercise?: (exerciseId: string) => void;
   selectionDisabled?: boolean;
-  scope?: 'public' | 'coach';
+  scope?: 'public' | 'coach' | 'client';
   catalogueExercises?: readonly CatalogueExerciseRow[];
   favouriteIds?: ReadonlySet<string>;
+  personalIds?: ReadonlySet<string>;
+  assignedIds?: ReadonlySet<string>;
+  selectedCoachUserId?: string | null;
+  initialTab?: 'all' | 'mine';
   onToggleFavourite?: (exerciseId: string) => void;
   onCreateExercise?: (category: string | null) => void;
   onEditExercise?: (exerciseId: string) => void;
 }) {
   const { taxonomy, catalogue } = snapshot;
   const exercises = catalogueExercises ?? snapshot.exercises;
-  const isCoach = scope === 'coach' && mode === 'browse';
+  const isPersonal = (scope === 'coach' || scope === 'client') && mode === 'browse';
   const [category, setCategory] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -142,7 +160,7 @@ export function ExerciseCatalogContent({
   const [filterDialogGroup, setFilterDialogGroup] = useState<FilterGroup | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
-  const [tab, setTab] = useState<'main' | 'favourites' | 'all'>('all');
+  const [tab, setTab] = useState<'main' | 'favourites' | 'mine' | 'trainer' | 'all'>(initialTab);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const requestBackTransition = useNavigationBackTransition();
 
@@ -170,21 +188,30 @@ export function ExerciseCatalogContent({
     return () => onNavigationContextChange(null);
   }, [category, categoryLabel, onNavigationContextChange, requestBackTransition, selected, selectedId]);
 
+  const tabExercises = useMemo(() => {
+    if (!isPersonal) return exercises;
+    if (tab === 'main') return [];
+    if (tab === 'mine') return exercises.filter(row => personalIds.has(row.id));
+    if (tab === 'trainer') return scope === 'client'
+      ? exercises.filter(row => assignedIds.has(row.id)) : [];
+    if (tab === 'favourites') return exercises.filter(row => favouriteIds.has(row.id));
+    // "Вся база" means the immutable public catalogue, not private definitions.
+    return exercises.filter(row => row.realmId === 'rlm-public' && row.owner === null);
+  }, [exercises, isPersonal, scope, tab, personalIds, assignedIds, favouriteIds]);
+
   const selectedEntries = FILTER_GROUPS.flatMap(({ id, label }) =>
     (filters[id] ?? []).map((value) => {
-      const option = filterOptions(id, exercises, taxonomy, catalogue.subcategoryLabelsRu)
+      const option = filterOptions(id, tabExercises, taxonomy, catalogue.subcategoryLabelsRu)
         .find((item) => item.id === value);
       return { group: id, value, label: `${label}: ${option?.label ?? value}` };
     }));
 
-  const visibleExercises = useMemo(() => {
-    const filtered = filterPublicExercises(exercises, taxonomy, filters, query, category);
-    return isCoach && tab === 'favourites'
-      ? filtered.filter(row => favouriteIds.has(row.id)) : filtered;
-  }, [exercises, taxonomy, filters, query, category, isCoach, tab, favouriteIds]);
+  const visibleExercises = useMemo(() =>
+    filterPublicExercises(tabExercises, taxonomy, filters, query, category),
+  [tabExercises, taxonomy, filters, query, category]);
 
   const groupOptions = filterDialogGroup ? filterOptions(
-    filterDialogGroup, exercises, taxonomy, catalogue.subcategoryLabelsRu,
+    filterDialogGroup, tabExercises, taxonomy, catalogue.subcategoryLabelsRu,
   ) : [];
 
   const closeFilter = () => setFilterDialogGroup(null);
@@ -210,14 +237,17 @@ export function ExerciseCatalogContent({
   };
 
   if (selected) return <ExerciseDetail row={selected} taxonomy={taxonomy}
-    onEdit={isCoach && onEditExercise ? () => onEditExercise(selected.id) : undefined} />;
+    origin={personalIds.has(selected.id) ? 'personal' : assignedIds.has(selected.id) ? 'trainer' : null}
+    onEdit={isPersonal && onEditExercise ? () => onEditExercise(selected.id) : undefined} />;
   return (
     <section className="mezfit-public-exercises stack">
-      {isCoach && onCreateExercise ? <CoachExerciseCatalogFab onCreate={() => onCreateExercise(category)} /> : null}
-      {isCoach ? <div className="mezfit-public-exercises__tabs">
-        <LiquidGlassTextOnly tabs={COACH_CATALOG_TABS} value={tab} hidden={false}
+      {isPersonal && onCreateExercise ? <CoachExerciseCatalogFab onCreate={() => onCreateExercise(category)} /> : null}
+      {isPersonal ? <div className="mezfit-public-exercises__tabs">
+        <LiquidGlassTextOnly tabs={scope === 'client' ? CLIENT_CATALOG_TABS : PERSONAL_CATALOG_TABS}
+          value={tab} hidden={false}
           onValueChange={(value) => {
-            if (value !== 'main' && value !== 'favourites' && value !== 'all') return;
+            if (value !== 'main' && value !== 'favourites' && value !== 'mine'
+              && value !== 'trainer' && value !== 'all') return;
             setTab(value);
             setCategory(null);
             setVisibleLimit(PAGE_SIZE);
@@ -256,15 +286,15 @@ export function ExerciseCatalogContent({
         </div>
       ) : null}
 
-      {isCoach && tab === 'main' ? (
+      {isPersonal && tab === 'main' ? (
         <Surface><Text variant="body">Раздел «Основные» будет доступен позже.</Text></Surface>
-      ) : !category && !query.trim() && selectedEntries.length === 0 && (!isCoach || tab === 'all') ? (
+      ) : !category && !query.trim() && selectedEntries.length === 0 && (!isPersonal || tab === 'all') ? (
         <List className="mezfit-public-exercises__category-list">
           {PUBLIC_EXERCISE_CATEGORIES.map(([id, label]) => (
             <ListItem
               key={id}
               title={label}
-              subtitle={`${exercises.filter((row) => row.category === id).length} упражнений`}
+              subtitle={`${tabExercises.filter((row) => row.category === id).length} упражнений`}
               leading={<span className="mezfit-public-exercises__category-fallback">
                 {publicExerciseCategoryArtwork(id)
                   ? <img src={publicExerciseCategoryArtwork(id)!} alt="" width={72} height={72} decoding="async" />
@@ -289,10 +319,14 @@ export function ExerciseCatalogContent({
                   leading={<span className="mezfit-public-exercises__exercise-fallback">
                     <PublicExerciseMedia key={`thumbnail:${row.id}:${row.sourceSha256}`} row={row} variant="thumbnail" />
                   </span>}
-                  title={row.name_ru || row.name}
+                  title={<span className="mezfit-public-exercises__exercise-title">
+                    {row.name_ru || row.name}
+                    {personalIds.has(row.id) ? <Text variant="caption" tone="muted">Пользовательское</Text> : null}
+                    {assignedIds.has(row.id) ? <Text variant="caption" tone="muted">Тренерское</Text> : null}
+                  </span>}
                   subtitle={row.name_en || row.subcategory_ru}
                   trailing={mode === 'select' && selectedExerciseIds?.has(row.id) ? '✓' : undefined}
-                  trailingAction={isCoach && onToggleFavourite ? (
+                  trailingAction={isPersonal && onToggleFavourite ? (
                     <IconButton
                       label={favouriteIds.has(row.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
                       aria-pressed={favouriteIds.has(row.id)}
@@ -309,7 +343,14 @@ export function ExerciseCatalogContent({
                 />
               ))}
             </List>
-          ) : <Surface><Text>{isCoach && tab === 'favourites' ? 'В избранном пока нет упражнений.' : 'По выбранным условиям упражнений нет.'}</Text></Surface>}
+          ) : <Surface><Text>{
+            isPersonal && tab === 'favourites' ? 'В избранном пока нет упражнений.'
+              : isPersonal && tab === 'mine' ? 'У вас пока нет пользовательских упражнений.'
+              : isPersonal && tab === 'trainer'
+                ? selectedCoachUserId ? 'Выбранный тренер пока не назначил вам пользовательских упражнений.'
+                  : 'Выберите тренера, чтобы увидеть назначенные им упражнения.'
+                : 'По выбранным условиям упражнений нет.'
+          }</Text></Surface>}
           {visibleExercises.length > visibleLimit ? (
             <Button variant="secondary" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
               Показать ещё
