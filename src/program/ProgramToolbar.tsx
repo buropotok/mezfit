@@ -23,7 +23,7 @@ export function ProgramToolbar({ controls, showSearch = true }: {
   return (
     <div className="cloud-plan-toolbar">
       <div className="cloud-plan-toolbar-tabs">
-        <LiquidGlassTextOnly tabs={FILTERS} value={controls.filter} hidden={false}
+        <LiquidGlassTextOnly tabs={FILTERS} value={controls.filter} hidden={false} fullWidth
           onValueChange={(value) => {
             if (FILTERS.some((tab) => tab.value === value)) controls.onFilterChange(value as ProgramFilter);
           }} />
