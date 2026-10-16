@@ -155,6 +155,24 @@ describe('LiquidGlassTextOnly', () => {
     expect(button(root, 1).offsetWidth).not.toBe(button(root, 2).offsetWidth);
   });
 
+  it('expands only on explicit fullWidth and preserves selection and the existing default', () => {
+    const view = render(ui());
+    const root = getScene(view.container);
+    const stage = root.querySelector<HTMLElement>('.text-only-stage');
+    expect(stage?.classList.contains('text-only-stage--full-width')).toBe(false);
+
+    view.rerender(<LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+      onValueChange={changed} fullWidth />);
+
+    expect(getScene(view.container)).toBe(root);
+    expect(stage?.classList.contains('text-only-stage--full-width')).toBe(true);
+    expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
+    expect(changed).not.toHaveBeenCalled();
+
+    view.rerender(ui());
+    expect(stage?.classList.contains('text-only-stage--full-width')).toBe(false);
+  });
+
   it('selects on tap and moves scroll + lens in the same travel window', () => {
     const view = render(<Controlled />);
     const root = getScene(view.container);
