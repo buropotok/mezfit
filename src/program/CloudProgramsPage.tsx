@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { List as KonstaList, ListInput, ListItem as KonstaListItem, Radio } from 'konsta/react';
 import type { CloudTrainingPlanRow, CloudProgramStatus } from '../data/cloud/database';
 import type { CloudContact, CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
-import { athleteOf, isOtherActiveProgramInScope, type ProgramManagementRepository } from '../data/cloud/program-management';
-import { useNavigationFloatingAction } from '../NavigationShell';
+import { isOtherActiveProgramInScope, type ProgramManagementRepository } from '../data/cloud/program-management';
+import { useNavigationFloatingAction, type NavigationContext } from '../NavigationShell';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import {
   Badge, GlassSurface, IconButton, LiquidPopover, List, ListItem,
@@ -11,6 +11,7 @@ import {
   type BadgeColor, type LiquidPopoverItem,
 } from '../ui';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
+import { ProgramClientPicker } from './ProgramClientPicker';
 import { ProgramToolbar, type ProgramControls } from './ProgramToolbar';
 import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogOption, type PlanDialogState } from './PlanActionDialog';
@@ -34,10 +35,11 @@ function label(status: CloudProgramStatus): { text: string; color: BadgeColor } 
 }
 
 function ProgramRow({
-  plan, busy, onOpen, onAction,
+  plan, busy, readOnly, onOpen, onAction,
 }: {
   plan: CloudTrainingPlanRow;
   busy: boolean;
+  readOnly: boolean;
   onOpen: (plan: CloudTrainingPlanRow) => void;
   onAction: (action: string, plan: CloudTrainingPlanRow) => void;
 }) {
@@ -70,14 +72,14 @@ function ProgramRow({
           disabled={busy}
         />
       </div>
-      <LiquidPopover isOpen={open} onOpenChange={setOpen}
+      {!readOnly ? <LiquidPopover isOpen={open} onOpenChange={setOpen}
         triggerRef={triggerRef}
         trigger={<IconButton ref={triggerRef} icon="dots-vertical"
           label={`Меню программы ${plan.name}`} disabled={busy} />}
         label={`Меню программы ${plan.name}`}
         preset={glass.preset} optics={glass.optics}
         items={entries}
-      />
+      /> : null}
     </div>
   );
 }
@@ -85,6 +87,7 @@ function ProgramRow({
 export function CloudProgramsPage({
   repository, clients, onOpen, cloudStatus, cloudError, syncStatus, syncError,
   onRetryCloud, onRetrySync, personalOnly = false, controls, hideToolbar = false,
+  viewerRole = 'coach', coaches = [], onNavigationContextChange,
 }: {
   repository: ProgramManagementRepository;
   clients: readonly CloudContact[];
@@ -95,6 +98,9 @@ export function CloudProgramsPage({
   syncError: string;
   onRetryCloud: () => Promise<void>;
   onRetrySync: () => Promise<void>;
+  viewerRole?: 'coach' | 'client';
+  coaches?: readonly CloudContact[];
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
   personalOnly?: boolean;
   controls?: ProgramControls;
   hideToolbar?: boolean;
@@ -113,6 +119,7 @@ export function CloudProgramsPage({
   const [retryKey, setRetryKey] = useState(0);
   const [dialog, setDialog] = useState<PlanDialogState | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createNameError, setCreateNameError] = useState(false);
   const [createAthlete, setCreateAthlete] = useState(repository.actorUserId);
@@ -120,6 +127,8 @@ export function CloudProgramsPage({
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setPrograms([]);
+    setError('');
     const onChange = (rows: CloudTrainingPlanRow[]) => {
       if (!active) return;
       setPrograms(rows);
@@ -131,43 +140,56 @@ export function CloudProgramsPage({
       setError(reason instanceof Error ? reason.message : 'Не удалось загрузить программы');
       setLoading(false);
     };
-    const subscription = personalOnly
+    const subscription = viewerRole === 'client'
+      ? repository.observeForAthlete(onChange, onError)
+      : personalOnly
       ? repository.observePersonal(onChange, onError)
       : repository.observeAuthored(onChange, onError);
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, retryKey, personalOnly]);
+  }, [repository, retryKey, personalOnly, viewerRole]);
 
+  const personal = programs.filter((plan) => plan.coachUserId === null && plan.clientUserId === null
+    && plan.realmId === repository.actorUserId && plan.athleteUserId === repository.actorUserId);
+  const matches = (plan: CloudTrainingPlanRow) => filter === 'all' || plan.status === filter;
+  const query = search.trim().toLocaleLowerCase('ru-RU');
+  const personalVisible = personal.filter((plan) => matches(plan)
+    && plan.name.toLocaleLowerCase('ru-RU').includes(query));
   const groups = useMemo(() => {
-    const byAthlete = new Map<string, CloudTrainingPlanRow[]>();
+    const byRealm = new Map<string, CloudTrainingPlanRow[]>();
     for (const plan of programs) {
-      if (personalOnly && !(plan.realmId === repository.actorUserId
-        && plan.athleteUserId === repository.actorUserId
-        && plan.coachUserId === null && plan.clientUserId === null)) continue;
-      if (filter !== 'all' && plan.status !== filter) continue;
-      const athlete = athleteOf(plan);
-      if (!athlete) continue;
-      const group = byAthlete.get(athlete) ?? [];
-      group.push(plan);
-      byAthlete.set(athlete, group);
+      if (!plan.coachUserId || !plan.clientUserId || (filter !== 'all' && plan.status !== filter)) continue;
+      if (viewerRole === 'client' && (plan.clientUserId !== repository.actorUserId || plan.status === 'draft')) continue;
+      const rows = byRealm.get(plan.realmId) ?? [];
+      rows.push(plan);
+      byRealm.set(plan.realmId, rows);
     }
-    const query = search.trim().toLocaleLowerCase('ru-RU');
-    return [...byAthlete].map(([athleteId, plans]) => {
-      const contact = clients.find((client) => client.userId === athleteId);
-      const athleteName = athleteId === repository.actorUserId ? 'Мои программы' : contact?.displayName ?? 'Атлет';
-      const nameMatches = athleteName.toLocaleLowerCase('ru-RU').includes(query);
-      return {
-        athleteId, athleteName, contact,
-        plans: nameMatches ? plans : plans.filter((plan) => plan.name.toLocaleLowerCase('ru-RU').includes(query)),
-      };
-    }).filter((group) => group.plans.length > 0)
-      .sort((left, right) => Number(right.athleteId === repository.actorUserId)
-        - Number(left.athleteId === repository.actorUserId));
-  }, [programs, filter, search, clients, repository.actorUserId, personalOnly]);
+    const contacts = viewerRole === 'client' ? coaches : clients;
+    return [...byRealm].map(([realmId, plans]) => {
+      const personId = viewerRole === 'client' ? plans[0].coachUserId : plans[0].clientUserId;
+      const contact = contacts.find((person) => person.relationshipId === realmId && person.userId === personId);
+      const personName = contact?.displayName ?? (viewerRole === 'client' ? 'Тренер' : 'Атлет');
+      return { realmId, personName, contact, plans: personName.toLocaleLowerCase('ru-RU').includes(query)
+        ? plans : plans.filter((plan) => plan.name.toLocaleLowerCase('ru-RU').includes(query)) };
+    }).filter((group) => group.plans.length > 0);
+  }, [programs, filter, query, clients, coaches, viewerRole, repository.actorUserId]);
+
+  useEffect(() => {
+    if (!onNavigationContextChange) return;
+    onNavigationContextChange(createOpen ? {
+      title: pickerOpen ? 'Выбрать клиента' : 'Создать программу',
+      scrollKey: pickerOpen ? 'program-client-picker' : 'program-create',
+      onBack: () => { if (!busy) { if (pickerOpen) setPickerOpen(false); else setCreateOpen(false); } },
+    } : null);
+    return () => onNavigationContextChange(null);
+  }, [createOpen, pickerOpen, busy, onNavigationContextChange]);
+
+  const selectedClient = clients.find((client) => client.userId === createAthlete);
 
   const floatingAction = useMemo(() => ({
     label: 'Создать программу', icon: 'text-plus' as const,
     onClick: () => {
       setCreateName('');
+      setPickerOpen(false);
       setCreateNameError(false);
       setCreateAthlete(repository.actorUserId);
       setCreateOpen(true);
@@ -195,7 +217,7 @@ export function CloudProgramsPage({
     setError('');
     try {
       if (name.length > 120) throw new Error('Введите название программы');
-      if (createAthlete === repository.actorUserId) await repository.createPersonal(name);
+      if (viewerRole === 'client' || createAthlete === repository.actorUserId) await repository.createPersonal(name);
       else await repository.createAssigned(createAthlete, name);
       setCreateOpen(false);
     } catch (reason) {
@@ -270,35 +292,45 @@ export function CloudProgramsPage({
 
   return (
     <section className="cloud-plan-list" aria-label="Программы">
-      {!hideToolbar ? <ProgramToolbar controls={toolbarControls} /> : null}
+      {!hideToolbar ? <ProgramToolbar controls={toolbarControls} showSearch={viewerRole === 'coach'} /> : null}
       {loading || cloudStatus === 'loading' ? (
         <Text variant="footnote" tone="muted">Загружаем программы…</Text>
       ) : null}
-      {!loading && cloudStatus === 'ready' && syncStatus === 'synced' && groups.length === 0 ? (
-        <Text variant="footnote" tone="muted">Программ с выбранными параметрами нет</Text>
-      ) : null}
-      {groups.map((group) => (
-        <section key={group.athleteId} className="cloud-plan-group">
-          <div className="cloud-plan-person-row">
-            {group.contact ? <CloudContactAvatar contact={group.contact} /> : null}
-            <Text variant="headline" role="heading" aria-level={2}>{group.athleteName}</Text>
-          </div>
-          <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-group-surface">
-            <div className="cloud-plan-group-content"><List>
-              {group.plans.map((plan) => (
-                <ProgramRow key={plan.id} plan={plan} busy={busy} onOpen={onOpen} onAction={action} />
-              ))}
-            </List></div>
-          </GlassSurface>
-        </section>
-      ))}
+      <section className="cloud-plan-group" aria-label="Мои программы">
+        <Text variant="headline" role="heading" aria-level={2}>Мои программы</Text>
+        {personalVisible.length ? <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-group-surface">
+          <div className="cloud-plan-group-content"><List>{personalVisible.map((plan) => (
+            <ProgramRow key={plan.id} plan={plan} busy={busy} readOnly={false} onOpen={onOpen} onAction={action} />
+          ))}</List></div>
+        </GlassSurface> : !loading && !error && cloudStatus === 'ready' ? <Text variant="body">
+          {personal.length ? 'Программ с выбранными параметрами нет' : 'Мы не создали ни одной личной программы'}
+        </Text> : null}
+      </section>
+      {!personalOnly ? <section className="cloud-plan-group" aria-label={viewerRole === 'client' ? 'Тренерские программы' : 'Программы клиентов'}>
+        <Text variant="headline" role="heading" aria-level={2}>{viewerRole === 'client' ? 'Тренерские программы' : 'Программы клиентов'}</Text>
+        {groups.map((group) => (
+          <section key={group.realmId} className="cloud-plan-group" aria-label={group.personName}>
+            <div className="cloud-plan-person-row">
+              {group.contact ? <CloudContactAvatar contact={group.contact} /> : null}
+              <Text variant="headline" role="heading" aria-level={3}>{group.personName}</Text>
+            </div>
+            <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-group-surface">
+              <div className="cloud-plan-group-content"><List>{group.plans.map((plan) => (
+                <ProgramRow key={plan.id} plan={plan} busy={busy} readOnly={viewerRole === 'client'} onOpen={onOpen} onAction={action} />
+              ))}</List></div>
+            </GlassSurface>
+          </section>
+        ))}
+        {!groups.length && !loading && !error && cloudStatus === 'ready' && syncStatus === 'synced'
+          ? <Text variant="body">Программ с выбранными параметрами нет</Text> : null}
+      </section> : null}
       <PlanSyncNotice cloudStatus={cloudStatus} cloudError={cloudError}
         syncStatus={syncStatus} syncError={syncError}
         onRetryCloud={onRetryCloud} onRetrySync={onRetrySync}
         localError={error} onRetryLocal={() => setRetryKey((n) => n + 1)} />
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
       <MezfitDialog
-        opened={createOpen}
+        opened={createOpen && !pickerOpen}
         title="Создать программу"
         onBackdropClick={!busy ? () => setCreateOpen(false) : undefined}
         role="dialog" aria-modal="true" aria-label="Создать программу"
@@ -320,16 +352,17 @@ export function CloudProgramsPage({
             onClick={() => setCreateAthlete(repository.actorUserId)}
             after={<Radio component="div" checked={createAthlete === repository.actorUserId}
               onChange={() => setCreateAthlete(repository.actorUserId)} />} />
-          {!personalOnly ? clients.map((client) => (
-            <KonstaListItem key={client.userId} label link title={client.displayName}
-              media={<CloudContactAvatar contact={client} />}
-              onClick={() => setCreateAthlete(client.userId)}
-              after={<Radio component="div" checked={createAthlete === client.userId}
-                onChange={() => setCreateAthlete(client.userId)} />} />
-          )) : null}
+          {!personalOnly && viewerRole === 'coach' ? <KonstaListItem link title="Выбрать клиента"
+            subtitle={selectedClient?.displayName}
+            media={selectedClient ? <CloudContactAvatar contact={selectedClient} /> : undefined}
+            onClick={() => setPickerOpen(true)} /> : null}
         </KonstaList>
         {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
       </MezfitDialog>
+      {pickerOpen ? <ProgramClientPicker clients={clients} loading={cloudStatus === 'loading'}
+        onClose={() => setPickerOpen(false)} onSelect={(client) => {
+          setCreateAthlete(client.userId); setPickerOpen(false);
+        }} /> : null}
     </section>
   );
 }

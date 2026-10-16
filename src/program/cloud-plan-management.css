@@ -107,6 +107,7 @@
 .cloud-plan-toolbar { display: flex; flex-direction: column; gap: var(--ui-space-2); min-width: 0; width: 100%; }
 .cloud-plan-toolbar-tabs { min-width: 0; width: 100%; }
 .cloud-plan-toolbar-search-action { display: flex; justify-content: flex-end; }
+.cloud-plan-client-picker { display: flex; flex-direction: column; gap: var(--ui-space-3); padding: var(--ui-space-4, 16px); }
 .cloud-plan-search-reveal { min-width: 0; animation: cloud-plan-search-in 180ms ease-out; }
 .cloud-plan-search-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes cloud-plan-search-in { from { transform: translateX(16px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }

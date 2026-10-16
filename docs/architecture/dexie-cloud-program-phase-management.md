@@ -9,8 +9,9 @@ snapshots, scheduling and FACT remain on their existing owners.
 Phase lifecycle: `draft`, `pending`, `active`, `finished`, `cancelled`.
 `draft` means authoring and is never projected to the client;
 `pending` means the coach has published the phase, even when no days exist.
-Programs are `draft`, `active`, `finished` or `cancelled`; clients display
-only their one active program and non-draft phases of that program.
+Programs are `draft`, `active`, `finished` or `cancelled`; the client directory
+displays personal programs and all non-draft assigned programs from connected
+coaches. Assigned details project only non-draft phases.
 Finishing a phase keeps its parent program active so completed phases remain
 visible in that projection. Finishing the entire program is a separate action.
 
@@ -69,7 +70,7 @@ explicit server ACL permissions, not silently simulated in this PR.
 - `MezfitDialog` / `MezfitDialogButton`: prompts, list selectors, confirms.
 - Icon names are sourced from the existing Tabler SVG registry.
 
-FAB: `+ Фаза` creates immediately; `+ День` is disabled until the next PR;
+FAB: `+ Фаза` opens a phase naming dialog; `+ День` is disabled until the next PR;
 `+ Упражнение` is removed from the FAB.
 
 ## Permission and activation gate
@@ -126,15 +127,26 @@ those obsolete paths only after the cloud editor is live and verified.
 
 ## Client personal programs and multi-coach behavior
 
-The Client Programs screen has two surfaces:
+The Client Programs screen always displays two consecutive sections without
+source tabs:
 
-- **От тренера** — read-only, displays the active program assigned by the
-  **currently selected coach** and its non-draft phases. It does not show
-  programs from other coaches or the client's personal programs.
-- **Мои программы** — edits programs the athlete created inside their
-  personal realm using the same program/phase editor as Coach Mode. These
-  are completely independent of assigned coach-controlled PLAN records.
-  Client writes must not grant any additional shared-realm PLAN rights.
+- **Мои программы** — programs created in the athlete's private realm, editable
+  through the shared program/phase editor. An empty section displays
+  “Мы не создали ни одной личной программы” directly on the page background.
+- **Тренерские программы** — read-only lists grouped by coach, including active,
+  finished and cancelled assigned programs from every readable relationship.
+  Draft programs and draft phases are excluded by the repository projection.
+
+Selecting a row opens separate program details; Back returns to the directory.
+Status filters apply to both sections. Coach Mode follows the same structure,
+with personal programs first and **Программы клиентов** grouped by client.
+Client writes do not grant any additional shared-realm PLAN rights.
+
+Program creation uses a dedicated `MezfitBottomSheet` client picker. It reuses
+the Clients screen's alphabetical contact list and avatars, with a
+`MezfitSearchbar` using `modalTuned`, optics disabled and provider-managed blur.
+The creation form owns its draft while the picker is open. Navigation Back
+returns from picker to form before closing the form.
 
 The one-active-program invariant is scoped to the **one shared realm for the
 coach-client relationship**; one athlete may have one active program with Coach A
@@ -156,9 +168,10 @@ retries queued writes. Failed contact hydration is retried separately even when
 pushing fails, so a contact error cannot suppress a PLAN retry or remain stuck
 behind a successful push. Observer errors can re-subscribe without reloading the app.
 
-The selected coach and selected program key their respective working surfaces.
-Changing selection destroys the previous subscription and dialog state; a late
-callback cannot show a previous coach's plan after the new selection.
+The client account and selected program key their respective working surfaces.
+Changing accounts destroys the previous subscription and dialog state; a late
+callback cannot show the previous account's programs. Directory visibility does
+not depend on the globally selected coach.
 
 Header copy/delete guards inspect all same-realm child days regardless of `owner`.
 They deliberately do not reuse the owner-filtered UI projection. Malformed phase
@@ -168,7 +181,7 @@ creation if the parent was deleted between authorization and the write.
 
 Regression coverage includes an accepted Worker-generated coach/client relationship,
 all client attempts to mutate its assigned PLAN, unrelated-user reads, parent deletion
-before child writes, Addon-owned days, both Client tabs, selection changes with late
+before child writes, Addon-owned days, both Client sections, account changes with late
 observer callbacks, offline/error/pending/recovery, and duplicate retry taps. Mocked
 repository tests do not replace live cloud authorization and multi-device validation;
 those remain required before enabling the feature flag as specified above.

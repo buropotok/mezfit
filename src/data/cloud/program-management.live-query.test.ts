@@ -18,10 +18,16 @@ async function fixture() {
   db.version(1).stores({
     trainingPlans: 'id, realmId',
     programPhases: 'id, realmId, trainingPlanId',
+    programDays: 'id, realmId, programPhaseId',
+    programExercises: 'id',
+    programSets: 'id',
+    workoutOccurrences: 'id',
+    workoutSessions: 'id, trainingPlanId',
     realms: 'realmId',
     members: 'id, realmId',
   });
   db.table('programPhases').hook('creating', () => crypto.randomUUID());
+  db.table('trainingPlans').hook('creating', (key) => key === undefined ? crypto.randomUUID() : undefined);
   const pair = await relationshipMembership('101', '202');
   const plan: CloudTrainingPlanRow = {
     id: 'plan', realmId: pair.realm.realmId, owner: 'tg:101',
@@ -41,6 +47,23 @@ async function fixture() {
 }
 
 describe('assigned phase observation across WebCrypto authorization', () => {
+  it('updates the client directory after personal create, duplicate and delete', async () => {
+    const { client } = await fixture();
+    const next = vi.fn();
+    const error = vi.fn();
+    const subscription = client.observeForAthlete(next, error);
+    try {
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toHaveLength(1));
+      const personal = await client.createPersonal('Личная');
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toHaveLength(2));
+      const copy = await client.duplicateProgram(personal);
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toHaveLength(3));
+      await client.deleteProgram(copy);
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toHaveLength(2));
+      expect(next.mock.lastCall?.[0].some((plan: CloudTrainingPlanRow) => plan.id === personal)).toBe(true);
+      expect(error).not.toHaveBeenCalled();
+    } finally { subscription.unsubscribe(); }
+  });
   it('emits a newly created and renamed phase without reopening the program', async () => {
     const { db, coach } = await fixture();
     const next = vi.fn();
