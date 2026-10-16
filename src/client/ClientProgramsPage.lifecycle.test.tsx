@@ -105,7 +105,8 @@ describe('client program directory', () => {
     view.rerender(<ClientProgramsPage />);
     act(() => { previousEmit([plan('202')]); fail(new Error('Не удалось загрузить программы')); });
     expect(screen.queryByText('Программа 202')).toBeNull();
-    expect(screen.getByText('Не удалось загрузить программы')).toBeTruthy();
+    expect(screen.getAllByText('Не удалось загрузить программы')
+      .some((node) => !node.closest('[role="dialog"]'))).toBe(true);
     expect(unsubscribe).toHaveBeenCalled();
   });
 });
