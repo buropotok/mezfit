@@ -11,16 +11,6 @@
   min-width: 0;
   padding-bottom: 5rem;
 }
-.cloud-client-program .cloud-client-program-summary {
-  min-width: 0;
-}
-.cloud-client-program-summary-content {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-3);
-}
 .cloud-client-program-phase {
   display: flex;
   flex-wrap: wrap;

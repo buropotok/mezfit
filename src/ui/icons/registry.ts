@@ -11,6 +11,7 @@ import chevronLeftUrl from './chevron-left.svg';
 import clipboardListFilledUrl from './liquid-glass-clipboard-list-filled.svg';
 import clipboardListOutlineUrl from './liquid-glass-clipboard-list-outline.svg';
 import clockUrl from './clock.svg';
+import searchUrl from './search.svg';
 import copyUrl from './copy.svg';
 import trashUrl from './trash.svg';
 import alertCircleUrl from './alert-circle.svg';
@@ -42,6 +43,7 @@ const uiIconRegistry = {
   'chart-dots-2': { outline: chartDotsOutlineUrl, filled: chartDotsFilledUrl },
   'chevron-left': { outline: chevronLeftUrl, filled: chevronLeftUrl },
   'clipboard-list': { outline: clipboardListOutlineUrl, filled: clipboardListFilledUrl },
+  search: { outline: searchUrl, filled: searchUrl },
   clock: { outline: clockUrl, filled: clockUrl },
   copy: { outline: copyUrl, filled: copyUrl },
   trash: { outline: trashUrl, filled: trashUrl },

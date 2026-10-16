@@ -13,6 +13,7 @@ import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext
 import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
 import { CloudConnectionsProvider } from './data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from './data/cloud/pilot-activation';
+import type { ProgramActor } from './program/ProgramSummary';
 import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
 import { PersonalExercises } from './exercises/PersonalExercises';
@@ -95,12 +96,14 @@ const clientPlaceholderCopy: Partial<Record<AppDestination, { title: string; tex
 function ClientShell({
   initData,
   currentUserId,
+  actor,
   startParam,
   destination,
   onNavigationContextChange,
 }: {
   initData: string;
   currentUserId: number;
+  actor?: ProgramActor;
   startParam: string | null;
   destination: AppDestination;
   onNavigationContextChange: (context: NavigationContext | null) => void;
@@ -162,7 +165,7 @@ function ClientShell({
   }
 
   if (destination === 'programs') return (
-    <ClientProgramsPage onNavigationContextChange={onNavigationContextChange} />
+    <ClientProgramsPage actor={actor} onNavigationContextChange={onNavigationContextChange} />
   );
   if (destination === 'exercises') return <PersonalExercises role="client"
     selectedCoachUserId={selectedCoach?.userId ?? null}
@@ -410,6 +413,7 @@ export function App() {
           />
         ) : state.activeRole === 'coach' ? (
           <CoachShell
+            actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
             initData={state.initData}
             destination={coachDestination}
             onNavigationContextChange={handleNavigationContextChange}
@@ -418,6 +422,7 @@ export function App() {
           <ClientShell
             initData={state.initData}
             currentUserId={state.me.user.id}
+            actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
             startParam={state.startParam}
             destination={clientDestination}
             onNavigationContextChange={handleNavigationContextChange}

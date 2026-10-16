@@ -272,12 +272,14 @@ export class ProgramManagementRepository {
         throw new Error('Фаза не найдена');
       const wasActive = phase.status === 'active';
       await this.db.programPhases.update(phaseId, { status });
-      if (wasActive && current.status === 'active') {
+      if (wasActive && current.status === 'active' && status !== 'finished') {
+        // Finishing one phase keeps the assigned program (and its history) visible.
+        // Finishing the entire program is an explicit, separate operation.
         // pending has no program equivalent: the parent becomes a draft.
         const nextProgramStatus: CloudProgramStatus = status === 'pending' ? 'draft' : status;
         await this.db.trainingPlans.update(id, {
           status: nextProgramStatus, updatedAt: new Date().toISOString(),
-          finishedAt: status === 'finished' ? new Date().toISOString() : null,
+          finishedAt: null,
         });
       }
     });
@@ -297,7 +299,7 @@ export class ProgramManagementRepository {
     });
   }
   async activate(id: string, phaseId: string, options: {
-    previousPhaseStatus?: 'draft' | 'finished' | 'cancelled';
+    previousPhaseStatus?: Exclude<PhaseStatus, 'active'>;
     previousProgramStatus?: InactiveStatus;
   } = {}): Promise<void> {
     const plan = await this.writable(id);

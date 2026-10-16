@@ -6,10 +6,12 @@ import { athleteOf, isOtherActiveProgramInScope, type ProgramManagementRepositor
 import { useNavigationFloatingAction } from '../NavigationShell';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import {
-  Avatar, Badge, GlassSurface, IconButton, LiquidPopover, List, ListItem,
-  MezfitDialog, MezfitDialogButton, SearchInput, Tabs, TabsList, TabsTrigger, Text,
+  Badge, GlassSurface, IconButton, LiquidPopover, List, ListItem,
+  MezfitDialog, MezfitDialogButton, Text,
   type BadgeColor, type LiquidPopoverItem,
 } from '../ui';
+import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
+import { ProgramToolbar, type ProgramControls } from './ProgramToolbar';
 import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogOption, type PlanDialogState } from './PlanActionDialog';
 import './cloud-plan-management.css';
@@ -82,7 +84,7 @@ function ProgramRow({
 
 export function CloudProgramsPage({
   repository, clients, onOpen, cloudStatus, cloudError, syncStatus, syncError,
-  onRetryCloud, onRetrySync, personalOnly = false,
+  onRetryCloud, onRetrySync, personalOnly = false, controls, hideToolbar = false,
 }: {
   repository: ProgramManagementRepository;
   clients: readonly CloudContact[];
@@ -94,12 +96,19 @@ export function CloudProgramsPage({
   onRetryCloud: () => Promise<void>;
   onRetrySync: () => Promise<void>;
   personalOnly?: boolean;
+  controls?: ProgramControls;
+  hideToolbar?: boolean;
 }) {
   const [programs, setPrograms] = useState<CloudTrainingPlanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
-  const [search, setSearch] = useState('');
+  const [localFilter, setLocalFilter] = useState<Filter>('all');
+  const [localSearch, setLocalSearch] = useState('');
+  const filter = controls?.filter ?? localFilter;
+  const search = controls?.search ?? localSearch;
+  const toolbarControls: ProgramControls = controls ?? {
+    filter: localFilter, onFilterChange: setLocalFilter, search: localSearch, onSearchChange: setLocalSearch,
+  };
   const [busy, setBusy] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [dialog, setDialog] = useState<PlanDialogState | null>(null);
@@ -140,15 +149,18 @@ export function CloudProgramsPage({
       group.push(plan);
       byAthlete.set(athlete, group);
     }
-    return [...byAthlete].map(([athleteId, plans]) => ({
-      athleteId,
-      athleteName: athleteId === repository.actorUserId
-        ? 'Мои программы'
-        : clients.find((client) => client.userId === athleteId)?.displayName ?? 'Атлет',
-      plans,
-    })).filter((group) => group.athleteName.toLocaleLowerCase('ru-RU')
-      .includes(search.trim().toLocaleLowerCase('ru-RU')) || group.plans.some((plan) =>
-        plan.name.toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU'))));
+    const query = search.trim().toLocaleLowerCase('ru-RU');
+    return [...byAthlete].map(([athleteId, plans]) => {
+      const contact = clients.find((client) => client.userId === athleteId);
+      const athleteName = athleteId === repository.actorUserId ? 'Мои программы' : contact?.displayName ?? 'Атлет';
+      const nameMatches = athleteName.toLocaleLowerCase('ru-RU').includes(query);
+      return {
+        athleteId, athleteName, contact,
+        plans: nameMatches ? plans : plans.filter((plan) => plan.name.toLocaleLowerCase('ru-RU').includes(query)),
+      };
+    }).filter((group) => group.plans.length > 0)
+      .sort((left, right) => Number(right.athleteId === repository.actorUserId)
+        - Number(left.athleteId === repository.actorUserId));
   }, [programs, filter, search, clients, repository.actorUserId, personalOnly]);
 
   const floatingAction = useMemo(() => ({
@@ -195,28 +207,33 @@ export function CloudProgramsPage({
       setError('Добавьте хотя бы одну фазу перед активацией программы');
       return;
     }
-    setDialog({
-      kind: 'select', title: 'Выберите фазу для активации',
-      options: details.phases.map((phase) => ({ value: phase.id, label: phase.name })),
-      onConfirm: async (phaseId) => {
-        const active = programs.find((item) => isOtherActiveProgramInScope(item, plan));
-        if (active) {
-          setDialog({
-            kind: 'select', title: 'Выберите статус для текущей активной программы',
-            options: INACTIVE,
-            onConfirm: async (value) => {
-              await repository.activate(plan.id, phaseId, {
-                previousProgramStatus: value as 'draft' | 'finished' | 'cancelled',
-              });
-              setDialog(null);
-            },
-          });
-        } else {
-          await repository.activate(plan.id, phaseId);
-          setDialog(null);
-        }
-      },
-    });
+    const activatePhase = async (phaseId: string) => {
+      const active = programs.find((item) => isOtherActiveProgramInScope(item, plan));
+      if (active) {
+        setDialog({
+          kind: 'select', title: 'Выберите статус для текущей активной программы',
+          options: INACTIVE,
+          onConfirm: async (value) => {
+            await repository.activate(plan.id, phaseId, {
+              previousProgramStatus: value as 'draft' | 'finished' | 'cancelled',
+            });
+            setDialog(null);
+          },
+        });
+      } else {
+        await repository.activate(plan.id, phaseId);
+        setDialog(null);
+      }
+    };
+    if (details.phases.length === 1) {
+      await activatePhase(details.phases[0].id);
+    } else {
+      setDialog({
+        kind: 'select', title: 'Выберите фазу для активации',
+        options: details.phases.map((phase) => ({ value: phase.id, label: phase.name })),
+        onConfirm: activatePhase,
+      });
+    }
   };
   const action = (key: string, plan: CloudTrainingPlanRow) => {
     if (busy) return;
@@ -247,17 +264,7 @@ export function CloudProgramsPage({
 
   return (
     <section className="cloud-plan-list" aria-label="Программы">
-      <SearchInput value={search} onChange={(event) => setSearch(event.target.value)}
-        placeholder="Поиск программы или атлета" />
-      <Tabs value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-        <TabsList aria-label="Статус программы">
-          <TabsTrigger value="all">Все</TabsTrigger>
-          <TabsTrigger value="active">Активные</TabsTrigger>
-          <TabsTrigger value="finished">Завершённые</TabsTrigger>
-          <TabsTrigger value="draft">Черновики</TabsTrigger>
-          <TabsTrigger value="cancelled">Отменённые</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {!hideToolbar ? <ProgramToolbar controls={toolbarControls} /> : null}
       {loading || cloudStatus === 'loading' ? (
         <Text variant="footnote" tone="muted">Загружаем программы…</Text>
       ) : null}
@@ -266,13 +273,16 @@ export function CloudProgramsPage({
       ) : null}
       {groups.map((group) => (
         <section key={group.athleteId} className="cloud-plan-group">
-          <Text variant="headline">{group.athleteName}</Text>
+          <div className="cloud-plan-person-row">
+            {group.contact ? <CloudContactAvatar contact={group.contact} /> : null}
+            <Text variant="headline" role="heading" aria-level={2}>{group.athleteName}</Text>
+          </div>
           <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-group-surface">
-            <List>
+            <div className="cloud-plan-group-content"><List>
               {group.plans.map((plan) => (
                 <ProgramRow key={plan.id} plan={plan} busy={busy} onOpen={onOpen} onAction={action} />
               ))}
-            </List>
+            </List></div>
           </GlassSurface>
         </section>
       ))}
@@ -294,8 +304,9 @@ export function CloudProgramsPage({
           </>
         )}
       >
+        {!createName.trim() ? <Text variant="footnote">Введите название программы, чтобы сохранить её.</Text> : null}
         <KonstaList nested>
-          <ListInput floatingLabel inputId="cloud-plan-name" label="Название"
+          <ListInput floatingLabel inputId="cloud-plan-name" label="Название — обязательно" required
             value={createName} maxLength={120} disabled={busy}
             onChange={(event) => setCreateName(event.target.value)} />
           <KonstaListItem label link title="Моя программа"
@@ -304,7 +315,7 @@ export function CloudProgramsPage({
               onChange={() => setCreateAthlete(repository.actorUserId)} />} />
           {!personalOnly ? clients.map((client) => (
             <KonstaListItem key={client.userId} label link title={client.displayName}
-              media={<Avatar name={client.displayName} />}
+              media={<CloudContactAvatar contact={client} />}
               onClick={() => setCreateAthlete(client.userId)}
               after={<Radio component="div" checked={createAthlete === client.userId}
                 onChange={() => setCreateAthlete(client.userId)} />} />

@@ -105,6 +105,42 @@ function fixture() {
 }
 
 describe('local-first program/phase management', () => {
+  it('creates assigned phases locally without calling a cloud sync transport', async () => {
+    const f = fixture();
+    const pair = await relationshipMembership('101', '202');
+    f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
+    f.memberRows.push(...pair.members);
+    // There is no cloud transport in this database fixture.
+    const assigned = await f.repo.createAssigned('tg:202', 'Без сети');
+    const phaseId = await f.repo.createPhase(assigned);
+    expect(f.phases.find((phase) => phase.id === phaseId)).toMatchObject({
+      trainingPlanId: assigned, realmId: pair.realm.realmId, status: 'draft',
+    });
+  });
+
+  it('keeps a completed phase visible in the active assigned program', async () => {
+    const f = fixture();
+    const pair = await relationshipMembership('101', '202');
+    f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
+    f.memberRows.push(...pair.members);
+    const assigned = await f.repo.createAssigned('tg:202', 'Назначенная');
+    const phase = await f.repo.createPhase(assigned);
+    await f.repo.activate(assigned, phase);
+    await f.repo.setPhaseStatus(assigned, phase, 'finished');
+    const client = new ProgramManagementRepository(f.db, 'tg:202');
+    expect((await client.details(assigned))?.program.status).toBe('active');
+    expect((await client.details(assigned))?.phases[0].status).toBe('finished');
+  });
+
+  it('can return the previous active phase to pending when activating another', async () => {
+    const f = fixture();
+    const first = await f.repo.createPhase('tra-1');
+    const second = await f.repo.createPhase('tra-1');
+    await f.repo.activate('tra-1', first);
+    await f.repo.activate('tra-1', second, { previousPhaseStatus: 'pending' });
+    expect(f.phases.find((phase) => phase.id === first)?.status).toBe('pending');
+    expect(f.phases.find((phase) => phase.id === second)?.status).toBe('active');
+  });
   it('rejects unsupported cloud statuses before they enter the domain', async () => {
     const f = fixture();
     expect(isCloudPlanRow({ ...f.plans[0], status: 'archived' })).toBe(false);

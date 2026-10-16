@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
-import { athleteOf, isOtherActiveProgramInScope, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
+import { isOtherActiveProgramInScope, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
 import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
-import { Badge, Button, GlassSurface, IconButton, LiquidPopover, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
+import { Badge, Button, IconButton, LiquidPopover, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
+import { ProgramSummary, type ProgramActor } from './ProgramSummary';
+import { programMutationMessage, weekLabel } from './programPresentation';
 import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogState, type PlanDialogOption } from './PlanActionDialog';
 import './cloud-plan-management.css';
@@ -62,7 +64,7 @@ function PhaseHeading({
       <div className="cloud-plan-phase-heading">
         <div className="cloud-plan-phase-title"><Text variant="title">{phase.name}</Text></div>
         <Badge color={label.color}>{label.label}</Badge>
-        <Text variant="footnote" className="cloud-plan-phase-weeks">{weeks} недель</Text>
+        <Text variant="footnote" className="cloud-plan-phase-weeks">{weeks} {weekLabel(weeks)}</Text>
         <LiquidPopover
           isOpen={open}
           onOpenChange={setOpen}
@@ -86,10 +88,12 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync,
+  repository, planId, viewerRole = 'coach', actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync,
 }: {
   repository: ProgramManagementRepository;
   planId: string;
+  viewerRole?: 'coach' | 'client';
+  actor?: ProgramActor;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
   syncStatus: CloudSyncStatus;
@@ -97,6 +101,7 @@ export function CloudProgramDetailsPage({
   onRetryCloud: () => Promise<void>;
   onRetrySync: () => Promise<void>;
 }) {
+  const coachGuidance = viewerRole === 'coach';
   const [details, setDetails] = useState<ProgramDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -128,7 +133,7 @@ export function CloudProgramDetailsPage({
     setError('');
     try { await task(); }
     catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Изменение не сохранено');
+      setError(programMutationMessage(reason));
     } finally { setBusy(false); }
   }, [busy]);
 
@@ -144,7 +149,7 @@ export function CloudProgramDetailsPage({
   } : null, [details, addPhase, busy]);
   useNavigationSurfaceFloatingAction(floatingAction);
 
-  const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'finished' | 'cancelled') => {
+  const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled') => {
     if (!details) return;
     const other = (await repository.listReadable()).find((plan) =>
       isOtherActiveProgramInScope(plan, details.program));
@@ -165,7 +170,7 @@ export function CloudProgramDetailsPage({
       setDialog(null);
     }
   };
-  const confirmActivation = async (phaseId: string, previousPhaseStatus?: 'draft' | 'finished' | 'cancelled') => {
+  const confirmActivation = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled') => {
     if (details?.program.status !== 'active') {
       setDialog({
         kind: 'confirm', title: 'Программа будет активирована.',
@@ -180,9 +185,9 @@ export function CloudProgramDetailsPage({
     if (previous) {
       setDialog({
         kind: 'select', title: 'Выберите статус для текущей активной фазы',
-        options: INACTIVE,
+        options: [...INACTIVE, { value: 'pending', label: 'В ожидании' }],
         onConfirm: async (value) =>
-          confirmActivation(phase.id, value as 'draft' | 'finished' | 'cancelled'),
+          confirmActivation(phase.id, value as 'draft' | 'pending' | 'finished' | 'cancelled'),
       });
     } else await confirmActivation(phase.id);
   };
@@ -226,7 +231,8 @@ export function CloudProgramDetailsPage({
         onConfirm: async (value) => {
           if (value === 'active') {
             await requestActivation(phase);
-          } else if (value === 'draft' && phase.status !== 'draft'
+          } else if (coachGuidance && details.program.clientUserId !== null
+            && value === 'draft' && phase.status !== 'draft'
             && details.program.status === 'active') {
             setDialog({
               kind: 'confirm', title: 'Скрыть фазу от клиента?',
@@ -249,7 +255,7 @@ export function CloudProgramDetailsPage({
   const syncNotice = <PlanSyncNotice cloudStatus={cloudStatus} cloudError={cloudError}
     syncStatus={syncStatus} syncError={syncError}
     onRetryCloud={onRetryCloud} onRetrySync={onRetrySync}
-    localError={!details ? error : ''} onRetryLocal={() => setRetryKey((n) => n + 1)} />;
+    localError={error} onRetryLocal={() => setRetryKey((n) => n + 1)} />;
 
   if (loading) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
   if (!details) return (
@@ -270,24 +276,23 @@ export function CloudProgramDetailsPage({
               details.program.status === 'finished' ? 'Завершена' : 'Отменена'}
         </Badge>
       </div>
-      <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-summary">
-        <div className="cloud-plan-summary-content">
-          <Text variant="headline">Программа тренировок</Text>
-          <Text variant="footnote" tone="muted">Атлет: {athleteOf(details.program) ?? 'Не указан'}</Text>
-          <Text variant="body">Фаз: {details.phases.length}</Text>
-        </div>
-      </GlassSurface>
-      <Text variant="footnote" tone="muted" className="cloud-plan-visibility-tip">
-        Клиент видит только активную программу и её фазы, кроме черновиков.
-        Чтобы подготовленная фаза появилась у клиента, завершите её заполнение.
-      </Text>
+      <ProgramSummary program={details.program} phaseCount={details.phases.length}
+        actorUserId={repository.actorUserId} actor={actor} />
+      {coachGuidance && details.program.clientUserId !== null ? (
+        <Text variant="footnote" tone="muted" className="cloud-plan-visibility-tip">
+          Клиент видит только активную программу и её фазы, кроме черновиков.
+          Чтобы подготовленная фаза появилась у клиента, завершите её заполнение.
+        </Text>
+      ) : null}
       <Text variant="title">Фазы</Text>
       {details.phases.length ? details.phases.map((phase) => (
         <PhaseHeading key={phase.id} phase={phase} disabled={busy}
           onAction={action}
           onPublish={(item) => setDialog({
             kind: 'confirm', title: 'Завершить заполнение фазы?',
-            description: 'Фаза перейдёт в статус «В ожидании». Клиент увидит её в активной программе. Редактирование останется доступным.',
+            description: coachGuidance && details.program.clientUserId !== null
+              ? 'Фаза перейдёт в статус «В ожидании». Клиент увидит её в активной программе. Редактирование останется доступным.'
+              : 'Фаза перейдёт в статус «В ожидании». Редактирование останется доступным.',
             onConfirm: async () => {
               await repository.publishPhase(planId, item.id);
               setDialog(null);
@@ -295,7 +300,6 @@ export function CloudProgramDetailsPage({
           })}
         />
       )) : <Text variant="footnote" tone="muted">Добавьте первую фазу через кнопку «Добавить».</Text>}
-      {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
     </section>
   );
