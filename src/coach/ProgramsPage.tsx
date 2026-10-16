@@ -174,6 +174,7 @@ export function ProgramsPage({
   const [clientGroups, setClientGroups] = useState<ProgramOwnerGroup[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
+  const [creationNameError, setCreationNameError] = useState(false);
   const [message, setMessage] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
   const [duplicateProgramId, setDuplicateProgramId] = useState<number | null>(null);
@@ -290,11 +291,10 @@ export function ProgramsPage({
     }
   };
 
-  const canSave = Boolean(creationDraft?.name.trim() && creationDraft.owner && !creationBusy);
   const selectedClient = creationDraft?.owner?.type === 'client' ? creationDraft.owner.client : null;
   const floatingAction = useMemo(() => onOpenCreation ? {
     label: 'Создать программу',
-    onClick: onOpenCreation,
+    onClick: () => { setCreationNameError(false); onOpenCreation(); },
     icon: 'text-plus' as const,
   } : null, [onOpenCreation]);
   useNavigationFloatingAction('programs', floatingAction);
@@ -408,10 +408,13 @@ export function ProgramsPage({
         isOpen={creationDraft !== null}
         title={<span className="program-create-title"><img src={programIconUrl} alt="" aria-hidden="true" />Создать программу</span>}
         hasCloseButton={false}
-        onClose={() => onCancelCreation?.()}
+        onClose={() => { setCreationNameError(false); onCancelCreation?.(); }}
         actions={[
-          { id: 'cancel', label: 'Отмена', onClick: () => onCancelCreation?.(), disabled: creationBusy },
-          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', tone: 'primary', onClick: () => onSaveCreation?.(), disabled: !canSave },
+          { id: 'cancel', label: 'Отмена', onClick: () => { setCreationNameError(false); onCancelCreation?.(); }, disabled: creationBusy },
+          { id: 'save', label: creationBusy ? 'Сохранение…' : 'Сохранить', tone: 'primary', onClick: () => {
+            if (!creationDraft?.name.trim()) { setCreationNameError(true); return; }
+            onSaveCreation?.();
+          }, disabled: creationBusy },
         ]}
       >
         {creationDraft ? (
@@ -423,7 +426,8 @@ export function ProgramsPage({
                 label={<label htmlFor="program-create-name">Название</label>}
                 value={creationDraft.name}
                 maxLength={120}
-                onChange={(event) => onDraftChange?.({ ...creationDraft, name: event.target.value })}
+                error={creationNameError ? 'Обязательно к заполнению' : undefined}
+                onChange={(event) => { setCreationNameError(false); onDraftChange?.({ ...creationDraft, name: event.target.value }); }}
               />
             </KonstaList>
             <List>
