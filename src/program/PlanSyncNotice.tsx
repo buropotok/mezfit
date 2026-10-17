@@ -43,13 +43,15 @@ export function PlanSyncNotice({
     onRetryLocal?.();
     if (failure) throw failure;
   };
+  const notification = <Notification opened={Boolean(message && message !== dismissed)}
+    title="Синхронизация с облаком" text={message} button onClose={close} onClick={close} />;
   return <>
     {localError ? <div className="cloud-plan-error">
       <Text variant="footnote" role="alert">{localError}</Text>
       {onRetryLocal ? <Button onClick={onRetryLocal}>Повторить</Button> : null}
     </div> : null}
-    {createPortal(<Notification opened={Boolean(message && message !== dismissed)}
-      title="Синхронизация с облаком" text={message} button onClose={close} onClick={close} />, document.getElementById('root') ?? document.body)}
+    {typeof document === 'undefined' ? notification
+      : createPortal(notification, document.getElementById('root') ?? document.body)}
     <ProgramSyncDialog opened={opened} onClose={() => setOpened(false)} onSync={retry} onNavigationContextChange={onNavigationContextChange} />
   </>;
 }

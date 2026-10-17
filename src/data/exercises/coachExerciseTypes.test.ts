@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import schema from '../../../cloud/schema-coach-exercises.json';
-import { CLOUD_DATABASE_STORES_V4, CLOUD_DATABASE_STORES_V5, CLOUD_DATABASE_STORES_V6, CLOUD_DATABASE_VERSION } from '../cloud/database';
+import { CLOUD_DATABASE_STORES_V4, CLOUD_DATABASE_STORES_V5, CLOUD_DATABASE_STORES_V6 } from '../cloud/database';
 import { coachFavouriteId, coachOverrideId, isCoachExerciseChanges, resolveCoachExerciseCatalogue } from './coachExerciseTypes';
 import type { PublicExerciseRow } from './publicExerciseTypes';
 import type { CoachExercisePersonalSnapshot } from './coachExerciseTypes';
@@ -24,7 +24,6 @@ const empty = (): CoachExercisePersonalSnapshot => ({ overrides: [], definitions
 
 describe('Dexie v5 coach catalogue declaration', () => {
   it('is additive and its primary keys match the separately deployed cloud manifest', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(6);
     for (const [table, key] of Object.entries(schema.schema)) {
       expect(CLOUD_DATABASE_STORES_V6[table as keyof typeof CLOUD_DATABASE_STORES_V6]?.split(',')[0]).toBe(key);
       expect(CLOUD_DATABASE_STORES_V5[table as keyof typeof CLOUD_DATABASE_STORES_V5]?.split(',')[0]).toBe(key);

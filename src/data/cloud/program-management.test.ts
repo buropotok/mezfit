@@ -146,6 +146,7 @@ describe('local-first program/phase management', () => {
     expect(f.plans.find((plan) => plan.id === assigned)?.owner).toBeNull();
     expect(f.phases.find((phase) => phase.id === phaseId)).toMatchObject({
       trainingPlanId: assigned, realmId: pair.realm.realmId, owner: null, status: 'draft',
+      name: 'Фаза 2', position: 1,
     });
   });
 
@@ -155,7 +156,10 @@ describe('local-first program/phase management', () => {
     f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
     f.memberRows.push(...pair.members);
     const assigned = await f.repo.createAssigned('tg:202', 'Назначенная');
-    const phase = await f.repo.createPhase(assigned);
+    const initial = await f.repo.details(assigned);
+    expect(initial?.phases).toHaveLength(1);
+    const phase = initial?.phases[0].id;
+    if (!phase) throw new Error('Expected automatically created first phase');
     await f.repo.activate(assigned, phase);
     await f.repo.setPhaseStatus(assigned, phase, 'finished');
     const client = new ProgramManagementRepository(f.db, 'tg:202');
@@ -347,7 +351,10 @@ describe('local-first program/phase management', () => {
     f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
     f.memberRows.push(...pair.members);
     const assigned = await f.repo.createAssigned('tg:202', 'Назначенная программа');
-    const phase = await f.repo.createPhase(assigned);
+    const initial = await f.repo.details(assigned);
+    expect(initial?.phases).toHaveLength(1);
+    const phase = initial?.phases[0].id;
+    if (!phase) throw new Error('Expected automatically created first phase');
     await f.repo.publishPhase(assigned, phase);
     const client = new ProgramManagementRepository(f.db, 'tg:202');
     expect((await client.details(assigned))?.phases[0].id).toBe(phase);

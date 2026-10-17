@@ -45,10 +45,10 @@ beforeEach(() => {
 });
 
 describe('client program directory initial states', () => {
-  it('shows cloud failure and retry without a coach selection gate', () => {
+  it('shows cloud failure in a notification without a coach selection gate', () => {
     const markup = renderToStaticMarkup(<ClientProgramsPage />);
     expect(markup).toContain('Нет соединения с облаком');
-    expect(markup).toContain('Повторить');
+    expect(markup).toContain('Синхронизация с облаком');
     expect(markup).not.toContain('Нет выбранного тренера');
   });
 
