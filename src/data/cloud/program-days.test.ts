@@ -184,4 +184,45 @@ describe('local-first program days', () => {
       expect(error).not.toHaveBeenCalled();
     } finally { subscription.unsubscribe(); }
   });
+
+  it('requires the exact Coach PLAN ACL, rejecting extra managed tables', async () => {
+    const { db, repo, phaseId } = await fixture(true);
+    await db.table('roles').put({
+      realmId: 'rlm-public', name: 'coach', ...roles.roles.coach,
+      permissions: {
+        ...roles.roles.coach.permissions,
+        manage: [...roles.roles.coach.permissions.manage, 'workoutSessions'],
+      },
+    });
+    await expect(repo.createDay('plan', phaseId, 'Недопустимый ACL'))
+      .rejects.toThrow('обновить права');
+    expect(await db.table('programDays').count()).toBe(0);
+  });
+
+  it('keeps new shared PLAN descendants ownerless through copies', async () => {
+    const { db, repo, phaseId, plan } = await fixture(true);
+    expect((await db.table('programPhases').get(phaseId)).owner).toBeNull();
+    const dayId = await repo.createDay('plan', phaseId, 'Силовая');
+    const original = await db.table('programDays').get(dayId);
+    expect(original.owner).toBeNull();
+    await seedExercise(db, original);
+    const copyId = await repo.duplicateDay('plan', dayId);
+    const copied = (await repo.details('plan'))?.days?.find((item) => item.day.id === copyId);
+    expect(copied?.day.owner).toBeNull();
+    expect(copied?.exercises[0]?.exercise.owner).toBeNull();
+    expect(copied?.exercises[0]?.sets[0]?.owner).toBeNull();
+
+    await repo.duplicatePhase('plan', phaseId);
+    const duplicatedPlanId = await repo.duplicateProgram('plan');
+    expect((await db.table('trainingPlans').get(duplicatedPlanId)).owner).toBeNull();
+    const phases = await db.table('programPhases').where('trainingPlanId')
+      .equals(duplicatedPlanId).toArray();
+    expect(phases.length).toBeGreaterThan(0);
+    expect(phases.every((phase) => phase.realmId === plan.realmId && phase.owner === null)).toBe(true);
+    const nextDetails = await repo.details(duplicatedPlanId);
+    expect(nextDetails?.days?.length).toBeGreaterThan(0);
+    expect(nextDetails?.days?.every((item) => item.day.owner === null
+      && item.exercises.every((exercise) => exercise.exercise.owner === null
+        && exercise.sets.every((set) => set.owner === null)))).toBe(true);
+  });
 });
