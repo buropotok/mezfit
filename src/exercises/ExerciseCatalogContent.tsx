@@ -116,7 +116,6 @@ function ExerciseDetail({ row, taxonomy, onEdit, origin }: {
           </div>
         ) : null)}
       </GlassSurface>
-      <Text variant="footnote" tone="muted">{row.attribution}</Text>
       {primary.length || secondary.length ? (
         <WorkedMuscles primaryMuscleIds={primary} secondaryMuscleIds={secondary} />
       ) : null}

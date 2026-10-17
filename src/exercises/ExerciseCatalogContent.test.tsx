@@ -70,6 +70,14 @@ describe('shared public exercise catalogue', () => {
     expect(screen.getByText('Инструкция')).toBeTruthy();
   });
 
+  it('does not render imported media attribution in the exercise detail', () => {
+    const attributedRow = { ...row, attribution: '© Gym visual — https://gymvisual.com/' };
+    render(<ExerciseCatalogContent snapshot={{ ...snapshot, exercises: [attributedRow] }} />);
+    fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    expect(screen.queryByText(attributedRow.attribution)).toBeNull();
+  });
+
   it('places the anatomy module after exercise text and maps only known muscles', () => {
     const exercise = {
       ...row,
