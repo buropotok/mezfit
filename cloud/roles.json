@@ -2,9 +2,10 @@
   "roles": {
     "coach": {
       "displayName": "Coach",
-      "description": "Can author assigned PLAN and edit set FACT; session lifecycle stays privileged",
+      "description": "Can author assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged",
       "sortOrder": 1,
       "permissions": {
+        "add": ["workoutScheduleRequests"],
         "manage": [
           "trainingPlans",
           "programPhases",
@@ -29,9 +30,10 @@
     },
     "client": {
       "displayName": "Client",
-      "description": "Can read assigned PLAN and edit only set FACT; session lifecycle stays privileged",
+      "description": "Can read assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged",
       "sortOrder": 2,
       "permissions": {
+        "add": ["workoutScheduleRequests"],
         "update": {
           "sessionSetFacts": [
             "actualReps",
