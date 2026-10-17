@@ -107,7 +107,7 @@ export class WorkoutSchedulingRepository {
       const id = scheduleRequestId(this.actorUserId, input.requestKey);
       const saved = await this.db.workoutScheduleRequests.get(id);
       const intended = {
-        realmId: plan.realmId, owner: null as const, requestKey: input.requestKey,
+        realmId: plan.realmId, owner: null, requestKey: input.requestKey,
         action: 'create' as const, trainingPlanId: plan.id, programDayId: input.programDayId,
         targetOccurrenceId: null, athleteUserId, coachUserId: plan.coachUserId,
         format: input.format, requestedByUserId: this.actorUserId,
