@@ -3,6 +3,8 @@ import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
 import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
 import type { CloudProgramStatus, CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import { belongsToPlan, orderedPlanRows, readProgramDays } from './program-day-tree';
+import { isProgramExerciseSnapshot } from './workout-foundation-types';
+import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
 import type { CloudProgramDayOutline, CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
 
 export type PhaseStatus = CloudProgramPhaseRow['status'];
@@ -447,6 +449,33 @@ export class ProgramManagementRepository {
         position: days.filter((day) => belongsToPlan(day, current))
           .reduce((max, day) => Math.max(max, day.position), -1) + 1,
       });
+    });
+  }
+
+  async addDayExercises(id: string, dayId: string, exerciseIds: readonly string[]): Promise<void> {
+    if (!Array.isArray(exerciseIds) || !exerciseIds.length || exerciseIds.length > 100
+      || exerciseIds.some(value => typeof value !== 'string')
+      || new Set(exerciseIds).size !== exerciseIds.length)
+      throw new Error('Выберите от 1 до 100 разных упражнений');
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
+      'publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'], async () => {
+      const current = await this.currentParent(plan);
+      await this.currentDay(current, dayId);
+      const existing = await this.db.programExercises.where('programDayId').equals(dayId).toArray();
+      let position = existing.filter(row => belongsToPlan(row, current))
+        .reduce((max, row) => Math.max(max, row.position), -1) + 1;
+      for (const exerciseId of exerciseIds) {
+        // Resolve current catalogue rows inside the write transaction: deleted/private/stale catalogue
+        // choices must not create a partial or inaccessible PLAN.
+        const row = await readProgramCatalogueExercise(this.db, this.actorUserId, exerciseId);
+        const snapshot = programExerciseSnapshot(row, this.actorUserId);
+        if (!isProgramExerciseSnapshot(snapshot)) throw new Error('Некорректные данные упражнения');
+        await this.db.programExercises.add({ realmId: current.realmId,
+          owner: this.ownerForRealm(current.realmId), programDayId: dayId,
+          exercise: snapshot, position: position++, status: 'active', notes: null });
+      }
     });
   }
 

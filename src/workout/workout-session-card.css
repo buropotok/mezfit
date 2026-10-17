@@ -152,8 +152,10 @@
 }
 
 .workout-plan-card__avatar { width: 44px; height: 44px; display: grid; place-items: center; }
-.workout-plan-card__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ui-space-2); }
-.workout-plan-card__actions > :first-child { margin-inline-end: auto; }
+.workout-plan-card__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-space-2); }
+.workout-plan-card__action { display: flex; align-items: center; justify-content: center; gap: var(--ui-space-1); min-width: 0; min-height: 44px; padding: var(--ui-space-2); color: white; }
+.workout-plan-card__action-icon { width: 20px; height: 20px; flex: 0 0 20px; }
+.workout-plan-card__action-label { overflow-wrap: anywhere; }
 .workout-plan-card__exercise { padding: var(--ui-space-3); min-width: 0; }
 .workout-plan-card__set-details { display: flex; flex-direction: column; gap: var(--ui-space-1); }
 .workout-plan-card__comment { white-space: pre-wrap; overflow-wrap: anywhere; }

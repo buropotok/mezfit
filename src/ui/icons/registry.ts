@@ -1,3 +1,10 @@
+import trashThinUrl from './trash-outline.svg';
+import copyThinUrl from './copy-outline.svg';
+import treadmillUrl from './treadmill.svg';
+import calendarPlusUrl from './calendar-plus.svg';
+import chevronRightUrl from './chevron-right-outline.svg';
+import arrowDownUrl from './arrow-down.svg';
+import arrowUpUrl from './arrow-up.svg';
 import arrowLeftUrl from './arrow-left.svg';
 import barbellFilledUrl from './liquid-glass-barbell-filled.svg';
 import barbellOutlineUrl from './liquid-glass-barbell-outline.svg';
@@ -36,6 +43,13 @@ import usersFilledUrl from './liquid-glass-users-filled.svg';
 import usersOutlineUrl from './liquid-glass-users-outline.svg';
 
 const uiIconRegistry = {
+  'trash-outline': { outline: trashThinUrl, filled: trashThinUrl },
+  'copy-outline': { outline: copyThinUrl, filled: copyThinUrl },
+  'treadmill': { outline: treadmillUrl, filled: treadmillUrl },
+  'calendar-plus': { outline: calendarPlusUrl, filled: calendarPlusUrl },
+  'chevron-right': { outline: chevronRightUrl, filled: chevronRightUrl },
+  'arrow-down': { outline: arrowDownUrl, filled: arrowDownUrl },
+  'arrow-up': { outline: arrowUpUrl, filled: arrowUpUrl },
   'arrow-left': { outline: arrowLeftUrl, filled: arrowLeftUrl },
   barbell: { outline: barbellOutlineUrl, filled: barbellFilledUrl },
   calendar: { outline: calendarOutlineUrl, filled: calendarFilledUrl },

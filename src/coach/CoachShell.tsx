@@ -157,6 +157,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
+  const [programDetailNavigation, setProgramDetailNavigation] = useState<NavigationContext | null>(null);
   const [selectedCloudProgram, setSelectedCloudProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteCopyError, setInviteCopyError] = useState('');
@@ -210,7 +211,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
     }
 
     if (selectedCloudProgram && destination === 'programs') {
-      onNavigationContextChange({ title: 'Детали программы', scrollKey: `cloud-plan:${selectedCloudProgram.id}`, onBack: () => setSelectedCloudProgram(null) });
+      onNavigationContextChange(programDetailNavigation ?? { title: 'Детали программы', scrollKey: `cloud-plan:${selectedCloudProgram.id}`, onBack: () => setSelectedCloudProgram(null) });
       return () => onNavigationContextChange(null);
     }
 
@@ -237,7 +238,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [destination, selectedClient, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [programDetailNavigation, destination, selectedClient, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
     return <ClientWorkspace client={selectedClient} />;
@@ -260,7 +261,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   if (destination === 'programs') {
     if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && programRepository) {
       if (selectedCloudProgram) return (
-        <CloudProgramDetailsPage actor={actor} viewerRole="coach" key={selectedCloudProgram.id} repository={programRepository} planId={selectedCloudProgram.id}
+        <CloudProgramDetailsPage onNavigationContextChange={setProgramDetailNavigation} actor={actor} viewerRole="coach" key={selectedCloudProgram.id} repository={programRepository} planId={selectedCloudProgram.id}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
           syncStatus={cloudConnections?.syncStatus ?? 'pending'}

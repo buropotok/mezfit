@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
@@ -10,15 +11,24 @@ import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import { ProgramDayDialog } from './ProgramDayDialog';
 import { PlanActionDialog } from './PlanActionDialog';
 import type { ProgramActor } from './ProgramSummary';
+import { usePhaseDayMotion } from './usePhaseDayMotion';
+import { ProgramDayExercisePicker } from './ProgramDayExercisePicker';
 import { programMutationMessage } from './programPresentation';
 
-export function ProgramPhaseDays({ repository, program, days, readOnly, actor }: {
+export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach' }: {
   repository: ProgramManagementRepository;
   program: CloudTrainingPlanRow;
   days: readonly CloudProgramDayOutline[];
   readOnly: boolean;
   actor?: ProgramActor;
+  collapsed?: boolean;
+  bodyId?: string;
+  viewerRole?: 'coach' | 'client';
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
 }) {
+  const viewport = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const [exerciseDayId, setExerciseDayId] = useState<string | null>(null);
   const cloud = useCloudConnections();
   const authorId = planAuthorUserId(program);
   const self = authorId === repository.actorUserId;
@@ -40,6 +50,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor }:
     alive.current = true;
     return () => { alive.current = false; animations.current.forEach((animation) => animation.cancel()); };
   }, []);
+  usePhaseDayMotion(collapsed, viewport, content, nodes);
   const orderKey = days.map((row) => row.day.id).join('|');
   // Animate only our own day wrappers; no access to UI Kit/private DOM or DnD sensors.
   useLayoutEffect(() => {
@@ -52,7 +63,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor }:
       animations.current.forEach((animation) => animation.cancel());
       animations.current = [];
     }
-    if (reordered && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    if (reordered && !collapsed && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       for (const [id, top] of next) {
         const previous = positions.current.get(id), node = nodes.current.get(id);
         if (previous !== undefined && previous !== top && node?.animate) {
@@ -75,18 +86,26 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor }:
     finally { running.current = false; if (alive.current) setBusy(false); }
   };
   const selected = dialog?.item.day;
-  return <div className="cloud-plan-days">
+  return <>
+    <div ref={viewport} id={bodyId} className="cloud-plan-days-viewport" aria-hidden={collapsed} inert={collapsed}>
+    <div ref={content} className="cloud-plan-days">
     {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     {days.map((item, index) => <div key={item.day.id}
+      style={{ position: 'relative', zIndex: days.length - index }}
       ref={(node) => { if (node) nodes.current.set(item.day.id, node); else nodes.current.delete(item.day.id); }}>
       <WorkoutSessionCard mode="planning" day={item} creatorName={creatorName} creatorAvatar={creatorAvatar}
-        readOnly={readOnly} busy={busy} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
+        readOnly={readOnly} busy={busy || exerciseDayId !== null} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
+        onAddExercise={() => setExerciseDayId(item.day.id)}
         onEdit={() => setDialog({ kind: 'edit', item })}
         onComment={() => setDialog({ kind: 'comment', item })}
         onDelete={() => setDialog({ kind: 'delete', item })}
         onMove={(direction) => { void run(() => repository.moveDay(program.id, item.day.id, direction)); }}
         onDuplicate={() => { void run(() => repository.duplicateDay(program.id, item.day.id)); }} />
     </div>)}
+    </div>
+    </div>
+    {!readOnly ? <ProgramDayExercisePicker repository={repository} program={program}
+      dayId={exerciseDayId} catalogueRole={viewerRole} onNavigationContextChange={onNavigationContextChange} onClose={() => setExerciseDayId(null)} /> : null}
     {dialog && selected && dialog.kind !== 'delete' ? <ProgramDayDialog key={`${dialog.kind}:${selected.id}`}
       title={dialog.kind === 'edit' ? 'Изменить день' : 'Комментарий к тренировке'}
       name={selected.name} category={selected.category ?? ''} comment={selected.comment ?? ''}
@@ -102,5 +121,5 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor }:
         if (alive.current) setDialog(null);
       },
     } : null} />
-  </div>;
+  </>;
 }

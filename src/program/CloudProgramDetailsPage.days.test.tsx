@@ -116,11 +116,11 @@ describe('days inside program phases', () => {
     expect(within(card).getByText('Без категории')).toBeTruthy();
     expect(within(card).queryByRole('progressbar')).toBeNull();
     expect(within(card).getByRole('button', { name: 'Начать' }).hasAttribute('disabled')).toBe(true);
-    expect(within(card).getByRole('button', { name: 'Добавить упражнение' }).hasAttribute('disabled')).toBe(true);
+    expect(within(card).getByRole('button', { name: 'Добавить упражнение' }).hasAttribute('disabled')).toBe(false);
     const menu = within(card).getByRole('menu', { name: 'Меню дня День А' });
-    expect(within(menu).getByRole('button', { name: 'Переместить вверх' }).hasAttribute('disabled')).toBe(true);
-    expect(within(menu).getByRole('button', { name: 'Переместить вниз' }).hasAttribute('disabled')).toBe(true);
-    fireEvent.click(within(menu).getByRole('button', { name: 'Изменить название и категорию' }));
+    expect(within(menu).getByRole('button', { name: 'Вверх' }).hasAttribute('disabled')).toBe(true);
+    expect(within(menu).getByRole('button', { name: 'Вниз' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.click(within(menu).getByRole('button', { name: 'Переименовать' }));
     fireEvent.click(within(menu).getByRole('button', { name: 'Закрыть меню' }));
     const dialog = await screen.findByRole('dialog', { name: 'Изменить день' });
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Категория' }), { target: { value: 'Флекс' } });

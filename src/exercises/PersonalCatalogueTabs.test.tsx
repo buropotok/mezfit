@@ -113,4 +113,15 @@ describe('separate personal and selected trainer tabs', () => {
     expect(screen.getByText('Общий жим')).toBeTruthy();
     expect(screen.queryByText('Моё движение')).toBeNull();
   });
+  it('selects own exercises from Mine without opening an editor', () => {
+    const toggle = vi.fn();
+    render(<ExerciseCatalogContent snapshot={snapshot} scope="coach" mode="select"
+      catalogueExercises={[publicRow, mine]} personalIds={new Set([mine.id])}
+      selectedExerciseIds={new Set()} onToggleExercise={toggle} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Мои упражнения' }));
+    fireEvent.click(screen.getByRole('button', { name: /Моё движение/ }));
+    expect(toggle).toHaveBeenCalledWith(mine.id);
+    expect(screen.queryByRole('button', { name: 'Изменить' })).toBeNull();
+  });
+
 });

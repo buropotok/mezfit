@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PersonalExercises } from '../exercises/PersonalExercises';
 import { PublicExercises } from '../exercises/PublicExercises';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import { Button, IconButton, MezfitBottomSheet, Text } from '../ui';
@@ -6,20 +7,30 @@ import './workout-exercise-selection.css';
 
 interface WorkoutExerciseSelectionSheetProps {
   initData: string;
+  personalCatalogueRole?: 'coach' | 'client';
   opened?: boolean;
   saving: boolean;
   actionError?: string;
-  onConfirm: (publicExerciseIds: string[]) => void;
+  onConfirm: (exerciseIds: string[]) => void;
   onClose: () => void;
+  onClosed?: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
 /**
  * One shared Dexie Cloud catalogue for browsing and selecting.
- * Workout persistence to Dexie Cloud is not implemented yet; confirmation is selection-only.
+ * The caller owns persistence; PLAN and FACT keep separate typed operations.
  */
-export function WorkoutExerciseSelectionSheet({
-  opened = true,
+export function WorkoutExerciseSelectionSheet(props: WorkoutExerciseSelectionSheetProps) {
+  return <MezfitBottomSheet opened={props.opened ?? true} label="Выбор упражнений для тренировки"
+    lazyMount onClosed={props.onClosed}>
+    <WorkoutExerciseSelectionContent {...props} />
+  </MezfitBottomSheet>;
+}
+
+/** Selection/navigation subscriptions exist only while the sheet content is mounted. */
+function WorkoutExerciseSelectionContent({
+  opened = true, personalCatalogueRole,
   saving,
   actionError = '',
   onConfirm,
@@ -35,7 +46,7 @@ export function WorkoutExerciseSelectionSheet({
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
-      else if (next.size < 100) next.add(id); // Bound selections while local-first workout persistence is pending.
+      else if (next.size < 100) next.add(id); // Bound batch size for either PLAN or FACT selection.
       return next;
     });
   }, [saving]);
@@ -65,11 +76,6 @@ export function WorkoutExerciseSelectionSheet({
   }, [opened, onNavigationContextChange]);
 
   return (
-    <MezfitBottomSheet opened={opened} label="Выбор упражнений для тренировки"
-      lazyMount onClosed={() => {
-        setSelectedIds(new Set());
-        setNavigationContext(null);
-      }}>
       <section className="workout-exercise-selection">
         <header className="workout-exercise-selection__header">
           {navigationContext ? <IconButton icon="chevron-left" label="Назад" disabled={saving} onClick={requestBack} /> : null}
@@ -78,13 +84,15 @@ export function WorkoutExerciseSelectionSheet({
         </header>
         <div className="workout-exercise-selection__catalog">
           {actionError ? <Text variant="footnote" role="alert">{actionError}</Text> : null}
-          <PublicExercises
+          {personalCatalogueRole ? <PersonalExercises role={personalCatalogueRole} mode="select"
+            selectedExerciseIds={selectedIds} onToggleExercise={toggleExercise}
+            selectionDisabled={saving} onNavigationContextChange={setNavigationContext} /> : <PublicExercises
             mode="select"
             selectedExerciseIds={selectedIds}
             onToggleExercise={toggleExercise}
             selectionDisabled={saving}
             onNavigationContextChange={setNavigationContext}
-          />
+          />}
         </div>
         <footer className="workout-exercise-selection__footer">
           {selectedIds.size === 100 ? <Text variant="footnote" tone="muted">Максимум 100 упражнений за раз</Text> : null}
@@ -93,6 +101,5 @@ export function WorkoutExerciseSelectionSheet({
           </Button>
         </footer>
       </section>
-    </MezfitBottomSheet>
   );
 }
