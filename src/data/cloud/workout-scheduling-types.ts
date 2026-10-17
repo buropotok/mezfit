@@ -45,7 +45,8 @@ export function isWorkoutScheduleRequestRow(value: unknown): value is CloudWorko
   return timingValid && typeof row.id === 'string' && row.id.length > 0
     && typeof row.realmId === 'string' && row.realmId.length > 0
     && (row.owner === null || row.owner === row.requestedByUserId)
-    && typeof row.requestKey === 'string' && row.requestKey.length > 0
+    && typeof row.requestKey === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(row.requestKey)
+    && row.id === `req:${row.requestedByUserId}:${row.requestKey}`
     && ['create', 'reschedule', 'cancel'].includes(row.action ?? '')
     && typeof row.trainingPlanId === 'string' && row.trainingPlanId.length > 0
     && typeof row.programDayId === 'string' && row.programDayId.length > 0
