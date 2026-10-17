@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 export const ORIGINAL_SHA256 = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 export const TRACKING_SCHEMA_VERSION = '2.1.0';
+export const TRACKING_RELEASE_SHA256 = 'ee0f313fa15dd8a35a7e6cc558ccd6012810128948e8c8a9e6b5381bf6449c66';
 const EXPECTED_EXERCISES = 1324;
 const EXPECTED_CARDIO = 29;
 
@@ -54,7 +55,9 @@ export function deriveTrackingRelease(sourceBytes) {
   const source = JSON.parse(sourceBytes.toString('utf8'));
   const release = withLegacyTracking(source);
   const bytes = Buffer.from(JSON.stringify(release, null, 2) + '\n', 'utf8');
-  return { bytes, sha256: createHash('sha256').update(bytes).digest('hex') };
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if (sha256 !== TRACKING_RELEASE_SHA256) fail('Derived tracking release SHA-256 mismatch');
+  return { bytes, sha256 };
 }
 
 async function main() {
