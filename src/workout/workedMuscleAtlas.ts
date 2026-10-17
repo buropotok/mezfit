@@ -116,11 +116,11 @@ export function parseWorkedMuscleAtlasManifest(
 async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex): Promise<WorkedMuscleAtlas> {
   const config = getWorkedMuscleViewConfig(sex, view);
   const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas] = await Promise.all([
-    getStaticFile(assetUrl(config.manifest, view, sex))
-    getStaticFile(assetUrl(config.mask, view, sex))
-    loadStaticImage(assetUrl(config.neutral, view, sex))
-    loadStaticImage(assetUrl(config.colorAtlas, view, sex))
-    loadStaticImage(assetUrl(config.glowAtlas, view, sex))
+    getStaticFile(assetUrl(config.manifest, view, sex)),
+    getStaticFile(assetUrl(config.mask, view, sex)),
+    loadStaticImage(assetUrl(config.neutral, view, sex)),
+    loadStaticImage(assetUrl(config.colorAtlas, view, sex)),
+    loadStaticImage(assetUrl(config.glowAtlas, view, sex)),
   ]);
   const [rawManifest, maskBytes] = await Promise.all([
     manifestResponse.json() as Promise<unknown>,
