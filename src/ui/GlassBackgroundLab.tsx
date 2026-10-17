@@ -3,8 +3,9 @@ import { Button, Divider, Surface, Text } from './primitives';
 import { GlassSurface } from './GlassSurface';
 import { GlassBackgroundColorControls } from './GlassBackgroundColorControls';
 import { hsvToHex, type HsvColor } from './colorMath';
-export { hsvToHex } from './colorMath';
 import './GlassBackgroundLab.css';
+
+export { hsvToHex } from './colorMath';
 
 const RECOMMENDED_COLOR: HsvColor = {
   hue: 219,
@@ -38,19 +39,19 @@ export function GlassBackgroundLab() {
           </GlassSurface>
         </div>
         <GlassBackgroundColorControls color={color} onChange={setColor}>
-            <Text variant="caption" tone="muted">
-              Мой стартовый вариант — {RECOMMENDED_GLASS_BACKGROUND}: глубокий сине-серый фон, который подчёркивает стекло без лишней насыщенности.
-            </Text>
-            <div>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setColor(RECOMMENDED_COLOR);
-                }}
-              >
-                Вернуть рекомендованный
-              </Button>
-            </div>
+          <Text variant="caption" tone="muted">
+            Мой стартовый вариант — {RECOMMENDED_GLASS_BACKGROUND}: глубокий сине-серый фон, который подчёркивает стекло без лишней насыщенности.
+          </Text>
+          <div>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setColor(RECOMMENDED_COLOR);
+              }}
+            >
+              Вернуть рекомендованный
+            </Button>
+          </div>
         </GlassBackgroundColorControls>
       </div>
     </Surface>
