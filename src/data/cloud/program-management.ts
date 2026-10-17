@@ -95,6 +95,10 @@ function belongs(phase: CloudProgramPhaseRow, plan: CloudTrainingPlanRow): boole
 export class ProgramManagementRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {}
 
+  /** Shared PLAN records have no privileged per-object owner. */
+  private ownerForRealm(realmId: string): string | null {
+    return realmId === this.actorUserId ? this.actorUserId : null;
+  }
   private own(plan: CloudTrainingPlanRow): boolean {
     return plan.realmId === this.actorUserId && plan.athleteUserId === this.actorUserId
       && plan.coachUserId === null && plan.clientUserId === null
@@ -234,7 +238,7 @@ export class ProgramManagementRepository {
       const position = plans.reduce((max, plan) => Math.max(max, plan.position), -1) + 1;
       const now = new Date().toISOString();
       return this.db.trainingPlans.add({
-        realmId: assignedRealmId, owner: this.actorUserId, athleteUserId,
+        realmId: assignedRealmId, owner: null, athleteUserId,
         coachUserId: this.actorUserId, clientUserId: athleteUserId,
         name, position, status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
       });
@@ -274,7 +278,7 @@ export class ProgramManagementRepository {
       while (used.has(`Фаза ${n}`)) n++;
       const name = rawName === undefined ? `Фаза ${n}` : validName(rawName);
       return this.db.programPhases.add({
-        realmId: current.realmId, owner: this.actorUserId, trainingPlanId: id,
+        realmId: current.realmId, owner: this.ownerForRealm(current.realmId), trainingPlanId: id,
         name, status: 'draft', durationWeeks: DEFAULT_PHASE_WEEKS,
         position: phases.reduce((max, phase) => Math.max(max, phase.position), -1) + 1,
         plannedStartDate: null, plannedEndDate: null,
@@ -406,8 +410,10 @@ export class ProgramManagementRepository {
       if (!record(role) || role.realmId !== 'rlm-public' || role.name !== 'coach'
         || !record(role.permissions)) return false;
       const manage = role.permissions.manage;
-      return Array.isArray(manage) && ['trainingPlans', 'programPhases',
-        'programDays', 'programExercises', 'programSets'].every((table) => manage.includes(table));
+      const expected = ['trainingPlans', 'programPhases', 'programDays',
+        'programExercises', 'programSets'];
+      return Array.isArray(manage) && manage.length === expected.length
+        && expected.every((table) => manage.includes(table));
     });
     if (!ready) throw new Error('Для работы с днями нужно обновить права тренера в Dexie Cloud и повторить синхронизацию.');
   }
@@ -436,7 +442,7 @@ export class ProgramManagementRepository {
       await this.currentPhase(current, phaseId);
       const days = await this.db.programDays.where('programPhaseId').equals(phaseId).toArray();
       return this.db.programDays.add({
-        realmId: current.realmId, owner: this.actorUserId, programPhaseId: phaseId,
+        realmId: current.realmId, owner: this.ownerForRealm(current.realmId), programPhaseId: phaseId,
         name, category: category || null, comment: null, status: 'active',
         position: days.filter((day) => belongsToPlan(day, current))
           .reduce((max, day) => Math.max(max, day.position), -1) + 1,
@@ -500,14 +506,14 @@ export class ProgramManagementRepository {
   private async copyDay(source: CloudProgramDayOutline, phaseId: string, position: number): Promise<string> {
     const { id: _dayId, ...day } = source.day;
     const nextDayId = await this.db.programDays.add({ ...day,
-      owner: this.actorUserId, programPhaseId: phaseId, position, status: 'active' });
+      owner: this.ownerForRealm(day.realmId), programPhaseId: phaseId, position, status: 'active' });
     for (const item of source.exercises) {
       const { id: _exerciseId, ...exercise } = item.exercise;
       const exerciseId = await this.db.programExercises.add({ ...exercise,
-        owner: this.actorUserId, programDayId: nextDayId });
+        owner: this.ownerForRealm(exercise.realmId), programDayId: nextDayId });
       for (const sourceSet of item.sets) {
         const { id: _setId, ...set } = sourceSet;
-        await this.db.programSets.add({ ...set, owner: this.actorUserId, programExerciseId: exerciseId });
+        await this.db.programSets.add({ ...set, owner: this.ownerForRealm(set.realmId), programExerciseId: exerciseId });
       }
     }
     return nextDayId;
@@ -515,7 +521,7 @@ export class ProgramManagementRepository {
 
   private async copyPhase(source: CloudProgramPhaseRow, planId: string, position: number): Promise<string> {
     return this.db.programPhases.add({
-      realmId: source.realmId, owner: this.actorUserId, trainingPlanId: planId,
+      realmId: source.realmId, owner: this.ownerForRealm(source.realmId), trainingPlanId: planId,
       name: source.name, position, status: 'draft',
       durationWeeks: source.durationWeeks ?? DEFAULT_PHASE_WEEKS,
       plannedStartDate: source.plannedStartDate, plannedEndDate: source.plannedEndDate,
@@ -563,7 +569,7 @@ export class ProgramManagementRepository {
       const plans = await this.db.trainingPlans.where('realmId').equals(plan.realmId).toArray();
       const now = new Date().toISOString();
       const nextId = await this.db.trainingPlans.add({
-        realmId: plan.realmId, owner: this.actorUserId, athleteUserId: athleteOf(plan) ?? undefined,
+        realmId: plan.realmId, owner: this.ownerForRealm(plan.realmId), athleteUserId: athleteOf(plan) ?? undefined,
         coachUserId: plan.coachUserId, clientUserId: plan.clientUserId,
         name: validName(`${plan.name.slice(0, 111)} (копия)`),
         position: plans.reduce((max, row) => Math.max(max, row.position), -1) + 1,
