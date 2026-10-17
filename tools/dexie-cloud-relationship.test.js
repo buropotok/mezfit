@@ -369,6 +369,19 @@ describe('installed role policy guard', () => {
     expect(() => assertRolePolicy(previous, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
   });
 
+  it('supports exact prior and new request role layouts', () => {
+    const rows = ['coach', 'client'].map(name => ({
+      realmId: 'rlm-public', name,
+      permissions: structuredClone(localRoles[name].permissions),
+    }));
+    for (const row of rows) delete row.permissions.add;
+    expect(() => assertRolePolicy(rows, localRoles)).not.toThrow();
+    for (const row of rows) row.permissions.add = ['workoutScheduleRequests'];
+    expect(() => assertRolePolicy(rows, localRoles)).not.toThrow();
+    rows[1].permissions.add = ['workoutScheduleRequests', 'workoutOccurrences'];
+    expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
+  });
+
   it('accepts only the intended coach and client permissions', () => {
     const remote = ['coach', 'client'].map((name) => ({
       realmId: 'rlm-public', name, permissions: localRoles[name].permissions,
