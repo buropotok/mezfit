@@ -63,47 +63,47 @@ export function GlassBackgroundColorControls({
 
   const backgroundColor = hsvToHex(color);
   return (
-        <div className="glass-background-lab__controls">
-          <div className="glass-background-lab__wheel-wrap">
-            <Text variant="footnote" tone="muted">Оттенок и насыщенность</Text>
-            <button
-              type="button"
-              className="glass-background-lab__wheel"
-              aria-label={`Выбрать цвет фона. Оттенок ${Math.round(color.hue)}°, насыщенность ${Math.round(color.saturation)}%`}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={releasePointer}
-              onPointerCancel={releasePointer}
-              onLostPointerCapture={() => {
-                activePointerId.current = null;
-              }}
-            >
-              <span className="glass-background-lab__wheel-marker" style={markerStyle} aria-hidden="true" />
-            </button>
-          </div>
-          <div className="glass-background-lab__brightness">
-            <div className="glass-background-lab__brightness-control">
-              <label htmlFor={brightnessId}>
-                <Text variant="footnote" tone="muted">Яркость · {Math.round(color.value)}%</Text>
-              </label>
-              <KonstaRange
-                inputId={brightnessId}
-                min={minimumBrightness}
-                max={100}
-                step={1}
-                value={color.value}
-                onChange={(event) => {
-                  onChange({ ...color, value: Number(event.target.value) });
-                }}
-              />
-            </div>
-            <div className="glass-background-lab__value">
-              <span className="glass-background-lab__swatch" style={{ backgroundColor }} aria-hidden="true" />
-              <Text>{backgroundColor}</Text>
-            </div>
-            {children}
-          </div>
+    <div className="glass-background-lab__controls">
+      <div className="glass-background-lab__wheel-wrap">
+        <Text variant="footnote" tone="muted">Оттенок и насыщенность</Text>
+        <button
+          type="button"
+          className="glass-background-lab__wheel"
+          aria-label={`Выбрать цвет фона. Оттенок ${Math.round(color.hue)}°, насыщенность ${Math.round(color.saturation)}%`}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={releasePointer}
+          onPointerCancel={releasePointer}
+          onLostPointerCapture={() => {
+            activePointerId.current = null;
+          }}
+        >
+          <span className="glass-background-lab__wheel-marker" style={markerStyle} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="glass-background-lab__brightness">
+        <div className="glass-background-lab__brightness-control">
+          <label htmlFor={brightnessId}>
+            <Text variant="footnote" tone="muted">Яркость · {Math.round(color.value)}%</Text>
+          </label>
+          <KonstaRange
+            inputId={brightnessId}
+            min={minimumBrightness}
+            max={100}
+            step={1}
+            value={color.value}
+            onChange={(event) => {
+              onChange({ ...color, value: Number(event.target.value) });
+            }}
+          />
         </div>
+        <div className="glass-background-lab__value">
+          <span className="glass-background-lab__swatch" style={{ backgroundColor }} aria-hidden="true" />
+          <Text>{backgroundColor}</Text>
+        </div>
+        {children}
+      </div>
+    </div>
   );
 }
 
