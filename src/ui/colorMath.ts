@@ -24,8 +24,8 @@ export function hsvToHex({ hue, saturation, value }: HsvColor) {
 
   if (hueSector < 1) [r, g, b] = [chroma, x, 0];
   else if (hueSector < 2) [r, g, b] = [x, chroma, 0];
-  else if (hueSector < 3) [r, g, b] = [0, x, chroma];
-  else if (hueSector < 4) [r, g, b] = [0, chroma, x];
+  else if (hueSector < 3) [r, g, b] = [0, chroma, x];
+  else if (hueSector < 4) [r, g, b] = [0, x, chroma];
   else if (hueSector < 5) [r, g, b] = [x, 0, chroma];
   else [r, g, b] = [chroma, 0, x];
 
