@@ -1,6 +1,5 @@
-import type { TrackingType } from '../../api';
 import { isCoachExerciseDefinition } from '../exercises/coachExerciseTypes';
-import type { PublicExercise } from '../exercises/publicExerciseTypes';
+import type { ExerciseTrackingType as TrackingType, PublicExercise } from '../exercises/publicExerciseTypes';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { CloudSharedRow } from './database';
 
