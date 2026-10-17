@@ -6,8 +6,9 @@ booking processor consumes these records yet.
 ## Domain boundary
 
 - PLAN: `trainingPlans → programPhases → programDays → programExercises → programSets`.
-- Booking intent: `workoutScheduleRequests`, an untrusted, immutable-by-policy
-  instruction to request a date and time for an existing day.
+- Booking intent: `workoutScheduleRequests`, an untrusted, **potentially mutable**
+  proposal to request a date and time for an existing day. No security-critical
+  decision is allowed to rely on its immutability.
 - Confirmed booking: `workoutOccurrences`, controlled by trusted lifecycle
   operations. The table already exists, but no normal Coach/Client writer is
   provided by this PR.
@@ -31,20 +32,31 @@ implemented here. Clients may not request unpublished plans or draft phases;
 neither role may schedule deleted or deprecated days.
 
 Every new shared request explicitly supplies `owner: null`. Dexie Cloud Addon
-may fill owner with the originating user. That does not confer business
-authority: the request remains untrusted regardless of owner. In particular
-the original requester's claims, participants and timing are **not** proof of
-an accepted booking. There is no mutable `approved` status on these requests.
+may fill owner with the originating user, granting the creator update/delete
+privileges even when the role only permits `add`. **This is expected:** request
+records are user-controlled and may change or disappear before processing.
+The future privileged Worker must validate the exact latest request payload
+and atomically persist an independently authorized canonical occurrence, including
+its frozen approved scheduling fields. Once confirmed, further edits/deletion
+of the originating intent can never change, undo or re-authorize that booking.
+No processor may validate a request, await another asynchronous action, then
+implicitly use a potentially changed request row. There is no mutable
+`approved` status on these requests.
 
 ## Storage and synchronization
 
 Schema v8 adds `workoutScheduleRequests` alongside the unchanged PLAN and
-FACT stores. It has an Addon-generated `@id`, an independent unique
-`requestKey` for local retry deduplication, realm / plan / day lookup indexes,
-and a compound realm/date index. Dexie Cloud does not enforce secondary
-index uniqueness across devices; future privileged processing must enforce
-idempotency using the canonical globally unique request ID, not assume
-`requestKey` is globally unique. No D1 identity or custom replication state.
+FACT stores. It uses a client-supplied canonical primary key `id`, derived
+as `req:<verified-cloud-user-id>:<requestKey>`. This names one actor-specific
+action consistently on multiple offline devices. The `requestKey` is a
+nonunique ordinary index, so different actors can reuse the same key without
+making replicated IndexedDB fail. Realm / plan / day lookup indexes and the
+compound realm/date index are retained. Two devices using one actor/key to
+create conflicting payloads will converge under Dexie Cloud's normal conflict
+behavior: **neither the key nor a prior observation represents confirmed
+booking state**. Future privileged processing must independently enforce
+idempotency by the canonical ID and trusted snapshot.
+No D1 identity or custom replication state.
 
 `WorkoutSchedulingRepository` owns local-first writes in an IndexedDB
 transaction. `createRequest()` validates date, IANA time zone, DST ambiguity,
@@ -89,7 +101,12 @@ shapes during staged rollout, rejecting extra columns/tables.
 
 Deployment order:
 1. Deploy schema v8 and the Worker/admin policy compatibility checks.
-2. Publish the new request table to the existing Dexie Cloud database.
+2. Publish the new request table to the existing Dexie Cloud database using
+   the existing protected `dexie-workout-schema.yml` manual workflow with
+   `schema_target=scheduling_v1`, confirmation `APPLY_SCHEDULING_V1_SCHEMA`.
+   Its reviewed manifest is `cloud/schema-scheduling-foundation.json` and it
+   adds only `workoutScheduleRequests: id`. The legacy `workout_v4` target stays
+   available with its own confirmation phrase.
 3. Update installed global roles using the existing authorized process.
 4. Verify actual Coach/Client isolation and offline request sync with two
    real identities. No automatic role push from a browser.
