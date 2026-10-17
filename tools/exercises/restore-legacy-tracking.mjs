@@ -29,7 +29,7 @@ export function withLegacyTracking(source) {
   const ids = new Set();
   let cardioCount = 0;
   const exercises = source.exercises.map((row) => {
-    if (!row || typeof row.id !== 'string' || !/^\\d{4}$/.test(row.id)
+    if (!row || typeof row.id !== 'string' || !/^\d{4}$/.test(row.id)
         || ids.has(row.id) || Object.hasOwn(row, 'tracking_type')) {
       fail('Unexpected or duplicate exercise in source catalogue');
     }
@@ -53,7 +53,7 @@ export function deriveTrackingRelease(sourceBytes) {
   if (digest !== ORIGINAL_SHA256) fail('Original source SHA-256 mismatch');
   const source = JSON.parse(sourceBytes.toString('utf8'));
   const release = withLegacyTracking(source);
-  const bytes = Buffer.from(JSON.stringify(release, null, 2) + '\\n', 'utf8');
+  const bytes = Buffer.from(JSON.stringify(release, null, 2) + '\n', 'utf8');
   return { bytes, sha256: createHash('sha256').update(bytes).digest('hex') };
 }
 
