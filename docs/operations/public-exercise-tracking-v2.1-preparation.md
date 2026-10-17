@@ -43,25 +43,26 @@ No existing R2 content-addressed object may be overwritten. Once publication
 is explicitly approved, the new release candidate can be stored under its
 own content-addressed R2 key, not the original v2.0.0 key.
 
-## Publication is a separate, protected change
+## Publication is a separate, protected action
 
-**Do not point the current `publish-public-catalogue.yml` at this file.**
-The published Dexie records already use the same IDs; current
-`publish-public-catalogue.mjs` deliberately refuses differences in existing
-records and a changed manifest. No Git merge publishes public data.
+The existing initial publisher `publish-public-catalogue.mjs` still refuses
+changes to already-active records. The reviewed tracking-only updater
+`update-public-tracking.mjs` has a separate, manually triggered
+`tracking-preview` / `tracking-publish` path in the same GitHub workflow.
 
-Before publication, a separate versioned-update design and authorization
-must be approved against `AGENTS.md` §21, along with a backup, restoration
-plan, explicit allowed-diff checks, server permission review and a
-protected operator-only GitHub Actions operation. In particular, changing
-the `sourceSha256` of active rows in batches while the existing manifest
-remains active would make the current snapshot reader reject a partially
-updated catalogue. Publication must avoid exposing this mixed state.
+See [dexie-public-tracking-update.md](./dexie-public-tracking-update.md) for
+the approved execution sequence, R2 backup, versioned source upload, precise
+allowed data changes, activation marker, rollback limitations and readback
+verification.
 
-The frontend currently accepts v2.0.0 and v2.1.0 manifests; it requires
-`tracking_type` on every record for v2.1.0, and both approved releases
-retain the original R2 GIF identity. Existing personal definitions may still
-lack the new field; this preparation does not rewrite private user data.
+To keep already deployed v2.0 clients working throughout the rollout,
+the `sourceSha256` of each exercise and the manifest's `schemaVersion`
+remain pinned to the original immutable v2.0 source. After all tracking
+values are verified, two separate marker properties activate the new
+tracking release: `trackingSchemaVersion: '2.1.0'` and the pinned
+`trackingReleaseSha256`. This ensures no source-hash mismatch interrupts
+ordinary catalogue reads during staged upserts. Existing personal
+definitions remain independent.
 
-**No Dexie Cloud write, R2 upload or production publication is part of this
-preparation change.**
+**Merging code does not write to Dexie Cloud.** Publication requires
+a separate protected, reviewer-approved GitHub Actions run.
