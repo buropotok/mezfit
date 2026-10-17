@@ -162,6 +162,27 @@ describe('existing public catalogue tracking-only release', () => {
       .trackingSchemaVersion).toBe('2.1.0');
   });
 
+  it('refuses manifest activation if the cloud readback diverges after successful batch writes', async () => {
+    const f = fixture();
+    const db = fakeSession(f.current);
+    const originalList = db.session.list;
+    const session = {
+      ...db.session,
+      async list(table) {
+        const rows = await originalList(table);
+        if (table === 'publicExerciseDefinitions' && db.writes.length > 0) {
+          rows[0] = { ...rows[0], name: 'unexpected server modification' };
+        }
+        return rows;
+      },
+    };
+    await expect(executeTrackingUpdate({
+      session, plan: trackingUpdatePlan(f.current, f.prepared, f.release),
+      backupApproved: true, releaseStored: true,
+    })).rejects.toThrow(/Tracking readback verification failed/);
+    expect(db.writes.some(write => write.table === 'publicExerciseCatalogues')).toBe(false);
+  });
+
   it('is idempotent after publication and rejects altered active records', async () => {
     const f = fixture();
     const db = fakeSession(f.current);
