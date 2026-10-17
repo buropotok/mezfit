@@ -152,7 +152,11 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
     // Capture touches only while zoomed or after a second pointer starts a pinch.
     if (zoomRef.current.scale > 1 || pointersRef.current.size > 1) {
       event.preventDefault();
-      event.currentTarget.setPointerCapture(event.pointerId);
+      // Capture both fingers once a pinch starts; the first touch was left
+      // uncaptured at 1x so that ordinary page scrolling could begin.
+      for (const pointerId of pointersRef.current.keys()) {
+        event.currentTarget.setPointerCapture(pointerId);
+      }
     }
     if (pointersRef.current.size === 1) {
       gestureRef.current = { moved: false, pinched: false, dist: 0, midX: 0, midY: 0 };
