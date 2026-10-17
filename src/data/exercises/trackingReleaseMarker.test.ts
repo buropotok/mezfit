@@ -66,5 +66,7 @@ describe('backwards-compatible tracking source release', () => {
     expect(isPublicCatalogueRow({ ...manifest, trackingReleaseSha256: TRACKING_RELEASE_SHA256 })).toBe(false);
     expect(isPublicCatalogueRow({ ...manifest, trackingSchemaVersion: '2.1.0',
       trackingReleaseSha256: 'a'.repeat(64) })).toBe(false);
+    expect(isPublicCatalogueRow({ ...manifest, sourceSha256: 'b'.repeat(64),
+      trackingSchemaVersion: '2.1.0', trackingReleaseSha256: TRACKING_RELEASE_SHA256 })).toBe(false);
   });
 });
