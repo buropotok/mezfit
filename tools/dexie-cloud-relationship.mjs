@@ -10,6 +10,7 @@ const USER_SCOPES = ['ACCESS_DB'];
 const COACH_PLAN_TABLES = [
   'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
 ];
+const SCHEDULE_REQUEST_TABLES = ['workoutScheduleRequests'];
 const FACT_FIELDS = [
   'actualReps', 'actualWeightKg', 'actualDurationSeconds', 'actualDistanceMeters',
   'setLabel', 'rpe', 'comment', 'bands', 'setStatus',
@@ -202,14 +203,18 @@ export function assertRolePolicy(remoteRoles, localRoles) {
       throw new Error('CLOUD_ROLE_MISMATCH');
     }
     const permissionKeys = Object.keys(remote.permissions).sort();
-    const expectedKeys = roleName === 'coach' ? ['manage', 'update'] : ['update'];
+    const expectedKeys = roleName === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
+    const legacyKeys = roleName === 'coach' ? ['manage', 'update'] : ['update'];
+    const remoteHasAdd = Object.hasOwn(remote.permissions, 'add');
     // Accept only the two exact deployed policies and the reviewed descendant
     // policy while the compatible Worker and global roles roll out separately.
     const coachRemoteCompatible = equalItems(remote.permissions.manage, ['trainingPlans'])
       || equalItems(remote.permissions.manage, ['trainingPlans', 'programPhases'])
       || equalItems(remote.permissions.manage, COACH_PLAN_TABLES);
-    if (!equalItems(permissionKeys, expectedKeys)
+    if ((!equalItems(permissionKeys, expectedKeys) && !equalItems(permissionKeys, legacyKeys))
+      || (remoteHasAdd && !equalItems(remote.permissions.add, SCHEDULE_REQUEST_TABLES))
       || !equalItems(Object.keys(local.permissions), expectedKeys)
+      || !equalItems(local.permissions.add, SCHEDULE_REQUEST_TABLES)
       || (roleName === 'coach' && (!coachRemoteCompatible
         || !equalItems(local.permissions.manage, COACH_PLAN_TABLES)))
       || !isRecord(remote.permissions.update)
