@@ -2,6 +2,8 @@
 
 This manual-only process publishes schema 2.0.0 (1324 exercises and 69 taxonomy nodes) into `rlm-public` of the existing Dexie Cloud database. No production data is published by merging a PR.
 
+For the subsequent **data-only tracking_type update** of an already-published catalogue, use the separate `tracking-preview` / `tracking-publish` operations documented in [dexie-public-tracking-update.md](./dexie-public-tracking-update.md). The original `preview` and `publish` options remain limited to the initial v2.0 release.
+
 ## Setup required before using the publish action
 
 1. The database manager must review and separately back up the remote Dexie schema and role permissions. Confirm all three public catalogue tables use the `id` key, and ordinary coach/client accounts cannot write public data. This must happen using the manager account, not the workflow.
