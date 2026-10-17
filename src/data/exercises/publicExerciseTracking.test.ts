@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolvePublicExerciseSnapshot } from './publicExerciseCatalogue';
-import { isPublicExerciseRow, type PublicExerciseCatalogueRow, type PublicExerciseRow, type PublicTaxonomyRow } from './publicExerciseTypes';
+import { isExerciseTrackingType, isPublicExerciseRow, type PublicExerciseCatalogueRow, type PublicExerciseRow, type PublicTaxonomyRow } from './publicExerciseTypes';
 import { publicExerciseMediaUrl } from './publicExerciseMedia';
 
 const newSha = 'ee0f313fa15dd8a35a7e6cc558ccd6012810128948e8c8a9e6b5381bf6449c66';
@@ -35,10 +35,13 @@ function taxonomy(id: string): PublicTaxonomyRow {
 }
 
 describe('versioned public tracking catalogue', () => {
-  it('validates supported tracking fields and rejects corrupt values', () => {
+  it('keeps the legacy row identity check separate from tracking validation', () => {
     expect(isPublicExerciseRow(exercise('0001'))).toBe(true);
-    expect(isPublicExerciseRow({ ...exercise('0001'), tracking_type: 'incorrect' })).toBe(false);
-    expect(isPublicExerciseRow({ ...exercise('0001'), tracking_type: 'time_weight' })).toBe(true);
+    // Reusable programme authoring must tolerate extraneous v2.0 tracking metadata.
+    expect(isPublicExerciseRow({ ...exercise('0001'), tracking_type: { legacy: true } })).toBe(true);
+    expect(isExerciseTrackingType('incorrect')).toBe(false);
+    expect(isExerciseTrackingType({ legacy: true })).toBe(false);
+    expect(isExerciseTrackingType('time_weight')).toBe(true);
   });
 
   it('does not activate a v2.1 catalogue until every exercise has tracking metadata', () => {
@@ -47,6 +50,9 @@ describe('versioned public tracking catalogue', () => {
     expect(resolvePublicExerciseSnapshot(manifest, rows, muscles).status).toBe('ready');
     rows[0] = { ...rows[0], tracking_type: undefined };
     expect(resolvePublicExerciseSnapshot(manifest, rows, muscles).status).toBe('incomplete');
+    const invalidRows = [...rows];
+    invalidRows[0] = { ...rows[0], tracking_type: 'unknown' as PublicExerciseRow['tracking_type'] };
+    expect(resolvePublicExerciseSnapshot(manifest, invalidRows, muscles).status).toBe('incomplete');
     const oldManifest = { ...manifest, schemaVersion: '2.0.0' as const, sourceSha256: oldSha };
     const oldRows = rows.map(row => ({ ...row, sourceSha256: oldSha }));
     const oldMuscles = muscles.map(row => ({ ...row, sourceSha256: oldSha }));
