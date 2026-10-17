@@ -149,6 +149,19 @@ describe('local-first workout scheduling intent', () => {
     expect(await table.count()).toBe(0);
   });
 
+  it('emits the local commit through liveQuery and retains it on repository recreation', async () => {
+    const f = await fixture();
+    const received = new Promise<string[]>( (resolve, reject) => {
+      const subscription = f.client.observeRequests('client-personal', rows => {
+        if (rows.length) { subscription.unsubscribe(); resolve(rows.map(row => row.id)); }
+      }, reject);
+    });
+    const id = await f.client.createRequest(command('client-personal', 'client-action-0030'));
+    expect(await received).toEqual([id]);
+    const repo = new WorkoutSchedulingRepository(f.db as unknown as MezfitCloudDatabase, 'tg:202');
+    expect((await repo.listRequests('client-personal')).map(row => row.id)).toEqual([id]);
+  });
+
   it('keeps occurrences read-only and filters them by the authorized PLAN', async () => {
     const f = await fixture();
     await f.db.table('workoutOccurrences').bulkPut([
