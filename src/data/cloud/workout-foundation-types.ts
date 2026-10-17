@@ -6,12 +6,14 @@ import type { CloudSharedRow } from './database';
 
 /** Canonical exercise identity. Keep a self-contained snapshot for coach-private
  * exercises that a client may not be able to query outside this relationship. */
-export interface CloudWorkoutExerciseSnapshot {
+export interface CloudProgramExerciseSnapshot {
   exerciseDefinitionId: string;
   scope: 'public' | 'coach' | 'client';
   name: string;
   nameEn: string | null;
-  trackingType: TrackingType;
+  /** Legacy program records may contain this metadata. Program authoring and
+   * projection deliberately ignore it; newly added program exercises omit it. */
+  trackingType?: unknown;
   mediaUrl: string | null;
   /** Immutable full definition captured when a coach assigns a private exercise. */
   catalogueDefinition?: PublicExercise;
@@ -19,11 +21,16 @@ export interface CloudWorkoutExerciseSnapshot {
   catalogueCoachUserId?: string;
 }
 
+/** Result entry belongs to a concrete workout, not its reusable program. */
+export interface CloudWorkoutExerciseSnapshot extends CloudProgramExerciseSnapshot {
+  trackingType: TrackingType;
+}
+
 /** Only a complete, self-contained relationship snapshot may populate 'Тренерские'. */
 export function isAssignedCoachExerciseSnapshot(
-  value: CloudWorkoutExerciseSnapshot,
+  value: CloudProgramExerciseSnapshot,
   coachUserId: string,
-): value is CloudWorkoutExerciseSnapshot & { catalogueDefinition: PublicExercise } {
+): value is CloudProgramExerciseSnapshot & { catalogueDefinition: PublicExercise } {
   const candidate = value.catalogueDefinition;
   return value.scope === 'coach'
     && value.catalogueCoachUserId === coachUserId
@@ -45,20 +52,25 @@ const TRACKING_TYPES: Record<TrackingType, true> = {
 };
 
 /** Synced IndexedDB records remain untrusted even when Dexie tables are typed. */
-export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkoutExerciseSnapshot {
+export function isProgramExerciseSnapshot(value: unknown): value is CloudProgramExerciseSnapshot {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const snapshot = value as Record<string, unknown>;
   return typeof snapshot.exerciseDefinitionId === 'string' && snapshot.exerciseDefinitionId.length > 0
     && (snapshot.scope === 'public' || snapshot.scope === 'coach' || snapshot.scope === 'client')
     && typeof snapshot.name === 'string' && snapshot.name.trim().length > 0
     && (snapshot.nameEn === null || typeof snapshot.nameEn === 'string')
-    && typeof snapshot.trackingType === 'string' && Object.hasOwn(TRACKING_TYPES, snapshot.trackingType)
     && (snapshot.mediaUrl === null || typeof snapshot.mediaUrl === 'string')
     && (snapshot.catalogueDefinition === undefined || (
       typeof snapshot.catalogueCoachUserId === 'string'
       && /^tg:[1-9]\d*$/.test(snapshot.catalogueCoachUserId)
-      && isAssignedCoachExerciseSnapshot(value as CloudWorkoutExerciseSnapshot, snapshot.catalogueCoachUserId)
+      && isAssignedCoachExerciseSnapshot(value as CloudProgramExerciseSnapshot, snapshot.catalogueCoachUserId)
     ));
+}
+
+/** Executing/session snapshots retain the strict result-entry contract. */
+export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkoutExerciseSnapshot {
+  return isProgramExerciseSnapshot(value)
+    && typeof value.trackingType === 'string' && Object.hasOwn(TRACKING_TYPES, value.trackingType);
 }
 
 export interface CloudPlanChildRow extends Omit<CloudSharedRow, 'owner'> {
@@ -89,7 +101,7 @@ export interface CloudProgramDayRow extends CloudPlanChildRow {
 
 export interface CloudProgramExerciseRow extends CloudPlanChildRow {
   programDayId: string;
-  exercise: CloudWorkoutExerciseSnapshot;
+  exercise: CloudProgramExerciseSnapshot;
   position: number;
   status: 'active' | 'deprecated';
   notes: string | null;

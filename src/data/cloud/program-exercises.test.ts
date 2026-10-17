@@ -5,8 +5,7 @@ import roles from '../../../cloud/roles.json';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import type { MezfitCloudDatabase } from './database';
 import { ProgramManagementRepository } from './program-management';
-import { isAssignedCoachExerciseSnapshot } from './workout-foundation-types';
-import { programExerciseTracking } from './program-exercise-selection';
+import { isAssignedCoachExerciseSnapshot, isProgramExerciseSnapshot, isWorkoutExerciseSnapshot } from './workout-foundation-types';
 import type { PublicExerciseRow } from '../exercises/publicExerciseTypes';
 
 const databases: Dexie[] = [];
@@ -56,38 +55,45 @@ async function fixture(assigned = false) {
 }
 
 describe('program exercise authoring', () => {
-  it('applies approved defaults and never guesses an unknown movement kind', () => {
-    expect(programExerciseTracking('resistance')).toBe('weight_reps');
-    expect(programExerciseTracking('cardio')).toBe('time_distance');
-    expect(programExerciseTracking('mobility')).toBe('time');
-    expect(programExerciseTracking('skill')).toBeNull();
+  it('separates reusable program identity from concrete workout result entry', () => {
+    const identity = { exerciseDefinitionId: '0001', scope: 'public', name: 'Жим', nameEn: null, mediaUrl: null };
+    expect(isProgramExerciseSnapshot(identity)).toBe(true);
+    expect(isWorkoutExerciseSnapshot(identity)).toBe(false);
+    expect(isWorkoutExerciseSnapshot({ ...identity, trackingType: 'weight_reps' })).toBe(true);
+    expect(isWorkoutExerciseSnapshot({ ...identity, trackingType: 'unsupported' })).toBe(false);
   });
   it('commits ordered exercises locally, without sets, and survives database reopen', async () => {
     const { db, repo, planId, dayId } = await fixture();
-    await repo.addDayExercises(planId, dayId, [{ id: '0002' }, { id: '0001' }]);
+    await repo.addDayExercises(planId, dayId, ['0002', '0001']);
     db.close(); await db.open();
     const detail = await repo.details(planId);
     const exercises = detail?.days?.[0].exercises;
     expect(exercises?.map(item => item.exercise.exercise.exerciseDefinitionId)).toEqual(['0002', '0001']);
-    expect(exercises?.map(item => item.exercise.exercise.trackingType)).toEqual(['time_distance', 'weight_reps']);
+    expect(exercises?.every(item => !Object.hasOwn(item.exercise.exercise, 'trackingType'))).toBe(true);
     expect(exercises?.every(item => item.sets.length === 0)).toBe(true);
     expect(exercises?.every(item => item.exercise.realmId === 'tg:101' && item.exercise.owner === 'tg:101')).toBe(true);
   });
-  it('rolls back the whole selection when a later record is missing or its type is unresolved', async () => {
+  it('rolls back the whole selection when a later record is missing', async () => {
     const { db, repo, planId, dayId } = await fixture();
-    await expect(repo.addDayExercises(planId, dayId, [{ id: '0001' }, { id: '9999' }])).rejects.toThrow();
+    await expect(repo.addDayExercises(planId, dayId, ['0001', '9999'])).rejects.toThrow();
     expect(await db.table('programExercises').count()).toBe(0);
-    await expect(repo.addDayExercises(planId, dayId, [{ id: '0001' }, { id: '0003' }])).rejects.toThrow('тип учёта');
-    expect(await db.table('programExercises').count()).toBe(0);
-    await repo.addDayExercises(planId, dayId, [{ id: '0003', trackingType: 'time_reps' }]);
-    expect(await db.table('programExercises').count()).toBe(1);
+  });
+  it('adds exercises without reading movement or tracking metadata', async () => {
+    const { db, repo, planId, dayId } = await fixture();
+    await db.table('publicExerciseDefinitions').update('0003', {
+      movement_type: 'unknown-kind', tracking_type: { invalid: true }, trackingType: 'unsupported',
+    });
+    await repo.addDayExercises(planId, dayId, ['0001', '0003']);
+    const exercises = (await repo.details(planId))?.days?.[0].exercises;
+    expect(exercises?.map(item => item.exercise.exercise.exerciseDefinitionId)).toEqual(['0001', '0003']);
+    expect(exercises?.every(item => !Object.hasOwn(item.exercise.exercise, 'trackingType'))).toBe(true);
   });
   it('makes private exercise snapshots accessible in the relationship, without owner privileges', async () => {
     const { db, repo, planId, dayId, pair } = await fixture(true);
     const customId = 'custom:11111111-1111-4111-8111-111111111111';
     await db.table('coachExerciseDefinitions').add({ ...row('0001'), id: customId,
       realmId: 'tg:101', owner: 'tg:101', sourceSha256: 'coach-custom', updatedAt: '', archivedAt: null });
-    await repo.addDayExercises(planId, dayId, [{ id: customId }]);
+    await repo.addDayExercises(planId, dayId, [customId]);
     const saved = await db.table('programExercises').toArray();
     expect(saved[0]).toMatchObject({ realmId: pair.realm.realmId, owner: null, programDayId: dayId });
     expect(isAssignedCoachExerciseSnapshot(saved[0].exercise, 'tg:101')).toBe(true);
@@ -97,15 +103,15 @@ describe('program exercise authoring', () => {
   it('rejects a client modifying assigned PLAN, foreign/deleted days, duplicate IDs and foreign private exercises', async () => {
     const { db, repo, planId, dayId } = await fixture(true);
     const client = new ProgramManagementRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
-    await expect(client.addDayExercises(planId, dayId, [{ id: '0001' }])).rejects.toThrow('прав');
-    await expect(repo.addDayExercises(planId, 'missing', [{ id: '0001' }])).rejects.toThrow('День не найден');
-    await expect(repo.addDayExercises(planId, dayId, [{ id: '0001' }, { id: '0001' }])).rejects.toThrow();
+    await expect(client.addDayExercises(planId, dayId, ['0001'])).rejects.toThrow('прав');
+    await expect(repo.addDayExercises(planId, 'missing', ['0001'])).rejects.toThrow('День не найден');
+    await expect(repo.addDayExercises(planId, dayId, ['0001', '0001'])).rejects.toThrow();
     const foreign = 'custom:22222222-2222-4222-8222-222222222222';
     await db.table('coachExerciseDefinitions').add({ ...row('0001'), id: foreign,
       realmId: 'tg:303', owner: 'tg:303', sourceSha256: 'coach-custom', updatedAt: '', archivedAt: null });
-    await expect(repo.addDayExercises(planId, dayId, [{ id: foreign }])).rejects.toThrow('недоступно');
+    await expect(repo.addDayExercises(planId, dayId, [foreign])).rejects.toThrow('недоступно');
     await db.table('programDays').update(dayId, { status: 'deprecated' });
-    await expect(repo.addDayExercises(planId, dayId, [{ id: '0001' }])).rejects.toThrow('День не найден');
+    await expect(repo.addDayExercises(planId, dayId, ['0001'])).rejects.toThrow('День не найден');
     expect(await db.table('programExercises').count()).toBe(0);
   });
 });

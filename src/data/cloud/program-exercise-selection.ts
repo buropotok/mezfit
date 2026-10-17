@@ -1,22 +1,8 @@
 import { publicExerciseMediaUrl } from '../exercises/publicExerciseMedia';
-import type { TrackingType } from '../../api';
 import type { MezfitCloudDatabase } from './database';
 import { isPublicCatalogueRow, isPublicExerciseRow } from '../exercises/publicExerciseTypes';
 import { isCoachExerciseDefinition, type CatalogueExerciseRow } from '../exercises/coachExerciseTypes';
-import type { CloudWorkoutExerciseSnapshot } from './workout-foundation-types';
-
-export interface ProgramExerciseSelection { id: string; trackingType?: TrackingType }
-export interface PreparedProgramExercise { id: string; name: string; trackingType: TrackingType | null }
-
-/** Approved initial tracking defaults; unknown movement kinds require explicit input. */
-export function programExerciseTracking(movementType: string): TrackingType | null {
-  switch (movementType) {
-    case 'resistance': case 'strength_or_skill': return 'weight_reps';
-    case 'cardio': return 'time_distance';
-    case 'mobility': return 'time';
-    default: return null;
-  }
-}
+import type { CloudProgramExerciseSnapshot } from './workout-foundation-types';
 
 export async function readProgramCatalogueExercise(db: MezfitCloudDatabase, actor: string,
   id: string): Promise<CatalogueExerciseRow> {
@@ -31,8 +17,7 @@ export async function readProgramCatalogueExercise(db: MezfitCloudDatabase, acto
   throw new Error('Упражнение недоступно. Обновите выбор.');
 }
 
-export function programExerciseSnapshot(row: CatalogueExerciseRow, actor: string,
-  trackingType: TrackingType): CloudWorkoutExerciseSnapshot {
+export function programExerciseSnapshot(row: CatalogueExerciseRow, actor: string): CloudProgramExerciseSnapshot {
   const personal = row.realmId === actor;
   // Storage metadata is never copied into the immutable exercise definition.
   const { id, name, name_ru, name_en, category, subcategory, subcategory_ru, movement_type,
@@ -41,7 +26,7 @@ export function programExerciseSnapshot(row: CatalogueExerciseRow, actor: string
     source_consistency_issue, anatomy_evidence } = row;
   return {
     exerciseDefinitionId: id, scope: personal ? 'coach' : 'public',
-    name: name_ru || name, nameEn: name_en || null, trackingType, mediaUrl: publicExerciseMediaUrl(row),
+    name: name_ru || name, nameEn: name_en || null, mediaUrl: publicExerciseMediaUrl(row),
     ...(personal ? { catalogueCoachUserId: actor, catalogueDefinition: {
       id, name, name_ru, name_en, category, subcategory, subcategory_ru, movement_type,
       muscles, mobility_targets, equipment, body_part, target, muscle_group, secondary_muscles,

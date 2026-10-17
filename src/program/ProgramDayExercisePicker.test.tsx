@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { PreparedProgramExercise } from '../data/cloud/program-exercise-selection';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { ProgramDayExercisePicker } from './ProgramDayExercisePicker';
@@ -21,26 +20,20 @@ afterEach(cleanup);
 const program: CloudTrainingPlanRow = { id: 'plan', realmId: 'tg:101', owner: 'tg:101',
   athleteUserId: 'tg:101', coachUserId: null, clientUserId: null, name: 'План', status: 'draft',
   position: 0, startedAt: null, finishedAt: null, createdAt: '', updatedAt: '' };
-const selection: PreparedProgramExercise[] = [
-  { id: '0001', name: 'Жим', trackingType: 'weight_reps' as const },
-  { id: '0002', name: 'Бег', trackingType: 'time_distance' as const },
-];
 function fixture(add = vi.fn(async () => {})) {
-  const prepareDayExercises = vi.fn(async () => selection);
-  const repo = { prepareDayExercises, addDayExercises: add };
+  const repo = { addDayExercises: add };
   const close = vi.fn();
   const page = <ProgramDayExercisePicker repository={repo as unknown as ProgramManagementRepository}
     program={program} dayId="chosen-day" onClose={close} />;
-  return { prepareDayExercises, add, close, page };
+  return { add, close, page };
 }
 
 describe('program day exercise selection', () => {
   it('saves to the chosen day and waits for sheet closing before disposing it', async () => {
     const f = fixture(); render(f.page);
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать' }));
-    await waitFor(() => expect(f.add).toHaveBeenCalledWith('plan', 'chosen-day', [
-      { id: '0001', trackingType: 'weight_reps' }, { id: '0002', trackingType: 'time_distance' },
-    ]));
+    await waitFor(() => expect(f.add).toHaveBeenCalledWith('plan', 'chosen-day', ['0001', '0002']));
+    expect(screen.queryByRole('dialog', { name: 'Тип учёта' })).toBeNull();
     await waitFor(() => expect(screen.getByTestId('picker').getAttribute('data-open')).toBe('false'));
     expect(f.close).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Анимация закрытия завершена' }));
@@ -59,28 +52,15 @@ describe('program day exercise selection', () => {
     fireEvent.click(choose);
     await waitFor(() => expect(add).toHaveBeenCalledTimes(2));
   });
-  it('requires an explicit choice for unknown exercise movement types', async () => {
-    const f = fixture();
-    f.prepareDayExercises.mockResolvedValue([{ id: '0001', name: 'Баланс', trackingType: null }]);
-    render(f.page);
-    fireEvent.click(screen.getByRole('button', { name: 'Выбрать' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Тип учёта' });
-    expect(f.add).not.toHaveBeenCalled();
-    const select = dialog.querySelector('select');
-    if (!select) throw new Error('Missing tracking selector');
-    fireEvent.change(select, { target: { value: 'time' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить' }));
-    await waitFor(() => expect(f.add).toHaveBeenCalledWith('plan', 'chosen-day', [{ id: '0001', trackingType: 'time' }]));
-  });
-  it('does not start persistence if selection preparation completes after navigation away', async () => {
-    let complete: (rows: typeof selection) => void = () => {};
-    const f = fixture();
-    f.prepareDayExercises.mockImplementation(() => new Promise<PreparedProgramExercise[]>(resolve => { complete = resolve; }));
+  it('ignores late save completion after navigation away', async () => {
+    let complete: () => void = () => {};
+    const add = vi.fn(() => new Promise<void>(resolve => { complete = resolve; }));
+    const f = fixture(add);
     const view = render(f.page);
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать' }));
+    expect(add).toHaveBeenCalledTimes(1);
     view.unmount();
-    await act(async () => { complete(selection); });
-    expect(f.add).not.toHaveBeenCalled();
+    await act(async () => { complete(); });
     expect(f.close).not.toHaveBeenCalled();
   });
 });

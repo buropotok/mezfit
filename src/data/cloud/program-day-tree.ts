@@ -1,6 +1,6 @@
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import { planAuthorUserId } from './program-ownership';
-import { isWorkoutExerciseSnapshot, type CloudPlanChildRow, type CloudProgramDayOutline,
+import { isProgramExerciseSnapshot, type CloudPlanChildRow, type CloudProgramDayOutline,
   type CloudProgramPhaseRow } from './workout-foundation-types';
 
 export function orderedPlanRows<T extends { id: string; position: number }>(rows: readonly T[]): T[] {
@@ -40,7 +40,7 @@ export async function readProgramDays(
   const exercises = orderedPlanRows(exerciseRows.filter((row) =>
     dayIds.has(row.programDayId) && belongsToPlan(row, plan) && row.status === 'active'));
   for (const row of exercises) {
-    if (!validChild(row) || !isWorkoutExerciseSnapshot(row.exercise)
+    if (!validChild(row) || !isProgramExerciseSnapshot(row.exercise)
       || (row.notes != null && typeof row.notes !== 'string'))
       throw new Error('INVALID_CLOUD_WORKOUT_EXERCISE_SNAPSHOT');
   }

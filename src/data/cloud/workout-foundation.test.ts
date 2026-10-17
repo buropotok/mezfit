@@ -164,12 +164,12 @@ describe('read-only shared workout PLAN repository', () => {
     expect((await repo.getProgramOutline(f.plan.id))?.phases).toHaveLength(0);
   });
 
-  it('rejects unsupported synced exercise tracking types instead of exposing invalid metrics', async () => {
+  it('ignores legacy tracking metadata when projecting a reusable program', async () => {
     const f = await fixture();
     const repo = new WorkoutFoundationRepository(f.db, 'tg:101');
     Object.assign(f.exercises[0].exercise, { trackingType: 'legacy_unknown' });
-    await expect(repo.getProgramOutline(f.plan.id))
-      .rejects.toThrow('INVALID_CLOUD_WORKOUT_EXERCISE_SNAPSHOT');
+    const outline = await repo.getProgramOutline(f.plan.id);
+    expect(outline?.phases[0].days[0].exercises[0].exercise.exercise.exerciseDefinitionId).toBe('0001');
   });
 
   it('rejects incomplete synced exercise snapshots', async () => {
@@ -180,14 +180,12 @@ describe('read-only shared workout PLAN repository', () => {
       .rejects.toThrow('INVALID_CLOUD_WORKOUT_EXERCISE_SNAPSHOT');
   });
 
-  it('accepts each canonical tracking type in a synced exercise snapshot', async () => {
+  it('projects program exercises without tracking metadata', async () => {
     const f = await fixture();
     const repo = new WorkoutFoundationRepository(f.db, 'tg:101');
-    for (const trackingType of ['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight']) {
-      Object.assign(f.exercises[0].exercise, { trackingType });
-      const result = await repo.getProgramOutline(f.plan.id);
-      expect(result?.phases[0].days[0].exercises[0].exercise.exercise.trackingType).toBe(trackingType);
-    }
+    delete f.exercises[0].exercise.trackingType;
+    const outline = await repo.getProgramOutline(f.plan.id);
+    expect(outline?.phases[0].days[0].exercises[0].exercise.exercise.exerciseDefinitionId).toBe('0001');
   });
 
   it('allows the accepted client to read the same outline without authoring capabilities', async () => {
