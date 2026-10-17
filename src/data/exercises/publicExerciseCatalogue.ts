@@ -1,6 +1,6 @@
 import { liveQuery } from 'dexie';
 import type { MezfitCloudDatabase } from '../cloud/database';
-import { isPublicCatalogueRow, isPublicExerciseRow, isPublicTaxonomyRow, type PublicExerciseCatalogueRow, type PublicExerciseRow, type PublicTaxonomyRow } from './publicExerciseTypes';
+import { isExerciseTrackingType, isPublicCatalogueRow, isPublicExerciseRow, isPublicTaxonomyRow, type PublicExerciseCatalogueRow, type PublicExerciseRow, type PublicTaxonomyRow } from './publicExerciseTypes';
 
 export type PublicExerciseSnapshot =
   | { status: 'unpublished'; exercises: PublicExerciseRow[]; taxonomy: PublicTaxonomyRow[]; catalogue: null }
@@ -24,7 +24,7 @@ export function resolvePublicExerciseSnapshot(
   if (manifest.realmId !== 'rlm-public' || manifest.owner !== null
     || !/^[a-f0-9]{64}$/.test(manifest.sourceSha256)
     // A tracking-enabled release is not ready until EVERY exercise supplies its metric.
-    || (manifest.schemaVersion === '2.1.0' && exercises.some((row) => row.tracking_type === undefined))
+    || (manifest.schemaVersion === '2.1.0' && exercises.some((row) => !isExerciseTrackingType(row.tracking_type)))
     || manifest.exerciseCount !== 1324 || manifest.taxonomyCount !== 69
     || exercises.length !== manifest.exerciseCount || taxonomy.length !== manifest.taxonomyCount
     || new Set(exercises.map((row) => row.id)).size !== exercises.length
