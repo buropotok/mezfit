@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
-import { WorkoutSchedulingRepository } from './workout-scheduling';
+import { WorkoutSchedulingRepository, scheduleRequestId } from './workout-scheduling';
 
 const dbs: Dexie[] = [];
 afterEach(async () => { for (const db of dbs.splice(0)) await db.delete(); });
@@ -16,14 +16,11 @@ async function fixture() {
     trainingPlans: 'id, realmId',
     programPhases: 'id, trainingPlanId',
     programDays: 'id, realmId, programPhaseId',
-    workoutScheduleRequests: 'id, realmId, &requestKey, trainingPlanId, programDayId',
+    workoutScheduleRequests: 'id, realmId, requestKey, trainingPlanId, programDayId',
     workoutOccurrences: 'id, realmId',
     realms: 'realmId',
     members: 'id, realmId',
   });
-  let counter = 0;
-  db.table('workoutScheduleRequests').hook('creating',
-    key => key === undefined ? 'req-' + (++counter) : undefined);
   const pair = await relationshipMembership('101', '202');
   await db.table('realms').put(pair.realm);
   await db.table('members').bulkAdd(pair.members);
@@ -71,6 +68,8 @@ describe('local-first workout scheduling intent', () => {
     const clientId = await f.client.createRequest(command('client-personal', 'client-action-0002'));
     const againId = await f.client.createRequest(command('client-personal', 'client-action-0003'));
     expect(coachId).not.toBe(clientId);
+    expect(coachId).toBe(scheduleRequestId('tg:101', 'client-action-0001'));
+    expect(clientId).toBe(scheduleRequestId('tg:202', 'client-action-0002'));
     expect(againId).not.toBe(clientId);
     expect(await f.client.listRequests('client-personal')).toHaveLength(2);
     expect(await f.coach.listRequests('coach-personal')).toHaveLength(1);
