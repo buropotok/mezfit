@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   acceptCurrentInvite,
   addRole,
@@ -10,6 +10,7 @@ import {
   type Role,
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { applyBackgroundSettings, loadBrowserBackgroundSettings, saveBrowserBackgroundSettings } from './backgroundSettings';
 import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
 import { CloudConnectionsProvider } from './data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from './data/cloud/pilot-activation';
@@ -190,6 +191,7 @@ export function App() {
   const [workoutStatusLoadFailed, setWorkoutStatusLoadFailed] = useState(false);
   const workoutStatusVersionRef = useRef(0);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
+  const [backgroundSettings, setBackgroundSettings] = useState(loadBrowserBackgroundSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
@@ -209,6 +211,19 @@ export function App() {
   useEffect(() => {
     saveBrowserGlassSettings(glassSettings);
   }, [glassSettings]);
+
+  useEffect(() => {
+    applyBackgroundSettings(backgroundSettings);
+    saveBrowserBackgroundSettings(backgroundSettings);
+  }, [backgroundSettings]);
+
+  const isScheduleScreen = state.status === 'ready'
+    && (state.activeRole === 'coach' ? coachDestination : clientDestination) === 'today';
+
+  useLayoutEffect(() => {
+    document.documentElement.dataset.appBackground = isScheduleScreen ? 'schedule' : 'custom';
+    return () => { delete document.documentElement.dataset.appBackground; };
+  }, [isScheduleScreen]);
 
   useEffect(() => {
     applyTypographySettings(typographySettings);
@@ -405,6 +420,8 @@ export function App() {
             />
           ) : destination === 'settings' ? (
           <SettingsPage
+            backgroundSettings={backgroundSettings}
+            onBackgroundSettingsChange={setBackgroundSettings}
             glassSettings={glassSettings}
             onGlassSettingsChange={setGlassSettings}
             typographySettings={typographySettings}

@@ -2,6 +2,7 @@ import { KonstaProvider } from 'konsta/react';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { applyBackgroundSettings, loadBrowserBackgroundSettings } from './backgroundSettings';
 import { loadGlobalTheme } from './theme';
 import { applyTypographySettings, loadBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp } from './telegram';
@@ -27,6 +28,7 @@ function resolveRoot(): HTMLElement {
 const root = resolveRoot();
 
 async function bootstrap(): Promise<void> {
+  applyBackgroundSettings(loadBrowserBackgroundSettings());
   applyTypographySettings(loadBrowserTypographySettings());
   await loadGlobalTheme();
   root.classList.add('k-ios', 'dark', 'safe-areas');

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Range, Toggle } from 'konsta/react';
+import { DEFAULT_BACKGROUND_SETTINGS, type BackgroundSettings } from '../backgroundSettings';
 import type { NavigationContext } from '../NavigationShell';
 import {
   DEFAULT_GLASS_SETTINGS,
@@ -30,7 +31,8 @@ import {
   type TypographyRole,
   type TypographySettings,
 } from '../typographySettings';
-import { Button, DatePicker, Divider, Dropdown, GlassSurface, MezfitSidePanel, MezfitTopPanel, Surface, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
+import { Button, DatePicker, Divider, Dropdown, GlassBackgroundColorControls, GlassSurface, MezfitSidePanel, MezfitTopPanel, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
+import { hsvToHex } from '../ui/colorMath';
 import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkedMuscleId, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import './settings-page.css';
@@ -157,6 +159,8 @@ const planPreviewExercise: SessionExerciseData = {
 };
 
 interface SettingsPageProps {
+  backgroundSettings?: Readonly<BackgroundSettings>;
+  onBackgroundSettingsChange?: (settings: BackgroundSettings) => void;
   glassSettings?: Readonly<GlassSettings>;
   onGlassSettingsChange?: (settings: GlassSettings) => void;
   typographySettings?: Readonly<TypographySettings>;
@@ -247,6 +251,8 @@ function TypographyNumberField({
 }
 
 export function SettingsPage({
+  backgroundSettings = DEFAULT_BACKGROUND_SETTINGS,
+  onBackgroundSettingsChange = () => {},
   glassSettings = DEFAULT_GLASS_SETTINGS,
   onGlassSettingsChange = () => {},
   typographySettings = defaultTypographySettings(),
@@ -255,6 +261,7 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const [modulesOpen, setModulesOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
+  const [backgroundSettingsOpen, setBackgroundSettingsOpen] = useState(false);
   const [typographySettingsOpen, setTypographySettingsOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [timePickerValue, setTimePickerValue] = useState<LocalTime>('08:30');
@@ -291,8 +298,16 @@ export function SettingsPage({
   const closeTypographySettings = useCallback(() => {
     setTypographySettingsOpen(false);
   }, []);
+  const closeBackgroundSettings = useCallback(() => {
+    setBackgroundSettingsOpen(false);
+  }, []);
 
   useEffect(() => {
+    if (backgroundSettingsOpen) {
+      onNavigationContextChange({ title: 'Цвет фона', scrollKey: 'settings:background', onBack: closeBackgroundSettings });
+      return () => onNavigationContextChange(null);
+    }
+
     if (typographySettingsOpen) {
       onNavigationContextChange({ title: 'Шрифты', scrollKey: 'settings:typography', onBack: closeTypographySettings });
       return () => onNavigationContextChange(null);
@@ -310,12 +325,12 @@ export function SettingsPage({
 
     onNavigationContextChange(null);
     return undefined;
-  }, [closeGlassSettings, closeModules, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, typographySettingsOpen]);
+  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, typographySettingsOpen]);
 
-  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen) {
+  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
-        <Surface className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Интерфейс</Text>
           <Text variant="footnote" tone="muted">
             Общие параметры материалов интерфейса.
@@ -323,10 +338,11 @@ export function SettingsPage({
           <div className="settings-page__actions">
             <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
             <Button variant="secondary" onClick={() => setTypographySettingsOpen(true)}>Шрифты</Button>
+            <Button variant="secondary" onClick={() => setBackgroundSettingsOpen(true)}>Цвет фона</Button>
           </div>
-        </Surface>
+        </GlassSurface>
 
-        <Surface className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Разработка</Text>
           <Text variant="footnote" tone="muted">
             Временные инструменты для просмотра собранных интерфейсных модулей.
@@ -334,7 +350,7 @@ export function SettingsPage({
           <span className="settings-page__action">
             <Button onClick={() => setModulesOpen(true)}>Модули</Button>
           </span>
-        </Surface>
+        </GlassSurface>
       </section>
     );
   }
@@ -351,7 +367,7 @@ export function SettingsPage({
 
     return (
       <section className="settings-page" aria-label="Настройки стекла">
-        <Surface className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Настройки стекла</Text>
           <Text variant="footnote" tone="muted">
             Эти параметры применяются ко всем GlassSurface приложения. Локальные настройки компонента могут переопределить глобальное значение.
@@ -403,7 +419,41 @@ export function SettingsPage({
               })}
             />
           </label>
-        </Surface>
+        </GlassSurface>
+      </section>
+    );
+  }
+
+  if (backgroundSettingsOpen) {
+    return (
+      <section className="settings-page" aria-label="Цвет фона">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
+          <Text variant="title">Цвет фона</Text>
+          <Text variant="footnote" tone="muted">
+            Выбранный цвет применяется ко всем экранам, кроме расписания. Изменения сохраняются автоматически.
+          </Text>
+          <div className="settings-page__background-preview" style={{ backgroundColor: hsvToHex(backgroundSettings) }}>
+            <GlassSurface preset="modalTuned" optics={false} blur={effectiveGlassBlur} wrapContent={false} shape={{ radius: 16 }} className="settings-page__background-preview-glass">
+              <Text variant="headline">Предпросмотр</Text>
+              <Text variant="footnote" tone="muted">GlassSurface · modalTuned</Text>
+            </GlassSurface>
+          </div>
+          <GlassBackgroundColorControls
+            color={backgroundSettings}
+            onChange={(next) => onBackgroundSettingsChange(
+              backgroundSettings.value === 0 && next.value === 0
+                && (next.hue !== backgroundSettings.hue || next.saturation !== backgroundSettings.saturation)
+                ? { ...next, value: 43 }
+                : next,
+            )}
+            minimumBrightness={0}
+          />
+          <div className="settings-page__background-reset">
+            <Button variant="secondary" onClick={() => onBackgroundSettingsChange({ ...DEFAULT_BACKGROUND_SETTINGS })}>
+              Вернуть стандартный фон
+            </Button>
+          </div>
+        </GlassSurface>
       </section>
     );
   }
@@ -422,7 +472,7 @@ export function SettingsPage({
 
     return (
       <section className="settings-page" aria-label="Шрифты">
-        <Surface className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Шрифты</Text>
           <Text variant="footnote" tone="muted">
             Настройте шесть общих типографических пресетов. Изменения сразу применяются ко всему интерфейсу и сохраняются после перезагрузки.
@@ -508,7 +558,7 @@ export function SettingsPage({
               Сбросить шрифты
             </Button>
           </span>
-        </Surface>
+        </GlassSurface>
       </section>
     );
   }
