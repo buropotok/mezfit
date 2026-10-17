@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: 'Preview (read-only) or publish immutable release'
+        description: 'Initial catalogue release or approved tracking update'
         type: choice
         required: true
         default: preview
@@ -15,7 +15,7 @@ on:
           - tracking-preview
           - tracking-publish
       confirmation:
-        description: 'For publish enter exactly PUBLISH_1324_69_V2 after administrator schema/ACL review'
+        description: 'publish: PUBLISH_1324_69_V2; tracking-publish: UPDATE_TRACKING_1324_V21'
         type: string
         required: false
 
