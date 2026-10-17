@@ -3,6 +3,7 @@ export type ExerciseTrackingType = 'weight_reps' | 'time' | 'time_distance' | 't
 
 /** SHA-256 of the immutable v2.1 tracking source in private R2. */
 export const TRACKING_RELEASE_SHA256 = 'ee0f313fa15dd8a35a7e6cc558ccd6012810128948e8c8a9e6b5381bf6449c66';
+const TRACKING_BASE_SOURCE_SHA256 = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 
 const VALID_EXERCISE_TRACKING_TYPES: readonly string[] = [
   'weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight',
@@ -160,7 +161,9 @@ export function isPublicCatalogueRow(value: unknown): value is PublicExerciseCat
     && typeof value.sourceSha256 === 'string' && /^[a-f0-9]{64}$/.test(value.sourceSha256)
     && value.exerciseCount === 1324 && value.taxonomyCount === 69
     && ((value.trackingSchemaVersion === undefined && value.trackingReleaseSha256 === undefined)
-      || (value.trackingSchemaVersion === '2.1.0'
+      || (value.schemaVersion === '2.0.0'
+        && value.sourceSha256 === TRACKING_BASE_SOURCE_SHA256
+        && value.trackingSchemaVersion === '2.1.0'
         && value.trackingReleaseSha256 === TRACKING_RELEASE_SHA256))
     && isStringMap(value.subcategoryLabelsRu)
     && isStringMap(value.movementFamilyReferences)
