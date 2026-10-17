@@ -20,8 +20,9 @@ describe('scheduling ACL and schema rollout', () => {
 
   it('preserves v7 stores while adding a dedicated request index in v8', () => {
     expect(CLOUD_DATABASE_VERSION).toBe(8);
-    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('@id');
-    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('&requestKey');
+    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toMatch(/^id,/);
+    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('requestKey');
+    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).not.toContain('&requestKey');
     expect(CLOUD_DATABASE_STORES_V8.workoutOccurrences).toContain('[realmId+calendarDate]');
     expect(CLOUD_DATABASE_STORES_V8.trainingPlans).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V8.sessionSetFacts).toContain('sessionSetId');
