@@ -12,6 +12,8 @@ on:
         options:
           - preview
           - publish
+          - tracking-preview
+          - tracking-publish
       confirmation:
         description: 'For publish enter exactly PUBLISH_1324_69_V2 after administrator schema/ACL review'
         type: string
@@ -118,3 +120,119 @@ jobs:
       - name: Remove temporary source and private backup
         if: always()
         run: rm -rf "$RUNNER_TEMP/dexie-catalogue-$GITHUB_RUN_ID"
+
+  tracking-preview:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      inputs.operation == 'tracking-preview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Fetch original catalogue from private R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID"
+          npx wrangler r2 object get \
+            mezfit/exercise-catalogue/source/2.0.0/sha256-5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c.json \
+            --file "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/source.json" --remote
+      - name: Preview tracking-only changes without writing
+        env:
+          DEXIE_CLOUD_KEY_JSON: ${{ secrets.DEXIE_CLOUD_KEY_JSON }}
+        run: |
+          node tools/exercises/update-public-tracking.mjs \
+            --mode preview --source "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/source.json"
+      - name: Remove temporary source
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID"
+
+  tracking-publish:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      inputs.operation == 'tracking-publish' &&
+      inputs.confirmation == 'UPDATE_TRACKING_1324_V21'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Reuse existing publication service credentials and owner-approved environment.
+    environment:
+      name: dexie-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Fetch pinned v2.0 catalogue from private R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID"
+          npx wrangler r2 object get \
+            mezfit/exercise-catalogue/source/2.0.0/sha256-5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c.json \
+            --file "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/source.json" --remote
+      - name: Derive and verify immutable v2.1 catalogue
+        run: |
+          node tools/exercises/restore-legacy-tracking.mjs \
+            "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/source.json" \
+            "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/release.json"
+      - name: Read-only preflight against existing Dexie records
+        env:
+          DEXIE_CLOUD_KEY_JSON: ${{ secrets.DEXIE_CLOUD_KEY_JSON }}
+        run: |
+          node tools/exercises/update-public-tracking.mjs \
+            --mode preview --source "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/source.json"
+      - name: Prepare scoped public-catalogue backup before any mutation
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: |
+          node tools/exercises/update-public-tracking.mjs \
+            --mode backup --source "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/source.json" \
+            --out "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/public-before.json"
+      - name: Persist private backup to R2
+        id: tracking_backup
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          npx wrangler r2 object put \
+            "mezfit/exercise-catalogue/backups/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/before-tracking.json" \
+            --file "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/public-before.json" --remote
+          echo "saved=yes" >> "$GITHUB_OUTPUT"
+      - name: Store verified immutable v2.1 source privately in R2
+        id: tracking_source
+        if: steps.tracking_backup.outputs.saved == 'yes'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          npx wrangler r2 object put \
+            mezfit/exercise-catalogue/source/2.1.0/sha256-ee0f313fa15dd8a35a7e6cc558ccd6012810128948e8c8a9e6b5381bf6449c66.json \
+            --file "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/release.json" --remote
+          echo "stored=yes" >> "$GITHUB_OUTPUT"
+      - name: Update tracking only, verify all 1324, activate marker last
+        if: steps.tracking_backup.outputs.saved == 'yes' && steps.tracking_source.outputs.stored == 'yes'
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+          DEXIE_PRIVATE_R2_BACKUP_READY: ${{ steps.tracking_backup.outputs.saved }}
+          DEXIE_TRACKING_RELEASE_R2_READY: ${{ steps.tracking_source.outputs.stored }}
+        run: |
+          node tools/exercises/update-public-tracking.mjs \
+            --mode publish --source "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID/source.json"
+      - name: Remove temporary source, release and private backup
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-tracking-$GITHUB_RUN_ID"
