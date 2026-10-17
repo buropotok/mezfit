@@ -1,4 +1,5 @@
 import { confirmProgramSync, observeProgramSyncConfirmation } from './program-sync';
+import { createSyncNotificationBudget, SyncNotificationBudgetContext } from './sync-notification-budget';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
@@ -24,7 +25,7 @@ export function projectCloudSyncState(state: MezfitCloudDatabase['cloud']['syncS
   error: string;
 } {
   if (state.phase === 'error' || state.status === 'error') {
-    return { status: 'error', error: state.error?.message || 'Синхронизация с Dexie Cloud завершилась ошибкой.' };
+    return { status: 'error', error: state.error?.message || 'Синхронизация с Mezfit облаком завершилась ошибкой.' };
   }
   if (state.phase === 'offline' || state.status === 'offline') {
     return { status: 'offline', error: 'Облако недоступно. Изменения остаются на этом устройстве до синхронизации.' };
@@ -151,6 +152,7 @@ export function CloudConnectionsProvider({
   telegramUserId, initData, children,
 }: { telegramUserId: string; initData: string; children: ReactNode }) {
   const db = useMemo(() => createCloudDatabase(telegramUserId, initData), [telegramUserId, initData]);
+  const notificationBudget = useMemo(() => createSyncNotificationBudget(), []);
   const actorUserId = `tg:${telegramUserId}`;
   const [clients, setClients] = useState<CloudContact[]>([]);
   const [coaches, setCoaches] = useState<CloudContact[]>([]);
@@ -233,7 +235,7 @@ export function CloudConnectionsProvider({
         // Previously synced contacts must stay usable without connectivity.
         if (!locallyAvailable && !initialPullSucceededRef.current) {
           setStatus('error');
-          setError('Не удалось синхронизировать связи с Dexie Cloud. Проверьте соединение и повторите.');
+          setError('Не удалось синхронизировать связи с Mezfit облаком. Проверьте соединение и повторите.');
         }
       }
     })();
@@ -256,16 +258,17 @@ export function CloudConnectionsProvider({
     const subscription = db.cloud.syncState?.subscribe({
       next: (state) => {
         const next = projectCloudSyncState(state);
+        if (next.status === 'synced') notificationBudget.reset();
         setSyncStatus(next.status);
         setSyncError(next.error);
       },
       error: (reason: unknown) => {
         setSyncStatus('error');
-        setSyncError(reason instanceof Error ? reason.message : 'Не удалось отследить синхронизацию Dexie Cloud.');
+        setSyncError(reason instanceof Error ? reason.message : 'Не удалось отследить синхронизацию с Mezfit облаком.');
       },
     });
     return () => subscription?.unsubscribe();
-  }, [db]);
+  }, [db, notificationBudget]);
 
   useEffect(() => observeProgramSyncConfirmation(db, (reason) => {
     setSyncStatus('error');
@@ -321,7 +324,7 @@ export function CloudConnectionsProvider({
       // Wait for db.cloud.syncState to confirm 'in-sync'; do not fabricate success.
     } catch (reason) {
       setSyncStatus('error');
-      setSyncError(reason instanceof Error ? reason.message : 'Не удалось повторить синхронизацию Dexie Cloud.');
+      setSyncError(reason instanceof Error ? reason.message : 'Не удалось повторить синхронизацию с Mezfit облаком.');
       throw reason;
     }
   }, [db]);
@@ -332,7 +335,9 @@ export function CloudConnectionsProvider({
   }), [db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
     refresh, retrySync, loadAvatar]);
 
-  return <Context.Provider value={value}>{children}</Context.Provider>;
+  return <Context.Provider value={value}>
+    <SyncNotificationBudgetContext.Provider value={notificationBudget}>{children}</SyncNotificationBudgetContext.Provider>
+  </Context.Provider>;
 }
 
 export function useCloudConnections(): CloudConnectionsValue | null {

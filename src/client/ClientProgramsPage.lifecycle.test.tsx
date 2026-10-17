@@ -80,7 +80,7 @@ describe('client program directory', () => {
     expect(screen.queryByRole('tab', { name: 'От тренера' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Поиск программ' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Синхронизироваться' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(retrySync).toHaveBeenCalledTimes(1));
     expect(refresh).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('tab', { name: 'Черновики' }));

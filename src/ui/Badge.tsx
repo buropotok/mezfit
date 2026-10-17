@@ -5,12 +5,13 @@ export type BadgeColor = 'green' | 'yellow' | 'blue' | 'red' | 'orange' | 'purpl
 
 export type BadgeProps = Omit<HTMLAttributes<HTMLSpanElement>, 'color'> & {
   color?: BadgeColor;
+  textVariant?: 'body' | 'caption';
   children: ReactNode;
 };
 
-export function Badge({ color = 'gray', className = '', children, ...props }: BadgeProps) {
+export function Badge({ color = 'gray', textVariant = 'body', className = '', children, ...props }: BadgeProps) {
   return (
-    <span {...props} className={`ui-badge ui-text--body ui-badge--${color} ${className}`.trim()}>
+    <span {...props} className={`ui-badge ui-text--${textVariant} ui-badge--${color} ${className}`.trim()}>
       {children}
     </span>
   );

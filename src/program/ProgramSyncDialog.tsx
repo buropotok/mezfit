@@ -30,8 +30,8 @@ export function ProgramSyncDialog({ opened, onClose, onSync, onNavigationContext
     try {
       await onSync();
       if (active.current && visible.current) onClose();
-    } catch (reason) {
-      if (active.current) setError(reason instanceof Error ? reason.message : 'Не удалось синхронизировать');
+    } catch {
+      if (active.current) setError('Не удалось синхронизироваться с Mezfit облаком. Изменения сохранены на устройстве.');
     } finally {
       running.current = false;
       if (active.current) setBusy(false);
@@ -42,11 +42,11 @@ export function ProgramSyncDialog({ opened, onClose, onSync, onNavigationContext
     onBackdropClick={onClose} buttons={<>
       <MezfitDialogButton onClick={onClose}>Отмена</MezfitDialogButton>
       {!busy ? <MezfitDialogButton strong onClick={() => { void synchronize(); }}>
-        Синхронизироваться
+        Да
       </MezfitDialogButton> : null}
     </>}>
-    {busy ? <Preloader colors={{ iconIos: 'text-white', iconMaterial: 'text-white' }} aria-label="Синхронизация…" />
-      : <><Text variant="body">Синхронизируйтесь с облаком</Text>
+    {busy ? <div className="program-sync-preloader"><Preloader colors={{ iconIos: 'text-white', iconMaterial: 'text-white' }} aria-label="Синхронизация…" /></div>
+      : <><Text variant="body">Синхронизироваться с облаком?</Text>
         {error ? <Text variant="footnote" role="alert">{error}</Text> : null}</>}
   </MezfitDialog>;
 }

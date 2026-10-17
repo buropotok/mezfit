@@ -32,7 +32,7 @@ export function ClientCoachProvider({ clientTelegramUserId, enabled, children }:
   const [selectedCoachUserId, setSelectedCoachUserId] = useState<string | null>(null);
   const coaches = useMemo(() => enabled ? cloud?.coaches ?? [] : [], [cloud?.coaches, enabled]);
   const status = !enabled ? 'idle' : cloud?.status ?? 'error';
-  const error = cloud?.error ?? 'Dexie Cloud недоступен';
+  const error = cloud?.error ?? 'Mezfit облако недоступно';
 
   useEffect(() => {
     if (!enabled) {

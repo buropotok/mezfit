@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cloneElement } from 'react';
+import type { LiquidPopoverProps } from '../ui/LiquidPopover';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalProgramSyncRow } from '../data/cloud/database';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
@@ -7,7 +9,12 @@ import { ProgramSyncControls } from './ProgramSyncControls';
 
 vi.mock('../ui', async importOriginal => {
   const actual = await importOriginal<typeof import('../ui')>();
-  return { ...actual, GlassSurface: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) =>
+  return { ...actual,
+    LiquidPopover: ({ trigger, isOpen, onOpenChange, text }: LiquidPopoverProps) => <>
+      {cloneElement(trigger, { onClick: () => onOpenChange(!isOpen) })}
+      {isOpen ? <div role="dialog">{text}</div> : null}
+    </>,
+    GlassSurface: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) =>
     <button onClick={onClick}>{children}</button> };
 });
 afterEach(cleanup);
@@ -40,10 +47,20 @@ describe('program cloud status pills', () => {
       onSync={async () => {}} onNavigationContextChange={navigation} />);
     expect(screen.getByText('Нет соединения').className).toContain('ui-badge--gray');
     fireEvent.click(screen.getByRole('button', { name: 'Синхронизировать' }));
-    expect(screen.getByText('Синхронизируйтесь с облаком')).toBeTruthy();
+    expect(screen.getByText('Синхронизироваться с облаком?')).toBeTruthy();
     expect(navigation.mock.lastCall?.[0].title).toBe('Синхронизация');
     act(() => navigation.mock.lastCall?.[0].onBack());
-    expect(screen.queryByText('Синхронизируйтесь с облаком')).toBeNull();
+    expect(screen.queryByText('Синхронизироваться с облаком?')).toBeNull();
     expect(navigation.mock.lastCall?.[0]).toBeNull();
   });
+});
+
+it('explains the status from the badge without technical errors or a separate info button', () => {
+  const f = fixture({ id: 'a', revision: 2, confirmedRevision: 1, confirmed: true });
+  render(<ProgramSyncControls repository={f.repository} planId="a" syncStatus="error" onSync={async () => {}} />);
+  fireEvent.click(screen.getByRole('button', { name: 'О статусе: Ошибка' }));
+  expect(screen.getByRole('dialog').textContent).toContain('изменения');
+  expect(screen.getByRole('dialog').textContent).toContain('сохранены на устройстве');
+  expect(screen.getByRole('dialog').textContent).not.toContain('Dexie');
+  expect(screen.queryByRole('button', { name: 'О синхронизации программы' })).toBeNull();
 });

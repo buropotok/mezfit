@@ -1,14 +1,15 @@
 import type { NavigationContext } from '../NavigationShell';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Notification } from 'konsta/react';
 import { createPortal } from 'react-dom';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
+import { useSyncNotificationBudget } from '../data/cloud/sync-notification-budget';
 import { Button, Text } from '../ui';
 import { ProgramSyncDialog } from './ProgramSyncDialog';
 
 /** Local errors stay local; cloud recovery uses Konsta's notification callback. */
 export function PlanSyncNotice({
-  cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync,
+  cloudStatus, syncStatus, onRetryCloud, onRetrySync,
   localError = '', onRetryLocal, onNavigationContextChange,
 }: {
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -23,16 +24,30 @@ export function PlanSyncNotice({
 }) {
   const [dismissed, setDismissed] = useState('');
   const [opened, setOpened] = useState(false);
-  const warning = syncStatus === 'error' ? syncError || 'Ошибка синхронизации с Dexie Cloud'
-    : syncStatus === 'offline' ? syncError || 'Нет соединения с Dexie Cloud'
+  const budget = useSyncNotificationBudget();
+  const observed = useRef('');
+  const [admitted, setAdmitted] = useState('');
+  const warning = syncStatus === 'error' ? 'Не удалось отправить изменения в Mezfit облако.'
+    : syncStatus === 'offline' ? 'Нет соединения с Mezfit облаком'
       : syncStatus === 'pending' ? 'Синхронизация с облаком ещё не подтверждена.' : '';
-  const contactError = cloudStatus === 'error' ? cloudError || 'Не удалось загрузить облачные данные' : '';
+  const contactError = cloudStatus === 'error' ? 'Не удалось получить данные из Mezfit облака.' : '';
   const message = [warning, contactError].filter(Boolean).join(' ');
-  useEffect(() => { if (!message) setDismissed(''); }, [message]);
+  useEffect(() => {
+    // StrictMode effect replay must not charge twice for one displayed notice.
+    if (observed.current === message) return;
+    observed.current = message;
+    if (!message) {
+      setDismissed('');
+      setAdmitted('');
+    } else {
+      setAdmitted(message !== dismissed && (!budget || budget.claim()) ? message : '');
+    }
+  }, [message, budget, dismissed]);
   const close = () => {
+    if (!message || message === dismissed || (budget && admitted !== message)) return;
     setDismissed(message);
     // Closing after successful recovery must not resurrect an obsolete prompt.
-    if (message) setOpened(true);
+    setOpened(true);
   };
   const retry = async () => {
     let failure: unknown;
@@ -43,8 +58,8 @@ export function PlanSyncNotice({
     onRetryLocal?.();
     if (failure) throw failure;
   };
-  const notification = <Notification opened={Boolean(message && message !== dismissed)}
-    title="Синхронизация с облаком" text={message} button onClose={close} onClick={close} />;
+  const notification = <Notification opened={Boolean(message && message !== dismissed && (!budget || admitted === message))}
+    title="Mezfit облако" text={message} button onClose={close} onClick={close} />;
   return <>
     {localError ? <div className="cloud-plan-error">
       <Text variant="footnote" role="alert">{localError}</Text>
