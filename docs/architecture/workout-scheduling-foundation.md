@@ -40,8 +40,11 @@ an accepted booking. There is no mutable `approved` status on these requests.
 
 Schema v8 adds `workoutScheduleRequests` alongside the unchanged PLAN and
 FACT stores. It has an Addon-generated `@id`, an independent unique
-`requestKey` for retry deduplication, realm / plan / day lookup indexes,
-and a compound realm/date index. No D1 identity or custom replication state.
+`requestKey` for local retry deduplication, realm / plan / day lookup indexes,
+and a compound realm/date index. Dexie Cloud does not enforce secondary
+index uniqueness across devices; future privileged processing must enforce
+idempotency using the canonical globally unique request ID, not assume
+`requestKey` is globally unique. No D1 identity or custom replication state.
 
 `WorkoutSchedulingRepository` owns local-first writes in an IndexedDB
 transaction. `createRequest()` validates date, IANA time zone, DST ambiguity,
