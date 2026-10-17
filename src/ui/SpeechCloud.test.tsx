@@ -52,18 +52,27 @@ describe('SpeechCloud public lifecycle', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
   it('uses Liquid Popover raster and mesh during motion, then hands off to live text', () => {
+    const operations: string[] = [];
     vi.stubGlobal('CanvasRenderingContext2D', class {
-      save() {} restore() {} beginPath() {} rect() {} clip() {} resetTransform() {} clearRect() {}
+      save() { operations.push('save'); }
+      restore() { operations.push('restore'); }
+      beginPath() {} rect() {} resetTransform() {}
+      clearRect() { operations.push('clear'); }
+      clip(_path?: Path2D, rule?: CanvasFillRule) {
+        operations.push(rule === 'evenodd' ? 'avatar-clip' : 'text-clip');
+      }
     });
     vi.stubGlobal('Path2D', class {});
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(new CanvasRenderingContext2D());
     const paint = vi.spyOn(raster, 'paintLiquidPopoverText').mockReturnValue(true);
-    const warp = vi.spyOn(mesh, 'paintLiquidMesh').mockImplementation(() => undefined);
+    const warp = vi.spyOn(mesh, 'paintLiquidMesh').mockImplementation(() => { operations.push('mesh'); });
     render(<SpeechCloud {...props} isOpen />);
     advance(160);
     expect(paint).toHaveBeenCalled();
     expect(paint.mock.calls[0][1].textContent).toBe(props.text);
     expect(warp).toHaveBeenCalled();
+    // Every frame clears old glyphs before the expanding aperture is clipped.
+    expect(operations.slice(-5)).toEqual(['clear', 'save', 'avatar-clip', 'mesh', 'restore']);
     expect(warp.mock.calls.at(-1)?.at(-1)).toBeInstanceOf(Path2D);
     expect(screen.queryByRole('dialog')).toBeNull();
     advance(320);
