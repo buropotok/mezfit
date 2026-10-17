@@ -222,6 +222,7 @@ export function App() {
 
   useLayoutEffect(() => {
     document.documentElement.dataset.appBackground = isScheduleScreen ? 'schedule' : 'custom';
+    return () => { delete document.documentElement.dataset.appBackground; };
   }, [isScheduleScreen]);
 
   useEffect(() => {
