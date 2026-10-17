@@ -97,6 +97,7 @@ export class AssignedProgramsRepository {
       ]);
       const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
       const permitted = await Promise.all(plans.map(async (plan) => {
+        if (plan.deletedAt) return null;
         if (plan.realmId === this.actorUserId && plan.athleteUserId === this.actorUserId
           && plan.coachUserId === null && plan.clientUserId === null) return plan;
         if (!plan.coachUserId || !plan.clientUserId) return null;

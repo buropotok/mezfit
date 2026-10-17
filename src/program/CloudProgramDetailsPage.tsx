@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
@@ -8,6 +8,8 @@ import { Badge, Button, IconButton, LiquidPopover, MezfitDialog, MezfitDialogBut
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { ProgramSummary, type ProgramActor } from './ProgramSummary';
 import { programMutationMessage, weekLabel } from './programPresentation';
+import { ProgramPhaseDays } from './ProgramPhaseDays';
+import { ProgramDayDialog } from './ProgramDayDialog';
 import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogState, type PlanDialogOption } from './PlanActionDialog';
 import './cloud-plan-management.css';
@@ -35,8 +37,9 @@ function status(phase: CloudProgramPhaseRow): { label: string; color: BadgeColor
 }
 
 function PhaseHeading({
-  phase, disabled, readOnly, onAction, onPublish,
+  phase, disabled, readOnly, onAction, onPublish, children,
 }: {
+  children?: ReactNode;
   phase: CloudProgramPhaseRow;
   disabled: boolean;
   readOnly: boolean;
@@ -79,7 +82,7 @@ function PhaseHeading({
           optics={glass.optics}
         /> : null}
       </div>
-      {!readOnly ? <Text variant="footnote" tone="muted">Дни и упражнения появятся в следующей итерации.</Text> : null}
+      {children}
       {!readOnly && phase.status === 'draft' ? (
         <Button variant="secondary" disabled={disabled} onClick={() => onPublish(phase)}>
           Завершить заполнение фазы
@@ -115,6 +118,7 @@ export function CloudProgramDetailsPage({
   const [phaseNameRequired, setPhaseNameRequired] = useState(false);
   const [phaseCreateBusy, setPhaseCreateBusy] = useState(false);
   const [phaseCreateError, setPhaseCreateError] = useState('');
+  const [dayCreatePhaseId, setDayCreatePhaseId] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
@@ -123,6 +127,7 @@ export function CloudProgramDetailsPage({
     setDetails(null);
     setDialog(null);
     setPhaseCreateOpen(false);
+    setDayCreatePhaseId(null);
     setError('');
     const observe = readOnly ? repository.observeAthleteDetails.bind(repository) : repository.observeDetails.bind(repository);
     const subscription = observe(planId, (value) => {
@@ -173,14 +178,23 @@ export function CloudProgramDetailsPage({
       setPhaseCreateBusy(false);
     }
   };
+  const addDay = useCallback(() => {
+    if (!details || readOnly || busy || phaseCreateBusy) return;
+    if (details.phases.length === 1) setDayCreatePhaseId(details.phases[0].id);
+    else if (details.phases.length > 1) setDialog({
+      kind: 'select', title: 'Выберите фазу',
+      options: details.phases.map((phase) => ({ value: phase.id, label: phase.name })),
+      onConfirm: async (phaseId) => { setDialog(null); setDayCreatePhaseId(phaseId); },
+    });
+  }, [details, readOnly, busy, phaseCreateBusy]);
   const floatingAction = useMemo(() => details && !readOnly ? {
     label: 'Добавить',
     icon: 'plus' as const,
     popoverItems: [
       { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: addPhase, disabled: busy || phaseCreateBusy },
-      { id: 'add-day', icon: 'plus' as const, label: 'День', disabled: true },
+      { id: 'add-day', icon: 'plus' as const, label: 'День', onSelect: addDay, disabled: busy || phaseCreateBusy || !details.phases.length },
     ],
-  } : null, [details, readOnly, addPhase, busy, phaseCreateBusy]);
+  } : null, [details, readOnly, addPhase, addDay, busy, phaseCreateBusy]);
   useNavigationSurfaceFloatingAction(floatingAction);
 
   const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled') => {
@@ -249,7 +263,7 @@ export function CloudProgramDetailsPage({
     } else if (key === 'delete') {
       setDialog({
         kind: 'confirm', title: 'Удалить фазу?', destructive: true,
-        description: 'Будет удалена только фаза без дней. Фазу с днями удалить пока нельзя.',
+        description: 'Фаза и её дни будут удалены из программы. История тренировок сохранится.',
         confirmLabel: 'Удалить',
         onConfirm: async () => {
           await repository.deletePhase(planId, phase.id);
@@ -332,7 +346,11 @@ export function CloudProgramDetailsPage({
               setDialog(null);
             },
           })}
-        />
+        >
+          <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
+            days={(details.days ?? []).filter((item) => item.day.programPhaseId === phase.id)}
+            readOnly={readOnly} actor={actor} />
+        </PhaseHeading>
       )) : <Text variant="footnote" tone="muted">{readOnly ? 'В программе пока нет подготовленных фаз.' : 'Добавьте первую фазу через кнопку «Добавить».'}</Text>}
       <MezfitDialog
         opened={phaseCreateOpen}
@@ -363,6 +381,9 @@ export function CloudProgramDetailsPage({
         </KonstaList>
         {phaseCreateError ? <Text variant="footnote" role="alert">{phaseCreateError}</Text> : null}
       </MezfitDialog>
+      {dayCreatePhaseId && !readOnly ? <ProgramDayDialog key={`${planId}:${dayCreatePhaseId}`}
+        title="Добавить день" onClose={() => setDayCreatePhaseId(null)}
+        onSave={async (value) => { await repository.createDay(planId, dayCreatePhaseId, value.name, value.category); }} /> : null}
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
     </section>
   );

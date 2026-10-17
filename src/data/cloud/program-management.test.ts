@@ -138,8 +138,9 @@ describe('local-first program/phase management', () => {
     // There is no cloud transport in this database fixture.
     const assigned = await f.repo.createAssigned('tg:202', 'Без сети');
     const phaseId = await f.repo.createPhase(assigned);
+    expect(f.plans.find((plan) => plan.id === assigned)?.owner).toBeNull();
     expect(f.phases.find((phase) => phase.id === phaseId)).toMatchObject({
-      trainingPlanId: assigned, realmId: pair.realm.realmId, status: 'draft',
+      trainingPlanId: assigned, realmId: pair.realm.realmId, owner: null, status: 'draft',
     });
   });
 
@@ -424,39 +425,36 @@ describe('local-first program/phase management', () => {
     expect(f.phases.find((phase) => phase.id === first)?.status).toBe('finished');
   });
 
-  it('deletes phase headers using collection predicates and rejects nonempty trees', async () => {
+  it('copies a nonempty phase and tombstones its source without losing descendants', async () => {
     const f = fixture();
     const phase = await f.repo.createPhase('tra-1');
     const second = await f.repo.createPhase('tra-1');
     await f.repo.deletePhase('tra-1', phase);
-    expect(f.phases.map((row) => row.id)).toEqual([second]);
-    f.days.push({
-      id: 'day-1', realmId: user, owner: null,
-      programPhaseId: second, name: 'День 1', position: 0, status: 'active',
-    });
-    await expect(f.repo.duplicatePhase('tra-1', second)).rejects.toThrow('с днями');
-    await expect(f.repo.deletePhase('tra-1', second)).rejects.toThrow('с днями');
-    await expect(f.repo.duplicateProgram('tra-1')).rejects.toThrow('с днями');
-    await expect(f.repo.deleteProgram('tra-1')).rejects.toThrow('с днями');
-    expect(f.phases).toHaveLength(1);
-    expect(f.days).toHaveLength(1);
+    const dayId = await f.repo.createDay('tra-1', second, 'День 1');
+    await f.repo.duplicatePhase('tra-1', second);
+    expect(f.phases).toHaveLength(2);
+    expect(f.days).toHaveLength(2);
+    expect(f.days[1].programPhaseId).not.toBe(second);
+    await f.repo.deletePhase('tra-1', second);
+    expect(f.phases.find((row) => row.id === second)?.deletedAt).toBeTruthy();
+    expect(f.days.find((row) => row.id === dayId)).toBeTruthy();
+    expect((await f.repo.details('tra-1'))?.phases).toHaveLength(1);
+    expect((await f.repo.details('tra-1'))?.days).toHaveLength(1);
   });
 
-  it('blocks header deletion and duplication for addon-owned days too', async () => {
+  it('retains an addon-owned day graph when removing its program from PLAN', async () => {
     const f = fixture();
     const phaseId = await f.repo.createPhase('tra-1');
-    const persistedDay = {
-      id: 'owned-day', realmId: user, owner: user,
-      programPhaseId: phaseId, name: 'День', position: 0, status: 'active',
-    };
-    // These are raw synced rows; CloudProgramDayRow currently models legacy ownerless rows.
-    Object.assign(f.days, { 0: persistedDay });
-    await expect(f.repo.deleteProgram('tra-1')).rejects.toThrow('с днями');
-    await expect(f.repo.deletePhase('tra-1', phaseId)).rejects.toThrow('с днями');
-    await expect(f.repo.duplicateProgram('tra-1')).rejects.toThrow('с днями');
-    await expect(f.repo.duplicatePhase('tra-1', phaseId)).rejects.toThrow('с днями');
-    expect(f.plans).toHaveLength(1);
-    expect(f.phases).toHaveLength(1);
+    await f.repo.createDay('tra-1', phaseId, 'День');
+    await f.repo.duplicateProgram('tra-1');
+    expect(f.plans).toHaveLength(2);
+    expect(f.days).toHaveLength(2);
+    await f.repo.deleteProgram('tra-1');
+    expect(f.plans.find((row) => row.id === 'tra-1')?.deletedAt).toBeTruthy();
+    expect(await f.repo.details('tra-1')).toBeNull();
+    expect(await f.repo.listPersonal()).toHaveLength(1);
+    expect(f.days).toHaveLength(2);
+    await expect(f.repo.createDay('tra-1', phaseId, 'Поздний день')).rejects.toThrow();
   });
 
   it.each(['createPhase', 'duplicatePhase', 'duplicateProgram', 'publishPhase', 'renamePhase', 'duration'] as const)(

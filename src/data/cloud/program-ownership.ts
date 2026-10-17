@@ -2,13 +2,10 @@ import type { CloudTrainingPlanRow } from './database';
 import type { CloudProgramPhaseRow } from './workout-foundation-types';
 
 /**
- * Dexie Cloud Addon's implicit owner setter may assign a new PLAN header to
- * the actor even when add() was supplied owner:null. Ownership is therefore
- * intentional and limited to the authorized author of this PLAN scope.
- *
- * Personal plans: only the athlete; relationship plans: only the coach.
- * Existing Worker-provisioned ownerless headers remain compatible.
- * A Client-owned header in a coach realm is not a valid assigned PLAN.
+ * New assigned PLAN records explicitly set owner:null so access follows the
+ * relationship ACL, not implicit per-object owner privileges. Personal PLAN
+ * remains author-owned. Legacy coach-owned PLAN rows stay readable.
+ * Client-owned PLAN rows in relationship realms are always invalid.
  */
 export function planAuthorUserId(plan: CloudTrainingPlanRow): string | null {
   if (plan.coachUserId === null && plan.clientUserId === null) {

@@ -38,6 +38,8 @@ export type CloudProgramStatus = 'draft' | 'active' | 'finished' | 'cancelled';
 export interface CloudTrainingPlanRow extends Omit<CloudSharedRow, 'owner'> {
   /** The Addon may assign PLAN headers to their authorized author. */
   owner: string | null;
+  /** Retains references/history when a nonempty program is removed. */
+  deletedAt?: string | null;
   /** Explicit athlete identity, independent of reserved Dexie ownership. */
   athleteUserId?: string;
   /** Null for standalone personal programs. */

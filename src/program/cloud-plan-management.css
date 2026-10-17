@@ -112,3 +112,5 @@
 .cloud-plan-search-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes cloud-plan-search-in { from { transform: translateX(16px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .cloud-plan-search-reveal { animation: none; } }
+
+.cloud-plan-days { position: relative; display: flex; flex-direction: column; gap: var(--ui-space-3); width: 100%; min-width: 0; }

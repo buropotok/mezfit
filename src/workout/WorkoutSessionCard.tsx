@@ -12,6 +12,7 @@ import {
   Text,
   type LiquidPopoverItem,
 } from '../ui';
+import { WorkoutPlanCard, type WorkoutPlanCardProps } from './WorkoutPlanCard';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
@@ -85,9 +86,10 @@ function workoutTimeRange(session: ActiveWorkoutSession): string {
   return '—';
 }
 
-export type WorkoutSessionCardMode = 'active-program' | 'active-own' | 'completed';
+export type WorkoutSessionCardMode = 'planning' | 'active-program' | 'active-own' | 'completed';
 
-export interface WorkoutSessionCardProps {
+export interface WorkoutFactCardProps {
+  mode?: 'workout';
   session: ActiveWorkoutSession;
   title?: string;
   comment?: string | null;
@@ -106,7 +108,13 @@ export interface WorkoutSessionCardProps {
   onOpenChat?: () => void;
 }
 
-export function WorkoutSessionCard({
+export type WorkoutSessionCardProps = WorkoutFactCardProps | WorkoutPlanCardProps;
+
+export function WorkoutSessionCard(props: WorkoutSessionCardProps) {
+  return props.mode === 'planning' ? <WorkoutPlanCard {...props} /> : <WorkoutFactCard {...props} />;
+}
+
+function WorkoutFactCard({
   session,
   title,
   comment,
@@ -123,7 +131,7 @@ export function WorkoutSessionCard({
   onOpenExerciseMenu,
   onOpenExerciseHistory,
   onOpenChat,
-}: WorkoutSessionCardProps) {
+}: WorkoutFactCardProps) {
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = title ?? workoutTitle(session);
   const [menuOpen, setMenuOpen] = useState(false);

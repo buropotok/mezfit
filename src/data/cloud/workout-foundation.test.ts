@@ -18,7 +18,7 @@ const newTables = [
 ] as const;
 
 describe('Dexie Cloud v4 workout foundation', () => {
-  it('adds eight ownerless relationship domain tables with globally unique keys', () => {
+  it('keeps eight relationship domain tables with globally unique keys', () => {
     expect(CLOUD_DATABASE_VERSION).toBe(6);
     // v5's coach-private catalogue survives PLAN v6.
     expect(Object.keys(CLOUD_DATABASE_STORES_V5)).toContain('coachExerciseDefinitions');
@@ -46,11 +46,11 @@ describe('Dexie Cloud v4 workout foundation', () => {
     }
   });
 
-  it('grants coach authoring only for phase headers and keeps Client and execution tables read-only', () => {
+  it('grants Coach PLAN descendants while keeping Client and execution tables read-only', () => {
     const coach = currentRoles.roles.coach.permissions;
     const client = currentRoles.roles.client.permissions;
-    expect(coach.manage).toEqual(['trainingPlans', 'programPhases']);
-    for (const table of newTables.filter((name) => name !== 'programPhases')) {
+    expect(coach.manage).toEqual(['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets']);
+    for (const table of newTables.filter((name) => !['programPhases', 'programDays', 'programExercises', 'programSets'].includes(name))) {
       expect(JSON.stringify(coach)).not.toContain('"' + table + '"');
     }
     for (const table of newTables) {
@@ -119,7 +119,7 @@ async function fixture() {
     exercise,
     { ...exercise, id: 'pex-stray', programDayId: 'day-stray' },
     { ...exercise, id: 'pex-other-realm', realmId: 'rlm-foreign' },
-    { ...exercise, id: 'pex-owned', owner: 'tg:101' },
+    { ...exercise, id: 'pex-owned', owner: 'tg:303' },
   ];
   const sets = [
     set,

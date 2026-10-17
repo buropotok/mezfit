@@ -205,7 +205,8 @@ function assertRemoteRoles(value: unknown): void {
     const keys = name === 'coach' ? ['manage', 'update'] : ['update'];
     // Deploy this compatible Worker before expanding Dexie Cloud roles.
     const compatibleCoach = sameStrings(permissions.manage, ['trainingPlans'])
-      || sameStrings(permissions.manage, ['trainingPlans', 'programPhases']);
+      || sameStrings(permissions.manage, ['trainingPlans', 'programPhases'])
+      || sameStrings(permissions.manage, expected.coach.permissions.manage);
     if (!sameStrings(Object.keys(permissions), keys)
       || (name === 'coach' && !compatibleCoach)
       || !isObject(permissions.update)
