@@ -138,8 +138,9 @@ describe('local-first program/phase management', () => {
     // There is no cloud transport in this database fixture.
     const assigned = await f.repo.createAssigned('tg:202', 'Без сети');
     const phaseId = await f.repo.createPhase(assigned);
+    expect(f.plans.find((plan) => plan.id === assigned)?.owner).toBeNull();
     expect(f.phases.find((phase) => phase.id === phaseId)).toMatchObject({
-      trainingPlanId: assigned, realmId: pair.realm.realmId, status: 'draft',
+      trainingPlanId: assigned, realmId: pair.realm.realmId, owner: null, status: 'draft',
     });
   });
 
