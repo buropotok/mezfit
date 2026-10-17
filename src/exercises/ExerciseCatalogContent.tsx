@@ -5,7 +5,7 @@ import {
   FILTER_GROUPS, PUBLIC_EXERCISE_CATEGORIES, filterOptions, filterPublicExercises,
   type FilterGroup, type SelectedFilters,
 } from '../data/exercises/publicExerciseFilters';
-import type { PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import { isExerciseTrackingType, type ExerciseTrackingType, type PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import { PublicExerciseMedia } from './PublicExerciseMedia';
 import { WorkedMuscles } from '../workout/WorkedMuscles';
@@ -52,6 +52,13 @@ function TablerBarbell() {
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
 const PAGE_SIZE = 80;
+const TRACKING_TYPE_LABELS: Record<ExerciseTrackingType, string> = {
+  weight_reps: 'Вес и повторения',
+  time: 'Время',
+  time_distance: 'Время и дистанция',
+  time_reps: 'Время и повторения',
+  time_weight: 'Время и вес',
+};
 
 type PublishedSnapshot = Extract<PublicExerciseSnapshot, { status: 'ready' }>;
 
@@ -97,6 +104,10 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media }: {
       </Text> : null}
       {row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
       <Text variant="footnote">{categories[row.category] ?? row.category} · {row.subcategory_ru} · {row.equipment}</Text>
+      {row.realmId === 'rlm-public' && row.owner === null ? (
+        <Text variant="footnote">Тип учёта: {isExerciseTrackingType(row.tracking_type)
+          ? `${TRACKING_TYPE_LABELS[row.tracking_type]} (${row.tracking_type})` : 'Не указан'}</Text>
+      ) : null}
       {onEdit ? <div className="mezfit-public-exercises__detail-actions"><Button onClick={onEdit}>Изменить</Button></div> : null}
       <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
         contentClassName="mezfit-public-exercises__detail-section-content">
