@@ -9,6 +9,7 @@ afterEach(() => {
   cleanup(); vi.restoreAllMocks();
   if (originalAnimate) Object.defineProperty(HTMLElement.prototype, 'animate', originalAnimate);
   else Reflect.deleteProperty(HTMLElement.prototype, 'animate');
+  vi.unstubAllGlobals();
 });
 function Stack({ collapsed }: { collapsed: boolean }) {
   const outer = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
@@ -53,4 +54,45 @@ describe('measured phase animation lifecycle', () => {
     view.unmount();
     expect(cancel).toHaveBeenCalledTimes(12);
   });
+});
+
+it('pins the visible height before collapse and ignores stale completion after reopening', () => {
+  const calls: { element: HTMLElement; onfinish: (() => void) | null; oncancel: (() => void) | null; cancel: () => void }[] = [];
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ height: 700, top: 0 } as DOMRect);
+  Object.defineProperty(HTMLElement.prototype, 'animate', { configurable: true,
+    value: function (this: HTMLElement) {
+      if (this.dataset.testid === 'outer') expect(this.style.height).toBe('700px');
+      const call = { element: this, onfinish: null, oncancel: null, cancel: vi.fn() };
+      calls.push(call); return call;
+    },
+  });
+  const view = render(<Stack collapsed={false} />);
+  view.rerender(<Stack collapsed />);
+  const oldFinish = calls[0].onfinish;
+  view.rerender(<Stack collapsed={false} />);
+  oldFinish?.();
+  expect(view.getByTestId('outer').style.visibility).toBe('visible');
+  // Unexpected browser cancellation must reveal natural open content.
+  calls[4].oncancel?.();
+  expect(view.getByTestId('outer').style.height).toBe('auto');
+  expect(view.getByTestId('outer').style.visibility).toBe('visible');
+});
+
+it('releases the open height when workouts resize during expansion', () => {
+  let resize: (() => void) | undefined;
+  let height = 100;
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({ height, top: 0 } as DOMRect));
+  vi.stubGlobal('ResizeObserver', class {
+    constructor(callback: () => void) { resize = callback; }
+    observe() {} disconnect() {}
+  });
+  Object.defineProperty(HTMLElement.prototype, 'animate', { configurable: true,
+    value: () => ({ onfinish: null, oncancel: null, cancel: vi.fn() }),
+  });
+  const view = render(<Stack collapsed />);
+  view.rerender(<Stack collapsed={false} />);
+  height = 400;
+  resize?.();
+  expect(view.getByTestId('outer').style.height).toBe('auto');
+  expect(view.getByTestId('outer').style.visibility).toBe('visible');
 });

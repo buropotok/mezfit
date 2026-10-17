@@ -6,9 +6,11 @@ export function usePhaseDayMotion(collapsed: boolean, viewport: RefObject<HTMLDi
   content: RefObject<HTMLDivElement | null>, nodes: RefObject<Map<string, HTMLDivElement>>) {
   const previous = useRef(collapsed);
   const active = useRef<Animation[]>([]);
+  const generation = useRef(0);
   useLayoutEffect(() => {
     const outer = viewport.current, inner = content.current;
     if (!outer || !inner) return;
+    const token = ++generation.current;
     const wasCollapsed = previous.current;
     const interrupted = active.current.length > 0;
     const changed = wasCollapsed !== collapsed;
@@ -17,11 +19,19 @@ export function usePhaseDayMotion(collapsed: boolean, viewport: RefObject<HTMLDi
     const startHeight = outer.getBoundingClientRect().height;
     const starts = new Map([...nodes.current].map(([id, node]) =>
       [id, node.getBoundingClientRect().top - inner.getBoundingClientRect().top]));
-    active.current.forEach(animation => animation.cancel());
+    // Pin the current height before cancellation: a temporary zero height can
+    // clamp the owning scroll viewport before the first animated frame.
+    outer.style.height = `${startHeight}px`;
+    active.current.forEach(animation => { animation.onfinish = null; animation.oncancel = null; animation.cancel(); });
     active.current = [];
-    outer.style.height = collapsed ? '0px' : 'auto';
-    outer.style.visibility = collapsed ? 'hidden' : 'visible';
-    if (!changed || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !outer.animate) return;
+    const settle = () => {
+      outer.style.height = collapsed ? '0px' : 'auto';
+      outer.style.visibility = collapsed ? 'hidden' : 'visible';
+    };
+    if (!changed || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !outer.animate) {
+      settle();
+      return;
+    }
     const baseline = [...nodes.current.values()][0]?.offsetTop ?? 0;
     const slots = [...nodes.current].map(([id, node]) => ({ id, node, top: node.offsetTop - baseline }));
     const maximum = Math.max(0, ...slots.map(slot => slot.top));
@@ -51,18 +61,36 @@ export function usePhaseDayMotion(collapsed: boolean, viewport: RefObject<HTMLDi
         transform: `translateY(${position - top}px)`, offset: step / 60,
       })), { duration: PHASE_MOTION_MS, easing: 'linear' }));
     }
-    height.onfinish = () => {
-      outer.style.visibility = collapsed ? 'hidden' : 'visible';
-      outer.style.height = collapsed ? '0px' : 'auto';
-      active.current.forEach(animation => animation.cancel());
+    const ownedAnimations = [...active.current];
+    let observer: ResizeObserver | null = null;
+    const finish = () => {
+      if (token !== generation.current) return;
+      settle();
+      observer?.disconnect();
+      for (const animation of ownedAnimations) {
+        animation.onfinish = null;
+        animation.oncancel = null;
+        animation.cancel();
+      }
       active.current = [];
     };
+    height.onfinish = finish;
+    height.oncancel = finish;
+    // Late liveQuery/media/layout changes invalidate the measured heights. An
+    // open phase must recover to natural layout instead of keeping a stale clip.
+    const measuredHeight = inner.getBoundingClientRect().height;
+    observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => {
+      if (Math.abs(inner.getBoundingClientRect().height - measuredHeight) > 1) finish();
+    });
+    observer?.observe(inner);
     return () => {
-      // Cleanup on unmount. Toggle interruptions are captured by the next effect.
+      observer?.disconnect();
       height.onfinish = null;
+      height.oncancel = null;
     };
   }, [collapsed, viewport, content, nodes]);
   useLayoutEffect(() => () => {
+    generation.current++;
     active.current.forEach(animation => animation.cancel());
     active.current = [];
   }, []);

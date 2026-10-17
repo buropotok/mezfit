@@ -86,7 +86,8 @@
 .ui-liquid-popover--text,
 .ui-liquid-popover__measure--text {
   box-sizing: border-box;
-  width: min(20rem, calc(100vw - 2rem));
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 2rem));
   min-width: 0;
 }
 .ui-liquid-popover__measure--text,

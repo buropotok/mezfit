@@ -121,7 +121,7 @@ export function ClientProgramsPage({
   }
   // Compatibility for installations not yet provisioned with Dexie Cloud.
   if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
-    return <List><ListItem interactive={false} title="Программы пока недоступны" subtitle="Для назначения программ необходимо активировать проверенные права Dexie Cloud." /></List>;
+    return <List><ListItem interactive={false} title="Программы пока недоступны" subtitle="Для назначения программ необходимо настроить доступ к Mezfit облаку." /></List>;
   }
   return <CloudClientProgramsPage />;
 }

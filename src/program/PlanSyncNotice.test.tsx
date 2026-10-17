@@ -2,6 +2,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PlanSyncNotice } from './PlanSyncNotice';
+import { StrictMode } from 'react';
+import { createSyncNotificationBudget, SyncNotificationBudgetContext } from '../data/cloud/sync-notification-budget';
 
 vi.mock('konsta/react', async importOriginal => {
   const actual = await importOriginal<typeof import('konsta/react')>();
@@ -14,11 +16,37 @@ const defaults = { cloudStatus: 'ready' as const, cloudError: '', syncStatus: 's
   syncError: '', onRetryCloud: async () => {}, onRetrySync: async () => {} };
 
 describe('PLAN notification cloud recovery', () => {
+  it('caps notifications when several program surfaces mount together', () => {
+    const budget = createSyncNotificationBudget();
+    render(<SyncNotificationBudgetContext.Provider value={budget}>
+      {[0, 1, 2, 3, 4].map(key => <PlanSyncNotice key={key} {...defaults} syncStatus="error" />)}
+    </SyncNotificationBudgetContext.Provider>);
+    expect(screen.getAllByRole('button', { name: 'Закрыть уведомление' })).toHaveLength(3);
+  });
+  it('shares three notices across pages, survives StrictMode replay and allows notices after successful sync', () => {
+    const budget = createSyncNotificationBudget();
+    const page = (key: number) => <StrictMode><SyncNotificationBudgetContext.Provider value={budget}>
+      <PlanSyncNotice key={key} {...defaults} syncStatus="offline" />
+    </SyncNotificationBudgetContext.Provider></StrictMode>;
+    const view = render(page(0));
+    for (let key = 0; key < 3; key++) {
+      if (key) view.rerender(page(key));
+      expect(screen.getByRole('button', { name: 'Закрыть уведомление' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
+      expect(screen.getByText('Синхронизироваться с облаком?')).toBeTruthy();
+    }
+    view.rerender(page(3));
+    expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
+    expect(screen.queryByText('Синхронизироваться с облаком?')).toBeNull();
+    budget.reset();
+    view.rerender(page(4));
+    expect(screen.getByRole('button', { name: 'Закрыть уведомление' })).toBeTruthy();
+  });
   it('opens the synchronization dialog from notification close', () => {
     render(<PlanSyncNotice {...defaults} syncStatus="offline" />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
-    expect(screen.getByText('Синхронизируйтесь с облаком')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Синхронизироваться' })).toBeTruthy();
+    expect(screen.getByText('Синхронизироваться с облаком?')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Да' })).toBeTruthy();
   });
   it('retries pending writes and failed contacts, even if upload fails', async () => {
     const push = vi.fn(async () => { throw new Error('WRITE_DENIED'); });
@@ -26,8 +54,9 @@ describe('PLAN notification cloud recovery', () => {
     render(<PlanSyncNotice {...defaults} cloudStatus="error" cloudError="CONTACTS_FAILED"
       syncStatus="error" onRetrySync={push} onRetryCloud={contacts} onRetryLocal={local} />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Синхронизироваться' }));
-    await screen.findByText('WRITE_DENIED');
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+    await screen.findByText('Не удалось синхронизироваться с Mezfit облаком. Изменения сохранены на устройстве.');
+    expect(screen.queryByText('WRITE_DENIED')).toBeNull();
     expect(push).toHaveBeenCalledTimes(1);
     expect(contacts).toHaveBeenCalledTimes(1);
     expect(local).toHaveBeenCalledTimes(1);
@@ -37,9 +66,9 @@ describe('PLAN notification cloud recovery', () => {
     const push = vi.fn(() => new Promise<void>(resolve => { complete = resolve; }));
     render(<PlanSyncNotice {...defaults} syncStatus="offline" onRetrySync={push} />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Синхронизироваться' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     expect(screen.getByLabelText('Синхронизация…')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Синхронизироваться' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Да' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
     await act(async () => complete());
     await waitFor(() => expect(push).toHaveBeenCalledTimes(1));

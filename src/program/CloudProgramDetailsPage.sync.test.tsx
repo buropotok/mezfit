@@ -32,12 +32,12 @@ describe('PLAN details cloud connection status', () => {
     const view = render(page('synced'));
     expect(await screen.findByText('Моя программа')).toBeTruthy();
     view.rerender(page('error'));
-    expect(screen.getByText('Изменение отклонено сервером')).toBeTruthy();
+    expect(screen.getByText('Не удалось отправить изменения в Mezfit облако.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Синхронизироваться' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
     view.rerender(page('offline'));
-    expect(screen.getByText('Нет соединения с Dexie Cloud')).toBeTruthy();
+    expect(screen.getByText('Нет соединения с Mezfit облаком')).toBeTruthy();
     view.rerender(page('pending'));
     expect(screen.getByText('Синхронизация с облаком ещё не подтверждена.')).toBeTruthy();
     view.rerender(page('synced'));
