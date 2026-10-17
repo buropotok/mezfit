@@ -129,6 +129,13 @@
   white-space: nowrap;
 }
 
+.session-exercise__set-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+  min-width: 0;
+}
+
 .session-exercise__set-plan {
   color: var(--ui-color-primary);
 }

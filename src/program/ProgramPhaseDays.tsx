@@ -96,6 +96,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       <WorkoutSessionCard mode="planning" day={item} creatorName={creatorName} creatorAvatar={creatorAvatar}
         readOnly={readOnly} busy={busy || exerciseDayId !== null} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
+        onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
         onEdit={() => setDialog({ kind: 'edit', item })}
         onComment={() => setDialog({ kind: 'comment', item })}
         onDelete={() => setDialog({ kind: 'delete', item })}

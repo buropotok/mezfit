@@ -1,9 +1,8 @@
 import { useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
-import { List, ListItem } from 'konsta/react';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
-import type { SetLabel } from './setEntryTypes';
+import { SessionExercise } from './SessionExercise';
 
 export interface WorkoutPlanCardProps {
   mode: 'planning';
@@ -15,6 +14,7 @@ export interface WorkoutPlanCardProps {
   canMoveUp?: boolean;
   canMoveDown?: boolean;
   onAddExercise?: () => void;
+  onAddSet?: (programExerciseId: string) => void;
   onEdit: () => void;
   onComment: () => void;
   onMove: (direction: 'up' | 'down') => void;
@@ -26,15 +26,11 @@ function PlanGlassButton({ 'aria-disabled': disabled, ...props }: ButtonHTMLAttr
   return <button type="button" disabled={disabled === true || disabled === 'true'} {...props} />;
 }
 
-const setLabels: Record<SetLabel, string> = {
-  warmup: 'Разминочный', easy: 'Лёгкий', normal: 'Обычный', hard: 'Тяжёлый', drop: 'Дроп-сет',
-};
-
 /** Program template mode deliberately has neither a session nor numeric PLAN/FACT.
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
   day: outline, creatorName, creatorAvatar, readOnly = false, busy = false,
-  canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise,
+  canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -55,24 +51,10 @@ export function WorkoutPlanCard({
     { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: true },
     { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(onDelete) },
   ];
-  const items = exercises.map(({ exercise: item, sets }) => ({
-    id: item.id,
-    content: (
-      <div className="workout-plan-card__exercise">
-        <Text variant="headline">{item.exercise.name}</Text>
-        {item.notes ? <Text variant="footnote" tone="muted">{item.notes}</Text> : null}
-        <List nested>
-          {sets.map((set, index) => <ListItem key={set.id}
-            title={<Text variant="body">Подход {index + 1}</Text>}
-            subtitle={<div className="workout-plan-card__set-details">
-              <Text variant="footnote">{setLabels[set.setLabel ?? 'normal']}</Text>
-              {set.comment ? <Text variant="footnote" tone="muted">{set.comment}</Text> : null}
-              {set.materialLinks?.length ? <Text variant="caption" tone="muted">Материалы: {set.materialLinks.length}</Text> : null}
-              {set.chatLinks?.length ? <Text variant="caption" tone="muted">Обсуждения: {set.chatLinks.length}</Text> : null}
-            </div>} />)}
-        </List>
-      </div>
-    ),
+  const items = exercises.map((item) => ({
+    id: item.exercise.id,
+    content: <SessionExercise mode="program" data={item} surface="transparent" editable={!readOnly}
+      busy={busy} onAddSet={onAddSet ? () => onAddSet(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
     <SortableList items={items} disabled showSeparators={false} onReorder={() => {}}

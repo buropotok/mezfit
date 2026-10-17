@@ -30,7 +30,7 @@ async function fixture(assigned = false) {
     programSets: 'id, realmId, programExerciseId', realms: 'realmId', members: 'id, realmId',
     roles: '[realmId+name]', publicExerciseDefinitions: 'id', publicExerciseCatalogues: 'id',
     coachExerciseDefinitions: 'id' });
-  for (const table of ['trainingPlans', 'programPhases', 'programDays', 'programExercises'])
+  for (const table of ['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'])
     db.table(table).hook('creating', key => key === undefined ? crypto.randomUUID() : undefined);
   const pair = await relationshipMembership('101', '202');
   await db.table('realms').add(pair.realm);
@@ -113,5 +113,43 @@ describe('program exercise authoring', () => {
     await db.table('programDays').update(dayId, { status: 'deprecated' });
     await expect(repo.addDayExercises(planId, dayId, ['0001'])).rejects.toThrow('День не найден');
     expect(await db.table('programExercises').count()).toBe(0);
+  });
+});
+
+describe('program set creation without a result editor', () => {
+  it.each([false, true])('appends empty sets locally with the correct realm owner (assigned: %s)', async (assigned) => {
+    const { db, repo, planId, dayId, pair } = await fixture(assigned);
+    await repo.addDayExercises(planId, dayId, ['0001']);
+    const exercise = (await db.table('programExercises').toArray())[0];
+    await Promise.all([repo.addExerciseSet(planId, dayId, exercise.id), repo.addExerciseSet(planId, dayId, exercise.id)]);
+    db.close(); await db.open();
+    const sets = (await repo.details(planId))?.days?.[0].exercises[0].sets;
+    expect(sets?.map(set => set.position)).toEqual([0, 1]);
+    expect(new Set(sets?.map(set => set.id)).size).toBe(2);
+    expect(sets).toEqual(expect.arrayContaining([expect.objectContaining({
+      programExerciseId: exercise.id, realmId: assigned ? pair.realm.realmId : 'tg:101',
+      owner: assigned ? null : 'tg:101', status: 'active', setLabel: 'normal', comment: null,
+      materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
+      plannedDurationSeconds: null, plannedDistanceMeters: null,
+    })]));
+  });
+
+  it('rejects clients, foreign exercise ownership, wrong days and deleted ancestors without adding a set', async () => {
+    const { db, repo, planId, dayId } = await fixture(true);
+    await repo.addDayExercises(planId, dayId, ['0001']);
+    const exercise = (await db.table('programExercises').toArray())[0];
+    const client = new ProgramManagementRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    await expect(client.addExerciseSet(planId, dayId, exercise.id)).rejects.toThrow('прав');
+    await expect(repo.addExerciseSet(planId, dayId, 'missing')).rejects.toThrow('Упражнение не найдено');
+    await db.table('programExercises').update(exercise.id, { programDayId: 'another-day' });
+    await expect(repo.addExerciseSet(planId, dayId, exercise.id)).rejects.toThrow('Упражнение не найдено');
+    await db.table('programExercises').update(exercise.id, { programDayId: dayId, owner: 'tg:303' });
+    await expect(repo.addExerciseSet(planId, dayId, exercise.id)).rejects.toThrow('Упражнение не найдено');
+    await db.table('programExercises').update(exercise.id, { owner: null, status: 'deprecated' });
+    await expect(repo.addExerciseSet(planId, dayId, exercise.id)).rejects.toThrow('Упражнение не найдено');
+    await db.table('programExercises').update(exercise.id, { status: 'active' });
+    await db.table('programDays').update(dayId, { status: 'deprecated' });
+    await expect(repo.addExerciseSet(planId, dayId, exercise.id)).rejects.toThrow('День не найден');
+    expect(await db.table('programSets').count()).toBe(0);
   });
 });

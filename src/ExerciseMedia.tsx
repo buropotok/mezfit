@@ -3,6 +3,8 @@ import type { ExerciseDefinition } from './api';
 import { exerciseDisplayName } from './exerciseLocalization';
 import { gymKeeperIcons } from './gymKeeperIcons';
 
+export type ExerciseMediaSource = Pick<ExerciseDefinition, 'name' | 'reference_source' | 'reference_key'> & { id: string | number };
+
 export type ExerciseMediaVariant = 'thumbnail' | 'detail' | 'editor';
 
 function iconStyle(url: string): CSSProperties {
@@ -18,13 +20,15 @@ export function ExerciseMedia({
   exercise,
   variant = 'thumbnail',
   decorative = variant !== 'detail',
+  sourceUrl,
 }: {
-  exercise: ExerciseDefinition;
+  exercise: ExerciseMediaSource;
+  sourceUrl?: string | null;
   variant?: ExerciseMediaVariant;
   decorative?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const mediaUrl = exerciseMediaUrl(exercise);
+  const mediaUrl = sourceUrl ?? exerciseMediaUrl(exercise);
 
   useEffect(() => {
     setFailed(false);

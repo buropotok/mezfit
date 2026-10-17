@@ -1,3 +1,4 @@
+import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { ExerciseDefinition } from '../api';
 import type { ExistingSetFact, PreviousSet, SetEntryFactDraft, SetMetrics } from './setEntryTypes';
 
@@ -55,7 +56,7 @@ interface SessionExerciseSharedProps {
   onOpenChat?: () => void;
 }
 
-export type SessionExerciseProps =
+export type WorkoutSessionExerciseProps =
   | (SessionExerciseSharedProps & {
       mode?: 'workout';
       onSaveSet: (input: SaveSessionSetInput) => Promise<void>;
@@ -67,3 +68,18 @@ export type SessionExerciseProps =
       onPlanSetSaved: () => void;
       onSaveSet?: never;
     });
+
+/** Program templates use stable cloud IDs and recommendations, without a result-entry contract. */
+export interface ProgramSessionExerciseProps {
+  mode: 'program';
+  data: CloudProgramDayOutline['exercises'][number];
+  surface?: 'default' | 'transparent';
+  editable?: boolean;
+  busy?: boolean;
+  collapsed?: boolean;
+  defaultCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  onAddSet?: () => void;
+}
+
+export type SessionExerciseProps = WorkoutSessionExerciseProps | ProgramSessionExerciseProps;
