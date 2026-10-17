@@ -193,6 +193,13 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
       .resolves.toMatchObject({ realmId: expect.any(String) });
   });
 
+  it('accepts installed roles from before request scheduling rollout', async () => {
+    const cloud = fakeCloud();
+    for (const role of cloud.installedRoles) delete role.permissions.add;
+    await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
+      .resolves.toMatchObject({ realmId: expect.any(String) });
+  });
+
   it('fails closed on a drifted global role policy', async () => {
     const cloud = fakeCloud();
     cloud.installedRoles[1].permissions.update.sessionSetFacts.push('owner');
