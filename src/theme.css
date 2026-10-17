@@ -65,16 +65,21 @@
 }
 
 :root {
+  --app-active-background: var(--app-background-color, var(--theme-bg));
   --color-bg: var(--theme-bg);
   --color-text: var(--theme-bg-text);
   --color-text-secondary: var(--theme-bg-muted);
+}
+
+:root[data-app-background='schedule'] {
+  --app-active-background: var(--theme-bg);
 }
 
 html,
 body,
 #root {
   color: var(--theme-bg-text);
-  background: var(--theme-bg);
+  background: var(--app-active-background);
 }
 
 #root {
