@@ -88,7 +88,7 @@ export class WorkoutSchedulingRepository {
       if (saved) {
         if (!isWorkoutScheduleRequestRow(saved)
           || Object.entries(intended).some(([key, value]) =>
-            Reflect.get(saved, key) !== value)) throw new Error('SCHEDULE_REQUEST_KEY_CONFLICT');
+            key !== 'owner' && Reflect.get(saved, key) !== value)) throw new Error('SCHEDULE_REQUEST_KEY_CONFLICT');
         return saved.id;
       }
       return this.db.workoutScheduleRequests.add({
