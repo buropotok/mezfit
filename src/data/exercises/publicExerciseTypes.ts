@@ -1,4 +1,7 @@
-/** Canonical JSON 2.0.0, with its original four-character IDs and media metadata. */
+/** Valid exercise result metrics; shared by the new catalogue and workout snapshots. */
+export type ExerciseTrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
+
+/** Canonical public exercise definition, retaining stable IDs and media metadata. */
 export interface PublicExercise {
   id: string;
   name: string;
@@ -8,6 +11,8 @@ export interface PublicExercise {
   subcategory: string;
   subcategory_ru: string;
   movement_type: string;
+  /** Required for v2.1.0 public data; optional for existing v2.0.0 and personal records. */
+  tracking_type?: ExerciseTrackingType;
   muscles: {
     primary: string[];
     secondary: string[];
@@ -60,7 +65,7 @@ export type PublicExerciseCatalogueRow = {
   id: 'mezfit:exercise-catalogue';
   realmId: 'rlm-public';
   owner: null;
-  schemaVersion: '2.0.0';
+  schemaVersion: '2.0.0' | '2.1.0';
   catalogue: 'mezfit.exercise_catalog.ru_anatomy';
   sourceSha256: string;
   exerciseCount: number;
@@ -85,6 +90,9 @@ export function isPublicExerciseRow(value: unknown): value is PublicExerciseRow 
     && typeof row.name_en === 'string' && typeof row.category === 'string'
     && typeof row.subcategory === 'string' && typeof row.subcategory_ru === 'string'
     && typeof row.movement_type === 'string'
+    && (row.tracking_type === undefined
+      || (typeof row.tracking_type === 'string'
+        && ['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight'].includes(row.tracking_type)))
     && typeof row.equipment === 'string' && typeof row.attribution === 'string'
     && typeof row.image === 'string' && typeof row.gif_url === 'string'
     && typeof row.media_id === 'string' && typeof row.created_at === 'string'
@@ -134,7 +142,7 @@ export function isPublicCatalogueRow(value: unknown): value is PublicExerciseCat
   if (!isRecord(value)) return false;
   return value.id === 'mezfit:exercise-catalogue'
     && value.realmId === 'rlm-public' && value.owner === null
-    && value.schemaVersion === '2.0.0'
+    && (value.schemaVersion === '2.0.0' || value.schemaVersion === '2.1.0')
     && value.catalogue === 'mezfit.exercise_catalog.ru_anatomy'
     && typeof value.sourceSha256 === 'string' && /^[a-f0-9]{64}$/.test(value.sourceSha256)
     && value.exerciseCount === 1324 && value.taxonomyCount === 69
