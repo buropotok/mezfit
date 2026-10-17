@@ -36,3 +36,6 @@ export type { LiquidPopoverRenderMode, ResolvedLiquidPopoverRenderMode } from '.
 export { LIQUID_POPOVER_DEFAULTS } from './liquidPopoverGeometry';
 export type { LiquidMotionOptions } from './liquidPopoverGeometry';
 export type { FloatingActionButtonAction } from './MetaballFab';
+
+export { SpeechCloud, type SpeechCloudProps } from './SpeechCloud';
+export { SPEECH_CLOUD_DEFAULTS, type SpeechCloudArea } from './speechCloudGeometry';
