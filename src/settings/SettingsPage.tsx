@@ -31,8 +31,7 @@ import {
   type TypographyRole,
   type TypographySettings,
 } from '../typographySettings';
-import { Button, DatePicker, Divider, Dropdown, GlassSurface, MezfitSidePanel, MezfitTopPanel, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
-import { GlassBackgroundColorControls } from '../ui/GlassBackgroundLab';
+import { Button, DatePicker, Divider, Dropdown, GlassBackgroundColorControls, GlassSurface, MezfitSidePanel, MezfitTopPanel, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
 import { hsvToHex } from '../ui/colorMath';
 import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkedMuscleId, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
@@ -434,7 +433,7 @@ export function SettingsPage({
             Выбранный цвет применяется ко всем экранам, кроме расписания. Изменения сохраняются автоматически.
           </Text>
           <div className="settings-page__background-preview" style={{ backgroundColor: hsvToHex(backgroundSettings) }}>
-            <GlassSurface preset="modalTuned" optics={false} blur={effectiveGlassBlur} className="settings-page__background-preview-glass">
+            <GlassSurface preset="modalTuned" optics={false} blur={effectiveGlassBlur} wrapContent={false} className="settings-page__background-preview-glass">
               <Text variant="headline">Предпросмотр</Text>
               <Text variant="footnote" tone="muted">GlassSurface · modalTuned</Text>
             </GlassSurface>
