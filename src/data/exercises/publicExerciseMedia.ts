@@ -2,7 +2,10 @@ import type { CatalogueExerciseRow } from './coachExerciseTypes';
 import approvedMediaRelease from '../../../shared/approved-exercise-media.json';
 
 /** Only the approved immutable Dexie catalogue may reference the existing media library. */
-const PUBLIC_CATALOGUE_SHA = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
+const APPROVED_PUBLIC_CATALOGUE_SHAS = new Set([
+  '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c', // v2.0
+  'ee0f313fa15dd8a35a7e6cc558ccd6012810128948e8c8a9e6b5381bf6449c66', // prepared v2.1
+]);
 
 type MediaIdentity = Pick<CatalogueExerciseRow, 'id' | 'sourceSha256' | 'gif_url'> & Partial<Pick<CatalogueExerciseRow, 'media_id' | 'copiedFromExerciseId' | 'copiedFromScope'>>;
 
@@ -17,7 +20,7 @@ type MediaIdentity = Pick<CatalogueExerciseRow, 'id' | 'sourceSha256' | 'gif_url
 export function publicExerciseMediaUrl(
   row: MediaIdentity,
 ): string | null {
-  const publicId = /^\d{4}$/.test(row.id) && row.sourceSha256 === PUBLIC_CATALOGUE_SHA
+  const publicId = /^\d{4}$/.test(row.id) && APPROVED_PUBLIC_CATALOGUE_SHAS.has(row.sourceSha256)
     ? row.id : row.sourceSha256 === 'coach-custom'
       && row.copiedFromScope === 'public'
       && typeof row.copiedFromExerciseId === 'string'
