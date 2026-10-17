@@ -8,7 +8,8 @@ import { isProgramExerciseSnapshot } from './workout-foundation-types';
 import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
 import type { CloudProgramDayOutline, CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
 import type { CatalogueExerciseRow } from '../exercises/coachExerciseTypes';
-import { isPublicExerciseRow, isPublicCatalogueRow, isPublicTaxonomyRow, type PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
+import type { PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
+import { PublicExerciseCatalogueRepository } from '../exercises/publicExerciseCatalogue';
 
 export type PhaseStatus = CloudProgramPhaseRow['status'];
 export type InactiveStatus = Exclude<CloudProgramStatus, 'active'>;
@@ -546,19 +547,15 @@ export class ProgramManagementRepository {
       throw new Error('День недоступен');
     const snapshot = day.exercises.find(item => item.exercise.id === exerciseId)?.exercise.exercise;
     if (!snapshot) throw new Error('Упражнение недоступно');
+    const catalogue = await new PublicExerciseCatalogueRepository(this.db).read();
     let row: CatalogueExerciseRow | null = null;
     if (snapshot.catalogueDefinition) {
       row = { ...snapshot.catalogueDefinition, realmId: details.program.realmId, owner: null, sourceSha256: 'program-snapshot' };
-    } else if (snapshot.scope === 'public') {
-      const [candidate, manifest] = await Promise.all([
-        this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId),
-        this.db.publicExerciseCatalogues.get('mezfit:exercise-catalogue'),
-      ]);
-      if (isPublicExerciseRow(candidate) && isPublicCatalogueRow(manifest)
-        && candidate.sourceSha256 === manifest.sourceSha256) row = candidate;
+    } else if (snapshot.scope === 'public' && catalogue.status === 'ready') {
+      row = catalogue.exercises.find(item => item.id === snapshot.exerciseDefinitionId) ?? null;
     }
-    const taxonomy = (await this.db.publicExerciseTaxonomy.toArray()).filter(isPublicTaxonomyRow);
-    return { row, taxonomy, name: snapshot.name, mediaUrl: snapshot.mediaUrl };
+    return { row, taxonomy: catalogue.status === 'ready' ? catalogue.taxonomy : [],
+      name: snapshot.name, mediaUrl: snapshot.mediaUrl };
   }
 
   async deleteDayExercise(id: string, dayId: string, exerciseId: string): Promise<void> {
