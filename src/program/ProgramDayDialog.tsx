@@ -3,12 +3,11 @@ import { List, ListInput } from 'konsta/react';
 import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { programMutationMessage } from './programPresentation';
 
-export function ProgramDayDialog({ title, name = '', category = '', comment = '', commentOnly = false,
+export function ProgramDayDialog({ title, name = '', comment = '', commentOnly = false,
   onSave, onClose,
 }: {
   title: string;
   name?: string;
-  category?: string;
   comment?: string;
   commentOnly?: boolean;
   onSave: (value: { name: string; category: string; comment: string }) => Promise<void>;
@@ -16,7 +15,6 @@ export function ProgramDayDialog({ title, name = '', category = '', comment = ''
 }) {
   const id = useId();
   const [draftName, setDraftName] = useState(name);
-  const [draftCategory, setDraftCategory] = useState(category);
   const [draftComment, setDraftComment] = useState(comment);
   const [required, setRequired] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -31,7 +29,7 @@ export function ProgramDayDialog({ title, name = '', category = '', comment = ''
     setBusy(true);
     setError('');
     try {
-      await onSave({ name: draftName.trim(), category: draftCategory.trim(), comment: draftComment.trim() });
+      await onSave({ name: draftName.trim(), category: '', comment: draftComment.trim() });
       if (alive.current) onClose();
     } catch (reason) {
       if (alive.current) setError(programMutationMessage(reason));
@@ -57,10 +55,6 @@ export function ProgramDayDialog({ title, name = '', category = '', comment = ''
           value={draftName} maxLength={120} disabled={busy}
           error={required ? 'Обязательно к заполнению' : undefined}
           onChange={(event) => { setDraftName(event.target.value); setRequired(false); setError(''); }} />
-        <ListInput floatingLabel inputId={`${id}-category`}
-          label={<label htmlFor={`${id}-category`}>Категория</label>}
-          placeholder="Напр., силовая, кардио, флекс" value={draftCategory} maxLength={120} disabled={busy}
-          onChange={(event) => setDraftCategory(event.target.value)} />
       </>}
     </List>
     {error ? <Text variant="footnote" role="alert">{error}</Text> : null}

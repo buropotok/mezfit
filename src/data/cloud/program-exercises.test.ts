@@ -25,7 +25,8 @@ const row = (id: string, movement_type = 'resistance'): PublicExerciseRow => ({
 async function fixture(assigned = false) {
   const db = new Dexie(`program-exercises-${crypto.randomUUID()}`, { addons: [] });
   databases.push(db);
-  db.version(1).stores({ trainingPlans: 'id, realmId', programPhases: 'id, realmId, trainingPlanId',
+  db.version(1).stores({ localProgramSync: 'id',
+    trainingPlans: 'id, realmId', programPhases: 'id, realmId, trainingPlanId',
     programDays: 'id, realmId, programPhaseId', programExercises: 'id, realmId, programDayId',
     programSets: 'id, realmId, programExerciseId', realms: 'realmId', members: 'id, realmId',
     roles: '[realmId+name]', publicExerciseDefinitions: 'id', publicExerciseCatalogues: 'id',

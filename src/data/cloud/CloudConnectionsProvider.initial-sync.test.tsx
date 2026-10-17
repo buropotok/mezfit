@@ -6,6 +6,10 @@ import { isApprovedAssignedPair } from './assigned-programs';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { CloudConnectionsProvider, useCloudConnections, type CloudContact } from './CloudConnectionsProvider';
 
+vi.mock('./program-sync', () => ({
+  observeProgramSyncConfirmation: vi.fn(() => () => {}),
+  confirmProgramSync: vi.fn(async () => {}),
+}));
 vi.mock('./database', () => ({ createCloudDatabase: vi.fn() }));
 vi.mock('./assigned-programs', () => ({ isApprovedAssignedPair: vi.fn() }));
 vi.mock('dexie', async (importOriginal) => {

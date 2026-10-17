@@ -21,7 +21,7 @@ vi.mock('../ui', async (importOriginal) => {
 
   function TestLiquidPopover({
     trigger,
-    items,
+    items = [],
     label,
     onPresentationChange,
   }: LiquidPopoverProps) {

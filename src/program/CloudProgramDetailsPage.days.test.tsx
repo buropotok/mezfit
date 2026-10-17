@@ -8,6 +8,8 @@ import type { ProgramDetails, ProgramManagementRepository } from '../data/cloud/
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 
+vi.mock('./ProgramSyncControls', () => ({ ProgramSyncControls: () => null }));
+
 const originalAnimate = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'animate');
 const actions = vi.hoisted(() => ({ addDay: undefined as undefined | (() => void), disabled: false }));
 vi.mock('../NavigationShell', () => ({
@@ -22,7 +24,7 @@ vi.mock('../ui', async (importOriginal) => {
   return { ...actual,
     SortableList: ({ items, header, footer }: React.ComponentProps<typeof actual.SortableList>) =>
       <div>{header}{items.map((item) => <div key={item.id}>{item.content}</div>)}{footer}</div>,
-    LiquidPopover: ({ trigger, label, items, onPresentationChange }: React.ComponentProps<typeof actual.LiquidPopover>) =>
+    LiquidPopover: ({ trigger, label, items = [], onPresentationChange }: React.ComponentProps<typeof actual.LiquidPopover>) =>
       <div>{trigger}<div role="menu" aria-label={label}>
         {items.map((item) => <button key={item.id} disabled={item.disabled} onClick={item.onSelect}>{item.label}</button>)}
         <button onClick={() => onPresentationChange?.(false)}>Закрыть меню</button>
@@ -72,14 +74,14 @@ const day: CloudProgramDayOutline = {
 };
 
 describe('days inside program phases', () => {
-  it('skips phase selection for one phase, validates name on save and permits an empty category', async () => {
+  it('skips phase selection for one phase, validates name on save without a category field', async () => {
     const { repo, page } = fixture();
     render(page());
     await screen.findByText('Фаза 1');
     act(() => actions.addDay?.());
     expect(screen.queryByRole('dialog', { name: 'Выберите фазу' })).toBeNull();
     const dialog = screen.getByRole('dialog', { name: 'Добавить день' });
-    expect(within(dialog).getByPlaceholderText('Напр., силовая, кардио, флекс')).toBeTruthy();
+    expect(within(dialog).queryByRole('textbox', { name: 'Категория' })).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить' }));
     expect(within(dialog).getByText('Обязательно к заполнению')).toBeTruthy();
     expect(repo.createDay).not.toHaveBeenCalled();
@@ -98,9 +100,9 @@ describe('days inside program phases', () => {
     fireEvent.click(within(picker).getByRole('button', { name: 'Подтвердить' }));
     const dialog = await screen.findByRole('dialog', { name: 'Добавить день' });
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Название' }), { target: { value: 'Б' } });
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Категория' }), { target: { value: 'Кардио' } });
+    expect(within(dialog).queryByRole('textbox', { name: 'Категория' })).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить' }));
-    await waitFor(() => expect(f.repo.createDay).toHaveBeenCalledWith('plan', 'phase-1', 'Б', 'Кардио'));
+    await waitFor(() => expect(f.repo.createDay).toHaveBeenCalledWith('plan', 'phase-1', 'Б', ''));
     view.unmount();
     const empty = fixture(0);
     render(empty.page());
@@ -108,12 +110,12 @@ describe('days inside program phases', () => {
     expect(actions.disabled).toBe(true);
   });
 
-  it('renders full cards and edits title/category through the day menu', async () => {
+  it('renders program names and edits the day title without category input', async () => {
     const f = fixture();
     f.details.days = [day];
     render(f.page());
     const card = await screen.findByRole('article', { name: 'День День А' });
-    expect(within(card).getByText('Без категории')).toBeTruthy();
+    expect(within(card).getByText(f.details.program.name)).toBeTruthy();
     expect(within(card).queryByRole('progressbar')).toBeNull();
     expect(within(card).getByRole('button', { name: 'Начать' }).hasAttribute('disabled')).toBe(true);
     expect(within(card).getByRole('button', { name: 'Добавить упражнение' }).hasAttribute('disabled')).toBe(false);
@@ -123,9 +125,10 @@ describe('days inside program phases', () => {
     fireEvent.click(within(menu).getByRole('button', { name: 'Переименовать' }));
     fireEvent.click(within(menu).getByRole('button', { name: 'Закрыть меню' }));
     const dialog = await screen.findByRole('dialog', { name: 'Изменить день' });
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Категория' }), { target: { value: 'Флекс' } });
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Название' }), { target: { value: 'Новый день' } });
+    expect(within(dialog).queryByRole('textbox', { name: 'Категория' })).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить' }));
-    await waitFor(() => expect(f.repo.editDay).toHaveBeenCalledWith('plan', 'day-string-id', 'День А', 'Флекс'));
+    await waitFor(() => expect(f.repo.editDay).toHaveBeenCalledWith('plan', 'day-string-id', 'Новый день', ''));
   });
 
   it('keeps assigned cards read-only and omits all authoring controls', async () => {

@@ -14,6 +14,7 @@ async function fixture(assigned = false) {
   const db = new Dexie(`program-days-${crypto.randomUUID()}`, { addons: [] });
   databases.push(db);
   db.version(1).stores({
+    localProgramSync: 'id',
     trainingPlans: 'id, realmId, [realmId+status]',
     programPhases: 'id, realmId, trainingPlanId, [trainingPlanId+status], [realmId+status]',
     programDays: 'id, realmId, programPhaseId', programExercises: 'id, realmId, programDayId',
@@ -58,6 +59,46 @@ async function seedExercise(db: Dexie, day: CloudProgramDayRow) {
 }
 
 describe('local-first program days', () => {
+  it('creates the first phase atomically with personal and assigned programs', async () => {
+    const { db, repo } = await fixture(true);
+    for (const id of [await repo.createPersonal('Личная'), await repo.createAssigned('tg:202', 'Клиентская')]) {
+      const plan = await db.table('trainingPlans').get(id);
+      const phases = await db.table('programPhases').where('trainingPlanId').equals(id).toArray();
+      expect(phases).toHaveLength(1);
+      expect(phases[0]).toMatchObject({ name: 'Фаза 1', realmId: plan.realmId, owner: plan.owner,
+        status: 'draft', position: 0, durationWeeks: 10 });
+      expect(await db.table('localProgramSync').get(id)).toMatchObject({ revision: 1, confirmed: false });
+    }
+  });
+
+  it('rolls back the new program when creating its first phase fails', async () => {
+    const { db, repo } = await fixture();
+    const before = await db.table('trainingPlans').count();
+    db.table('programPhases').hook('creating', () => { throw new Error('NO_SPACE'); });
+    await expect(repo.createPersonal('Не сохранится')).rejects.toThrow('NO_SPACE');
+    expect(await db.table('trainingPlans').count()).toBe(before);
+    expect((await db.table('trainingPlans').toArray()).some(row => row.name === 'Не сохранится')).toBe(false);
+  });
+
+  it('persists exact exercise order and rejects stale, duplicate, foreign and unauthorized lists', async () => {
+    const { db, repo, client, phaseId } = await fixture(true);
+    const dayId = await repo.createDay('plan', phaseId, 'День');
+    const day = await db.table('programDays').get(dayId);
+    await seedExercise(db, day);
+    const first = await db.table('programExercises').get('exercise');
+    await db.table('programExercises').add({ ...first, id: 'second', position: 1 });
+    await repo.reorderDayExercises('plan', dayId, ['second', 'exercise']);
+    const outline = (await repo.details('plan'))?.days?.find(row => row.day.id === dayId);
+    expect(outline?.exercises.map(row => row.exercise.id)).toEqual(['second', 'exercise']);
+    const revision = await db.table('localProgramSync').get('plan');
+    for (const order of [['exercise'], ['exercise', 'exercise'], ['exercise', 'foreign']])
+      await expect(repo.reorderDayExercises('plan', dayId, order)).rejects.toThrow();
+    await expect(client.reorderDayExercises('plan', dayId, ['exercise', 'second'])).rejects.toThrow();
+    expect(await db.table('localProgramSync').get('plan')).toEqual(revision);
+    const unchanged = (await repo.details('plan'))?.days?.find(row => row.day.id === dayId);
+    expect(unchanged?.exercises.map(row => row.exercise.id)).toEqual(['second', 'exercise']);
+  });
+
   it('validates required names, appends after gaps and persists category/comment independently', async () => {
     const { db, repo, phaseId } = await fixture();
     await expect(repo.createDay('plan', phaseId, '  ')).rejects.toThrow();

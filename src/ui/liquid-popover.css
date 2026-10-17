@@ -82,3 +82,18 @@
   color: var(--ui-color-surface-text);
   background: rgb(255 255 255 / 14%);
 }
+
+.ui-liquid-popover--text,
+.ui-liquid-popover__measure--text {
+  box-sizing: border-box;
+  width: min(20rem, calc(100vw - 2rem));
+  min-width: 0;
+}
+.ui-liquid-popover__measure--text,
+.ui-liquid-popover__native--text { padding: 0; }
+.ui-liquid-popover__text {
+  display: block;
+  padding: var(--ui-space-4);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

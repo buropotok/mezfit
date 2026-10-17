@@ -6,6 +6,8 @@ import type { ProgramDetails, ProgramManagementRepository } from '../data/cloud/
 import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
 
 // Exercise the page/dialog ownership without waiting for the popover's optical animation.
+vi.mock('./ProgramSyncControls', () => ({ ProgramSyncControls: () => null }));
+
 vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
   return {

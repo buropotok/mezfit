@@ -8,6 +8,10 @@ import {
   type CloudContact,
 } from './CloudConnectionsProvider';
 
+vi.mock('./program-sync', () => ({
+  observeProgramSyncConfirmation: vi.fn(() => () => {}),
+  confirmProgramSync: vi.fn(async () => {}),
+}));
 vi.mock('./database', () => ({ createCloudDatabase: vi.fn() }));
 vi.mock('../../api', () => ({ syncCloudContactProfile: vi.fn(async () => false) }));
 vi.mock('dexie', async (importOriginal) => {

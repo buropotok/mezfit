@@ -12,6 +12,8 @@ import {
   type CSSProperties,
   type RefObject,
 } from 'react';
+import { Text } from './primitives';
+import { paintLiquidPopoverText } from './liquidPopoverText';
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName } from './Icon';
 import { getUiIconAsset } from './icons/registry';
@@ -47,10 +49,12 @@ export type LiquidPopoverItem = {
   'aria-current'?: 'page' | 'date';
 };
 
-export type LiquidPopoverLayout = 'menu' | 'grid';
+export type LiquidPopoverLayout = 'menu' | 'grid' | 'text';
+const EMPTY_ITEMS: readonly LiquidPopoverItem[] = [];
 export type LiquidPopoverRole = 'menu' | 'dialog';
 
 type LiquidPresentationSnapshot = {
+  text?: string;
   items: readonly LiquidPopoverItem[];
   layout: LiquidPopoverLayout;
   columns: number;
@@ -90,7 +94,9 @@ export interface LiquidPopoverProps {
   trigger: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>;
   /** The whole originating surface, e.g. Navbar's right capsule or a circular button. */
   triggerRef: RefObject<HTMLElement | null>;
-  items: readonly LiquidPopoverItem[];
+  /** Plain text uses a non-interactive window with automatic multiline layout. */
+  text?: string;
+  items?: readonly LiquidPopoverItem[];
   label?: string;
   preset?: GlassPresetName;
   optics?: boolean;
@@ -157,6 +163,10 @@ function paintContentTexture(
   if (!context) return false;
   canvas.width = Math.max(1, Math.ceil(bounds.width));
   canvas.height = Math.max(1, Math.ceil(bounds.height));
+  if (layout === 'text') {
+    const textElement = container.querySelector<HTMLElement>('.ui-liquid-popover__text');
+    return textElement ? paintLiquidPopoverText(context, textElement, bounds) : false;
+  }
   const containerStyle = getComputedStyle(container);
   for (const item of items) {
     const row = rows.get(item.id);
@@ -230,19 +240,22 @@ export function LiquidPopover({
   onOpenChange,
   trigger,
   triggerRef,
-  items,
-  label = 'Меню',
+  items = EMPTY_ITEMS,
+  text,
+  label = text === undefined ? 'Меню' : 'Информация',
   triggerActivation = 'automatic',
   preset = 'frosted',
   optics = false,
-  layout = 'menu',
+  layout: requestedLayout = 'menu',
   columns = 4,
-  role = 'menu',
+  role: requestedRole,
   scrollActiveIntoView = false,
   onPresentationChange,
   motion,
   renderMode = 'auto',
 }: LiquidPopoverProps) {
+  const layout = text === undefined ? requestedLayout : 'text';
+  const role = requestedRole ?? (layout === 'text' ? 'dialog' : 'menu');
   const id = useId().replace(/:/g, ''),
     clipId = `liquid-clip-${id}`;
   const measureRef = useRef<HTMLDivElement>(null),
@@ -279,6 +292,7 @@ export function LiquidPopover({
   const currentPresentation = useMemo<LiquidPresentationSnapshot>(
     () => ({
       items,
+      text,
       layout,
       columns: resolvedColumns,
       role,
@@ -287,7 +301,7 @@ export function LiquidPopover({
       optics,
       options,
     }),
-    [items, label, layout, optics, options, preset, resolvedColumns, role],
+    [items, text, label, layout, optics, options, preset, resolvedColumns, role],
   );
   const presentationRef = useRef<LiquidPresentationSnapshot>(currentPresentation),
     useCurrentPresentation = !presented || (isOpen && settled),
@@ -306,6 +320,7 @@ export function LiquidPopover({
   }, [scrollActiveIntoView]);
   const contentKey = JSON.stringify([
     layout,
+    text,
     resolvedColumns,
     items.map((item) => [
       item.id,
@@ -318,6 +333,7 @@ export function LiquidPopover({
   ]);
   const presentationKey = JSON.stringify([
     presentation.layout,
+    presentation.text,
     presentation.columns,
     presentation.preset,
     presentation.optics,
@@ -741,12 +757,12 @@ export function LiquidPopover({
     <>
       <div
         ref={measureRef}
-        className={`ui-liquid-popover__measure${layout === 'grid' ? ' ui-liquid-popover__measure--grid' : ''}`}
+        className={`ui-liquid-popover__measure${layout === 'grid' ? ' ui-liquid-popover__measure--grid' : layout === 'text' ? ' ui-liquid-popover__measure--text' : ''}`}
         style={gridStyle}
         aria-hidden="true"
         inert
       >
-        {items.map((item) => (
+        {layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{text}</Text> : items.map((item) => (
           <Fragment key={item.id}>
             {item.dividerBefore ? <div className="ui-menu-divider" /> : null}
             <div
@@ -790,7 +806,7 @@ export function LiquidPopover({
         role={presentation.role}
         aria-modal={presentation.role === 'dialog' ? 'true' : undefined}
         aria-label={presentation.label}
-        className={`ui-liquid-popover${presentation.layout === 'grid' ? ' ui-liquid-popover--grid' : ''}`}
+        className={`ui-liquid-popover${presentation.layout === 'grid' ? ' ui-liquid-popover--grid' : presentation.layout === 'text' ? ' ui-liquid-popover--text' : ''}`}
         style={presentationGridStyle}
       >
         <GlassSurface
@@ -824,11 +840,11 @@ export function LiquidPopover({
           />
           <div
             ref={nativeRef}
-            className={`ui-liquid-popover__native${presentation.layout === 'grid' ? ' ui-liquid-popover__native--grid' : ''}`}
+            className={`ui-liquid-popover__native${presentation.layout === 'grid' ? ' ui-liquid-popover__native--grid' : presentation.layout === 'text' ? ' ui-liquid-popover__native--text' : ''}`}
             style={presentationGridStyle}
             inert={!settled}
           >
-            {presentation.items.map((item) => (
+            {presentation.layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{presentation.text}</Text> : presentation.items.map((item) => (
               <Fragment key={item.id}>
                 {item.dividerBefore ? (
                   <div role="separator" className="ui-menu-divider" />

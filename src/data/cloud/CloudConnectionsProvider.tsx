@@ -1,3 +1,4 @@
+import { confirmProgramSync, observeProgramSyncConfirmation } from './program-sync';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
@@ -266,6 +267,11 @@ export function CloudConnectionsProvider({
     return () => subscription?.unsubscribe();
   }, [db]);
 
+  useEffect(() => observeProgramSyncConfirmation(db, (reason) => {
+    setSyncStatus('error');
+    setSyncError(reason instanceof Error ? reason.message : 'Не удалось подтвердить синхронизацию программ');
+  }), [db]);
+
   // Profile writes are privileged and change-only; failures must not block offline lists.
   useEffect(() => {
     let active = true;
@@ -311,6 +317,7 @@ export function CloudConnectionsProvider({
       // Contacts-only pull does not retry queued PLAN writes.
       await db.cloud.sync({ purpose: 'push', wait: true });
       await db.cloud.sync({ purpose: 'pull', wait: true });
+      await confirmProgramSync(db, () => alive.current);
       // Wait for db.cloud.syncState to confirm 'in-sync'; do not fabricate success.
     } catch (reason) {
       setSyncStatus('error');

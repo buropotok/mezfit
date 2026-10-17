@@ -93,7 +93,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     {days.map((item, index) => <div key={item.day.id}
       style={{ position: 'relative', zIndex: days.length - index }}
       ref={(node) => { if (node) nodes.current.set(item.day.id, node); else nodes.current.delete(item.day.id); }}>
-      <WorkoutSessionCard mode="planning" day={item} creatorName={creatorName} creatorAvatar={creatorAvatar}
+      <WorkoutSessionCard mode="planning" day={item} programName={program.name}
+        onReorderExercises={(ids) => { void run(() => repository.reorderDayExercises(program.id, item.day.id, ids)); }} creatorName={creatorName} creatorAvatar={creatorAvatar}
         readOnly={readOnly} busy={busy || exerciseDayId !== null} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
@@ -109,11 +110,11 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       dayId={exerciseDayId} catalogueRole={viewerRole} onNavigationContextChange={onNavigationContextChange} onClose={() => setExerciseDayId(null)} /> : null}
     {dialog && selected && dialog.kind !== 'delete' ? <ProgramDayDialog key={`${dialog.kind}:${selected.id}`}
       title={dialog.kind === 'edit' ? 'Изменить день' : 'Комментарий к тренировке'}
-      name={selected.name} category={selected.category ?? ''} comment={selected.comment ?? ''}
+      name={selected.name} comment={selected.comment ?? ''}
       commentOnly={dialog.kind === 'comment'} onClose={() => setDialog(null)}
       onSave={(value) => dialog.kind === 'comment'
         ? repository.commentDay(program.id, selected.id, value.comment)
-        : repository.editDay(program.id, selected.id, value.name, value.category)} /> : null}
+        : repository.editDay(program.id, selected.id, value.name, selected.category ?? '')} /> : null}
     <PlanActionDialog onClose={() => setDialog(null)} dialog={dialog?.kind === 'delete' && selected ? {
       kind: 'confirm', title: 'Удалить день?', confirmLabel: 'Удалить', destructive: true,
       description: 'День будет удалён из программы. История выполненных тренировок сохранится.',

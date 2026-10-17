@@ -16,6 +16,7 @@ async function fixture() {
   const db = new Dexie(`phase-observation-${crypto.randomUUID()}`, { addons: [] });
   databases.push(db);
   db.version(1).stores({
+    localProgramSync: 'id',
     trainingPlans: 'id, realmId',
     programPhases: 'id, realmId, trainingPlanId',
     programDays: 'id, realmId, programPhaseId',

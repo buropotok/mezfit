@@ -1,3 +1,7 @@
+import type { NavigationContext } from '../NavigationShell';
+import { ProgramSyncControls } from './ProgramSyncControls';
+import type { ProgramManagementRepository } from '../data/cloud/program-management';
+import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { planAuthorUserId } from '../data/cloud/program-ownership';
@@ -7,12 +11,16 @@ import { Avatar, GlassSurface, Text } from '../ui';
 
 export interface ProgramActor { name: string; photoUrl?: string | null }
 
-export function ProgramSummary({ program, phaseCount, actorUserId, actor, showName = false }: {
+export function ProgramSummary({ program, phaseCount, actorUserId, actor, showName = false, repository, syncStatus, onSync, onNavigationContextChange }: {
   program: CloudTrainingPlanRow;
   phaseCount: number;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
   actorUserId: string;
   actor?: ProgramActor;
   showName?: boolean;
+  repository: ProgramManagementRepository;
+  syncStatus: CloudSyncStatus;
+  onSync: () => Promise<void>;
 }) {
   const cloud = useCloudConnections();
   const people = [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])];
@@ -40,6 +48,8 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
           <Text variant="body">Атлет: {athlete.name}</Text>
         </div>
         <Text variant="body">Фаз: {phaseCount}</Text>
+        <ProgramSyncControls key={program.id} repository={repository} planId={program.id}
+          syncStatus={syncStatus} onSync={onSync} onNavigationContextChange={onNavigationContextChange} />
       </div>
     </GlassSurface>
   );

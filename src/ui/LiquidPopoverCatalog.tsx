@@ -2,7 +2,7 @@ import { forwardRef, useRef, useState, type ButtonHTMLAttributes } from 'react';
 import { GlassSurface } from './GlassSurface';
 import { LiquidPopover, type LiquidPopoverItem } from './LiquidPopover';
 import { MezfitNavbar } from './MezfitNavbar';
-import { Divider, Surface, Text } from './primitives';
+import { Divider, IconButton, Surface, Text } from './primitives';
 import { LIQUID_POPOVER_DEFAULTS, type LiquidMotionOptions } from './liquidPopoverGeometry';
 import { resolveLiquidPopoverRenderMode, type LiquidPopoverRenderMode } from './liquidPopoverRenderMode';
 
@@ -64,6 +64,8 @@ function RoundPopoverModeExample({
 }
 
 export function LiquidPopoverCatalog() {
+  const textRef = useRef<HTMLButtonElement>(null);
+  const [textOpen, setTextOpen] = useState(false);
   const navbarRef = useRef<HTMLElement>(null);
   const [navbarOpen, setNavbarOpen] = useState(false),
     [navbarPresented, setNavbarPresented] = useState(false),
@@ -101,6 +103,13 @@ export function LiquidPopoverCatalog() {
         Один компонент: правая капсула Navbar и круглая кнопка. Размер меню
         задаётся содержимым.
       </Text>
+      <div className="ui-kit-row">
+        <Text variant="body">Текстовая подсказка</Text>
+        <LiquidPopover isOpen={textOpen} onOpenChange={setTextOpen} triggerRef={textRef}
+          text={'Liquid Popover может просто показывать текст.\nПереносы строк и длинные слова обрабатываются автоматически.'}
+          label="Текстовая подсказка"
+          trigger={<IconButton ref={textRef} icon="info-circle" label="Открыть текстовую подсказку" />} />
+      </div>
       <MezfitNavbar
         level={1}
         identity={{ title: 'Живое меню', icon: 'users' }}

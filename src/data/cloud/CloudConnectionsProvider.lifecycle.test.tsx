@@ -6,6 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { CloudConnectionsProvider } from './CloudConnectionsProvider';
 
+vi.mock('./program-sync', () => ({
+  observeProgramSyncConfirmation: vi.fn(() => () => {}),
+  confirmProgramSync: vi.fn(async () => {}),
+}));
 vi.mock('./database', () => ({ createCloudDatabase: vi.fn() }));
 vi.mock('dexie', async (importOriginal) => {
   const actual = await importOriginal<typeof import('dexie')>();

@@ -315,7 +315,7 @@ export function CloudProgramDetailsPage({
 
   const syncNotice = <PlanSyncNotice cloudStatus={cloudStatus} cloudError={cloudError}
     syncStatus={syncStatus} syncError={syncError}
-    onRetryCloud={onRetryCloud} onRetrySync={onRetrySync}
+    onRetryCloud={onRetryCloud} onRetrySync={onRetrySync} onNavigationContextChange={onNavigationContextChange}
     localError={error} onRetryLocal={() => setRetryKey((n) => n + 1)} />;
 
   if (loading) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
@@ -338,7 +338,8 @@ export function CloudProgramDetailsPage({
         </Badge>
       </div>
       <ProgramSummary program={details.program} phaseCount={details.phases.length}
-        actorUserId={repository.actorUserId} actor={actor} />
+        actorUserId={repository.actorUserId} actor={actor} repository={repository}
+        syncStatus={syncStatus} onSync={onRetrySync} onNavigationContextChange={onNavigationContextChange} />
       {coachGuidance && details.program.clientUserId !== null ? (
         <Text variant="footnote" tone="muted" className="cloud-plan-visibility-tip">
           Клиент видит опубликованные программы и их фазы, кроме черновиков.
