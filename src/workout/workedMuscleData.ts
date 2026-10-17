@@ -343,3 +343,89 @@ export const WORKED_MUSCLE_VIEWS = {
 } as const;
 
 export type WorkedMuscleView = keyof typeof WORKED_MUSCLE_VIEWS;
+export type WorkedMuscleSex = 'male' | 'female';
+
+/** Female assets use the same canonical muscle IDs and separate pixel geometry. */
+export const FEMALE_WORKED_MUSCLE_VIEWS = {
+  "front": {
+    "width": 1229,
+    "height": 1536,
+    "manifest": "anatomy/female/front/manifest.json",
+    "neutral": "anatomy/female/front/neutral.png",
+    "colorAtlas": "anatomy/female/front/color-atlas.png",
+    "glowAtlas": "anatomy/female/front/glow-atlas.png",
+    "mask": "anatomy/female/front/mask.mezmask",
+    "indices": {
+      "1": "pectoralis_clavicular",
+      "2": "pectoralis_sternal",
+      "3": "pectoralis_lower",
+      "4": "serratus_anterior",
+      "5": "deltoid_anterior",
+      "6": "deltoid_lateral",
+      "7": "biceps_long_head",
+      "8": "biceps_short_head",
+      "9": "brachialis",
+      "10": "brachioradialis",
+      "11": "forearm_flexors",
+      "12": "forearm_extensors",
+      "13": "forearm_grip",
+      "14": "rectus_abdominis",
+      "15": "rectus_abdominis_lower_zone",
+      "16": "obliques",
+      "17": "iliopsoas",
+      "18": "rectus_femoris",
+      "19": "vastus_lateralis",
+      "20": "vastus_medialis",
+      "21": "hip_adductors",
+      "22": "tibialis_anterior",
+      "23": "peroneals",
+      "24": "ankle_stabilizers"
+    }
+  },
+  "rear": {
+    "width": 1086,
+    "height": 1448,
+    "manifest": "anatomy/female/rear/manifest.json",
+    "neutral": "anatomy/female/rear/neutral.png",
+    "colorAtlas": "anatomy/female/rear/color-atlas.png",
+    "glowAtlas": "anatomy/female/rear/glow-atlas.png",
+    "mask": "anatomy/female/rear/mask.mezmask",
+    "indices": {
+      "1": "latissimus_dorsi",
+      "2": "rhomboids",
+      "3": "trapezius_upper",
+      "4": "trapezius_middle",
+      "5": "trapezius_lower",
+      "6": "erector_spinae",
+      "7": "teres_major",
+      "8": "levator_scapulae",
+      "9": "deltoid_posterior",
+      "10": "infraspinatus",
+      "11": "teres_minor",
+      "12": "supraspinatus",
+      "13": "triceps_long_head",
+      "14": "triceps_lateral_head",
+      "15": "triceps_medial_head",
+      "16": "forearm_extensors",
+      "17": "forearm_pronators",
+      "18": "forearm_grip",
+      "19": "quadratus_lumborum",
+      "20": "gluteus_maximus",
+      "21": "gluteus_medius",
+      "22": "biceps_femoris_long",
+      "23": "biceps_femoris_short",
+      "24": "semitendinosus",
+      "25": "semimembranosus",
+      "26": "gastrocnemius_medial",
+      "27": "gastrocnemius_lateral",
+      "28": "soleus",
+      "29": "ankle_stabilizers",
+      "30": "cervical_extensors"
+    }
+  }
+} as const;
+
+export function getWorkedMuscleViewConfig(sex: WorkedMuscleSex, view: WorkedMuscleView) {
+  return sex === 'male' ? WORKED_MUSCLE_VIEWS[view] : FEMALE_WORKED_MUSCLE_VIEWS[view];
+}
+
