@@ -479,6 +479,26 @@ export class ProgramManagementRepository {
     });
   }
 
+  async addExerciseSet(id: string, dayId: string, exerciseId: string): Promise<void> {
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
+      'programSets'], async () => {
+      const current = await this.currentParent(plan);
+      await this.currentDay(current, dayId);
+      const exercise = await this.db.programExercises.get(exerciseId);
+      if (!exercise || exercise.programDayId !== dayId || !belongsToPlan(exercise, current)
+        || exercise.status !== 'active') throw new Error('Упражнение не найдено');
+      const sets = await this.db.programSets.where('programExerciseId').equals(exerciseId).toArray();
+      const position = sets.filter(row => belongsToPlan(row, current))
+        .reduce((max, row) => Math.max(max, row.position), -1) + 1;
+      await this.db.programSets.add({ realmId: current.realmId, owner: this.ownerForRealm(current.realmId),
+        programExerciseId: exerciseId, position, status: 'active', setLabel: 'normal', comment: null,
+        materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
+        plannedDurationSeconds: null, plannedDistanceMeters: null });
+    });
+  }
+
   async editDay(id: string, dayId: string, rawName: string, rawCategory: string): Promise<void> {
     const name = validName(rawName), category = rawCategory.trim();
     if (category.length > 120) throw new Error('Категория должна содержать не более 120 символов');

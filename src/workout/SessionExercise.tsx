@@ -5,7 +5,7 @@ import { exerciseDisplayName } from '../exerciseLocalization';
 import { Badge, GlassSurface, Icon, IconButton, List, ListItem, Text } from '../ui';
 import { SetEntry } from './SetEntry';
 import type { SetEntryProgramIdentity, SetMetrics } from './setEntryTypes';
-import type { SessionExerciseProps, SessionExerciseSetData } from './sessionExerciseTypes';
+import type { ProgramSessionExerciseProps, SessionExerciseProps, SessionExerciseData, SessionExerciseSetData, WorkoutSessionExerciseProps } from './sessionExerciseTypes';
 import './session-exercise.css';
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -91,7 +91,7 @@ export function formatSessionSetMetrics(metrics: SetMetrics | null, trackingType
   }
 }
 
-function exerciseMeta(data: SessionExerciseProps['data']): string {
+function exerciseMeta(data: SessionExerciseData): string {
   const parts: string[] = [];
   if (data.exercise.category_code) parts.push(categoryLabels[data.exercise.category_code]);
   if (data.exercise.equipment_code) parts.push(equipmentLabels[data.exercise.equipment_code]);
@@ -119,52 +119,51 @@ function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, pl
   );
 }
 
-export function SessionExercise(props: SessionExerciseProps) {
-  const {
-    context,
-    data,
-    collapsed: controlledCollapsed,
-    defaultCollapsed = false,
-    surface = 'default',
-    editable = true,
-    onAddSet,
-    onCollapsedChange,
-    onOpenExerciseMenu,
-    onOpenHistory,
-    onOpenChat,
-  } = props;
+interface SessionExerciseLayoutProps {
+  exerciseId: string | number;
+  exerciseName: string;
+  media: ReactNode;
+  subtitle: string;
+  badge?: ReactNode;
+  notes: string | null;
+  surface?: 'default' | 'transparent';
+  collapsed?: boolean;
+  defaultCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  onOpenExerciseMenu?: () => void;
+  onAddSet?: () => void;
+  busy?: boolean;
+  summary?: ReactNode;
+  editor?: ReactNode;
+  children: ReactNode;
+}
+
+/** One layout owns the media, disclosure, set list and glass add-set control in both modes. */
+function SessionExerciseLayout({
+  exerciseId, exerciseName, media, subtitle, badge, notes, surface = 'default',
+  collapsed: controlledCollapsed, defaultCollapsed = false, onCollapsedChange,
+  onOpenExerciseMenu, onAddSet, busy = false, summary, editor, children,
+}: SessionExerciseLayoutProps) {
   const bodyId = useId();
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const collapsed = controlledCollapsed ?? internalCollapsed;
-  const [selectedSessionSetId, setSelectedSessionSetId] = useState<number | null>(null);
-  const renderedSets = props.mode === 'plan' ? [...data.sets, props.createSet] : data.sets;
-  const completedSets = data.sets.filter((set) => set.status === 'completed').length;
-  const totalSets = data.sets.length;
-  const progress = totalSets === 0 ? 0 : Math.round((completedSets / totalSets) * 100);
-  const exerciseName = exerciseDisplayName(data.exercise);
-  const selectedSet = selectedSessionSetId === null
-    ? null
-    : renderedSets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
-  const programIdentity: SetEntryProgramIdentity = context.program
-    ? { programId: context.program.id, programName: context.program.name }
-    : { programId: null, programName: null };
   const toggleCollapsed = () => {
     const nextCollapsed = !collapsed;
     if (controlledCollapsed === undefined) setInternalCollapsed(nextCollapsed);
     onCollapsedChange?.(nextCollapsed);
   };
-
   return (
-    <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={data.sessionExerciseId}>
+    <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={typeof exerciseId === 'number' ? exerciseId : undefined}
+      data-program-exercise-id={typeof exerciseId === 'string' ? exerciseId : undefined}>
       <div className="session-exercise__header">
         <List className="session-exercise__header-list">
           <ListItem
             className="session-exercise__header-toggle"
             leadingShape="square"
-            leading={<ExerciseMedia exercise={data.exercise} variant="thumbnail" />}
+            leading={media}
             title={exerciseName}
-            subtitle={exerciseMeta(data)}
-            trailing={<Badge color="blue">{completedSets} / {totalSets}</Badge>}
+            subtitle={subtitle}
+            trailing={badge}
             aria-expanded={!collapsed}
             aria-controls={bodyId}
             onClick={toggleCollapsed}
@@ -175,7 +174,7 @@ export function SessionExercise(props: SessionExerciseProps) {
             className="session-exercise__menu"
             data-no-dnd
             label="Опции упражнения"
-            onClick={() => onOpenExerciseMenu(data.sessionExerciseId)}
+            onClick={onOpenExerciseMenu}
           >
             <SharedIcon name="dots-vertical" />
           </IconButton>
@@ -193,52 +192,18 @@ export function SessionExercise(props: SessionExerciseProps) {
       </div>
 
       <div id={bodyId} className="session-exercise__body" hidden={collapsed}>
-        {data.notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{data.notes}</Text> : null}
+        {notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{notes}</Text> : null}
 
-        <List className="session-exercise__sets" divider="inset">
-          {renderedSets.map((set) => {
-            const setNumber = set.position + 1;
-            const planMode = props.mode === 'plan';
-            const metrics = formatSessionSetMetrics(
-              planMode ? set.plan : set.fact?.metrics ?? null,
-              data.exercise.tracking_type,
-            );
-            const canOpenSet = planMode ? set.sourceProgramSetId === null : editable;
-            return (
-              <ListItem
-                key={set.sessionSetId}
-                className="session-exercise__set-row"
-                leading={<SetStatus set={set} />}
-                title={(
-                  <span className="session-exercise__set-title">
-                    <span>Подход {setNumber}</span>
-                    <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
-                      {metrics ?? (planMode ? 'ввести план' : 'ввести факт')}
-                    </span>
-                  </span>
-                )}
-                subtitle={setSubtitle(set, data.exercise.tracking_type, planMode)}
-                trailing={(
-                  <span className="session-exercise__set-trailing">
-                    {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
-                    {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
-                  </span>
-                )}
-                aria-label={canOpenSet ? `Открыть подход ${setNumber}` : undefined}
-                onClick={canOpenSet ? () => setSelectedSessionSetId(set.sessionSetId) : undefined}
-              />
-            );
-          })}
-        </List>
-
-        {props.mode !== 'plan' && editable && onAddSet ? (
+        {children}
+        {onAddSet ? (
           <div className="session-exercise__add-set">
             <button
               type="button"
               className="session-exercise__add-set-hit"
               data-no-dnd
               aria-label="Добавить подход"
-              onClick={() => onAddSet(data.sessionExerciseId)}
+              onClick={onAddSet}
+              disabled={busy}
             >
               <GlassSurface
                 component="span"
@@ -254,22 +219,103 @@ export function SessionExercise(props: SessionExerciseProps) {
           </div>
         ) : null}
 
+        {summary}
+      </div>
+      {editor}
+    </article>
+  );
+}
+
+const programSetLabels = {
+  warmup: 'Разминочный', easy: 'Лёгкий', normal: 'Обычный', hard: 'Тяжёлый', drop: 'Дроп-сет',
+};
+
+function ProgramExercise(props: ProgramSessionExerciseProps) {
+  const { exercise: item, sets } = props.data;
+  const snapshot = item.exercise;
+  return (
+    <SessionExerciseLayout
+      exerciseId={item.id} exerciseName={snapshot.name}
+      media={<ExerciseMedia exercise={{ id: snapshot.exerciseDefinitionId, name: snapshot.name,
+        reference_source: null, reference_key: null }} sourceUrl={snapshot.mediaUrl} variant="thumbnail" />}
+      subtitle={formatSetCount(sets.length)} notes={item.notes}
+      surface={props.surface} collapsed={props.collapsed} defaultCollapsed={props.defaultCollapsed}
+      onCollapsedChange={props.onCollapsedChange}
+      onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
+    >
+      <List className="session-exercise__sets" divider="inset">
+        {sets.map((set, index) => (
+          <ListItem key={set.id} className="session-exercise__set-row"
+            leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
+            title={<Text variant="body">Подход {index + 1}</Text>}
+            subtitle={<span className="session-exercise__set-recommendations">
+              <Text variant="footnote">{programSetLabels[set.setLabel ?? 'normal']}</Text>
+              {set.comment ? <Text variant="footnote" tone="muted">{set.comment}</Text> : null}
+              {set.materialLinks?.length ? <Text variant="caption" tone="muted">Материалы: {set.materialLinks.length}</Text> : null}
+              {set.chatLinks?.length ? <Text variant="caption" tone="muted">Обсуждения: {set.chatLinks.length}</Text> : null}
+            </span>}
+          />
+        ))}
+      </List>
+    </SessionExerciseLayout>
+  );
+}
+
+export function SessionExercise(props: SessionExerciseProps) {
+  return props.mode === 'program' ? <ProgramExercise {...props} /> : <WorkoutExercise {...props} />;
+}
+
+function WorkoutExercise(props: WorkoutSessionExerciseProps) {
+  const {
+    context,
+    data,
+    collapsed: controlledCollapsed,
+    defaultCollapsed = false,
+    surface = 'default',
+    editable = true,
+    onAddSet,
+    onCollapsedChange,
+    onOpenExerciseMenu,
+    onOpenHistory,
+    onOpenChat,
+  } = props;
+  const [selectedSessionSetId, setSelectedSessionSetId] = useState<number | null>(null);
+  const renderedSets = props.mode === 'plan' ? [...data.sets, props.createSet] : data.sets;
+  const completedSets = data.sets.filter((set) => set.status === 'completed').length;
+  const totalSets = data.sets.length;
+  const progress = totalSets === 0 ? 0 : Math.round((completedSets / totalSets) * 100);
+  const exerciseName = exerciseDisplayName(data.exercise);
+  const selectedSet = selectedSessionSetId === null
+    ? null
+    : renderedSets.find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
+  const programIdentity: SetEntryProgramIdentity = context.program
+    ? { programId: context.program.id, programName: context.program.name }
+    : { programId: null, programName: null };
+
+  return (
+    <SessionExerciseLayout
+      exerciseId={data.sessionExerciseId}
+      exerciseName={exerciseName}
+      media={<ExerciseMedia exercise={data.exercise} variant="thumbnail" />}
+      subtitle={exerciseMeta(data)}
+      badge={<Badge color="blue">{completedSets} / {totalSets}</Badge>}
+      notes={data.notes}
+      surface={surface}
+      collapsed={controlledCollapsed}
+      defaultCollapsed={defaultCollapsed}
+      onCollapsedChange={onCollapsedChange}
+      onOpenExerciseMenu={onOpenExerciseMenu ? () => onOpenExerciseMenu(data.sessionExerciseId) : undefined}
+      onAddSet={props.mode !== 'plan' && editable && onAddSet ? () => onAddSet(data.sessionExerciseId) : undefined}
+      summary={(
         <div className="session-exercise__summary">
-          <div
-            className="session-exercise__progress"
-            role="progressbar"
-            aria-label="Выполнение упражнения"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-          >
+          <div className="session-exercise__progress" role="progressbar" aria-label="Выполнение упражнения"
+            aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
             <span className="session-exercise__progress-value" style={{ width: `${progress}%` }} />
           </div>
           <Text variant="caption" tone="muted">{progress}% выполнено</Text>
         </div>
-      </div>
-
-      {selectedSet ? (
+      )}
+      editor={selectedSet ? (
         props.mode === 'plan' ? (
           <SetEntry
             mode="plan"
@@ -326,6 +372,42 @@ export function SessionExercise(props: SessionExerciseProps) {
           />
         )
       ) : null}
-    </article>
+    >
+      <List className="session-exercise__sets" divider="inset">
+        {renderedSets.map((set) => {
+          const setNumber = set.position + 1;
+          const planMode = props.mode === 'plan';
+          const metrics = formatSessionSetMetrics(
+            planMode ? set.plan : set.fact?.metrics ?? null,
+            data.exercise.tracking_type,
+          );
+          const canOpenSet = planMode ? set.sourceProgramSetId === null : editable;
+          return (
+            <ListItem
+              key={set.sessionSetId}
+              className="session-exercise__set-row"
+              leading={<SetStatus set={set} />}
+              title={(
+                <span className="session-exercise__set-title">
+                  <span>Подход {setNumber}</span>
+                  <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
+                    {metrics ?? (planMode ? 'ввести план' : 'ввести факт')}
+                  </span>
+                </span>
+              )}
+              subtitle={setSubtitle(set, data.exercise.tracking_type, planMode)}
+              trailing={(
+                <span className="session-exercise__set-trailing">
+                  {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
+                  {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
+                </span>
+              )}
+              aria-label={canOpenSet ? `Открыть подход ${setNumber}` : undefined}
+              onClick={canOpenSet ? () => setSelectedSessionSetId(set.sessionSetId) : undefined}
+            />
+          );
+        })}
+      </List>
+    </SessionExerciseLayout>
   );
 }
