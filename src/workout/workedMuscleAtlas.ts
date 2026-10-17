@@ -1,4 +1,4 @@
-import { WORKED_MUSCLE_VIEWS, type WorkedMuscleView } from './workedMuscleData';
+import { getWorkedMuscleViewConfig, type WorkedMuscleSex, type WorkedMuscleView } from './workedMuscleData';
 import { decodeWorkedMuscleMask } from './workedMuscleMask';
 
 export type AtlasSprite = {
@@ -25,7 +25,7 @@ export type WorkedMuscleAtlas = {
 };
 
 type HitRect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>;
-const cache = new Map<WorkedMuscleView, Promise<WorkedMuscleAtlas>>();
+const cache = new Map<string, Promise<WorkedMuscleAtlas>>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -39,9 +39,11 @@ function nonnegativeInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
-function assetUrl(relativePath: string, view: WorkedMuscleView): string {
+function assetUrl(relativePath: string, view: WorkedMuscleView, sex: WorkedMuscleSex): string {
   const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
-  const revision = view === 'front' ? 'front84-mask3-atlas1' : 'rear59-atlas2-transparent';
+  const revision = sex === 'female'
+    ? (view === 'front' ? 'female-front-v1' : 'female-rear-v1')
+    : (view === 'front' ? 'front84-mask3-atlas1' : 'rear59-atlas2-transparent');
   return new URL(base + relativePath + '?v=' + revision, window.location.origin).href;
 }
 
@@ -75,9 +77,10 @@ export function parseWorkedMuscleAtlasManifest(
   view: WorkedMuscleView,
   atlasWidth: number,
   atlasHeight: number,
+  sex: WorkedMuscleSex = 'male',
 ): Readonly<Record<string, AtlasSprite>> {
-  const config = WORKED_MUSCLE_VIEWS[view];
-  const approvedTone = view === 'front' ? 84 : 59;
+  const config = getWorkedMuscleViewConfig(sex, view);
+  const approvedTone = sex === 'female' ? null : (view === 'front' ? 84 : 59);
   if (!isRecord(raw) || raw.view !== view || raw.width !== config.width
     || raw.height !== config.height || raw.tonePercent !== approvedTone || !isRecord(raw.sprites)) {
     throw new Error('Некорректный манифест атласа: ' + view);
@@ -110,27 +113,27 @@ export function parseWorkedMuscleAtlasManifest(
   return sprites;
 }
 
-async function fetchWorkedMuscleAtlas(view: WorkedMuscleView): Promise<WorkedMuscleAtlas> {
-  const config = WORKED_MUSCLE_VIEWS[view];
+async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex): Promise<WorkedMuscleAtlas> {
+  const config = getWorkedMuscleViewConfig(sex, view);
   const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas] = await Promise.all([
-    getStaticFile(assetUrl(config.manifest, view)),
-    getStaticFile(assetUrl(config.mask, view)),
-    loadStaticImage(assetUrl(config.neutral, view)),
-    loadStaticImage(assetUrl(config.colorAtlas, view)),
-    loadStaticImage(assetUrl(config.glowAtlas, view)),
+    getStaticFile(assetUrl(config.manifest, view, sex)),
+    getStaticFile(assetUrl(config.mask, view, sex)),
+    loadStaticImage(assetUrl(config.neutral, view, sex)),
+    loadStaticImage(assetUrl(config.colorAtlas, view, sex)),
+    loadStaticImage(assetUrl(config.glowAtlas, view, sex)),
   ]);
   const [rawManifest, maskBytes] = await Promise.all([
     manifestResponse.json() as Promise<unknown>,
     maskResponse.arrayBuffer(),
   ]);
-  const mask = decodeWorkedMuscleMask(maskBytes, view);
+  const mask = decodeWorkedMuscleMask(maskBytes, view, sex);
   if (neutral.naturalWidth !== config.width || neutral.naturalHeight !== config.height
     || colorAtlas.naturalWidth !== glowAtlas.naturalWidth
     || colorAtlas.naturalHeight !== glowAtlas.naturalHeight) {
     throw new Error('Размеры PNG не совпадают с анатомической маской');
   }
   const sprites = parseWorkedMuscleAtlasManifest(
-    rawManifest, view, colorAtlas.naturalWidth, colorAtlas.naturalHeight,
+    rawManifest, view, colorAtlas.naturalWidth, colorAtlas.naturalHeight, sex,
   );
   return { width: config.width, height: config.height, sprites, mask, neutral, colorAtlas, glowAtlas };
 }
@@ -140,13 +143,14 @@ async function fetchWorkedMuscleAtlas(view: WorkedMuscleView): Promise<WorkedMus
  * warmer reuse the same in-flight promise and decoded image instances.
  * Failures are evicted so a later open retries normally.
  */
-export function loadWorkedMuscleAtlas(view: WorkedMuscleView): Promise<WorkedMuscleAtlas> {
-  const existing = cache.get(view);
+export function loadWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex = 'male'): Promise<WorkedMuscleAtlas> {
+  const key = `${sex}:${view}`;
+  const existing = cache.get(key);
   if (existing) return existing;
-  const pending = fetchWorkedMuscleAtlas(view);
-  cache.set(view, pending);
+  const pending = fetchWorkedMuscleAtlas(view, sex);
+  cache.set(key, pending);
   void pending.catch(() => {
-    if (cache.get(view) === pending) cache.delete(view);
+    if (cache.get(key) === pending) cache.delete(key);
   });
   return pending;
 }

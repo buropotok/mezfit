@@ -1,11 +1,11 @@
-import { WORKED_MUSCLE_VIEWS, type WorkedMuscleView } from './workedMuscleData';
+import { getWorkedMuscleViewConfig, type WorkedMuscleSex, type WorkedMuscleView } from './workedMuscleData';
 
 const HEADER_BYTES = 16;
 const MAGIC = 'MEZMASK1';
 
 /** Decode the saved binary format without interpolating or remapping pixel IDs. */
-export function decodeWorkedMuscleMask(buffer: ArrayBuffer, view: WorkedMuscleView): Uint8Array {
-  const { width, height } = WORKED_MUSCLE_VIEWS[view];
+export function decodeWorkedMuscleMask(buffer: ArrayBuffer, view: WorkedMuscleView, sex: WorkedMuscleSex = 'male'): Uint8Array {
+  const { width, height } = getWorkedMuscleViewConfig(sex, view);
   const expectedLength = HEADER_BYTES + width * height;
   if (buffer.byteLength !== expectedLength) {
     throw new Error(`Некорректный размер маски ${view}: ${buffer.byteLength} вместо ${expectedLength}`);

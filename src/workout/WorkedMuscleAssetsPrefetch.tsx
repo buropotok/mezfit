@@ -10,8 +10,8 @@ import { loadWorkedMuscleAtlas } from './workedMuscleAtlas';
 export function WorkedMuscleAssetsPrefetch() {
   useEffect(() => {
     const prefetch = () => {
-      void loadWorkedMuscleAtlas('front').catch(() => undefined);
-      void loadWorkedMuscleAtlas('rear').catch(() => undefined);
+      void loadWorkedMuscleAtlas('front', 'female').catch(() => undefined);
+      void loadWorkedMuscleAtlas('rear', 'female').catch(() => undefined);
     };
     if ('requestIdleCallback' in window && typeof window.requestIdleCallback === 'function') {
       const id = window.requestIdleCallback(prefetch, { timeout: 4000 });

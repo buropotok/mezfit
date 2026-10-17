@@ -33,6 +33,10 @@
   color: inherit;
 }
 
+.worked-muscles__sex-switch {
+  width: min(100%, 280px);
+}
+
 .worked-muscles__views {
   display: flex;
   flex-direction: column;
@@ -51,6 +55,8 @@
 .worked-muscles__image-wrap {
   position: relative;
   width: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
   display: flex;
   justify-content: center;
 }
@@ -59,7 +65,8 @@
   display: block;
   height: auto;
   background: transparent;
-  touch-action: manipulation;
+  touch-action: pan-y;
+  transform-origin: center center;
 }
 
 /* Match displayed heights, not native pixel widths: 1536/1024 vs 1402/1122. */
@@ -69,6 +76,15 @@
 
 .worked-muscles__canvas--rear {
   width: 100%;
+}
+
+/* Female figure proportions differ from the original male atlas. */
+.worked-muscles__canvas--female-front {
+  width: 100%;
+}
+
+.worked-muscles__canvas--female-rear {
+  width: 94%;
 }
 
 .worked-muscles__tap-result {
