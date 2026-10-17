@@ -48,7 +48,8 @@ export class WorkoutSchedulingRepository {
       throw new Error('SCHEDULE_PLAN_NOT_FOUND');
     }
     if (personal(plan, this.actorUserId)) return plan;
-    if (!plan.coachUserId || !plan.clientUserId || plan.athleteUserId !== plan.clientUserId
+    if (!plan.coachUserId || !plan.clientUserId
+      || (plan.athleteUserId !== undefined && plan.athleteUserId !== plan.clientUserId)
       || (this.actorUserId !== plan.coachUserId && this.actorUserId !== plan.clientUserId)) {
       throw new Error('SCHEDULE_FORBIDDEN');
     }
