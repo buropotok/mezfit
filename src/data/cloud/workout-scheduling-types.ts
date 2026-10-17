@@ -1,5 +1,5 @@
 import type { CloudSharedRow } from './database';
-import type { ScheduleTiming } from './workout-scheduling-time';
+import { validateScheduleTiming, type ScheduleTiming } from './workout-scheduling-time';
 
 export type WorkoutScheduleFormat = 'independent' | 'coached';
 export type WorkoutScheduleAction = 'create' | 'reschedule' | 'cancel';
@@ -31,12 +31,15 @@ export interface CreateWorkoutScheduleRequestInput extends ScheduleTiming {
 }
 
 const userId = (value: unknown): value is string =>
-  typeof value === 'string' && /^tg:[1-9]\\d*$/.test(value);
+  typeof value === 'string' && /^tg:[1-9]\d*$/.test(value);
 
 export function isWorkoutScheduleRequestRow(value: unknown): value is CloudWorkoutScheduleRequestRow {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const row = value as Partial<CloudWorkoutScheduleRequestRow>;
-  return typeof row.id === 'string' && row.id.length > 0
+  let timingValid = false;
+  try { validateScheduleTiming(row as ScheduleTiming); timingValid = true; }
+  catch { return false; }
+  return timingValid && typeof row.id === 'string' && row.id.length > 0
     && typeof row.realmId === 'string' && row.realmId.length > 0
     && row.owner === null
     && typeof row.requestKey === 'string' && row.requestKey.length > 0
