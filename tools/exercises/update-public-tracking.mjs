@@ -36,10 +36,11 @@ function byId(rows, name, expectedCount) {
   return map;
 }
 function matchesBase(row, expected) {
-  return Object.entries(expected).every(([key, value]) => isDeepStrictEqual(row[key], value));
+  return record(row) && Object.entries(expected).every(([key, value]) => isDeepStrictEqual(row[key], value));
 }
 function compareManifest(active, baseline) {
-  if (!record(active) || !matchesBase(active, { ...baseline, publishedAt: active.publishedAt })
+  if (!record(active) || active.sourceSha256 !== ORIGINAL_SHA256
+      || !matchesBase(active, { ...baseline, publishedAt: active.publishedAt })
       || typeof active.publishedAt !== 'string' || !active.publishedAt) {
     fail('Active public manifest differs from the pinned v2.0 source');
   }
@@ -145,7 +146,7 @@ export async function executeTrackingUpdate({ session, plan, backupApproved, rel
   await session.put('publicExerciseCatalogues', [manifest]);
   const final = await session.list('publicExerciseCatalogues');
   const records = byId(final, 'publicExerciseCatalogues', 1);
-  if (!isDeepStrictEqual(records.get(MANIFEST_ID), manifest)) {
+  if (!matchesBase(records.get(MANIFEST_ID), manifest)) {
     fail('Tracking publication manifest readback failed');
   }
   return { status: 'published', exercises: 1324, updated: plan.pending.length,
@@ -230,7 +231,7 @@ async function main() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch(() => {
-    console.error('Dexie tracking update failed; no manifest activation is attempted after an error');
+    console.error('Dexie tracking update failed; inspect the public manifest before retrying');
     process.exitCode = 1;
   });
 }
