@@ -9,7 +9,9 @@ export type WorkoutScheduleAction = 'create' | 'reschedule' | 'cancel';
  * both relationship roles add-only access. A future privileged processor must
  * derive identity from verified auth and independently validate every field.
  */
-export interface CloudWorkoutScheduleRequestRow extends CloudSharedRow, ScheduleTiming {
+export interface CloudWorkoutScheduleRequestRow extends Omit<CloudSharedRow, 'owner'>, ScheduleTiming {
+  /** Dexie Cloud may assign the creator despite an explicit owner:null input. */
+  owner: string | null;
   requestKey: string;
   action: WorkoutScheduleAction;
   trainingPlanId: string;
@@ -41,7 +43,7 @@ export function isWorkoutScheduleRequestRow(value: unknown): value is CloudWorko
   catch { return false; }
   return timingValid && typeof row.id === 'string' && row.id.length > 0
     && typeof row.realmId === 'string' && row.realmId.length > 0
-    && row.owner === null
+    && (row.owner === null || row.owner === row.requestedByUserId)
     && typeof row.requestKey === 'string' && row.requestKey.length > 0
     && ['create', 'reschedule', 'cancel'].includes(row.action ?? '')
     && typeof row.trainingPlanId === 'string' && row.trainingPlanId.length > 0
