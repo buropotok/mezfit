@@ -122,10 +122,19 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
 
 /** Scheduling is not a workout PLAN snapshot. Only a privileged Start freezes PLAN. */
 export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
-  coachUserId: string;
-  clientUserId: string;
+  /** Assigned workouts have a coach; personal workouts do not. */
+  coachUserId: string | null;
+  /** Legacy assigned rows carry clientUserId; new records also use athleteUserId. */
+  clientUserId: string | null;
+  athleteUserId?: string;
   programDayId: string;
   workoutSessionId: string | null;
+  format?: 'independent' | 'coached';
+  timeZone?: string;
+  sourceRequestId?: string | null;
+  createdByUserId?: string;
+  createdAt?: string;
+  updatedAt?: string;
   calendarDate: string;
   startMinute: number;
   durationMinutes: number;
