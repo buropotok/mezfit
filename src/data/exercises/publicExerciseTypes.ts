@@ -1,6 +1,14 @@
 /** Valid exercise result metrics; shared by the new catalogue and workout snapshots. */
 export type ExerciseTrackingType = 'weight_reps' | 'time' | 'time_distance' | 'time_reps' | 'time_weight';
 
+const VALID_EXERCISE_TRACKING_TYPES: readonly string[] = [
+  'weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight',
+];
+
+export function isExerciseTrackingType(value: unknown): value is ExerciseTrackingType {
+  return typeof value === 'string' && VALID_EXERCISE_TRACKING_TYPES.includes(value);
+}
+
 /** Canonical public exercise definition, retaining stable IDs and media metadata. */
 export interface PublicExercise {
   id: string;
@@ -90,9 +98,8 @@ export function isPublicExerciseRow(value: unknown): value is PublicExerciseRow 
     && typeof row.name_en === 'string' && typeof row.category === 'string'
     && typeof row.subcategory === 'string' && typeof row.subcategory_ru === 'string'
     && typeof row.movement_type === 'string'
-    && (row.tracking_type === undefined
-      || (typeof row.tracking_type === 'string'
-        && ['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight'].includes(row.tracking_type)))
+    // Tracking is intentionally not checked here. v2.0 programme authoring may
+    // receive unknown legacy tracking metadata; v2.1 activation validates it.
     && typeof row.equipment === 'string' && typeof row.attribution === 'string'
     && typeof row.image === 'string' && typeof row.gif_url === 'string'
     && typeof row.media_id === 'string' && typeof row.created_at === 'string'
