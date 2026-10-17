@@ -16,6 +16,16 @@ const defaults = { cloudStatus: 'ready' as const, cloudError: '', syncStatus: 's
   syncError: '', onRetryCloud: async () => {}, onRetrySync: async () => {} };
 
 describe('PLAN notification cloud recovery', () => {
+  it.each(['pending', 'offline', 'synced'] as const)('does not notify or spend the error budget for %s', syncStatus => {
+    const budget = createSyncNotificationBudget();
+    render(<SyncNotificationBudgetContext.Provider value={budget}>
+      <PlanSyncNotice {...defaults} syncStatus={syncStatus} />
+    </SyncNotificationBudgetContext.Provider>);
+    expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
+    expect(budget.claim()).toBe(true);
+    expect(budget.claim()).toBe(true);
+    expect(budget.claim()).toBe(true);
+  });
   it('caps notifications when several program surfaces mount together', () => {
     const budget = createSyncNotificationBudget();
     render(<SyncNotificationBudgetContext.Provider value={budget}>
@@ -26,7 +36,7 @@ describe('PLAN notification cloud recovery', () => {
   it('shares three notices across pages, survives StrictMode replay and allows notices after successful sync', () => {
     const budget = createSyncNotificationBudget();
     const page = (key: number) => <StrictMode><SyncNotificationBudgetContext.Provider value={budget}>
-      <PlanSyncNotice key={key} {...defaults} syncStatus="offline" />
+      <PlanSyncNotice key={key} {...defaults} syncStatus="error" />
     </SyncNotificationBudgetContext.Provider></StrictMode>;
     const view = render(page(0));
     for (let key = 0; key < 3; key++) {
@@ -43,7 +53,7 @@ describe('PLAN notification cloud recovery', () => {
     expect(screen.getByRole('button', { name: 'Закрыть уведомление' })).toBeTruthy();
   });
   it('opens the synchronization dialog from notification close', () => {
-    render(<PlanSyncNotice {...defaults} syncStatus="offline" />);
+    render(<PlanSyncNotice {...defaults} syncStatus="error" />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
     expect(screen.getByText('Синхронизироваться с облаком?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Да' })).toBeTruthy();
@@ -64,7 +74,7 @@ describe('PLAN notification cloud recovery', () => {
   it('shows a preloader, allows dismissal and prevents a second pending upload', async () => {
     let complete!: () => void;
     const push = vi.fn(() => new Promise<void>(resolve => { complete = resolve; }));
-    render(<PlanSyncNotice {...defaults} syncStatus="offline" onRetrySync={push} />);
+    render(<PlanSyncNotice {...defaults} syncStatus="error" onRetrySync={push} />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     expect(screen.getByLabelText('Синхронизация…')).toBeTruthy();
@@ -74,10 +84,10 @@ describe('PLAN notification cloud recovery', () => {
     await waitFor(() => expect(push).toHaveBeenCalledTimes(1));
   });
   it('removes obsolete notifications on recovery and reports a later outage again', () => {
-    const view = render(<PlanSyncNotice {...defaults} syncStatus="offline" />);
+    const view = render(<PlanSyncNotice {...defaults} syncStatus="error" />);
     view.rerender(<PlanSyncNotice {...defaults} />);
     expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
-    view.rerender(<PlanSyncNotice {...defaults} syncStatus="offline" />);
+    view.rerender(<PlanSyncNotice {...defaults} syncStatus="error" />);
     expect(screen.getByRole('button', { name: 'Закрыть уведомление' })).toBeTruthy();
   });
 });

@@ -17,6 +17,8 @@ export interface WorkoutPlanCardProps {
   canMoveDown?: boolean;
   onAddExercise?: () => void;
   onAddSet?: (programExerciseId: string) => void;
+  onDeleteExercise?: (programExerciseId: string) => void;
+  onExerciseInformation?: (programExerciseId: string) => void;
   onEdit: () => void;
   onComment: () => void;
   onMove: (direction: 'up' | 'down') => void;
@@ -33,6 +35,7 @@ function PlanGlassButton({ 'aria-disabled': disabled, ...props }: ButtonHTMLAttr
 export function WorkoutPlanCard({
   day: outline, programName = 'Без программы', onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
+  onDeleteExercise, onExerciseInformation,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -56,7 +59,9 @@ export function WorkoutPlanCard({
   const items = exercises.map((item) => ({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={!readOnly}
-      busy={busy} onAddSet={onAddSet ? () => onAddSet(item.exercise.id) : undefined} />,
+      busy={busy} onAddSet={onAddSet ? () => onAddSet(item.exercise.id) : undefined}
+      onDelete={onDeleteExercise ? () => onDeleteExercise(item.exercise.id) : undefined}
+      onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
     <SortableList items={items} disabled={readOnly || busy || !onReorderExercises} showSeparators={false}

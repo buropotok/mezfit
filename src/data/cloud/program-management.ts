@@ -7,10 +7,13 @@ import { belongsToPlan, orderedPlanRows, readProgramDays } from './program-day-t
 import { isProgramExerciseSnapshot } from './workout-foundation-types';
 import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
 import type { CloudProgramDayOutline, CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
+import type { CatalogueExerciseRow } from '../exercises/coachExerciseTypes';
+import { isPublicExerciseRow, isPublicCatalogueRow, isPublicTaxonomyRow, type PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
 
 export type PhaseStatus = CloudProgramPhaseRow['status'];
 export type InactiveStatus = Exclude<CloudProgramStatus, 'active'>;
 export type ProgramDetails = { program: CloudTrainingPlanRow; phases: CloudProgramPhaseRow[]; days?: CloudProgramDayOutline[] };
+export type ProgramExerciseInformation = { row: CatalogueExerciseRow | null; taxonomy: PublicTaxonomyRow[]; name: string; mediaUrl: string | null };
 export const DEFAULT_PHASE_WEEKS = 10;
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -530,6 +533,45 @@ export class ProgramManagementRepository {
       await markProgramChanged(this.db, id);
       for (const [position, exerciseId] of ids.entries())
         await this.db.programExercises.update(exerciseId, { position });
+    });
+  }
+
+  async exerciseInformation(id: string, dayId: string, exerciseId: string): Promise<ProgramExerciseInformation> {
+    const details = await this.details(id);
+    if (!details || (details.program.clientUserId === this.actorUserId && details.program.status === 'draft'))
+      throw new Error('Программа недоступна');
+    const day = details.days?.find(item => item.day.id === dayId);
+    if (!day || (details.program.clientUserId === this.actorUserId
+      && !clientVisiblePhases(details.phases).some(phase => phase.id === day.day.programPhaseId)))
+      throw new Error('День недоступен');
+    const snapshot = day.exercises.find(item => item.exercise.id === exerciseId)?.exercise.exercise;
+    if (!snapshot) throw new Error('Упражнение недоступно');
+    let row: CatalogueExerciseRow | null = null;
+    if (snapshot.catalogueDefinition) {
+      row = { ...snapshot.catalogueDefinition, realmId: details.program.realmId, owner: null, sourceSha256: 'program-snapshot' };
+    } else if (snapshot.scope === 'public') {
+      const [candidate, manifest] = await Promise.all([
+        this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId),
+        this.db.publicExerciseCatalogues.get('mezfit:exercise-catalogue'),
+      ]);
+      if (isPublicExerciseRow(candidate) && isPublicCatalogueRow(manifest)
+        && candidate.sourceSha256 === manifest.sourceSha256) row = candidate;
+    }
+    const taxonomy = (await this.db.publicExerciseTaxonomy.toArray()).filter(isPublicTaxonomyRow);
+    return { row, taxonomy, name: snapshot.name, mediaUrl: snapshot.mediaUrl };
+  }
+
+  async deleteDayExercise(id: string, dayId: string, exerciseId: string): Promise<void> {
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises'], async () => {
+      const current = await this.beginChange(plan);
+      await this.currentDay(current, dayId);
+      const exercise = await this.db.programExercises.get(exerciseId);
+      if (!exercise || exercise.programDayId !== dayId || !belongsToPlan(exercise, current)
+        || exercise.status !== 'active') throw new Error('Упражнение не найдено');
+      // Retain source identity and sets for existing session history and late sync.
+      await this.db.programExercises.update(exerciseId, { status: 'deprecated' });
     });
   }
 

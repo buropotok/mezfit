@@ -172,7 +172,7 @@ describe('program workspace regressions', () => {
     fireEvent.change(within(prompt).getByRole('textbox', { name: 'Название' }), { target: { value: 'Новая фаза' } });
     fireEvent.click(save);
     expect(await within(prompt).findByRole('alert')).toHaveProperty('textContent', 'Фаза не сохранена');
-    expect(screen.getByText('Синхронизация с облаком ещё не подтверждена.')).toBeTruthy();
+    expect(screen.queryByText('Синхронизация с облаком ещё не подтверждена.')).toBeNull();
     expect(repo.createPhase).toHaveBeenCalledWith('Программа', 'Новая фаза');
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
@@ -15,6 +15,9 @@ import { usePhaseDayMotion } from './usePhaseDayMotion';
 import { ProgramDayExercisePicker } from './ProgramDayExercisePicker';
 import { programMutationMessage } from './programPresentation';
 
+const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
+  .then(module => ({ default: module.ProgramExerciseInformationSheet })));
+
 export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach' }: {
   repository: ProgramManagementRepository;
   program: CloudTrainingPlanRow;
@@ -29,6 +32,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const viewport = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const [exerciseDayId, setExerciseDayId] = useState<string | null>(null);
+  const [exerciseInformation, setExerciseInformation] = useState<{ dayId: string; exerciseId: string } | null>(null);
+  const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const cloud = useCloudConnections();
   const authorId = planAuthorUserId(program);
   const self = authorId === repository.actorUserId;
@@ -98,6 +103,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
         readOnly={readOnly} busy={busy || exerciseDayId !== null} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
+        onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}
+        onExerciseInformation={exerciseId => setExerciseInformation({ dayId: item.day.id, exerciseId })}
         onEdit={() => setDialog({ kind: 'edit', item })}
         onComment={() => setDialog({ kind: 'comment', item })}
         onDelete={() => setDialog({ kind: 'delete', item })}
@@ -115,6 +122,17 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       onSave={(value) => dialog.kind === 'comment'
         ? repository.commentDay(program.id, selected.id, value.comment)
         : repository.editDay(program.id, selected.id, value.name, selected.category ?? '')} /> : null}
+    {exerciseInformation ? <Suspense fallback={<Text variant="footnote">Загружаем информацию…</Text>}><ProgramExerciseInformationSheet key={exerciseInformation.exerciseId}
+      repository={repository} programId={program.id} {...exerciseInformation}
+      onClose={() => setExerciseInformation(null)} onNavigationContextChange={onNavigationContextChange} /></Suspense> : null}
+    <PlanActionDialog onClose={() => setDeletingExercise(null)} dialog={deletingExercise ? {
+      kind: 'confirm', title: 'Удалить упражнение?', confirmLabel: 'Удалить', destructive: true,
+      description: 'Упражнение будет удалено из этого дня программы. История тренировок сохранится.',
+      onConfirm: async () => {
+        await repository.deleteDayExercise(program.id, deletingExercise.dayId, deletingExercise.exerciseId);
+        if (alive.current) setDeletingExercise(null);
+      },
+    } : null} />
     <PlanActionDialog onClose={() => setDialog(null)} dialog={dialog?.kind === 'delete' && selected ? {
       kind: 'confirm', title: 'Удалить день?', confirmLabel: 'Удалить', destructive: true,
       description: 'День будет удалён из программы. История выполненных тренировок сохранится.',

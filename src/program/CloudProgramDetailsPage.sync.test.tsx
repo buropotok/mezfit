@@ -37,9 +37,9 @@ describe('PLAN details cloud connection status', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
     view.rerender(page('offline'));
-    expect(screen.getByText('Нет соединения с Mezfit облаком')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
     view.rerender(page('pending'));
-    expect(screen.getByText('Синхронизация с облаком ещё не подтверждена.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
     view.rerender(page('synced'));
     expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
   });

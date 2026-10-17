@@ -30,7 +30,7 @@ async function fixture(assigned = false) {
     programDays: 'id, realmId, programPhaseId', programExercises: 'id, realmId, programDayId',
     programSets: 'id, realmId, programExerciseId', realms: 'realmId', members: 'id, realmId',
     roles: '[realmId+name]', publicExerciseDefinitions: 'id', publicExerciseCatalogues: 'id',
-    coachExerciseDefinitions: 'id' });
+    coachExerciseDefinitions: 'id', publicExerciseTaxonomy: 'id' });
   for (const table of ['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'])
     db.table(table).hook('creating', key => key === undefined ? crypto.randomUUID() : undefined);
   const pair = await relationshipMembership('101', '202');
@@ -56,6 +56,41 @@ async function fixture(assigned = false) {
 }
 
 describe('program exercise authoring', () => {
+  it('removes an exercise locally while retaining its sets and marking only its program dirty', async () => {
+    const { db, repo, planId, dayId } = await fixture();
+    await repo.addDayExercises(planId, dayId, ['0001', '0002']);
+    const exercise = (await db.table('programExercises').toArray())[0];
+    await repo.addExerciseSet(planId, dayId, exercise.id);
+    const before = await db.table('localProgramSync').get(planId);
+    await repo.deleteDayExercise(planId, dayId, exercise.id);
+    db.close(); await db.open();
+    expect((await repo.details(planId))?.days?.[0].exercises.map(item => item.exercise.exercise.exerciseDefinitionId)).toEqual(['0002']);
+    expect((await db.table('programExercises').get(exercise.id)).status).toBe('deprecated');
+    expect(await db.table('programSets').where('programExerciseId').equals(exercise.id).count()).toBe(1);
+    expect((await db.table('localProgramSync').get(planId)).revision).toBe(before.revision + 1);
+  });
+  it('rejects exercise deletion from assigned PLAN by clients and from another day', async () => {
+    const { db, repo, planId, dayId } = await fixture(true);
+    await repo.addDayExercises(planId, dayId, ['0001']);
+    const exercise = (await db.table('programExercises').toArray())[0];
+    const client = new ProgramManagementRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    await expect(client.deleteDayExercise(planId, dayId, exercise.id)).rejects.toThrow('прав');
+    await expect(repo.deleteDayExercise(planId, 'missing', exercise.id)).rejects.toThrow('День не найден');
+    await expect(repo.deleteDayExercise(planId, dayId, 'missing')).rejects.toThrow('Упражнение не найдено');
+    expect((await db.table('programExercises').get(exercise.id)).status).toBe('active');
+  });
+  it('reads catalogue information locally and refuses an inaccessible program or exercise', async () => {
+    const { db, repo, planId, dayId } = await fixture();
+    await repo.addDayExercises(planId, dayId, ['0001']);
+    const exercise = (await db.table('programExercises').toArray())[0];
+    expect((await repo.exerciseInformation(planId, dayId, exercise.id)).row?.id).toBe('0001');
+    await db.table('publicExerciseDefinitions').delete('0001');
+    expect(await repo.exerciseInformation(planId, dayId, exercise.id)).toMatchObject({ row: null, name: 'Жим' });
+    const foreign = new ProgramManagementRepository(db as unknown as MezfitCloudDatabase, 'tg:303');
+    await expect(foreign.exerciseInformation(planId, dayId, exercise.id)).rejects.toThrow('недоступна');
+    await repo.deleteDayExercise(planId, dayId, exercise.id);
+    await expect(repo.exerciseInformation(planId, dayId, exercise.id)).rejects.toThrow('недоступно');
+  });
   it('separates reusable program identity from concrete workout result entry', () => {
     const identity = { exerciseDefinitionId: '0001', scope: 'public', name: 'Жим', nameEn: null, mediaUrl: null };
     expect(isProgramExerciseSnapshot(identity)).toBe(true);

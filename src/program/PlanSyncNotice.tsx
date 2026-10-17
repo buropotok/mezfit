@@ -27,9 +27,7 @@ export function PlanSyncNotice({
   const budget = useSyncNotificationBudget();
   const observed = useRef('');
   const [admitted, setAdmitted] = useState('');
-  const warning = syncStatus === 'error' ? 'Не удалось отправить изменения в Mezfit облако.'
-    : syncStatus === 'offline' ? 'Нет соединения с Mezfit облаком'
-      : syncStatus === 'pending' ? 'Синхронизация с облаком ещё не подтверждена.' : '';
+  const warning = syncStatus === 'error' ? 'Не удалось отправить изменения в Mezfit облако.' : '';
   const contactError = cloudStatus === 'error' ? 'Не удалось получить данные из Mezfit облака.' : '';
   const message = [warning, contactError].filter(Boolean).join(' ');
   useEffect(() => {

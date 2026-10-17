@@ -4,6 +4,7 @@ import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
 import { Badge, GlassSurface, Icon, IconButton, List, ListItem, Text } from '../ui';
 import { SetEntry } from './SetEntry';
+import { ExerciseActionsMenu } from './ExerciseActionsMenu';
 import type { SetEntryProgramIdentity, SetMetrics } from './setEntryTypes';
 import type { ProgramSessionExerciseProps, SessionExerciseProps, SessionExerciseData, SessionExerciseSetData, WorkoutSessionExerciseProps } from './sessionExerciseTypes';
 import './session-exercise.css';
@@ -33,7 +34,7 @@ const equipmentLabels: Record<ExerciseEquipmentCode, string> = {
   other: 'Другое',
 };
 
-function SharedIcon({ name }: { name: 'check' | 'chevron-down' | 'chevron-right' | 'dots-vertical' }) {
+function SharedIcon({ name }: { name: 'check' | 'chevron-down' | 'chevron-right' }) {
   return <span className={`session-exercise__icon session-exercise__icon--${name}`} aria-hidden="true" />;
 }
 
@@ -131,6 +132,7 @@ interface SessionExerciseLayoutProps {
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
   onOpenExerciseMenu?: () => void;
+  actions?: ReactNode;
   onAddSet?: () => void;
   busy?: boolean;
   summary?: ReactNode;
@@ -142,7 +144,7 @@ interface SessionExerciseLayoutProps {
 function SessionExerciseLayout({
   exerciseId, exerciseName, media, subtitle, badge, notes, surface = 'default',
   collapsed: controlledCollapsed, defaultCollapsed = false, onCollapsedChange,
-  onOpenExerciseMenu, onAddSet, busy = false, summary, editor, children,
+  onOpenExerciseMenu, actions, onAddSet, busy = false, summary, editor, children,
 }: SessionExerciseLayoutProps) {
   const bodyId = useId();
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
@@ -169,16 +171,6 @@ function SessionExerciseLayout({
             onClick={toggleCollapsed}
           />
         </List>
-        {onOpenExerciseMenu ? (
-          <IconButton
-            className="session-exercise__menu"
-            data-no-dnd
-            label="Опции упражнения"
-            onClick={onOpenExerciseMenu}
-          >
-            <SharedIcon name="dots-vertical" />
-          </IconButton>
-        ) : null}
         <IconButton
           className={`session-exercise__collapse${collapsed ? ' session-exercise__collapse--collapsed' : ''}`}
           data-no-dnd
@@ -189,6 +181,8 @@ function SessionExerciseLayout({
         >
           <SharedIcon name="chevron-down" />
         </IconButton>
+        {actions ?? (onOpenExerciseMenu ? <IconButton className="session-exercise__menu"
+          data-no-dnd icon="dots-vertical" label="Опции упражнения" onClick={onOpenExerciseMenu} /> : null)}
       </div>
 
       <div id={bodyId} className="session-exercise__body" hidden={collapsed}>
@@ -241,6 +235,8 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
       subtitle={formatSetCount(sets.length)} notes={item.notes}
       surface={props.surface} collapsed={props.collapsed} defaultCollapsed={props.defaultCollapsed}
       onCollapsedChange={props.onCollapsedChange}
+      actions={<ExerciseActionsMenu busy={props.busy}
+        onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
     >
       <List className="session-exercise__sets" divider="inset">

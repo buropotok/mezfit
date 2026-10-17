@@ -51,7 +51,7 @@ beforeEach(() => {
   vi.mocked(useCloudConnections).mockReturnValue({
     db: {} as NonNullable<ReturnType<typeof useCloudConnections>>['db'],
     actorUserId: 'tg:101', clients: [], coaches: [coach('202'), coach('303')],
-    status: 'ready', error: '', syncStatus: 'offline', syncError: 'Нет сети',
+    status: 'ready', error: '', syncStatus: 'error', syncError: 'Не удалось синхронизироваться',
     refresh, retrySync, loadAvatar: async () => null,
   });
   vi.spyOn(ProgramManagementRepository.prototype, 'observeForAthlete')

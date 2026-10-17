@@ -59,6 +59,8 @@ function fixture(phaseCount = 1) {
     createDay: vi.fn(async () => 'day'), editDay: vi.fn(async () => {}),
     commentDay: vi.fn(async () => {}), moveDay: vi.fn(async () => {}),
     duplicateDay: vi.fn(async () => 'copy'), deleteDay: vi.fn(async () => {}),
+    deleteDayExercise: vi.fn(async () => {}),
+    exerciseInformation: vi.fn(async () => ({ row: null, taxonomy: [], name: 'Жим', mediaUrl: null })),
   };
   const page = (readOnly = false) => <CloudProgramDetailsPage
     repository={repo as unknown as ProgramManagementRepository} planId="plan" readOnly={readOnly}
@@ -74,6 +76,28 @@ const day: CloudProgramDayOutline = {
 };
 
 describe('days inside program phases', () => {
+  it('connects the exercise menu to confirmed deletion and exercise information', async () => {
+    const f = fixture();
+    f.details.days = [{ ...day, exercises: [{ exercise: {
+      id: 'exercise', realmId: 'tg:101', owner: 'tg:101', programDayId: day.day.id,
+      position: 0, status: 'active', notes: null,
+      exercise: { exerciseDefinitionId: '0001', scope: 'public', name: 'Жим', nameEn: null, mediaUrl: null },
+    }, sets: [] }] }];
+    render(f.page());
+    const menu = await screen.findByRole('menu', { name: 'Меню упражнения' });
+    fireEvent.click(within(menu).getByRole('button', { name: 'Удалить' }));
+    expect(f.repo.deleteDayExercise).not.toHaveBeenCalled();
+    fireEvent.click(within(menu).getByRole('button', { name: 'Закрыть меню' }));
+    const confirm = screen.getByRole('dialog', { name: 'Удалить упражнение?' });
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Удалить' }));
+    await waitFor(() => expect(f.repo.deleteDayExercise).toHaveBeenCalledWith('plan', day.day.id, 'exercise'));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Удалить упражнение?' })).toBeNull());
+    fireEvent.click(within(menu).getByRole('button', { name: 'Информация' }));
+    fireEvent.click(within(menu).getByRole('button', { name: 'Закрыть меню' }));
+    const information = await screen.findByRole('dialog', { name: 'Информация об упражнении' });
+    await within(information).findByText('Подробное описание пока недоступно на этом устройстве.');
+    expect(f.repo.exerciseInformation).toHaveBeenCalledWith('plan', day.day.id, 'exercise');
+  });
   it('skips phase selection for one phase, validates name on save without a category field', async () => {
     const { repo, page } = fixture();
     render(page());

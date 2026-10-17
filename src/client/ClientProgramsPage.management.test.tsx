@@ -47,7 +47,7 @@ beforeEach(() => {
 describe('client program directory initial states', () => {
   it('shows cloud failure in a notification without a coach selection gate', () => {
     const markup = renderToStaticMarkup(<ClientProgramsPage />);
-    expect(markup).toContain('Нет соединения с Mezfit облаком');
+    expect(markup).toContain('Не удалось получить данные из Mezfit облака.');
     expect(markup).toContain('Mezfit облако');
     expect(markup).not.toContain('Нет выбранного тренера');
   });
