@@ -26,6 +26,21 @@ type LastTap = {
   readonly status: string;
 };
 
+/** CSS transforms are center-origin; keep part of each zoomed figure inside its viewport. */
+export function clampWorkedMusclePan(
+  scale: number, x: number, y: number,
+  viewportWidth: number, viewportHeight: number,
+  canvasWidth: number, canvasHeight: number,
+): { x: number; y: number } {
+  if (scale <= 1) return { x: 0, y: 0 };
+  const maxX = Math.max(0, (canvasWidth * scale - viewportWidth) / 2);
+  const maxY = Math.max(0, (canvasHeight * scale - viewportHeight) / 2);
+  return {
+    x: Math.max(-maxX, Math.min(maxX, x)),
+    y: Math.max(-maxY, Math.min(maxY, y)),
+  };
+}
+
 function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary }: AnatomyViewProps) {
   const config = getWorkedMuscleViewConfig(sex, view);
   const viewLabel = view === 'front' ? 'Вид спереди' : 'Вид сзади';
@@ -40,7 +55,15 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
 
   const updateZoom = (scale: number, x: number, y: number) => {
     const nextScale = Math.max(1, Math.min(5, scale));
-    const next = nextScale === 1 ? { scale: 1, x: 0, y: 0 } : { scale: nextScale, x, y };
+    const canvas = canvasRef.current;
+    const wrap = canvas?.parentElement;
+    const bounded = canvas && wrap
+      ? clampWorkedMusclePan(
+        nextScale, x, y,
+        wrap.clientWidth, wrap.clientHeight, canvas.clientWidth, canvas.clientHeight,
+      )
+      : { x: 0, y: 0 };
+    const next = { scale: nextScale, ...bounded };
     zoomRef.current = next;
     setZoom(next);
   };
@@ -122,11 +145,15 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
   };
   const pointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
     if (!atlas) return;
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, {
       x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY,
     });
+    // At 1x, let the browser own single-finger vertical scrolling of the exercise page.
+    // Capture touches only while zoomed or after a second pointer starts a pinch.
+    if (zoomRef.current.scale > 1 || pointersRef.current.size > 1) {
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     if (pointersRef.current.size === 1) {
       gestureRef.current = { moved: false, pinched: false, dist: 0, midX: 0, midY: 0 };
     } else {
@@ -139,7 +166,7 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
   const pointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
     const current = pointersRef.current.get(event.pointerId);
     if (!current) return;
-    event.preventDefault();
+    if (pointersRef.current.size > 1 || zoomRef.current.scale > 1) event.preventDefault();
     const dx = event.clientX - current.x;
     const dy = event.clientY - current.y;
     if (Math.hypot(event.clientX - current.startX, event.clientY - current.startY) > 5) {
@@ -181,13 +208,17 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
 
   return (
     <section className="worked-muscles__view" aria-label={viewLabel}>
-      <div className="worked-muscles__image-wrap" aria-busy={!atlas && !error}>
+      <div className="worked-muscles__image-wrap" aria-busy={!atlas && !error}
+        style={{ touchAction: zoom.scale > 1 ? 'none' : 'pan-y' }}>
         <canvas
           ref={canvasRef}
           className={`worked-muscles__canvas worked-muscles__canvas--${view} worked-muscles__canvas--${sex}-${view}`}
           width={config.width}
           height={config.height}
-          style={{ transform: `translate3d(${zoom.x}px, ${zoom.y}px, 0) scale(${zoom.scale})` }}
+          style={{
+            transform: `translate3d(${zoom.x}px, ${zoom.y}px, 0) scale(${zoom.scale})`,
+            touchAction: zoom.scale > 1 ? 'none' : 'pan-y',
+          }}
           onPointerDown={pointerDown}
           onPointerMove={pointerMove}
           onPointerUp={(event) => pointerEnd(event, false)}
