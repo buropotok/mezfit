@@ -9,7 +9,7 @@ export function weekLabel(weeks: number): string {
 
 export function programMutationMessage(reason: unknown): string {
   if (reason instanceof Error && reason.name === 'PermissionDeniedError') {
-    return 'Изменение не сохранено: Mezfit облако отказало в доступе к данным программы.';
+    return 'Изменение не сохранено: сервис «Mezfit облако» отказал в доступе к данным программы.';
   }
   return reason instanceof Error ? reason.message : 'Изменение не сохранено';
 }
