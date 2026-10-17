@@ -140,6 +140,14 @@ describe('local-first workout scheduling intent', () => {
     expect(await f.db.table('workoutScheduleRequests').count()).toBe(1);
   });
 
+  it('remains idempotent if Dexie Cloud implicitly assigns the request creator as owner', async () => {
+    const f = await fixture(), input = command('client-personal', 'client-action-0023');
+    const id = await f.client.createRequest(input);
+    await f.db.table('workoutScheduleRequests').update(id, { owner: 'tg:202' });
+    expect(await f.client.createRequest(input)).toBe(id);
+    expect((await f.client.listRequests('client-personal')).map(row => row.id)).toEqual([id]);
+  });
+
   it('commits one local record without cloud sync and rolls back on failure', async () => {
     const f = await fixture();
     const table = f.db.table('workoutScheduleRequests');
