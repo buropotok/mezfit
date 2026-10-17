@@ -10,6 +10,34 @@
   gap: 12px;
 }
 
+.settings-page__section {
+  padding: var(--ui-space-6) var(--ui-space-4);
+}
+
+.settings-page__background-preview {
+  display: grid;
+  min-height: 196px;
+  place-items: center;
+  padding: var(--ui-space-4);
+  border-radius: var(--ui-radius-md);
+  transition: background-color 120ms ease-out;
+}
+
+.settings-page__background-preview-glass {
+  display: grid;
+  gap: var(--ui-space-2);
+  align-content: center;
+  justify-items: center;
+  width: min(100%, 270px);
+  min-height: 124px;
+  padding: var(--ui-space-4);
+}
+
+.settings-page__background-reset {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .settings-page__action {
   display: inline-flex;
   justify-self: start;
