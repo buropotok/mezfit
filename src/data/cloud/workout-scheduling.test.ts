@@ -80,6 +80,19 @@ describe('local-first workout scheduling intent', () => {
     });
   });
 
+  it('permits the same retry key from different actors without a sync-unique secondary index', async () => {
+    const f = await fixture();
+    const key = 'shared-retry-key-01';
+    const coachId = await f.coach.createRequest(command('assigned', key));
+    const clientId = await f.client.createRequest(command('assigned', key));
+    expect(coachId).toBe(scheduleRequestId('tg:101', key));
+    expect(clientId).toBe(scheduleRequestId('tg:202', key));
+    expect(coachId).not.toBe(clientId);
+    expect(await f.db.table('workoutScheduleRequests').count()).toBe(2);
+    expect((await f.client.listRequests('assigned')).map(row => row.id))
+      .toEqual([coachId, clientId]);
+  });
+
   it('allows a coach or a client to request assigned workouts without granting PLAN writes', async () => {
     const f = await fixture();
     const first = await f.coach.createRequest({ ...command('assigned', 'action-coach-0001'),
