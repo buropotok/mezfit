@@ -11,6 +11,8 @@ import { CloudProgramsPage } from './CloudProgramsPage';
 import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
 import { ProgramToolbar } from './ProgramToolbar';
 
+vi.mock('./ProgramSyncControls', () => ({ ProgramSyncControls: () => null }));
+
 const actions = vi.hoisted(() => ({
   create: undefined as (() => void) | undefined,
   addPhase: undefined as (() => void) | undefined,
@@ -170,7 +172,7 @@ describe('program workspace regressions', () => {
     fireEvent.change(within(prompt).getByRole('textbox', { name: 'Название' }), { target: { value: 'Новая фаза' } });
     fireEvent.click(save);
     expect(await within(prompt).findByRole('alert')).toHaveProperty('textContent', 'Фаза не сохранена');
-    expect(screen.getByRole('status').textContent).toContain('ещё не подтверждена');
+    expect(screen.getByText('Синхронизация с облаком ещё не подтверждена.')).toBeTruthy();
     expect(repo.createPhase).toHaveBeenCalledWith('Программа', 'Новая фаза');
   });
 

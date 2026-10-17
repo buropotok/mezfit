@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
-import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
+import type { LocalProgramSyncRow, CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
 import {
   ProgramManagementRepository, clientVisiblePhases, isCloudPlanRow, isCloudPhaseRow,
@@ -76,6 +76,11 @@ function fixture() {
     name: 'Моя программа', position: 0, status: 'draft',
     startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
   };
+  const syncRows = new Map<string, LocalProgramSyncRow>();
+  const localProgramSync = {
+    get: async (id: string) => syncRows.get(id),
+    put: async (row: LocalProgramSyncRow) => { syncRows.set(row.id, row); },
+  };
   const trainingPlans = mockTable<CloudTrainingPlanRow>([initial], 'tra');
   const programPhases = mockTable<CloudProgramPhaseRow>([], 'pha');
   const programDays = mockTable<CloudProgramDayRow>([], 'day');
@@ -91,7 +96,7 @@ function fixture() {
   const realms = mockTable<Row>([], 'realm');
   const members = mockTable<Row>([], 'member');
   const db = {
-    trainingPlans, programPhases, programDays, programExercises, programSets,
+    localProgramSync, trainingPlans, programPhases, programDays, programExercises, programSets,
     workoutSessions, workoutOccurrences,
     realms, members,
     transaction,
@@ -141,6 +146,7 @@ describe('local-first program/phase management', () => {
     expect(f.plans.find((plan) => plan.id === assigned)?.owner).toBeNull();
     expect(f.phases.find((phase) => phase.id === phaseId)).toMatchObject({
       trainingPlanId: assigned, realmId: pair.realm.realmId, owner: null, status: 'draft',
+      name: 'Фаза 2', position: 1,
     });
   });
 
@@ -150,7 +156,10 @@ describe('local-first program/phase management', () => {
     f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
     f.memberRows.push(...pair.members);
     const assigned = await f.repo.createAssigned('tg:202', 'Назначенная');
-    const phase = await f.repo.createPhase(assigned);
+    const initial = await f.repo.details(assigned);
+    expect(initial?.phases).toHaveLength(1);
+    const phase = initial?.phases[0].id;
+    if (!phase) throw new Error('Expected automatically created first phase');
     await f.repo.activate(assigned, phase);
     await f.repo.setPhaseStatus(assigned, phase, 'finished');
     const client = new ProgramManagementRepository(f.db, 'tg:202');
@@ -222,7 +231,7 @@ describe('local-first program/phase management', () => {
       const appended = await create('Новая');
       expect(f.plans.find((plan) => plan.id === appended)?.position).toBe(lastPosition + 1);
       expect(f.plans.find((plan) => plan.id === first)?.position).toBeLessThan(lastPosition);
-      expect(f.transaction).toHaveBeenCalledWith('rw', ['trainingPlans'], expect.any(Function));
+      expect(f.transaction).toHaveBeenCalledWith('rw', ['trainingPlans', 'programPhases', 'localProgramSync'], expect.any(Function));
     },
   );
 
@@ -342,7 +351,10 @@ describe('local-first program/phase management', () => {
     f.realmRows.push({ ...pair.realm, id: pair.realm.realmId });
     f.memberRows.push(...pair.members);
     const assigned = await f.repo.createAssigned('tg:202', 'Назначенная программа');
-    const phase = await f.repo.createPhase(assigned);
+    const initial = await f.repo.details(assigned);
+    expect(initial?.phases).toHaveLength(1);
+    const phase = initial?.phases[0].id;
+    if (!phase) throw new Error('Expected automatically created first phase');
     await f.repo.publishPhase(assigned, phase);
     const client = new ProgramManagementRepository(f.db, 'tg:202');
     expect((await client.details(assigned))?.phases[0].id).toBe(phase);

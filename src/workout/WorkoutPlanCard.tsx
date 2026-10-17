@@ -6,6 +6,8 @@ import { SessionExercise } from './SessionExercise';
 
 export interface WorkoutPlanCardProps {
   mode: 'planning';
+  programName?: string;
+  onReorderExercises?: (ids: string[]) => void;
   day: CloudProgramDayOutline;
   creatorName: string;
   creatorAvatar?: ReactNode;
@@ -29,7 +31,7 @@ function PlanGlassButton({ 'aria-disabled': disabled, ...props }: ButtonHTMLAttr
 /** Program template mode deliberately has neither a session nor numeric PLAN/FACT.
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
-  day: outline, creatorName, creatorAvatar, readOnly = false, busy = false,
+  day: outline, programName = 'Без программы', onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
@@ -57,7 +59,8 @@ export function WorkoutPlanCard({
       busy={busy} onAddSet={onAddSet ? () => onAddSet(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
-    <SortableList items={items} disabled showSeparators={false} onReorder={() => {}}
+    <SortableList items={items} disabled={readOnly || busy || !onReorderExercises} showSeparators={false}
+      onReorder={(rows) => onReorderExercises?.(rows.map((row) => String(row.id)))}
       header={<div className="workout-session-card__header">
         <span className="workout-session-card__icon">
           <Icon name="barbell" className="workout-session-card__icon-artwork" />
@@ -65,7 +68,7 @@ export function WorkoutPlanCard({
         <div className="workout-session-card__copy">
           <Text variant="body" className="workout-session-card__workout-name">{day.name}</Text>
           <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
-            {day.category?.trim() || 'Без категории'}
+            {programName}
           </Text>
         </div>
         {menu.length ? <LiquidPopover isOpen={menuOpen} onOpenChange={setMenuOpen}

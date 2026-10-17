@@ -14,7 +14,14 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 6;
+export const CLOUD_DATABASE_VERSION = 7;
+
+export interface LocalProgramSyncRow {
+  id: string;
+  revision: number;
+  confirmedRevision: number;
+  confirmed: boolean;
+}
 
 export interface CloudSharedRow {
   id: string;
@@ -180,6 +187,7 @@ export function cloudDatabaseName(telegramUserId: string): string {
 }
 
 export class MezfitCloudDatabase extends Dexie {
+  localProgramSync!: Table<LocalProgramSyncRow, string>;
   trainingPlans!: Table<CloudTrainingPlanRow, string, Omit<CloudTrainingPlanRow, 'id'>>;
   programPhases!: Table<CloudProgramPhaseRow, string, Omit<CloudProgramPhaseRow, 'id'>>;
   programDays!: Table<CloudProgramDayRow, string, Omit<CloudProgramDayRow, 'id'>>;
@@ -207,10 +215,12 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(3).stores(CLOUD_DATABASE_STORES_V3);
     this.version(4).stores(CLOUD_DATABASE_STORES_V4);
     this.version(5).stores(CLOUD_DATABASE_STORES_V5);
-    this.version(CLOUD_DATABASE_VERSION).stores(CLOUD_DATABASE_STORES_V6);
+    this.version(6).stores(CLOUD_DATABASE_STORES_V6);
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V6, localProgramSync: 'id' });
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
+      unsyncedTables: ['localProgramSync'],
       // Disable the email OTP UI: the Worker verifies Telegram initData.
       fetchTokens: (params) => getDexieCloudTokens(initData, params),
     });

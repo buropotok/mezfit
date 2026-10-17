@@ -262,3 +262,24 @@ it('finishes opening and fully reverses the same animation on close', async () =
   expect(trigger.style.visibility).toBe('');
   expect(view.presentation).toHaveBeenLastCalledWith(false);
 });
+
+it('shows plain multiline text without menu items and preserves literal text safely', async () => {
+  const triggerRef = createRef<HTMLButtonElement>();
+  const change = vi.fn();
+  const text = 'Первая строка\n\nВторая строка <script> — просто текст';
+  const props = { trigger: <button ref={triggerRef}>Информация</button>, triggerRef, onOpenChange: change,
+    label: 'Текстовая подсказка', text };
+  const view = render(<LiquidPopover {...props} isOpen />);
+  await act(async () => { vi.advanceTimersByTime(32); });
+  const dialog = screen.getByRole('dialog', { name: 'Текстовая подсказка' });
+  expect(dialog.querySelector('.ui-liquid-popover__text')?.textContent).toBe(text);
+  expect(dialog.querySelector('script')).toBeNull();
+  expect(dialog.querySelector('[role="menuitem"]')).toBeNull();
+  expect(dialog.querySelector('button')).toBeNull();
+  view.rerender(<LiquidPopover {...props} isOpen={false} />);
+  await act(async () => { vi.advanceTimersByTime(32); });
+  expect(screen.queryByRole('dialog', { name: 'Текстовая подсказка' })).toBeNull();
+  view.rerender(<LiquidPopover {...props} text="Обновлённая подсказка" isOpen />);
+  await act(async () => { vi.advanceTimersByTime(32); });
+  expect(screen.getByRole('dialog', { name: 'Текстовая подсказка' }).textContent).toContain('Обновлённая подсказка');
+});

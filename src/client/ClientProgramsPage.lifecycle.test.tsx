@@ -8,6 +8,14 @@ import { ProgramManagementRepository, type ProgramDetails } from '../data/cloud/
 import type { LiquidGlassTextOnlyProps } from '../ui/LiquidGlassTextOnly';
 import { ClientProgramsPage } from './ClientProgramsPage';
 
+vi.mock('../program/ProgramSyncControls', () => ({ ProgramSyncControls: () => null }));
+vi.mock('konsta/react', async importOriginal => {
+  const actual = await importOriginal<typeof import('konsta/react')>();
+  return { ...actual, Notification: ({ opened, text, onClose }: {
+    opened: boolean; text: string; onClose: () => void;
+  }) => opened ? <button aria-label="Закрыть уведомление" onClick={onClose}>{text}</button> : null };
+});
+
 vi.mock('../ui/LiquidGlassTextOnly', () => ({
   LiquidGlassTextOnly: ({ tabs, value, onValueChange }: LiquidGlassTextOnlyProps) => (
     <div role="tablist">{tabs.map((tab) => <button key={tab.value} role="tab"
@@ -71,7 +79,8 @@ describe('client program directory', () => {
     expect(screen.queryByRole('tab', { name: 'Мои программы' })).toBeNull();
     expect(screen.queryByRole('tab', { name: 'От тренера' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Поиск программ' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Повторить синхронизацию' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Синхронизироваться' }));
     await waitFor(() => expect(retrySync).toHaveBeenCalledTimes(1));
     expect(refresh).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('tab', { name: 'Черновики' }));

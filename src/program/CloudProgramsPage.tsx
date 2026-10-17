@@ -326,7 +326,7 @@ export function CloudProgramsPage({
       </section> : null}
       <PlanSyncNotice cloudStatus={cloudStatus} cloudError={cloudError}
         syncStatus={syncStatus} syncError={syncError}
-        onRetryCloud={onRetryCloud} onRetrySync={onRetrySync}
+        onRetryCloud={onRetryCloud} onRetrySync={onRetrySync} onNavigationContextChange={onNavigationContextChange}
         localError={error} onRetryLocal={() => setRetryKey((n) => n + 1)} />
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
       <MezfitDialog

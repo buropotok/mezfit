@@ -130,7 +130,14 @@
   min-width: 0;
   /* Preserve vertical clipping during phase collapse, but allow side shadows into the gutters. */
   overflow: clip;
+  overflow-anchor: none;
 }
 @keyframes cloud-phase-expand { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(45deg) scale(1.5); } 100% { transform: rotate(90deg) scale(1); } }
 @keyframes cloud-phase-collapse { 0% { transform: rotate(90deg) scale(1); } 50% { transform: rotate(45deg) scale(1.5); } 100% { transform: rotate(0deg) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .cloud-plan-phase-chevron.has-toggled.is-expanded, .cloud-plan-phase-chevron.has-toggled.is-collapsed { animation: none; } }
+
+.cloud-plan-phase { overflow-anchor: none; }
+
+.program-sync-status { display: flex; align-items: center; gap: var(--ui-space-2); }
+.program-sync-actions { display: flex; justify-content: flex-end; }
+.program-sync-button { height: 44px; padding-inline: var(--ui-space-4); color: white; }

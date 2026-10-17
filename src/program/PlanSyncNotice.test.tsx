@@ -3,54 +3,52 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PlanSyncNotice } from './PlanSyncNotice';
 
+vi.mock('konsta/react', async importOriginal => {
+  const actual = await importOriginal<typeof import('konsta/react')>();
+  return { ...actual, Notification: ({ opened, text, onClose }: {
+    opened: boolean; text: string; onClose: () => void;
+  }) => opened ? <button aria-label="Закрыть уведомление" onClick={onClose}>{text}</button> : null };
+});
 afterEach(cleanup);
-const defaults = {
-  cloudStatus: 'ready' as const, cloudError: '',
-  syncStatus: 'synced' as const, syncError: '',
-  onRetryCloud: async () => undefined, onRetrySync: async () => undefined,
-};
+const defaults = { cloudStatus: 'ready' as const, cloudError: '', syncStatus: 'synced' as const,
+  syncError: '', onRetryCloud: async () => {}, onRetrySync: async () => {} };
 
-describe('shared PLAN confirmation and recovery', () => {
-  it('keeps cached data honest through pending, offline, denial and recovery', () => {
-    const view = render(<PlanSyncNotice {...defaults} />);
-    expect(screen.queryByRole('alert')).toBeNull();
-    view.rerender(<PlanSyncNotice {...defaults} syncStatus="pending" />);
-    expect(screen.getByRole('status').textContent).toContain('не подтверждена');
-    expect(screen.queryByRole('button')).toBeNull();
-    view.rerender(<PlanSyncNotice {...defaults} syncStatus="offline" />);
-    expect(screen.getByRole('alert').textContent).toContain('Нет соединения');
-    view.rerender(<PlanSyncNotice {...defaults} syncStatus="error" syncError="PLAN_WRITE_DENIED" />);
-    expect(screen.getByRole('alert').textContent).toContain('PLAN_WRITE_DENIED');
-    view.rerender(<PlanSyncNotice {...defaults} />);
-    expect(screen.queryByRole('alert')).toBeNull();
+describe('PLAN notification cloud recovery', () => {
+  it('opens the synchronization dialog from notification close', () => {
+    render(<PlanSyncNotice {...defaults} syncStatus="offline" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
+    expect(screen.getByText('Синхронизируйтесь с облаком')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Синхронизироваться' })).toBeTruthy();
   });
-
-  it('retries pending writes AND failed contacts, including when pushing fails', async () => {
+  it('retries pending writes and failed contacts, even if upload fails', async () => {
     const push = vi.fn(async () => { throw new Error('WRITE_DENIED'); });
-    const contacts = vi.fn(async () => undefined);
-    const local = vi.fn();
+    const contacts = vi.fn(async () => {}), local = vi.fn();
     render(<PlanSyncNotice {...defaults} cloudStatus="error" cloudError="CONTACTS_FAILED"
       syncStatus="error" onRetrySync={push} onRetryCloud={contacts} onRetryLocal={local} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Повторить синхронизацию' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Синхронизироваться' }));
     await screen.findByText('WRITE_DENIED');
     expect(push).toHaveBeenCalledTimes(1);
     expect(contacts).toHaveBeenCalledTimes(1);
     expect(local).toHaveBeenCalledTimes(1);
   });
-
-  it('retries writes without refreshing healthy contacts and blocks duplicate taps', async () => {
+  it('shows a preloader, allows dismissal and prevents a second pending upload', async () => {
     let complete!: () => void;
-    const push = vi.fn(() => new Promise<void>((resolve) => { complete = resolve; }));
-    const contacts = vi.fn(async () => undefined);
-    render(<PlanSyncNotice {...defaults} syncStatus="offline" onRetrySync={push} onRetryCloud={contacts} />);
-    const button = screen.getByRole('button', { name: 'Повторить синхронизацию' });
-    fireEvent.click(button);
-    fireEvent.click(button);
-    expect(push).toHaveBeenCalledTimes(1);
+    const push = vi.fn(() => new Promise<void>(resolve => { complete = resolve; }));
+    render(<PlanSyncNotice {...defaults} syncStatus="offline" onRetrySync={push} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Синхронизироваться' }));
+    expect(screen.getByLabelText('Синхронизация…')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Синхронизироваться' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
     await act(async () => complete());
-    await waitFor(() => expect(screen.getByRole('button').textContent).toContain('Повторить'));
-    expect(contacts).not.toHaveBeenCalled();
-    // Resolving retry does not fabricate a synced state.
-    expect(screen.getByRole('alert').textContent).toContain('Нет соединения');
+    await waitFor(() => expect(push).toHaveBeenCalledTimes(1));
+  });
+  it('removes obsolete notifications on recovery and reports a later outage again', () => {
+    const view = render(<PlanSyncNotice {...defaults} syncStatus="offline" />);
+    view.rerender(<PlanSyncNotice {...defaults} />);
+    expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
+    view.rerender(<PlanSyncNotice {...defaults} syncStatus="offline" />);
+    expect(screen.getByRole('button', { name: 'Закрыть уведомление' })).toBeTruthy();
   });
 });

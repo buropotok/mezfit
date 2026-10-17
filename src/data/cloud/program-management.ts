@@ -1,7 +1,8 @@
 import { liveQuery } from 'dexie';
+import { markProgramChanged } from './program-sync';
 import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
 import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
-import type { CloudProgramStatus, CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
+import type { LocalProgramSyncRow, CloudProgramStatus, CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import { belongsToPlan, orderedPlanRows, readProgramDays } from './program-day-tree';
 import { isProgramExerciseSnapshot } from './workout-foundation-types';
 import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
@@ -97,6 +98,10 @@ function belongs(phase: CloudProgramPhaseRow, plan: CloudTrainingPlanRow): boole
 export class ProgramManagementRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {}
 
+  private write<T>(tables: string[], task: () => Promise<T>): Promise<T> {
+    return this.db.transaction('rw', [...tables, 'localProgramSync'], task);
+  }
+
   /** Shared PLAN records have no privileged per-object owner. */
   private ownerForRealm(realmId: string): string | null {
     return realmId === this.actorUserId ? this.actorUserId : null;
@@ -126,6 +131,10 @@ export class ProgramManagementRepository {
     if (!plan || plan.deletedAt) throw new Error('Программа не найдена');
     await this.author(plan);
     return plan;
+  }
+
+  observeSync(id: string, onChange: (row: LocalProgramSyncRow | undefined) => void, onError: (reason: unknown) => void) {
+    return liveQuery(() => this.db.localProgramSync.get(id)).subscribe({ next: onChange, error: onError });
   }
 
   async listReadable(): Promise<CloudTrainingPlanRow[]> {
@@ -212,15 +221,22 @@ export class ProgramManagementRepository {
   async createPersonal(rawName: string): Promise<string> {
     const name = validName(rawName), now = new Date().toISOString();
     // Keep allocation and insertion atomic on this device, including rapid creates.
-    return this.db.transaction('rw', ['trainingPlans'], async () => {
+    return this.write(['trainingPlans', 'programPhases'], async () => {
       const plans = await this.db.trainingPlans.where('realmId').equals(this.actorUserId).toArray();
       const position = plans.reduce((max, plan) => Math.max(max, plan.position), -1) + 1;
       // Built-in personal Dexie Cloud realm uses the authenticated user's cloud ID.
-      return this.db.trainingPlans.add({
+      const id = await this.db.trainingPlans.add({
         realmId: this.actorUserId, owner: this.actorUserId, athleteUserId: this.actorUserId,
         coachUserId: null, clientUserId: null, name, position,
         status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
       });
+      await this.db.programPhases.add({
+        realmId: this.actorUserId, owner: this.actorUserId, trainingPlanId: id,
+        name: 'Фаза 1', status: 'draft', durationWeeks: DEFAULT_PHASE_WEEKS, position: 0,
+        plannedStartDate: null, plannedEndDate: null,
+      });
+      await markProgramChanged(this.db, id);
+      return id;
     });
   }
   async createAssigned(athleteUserId: string, rawName: string): Promise<string> {
@@ -235,28 +251,35 @@ export class ProgramManagementRepository {
     }
     if (!realmId) throw new Error('Связь с атлетом ещё не синхронизирована');
     const assignedRealmId = realmId;
-    return this.db.transaction('rw', ['trainingPlans'], async () => {
+    return this.write(['trainingPlans', 'programPhases'], async () => {
       const plans = await this.db.trainingPlans.where('realmId').equals(assignedRealmId).toArray();
       const position = plans.reduce((max, plan) => Math.max(max, plan.position), -1) + 1;
       const now = new Date().toISOString();
-      return this.db.trainingPlans.add({
+      const id = await this.db.trainingPlans.add({
         realmId: assignedRealmId, owner: null, athleteUserId,
         coachUserId: this.actorUserId, clientUserId: athleteUserId,
         name, position, status: 'draft', startedAt: null, finishedAt: null, createdAt: now, updatedAt: now,
       });
+      await this.db.programPhases.add({
+        realmId: assignedRealmId, owner: null, trainingPlanId: id,
+        name: 'Фаза 1', status: 'draft', durationWeeks: DEFAULT_PHASE_WEEKS, position: 0,
+        plannedStartDate: null, plannedEndDate: null,
+      });
+      await markProgramChanged(this.db, id);
+      return id;
     });
   }
   async renameProgram(id: string, name: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans'], async () => {
-      await this.currentParent(plan);
+    await this.write(['trainingPlans'], async () => {
+      await this.beginChange(plan);
       await this.db.trainingPlans.update(id, { name: validName(name), updatedAt: new Date().toISOString() });
     });
   }
   async renamePhase(id: string, phaseId: string, name: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.currentParent(plan), phase = await this.db.programPhases.get(phaseId);
+    await this.write(['trainingPlans', 'programPhases'], async () => {
+      const current = await this.beginChange(plan), phase = await this.db.programPhases.get(phaseId);
       if (!phase || phase.deletedAt || !isCloudPhaseRow(phase) || !belongs(phase, current)) throw new Error('Фаза не найдена');
       await this.db.programPhases.update(phaseId, { name: validName(name) });
     });
@@ -264,16 +287,16 @@ export class ProgramManagementRepository {
   async duration(id: string, phaseId: string, weeks: number): Promise<void> {
     if (!isValidDurationWeeks(weeks)) throw new Error('Укажите положительное целое количество недель');
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.currentParent(plan), phase = await this.db.programPhases.get(phaseId);
+    await this.write(['trainingPlans', 'programPhases'], async () => {
+      const current = await this.beginChange(plan), phase = await this.db.programPhases.get(phaseId);
       if (!phase || phase.deletedAt || !isCloudPhaseRow(phase) || !belongs(phase, current)) throw new Error('Фаза не найдена');
       await this.db.programPhases.update(phaseId, { durationWeeks: weeks });
     });
   }
   async createPhase(id: string, rawName?: string): Promise<string> {
     const plan = await this.writable(id);
-    return this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.currentParent(plan);
+    return this.write(['trainingPlans', 'programPhases'], async () => {
+      const current = await this.beginChange(plan);
       const phases = await this.db.programPhases.where('trainingPlanId').equals(id).toArray();
       const used = new Set(phases.map((phase) => phase.name));
       let n = 1;
@@ -289,8 +312,8 @@ export class ProgramManagementRepository {
   }
   async publishPhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      await this.currentParent(plan);
+    await this.write(['trainingPlans', 'programPhases'], async () => {
+      await this.beginChange(plan);
       const phase = await this.db.programPhases.get(phaseId);
       if (!phase || phase.deletedAt || !belongs(phase, plan) || phase.status !== 'draft')
         throw new Error('Завершить заполнение можно только у черновика');
@@ -299,9 +322,9 @@ export class ProgramManagementRepository {
   }
   async setPhaseStatus(id: string, phaseId: string, status: Exclude<PhaseStatus, 'active'>): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
+    await this.write(['trainingPlans', 'programPhases'], async () => {
       const phase = await this.db.programPhases.get(phaseId);
-      const current = await this.currentParent(plan);
+      const current = await this.beginChange(plan);
       if (!phase || phase.deletedAt || !isCloudPhaseRow(phase) || !belongs(phase, current))
         throw new Error('Фаза не найдена');
       const wasActive = phase.status === 'active';
@@ -320,8 +343,8 @@ export class ProgramManagementRepository {
   }
   async setProgramStatus(id: string, status: InactiveStatus): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      await this.currentParent(plan);
+    await this.write(['trainingPlans', 'programPhases'], async () => {
+      await this.beginChange(plan);
       // The indexed relationship is replayed against the server's current snapshot
       // and also affects phases that another offline client created or activated.
       await this.db.programPhases.where('[trainingPlanId+status]').equals([id, 'active'])
@@ -345,8 +368,8 @@ export class ProgramManagementRepository {
       await this.author(other);
       if (!options.previousProgramStatus) throw new Error('PREVIOUS_PROGRAM_STATUS_REQUIRED');
     }
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases'], async () => {
-      const current = await this.currentParent(plan);
+    await this.write(['trainingPlans', 'programPhases'], async () => {
+      const current = await this.beginChange(plan);
       const target = await this.db.programPhases.get(phaseId);
       if (!target || target.deletedAt || !isCloudPhaseRow(target) || !belongs(target, current))
         throw new Error('Фаза программы не найдена');
@@ -356,6 +379,11 @@ export class ProgramManagementRepository {
       if (activePhases.some((phase) => phase.id !== phaseId) && !options.previousPhaseStatus)
         throw new Error('PREVIOUS_PHASE_STATUS_REQUIRED');
 
+      const previousPrograms = await this.db.trainingPlans.where('[realmId+status]')
+        .equals([current.realmId, 'active']).toArray();
+      for (const previous of previousPrograms) {
+        if (previous.id !== id) await markProgramChanged(this.db, previous.id);
+      }
       const now = new Date().toISOString();
       // Both where predicates are intentionally declarative: Dexie Cloud
       // replays them against the server's canonical state, unlike bulk ID updates.
@@ -403,6 +431,13 @@ export class ProgramManagementRepository {
       throw new Error('Программа изменилась. Повторите действие.');
     return current;
   }
+  /** Called only inside an authoring transaction; rollback includes the local revision. */
+  private async beginChange(plan: CloudTrainingPlanRow): Promise<CloudTrainingPlanRow> {
+    const current = await this.currentParent(plan);
+    await markProgramChanged(this.db, current.id);
+    return current;
+  }
+
   /** Server ACLs remain authoritative. Refuse new shared writes until the synced
    * global Coach policy includes the complete reviewed descendant allowlist. */
   private async dayAuthoringReady(plan: CloudTrainingPlanRow): Promise<void> {
@@ -439,8 +474,8 @@ export class ProgramManagementRepository {
     if (category.length > 120) throw new Error('Категория должна содержать не более 120 символов');
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
-    return this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
-      const current = await this.currentParent(plan);
+    return this.write(['trainingPlans', 'programPhases', 'programDays'], async () => {
+      const current = await this.beginChange(plan);
       await this.currentPhase(current, phaseId);
       const days = await this.db.programDays.where('programPhaseId').equals(phaseId).toArray();
       return this.db.programDays.add({
@@ -459,9 +494,9 @@ export class ProgramManagementRepository {
       throw new Error('Выберите от 1 до 100 разных упражнений');
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
+    await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises',
       'publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'], async () => {
-      const current = await this.currentParent(plan);
+      const current = await this.beginChange(plan);
       await this.currentDay(current, dayId);
       const existing = await this.db.programExercises.where('programDayId').equals(dayId).toArray();
       let position = existing.filter(row => belongsToPlan(row, current))
@@ -479,12 +514,31 @@ export class ProgramManagementRepository {
     });
   }
 
+  async reorderDayExercises(id: string, dayId: string, ids: readonly string[]): Promise<void> {
+    if (!Array.isArray(ids) || ids.some(value => typeof value !== 'string')
+      || new Set(ids).size !== ids.length) throw new Error('Некорректный порядок упражнений');
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises'], async () => {
+      const current = await this.currentParent(plan);
+      await this.currentDay(current, dayId);
+      const rows = (await this.db.programExercises.where('programDayId').equals(dayId).toArray())
+        .filter(row => row.status === 'active' && belongsToPlan(row, current));
+      if (rows.length !== ids.length || rows.some(row => !ids.includes(row.id)))
+        throw new Error('Список упражнений изменился. Повторите перестановку.');
+      if (orderedPlanRows(rows).every((row, index) => row.id === ids[index])) return;
+      await markProgramChanged(this.db, id);
+      for (const [position, exerciseId] of ids.entries())
+        await this.db.programExercises.update(exerciseId, { position });
+    });
+  }
+
   async addExerciseSet(id: string, dayId: string, exerciseId: string): Promise<void> {
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
+    await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises',
       'programSets'], async () => {
-      const current = await this.currentParent(plan);
+      const current = await this.beginChange(plan);
       await this.currentDay(current, dayId);
       const exercise = await this.db.programExercises.get(exerciseId);
       if (!exercise || exercise.programDayId !== dayId || !belongsToPlan(exercise, current)
@@ -515,8 +569,8 @@ export class ProgramManagementRepository {
     patch: Partial<Pick<CloudProgramDayRow, 'name' | 'category' | 'comment'>>): Promise<void> {
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
-      const current = await this.currentParent(plan);
+    await this.write(['trainingPlans', 'programPhases', 'programDays'], async () => {
+      const current = await this.beginChange(plan);
       await this.currentDay(current, dayId);
       await this.db.programDays.update(dayId, patch);
     });
@@ -525,7 +579,7 @@ export class ProgramManagementRepository {
   async moveDay(id: string, dayId: string, direction: 'up' | 'down'): Promise<void> {
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
+    await this.write(['trainingPlans', 'programPhases', 'programDays'], async () => {
       const current = await this.currentParent(plan), day = await this.currentDay(current, dayId);
       const days = orderedPlanRows((await this.db.programDays.where('programPhaseId')
         .equals(day.programPhaseId).toArray()).filter((row) =>
@@ -533,6 +587,7 @@ export class ProgramManagementRepository {
       const from = days.findIndex((row) => row.id === dayId);
       const to = from + (direction === 'up' ? -1 : 1);
       if (to < 0 || to >= days.length) return;
+      await markProgramChanged(this.db, id);
       [days[from], days[to]] = [days[to], days[from]];
       // Normalize ties/gaps deterministically, but touch only positions that change.
       for (const [position, row] of days.entries()) {
@@ -544,8 +599,8 @@ export class ProgramManagementRepository {
   async deleteDay(id: string, dayId: string): Promise<void> {
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
-      const current = await this.currentParent(plan);
+    await this.write(['trainingPlans', 'programPhases', 'programDays'], async () => {
+      const current = await this.beginChange(plan);
       await this.currentDay(current, dayId);
       // Tombstone keeps immutable session sources and offline-added descendants.
       await this.db.programDays.update(dayId, { status: 'deprecated' });
@@ -580,9 +635,9 @@ export class ProgramManagementRepository {
   async duplicateDay(id: string, dayId: string): Promise<string> {
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
-    return this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
+    return this.write(['trainingPlans', 'programPhases', 'programDays',
       'programExercises', 'programSets'], async () => {
-      const current = await this.currentParent(plan), day = await this.currentDay(current, dayId);
+      const current = await this.beginChange(plan), day = await this.currentDay(current, dayId);
       const phase = await this.currentPhase(current, day.programPhaseId);
       const outline = await readProgramDays(this.db, current, [phase]);
       const source = outline.find((row) => row.day.id === dayId);
@@ -596,9 +651,9 @@ export class ProgramManagementRepository {
     const plan = await this.writable(id);
     const initial = await this.tree(plan);
     if (initial.days.length) await this.dayAuthoringReady(plan);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
+    await this.write(['trainingPlans', 'programPhases', 'programDays',
       'programExercises', 'programSets'], async () => {
-      const current = await this.currentParent(plan), tree = await this.tree(current);
+      const current = await this.beginChange(plan), tree = await this.tree(current);
       const source = await this.currentPhase(current, phaseId);
       const days = await readProgramDays(this.db, current, [source]);
       const copyId = await this.copyPhase(source, id,
@@ -611,7 +666,7 @@ export class ProgramManagementRepository {
     const original = await this.writable(id);
     const initial = await this.tree(original);
     if (initial.days.length) await this.dayAuthoringReady(original);
-    return this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
+    return this.write(['trainingPlans', 'programPhases', 'programDays',
       'programExercises', 'programSets'], async () => {
       const plan = await this.currentParent(original), tree = await this.tree(plan);
       const days = await readProgramDays(this.db, plan, tree.phases);
@@ -629,14 +684,15 @@ export class ProgramManagementRepository {
         for (const day of days.filter((row) => row.day.programPhaseId === phase.id))
           await this.copyDay(day, phaseId, day.day.position);
       }
+      await markProgramChanged(this.db, nextId);
       return nextId;
     });
   }
 
   async deletePhase(id: string, phaseId: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays'], async () => {
-      const current = await this.currentParent(plan), phase = await this.currentPhase(current, phaseId);
+    await this.write(['trainingPlans', 'programPhases', 'programDays'], async () => {
+      const current = await this.beginChange(plan), phase = await this.currentPhase(current, phaseId);
       if (phase.status === 'active') throw new Error('Сначала смените статус активной фазы');
       const tree = await this.tree(current);
       if (tree.days.some((day) => day.programPhaseId === phaseId)) {
@@ -647,9 +703,9 @@ export class ProgramManagementRepository {
 
   async deleteProgram(id: string): Promise<void> {
     const plan = await this.writable(id);
-    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays',
+    await this.write(['trainingPlans', 'programPhases', 'programDays',
       'workoutSessions'], async () => {
-      const current = await this.currentParent(plan);
+      const current = await this.beginChange(plan);
       if (current.status === 'active') throw new Error('Сначала смените статус активной программы');
       const tree = await this.tree(current);
       if (tree.days.length || await this.db.workoutSessions.where('trainingPlanId').equals(id).count()) {
