@@ -342,6 +342,22 @@ describe('administrative Dexie relationship provisioning', () => {
 });
 
 describe('installed role policy guard', () => {
+  it('accepts all three exact rollout policies and rejects extra Coach grants', () => {
+    const remote = ['coach', 'client'].map((name) => ({
+      realmId: 'rlm-public', name, permissions: structuredClone(localRoles[name].permissions),
+    }));
+    for (const manage of [
+      ['trainingPlans'],
+      ['trainingPlans', 'programPhases'],
+      ['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'],
+    ]) {
+      remote[0].permissions.manage = manage;
+      expect(() => assertRolePolicy(remote, localRoles)).not.toThrow();
+    }
+    remote[0].permissions.manage.push('workoutSessions');
+    expect(() => assertRolePolicy(remote, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
+  });
+
   it('permits only the exact legacy and upgraded Coach ACL during staged rollout', () => {
     const previous = ['coach', 'client'].map((name) => ({
       realmId: 'rlm-public', name,
