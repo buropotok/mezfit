@@ -330,7 +330,7 @@ export function SettingsPage({
   if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
-        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Интерфейс</Text>
           <Text variant="footnote" tone="muted">
             Общие параметры материалов интерфейса.
@@ -342,7 +342,7 @@ export function SettingsPage({
           </div>
         </GlassSurface>
 
-        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Разработка</Text>
           <Text variant="footnote" tone="muted">
             Временные инструменты для просмотра собранных интерфейсных модулей.
@@ -367,7 +367,7 @@ export function SettingsPage({
 
     return (
       <section className="settings-page" aria-label="Настройки стекла">
-        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Настройки стекла</Text>
           <Text variant="footnote" tone="muted">
             Эти параметры применяются ко всем GlassSurface приложения. Локальные настройки компонента могут переопределить глобальное значение.
@@ -427,13 +427,13 @@ export function SettingsPage({
   if (backgroundSettingsOpen) {
     return (
       <section className="settings-page" aria-label="Цвет фона">
-        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Цвет фона</Text>
           <Text variant="footnote" tone="muted">
             Выбранный цвет применяется ко всем экранам, кроме расписания. Изменения сохраняются автоматически.
           </Text>
           <div className="settings-page__background-preview" style={{ backgroundColor: hsvToHex(backgroundSettings) }}>
-            <GlassSurface preset="modalTuned" optics={false} blur={effectiveGlassBlur} wrapContent={false} className="settings-page__background-preview-glass">
+            <GlassSurface preset="modalTuned" optics={false} blur={effectiveGlassBlur} wrapContent={false} shape={{ radius: 16 }} className="settings-page__background-preview-glass">
               <Text variant="headline">Предпросмотр</Text>
               <Text variant="footnote" tone="muted">GlassSurface · modalTuned</Text>
             </GlassSurface>
@@ -472,7 +472,7 @@ export function SettingsPage({
 
     return (
       <section className="settings-page" aria-label="Шрифты">
-        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Шрифты</Text>
           <Text variant="footnote" tone="muted">
             Настройте шесть общих типографических пресетов. Изменения сразу применяются ко всему интерфейсу и сохраняются после перезагрузки.
