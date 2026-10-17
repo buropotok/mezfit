@@ -62,7 +62,7 @@ export function isWorkoutExerciseSnapshot(value: unknown): value is CloudWorkout
 }
 
 export interface CloudPlanChildRow extends Omit<CloudSharedRow, 'owner'> {
-  /** PLAN belongs to its authorized author, including Addon-created rows. */
+  /** Personal PLAN may be author-owned; new assigned PLAN descendants are ownerless. */
   owner: string | null;
 }
 
