@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
+import type { CloudWorkoutScheduleRequestRow } from './workout-scheduling-types';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
 import type { CoachExerciseOverrideRow, CoachExerciseDefinitionRow, CoachExerciseFavouriteRow } from '../exercises/coachExerciseTypes';
@@ -14,7 +15,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 7;
+export const CLOUD_DATABASE_VERSION = 8;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -167,6 +168,12 @@ export const CLOUD_DATABASE_STORES_V6 = {
   programPhases: '@id, realmId, trainingPlanId, [trainingPlanId+position], [trainingPlanId+status], [realmId+status]',
 } as const;
 
+/** Request intents are separate from privileged lifecycle rows. */
+export const CLOUD_DATABASE_STORES_V8 = {
+  ...CLOUD_DATABASE_STORES_V6,
+  workoutScheduleRequests: '@id, realmId, &requestKey, trainingPlanId, programDayId, targetOccurrenceId, [realmId+calendarDate]',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -194,6 +201,7 @@ export class MezfitCloudDatabase extends Dexie {
   programExercises!: Table<CloudProgramExerciseRow, string, Omit<CloudProgramExerciseRow, 'id'>>;
   programSets!: Table<CloudProgramSetRow, string, Omit<CloudProgramSetRow, 'id'>>;
   workoutOccurrences!: Table<CloudWorkoutOccurrenceRow, string, Omit<CloudWorkoutOccurrenceRow, 'id'>>;
+  workoutScheduleRequests!: Table<CloudWorkoutScheduleRequestRow, string, Omit<CloudWorkoutScheduleRequestRow, 'id'>>;
   sessionExercises!: Table<CloudSessionExerciseRow, string, Omit<CloudSessionExerciseRow, 'id'>>;
   sessionFactExercises!: Table<CloudSessionFactExerciseRow, string, Omit<CloudSessionFactExerciseRow, 'id'>>;
   sessionFactSets!: Table<CloudSessionFactSetRow, string, Omit<CloudSessionFactSetRow, 'id'>>;
@@ -216,7 +224,8 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(4).stores(CLOUD_DATABASE_STORES_V4);
     this.version(5).stores(CLOUD_DATABASE_STORES_V5);
     this.version(6).stores(CLOUD_DATABASE_STORES_V6);
-    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V6, localProgramSync: 'id' });
+    this.version(7).stores({ ...CLOUD_DATABASE_STORES_V6, localProgramSync: 'id' });
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V8, localProgramSync: 'id' });
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
