@@ -29,7 +29,7 @@ function fixture() {
     activate: { data: { [REALM]: { publicExerciseCatalogues: { [manifest.id]: manifest } } } },
   };
   const release = { schema_version: '2.1.0', exercises: Object.keys(publicExerciseDefinitions)
-    .map((id, i) => ({ id, tracking_type: i < 29 ? 'time_distance' : 'weight_reps' })) };
+    .map(id => ({ id, tracking_type: Number(id) <= 29 ? 'time_distance' : 'weight_reps' })) };
   const current = {
     publicExerciseDefinitions: Object.values(publicExerciseDefinitions).map(row => ({ ...row })),
     publicExerciseTaxonomy: Object.values(publicExerciseTaxonomy).map(row => ({ ...row })),
@@ -62,8 +62,10 @@ describe('existing public catalogue tracking-only release', () => {
     expect(plan.pending).toHaveLength(1324);
     expect(plan.alreadyActive).toBe(false);
     expect(plan.unchanged).toBe(0);
-    expect(plan.pending.slice(0, 29).every(row => row.tracking_type === 'time_distance')).toBe(true);
-    expect(plan.pending.slice(29).every(row => row.tracking_type === 'weight_reps')).toBe(true);
+    const cardioIds = plan.pending.filter(row => row.tracking_type === 'time_distance')
+      .map(row => row.id).sort();
+    expect(cardioIds).toEqual(Array.from({ length: 29 }, (_, i) => String(i + 1).padStart(4, '0')));
+    expect(plan.pending.filter(row => row.tracking_type === 'weight_reps')).toHaveLength(1295);
     expect(current).toEqual(initial);
     for (let i = 0; i < 1324; i++) {
       const { tracking_type: _tracking, ...base } = plan.pending[i];
@@ -144,8 +146,15 @@ describe('existing public catalogue tracking-only release', () => {
     })).rejects.toThrow(/Cloud write failed/);
     expect(db.data.publicExerciseCatalogues.get('mezfit:exercise-catalogue'))
       .not.toHaveProperty('trackingReleaseSha256');
-    expect(db.data.publicExerciseDefinitions.get('0001').tracking_type).toBe('time_distance');
-    expect(db.data.publicExerciseDefinitions.get('1324').tracking_type).toBeUndefined();
+    // The first two batches committed; batch three failed. Assert using their actual IDs,
+    // not JavaScript object-key iteration order (integer keys 1000+ enumerate first).
+    const committedRows = db.writes.slice(0, 2).flatMap(write => write.rows);
+    expect(committedRows).toHaveLength(50);
+    for (const row of committedRows) {
+      expect(db.data.publicExerciseDefinitions.get(row.id).tracking_type).toBe(row.tracking_type);
+    }
+    const failedId = db.writes[2].rows[0].id;
+    expect(db.data.publicExerciseDefinitions.get(failedId).tracking_type).toBeUndefined();
     const resumed = {
       publicExerciseDefinitions: await db.session.list('publicExerciseDefinitions'),
       publicExerciseTaxonomy: await db.session.list('publicExerciseTaxonomy'),
