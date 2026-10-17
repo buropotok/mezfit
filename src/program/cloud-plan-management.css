@@ -121,7 +121,16 @@
 .cloud-plan-phase-chevron.is-expanded { transform: rotate(90deg); }
 .cloud-plan-phase-chevron.has-toggled.is-expanded { animation: cloud-phase-expand 400ms ease-in-out; }
 .cloud-plan-phase-chevron.has-toggled.is-collapsed { animation: cloud-phase-collapse 400ms ease-in-out; }
-.cloud-plan-days-viewport { display: flow-root; width: 100%; min-width: 0; overflow: clip; }
+.cloud-plan-days-viewport {
+  display: flow-root;
+  box-sizing: border-box;
+  width: calc(100% + (var(--ui-space-4, 16px) * 2));
+  margin-inline: calc(var(--ui-space-4, 16px) * -1);
+  padding-inline: var(--ui-space-4, 16px);
+  min-width: 0;
+  /* Preserve vertical clipping during phase collapse, but allow side shadows into the gutters. */
+  overflow: clip;
+}
 @keyframes cloud-phase-expand { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(45deg) scale(1.5); } 100% { transform: rotate(90deg) scale(1); } }
 @keyframes cloud-phase-collapse { 0% { transform: rotate(90deg) scale(1); } 50% { transform: rotate(45deg) scale(1.5); } 100% { transform: rotate(0deg) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .cloud-plan-phase-chevron.has-toggled.is-expanded, .cloud-plan-phase-chevron.has-toggled.is-collapsed { animation: none; } }
