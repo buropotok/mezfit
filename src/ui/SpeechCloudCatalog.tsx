@@ -14,7 +14,7 @@ export function SpeechCloudCatalog() {
     <TextArea label="Текст подсказки" value={text} onChange={(event) => setText(event.target.value)} />
     <div className="ui-kit-row">
       <SpeechCloud isOpen={open} onOpenChange={setOpen} text={text} avatar={<Avatar name="Тренер" />} />
-      <KonstaButton strong onClick={() => setOpen(true)} disabled={!text.trim()}>Показать</KonstaButton>
+      <KonstaButton onClick={() => setOpen(true)} disabled={!text.trim()}>Показать</KonstaButton>
     </div>
   </Surface>;
 }
