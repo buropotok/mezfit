@@ -5,7 +5,7 @@ import { isCloudPhaseRow, isCloudPlanRow } from './program-management';
 import { isExpectedPhaseOwner, isExpectedPlanOwner } from './program-ownership';
 import { isWorkoutScheduleRequestRow, type CloudWorkoutScheduleRequestRow,
   type CreateWorkoutScheduleRequestInput } from './workout-scheduling-types';
-import { resolveScheduledStart } from './workout-scheduling-time';
+import { resolveScheduledStart, validateScheduleTiming } from './workout-scheduling-time';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 
 function personal(plan: CloudTrainingPlanRow, actor: string): boolean {
@@ -16,6 +16,26 @@ function personal(plan: CloudTrainingPlanRow, actor: string): boolean {
 
 function validRequestKey(key: string): boolean {
   return typeof key === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(key);
+}
+
+function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Partial<CloudWorkoutOccurrenceRow>;
+  if (typeof row.id !== 'string' || !row.id || typeof row.realmId !== 'string'
+    || !row.realmId || row.owner !== null || typeof row.programDayId !== 'string'
+    || !row.programDayId || (row.coachUserId !== null && typeof row.coachUserId !== 'string')
+    || (row.clientUserId !== null && typeof row.clientUserId !== 'string')
+    || (row.workoutSessionId !== null && typeof row.workoutSessionId !== 'string')
+    || !['scheduled', 'in_progress', 'completed', 'cancelled'].includes(row.status ?? '')) return false;
+  try {
+    validateScheduleTiming({
+      calendarDate: row.calendarDate as string,
+      startMinute: row.startMinute as number,
+      durationMinutes: row.durationMinutes as number,
+      timeZone: row.timeZone ?? 'UTC',
+    });
+    return true;
+  } catch { return false; }
 }
 
 /** A booking intent is not a reservation; only trusted processing may materialize an occurrence. */
@@ -97,10 +117,24 @@ export class WorkoutSchedulingRepository {
     });
   }
 
+  private async visibleDayIds(plan: CloudTrainingPlanRow): Promise<Set<string>> {
+    const phases = await this.db.programPhases.where('trainingPlanId').equals(plan.id).toArray();
+    const phaseIds = new Set(phases.filter(phase => !phase.deletedAt
+      && phase.realmId === plan.realmId && isExpectedPhaseOwner(phase, plan)
+      && (personal(plan, this.actorUserId) || this.actorUserId !== plan.clientUserId
+        || phase.status !== 'draft')).map(phase => phase.id));
+    const days = await this.db.programDays.where('realmId').equals(plan.realmId).toArray();
+    return new Set(days.filter(day => phaseIds.has(day.programPhaseId)
+      && (day.owner === null || day.owner === (plan.coachUserId ?? plan.athleteUserId)))
+      .map(day => day.id));
+  }
+
   async listRequests(trainingPlanId: string): Promise<CloudWorkoutScheduleRequestRow[]> {
     const plan = await this.readablePlan(trainingPlanId);
+    const visible = await this.visibleDayIds(plan);
     return (await this.db.workoutScheduleRequests.where('trainingPlanId').equals(plan.id).toArray())
-      .filter(row => isWorkoutScheduleRequestRow(row) && row.realmId === plan.realmId
+      .filter(row => isWorkoutScheduleRequestRow(row) && visible.has(row.programDayId)
+        && row.realmId === plan.realmId
         && row.athleteUserId === (plan.clientUserId ?? this.actorUserId)
         && row.coachUserId === plan.coachUserId
         && (row.requestedByUserId === plan.coachUserId
@@ -115,13 +149,9 @@ export class WorkoutSchedulingRepository {
 
   async listOccurrences(trainingPlanId: string): Promise<CloudWorkoutOccurrenceRow[]> {
     const plan = await this.readablePlan(trainingPlanId);
-    const phases = await this.db.programPhases.where('trainingPlanId').equals(plan.id).toArray();
-    const phaseIds = new Set(phases.filter(phase => !phase.deletedAt
-      && phase.realmId === plan.realmId && isExpectedPhaseOwner(phase, plan)).map(phase => phase.id));
-    const days = await this.db.programDays.where('realmId').equals(plan.realmId).toArray();
-    const dayIds = new Set(days.filter(day => phaseIds.has(day.programPhaseId)).map(day => day.id));
+    const dayIds = await this.visibleDayIds(plan);
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
-    return rows.filter(row => row.owner === null && dayIds.has(row.programDayId)
+    return rows.filter(row => validOccurrence(row) && dayIds.has(row.programDayId)
       && (row.athleteUserId === undefined || row.athleteUserId === (plan.clientUserId ?? this.actorUserId))
       && (row.coachUserId === plan.coachUserId || (row.coachUserId === null && plan.coachUserId === null)))
       .sort((a, b) => a.calendarDate.localeCompare(b.calendarDate)
