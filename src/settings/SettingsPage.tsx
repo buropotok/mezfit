@@ -440,7 +440,12 @@ export function SettingsPage({
           </div>
           <GlassBackgroundColorControls
             color={backgroundSettings}
-            onChange={onBackgroundSettingsChange}
+            onChange={(next) => onBackgroundSettingsChange(
+              backgroundSettings.value === 0 && next.value === 0
+                && (next.hue !== backgroundSettings.hue || next.saturation !== backgroundSettings.saturation)
+                ? { ...next, value: 43 }
+                : next,
+            )}
             minimumBrightness={0}
           />
           <div className="settings-page__background-reset">
