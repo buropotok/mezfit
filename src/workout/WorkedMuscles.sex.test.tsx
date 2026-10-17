@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { WorkedMuscles } from './WorkedMuscles';
+import { WorkedMuscles, clampWorkedMusclePan } from './WorkedMuscles';
 import {
   FEMALE_WORKED_MUSCLE_VIEWS,
   getWorkedMuscleViewConfig,
@@ -19,6 +19,7 @@ describe('WorkedMuscles sex selection', () => {
     expect(html).toContain('Пол анатомической модели');
     expect(html).toContain('Женский');
     expect(html).toContain('Мужской');
+    expect(html).toContain('touch-action:pan-y');
   });
 
   it('uses a supplied sex without exposing a manual switch', () => {
@@ -29,6 +30,20 @@ describe('WorkedMuscles sex selection', () => {
     expect(female).toContain('worked-muscles__canvas--female-front');
     expect(male).not.toContain('Пол анатомической модели');
     expect(female).not.toContain('Пол анатомической модели');
+  });
+});
+
+describe('Anatomy pan boundaries', () => {
+  it('keeps zoomed anatomy reachable even after large drags', () => {
+    expect(clampWorkedMusclePan(3, 10000, -10000, 300, 500, 240, 500))
+      .toEqual({ x: 210, y: -500 });
+  });
+
+  it('centers an image narrower than its viewport and resets at base zoom', () => {
+    expect(clampWorkedMusclePan(1.2, 100, 60, 400, 500, 200, 500))
+      .toEqual({ x: 0, y: 50 });
+    expect(clampWorkedMusclePan(1, 100, 60, 400, 500, 200, 500))
+      .toEqual({ x: 0, y: 0 });
   });
 });
 
