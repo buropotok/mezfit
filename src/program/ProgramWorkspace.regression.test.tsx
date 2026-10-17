@@ -159,7 +159,7 @@ describe('program workspace regressions', () => {
     const repo = { ...repository([plan('Программа')]), createPhase: vi.fn(async () => { throw new Error('Фаза не сохранена'); }) };
     render(<CloudProgramDetailsPage repository={repo as unknown as ProgramManagementRepository}
       planId="Программа" {...connection} syncStatus="pending" />);
-    await screen.findByText('Программа тренировок');
+    await screen.findByText('Описание программы');
     act(() => actions.addPhase?.());
     const prompt = screen.getByRole('dialog', { name: 'Добавить фазу' });
     const save = within(prompt).getByRole('button', { name: 'Сохранить' });

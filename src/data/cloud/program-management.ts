@@ -3,6 +3,8 @@ import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
 import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
 import type { CloudProgramStatus, CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import { belongsToPlan, orderedPlanRows, readProgramDays } from './program-day-tree';
+import { isWorkoutExerciseSnapshot } from './workout-foundation-types';
+import { programExerciseTracking, programExerciseSnapshot, readProgramCatalogueExercise, type PreparedProgramExercise, type ProgramExerciseSelection } from './program-exercise-selection';
 import type { CloudProgramDayOutline, CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
 
 export type PhaseStatus = CloudProgramPhaseRow['status'];
@@ -447,6 +449,45 @@ export class ProgramManagementRepository {
         position: days.filter((day) => belongsToPlan(day, current))
           .reduce((max, day) => Math.max(max, day.position), -1) + 1,
       });
+    });
+  }
+
+  async prepareDayExercises(ids: readonly string[]): Promise<PreparedProgramExercise[]> {
+    if (!Array.isArray(ids) || !ids.length || ids.length > 100
+      || ids.some(value => typeof value !== 'string') || new Set(ids).size !== ids.length)
+      throw new Error('Выберите от 1 до 100 разных упражнений');
+    return Promise.all(ids.map(async id => {
+      const row = await readProgramCatalogueExercise(this.db, this.actorUserId, id);
+      return { id, name: row.name_ru || row.name, trackingType: programExerciseTracking(row.movement_type) };
+    }));
+  }
+
+  async addDayExercises(id: string, dayId: string, selections: readonly ProgramExerciseSelection[]): Promise<void> {
+    if (!Array.isArray(selections) || !selections.length || selections.length > 100
+      || selections.some(item => !item || typeof item.id !== 'string')
+      || new Set(selections.map(item => item.id)).size !== selections.length)
+      throw new Error('Выберите от 1 до 100 разных упражнений');
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.db.transaction('rw', ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
+      'publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'], async () => {
+      const current = await this.currentParent(plan);
+      await this.currentDay(current, dayId);
+      const existing = await this.db.programExercises.where('programDayId').equals(dayId).toArray();
+      let position = existing.filter(row => belongsToPlan(row, current))
+        .reduce((max, row) => Math.max(max, row.position), -1) + 1;
+      for (const selection of selections) {
+        // Resolve again inside the write transaction: deleted/private/stale catalogue
+        // choices must not create a partial or inaccessible PLAN.
+        const row = await readProgramCatalogueExercise(this.db, this.actorUserId, selection.id);
+        const tracking = selection.trackingType ?? programExerciseTracking(row.movement_type);
+        if (!tracking) throw new Error(`Выберите тип учёта для упражнения «${row.name_ru || row.name}»`);
+        const snapshot = programExerciseSnapshot(row, this.actorUserId, tracking);
+        if (!isWorkoutExerciseSnapshot(snapshot)) throw new Error('Некорректные данные упражнения');
+        await this.db.programExercises.add({ realmId: current.realmId,
+          owner: this.ownerForRealm(current.realmId), programDayId: dayId,
+          exercise: snapshot, position: position++, status: 'active', notes: null });
+      }
     });
   }
 

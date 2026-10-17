@@ -10,8 +10,13 @@ import { usePublishedExerciseCatalogue } from './usePublishedExerciseCatalogue';
 
 export function PersonalExercises({
   role, selectedCoachUserId = null, onNavigationContextChange,
+  mode = 'browse', selectedExerciseIds, onToggleExercise, selectionDisabled = false,
 }: {
   role: 'coach' | 'client';
+  mode?: 'browse' | 'select';
+  selectedExerciseIds?: ReadonlySet<string>;
+  onToggleExercise?: (id: string) => void;
+  selectionDisabled?: boolean;
   selectedCoachUserId?: string | null;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }) {
@@ -175,15 +180,17 @@ export function PersonalExercises({
       key={catalogueKey}
       snapshot={snapshot}
       scope={role}
+      mode={mode} selectedExerciseIds={selectedExerciseIds}
+      onToggleExercise={onToggleExercise} selectionDisabled={selectionDisabled}
       initialTab={initialTab}
       catalogueExercises={combined}
       personalIds={personalIds}
       assignedIds={assignedIds}
       favouriteIds={favouriteIds}
       selectedCoachUserId={selectedCoachUserId}
-      onToggleFavourite={id => { void toggleFavourite(id); }}
-      onCreateExercise={category => setRequest({ mode: 'create', category })}
-      onEditExercise={edit}
+      onToggleFavourite={mode === 'browse' ? id => { void toggleFavourite(id); } : undefined}
+      onCreateExercise={mode === 'browse' ? category => setRequest({ mode: 'create', category }) : undefined}
+      onEditExercise={mode === 'browse' ? edit : undefined}
       onNavigationContextChange={setCatalogueNavigation}
     /> : null}
     <PersonalExerciseEditorGateway

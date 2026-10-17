@@ -151,7 +151,7 @@ export function ExerciseCatalogContent({
 }) {
   const { taxonomy, catalogue } = snapshot;
   const exercises = catalogueExercises ?? snapshot.exercises;
-  const isPersonal = (scope === 'coach' || scope === 'client') && mode === 'browse';
+  const isPersonal = scope === 'coach' || scope === 'client';
   const [category, setCategory] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');

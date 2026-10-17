@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { isOtherActiveProgramInScope, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
-import { useNavigationSurfaceFloatingAction } from '../NavigationShell';
-import { Badge, Button, IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
+import { useNavigationSurfaceFloatingAction, type NavigationContext } from '../NavigationShell';
+import { Badge, Button, Icon, IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { ProgramSummary, type ProgramActor } from './ProgramSummary';
 import { programMutationMessage, weekLabel } from './programPresentation';
@@ -39,7 +39,7 @@ function status(phase: CloudProgramPhaseRow): { label: string; color: BadgeColor
 function PhaseHeading({
   phase, disabled, readOnly, onAction, onPublish, children,
 }: {
-  children?: ReactNode;
+  children?: (collapsed: boolean, bodyId: string) => ReactNode;
   phase: CloudProgramPhaseRow;
   disabled: boolean;
   readOnly: boolean;
@@ -47,6 +47,9 @@ function PhaseHeading({
   onPublish: (phase: CloudProgramPhaseRow) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [toggled, setToggled] = useState(false);
+  const bodyId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const glass = loadBrowserGlassSettings();
   const menu: LiquidPopoverItem[] = ([
@@ -67,22 +70,31 @@ function PhaseHeading({
   return (
     <section className="cloud-plan-phase" aria-label={phase.name}>
       <div className="cloud-plan-phase-heading">
-        <div className="cloud-plan-phase-title"><Text variant="title">{phase.name}</Text></div>
+        <div className="cloud-plan-phase-title"><Text variant="headline">{phase.name}</Text></div>
         <Badge color={label.color}>{label.label}</Badge>
         <Text variant="footnote" className="cloud-plan-phase-weeks">{weeks} {weekLabel(weeks)}</Text>
-        {!readOnly ? <LiquidPopover
-          isOpen={open}
-          onOpenChange={setOpen}
-          triggerRef={triggerRef}
-          trigger={<IconButton ref={triggerRef} icon="dots-vertical"
-            label={`Действия с фазой ${phase.name}`} />}
-          items={menu}
-          label={`Действия с фазой ${phase.name}`}
-          preset={glass.preset}
-          optics={glass.optics}
-        /> : null}
+        <div className="cloud-plan-phase-controls">
+          <IconButton label={collapsed ? `Развернуть фазу ${phase.name}` : `Свернуть фазу ${phase.name}`}
+            aria-expanded={!collapsed} aria-controls={bodyId}
+            onPointerDown={event => event.preventDefault()} onClick={() => { setToggled(true); setCollapsed(value => !value); }}>
+            <span key={String(collapsed)} className={`cloud-plan-phase-chevron ${toggled ? 'has-toggled' : ''} ${collapsed ? 'is-collapsed' : 'is-expanded'}`}>
+              <Icon name="chevron-right" />
+            </span>
+          </IconButton>
+          {!readOnly ? <LiquidPopover
+            isOpen={open}
+            onOpenChange={setOpen}
+            triggerRef={triggerRef}
+            trigger={<IconButton ref={triggerRef} icon="dots-vertical"
+              label={`Действия с фазой ${phase.name}`} />}
+            items={menu}
+            label={`Действия с фазой ${phase.name}`}
+            preset={glass.preset}
+            optics={glass.optics}
+          /> : null}
+        </div>
       </div>
-      {children}
+      {children?.(collapsed, bodyId)}
       {!readOnly && phase.status === 'draft' ? (
         <Button variant="secondary" disabled={disabled} onClick={() => onPublish(phase)}>
           Завершить заполнение фазы
@@ -93,9 +105,10 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, viewerRole = 'coach', readOnly = false, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync,
+  repository, planId, viewerRole = 'coach', readOnly = false, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
 }: {
   repository: ProgramManagementRepository;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
   planId: string;
   viewerRole?: 'coach' | 'client';
   readOnly?: boolean;
@@ -347,9 +360,9 @@ export function CloudProgramDetailsPage({
             },
           })}
         >
-          <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
+          {(collapsed, bodyId) => <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
             days={(details.days ?? []).filter((item) => item.day.programPhaseId === phase.id)}
-            readOnly={readOnly} actor={actor} />
+            collapsed={collapsed} bodyId={bodyId} viewerRole={viewerRole} onNavigationContextChange={onNavigationContextChange} readOnly={readOnly} actor={actor} /> }
         </PhaseHeading>
       )) : <Text variant="footnote" tone="muted">{readOnly ? 'В программе пока нет подготовленных фаз.' : 'Добавьте первую фазу через кнопку «Добавить».'}</Text>}
       <MezfitDialog

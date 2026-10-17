@@ -1,7 +1,7 @@
-import { useRef, useState, type ReactNode } from 'react';
-import { Button, List, ListItem } from 'konsta/react';
+import { useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { List, ListItem } from 'konsta/react';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
-import { Avatar, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
+import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import type { SetLabel } from './setEntryTypes';
 
@@ -14,11 +14,16 @@ export interface WorkoutPlanCardProps {
   busy?: boolean;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  onAddExercise?: () => void;
   onEdit: () => void;
   onComment: () => void;
   onMove: (direction: 'up' | 'down') => void;
   onDuplicate: () => void;
   onDelete: () => void;
+}
+
+function PlanGlassButton({ 'aria-disabled': disabled, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type="button" disabled={disabled === true || disabled === 'true'} {...props} />;
 }
 
 const setLabels: Record<SetLabel, string> = {
@@ -29,7 +34,7 @@ const setLabels: Record<SetLabel, string> = {
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
   day: outline, creatorName, creatorAvatar, readOnly = false, busy = false,
-  canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete,
+  canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -41,14 +46,14 @@ export function WorkoutPlanCard({
     setMenuOpen(false);
   };
   const menu: LiquidPopoverItem[] = readOnly ? [] : [
-    { id: 'edit', label: 'Изменить название и категорию', icon: 'pencil', disabled: busy, onSelect: () => defer(onEdit) },
-    { id: 'up', label: 'Переместить вверх', disabled: busy || !canMoveUp, onSelect: () => defer(() => onMove('up')) },
-    { id: 'down', label: 'Переместить вниз', disabled: busy || !canMoveDown, onSelect: () => defer(() => onMove('down')) },
-    { id: 'duplicate', label: 'Дублировать', icon: 'copy', disabled: busy, onSelect: () => defer(onDuplicate) },
+    { id: 'edit', label: 'Переименовать', icon: 'pencil', disabled: busy, onSelect: () => defer(onEdit) },
+    { id: 'up', label: 'Вверх', icon: 'arrow-up', disabled: busy || !canMoveUp, onSelect: () => defer(() => onMove('up')) },
+    { id: 'down', label: 'Вниз', icon: 'arrow-down', disabled: busy || !canMoveDown, onSelect: () => defer(() => onMove('down')) },
+    { id: 'duplicate', label: 'Дублировать', icon: 'copy-outline', disabled: busy, onSelect: () => defer(onDuplicate) },
     { id: 'comment', label: 'Комментарий', icon: 'message-circle', disabled: busy, onSelect: () => defer(onComment) },
-    { id: 'start', label: 'Начать тренировку', disabled: true, dividerBefore: true },
-    { id: 'schedule', label: 'Запланировать тренировку', disabled: true },
-    { id: 'delete', label: 'Удалить', icon: 'trash', disabled: busy, dividerBefore: true, onSelect: () => defer(onDelete) },
+    { id: 'start', label: 'Начать тренировку', icon: 'treadmill', disabled: true, dividerBefore: true },
+    { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: true },
+    { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(onDelete) },
   ];
   const items = exercises.map(({ exercise: item, sets }) => ({
     id: item.id,
@@ -98,12 +103,26 @@ export function WorkoutPlanCard({
       </div>}
       footer={<div className="workout-session-card__footer">
         {!exercises.length ? <Text variant="footnote" tone="muted">В этом дне пока нет упражнений</Text> : null}
-        {!readOnly ? <Button disabled>Добавить упражнение</Button> : null}
+        {!readOnly ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+          className="workout-session-card__add-exercise" aria-disabled={busy || !onAddExercise}
+          onClick={() => { if (!busy) onAddExercise?.(); }}>
+          <Icon name="plus" className="workout-session-card__add-exercise-icon" />
+          <Text variant="body">Добавить упражнение</Text>
+        </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
         {!readOnly ? <div className="workout-plan-card__actions">
-          <Button disabled={busy} onClick={onComment}>Комментарий</Button>
-          <Button disabled>Начать</Button>
-          <Button disabled>Запланировать</Button>
+          <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+            glass={{ tintR: 244, tintG: 218, tintB: 139, tintA: 0.14 }} aria-disabled="true"
+            className="workout-plan-card__action">
+            <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
+            <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
+          </GlassSurface>
+          <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+            glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled="true"
+            className="workout-plan-card__action">
+            <Icon name="treadmill" className="workout-plan-card__action-icon" />
+            <Text variant="body">Начать</Text>
+          </GlassSurface>
         </div> : null}
       </div>} />
   </article>;

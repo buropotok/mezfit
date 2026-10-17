@@ -81,17 +81,18 @@ function CloudClientProgramsWorkspace({
   onRetrySync: () => Promise<void>;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }) {
+  const [detailNavigation, setDetailNavigation] = useState<NavigationContext | null>(null);
   const [selected, setSelected] = useState<CloudTrainingPlanRow | null>(null);
   const [filter, setFilter] = useState<ProgramFilter>('all');
   const controls: ProgramControls = { filter, onFilterChange: setFilter, search: '', onSearchChange: () => {} };
   useEffect(() => {
-    onNavigationContextChange?.(selected ? {
+    onNavigationContextChange?.(selected ? detailNavigation ?? {
       title: 'Детали программы', scrollKey: `client-program:${selected.id}`,
       onBack: () => setSelected(null),
     } : null);
     return () => onNavigationContextChange?.(null);
-  }, [selected?.id, onNavigationContextChange]);
-  if (selected) return <CloudProgramDetailsPage key={selected.id} repository={repository}
+  }, [selected?.id, detailNavigation, onNavigationContextChange]);
+  if (selected) return <CloudProgramDetailsPage onNavigationContextChange={setDetailNavigation} key={selected.id} repository={repository}
     planId={selected.id} viewerRole="client" readOnly={selected.coachUserId !== null} actor={actor}
     cloudStatus={cloudStatus} cloudError={cloudError} syncStatus={syncStatus} syncError={syncError}
     onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
