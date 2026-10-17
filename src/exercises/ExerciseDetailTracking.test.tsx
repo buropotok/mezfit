@@ -8,6 +8,19 @@ import { ExerciseDetail } from './ExerciseCatalogContent';
 vi.mock('../ui', () => ({
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
+vi.mock('konsta/react', () => ({
+  Checkbox: () => null,
+  Chip: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+}));
+vi.mock('../NavigationShell', () => ({
+  useNavigationBackTransition: () => (action: () => void) => action(),
+}));
+vi.mock('../ui/LiquidGlassTextOnly', () => ({
+  LiquidGlassTextOnly: () => null,
+}));
+vi.mock('./CoachExerciseCatalogFab', () => ({
+  CoachExerciseCatalogFab: () => null,
+}));
 vi.mock('../ui/GlassSurface', () => ({
   GlassSurface: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
