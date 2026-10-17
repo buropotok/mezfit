@@ -37,11 +37,15 @@ editor will use `setLabel`, `comment`, `materialLinks` and `chatLinks`; numerica
 loads belong to a future per-occurrence plan. Old numeric attributes are retained
 in storage/copies for compatibility but omitted from template UI.
 
-All descendants use the program's realm and its authorized PLAN author as owner;
-legacy ownerless rows remain readable. Both program readers reject foreign realms,
-foreign owners and orphaned descendants. The athlete projection hides draft phases
-and their days. Personal authors can edit their own PLAN; an assigned client cannot
-invoke the repository's PLAN mutations.
+New assigned PLAN headers and descendants explicitly use `owner: null` in
+their relationship realm; this keeps write authority in the role ACL rather
+than object ownership. Personal PLAN rows remain owned by their author.
+Historical coach-owned rows remain readable during rollout. Both readers reject
+foreign realms, client-owned PLAN rows and orphaned descendants. The athlete
+projection hides draft phases and their days. Personal authors can edit their
+own PLAN; assigned clients cannot invoke the repository's PLAN mutations.
+Cloud server-side denial of direct Client add/update/delete attempts must also
+be verified; repository filtering alone is not an authorization boundary.
 
 Duplicate day/phase/program copies active descendants with new IDs in one local
 transaction; copied phases/programs are drafts. It never copies occurrences or
