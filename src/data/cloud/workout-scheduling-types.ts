@@ -6,11 +6,12 @@ export type WorkoutScheduleAction = 'create' | 'reschedule' | 'cancel';
 
 /**
  * This is an untrusted user intent, NOT a booked workout. Dexie Cloud grants
- * both relationship roles add-only access. A future privileged processor must
- * derive identity from verified auth and independently validate every field.
+ * both relationship roles add-only access, but implicit owner privileges can
+ * make intents mutable. A future privileged processor must consume a freshly
+ * validated immutable snapshot and never trust a prior observation.
  */
 export interface CloudWorkoutScheduleRequestRow extends Omit<CloudSharedRow, 'owner'>, ScheduleTiming {
-  /** Dexie Cloud may assign the creator despite an explicit owner:null input. */
+  /** Addon ownership is not an immutability or authorization guarantee. */
   owner: string | null;
   requestKey: string;
   action: WorkoutScheduleAction;
