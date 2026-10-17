@@ -171,7 +171,7 @@ export const CLOUD_DATABASE_STORES_V6 = {
 /** Request intents are separate from privileged lifecycle rows. */
 export const CLOUD_DATABASE_STORES_V8 = {
   ...CLOUD_DATABASE_STORES_V6,
-  workoutScheduleRequests: '@id, realmId, &requestKey, trainingPlanId, programDayId, targetOccurrenceId, [realmId+calendarDate]',
+  workoutScheduleRequests: 'id, realmId, requestKey, trainingPlanId, programDayId, targetOccurrenceId, [realmId+calendarDate]',
 } as const;
 
 /**
@@ -201,7 +201,7 @@ export class MezfitCloudDatabase extends Dexie {
   programExercises!: Table<CloudProgramExerciseRow, string, Omit<CloudProgramExerciseRow, 'id'>>;
   programSets!: Table<CloudProgramSetRow, string, Omit<CloudProgramSetRow, 'id'>>;
   workoutOccurrences!: Table<CloudWorkoutOccurrenceRow, string, Omit<CloudWorkoutOccurrenceRow, 'id'>>;
-  workoutScheduleRequests!: Table<CloudWorkoutScheduleRequestRow, string, Omit<CloudWorkoutScheduleRequestRow, 'id'>>;
+  workoutScheduleRequests!: Table<CloudWorkoutScheduleRequestRow, string>;
   sessionExercises!: Table<CloudSessionExerciseRow, string, Omit<CloudSessionExerciseRow, 'id'>>;
   sessionFactExercises!: Table<CloudSessionFactExerciseRow, string, Omit<CloudSessionFactExerciseRow, 'id'>>;
   sessionFactSets!: Table<CloudSessionFactSetRow, string, Omit<CloudSessionFactSetRow, 'id'>>;
