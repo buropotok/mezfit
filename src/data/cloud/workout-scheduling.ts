@@ -18,6 +18,14 @@ function validRequestKey(key: string): boolean {
   return typeof key === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(key);
 }
 
+/** Canonical across devices: actor-scoped retry identity, not a local unique index. */
+export function scheduleRequestId(actor: string, key: string): string {
+  if (!/^tg:[1-9]\d*$/.test(actor) || !validRequestKey(key)) {
+    throw new Error('INVALID_SCHEDULE_REQUEST_KEY');
+  }
+  return `req:${actor}:${key}`;
+}
+
 function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const row = value as Partial<CloudWorkoutOccurrenceRow>;
@@ -96,8 +104,8 @@ export class WorkoutSchedulingRepository {
         throw new Error('SCHEDULE_COACH_REQUIRED');
       }
       const athleteUserId = plan.clientUserId ?? this.actorUserId;
-      const saved = await this.db.workoutScheduleRequests.where('requestKey')
-        .equals(input.requestKey).first();
+      const id = scheduleRequestId(this.actorUserId, input.requestKey);
+      const saved = await this.db.workoutScheduleRequests.get(id);
       const intended = {
         realmId: plan.realmId, owner: null as const, requestKey: input.requestKey,
         action: 'create' as const, trainingPlanId: plan.id, programDayId: input.programDayId,
@@ -112,9 +120,10 @@ export class WorkoutSchedulingRepository {
             key !== 'owner' && Reflect.get(saved, key) !== value)) throw new Error('SCHEDULE_REQUEST_KEY_CONFLICT');
         return saved.id;
       }
-      return this.db.workoutScheduleRequests.add({
-        ...intended, createdAt: new Date().toISOString(),
+      await this.db.workoutScheduleRequests.add({
+        id, ...intended, createdAt: new Date().toISOString(),
       });
+      return id;
     });
   }
 
