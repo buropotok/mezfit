@@ -93,6 +93,20 @@ describe('local-first workout scheduling intent', () => {
     expect(await f.db.table('workoutOccurrences').count()).toBe(0);
   });
 
+  it('stores a client-requested coached workout as an unconfirmed intent', async () => {
+    const f = await fixture();
+    const id = await f.client.createRequest({
+      ...command('assigned', 'client-coached-0001'), format: 'coached',
+    });
+    const record = await f.db.table('workoutScheduleRequests').get(id);
+    expect(record).toMatchObject({
+      action: 'create', format: 'coached', requestedByUserId: 'tg:202',
+      coachUserId: 'tg:101', athleteUserId: 'tg:202',
+    });
+    expect(record).not.toHaveProperty('status');
+    expect(await f.db.table('workoutOccurrences').count()).toBe(0);
+  });
+
   it('denies foreign realms, client draft PLAN and unpublished phases', async () => {
     const f = await fixture();
     await expect(f.stranger.createRequest(command('assigned', 'foreign-action-01')))
