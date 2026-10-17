@@ -80,6 +80,8 @@ export interface ProgramSessionExerciseProps {
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
   onAddSet?: () => void;
+  onDelete?: () => void;
+  onInformation?: () => void;
 }
 
 export type SessionExerciseProps = WorkoutSessionExerciseProps | ProgramSessionExerciseProps;

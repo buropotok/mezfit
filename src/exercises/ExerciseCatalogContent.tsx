@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Checkbox, Chip } from 'konsta/react';
 import type { PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
 import {
@@ -67,11 +67,12 @@ function anatomyMuscleIds(ids: readonly string[]): string[] {
   ))];
 }
 
-function ExerciseDetail({ row, taxonomy, onEdit, origin }: {
+export function ExerciseDetail({ row, taxonomy, onEdit, origin, media }: {
   row: CatalogueExerciseRow;
   taxonomy: PublicTaxonomyRow[];
   onEdit?: () => void;
   origin?: 'personal' | 'trainer' | null;
+  media?: ReactNode;
 }) {
   const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
   const primaryIds = new Set(primary);
@@ -88,7 +89,7 @@ function ExerciseDetail({ row, taxonomy, onEdit, origin }: {
     <section className="mezfit-public-exercises__detail" aria-label="Детали упражнения">
       <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__media-placeholder"
         contentClassName="mezfit-public-exercises__media-content">
-        <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />
+        {media ?? <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />}
       </GlassSurface>
       <Text variant="headline">{row.name_ru || row.name}</Text>
       {origin ? <Text variant="caption" tone="muted">

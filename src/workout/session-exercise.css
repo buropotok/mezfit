@@ -38,7 +38,7 @@
   flex: 0 0 auto;
 }
 
-.session-exercise__collapse {
+.session-exercise__menu {
   margin-inline-end: var(--ui-space-1);
 }
 
@@ -63,7 +63,6 @@
 .session-exercise__icon--check { mask-image: url('../ui/icons/check.svg'); }
 .session-exercise__icon--chevron-down { mask-image: url('../ui/icons/chevron-down.svg'); }
 .session-exercise__icon--chevron-right { mask-image: url('../ui/icons/chevron-right.svg'); }
-.session-exercise__icon--dots-vertical { mask-image: url('../ui/icons/dots-vertical.svg'); }
 
 .session-exercise__body {
   width: 100%;

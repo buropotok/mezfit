@@ -26,6 +26,14 @@ const item: CloudProgramDayOutline['exercises'][number] = {
 };
 
 describe('existing exercise component in program mode', () => {
+  it('places the exercise menu to the right of the independent disclosure button', () => {
+    render(<SessionExercise mode="program" data={item} onInformation={() => {}} onDelete={() => {}} />);
+    const chevron = screen.getByRole('button', { name: 'Свернуть упражнение' });
+    const menu = screen.getByRole('button', { name: 'Меню упражнения' });
+    expect(chevron.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(menu.hasAttribute('data-no-dnd')).toBe(true);
+    expect(screen.getByText('Подход 1')).toBeTruthy();
+  });
   it('keeps media, disclosure, numbered set rows and the glass add-set control without FACT or an editor', () => {
     const addSet = vi.fn();
     const { container } = render(<SessionExercise mode="program" data={item} onAddSet={addSet} />);

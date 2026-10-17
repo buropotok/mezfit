@@ -39,17 +39,23 @@ export function resolvePublicExerciseSnapshot(
 export class PublicExerciseCatalogueRepository {
   constructor(private readonly db: MezfitCloudDatabase) {}
 
-  observe(
-    onChange: (snapshot: PublicExerciseSnapshot) => void,
-    onError: (error: unknown) => void,
-  ): { unsubscribe(): void } {
-    return liveQuery(async () => {
+  /** Read one coherent local release, including its completeness boundary. */
+  read(): Promise<PublicExerciseSnapshot> {
+    return this.db.transaction('r', [this.db.publicExerciseCatalogues,
+      this.db.publicExerciseDefinitions, this.db.publicExerciseTaxonomy], async () => {
       const [manifest, exercises, taxonomy] = await Promise.all([
         this.db.publicExerciseCatalogues.get('mezfit:exercise-catalogue'),
         this.db.publicExerciseDefinitions.where('realmId').equals('rlm-public').toArray(),
         this.db.publicExerciseTaxonomy.where('realmId').equals('rlm-public').toArray(),
       ]);
       return resolvePublicExerciseSnapshot(manifest, exercises, taxonomy);
-    }).subscribe({ next: onChange, error: onError });
+    });
+  }
+
+  observe(
+    onChange: (snapshot: PublicExerciseSnapshot) => void,
+    onError: (error: unknown) => void,
+  ): { unsubscribe(): void } {
+    return liveQuery(() => this.read()).subscribe({ next: onChange, error: onError });
   }
 }

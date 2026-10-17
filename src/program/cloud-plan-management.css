@@ -143,3 +143,6 @@
 .program-sync-badge { display: block; padding: 0; border: 0; background: none; cursor: pointer; }
 .program-sync-preloader { display: flex; justify-content: center; align-items: center; min-height: 64px; }
 .program-sync-button { height: 44px; padding-inline: var(--ui-space-2); color: white; white-space: nowrap; }
+
+.program-exercise-information { display: flex; flex-direction: column; gap: var(--ui-space-3); padding: var(--ui-space-4); }
+.program-exercise-information__header { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-3); }
