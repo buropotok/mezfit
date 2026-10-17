@@ -151,10 +151,12 @@ describe('local-first workout scheduling intent', () => {
 
   it('emits the local commit through liveQuery and retains it on repository recreation', async () => {
     const f = await fixture();
-    const received = new Promise<string[]>( (resolve, reject) => {
+    let unsubscribe: (() => void) | undefined;
+    const received = new Promise<string[]>((resolve, reject) => {
       const subscription = f.client.observeRequests('client-personal', rows => {
-        if (rows.length) { subscription.unsubscribe(); resolve(rows.map(row => row.id)); }
+        if (rows.length) { unsubscribe?.(); resolve(rows.map(row => row.id)); }
       }, reject);
+      unsubscribe = () => subscription.unsubscribe();
     });
     const id = await f.client.createRequest(command('client-personal', 'client-action-0030'));
     expect(await received).toEqual([id]);
