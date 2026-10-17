@@ -1,6 +1,6 @@
 :root {
   /* Semantic aliases over the existing canonical Mezfit theme contract. */
-  --ui-color-canvas: var(--theme-bg);
+  --ui-color-canvas: var(--app-active-background);
   --ui-color-canvas-text: var(--theme-bg-text);
   --ui-color-canvas-muted: var(--theme-bg-muted);
   --ui-color-surface: var(--theme-surface);
