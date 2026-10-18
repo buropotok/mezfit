@@ -176,7 +176,7 @@ export function PersonalExercises({
       ? <Text variant="footnote" tone="muted">Офлайн: отображаются сохранённые упражнения</Text> : null}
     {assignedError ? <Text role="alert" variant="footnote">Не удалось открыть тренерские упражнения: {assignedError}</Text> : null}
     {actionError ? <Text role="alert" variant="footnote">{actionError}</Text> : null}
-    {request?.mode !== 'edit' ? <ExerciseCatalogContent
+    {request === null ? <ExerciseCatalogContent
       key={catalogueKey}
       snapshot={snapshot}
       scope={role}
@@ -192,11 +192,14 @@ export function PersonalExercises({
       onCreateExercise={mode === 'browse' ? category => setRequest({ mode: 'create', category }) : undefined}
       onEditExercise={mode === 'browse' ? edit : undefined}
       onNavigationContextChange={setCatalogueNavigation}
+      mediaAccountId={cloud.actorUserId}
     /> : null}
     <PersonalExerciseEditorGateway
       request={request}
       repository={repository}
       rows={personal.definitions}
+      sourceRows={combined} taxonomy={snapshot.taxonomy}
+      mediaAccountId={cloud.actorUserId}
       selectedCoachUserId={selectedCoachUserId}
       onCreated={() => {
         setRequest(null);
