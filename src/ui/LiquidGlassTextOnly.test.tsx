@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { StrictMode, useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { GlassSurfaceProvider } from './GlassSurface';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LiquidGlassTextOnly, type LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
 
@@ -161,6 +162,38 @@ describe('LiquidGlassTextOnly', () => {
     expect(element(root, 'lens-viewport')).not.toBeNull();
     expect(root.getElementById('startupScene')).toBeNull();
     expect(button(root, 1).offsetWidth).not.toBe(button(root, 2).offsetWidth);
+  });
+
+  it('renders the app-configured GlassSurface capsule without resetting the text-only scene', () => {
+    const view = render(
+      <LiquidGlassTextOnly hidden={false} tabs={tabs} value="today" onValueChange={changed}
+        glassPreset="clear" glassBlur={12} glassOptics={false} />,
+    );
+    const root = getScene(view.container);
+    const pane = element(root, 'toolbar-pane');
+    expect(pane.classList.contains('ui-glass-surface')).toBe(true);
+    expect(pane.style.borderRadius).toBe('22px');
+    expect(pane.style.getPropertyValue('--ui-glass-surface-blur')).toBe('12px');
+    expect(pane.style.getPropertyValue('--ui-glass-surface-tint-a')).toBe('0.08');
+
+    view.rerender(
+      <LiquidGlassTextOnly hidden={false} tabs={tabs} value="today" onValueChange={changed}
+        glassPreset="smoked" glassBlur={23} glassOptics />,
+    );
+    expect(getScene(view.container)).toBe(root);
+    expect(element(root, 'toolbar-pane')).toBe(pane);
+    expect(pane.style.getPropertyValue('--ui-glass-surface-blur')).toBe('23px');
+    expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('inherits application GlassSurface blur when not overridden locally', () => {
+    const view = render(
+      <GlassSurfaceProvider blur={9} optics={false}>
+        {ui()}
+      </GlassSurfaceProvider>,
+    );
+    const pane = element(getScene(view.container), 'toolbar-pane');
+    expect(pane.style.getPropertyValue('--ui-glass-surface-blur')).toBe('9px');
   });
 
   it('expands only on explicit fullWidth and preserves selection and the existing default', () => {
