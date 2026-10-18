@@ -73,6 +73,7 @@ describe('tracking type on the public exercise detail card', () => {
 
     rerender(<ExerciseDetail row={publicExercise} taxonomy={[]} mediaLayout="square" />);
     expect(container.querySelector('.mezfit-public-exercises__media-placeholder--square')).not.toBeNull();
+    expect(container.querySelector('.mezfit-public-exercises__media-content--square')).not.toBeNull();
   });
 
   it('does not claim a public tracking type for a private exercise', () => {
