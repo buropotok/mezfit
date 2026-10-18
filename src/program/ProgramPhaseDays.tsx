@@ -101,7 +101,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     running.current = true;
     setBusy(true);
     setError('');
-    const draftStore = new WorkoutOccurrenceDraftRepository(repository.actorUserId);
+    const draftStore = new WorkoutOccurrenceDraftRepository(cloud.db, repository.actorUserId);
     try {
       // Suggest the next free 15-minute slot from authorized local calendar data.
       const scheduling = new WorkoutSchedulingRepository(cloud.db, repository.actorUserId);
@@ -139,7 +139,6 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     } catch (reason) {
       setError(programMutationMessage(reason));
     } finally {
-      draftStore.close();
       running.current = false;
       if (alive.current) setBusy(false);
     }
