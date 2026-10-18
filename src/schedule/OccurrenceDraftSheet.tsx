@@ -65,23 +65,38 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
   const startRef = useRef<HTMLSpanElement>(null);
   const endRef = useRef<HTMLSpanElement>(null);
   const pendingEditsRef = useRef<Promise<void>>(Promise.resolve());
+  const unsavedEditsRef = useRef<Array<Parameters<WorkoutOccurrenceDraftRepository['edit']>[1]>>([]);
+
+  // Remove an intent only after its local transaction commits. A retry must
+  // replay the failed intent before later edits or final confirmation.
+  const flushEdits = (): Promise<void> => {
+    if (!draft) return Promise.resolve();
+    const targetId = draft.id;
+    const next = pendingEditsRef.current.catch(() => undefined).then(async () => {
+      while (unsavedEditsRef.current.length) {
+        await drafts.edit(targetId, unsavedEditsRef.current[0]);
+        unsavedEditsRef.current.shift();
+      }
+    });
+    pendingEditsRef.current = next;
+    void next.catch(reason => {
+      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
+    });
+    return next;
+  };
 
   const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1]) => {
     if (!draft || busy) return;
-    const targetId = draft.id;
     setError('');
-    const next = pendingEditsRef.current.catch(() => undefined)
-      .then(() => drafts.edit(targetId, apply));
-    pendingEditsRef.current = next.catch(reason => {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
-    });
+    unsavedEditsRef.current.push(apply);
+    void flushEdits();
   };
   const save = async (updateProgram: boolean) => {
     if (!draft || busy) return;
     setBusy(true);
     setError('');
     try {
-      await pendingEditsRef.current;
+      await flushEdits();
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
       await onSave(latest, updateProgram);
@@ -95,7 +110,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
     setBusy(true);
     setError('');
     try {
-      await pendingEditsRef.current;
+      await flushEdits();
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
       const owner = (latest.coachUserId ?? latest.athleteUserId) === latest.actorUserId;
@@ -122,11 +137,12 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
     try {
       const selected = await Promise.all(ids.map(async id => programExerciseSnapshot(
         await readProgramCatalogueExercise(cloud.db, draft.actorUserId, id), draft.actorUserId)));
-      await pendingEditsRef.current;
-      await drafts.edit(draft.id, current => ({
+      await flushEdits();
+      unsavedEditsRef.current.push(current => ({
         ...current, plan: selected.reduce(appendOccurrenceExercise, current.plan),
       }));
       setExercisePickerOpened(false);
+      await flushEdits();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось добавить упражнения');
     } finally { setBusy(false); }

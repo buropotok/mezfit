@@ -22,6 +22,17 @@ describe('cloud booking protocol', () => {
       access: { realmId: 'tg:101', athleteUserId: 'tg:101', coachUserId: null, clientUserId: null },
     });
   });
+  it.each([
+    ['SCHEDULE_EXERCISE_UNAVAILABLE', 'Одно из упражнений недоступно для этой тренировки'],
+    ['SCHEDULE_FORBIDDEN', 'Нет доступа к расписанию этого спортсмена'],
+    ['CLOUD_BOOKING_NOT_CONFIRMED', 'Сохранение тренировки пока не подтверждено. Черновик сохранён, попробуйте ещё раз'],
+    ['BOOKING_FAILED', 'Не удалось сохранить тренировку. Черновик сохранён, попробуйте ещё раз'],
+  ])('localizes %s without discarding the stable code', async (code, message) => {
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async () => Response.json({ error: { code, message: code } }, { status: 403 })));
+    await expect(confirmCloudWorkoutOccurrence('signed-init-data', draft))
+      .rejects.toMatchObject({ code, message });
+  });
+
   it('requires a confirmation receipt instead of inferring success from a lifecycle status', async () => {
     vi.stubGlobal('fetch', vi.fn<typeof fetch>(async () => Response.json({ occurrenceId: 'some-id', status: 'scheduled' })));
     await expect(confirmCloudWorkoutOccurrence('signed-init-data', draft))

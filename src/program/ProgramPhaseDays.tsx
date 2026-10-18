@@ -18,6 +18,7 @@ import { PlanActionDialog } from './PlanActionDialog';
 import type { ProgramActor } from './ProgramSummary';
 import { usePhaseDayMotion } from './usePhaseDayMotion';
 import { ProgramDayExercisePicker } from './ProgramDayExercisePicker';
+import { nextAvailableSlot } from '../schedule/available-slot';
 import { programMutationMessage } from './programPresentation';
 
 const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
@@ -115,23 +116,9 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
         || (format === 'coached' && occurrence.athleteUserId === repository.actorUserId)
         || (format === 'coached' && occurrence.coachUserId === repository.actorUserId
           && occurrence.format === 'coached'));
-      let slot = new Date();
-      slot.setSeconds(0, 0);
-      slot.setMinutes(Math.ceil(slot.getMinutes() / 15) * 15);
-      if (slot.getHours() < 8) slot.setHours(8, 0, 0, 0);
       const durationMinutes = 60;
-      for (let i = 0; i < 14 * 96; i++) {
-        if (slot.getHours() >= 22 || slot.getHours() * 60 + slot.getMinutes() + durationMinutes > 22 * 60) {
-          slot.setDate(slot.getDate() + 1);
-          slot.setHours(8, 0, 0, 0);
-        }
-        const start = slot.getTime();
-        const end = start + durationMinutes * 60_000;
-        if (entries.every(row => row.startsAtUtc === undefined
-          || end <= Date.parse(row.startsAtUtc)
-          || start >= Date.parse(row.startsAtUtc) + row.durationMinutes * 60_000)) break;
-        slot.setMinutes(slot.getMinutes() + 15);
-      }
+      const slot = nextAvailableSlot(entries, new Date(), durationMinutes);
+      if (!slot) throw new Error('Не удалось найти свободное время. Выберите другой период в расписании');
       const draft = draftFromProgramDay(repository.actorUserId, program, item,
         format, slot.toISOString(), durationMinutes, phaseStatus);
       await draftStore.create(draft);

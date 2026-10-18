@@ -30,7 +30,7 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 
 describe('draft edit recovery', () => {
-  it('can save the last persisted version after an edit failed', async () => {
+  it('retries the failed intent and blocks confirmation until it is persisted', async () => {
     const edit = vi.fn().mockRejectedValue(new Error('Недостаточно места'));
     const get = vi.fn().mockResolvedValue(draft);
     const drafts = { edit, get } as unknown as WorkoutOccurrenceDraftRepository;
@@ -39,7 +39,14 @@ describe('draft edit recovery', () => {
     fireEvent.click(screen.getByText('Добавить подход'));
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Недостаточно места');
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(edit).toHaveBeenCalledTimes(2));
+    expect(get).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Сохранить' }).hasAttribute('disabled')).toBe(false));
+    edit.mockResolvedValue(undefined);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(save).toHaveBeenCalledWith(draft, false));
+    expect(edit.mock.calls[2][1]).toBe(edit.mock.calls[0][1]);
   });
 
   it('waits for the latest queued edit before reading and confirming the draft', async () => {

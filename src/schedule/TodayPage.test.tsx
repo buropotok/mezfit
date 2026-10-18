@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
@@ -143,6 +143,34 @@ describe('Dexie-backed schedule', () => {
     await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
     expect(vi.mocked(confirmCloudWorkoutOccurrence)).toHaveBeenCalledTimes(1);
     expect(screen.getByText(/Самостоятельная · День 1/)).toBeTruthy();
+  });
+
+  it('retires a confirmation after cloud observation so cancellation cannot resurrect it', async () => {
+    state.localRows = [baseDraft];
+    vi.mocked(confirmCloudWorkoutOccurrence).mockResolvedValue('occ-confirmed');
+    open();
+    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
+    await act(async () => { state.calendarChanged?.([{ ...occurrence, id: 'occ-confirmed' }]); });
+    expect(screen.getAllByText(/Самостоятельная · День 1/)).toHaveLength(1);
+    await act(async () => { state.calendarChanged?.([]); });
+    expect(screen.queryByText(/Самостоятельная · День 1/)).toBeNull();
+  });
+
+  it('does not recreate a confirmation if cloud observation and removal preceded the API receipt', async () => {
+    state.localRows = [baseDraft];
+    let confirm: (id: string) => void = () => {};
+    vi.mocked(confirmCloudWorkoutOccurrence).mockImplementation(() => new Promise(resolve => { confirm = resolve; }));
+    open();
+    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
+    await act(async () => { state.calendarChanged?.([{ ...occurrence, id: 'occ-confirmed' }]); });
+    await act(async () => { state.calendarChanged?.([]); });
+    await act(async () => { confirm('occ-confirmed'); });
+    await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
+    expect(screen.queryByText(/Самостоятельная · День 1/)).toBeNull();
   });
 
   it('retains the draft and editor when booking fails', async () => {

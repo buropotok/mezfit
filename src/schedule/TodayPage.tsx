@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { confirmCloudWorkoutOccurrence, type Role } from '../api';
 import type { NavigationContext } from '../NavigationShell';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -50,6 +50,7 @@ export function TodayPage({
   const [date, setDate] = useState<LocalDate>(currentDate);
   const [occurrences, setOccurrences] = useState<CloudWorkoutOccurrenceRow[]>([]);
   const [confirmed, setConfirmed] = useState<CloudWorkoutOccurrenceRow[]>([]);
+  const observedIds = useRef(new Set<string>());
   const [drafts, setDrafts] = useState<LocalWorkoutOccurrenceDraft[]>([]);
   const [openedDraftId, setOpenedDraftId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,8 +64,12 @@ export function TodayPage({
 
   useEffect(() => {
     if (!scheduling || !draftRepository) return undefined;
-    setLoading(true); setOccurrences([]); setDrafts([]);
+    const seen = new Set<string>();
+    observedIds.current = seen;
+    setLoading(true); setOccurrences([]); setDrafts([]); setConfirmed([]);
     const sub = scheduling.observeCalendar(rows => {
+      for (const row of rows) seen.add(row.id);
+      setConfirmed(current => current.filter(row => !seen.has(row.id)));
       setOccurrences(rows); setLoading(false); setError('');
     }, reason => {
       setLoading(false);
@@ -73,7 +78,10 @@ export function TodayPage({
     const local = draftRepository.observe(rows => setDrafts(rows), reason => {
       setError(reason instanceof Error ? reason.message : 'Не удалось загрузить черновики');
     });
-    return () => { sub.unsubscribe(); local.unsubscribe(); };
+    return () => {
+      observedIds.current = new Set();
+      sub.unsubscribe(); local.unsubscribe();
+    };
   }, [scheduling, draftRepository]);
 
   useEffect(() => {
@@ -129,10 +137,12 @@ export function TodayPage({
 
   const save = async (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => {
     if (!cloud || !draftRepository) throw new Error('Сохранение недоступно');
+    const seen = observedIds.current;
     const id = await confirmCloudWorkoutOccurrence(initData, draft);
+    if (seen !== observedIds.current) throw new Error('Аккаунт изменился. Откройте расписание заново');
     // This record is displayed only after the privileged server confirmed persistence.
     // Dexie Cloud Addon remains the durable read authority and will replace it on sync.
-    setConfirmed(rows => [...rows.filter(row => row.id !== id), {
+    setConfirmed(rows => seen.has(id) ? rows : [...rows.filter(row => row.id !== id), {
       id, realmId: draft.realmId, owner: null, trainingPlanId: draft.trainingPlanId,
       coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
       athleteUserId: draft.athleteUserId, programDayId: draft.programDayId,
