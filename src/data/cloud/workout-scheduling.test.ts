@@ -61,6 +61,16 @@ const command = (trainingPlanId: string, requestKey: string) => ({
   durationMinutes: 60,
 });
 
+
+/** Occurrence v2 always contains its own PLAN; legacy plan-less fixtures are deprecated. */
+const occurrencePlan = { name: 'День', comment: null, exercises: [] };
+async function seedOccurrences(db: Dexie, rows: Record<string, unknown>[]): Promise<void> {
+  await db.table('workoutOccurrences').bulkPut(rows.map(row => ({ plan: occurrencePlan, ...row })));
+}
+async function seedOccurrence(db: Dexie, row: Record<string, unknown>): Promise<void> {
+  await db.table('workoutOccurrences').put({ plan: occurrencePlan, ...row });
+}
+
 describe('local-first workout scheduling intent', () => {
   it('accepts independent personal schedules for both roles and separate occurrences of one day', async () => {
     const f = await fixture();
@@ -238,6 +248,22 @@ describe('local-first workout scheduling intent', () => {
     expect((await repo.listRequests('client-personal')).map(row => row.id)).toEqual([id]);
   });
 
+  it('rejects old plan-less and malformed PLAN occurrences', async () => {
+    const f = await fixture();
+    const base = { id: 'no-plan', realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: null,
+      format: 'coached', startsAtUtc: '2026-10-19T08:00:00.000Z',
+      durationMinutes: 60, status: 'scheduled' };
+    await seedOccurrences(f.db, [
+      { ...base, id: 'valid-new-plan' },
+      { ...base, id: 'no-plan', plan: undefined },
+      { ...base, id: 'malformed-plan', plan: { name: 'Invalid', comment: null,
+        exercises: [{ id: 'broken', position: 0 }] } },
+    ]);
+    expect((await f.client.listCalendar()).map(row => row.id)).toEqual(['valid-new-plan']);
+  });
+
   it('excludes cancelled occurrences from active program and calendar projections', async () => {
     const f = await fixture();
     const rows = [
@@ -252,7 +278,7 @@ describe('local-first workout scheduling intent', () => {
         startsAtUtc: '2026-10-19T10:00:00.000Z', durationMinutes: 60,
         status: 'cancelled' },
     ];
-    await f.db.table('workoutOccurrences').bulkPut(rows);
+    await seedOccurrences(f.db, rows);
     for (const view of ['program', 'calendar'] as const) {
       expect((await f.client.listOccurrences('assigned', view)).map(row => row.id))
         .toEqual(['occ-active']);
@@ -270,7 +296,7 @@ describe('local-first workout scheduling intent', () => {
       format, createdByUserId, startsAtUtc: '2026-10-19T08:00:00.000Z',
       durationMinutes: 60, status: 'scheduled' as const,
     });
-    await f.db.table('workoutOccurrences').bulkPut([
+    await seedOccurrences(f.db, [
       occurrence('client-independent', 'independent', 'tg:202'),
       occurrence('coach-planned-independent', 'independent', 'tg:101'),
       occurrence('coach-guided', 'coached', 'tg:101'),
@@ -292,7 +318,7 @@ describe('local-first workout scheduling intent', () => {
 
   it('keeps a coach personal independent workout on their own calendar', async () => {
     const f = await fixture();
-    await f.db.table('workoutOccurrences').put({
+    await seedOccurrence(f.db, {
       id: 'coach-own-training', realmId: 'tg:101', owner: null,
       coachUserId: null, clientUserId: null, athleteUserId: 'tg:101',
       programDayId: 'coach-personal-day', workoutSessionId: null,
@@ -322,7 +348,7 @@ describe('local-first workout scheduling intent', () => {
       { ...expected, id: 'occ-offset-start', startsAtUtc: '2026-10-19T10:00:00.000+02:00' },
       { ...expected, id: 'occ-invalid-start', startsAtUtc: '2026-02-30T08:00:00.000Z' },
     ];
-    await f.db.table('workoutOccurrences').bulkPut(records);
+    await seedOccurrences(f.db, records);
     for (const view of ['program', 'calendar'] as const) {
       for (const repository of [f.coach, f.client]) {
         expect((await repository.listOccurrences('assigned', view)).map(row => row.id))
@@ -343,7 +369,7 @@ describe('local-first workout scheduling intent', () => {
       startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60,
       status: 'scheduled',
     };
-    await f.db.table('workoutOccurrences').bulkPut([
+    await seedOccurrences(f.db, [
       { ...valid, id: 'personal-independent' },
       { ...valid, id: 'personal-coached', format: 'coached' },
     ]);
@@ -364,7 +390,7 @@ describe('local-first workout scheduling intent', () => {
       workoutSessionId: null, startsAtUtc: '2026-10-19T08:00:00.000Z',
       durationMinutes: 60, status: 'scheduled',
     };
-    await f.db.table('workoutOccurrences').bulkPut([
+    await seedOccurrences(f.db, [
       { ...valid, id: 'scheduled' },
       { ...valid, id: 'invalid-running', status: 'in_progress' },
       { ...valid, id: 'invalid-completed', status: 'completed' },
@@ -410,7 +436,7 @@ describe('local-first workout scheduling intent', () => {
       { workoutSessionId: 123 },
       { durationMinutes: -1 },
     ];
-    await f.db.table('workoutOccurrences').bulkPut([
+    await seedOccurrences(f.db, [
       { ...valid, id: 'valid-provenance' },
       ...rejected.map((patch, i) => ({ ...valid, id: 'invalid-provenance-' + i, ...patch })),
     ]);
@@ -430,7 +456,7 @@ describe('local-first workout scheduling intent', () => {
     };
     const first = '2026-10-25T00:30:00.000Z';
     const second = '2026-10-25T01:30:00.000Z';
-    await f.db.table('workoutOccurrences').bulkPut([
+    await seedOccurrences(f.db, [
       { ...common, id: 'second', startsAtUtc: second },
       { ...common, id: 'first', startsAtUtc: first },
     ]);
@@ -440,7 +466,7 @@ describe('local-first workout scheduling intent', () => {
 
   it('keeps occurrences read-only and filters them by the authorized PLAN', async () => {
     const f = await fixture();
-    await f.db.table('workoutOccurrences').bulkPut([
+    await seedOccurrences(f.db, [
       { id: 'occ-good', realmId: f.pair.realm.realmId, owner: null,
         coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
         programDayId: 'assigned-day', workoutSessionId: null, format: 'independent',
