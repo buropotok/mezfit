@@ -617,7 +617,10 @@ export class ProgramManagementRepository {
       const owner = this.ownerForRealm(current.realmId);
       const nextSetRows: Array<{ exerciseId: string; items: WorkoutOccurrencePlan['exercises'][number]['sets'] }> = [];
       await this.beginChange(current);
-      await this.db.programDays.update(dayId, { name: validName(edited.name), comment: edited.comment });
+      await this.db.programDays.update(dayId, {
+        name: validName(edited.name), comment: edited.comment,
+        category: edited.category ?? null,
+      });
       for (const [position, next] of edited.exercises.entries()) {
         const existing = next.sourceProgramExerciseId
           ? previous.get(next.sourceProgramExerciseId) : undefined;
@@ -646,6 +649,7 @@ export class ProgramManagementRepository {
           if (next.sourceProgramSetId && !prev) throw new Error('Подход изменился');
           const values = {
             position, setLabel: next.setLabel ?? 'normal', comment: next.comment,
+            materialLinks: next.materialLinks, chatLinks: next.chatLinks,
             plannedReps: next.plannedReps, plannedWeightKg: next.plannedWeightKg,
             plannedDurationSeconds: next.plannedDurationSeconds,
             plannedDistanceMeters: next.plannedDistanceMeters,
@@ -656,7 +660,7 @@ export class ProgramManagementRepository {
           } else {
             await this.db.programSets.add({
               realmId: current.realmId, owner, programExerciseId: exerciseId,
-              status: 'active', materialLinks: [], chatLinks: [], ...values,
+              status: 'active', ...values,
             });
           }
         }
