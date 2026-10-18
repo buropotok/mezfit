@@ -504,7 +504,7 @@ export async function uploadPersonalExerciseMedia(initData: string, image: Blob)
   if (!response.ok) throw new ApiError(response.status, 'Не удалось загрузить изображение', 'IMAGE_UPLOAD_FAILED');
   const value: unknown = await response.json();
   if (!isRecord(value) || typeof value.url !== 'string'
-    || !/^\\/api\\/exercise-media\\/personal\\/[a-f0-9-]{36}\\?v=[a-f0-9]{64}$/.test(value.url)) {
+    || !/^\/api\/exercise-media\/personal\/[a-f0-9-]{36}\?v=[a-f0-9]{64}$/.test(value.url)) {
     throw new ApiError(502, 'Некорректная ссылка изображения', 'INVALID_API_RESPONSE');
   }
   return value.url;
