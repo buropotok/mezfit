@@ -1,4 +1,5 @@
 import { liveQuery } from 'dexie';
+import { blankPersonalExercise } from './blankPersonalExercise';
 import { AssignedCoachExercisesRepository } from './assignedCoachExercises';
 import type { MezfitCloudDatabase } from '../cloud/database';
 import { isPublicExerciseRow, type PublicExercise } from './publicExerciseTypes';
@@ -6,21 +7,6 @@ import {
   coachFavouriteId, isCoachExerciseChanges, isCoachExerciseDefinition,
   type CoachExerciseChanges, type CoachExerciseDefinitionRow, type CoachExercisePersonalSnapshot,
 } from './coachExerciseTypes';
-
-/** Unsaved starter; constructing it never creates a Dexie Cloud record. */
-export function blankPersonalExercise(category: string | null): Omit<PublicExercise, 'id'> {
-  return {
-    name: '', name_ru: '', name_en: '', category: category ?? 'other',
-    subcategory: '', subcategory_ru: '', movement_type: 'resistance',
-    muscles: { primary: [], secondary: [], stabilizers: [], emphasis: [] },
-    mobility_targets: [], equipment: '', body_part: '', target: '', muscle_group: '',
-    secondary_muscles: [], media_id: '', image: '', gif_url: '', attribution: '',
-    created_at: new Date().toISOString(),
-    instructions: { ru: '', en: '' }, instruction_steps: { ru: [], en: [] },
-    source_consistency_issue: null,
-    anatomy_evidence: { classification_family: '', basis: '', external_individual_match: false },
-  };
-}
 
 /** All private records stay in the authenticated user's built-in Dexie Cloud realm. */
 export class CoachExerciseCatalogueRepository {
