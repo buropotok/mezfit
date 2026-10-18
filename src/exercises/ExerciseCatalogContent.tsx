@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { loadBrowserGlassSettings } from '../glassSettings';
 import { Checkbox, Chip } from 'konsta/react';
+import { loadBrowserGlassSettings } from '../glassSettings';
 import type { PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
 import {
   FILTER_GROUPS, PUBLIC_EXERCISE_CATEGORIES, filterOptions, filterPublicExercises,
