@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  assertApprovedManifest, assertUnchangedBeforeApply, planSchedulingAcl,
+  assertApprovedManifest, assertExactImportPayload, assertUnchangedBeforeApply, planSchedulingAcl,
   validateAclDispatch, verifySchedulingAcl,
 } from './scheduling.mjs';
 
@@ -85,6 +85,19 @@ describe('protected Dexie scheduling role rollout', () => {
     }
     expect(() => planSchedulingAcl(manifest, { schema: { trainingPlans: '@id' } }, remote()))
       .toThrow('INVALID_SCHEDULING_CLOUD_STRUCTURE');
+  });
+
+  it('rejects payload tampering and role/import expansion before cloud writes', () => {
+    const planned = planSchedulingAcl(manifest, schema, remote()).importPayload;
+    expect(() => assertExactImportPayload(planned, structuredClone(planned))).not.toThrow();
+    for (const invalid of [
+      { ...planned, schema: { workoutOccurrences: 'id' } },
+      { ...planned, data: { 'rlm-public': {} } },
+      { roles: { ...planned.roles, other: { permissions: { manage: '*' } } } },
+      { roles: { ...planned.roles, client: { ...target.client, permissions: { manage: '*' } } } },
+      { roles: { coach: target.coach } },
+    ]) expect(() => assertExactImportPayload(planned, invalid))
+      .toThrow('ACL_IMPORT_PAYLOAD_CHANGED');
   });
 
   it('refuses to write from a stale preview or modified import payload', () => {
