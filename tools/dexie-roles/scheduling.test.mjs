@@ -6,6 +6,7 @@ import {
 } from './scheduling.mjs';
 
 const manifest = JSON.parse(readFileSync(new URL('../../cloud/roles.json', import.meta.url), 'utf8'));
+const workflow = readFileSync(new URL('../../.github/workflows/dexie-scheduling-acl.yml', import.meta.url), 'utf8');
 const target = structuredClone(manifest.roles);
 const current = structuredClone(target);
 delete current.coach.permissions.add;
@@ -29,6 +30,20 @@ const trustedEnv = {
 };
 
 describe('protected Dexie scheduling role rollout', () => {
+  it('cannot trigger privileged ACL mutation on push/PR or outside protected owner/main dispatch', () => {
+    expect(workflow).toMatch(/^on:\n  workflow_dispatch:/m);
+    expect(workflow).not.toMatch(/^\s+(?:push|pull_request|schedule):/m);
+    expect(workflow).toContain("github.ref == 'refs/heads/main'");
+    expect(workflow).toContain('github.actor == github.repository_owner');
+    expect(workflow).toContain('name: dexie-production');
+    expect(workflow).toContain('secrets.DEXIE_CLOUD_WRITE_KEY');
+    expect(workflow).toContain('group: dexie-public-catalogue-publishing');
+    expect(workflow).toContain('dexie-cloud import roles-only-import.json');
+    expect(workflow).toContain('node tools/dexie-roles/scheduling.mjs recheck');
+    expect(workflow).toContain('node tools/dexie-roles/scheduling.mjs verify');
+    expect(workflow).not.toContain('dexie-cloud import cloud/roles.json');
+  });
+
   it('allows exactly the reviewed current-role manifest, not generalized role changes', () => {
     expect(assertApprovedManifest(manifest)).toEqual(target);
     for (const invalid of [
