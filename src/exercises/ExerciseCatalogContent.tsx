@@ -162,9 +162,9 @@ export function ExerciseCatalogContent({
   onEditExercise?: (exerciseId: string) => void;
 }) {
   const { taxonomy, catalogue } = snapshot;
-  const glassPreset = loadBrowserGlassSettings().preset;
   const exercises = catalogueExercises ?? snapshot.exercises;
   const isPersonal = scope === 'coach' || scope === 'client';
+  const glassPreset = isPersonal ? loadBrowserGlassSettings().preset : undefined;
   const [category, setCategory] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
