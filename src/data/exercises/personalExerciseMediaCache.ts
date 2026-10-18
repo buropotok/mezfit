@@ -1,6 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-
-const PERSONAL_MEDIA_URL = /^\/api\/exercise-media\/personal\/[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\?v=[a-f0-9]{64}$/;
+import { isPersonalExerciseMediaUrl } from './personalExerciseMediaReference';
 
 interface CachedExerciseImage {
   url: string;
@@ -15,10 +14,6 @@ class PersonalExerciseMediaDatabase extends Dexie {
     super(`mezfit-personal-exercise-media:${accountId}`);
     this.version(1).stores({ images: '&url' });
   }
-}
-
-export function isPersonalExerciseMediaUrl(url: unknown): url is string {
-  return typeof url === 'string' && PERSONAL_MEDIA_URL.test(url);
 }
 
 export async function storePersonalExerciseMedia(
