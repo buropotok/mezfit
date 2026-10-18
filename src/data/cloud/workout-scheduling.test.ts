@@ -57,7 +57,7 @@ async function fixture() {
 
 const command = (trainingPlanId: string, requestKey: string) => ({
   trainingPlanId, programDayId: trainingPlanId + '-day', requestKey,
-  format: 'independent' as const, calendarDate: '2026-10-19', timeZone: 'Europe/Berlin',
+  format: 'independent' as const, calendarDate: '2026-10-19',
   startMinute: 600, durationMinutes: 60, timeZone: 'Europe/Berlin',
 });
 
