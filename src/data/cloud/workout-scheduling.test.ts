@@ -264,6 +264,25 @@ describe('local-first workout scheduling intent', () => {
     expect((await f.client.listCalendar()).map(row => row.id)).toEqual(['valid-new-plan']);
   });
 
+  it('keeps booked workouts after their original day is deprecated and isolates clients', async () => {
+    const f = await fixture();
+    const booking = { realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: null,
+      startsAtUtc: '2026-10-19T08:00:00.000Z',
+      durationMinutes: 60, status: 'scheduled' };
+    await seedOccurrences(f.db, [
+      { ...booking, id: 'client-alone', format: 'independent' },
+      { ...booking, id: 'with-coach', format: 'coached',
+        startsAtUtc: '2026-10-19T10:00:00.000Z' },
+    ]);
+    await f.db.table('programDays').update('assigned-day', { status: 'deprecated' });
+    expect((await f.client.listCalendar()).map(row => row.id))
+      .toEqual(['client-alone', 'with-coach']);
+    expect((await f.coach.listCalendar()).map(row => row.id)).toEqual(['with-coach']);
+    expect(await f.stranger.listCalendar()).toEqual([]);
+  });
+
   it('excludes cancelled occurrences from active program and calendar projections', async () => {
     const f = await fixture();
     const rows = [
