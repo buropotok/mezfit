@@ -1,3 +1,4 @@
+import { isExerciseDefinition } from '../../../shared/exercise-definition';
 import type { ExerciseTrackingType, PublicExercise } from '../../../shared/exercise-types';
 export type { ExerciseTrackingType, PublicExercise } from '../../../shared/exercise-types';
 
@@ -52,43 +53,12 @@ export type PublicExerciseCatalogueRow = {
   publishedAt: string;
 };
 
-/** Reject malformed cloud rows instead of treating a partial object as an exercise. */
+/** Public catalogue storage metadata is separate from definition payload validation. */
 export function isPublicExerciseRow(value: unknown): value is PublicExerciseRow {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-  const row = value as Record<string, unknown>;
-  const muscles = row.muscles as Record<string, unknown> | undefined;
-  const instructionSteps = row.instruction_steps as Record<string, unknown> | undefined;
-  const instructions = row.instructions as Record<string, unknown> | undefined;
-  return typeof row.id === 'string' && /^\d{4}$/.test(row.id)
-    && row.realmId === 'rlm-public' && row.owner === null
-    && typeof row.sourceSha256 === 'string' && /^[a-f0-9]{64}$/.test(row.sourceSha256)
-    && typeof row.name === 'string' && typeof row.name_ru === 'string'
-    && typeof row.name_en === 'string' && typeof row.category === 'string'
-    && typeof row.subcategory === 'string' && typeof row.subcategory_ru === 'string'
-    && typeof row.movement_type === 'string'
-    // Tracking is intentionally not checked here. v2.0 programme authoring may
-    // receive unknown legacy tracking metadata; v2.1 activation validates it.
-    && typeof row.equipment === 'string' && typeof row.attribution === 'string'
-    && typeof row.image === 'string' && typeof row.gif_url === 'string'
-    && typeof row.media_id === 'string' && typeof row.created_at === 'string'
-    && typeof row.body_part === 'string' && typeof row.target === 'string'
-    && typeof row.muscle_group === 'string' && Array.isArray(row.secondary_muscles)
-    && row.secondary_muscles.every((item: unknown) => typeof item === 'string')
-    && typeof muscles === 'object' && muscles !== null
-    && ['primary', 'secondary', 'stabilizers', 'emphasis'].every((field) => Array.isArray(muscles[field])
-      && (muscles[field] as unknown[]).every((item) => typeof item === 'string'))
-    && Array.isArray(row.mobility_targets)
-    && row.mobility_targets.every((item: unknown) => typeof item === 'string')
-    && instructions !== undefined && typeof instructions.ru === 'string'
-    && typeof instructions.en === 'string'
-    && instructionSteps !== undefined && Array.isArray(instructionSteps.ru)
-    && Array.isArray(instructionSteps.en)
-    && instructionSteps.ru.every((item: unknown) => typeof item === 'string')
-    && instructionSteps.en.every((item: unknown) => typeof item === 'string')
-    && typeof row.anatomy_evidence === 'object' && row.anatomy_evidence !== null
-    && typeof (row.anatomy_evidence as Record<string, unknown>).classification_family === 'string'
-    && typeof (row.anatomy_evidence as Record<string, unknown>).basis === 'string'
-    && typeof (row.anatomy_evidence as Record<string, unknown>).external_individual_match === 'boolean';
+  if (!isExerciseDefinition(value)) return false;
+  const row = value as PublicExercise & Record<string, unknown>;
+  return /^\d{4}$/.test(row.id) && row.realmId === 'rlm-public' && row.owner === null
+    && typeof row.sourceSha256 === 'string' && /^[a-f0-9]{64}$/.test(row.sourceSha256);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

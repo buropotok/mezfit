@@ -1,4 +1,4 @@
-import type { CloudProgramDayOutline } from './workout-foundation-types';
+import type { CloudProgramDayOutline, CloudProgramPhaseRow } from './workout-foundation-types';
 import type { CloudTrainingPlanRow } from './database';
 import { validateScheduleTiming } from './workout-scheduling-time';
 
@@ -55,9 +55,11 @@ export function snapshotProgramDay(outline: CloudProgramDayOutline): WorkoutOccu
 export function draftFromProgramDay(
   actorUserId: string, plan: CloudTrainingPlanRow, outline: CloudProgramDayOutline,
   format: 'independent' | 'coached', startsAtUtc: string, durationMinutes: number,
+  phaseStatus: CloudProgramPhaseRow['status'],
 ): LocalWorkoutOccurrenceDraft {
   validateScheduleTiming({ startsAtUtc, durationMinutes });
-  if (plan.realmId !== outline.day.realmId || (format === 'coached' && !plan.coachUserId)
+  if (plan.status !== 'active' || phaseStatus !== 'active'
+    || plan.realmId !== outline.day.realmId || (format === 'coached' && !plan.coachUserId)
     || (actorUserId !== (plan.clientUserId ?? plan.athleteUserId)
       && actorUserId !== plan.coachUserId)
     || outline.day.status !== 'active') throw new Error('SCHEDULE_FORBIDDEN');

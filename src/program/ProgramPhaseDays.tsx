@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
-import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
+import type { CloudProgramDayOutline, CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -23,7 +23,7 @@ import { programMutationMessage } from './programPresentation';
 const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
   .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
-export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach' }: {
+export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft' }: {
   repository: ProgramManagementRepository;
   program: CloudTrainingPlanRow;
   days: readonly CloudProgramDayOutline[];
@@ -32,6 +32,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   collapsed?: boolean;
   bodyId?: string;
   viewerRole?: 'coach' | 'client';
+  phaseStatus?: CloudProgramPhaseRow['status'];
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
@@ -97,7 +98,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     finally { running.current = false; if (alive.current) setBusy(false); }
   };
   const schedule = async (item: CloudProgramDayOutline, format: WorkoutScheduleFormat) => {
-    if (running.current || !cloud || !planning) return;
+    if (running.current || !cloud || !planning
+      || program.status !== 'active' || phaseStatus !== 'active') return;
     running.current = true;
     setBusy(true);
     setError('');
@@ -131,7 +133,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
         slot.setMinutes(slot.getMinutes() + 15);
       }
       const draft = draftFromProgramDay(repository.actorUserId, program, item,
-        format, slot.toISOString(), durationMinutes);
+        format, slot.toISOString(), durationMinutes, phaseStatus);
       await draftStore.create(draft);
       planning.openDraft(draft.id);
     } catch (reason) {
@@ -153,7 +155,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
         onReorderExercises={(ids) => { void run(() => repository.reorderDayExercises(program.id, item.day.id, ids)); }} creatorName={creatorName} creatorAvatar={creatorAvatar}
         readOnly={readOnly} busy={busy || exerciseDayId !== null}
         canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
-          && program.clientUserId !== null} onSchedule={planning ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
+          && program.clientUserId !== null} onSchedule={planning && program.status === 'active' && phaseStatus === 'active' ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
         onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}

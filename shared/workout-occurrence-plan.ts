@@ -1,3 +1,4 @@
+import { isExerciseDefinition } from './exercise-definition';
 import type { CloudProgramExerciseSnapshot } from './program-exercise-snapshot';
 import type { SetLabel } from './set-label';
 
@@ -47,8 +48,16 @@ export function isWorkoutOccurrencePlan(value: unknown): value is WorkoutOccurre
       || exerciseIds.has(row.id) || row.position !== position
       || (row.sourceProgramExerciseId !== null && typeof row.sourceProgramExerciseId !== 'string')
       || !object(row.exercise) || typeof row.exercise.exerciseDefinitionId !== 'string'
-      || typeof row.exercise.name !== 'string'
-      || typeof row.exercise.scope !== 'string'
+      || !row.exercise.exerciseDefinitionId
+      || typeof row.exercise.name !== 'string' || !row.exercise.name.trim()
+      || (row.exercise.nameEn !== null && typeof row.exercise.nameEn !== 'string')
+      || (row.exercise.mediaUrl !== null && typeof row.exercise.mediaUrl !== 'string')
+      || !['public', 'coach', 'client'].includes(String(row.exercise.scope))
+      || (row.exercise.catalogueDefinition !== undefined
+        && (!isExerciseDefinition(row.exercise.catalogueDefinition)
+          || row.exercise.catalogueDefinition.id !== row.exercise.exerciseDefinitionId
+          || typeof row.exercise.catalogueCoachUserId !== 'string'
+          || !/^tg:[1-9]\d*$/.test(row.exercise.catalogueCoachUserId)))
       || (row.notes !== null && typeof row.notes !== 'string')
       || !Array.isArray(row.sets) || row.sets.length > 100) return false;
     exerciseIds.add(row.id);

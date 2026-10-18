@@ -1,3 +1,4 @@
+import type { WorkoutBookingAccess } from '../shared/workout-booking-access';
 import type { DexieCloudOptions } from 'dexie-cloud-addon';
 import type { LocalWorkoutOccurrenceDraft } from './data/cloud/workout-occurrence-plan';
 import { localizeBundledExerciseName } from './exerciseLocalization';
@@ -880,6 +881,8 @@ export async function confirmCloudWorkoutOccurrence(initData: string,
       requestKey: draft.id.slice('draft:'.length),
       trainingPlanId: draft.trainingPlanId,
       programDayId: draft.programDayId,
+      access: { realmId: draft.realmId, athleteUserId: draft.athleteUserId,
+        coachUserId: draft.coachUserId, clientUserId: draft.clientUserId } satisfies WorkoutBookingAccess,
       format: draft.format,
       startsAtUtc: draft.startsAtUtc,
       durationMinutes: draft.durationMinutes,
@@ -887,7 +890,7 @@ export async function confirmCloudWorkoutOccurrence(initData: string,
     }),
   });
   if (!isRecord(response) || typeof response.occurrenceId !== 'string'
-    || !response.occurrenceId || response.status !== 'scheduled') {
+    || !response.occurrenceId || response.confirmed !== true) {
     throw new ApiError(502, 'Не удалось подтвердить сохранение тренировки', 'INVALID_API_RESPONSE');
   }
   return response.occurrenceId;

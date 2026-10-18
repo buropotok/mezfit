@@ -40,9 +40,23 @@ const outline: CloudProgramDayOutline = {
 };
 const repo = (user = 'tg:101') => new WorkoutOccurrenceDraftRepository(db as unknown as MezfitCloudDatabase, user);
 const make = () => draftFromProgramDay('tg:101', program, outline, 'independent',
-  '2026-10-19T08:00:00.000Z', 60);
+  '2026-10-19T08:00:00.000Z', 60, 'active');
 
 describe('local workout occurrence drafts', () => {
+  it.each(['draft', 'pending', 'finished', 'cancelled'] as const)('checks phase %s locally at creation only', async status => {
+    expect(() => draftFromProgramDay('tg:101', program, outline, 'independent',
+      '2026-10-19T08:00:00.000Z', 60, status)).toThrow('SCHEDULE_FORBIDDEN');
+    const store = repo(), accepted = make();
+    await store.create(accepted);
+    // The accepted draft is independent; source state is not re-read on edit/get.
+    await store.edit(accepted.id, current => ({ ...current, durationMinutes: 90 }));
+    expect((await store.get(accepted.id))?.durationMinutes).toBe(90);
+  });
+  it.each(['draft', 'finished', 'cancelled'] as const)('checks program %s locally at creation', status => {
+    expect(() => draftFromProgramDay('tg:101', { ...program, status }, outline, 'independent',
+      '2026-10-19T08:00:00.000Z', 60, 'active')).toThrow('SCHEDULE_FORBIDDEN');
+  });
+
   it('persists a complete independent PLAN after closing the editor and reopening the database', async () => {
     const first = repo(), draft = make();
     await first.create(draft);

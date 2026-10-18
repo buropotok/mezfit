@@ -94,13 +94,45 @@ Keep authorization logic auditable and avoid subtly different duplicated checks.
 
 Treat JSON bodies, query/route parameters, Telegram data, and legacy persisted data as untrusted. Validate before domain mutation. Use deliberate status codes and stable error shapes. Do not expose stack traces, SQL details, tokens, secrets, or unnecessary personal data.
 
+### Local-first operation validation: mandatory architectural rule
+
+Separate structural authorization from dynamic business eligibility. The server
+checks only structural access boundaries: verified identity, personal realm,
+Coach/Client relationship membership, operation permissions and exercise access
+or immutable custom-exercise ownership. Payload decoding, size limits and
+idempotent operation identity remain required protocol checks.
+
+Dynamic business checks belong to the local domain/repository at the time the
+user performs the action. Examples include program/phase status, deletion or
+archive state, scheduling eligibility, calendar availability, current exercise
+metadata, and a PLAN's contents/order/sets. A locally accepted operation must
+not be rejected, deleted, rewritten or silently discarded because the cloud has
+a different dynamic state or because dependent local records synchronize later.
+Never compare the submitted PLAN with a cloud template or rebuild/normalize its
+business content from cloud state. Do not introduce wait-for-sync barriers,
+server business locks or compensating rollbacks to work around replication order.
+
+For scheduling from a program, both program and phase must be Active locally
+when creating the draft. Subsequent source changes do not revoke that accepted
+operation. Source IDs are provenance, not access grants or prerequisites that
+must already exist in the cloud. Authorize the target realm independently of
+those business records. A complete self-contained exercise snapshot may precede
+its own definition's cloud synchronization; do not treat absence as proof of
+foreign ownership. Such a snapshot grants no access to private catalogue rows.
+An existing foreign-owned definition remains forbidden; its current metadata
+or archive state must not be used to revalidate the business action.
+
+These rules govern domain operations, not credential verification or explicit
+protected infrastructure/schema/ACL maintenance. Existing code outside a scoped
+PR is audited separately; do not expand a task into a repository-wide migration.
+
 ## 11. Dexie Cloud persistence and access
 
 Dexie Cloud is the sole authoritative business database; local IndexedDB is each user's offline-capable working subset, not a copy of all users' data. One Dexie Cloud database/environment is sufficient for pre-MVP. Keep storage-specific code inside adapters/repositories, never React components.
 
 Use personal realms for private records and a separate shared realm per coach-client relationship for jointly visible data. Every nested program/workout record must carry the appropriate realmId; references do not grant access. A coach can see all their relationships, while a client must never see another client's private data. Design membership, record ownership, and permissions explicitly; ownership defaults must not bypass role restrictions. Public catalogue data may use a public realm. Media blobs may remain in R2; D1 is not a second business database.
 
-PLAN authoring is coach-controlled and must be enforced by server-side permissions. FACT is intentionally editable by both participants in a shared relationship realm: handoff is a workflow convention, not a server-enforced single-writer lock. The product accepts rare same-field edit conflicts in pre-MVP. Prefer granular per-record/per-field updates; never replace an entire stale workout snapshot for an unrelated set change.
+PLAN authoring in source program tables is coach-controlled and must be enforced by server-side permissions. Accepting a locally authorized occurrence snapshot does not mutate those source tables and must not introduce cloud-template content/status comparisons. FACT is intentionally editable by both participants in a shared relationship realm: handoff is a workflow convention, not a server-enforced single-writer lock. The product accepts rare same-field edit conflicts in pre-MVP. Prefer granular per-record/per-field updates; never replace an entire stale workout snapshot for an unrelated set change.
 
 Preserve domain invariants, stable IDs, deletion semantics, and atomic local transactions. Do not implement a custom SyncEngine, change-feed cursor, shadow cloud database, or generic merge/locking system alongside Dexie Cloud Addon.
 

@@ -1,6 +1,7 @@
 import cloudConfig from '../../dexie-cloud.json';
 import { cloudMembershipAdminToken } from './dexie-cloud-membership';
 import { validatedPair } from './cloud-contact-profiles';
+import { isWorkoutBookingAccess } from '../../shared/workout-booking-access';
 import { isWorkoutOccurrencePlan } from '../../shared/workout-occurrence-plan';
 import { validateScheduleTiming } from '../../shared/workout-scheduling-time';
 
@@ -50,25 +51,19 @@ async function rows(env: Env, bearer: string, table: string, filters: Json): Pro
   if (!Array.isArray(value) || !value.every(record)) return reject(502, 'CLOUD_BOOKING_INVALID_RESPONSE');
   return value;
 }
-function conflict(a: Json, start: number, end: number): boolean {
-  if (!['scheduled', 'in_progress'].includes(String(a.status))) return false;
-  if (typeof a.startsAtUtc !== 'string' || !Number.isSafeInteger(a.durationMinutes)) {
-    reject(502, 'CLOUD_BOOKING_INVALID_OCCURRENCE');
-  }
-  const from = Date.parse(a.startsAtUtc);
-  return Number.isFinite(from) && start < from + (a.durationMinutes as number) * 60_000 && end > from;
-}
 function response(body: unknown, status = 200): Response {
   return Response.json(body, { status, headers: { 'cache-control': 'no-store' } });
 }
-function sameExercise(a: unknown, b: unknown): boolean {
-  return record(a) && record(b)
-    && a.exerciseDefinitionId === b.exerciseDefinitionId
-    && a.scope === b.scope
-    && a.name === b.name && a.nameEn === b.nameEn
-    && a.mediaUrl === b.mediaUrl
-    && JSON.stringify(a.catalogueDefinition ?? null) === JSON.stringify(b.catalogueDefinition ?? null)
-    && a.catalogueCoachUserId === b.catalogueCoachUserId;
+/** Compare immutable submission identities, never the current mutable booking. */
+async function requestHash(value: unknown): Promise<string> {
+  const canonical = (item: unknown): unknown => {
+    if (Array.isArray(item)) return item.map(canonical);
+    if (record(item)) return Object.fromEntries(Object.keys(item).sort().map(key => [key, canonical(item[key])]));
+    return item;
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(canonical(value)));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /** This operates only after Telegram authentication in the public Worker route. */
@@ -80,6 +75,7 @@ export async function confirmWorkoutOccurrence(
     || typeof input.trainingPlanId !== 'string' || !input.trainingPlanId
     || typeof input.programDayId !== 'string' || !input.programDayId
     || (input.format !== 'coached' && input.format !== 'independent')
+    || !isWorkoutBookingAccess(input.access)
     || !isWorkoutOccurrencePlan(input.plan)
     || typeof input.startsAtUtc !== 'string'
     || !Number.isSafeInteger(input.durationMinutes)) reject(400, 'INVALID_SCHEDULE_REQUEST');
@@ -91,38 +87,15 @@ export async function confirmWorkoutOccurrence(
   } catch { reject(400, 'INVALID_SCHEDULE_TIME'); }
 
   const token = await cloudMembershipAdminToken(env);
-  const requestId = 'req:' + actor + ':' + input.requestKey;
-  const existing = await rows(env, token, 'workoutOccurrences', { sourceRequestId: requestId });
-  if (existing.length > 1) reject(502, 'CLOUD_BOOKING_INTEGRITY_ERROR');
-  if (existing.length === 1) {
-    const booking = existing[0];
-    if (booking.createdByUserId !== actor
-      || booking.trainingPlanId !== input.trainingPlanId
-      || booking.programDayId !== input.programDayId
-      || booking.format !== input.format || booking.startsAtUtc !== input.startsAtUtc
-      || booking.durationMinutes !== input.durationMinutes
-      || JSON.stringify(booking.plan) !== JSON.stringify(input.plan)) reject(409, 'SCHEDULE_KEY_CONFLICT');
-    if (typeof booking.id !== 'string') reject(502, 'CLOUD_BOOKING_INVALID_RESPONSE');
-    return response({ occurrenceId: booking.id, status: booking.status });
-  }
-
-  const plan = await getRow(env, token, 'trainingPlans', input.trainingPlanId);
-  if (!plan || plan.deletedAt || plan.id !== input.trainingPlanId
-    || typeof plan.realmId !== 'string' || !plan.realmId
-    || (plan.coachUserId !== null && !user(plan.coachUserId))
-    || (plan.clientUserId !== null && !user(plan.clientUserId))
-    || !user(plan.athleteUserId)
-    || (plan.owner !== null && plan.owner !== (plan.coachUserId ?? plan.athleteUserId)))
-    reject(404, 'SCHEDULE_PLAN_NOT_FOUND');
-  const coach = plan.coachUserId as string | null;
-  const athlete = plan.clientUserId === null ? plan.athleteUserId as string : plan.clientUserId as string;
-  const personal = coach === null && plan.clientUserId === null
-    && actor === athlete && plan.realmId === athlete;
-  if (!personal) {
-    if (!coach || !user(plan.clientUserId) || plan.athleteUserId !== plan.clientUserId
-      || (actor !== coach && actor !== athlete)) reject(403, 'SCHEDULE_FORBIDDEN');
-    if (actor === athlete && plan.status === 'draft') reject(403, 'SCHEDULE_PLAN_NOT_PUBLISHED');
-    const members = await validatedPair(fetch, token, plan.realmId);
+  const access = input.access;
+  const coach = access.coachUserId;
+  const athlete = access.athleteUserId;
+  const personal = coach === null;
+  if (personal) {
+    if (access.realmId !== actor || athlete !== actor) reject(403, 'SCHEDULE_FORBIDDEN');
+  } else {
+    if (actor !== coach && actor !== athlete) reject(403, 'SCHEDULE_FORBIDDEN');
+    const members = await validatedPair(fetch, token, access.realmId);
     if (!members?.some(member => member.userId === coach
       && Array.isArray(member.roles) && member.roles.includes('coach'))
       || !members.some(member => member.userId === athlete
@@ -132,111 +105,59 @@ export async function confirmWorkoutOccurrence(
   if (input.format === 'coached' && (coach === null || actor !== coach))
     reject(403, 'SCHEDULE_COACH_REQUIRED');
 
-  const day = await getRow(env, token, 'programDays', input.programDayId);
-  if (!day || day.status !== 'active' || day.realmId !== plan.realmId
-    || typeof day.programPhaseId !== 'string'
-    || (day.owner !== null && day.owner !== (coach ?? athlete)))
-    reject(404, 'SCHEDULE_DAY_NOT_FOUND');
-  const phase = await getRow(env, token, 'programPhases', day.programPhaseId as string);
-  if (!phase || phase.trainingPlanId !== plan.id || phase.realmId !== plan.realmId
-    || phase.deletedAt || phase.status === 'cancelled'
-    || (phase.owner !== null && phase.owner !== (coach ?? athlete))
-    || (actor === athlete && !personal && phase.status === 'draft'))
-    reject(404, 'SCHEDULE_DAY_NOT_FOUND');
-
-  // Validate every incoming foreign key against the server's authoritative PLAN.
-  const sourceExercises = await rows(env, token, 'programExercises', { programDayId: day.id });
-  const activeExercises = sourceExercises.filter(ex => ex.realmId === day.realmId
-    && ex.status === 'active').sort((a, b) => Number(a.position) - Number(b.position));
-  const byId = new Map(activeExercises.map(ex => [ex.id, ex]));
-  const isSourceAuthor = actor === (coach ?? athlete);
-  if (!isSourceAuthor && (
-    input.plan.name !== day.name
-    || (input.plan.comment ?? null) !== (day.comment ?? null)
-    || (input.plan.category ?? null) !== (day.category ?? null)
-    || input.plan.exercises.length !== activeExercises.length
-    || input.plan.exercises.some((item, index) =>
-      item.sourceProgramExerciseId !== activeExercises[index]?.id
-      || item.notes !== (activeExercises[index]?.notes ?? null))
-  )) reject(403, 'SCHEDULE_PLAN_EDIT_FORBIDDEN');
-  for (const exercise of input.plan.exercises) {
-    if (exercise.sourceProgramExerciseId !== null) {
-      const source = byId.get(exercise.sourceProgramExerciseId);
-      if (!source || !sameExercise(source.exercise, exercise.exercise))
-        reject(409, 'SCHEDULE_SOURCE_CHANGED');
-    } else {
-      const definitionId = exercise.exercise.exerciseDefinitionId;
-      if (exercise.exercise.scope === 'public') {
-        const definition = await getRow(env, token, 'publicExerciseDefinitions', definitionId);
-        if (!definition || definition.realmId !== 'rlm-public') reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
-      } else if (exercise.exercise.scope === 'coach' && (actor === coach || personal)) {
-        const definition = await getRow(env, token, 'coachExerciseDefinitions', definitionId);
-        if (!definition || definition.realmId !== actor || definition.archivedAt !== null)
-          reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
-      } else reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
-    }
-    const sourceSets = exercise.sourceProgramExerciseId === null ? []
-      : (await rows(env, token, 'programSets', {
-        programExerciseId: exercise.sourceProgramExerciseId,
-      })).filter(set => set.realmId === day.realmId && set.status === 'active')
-        .sort((a, b) => Number(a.position) - Number(b.position));
-    const sourceSetIds = new Set(sourceSets.map(set => String(set.id)));
-    if (exercise.sets.some(set => set.sourceProgramSetId !== null
-      && !sourceSetIds.has(set.sourceProgramSetId))) reject(409, 'SCHEDULE_SOURCE_CHANGED');
-    if (!isSourceAuthor) {
-      if (exercise.sets.length !== sourceSets.length
-        || exercise.sets.some((set, index) => {
-          const source = sourceSets[index];
-          return set.sourceProgramSetId !== source.id
-            || (set.setLabel ?? null) !== (source.setLabel ?? null)
-            || (set.comment ?? null) !== (source.comment ?? null)
-            || set.plannedReps !== source.plannedReps
-            || set.plannedWeightKg !== source.plannedWeightKg
-            || set.plannedDurationSeconds !== source.plannedDurationSeconds
-            || set.plannedDistanceMeters !== source.plannedDistanceMeters
-            || JSON.stringify(set.materialLinks) !== JSON.stringify(source.materialLinks ?? [])
-            || JSON.stringify(set.chatLinks) !== JSON.stringify(source.chatLinks ?? []);
-        })) reject(403, 'SCHEDULE_PLAN_EDIT_FORBIDDEN');
-    }
+  const fingerprint = await requestHash(input);
+  const requestId = 'req:' + actor + ':' + input.requestKey;
+  const existing = await rows(env, token, 'workoutOccurrences', { sourceRequestId: requestId });
+  if (existing.length > 1) reject(502, 'CLOUD_BOOKING_INTEGRITY_ERROR');
+  if (existing.length === 1) {
+    const booking = existing[0];
+    if (booking.createdByUserId !== actor || booking.realmId !== access.realmId
+      || booking.sourceRequestHash !== fingerprint) reject(409, 'SCHEDULE_KEY_CONFLICT');
+    if (typeof booking.id !== 'string') reject(502, 'CLOUD_BOOKING_INVALID_RESPONSE');
+    return response({ occurrenceId: booking.id, confirmed: true });
   }
 
-  const start = Date.parse(input.startsAtUtc);
-  const end = start + (input.durationMinutes as number) * 60_000;
-  // Every participant occupies their athlete slots and their coached client slots.
-  const participants = new Set([athlete]);
-  if (input.format === 'coached' && coach) participants.add(coach);
-  for (const participant of participants) {
-    const [athleteBookings, coachedBookings] = await Promise.all([
-      rows(env, token, 'workoutOccurrences', { athleteUserId: participant }),
-      rows(env, token, 'workoutOccurrences', { coachUserId: participant }),
-    ]);
-    if (athleteBookings.some(row => conflict(row, start, end))
-      || coachedBookings.some(row => row.format === 'coached' && conflict(row, start, end)))
-      reject(409, 'SCHEDULE_SLOT_OCCUPIED');
+  // Source IDs are provenance. No reads of cloud program/day/phase/set state.
+  for (const { exercise } of input.plan.exercises) {
+    const definitionId = exercise.exerciseDefinitionId;
+    if (exercise.scope === 'public') {
+      const definition = await getRow(env, token, 'publicExerciseDefinitions', definitionId);
+      if (!definition || definition.realmId !== 'rlm-public' || exercise.catalogueDefinition !== undefined)
+        reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
+    } else if (exercise.scope === 'coach') {
+      const author = coach ?? athlete;
+      if (exercise.catalogueCoachUserId !== author || !exercise.catalogueDefinition)
+        reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
+      const definition = await getRow(env, token, 'coachExerciseDefinitions', definitionId);
+      // A complete author-attributed snapshot may arrive before its definition.
+      // It grants no access to catalogue rows; known foreign ownership is denied.
+      if (definition && (definition.realmId !== author || definition.owner !== author))
+        reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
+    } else reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
   }
 
   const now = new Date().toISOString();
   await requestCloud(env, token, '/all/workoutOccurrences', {
     method: 'POST',
     body: JSON.stringify([{
-      realmId: plan.realmId, owner: null, trainingPlanId: plan.id,
-      programDayId: day.id, athleteUserId: athlete, coachUserId: coach,
-      clientUserId: plan.clientUserId, workoutSessionId: null,
+      realmId: access.realmId, owner: null, trainingPlanId: input.trainingPlanId,
+      programDayId: input.programDayId, athleteUserId: athlete, coachUserId: coach,
+      clientUserId: access.clientUserId, workoutSessionId: null,
       format: input.format, startsAtUtc: input.startsAtUtc,
       durationMinutes: input.durationMinutes, status: 'scheduled',
-      sourceRequestId: requestId, createdByUserId: actor,
+      sourceRequestId: requestId, sourceRequestHash: fingerprint, createdByUserId: actor,
       createdAt: now, updatedAt: now, plan: input.plan,
     }]),
   });
   const stored = await rows(env, token, 'workoutOccurrences', { sourceRequestId: requestId });
   if (stored.length !== 1 || typeof stored[0].id !== 'string'
-    || stored[0].status !== 'scheduled') reject(502, 'CLOUD_BOOKING_NOT_CONFIRMED');
-  return response({ occurrenceId: stored[0].id, status: 'scheduled' }, 201);
+    || stored[0].sourceRequestHash !== fingerprint || stored[0].createdByUserId !== actor) reject(502, 'CLOUD_BOOKING_NOT_CONFIRMED');
+  return response({ occurrenceId: stored[0].id, confirmed: true }, 201);
 }
 
 /**
- * A single globally addressed Durable Object serializes all authoritative booking
- * confirmations. Never do a separate REST read-then-write without this queue.
+ * The Durable Object serializes idempotent create/readback only.
+ * It never locks business state, searches for slots or revalidates cloud templates.
  */
 export class ScheduleReservationCoordinator {
   private queue: Promise<void> = Promise.resolve();

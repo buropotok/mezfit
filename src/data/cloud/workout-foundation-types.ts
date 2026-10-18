@@ -125,6 +125,8 @@ export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   /** Canonical UTC start; local calendar day is calculated by the viewer's device. */
   startsAtUtc: string;
   sourceRequestId?: string | null;
+  /** Immutable submitted-command identity; not a comparison with mutable PLAN. */
+  sourceRequestHash?: string;
   createdByUserId?: string;
   createdAt?: string;
   updatedAt?: string;
