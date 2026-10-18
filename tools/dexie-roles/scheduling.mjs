@@ -84,6 +84,11 @@ export function planSchedulingAcl(manifest, schema, exportedRoles) {
   };
 }
 
+/** Reject a tampered generated payload; never import data, schema or additional roles. */
+export function assertExactImportPayload(expected, actual) {
+  if (!isDeepStrictEqual(actual, expected)) fail('ACL_IMPORT_PAYLOAD_CHANGED');
+}
+
 export function assertUnchangedBeforeApply(beforeSchema, beforeRoles, currentSchema, currentRoles) {
   if (!isDeepStrictEqual(beforeSchema, currentSchema)
     || !isDeepStrictEqual(beforeRoles, currentRoles)) {
@@ -170,9 +175,8 @@ async function main() {
   if (mode === 'recheck') {
     assertUnchangedBeforeApply(beforeSchema, beforeRoles,
       await load(join(dir, 'current-schema.json')), await load(join(dir, 'current-roles.json')));
-    if (!isDeepStrictEqual(await load(join(dir, 'roles-only-import.json')), plan.importPayload)) {
-      fail('ACL_IMPORT_PAYLOAD_CHANGED');
-    }
+    assertExactImportPayload(plan.importPayload,
+      await load(join(dir, 'roles-only-import.json')));
     if (plan.changedNames.length === 0) fail('NO_ACL_CHANGES_REQUIRED');
     console.log('Remote structure unchanged since preview; exact role delta approved.');
     return;
