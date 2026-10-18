@@ -1,7 +1,13 @@
-import { useRef, useState } from 'react';
-import type { CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
-import type { CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
-import { Button, MezfitDialog, MezfitDialogButton, Text, TextArea, TextInput } from '../ui';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { uploadPersonalExerciseMedia } from '../api';
+import { blankPersonalExercise, type CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
+import type { CatalogueExerciseRow, CoachExerciseChanges, CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
+import { storePersonalExerciseMedia } from '../data/exercises/personalExerciseMediaCache';
+import { PUBLIC_EXERCISE_CATEGORIES } from '../data/exercises/publicExerciseFilters';
+import type { ExerciseTrackingType, PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import { getTelegramWebApp } from '../telegram';
+import { Button, Dropdown, Icon, Text, TextArea, TextInput, type DropdownOption } from '../ui';
+import { ExerciseDetail } from './ExerciseCatalogContent';
 import './personal-exercises.css';
 
 export type PersonalExerciseEditorRequest =
@@ -9,155 +15,290 @@ export type PersonalExerciseEditorRequest =
   | { mode: 'create'; category: string | null }
   | { mode: 'edit'; exerciseId: string };
 
-function message(cause: unknown): string {
+const TRACKING: Array<{ value: ExerciseTrackingType; label: string }> = [
+  { value: 'weight_reps', label: 'Вес и повторения' },
+  { value: 'time', label: 'Время' },
+  { value: 'time_distance', label: 'Время и дистанция' },
+  { value: 'time_reps', label: 'Время и повторения' },
+  { value: 'time_weight', label: 'Время и вес' },
+];
+const MUSCLES = [
+  ['primary', 'Основные мышцы'],
+  ['secondary', 'Вспомогательные мышцы'],
+  ['stabilizers', 'Стабилизаторы'],
+  ['emphasis', 'Акцент'],
+] as const;
+
+function errorMessage(cause: unknown): string {
   return cause instanceof Error ? cause.message : 'Не удалось сохранить упражнение';
 }
 
-function CopyOrCreate({
-  request, repository, selectedCoachUserId, onCreated, onClose,
-}: {
-  request: Extract<PersonalExerciseEditorRequest, { mode: 'copy' | 'create' }>;
-  repository: CoachExerciseCatalogueRepository;
-  selectedCoachUserId: string | null;
-  onCreated: (id: string) => void;
-  onClose: () => void;
+function textOptions(values: readonly string[], current: string): DropdownOption[] {
+  const unique = new Set([...values, current].map(value => value.trim()).filter(Boolean));
+  return [
+    { value: '', label: 'Не указано' },
+    ...[...unique].sort((a, b) => a.localeCompare(b, 'ru'))
+      .map(value => ({ value, label: value })),
+  ];
+}
+
+function Field({ label, value, options, onChange, disabled }: {
+  label: string;
+  value: string | null;
+  options: DropdownOption[];
+  onChange: (value: string) => void;
+  disabled: boolean;
 }) {
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
-  const inFlight = useRef(false);
-  const [error, setError] = useState('');
+  return <div className="mezfit-personal-exercise-field">
+    <Text variant="footnote" tone="muted">{label}</Text>
+    <Dropdown mode="single" variant="field" title={label} placeholder="Выбрать"
+      triggerProps={{ 'aria-label': label }}
+      value={value} options={options} onChange={onChange} disabled={disabled} />
+  </div>;
+}
 
-  const confirm = async () => {
-    if (inFlight.current || (request.mode === 'create' && !name.trim())) return;
-    inFlight.current = true;
-    setBusy(true);
-    setError('');
-    try {
-      const id = request.mode === 'create'
-        ? await repository.createBlankExercise(request.category, name)
-        : request.source === 'public'
-          ? await repository.duplicatePublicExercise(request.exerciseId)
-          : selectedCoachUserId
-            ? await repository.duplicateAssignedCoachExercise(selectedCoachUserId, request.exerciseId)
-            : null;
-      if (!id) throw new Error('Не выбран тренер');
-      onCreated(id);
-    } catch (cause) {
-      setError(message(cause));
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-    }
-  };
-
-  const copy = request.mode === 'copy';
-  return (
-    <MezfitDialog
-      opened
-      title={copy ? 'Создать мою копию?' : 'Новое упражнение'}
-      content={<div className="mezfit-personal-exercise-editor">
-        <Text variant="body">{copy
-          ? 'Исходное упражнение останется без изменений. Копия появится в разделе «Мои упражнения» и будет доступна для редактирования.'
-          : 'Упражнение сохранится в личном каталоге. Оно будет доступно даже без тренера.'}</Text>
-        {!copy ? <TextInput label="Название" value={name} maxLength={120}
-          onChange={event => setName(event.currentTarget.value)} /> : null}
-        {error ? <Text role="alert" variant="footnote">{error}</Text> : null}
-      </div>}
-      onBackdropClick={() => { if (!busy) onClose(); }}
-      buttons={<>
-        <MezfitDialogButton onClick={onClose} disabled={busy}>Отмена</MezfitDialogButton>
-        <MezfitDialogButton strong disabled={busy || (!copy && !name.trim())}
-          onClick={() => { void confirm(); }}>
-          {copy ? 'Создать копию' : 'Создать'}
-        </MezfitDialogButton>
-      </>}
-    />
-  );
+function MultiField({ label, value, options, onChange, disabled }: {
+  label: string;
+  value: string[];
+  options: DropdownOption[];
+  onChange: (value: string[]) => void;
+  disabled: boolean;
+}) {
+  return <div className="mezfit-personal-exercise-field">
+    <Text variant="footnote" tone="muted">{label}</Text>
+    <Dropdown mode="multi" variant="field" title={label} placeholder="Не указано"
+      triggerProps={{ 'aria-label': label }}
+      value={value} options={options} onChange={onChange} disabled={disabled} />
+  </div>;
 }
 
 function EditPersonalExercise({
-  row, repository, onClose,
+  request, source, repository, selectedCoachUserId, sourceRows, taxonomy,
+  mediaAccountId, onCreated, onClose,
 }: {
-  row: CoachExerciseDefinitionRow;
+  request: PersonalExerciseEditorRequest;
+  source: CatalogueExerciseRow | null;
   repository: CoachExerciseCatalogueRepository;
+  selectedCoachUserId: string | null;
+  sourceRows: readonly CatalogueExerciseRow[];
+  taxonomy: readonly PublicTaxonomyRow[];
+  mediaAccountId: string;
+  onCreated: (id: string) => void;
   onClose: () => void;
 }) {
-  const [nameRu, setNameRu] = useState(row.name_ru);
-  const [nameEn, setNameEn] = useState(row.name_en);
-  const [equipment, setEquipment] = useState(row.equipment);
-  const [instructions, setInstructions] = useState(row.instructions.ru);
-  const [busy, setBusy] = useState(false);
+  const initial = useMemo<CatalogueExerciseRow>(() => {
+    if (source) return structuredClone(source);
+    return {
+      ...blankPersonalExercise(request.mode === 'create' ? request.category : null),
+      id: 'custom:unsaved', realmId: mediaAccountId,
+      owner: mediaAccountId, sourceSha256: 'coach-custom',
+    };
+  }, [source, request, mediaAccountId]);
+  const [draft, setDraft] = useState<CatalogueExerciseRow>(initial);
+  const [upload, setUpload] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const inFlight = useRef(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (!upload || typeof URL.createObjectURL !== 'function') {
+      setPreview(null);
+      return undefined;
+    }
+    const url = URL.createObjectURL(upload);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [upload]);
+
+  const scalarFields = useMemo(() => {
+    const fields = ['subcategory', 'equipment', 'movement_type', 'body_part', 'target', 'muscle_group'] as const;
+    return Object.fromEntries(fields.map(field => [
+      field,
+      textOptions(sourceRows.map(row => row[field]), draft[field]),
+    ])) as Record<(typeof fields)[number], DropdownOption[]>;
+  }, [sourceRows, draft]);
+
+  const muscleOptions = useMemo<DropdownOption[]>(() => {
+    const labels = new Map(taxonomy.map(item => [item.id, item.subcategory_ru]));
+    const ids = new Set(taxonomy.map(item => item.id));
+    for (const row of sourceRows) {
+      for (const values of Object.values(row.muscles)) values.forEach(id => ids.add(id));
+      row.mobility_targets.forEach(id => ids.add(id));
+    }
+    for (const values of Object.values(draft.muscles)) values.forEach(id => ids.add(id));
+    draft.mobility_targets.forEach(id => ids.add(id));
+    return [...ids].sort((a, b) => (labels.get(a) ?? a).localeCompare(labels.get(b) ?? b, 'ru'))
+      .map(id => ({ value: id, label: labels.get(id) ?? id }));
+  }, [sourceRows, taxonomy, draft.muscles, draft.mobility_targets]);
+
+  const update = <K extends keyof CatalogueExerciseRow>(key: K, value: CatalogueExerciseRow[K]) =>
+    setDraft(current => ({ ...current, [key]: value }));
+  const updateMuscles = (key: keyof CatalogueExerciseRow['muscles'], value: string[]) =>
+    setDraft(current => ({ ...current, muscles: { ...current.muscles, [key]: value } }));
+
   const save = async () => {
-    if (inFlight.current || !nameRu.trim()) return;
+    const name = draft.name_ru.trim();
+    if (inFlight.current || !name || name.length > 120) return;
     inFlight.current = true;
     setBusy(true);
     setError('');
     try {
-      await repository.updateExercise(row.id, {
-        name: nameRu.trim(),
-        name_ru: nameRu.trim(),
-        name_en: nameEn.trim(),
-        equipment: equipment.trim(),
-        instructions: { ...row.instructions, ru: instructions.trim() },
-        instruction_steps: instructions !== row.instructions.ru
-          ? { ...row.instruction_steps, ru: [] } : row.instruction_steps,
-      });
-      onClose();
+      const changes: CoachExerciseChanges = {
+        name, name_ru: name, name_en: draft.name_en.trim(),
+        category: draft.category, subcategory: draft.subcategory,
+        subcategory_ru: draft.subcategory_ru, equipment: draft.equipment,
+        movement_type: draft.movement_type, tracking_type: draft.tracking_type,
+        body_part: draft.body_part, target: draft.target, muscle_group: draft.muscle_group,
+        secondary_muscles: draft.secondary_muscles,
+        muscles: draft.muscles, mobility_targets: draft.mobility_targets,
+        instructions: draft.instructions,
+        instruction_steps: draft.instructions.ru !== initial.instructions.ru
+          ? { ...draft.instruction_steps, ru: [] } : draft.instruction_steps,
+      };
+      if (upload) {
+        const initData = getTelegramWebApp()?.initData ?? '';
+        const url = await uploadPersonalExerciseMedia(initData, upload);
+        await storePersonalExerciseMedia(mediaAccountId, url, upload);
+        changes.image = url;
+      }
+      const id = request.mode === 'edit'
+        ? (await repository.updateExercise(request.exerciseId, changes), request.exerciseId)
+        : request.mode === 'create'
+          ? await repository.createBlankExercise(request.category, name, changes)
+          : request.source === 'public'
+            ? await repository.duplicatePublicExercise(request.exerciseId, changes)
+            : selectedCoachUserId
+              ? await repository.duplicateAssignedCoachExercise(selectedCoachUserId, request.exerciseId, changes)
+              : null;
+      if (!id) throw new Error('Не выбран тренер');
+      if (request.mode === 'edit') onClose();
+      else onCreated(id);
     } catch (cause) {
-      setError(message(cause));
+      setError(errorMessage(cause));
     } finally {
       inFlight.current = false;
       setBusy(false);
     }
   };
 
-  return (
-    <section className="mezfit-personal-exercise-page" aria-label="Редактирование моего упражнения">
-      <Text variant="headline">Изменить моё упражнение</Text>
-      <Text variant="footnote" tone="muted">Пользовательское упражнение</Text>
-      <div className="mezfit-personal-exercise-editor">
-        <TextInput label="Название" value={nameRu} maxLength={120}
-          onChange={event => setNameRu(event.currentTarget.value)} />
-        <TextInput label="Название на английском" value={nameEn}
-          onChange={event => setNameEn(event.currentTarget.value)} />
-        <TextInput label="Оборудование" value={equipment}
-          onChange={event => setEquipment(event.currentTarget.value)} />
-        <TextArea label="Инструкция" rows={4} value={instructions}
-          onChange={event => setInstructions(event.currentTarget.value)} />
-        {error ? <Text role="alert" variant="footnote">{error}</Text> : null}
-      </div>
-      <div className="mezfit-personal-exercise-actions">
-        <Button variant="secondary" onClick={onClose} disabled={busy}>Отмена</Button>
-        <Button onClick={() => { void save(); }} disabled={busy || !nameRu.trim()}>Сохранить</Button>
-      </div>
-    </section>
-  );
+  const categoryOptions = [...PUBLIC_EXERCISE_CATEGORIES].map(([value, label]) => ({ value, label }));
+  const subcategories = new Map(sourceRows.map(row => [row.subcategory, row.subcategory_ru]));
+  if (draft.subcategory) subcategories.set(draft.subcategory, draft.subcategory_ru);
+  const subcategoryOptions = [
+    { value: '', label: 'Не указано' },
+    ...[...subcategories.entries()].filter(([value]) => value).map(([value, label]) =>
+      ({ value, label: label || value })),
+  ];
+  const option = (key: 'subcategory' | 'equipment' | 'movement_type' | 'body_part' | 'target' | 'muscle_group', label: string) =>
+    <Field key={key} label={label} value={draft[key] || null} options={
+      key === 'subcategory' ? subcategoryOptions : scalarFields[key]
+    } disabled={busy} onChange={value => {
+      if (key === 'subcategory') {
+        setDraft(current => ({ ...current, subcategory: value,
+          subcategory_ru: subcategories.get(value) ?? '' }));
+      } else update(key, value);
+    }} />;
+
+  const editor: {
+    name: ReactNode; metadata: ReactNode; instructions: ReactNode;
+    anatomy: ReactNode; actions: ReactNode;
+  } = {
+    actions: <>
+      <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif"
+        className="mezfit-personal-exercise-file-input" aria-label="Выбрать изображение"
+        disabled={busy} onChange={event => {
+          const file = event.currentTarget.files?.[0];
+          if (!file) return;
+          if (file.size > 8 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+            setError('Поддерживаются GIF, JPG, PNG и WebP до 8 МБ');
+            return;
+          }
+          setUpload(file);
+          setError('');
+        }} />
+      <Button variant="secondary" disabled={busy} onClick={() => fileInput.current?.click()}>
+        Загрузить изображение
+      </Button>
+      <Button disabled={busy || !draft.name_ru.trim()} onClick={() => { void save(); }}>
+        {busy ? 'Сохраняем…' : 'Сохранить'}
+      </Button>
+    </>,
+    name: <div className="mezfit-personal-exercise-fields">
+      <TextInput label="Название" value={draft.name_ru} maxLength={120}
+        disabled={busy} onChange={event => update('name_ru', event.currentTarget.value)} />
+      <TextInput label="Название на английском" value={draft.name_en} maxLength={120}
+        disabled={busy} onChange={event => update('name_en', event.currentTarget.value)} />
+    </div>,
+    metadata: <div className="mezfit-personal-exercise-fields">
+      <Field label="Тип учёта" value={draft.tracking_type ?? null}
+        options={[{ value: '', label: 'Не указан' }, ...TRACKING]}
+        disabled={busy}
+        onChange={value => update('tracking_type', (value || undefined) as ExerciseTrackingType | undefined)} />
+      <Field label="Категория" value={draft.category} options={categoryOptions}
+        disabled={busy} onChange={value => update('category', value)} />
+      {option('subcategory', 'Подкатегория')}
+      {option('equipment', 'Оборудование')}
+      {option('movement_type', 'Тип движения')}
+      {option('body_part', 'Часть тела')}
+      {option('target', 'Целевая мышца')}
+      {option('muscle_group', 'Группа мышц')}
+    </div>,
+    instructions: <TextArea label="Инструкция" rows={5} disabled={busy}
+      value={draft.instructions.ru}
+      onChange={event => update('instructions', { ...draft.instructions, ru: event.currentTarget.value })} />,
+    anatomy: <div className="mezfit-personal-exercise-fields">
+      {MUSCLES.map(([key, label]) => <MultiField key={key} label={label}
+        value={draft.muscles[key]} options={muscleOptions} disabled={busy}
+        onChange={values => updateMuscles(key, values)} />)}
+      <MultiField label="Цели подвижности" value={draft.mobility_targets}
+        options={muscleOptions} disabled={busy}
+        onChange={values => update('mobility_targets', values)} />
+      <MultiField label="Дополнительные мышцы" value={draft.secondary_muscles}
+        options={muscleOptions} disabled={busy}
+        onChange={values => update('secondary_muscles', values)} />
+    </div>,
+  };
+
+  const media = preview ? <img className="mezfit-public-exercises__media-image mezfit-public-exercises__media-image--detail"
+    src={preview} alt="Выбранное изображение" /> : request.mode === 'create'
+      ? <Icon name="barbell" /> : undefined;
+
+  return <section className="mezfit-personal-exercise-page" aria-label="Редактирование моего упражнения">
+    <ExerciseDetail row={draft} taxonomy={[...taxonomy]} origin="personal"
+      media={media} mediaAccountId={mediaAccountId} editor={editor} />
+    {error ? <Text role="alert" variant="footnote">{error}</Text> : null}
+  </section>;
 }
 
-/** All mutations run through the personal domain repository, never the D1 editor. */
+/** The source is only a preview. Repository authorization and insertion occur on Save. */
 export function PersonalExerciseEditorGateway({
-  request, repository, rows, selectedCoachUserId, onCreated, onClose,
+  request, repository, rows, sourceRows = rows, taxonomy = [],
+  mediaAccountId = '', selectedCoachUserId, onCreated, onClose,
 }: {
   request: PersonalExerciseEditorRequest | null;
   repository: CoachExerciseCatalogueRepository;
   rows: readonly CoachExerciseDefinitionRow[];
+  sourceRows?: readonly CatalogueExerciseRow[];
+  taxonomy?: readonly PublicTaxonomyRow[];
+  mediaAccountId?: string;
   selectedCoachUserId: string | null;
   onCreated: (id: string) => void;
   onClose: () => void;
 }) {
   if (!request) return null;
-  if (request.mode === 'create' || request.mode === 'copy') {
-    return <CopyOrCreate key={JSON.stringify(request)} request={request}
-      repository={repository} selectedCoachUserId={selectedCoachUserId}
-      onCreated={onCreated} onClose={onClose} />;
-  }
-  const row = rows.find(item => item.id === request.exerciseId && item.archivedAt === null);
-  if (!row) return <section className="mezfit-personal-exercise-page" role="alert">
-    <Text>Это упражнение больше не входит в вашу личную библиотеку.</Text>
+  const source = request.mode === 'create' ? null
+    : request.mode === 'edit'
+      ? rows.find(row => row.id === request.exerciseId && row.archivedAt === null)
+      : sourceRows.find(row => row.id === request.exerciseId);
+  if (request.mode !== 'create' && !source) return <section role="alert">
+    <Text>Это упражнение недоступно.</Text>
     <Button onClick={onClose}>Закрыть</Button>
   </section>;
-  return <EditPersonalExercise key={row.id} row={row} repository={repository} onClose={onClose} />;
+  return <EditPersonalExercise key={JSON.stringify(request)}
+    request={request} source={source ?? null} repository={repository}
+    selectedCoachUserId={selectedCoachUserId} sourceRows={sourceRows}
+    taxonomy={taxonomy} mediaAccountId={mediaAccountId}
+    onCreated={onCreated} onClose={onClose} />;
 }
