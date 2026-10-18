@@ -5,7 +5,7 @@ import { isCloudPhaseRow, isCloudPlanRow } from './program-management';
 import { isExpectedPhaseOwner, isExpectedPlanOwner } from './program-ownership';
 import { isWorkoutScheduleRequestRow, type CloudWorkoutScheduleRequestRow,
   type CreateWorkoutScheduleRequestInput } from './workout-scheduling-types';
-import { resolveScheduledStart } from './workout-scheduling-time';
+import { isUtcInstant, validateScheduleTiming } from './workout-scheduling-time';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 
 function personal(plan: CloudTrainingPlanRow, actor: string): boolean {
@@ -26,23 +26,36 @@ export function scheduleRequestId(actor: string, key: string): string {
   return `req:${actor}:${key}`;
 }
 
+const validCloudUserId = (value: unknown): value is string =>
+  typeof value === 'string' && /^tg:[1-9]\\d*$/.test(value);
+
 function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const row = value as Partial<CloudWorkoutOccurrenceRow>;
-  if (typeof row.id !== 'string' || !row.id || typeof row.realmId !== 'string'
-    || !row.realmId || row.owner !== null || typeof row.programDayId !== 'string'
-    || !row.programDayId || (row.coachUserId !== null && typeof row.coachUserId !== 'string')
-    || (row.clientUserId !== null && typeof row.clientUserId !== 'string')
-    || (row.workoutSessionId !== null && typeof row.workoutSessionId !== 'string')
+  if (typeof row.id !== 'string' || !row.id
+    || typeof row.realmId !== 'string' || !row.realmId
+    || row.owner !== null
+    || typeof row.programDayId !== 'string' || !row.programDayId
+    || !validCloudUserId(row.athleteUserId)
+    || (row.coachUserId !== null && !validCloudUserId(row.coachUserId))
+    || (row.clientUserId !== null && !validCloudUserId(row.clientUserId))
+    || (row.workoutSessionId !== null && (typeof row.workoutSessionId !== 'string'
+      || !row.workoutSessionId))
     || (row.format !== 'independent' && row.format !== 'coached')
-    || !['scheduled', 'in_progress', 'completed', 'cancelled'].includes(row.status ?? '')) return false;
+    || (row.format === 'coached' && row.coachUserId === null)
+    || !['scheduled', 'in_progress', 'completed', 'cancelled'].includes(row.status ?? '')
+    || ((row.status === 'in_progress' || row.status === 'completed')
+      && !row.workoutSessionId)
+    || (row.status === 'scheduled' && row.workoutSessionId !== null)
+    || (row.sourceRequestId !== undefined && row.sourceRequestId !== null
+      && (typeof row.sourceRequestId !== 'string' || !row.sourceRequestId))
+    || (row.createdByUserId !== undefined && !validCloudUserId(row.createdByUserId))
+    || (row.createdAt !== undefined && !isUtcInstant(row.createdAt))
+    || (row.updatedAt !== undefined && !isUtcInstant(row.updatedAt))) return false;
   try {
-    // Synced records must meet the same unique wall-clock contract as new requests.
-    resolveScheduledStart({
-      calendarDate: row.calendarDate as string,
-      startMinute: row.startMinute as number,
+    validateScheduleTiming({
+      startsAtUtc: row.startsAtUtc as string,
       durationMinutes: row.durationMinutes as number,
-      timeZone: row.timeZone as string,
     });
     return true;
   } catch { return false; }
@@ -95,8 +108,8 @@ export class WorkoutSchedulingRepository {
       || !input.programDayId || (input.format !== 'independent' && input.format !== 'coached')) {
       throw new Error('INVALID_SCHEDULE_REQUEST');
     }
-    // Reject non-existent/ambiguous DST wall-clock instants before a write.
-    resolveScheduledStart(input);
+    // The client submits the selected phone-local instant already converted to UTC.
+    validateScheduleTiming(input);
     return this.db.transaction('rw', [
       'trainingPlans', 'programPhases', 'programDays', 'realms', 'members',
       'workoutScheduleRequests',
@@ -114,8 +127,7 @@ export class WorkoutSchedulingRepository {
         action: 'create' as const, trainingPlanId: plan.id, programDayId: input.programDayId,
         targetOccurrenceId: null, athleteUserId, coachUserId: plan.coachUserId,
         format: input.format, requestedByUserId: this.actorUserId,
-        calendarDate: input.calendarDate, startMinute: input.startMinute,
-        durationMinutes: input.durationMinutes, timeZone: input.timeZone,
+        startsAtUtc: input.startsAtUtc, durationMinutes: input.durationMinutes,
       };
       if (saved) {
         if (!isWorkoutScheduleRequestRow(saved)
@@ -173,12 +185,12 @@ export class WorkoutSchedulingRepository {
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
     return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled'
       && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
-      && (row.athleteUserId === undefined || row.athleteUserId === (plan.clientUserId ?? this.actorUserId))
+      && row.athleteUserId === (plan.clientUserId ?? this.actorUserId)
       && row.coachUserId === plan.coachUserId
       && (view !== 'calendar' || this.actorUserId !== plan.coachUserId
         || plan.clientUserId === null || row.format === 'coached'))
-      .sort((a, b) => a.calendarDate.localeCompare(b.calendarDate)
-        || a.startMinute - b.startMinute || a.id.localeCompare(b.id));
+      .sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
+        || a.id.localeCompare(b.id));
   }
 
   observeOccurrences(trainingPlanId: string, view: WorkoutOccurrenceView,
