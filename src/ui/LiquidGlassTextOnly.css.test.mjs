@@ -16,8 +16,9 @@ describe('LiquidGlassTextOnly prototype CSS contract', () => {
   });
 
   it('leaves the base pill material to GlassSurface instead of a fixed prototype blur', () => {
-    const toolbar = prototypeCss.match(/\\.toolbar-pane\\s*\\{([^}]*)\\}/)?.[1] ?? '';
-    expect(toolbar).not.toMatch(/(?:background|box-shadow|backdrop-filter)\\s*:/);
+    const toolbar = prototypeCss.match(/\.toolbar-pane\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(toolbar).not.toBe('');
+    expect(toolbar).not.toMatch(/(?:background|box-shadow|backdrop-filter)\s*:/);
     expect(toolbar).not.toContain('overflow: visible');
   });
 
