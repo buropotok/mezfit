@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Checkbox, Chip } from 'konsta/react';
+import { loadBrowserGlassSettings } from '../glassSettings';
 import type { PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
 import {
   FILTER_GROUPS, PUBLIC_EXERCISE_CATEGORIES, filterOptions, filterPublicExercises,
@@ -163,6 +164,7 @@ export function ExerciseCatalogContent({
   const { taxonomy, catalogue } = snapshot;
   const exercises = catalogueExercises ?? snapshot.exercises;
   const isPersonal = scope === 'coach' || scope === 'client';
+  const glassPreset = isPersonal ? loadBrowserGlassSettings().preset : undefined;
   const [category, setCategory] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -256,7 +258,7 @@ export function ExerciseCatalogContent({
       {isPersonal ? <div className="mezfit-public-exercises__tabs">
         <div className="mezfit-public-exercises__tabs-content">
           <LiquidGlassTextOnly tabs={scope === 'client' ? CLIENT_CATALOG_TABS : PERSONAL_CATALOG_TABS}
-            value={tab} hidden={false}
+            value={tab} hidden={false} glassPreset={glassPreset}
             onValueChange={(value) => {
               if (value !== 'main' && value !== 'favourites' && value !== 'mine'
                 && value !== 'trainer' && value !== 'all') return;

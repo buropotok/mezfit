@@ -15,6 +15,13 @@ describe('LiquidGlassTextOnly prototype CSS contract', () => {
     expect(tabLink).toMatch(/width:\s*max-content;/);
   });
 
+  it('leaves the base pill material to GlassSurface instead of a fixed prototype blur', () => {
+    const toolbar = prototypeCss.match(/\.toolbar-pane\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(toolbar).not.toBe('');
+    expect(toolbar).not.toMatch(/(?:background|box-shadow|backdrop-filter)\s*:/);
+    expect(toolbar).not.toContain('overflow: visible');
+  });
+
   it('uses the approved Caption typography and clipping layers', () => {
     expect(prototypeCss).toContain('font-size: var(--ui-font-size-caption)');
     expect(prototypeCss).toContain('line-height: var(--ui-line-height-caption)');

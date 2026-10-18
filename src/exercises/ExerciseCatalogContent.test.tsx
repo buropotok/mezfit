@@ -5,6 +5,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseCatalogContent } from './ExerciseCatalogContent';
 import type { PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
 
+vi.mock('../ui/LiquidGlassTextOnly', () => ({
+  LiquidGlassTextOnly: ({ glassPreset }: { glassPreset?: string }) => (
+    <span data-testid="catalogue-glass-preset" data-preset={glassPreset} />
+  ),
+}));
+
 vi.mock('../NavigationShell', () => ({
   useNavigationBackTransition: () => (action: () => void) => action(),
 }));
@@ -63,6 +69,18 @@ const snapshot = {
 afterEach(cleanup);
 
 describe('shared public exercise catalogue', () => {
+  it('passes the saved app preset to personal catalogue tabs', () => {
+    window.localStorage.setItem('mezfit.glassSettings', JSON.stringify({
+      preset: 'smoked', blur: 5, optics: true,
+    }));
+    try {
+      render(<ExerciseCatalogContent snapshot={snapshot} scope="coach" />);
+      expect(screen.getByTestId('catalogue-glass-preset').getAttribute('data-preset')).toBe('smoked');
+    } finally {
+      window.localStorage.removeItem('mezfit.glassSettings');
+    }
+  });
+
   it('keeps the existing read-only navigation to details', () => {
     render(<ExerciseCatalogContent snapshot={snapshot} />);
     fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));

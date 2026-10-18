@@ -1,5 +1,8 @@
 import { useLayoutEffect, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { GlassSurface } from './GlassSurface';
+import glassSurfaceCss from './GlassSurface.css?inline';
+import type { GlassPresetName } from './glassMaterial';
 import { mountPrototype, type PrototypeController } from './liquid-glass-text-only/prototypeRuntime';
 import prototypeCss from './liquid-glass-text-only/prototype.css?inline';
 
@@ -15,9 +18,12 @@ export type LiquidGlassTextOnlyProps = {
   hidden: boolean;
   /** Expand the glass strip to the host width; the default keeps its original inset. */
   fullWidth?: boolean;
+  glassPreset?: GlassPresetName;
+  glassBlur?: number;
+  glassOptics?: boolean;
 };
 
-function Scene({ tabs, value, onValueChange, fullWidth = false }: Omit<LiquidGlassTextOnlyProps, 'hidden'>) {
+function Scene({ tabs, value, onValueChange, fullWidth = false, glassPreset, glassBlur, glassOptics }: Omit<LiquidGlassTextOnlyProps, 'hidden'>) {
   const host = useRef<HTMLDivElement>(null);
   const controller = useRef<PrototypeController | null>(null);
   const latest = useRef({ tabs, value, onValueChange });
@@ -57,12 +63,21 @@ function Scene({ tabs, value, onValueChange, fullWidth = false }: Omit<LiquidGla
     <div ref={host} style={{ display: 'block', position: 'relative', width: '100%', height: 44, overflow: 'visible' }}>
       {shadow && createPortal(<>
         <style>{prototypeCss}</style>
+        <style>{glassSurfaceCss}</style>
         <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
           <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
         </svg>
         <div className={fullWidth ? 'text-only-stage text-only-stage--full-width' : 'text-only-stage'}>
           <div className="optical-tabs-playground" id="playground">
-            <div className="toolbar-pane" id="toolbar-pane">
+            <GlassSurface
+              className="toolbar-pane"
+              id="toolbar-pane"
+              preset={glassPreset}
+              blur={glassBlur}
+              optics={glassOptics}
+              shape="capsule"
+              wrapContent={false}
+            >
               <div className="selector-mask" id="selector-mask">
                 <div className="tab-strip" id="tab-strip" role="tablist" aria-label="Навигация">
                   {tabs.map((tab, index) => (
@@ -82,7 +97,7 @@ function Scene({ tabs, value, onValueChange, fullWidth = false }: Omit<LiquidGla
                   </span>
                 </div>
               </div>
-            </div>
+            </GlassSurface>
             <div className="lens-viewport" id="lens-viewport" aria-hidden="true">
               <span className="lens-track" id="lens-track">
                 <span className="lens" id="lens" />

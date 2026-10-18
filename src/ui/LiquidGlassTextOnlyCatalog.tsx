@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { loadBrowserGlassSettings } from '../glassSettings';
 import { Button, Text } from './primitives';
 import { LiquidGlassTextOnly, type LiquidGlassTextOnlyTab } from './LiquidGlassTextOnly';
 import './LiquidGlassTextOnlyCatalog.css';
@@ -16,6 +17,7 @@ const prototypeTabs: readonly LiquidGlassTextOnlyTab[] = [
 export function LiquidGlassTextOnlyCatalog() {
   const [hidden, setHidden] = useState(false);
   const [value, setValue] = useState('today');
+  const [glassSettings] = useState(loadBrowserGlassSettings);
 
   return (
     <section className="ui-kit-liquid-glass-text-only" aria-labelledby="ui-kit-liquid-glass-text-only-title">
@@ -32,6 +34,9 @@ export function LiquidGlassTextOnlyCatalog() {
           value={value}
           onValueChange={setValue}
           hidden={hidden}
+          glassPreset={glassSettings.preset}
+          glassBlur={glassSettings.blur}
+          glassOptics={glassSettings.optics}
         />
       </div>
       <div className="ui-kit-liquid-glass-text-only__value">
