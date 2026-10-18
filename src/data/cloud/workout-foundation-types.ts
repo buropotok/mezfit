@@ -121,7 +121,7 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
   plannedDistanceMeters: number | null;
 }
 
-/** Scheduling is not a workout PLAN snapshot. Only a privileged Start freezes PLAN. */
+/** Each confirmed booking owns its PLAN snapshot; session Start later freezes it into FACT context. */
 export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   /** Frozen-at-confirmation workout prescription, not a live program reference. */
   plan: WorkoutOccurrencePlan;
@@ -132,7 +132,7 @@ export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   athleteUserId: string;
   programDayId: string;
   workoutSessionId: string | null;
-  /** Current scheduling contract requires an explicit workout format and IANA zone. */
+  /** The scheduling contract requires an explicit workout format. */
   format: 'independent' | 'coached';
   /** Canonical UTC start; local calendar day is calculated by the viewer's device. */
   startsAtUtc: string;
