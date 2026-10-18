@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { validatedPair } from './cloud-contact-profiles';
 import { confirmWorkoutOccurrence } from './schedule-reservation-coordinator';
 
 vi.mock('./dexie-cloud-membership', () => ({
   cloudMembershipAdminToken: vi.fn(async () => 'test-token'),
 }));
 vi.mock('./cloud-contact-profiles', () => ({
-  validatedPair: vi.fn(async () => [{}]),
+  validatedPair: vi.fn(),
 }));
 
 const plan = { name: 'День 1', category: null, comment: null, exercises: [] };
@@ -22,6 +23,10 @@ const requests: string[] = [];
 
 beforeEach(() => {
   saved = []; writes.splice(0); requests.splice(0);
+  vi.mocked(validatedPair).mockResolvedValue([
+    { userId: 'tg:101', roles: ['coach'] },
+    { userId: 'tg:202', roles: ['client'] },
+  ]);
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const parsed = new URL(url);
     const table = parsed.pathname.split('/').filter(Boolean).slice(1).join('/');
@@ -79,6 +84,26 @@ describe('trusted occurrence reservation', () => {
     await expect(confirmWorkoutOccurrence(env, 'tg:303', command()))
       .rejects.toMatchObject({ status: 403, code: 'SCHEDULE_FORBIDDEN' });
     expect(writes).toHaveLength(0);
+  });
+
+  it.each([
+    [{ userId: 'tg:101', roles: ['coach'] }, { userId: 'tg:303', roles: ['client'] }],
+    [{ userId: 'tg:303', roles: ['coach'] }, { userId: 'tg:202', roles: ['client'] }],
+    [{ userId: 'tg:202', roles: ['coach'] }, { userId: 'tg:101', roles: ['client'] }],
+  ])('rejects program identities that do not match membership roles: %j / %j', async (coach, client) => {
+    vi.mocked(validatedPair).mockResolvedValue([coach, client]);
+    await expect(confirmWorkoutOccurrence(env, 'tg:101', command({ format: 'coached' })))
+      .rejects.toMatchObject({ status: 403, code: 'SCHEDULE_FORBIDDEN' });
+    expect(writes).toHaveLength(0);
+    expect(requests).not.toContain('GET programDays/day-1');
+  });
+
+  it('rejects an invalid relationship realm before loading its day', async () => {
+    vi.mocked(validatedPair).mockResolvedValue(null);
+    await expect(confirmWorkoutOccurrence(env, 'tg:101', command()))
+      .rejects.toMatchObject({ status: 403, code: 'SCHEDULE_FORBIDDEN' });
+    expect(writes).toHaveLength(0);
+    expect(requests).not.toContain('GET programDays/day-1');
   });
 
   it('rejects overlapping confirmed client slots', async () => {

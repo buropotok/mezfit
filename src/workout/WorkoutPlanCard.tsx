@@ -8,7 +8,7 @@ import { SessionExercise } from './SessionExercise';
 export interface WorkoutPlanCardProps {
   mode: 'planning';
   programName?: string;
-  scheduleRole?: 'coach' | 'client';
+  canScheduleCoached?: boolean;
   onSchedule?: (format: WorkoutScheduleFormat) => void;
   hideProgramMenu?: boolean;
   hideWorkoutActions?: boolean;
@@ -42,7 +42,7 @@ PlanGlassButton.displayName = 'PlanGlassButton';
 /** Program template mode deliberately has neither a session nor numeric PLAN/FACT.
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
-  day: outline, programName = 'Без программы', scheduleRole = 'coach', onSchedule,
+  day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule,
   hideProgramMenu = false, hideWorkoutActions = false,
   onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
@@ -67,7 +67,7 @@ export function WorkoutPlanCard({
     { id: 'comment', label: 'Комментарий', icon: 'message-circle', disabled: busy, onSelect: () => defer(onComment) },
     { id: 'start', label: 'Начать тренировку', icon: 'treadmill', disabled: true, dividerBefore: true },
     { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: busy || !onSchedule,
-      onSelect: () => defer(() => scheduleRole === 'coach'
+      onSelect: () => defer(() => canScheduleCoached
         ? setSchedulePopoverOpen(true) : onSchedule?.('independent')) },
     { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(onDelete) },
   ];
@@ -119,7 +119,7 @@ export function WorkoutPlanCard({
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
 
         {!hideWorkoutActions && (!readOnly || onSchedule) ? <div className="workout-plan-card__actions">
-          {onSchedule ? scheduleRole === 'coach' ? (
+          {onSchedule ? canScheduleCoached ? (
             <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}
               triggerRef={scheduleTriggerRef} label="Формат тренировки"
               preset={glass.preset} optics={glass.optics}

@@ -1,6 +1,7 @@
 import type { PlannedSet, TrackingType } from '../api';
 
-export type SetLabel = 'warmup' | 'easy' | 'normal' | 'hard' | 'drop';
+import type { SetLabel } from '../../shared/set-label';
+export type { SetLabel } from '../../shared/set-label';
 
 export type ResistanceBandCode = 'yellow' | 'red' | 'green' | 'blue' | 'purple' | 'black';
 

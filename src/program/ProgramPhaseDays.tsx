@@ -154,7 +154,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       <WorkoutSessionCard mode="planning" day={item} programName={program.name}
         onReorderExercises={(ids) => { void run(() => repository.reorderDayExercises(program.id, item.day.id, ids)); }} creatorName={creatorName} creatorAvatar={creatorAvatar}
         readOnly={readOnly} busy={busy || exerciseDayId !== null}
-        scheduleRole={viewerRole} onSchedule={planning ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
+        canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
+          && program.clientUserId !== null} onSchedule={planning ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
         onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}

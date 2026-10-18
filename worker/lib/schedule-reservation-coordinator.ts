@@ -1,8 +1,8 @@
 import cloudConfig from '../../dexie-cloud.json';
 import { cloudMembershipAdminToken } from './dexie-cloud-membership';
 import { validatedPair } from './cloud-contact-profiles';
-import { isWorkoutOccurrencePlan } from '../../src/data/cloud/workout-occurrence-plan';
-import { validateScheduleTiming } from '../../src/data/cloud/workout-scheduling-time';
+import { isWorkoutOccurrencePlan } from '../../shared/workout-occurrence-plan';
+import { validateScheduleTiming } from '../../shared/workout-scheduling-time';
 
 type Json = Record<string, unknown>;
 const record = (value: unknown): value is Json =>
@@ -122,7 +122,12 @@ export async function confirmWorkoutOccurrence(
     if (!coach || !user(plan.clientUserId) || plan.athleteUserId !== plan.clientUserId
       || (actor !== coach && actor !== athlete)) reject(403, 'SCHEDULE_FORBIDDEN');
     if (actor === athlete && plan.status === 'draft') reject(403, 'SCHEDULE_PLAN_NOT_PUBLISHED');
-    if (!await validatedPair(fetch, token, plan.realmId as string)) reject(403, 'SCHEDULE_FORBIDDEN');
+    const members = await validatedPair(fetch, token, plan.realmId);
+    if (!members?.some(member => member.userId === coach
+      && Array.isArray(member.roles) && member.roles.includes('coach'))
+      || !members.some(member => member.userId === athlete
+        && Array.isArray(member.roles) && member.roles.includes('client')))
+      reject(403, 'SCHEDULE_FORBIDDEN');
   }
   if (input.format === 'coached' && (coach === null || actor !== coach))
     reject(403, 'SCHEDULE_COACH_REQUIRED');
