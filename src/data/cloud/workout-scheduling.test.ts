@@ -198,6 +198,72 @@ describe('local-first workout scheduling intent', () => {
     expect((await repo.listRequests('client-personal')).map(row => row.id)).toEqual([id]);
   });
 
+  it('excludes cancelled occurrences from active program and calendar projections', async () => {
+    const f = await fixture();
+    const rows = [
+      { id: 'occ-active', realmId: f.pair.realm.realmId, owner: null,
+        coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+        programDayId: 'assigned-day', workoutSessionId: null, format: 'coached',
+        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        status: 'scheduled' },
+      { id: 'occ-cancelled', realmId: f.pair.realm.realmId, owner: null,
+        coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+        programDayId: 'assigned-day', workoutSessionId: null, format: 'coached',
+        calendarDate: '2026-10-19', startMinute: 720, durationMinutes: 60,
+        status: 'cancelled' },
+    ];
+    await f.db.table('workoutOccurrences').bulkPut(rows);
+    for (const view of ['program', 'calendar'] as const) {
+      expect((await f.client.listOccurrences('assigned', view)).map(row => row.id))
+        .toEqual(['occ-active']);
+      expect(await f.coach.getOccurrence('assigned', 'occ-cancelled', view)).toBeNull();
+    }
+  });
+
+  it('shows client independent workouts in their PLAN but never books the coach calendar', async () => {
+    const f = await fixture();
+    const occurrence = (id: string, format: 'coached' | 'independent',
+      createdByUserId: string) => ({
+      id, realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: null,
+      format, createdByUserId, calendarDate: '2026-10-19',
+      startMinute: 600, durationMinutes: 60, status: 'scheduled' as const,
+    });
+    await f.db.table('workoutOccurrences').bulkPut([
+      occurrence('client-independent', 'independent', 'tg:202'),
+      occurrence('coach-planned-independent', 'independent', 'tg:101'),
+      occurrence('coach-guided', 'coached', 'tg:101'),
+      occurrence('client-request-approved', 'coached', 'tg:202'),
+    ]);
+    expect((await f.coach.listOccurrences('assigned', 'program')).map(row => row.id))
+      .toEqual(['client-independent', 'client-request-approved', 'coach-guided', 'coach-planned-independent']);
+    expect((await f.coach.listOccurrences('assigned', 'calendar')).map(row => row.id))
+      .toEqual(['client-request-approved', 'coach-guided']);
+    expect((await f.client.listOccurrences('assigned', 'calendar')).map(row => row.id))
+      .toHaveLength(4);
+    expect(await f.coach.getOccurrence('assigned', 'client-independent', 'calendar'))
+      .toBeNull();
+    expect((await f.coach.getOccurrence('assigned', 'client-independent', 'program'))?.id)
+      .toBe('client-independent');
+    await expect(f.coach.listOccurrences('assigned', 'invalid' as 'calendar'))
+      .rejects.toThrow('INVALID_SCHEDULE_VIEW');
+  });
+
+  it('keeps a coach personal independent workout on their own calendar', async () => {
+    const f = await fixture();
+    await f.db.table('workoutOccurrences').put({
+      id: 'coach-own-training', realmId: 'tg:101', owner: null,
+      coachUserId: null, clientUserId: null, athleteUserId: 'tg:101',
+      programDayId: 'coach-personal-day', workoutSessionId: null,
+      format: 'independent', createdByUserId: 'tg:101',
+      calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+      status: 'scheduled',
+    });
+    expect((await f.coach.listOccurrences('coach-personal', 'calendar')).map(row => row.id))
+      .toEqual(['coach-own-training']);
+  });
+
   it('keeps occurrences read-only and filters them by the authorized PLAN', async () => {
     const f = await fixture();
     await f.db.table('workoutOccurrences').bulkPut([
@@ -222,8 +288,8 @@ describe('local-first workout scheduling intent', () => {
         calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
         status: 'scheduled' },
     ]);
-    expect((await f.client.listOccurrences('assigned')).map(row => row.id)).toEqual(['occ-good']);
-    expect((await f.client.getOccurrence('assigned', 'occ-good'))?.id).toBe('occ-good');
-    expect(await f.client.getOccurrence('assigned', 'occ-foreign')).toBeNull();
+    expect((await f.client.listOccurrences('assigned', 'program')).map(row => row.id)).toEqual(['occ-good']);
+    expect((await f.client.getOccurrence('assigned', 'occ-good', 'program'))?.id).toBe('occ-good');
+    expect(await f.client.getOccurrence('assigned', 'occ-foreign', 'program')).toBeNull();
   });
 });
