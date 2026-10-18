@@ -1,5 +1,5 @@
 import type { CloudSharedRow } from './database';
-import { validateScheduleTiming, type ScheduleTiming } from './workout-scheduling-time';
+import { isUtcInstant, validateScheduleTiming, type ScheduleTiming } from './workout-scheduling-time';
 
 export type WorkoutScheduleFormat = 'independent' | 'coached';
 export type WorkoutScheduleAction = 'create' | 'reschedule' | 'cancel';
@@ -55,7 +55,5 @@ export function isWorkoutScheduleRequestRow(value: unknown): value is CloudWorko
     && (row.coachUserId === null || userId(row.coachUserId))
     && (row.format === 'independent' || row.format === 'coached')
     && userId(row.requestedByUserId)
-    && typeof row.createdAt === 'string' && Number.isFinite(Date.parse(row.createdAt))
-    && typeof row.calendarDate === 'string' && typeof row.timeZone === 'string'
-    && typeof row.startMinute === 'number' && typeof row.durationMinutes === 'number';
+    && isUtcInstant(row.createdAt);
 }
