@@ -122,12 +122,21 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
 
 /** Scheduling is not a workout PLAN snapshot. Only a privileged Start freezes PLAN. */
 export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
-  coachUserId: string;
-  clientUserId: string;
+  /** Assigned workouts have a coach; personal workouts do not. */
+  coachUserId: string | null;
+  /** Null only for personal programs; assigned records always identify the client. */
+  clientUserId: string | null;
+  athleteUserId: string;
   programDayId: string;
   workoutSessionId: string | null;
-  calendarDate: string;
-  startMinute: number;
+  /** Current scheduling contract requires an explicit workout format and IANA zone. */
+  format: 'independent' | 'coached';
+  /** Canonical UTC start; local calendar day is calculated by the viewer's device. */
+  startsAtUtc: string;
+  sourceRequestId?: string | null;
+  createdByUserId?: string;
+  createdAt?: string;
+  updatedAt?: string;
   durationMinutes: number;
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 }
