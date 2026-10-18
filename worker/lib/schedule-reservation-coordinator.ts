@@ -141,8 +141,19 @@ export async function confirmWorkoutOccurrence(
 
   // Validate every incoming foreign key against the server's authoritative PLAN.
   const sourceExercises = await rows(env, token, 'programExercises', { programDayId: day.id });
-  const byId = new Map(sourceExercises.filter(ex => ex.realmId === day.realmId
-    && ex.status === 'active').map(ex => [ex.id, ex]));
+  const activeExercises = sourceExercises.filter(ex => ex.realmId === day.realmId
+    && ex.status === 'active').sort((a, b) => Number(a.position) - Number(b.position));
+  const byId = new Map(activeExercises.map(ex => [ex.id, ex]));
+  const isSourceAuthor = actor === (coach ?? athlete);
+  if (!isSourceAuthor && (
+    input.plan.name !== day.name
+    || (input.plan.comment ?? null) !== (day.comment ?? null)
+    || (input.plan.category ?? null) !== (day.category ?? null)
+    || input.plan.exercises.length !== activeExercises.length
+    || input.plan.exercises.some((item, index) =>
+      item.sourceProgramExerciseId !== activeExercises[index]?.id
+      || item.notes !== (activeExercises[index]?.notes ?? null))
+  )) reject(403, 'SCHEDULE_PLAN_EDIT_FORBIDDEN');
   for (const exercise of input.plan.exercises) {
     if (exercise.sourceProgramExerciseId !== null) {
       const source = byId.get(exercise.sourceProgramExerciseId);
@@ -159,13 +170,29 @@ export async function confirmWorkoutOccurrence(
           reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
       } else reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
     }
-    const sourceSetIds = exercise.sourceProgramExerciseId === null ? new Set<string>()
-      : new Set((await rows(env, token, 'programSets', {
+    const sourceSets = exercise.sourceProgramExerciseId === null ? []
+      : (await rows(env, token, 'programSets', {
         programExerciseId: exercise.sourceProgramExerciseId,
       })).filter(set => set.realmId === day.realmId && set.status === 'active')
-        .map(set => String(set.id)));
+        .sort((a, b) => Number(a.position) - Number(b.position));
+    const sourceSetIds = new Set(sourceSets.map(set => String(set.id)));
     if (exercise.sets.some(set => set.sourceProgramSetId !== null
       && !sourceSetIds.has(set.sourceProgramSetId))) reject(409, 'SCHEDULE_SOURCE_CHANGED');
+    if (!isSourceAuthor) {
+      if (exercise.sets.length !== sourceSets.length
+        || exercise.sets.some((set, index) => {
+          const source = sourceSets[index];
+          return set.sourceProgramSetId !== source.id
+            || (set.setLabel ?? null) !== (source.setLabel ?? null)
+            || (set.comment ?? null) !== (source.comment ?? null)
+            || set.plannedReps !== source.plannedReps
+            || set.plannedWeightKg !== source.plannedWeightKg
+            || set.plannedDurationSeconds !== source.plannedDurationSeconds
+            || set.plannedDistanceMeters !== source.plannedDistanceMeters
+            || JSON.stringify(set.materialLinks) !== JSON.stringify(source.materialLinks ?? [])
+            || JSON.stringify(set.chatLinks) !== JSON.stringify(source.chatLinks ?? []);
+        })) reject(403, 'SCHEDULE_PLAN_EDIT_FORBIDDEN');
+    }
   }
 
   const start = Date.parse(input.startsAtUtc);
