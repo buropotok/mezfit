@@ -206,7 +206,8 @@ function EditPersonalExercise({
   };
 
   const categoryOptions = [...PUBLIC_EXERCISE_CATEGORIES].map(([value, label]) => ({ value, label }));
-  const subcategories = new Map(sourceRows.map(row => [row.subcategory, row.subcategory_ru]));
+  const subcategories = new Map(sourceRows.filter(row => row.category === draft.category)
+    .map(row => [row.subcategory, row.subcategory_ru]));
   if (draft.subcategory) subcategories.set(draft.subcategory, draft.subcategory_ru);
   const subcategoryOptions = [
     { value: '', label: 'Не указано' },
@@ -259,7 +260,8 @@ function EditPersonalExercise({
         disabled={busy}
         onChange={value => update('tracking_type', (value || undefined) as ExerciseTrackingType | undefined)} />
       <Field label="Категория" value={draft.category} options={categoryOptions}
-        disabled={busy} onChange={value => update('category', value)} />
+        disabled={busy} onChange={value => setDraft(current => current.category === value
+          ? current : { ...current, category: value, subcategory: '', subcategory_ru: '' })} />
       {option('subcategory', 'Подкатегория')}
       {option('equipment', 'Оборудование')}
       {option('movement_type', 'Тип движения')}
