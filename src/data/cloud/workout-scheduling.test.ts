@@ -294,6 +294,110 @@ describe('local-first workout scheduling intent', () => {
     }
   });
 
+  it('rejects coached personal workouts without a coach while keeping independent ones', async () => {
+    const f = await fixture();
+    const valid = {
+      realmId: 'tg:202', owner: null, coachUserId: null, clientUserId: null,
+      athleteUserId: 'tg:202', programDayId: 'client-personal-day',
+      workoutSessionId: null, format: 'independent',
+      startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60,
+      status: 'scheduled',
+    };
+    await f.db.table('workoutOccurrences').bulkPut([
+      { ...valid, id: 'personal-independent' },
+      { ...valid, id: 'personal-coached', format: 'coached' },
+    ]);
+    for (const view of ['calendar', 'program'] as const) {
+      expect((await f.client.listOccurrences('client-personal', view)).map(row => row.id))
+        .toEqual(['personal-independent']);
+      expect(await f.client.getOccurrence('client-personal', 'personal-coached', view))
+        .toBeNull();
+    }
+  });
+
+  it('requires a materialized session ID for started/completed occurrences', async () => {
+    const f = await fixture();
+    const valid = {
+      realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', format: 'coached',
+      workoutSessionId: null, startsAtUtc: '2026-10-19T08:00:00.000Z',
+      durationMinutes: 60, status: 'scheduled',
+    };
+    await f.db.table('workoutOccurrences').bulkPut([
+      { ...valid, id: 'scheduled' },
+      { ...valid, id: 'invalid-running', status: 'in_progress' },
+      { ...valid, id: 'invalid-completed', status: 'completed' },
+      { ...valid, id: 'invalid-session-empty', status: 'completed', workoutSessionId: '' },
+      { ...valid, id: 'invalid-scheduled-session', status: 'scheduled', workoutSessionId: 'ses-1' },
+      { ...valid, id: 'running', status: 'in_progress', workoutSessionId: 'ses-1' },
+      { ...valid, id: 'completed', status: 'completed', workoutSessionId: 'ses-2' },
+    ]);
+    const expectedIds = ['completed', 'running', 'scheduled'];
+    for (const view of ['calendar', 'program'] as const) {
+      expect((await f.client.listOccurrences('assigned', view)).map(row => row.id))
+        .toEqual(expectedIds);
+      expect((await f.coach.listOccurrences('assigned', view)).map(row => row.id))
+        .toEqual(expectedIds);
+    }
+  });
+
+  it('rejects malformed optional occurrence provenance and timestamps', async () => {
+    const f = await fixture();
+    const valid = {
+      realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: null,
+      format: 'coached', startsAtUtc: '2026-10-19T08:00:00.000Z',
+      durationMinutes: 60, status: 'scheduled',
+      createdByUserId: 'tg:101',
+      sourceRequestId: 'req:tg:101:coach-request-123',
+      createdAt: '2026-10-18T12:00:00.000Z',
+      updatedAt: '2026-10-18T12:00:00.000Z',
+    };
+    const rejected = [
+      { createdByUserId: 42 },
+      { createdByUserId: 'invalid-user' },
+      { sourceRequestId: {} },
+      { sourceRequestId: '' },
+      { createdAt: false },
+      { createdAt: '2026-10-18T12:00:00+00:00' },
+      { updatedAt: null },
+      { athleteUserId: 42 },
+      { athleteUserId: undefined },
+      { coachUserId: '' },
+      { clientUserId: '' },
+      { workoutSessionId: 123 },
+      { durationMinutes: -1 },
+    ];
+    await f.db.table('workoutOccurrences').bulkPut([
+      { ...valid, id: 'valid-provenance' },
+      ...rejected.map((patch, i) => ({ ...valid, id: 'invalid-provenance-' + i, ...patch })),
+    ]);
+    for (const view of ['program', 'calendar'] as const) {
+      expect((await f.client.listOccurrences('assigned', view)).map(row => row.id))
+        .toEqual(['valid-provenance']);
+    }
+  });
+
+  it('orders distinct UTC instants through the DST overlap without a saved timezone', async () => {
+    const f = await fixture();
+    const common = {
+      realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: null, format: 'coached',
+      durationMinutes: 60, status: 'scheduled',
+    };
+    const first = '2026-10-25T00:30:00.000Z';
+    const second = '2026-10-25T01:30:00.000Z';
+    await f.db.table('workoutOccurrences').bulkPut([
+      { ...common, id: 'second', startsAtUtc: second },
+      { ...common, id: 'first', startsAtUtc: first },
+    ]);
+    expect((await f.client.listOccurrences('assigned', 'calendar')).map(row => row.id))
+      .toEqual(['first', 'second']);
+  });
+
   it('keeps occurrences read-only and filters them by the authorized PLAN', async () => {
     const f = await fixture();
     await f.db.table('workoutOccurrences').bulkPut([
