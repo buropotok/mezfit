@@ -141,14 +141,14 @@ export function TodayPage({
       durationMinutes: draft.durationMinutes, status: 'scheduled',
       plan: draft.plan, createdByUserId: draft.actorUserId,
     }]);
-    await draftRepository.delete(draft.id);
-    setOpenedDraftId(null);
     if (updateProgram) {
       // The booking is already confirmed. A separate authorized PLAN operation
       // can fail independently and must be reported without duplicating the booking.
       const repository = new ProgramManagementRepository(cloud.db, cloud.actorUserId);
-      await repository.applyOccurrencePlan(draft.trainingPlanId, draft.programDayId, draft.plan);
+      await repository.applyOccurrencePlan(draft.trainingPlanId, draft.programDayId, draft.plan, draft.originalPlan);
     }
+    await draftRepository.delete(draft.id);
+    setOpenedDraftId(null);
   };
 
   return (
