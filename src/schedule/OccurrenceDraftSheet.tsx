@@ -9,7 +9,7 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
-  Text, TimePicker, IconButton, type LocalDate, type LocalTime } from '../ui';
+  Text, TimePicker, Icon, IconButton, type LocalDate, type LocalTime } from '../ui';
 import './occurrence-draft-sheet.css';
 
 function localDate(date: Date): LocalDate {
@@ -154,13 +154,13 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           <div className="occurrence-draft-sheet__timing">
             <Button variant="secondary" onClick={() => setDateOpened(true)}>
-              Дата: {localDate(start)}
+              <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" />Дата: {localDate(start)}</span>
             </Button>
             <span ref={startRef}><Button variant="secondary" onClick={() => setTimeOpened('start')}>
-              Начало: {localTime(start)}
+              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" />Начало: {localTime(start)}</span>
             </Button></span>
             <span ref={endRef}><Button variant="secondary" onClick={() => setTimeOpened('end')}>
-              Конец: {localTime(end)}
+              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" />Конец: {localTime(end)}</span>
             </Button></span>
           </div>
           <Text variant="body">Введите план на тренировку (не обязательно)</Text>
