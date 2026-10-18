@@ -139,6 +139,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
       setError(reason instanceof Error ? reason.message : 'Не удалось добавить упражнения');
     } finally { setBusy(false); }
   };
+  const mayEditStructure = Boolean(draft && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
   return <>
@@ -164,22 +165,22 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
           <Text variant="body">Введите план на тренировку (не обязательно)</Text>
           <WorkoutPlanCard mode="planning" day={outline(draft)} programName={draft.plan.name}
             creatorName="План тренировки" hideProgramMenu hideWorkoutActions
-            busy={busy} readOnly={false}
+            busy={busy} readOnly={!mayEditStructure}
             onEdit={() => {}} onComment={() => {}} onMove={() => {}}
             onDuplicate={() => {}} onDelete={() => {}}
-            onReorderExercises={ids => edit(current => ({
+            onReorderExercises={mayEditStructure ? ids => edit(current => ({
               ...current, plan: reorderOccurrenceExercises(current.plan, ids),
-            }))}
-            onAddExercise={() => setExercisePickerOpened(true)}
-            onAddSet={id => edit(current => ({
+            })) : undefined}
+            onAddExercise={mayEditStructure ? () => setExercisePickerOpened(true) : undefined}
+            onAddSet={mayEditStructure ? id => edit(current => ({
               ...current, plan: appendOccurrenceSet(current.plan, id),
-            }))}
-            onDeleteExercise={id => edit(current => ({
+            })) : undefined}
+            onDeleteExercise={mayEditStructure ? id => edit(current => ({
               ...current, plan: removeOccurrenceExercise(current.plan, id),
-            }))}
-            onDeleteSet={(exerciseId, setId) => edit(current => ({
+            })) : undefined}
+            onDeleteSet={mayEditStructure ? (exerciseId, setId) => edit(current => ({
               ...current, plan: removeOccurrenceSet(current.plan, exerciseId, setId),
-            }))}
+            })) : undefined}
             onOpenSet={() => setSetPlaceholderOpen(true)}
           />
         </div>
