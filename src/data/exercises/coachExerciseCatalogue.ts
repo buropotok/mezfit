@@ -7,6 +7,21 @@ import {
   type CoachExerciseChanges, type CoachExerciseDefinitionRow, type CoachExercisePersonalSnapshot,
 } from './coachExerciseTypes';
 
+/** Unsaved starter; constructing it never creates a Dexie Cloud record. */
+export function blankPersonalExercise(category: string | null): Omit<PublicExercise, 'id'> {
+  return {
+    name: '', name_ru: '', name_en: '', category: category ?? 'other',
+    subcategory: '', subcategory_ru: '', movement_type: 'resistance',
+    muscles: { primary: [], secondary: [], stabilizers: [], emphasis: [] },
+    mobility_targets: [], equipment: '', body_part: '', target: '', muscle_group: '',
+    secondary_muscles: [], media_id: '', image: '', gif_url: '', attribution: '',
+    created_at: new Date().toISOString(),
+    instructions: { ru: '', en: '' }, instruction_steps: { ru: [], en: [] },
+    source_consistency_issue: null,
+    anatomy_evidence: { classification_family: '', basis: '', external_individual_match: false },
+  };
+}
+
 /** All private records stay in the authenticated user's built-in Dexie Cloud realm. */
 export class CoachExerciseCatalogueRepository {
   constructor(private readonly db: MezfitCloudDatabase, private readonly actorUserId: string) {
@@ -55,18 +70,19 @@ export class CoachExerciseCatalogueRepository {
   }
 
   /** Global base exercises are immutable. The only supported edit path is a private copy. */
-  async duplicatePublicExercise(sourceExerciseId: string): Promise<string> {
+  async duplicatePublicExercise(sourceExerciseId: string, changes: CoachExerciseChanges = {}): Promise<string> {
     if (!/^\d{4}$/.test(sourceExerciseId)) throw new Error('EXERCISE_NOT_FOUND');
     const source = await this.db.publicExerciseDefinitions.get(sourceExerciseId);
     if (!isPublicExerciseRow(source)) throw new Error('EXERCISE_NOT_FOUND');
     const { id: _id, realmId: _realmId, owner: _owner, sourceSha256: _sha, ...data } = source;
-    return this.createExercise({ ...structuredClone(data), created_at: new Date().toISOString() }, {
+    return this.createExercise({ ...structuredClone(data), ...changes, created_at: new Date().toISOString() }, {
       copiedFromExerciseId: source.id, copiedFromScope: 'public',
     });
   }
 
   /** Authorize the copy from CURRENT assigned relationship snapshots, not caller-supplied data. */
-  async duplicateAssignedCoachExercise(coachUserId: string, sourceExerciseId: string): Promise<string> {
+  async duplicateAssignedCoachExercise(coachUserId: string, sourceExerciseId: string, changes: CoachExerciseChanges = {}): Promise<string> {
+    if (!isCoachExerciseChanges(changes)) throw new Error('INVALID_CUSTOM_EXERCISE');
     const assigned = new AssignedCoachExercisesRepository(this.db, this.actorUserId);
     const source = (await assigned.read(coachUserId)).find(row => row.id === sourceExerciseId);
     if (!source) throw new Error('EXERCISE_NOT_ASSIGNED');
@@ -77,19 +93,12 @@ export class CoachExerciseCatalogueRepository {
   }
 
   /** Blank personal item for FAB create. Does not require a trainer relationship. */
-  async createBlankExercise(category: string | null, name: string): Promise<string> {
+  async createBlankExercise(category: string | null, name: string, changes: CoachExerciseChanges = {}): Promise<string> {
     const title = name.trim();
     if (!title || title.length > 120) throw new Error('INVALID_CUSTOM_EXERCISE_NAME');
+    if (!isCoachExerciseChanges(changes)) throw new Error('INVALID_CUSTOM_EXERCISE');
     return this.createExercise({
-      name: title, name_ru: title, name_en: '', category: category ?? 'other',
-      subcategory: '', subcategory_ru: '', movement_type: 'resistance',
-      muscles: { primary: [], secondary: [], stabilizers: [], emphasis: [] },
-      mobility_targets: [], equipment: '', body_part: '', target: '', muscle_group: '',
-      secondary_muscles: [], media_id: '', image: '', gif_url: '', attribution: '',
-      created_at: new Date().toISOString(),
-      instructions: { ru: '', en: '' }, instruction_steps: { ru: [], en: [] },
-      source_consistency_issue: null,
-      anatomy_evidence: { classification_family: '', basis: '', external_individual_match: false },
+      ...blankPersonalExercise(category), ...changes, name: title, name_ru: title,
     });
   }
 
