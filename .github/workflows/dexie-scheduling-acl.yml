@@ -67,21 +67,28 @@ jobs:
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles current-roles.json
           cd "$GITHUB_WORKSPACE"
           node tools/dexie-roles/scheduling.mjs recheck
-      - name: Import only approved Coach and Client global roles
+      # Remember that the next operation may write to the server even if its CLI exits nonzero.
+      - name: Record ACL import attempt before mutation
+        id: import_attempt
         if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'
+        run: echo "attempted=true" >> "$GITHUB_OUTPUT"
+      - name: Import only approved Coach and Client global roles
+        if: inputs.operation == 'apply' && steps.import_attempt.outputs.attempted == 'true'
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud import roles-only-import.json
-      - name: Export schema and roles after apply
-        if: inputs.operation == 'apply'
+      # !cancelled() prevents Actions' implicit success() from suppressing readback
+      # when an import reaches Dexie Cloud but reports an error to the runner.
+      - name: Export schema and roles after any ACL import attempt
+        if: ${{ !cancelled() && inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0') }}
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
       - name: Verify exact ACL and untouched cloud configuration
-        if: inputs.operation == 'apply'
+        if: ${{ !cancelled() && inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0') }}
         run: node tools/dexie-roles/scheduling.mjs verify
       - name: Remove temporary credentials and private exports
         if: always()
