@@ -85,9 +85,12 @@ Initial membership and first hydration still require connectivity.
 A schedule request stores local `calendarDate` (YYYY-MM-DD),
 `startMinute`, `durationMinutes` and an IANA `timeZone` such as
 `Europe/Berlin`. A booking cannot cross the chosen local day's 24:00 boundary.
-Nonexistent DST wall-clock times are rejected; ambiguous fall-back times are
-also rejected rather than selecting a silent offset. The future UI may
-introduce explicit disambiguation.
+The canonical occurrence requires an explicit `format` (`independent` or
+`coached`) and an IANA `timeZone`; missing or unrecognized values are
+not silently replaced with defaults. Both incoming requests **and synced
+occurrence read projections** reject nonexistent DST wall-clock starts and
+ambiguous fall-back times rather than selecting a silent offset. The future
+UI may introduce explicit disambiguation.
 
 ## Authorization and rollout
 
