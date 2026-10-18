@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import roleConfig from '../../../cloud/roles.json';
-import { CLOUD_DATABASE_STORES_V8, CLOUD_DATABASE_VERSION } from './database';
+import { CLOUD_DATABASE_STORES_V8, CLOUD_DATABASE_STORES_V9, CLOUD_DATABASE_VERSION } from './database';
 
 const roles = roleConfig.roles;
 
@@ -19,7 +19,10 @@ describe('scheduling ACL and schema rollout', () => {
   });
 
   it('preserves v7 stores while adding a dedicated request index in v8', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(8);
+    expect(CLOUD_DATABASE_VERSION).toBe(9);
+    expect(CLOUD_DATABASE_STORES_V9.localWorkoutOccurrenceDrafts).toContain('actorUserId');
+    expect(CLOUD_DATABASE_STORES_V9.workoutScheduleRequests)
+      .toBe(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests);
     expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toMatch(/^id,/);
     expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('requestKey');
     expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).not.toContain('&requestKey');
