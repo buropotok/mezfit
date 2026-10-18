@@ -148,6 +148,24 @@ describe('personal exercise card editor', () => {
       })));
   });
 
+  it('keeps a new draft editable if image upload fails, without creating an exercise', async () => {
+    const { uploadPersonalExerciseMedia } = await import('../api');
+    vi.mocked(uploadPersonalExerciseMedia).mockRejectedValueOnce(new Error('R2 недоступен'));
+    const repository = api(), p = props(repository);
+    render(<PersonalExerciseEditorGateway
+      request={{ mode: 'create', category: 'chest' }} {...p} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Название' }),
+      { target: { value: 'Упражнение' } });
+    fireEvent.change(screen.getByLabelText('Выбрать изображение'), {
+      target: { files: [new File([new Uint8Array([137, 80, 78, 71])], 'test.png',
+        { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.getByText('R2 недоступен')).toBeTruthy());
+    expect(repository.createBlankExercise).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Название' })).toHaveProperty('value', 'Упражнение');
+  });
+
   it('copies the authorized trainer snapshot only after Save', async () => {
     const repository = api(), p = props(repository);
     render(<PersonalExerciseEditorGateway
