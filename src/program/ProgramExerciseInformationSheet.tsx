@@ -36,10 +36,10 @@ export function ProgramExerciseInformationSheet({ repository, programId, dayId, 
       </div>
       {error ? <Text variant="footnote" role="alert">{error}</Text>
         : !data ? <Text variant="body">Загружаем информацию…</Text>
-          : data.row ? <ExerciseDetail row={data.row} taxonomy={data.taxonomy}
-            media={<ExerciseMedia exercise={{ id: exerciseId, name: data.name, reference_source: null, reference_key: null }} sourceUrl={data.mediaUrl} variant="detail" />} />
+          : data.row ? <ExerciseDetail row={data.row} taxonomy={data.taxonomy} mediaLayout="square"
+            media={<ExerciseMedia exercise={{ id: exerciseId, name: data.name, reference_source: null, reference_key: null }} sourceUrl={data.mediaUrl} variant="detail" layout="square" />} />
             : <><Text variant="headline">{data.name}</Text>
-              <ExerciseMedia exercise={{ id: exerciseId, name: data.name, reference_source: null, reference_key: null }} sourceUrl={data.mediaUrl} variant="detail" />
+              <ExerciseMedia exercise={{ id: exerciseId, name: data.name, reference_source: null, reference_key: null }} sourceUrl={data.mediaUrl} variant="detail" layout="square" />
               <Text variant="body">Подробное описание пока недоступно на этом устройстве.</Text></>}
     </section>
   </MezfitBottomSheet>;
