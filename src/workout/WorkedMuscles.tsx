@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Segmented, SegmentedButton, Toggle } from 'konsta/react';
 import { Text } from '../ui';
-import { getWorkedMuscleViewConfig, WORKED_MUSCLE_LABELS, type WorkedMuscleSex, type WorkedMuscleView } from './workedMuscleData';
+import {
+  getWorkedMuscleViewConfig, PECTORALIS_MAJOR_PART_IDS, WORKED_MUSCLE_LABELS,
+  type WorkedMuscleSex, type WorkedMuscleView,
+} from './workedMuscleData';
 import { loadWorkedMuscleAtlas, pickWorkedMuscleAt, type WorkedMuscleAtlas } from './workedMuscleAtlas';
 import './worked-muscles.css';
 
@@ -25,6 +28,18 @@ type LastTap = {
   readonly label: string;
   readonly status: string;
 };
+
+export type MuscleHighlightRole = 'primary' | 'secondary';
+
+/** Canonical catalogue ID priority is shared by direct zones and aggregate aliases. */
+export function workedMuscleHighlightRole(
+  id: string, primary: ReadonlySet<string>, secondary: ReadonlySet<string>,
+  showPrimary: boolean, showSecondary: boolean,
+): MuscleHighlightRole | null {
+  if (showPrimary && primary.has(id)) return 'primary';
+  if (showSecondary && secondary.has(id)) return 'secondary';
+  return null;
+}
 
 /** CSS transforms are center-origin; keep part of each zoomed figure inside its viewport. */
 export function clampWorkedMusclePan(
@@ -87,10 +102,25 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
     context.clearRect(0, 0, atlas.width, atlas.height);
     context.drawImage(atlas.neutral, 0, 0);
 
-    const visible: Array<{ sprite: (typeof atlas.sprites)[string]; role: 'primary' | 'secondary' }> = [];
+    const visible: Array<{ sprite: (typeof atlas.sprites)[string]; role: MuscleHighlightRole }> = [];
+    const roleFor = (id: string) =>
+      workedMuscleHighlightRole(id, primary, secondary, showPrimary, showSecondary);
+    const majorRole = roleFor('pectoralis_major');
+
     for (const sprite of Object.values(atlas.sprites)) {
-      if (showPrimary && primary.has(sprite.id)) visible.push({ sprite, role: 'primary' });
-      else if (showSecondary && secondary.has(sprite.id)) visible.push({ sprite, role: 'secondary' });
+      // Draw the alias copies instead of the original bilateral sprites when
+      // the whole pectoralis major is selected. Never double-blend the same pixels.
+      if (majorRole && PECTORALIS_MAJOR_PART_IDS.some((id) => id === sprite.id)) continue;
+      const role = roleFor(sprite.id);
+      if (role) visible.push({ sprite, role });
+    }
+    if (majorRole) {
+      for (const sprite of atlas.pectoralisMajorSprites) {
+        const original = atlas.sprites[String(sprite.index)];
+        const originalRole = original ? roleFor(original.id) : null;
+        const role = majorRole === 'primary' || originalRole === 'primary' ? 'primary' : 'secondary';
+        visible.push({ sprite, role });
+      }
     }
     const drawSprite = (image: HTMLImageElement, sprite: (typeof atlas.sprites)[string]) => {
       context.drawImage(
@@ -123,12 +153,19 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
       setLastTap(null);
       return;
     }
-    const status = showPrimary && primary.has(muscleId) ? 'Основная мышца'
-      : showSecondary && secondary.has(muscleId) ? 'Вспомогательная мышца'
-        : 'Не задействована в этой тренировке';
+    const roleFor = (id: string) =>
+      workedMuscleHighlightRole(id, primary, secondary, showPrimary, showSecondary);
+    const partRole = roleFor(muscleId);
+    const majorRole = PECTORALIS_MAJOR_PART_IDS.some((id) => id === muscleId)
+      ? roleFor('pectoralis_major') : null;
+    const role = partRole === 'primary' || majorRole === 'primary'
+      ? 'primary' : partRole ?? majorRole;
+    const isMajorSelection = majorRole && (!partRole || majorRole === 'primary' && partRole === 'secondary');
     setLastTap({
-      label: WORKED_MUSCLE_LABELS[muscleId] ?? muscleId,
-      status,
+      label: WORKED_MUSCLE_LABELS[isMajorSelection ? 'pectoralis_major' : muscleId] ?? muscleId,
+      status: role === 'primary' ? 'Основная мышца'
+        : role === 'secondary' ? 'Вспомогательная мышца'
+          : 'Не задействована в этой тренировке',
     });
   };
 

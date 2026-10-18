@@ -259,9 +259,15 @@ export const WORKED_MUSCLES = [
 
 export type WorkedMuscleId = (typeof WORKED_MUSCLES)[number]['id'];
 
-export const WORKED_MUSCLE_LABELS: Readonly<Record<string, string>> = Object.fromEntries(
-  WORKED_MUSCLES.map(({ id, label }) => [id, label]),
-);
+/** Aggregate catalogue ID: its six left/right sprites per sex reuse the three zone atlases. */
+export const PECTORALIS_MAJOR_PART_IDS = [
+  'pectoralis_clavicular', 'pectoralis_sternal', 'pectoralis_lower',
+] as const;
+
+export const WORKED_MUSCLE_LABELS: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(WORKED_MUSCLES.map(({ id, label }) => [id, label])),
+  pectoralis_major: 'Большая грудная мышца',
+};
 
 /** Numeric mask IDs are view-specific: never combine the two numeric tables. */
 export const WORKED_MUSCLE_VIEWS = {

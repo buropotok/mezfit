@@ -1,4 +1,7 @@
-import { getWorkedMuscleViewConfig, type WorkedMuscleSex, type WorkedMuscleView } from './workedMuscleData';
+import {
+  getWorkedMuscleViewConfig, PECTORALIS_MAJOR_PART_IDS, WORKED_MUSCLE_LABELS,
+  type WorkedMuscleSex, type WorkedMuscleView,
+} from './workedMuscleData';
 import { decodeWorkedMuscleMask } from './workedMuscleMask';
 
 export type AtlasSprite = {
@@ -18,6 +21,7 @@ export type WorkedMuscleAtlas = {
   readonly width: number;
   readonly height: number;
   readonly sprites: Readonly<Record<string, AtlasSprite>>;
+  readonly pectoralisMajorSprites: readonly AtlasSprite[];
   readonly mask: Uint8Array;
   readonly neutral: HTMLImageElement;
   readonly colorAtlas: HTMLImageElement;
@@ -113,6 +117,40 @@ export function parseWorkedMuscleAtlasManifest(
   return sprites;
 }
 
+/**
+ * Six virtual sprites per front view: three chest zones x left/right.
+ * Their atlas pixels are shared with the original zones, so no second PNG,
+ * extra downloads, or changes to the exact-hit mask are necessary.
+ */
+export function createPectoralisMajorSprites(
+  sprites: Readonly<Record<string, AtlasSprite>>,
+  canvasWidth: number,
+): readonly AtlasSprite[] {
+  const middle = Math.floor(canvasWidth / 2);
+  const copies: AtlasSprite[] = [];
+  for (const partId of PECTORALIS_MAJOR_PART_IDS) {
+    const source = Object.values(sprites).find((sprite) => sprite.id === partId);
+    if (!source) continue;
+    const leftWidth = Math.max(0, Math.min(source.width, middle - source.targetX));
+    const segments = [
+      { offset: 0, width: leftWidth },
+      { offset: leftWidth, width: source.width - leftWidth },
+    ];
+    for (const { offset, width } of segments) {
+      if (width === 0) continue;
+      copies.push({
+        ...source,
+        id: 'pectoralis_major',
+        label: WORKED_MUSCLE_LABELS.pectoralis_major,
+        atlasX: source.atlasX + offset,
+        targetX: source.targetX + offset,
+        width,
+      });
+    }
+  }
+  return copies;
+}
+
 async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex): Promise<WorkedMuscleAtlas> {
   const config = getWorkedMuscleViewConfig(sex, view);
   const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas] = await Promise.all([
@@ -135,7 +173,9 @@ async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleS
   const sprites = parseWorkedMuscleAtlasManifest(
     rawManifest, view, colorAtlas.naturalWidth, colorAtlas.naturalHeight, sex,
   );
-  return { width: config.width, height: config.height, sprites, mask, neutral, colorAtlas, glowAtlas };
+  const pectoralisMajorSprites = view === 'front'
+    ? createPectoralisMajorSprites(sprites, config.width) : [];
+  return { width: config.width, height: config.height, sprites, pectoralisMajorSprites, mask, neutral, colorAtlas, glowAtlas };
 }
 
 /**

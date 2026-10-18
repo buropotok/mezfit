@@ -68,7 +68,7 @@ function uniqueMuscles(ids: readonly string[], taxonomy: readonly PublicTaxonomy
 }
 
 /** Atlas zone IDs are canonical taxonomy IDs; never infer matches from display labels. */
-function anatomyMuscleIds(ids: readonly string[]): string[] {
+export function anatomyMuscleIds(ids: readonly string[]): string[] {
   return [...new Set(ids.filter((id) =>
     Object.prototype.hasOwnProperty.call(WORKED_MUSCLE_LABELS, id),
   ))];
