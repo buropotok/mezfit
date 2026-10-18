@@ -166,6 +166,33 @@ describe('local-first workout scheduling intent', () => {
     expect(await f.db.table('workoutScheduleRequests').count()).toBe(1);
   });
 
+  it('does not project unsupported or malformed synchronized scheduling intents', async () => {
+    const f = await fixture();
+    const id = await f.client.createRequest(command('client-personal', 'valid-request-101'));
+    const valid = await f.db.table('workoutScheduleRequests').get(id);
+    expect(valid).toBeDefined();
+    const invalidChanges = [
+      { action: 'cancel' },
+      { action: 'reschedule' },
+      { targetOccurrenceId: 'occ-someone-else' },
+      { format: 'coached' },
+      { startsAtUtc: '2026-10-19T10:00:00.000+02:00' },
+      { createdAt: 'yesterday' },
+      { durationMinutes: 0 },
+      { owner: 'tg:303' },
+      { athleteUserId: 'tg:303' },
+    ];
+    for (const [index, patch] of invalidChanges.entries()) {
+      const key = 'invalid-request-' + index;
+      await f.db.table('workoutScheduleRequests').put({
+        ...valid, id: scheduleRequestId('tg:202', key),
+        requestKey: key, ...patch,
+      });
+    }
+    expect((await f.client.listRequests('client-personal')).map(row => row.id))
+      .toEqual([id]);
+  });
+
   it('remains idempotent if Dexie Cloud implicitly assigns the request creator as owner', async () => {
     const f = await fixture(), input = command('client-personal', 'client-action-0023');
     const id = await f.client.createRequest(input);
