@@ -58,9 +58,8 @@ export function TodayPage({
     ? new WorkoutSchedulingRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const draftRepository = useMemo(() => cloud
-    ? new WorkoutOccurrenceDraftRepository(cloud.actorUserId) : null,
+    ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.actorUserId]);
-  useEffect(() => () => { draftRepository?.close(); }, [draftRepository]);
 
   useEffect(() => {
     if (!scheduling || !draftRepository) return undefined;
