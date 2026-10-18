@@ -197,15 +197,13 @@ function assertRemoteRoles(value: unknown): void {
   if (!Array.isArray(value)) failUnavailable();
   const expected = roleConfig.roles;
   const expectedFacts = expected.client.permissions.update.sessionSetFacts;
-  const expectedScheduling = ['workoutScheduleRequests'];
   for (const name of ['coach', 'client'] as const) {
     const remote = value.find((candidate: unknown) => isObject(candidate)
       && candidate.realmId === 'rlm-public' && candidate.name === name);
     if (!isObject(remote) || !isObject(remote.permissions)) failUnavailable();
     const permissions = remote.permissions;
-    const keys = name === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
+    const keys = name === 'coach' ? ['manage', 'update'] : ['update'];
     if (!sameStrings(Object.keys(permissions), keys)
-      || !sameStrings(permissions.add, expectedScheduling)
       || (name === 'coach' && !sameStrings(permissions.manage, expected.coach.permissions.manage))
       || !isObject(permissions.update)
       || !sameStrings(Object.keys(permissions.update), ['sessionSetFacts'])

@@ -356,10 +356,10 @@ describe('installed role policy guard', () => {
     expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
     rows[0].permissions.manage.pop();
 
-    delete rows[0].permissions.add;
-    expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
     rows[0].permissions.add = ['workoutScheduleRequests'];
-    delete rows[1].permissions.add;
+    expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
+    delete rows[0].permissions.add;
+    rows[1].permissions.add = ['workoutScheduleRequests'];
     expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
     rows[1].permissions.add = ['workoutScheduleRequests', 'workoutOccurrences'];
     expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');

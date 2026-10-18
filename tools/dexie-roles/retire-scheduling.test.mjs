@@ -3,16 +3,16 @@ import { describe, expect, it } from 'vitest';
 import {
   assertApprovedManifest, assertExactImportPayload, assertUnchangedBeforeApply, planSchedulingAcl,
   validateAclDispatch, verifySchedulingAcl,
-} from './scheduling.mjs';
+} from './retire-scheduling.mjs';
 
 const manifest = JSON.parse(readFileSync(new URL('../../cloud/roles.json', import.meta.url), 'utf8'));
-const workflow = readFileSync(new URL('../../.github/workflows/dexie-scheduling-acl.yml', import.meta.url), 'utf8');
+const workflow = readFileSync(new URL('../../.github/workflows/dexie-retire-scheduling-acl.yml', import.meta.url), 'utf8');
 const target = structuredClone(manifest.roles);
 const current = structuredClone(target);
-delete current.coach.permissions.add;
-delete current.client.permissions.add;
-current.coach.description = 'Can author assigned PLAN and edit set FACT; session lifecycle stays privileged';
-current.client.description = 'Can read assigned PLAN and edit only set FACT; session lifecycle stays privileged';
+current.coach.permissions.add = ['workoutScheduleRequests'];
+current.client.permissions.add = ['workoutScheduleRequests'];
+current.coach.description = 'Can author assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged';
+current.client.description = 'Can read assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged';
 
 const schema = {
   sealed: true, schema: { trainingPlans: '@id', workoutScheduleRequests: 'id', workoutOccurrences: '@id' },
@@ -29,7 +29,7 @@ const trustedEnv = {
   DEXIE_ACL_CONFIRMATION: '',
 };
 
-describe('protected Dexie scheduling role rollout', () => {
+describe('protected retirement of scheduling role grants', () => {
   it('cannot trigger privileged ACL mutation on push/PR or outside protected owner/main dispatch', () => {
     expect(workflow).toMatch(/^on:\n  workflow_dispatch:/m);
     expect(workflow).not.toMatch(/^\s+(?:push|pull_request|schedule):/m);
@@ -39,8 +39,8 @@ describe('protected Dexie scheduling role rollout', () => {
     expect(workflow).toContain('secrets.DEXIE_CLOUD_WRITE_KEY');
     expect(workflow).toContain('group: dexie-public-catalogue-publishing');
     expect(workflow).toContain('dexie-cloud import roles-only-import.json');
-    expect(workflow).toContain('node tools/dexie-roles/scheduling.mjs recheck');
-    expect(workflow).toContain('node tools/dexie-roles/scheduling.mjs verify');
+    expect(workflow).toContain('node tools/dexie-roles/retire-scheduling.mjs recheck');
+    expect(workflow).toContain('node tools/dexie-roles/retire-scheduling.mjs verify');
     expect(workflow).not.toContain('dexie-cloud import cloud/roles.json');
   });
 
@@ -71,6 +71,8 @@ describe('protected Dexie scheduling role rollout', () => {
 
   it('allows exactly the reviewed current-role manifest, not generalized role changes', () => {
     expect(assertApprovedManifest(manifest)).toEqual(target);
+    expect(() => assertApprovedManifest({ roles: current }))
+      .toThrow('INVALID_SCHEDULING_ROLE_MANIFEST');
     for (const invalid of [
       { roles: { ...target, admin: { permissions: { manage: '*' } } } },
       { roles: { ...target, client: { ...target.client, permissions: { manage: '*' } } } },
@@ -123,7 +125,7 @@ describe('protected Dexie scheduling role rollout', () => {
       expect(() => planSchedulingAcl(manifest, schema, changed))
         .toThrow('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
     }
-    expect(() => planSchedulingAcl(manifest, { schema: { trainingPlans: '@id' } }, remote()))
+    expect(() => planSchedulingAcl(manifest, { schema: null }, remote()))
       .toThrow('INVALID_SCHEDULING_CLOUD_STRUCTURE');
   });
 
@@ -174,7 +176,7 @@ describe('protected Dexie scheduling role rollout', () => {
     expect(() => validateAclDispatch({
       ...trustedEnv,
       DEXIE_ACL_OPERATION: 'apply',
-      DEXIE_ACL_CONFIRMATION: 'APPLY_SCHEDULING_COACH_CLIENT_ACL',
+      DEXIE_ACL_CONFIRMATION: 'REVOKE_SCHEDULING_COACH_CLIENT_ACL',
     })).not.toThrow();
     for (const invalid of [
       { GITHUB_REF: 'refs/heads/feature' },
@@ -182,7 +184,7 @@ describe('protected Dexie scheduling role rollout', () => {
       { GITHUB_EVENT_NAME: 'push' },
       { DEXIE_ACL_OPERATION: 'delete' },
       { DEXIE_ACL_OPERATION: 'apply' },
-      { DEXIE_ACL_CONFIRMATION: 'APPLY_SCHEDULING_COACH_CLIENT_ACL ' },
+      { DEXIE_ACL_CONFIRMATION: 'REVOKE_SCHEDULING_COACH_CLIENT_ACL ' },
     ]) {
       expect(() => validateAclDispatch({ ...trustedEnv, ...invalid })).toThrow();
     }

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import roleConfig from '../../../cloud/roles.json';
-import { CLOUD_DATABASE_STORES_V8, CLOUD_DATABASE_STORES_V9, CLOUD_DATABASE_VERSION } from './database';
+import { CLOUD_DATABASE_STORES_V9, CLOUD_DATABASE_STORES_V10, CLOUD_DATABASE_VERSION } from './database';
 
 const roles = roleConfig.roles;
 
-describe('scheduling ACL and schema rollout', () => {
-  it('adds only the request table to both roles without lifecycle mutation rights', () => {
-    expect(roles.coach.permissions.add).toEqual(['workoutScheduleRequests']);
-    expect(roles.client.permissions.add).toEqual(['workoutScheduleRequests']);
+describe('occurrence scheduling policy', () => {
+  it('keeps lifecycle writes privileged while preserving Coach PLAN and shared FACT grants', () => {
+    expect(roles.coach.permissions).not.toHaveProperty('add');
+    expect(roles.client.permissions).not.toHaveProperty('add');
     expect(roles.coach.permissions.manage).toEqual([
       'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
     ]);
@@ -18,19 +18,15 @@ describe('scheduling ACL and schema rollout', () => {
     expect(roles.client.permissions.update).toHaveProperty('sessionSetFacts');
   });
 
-  it('preserves v7 stores while adding a dedicated request index in v8', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(9);
-    expect(CLOUD_DATABASE_STORES_V9.localWorkoutOccurrenceDrafts).toContain('actorUserId');
-    expect(CLOUD_DATABASE_STORES_V9.workoutScheduleRequests)
-      .toBe(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests);
-    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toMatch(/^id,/);
-    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('requestKey');
-    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).not.toContain('&requestKey');
-    expect(CLOUD_DATABASE_STORES_V8.workoutOccurrences).toContain('[realmId+startsAtUtc]');
-    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('[realmId+startsAtUtc]');
-    expect(CLOUD_DATABASE_STORES_V8.workoutOccurrences).not.toContain('calendarDate');
-    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).not.toContain('calendarDate');
-    expect(CLOUD_DATABASE_STORES_V8.trainingPlans).toContain('realmId');
-    expect(CLOUD_DATABASE_STORES_V8.sessionSetFacts).toContain('sessionSetId');
+  it('drops only the retired local intent table and retains drafts and workout data', () => {
+    expect(CLOUD_DATABASE_VERSION).toBe(10);
+    expect(CLOUD_DATABASE_STORES_V10.workoutScheduleRequests).toBeNull();
+    const { workoutScheduleRequests: retired, ...previous } = CLOUD_DATABASE_STORES_V9;
+    const { workoutScheduleRequests: removed, ...current } = CLOUD_DATABASE_STORES_V10;
+    expect(retired).toMatch(/^id,/);
+    expect(removed).toBeNull();
+    expect(current).toEqual(previous);
+    expect(current.localWorkoutOccurrenceDrafts).toContain('actorUserId');
+    expect(current.workoutOccurrences).toContain('[realmId+startsAtUtc]');
   });
 });

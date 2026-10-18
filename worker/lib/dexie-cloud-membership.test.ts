@@ -184,10 +184,10 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
     }
   });
 
-  it('rejects missing or mismatched scheduling grants for either role', async () => {
+  it('rejects retired intent grants for either role', async () => {
     for (const roleIndex of [0, 1]) {
       const cloud = fakeCloud();
-      Reflect.deleteProperty(cloud.installedRoles[roleIndex].permissions, 'add');
+      Reflect.set(cloud.installedRoles[roleIndex].permissions, 'add', ['workoutScheduleRequests']);
       await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
         .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
       expect(cloud.realms.size).toBe(0);

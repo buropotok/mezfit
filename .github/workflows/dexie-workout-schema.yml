@@ -6,7 +6,7 @@ on:
     inputs:
       operation:
         type: choice
-        description: 'Report schema/roles or apply additive workout/scheduling schema'
+        description: 'Report schema/roles or apply additive workout schema'
         required: true
         default: preview
         options: [preview, apply]
@@ -15,10 +15,10 @@ on:
         description: 'Exact approved schema manifest to provision'
         required: true
         default: workout_v4
-        options: [workout_v4, scheduling_v1]
+        options: [workout_v4]
       confirmation:
         type: string
-        description: 'For apply enter APPLY_WORKOUT_V4_SCHEMA or APPLY_SCHEDULING_V1_SCHEMA'
+        description: 'For apply enter APPLY_WORKOUT_V4_SCHEMA'
         required: false
 
 permissions:
@@ -38,8 +38,7 @@ jobs:
       github.actor == github.repository_owner &&
       (inputs.operation == 'preview' ||
        (inputs.operation == 'apply' &&
-        ((inputs.schema_target == 'workout_v4' && inputs.confirmation == 'APPLY_WORKOUT_V4_SCHEMA') ||
-         (inputs.schema_target == 'scheduling_v1' && inputs.confirmation == 'APPLY_SCHEDULING_V1_SCHEMA'))))
+        inputs.schema_target == 'workout_v4' && inputs.confirmation == 'APPLY_WORKOUT_V4_SCHEMA'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:

@@ -1,12 +1,11 @@
-# Workout scheduling foundation (PR 1)
+# Workout scheduling
 
-Status: foundation document for the original intent-only phase. The application
-now additionally implements the occurrence-backed calendar described below.
+Status: occurrence-backed calendar with private local drafts and privileged booking.
 
 ## Scheduling integration (current)
 
 - The `ProgramDay` is a template, never the live plan of a booked workout.
-- A user creates a local `localWorkoutOccurrenceDrafts` record (Dexie local v9,
+- A user creates a local `localWorkoutOccurrenceDrafts` record (introduced in Dexie v9, retained in v10,
   `unsyncedTables`). It contains a deep PLAN snapshot, the program origin,
   UTC slot and workout format. Drafts do not enter Dexie Cloud, consume confirmed
   slots or become visible to the client on another device.
@@ -35,171 +34,41 @@ now additionally implements the occurrence-backed calendar described below.
   to the program. Future Dexie workout-session Start must read this PLAN and
   produce independent session PLAN/FACT; the existing legacy D1 workout-session
   path is **not** migrated by the scheduling UI cutover.
-- Existing `workoutScheduleRequests` remains available for the earlier
-  intent-only contract; the new trusted booking path submits the full PLAN
-  directly to the Worker instead of treating that mutable client table as
-  authoritative. No new cloud role grants or cloud schema imports are required.
+- The old synchronized booking-intent table and its repository are retired.
+  Booking uses the authenticated Worker request directly; local drafts remain
+  private and durable until confirmation.
 
-The subsequent sections describe the original foundation's initial rollout,
-including intentionally unimplemented steps at that historical point.
+## Storage and time
 
-## Domain boundary
+Local schema v10 explicitly drops the retired `workoutScheduleRequests` table
+when upgrading from v8/v9. Historical schema declarations are retained solely
+for that local upgrade. PLAN, occurrences, FACT and private drafts are preserved.
+The cloud table may remain inert: this retirement never deletes cloud business
+records or changes the cloud schema. No provisioning path can recreate it.
 
-- PLAN: `trainingPlans → programPhases → programDays → programExercises → programSets`.
-- Booking intent: `workoutScheduleRequests`, an untrusted, **potentially mutable**
-  proposal to request a date and time for an existing day. No security-critical
-  decision is allowed to rely on its immutability.
-- Confirmed booking: `workoutOccurrences`, controlled by trusted lifecycle
-  operations. The table already exists, but no normal Coach/Client writer is
-  provided by this PR.
-- FACT: `workoutSessions` and its immutable snapshot / editable result tables.
-  No FACT or workout session is created by requesting a booking.
+Store canonical UTC `startsAtUtc` plus `durationMinutes`. Calendar display splits
+an overnight workout at each local midnight. Local input rejects nonexistent or
+ambiguous wall times during daylight-saving changes. The end time is resolved
+on its actual local calendar day before calculating elapsed UTC minutes.
 
-A program day can be referenced by many requests and later by many occurrences.
-PLAN edits never rewrite completed FACT.
+## ACL retirement and deployment
 
-## Personal and assigned contexts
+`cloud/roles.json` no longer grants either role permission to add intent rows.
+Worker membership provisioning and the relationship operator require that exact
+policy and reject the old grant. Coach PLAN and shared FACT grants are unchanged.
 
-A personal program is in its author's personal realm and has no assigned coach.
-It can be planned by either a Coach or Client account acting as its owner.
-Both roles may request a **self-managed independent** workout there.
+If the earlier ACL was applied, after merging run the protected manual
+`dexie-retire-scheduling-acl.yml` workflow on `main`, first with
+`operation=preview`, then `operation=apply` and confirmation
+`REVOKE_SCHEDULING_COACH_CLIENT_ACL`. It accepts only the exact old policy or
+an already retired policy. It removes only the old add grant and restores the
+role descriptions, rechecks configuration immediately before import, and reads
+back schema and every role after an attempted write. The existing protected
+publisher is used; schema, other roles, PLAN/FACT grants, memberships and
+business data cannot be changed. Remove this one-time operator after retirement
+has been verified. It cannot restore or grant the retired permission.
 
-Assigned programs are in an approved one-Coach/one-Client relationship realm.
-The Coach and Client may request independent workouts. Either may submit a
-`coached` request; requests by the Client require a future Coach confirmation
-before consuming the Coach's schedule. This future lifecycle is **not**
-implemented here. Clients may not request unpublished plans or draft phases;
-neither role may schedule deleted or deprecated days.
-
-Every new shared request explicitly supplies `owner: null`. Dexie Cloud Addon
-may fill owner with the originating user, granting the creator update/delete
-privileges even when the role only permits `add`. **This is expected:** request
-records are user-controlled and may change or disappear before processing.
-The future privileged Worker must validate the exact latest request payload
-and atomically persist an independently authorized canonical occurrence, including
-its frozen approved scheduling fields. Once confirmed, further edits/deletion
-of the originating intent can never change, undo or re-authorize that booking.
-No processor may validate a request, await another asynchronous action, then
-implicitly use a potentially changed request row. There is no mutable
-`approved` status on these requests.
-
-## Storage and synchronization
-
-Schema v8 adds `workoutScheduleRequests` alongside unchanged PLAN and
-FACT stores. `MezfitCloudDatabase` registers v8 unconditionally; there is no
-compatibility mode, schema version toggle or fallback to v7. It uses a client-supplied canonical primary key `id`, derived
-as `req:<verified-cloud-user-id>:<requestKey>`. This names one actor-specific
-action consistently on multiple offline devices. The `requestKey` is a
-nonunique ordinary index, so different actors can reuse the same key without
-making replicated IndexedDB fail. Realm / plan / day lookup indexes and the
-compound realm/UTC-start index are used for chronologically sortable projections. Two devices using one actor/key to
-create conflicting payloads will converge under Dexie Cloud's normal conflict
-behavior: **neither the key nor a prior observation represents confirmed
-booking state**. Future privileged processing must independently enforce
-idempotency by the canonical ID and trusted snapshot.
-No D1 identity or custom replication state.
-
-`WorkoutSchedulingRepository` owns local-first writes in an IndexedDB
-transaction. `createRequest()` validates the canonical UTC instant, duration,
-source program/day, membership and visibility; the resulting ID is available
-immediately. Callers must retain a stable `requestKey` for retries.
-`listRequests` and `observeRequests` project the permitted local subset.
-`listOccurrences`, `observeOccurrences` and `getOccurrence` require an explicit
-view: `program` shows an athlete's active planned workouts to the authorized
-coach and client; `calendar` shows workouts occupying the actor's own
-calendar. In an assigned program, `independent` workouts belong to the
-**client's** calendar, regardless of who scheduled them. Only approved
-`coached` occurrences occupy the **coach's** calendar. A coach's *personal*
-independent workout occupies their own calendar. Cancelled occurrences never
-appear in either active projection, including `getOccurrence`. Cancellation
-history needs a separate history read model, not a calendar workaround.
-All these reads are read-only; creation, editing, deletion, approval and
-lifecycle transitions are not exposed.
-
-Offline creation is only a **local submission**, never a confirmed booking.
-Dexie Cloud Addon owns push/retries; no second syncing engine is introduced.
-Initial membership and first hydration still require connectivity.
-
-## Time contract
-
-**A request and its canonical occurrence store the same absolute UTC start**:
-`startsAtUtc` (exact ISO 8601 `YYYY-MM-DDTHH:mm:ss.SSSZ`) plus
-`durationMinutes`. This is the only persisted source for workout date/time.
-Neither record stores a local calendar date, local minutes, or IANA time zone.
-The duration may cross a local calendar-day boundary. Created/updated UTC
-instants also use a validated canonical UTC representation.
-
-The future phone UI converts the time chosen in the device's local time zone to
-UTC **before** creating a request (e.g. a valid local `Date` → `toISOString()`).
-It converts UTC back using the device's current time zone for calendar grouping
-and display (e.g. `new Date(startsAtUtc).toLocaleString()`). Travel or a change
-of device time zone changes only the displayed local clock/day, never the
-underlying booking. A coach and client in different zones see the same instant.
-DST gaps/ambiguities must be handled when taking the local UI input; **UTC
-instants themselves are unique**, including the two instants in a fall-back hour.
-Sorting and future overlap checks compare UTC starts, not local display labels.
-
-`format` is required (`independent` or `coached`); personal programs cannot
-have coached occurrences without a coach. `in_progress`/`completed` occurrences
-must link a nonempty `workoutSessionId`, while scheduled occurrences have no
-session yet. Synced rows are checked for valid optional provenance and timestamps
-before being exposed as typed records. Cancellation stays excluded from active
-program and calendar projections.
-
-## Authorization and rollout
-
-Global Coach and Client ACLs grant `add: ['workoutScheduleRequests']`.
-No role may `manage` `workoutOccurrences`. Existing Coach PLAN management
-and the strictly field-limited FACT updates remain unchanged.
-
-Dexie Cloud table add permission does **not** validate the content of a
-user-created row. A future privileged handler must independently verify
-Telegram identity, the approved relationship, ownership of the personal
-program, the latest plan/day visibility, allowed actor/format, and scheduling
-conflicts. It must materialize a canonical occurrence and associate it
-idempotently by the request's stable ID, without trusting request fields.
-The processor must establish an atomic/serialized reservation mechanism before
-promising a clash-free coached booking. It must not fake such a guarantee via
-separate uncontrolled REST writes.
-
-`tools/dexie-cloud-relationship.mjs` and
-`worker/lib/dexie-cloud-membership.ts` require the **current exact** Coach
-and Client role policies. Earlier Coach PLAN-only grants and roles without
-`workoutScheduleRequests` permissions are rejected. No staged old/new role
-compatibility is supported.
-
-Development environment setup (no backwards compatibility):
-1. Merge the reviewed code; client schema v8 is enabled unconditionally.
-2. Run the protected `dexie-workout-schema.yml` workflow on `main`, choosing
-   `schema_target=scheduling_v1` with confirmation
-   `APPLY_SCHEDULING_V1_SCHEMA`. The reviewed manifest
-   `cloud/schema-scheduling-foundation.json` adds
-   `workoutScheduleRequests: id` only.
-3. After merging the separate security-reviewed ACL workflow and its
-   `AGENTS.md` authorization, dispatch `dexie-scheduling-acl.yml` on
-   `main` with `operation=preview` (leave confirmation empty). The operator
-   refuses unexpected existing roles or a missing scheduling schema and reports
-   the **only** intended changes: `coach` and `client` gaining
-   `add: ['workoutScheduleRequests']` and updated descriptions.
-4. If preview matches, dispatch `dexie-scheduling-acl.yml` on `main` with
-   `operation=apply` and the **exact** confirmation
-   `APPLY_SCHEDULING_COACH_CLIENT_ACL`. The `dexie-production` environment
-   must retain required reviewers and `main` branch restrictions. The
-   workflow re-exports immediately before mutation, imports a roles-only
-   allowlisted payload, then verifies both global roles and that the entire
-   cloud schema and every other role were unchanged. A failed preview or
-   verification blocks rollout; do not use a more permissive role import.
-5. Confirm Coach/Client read/write isolation and offline-to-cloud
-   synchronization in the development environment before exposing the UI.
-   Schema/ACL verification proves configuration, **not** live user authorization.
-
-Because this is a nonproduction development environment, **temporary
-synchronization failure between code deploy and cloud schema/role setup is
-acceptable**. Do not claim the scheduling feature works until the cloud
-schema and ACL have been installed. There is no v7 fallback or guarantee that
-a device running outdated schema/role definitions remains functional.
-
-UI activation, server-confirmed reservations and calendar integration are
-later tasks, not compatibility paths in this PR.
-
-This PR intentionally leaves `TodayPage` and the old D1 endpoints untouched.
+Code deployment does not apply cloud permissions. In this nonproduction
+rollout, membership provisioning intentionally fails closed until the exact
+cloud ACL is installed. Complete the protected retirement before verifying new
+invitations and two-account access. PR CI never mutates cloud configuration.
