@@ -129,6 +129,25 @@ describe('personal exercise card editor', () => {
       })));
   });
 
+  it('uploads a selected image, caches it locally, then saves its R2 reference', async () => {
+    const repository = api(), p = props(repository);
+    render(<PersonalExerciseEditorGateway
+      request={{ mode: 'edit', exerciseId: customId }} {...p} />);
+    const file = new File([new Uint8Array([137, 80, 78, 71])], 'exercise.png',
+      { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText('Выбрать изображение'), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    const { uploadPersonalExerciseMedia } = await import('../api');
+    const { storePersonalExerciseMedia } = await import('../data/exercises/personalExerciseMediaCache');
+    await waitFor(() => expect(uploadPersonalExerciseMedia).toHaveBeenCalledWith('signed-init', file));
+    await waitFor(() => expect(storePersonalExerciseMedia).toHaveBeenCalledWith(
+      'tg:202', expect.stringContaining('/api/exercise-media/personal/'), file));
+    await waitFor(() => expect(repository.updateExercise).toHaveBeenCalledWith(
+      customId, expect.objectContaining({
+        image: expect.stringContaining('/api/exercise-media/personal/'),
+      })));
+  });
+
   it('copies the authorized trainer snapshot only after Save', async () => {
     const repository = api(), p = props(repository);
     render(<PersonalExerciseEditorGateway
