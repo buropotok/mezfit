@@ -71,6 +71,7 @@ export class CoachExerciseCatalogueRepository {
 
   /** Global base exercises are immutable. The only supported edit path is a private copy. */
   async duplicatePublicExercise(sourceExerciseId: string, changes: CoachExerciseChanges = {}): Promise<string> {
+    if (!isCoachExerciseChanges(changes)) throw new Error('INVALID_CUSTOM_EXERCISE');
     if (!/^\d{4}$/.test(sourceExerciseId)) throw new Error('EXERCISE_NOT_FOUND');
     const source = await this.db.publicExerciseDefinitions.get(sourceExerciseId);
     if (!isPublicExerciseRow(source)) throw new Error('EXERCISE_NOT_FOUND');
@@ -87,7 +88,7 @@ export class CoachExerciseCatalogueRepository {
     const source = (await assigned.read(coachUserId)).find(row => row.id === sourceExerciseId);
     if (!source) throw new Error('EXERCISE_NOT_ASSIGNED');
     const { id: _id, realmId: _realmId, owner: _owner, sourceSha256: _sha, ...data } = source;
-    return this.createExercise({ ...structuredClone(data), created_at: new Date().toISOString() }, {
+    return this.createExercise({ ...structuredClone(data), ...changes, created_at: new Date().toISOString() }, {
       copiedFromExerciseId: source.id, copiedFromScope: 'coach',
     });
   }
