@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+  padding: 0 0 calc(24px + env(safe-area-inset-bottom));
 }
 
 .workout-session-screen__heading {
