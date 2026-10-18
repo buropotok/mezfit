@@ -1,4 +1,5 @@
-import { useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { forwardRef, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -7,6 +8,8 @@ import { SessionExercise } from './SessionExercise';
 export interface WorkoutPlanCardProps {
   mode: 'planning';
   programName?: string;
+  scheduleRole?: 'coach' | 'client';
+  onSchedule?: (format: WorkoutScheduleFormat) => void;
   onReorderExercises?: (ids: string[]) => void;
   day: CloudProgramDayOutline;
   creatorName: string;
@@ -26,19 +29,24 @@ export interface WorkoutPlanCardProps {
   onDelete: () => void;
 }
 
-function PlanGlassButton({ 'aria-disabled': disabled, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" disabled={disabled === true || disabled === 'true'} {...props} />;
-}
+const PlanGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
+  ({ 'aria-disabled': disabled, ...props }, ref) =>
+    <button type="button" ref={ref} disabled={disabled === true || disabled === 'true'} {...props} />,
+);
+PlanGlassButton.displayName = 'PlanGlassButton';
 
 /** Program template mode deliberately has neither a session nor numeric PLAN/FACT.
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
-  day: outline, programName = 'Без программы', onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
+  day: outline, programName = 'Без программы', scheduleRole = 'coach', onSchedule,
+  onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
   onDeleteExercise, onExerciseInformation,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
+  const scheduleTriggerRef = useRef<HTMLElement>(null);
   const [afterMenu, setAfterMenu] = useState<(() => void) | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const glass = loadBrowserGlassSettings();
@@ -53,7 +61,9 @@ export function WorkoutPlanCard({
     { id: 'duplicate', label: 'Дублировать', icon: 'copy-outline', disabled: busy, onSelect: () => defer(onDuplicate) },
     { id: 'comment', label: 'Комментарий', icon: 'message-circle', disabled: busy, onSelect: () => defer(onComment) },
     { id: 'start', label: 'Начать тренировку', icon: 'treadmill', disabled: true, dividerBefore: true },
-    { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: true },
+    { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: busy || !onSchedule,
+      onSelect: () => defer(() => scheduleRole === 'coach'
+        ? setSchedulePopoverOpen(true) : onSchedule?.('independent')) },
     { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(onDelete) },
   ];
   const items = exercises.map((item) => ({
