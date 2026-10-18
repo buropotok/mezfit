@@ -26,7 +26,18 @@ export type WorkedMuscleAtlas = {
   readonly neutral: HTMLImageElement;
   readonly colorAtlas: HTMLImageElement;
   readonly glowAtlas: HTMLImageElement;
+  readonly femaleLowerChest: HTMLImageElement | null;
 };
+
+/** Uploaded female chest artwork is cropped losslessly from native canvas coordinates. */
+export const FEMALE_LOWER_CHEST_ARTWORK = {
+  path: 'anatomy/female/front/pectoralis-lower-replacement.png',
+  index: 3,
+  x: 455,
+  y: 400,
+  width: 243,
+  height: 149,
+} as const;
 
 type HitRect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>;
 const cache = new Map<string, Promise<WorkedMuscleAtlas>>();
@@ -46,7 +57,7 @@ function nonnegativeInteger(value: unknown): value is number {
 function assetUrl(relativePath: string, view: WorkedMuscleView, sex: WorkedMuscleSex): string {
   const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
   const revision = sex === 'female'
-    ? (view === 'front' ? 'female-front-v3-shifted' : 'female-rear-v3-shifted')
+    ? (view === 'front' ? 'female-front-v4-lower-chest' : 'female-rear-v3-shifted')
     : (view === 'front' ? 'front84-mask3-atlas1' : 'rear59-atlas2-transparent');
   return new URL(base + relativePath + '?v=' + revision, window.location.origin).href;
 }
@@ -153,12 +164,15 @@ export function createPectoralisMajorSprites(
 
 async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex): Promise<WorkedMuscleAtlas> {
   const config = getWorkedMuscleViewConfig(sex, view);
-  const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas] = await Promise.all([
+  const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas, femaleLowerChest] = await Promise.all([
     getStaticFile(assetUrl(config.manifest, view, sex)),
     getStaticFile(assetUrl(config.mask, view, sex)),
     loadStaticImage(assetUrl(config.neutral, view, sex)),
     loadStaticImage(assetUrl(config.colorAtlas, view, sex)),
     loadStaticImage(assetUrl(config.glowAtlas, view, sex)),
+    sex === 'female' && view === 'front'
+      ? loadStaticImage(assetUrl(FEMALE_LOWER_CHEST_ARTWORK.path, view, sex))
+      : Promise.resolve(null),
   ]);
   const [rawManifest, maskBytes] = await Promise.all([
     manifestResponse.json() as Promise<unknown>,
@@ -173,9 +187,15 @@ async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleS
   const sprites = parseWorkedMuscleAtlasManifest(
     rawManifest, view, colorAtlas.naturalWidth, colorAtlas.naturalHeight, sex,
   );
+  if (femaleLowerChest
+    && (femaleLowerChest.naturalWidth !== FEMALE_LOWER_CHEST_ARTWORK.width
+      || femaleLowerChest.naturalHeight !== FEMALE_LOWER_CHEST_ARTWORK.height
+      || sprites[String(FEMALE_LOWER_CHEST_ARTWORK.index)]?.id !== 'pectoralis_lower')) {
+    throw new Error('Неверный размер или ID спрайта низа груди');
+  }
   const pectoralisMajorSprites = view === 'front'
     ? createPectoralisMajorSprites(sprites, config.width) : [];
-  return { width: config.width, height: config.height, sprites, pectoralisMajorSprites, mask, neutral, colorAtlas, glowAtlas };
+  return { width: config.width, height: config.height, sprites, pectoralisMajorSprites, mask, neutral, colorAtlas, glowAtlas, femaleLowerChest };
 }
 
 /**
