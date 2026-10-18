@@ -264,6 +264,37 @@ describe('local-first workout scheduling intent', () => {
       .toEqual(['coach-own-training']);
   });
 
+  it('rejects invalid synchronized occurrence formats and DST wall-clock starts', async () => {
+    const f = await fixture();
+    const expected = {
+      realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: null,
+      format: 'coached', calendarDate: '2026-10-19',
+      startMinute: 600, durationMinutes: 60, timeZone: 'Europe/Berlin',
+      status: 'scheduled',
+    };
+    const records = [
+      { ...expected, id: 'occ-valid' },
+      { ...expected, id: 'occ-invalid-format', format: 'unexpected' },
+      { ...expected, id: 'occ-no-format', format: undefined },
+      { ...expected, id: 'occ-no-zone', timeZone: undefined },
+      { ...expected, id: 'occ-invalid-zone', timeZone: 'Fake/Unknown' },
+      { ...expected, id: 'occ-spring-gap', calendarDate: '2026-03-29', startMinute: 150 },
+      { ...expected, id: 'occ-autumn-overlap', calendarDate: '2026-10-25', startMinute: 150 },
+    ];
+    await f.db.table('workoutOccurrences').bulkPut(records);
+    for (const view of ['program', 'calendar'] as const) {
+      for (const repository of [f.coach, f.client]) {
+        expect((await repository.listOccurrences('assigned', view)).map(row => row.id))
+          .toEqual(['occ-valid']);
+        for (const record of records.slice(1)) {
+          expect(await repository.getOccurrence('assigned', record.id, view)).toBeNull();
+        }
+      }
+    }
+  });
+
   it('keeps occurrences read-only and filters them by the authorized PLAN', async () => {
     const f = await fixture();
     await f.db.table('workoutOccurrences').bulkPut([
