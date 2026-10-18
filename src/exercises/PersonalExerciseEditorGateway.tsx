@@ -262,7 +262,10 @@ function EditPersonalExercise({
       <Field label="Тип учёта" value={draft.tracking_type ?? null}
         options={[{ value: '', label: 'Не указан' }, ...TRACKING]}
         disabled={busy}
-        onChange={value => { if (!value || isExerciseTrackingType(value)) update('tracking_type', value || undefined); }} />
+        onChange={value => {
+          if (!value) update('tracking_type', undefined);
+          else if (isExerciseTrackingType(value)) update('tracking_type', value);
+        }} />
       <Field label="Категория" value={draft.category} options={categoryOptions}
         disabled={busy} onChange={value => setDraft(current => current.category === value
           ? current : { ...current, category: value, subcategory: '', subcategory_ru: '' })} />
