@@ -1,7 +1,11 @@
+// @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { anatomyMuscleIds } from '../exercises/ExerciseCatalogContent';
 import { workedMuscleHighlightRole } from './WorkedMuscles';
-import { createPectoralisMajorSprites, type AtlasSprite } from './workedMuscleAtlas';
+import {
+  createPectoralisMajorSprites, parseWorkedMuscleAtlasManifest, type AtlasSprite,
+} from './workedMuscleAtlas';
 import {
   getWorkedMuscleViewConfig, PECTORALIS_MAJOR_PART_IDS, WORKED_MUSCLE_LABELS,
 } from './workedMuscleData';
@@ -40,6 +44,26 @@ describe('Pectoralis major catalogue-to-atlas contract', () => {
         expect(left.index).toBe(original.index);
         expect(right.index).toBe(original.index);
         expect(original.id).toBe(PECTORALIS_MAJOR_PART_IDS[i]);
+      }
+    },
+  );
+
+  it.each(['male', 'female'] as const)(
+    'produces six pectoralis_major sprites from the real %s manifest', (sex) => {
+      const relativePath = sex === 'male'
+        ? '../../public/anatomy/front/manifest.json'
+        : '../../public/anatomy/female/front/manifest.json';
+      const manifest: unknown = JSON.parse(readFileSync(new URL(relativePath, import.meta.url), 'utf8'));
+      const parsed = parseWorkedMuscleAtlasManifest(manifest, 'front', 4096, 4096, sex);
+      const aliases = createPectoralisMajorSprites(parsed, getWorkedMuscleViewConfig(sex, 'front').width);
+      expect(aliases).toHaveLength(6);
+      expect(aliases.map((sprite) => sprite.id)).toEqual(Array(6).fill('pectoralis_major'));
+      for (const id of PECTORALIS_MAJOR_PART_IDS) {
+        const source = Object.values(parsed).find((sprite) => sprite.id === id);
+        expect(source).toBeDefined();
+        const slices = aliases.filter((sprite) => sprite.index === source?.index);
+        expect(slices).toHaveLength(2);
+        expect(slices[0].width + slices[1].width).toBe(source?.width);
       }
     },
   );
