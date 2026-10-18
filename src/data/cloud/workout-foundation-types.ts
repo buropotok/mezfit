@@ -125,6 +125,8 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
 export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   /** Frozen-at-confirmation workout prescription, not a live program reference. */
   plan: WorkoutOccurrencePlan;
+  /** Optional for historical rows; confirmed Worker bookings include this provenance. */
+  trainingPlanId?: string;
   /** Assigned workouts have a coach; personal workouts do not. */
   coachUserId: string | null;
   /** Null only for personal programs; assigned records always identify the client. */
