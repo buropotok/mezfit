@@ -22,7 +22,9 @@ vi.mock('./CoachExerciseCatalogFab', () => ({
   CoachExerciseCatalogFab: () => null,
 }));
 vi.mock('../ui/GlassSurface', () => ({
-  GlassSurface: ({ children, className }: { children: ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  GlassSurface: ({ children, className, contentClassName }: { children: ReactNode; className?: string; contentClassName?: string }) => (
+    <div className={className}><div className={contentClassName}>{children}</div></div>
+  ),
 }));
 vi.mock('./PublicExerciseMedia', () => ({
   PublicExerciseMedia: () => <span aria-hidden="true">GIF</span>,
