@@ -64,8 +64,17 @@ transaction. `createRequest()` validates date, IANA time zone, DST ambiguity,
 source program/day, membership and visibility; the resulting ID is available
 immediately. Callers must retain a stable `requestKey` for retries.
 `listRequests` and `observeRequests` project the permitted local subset.
-`listOccurrences` and `observeOccurrences` are read-only; creation, editing,
-deletion, approval and lifecycle transitions are not exposed.
+`listOccurrences`, `observeOccurrences` and `getOccurrence` require an explicit
+view: `program` shows an athlete's active planned workouts to the authorized
+coach and client; `calendar` shows workouts occupying the actor's own
+calendar. In an assigned program, `independent` workouts belong to the
+**client's** calendar, regardless of who scheduled them. Only approved
+`coached` occurrences occupy the **coach's** calendar. A coach's *personal*
+independent workout occupies their own calendar. Cancelled occurrences never
+appear in either active projection, including `getOccurrence`. Cancellation
+history needs a separate history read model, not a calendar workaround.
+All these reads are read-only; creation, editing, deletion, approval and
+lifecycle transitions are not exposed.
 
 Offline creation is only a **local submission**, never a confirmed booking.
 Dexie Cloud Addon owns push/retries; no second syncing engine is introduced.
