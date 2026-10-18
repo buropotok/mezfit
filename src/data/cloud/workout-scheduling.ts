@@ -47,6 +47,7 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
 }
 
 /** A booking intent is not a reservation; only trusted processing may materialize an occurrence. */
+export type WorkoutOccurrenceView = 'program' | 'calendar';
 export class WorkoutSchedulingRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {}
 
@@ -157,24 +158,37 @@ export class WorkoutSchedulingRepository {
     return liveQuery(() => this.listRequests(trainingPlanId)).subscribe({ next: onChange, error: onError });
   }
 
-  async listOccurrences(trainingPlanId: string): Promise<CloudWorkoutOccurrenceRow[]> {
+  /**
+   * Explicit viewing context:
+   * - program: show an athlete's workouts to both authorized people;
+   * - calendar: occupy only the current actor's time. An independent workout
+   *   from an assigned client program cannot book the coach's calendar.
+   */
+  async listOccurrences(trainingPlanId: string, view: WorkoutOccurrenceView): Promise<CloudWorkoutOccurrenceRow[]> {
+    if (view !== 'program' && view !== 'calendar') throw new Error('INVALID_SCHEDULE_VIEW');
     const plan = await this.readablePlan(trainingPlanId);
     const dayIds = await this.visibleDayIds(plan);
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
-    return rows.filter(row => validOccurrence(row) && dayIds.has(row.programDayId)
-      && row.clientUserId === plan.clientUserId
+    return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled'
+      && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
       && (row.athleteUserId === undefined || row.athleteUserId === (plan.clientUserId ?? this.actorUserId))
-      && row.coachUserId === plan.coachUserId)
+      && row.coachUserId === plan.coachUserId
+      && (view !== 'calendar' || this.actorUserId !== plan.coachUserId
+        || plan.clientUserId === null || row.format === 'coached'))
       .sort((a, b) => a.calendarDate.localeCompare(b.calendarDate)
         || a.startMinute - b.startMinute || a.id.localeCompare(b.id));
   }
 
-  observeOccurrences(trainingPlanId: string, onChange: (rows: CloudWorkoutOccurrenceRow[]) => void,
+  observeOccurrences(trainingPlanId: string, view: WorkoutOccurrenceView,
+    onChange: (rows: CloudWorkoutOccurrenceRow[]) => void,
     onError: (error: unknown) => void): { unsubscribe(): void } {
-    return liveQuery(() => this.listOccurrences(trainingPlanId)).subscribe({ next: onChange, error: onError });
+    return liveQuery(() => this.listOccurrences(trainingPlanId, view))
+      .subscribe({ next: onChange, error: onError });
   }
 
-  async getOccurrence(trainingPlanId: string, occurrenceId: string): Promise<CloudWorkoutOccurrenceRow | null> {
-    return (await this.listOccurrences(trainingPlanId)).find(row => row.id === occurrenceId) ?? null;
+  async getOccurrence(trainingPlanId: string, occurrenceId: string,
+    view: WorkoutOccurrenceView): Promise<CloudWorkoutOccurrenceRow | null> {
+    return (await this.listOccurrences(trainingPlanId, view))
+      .find(row => row.id === occurrenceId) ?? null;
   }
 }
