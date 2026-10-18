@@ -1,4 +1,5 @@
 import type { DexieCloudOptions } from 'dexie-cloud-addon';
+import type { LocalWorkoutOccurrenceDraft } from './data/cloud/workout-occurrence-plan';
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
 import type { ActiveWorkoutSession, OpenWorkoutSessionSummary, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
