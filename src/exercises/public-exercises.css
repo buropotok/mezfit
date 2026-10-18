@@ -70,6 +70,10 @@
 .mezfit-public-exercises__media-placeholder {
   height: 190px;
 }
+.mezfit-public-exercises__media-placeholder--square {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
 .mezfit-public-exercises__media-content {
   height: 100%;
   display: grid;
