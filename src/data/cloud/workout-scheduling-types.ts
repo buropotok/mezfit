@@ -17,7 +17,7 @@ export interface CloudWorkoutScheduleRequestRow extends Omit<CloudSharedRow, 'ow
   action: WorkoutScheduleAction;
   trainingPlanId: string;
   programDayId: string;
-  targetOccurrenceId: string | null;
+  targetOccurrenceId: null;
   athleteUserId: string;
   coachUserId: string | null;
   format: WorkoutScheduleFormat;
