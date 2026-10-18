@@ -47,7 +47,7 @@ function expectedRole(name, withScheduling) {
 export function assertApprovedManifest(manifest) {
   if (!record(manifest) || !record(manifest.roles)
     || !isDeepStrictEqual(Object.keys(manifest), ['roles'])
-    || !isDeepStrictEqual(Object.keys(manifest.roles).sort(), ROLES)) {
+    || !isDeepStrictEqual(Object.keys(manifest.roles).sort(), [...ROLES].sort())) {
     fail('INVALID_SCHEDULING_ROLE_MANIFEST');
   }
   for (const name of ROLES) {
