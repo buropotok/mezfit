@@ -176,7 +176,7 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
   it('rejects obsolete Coach grants before creating any relationship', async () => {
     for (const manage of [['trainingPlans'], ['trainingPlans', 'programPhases']]) {
       const cloud = fakeCloud();
-      cloud.installedRoles[0].permissions.manage = manage;
+      Object.assign(cloud.installedRoles[0].permissions, { manage });
       await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
         .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
       expect(cloud.realms.size).toBe(0);
