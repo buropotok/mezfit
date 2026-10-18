@@ -351,6 +351,9 @@ export const WORKED_MUSCLE_VIEWS = {
 export type WorkedMuscleView = keyof typeof WORKED_MUSCLE_VIEWS;
 export type WorkedMuscleSex = 'male' | 'female';
 
+/** Align female hit maps with the translated neutral figures and manifest sprite targets. */
+export const FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS = { front: 82, rear: 60 } as const;
+
 /** Female assets use the same canonical muscle IDs and separate pixel geometry. */
 export const FEMALE_WORKED_MUSCLE_VIEWS = {
   "front": {

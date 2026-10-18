@@ -1,4 +1,7 @@
-import { getWorkedMuscleViewConfig, type WorkedMuscleSex, type WorkedMuscleView } from './workedMuscleData';
+import {
+  FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS, getWorkedMuscleViewConfig,
+  type WorkedMuscleSex, type WorkedMuscleView,
+} from './workedMuscleData';
 
 const HEADER_BYTES = 16;
 const MAGIC = 'MEZMASK1';
@@ -22,6 +25,15 @@ export function decodeWorkedMuscleMask(buffer: ArrayBuffer, view: WorkedMuscleVi
   if (header.getUint32(8, true) !== width || header.getUint32(12, true) !== height) {
     throw new Error(`Размеры маски ${view} не совпадают с изображением`);
   }
-  return bytes.subarray(HEADER_BYTES);
+  const pixels = bytes.subarray(HEADER_BYTES);
+  if (sex === 'male') return pixels;
+
+  // The female neutral figures and manifest targets are shifted down without
+  // scaling any muscle. Translate the exact pixel IDs once when loading, rather
+  // than stretching the masks or changing the native male mask contract.
+  const offset = FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS[view];
+  const shifted = new Uint8Array(width * height);
+  shifted.set(pixels.subarray(0, width * (height - offset)), width * offset);
+  return shifted;
 }
 
