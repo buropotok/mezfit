@@ -1,17 +1,20 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { CloudTrainingPlanRow } from './database';
+import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayOutline } from './workout-foundation-types';
 import { draftFromProgramDay } from './workout-occurrence-plan';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 
-const opened: WorkoutOccurrenceDraftRepository[] = [];
+const opened: Dexie[] = [];
 afterEach(async () => {
-  opened.splice(0).forEach(repo => repo.close());
-  await Dexie.delete('mezfit-occurrence-drafts:tg:101');
-  await Dexie.delete('mezfit-occurrence-drafts:tg:202');
+  for (const db of opened.splice(0)) await db.delete();
 });
+const db = new Dexie('occurrence-drafts-' + crypto.randomUUID());
+db.version(1).stores({
+  localWorkoutOccurrenceDrafts: 'id, actorUserId, startsAtUtc, programDayId, updatedAt',
+});
+opened.push(db);
 const program: CloudTrainingPlanRow = {
   id: 'plan-one', realmId: 'tg:101', owner: 'tg:101', athleteUserId: 'tg:101',
   coachUserId: null, clientUserId: null, name: 'Program', position: 0, status: 'active',
@@ -32,11 +35,7 @@ const outline: CloudProgramDayOutline = {
       plannedDistanceMeters: null }],
   }],
 };
-const repo = (user = 'tg:101') => {
-  const next = new WorkoutOccurrenceDraftRepository(user);
-  opened.push(next);
-  return next;
-};
+const repo = (user = 'tg:101') => new WorkoutOccurrenceDraftRepository(db as MezfitCloudDatabase, user);
 const make = () => draftFromProgramDay('tg:101', program, outline, 'independent',
   '2026-10-19T08:00:00.000Z', 60);
 
@@ -51,7 +50,6 @@ describe('local workout occurrence drafts', () => {
         ...current.plan.exercises[0], id: 'copied-exercise', position: 1, sets: [],
       }] },
     }));
-    first.close();
     const restored = await repo().get(draft.id);
     expect(restored?.startsAtUtc).toBe('2026-10-20T10:00:00.000Z');
     expect(restored?.plan.exercises).toHaveLength(2);
