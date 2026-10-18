@@ -10,6 +10,7 @@ import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   Text, TimePicker, Icon, IconButton, type LocalDate, type LocalTime } from '../ui';
+import { localScheduleInstant, localScheduleEnd } from './calendar-time';
 import './occurrence-draft-sheet.css';
 
 function localDate(date: Date): LocalDate {
@@ -21,15 +22,6 @@ function localTime(date: Date): LocalTime {
 }
 function currentEnd(draft: LocalWorkoutOccurrenceDraft): Date {
   return new Date(Date.parse(draft.startsAtUtc) + draft.durationMinutes * 60_000);
-}
-function localStart(date: LocalDate, time: LocalTime): string {
-  const [year, month, day] = date.split('-').map(Number);
-  const [hours, minutes] = time.split(':').map(Number);
-  const instant = new Date(year, month - 1, day, hours, minutes);
-  if (localDate(instant) !== date || localTime(instant) !== time) {
-    throw new Error('Это местное время недоступно из-за перевода часов');
-  }
-  return instant.toISOString();
 }
 function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
   return {
@@ -80,8 +72,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
     setError('');
     const next = pendingEditsRef.current.catch(() => undefined)
       .then(() => drafts.edit(targetId, apply));
-    pendingEditsRef.current = next;
-    void next.catch(reason => {
+    pendingEditsRef.current = next.catch(reason => {
       setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
     });
   };
@@ -119,7 +110,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
   };
   const editStart = (date: LocalDate, time: LocalTime) => {
     try {
-      const utc = localStart(date, time);
+      const utc = localScheduleInstant(date, time);
       edit(current => ({ ...current, startsAtUtc: utc }));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Некорректная дата или время');
@@ -203,10 +194,13 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
       <TimePicker opened={timeOpened === 'end'} value={localTime(end)}
         target={endRef.current} onClose={() => setTimeOpened(null)}
         onChange={time => {
-          const target = new Date(localStart(localDate(start), time));
-          let duration = Math.round((target.getTime() - start.getTime()) / 60_000);
-          if (duration <= 0) duration += 1440;
-          edit(current => ({ ...current, durationMinutes: duration }));
+          try {
+            const target = Date.parse(localScheduleEnd(start, time));
+            const duration = Math.round((target - start.getTime()) / 60_000);
+            edit(current => ({ ...current, durationMinutes: duration }));
+          } catch (reason) {
+            setError(reason instanceof Error ? reason.message : 'Некорректное время окончания');
+          }
         }} />
       <WorkoutExerciseSelectionSheet opened={exercisePickerOpened} initData=""
         personalCatalogueRole={draft.coachUserId === draft.actorUserId ? 'coach' : 'client'}

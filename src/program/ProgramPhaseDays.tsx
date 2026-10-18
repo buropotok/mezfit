@@ -106,13 +106,11 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       // Suggest the next free 15-minute slot from authorized local calendar data.
       const scheduling = new WorkoutSchedulingRepository(cloud.db, repository.actorUserId);
       const athlete = program.clientUserId ?? repository.actorUserId;
-      const plans = await repository.listReadable();
-      const relevant = plans.filter(plan => plan.clientUserId === athlete
-        || (plan.clientUserId === null && plan.athleteUserId === athlete)
-        || (format === 'coached' && plan.coachUserId === repository.actorUserId));
-      const entries = (await Promise.all(relevant.map(plan =>
-        scheduling.listOccurrences(plan.id, 'program')))).flat().filter(occurrence =>
+      const entries = (await Promise.all([scheduling.listCalendar(athlete),
+        ...(format === 'coached' ? [scheduling.listCalendar()] : []),
+      ])).flat().filter(occurrence =>
         occurrence.athleteUserId === athlete
+        || (format === 'coached' && occurrence.athleteUserId === repository.actorUserId)
         || (format === 'coached' && occurrence.coachUserId === repository.actorUserId
           && occurrence.format === 'coached'));
       let slot = new Date();

@@ -205,7 +205,7 @@ export class WorkoutSchedulingRepository {
    * Calendar visibility depends on current membership and the immutable occurrence,
    * not on whether its originating program day still exists or remains active.
    */
-  async listCalendar(): Promise<CloudWorkoutOccurrenceRow[]> {
+  async listCalendar(participantUserId = this.actorUserId): Promise<CloudWorkoutOccurrenceRow[]> {
     const [occurrences, realms, members] = await Promise.all([
       this.db.workoutOccurrences.toArray(),
       this.db.realms.toArray(),
@@ -226,11 +226,13 @@ export class WorkoutSchedulingRepository {
       if (!validOccurrence(row) || row.status === 'cancelled') return false;
       if (row.coachUserId === null && row.clientUserId === null)
         return row.realmId === this.actorUserId && row.athleteUserId === this.actorUserId
+          && row.athleteUserId === participantUserId
           && row.format === 'independent';
       if (!row.coachUserId || !row.clientUserId || row.clientUserId !== row.athleteUserId
         || (row.coachUserId !== this.actorUserId && row.clientUserId !== this.actorUserId)) return false;
       if (!allowed.has(pairKey(row.realmId, row.coachUserId, row.clientUserId))) return false;
-      return row.clientUserId === this.actorUserId || row.format === 'coached';
+      return row.clientUserId === participantUserId
+        || (row.coachUserId === participantUserId && row.format === 'coached');
     }).sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
       || a.id.localeCompare(b.id));
   }

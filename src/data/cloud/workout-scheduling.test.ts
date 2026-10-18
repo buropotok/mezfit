@@ -283,6 +283,22 @@ describe('local-first workout scheduling intent', () => {
     expect(await f.stranger.listCalendar()).toEqual([]);
   });
 
+  it('uses the authorized client calendar after source deletion when suggesting slots', async () => {
+    const f = await fixture();
+    await seedOccurrence(f.db, {
+      id: 'booked-before-deletion', realmId: f.pair.realm.realmId, owner: null,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: null, format: 'independent',
+      startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60, status: 'scheduled',
+    });
+    await f.db.table('trainingPlans').delete('assigned');
+    await f.db.table('programPhases').delete('assigned-phase');
+    expect((await f.coach.listCalendar('tg:202')).map(row => row.id))
+      .toEqual(['booked-before-deletion']);
+    expect(await f.coach.listCalendar()).toEqual([]);
+    expect(await f.stranger.listCalendar('tg:202')).toEqual([]);
+  });
+
   it('excludes cancelled occurrences from active program and calendar projections', async () => {
     const f = await fixture();
     const rows = [

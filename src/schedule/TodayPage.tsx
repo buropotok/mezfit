@@ -11,9 +11,10 @@ import { Avatar, DaySchedule, DayScheduleEventCard, Text, getDayScheduleValue,
   type DayScheduleEvent, type LocalDate } from '../ui';
 import { useSchedulePlanning } from './SchedulePlanningContext';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
+import { calendarSegments } from './calendar-time';
 import './today-page.css';
 
-type TimelineItem = DayScheduleEvent & (
+type TimelineItem = DayScheduleEvent & { date: string } & (
   | { type: 'draft'; draft: LocalWorkoutOccurrenceDraft }
   | { type: 'occurrence'; occurrence: CloudWorkoutOccurrenceRow }
 );
@@ -25,15 +26,14 @@ function datePart(instant: string): LocalDate {
 }
 function currentDate(): LocalDate { return datePart(new Date().toISOString()); }
 
-function timelineEvent(
+function timelineEvents(
   row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow, type: 'draft' | 'occurrence',
-): TimelineItem {
-  const start = new Date(row.startsAtUtc);
-  const startMinutes = start.getHours() * 60 + start.getMinutes();
-  const base = { id: type === 'draft' ? 'draft:' + row.id : row.id,
-    startMinutes, durationMinutes: Math.min(row.durationMinutes, 1440 - startMinutes) };
-  return type === 'draft' ? { ...base, type, draft: row as LocalWorkoutOccurrenceDraft }
-    : { ...base, type, occurrence: row as CloudWorkoutOccurrenceRow };
+): TimelineItem[] {
+  return calendarSegments(row.startsAtUtc, row.durationMinutes).map(segment => {
+    const base = { ...segment, id: `${type}:${row.id}:${segment.date}` };
+    return type === 'draft' ? { ...base, type, draft: row as LocalWorkoutOccurrenceDraft }
+      : { ...base, type, occurrence: row as CloudWorkoutOccurrenceRow };
+  });
 }
 
 export function TodayPage({
@@ -110,17 +110,16 @@ export function TodayPage({
   const merged = useMemo(() => {
     const acknowledged = confirmed.filter(row => !occurrences.some(current => current.id === row.id));
     return [
-      ...occurrences.map(row => timelineEvent(row, 'occurrence')),
-      ...acknowledged.map(row => timelineEvent(row, 'occurrence')),
-      ...drafts.map(row => timelineEvent(row, 'draft')),
+      ...occurrences.flatMap(row => timelineEvents(row, 'occurrence')),
+      ...acknowledged.flatMap(row => timelineEvents(row, 'occurrence')),
+      ...drafts.flatMap(row => timelineEvents(row, 'draft')),
     ];
   }, [occurrences, confirmed, drafts]);
 
   const eventsByDate = useMemo<Record<LocalDate, TimelineItem[]>>(() => {
     const grouped: Record<string, TimelineItem[]> = {};
     merged.forEach(event => {
-      const key = datePart(event.type === 'draft'
-        ? event.draft.startsAtUtc : event.occurrence.startsAtUtc);
+      const key = event.date;
       (grouped[key] ??= []).push(event);
     });
     Object.values(grouped).forEach(rows =>
@@ -177,7 +176,7 @@ export function TodayPage({
           </Text>
         </div>
       ) : null}
-      {draftRepository ? <OccurrenceDraftSheet draft={selected} drafts={draftRepository}
+      {draftRepository ? <OccurrenceDraftSheet key={selected?.id ?? 'closed'} draft={selected} drafts={draftRepository}
         onClose={() => setOpenedDraftId(null)} onSave={save} /> : null}
     </section>
   );

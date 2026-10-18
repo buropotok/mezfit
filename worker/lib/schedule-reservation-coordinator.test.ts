@@ -18,11 +18,14 @@ const command = (patch: Record<string, unknown> = {}) => ({
 const realmId = 'rlm0123456789abcdef0123456789ab';
 
 let saved: Record<string, unknown>[];
+let personalPlan: boolean;
+let definitionRealm: string;
 const writes: unknown[] = [];
 const requests: string[] = [];
 
 beforeEach(() => {
   saved = []; writes.splice(0); requests.splice(0);
+  personalPlan = false; definitionRealm = 'tg:101';
   vi.mocked(validatedPair).mockResolvedValue([
     { userId: 'tg:101', roles: ['coach'] },
     { userId: 'tg:202', roles: ['client'] },
@@ -38,16 +41,20 @@ beforeEach(() => {
       return new Response(null, { status: 200 });
     }
     if (table === 'trainingPlans/plan-1') return Response.json({
-      id: 'plan-1', realmId, owner: null, athleteUserId: 'tg:202',
-      clientUserId: 'tg:202', coachUserId: 'tg:101', status: 'active', name: 'Программа',
+      id: 'plan-1', realmId: personalPlan ? 'tg:101' : realmId, owner: null,
+      athleteUserId: personalPlan ? 'tg:101' : 'tg:202',
+      clientUserId: personalPlan ? null : 'tg:202', coachUserId: personalPlan ? null : 'tg:101', status: 'active', name: 'Программа',
     });
     if (table === 'programDays/day-1') return Response.json({
-      id: 'day-1', realmId, owner: null, programPhaseId: 'phase-1',
+      id: 'day-1', realmId: personalPlan ? 'tg:101' : realmId, owner: null, programPhaseId: 'phase-1',
       name: 'День 1', status: 'active', category: null, comment: null,
     });
     if (table === 'programPhases/phase-1') return Response.json({
-      id: 'phase-1', realmId, owner: null, trainingPlanId: 'plan-1',
+      id: 'phase-1', realmId: personalPlan ? 'tg:101' : realmId, owner: null, trainingPlanId: 'plan-1',
       status: 'active',
+    });
+    if (table === 'coachExerciseDefinitions/custom-1') return Response.json({
+      id: 'custom-1', realmId: definitionRealm, archivedAt: null,
     });
     if (table === 'programExercises' || table === 'programSets') return Response.json([]);
     if (table === 'workoutOccurrences') {
@@ -104,6 +111,38 @@ describe('trusted occurrence reservation', () => {
       .rejects.toMatchObject({ status: 403, code: 'SCHEDULE_FORBIDDEN' });
     expect(writes).toHaveLength(0);
     expect(requests).not.toContain('GET programDays/day-1');
+  });
+
+  it.each([false, true])('blocks personal/coached conflicts in either booking order: %s', async personal => {
+    personalPlan = personal;
+    saved = [{
+      id: 'older', athleteUserId: personal ? 'tg:202' : 'tg:101',
+      coachUserId: personal ? 'tg:101' : null,
+      format: personal ? 'coached' : 'independent',
+      startsAtUtc: '2026-10-19T08:30:00.000Z', durationMinutes: 60,
+      status: 'scheduled', sourceRequestId: 'older-request',
+    }];
+    await expect(confirmWorkoutOccurrence(env, 'tg:101', command({
+      format: personal ? 'independent' : 'coached',
+    }))).rejects.toMatchObject({ status: 409, code: 'SCHEDULE_SLOT_OCCUPIED' });
+    expect(writes).toHaveLength(0);
+  });
+
+  it.each(['tg:101', 'tg:303'])('checks ownership of a personal custom exercise: %s', async realm => {
+    personalPlan = true; definitionRealm = realm;
+    const request = command({ plan: { ...plan, exercises: [{
+      id: 'new-exercise', sourceProgramExerciseId: null, position: 0, notes: null, sets: [],
+      exercise: { exerciseDefinitionId: 'custom-1', scope: 'coach', name: 'Своё упражнение',
+        nameEn: null, mediaUrl: null },
+    }] } });
+    if (realm === 'tg:101') {
+      expect((await confirmWorkoutOccurrence(env, 'tg:101', request)).status).toBe(201);
+      expect(writes).toHaveLength(1);
+    } else {
+      await expect(confirmWorkoutOccurrence(env, 'tg:101', request))
+        .rejects.toMatchObject({ status: 403, code: 'SCHEDULE_EXERCISE_UNAVAILABLE' });
+      expect(writes).toHaveLength(0);
+    }
   });
 
   it('rejects overlapping confirmed client slots', async () => {

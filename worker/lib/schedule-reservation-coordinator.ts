@@ -169,7 +169,7 @@ export async function confirmWorkoutOccurrence(
       if (exercise.exercise.scope === 'public') {
         const definition = await getRow(env, token, 'publicExerciseDefinitions', definitionId);
         if (!definition || definition.realmId !== 'rlm-public') reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
-      } else if (exercise.exercise.scope === 'coach' && actor === coach) {
+      } else if (exercise.exercise.scope === 'coach' && (actor === coach || personal)) {
         const definition = await getRow(env, token, 'coachExerciseDefinitions', definitionId);
         if (!definition || definition.realmId !== actor || definition.archivedAt !== null)
           reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
@@ -202,11 +202,16 @@ export async function confirmWorkoutOccurrence(
 
   const start = Date.parse(input.startsAtUtc);
   const end = start + (input.durationMinutes as number) * 60_000;
-  const athleteBookings = await rows(env, token, 'workoutOccurrences', { athleteUserId: athlete });
-  if (athleteBookings.some(row => conflict(row, start, end))) reject(409, 'SCHEDULE_SLOT_OCCUPIED');
-  if (input.format === 'coached' && coach) {
-    const coachBookings = await rows(env, token, 'workoutOccurrences', { coachUserId: coach });
-    if (coachBookings.some(row => row.format === 'coached' && conflict(row, start, end)))
+  // Every participant occupies their athlete slots and their coached client slots.
+  const participants = new Set([athlete]);
+  if (input.format === 'coached' && coach) participants.add(coach);
+  for (const participant of participants) {
+    const [athleteBookings, coachedBookings] = await Promise.all([
+      rows(env, token, 'workoutOccurrences', { athleteUserId: participant }),
+      rows(env, token, 'workoutOccurrences', { coachUserId: participant }),
+    ]);
+    if (athleteBookings.some(row => conflict(row, start, end))
+      || coachedBookings.some(row => row.format === 'coached' && conflict(row, start, end)))
       reject(409, 'SCHEDULE_SLOT_OCCUPIED');
   }
 
