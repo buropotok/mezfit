@@ -126,9 +126,8 @@ export function PersonalExercises({
     }
   }, [request?.mode]);
 
-  // The screen owns the effective nested navigation. A dialog overrides the
-  // catalogue's detail/category context without discarding it; dismissing the
-  // dialog restores the prior Back target instead of navigating underneath it.
+  // The editor page owns the nested Back target; dismissing its draft restores
+  // the catalogue without navigating underneath the active editor.
   const editorNavigation = useMemo<NavigationContext | null>(() => {
     if (!request) return null;
     if (request.mode === 'edit') return {
@@ -142,7 +141,7 @@ export function PersonalExercises({
       onBack: closeEditor,
     };
     return {
-      title: 'Создать мою копию',
+      title: 'Редактировать копию',
       scrollKey: `my-exercise:copy:${request.source}:${request.exerciseId}`,
       onBack: closeEditor,
     };
