@@ -45,8 +45,11 @@ implicitly use a potentially changed request row. There is no mutable
 
 ## Storage and synchronization
 
-Schema v8 adds `workoutScheduleRequests` alongside the unchanged PLAN and
-FACT stores. It uses a client-supplied canonical primary key `id`, derived
+Schema v8 defines `workoutScheduleRequests` alongside the unchanged PLAN and
+FACT stores, but **production clients open only v7 until the cloud prerequisite is
+satisfied**. `MezfitCloudDatabase` registers the v8 store only when the build
+flag `VITE_CLOUD_SCHEDULING_SCHEMA_ENABLED` is exactly `true`. An absent or
+different value leaves the previous synced table set untouched. It uses a client-supplied canonical primary key `id`, derived
 as `req:<verified-cloud-user-id>:<requestKey>`. This names one actor-specific
 action consistently on multiple offline devices. The `requestKey` is a
 nonunique ordinary index, so different actors can reuse the same key without
@@ -99,19 +102,35 @@ separate uncontrolled REST writes.
 `worker/lib/dexie-cloud-membership.ts` accept exact old and exact new role
 shapes during staged rollout, rejecting extra columns/tables.
 
-Deployment order:
-1. Deploy schema v8 and the Worker/admin policy compatibility checks.
-2. Publish the new request table to the existing Dexie Cloud database using
-   the existing protected `dexie-workout-schema.yml` manual workflow with
-   `schema_target=scheduling_v1`, confirmation `APPLY_SCHEDULING_V1_SCHEMA`.
-   Its reviewed manifest is `cloud/schema-scheduling-foundation.json` and it
-   adds only `workoutScheduleRequests: id`. The legacy `workout_v4` target stays
-   available with its own confirmation phrase.
-3. Update installed global roles using the existing authorized process.
-4. Verify actual Coach/Client isolation and offline request sync with two
-   real identities. No automatic role push from a browser.
-5. Only in later PRs connect the UI, verified processor and calendar.
-6. Retire legacy D1 scheduling reads/writes only when the Dexie calendar has
-   fully replaced them. Do not operate a parallel authoritative schedule.
+Deployment order (fail closed for the production client):
+1. Merge the code with `VITE_CLOUD_SCHEDULING_SCHEMA_ENABLED` unset. The
+   ordinary `.github/workflows/deploy.yml` build automatically deploys but
+   stays on **Dexie client schema v7**; the new request table is not registered,
+   so old production synchronization cannot fail on the sealed cloud's missing
+   table. Do not enable the flag when merging PR 1.
+2. Now that the schema target is on `main`, an authorized operator runs the
+   protected `dexie-workout-schema.yml` manual workflow with
+   `schema_target=scheduling_v1`, confirmation
+   `APPLY_SCHEDULING_V1_SCHEMA`. Its reviewed manifest
+   `cloud/schema-scheduling-foundation.json` adds only
+   `workoutScheduleRequests: id`. The original `workout_v4` target is unchanged.
+3. Validate the production schema export, install the reviewed Coach/Client
+   roles in the existing approved process, and confirm these permissions
+   against the remote role export. **No new user action may run before this.**
+4. Only after remote schema and roles are confirmed, set GitHub Actions
+   repository variable `VITE_CLOUD_SCHEDULING_SCHEMA_ENABLED=true` and
+   manually rerun the protected production deployment. That compiled client
+   will then open schema v8. Do not set the flag to any other value.
+5. Verify actual Coach/Client isolation and offline request sync with two real
+   accounts before enabling any product UI for scheduling. Never represent a
+   locally saved intent as a confirmed cloud reservation.
+6. Connect the UI, privileged booking processor and calendar in later PRs.
+   Retire legacy D1 scheduling only after a complete, verified cutover.
+
+**Safety invariant:** No shipped client registers `workoutScheduleRequests`
+before its presence in the remote Dexie Cloud schema is confirmed. The
+source-level `CLOUD_DATABASE_VERSION=8` denotes the *available* next
+version; the active production version remains 7 until the explicit feature
+flag is enabled. Changing the flag prematurely violates this prerequisite.
 
 This PR intentionally leaves `TodayPage` and the old D1 endpoints untouched.
