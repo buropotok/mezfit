@@ -22,6 +22,7 @@ import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } fr
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
 import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
+export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coordinator';
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
 import { getContactAvatar, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 
