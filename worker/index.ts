@@ -2,6 +2,7 @@ import { getGlobalTheme } from './lib/app-config';
 import { resolveInviteStartParam } from './lib/invite-launch';
 import { handleCoachExerciseCatalogueRoute } from './lib/coach-exercise-api';
 import { handleExerciseMediaRoute } from './lib/exercise-media';
+import { handlePersonalExerciseMedia } from './lib/personal-exercise-media';
 import {
   createExerciseForClient,
   hasActiveCoachClient,
@@ -324,6 +325,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const auth = await requireUser(request, env);
     return handleScheduleRoute(request, env.DB_BINDING, auth.row.id, auth.roles);
   }
+
+  if (url.pathname === '/api/exercise-media/personal') {
+    return handlePersonalExerciseMedia(request, env);
+  }
+  const personalMediaMatch = url.pathname.match(/^\/api\/exercise-media\/personal\/([^/]+)$/);
+  if (personalMediaMatch) return handlePersonalExerciseMedia(request, env, personalMediaMatch[1]);
 
   const mediaMatch = url.pathname.match(/^\/api\/exercise-media\/gym_keeper_apk\/([^/]+)$/);
   if (mediaMatch) {
