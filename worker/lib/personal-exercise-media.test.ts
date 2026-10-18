@@ -18,8 +18,10 @@ const env = () => {
     }),
     get: vi.fn(async (key: string) => {
       const bytes = images.get(key);
-      return bytes ? {
-        body: new Blob([bytes], { type: 'image/png' }).stream(),
+      const buffer = bytes ? new ArrayBuffer(bytes.length) : null;
+      if (buffer && bytes) new Uint8Array(buffer).set(bytes);
+      return buffer ? {
+        body: new Blob([buffer], { type: 'image/png' }).stream(),
         httpMetadata: { contentType: 'image/png' },
         httpEtag: '"test"',
       } : null;
