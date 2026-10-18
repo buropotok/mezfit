@@ -212,14 +212,16 @@ export class WorkoutSchedulingRepository {
       this.db.members.toArray(),
     ]);
     const byRealm = new Map(realms.map(realm => [realm.realmId, realm]));
-    const pairKeys = [...new Map(occurrences.filter(row => validOccurrence(row)
+    const pairKey = (realmId: string, coach: string, client: string) =>
+      realmId + ':' + coach + ':' + client;
+    const pairs = new Map(occurrences.filter(row => validOccurrence(row)
       && row.coachUserId !== null && row.clientUserId !== null)
-      .map(row => [row.realmId, { realmId: row.realmId,
-        coach: row.coachUserId as string, client: row.clientUserId as string }])).values()];
-    const allowed = new Set((await Promise.all(pairKeys.map(async pair =>
+      .map(row => [pairKey(row.realmId, row.coachUserId as string, row.clientUserId as string),
+        { realmId: row.realmId, coach: row.coachUserId as string, client: row.clientUserId as string }]));
+    const allowed = new Set((await Promise.all([...pairs].map(async ([key, pair]) =>
       await isApprovedAssignedPair(byRealm.get(pair.realmId),
         members.filter(member => member.realmId === pair.realmId), pair.coach, pair.client)
-        ? pair.realmId : null))).filter((id): id is string => id !== null));
+        ? key : null))).filter((key): key is string => key !== null));
     return occurrences.filter(row => {
       if (!validOccurrence(row) || row.status === 'cancelled') return false;
       if (row.coachUserId === null && row.clientUserId === null)
@@ -227,7 +229,7 @@ export class WorkoutSchedulingRepository {
           && row.format === 'independent';
       if (!row.coachUserId || !row.clientUserId || row.clientUserId !== row.athleteUserId
         || (row.coachUserId !== this.actorUserId && row.clientUserId !== this.actorUserId)) return false;
-      if (!allowed.has(row.realmId)) return false;
+      if (!allowed.has(pairKey(row.realmId, row.coachUserId, row.clientUserId))) return false;
       return row.clientUserId === this.actorUserId || row.format === 'coached';
     }).sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
       || a.id.localeCompare(b.id));
