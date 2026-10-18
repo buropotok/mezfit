@@ -75,12 +75,13 @@ export function anatomyMuscleIds(ids: readonly string[]): string[] {
   ))];
 }
 
-export function ExerciseDetail({ row, taxonomy, onEdit, origin, media }: {
+export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayout = 'default' }: {
   row: CatalogueExerciseRow;
   taxonomy: PublicTaxonomyRow[];
   onEdit?: () => void;
   origin?: 'personal' | 'trainer' | null;
   media?: ReactNode;
+  mediaLayout?: 'default' | 'square';
 }) {
   const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
   const primaryIds = new Set(primary);
@@ -95,7 +96,8 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media }: {
   ];
   return (
     <section className="mezfit-public-exercises__detail" aria-label="Детали упражнения">
-      <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__media-placeholder"
+      <GlassSurface preset="modalTuned" optics={false}
+        className={`mezfit-public-exercises__media-placeholder${mediaLayout === 'square' ? ' mezfit-public-exercises__media-placeholder--square' : ''}`}
         contentClassName="mezfit-public-exercises__media-content">
         {media ?? <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />}
       </GlassSurface>
