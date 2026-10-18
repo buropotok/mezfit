@@ -173,31 +173,26 @@ describe('automatic Dexie Cloud relationship provisioning', () => {
     expect(cloud.requests.some((r) => r.method === 'POST' && r.path === '/all/members')).toBe(false);
   });
 
-  it('accepts legacy Coach headers-only policy while rolling out phase permissions', async () => {
-    const cloud = fakeCloud();
-    Object.assign(cloud.installedRoles[0].permissions, { manage: ['trainingPlans'] });
-    await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
-      .resolves.toMatchObject({ realmId: expect.any(String) });
-    expect(cloud.members.size).toBe(2);
-    Object.assign(cloud.installedRoles[0].permissions, {
-      manage: ['trainingPlans', 'programPhases', 'programDays'],
-    });
-    await expect(provisionInviteMembership(env, '101', '203', cloud.fetchImpl))
-      .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
+  it('rejects obsolete Coach grants before creating any relationship', async () => {
+    for (const manage of [['trainingPlans'], ['trainingPlans', 'programPhases']]) {
+      const cloud = fakeCloud();
+      cloud.installedRoles[0].permissions.manage = manage;
+      await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
+        .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
+      expect(cloud.realms.size).toBe(0);
+      expect(cloud.members.size).toBe(0);
+    }
   });
 
-  it('accepts the exact previously deployed phase policy during descendant rollout', async () => {
-    const cloud = fakeCloud();
-    Object.assign(cloud.installedRoles[0].permissions, { manage: ['trainingPlans', 'programPhases'] });
-    await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
-      .resolves.toMatchObject({ realmId: expect.any(String) });
-  });
-
-  it('accepts installed roles from before request scheduling rollout', async () => {
-    const cloud = fakeCloud();
-    for (const role of cloud.installedRoles) Reflect.deleteProperty(role.permissions, 'add');
-    await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
-      .resolves.toMatchObject({ realmId: expect.any(String) });
+  it('rejects missing or mismatched scheduling grants for either role', async () => {
+    for (const roleIndex of [0, 1]) {
+      const cloud = fakeCloud();
+      Reflect.deleteProperty(cloud.installedRoles[roleIndex].permissions, 'add');
+      await expect(provisionInviteMembership(env, '101', '202', cloud.fetchImpl))
+        .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
+      expect(cloud.realms.size).toBe(0);
+      expect(cloud.members.size).toBe(0);
+    }
   });
 
   it('fails closed on a drifted global role policy', async () => {
