@@ -124,20 +124,19 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
 export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   /** Assigned workouts have a coach; personal workouts do not. */
   coachUserId: string | null;
-  /** Legacy assigned rows carry clientUserId; new records also use athleteUserId. */
+  /** Null only for personal programs; assigned records always identify the client. */
   clientUserId: string | null;
-  athleteUserId?: string;
+  athleteUserId: string;
   programDayId: string;
   workoutSessionId: string | null;
   /** Current scheduling contract requires an explicit workout format and IANA zone. */
   format: 'independent' | 'coached';
-  timeZone: string;
+  /** Canonical UTC start; local calendar day is calculated by the viewer's device. */
+  startsAtUtc: string;
   sourceRequestId?: string | null;
   createdByUserId?: string;
   createdAt?: string;
   updatedAt?: string;
-  calendarDate: string;
-  startMinute: number;
   durationMinutes: number;
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 }
