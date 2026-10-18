@@ -147,12 +147,3 @@
 .program-exercise-information { display: flex; flex-direction: column; gap: var(--ui-space-3); padding: var(--ui-space-4); }
 .program-exercise-information__header { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-3); }
 
-.program-exercise-information .mezfit-public-exercises__media-placeholder {
-  height: auto;
-  aspect-ratio: 1 / 1;
-}
-.program-exercise-information .exercise-media-image-detail {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
-}
