@@ -114,9 +114,9 @@ function EditPersonalExercise({
 
   const scalarFields = useMemo(() => {
     const fields = ['subcategory', 'equipment', 'movement_type', 'body_part', 'target', 'muscle_group'] as const;
-    return new Map(fields.map(field => [
+    return new Map<string, DropdownOption[]>(fields.map(field => [
       field, textOptions(sourceRows.map(row => row[field]), draft[field]),
-    ]));
+    ] as const));
   }, [sourceRows, draft]);
 
   const muscleOptions = useMemo<DropdownOption[]>(() => {
