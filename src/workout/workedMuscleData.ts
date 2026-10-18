@@ -351,6 +351,20 @@ export const WORKED_MUSCLE_VIEWS = {
 export type WorkedMuscleView = keyof typeof WORKED_MUSCLE_VIEWS;
 export type WorkedMuscleSex = 'male' | 'female';
 
+/**
+ * The replacement female underlays use the same anatomy at a lower vertical position.
+ * Shift highlights and native-resolution hit-testing together; the source atlases,
+ * manifests, and MEZMASK1 files retain their original pixel coordinates.
+ */
+export const FEMALE_WORKED_MUSCLE_OFFSET_Y: Readonly<Record<WorkedMuscleView, number>> = {
+  front: 82,
+  rear: 60,
+};
+
+export function getWorkedMuscleOffsetY(sex: WorkedMuscleSex, view: WorkedMuscleView): number {
+  return sex === 'female' ? FEMALE_WORKED_MUSCLE_OFFSET_Y[view] : 0;
+}
+
 /** Align female hit maps with the translated neutral figures and manifest sprite targets. */
 export const FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS = { front: 82, rear: 60 } as const;
 
