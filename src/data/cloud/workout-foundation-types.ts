@@ -2,6 +2,7 @@ import { isCoachExerciseDefinition } from '../exercises/coachExerciseTypes';
 import type { ExerciseTrackingType as TrackingType, PublicExercise } from '../exercises/publicExerciseTypes';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { CloudSharedRow } from './database';
+import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
 
 /** Canonical exercise identity. Keep a self-contained snapshot for coach-private
  * exercises that a client may not be able to query outside this relationship. */
@@ -122,6 +123,8 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
 
 /** Scheduling is not a workout PLAN snapshot. Only a privileged Start freezes PLAN. */
 export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
+  /** Frozen-at-confirmation workout prescription, not a live program reference. */
+  plan: WorkoutOccurrencePlan;
   /** Assigned workouts have a coach; personal workouts do not. */
   coachUserId: string | null;
   /** Null only for personal programs; assigned records always identify the client. */
