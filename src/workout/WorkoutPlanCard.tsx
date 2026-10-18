@@ -110,19 +110,40 @@ export function WorkoutPlanCard({
           <Text variant="body">Добавить упражнение</Text>
         </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
-        {!readOnly ? <div className="workout-plan-card__actions">
-          <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
-            glass={{ tintR: 244, tintG: 218, tintB: 139, tintA: 0.14 }} aria-disabled="true"
-            className="workout-plan-card__action">
-            <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
-            <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
-          </GlassSurface>
-          <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+
+        {(!readOnly || onSchedule) ? <div className="workout-plan-card__actions">
+          {onSchedule ? scheduleRole === 'coach' ? (
+            <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}
+              triggerRef={scheduleTriggerRef} label="Формат тренировки"
+              preset={glass.preset} optics={glass.optics}
+              items={[
+                { id: 'coached', label: 'В зале с клиентом', icon: 'user-plus',
+                  onSelect: () => onSchedule('coached') },
+                { id: 'independent', label: 'Самостоятельная', icon: 'users',
+                  onSelect: () => onSchedule('independent') },
+              ]}
+              trigger={<GlassSurface component={PlanGlassButton} ref={scheduleTriggerRef}
+                wrapContent={false} shape="capsule" preset="modalTuned"
+                glass={{ tintR: 244, tintG: 218, tintB: 139, tintA: 0.14 }}
+                aria-disabled={busy} className="workout-plan-card__action">
+                <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
+                <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
+              </GlassSurface>} />
+          ) : (
+            <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+              glass={{ tintR: 244, tintG: 218, tintB: 139, tintA: 0.14 }}
+              aria-disabled={busy} onClick={() => { if (!busy) onSchedule('independent'); }}
+              className="workout-plan-card__action">
+              <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
+              <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
+            </GlassSurface>
+          ) : null}
+          {!readOnly ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
             glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled="true"
             className="workout-plan-card__action">
             <Icon name="treadmill" className="workout-plan-card__action-icon" />
             <Text variant="body">Начать</Text>
-          </GlassSurface>
+          </GlassSurface> : null}
         </div> : null}
       </div>} />
   </article>;
