@@ -17,14 +17,6 @@ import type {
  */
 export const CLOUD_DATABASE_VERSION = 8;
 
-/**
- * Ship the approved schema/operator before enabling the new synchronized table.
- * Unset flags keep production clients on v7 and avoid a sealed-cloud schema mismatch.
- */
-export function isSchedulingSchemaEnabled(flag: unknown): boolean {
-  return flag === 'true';
-}
-
 export interface LocalProgramSyncRow {
   id: string;
   revision: number;
@@ -233,9 +225,7 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(5).stores(CLOUD_DATABASE_STORES_V5);
     this.version(6).stores(CLOUD_DATABASE_STORES_V6);
     this.version(7).stores({ ...CLOUD_DATABASE_STORES_V6, localProgramSync: 'id' });
-    if (isSchedulingSchemaEnabled(import.meta.env.VITE_CLOUD_SCHEDULING_SCHEMA_ENABLED)) {
-      this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V8, localProgramSync: 'id' });
-    }
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V8, localProgramSync: 'id' });
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
