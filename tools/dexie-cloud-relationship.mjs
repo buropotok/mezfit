@@ -194,6 +194,7 @@ export function assertRolePolicy(remoteRoles, localRoles) {
   if (!Array.isArray(remoteRoles) || !isRecord(localRoles)) {
     throw new Error('CLOUD_ROLES_UNAVAILABLE');
   }
+  let expectedAddMode = null;
   for (const roleName of ['coach', 'client']) {
     const remote = remoteRoles.find((role) => isRecord(role)
       && role.name === roleName && role.realmId === 'rlm-public');
@@ -206,6 +207,10 @@ export function assertRolePolicy(remoteRoles, localRoles) {
     const expectedKeys = roleName === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
     const legacyKeys = roleName === 'coach' ? ['manage', 'update'] : ['update'];
     const remoteHasAdd = Object.hasOwn(remote.permissions, 'add');
+    if (expectedAddMode !== null && remoteHasAdd !== expectedAddMode) {
+      throw new Error('CLOUD_ROLE_MISMATCH');
+    }
+    expectedAddMode = remoteHasAdd;
     // Accept only the two exact deployed policies and the reviewed descendant
     // policy while the compatible Worker and global roles roll out separately.
     const coachRemoteCompatible = equalItems(remote.permissions.manage, ['trainingPlans'])
