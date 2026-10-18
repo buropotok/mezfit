@@ -162,8 +162,9 @@ export class WorkoutSchedulingRepository {
     const dayIds = await this.visibleDayIds(plan);
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
     return rows.filter(row => validOccurrence(row) && dayIds.has(row.programDayId)
+      && row.clientUserId === plan.clientUserId
       && (row.athleteUserId === undefined || row.athleteUserId === (plan.clientUserId ?? this.actorUserId))
-      && (row.coachUserId === plan.coachUserId || (row.coachUserId === null && plan.coachUserId === null)))
+      && row.coachUserId === plan.coachUserId)
       .sort((a, b) => a.calendarDate.localeCompare(b.calendarDate)
         || a.startMinute - b.startMinute || a.id.localeCompare(b.id));
   }
