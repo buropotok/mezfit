@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   draftsChanged: null as null | ((rows: LocalWorkoutOccurrenceDraft[]) => void),
   requestedDraftId: null as string | null,
   actorUserId: 'tg:101',
+  db: {},
   closed: 0,
 }));
 
@@ -24,7 +25,7 @@ vi.mock('../api', async importOriginal => ({
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
-    actorUserId: state.actorUserId, db: {}, clients: [], coaches: [],
+    actorUserId: state.actorUserId, db: state.db, clients: [], coaches: [],
     status: 'ready', error: '', syncStatus: 'synced',
   }),
 }));
@@ -65,7 +66,7 @@ vi.mock('./OccurrenceDraftSheet', () => ({
     onClose: () => void;
   }) => draft ? <div role="dialog" aria-label="Запланировать тренировку">
     <span>Редактор: {draft.plan.name}</span>
-    <button onClick={() => { void onSave(draft, false); }}>Сохранить</button>
+    <button onClick={() => { void onSave(draft, false).catch(() => undefined); }}>Сохранить</button>
     <button onClick={onClose}>Закрыть</button>
   </div> : null,
 }));
