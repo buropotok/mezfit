@@ -52,7 +52,7 @@ as `req:<verified-cloud-user-id>:<requestKey>`. This names one actor-specific
 action consistently on multiple offline devices. The `requestKey` is a
 nonunique ordinary index, so different actors can reuse the same key without
 making replicated IndexedDB fail. Realm / plan / day lookup indexes and the
-compound realm/date index are retained. Two devices using one actor/key to
+compound realm/UTC-start index are used for chronologically sortable projections. Two devices using one actor/key to
 create conflicting payloads will converge under Dexie Cloud's normal conflict
 behavior: **neither the key nor a prior observation represents confirmed
 booking state**. Future privileged processing must independently enforce
@@ -60,7 +60,7 @@ idempotency by the canonical ID and trusted snapshot.
 No D1 identity or custom replication state.
 
 `WorkoutSchedulingRepository` owns local-first writes in an IndexedDB
-transaction. `createRequest()` validates date, IANA time zone, DST ambiguity,
+transaction. `createRequest()` validates the canonical UTC instant, duration,
 source program/day, membership and visibility; the resulting ID is available
 immediately. Callers must retain a stable `requestKey` for retries.
 `listRequests` and `observeRequests` project the permitted local subset.
@@ -82,15 +82,29 @@ Initial membership and first hydration still require connectivity.
 
 ## Time contract
 
-A schedule request stores local `calendarDate` (YYYY-MM-DD),
-`startMinute`, `durationMinutes` and an IANA `timeZone` such as
-`Europe/Berlin`. A booking cannot cross the chosen local day's 24:00 boundary.
-The canonical occurrence requires an explicit `format` (`independent` or
-`coached`) and an IANA `timeZone`; missing or unrecognized values are
-not silently replaced with defaults. Both incoming requests **and synced
-occurrence read projections** reject nonexistent DST wall-clock starts and
-ambiguous fall-back times rather than selecting a silent offset. The future
-UI may introduce explicit disambiguation.
+**A request and its canonical occurrence store the same absolute UTC start**:
+`startsAtUtc` (exact ISO 8601 `YYYY-MM-DDTHH:mm:ss.SSSZ`) plus
+`durationMinutes`. This is the only persisted source for workout date/time.
+Neither record stores a local calendar date, local minutes, or IANA time zone.
+The duration may cross a local calendar-day boundary. Created/updated UTC
+instants also use a validated canonical UTC representation.
+
+The future phone UI converts the time chosen in the device's local time zone to
+UTC **before** creating a request (e.g. a valid local `Date` → `toISOString()`).
+It converts UTC back using the device's current time zone for calendar grouping
+and display (e.g. `new Date(startsAtUtc).toLocaleString()`). Travel or a change
+of device time zone changes only the displayed local clock/day, never the
+underlying booking. A coach and client in different zones see the same instant.
+DST gaps/ambiguities must be handled when taking the local UI input; **UTC
+instants themselves are unique**, including the two instants in a fall-back hour.
+Sorting and future overlap checks compare UTC starts, not local display labels.
+
+`format` is required (`independent` or `coached`); personal programs cannot
+have coached occurrences without a coach. `in_progress`/`completed` occurrences
+must link a nonempty `workoutSessionId`, while scheduled occurrences have no
+session yet. Synced rows are checked for valid optional provenance and timestamps
+before being exposed as typed records. Cancellation stays excluded from active
+program and calendar projections.
 
 ## Authorization and rollout
 
