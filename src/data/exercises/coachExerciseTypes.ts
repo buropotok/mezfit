@@ -1,5 +1,5 @@
 import { isExerciseTrackingType, isPublicExerciseRow, type PublicExercise, type PublicExerciseRow } from './publicExerciseTypes';
-import { isPersonalExerciseMediaUrl } from './personalExerciseMediaCache';
+import { isPersonalExerciseMediaUrl } from './personalExerciseMediaReference';
 
 /** Shared display model: public catalogue rows or coach-owned definitions. */
 export type CatalogueExerciseRow = PublicExercise & {
