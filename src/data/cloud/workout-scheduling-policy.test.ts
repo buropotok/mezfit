@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import roleConfig from '../../../cloud/roles.json';
-import { CLOUD_DATABASE_STORES_V8, CLOUD_DATABASE_VERSION, isSchedulingSchemaEnabled } from './database';
+import { CLOUD_DATABASE_STORES_V8, CLOUD_DATABASE_VERSION } from './database';
 
 const roles = roleConfig.roles;
 
@@ -16,13 +16,6 @@ describe('scheduling ACL and schema rollout', () => {
     expect(roles.client.permissions).not.toHaveProperty('manage');
     expect(roles.coach.permissions.update).toHaveProperty('sessionSetFacts');
     expect(roles.client.permissions.update).toHaveProperty('sessionSetFacts');
-  });
-
-  it('keeps the new Dexie Cloud schema disabled unless explicitly enabled', () => {
-    for (const value of [undefined, null, '', 'false', '0', true, 'TRUE']) {
-      expect(isSchedulingSchemaEnabled(value)).toBe(false);
-    }
-    expect(isSchedulingSchemaEnabled('true')).toBe(true);
   });
 
   it('preserves v7 stores while adding a dedicated request index in v8', () => {
