@@ -23,7 +23,10 @@ describe('scheduling ACL and schema rollout', () => {
     expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toMatch(/^id,/);
     expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('requestKey');
     expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).not.toContain('&requestKey');
-    expect(CLOUD_DATABASE_STORES_V8.workoutOccurrences).toContain('[realmId+calendarDate]');
+    expect(CLOUD_DATABASE_STORES_V8.workoutOccurrences).toContain('[realmId+startsAtUtc]');
+    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).toContain('[realmId+startsAtUtc]');
+    expect(CLOUD_DATABASE_STORES_V8.workoutOccurrences).not.toContain('calendarDate');
+    expect(CLOUD_DATABASE_STORES_V8.workoutScheduleRequests).not.toContain('calendarDate');
     expect(CLOUD_DATABASE_STORES_V8.trainingPlans).toContain('realmId');
     expect(CLOUD_DATABASE_STORES_V8.sessionSetFacts).toContain('sessionSetId');
   });
