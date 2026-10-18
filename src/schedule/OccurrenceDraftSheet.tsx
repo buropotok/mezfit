@@ -35,7 +35,7 @@ function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
   return {
     day: { id: draft.programDayId, realmId: draft.realmId, owner: null,
       programPhaseId: '', status: 'active', position: 0, name: draft.plan.name,
-      comment: draft.plan.comment },
+      comment: draft.plan.comment, category: draft.plan.category ?? null },
     exercises: draft.plan.exercises.map(ex => ({
       exercise: { id: ex.id, realmId: draft.realmId, owner: null,
         programDayId: draft.programDayId, position: ex.position,
@@ -43,7 +43,8 @@ function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
       sets: ex.sets.map(set => ({
         id: set.id, realmId: draft.realmId, owner: null, programExerciseId: ex.id,
         position: set.position, status: 'active', setLabel: set.setLabel,
-        comment: set.comment, plannedReps: set.plannedReps,
+        comment: set.comment, materialLinks: set.materialLinks, chatLinks: set.chatLinks,
+        plannedReps: set.plannedReps,
         plannedWeightKg: set.plannedWeightKg,
         plannedDurationSeconds: set.plannedDurationSeconds,
         plannedDistanceMeters: set.plannedDistanceMeters,
