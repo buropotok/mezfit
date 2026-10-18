@@ -19,12 +19,14 @@ export function exerciseMediaUrl(exercise: Pick<ExerciseDefinition, 'reference_s
 export function ExerciseMedia({
   exercise,
   variant = 'thumbnail',
+  layout = 'default',
   decorative = variant !== 'detail',
   sourceUrl,
 }: {
   exercise: ExerciseMediaSource;
   sourceUrl?: string | null;
   variant?: ExerciseMediaVariant;
+  layout?: 'default' | 'square';
   decorative?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
@@ -37,7 +39,7 @@ export function ExerciseMedia({
   if (mediaUrl && !failed) {
     return (
       <img
-        className={`exercise-media-image exercise-media-image-${variant}`}
+        className={`exercise-media-image exercise-media-image-${variant}${variant === 'detail' && layout === 'square' ? ' exercise-media-image-detail--square' : ''}`}
         src={mediaUrl}
         alt={decorative ? '' : exerciseDisplayName(exercise)}
         loading={variant === 'detail' ? 'eager' : 'lazy'}
