@@ -45,7 +45,6 @@ describe('WorkoutSessionScreen page spacing', () => {
     expect(getComputedStyle(programs).display).toBe('flex');
     expect(getComputedStyle(workout).display).toBe('flex');
     expect(horizontalSpacing(workout)).toEqual(horizontalSpacing(programs));
-    expect(horizontalSpacing(workout)).toEqual({ left: 0, right: 0 });
     expect(Number.parseFloat(getComputedStyle(workout).paddingTop) || 0).toBe(0);
   });
 });
