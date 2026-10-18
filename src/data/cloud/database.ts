@@ -171,7 +171,8 @@ export const CLOUD_DATABASE_STORES_V6 = {
 /** Request intents are separate from privileged lifecycle rows. */
 export const CLOUD_DATABASE_STORES_V8 = {
   ...CLOUD_DATABASE_STORES_V6,
-  workoutScheduleRequests: 'id, realmId, requestKey, trainingPlanId, programDayId, targetOccurrenceId, [realmId+calendarDate]',
+  workoutOccurrences: '@id, realmId, clientUserId, programDayId, startsAtUtc, status, [realmId+startsAtUtc]',
+  workoutScheduleRequests: 'id, realmId, requestKey, trainingPlanId, programDayId, targetOccurrenceId, startsAtUtc, [realmId+startsAtUtc]',
 } as const;
 
 /**
