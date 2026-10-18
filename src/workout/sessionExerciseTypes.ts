@@ -82,6 +82,8 @@ export interface ProgramSessionExerciseProps {
   onAddSet?: () => void;
   onDelete?: () => void;
   onInformation?: () => void;
+  onOpenSet?: (setId: string) => void;
+  onDeleteSet?: (setId: string) => void;
 }
 
 export type SessionExerciseProps = WorkoutSessionExerciseProps | ProgramSessionExerciseProps;
