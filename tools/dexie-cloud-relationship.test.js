@@ -342,42 +342,25 @@ describe('administrative Dexie relationship provisioning', () => {
 });
 
 describe('installed role policy guard', () => {
-  it('accepts all three exact rollout policies and rejects extra Coach grants', () => {
-    const remote = ['coach', 'client'].map((name) => ({
-      realmId: 'rlm-public', name, permissions: structuredClone(localRoles[name].permissions),
-    }));
-    for (const manage of [
-      ['trainingPlans'],
-      ['trainingPlans', 'programPhases'],
-      ['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'],
-    ]) {
-      remote[0].permissions.manage = manage;
-      expect(() => assertRolePolicy(remote, localRoles)).not.toThrow();
-    }
-    remote[0].permissions.manage.push('workoutSessions');
-    expect(() => assertRolePolicy(remote, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
-  });
-
-  it('permits only the exact legacy and upgraded Coach ACL during staged rollout', () => {
-    const previous = ['coach', 'client'].map((name) => ({
-      realmId: 'rlm-public', name,
-      permissions: structuredClone(localRoles[name].permissions),
-    }));
-    previous[0].permissions.manage = ['trainingPlans'];
-    expect(() => assertRolePolicy(previous, localRoles)).not.toThrow();
-    previous[0].permissions.manage = ['trainingPlans', 'programPhases', 'programDays'];
-    expect(() => assertRolePolicy(previous, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
-  });
-
-  it('supports exact prior and new request role layouts', () => {
+  it('requires the current role policy for Coach and Client without legacy fallbacks', () => {
     const rows = ['coach', 'client'].map(name => ({
       realmId: 'rlm-public', name,
       permissions: structuredClone(localRoles[name].permissions),
     }));
-    for (const row of rows) delete row.permissions.add;
     expect(() => assertRolePolicy(rows, localRoles)).not.toThrow();
-    for (const row of rows) row.permissions.add = ['workoutScheduleRequests'];
-    expect(() => assertRolePolicy(rows, localRoles)).not.toThrow();
+
+    rows[0].permissions.manage = ['trainingPlans'];
+    expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
+    rows[0].permissions.manage = [...localRoles.coach.permissions.manage];
+    rows[0].permissions.manage.push('workoutSessions');
+    expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
+    rows[0].permissions.manage.pop();
+
+    delete rows[0].permissions.add;
+    expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
+    rows[0].permissions.add = ['workoutScheduleRequests'];
+    delete rows[1].permissions.add;
+    expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
     rows[1].permissions.add = ['workoutScheduleRequests', 'workoutOccurrences'];
     expect(() => assertRolePolicy(rows, localRoles)).toThrow('CLOUD_ROLE_MISMATCH');
   });
