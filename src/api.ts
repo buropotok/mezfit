@@ -870,3 +870,25 @@ export async function completeWorkoutSession(
   });
   return { session: localizeWorkoutSession(result.session) };
 }
+
+/** A local draft becomes a booked workout only after this API confirms persistence. */
+export async function confirmCloudWorkoutOccurrence(initData: string,
+  draft: LocalWorkoutOccurrenceDraft): Promise<string> {
+  const response = await apiRequest<unknown>(initData, '/api/cloud/schedule/confirm', {
+    method: 'POST',
+    body: JSON.stringify({
+      requestKey: draft.id.slice('draft:'.length),
+      trainingPlanId: draft.trainingPlanId,
+      programDayId: draft.programDayId,
+      format: draft.format,
+      startsAtUtc: draft.startsAtUtc,
+      durationMinutes: draft.durationMinutes,
+      plan: draft.plan,
+    }),
+  });
+  if (!isRecord(response) || typeof response.occurrenceId !== 'string'
+    || !response.occurrenceId || response.status !== 'scheduled') {
+    throw new ApiError(502, 'Не удалось подтвердить сохранение тренировки', 'INVALID_API_RESPONSE');
+  }
+  return response.occurrenceId;
+}
