@@ -100,6 +100,7 @@ function EditPersonalExercise({
   const [preview, setPreview] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const inFlight = useRef(false);
+  const stagedImage = useRef<{ file: File; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -177,8 +178,10 @@ function EditPersonalExercise({
         }
       }
       if (upload) {
-        const initData = getTelegramWebApp()?.initData ?? '';
-        const url = await uploadPersonalExerciseMedia(initData, upload);
+        const previous = stagedImage.current;
+        const url = previous?.file === upload ? previous.url
+          : await uploadPersonalExerciseMedia(getTelegramWebApp()?.initData ?? '', upload);
+        stagedImage.current = { file: upload, url };
         await storePersonalExerciseMedia(mediaAccountId, url, upload);
         changes.image = url;
       }
