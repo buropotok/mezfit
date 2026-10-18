@@ -13,6 +13,7 @@ export type CoachExerciseChanges = Partial<Pick<PublicExercise,
   'name' | 'name_ru' | 'name_en' | 'category' | 'subcategory' | 'subcategory_ru'
   | 'movement_type' | 'muscles' | 'mobility_targets' | 'equipment' | 'body_part'
   | 'target' | 'muscle_group' | 'secondary_muscles' | 'instructions' | 'instruction_steps'
+  | 'tracking_type' | 'image'
 >>;
 
 export interface CoachExerciseOverrideRow {
@@ -64,6 +65,7 @@ const editableFields: ReadonlySet<string> = new Set([
   'name', 'name_ru', 'name_en', 'category', 'subcategory', 'subcategory_ru',
   'movement_type', 'muscles', 'mobility_targets', 'equipment', 'body_part',
   'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps',
+  'tracking_type', 'image',
 ]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
