@@ -114,10 +114,9 @@ function EditPersonalExercise({
 
   const scalarFields = useMemo(() => {
     const fields = ['subcategory', 'equipment', 'movement_type', 'body_part', 'target', 'muscle_group'] as const;
-    return Object.fromEntries(fields.map(field => [
-      field,
-      textOptions(sourceRows.map(row => row[field]), draft[field]),
-    ])) as Record<(typeof fields)[number], DropdownOption[]>;
+    return new Map(fields.map(field => [
+      field, textOptions(sourceRows.map(row => row[field]), draft[field]),
+    ]));
   }, [sourceRows, draft]);
 
   const muscleOptions = useMemo<DropdownOption[]>(() => {
@@ -126,12 +125,14 @@ function EditPersonalExercise({
     for (const row of sourceRows) {
       for (const values of Object.values(row.muscles)) values.forEach(id => ids.add(id));
       row.mobility_targets.forEach(id => ids.add(id));
+      row.secondary_muscles.forEach(id => ids.add(id));
     }
     for (const values of Object.values(draft.muscles)) values.forEach(id => ids.add(id));
     draft.mobility_targets.forEach(id => ids.add(id));
+    draft.secondary_muscles.forEach(id => ids.add(id));
     return [...ids].sort((a, b) => (labels.get(a) ?? a).localeCompare(labels.get(b) ?? b, 'ru'))
       .map(id => ({ value: id, label: labels.get(id) ?? id }));
-  }, [sourceRows, taxonomy, draft.muscles, draft.mobility_targets]);
+  }, [sourceRows, taxonomy, draft.muscles, draft.mobility_targets, draft.secondary_muscles]);
 
   const update = <K extends keyof CatalogueExerciseRow>(key: K, value: CatalogueExerciseRow[K]) =>
     setDraft(current => ({ ...current, [key]: value }));
@@ -193,7 +194,7 @@ function EditPersonalExercise({
   ];
   const option = (key: 'subcategory' | 'equipment' | 'movement_type' | 'body_part' | 'target' | 'muscle_group', label: string) =>
     <Field key={key} label={label} value={draft[key] || null} options={
-      key === 'subcategory' ? subcategoryOptions : scalarFields[key]
+      key === 'subcategory' ? subcategoryOptions : scalarFields.get(key) ?? []
     } disabled={busy} onChange={value => {
       if (key === 'subcategory') {
         setDraft(current => ({ ...current, subcategory: value,
