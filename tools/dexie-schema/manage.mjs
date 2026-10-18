@@ -11,25 +11,29 @@ export const EXPECTED_TABLES = Object.freeze([
   'programPhases', 'programDays', 'programExercises', 'programSets',
   'workoutOccurrences', 'sessionExercises', 'sessionFactExercises', 'sessionFactSets',
 ]);
+export const SCHEDULING_SCHEMA = Object.freeze({ workoutScheduleRequests: 'id' });
 const EXPECTED_URL = 'https://zjv60oxag.dexie.cloud';
 
 function record(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
 function fail(message) { throw new Error(message); }
 
-export function validateManifest(value) {
-  if (!record(value) || Object.keys(value).join(',') !== 'schema'
-    || !record(value.schema) || Object.keys(value.schema).length !== EXPECTED_TABLES.length
-    || EXPECTED_TABLES.some(name => value.schema[name] !== '@id')) {
+export function validateManifest(value, target = 'workout_v4') {
+  const expected = target === 'workout_v4'
+    ? Object.fromEntries(EXPECTED_TABLES.map(name => [name, '@id']))
+    : target === 'scheduling_v1' ? SCHEDULING_SCHEMA : null;
+  if (!expected || !record(value) || Object.keys(value).join(',') !== 'schema'
+    || !record(value.schema) || Object.keys(value.schema).length !== Object.keys(expected).length
+    || Object.entries(expected).some(([name, key]) => value.schema[name] !== key)) {
     fail('INVALID_ADDITIVE_SCHEMA_MANIFEST');
   }
   return value.schema;
 }
 
-export function planAdditiveSchema(manifest, remote) {
-  const wanted = validateManifest(manifest);
+export function planAdditiveSchema(manifest, remote, target = 'workout_v4') {
+  const wanted = validateManifest(manifest, target);
   if (!record(remote) || !record(remote.schema)) fail('INVALID_REMOTE_SCHEMA');
   const missing = {};
-  for (const name of EXPECTED_TABLES) {
+  for (const name of Object.keys(wanted)) {
     if (Object.hasOwn(remote.schema, name)) {
       if (remote.schema[name] !== wanted[name]) fail('INCOMPATIBLE_EXISTING_SCHEMA_TABLE');
     } else missing[name] = wanted[name];
@@ -37,11 +41,11 @@ export function planAdditiveSchema(manifest, remote) {
   return { missing, addedNames: Object.keys(missing) };
 }
 
-export function verifyAdditiveSchema(manifest, before, after, rolesBefore, rolesAfter) {
+export function verifyAdditiveSchema(manifest, before, after, rolesBefore, rolesAfter, target = 'workout_v4') {
   if (!record(before) || !record(before.schema) || !record(after) || !record(after.schema)) {
     fail('INVALID_REMOTE_SCHEMA');
   }
-  if (planAdditiveSchema(manifest, after).addedNames.length !== 0) fail('INCOMPLETE_SCHEMA_IMPORT');
+  if (planAdditiveSchema(manifest, after, target).addedNames.length !== 0) fail('INCOMPLETE_SCHEMA_IMPORT');
   for (const [name, value] of Object.entries(before.schema)) {
     if (!Object.hasOwn(after.schema, name) || after.schema[name] !== value) {
       fail('UNEXPECTED_SCHEMA_CHANGE');
@@ -115,10 +119,13 @@ async function main() {
     return;
   }
 
-  const manifest = await load('cloud/schema-workout-foundation.json');
+  const target = process.env.DEXIE_SCHEMA_TARGET || 'workout_v4';
+  if (!['workout_v4', 'scheduling_v1'].includes(target)) fail('INVALID_SCHEMA_TARGET');
+  const manifest = await load(target === 'scheduling_v1'
+    ? 'cloud/schema-scheduling-foundation.json' : 'cloud/schema-workout-foundation.json');
   if (mode === 'plan') {
     const remote = await load(join(directory, 'before-schema.json'));
-    const plan = planAdditiveSchema(manifest, remote);
+    const plan = planAdditiveSchema(manifest, remote, target);
     await writeFile(join(directory, 'schema-only-import.json'),
       JSON.stringify({ schema: plan.missing }), { flag: 'wx', mode: 0o600 });
     if (!process.env.GITHUB_OUTPUT) fail('GITHUB_OUTPUT_REQUIRED');
@@ -131,8 +138,8 @@ async function main() {
     await load(join(directory, 'before-schema.json')),
     await load(join(directory, 'after-schema.json')),
     await load(join(directory, 'before-roles.json')),
-    await load(join(directory, 'after-roles.json')));
-  console.log('Verified all workout v4 tables; existing schema and roles unchanged.');
+    await load(join(directory, 'after-roles.json')), target);
+  console.log('Verified additive ' + target + ' tables; existing schema and roles unchanged.');
 }
 
 if (process.argv[1]?.endsWith('/tools/dexie-schema/manage.mjs')) {
