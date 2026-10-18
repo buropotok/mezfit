@@ -193,6 +193,19 @@ describe('local-first workout scheduling intent', () => {
       .toEqual([id]);
   });
 
+  it('captures one immutable UTC request snapshot before asynchronous PLAN lookups', async () => {
+    const f = await fixture();
+    const input = command('client-personal', 'snapshot-request-01');
+    const promise = f.client.createRequest(input);
+    input.startsAtUtc = '2026-10-19T16:00:00.000Z';
+    input.durationMinutes = 120;
+    const id = await promise;
+    const saved = await f.db.table('workoutScheduleRequests').get(id);
+    expect(saved).toMatchObject({
+      startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60,
+    });
+  });
+
   it('remains idempotent if Dexie Cloud implicitly assigns the request creator as owner', async () => {
     const f = await fixture(), input = command('client-personal', 'client-action-0023');
     const id = await f.client.createRequest(input);
