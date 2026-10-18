@@ -154,13 +154,13 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           <div className="occurrence-draft-sheet__timing">
             <Button variant="secondary" onClick={() => setDateOpened(true)}>
-              <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" />Дата: {localDate(start)}</span>
+              <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
             <span ref={startRef}><Button variant="secondary" onClick={() => setTimeOpened('start')}>
-              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" />Начало: {localTime(start)}</span>
+              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
             </Button></span>
             <span ref={endRef}><Button variant="secondary" onClick={() => setTimeOpened('end')}>
-              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" />Конец: {localTime(end)}</span>
+              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
             </Button></span>
           </div>
           <Text variant="body">Введите план на тренировку (не обязательно)</Text>
