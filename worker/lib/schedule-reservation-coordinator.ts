@@ -33,6 +33,7 @@ async function requestCloud(
   } catch { return reject(502, 'CLOUD_BOOKING_UNAVAILABLE'); }
   if (response.status === 404 && !init.body) return null;
   if (!response.ok) return reject(502, 'CLOUD_BOOKING_UNAVAILABLE');
+  if (init.method === 'POST') return { ok: true };
   try { return await response.json(); }
   catch { return reject(502, 'CLOUD_BOOKING_INVALID_RESPONSE'); }
 }
