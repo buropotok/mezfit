@@ -27,7 +27,7 @@ export function scheduleRequestId(actor: string, key: string): string {
 }
 
 const validCloudUserId = (value: unknown): value is string =>
-  typeof value === 'string' && /^tg:[1-9]\\d*$/.test(value);
+  typeof value === 'string' && /^tg:[1-9]\d*$/.test(value);
 
 function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
