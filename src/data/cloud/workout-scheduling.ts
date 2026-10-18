@@ -201,23 +201,29 @@ export class WorkoutSchedulingRepository {
         || a.id.localeCompare(b.id));
   }
 
-  /** Cross-program calendar read model from the permitted local subset. */
+  /**
+   * Calendar visibility depends on current membership and the immutable occurrence,
+   * not on whether its originating program day still exists or remains active.
+   */
   async listCalendar(): Promise<CloudWorkoutOccurrenceRow[]> {
-    const planRows = await this.db.trainingPlans.toArray();
-    const projections = await Promise.all(planRows.map(async plan => {
-      try {
-        return await this.listOccurrences(plan.id, 'calendar');
-      } catch (error) {
-        // Forbidden/unpublished plans must not leak into the actor's calendar.
-        if (error instanceof Error && [
-          'SCHEDULE_PLAN_NOT_FOUND', 'SCHEDULE_FORBIDDEN', 'SCHEDULE_PLAN_NOT_PUBLISHED',
-        ].includes(error.message)) return [];
-        throw error;
-      }
-    }));
-    const unique = new Map<string, CloudWorkoutOccurrenceRow>();
-    for (const rows of projections) for (const row of rows) unique.set(row.id, row);
-    return [...unique.values()].sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
+    const [occurrences, realms, members] = await Promise.all([
+      this.db.workoutOccurrences.toArray(),
+      this.db.realms.toArray(),
+      this.db.members.toArray(),
+    ]);
+    const byRealm = new Map(realms.map(realm => [realm.realmId, realm]));
+    return occurrences.filter(row => {
+      if (!validOccurrence(row) || row.status === 'cancelled') return false;
+      if (row.coachUserId === null && row.clientUserId === null)
+        return row.realmId === this.actorUserId && row.athleteUserId === this.actorUserId
+          && row.format === 'independent';
+      if (!row.coachUserId || !row.clientUserId || row.clientUserId !== row.athleteUserId
+        || (row.coachUserId !== this.actorUserId && row.clientUserId !== this.actorUserId)) return false;
+      if (!isApprovedAssignedPair(byRealm.get(row.realmId),
+        members.filter(member => member.realmId === row.realmId),
+        row.coachUserId, row.clientUserId)) return false;
+      return row.clientUserId === this.actorUserId || row.format === 'coached';
+    }).sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
       || a.id.localeCompare(b.id));
   }
 
