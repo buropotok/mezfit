@@ -135,10 +135,23 @@ Development environment setup (no backwards compatibility):
    `APPLY_SCHEDULING_V1_SCHEMA`. The reviewed manifest
    `cloud/schema-scheduling-foundation.json` adds
    `workoutScheduleRequests: id` only.
-3. Install the **exact** current Coach and Client roles from
-   `cloud/roles.json`; confirm the schema and ACL against the cloud exports.
-4. Verify Client/Coach isolation and local-first synchronization in the
-   development environment before exposing the scheduling UI.
+3. After merging the separate security-reviewed ACL workflow and its
+   `AGENTS.md` authorization, dispatch `dexie-scheduling-acl.yml` on
+   `main` with `operation=preview` (leave confirmation empty). The operator
+   refuses unexpected existing roles or a missing scheduling schema and reports
+   the **only** intended changes: `coach` and `client` gaining
+   `add: ['workoutScheduleRequests']` and updated descriptions.
+4. If preview matches, dispatch `dexie-scheduling-acl.yml` on `main` with
+   `operation=apply` and the **exact** confirmation
+   `APPLY_SCHEDULING_COACH_CLIENT_ACL`. The `dexie-production` environment
+   must retain required reviewers and `main` branch restrictions. The
+   workflow re-exports immediately before mutation, imports a roles-only
+   allowlisted payload, then verifies both global roles and that the entire
+   cloud schema and every other role were unchanged. A failed preview or
+   verification blocks rollout; do not use a more permissive role import.
+5. Confirm Coach/Client read/write isolation and offline-to-cloud
+   synchronization in the development environment before exposing the UI.
+   Schema/ACL verification proves configuration, **not** live user authorization.
 
 Because this is a nonproduction development environment, **temporary
 synchronization failure between code deploy and cloud schema/role setup is
