@@ -211,6 +211,16 @@ describe('local-first workout scheduling intent', () => {
         programDayId: 'other-day', workoutSessionId: null,
         calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
         status: 'scheduled' },
+      { id: 'occ-wrong-client', realmId: f.pair.realm.realmId, owner: null,
+        coachUserId: 'tg:101', clientUserId: 'tg:303', athleteUserId: 'tg:202',
+        programDayId: 'assigned-day', workoutSessionId: null,
+        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        status: 'scheduled' },
+      { id: 'occ-missing-client', realmId: f.pair.realm.realmId, owner: null,
+        coachUserId: 'tg:101', clientUserId: null, athleteUserId: 'tg:202',
+        programDayId: 'assigned-day', workoutSessionId: null,
+        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        status: 'scheduled' },
     ]);
     expect((await f.client.listOccurrences('assigned')).map(row => row.id)).toEqual(['occ-good']);
     expect((await f.client.getOccurrence('assigned', 'occ-good'))?.id).toBe('occ-good');
