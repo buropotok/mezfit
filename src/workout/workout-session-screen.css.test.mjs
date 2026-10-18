@@ -1,11 +1,12 @@
 /** @vitest-environment jsdom */
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const pageStyles = [
-  readFileSync(new URL('../navigation.css', import.meta.url), 'utf8'),
-  readFileSync(new URL('../program/cloud-plan-management.css', import.meta.url), 'utf8'),
-  readFileSync(new URL('./workout-session-screen.css', import.meta.url), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'src/navigation.css'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'src/program/cloud-plan-management.css'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'src/workout/workout-session-screen.css'), 'utf8'),
 ].join('\n');
 
 const mounted = [];
