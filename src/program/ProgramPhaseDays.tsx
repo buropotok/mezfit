@@ -9,6 +9,11 @@ import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Text } from '../ui';
 import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import { ProgramDayDialog } from './ProgramDayDialog';
+import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import { draftFromProgramDay } from '../data/cloud/workout-occurrence-plan';
+import { WorkoutSchedulingRepository } from '../data/cloud/workout-scheduling';
+import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
+import { useSchedulePlanning } from '../schedule/SchedulePlanningContext';
 import { PlanActionDialog } from './PlanActionDialog';
 import type { ProgramActor } from './ProgramSummary';
 import { usePhaseDayMotion } from './usePhaseDayMotion';
@@ -35,6 +40,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const [exerciseInformation, setExerciseInformation] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const cloud = useCloudConnections();
+  const planning = useSchedulePlanning();
   const authorId = planAuthorUserId(program);
   const self = authorId === repository.actorUserId;
   const contact = [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])].find((person) =>
@@ -90,6 +96,54 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     catch (reason) { if (alive.current) setError(programMutationMessage(reason)); }
     finally { running.current = false; if (alive.current) setBusy(false); }
   };
+  const schedule = async (item: CloudProgramDayOutline, format: WorkoutScheduleFormat) => {
+    if (running.current || !cloud || !planning) return;
+    running.current = true;
+    setBusy(true);
+    setError('');
+    const draftStore = new WorkoutOccurrenceDraftRepository(repository.actorUserId);
+    try {
+      // Suggest the next free 15-minute slot from authorized local calendar data.
+      const scheduling = new WorkoutSchedulingRepository(cloud.db, repository.actorUserId);
+      const athlete = program.clientUserId ?? repository.actorUserId;
+      const plans = await repository.listReadable();
+      const relevant = plans.filter(plan => plan.clientUserId === athlete
+        || (plan.clientUserId === null && plan.athleteUserId === athlete)
+        || (format === 'coached' && plan.coachUserId === repository.actorUserId));
+      const entries = (await Promise.all(relevant.map(plan =>
+        scheduling.listOccurrences(plan.id, 'program')))).flat().filter(occurrence =>
+        occurrence.athleteUserId === athlete
+        || (format === 'coached' && occurrence.coachUserId === repository.actorUserId
+          && occurrence.format === 'coached'));
+      let slot = new Date();
+      slot.setSeconds(0, 0);
+      slot.setMinutes(Math.ceil(slot.getMinutes() / 15) * 15);
+      if (slot.getHours() < 8) slot.setHours(8, 0, 0, 0);
+      const durationMinutes = 60;
+      for (let i = 0; i < 14 * 96; i++) {
+        if (slot.getHours() >= 22 || slot.getHours() * 60 + slot.getMinutes() + durationMinutes > 22 * 60) {
+          slot.setDate(slot.getDate() + 1);
+          slot.setHours(8, 0, 0, 0);
+        }
+        const start = slot.getTime();
+        const end = start + durationMinutes * 60_000;
+        if (entries.every(row => row.startsAtUtc === undefined
+          || end <= Date.parse(row.startsAtUtc)
+          || start >= Date.parse(row.startsAtUtc) + row.durationMinutes * 60_000)) break;
+        slot.setMinutes(slot.getMinutes() + 15);
+      }
+      const draft = draftFromProgramDay(repository.actorUserId, program, item,
+        format, slot.toISOString(), durationMinutes);
+      await draftStore.create(draft);
+      planning.openDraft(draft.id);
+    } catch (reason) {
+      setError(programMutationMessage(reason));
+    } finally {
+      draftStore.close();
+      running.current = false;
+      if (alive.current) setBusy(false);
+    }
+  };
   const selected = dialog?.item.day;
   return <>
     <div ref={viewport} id={bodyId} className="cloud-plan-days-viewport" aria-hidden={collapsed} inert={collapsed}>
@@ -100,7 +154,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       ref={(node) => { if (node) nodes.current.set(item.day.id, node); else nodes.current.delete(item.day.id); }}>
       <WorkoutSessionCard mode="planning" day={item} programName={program.name}
         onReorderExercises={(ids) => { void run(() => repository.reorderDayExercises(program.id, item.day.id, ids)); }} creatorName={creatorName} creatorAvatar={creatorAvatar}
-        readOnly={readOnly} busy={busy || exerciseDayId !== null} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
+        readOnly={readOnly} busy={busy || exerciseDayId !== null}
+        scheduleRole={viewerRole} onSchedule={planning ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
         onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}
