@@ -98,7 +98,7 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
     <section className="mezfit-public-exercises__detail" aria-label="Детали упражнения">
       <GlassSurface preset="modalTuned" optics={false}
         className={`mezfit-public-exercises__media-placeholder${mediaLayout === 'square' ? ' mezfit-public-exercises__media-placeholder--square' : ''}`}
-        contentClassName="mezfit-public-exercises__media-content">
+        contentClassName={`mezfit-public-exercises__media-content${mediaLayout === 'square' ? ' mezfit-public-exercises__media-content--square' : ''}`}>
         {media ?? <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />}
       </GlassSurface>
       <Text variant="headline">{row.name_ru || row.name}</Text>
