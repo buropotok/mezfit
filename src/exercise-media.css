@@ -25,6 +25,12 @@
   object-fit: contain;
 }
 
+.exercise-media-image-detail--square {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
 .exercise-media-fallback-thumbnail,
 .exercise-media-fallback-editor {
   width: 38px;

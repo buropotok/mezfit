@@ -22,7 +22,9 @@ vi.mock('./CoachExerciseCatalogFab', () => ({
   CoachExerciseCatalogFab: () => null,
 }));
 vi.mock('../ui/GlassSurface', () => ({
-  GlassSurface: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  GlassSurface: ({ children, className, contentClassName }: { children: ReactNode; className?: string; contentClassName?: string }) => (
+    <div className={className}><div className={contentClassName}>{children}</div></div>
+  ),
 }));
 vi.mock('./PublicExerciseMedia', () => ({
   PublicExerciseMedia: () => <span aria-hidden="true">GIF</span>,
@@ -65,6 +67,15 @@ describe('tracking type on the public exercise detail card', () => {
   it('shows a missing value explicitly rather than silently defaulting to weight/reps', () => {
     render(<ExerciseDetail row={{ ...publicExercise, tracking_type: undefined }} taxonomy={[]} />);
     expect(screen.getByText('Тип учёта: Не указан')).toBeTruthy();
+  });
+
+  it('keeps square media an explicit opt-in for exercise detail', () => {
+    const { container, rerender } = render(<ExerciseDetail row={publicExercise} taxonomy={[]} />);
+    expect(container.querySelector('.mezfit-public-exercises__media-placeholder--square')).toBeNull();
+
+    rerender(<ExerciseDetail row={publicExercise} taxonomy={[]} mediaLayout="square" />);
+    expect(container.querySelector('.mezfit-public-exercises__media-placeholder--square')).not.toBeNull();
+    expect(container.querySelector('.mezfit-public-exercises__media-content--square')).not.toBeNull();
   });
 
   it('does not claim a public tracking type for a private exercise', () => {
