@@ -57,7 +57,7 @@ async function fixture() {
 
 const command = (trainingPlanId: string, requestKey: string) => ({
   trainingPlanId, programDayId: trainingPlanId + '-day', requestKey,
-  format: 'independent' as const, calendarDate: '2026-10-19',
+  format: 'independent' as const, calendarDate: '2026-10-19', timeZone: 'Europe/Berlin',
   startMinute: 600, durationMinutes: 60, timeZone: 'Europe/Berlin',
 });
 
@@ -204,12 +204,12 @@ describe('local-first workout scheduling intent', () => {
       { id: 'occ-active', realmId: f.pair.realm.realmId, owner: null,
         coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
         programDayId: 'assigned-day', workoutSessionId: null, format: 'coached',
-        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        calendarDate: '2026-10-19', timeZone: 'Europe/Berlin', startMinute: 600, durationMinutes: 60,
         status: 'scheduled' },
       { id: 'occ-cancelled', realmId: f.pair.realm.realmId, owner: null,
         coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
         programDayId: 'assigned-day', workoutSessionId: null, format: 'coached',
-        calendarDate: '2026-10-19', startMinute: 720, durationMinutes: 60,
+        calendarDate: '2026-10-19', timeZone: 'Europe/Berlin', startMinute: 720, durationMinutes: 60,
         status: 'cancelled' },
     ];
     await f.db.table('workoutOccurrences').bulkPut(rows);
@@ -227,7 +227,7 @@ describe('local-first workout scheduling intent', () => {
       id, realmId: f.pair.realm.realmId, owner: null,
       coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
       programDayId: 'assigned-day', workoutSessionId: null,
-      format, createdByUserId, calendarDate: '2026-10-19',
+      format, createdByUserId, calendarDate: '2026-10-19', timeZone: 'Europe/Berlin',
       startMinute: 600, durationMinutes: 60, status: 'scheduled' as const,
     });
     await f.db.table('workoutOccurrences').bulkPut([
@@ -257,7 +257,7 @@ describe('local-first workout scheduling intent', () => {
       coachUserId: null, clientUserId: null, athleteUserId: 'tg:101',
       programDayId: 'coach-personal-day', workoutSessionId: null,
       format: 'independent', createdByUserId: 'tg:101',
-      calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+      calendarDate: '2026-10-19', timeZone: 'Europe/Berlin', startMinute: 600, durationMinutes: 60,
       status: 'scheduled',
     });
     expect((await f.coach.listOccurrences('coach-personal', 'calendar')).map(row => row.id))
@@ -269,23 +269,23 @@ describe('local-first workout scheduling intent', () => {
     await f.db.table('workoutOccurrences').bulkPut([
       { id: 'occ-good', realmId: f.pair.realm.realmId, owner: null,
         coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
-        programDayId: 'assigned-day', workoutSessionId: null,
-        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        programDayId: 'assigned-day', workoutSessionId: null, format: 'independent',
+        calendarDate: '2026-10-19', timeZone: 'Europe/Berlin', startMinute: 600, durationMinutes: 60,
         status: 'scheduled' },
       { id: 'occ-foreign', realmId: f.pair.realm.realmId, owner: null,
         coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
-        programDayId: 'other-day', workoutSessionId: null,
-        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        programDayId: 'other-day', workoutSessionId: null, format: 'independent',
+        calendarDate: '2026-10-19', timeZone: 'Europe/Berlin', startMinute: 600, durationMinutes: 60,
         status: 'scheduled' },
       { id: 'occ-wrong-client', realmId: f.pair.realm.realmId, owner: null,
         coachUserId: 'tg:101', clientUserId: 'tg:303', athleteUserId: 'tg:202',
-        programDayId: 'assigned-day', workoutSessionId: null,
-        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        programDayId: 'assigned-day', workoutSessionId: null, format: 'independent',
+        calendarDate: '2026-10-19', timeZone: 'Europe/Berlin', startMinute: 600, durationMinutes: 60,
         status: 'scheduled' },
       { id: 'occ-missing-client', realmId: f.pair.realm.realmId, owner: null,
         coachUserId: 'tg:101', clientUserId: null, athleteUserId: 'tg:202',
-        programDayId: 'assigned-day', workoutSessionId: null,
-        calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
+        programDayId: 'assigned-day', workoutSessionId: null, format: 'independent',
+        calendarDate: '2026-10-19', timeZone: 'Europe/Berlin', startMinute: 600, durationMinutes: 60,
         status: 'scheduled' },
     ]);
     expect((await f.client.listOccurrences('assigned', 'program')).map(row => row.id)).toEqual(['occ-good']);
