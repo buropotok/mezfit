@@ -198,26 +198,15 @@ function assertRemoteRoles(value: unknown): void {
   const expected = roleConfig.roles;
   const expectedFacts = expected.client.permissions.update.sessionSetFacts;
   const expectedScheduling = ['workoutScheduleRequests'];
-  let expectedAddMode: boolean | null = null;
   for (const name of ['coach', 'client'] as const) {
     const remote = value.find((candidate: unknown) => isObject(candidate)
       && candidate.realmId === 'rlm-public' && candidate.name === name);
     if (!isObject(remote) || !isObject(remote.permissions)) failUnavailable();
     const permissions = remote.permissions;
     const keys = name === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
-    const legacyKeys = name === 'coach' ? ['manage', 'update'] : ['update'];
-    const hasAdd = Object.hasOwn(permissions, 'add');
-    // Both roles must be upgraded together; mixed grants block relationship provisioning.
-    if (expectedAddMode !== null && hasAdd !== expectedAddMode) failUnavailable();
-    expectedAddMode = hasAdd;
-    // Deploy this compatible Worker before expanding Dexie Cloud roles.
-    const compatibleCoach = sameStrings(permissions.manage, ['trainingPlans'])
-      || sameStrings(permissions.manage, ['trainingPlans', 'programPhases'])
-      || sameStrings(permissions.manage, expected.coach.permissions.manage);
-    if ((!sameStrings(Object.keys(permissions), keys)
-      && !sameStrings(Object.keys(permissions), legacyKeys))
-      || (hasAdd && !sameStrings(permissions.add, expectedScheduling))
-      || (name === 'coach' && !compatibleCoach)
+    if (!sameStrings(Object.keys(permissions), keys)
+      || !sameStrings(permissions.add, expectedScheduling)
+      || (name === 'coach' && !sameStrings(permissions.manage, expected.coach.permissions.manage))
       || !isObject(permissions.update)
       || !sameStrings(Object.keys(permissions.update), ['sessionSetFacts'])
       || !sameStrings(permissions.update.sessionSetFacts, expectedFacts)) failUnavailable();
