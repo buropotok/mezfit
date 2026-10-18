@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { uploadPersonalExerciseMedia } from '../api';
-import { blankPersonalExercise, type CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
+import type { CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
+import { blankPersonalExercise } from '../data/exercises/blankPersonalExercise';
 import type { CatalogueExerciseRow, CoachExerciseChanges, CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
 import { storePersonalExerciseMedia } from '../data/exercises/personalExerciseMediaCache';
 import { PUBLIC_EXERCISE_CATEGORIES } from '../data/exercises/publicExerciseFilters';
