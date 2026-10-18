@@ -242,6 +242,9 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
       <List className="session-exercise__sets" divider="inset">
         {sets.map((set, index) => (
           <ListItem key={set.id} className="session-exercise__set-row"
+            onClick={props.onOpenSet ? () => props.onOpenSet?.(set.id) : undefined}
+            trailing={props.onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
+              onClick={(event) => { event.stopPropagation(); props.onDeleteSet?.(set.id); }} /> : undefined}
             leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
             title={<Text variant="body">Подход {index + 1}</Text>}
             subtitle={<span className="session-exercise__set-recommendations">
