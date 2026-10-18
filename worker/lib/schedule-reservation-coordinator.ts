@@ -92,18 +92,16 @@ export async function confirmWorkoutOccurrence(
 
   const token = await cloudMembershipAdminToken(env);
   const requestId = 'req:' + actor + ':' + input.requestKey;
-  const existing = await rows(env, token, 'workoutOccurrences', { sourceRequestId: requestId });
-  if (existing.length > 1) reject(502, 'CLOUD_BOOKING_INTEGRITY_ERROR');
-  if (existing.length === 1) {
-    const booking = existing[0];
+  const occurrenceId = 'occ:' + actor + ':' + input.requestKey;
+  const booking = await getRow(env, token, 'workoutOccurrences', occurrenceId);
+  if (booking) {
     if (booking.createdByUserId !== actor
       || booking.trainingPlanId !== input.trainingPlanId
       || booking.programDayId !== input.programDayId
       || booking.format !== input.format || booking.startsAtUtc !== input.startsAtUtc
       || booking.durationMinutes !== input.durationMinutes
       || JSON.stringify(booking.plan) !== JSON.stringify(input.plan)) reject(409, 'SCHEDULE_KEY_CONFLICT');
-    if (typeof booking.id !== 'string') reject(502, 'CLOUD_BOOKING_INVALID_RESPONSE');
-    return response({ occurrenceId: booking.id, status: 'scheduled' });
+    return response({ occurrenceId, status: booking.status });
   }
 
   const plan = await getRow(env, token, 'trainingPlans', input.trainingPlanId);
@@ -182,7 +180,7 @@ export async function confirmWorkoutOccurrence(
   await requestCloud(env, token, '/all/workoutOccurrences', {
     method: 'POST',
     body: JSON.stringify([{
-      realmId: plan.realmId, owner: null, trainingPlanId: plan.id,
+      id: occurrenceId, realmId: plan.realmId, owner: null, trainingPlanId: plan.id,
       programDayId: day.id, athleteUserId: athlete, coachUserId: coach,
       clientUserId: plan.clientUserId, workoutSessionId: null,
       format: input.format, startsAtUtc: input.startsAtUtc,
@@ -191,10 +189,10 @@ export async function confirmWorkoutOccurrence(
       createdAt: now, updatedAt: now, plan: input.plan,
     }]),
   });
-  const stored = await rows(env, token, 'workoutOccurrences', { sourceRequestId: requestId });
-  if (stored.length !== 1 || typeof stored[0].id !== 'string'
-    || stored[0].status !== 'scheduled') reject(502, 'CLOUD_BOOKING_NOT_CONFIRMED');
-  return response({ occurrenceId: stored[0].id, status: 'scheduled' }, 201);
+  const stored = await getRow(env, token, 'workoutOccurrences', occurrenceId);
+  if (!stored || stored.id !== occurrenceId || stored.status !== 'scheduled'
+    || stored.sourceRequestId !== requestId) reject(502, 'CLOUD_BOOKING_NOT_CONFIRMED');
+  return response({ occurrenceId, status: 'scheduled' }, 201);
 }
 
 /**
