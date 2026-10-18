@@ -1,19 +1,28 @@
-.mezfit-personal-exercise-editor {
-  display: grid;
-  gap: var(--space-3);
-  max-height: 58vh;
-  overflow-y: auto;
-}
-
 .mezfit-personal-exercise-page {
   display: grid;
   gap: var(--space-3);
   min-width: 0;
 }
 
-.mezfit-personal-exercise-actions {
+.mezfit-personal-exercise-fields {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.mezfit-personal-exercise-field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mezfit-personal-exercise-page .mezfit-public-exercises__detail-actions {
   display: flex;
-  justify-content: flex-end;
   flex-wrap: wrap;
   gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.mezfit-personal-exercise-file-input {
+  display: none;
 }
