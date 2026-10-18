@@ -77,6 +77,12 @@ describe('coach-private exercise view', () => {
     expect(isCoachExerciseChanges({ name_ru: 'Допустимо' })).toBe(true);
     expect(isCoachExerciseChanges({ id: 'injected' })).toBe(false);
     expect(isCoachExerciseChanges({ muscles: { primary: 'bad' } })).toBe(false);
+    expect(isCoachExerciseChanges({ tracking_type: 'time_reps' })).toBe(true);
+    expect(isCoachExerciseChanges({ tracking_type: 'not-a-tracking-type' })).toBe(false);
+    expect(isCoachExerciseChanges({ image: 'javascript:alert(1)' })).toBe(false);
+    expect(isCoachExerciseChanges({
+      image: '/api/exercise-media/personal/11111111-1111-4111-8111-111111111111?v=' + 'a'.repeat(64),
+    })).toBe(true);
     expect(() => coachOverrideId('other', '0001')).toThrow('INVALID_COACH_EXERCISE_REFERENCE');
     expect(() => coachFavouriteId(actor, 'malformed')).toThrow('INVALID_COACH_EXERCISE_REFERENCE');
   });
