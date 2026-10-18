@@ -1,38 +1,55 @@
 import { describe, expect, it } from 'vitest';
-import { resolveScheduledStart, validateScheduleTiming } from './workout-scheduling-time';
+import { isUtcInstant, validateScheduleTiming } from './workout-scheduling-time';
 
-const valid = {
-  calendarDate: '2026-10-19', startMinute: 600, durationMinutes: 60,
-  timeZone: 'Europe/Berlin',
-};
+const valid = { startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60 };
 
-describe('scheduling wall clock and time zones', () => {
-  it('accepts legitimate calendar dates and checks time boundaries', () => {
+describe('UTC-only scheduling contract', () => {
+  it('accepts one canonical UTC serialization and valid durations across midnight', () => {
     expect(validateScheduleTiming(valid)).toEqual(valid);
-    for (const calendarDate of ['2026-02-29', '2026-13-01', '2026-04-31', '19/10/2026']) {
-      expect(() => validateScheduleTiming({ ...valid, calendarDate })).toThrow('INVALID_SCHEDULE_DATE');
+    expect(isUtcInstant(valid.startsAtUtc)).toBe(true);
+    expect(validateScheduleTiming({
+      startsAtUtc: '2026-10-19T23:30:00.000Z', durationMinutes: 90,
+    })).toMatchObject({ durationMinutes: 90 });
+    for (const durationMinutes of [-1, 0, 0.5, Number.NaN, Infinity, 1441]) {
+      expect(() => validateScheduleTiming({ ...valid, durationMinutes }))
+        .toThrow('INVALID_SCHEDULE_DURATION');
     }
-    for (const [startMinute, durationMinutes] of [[-1, 60], [1440, 1], [1380, 90],
-      [60.5, 30], [600, 0], [600, Number.NaN]]) {
-      expect(() => validateScheduleTiming({ ...valid, startMinute, durationMinutes }))
-        .toThrow('INVALID_SCHEDULE_TIME');
-    }
-    expect(() => validateScheduleTiming({ ...valid, timeZone: 'Fake/Unknown' }))
-      .toThrow('INVALID_SCHEDULE_TIME_ZONE');
   });
 
-  it('converts real instants without using the device time zone', () => {
-    expect(resolveScheduledStart(valid)).toBe('2026-10-19T08:00:00.000Z');
-    expect(resolveScheduledStart({ ...valid, timeZone: 'Asia/Tokyo' }))
-      .toBe('2026-10-19T01:00:00.000Z');
+  it('rejects non-UTC, noncanonical and impossible stored timestamps', () => {
+    for (const startsAtUtc of [
+      '2026-10-19T08:00:00Z',
+      '2026-10-19T10:00:00.000+02:00',
+      '2026-10-19T08:00:00',
+      '2026-02-30T08:00:00.000Z',
+      '2026-10-19T24:00:00.000Z',
+      '2026-03-29T02:30:00.000 Europe/Berlin',
+      'not-a-date',
+      '',
+    ]) {
+      expect(isUtcInstant(startsAtUtc)).toBe(false);
+      expect(() => validateScheduleTiming({ ...valid, startsAtUtc }))
+        .toThrow('INVALID_SCHEDULE_START_UTC');
+    }
+    expect(isUtcInstant(null)).toBe(false);
+    expect(isUtcInstant(42)).toBe(false);
   });
 
-  it('rejects missing and ambiguous times at the DST changeover', () => {
-    expect(() => resolveScheduledStart({ ...valid, calendarDate: '2026-03-29', startMinute: 150 }))
-      .toThrow('NONEXISTENT_SCHEDULE_TIME');
-    expect(() => resolveScheduledStart({ ...valid, calendarDate: '2026-10-25', startMinute: 150 }))
-      .toThrow('AMBIGUOUS_SCHEDULE_TIME');
-    expect(resolveScheduledStart({ ...valid, calendarDate: '2026-10-25', startMinute: 210 }))
-      .toBe('2026-10-25T02:30:00.000Z');
+  it('preserves unique UTC instants across DST overlap and uses the viewer timezone only for display', () => {
+    const first = '2026-10-25T00:30:00.000Z';
+    const second = '2026-10-25T01:30:00.000Z';
+    expect(isUtcInstant(first)).toBe(true);
+    expect(isUtcInstant(second)).toBe(true);
+    expect(Date.parse(second) - Date.parse(first)).toBe(3600000);
+    const berlin = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    });
+    expect(berlin.format(new Date(first))).toBe('02:30');
+    expect(berlin.format(new Date(second))).toBe('02:30');
+    const moscow = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    });
+    expect(moscow.format(new Date(first))).toBe('03:30');
+    expect(moscow.format(new Date(second))).toBe('04:30');
   });
 });
