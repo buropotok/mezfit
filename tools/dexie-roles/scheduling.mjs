@@ -164,10 +164,15 @@ async function main() {
     await writeFile(join(dir, 'roles-only-import.json'),
       JSON.stringify(plan.importPayload), { flag: 'wx', mode: 0o600 });
     await appendFile(process.env.GITHUB_OUTPUT, 'change_count=' + plan.changedNames.length + '\n');
-    console.log(plan.changedNames.length === 0
-      ? 'Scheduling roles already match approved ACL: no import needed.'
-      : 'Approved changes for ' + plan.changedNames.join(', ')
-        + ': add workoutScheduleRequests permission and update role description only.');
+    if (plan.changedNames.length === 0) {
+      console.log('Scheduling roles already match approved ACL: no import needed.');
+    } else {
+      for (const name of plan.changedNames) {
+        console.log(name + ': permissions.add absent -> [workoutScheduleRequests]');
+        console.log(name + ': description "' + DESCRIPTIONS[name].before
+          + '" -> "' + DESCRIPTIONS[name].after + '"');
+      }
+    }
     console.log('No tables, other roles, PLAN grants or FACT grants are in the import.');
     return;
   }
