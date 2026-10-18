@@ -81,6 +81,9 @@
   justify-items: center;
   gap: var(--space-2);
 }
+.mezfit-public-exercises__media-content--square {
+  grid-template-columns: minmax(0, 1fr);
+}
 .mezfit-public-exercises__media-image {
   display: block;
   max-width: 100%;
