@@ -5,7 +5,7 @@ import { blankPersonalExercise } from '../data/exercises/blankPersonalExercise';
 import type { CatalogueExerciseRow, CoachExerciseChanges, CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
 import { storePersonalExerciseMedia } from '../data/exercises/personalExerciseMediaCache';
 import { PUBLIC_EXERCISE_CATEGORIES } from '../data/exercises/publicExerciseFilters';
-import type { ExerciseTrackingType, PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import { isExerciseTrackingType, type ExerciseTrackingType, type PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
 import { getTelegramWebApp } from '../telegram';
 import { Button, Dropdown, Icon, Text, TextArea, TextInput, type DropdownOption } from '../ui';
 import { ExerciseDetail } from './ExerciseCatalogContent';
@@ -259,7 +259,7 @@ function EditPersonalExercise({
       <Field label="Тип учёта" value={draft.tracking_type ?? null}
         options={[{ value: '', label: 'Не указан' }, ...TRACKING]}
         disabled={busy}
-        onChange={value => update('tracking_type', (value || undefined) as ExerciseTrackingType | undefined)} />
+        onChange={value => { if (!value || isExerciseTrackingType(value)) update('tracking_type', value || undefined); }} />
       <Field label="Категория" value={draft.category} options={categoryOptions}
         disabled={busy} onChange={value => setDraft(current => current.category === value
           ? current : { ...current, category: value, subcategory: '', subcategory_ru: '' })} />
