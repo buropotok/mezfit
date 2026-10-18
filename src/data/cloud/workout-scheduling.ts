@@ -5,7 +5,7 @@ import { isCloudPhaseRow, isCloudPlanRow } from './program-management';
 import { isExpectedPhaseOwner, isExpectedPlanOwner } from './program-ownership';
 import { isWorkoutScheduleRequestRow, type CloudWorkoutScheduleRequestRow,
   type CreateWorkoutScheduleRequestInput } from './workout-scheduling-types';
-import { resolveScheduledStart, validateScheduleTiming } from './workout-scheduling-time';
+import { resolveScheduledStart } from './workout-scheduling-time';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 
 function personal(plan: CloudTrainingPlanRow, actor: string): boolean {
@@ -34,13 +34,15 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
     || !row.programDayId || (row.coachUserId !== null && typeof row.coachUserId !== 'string')
     || (row.clientUserId !== null && typeof row.clientUserId !== 'string')
     || (row.workoutSessionId !== null && typeof row.workoutSessionId !== 'string')
+    || (row.format !== 'independent' && row.format !== 'coached')
     || !['scheduled', 'in_progress', 'completed', 'cancelled'].includes(row.status ?? '')) return false;
   try {
-    validateScheduleTiming({
+    // Synced records must meet the same unique wall-clock contract as new requests.
+    resolveScheduledStart({
       calendarDate: row.calendarDate as string,
       startMinute: row.startMinute as number,
       durationMinutes: row.durationMinutes as number,
-      timeZone: row.timeZone ?? 'UTC',
+      timeZone: row.timeZone as string,
     });
     return true;
   } catch { return false; }
