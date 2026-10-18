@@ -1,4 +1,5 @@
-import { isPublicExerciseRow, type PublicExercise, type PublicExerciseRow } from './publicExerciseTypes';
+import { isExerciseTrackingType, isPublicExerciseRow, type PublicExercise, type PublicExerciseRow } from './publicExerciseTypes';
+import { isPersonalExerciseMediaUrl } from './personalExerciseMediaCache';
 
 /** Shared display model: public catalogue rows or coach-owned definitions. */
 export type CatalogueExerciseRow = PublicExercise & {
@@ -84,6 +85,10 @@ export function isCoachExerciseChanges(value: unknown): value is CoachExerciseCh
       if (!isRecord(item) || typeof item.ru !== 'string' || typeof item.en !== 'string') return false;
     } else if (key === 'instruction_steps') {
       if (!isRecord(item) || !strings(item.ru) || !strings(item.en)) return false;
+    } else if (key === 'tracking_type') {
+      if (item !== undefined && !isExerciseTrackingType(item)) return false;
+    } else if (key === 'image') {
+      if (!isPersonalExerciseMediaUrl(item)) return false;
     } else if (typeof item !== 'string') return false;
   }
   return true;
