@@ -42,8 +42,12 @@ export function PublicExerciseMedia({
       .then((blob) => {
         if (controller.signal.aborted) return;
         if (blob && typeof URL.createObjectURL === 'function') {
-          objectUrl = URL.createObjectURL(blob);
-          setLocal({ source: mediaUrl, url: objectUrl });
+          try {
+            objectUrl = URL.createObjectURL(blob);
+            setLocal({ source: mediaUrl, url: objectUrl });
+          } catch {
+            // WebKit may reject a blob URL under memory pressure: use the R2 path.
+          }
         }
         setCacheResolved(true);
       });
