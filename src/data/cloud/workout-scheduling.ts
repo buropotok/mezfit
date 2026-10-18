@@ -103,31 +103,37 @@ export class WorkoutSchedulingRepository {
   }
 
   async createRequest(input: CreateWorkoutScheduleRequestInput): Promise<string> {
-    if (!validRequestKey(input.requestKey) || typeof input.trainingPlanId !== 'string'
-      || !input.trainingPlanId || typeof input.programDayId !== 'string'
-      || !input.programDayId || (input.format !== 'independent' && input.format !== 'coached')) {
+    // Snapshot user intent before any asynchronous realm/PLAN read or Dexie transaction.
+    const requested = {
+      requestKey: input.requestKey, trainingPlanId: input.trainingPlanId,
+      programDayId: input.programDayId, format: input.format,
+      startsAtUtc: input.startsAtUtc, durationMinutes: input.durationMinutes,
+    };
+    if (!validRequestKey(requested.requestKey) || typeof requested.trainingPlanId !== 'string'
+      || !requested.trainingPlanId || typeof requested.programDayId !== 'string'
+      || !requested.programDayId || (requested.format !== 'independent' && requested.format !== 'coached')) {
       throw new Error('INVALID_SCHEDULE_REQUEST');
     }
     // The client submits the selected phone-local instant already converted to UTC.
-    validateScheduleTiming(input);
+    validateScheduleTiming(requested);
     return this.db.transaction('rw', [
       'trainingPlans', 'programPhases', 'programDays', 'realms', 'members',
       'workoutScheduleRequests',
     ], async () => {
-      const plan = await this.readablePlan(input.trainingPlanId);
-      await this.activeDay(plan, input.programDayId);
-      if (input.format === 'coached' && !plan.coachUserId) {
+      const plan = await this.readablePlan(requested.trainingPlanId);
+      await this.activeDay(plan, requested.programDayId);
+      if (requested.format === 'coached' && !plan.coachUserId) {
         throw new Error('SCHEDULE_COACH_REQUIRED');
       }
       const athleteUserId = plan.clientUserId ?? this.actorUserId;
-      const id = scheduleRequestId(this.actorUserId, input.requestKey);
+      const id = scheduleRequestId(this.actorUserId, requested.requestKey);
       const saved = await this.db.workoutScheduleRequests.get(id);
       const intended = {
-        realmId: plan.realmId, owner: null, requestKey: input.requestKey,
-        action: 'create' as const, trainingPlanId: plan.id, programDayId: input.programDayId,
+        realmId: plan.realmId, owner: null, requestKey: requested.requestKey,
+        action: 'create' as const, trainingPlanId: plan.id, programDayId: requested.programDayId,
         targetOccurrenceId: null, athleteUserId, coachUserId: plan.coachUserId,
-        format: input.format, requestedByUserId: this.actorUserId,
-        startsAtUtc: input.startsAtUtc, durationMinutes: input.durationMinutes,
+        format: requested.format, requestedByUserId: this.actorUserId,
+        startsAtUtc: requested.startsAtUtc, durationMinutes: requested.durationMinutes,
       };
       if (saved) {
         if (!isWorkoutScheduleRequestRow(saved)
