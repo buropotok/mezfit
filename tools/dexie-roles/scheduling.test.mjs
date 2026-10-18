@@ -44,6 +44,31 @@ describe('protected Dexie scheduling role rollout', () => {
     expect(workflow).not.toContain('dexie-cloud import cloud/roles.json');
   });
 
+  it('reads back and verifies ACL even if an attempted cloud import reports failure', () => {
+    const marker = 'id: import_attempt';
+    const importCommand = 'dexie-cloud import roles-only-import.json';
+    const readback = '- name: Export schema and roles after any ACL import attempt';
+    const verify = '- name: Verify exact ACL and untouched cloud configuration';
+    expect(workflow.indexOf(marker)).toBeGreaterThan(-1);
+    expect(workflow.indexOf(marker)).toBeLessThan(workflow.indexOf(importCommand));
+    expect(workflow.indexOf(importCommand)).toBeLessThan(workflow.indexOf(readback));
+    expect(workflow.indexOf(readback)).toBeLessThan(workflow.indexOf(verify));
+    expect(workflow).toContain('run: echo "attempted=true" >> "$GITHUB_OUTPUT"');
+
+    const afterReadback = workflow.slice(workflow.indexOf(readback));
+    const readbackIf = afterReadback.split('\n').find(line => line.trim().startsWith('if:'));
+    const verifyIf = workflow.slice(workflow.indexOf(verify)).split('\n')
+      .find(line => line.trim().startsWith('if:'));
+    for (const condition of [readbackIf, verifyIf]) {
+      expect(condition).toContain('!cancelled()');
+      expect(condition).toContain("steps.import_attempt.outputs.attempted == 'true'");
+      expect(condition).toContain("steps.plan.outputs.change_count == '0'");
+      expect(condition).not.toContain('success()');
+    }
+    expect(workflow.slice(workflow.indexOf(marker), workflow.indexOf(importCommand)))
+      .toContain("steps.plan.outputs.change_count != '0'");
+  });
+
   it('allows exactly the reviewed current-role manifest, not generalized role changes', () => {
     expect(assertApprovedManifest(manifest)).toEqual(target);
     for (const invalid of [
