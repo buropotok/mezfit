@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import { publicExerciseMediaUrl } from '../data/exercises/publicExerciseMedia';
-import {
-  isPersonalExerciseMediaUrl, loadPersonalExerciseMedia,
-} from '../data/exercises/personalExerciseMediaCache';
+import { isPersonalExerciseMediaUrl } from '../data/exercises/personalExerciseMediaReference';
+import { loadPersonalExerciseMedia } from '../data/exercises/personalExerciseMediaCache';
 import { Icon, Text } from '../ui';
 
 export { publicExerciseMediaUrl } from '../data/exercises/publicExerciseMedia';
