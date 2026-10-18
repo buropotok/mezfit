@@ -31,6 +31,9 @@ jobs:
           VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED: ${{ vars.VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED }}
           # Remains false unless explicitly enabled after phase-role deployment and checks.
           VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED: ${{ vars.VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED }}
+          # Keep Dexie client on v7 until the scheduling request table is provisioned
+          # by the protected schema workflow and the Coach/Client ACL has been reviewed.
+          VITE_CLOUD_SCHEDULING_SCHEMA_ENABLED: ${{ vars.VITE_CLOUD_SCHEDULING_SCHEMA_ENABLED }}
       - name: Resolve D1 database id
         shell: bash
         run: |
