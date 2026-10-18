@@ -129,8 +129,9 @@ export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   athleteUserId?: string;
   programDayId: string;
   workoutSessionId: string | null;
-  format?: 'independent' | 'coached';
-  timeZone?: string;
+  /** Current scheduling contract requires an explicit workout format and IANA zone. */
+  format: 'independent' | 'coached';
+  timeZone: string;
   sourceRequestId?: string | null;
   createdByUserId?: string;
   createdAt?: string;
