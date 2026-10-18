@@ -9,6 +9,8 @@ export interface OccurrencePlanSet {
   position: number;
   setLabel: SetLabel | null;
   comment: string | null;
+  materialLinks: string[];
+  chatLinks: string[];
   plannedReps: number | null;
   plannedWeightKg: number | null;
   plannedDurationSeconds: number | null;
@@ -27,6 +29,7 @@ export interface OccurrencePlanExercise {
 /** Complete independent prescription for a single scheduled occurrence. */
 export interface WorkoutOccurrencePlan {
   name: string;
+  category?: string | null;
   comment: string | null;
   exercises: OccurrencePlanExercise[];
 }
@@ -56,6 +59,7 @@ function freshId(): string { return crypto.randomUUID(); }
 export function snapshotProgramDay(outline: CloudProgramDayOutline): WorkoutOccurrencePlan {
   return {
     name: outline.day.name,
+    category: outline.day.category ?? null,
     comment: outline.day.comment ?? null,
     exercises: outline.exercises
       .filter(({ exercise }) => exercise.status === 'active')
@@ -66,6 +70,7 @@ export function snapshotProgramDay(outline: CloudProgramDayOutline): WorkoutOccu
         sets: sets.filter(set => set.status === 'active').map((set, setPosition) => ({
           id: freshId(), sourceProgramSetId: set.id, position: setPosition,
           setLabel: set.setLabel ?? null, comment: set.comment ?? null,
+          materialLinks: [...(set.materialLinks ?? [])], chatLinks: [...(set.chatLinks ?? [])],
           plannedReps: set.plannedReps, plannedWeightKg: set.plannedWeightKg,
           plannedDurationSeconds: set.plannedDurationSeconds,
           plannedDistanceMeters: set.plannedDistanceMeters,
@@ -104,6 +109,7 @@ const bounded = (n: unknown, max: number): n is number =>
 export function isWorkoutOccurrencePlan(value: unknown): value is WorkoutOccurrencePlan {
   if (!object(value) || typeof value.name !== 'string'
     || value.name.length > 120 || !value.name.trim()
+    || (value.category !== undefined && value.category !== null && typeof value.category !== 'string')
     || (value.comment !== null && typeof value.comment !== 'string')
     || !Array.isArray(value.exercises) || value.exercises.length > 100) return false;
   const exerciseIds = new Set<string>();
@@ -125,6 +131,8 @@ export function isWorkoutOccurrencePlan(value: unknown): value is WorkoutOccurre
         || (set.comment !== null && typeof set.comment !== 'string')
         || (set.setLabel !== null && !['warmup', 'easy', 'normal', 'hard', 'drop'].includes(String(set.setLabel)))) return false;
       setIds.add(set.id);
+      if (!['materialLinks', 'chatLinks'].every(field => Array.isArray(set[field])
+        && (set[field] as unknown[]).every(item => typeof item === 'string'))) return false;
       return ['plannedReps', 'plannedWeightKg', 'plannedDurationSeconds', 'plannedDistanceMeters']
         .every(key => set[key] === null || (typeof set[key] === 'number'
           && Number.isFinite(set[key]) && (set[key] as number) >= 0));
