@@ -71,32 +71,50 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
   const [error, setError] = useState('');
   const startRef = useRef<HTMLSpanElement>(null);
   const endRef = useRef<HTMLSpanElement>(null);
-  const editingRef = useRef(false);
+  const pendingEditsRef = useRef<Promise<void>>(Promise.resolve());
 
   const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1]) => {
-    if (!draft || editingRef.current) return;
-    editingRef.current = true;
+    if (!draft || busy) return;
+    const targetId = draft.id;
     setError('');
-    void drafts.edit(draft.id, apply).catch(reason => {
+    const next = pendingEditsRef.current.catch(() => undefined)
+      .then(() => drafts.edit(targetId, apply));
+    pendingEditsRef.current = next;
+    void next.catch(reason => {
       setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
-    }).finally(() => { editingRef.current = false; });
+    });
   };
   const save = async (updateProgram: boolean) => {
-    if (!draft || busy || editingRef.current) return;
-    setProgramUpdateOpen(false);
+    if (!draft || busy) return;
     setBusy(true);
     setError('');
     try {
-      await onSave(draft, updateProgram);
+      await pendingEditsRef.current;
+      const latest = await drafts.get(draft.id);
+      if (!latest) throw new Error('Черновик не найден');
+      await onSave(latest, updateProgram);
+      setProgramUpdateOpen(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось сохранить тренировку');
     } finally { setBusy(false); }
   };
-  const beginSave = () => {
-    if (!draft || busy || editingRef.current) return;
-    const owner = (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId;
-    if (owner && occurrencePlanChanged(draft.plan, draft.originalPlan)) setProgramUpdateOpen(true);
-    else void save(false);
+  const beginSave = async () => {
+    if (!draft || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      await pendingEditsRef.current;
+      const latest = await drafts.get(draft.id);
+      if (!latest) throw new Error('Черновик не найден');
+      const owner = (latest.coachUserId ?? latest.athleteUserId) === latest.actorUserId;
+      if (owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
+        setProgramUpdateOpen(true);
+      } else {
+        await onSave(latest, false);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить тренировку');
+    } finally { setBusy(false); }
   };
   const editStart = (date: LocalDate, time: LocalTime) => {
     try {
@@ -112,6 +130,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
     try {
       const selected = await Promise.all(ids.map(async id => programExerciseSnapshot(
         await readProgramCatalogueExercise(cloud.db, draft.actorUserId, id), draft.actorUserId)));
+      await pendingEditsRef.current;
       await drafts.edit(draft.id, current => ({
         ...current, plan: selected.reduce(appendOccurrenceExercise, current.plan),
       }));
@@ -168,7 +187,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
           <Button variant="secondary" color="red" disabled={busy} onClick={() => setDeleteOpen(true)}>
             Удалить черновик
           </Button>
-          <Button disabled={busy} onClick={beginSave}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
+          <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer>
       </section> : null}
     </MezfitBottomSheet>
