@@ -117,7 +117,8 @@ function EditPersonalExercise({
     return new Map<string, DropdownOption[]>(fields.map(field => [
       field, textOptions(sourceRows.map(row => row[field]), draft[field]),
     ] as const));
-  }, [sourceRows, draft]);
+  }, [sourceRows, draft.subcategory, draft.equipment, draft.movement_type,
+    draft.body_part, draft.target, draft.muscle_group]);
 
   const muscleOptions = useMemo<DropdownOption[]>(() => {
     const labels = new Map(taxonomy.map(item => [item.id, item.subcategory_ru]));
@@ -158,11 +159,30 @@ function EditPersonalExercise({
         instruction_steps: draft.instructions.ru !== initial.instructions.ru
           ? { ...draft.instruction_steps, ru: [] } : draft.instruction_steps,
       };
+      if (request.mode === 'edit') {
+        // Do not overwrite unrelated fields changed by Dexie Cloud while this
+        // card was open. Personal edits only persist fields actually modified.
+        const fields = [
+          'name', 'name_ru', 'name_en', 'category', 'subcategory', 'subcategory_ru',
+          'equipment', 'movement_type', 'tracking_type', 'body_part', 'target',
+          'muscle_group', 'secondary_muscles', 'muscles', 'mobility_targets',
+          'instructions', 'instruction_steps',
+        ] as const;
+        for (const field of fields) {
+          if (JSON.stringify(changes[field]) === JSON.stringify(initial[field])) {
+            delete changes[field];
+          }
+        }
+      }
       if (upload) {
         const initData = getTelegramWebApp()?.initData ?? '';
         const url = await uploadPersonalExerciseMedia(initData, upload);
         await storePersonalExerciseMedia(mediaAccountId, url, upload);
         changes.image = url;
+      }
+      if (request.mode === 'edit' && Object.keys(changes).length === 0) {
+        onClose();
+        return;
       }
       const id = request.mode === 'edit'
         ? (await repository.updateExercise(request.exerciseId, changes), request.exerciseId)
