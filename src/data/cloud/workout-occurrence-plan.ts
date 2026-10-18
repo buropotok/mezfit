@@ -1,12 +1,13 @@
 import type { CloudProgramDayOutline, CloudProgramExerciseSnapshot } from './workout-foundation-types';
 import type { CloudTrainingPlanRow } from './database';
+import type { SetLabel } from '../../workout/setEntryTypes';
 import { validateScheduleTiming } from './workout-scheduling-time';
 
 export interface OccurrencePlanSet {
   id: string;
   sourceProgramSetId: string | null;
   position: number;
-  setLabel: string | null;
+  setLabel: SetLabel | null;
   comment: string | null;
   plannedReps: number | null;
   plannedWeightKg: number | null;
@@ -122,7 +123,7 @@ export function isWorkoutOccurrencePlan(value: unknown): value is WorkoutOccurre
         || set.position !== setPosition
         || (set.sourceProgramSetId !== null && typeof set.sourceProgramSetId !== 'string')
         || (set.comment !== null && typeof set.comment !== 'string')
-        || (set.setLabel !== null && typeof set.setLabel !== 'string')) return false;
+        || (set.setLabel !== null && !['warmup', 'easy', 'normal', 'hard', 'drop'].includes(String(set.setLabel)))) return false;
       setIds.add(set.id);
       return ['plannedReps', 'plannedWeightKg', 'plannedDurationSeconds', 'plannedDistanceMeters']
         .every(key => set[key] === null || (typeof set[key] === 'number'
