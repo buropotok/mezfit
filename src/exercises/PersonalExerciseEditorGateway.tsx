@@ -149,7 +149,8 @@ function EditPersonalExercise({
     setError('');
     try {
       const changes: CoachExerciseChanges = {
-        name, name_ru: name, name_en: draft.name_en.trim(),
+        name: request.mode === 'edit' && draft.name_ru === initial.name_ru ? initial.name : name,
+        name_ru: name, name_en: draft.name_en.trim(),
         category: draft.category, subcategory: draft.subcategory,
         subcategory_ru: draft.subcategory_ru, equipment: draft.equipment,
         movement_type: draft.movement_type, tracking_type: draft.tracking_type,
