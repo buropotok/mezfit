@@ -2,7 +2,7 @@ import type { CloudSharedRow } from './database';
 import { isUtcInstant, validateScheduleTiming, type ScheduleTiming } from './workout-scheduling-time';
 
 export type WorkoutScheduleFormat = 'independent' | 'coached';
-export type WorkoutScheduleAction = 'create' | 'reschedule' | 'cancel';
+export type WorkoutScheduleAction = 'create';
 
 /**
  * This is an untrusted user intent, NOT a booked workout. Dexie Cloud grants
@@ -47,12 +47,13 @@ export function isWorkoutScheduleRequestRow(value: unknown): value is CloudWorko
     && (row.owner === null || row.owner === row.requestedByUserId)
     && typeof row.requestKey === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(row.requestKey)
     && row.id === `req:${row.requestedByUserId}:${row.requestKey}`
-    && ['create', 'reschedule', 'cancel'].includes(row.action ?? '')
+    && row.action === 'create'
     && typeof row.trainingPlanId === 'string' && row.trainingPlanId.length > 0
     && typeof row.programDayId === 'string' && row.programDayId.length > 0
-    && (row.targetOccurrenceId === null || typeof row.targetOccurrenceId === 'string')
+    && row.targetOccurrenceId === null
     && userId(row.athleteUserId)
     && (row.coachUserId === null || userId(row.coachUserId))
+    && (row.format !== 'coached' || userId(row.coachUserId))
     && (row.format === 'independent' || row.format === 'coached')
     && userId(row.requestedByUserId)
     && isUtcInstant(row.createdAt);
