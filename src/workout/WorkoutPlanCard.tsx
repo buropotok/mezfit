@@ -10,6 +10,8 @@ export interface WorkoutPlanCardProps {
   programName?: string;
   scheduleRole?: 'coach' | 'client';
   onSchedule?: (format: WorkoutScheduleFormat) => void;
+  hideProgramMenu?: boolean;
+  hideWorkoutActions?: boolean;
   onReorderExercises?: (ids: string[]) => void;
   day: CloudProgramDayOutline;
   creatorName: string;
@@ -21,6 +23,8 @@ export interface WorkoutPlanCardProps {
   onAddExercise?: () => void;
   onAddSet?: (programExerciseId: string) => void;
   onDeleteExercise?: (programExerciseId: string) => void;
+  onOpenSet?: (programExerciseId: string, setId: string) => void;
+  onDeleteSet?: (programExerciseId: string, setId: string) => void;
   onExerciseInformation?: (programExerciseId: string) => void;
   onEdit: () => void;
   onComment: () => void;
@@ -39,9 +43,10 @@ PlanGlassButton.displayName = 'PlanGlassButton';
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
   day: outline, programName = 'Без программы', scheduleRole = 'coach', onSchedule,
+  hideProgramMenu = false, hideWorkoutActions = false,
   onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
-  onDeleteExercise, onExerciseInformation,
+  onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -54,7 +59,7 @@ export function WorkoutPlanCard({
     setAfterMenu(() => action);
     setMenuOpen(false);
   };
-  const menu: LiquidPopoverItem[] = readOnly ? [] : [
+  const menu: LiquidPopoverItem[] = readOnly || hideProgramMenu ? [] : [
     { id: 'edit', label: 'Переименовать', icon: 'pencil', disabled: busy, onSelect: () => defer(onEdit) },
     { id: 'up', label: 'Вверх', icon: 'arrow-up', disabled: busy || !canMoveUp, onSelect: () => defer(() => onMove('up')) },
     { id: 'down', label: 'Вниз', icon: 'arrow-down', disabled: busy || !canMoveDown, onSelect: () => defer(() => onMove('down')) },
@@ -70,6 +75,8 @@ export function WorkoutPlanCard({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={!readOnly}
       busy={busy} onAddSet={onAddSet ? () => onAddSet(item.exercise.id) : undefined}
+      onOpenSet={onOpenSet ? setId => onOpenSet(item.exercise.id, setId) : undefined}
+      onDeleteSet={onDeleteSet ? setId => onDeleteSet(item.exercise.id, setId) : undefined}
       onDelete={onDeleteExercise ? () => onDeleteExercise(item.exercise.id) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
@@ -111,7 +118,7 @@ export function WorkoutPlanCard({
         </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
 
-        {(!readOnly || onSchedule) ? <div className="workout-plan-card__actions">
+        {!hideWorkoutActions && (!readOnly || onSchedule) ? <div className="workout-plan-card__actions">
           {onSchedule ? scheduleRole === 'coach' ? (
             <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}
               triggerRef={scheduleTriggerRef} label="Формат тренировки"
