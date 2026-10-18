@@ -6,6 +6,7 @@ import { isExpectedPhaseOwner, isExpectedPlanOwner } from './program-ownership';
 import { isWorkoutScheduleRequestRow, type CloudWorkoutScheduleRequestRow,
   type CreateWorkoutScheduleRequestInput } from './workout-scheduling-types';
 import { isUtcInstant, validateScheduleTiming } from './workout-scheduling-time';
+import { isWorkoutOccurrencePlan } from './workout-occurrence-plan';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 
 function personal(plan: CloudTrainingPlanRow, actor: string): boolean {
@@ -36,6 +37,7 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
     || typeof row.realmId !== 'string' || !row.realmId
     || row.owner !== null
     || typeof row.programDayId !== 'string' || !row.programDayId
+    || !isWorkoutOccurrencePlan(row.plan)
     || !validCloudUserId(row.athleteUserId)
     || (row.coachUserId !== null && !validCloudUserId(row.coachUserId))
     || (row.clientUserId !== null && !validCloudUserId(row.clientUserId))
@@ -197,6 +199,31 @@ export class WorkoutSchedulingRepository {
         || plan.clientUserId === null || row.format === 'coached'))
       .sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
         || a.id.localeCompare(b.id));
+  }
+
+  /** Cross-program calendar read model from the permitted local subset. */
+  async listCalendar(): Promise<CloudWorkoutOccurrenceRow[]> {
+    const planRows = await this.db.trainingPlans.toArray();
+    const projections = await Promise.all(planRows.map(async plan => {
+      try {
+        return await this.listOccurrences(plan.id, 'calendar');
+      } catch (error) {
+        // Forbidden/unpublished plans must not leak into the actor's calendar.
+        if (error instanceof Error && [
+          'SCHEDULE_PLAN_NOT_FOUND', 'SCHEDULE_FORBIDDEN', 'SCHEDULE_PLAN_NOT_PUBLISHED',
+        ].includes(error.message)) return [];
+        throw error;
+      }
+    }));
+    const unique = new Map<string, CloudWorkoutOccurrenceRow>();
+    for (const rows of projections) for (const row of rows) unique.set(row.id, row);
+    return [...unique.values()].sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
+      || a.id.localeCompare(b.id));
+  }
+
+  observeCalendar(onChange: (rows: CloudWorkoutOccurrenceRow[]) => void,
+    onError: (error: unknown) => void): { unsubscribe(): void } {
+    return liveQuery(() => this.listCalendar()).subscribe({ next: onChange, error: onError });
   }
 
   observeOccurrences(trainingPlanId: string, view: WorkoutOccurrenceView,
