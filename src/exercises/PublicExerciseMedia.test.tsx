@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PublicExerciseMedia, publicExerciseMediaUrl } from './PublicExerciseMedia';
+import { PublicExerciseMedia, publicExerciseMediaUrl, exerciseImageUrl } from './PublicExerciseMedia';
 import mediaRelease from '../../shared/approved-exercise-media.json';
 
 vi.mock('../ui', () => ({
@@ -49,6 +49,20 @@ describe('public Dexie catalogue media / R2 boundary', () => {
     expect(publicExerciseMediaUrl({ ...row, id: '00001' })).toBeNull();
     expect(publicExerciseMediaUrl({ ...row, sourceSha256: 'a'.repeat(64) })).toBeNull();
     expect(publicExerciseMediaUrl({ ...row, gif_url: '' })).toBeNull();
+  });
+
+  it('prefers uploaded images for private copies and ignores untrusted URLs', () => {
+    const url = '/api/exercise-media/personal/11111111-1111-4111-8111-111111111111?v=' + 'a'.repeat(64);
+    const copy = {
+      ...row, id: 'custom:22222222-2222-4222-8222-222222222222',
+      sourceSha256: 'coach-custom', copiedFromScope: 'public' as const,
+      copiedFromExerciseId: '0001', media_id: '0001', image: url,
+    };
+    expect(exerciseImageUrl(copy)).toBe(url);
+    render(<PublicExerciseMedia row={copy} variant="detail" />);
+    expect(screen.getByRole('img', { name: 'Жим' }).getAttribute('src')).toBe(url);
+    expect(exerciseImageUrl({ ...copy, image: 'https://untrusted.test/a.gif' }))
+      .toContain('/api/exercise-media/gym_keeper_apk/0001');
   });
 
   it('renders lazy decorative thumbnail and falls back if Worker/R2 returns an error', () => {
