@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { loadBrowserGlassSettings } from '../glassSettings';
 import type { CloudProgramStatus } from '../data/cloud/database';
 import { IconButton, MezfitSearchbar, Text } from '../ui';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
@@ -20,10 +21,12 @@ export function ProgramToolbar({ controls, showSearch = true }: {
   showSearch?: boolean;
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const glassPreset = loadBrowserGlassSettings().preset;
   return (
     <div className="cloud-plan-toolbar">
       <div className="cloud-plan-toolbar-tabs">
         <LiquidGlassTextOnly tabs={FILTERS} value={controls.filter} hidden={false} fullWidth
+          glassPreset={glassPreset}
           onValueChange={(value) => {
             if (FILTERS.some((tab) => tab.value === value)) controls.onFilterChange(value as ProgramFilter);
           }} />
