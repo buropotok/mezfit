@@ -494,12 +494,13 @@ export async function fetchCloudContactAvatar(
 }
 
 /** Authenticated binary upload; JSON API helper must not set a JSON content-type here. */
-export async function uploadPersonalExerciseMedia(initData: string, image: Blob): Promise<string> {
+export async function uploadPersonalExerciseMedia(initData: string, image: Blob, signal?: AbortSignal): Promise<string> {
   if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');
   const response = await fetch('/api/exercise-media/personal', {
     method: 'POST',
     headers: { 'x-telegram-init-data': initData, 'content-type': image.type },
     body: image,
+    signal,
   });
   if (!response.ok) throw new ApiError(response.status, 'Не удалось загрузить изображение', 'IMAGE_UPLOAD_FAILED');
   const value: unknown = await response.json();
