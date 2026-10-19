@@ -210,7 +210,7 @@ export function CloudProgramDetailsPage({
   } : null, [details, readOnly, addPhase, addDay, busy, phaseCreateBusy]);
   useNavigationSurfaceFloatingAction(floatingAction);
 
-  const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled') => {
+  const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled', onActivated?: () => Promise<void>) => {
     if (!details) return;
     const other = (await repository.listReadable()).find((plan) =>
       isOtherActiveProgramInScope(plan, details.program));
@@ -224,33 +224,35 @@ export function CloudProgramDetailsPage({
             previousProgramStatus: value as 'draft' | 'finished' | 'cancelled',
           });
           setDialog(null);
+          await onActivated?.();
         },
       });
     } else {
       await repository.activate(planId, phaseId, { previousPhaseStatus });
       setDialog(null);
+      await onActivated?.();
     }
   };
-  const confirmActivation = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled') => {
-    if (details?.program.status !== 'active') {
+  const confirmActivation = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled', onActivated?: () => Promise<void>, confirmed = false) => {
+    if (details?.program.status !== 'active' && !confirmed) {
       setDialog({
         kind: 'confirm', title: 'Программа будет активирована.',
-        onConfirm: async () => { await activate(phaseId, previousPhaseStatus); },
+        onConfirm: async () => { await activate(phaseId, previousPhaseStatus, onActivated); },
       });
     } else {
-      await activate(phaseId, previousPhaseStatus);
+      await activate(phaseId, previousPhaseStatus, onActivated);
     }
   };
-  const requestActivation = async (phase: CloudProgramPhaseRow) => {
+  const requestActivation = async (phase: CloudProgramPhaseRow, onActivated?: () => Promise<void>, confirmed = false) => {
     const previous = details?.phases.find((item) => item.id !== phase.id && item.status === 'active');
     if (previous) {
       setDialog({
         kind: 'select', title: 'Выберите статус для текущей активной фазы',
         options: [...INACTIVE, { value: 'pending', label: 'В ожидании' }],
         onConfirm: async (value) =>
-          confirmActivation(phase.id, value as 'draft' | 'pending' | 'finished' | 'cancelled'),
+          confirmActivation(phase.id, value as 'draft' | 'pending' | 'finished' | 'cancelled', onActivated, confirmed),
       });
-    } else await confirmActivation(phase.id);
+    } else await confirmActivation(phase.id, undefined, onActivated, confirmed);
   };
 
   const action = (key: string, phase: CloudProgramPhaseRow) => {
@@ -362,6 +364,13 @@ export function CloudProgramDetailsPage({
           })}
         >
           {(collapsed, bodyId) => <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
+            onActivateForScheduling={(phaseId, onActivated) => {
+              const target = details.phases.find(item => item.id === phaseId);
+              if (!target || readOnly || busy) return;
+              setDialog({ kind: 'confirm', title: details.program.status === 'active' ? 'Фаза будет активирована.' : 'Программа будет активирована.',
+                description: 'После активации можно будет запланировать тренировку.',
+                onConfirm: () => requestActivation(target, onActivated, true) });
+            }}
             phaseStatus={phase.status} days={(details.days ?? []).filter((item) => item.day.programPhaseId === phase.id)}
             collapsed={collapsed} bodyId={bodyId} viewerRole={viewerRole} onNavigationContextChange={onNavigationContextChange} readOnly={readOnly} actor={actor} /> }
         </PhaseHeading>

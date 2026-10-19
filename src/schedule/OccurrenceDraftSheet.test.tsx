@@ -16,6 +16,7 @@ vi.mock('../workout/WorkoutPlanCard', () => ({
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>,
 }));
 vi.mock('../ui', () => ({
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Avatar: () => null,
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
@@ -27,7 +28,8 @@ vi.mock('../ui', () => ({
     <button onClick={() => onChange('2026-10-21')}>Свободная дата</button>
   </div> : null,
   Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
-  MezfitBottomSheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  MezfitBottomSheet: ({ children, opened }: { children: ReactNode; opened: boolean }) =>
+    <div data-testid="sheet-shell" data-open={opened}>{children}</div>,
   MezfitDialog: ({ opened, children, buttons }: { opened: boolean; children: ReactNode; buttons: ReactNode }) => opened ? <div>{children}{buttons}</div> : null,
   MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
@@ -45,6 +47,31 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 
 describe('draft edit recovery', () => {
+  it('keeps one closed shell mounted before opening and across workout changes', () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const props = { drafts, onClose: vi.fn(), onSave: vi.fn() };
+    const view = render(<OccurrenceDraftSheet {...props} draft={null} />);
+    const shell = screen.getByTestId('sheet-shell');
+    expect(shell.getAttribute('data-open')).toBe('false');
+    view.rerender(<OccurrenceDraftSheet {...props} draft={draft} />);
+    expect(screen.getByTestId('sheet-shell')).toBe(shell);
+    expect(shell.getAttribute('data-open')).toBe('true');
+    view.rerender(<OccurrenceDraftSheet {...props} draft={{ ...draft, id: 'another' }} />);
+    expect(screen.getByTestId('sheet-shell')).toBe(shell);
+  });
+  it.each(['independent', 'coached'] as const)('shows %s format and publication status independently from Save', format => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const view = render(<OccurrenceDraftSheet draft={{ ...draft, format }} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    expect(screen.getByText('Запланированная тренировка')).toBeTruthy();
+    expect(screen.getByText(format === 'coached' ? 'С тренером в зале' : 'Самостоятельная')).toBeTruthy();
+    expect(screen.getByText('Черновик')).toBeTruthy();
+    expect(screen.getByText('План на тренировку')).toBeTruthy();
+    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, format, saved: true }} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    expect(screen.getByText('Запланировано')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
+  });
   it.each(['Занятая дата', 'Некорректная дата'])('retains rejection of %s until timing is corrected, including across content edits', async badChoice => {
     vi.stubEnv('TZ', 'UTC');
     let current = structuredClone(draft);
@@ -58,6 +85,7 @@ describe('draft edit recovery', () => {
     const save = vi.fn().mockResolvedValue(undefined);
     render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={save} />);
     fireEvent.click(screen.getByRole('button', { name: /^Дата:/ }));
+    expect(screen.getByRole('button', { name: 'Занятая дата' }).closest('[data-testid="sheet-shell"]')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: badChoice }));
     expect(await screen.findByRole('alert')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));

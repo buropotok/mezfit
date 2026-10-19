@@ -3,7 +3,7 @@ import { Avatar } from '../ui';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 
 /** Presentation adapter only: the UIkit Avatar retains all existing mechanics and styling. */
-export function CloudContactAvatar({ contact }: { contact: CloudContact }) {
+export function CloudContactAvatar({ contact, className }: { contact: CloudContact; className?: string }) {
   const connections = useCloudConnections();
   const loadAvatar = connections?.loadAvatar;
   const cache = connections?.avatarUrls;
@@ -32,5 +32,5 @@ export function CloudContactAvatar({ contact }: { contact: CloudContact }) {
     };
   }, [identity, cache, loadAvatar]);
 
-  return <Avatar name={contact.displayName} src={src} />;
+  return <Avatar name={contact.displayName} src={src} className={className} />;
 }

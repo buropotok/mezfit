@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Chip } from 'konsta/react';
 import type { Role } from '../api';
-import type { NavigationContext } from '../NavigationShell';
+import { useNavigationSurfaceFloatingAction, type NavigationContext } from '../NavigationShell';
+import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
@@ -14,6 +16,7 @@ import { Badge, DaySchedule, DayScheduleEventCard, Text, getDayScheduleValue,
   type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
 import { useSchedulePlanning } from './SchedulePlanningContext';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
+import { ScheduleClientFilter } from './ScheduleClientFilter';
 import { calendarSegments, localScheduleInstant } from './calendar-time';
 import './today-page.css';
 
@@ -62,7 +65,9 @@ export function TodayPage({
 }) {
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
-  const [clientUserId, setClientUserId] = useState<string | null>(null);
+  const [clientUserIds, setClientUserIds] = useState<string[]>([]);
+  const [filterOpened, setFilterOpened] = useState(false);
+  const clients = useMemo(() => [...new Map((cloud?.clients ?? []).map(client => [client.userId, client])).values()], [cloud?.clients]);
   const [date, setDate] = useState<LocalDate>(currentDate);
   const [occurrences, setOccurrences] = useState<CloudWorkoutOccurrenceRow[]>([]);
   const [drafts, setDrafts] = useState<LocalWorkoutOccurrenceDraft[]>([]);
@@ -99,11 +104,11 @@ export function TodayPage({
     };
   }, [draftRepository]);
 
-  useEffect(() => { setClientUserId(null); setOpenedDraftId(null); setViewed(null); }, [planning?.viewResetKey]);
+  useEffect(() => { setClientUserIds([]); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); }, [planning?.viewResetKey, cloud?.actorUserId]);
 
   useEffect(() => {
     if (!planning?.requestedDraftId) return;
-    setClientUserId(role === 'coach' ? planning.requestedClientUserId ?? null : null);
+    setClientUserIds(role === 'coach' && planning.requestedClientUserId ? [planning.requestedClientUserId] : []);
     setOpenedDraftId(planning.requestedDraftId);
     planning.clearDraft();
   }, [planning?.requestedDraftId]);
@@ -115,6 +120,10 @@ export function TodayPage({
     return row && cloud ? draftFromOccurrence(cloud.actorUserId, row) : viewed;
   }, [drafts, occurrences, openedDraftId, viewed, cloud?.actorUserId]);
   const closeEditor = () => { setOpenedDraftId(null); setViewed(null); };
+  const filterAction = useMemo(() => role === 'coach' && !selected ? {
+    label: 'Поиск клиента', icon: 'search' as const, isShown: !filterOpened, onClick: () => setFilterOpened(true),
+  } : null, [role, selected?.id, filterOpened]);
+  useNavigationSurfaceFloatingAction(filterAction);
   const mayEdit = (row: CloudWorkoutOccurrenceRow) => row.status === 'scheduled' && !row.workoutSessionId
     && (row.athleteUserId === cloud?.actorUserId || row.coachUserId === cloud?.actorUserId)
     && (row.format !== 'coached' || row.coachUserId === cloud?.actorUserId);
@@ -125,10 +134,15 @@ export function TodayPage({
   useEffect(() => {
     if (selected) {
       onNavigationContextChange({
-        level: 2, title: 'Запланировать тренировку',
+        level: 2, title: 'Запланированная тренировка',
         scrollKey: 'schedule:draft:' + selected.id,
-        identity: { title: 'Запланировать тренировку', icon: 'calendar-plus' },
+        identity: { title: 'Запланированная тренировка', icon: 'calendar-plus' },
         contentMode: 'viewport', onBack: closeEditor,
+      });
+    } else if (filterOpened) {
+      onNavigationContextChange({
+        level: 2, title: 'Выбрать клиентов', identity: { title: 'Выбрать клиентов', icon: 'users' },
+        contentMode: 'viewport', onBack: () => setFilterOpened(false),
       });
     } else {
       const view = getDayScheduleValue(date);
@@ -140,20 +154,22 @@ export function TodayPage({
       });
     }
     return () => onNavigationContextChange(null);
-  }, [date, selected?.id, onNavigationContextChange]);
+  }, [date, selected?.id, filterOpened, onNavigationContextChange]);
 
   const merged = useMemo(() => {
     const withTiming = <T extends LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow>(row: T, type: string): T =>
       timingOverrides[type + ':' + row.id] ? { ...row, ...timingOverrides[type + ':' + row.id] } : row;
-    const participant = role === 'coach' ? clientUserId ?? cloud?.actorUserId : cloud?.actorUserId;
-    const visible = (row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow) => row.athleteUserId === participant
-      || (row.coachUserId === participant && row.format === 'coached');
+    const visible = (row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow) => {
+      if (role === 'coach' && clientUserIds.length) return clientUserIds.includes(row.athleteUserId);
+      return row.athleteUserId === cloud?.actorUserId
+        || (row.coachUserId === cloud?.actorUserId && row.format === 'coached');
+    };
     return [
       ...occurrences.filter(visible).filter(row => !drafts.some(draft => draft.targetOccurrenceId === row.id))
         .flatMap(row => timelineEvents(withTiming(row, 'occurrence'), 'occurrence')),
       ...drafts.filter(visible).flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
     ];
-  }, [occurrences, drafts, timingOverrides, role, clientUserId, cloud?.actorUserId]);
+  }, [occurrences, drafts, timingOverrides, role, clientUserIds, cloud?.actorUserId]);
 
   const eventsByDate = useMemo<Record<LocalDate, TimelineItem[]>>(() => {
     const grouped: Record<string, TimelineItem[]> = {};
@@ -231,7 +247,7 @@ export function TodayPage({
   const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить тренировку')); };
 
   return (
-    <section className="today-page" aria-label="Расписание" aria-busy={loading || undefined}>
+    <section className={`today-page${clientUserIds.length && role === 'coach' ? ' today-page--filtered' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
       <DaySchedule date={date} eventsByDate={eventsByDate} onDateChange={setDate}
         className="today-page__schedule"
         eventsShareResource={(event, other) => bookingsShareParticipant(
@@ -246,6 +262,23 @@ export function TodayPage({
         renderEvent={(event, state) => <BookingCard event={event} state={state} actor={actor}
           onClick={() => report(openEvent(event))} />} />
 
+      {role === 'coach' && clientUserIds.length ? <div className="today-page__filters" aria-label="Выбранные клиенты">
+        {clientUserIds.map(id => {
+          const client = clients.find(person => person.userId === id);
+          return <Chip key={id} deleteButton
+            media={client ? <CloudContactAvatar contact={client} className="schedule-client-avatar" /> : undefined}
+            onDelete={() => setClientUserIds(current => current.filter(value => value !== id))}>
+            {client?.displayName ?? 'Клиент'}
+          </Chip>;
+        })}
+      </div> : null}
+      {role === 'coach' ? <ScheduleClientFilter opened={filterOpened} clients={clients}
+        loading={cloud?.status === 'loading'} selected={clientUserIds}
+        onClose={() => setFilterOpened(false)} onApply={ids => {
+          setClientUserIds(ids.filter(id => clients.some(client => client.userId === id)));
+          setFilterOpened(false);
+        }} /> : null}
+
       {loading || error || (!selected && programUpdateError) || notice ? (
         <div className="today-page__status" aria-live="polite">
           <Text variant="footnote" tone="muted" role={error || (!selected && programUpdateError) ? 'alert' : undefined}>
@@ -253,7 +286,7 @@ export function TodayPage({
           </Text>
         </div>
       ) : null}
-      {draftRepository ? <OccurrenceDraftSheet key={selected?.id ?? 'closed'} draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
+      {draftRepository ? <OccurrenceDraftSheet draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
         onClose={closeEditor} onSave={save} saveNotice={programUpdateError} /> : null}
     </section>
   );
