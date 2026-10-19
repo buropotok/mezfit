@@ -1,4 +1,4 @@
-import { publicExerciseMediaUrl } from '../exercises/publicExerciseMedia';
+import { exerciseImageUrl } from '../exercises/publicExerciseMedia';
 import type { MezfitCloudDatabase } from './database';
 import { isPublicCatalogueRow, isPublicExerciseRow } from '../exercises/publicExerciseTypes';
 import { isCoachExerciseDefinition, type CatalogueExerciseRow } from '../exercises/coachExerciseTypes';
@@ -26,7 +26,7 @@ export function programExerciseSnapshot(row: CatalogueExerciseRow, actor: string
     source_consistency_issue, anatomy_evidence } = row;
   return {
     exerciseDefinitionId: id, scope: personal ? 'coach' : 'public',
-    name: name_ru || name, nameEn: name_en || null, mediaUrl: publicExerciseMediaUrl(row),
+    name: name_ru || name, nameEn: name_en || null, mediaUrl: exerciseImageUrl(row),
     ...(personal ? { catalogueCoachUserId: actor, catalogueDefinition: {
       id, name, name_ru, name_en, category, subcategory, subcategory_ru, movement_type,
       muscles, mobility_targets, equipment, body_part, target, muscle_group, secondary_muscles,
