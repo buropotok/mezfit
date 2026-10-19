@@ -60,4 +60,26 @@ describe('local-first personal exercise edits', () => {
     expect(saved.instruction_steps.en).toEqual(['Updated step']);
     expect(saved.realmId).toBe('tg:202');
   });
+  it('clears steps when newly edited text supersedes steps added elsewhere', async () => {
+    const db = new Dexie(`coach-exercise-instructions-${crypto.randomUUID()}`);
+    databases.push(db);
+    db.version(1).stores({ coachExerciseDefinitions: 'id, realmId' });
+    const initial = structuredClone(exercise);
+    initial.instruction_steps.ru = [];
+    await db.table('coachExerciseDefinitions').add(initial);
+    await db.table('coachExerciseDefinitions').update(initial.id, {
+      instruction_steps: { ...initial.instruction_steps, ru: ['Новый удалённый шаг'] },
+    });
+    const repository = new CoachExerciseCatalogueRepository(
+      db as unknown as MezfitCloudDatabase, 'tg:202',
+    );
+    await repository.updateExercise(initial.id, {
+      instructions: { ...initial.instructions, ru: 'Новый текст' },
+      instruction_steps: { ...initial.instruction_steps, ru: [] },
+    }, initial);
+    const saved = await db.table('coachExerciseDefinitions').get(initial.id);
+    expect(saved.instruction_steps.ru).toEqual([]);
+    expect(saved.instructions.ru).toBe('Новый текст');
+  });
+
 });
