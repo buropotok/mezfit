@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { MezfitCloudDatabase } from '../data/cloud/database';
+import { WorkoutSlotConflict } from '../data/cloud/workout-slot-validation';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 
 vi.mock('./WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
@@ -18,12 +19,19 @@ vi.mock('../ui', () => ({
   Avatar: () => null,
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
-  IconButton: () => null, Icon: () => null, DatePicker: () => null, TimePicker: () => null,
+  IconButton: () => null, Icon: () => null, TimePicker: () => null,
+  DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) => opened ? <div>
+    <button onClick={() => onChange('2026-10-20')}>Занятая дата</button>
+    <button onClick={() => onChange('invalid')}>Некорректная дата</button>
+    <button onClick={() => onChange('2026-10-21')}>Свободная дата</button>
+  </div> : null,
   Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
   MezfitBottomSheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  MezfitDialog: () => null, MezfitDialogButton: () => null,
+  MezfitDialog: ({ opened, children, buttons }: { opened: boolean; children: ReactNode; buttons: ReactNode }) => opened ? <div>{children}{buttons}</div> : null,
+  MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
+    <button onClick={onClick} disabled={disabled}>{children}</button>,
 }));
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
 const plan = { name: 'День', comment: null, exercises: [{
   id: 'exercise', sourceProgramExerciseId: null, position: 0, notes: null, sets: [],
   exercise: { exerciseDefinitionId: '0001', scope: 'public' as const, name: 'Жим', nameEn: null, mediaUrl: null },
@@ -36,6 +44,45 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 
 describe('draft edit recovery', () => {
+  it.each(['Занятая дата', 'Некорректная дата'])('retains rejection of %s until timing is corrected, including across content edits', async badChoice => {
+    vi.stubEnv('TZ', 'UTC');
+    let current = structuredClone(draft);
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'get').mockImplementation(async () => structuredClone(current));
+    vi.spyOn(drafts, 'edit').mockImplementation(async (_id, apply) => {
+      const changed = apply(structuredClone(current));
+      if (changed.startsAtUtc.startsWith('2026-10-20')) throw new WorkoutSlotConflict('Время занято');
+      current = changed;
+    });
+    const save = vi.fn().mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={save} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Дата:/ }));
+    fireEvent.click(screen.getByRole('button', { name: badChoice }));
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Сохранить' }).hasAttribute('disabled')).toBe(false));
+    expect(save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('Добавить подход'));
+    await waitFor(() => expect(current.plan.exercises[0].sets).toHaveLength(1));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Сохранить' }).hasAttribute('disabled')).toBe(false));
+    expect(save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Свободная дата' }));
+    await waitFor(() => expect(current.startsAtUtc).toBe('2026-10-21T08:00:00.000Z'));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Нет' }));
+    await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ startsAtUtc: '2026-10-21T08:00:00.000Z' }), false));
+  });
+
+  it('displays the parent-owned program result inside the open saved editor', () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={{ ...draft, saved: true }} drafts={drafts} onClose={() => {}} onSave={vi.fn()}
+      saveNotice="Тренировка сохранена. Программа не обновлена: День изменился" />);
+    expect(screen.getByRole('alert').textContent).toContain('Программа не обновлена');
+    expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
+  });
+
   it('shows Save only for a draft, while saved content remains editable', () => {
     const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
     vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);

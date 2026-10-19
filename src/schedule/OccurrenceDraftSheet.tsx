@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
-import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import { isWorkoutEditRejected, type WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { appendOccurrenceExercise, appendOccurrenceSet, occurrencePlanChanged,
   removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises } from '../data/cloud/workout-occurrence-edit';
 import { readProgramCatalogueExercise, programExerciseSnapshot } from '../data/cloud/program-exercise-selection';
@@ -53,11 +53,12 @@ export interface OccurrenceDraftSheetProps {
   drafts: WorkoutOccurrenceDraftRepository;
   actor?: ProgramActor;
   readOnly?: boolean;
+  saveNotice?: string;
   onClose: () => void;
   onSave: (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => Promise<void>;
 }
 
-export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, readOnly = false }: OccurrenceDraftSheetProps) {
+export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '' }: OccurrenceDraftSheetProps) {
   const cloud = useCloudConnections();
   const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
   const [dateOpened, setDateOpened] = useState(false);
@@ -71,6 +72,9 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
   const startRef = useRef<HTMLSpanElement>(null);
   const endRef = useRef<HTMLSpanElement>(null);
   const validating = useRef<Promise<void>>(Promise.resolve());
+  const rejectedTiming = useRef<string | null>(null);
+  const timingIntent = useRef(0);
+  const pendingTiming = useRef(false);
   useEffect(() => {
     if (!draft || readOnly) return;
     let active = true;
@@ -84,23 +88,41 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
 
   const flushEdits = async () => {
     await validating.current;
-    if (draft) await drafts.flushEdits(draft.id);
+    if (rejectedTiming.current) throw new Error(rejectedTiming.current);
+    try {
+      if (draft) await drafts.flushEdits(draft.id);
+      pendingTiming.current = false;
+    }
+    catch (reason) {
+      if (pendingTiming.current && isWorkoutEditRejected(reason)) rejectedTiming.current = reason.message;
+      throw reason;
+    }
   };
-  const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1]) => {
+  const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1], timing = false) => {
     if (!draft || busy || readOnly) return;
-    setError('');
+    const intent = timing ? ++timingIntent.current : 0;
+    if (timing) { rejectedTiming.current = null; pendingTiming.current = true; }
+    setError(rejectedTiming.current ?? '');
     let accepted = false;
     const next = validating.current.catch(() => undefined).then(async () => {
       const current = await drafts.get(draft.id);
       if (!current) throw new Error('Черновик не найден');
       accepted = true;
       await drafts.enqueueEdit(draft.id, apply);
+      if (timing && intent === timingIntent.current) pendingTiming.current = false;
     });
     // Invalid local choices block Save. A storage failure is retained by the
     // repository queue instead, so Save can retry that accepted edit.
-    validating.current = next.catch(reason => { if (!accepted) throw reason; });
+    validating.current = next.catch(reason => {
+      if (timing && intent === timingIntent.current && isWorkoutEditRejected(reason)) {
+        rejectedTiming.current = reason.message;
+        pendingTiming.current = false;
+      }
+      if (!accepted) throw reason;
+    });
     void validating.current.catch(() => undefined);
     void next.catch(reason => {
+      if (timing && intent !== timingIntent.current) return;
       setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
     });
   };
@@ -139,9 +161,11 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
   const editStart = (date: LocalDate, time: LocalTime) => {
     try {
       const utc = localScheduleInstant(date, time);
-      edit(current => ({ ...current, startsAtUtc: utc }));
+      edit(current => ({ ...current, startsAtUtc: utc }), true);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Некорректная дата или время');
+      ++timingIntent.current;
+      rejectedTiming.current = reason instanceof Error ? reason.message : 'Некорректная дата или время';
+      setError(rejectedTiming.current);
     }
   };
   const selectExercises = async (ids: string[]) => {
@@ -171,7 +195,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
           <IconButton label="Закрыть" disabled={busy} onClick={onClose}>✕</IconButton>
         </header>
         <div className="occurrence-draft-sheet__body">
-          {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
+          {error || saveNotice ? <Text variant="footnote" role="alert">{error || saveNotice}</Text> : null}
           <WorkoutSyncStatus draft={draft} repository={drafts} />
           <div className="occurrence-draft-sheet__timing">
             <Button variant="secondary" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
@@ -227,9 +251,11 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
           try {
             const target = Date.parse(localScheduleEnd(start, time));
             const duration = Math.round((target - start.getTime()) / 60_000);
-            edit(current => ({ ...current, durationMinutes: duration }));
+            edit(current => ({ ...current, durationMinutes: duration }), true);
           } catch (reason) {
-            setError(reason instanceof Error ? reason.message : 'Некорректное время окончания');
+            ++timingIntent.current;
+            rejectedTiming.current = reason instanceof Error ? reason.message : 'Некорректное время окончания';
+            setError(rejectedTiming.current);
           }
         }} />
       <WorkoutExerciseSelectionSheet opened={exercisePickerOpened} initData=""

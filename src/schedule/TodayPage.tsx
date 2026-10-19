@@ -69,6 +69,8 @@ export function TodayPage({
   const [openedDraftId, setOpenedDraftId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [programUpdateError, setProgramUpdateError] = useState('');
+  const activeRepository = useRef<WorkoutOccurrenceDraftRepository | null>(null);
   const changingEvent = useRef(false);
   const draftRepository = useMemo(() => cloud
     ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
@@ -76,6 +78,8 @@ export function TodayPage({
 
   useEffect(() => {
     if (!draftRepository) return undefined;
+    activeRepository.current = draftRepository;
+    setProgramUpdateError('');
     setLoading(true); setOccurrences([]); setDrafts([]); setOpenedDraftId(null); setViewed(null);
     const subscription = draftRepository.observeWorkspace(({ occurrences, drafts }) => {
       setOccurrences(occurrences); setDrafts(drafts); setLoading(false); setError('');
@@ -83,7 +87,10 @@ export function TodayPage({
       setLoading(false);
       setError(reason instanceof Error ? reason.message : 'Не удалось прочитать расписание');
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      activeRepository.current = null;
+      subscription.unsubscribe();
+    };
   }, [draftRepository]);
 
   useEffect(() => {
@@ -147,14 +154,23 @@ export function TodayPage({
 
   const save = async (selectedDraft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => {
     if (!cloud || !draftRepository) throw new Error('Сохранение недоступно');
+    setProgramUpdateError('');
     const draft = await draftRepository.get(selectedDraft.id);
     if (!draft) throw new Error('Черновик не найден');
     const id = await draftRepository.save(draft.id);
+    if (activeRepository.current !== draftRepository) return;
     setOpenedDraftId('draft:' + id);
     if (updateProgram) {
       // Updating the source is a separate local operation; the workout is already saved.
       const repository = new ProgramManagementRepository(cloud.db, cloud.actorUserId);
-      await repository.applyOccurrencePlan(draft.trainingPlanId, draft.programDayId, draft.plan, draft.originalPlan);
+      try {
+        await repository.applyOccurrencePlan(draft.trainingPlanId, draft.programDayId, draft.plan, draft.originalPlan);
+      } catch (reason) {
+        if (activeRepository.current === draftRepository) {
+          const detail = reason instanceof Error ? reason.message : 'Не удалось обновить день программы';
+          setProgramUpdateError('Тренировка сохранена. Программа не обновлена: ' + detail);
+        }
+      }
     }
   };
 
@@ -208,15 +224,15 @@ export function TodayPage({
         renderEvent={(event, state) => <BookingCard event={event} state={state} actor={actor}
           onClick={() => report(openEvent(event))} />} />
 
-      {loading || error || notice ? (
+      {loading || error || (!selected && programUpdateError) || notice ? (
         <div className="today-page__status" aria-live="polite">
-          <Text variant="footnote" tone="muted">
-            {error || notice || 'Загружаем расписание…'}
+          <Text variant="footnote" tone="muted" role={error || (!selected && programUpdateError) ? 'alert' : undefined}>
+            {(!selected && programUpdateError) || error || notice || 'Загружаем расписание…'}
           </Text>
         </div>
       ) : null}
       {draftRepository ? <OccurrenceDraftSheet key={selected?.id ?? 'closed'} draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
-        onClose={closeEditor} onSave={save} /> : null}
+        onClose={closeEditor} onSave={save} saveNotice={programUpdateError} /> : null}
     </section>
   );
 }

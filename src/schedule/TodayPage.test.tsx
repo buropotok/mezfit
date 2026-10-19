@@ -9,6 +9,7 @@ import type { MezfitCloudDatabase } from '../data/cloud/database';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { WorkoutOccurrenceDraftRepository as Repository } from '../data/cloud/workout-occurrence-drafts';
+import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { TodayPage } from './TodayPage';
 const state = vi.hoisted(() => ({ db: null as MezfitCloudDatabase | null,
   move: null as null | ((value: DayScheduleEventMove) => void),
@@ -19,14 +20,18 @@ vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: 
   db: state.db, actorUserId: 'tg:101', clients: [], coaches: [], syncStatus: 'offline',
 }) }));
 vi.mock('./SchedulePlanningContext', () => ({ useSchedulePlanning: () => null }));
-vi.mock('./OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ draft, drafts, onSave, onClose }: {
-  draft: LocalWorkoutOccurrenceDraft | null; drafts: WorkoutOccurrenceDraftRepository;
+vi.mock('./OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ draft, drafts, onSave, onClose, saveNotice }: {
+  draft: LocalWorkoutOccurrenceDraft | null; drafts: WorkoutOccurrenceDraftRepository; saveNotice?: string;
   onSave: (draft: LocalWorkoutOccurrenceDraft, update: boolean) => Promise<void>; onClose: () => void;
 }) => draft ? <div role="dialog">
+  {saveNotice ? <span role="alert">{saveNotice}</span> : null}
   <span>{draft.saved ? 'Сохранённая тренировка' : 'Редактируется черновик'}</span>
   <button onClick={() => { void drafts.enqueueEdit(draft.id, row => ({ ...row, plan: { ...row.plan, name: 'Новый план' } })); }}>Изменить план</button>
   <button onClick={() => { void drafts.enqueueEdit(draft.id, row => ({ ...row, durationMinutes: 90 })); }}>Изменить время</button>
-  {!draft.saved ? <button onClick={() => { void onSave(draft, false); }}>Сохранить</button> : null}
+  {!draft.saved ? <>
+    <button onClick={() => { void onSave(draft, false); }}>Сохранить</button>
+    <button onClick={() => { void onSave(draft, true); }}>Сохранить и обновить программу</button>
+  </> : null}
   <button onClick={onClose}>Закрыть</button>
 </div> : null }));
 vi.mock('../ui', async original => ({
@@ -65,8 +70,28 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
   vi.stubEnv('TZ', 'UTC');
 });
-afterEach(async () => { cleanup(); await db.delete(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
+afterEach(async () => { cleanup(); await db.delete(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe('local-first calendar experience', () => {
+  it('keeps a source-program failure visible after the saved editor remounts and closes', async () => {
+    let rejectUpdate: (reason: Error) => void = () => {};
+    const update = new Promise<void>((_, reject) => { rejectUpdate = reject; });
+    vi.spyOn(ProgramManagementRepository.prototype, 'applyOccurrencePlan').mockImplementation(() => update);
+    await repo().create(draft);
+    open(); fireEvent.click(await screen.findByText('Черновик'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить и обновить программу' }));
+    expect(await screen.findByText('Сохранённая тренировка')).toBeTruthy();
+    await act(async () => { rejectUpdate(new Error('Исходный день изменён')); });
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Тренировка сохранена. Программа не обновлена: Исходный день изменён');
+    expect(await repo().list()).toEqual([]);
+    expect(await db.table('workoutOccurrences').count()).toBe(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    // The result outlives the sheet and subsequent successful calendar observations.
+    const [row] = await db.table('workoutOccurrences').toArray();
+    await act(async () => { await db.table('workoutOccurrences').update(row.id, { durationMinutes: 90 }); });
+    expect(screen.getByRole('alert').textContent).toContain('Программа не обновлена');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('opens saved content without a draft and converts only content edits to a draft', async () => {
     await repo().create(draft); const id = await repo().save(draft.id);
     open(); fireEvent.click(await screen.findByRole('button', { name: /Вы.*День 1/ }));

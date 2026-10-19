@@ -12,6 +12,11 @@ import { markWorkoutChanged } from './workout-sync';
 
 class WorkoutEditRejected extends Error {}
 
+/** A rejected local choice is distinct from a storage failure retained for retry. */
+export function isWorkoutEditRejected(reason: unknown): reason is Error {
+  return reason instanceof WorkoutEditRejected || reason instanceof WorkoutSlotConflict;
+}
+
 type DraftEdit = (draft: LocalWorkoutOccurrenceDraft) => LocalWorkoutOccurrenceDraft;
 interface EditQueue { pending: DraftEdit[]; running: Promise<void>; error: string }
 // Only local storage intents. Addon owns all replication, independently of editors.
