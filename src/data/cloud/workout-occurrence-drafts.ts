@@ -80,7 +80,8 @@ export class WorkoutOccurrenceDraftRepository {
       .subscribe({ next: onChange, error: onError });
   }
 
-  observeSync(id: string, onChange: (row: LocalProgramSyncRow | undefined) => void, onError: (reason: unknown) => void) {
+  observeSync(id: string, onChange: (row: LocalProgramSyncRow | undefined) => void,
+    onError: (reason: unknown) => void): { unsubscribe(): void } {
     return liveQuery(() => this.db.localWorkoutSync.get(id)).subscribe({ next: onChange, error: onError });
   }
 

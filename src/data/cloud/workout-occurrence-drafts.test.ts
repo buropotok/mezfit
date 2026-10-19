@@ -113,10 +113,11 @@ describe('local workout occurrence drafts', () => {
     await repo('tg:202').enqueueEdit('draft:' + id, current => ({ ...current, durationMinutes: 90 }));
     expect((await db.table('workoutOccurrences').get(id)).durationMinutes).toBe(90);
     const patches: Record<string, unknown>[] = [];
-    const capture = (changes: Record<string, unknown>) => { patches.push(changes); };
-    db.table('workoutOccurrences').hook('updating', capture);
+    const updating = db.table('workoutOccurrences').hook.updating;
+    const capture: Parameters<typeof updating.subscribe>[0] = changes => { patches.push({ ...changes }); };
+    updating.subscribe(capture);
     await repo('tg:202').save('draft:' + id);
-    db.table('workoutOccurrences').hook('updating').unsubscribe(capture);
+    updating.unsubscribe(capture);
     for (const patch of patches) expect(patch).not.toHaveProperty('plan');
     expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe(shared.plan.name);
     await expect(repo('tg:202').replacePlan('draft:' + id, { ...shared.plan, name: 'Подмена' }))
