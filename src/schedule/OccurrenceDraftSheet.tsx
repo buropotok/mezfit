@@ -149,7 +149,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
       const owner = (latest.coachUserId ?? latest.athleteUserId) === latest.actorUserId;
-      if (!latest.targetOccurrenceId && owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
+      if (!latest.previouslyPublished && owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
         setProgramUpdateOpen(true);
       } else {
         await onSave(latest, false);
@@ -232,7 +232,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
         </div>
         {!readOnly && !draft.saved ? <footer className="occurrence-draft-sheet__footer">
           <Button variant="secondary" color="red" disabled={busy || readOnly} onClick={() => setDeleteOpen(true)}>
-            {draft.targetOccurrenceId ? 'Отменить изменения' : 'Удалить черновик'}
+            {draft.previouslyPublished ? 'Отменить изменения' : 'Удалить черновик'}
           </Button>
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer> : null}

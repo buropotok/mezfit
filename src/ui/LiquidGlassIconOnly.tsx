@@ -19,6 +19,8 @@ export type LiquidGlassIconOnlyProps = {
   tabs: readonly LiquidGlassIconOnlyTab[];
   value: string | null;
   onValueChange: (value: string) => void;
+  /** Explicit active-tab tap; does not pretend the selected value changed. */
+  onReselect?: (value: string) => void;
   hidden: boolean;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
@@ -120,13 +122,14 @@ function Scene({
   tabs,
   value,
   onValueChange,
+  onReselect,
   glassPreset,
   glassOptics = false,
   entrance,
 }: Omit<LiquidGlassIconOnlyProps, 'hidden' | 'fab'> & { entrance: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const controller = useRef<PrototypeController | null>(null);
-  const latest = useRef({ tabs, value, onValueChange });
+  const latest = useRef({ tabs, value, onValueChange, onReselect });
   const [selectionRequest, reconcileSelection] = useReducer((revision: number) => revision + 1, 0);
   const initialEntrance = useRef(entrance);
   const [shadow, setShadow] = useState<ShadowRoot | null>(null);
@@ -138,7 +141,7 @@ function Scene({
   }, []);
 
   useLayoutEffect(() => {
-    latest.current = { tabs, value, onValueChange };
+    latest.current = { tabs, value, onValueChange, onReselect };
   });
 
   useLayoutEffect(() => {
@@ -152,6 +155,7 @@ function Scene({
       const current = latest.current;
       const tab = current.tabs[index];
       if (tab && tab.value !== current.value) current.onValueChange(tab.value);
+      else if (tab) current.onReselect?.(tab.value);
       reconcileSelection();
     };
 
@@ -296,6 +300,7 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
           tabs={props.tabs}
           value={props.value}
           onValueChange={props.onValueChange}
+          onReselect={props.onReselect}
           glassPreset={props.glassPreset}
           glassOptics={props.glassOptics}
           entrance={entrance}

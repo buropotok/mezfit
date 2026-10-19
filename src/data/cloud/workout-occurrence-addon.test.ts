@@ -12,6 +12,7 @@ import type { ProgramManagementRepository } from './program-management';
 import type { CloudTrainingPlanRow } from './database';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
+import { WorkoutSchedulingRepository } from './workout-scheduling';
 import type { MezfitCloudDatabase } from './database';
 
 vi.mock('./CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: state.db, clients: [], coaches: [] }) }));
@@ -55,11 +56,19 @@ describe('pinned Addon shared occurrence ownership', () => {
       trainingPlanId: 'program', programDayId: 'day', athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202',
       format, startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60,
       plan, originalPlan: plan, createdAt: '2026-10-19T00:00:00.000Z', updatedAt: '2026-10-19T00:00:00.000Z' };
-    await repository.create(draft);
+    draft.id = await repository.create(draft);
+    const pendingId = draft.id.slice(6);
+    expect(await db.table('workoutOccurrences').get(pendingId)).toMatchObject({ publicationStatus: 'draft' });
+    expect(db.cloud.schema?.workoutOccurrences.markedForSync).toBe(true);
+    expect(await new WorkoutSchedulingRepository(db as MezfitCloudDatabase, 'tg:202').listWorkspace()).toEqual([]);
     const id = await repository.save(draft.id);
+    const calendar = new WorkoutSchedulingRepository(db as MezfitCloudDatabase, 'tg:101');
+    expect((await calendar.listWorkspace()).map(row => row.id)).toContain(id);
+    expect((await new WorkoutSchedulingRepository(db as MezfitCloudDatabase, 'tg:202').listWorkspace()).map(row => row.id)).toContain(id);
+    expect((await calendar.listCalendar()).some(row => row.id === id)).toBe(format === 'coached');
     // Existing bookings in two relationship realms exercise repeated WebCrypto checks.
     const second = { ...draft, id: 'draft:other', realmId: other.realm.realmId, athleteUserId: 'tg:303', clientUserId: 'tg:303', startsAtUtc: '2026-10-19T12:00:00.000Z' };
-    await repository.create(second); await repository.save(second.id);
+    second.id = await repository.create(second); await repository.save(second.id);
     await repository.enqueueEdit('draft:' + id, current => ({ ...current, startsAtUtc: '2026-10-19T07:45:00.000Z', durationMinutes: 75 }));
     expect(await repository.get('draft:' + id)).toMatchObject({ saved: true, durationMinutes: 75 });
     await repository.replacePlan('draft:' + id, { ...plan, name: 'Правка' });

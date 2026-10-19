@@ -7,7 +7,7 @@ import { isWorkoutOccurrencePlan } from '../../../shared/workout-occurrence-plan
 export { isWorkoutOccurrencePlan } from '../../../shared/workout-occurrence-plan';
 export type { WorkoutOccurrencePlan, OccurrencePlanExercise, OccurrencePlanSet } from '../../../shared/workout-occurrence-plan';
 
-/** The only place where an unsaved occurrence is persisted: a local, unsynced table. */
+/** Editable domain view of a synchronized occurrence, including unpublished PLAN. */
 export interface LocalWorkoutOccurrenceDraft {
   id: string;
   actorUserId: string;
@@ -22,8 +22,9 @@ export interface LocalWorkoutOccurrenceDraft {
   durationMinutes: number;
   plan: WorkoutOccurrencePlan;
   originalPlan: WorkoutOccurrencePlan;
-  /** View of a saved occurrence. Only content edits create a private draft. */
+  /** View of a saved occurrence. Only content edits change publication status to draft. */
   saved?: boolean;
+  previouslyPublished?: boolean;
   targetOccurrenceId?: string;
   createdAt: string;
   updatedAt: string;
@@ -108,9 +109,10 @@ export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWor
 
 export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurrenceRow): LocalWorkoutOccurrenceDraft {
   const now = new Date().toISOString();
-  return { id: 'draft:' + row.id, actorUserId, realmId: row.realmId, saved: true,
+  return { id: 'draft:' + row.id, actorUserId, realmId: row.realmId, saved: row.publicationStatus !== 'draft',
+    previouslyPublished: row.publicationStatus !== 'draft' || !!row.publishedPlan,
     targetOccurrenceId: row.id, trainingPlanId: row.trainingPlanId ?? '', programDayId: row.programDayId,
     athleteUserId: row.athleteUserId, coachUserId: row.coachUserId, clientUserId: row.clientUserId,
     format: row.format, startsAtUtc: row.startsAtUtc, durationMinutes: row.durationMinutes,
-    plan: structuredClone(row.plan), originalPlan: structuredClone(row.plan), createdAt: now, updatedAt: now };
+    plan: structuredClone(row.plan), originalPlan: structuredClone(row.originalPlan ?? row.plan), createdAt: now, updatedAt: now };
 }

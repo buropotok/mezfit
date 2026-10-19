@@ -15,6 +15,15 @@ const trusted = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/head
   GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok',
   DEXIE_ACL_OPERATION: 'apply', DEXIE_ACL_CONFIRMATION: 'APPLY_LOCAL_CALENDAR_COACH_CLIENT_ACL' };
 describe('protected local calendar ACL', () => {
+  it('upgrades the frozen installed calendar v1 policy without touching other grants', () => {
+    const v1 = structuredClone(manifest);
+    for (const role of ['coach', 'client']) v1.roles[role].permissions.update.workoutOccurrences =
+      v1.roles[role].permissions.update.workoutOccurrences.filter(field => !['publicationStatus', 'originalPlan', 'publishedPlan', 'draftAuthorUserId'].includes(field));
+    const plan = planSchedulingAcl(manifest, schema, v1);
+    expect(plan.changedNames).toEqual(['coach', 'client']);
+    expect(plan.importPayload.roles).toEqual(manifest.roles);
+  });
+
   it('accepts only the reviewed table and field grants and exact installed baseline', () => {
     expect(assertApprovedManifest(manifest)).toEqual(manifest.roles);
     const changed = structuredClone(manifest); changed.roles.client.permissions.manage = ['workoutOccurrences'];

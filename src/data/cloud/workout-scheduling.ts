@@ -25,6 +25,10 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
     || (row.cancelledAt !== undefined && row.cancelledAt !== null && !isUtcInstant(row.cancelledAt))
     || typeof row.programDayId !== 'string' || !row.programDayId
     || !isWorkoutOccurrencePlan(row.plan)
+    || (row.draftAuthorUserId !== undefined && !validCloudUserId(row.draftAuthorUserId))
+    || (row.publicationStatus !== undefined && !['draft', 'published'].includes(row.publicationStatus))
+    || (row.originalPlan !== undefined && !isWorkoutOccurrencePlan(row.originalPlan))
+    || (row.publishedPlan != null && !isWorkoutOccurrencePlan(row.publishedPlan))
     || !validCloudUserId(row.athleteUserId)
     || (row.coachUserId !== null && !validCloudUserId(row.coachUserId))
     || (row.clientUserId !== null && !validCloudUserId(row.clientUserId))
@@ -101,6 +105,7 @@ export class WorkoutSchedulingRepository {
     const dayIds = await this.visibleDayIds(plan);
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
     return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled' && !row.cancelledAt
+      && (row.publicationStatus !== 'draft' || (row.coachUserId ?? row.athleteUserId) === this.actorUserId || (row.draftAuthorUserId ?? row.createdByUserId) === this.actorUserId)
       && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
       && row.athleteUserId === (plan.clientUserId ?? this.actorUserId)
       && row.coachUserId === plan.coachUserId
@@ -114,7 +119,17 @@ export class WorkoutSchedulingRepository {
    * Calendar visibility depends on current membership and the immutable occurrence,
    * not on whether its originating program day still exists or remains active.
    */
-  async listCalendar(participantUserId = this.actorUserId): Promise<CloudWorkoutOccurrenceRow[]> {
+  async listCalendar(participantUserId = this.actorUserId, includeDrafts = false): Promise<CloudWorkoutOccurrenceRow[]> {
+    return this.visibleOccurrences(participantUserId, includeDrafts);
+  }
+
+  /** Display all authorized bookings, including a client's independent workout.
+   * Visibility does not imply that the booking occupies the coach's time. */
+  async listWorkspace(): Promise<CloudWorkoutOccurrenceRow[]> {
+    return this.visibleOccurrences(null);
+  }
+
+  private async visibleOccurrences(participantUserId: string | null, includeDrafts = false): Promise<CloudWorkoutOccurrenceRow[]> {
     const [occurrences, realms, members] = await Promise.all([
       this.db.workoutOccurrences.toArray(),
       this.db.realms.toArray(),
@@ -136,14 +151,16 @@ export class WorkoutSchedulingRepository {
     }
     return occurrences.filter(row => {
       if (!validOccurrence(row) || (row.status === 'cancelled' || row.cancelledAt)) return false;
+      if (!includeDrafts && row.publicationStatus === 'draft' && (row.coachUserId ?? row.athleteUserId) !== this.actorUserId
+        && (row.draftAuthorUserId ?? row.createdByUserId) !== this.actorUserId) return false;
       if (row.coachUserId === null && row.clientUserId === null)
         return row.realmId === this.actorUserId && row.athleteUserId === this.actorUserId
-          && row.athleteUserId === participantUserId
+          && (participantUserId === null || row.athleteUserId === participantUserId)
           && row.format === 'independent';
       if (!row.coachUserId || !row.clientUserId || row.clientUserId !== row.athleteUserId
         || (row.coachUserId !== this.actorUserId && row.clientUserId !== this.actorUserId)) return false;
       if (!allowed.has(pairKey(row.realmId, row.coachUserId, row.clientUserId))) return false;
-      return row.clientUserId === participantUserId
+      return participantUserId === null || row.clientUserId === participantUserId
         || (row.coachUserId === participantUserId && row.format === 'coached');
     }).sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)
       || a.id.localeCompare(b.id));

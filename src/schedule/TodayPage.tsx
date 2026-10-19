@@ -62,6 +62,7 @@ export function TodayPage({
 }) {
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
+  const [clientUserId, setClientUserId] = useState<string | null>(null);
   const [date, setDate] = useState<LocalDate>(currentDate);
   const [occurrences, setOccurrences] = useState<CloudWorkoutOccurrenceRow[]>([]);
   const [drafts, setDrafts] = useState<LocalWorkoutOccurrenceDraft[]>([]);
@@ -98,8 +99,11 @@ export function TodayPage({
     };
   }, [draftRepository]);
 
+  useEffect(() => { setClientUserId(null); setOpenedDraftId(null); setViewed(null); }, [planning?.viewResetKey]);
+
   useEffect(() => {
     if (!planning?.requestedDraftId) return;
+    setClientUserId(role === 'coach' ? planning.requestedClientUserId ?? null : null);
     setOpenedDraftId(planning.requestedDraftId);
     planning.clearDraft();
   }, [planning?.requestedDraftId]);
@@ -141,12 +145,15 @@ export function TodayPage({
   const merged = useMemo(() => {
     const withTiming = <T extends LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow>(row: T, type: string): T =>
       timingOverrides[type + ':' + row.id] ? { ...row, ...timingOverrides[type + ':' + row.id] } : row;
+    const participant = role === 'coach' ? clientUserId ?? cloud?.actorUserId : cloud?.actorUserId;
+    const visible = (row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow) => row.athleteUserId === participant
+      || (row.coachUserId === participant && row.format === 'coached');
     return [
-      ...occurrences.filter(row => !drafts.some(draft => draft.targetOccurrenceId === row.id))
+      ...occurrences.filter(visible).filter(row => !drafts.some(draft => draft.targetOccurrenceId === row.id))
         .flatMap(row => timelineEvents(withTiming(row, 'occurrence'), 'occurrence')),
-      ...drafts.flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
+      ...drafts.filter(visible).flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
     ];
-  }, [occurrences, drafts, timingOverrides]);
+  }, [occurrences, drafts, timingOverrides, role, clientUserId, cloud?.actorUserId]);
 
   const eventsByDate = useMemo<Record<LocalDate, TimelineItem[]>>(() => {
     const grouped: Record<string, TimelineItem[]> = {};

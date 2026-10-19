@@ -203,7 +203,7 @@ export function assertRolePolicy(remoteRoles, localRoles) {
     }
     const permissionKeys = Object.keys(remote.permissions).sort();
     const expectedKeys = roleName === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
-    const calendarFields = ['startsAtUtc', 'durationMinutes', 'cancelledAt', 'updatedAt', ...(roleName === 'coach' ? ['plan'] : [])];
+    const calendarFields = ['startsAtUtc', 'durationMinutes', 'cancelledAt', 'updatedAt', 'publicationStatus', 'draftAuthorUserId', ...(roleName === 'coach' ? ['plan', 'originalPlan', 'publishedPlan'] : [])];
     if (!equalItems(permissionKeys, expectedKeys)
       || !equalItems(Object.keys(local.permissions), expectedKeys)
       || (roleName === 'coach' && (!equalItems(remote.permissions.manage, COACH_PLAN_TABLES)

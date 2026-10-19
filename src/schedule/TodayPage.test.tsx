@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
+import { relationshipMembership } from '../../worker/lib/dexie-cloud-membership';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
@@ -15,11 +16,12 @@ const state = vi.hoisted(() => ({ db: null as MezfitCloudDatabase | null,
   move: null as null | ((value: DayScheduleEventMove) => void),
   resize: null as null | ((value: DayScheduleEventResize) => void),
   remove: null as null | ((value: DayScheduleEventDelete) => void), eventId: '',
+  planning: null as null | { requestedDraftId: string | null; requestedClientUserId: string | null; viewResetKey?: number; clearDraft: () => void; openDraft: () => void },
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
   db: state.db, actorUserId: 'tg:101', clients: [], coaches: [], syncStatus: 'offline',
 }) }));
-vi.mock('./SchedulePlanningContext', () => ({ useSchedulePlanning: () => null }));
+vi.mock('./SchedulePlanningContext', () => ({ useSchedulePlanning: () => state.planning }));
 vi.mock('./OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ draft, drafts, onSave, onClose, saveNotice }: {
   draft: LocalWorkoutOccurrenceDraft | null; drafts: WorkoutOccurrenceDraftRepository; saveNotice?: string;
   onSave: (draft: LocalWorkoutOccurrenceDraft, update: boolean) => Promise<void>; onClose: () => void;
@@ -66,17 +68,40 @@ beforeEach(() => {
   db.table('workoutOccurrences').hook('creating', (key, row) => {
     if (!key) { row.id = 'occ' + crypto.randomUUID().replaceAll('-', ''); return row.id; }
   });
-  state.db = db as MezfitCloudDatabase;
+  state.db = db as MezfitCloudDatabase; state.planning = null;
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
   vi.stubEnv('TZ', 'UTC');
 });
 afterEach(async () => { cleanup(); await db.delete(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe('local-first calendar experience', () => {
+  it.each(['independent', 'coached'] as const)('keeps a client %s card visible after Save and after reopening', async format => {
+    const pair = await relationshipMembership('101', '202');
+    await db.table('realms').put(pair.realm); await db.table('members').bulkPut(pair.members);
+    const createdId = await repo().create({ ...draft, realmId: pair.realm.realmId, athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202', format });
+    state.planning = { requestedDraftId: createdId, requestedClientUserId: format === 'independent' ? 'tg:202' : null, clearDraft: () => { if (state.planning) state.planning.requestedDraftId = null; }, openDraft: () => {} };
+    const page = open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    expect(await screen.findByText('Сохранённая тренировка')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(screen.getByRole('button', { name: /День 1/ })).toBeTruthy();
+    expect(screen.queryByText('Черновик')).toBeNull();
+    expect(await repo().list()).toEqual([]);
+    if (format === 'independent' && state.planning) {
+      state.planning.viewResetKey = 1;
+      page.rerender(<TodayPage initData="" role="coach" onNavigationContextChange={vi.fn()} />);
+      await waitFor(() => expect(screen.queryByTestId('segment')).toBeNull());
+    }
+    page.unmount(); state.planning = null; open();
+    if (format === 'coached') expect(await screen.findByRole('button', { name: /День 1/ })).toBeTruthy();
+    else await waitFor(() => expect(screen.queryByTestId('segment')).toBeNull());
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('keeps a source-program failure visible after the saved editor remounts and closes', async () => {
     let rejectUpdate: (reason: Error) => void = () => {};
     const update = new Promise<void>((_, reject) => { rejectUpdate = reject; });
     vi.spyOn(ProgramManagementRepository.prototype, 'applyOccurrencePlan').mockImplementation(() => update);
-    await repo().create(draft);
+    draft.id = await repo().create(draft);
     open(); fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить и обновить программу' }));
     expect(await screen.findByText('Сохранённая тренировка')).toBeTruthy();
@@ -93,7 +118,7 @@ describe('local-first calendar experience', () => {
   });
 
   it('opens saved content without a draft and converts only content edits to a draft', async () => {
-    await repo().create(draft); const id = await repo().save(draft.id);
+    draft.id = await repo().create(draft); const id = await repo().save(draft.id);
     open(); fireEvent.click(await screen.findByRole('button', { name: /Вы.*День 1/ }));
     expect(await screen.findByText('Сохранённая тренировка')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
@@ -103,7 +128,7 @@ describe('local-first calendar experience', () => {
     expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
     fireEvent.click(screen.getByText('Изменить план'));
     expect(await screen.findByRole('button', { name: 'Сохранить' })).toBeTruthy();
-    expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe('День 1');
+    expect(await db.table('workoutOccurrences').get(id)).toMatchObject({ publicationStatus: 'draft', plan: { name: 'Новый план' } });
     fireEvent.click(screen.getByText('Сохранить'));
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull());
     expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe('Новый план');
@@ -111,7 +136,7 @@ describe('local-first calendar experience', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
   it('saves a new draft offline and reopens it as a saved workout', async () => {
-    await repo().create(draft);
+    draft.id = await repo().create(draft);
     const view = open(); fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
     expect(await screen.findByText('Сохранённая тренировка')).toBeTruthy();
@@ -123,7 +148,7 @@ describe('local-first calendar experience', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
   it('keeps the drop position immediately while Dexie is pending and preserves identity across days', async () => {
-    await repo().create(draft); const id = await repo().save(draft.id); open();
+    draft.id = await repo().create(draft); const id = await repo().save(draft.id); open();
     await screen.findByRole('button', { name: /Вы.*День 1/ });
     const eventId = state.eventId;
     const original = Repository.prototype.enqueueEdit;
@@ -147,7 +172,7 @@ describe('local-first calendar experience', () => {
   });
 
   it('rolls a refused drop back visibly instead of retaining an optimistic booking', async () => {
-    await repo().create(draft); await repo().save(draft.id); open();
+    draft.id = await repo().create(draft); await repo().save(draft.id); open();
     await screen.findByRole('button', { name: /Вы.*День 1/ });
     vi.spyOn(Repository.prototype, 'enqueueEdit').mockRejectedValueOnce(new Error('Это время занято'));
     await act(async () => { state.move?.({ eventId: state.eventId, date: '2026-10-19', targetDate: '2026-10-19', previousStartMinutes: 480, startMinutes: 600 }); });
@@ -156,7 +181,7 @@ describe('local-first calendar experience', () => {
   });
 
   it('moves and resizes saved workouts without creating a draft or calling an API', async () => {
-    await repo().create(draft); const id = await repo().save(draft.id); open();
+    draft.id = await repo().create(draft); const id = await repo().save(draft.id); open();
     await screen.findByRole('button', { name: /Вы.*День 1/ });
     await act(async () => { state.move?.({ eventId: state.eventId, date: '2026-10-19', targetDate: '2026-10-20', previousStartMinutes: 480, startMinutes: 600 }); });
     await waitFor(async () => expect((await db.table('workoutOccurrences').get(id)).startsAtUtc).toBe('2026-10-20T10:00:00.000Z'));

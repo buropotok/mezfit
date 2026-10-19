@@ -54,6 +54,18 @@ beforeEach(()=>{
 afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
 
 describe('direct prototype adapter',()=>{
+  it('reports active-tab reselection separately without changing selection behavior', () => {
+    const reselected = vi.fn();
+    const view = render(<LiquidGlassIconOnly tabs={tabs} value="0" hidden={false}
+      onValueChange={changed} onReselect={reselected} />);
+    const root = getScene(view.container);
+    fireEvent.click(button(root, 0));
+    expect(reselected).toHaveBeenCalledExactlyOnceWith('0');
+    expect(changed).not.toHaveBeenCalled();
+    fireEvent.click(button(root, 2));
+    expect(changed).toHaveBeenCalledExactlyOnceWith('2');
+    expect(reselected).toHaveBeenCalledTimes(1);
+  });
   it('renders no scene, lenses, icons or timers while hidden',()=>{
     const view=render(ui(true));expect(view.container.firstElementChild?.hasAttribute('hidden')).toBe(true);
     expect(view.container.firstElementChild?.childElementCount).toBe(0);expect(vi.getTimerCount()).toBe(0);

@@ -1,3 +1,4 @@
+import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import cloudConfig from '../../../dexie-cloud.json';
@@ -243,6 +244,7 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(9).stores({ ...CLOUD_DATABASE_STORES_V9, localProgramSync: 'id' });
     this.version(10).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id' });
     this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id', localWorkoutSync: 'id' });
+    this.on('ready', () => new WorkoutOccurrenceDraftRepository(this, 'tg:' + telegramUserId).importDeviceDrafts());
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
