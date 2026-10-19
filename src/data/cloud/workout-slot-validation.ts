@@ -1,6 +1,5 @@
 import type { MezfitCloudDatabase } from './database';
 import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
-import { isLocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
 
 export class WorkoutSlotConflict extends Error {}
@@ -21,15 +20,10 @@ export function bookingsOverlap(a: Booking, b: Booking): boolean {
 export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: LocalWorkoutOccurrenceDraft): Promise<void> {
   const scheduling = new WorkoutSchedulingRepository(db, draft.actorUserId);
   // Serialize WebCrypto-backed membership checks within the enclosing transaction.
-  const athlete = await scheduling.listCalendar(draft.athleteUserId);
+  const athlete = await scheduling.listCalendar(draft.athleteUserId, true);
   const coach = draft.format === 'coached' && draft.coachUserId
-    ? await scheduling.listCalendar(draft.coachUserId) : [];
-  const drafts = await db.localWorkoutOccurrenceDrafts.toArray();
-  const rows = [...athlete, ...coach]
-    .filter(row => row.id !== draft.targetOccurrenceId);
-  const local = drafts.filter(isLocalWorkoutOccurrenceDraft).filter(row => row.actorUserId === draft.actorUserId
-    && row.id !== draft.id
-    && (!draft.targetOccurrenceId || row.targetOccurrenceId !== draft.targetOccurrenceId));
-  if ([...rows, ...local].some(row => bookingsOverlap(draft, row)))
+    ? await scheduling.listCalendar(draft.coachUserId, true) : [];
+  const rows = [...athlete, ...coach].filter(row => row.id !== draft.targetOccurrenceId);
+  if (rows.some(row => bookingsOverlap(draft, row)))
     throw new WorkoutSlotConflict('Это время занято другой тренировкой атлета или тренера. Выберите свободное время');
 }

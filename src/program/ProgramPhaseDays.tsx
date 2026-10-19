@@ -123,8 +123,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       if (!slot) throw new Error('Не удалось найти свободное время. Выберите другой период в расписании');
       const draft = draftFromProgramDay(repository.actorUserId, program, item,
         format, slot.toISOString(), durationMinutes, phaseStatus);
-      await draftStore.create(draft);
-      if (alive.current) planning.openDraft(draft.id);
+      const id = await draftStore.create(draft);
+      if (alive.current) planning.openDraft(id, format === 'independent' && program.clientUserId ? program.clientUserId : null);
     } catch (reason) {
       if (alive.current) setError(programMutationMessage(reason));
     } finally {

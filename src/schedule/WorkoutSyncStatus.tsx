@@ -21,19 +21,17 @@ export function WorkoutSyncStatus({ draft, repository }: { draft: LocalWorkoutOc
     const subscription = repository.observeSync(draft.targetOccurrenceId, setRow, () => setFailed(true));
     return () => subscription.unsubscribe();
   }, [repository, draft.targetOccurrenceId]);
-  // Private draft content intentionally stays on the device and is not yet published.
-  const pending = !draft.saved || workoutHasDelta(row);
+  const pending = workoutHasDelta(row);
   const label = failed ? 'Ошибка' : !pending ? 'Синхронизирована'
     : cloud?.syncStatus === 'offline' ? 'Нет соединения'
     : cloud?.syncStatus === 'error' ? 'Ошибка' : 'В ожидании';
   const color = failed ? 'red' : !pending ? 'green' : cloud?.syncStatus === 'offline' ? 'gray'
     : cloud?.syncStatus === 'error' ? 'red' : 'yellow';
-  const explanation = !draft.saved
-    ? 'Черновик сохранён на этом устройстве и виден только вам. Нажмите «Сохранить», чтобы опубликовать тренировку. После этого изменения отправятся в Mezfit облако автоматически.'
-    : label === 'Синхронизирована' ? 'Изменения сохранены в Mezfit облаке.'
+  const explanation = (label === 'Синхронизирована' ? 'Изменения сохранены в Mezfit облаке.'
     : label === 'Нет соединения' ? 'Изменения сохранены на устройстве и отправятся в Mezfit облако после восстановления соединения.'
     : label === 'Ошибка' ? 'Не удалось синхронизировать изменения с Mezfit облаком. Они сохранены на устройстве, работу можно продолжать.'
-    : 'Изменения сохранены на устройстве и ожидают синхронизации с Mezfit облаком.';
+    : 'Изменения сохранены на устройстве и ожидают синхронизации с Mezfit облаком.')
+    + (!draft.saved ? ' Это черновик: клиент его не видит. «Сохранить» публикует тренировку; синхронизация работает автоматически.' : '');
   return <div className="occurrence-sync-status" role="status" aria-label="Статус синхронизации тренировки">
     <LiquidPopover isOpen={opened} onOpenChange={setOpened} triggerRef={trigger}
       label="О синхронизации тренировки" text={explanation} preset={glass.preset} optics={glass.optics}

@@ -29,7 +29,10 @@
             "durationMinutes",
             "cancelledAt",
             "updatedAt",
-            "plan"
+            "plan",
+            "publicationStatus",
+            "originalPlan",
+            "publishedPlan"
           ]
         },
         "add": [
@@ -58,7 +61,8 @@
             "startsAtUtc",
             "durationMinutes",
             "cancelledAt",
-            "updatedAt"
+            "updatedAt",
+            "publicationStatus"
           ]
         },
         "add": [

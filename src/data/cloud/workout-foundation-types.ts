@@ -113,7 +113,11 @@ export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'>
   owner: string | null;
   /** Calendar cancellation is separate from execution/session lifecycle status. */
   cancelledAt?: string | null;
-  /** Published prescription; unsaved content edits live in a separate private draft. */
+  /** Publication is business state, independent from replication and execution. */
+  publicationStatus?: 'draft' | 'published';
+  originalPlan?: WorkoutOccurrencePlan;
+  publishedPlan?: WorkoutOccurrencePlan | null;
+  /** Every PLAN edit, including a draft, is synchronized by Addon. */
   plan: WorkoutOccurrencePlan;
   /** Source provenance, independent of current cloud program availability. */
   trainingPlanId?: string;

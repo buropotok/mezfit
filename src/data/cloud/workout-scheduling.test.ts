@@ -99,6 +99,22 @@ describe('confirmed workout calendar projections', () => {
     expect(await f.stranger.listCalendar()).toEqual([]);
   });
 
+  it('shows independent client bookings in the coach workspace without booking the coach own time', async () => {
+    const f = await fixture();
+    const booking = { realmId: f.pair.realm.realmId, owner: f.pair.realm.realmId,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202', programDayId: 'assigned-day',
+      workoutSessionId: null, startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60, status: 'scheduled' };
+    await seedOccurrences(f.db, [
+      { ...booking, id: 'independent', format: 'independent' },
+      { ...booking, id: 'coached', format: 'coached', startsAtUtc: '2026-10-19T10:00:00.000Z' },
+      { ...booking, id: 'client-private', realmId: 'tg:202', owner: 'tg:202', coachUserId: null, clientUserId: null, format: 'independent' },
+    ]);
+    expect((await f.coach.listWorkspace()).map(row => row.id)).toEqual(['independent', 'coached']);
+    expect((await f.coach.listCalendar()).map(row => row.id)).toEqual(['coached']);
+    expect((await f.coach.listCalendar('tg:202')).map(row => row.id)).toEqual(['independent', 'coached']);
+    expect(await f.stranger.listWorkspace()).toEqual([]);
+  });
+
   it('uses the authorized client calendar after source deletion when suggesting slots', async () => {
     const f = await fixture();
     await seedOccurrence(f.db, {

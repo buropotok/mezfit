@@ -18,11 +18,11 @@ async function fixture() {
 }
 
 describe('per-workout local cloud confirmation', () => {
-  it('requests native background push for local edits without a preceding in-sync event or manual button', async () => {
+  it('requests native background push for local edits after native sync without a manual button', async () => {
     const { db, sync, change } = await fixture();
     const unsubscribe = vi.fn();
     // The connection may still be starting, or recovering from an earlier failure.
-    Object.assign(db.cloud, { syncState: { subscribe: () => ({ unsubscribe }) } });
+    Object.assign(db.cloud, { syncState: { subscribe: ({ next }: { next: (state: { phase: string }) => void }) => { next({ phase: 'in-sync' }); return { unsubscribe }; } } });
     let finish: () => void = () => {};
     sync.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
     const stop = observeWorkoutSyncConfirmation(db, vi.fn());

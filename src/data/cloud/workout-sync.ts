@@ -44,28 +44,29 @@ export async function confirmWorkoutSync(db: MezfitCloudDatabase, isActive = () 
   });
 }
 
-/** Local deltas request the native Addon push without waiting for a prior in-sync
- * state. Observe successful global synchronization too, to confirm reconnects. No custom retries,
+/** Observe native synchronization to confirm local revisions, independent of
+ * publication status. Native Addon eager sync owns uploading. No custom retries,
  * transport, timers, or private Addon mutation tables. Addon owns all replication.
  */
 export function observeWorkoutSyncConfirmation(db: MezfitCloudDatabase,
   onError: (reason: unknown) => void): () => void {
-  let active = true, running = false, changed = false;
+  let active = true, ready = false, running = false, changed = false;
   const check = async () => {
     changed = true;
-    if (!active || running) return;
+    if (!active || !ready || running) return;
     running = true;
     try {
       do {
         changed = false;
         await confirmWorkoutSync(db, () => active);
-      } while (active && changed);
+      } while (active && ready && changed);
     } catch (reason) {
       if (active) onError(reason);
     } finally { running = false; }
   };
   const state = db.cloud.syncState.subscribe({ next: value => {
-    if (value.phase === 'in-sync') void check();
+    ready = value.phase === 'in-sync';
+    if (ready) void check();
   }, error: reason => { if (active) onError(reason); } });
   const changes = liveQuery(async () => ({
     occurrences: (await db.workoutOccurrences.toArray()).map(row => row.id),

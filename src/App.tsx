@@ -189,6 +189,8 @@ export function App() {
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
+  const [scheduleViewResetKey, setScheduleViewResetKey] = useState(0);
+  const [requestedScheduleClientId, setRequestedScheduleClientId] = useState<string | null>(null);
   const [requestedScheduleDraftId, setRequestedScheduleDraftId] = useState<string | null>(null);
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null | undefined>(undefined);
   const [workoutStatusLoadFailed, setWorkoutStatusLoadFailed] = useState(false);
@@ -402,7 +404,9 @@ export function App() {
         >
         <SchedulePlanningContext.Provider value={{
           requestedDraftId: requestedScheduleDraftId,
-          openDraft: (id) => { setRequestedScheduleDraftId(id); changeDestination('today'); },
+          requestedClientUserId: requestedScheduleClientId,
+          viewResetKey: scheduleViewResetKey,
+          openDraft: (id, clientUserId = null) => { setRequestedScheduleClientId(clientUserId); setRequestedScheduleDraftId(id); changeDestination('today'); },
           clearDraft: () => setRequestedScheduleDraftId(null),
         }}>
         <NavigationShell
@@ -410,7 +414,7 @@ export function App() {
           activeRole={state.activeRole}
           destination={destination}
           context={shellContext}
-          onDestinationChange={changeDestination}
+          onDestinationChange={next => { if (next === 'today') setScheduleViewResetKey(value => value + 1); changeDestination(next); }}
           onRoleSwitch={switchRole}
           floatingAction={clientWorkoutFloatingAction}
           glassPreset={glassSettings.preset}

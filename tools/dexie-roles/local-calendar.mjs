@@ -61,7 +61,7 @@ const BEFORE = {
     }
   }
 };
-const APPROVED = {
+const CALENDAR_V1 = {
   "coach": {
     "displayName": "Coach",
     "description": "Can author assigned PLAN and scheduled workouts; session lifecycle stays privileged",
@@ -129,6 +129,78 @@ const APPROVED = {
     }
   }
 };
+const APPROVED = {
+  "coach": {
+    "displayName": "Coach",
+    "description": "Can author assigned PLAN and scheduled workouts; session lifecycle stays privileged",
+    "sortOrder": 1,
+    "permissions": {
+      "manage": [
+        "trainingPlans",
+        "programPhases",
+        "programDays",
+        "programExercises",
+        "programSets"
+      ],
+      "update": {
+        "sessionSetFacts": [
+          "actualReps",
+          "actualWeightKg",
+          "actualDurationSeconds",
+          "actualDistanceMeters",
+          "setLabel",
+          "rpe",
+          "comment",
+          "bands",
+          "setStatus"
+        ],
+        "workoutOccurrences": [
+          "startsAtUtc",
+          "durationMinutes",
+          "cancelledAt",
+          "updatedAt",
+          "plan",
+          "publicationStatus",
+          "originalPlan",
+          "publishedPlan"
+        ]
+      },
+      "add": [
+        "workoutOccurrences"
+      ]
+    }
+  },
+  "client": {
+    "displayName": "Client",
+    "description": "Can schedule workouts and update calendar timing; assigned PLAN and session lifecycle stay protected",
+    "sortOrder": 2,
+    "permissions": {
+      "update": {
+        "sessionSetFacts": [
+          "actualReps",
+          "actualWeightKg",
+          "actualDurationSeconds",
+          "actualDistanceMeters",
+          "setLabel",
+          "rpe",
+          "comment",
+          "bands",
+          "setStatus"
+        ],
+        "workoutOccurrences": [
+          "startsAtUtc",
+          "durationMinutes",
+          "cancelledAt",
+          "updatedAt",
+          "publicationStatus"
+        ]
+      },
+      "add": [
+        "workoutOccurrences"
+      ]
+    }
+  }
+};
 
 function record(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
 function fail(code) { throw new Error(code); }
@@ -162,7 +234,7 @@ export function planSchedulingAcl(manifest, schema, exportedRoles) {
   for (const name of ROLES) {
     const actual = exportedRoles.roles[name];
     if (isDeepStrictEqual(actual, desired[name])) continue;
-    if (!isDeepStrictEqual(actual, BEFORE[name])) {
+    if (!isDeepStrictEqual(actual, BEFORE[name]) && !isDeepStrictEqual(actual, CALENDAR_V1[name])) {
       fail('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
     }
     updates[name] = desired[name];

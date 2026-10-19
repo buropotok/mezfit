@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { useState } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
@@ -475,6 +476,36 @@ describe('DaySchedule', () => {
     expect(moved).not.toHaveBeenCalled();
     expect(view.container.querySelectorAll('.ui-day-schedule__resize-handle')).toHaveLength(0);
     expect(view.queryByRole('button', { name: 'Удалить карточку' })).toBeNull();
+  });
+
+  it.each([
+    ['Изменить время начала', 84],
+    ['Изменить время окончания', 164],
+  ])('retains the controlled geometry after releasing %s', (label, endY) => {
+    function ControlledSchedule() {
+      const [rows, setRows] = useState(events);
+      return <DaySchedule date="2026-09-28" today="2026-09-28" eventsByDate={rows} onDateChange={changed}
+        onEventMove={() => {}} onEventResize={change => setRows(previous => ({ ...previous,
+          [change.date]: previous[change.date].map(row => row.id === change.eventId
+            ? { ...row, startMinutes: change.startMinutes, durationMinutes: change.durationMinutes } : row),
+        }))} renderEvent={event => <div>{event.id}</div>} />;
+    }
+    const view = render(<ControlledSchedule />);
+    const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]');
+    if (!frame) throw new Error('Missing event');
+    fireEvent.pointerDown(frame, { pointerId: 71, pointerType: 'mouse', button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { pointerId: 71, pointerType: 'mouse', buttons: 1, clientX: 100, clientY: 120 });
+    fireEvent.pointerUp(document, { pointerId: 71, pointerType: 'mouse', button: 0, clientX: 100, clientY: 120 });
+    act(() => vi.advanceTimersByTime(200));
+    const handle = view.getByRole('button', { name: label });
+    fireEvent.pointerDown(handle, { pointerId: 72, pointerType: 'touch', clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(handle, { pointerId: 72, pointerType: 'touch', clientX: 100, clientY: endY });
+    const geometry = () => view.container.querySelector<HTMLElement>('[data-event-id="a"]')?.getAttribute('style');
+    const resized = geometry();
+    fireEvent.pointerUp(handle, { pointerId: 72, pointerType: 'touch', clientX: 100, clientY: endY });
+    expect(geometry()).toBe(resized);
+    act(() => vi.advanceTimersByTime(16));
+    expect(geometry()).toBe(resized);
   });
 
   it('resizes an editable event when the predicate allows it', () => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import type { LocalDate } from '../date-picker/datePickerDate';
 
@@ -209,7 +209,7 @@ function EditableEventFrame<TEvent extends DayScheduleEventBase>({
     durationMinutes: number;
   } | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setDraft({ startMinutes: event.startMinutes, durationMinutes: event.durationMinutes });
   }, [event.durationMinutes, event.startMinutes]);
 

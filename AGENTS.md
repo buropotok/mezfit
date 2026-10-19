@@ -383,3 +383,32 @@ Treat this as an SDLC routing decision, not merely a model preference. The goal 
 Do not read the entire repository by default. Expand context only when the task's dependency graph requires it. If a narrow set of files is enough to make the architectural decision, keep the discovery scope narrow.
 
 Do not sacrifice correctness, security, architectural integrity, required review, or required verification merely to save tokens. Token efficiency changes how work is staged and routed; it does not lower the Definition of Done.
+
+
+## 34. Calendar publication and replication are independent
+
+All workout business data, including draft PLAN, lives in synchronized
+`workoutOccurrences`. Dexie Cloud Addon eagerly replicates every accepted local
+write at the first opportunity, irrespective of draft/publication state. Do not
+implement publication by excluding tables from sync, waiting for cloud state,
+manually staging uploads, or using Save as a replication trigger. Save changes
+`publicationStatus` locally to published. Content edits set it to draft; timing,
+move and resize preserve it. Client projections hide coach-authored drafts,
+including direct detail reads, even when the records exist in local/cloud storage.
+A draft may be fully synchronized. The sync capsule reports transmission only.
+The previous device-only draft requirement is superseded. The historical local
+table is read only for an atomic one-time transfer of existing user work.
+
+Coach calendar default: coach's own workouts plus coached client workouts.
+Independent planning opens a client context: all that client's workouts, including
+coached ones. Save and closing the editor retain that context; leaving/reopening
+or tapping the calendar tab restores the coach context. Do not add filter UI.
+Visibility and resource occupancy are separate: independent client workouts do
+not book the coach. All authorized relationship records remain accessible.
+
+Ordinary Coach grants include PLAN/publication baselines (`originalPlan`,
+`publishedPlan`) and publication state; Client may update publication state but
+not assigned PLAN/baselines. Execution status/session fields remain protected.
+The protected calendar ACL installer may upgrade either the frozen pre-calendar
+policy or its frozen v1 calendar grants to this exact reviewed manifest. Other
+roles, source programs, FACT, schema and membership stay unchanged.

@@ -85,11 +85,12 @@ A local mutation changes the smallest relevant records/fields in one Dexie trans
 
 Creating, saving, reopening, editing, moving, resizing and cancelling a scheduled
 workout commit to local Dexie without HTTP or an awaited cloud push. Saving
-atomically writes `workoutOccurrences` and removes the private draft. Addon owns
+changes `publicationStatus` on the already persisted `workoutOccurrences` row. Addon owns
 background replication. A sync error or offline state never freezes local edits.
-Opening a saved workout is a read. Only prescription/content edits create a private
-draft; date/time changes update the occurrence directly and preserve draft status.
-Private unsaved prescription content stays device-only and invisible to the client.
+Opening a saved workout is a read. Prescription/content edits set publication status
+to draft; date/time changes preserve it. Drafts use the same synchronized occurrence
+records as published workouts. Client projections hide coach drafts by business
+status, including detail reads. Physical replication is never conditional on status.
 A capsule reports synchronization independently from the content's draft status.
 The scoped protected calendar ACL operation grants ordinary scheduling writes;
 Workout Start/session materialization remains a separate existing concern.
@@ -149,3 +150,7 @@ Tests must reflect actual product behavior, authorization boundaries, offline ed
     Privileged control → verified Cloudflare Worker → Dexie Cloud
 
 No custom sync engine, second authoritative business database, server-enforced FACT single-writer mechanism, or multiple environments without a new product decision.
+
+Calendar view context is independent from storage/access: the default coach timeline
+shows personal/coached bookings. Independent planning selects that client timeline
+until leaving or tapping the calendar tab; closing/publishing preserves the selection.
