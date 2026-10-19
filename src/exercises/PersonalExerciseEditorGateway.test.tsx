@@ -3,7 +3,7 @@ import type { ChangeEvent, ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CoachExerciseCatalogueRepository } from '../data/exercises/coachExerciseCatalogue';
-import type { CatalogueExerciseRow, CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
+import type { CatalogueExerciseRow, CoachExerciseChanges, CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
 import { PersonalExerciseEditorGateway } from './PersonalExerciseEditorGateway';
 
 vi.mock('../telegram', () => ({ getTelegramWebApp: () => ({ initData: 'signed-init' }) }));
@@ -68,7 +68,8 @@ const api = () => ({
   duplicatePublicExercise: vi.fn(async () => customId),
   duplicateAssignedCoachExercise: vi.fn(async () => customId),
   createBlankExercise: vi.fn(async () => customId),
-  updateExercise: vi.fn(async () => undefined),
+  updateExercise: vi.fn(async (_id: string, _changes: CoachExerciseChanges,
+    _baseline?: Pick<CoachExerciseDefinitionRow, 'muscles' | 'instructions' | 'instruction_steps'>) => undefined),
 });
 const props = (repository: ReturnType<typeof api>) => ({
   repository: repository as unknown as CoachExerciseCatalogueRepository,
@@ -145,7 +146,7 @@ describe('personal exercise card editor', () => {
     await waitFor(() => expect(repository.updateExercise).toHaveBeenCalledWith(
       customId, expect.objectContaining({
         image: expect.stringContaining('/api/exercise-media/personal/'),
-      })));
+      }), expect.anything()));
   });
 
   it('keeps a new draft editable if image upload fails, without creating an exercise', async () => {
