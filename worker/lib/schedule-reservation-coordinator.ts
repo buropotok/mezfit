@@ -117,18 +117,34 @@ export async function confirmWorkoutOccurrence(
     return response({ occurrenceId: booking.id, confirmed: true });
   }
 
+  // Deduplicate by catalogue + ID, with at most six reads in flight.
+  const definitions = new Map<string, Json | null>();
+  const lookups = new Map<string, { table: string; id: string }>();
+  for (const { exercise } of input.plan.exercises) {
+    const table = exercise.scope === 'public' ? 'publicExerciseDefinitions'
+      : exercise.scope === 'coach' ? 'coachExerciseDefinitions' : null;
+    if (!table) reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
+    lookups.set(table + ':' + exercise.exerciseDefinitionId, { table, id: exercise.exerciseDefinitionId });
+  }
+  const pending = [...lookups.entries()];
+  for (let offset = 0; offset < pending.length; offset += 6) {
+    await Promise.all(pending.slice(offset, offset + 6).map(async ([key, lookup]) => {
+      definitions.set(key, await getRow(env, token, lookup.table, lookup.id));
+    }));
+  }
+
   // Source IDs are provenance. No reads of cloud program/day/phase/set state.
   for (const { exercise } of input.plan.exercises) {
     const definitionId = exercise.exerciseDefinitionId;
     if (exercise.scope === 'public') {
-      const definition = await getRow(env, token, 'publicExerciseDefinitions', definitionId);
+      const definition = definitions.get('publicExerciseDefinitions:' + definitionId);
       if (!definition || definition.realmId !== 'rlm-public' || exercise.catalogueDefinition !== undefined)
         reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
     } else if (exercise.scope === 'coach') {
       const author = coach ?? athlete;
       if (exercise.catalogueCoachUserId !== author || !exercise.catalogueDefinition)
         reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
-      const definition = await getRow(env, token, 'coachExerciseDefinitions', definitionId);
+      const definition = definitions.get('coachExerciseDefinitions:' + definitionId);
       // A complete author-attributed snapshot may arrive before its definition.
       // It grants no access to catalogue rows; known foreign ownership is denied.
       if (definition && (definition.realmId !== author || definition.owner !== author))

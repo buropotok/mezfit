@@ -29,8 +29,8 @@ function currentDate(): LocalDate { return datePart(new Date().toISOString()); }
 function timelineEvents(
   row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow, type: 'draft' | 'occurrence',
 ): TimelineItem[] {
-  return calendarSegments(row.startsAtUtc, row.durationMinutes).map(segment => {
-    const base = { ...segment, id: `${type}:${row.id}:${segment.date}` };
+  return calendarSegments(row.startsAtUtc, row.durationMinutes).map((segment, index) => {
+    const base = { ...segment, id: `${type}:${row.id}:${segment.date}:${index}` };
     return type === 'draft' ? { ...base, type, draft: row as LocalWorkoutOccurrenceDraft }
       : { ...base, type, occurrence: row as CloudWorkoutOccurrenceRow };
   });

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -61,35 +61,27 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() => draft ? drafts.pendingEditError(draft.id) : '');
   const startRef = useRef<HTMLSpanElement>(null);
   const endRef = useRef<HTMLSpanElement>(null);
-  const pendingEditsRef = useRef<Promise<void>>(Promise.resolve());
-  const unsavedEditsRef = useRef<Array<Parameters<WorkoutOccurrenceDraftRepository['edit']>[1]>>([]);
-
-  // Remove an intent only after its local transaction commits. A retry must
-  // replay the failed intent before later edits or final confirmation.
-  const flushEdits = (): Promise<void> => {
-    if (!draft) return Promise.resolve();
-    const targetId = draft.id;
-    const next = pendingEditsRef.current.catch(() => undefined).then(async () => {
-      while (unsavedEditsRef.current.length) {
-        await drafts.edit(targetId, unsavedEditsRef.current[0]);
-        unsavedEditsRef.current.shift();
-      }
+  useEffect(() => {
+    if (!draft) return;
+    let active = true;
+    // Reattach to pending/failed writes when reopening, including writes which
+    // failed after the previous editor unmounted through Back or a tab change.
+    void drafts.flushEdits(draft.id).catch(reason => {
+      if (active) setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
     });
-    pendingEditsRef.current = next;
-    void next.catch(reason => {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
-    });
-    return next;
-  };
+    return () => { active = false; };
+  }, [draft?.id, drafts]);
 
+  const flushEdits = () => draft ? drafts.flushEdits(draft.id) : Promise.resolve();
   const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1]) => {
     if (!draft || busy) return;
     setError('');
-    unsavedEditsRef.current.push(apply);
-    void flushEdits();
+    void drafts.enqueueEdit(draft.id, apply).catch(reason => {
+      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
+    });
   };
   const save = async (updateProgram: boolean) => {
     if (!draft || busy) return;
@@ -138,11 +130,11 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
       const selected = await Promise.all(ids.map(async id => programExerciseSnapshot(
         await readProgramCatalogueExercise(cloud.db, draft.actorUserId, id), draft.actorUserId)));
       await flushEdits();
-      unsavedEditsRef.current.push(current => ({
+      const writing = drafts.enqueueEdit(draft.id, current => ({
         ...current, plan: selected.reduce(appendOccurrenceExercise, current.plan),
       }));
       setExercisePickerOpened(false);
-      await flushEdits();
+      await writing;
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось добавить упражнения');
     } finally { setBusy(false); }

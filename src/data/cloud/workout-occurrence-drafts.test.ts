@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayOutline } from './workout-foundation-types';
 import { draftFromProgramDay } from './workout-occurrence-plan';
@@ -43,6 +43,32 @@ const make = () => draftFromProgramDay('tg:101', program, outline, 'independent'
   '2026-10-19T08:00:00.000Z', 60, 'active');
 
 describe('local workout occurrence drafts', () => {
+  it('retains a failed write across repository/editor recreation and isolates accounts', async () => {
+    const first = repo(), draft = make();
+    await first.create(draft);
+    const failure = vi.spyOn(first, 'edit').mockRejectedValueOnce(new Error('Нет места'));
+    await expect(first.enqueueEdit(draft.id, current => ({ ...current, durationMinutes: 90 })))
+      .rejects.toThrow('Нет места');
+    failure.mockRestore();
+    expect(repo('tg:202').pendingEditError(draft.id)).toBe('');
+    expect(repo().pendingEditError(draft.id)).toBe('Нет места');
+    await repo().flushEdits(draft.id);
+    expect((await repo().get(draft.id))?.durationMinutes).toBe(90);
+    expect(repo().pendingEditError(draft.id)).toBe('');
+  });
+
+  it('allows explicit deletion to discard a failed intent', async () => {
+    const store = repo(), draft = make();
+    await store.create(draft);
+    const failure = vi.spyOn(store, 'edit').mockRejectedValueOnce(new Error('Нет места'));
+    await expect(store.enqueueEdit(draft.id, current => ({ ...current, durationMinutes: 90 })))
+      .rejects.toThrow('Нет места');
+    failure.mockRestore();
+    await store.delete(draft.id);
+    expect(await repo().get(draft.id)).toBeNull();
+    expect(repo().pendingEditError(draft.id)).toBe('');
+  });
+
   it.each(['draft', 'pending', 'finished', 'cancelled'] as const)('checks phase %s locally at creation only', async status => {
     expect(() => draftFromProgramDay('tg:101', program, outline, 'independent',
       '2026-10-19T08:00:00.000Z', 60, status)).toThrow('SCHEDULE_FORBIDDEN');

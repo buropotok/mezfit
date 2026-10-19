@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
-import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => null }));
@@ -30,10 +31,32 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 
 describe('draft edit recovery', () => {
+  it('reports a write which failed after navigating away when the editor is reopened', async () => {
+    let rejectWrite: (reason: Error) => void = () => {};
+    const pending = new Promise<void>((_, reject) => { rejectWrite = reject; });
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    const edit = vi.spyOn(drafts, 'edit').mockImplementationOnce(() => pending)
+      .mockRejectedValue(new Error('Нет места'));
+    vi.spyOn(drafts, 'get').mockResolvedValue(draft);
+    const save = vi.fn().mockResolvedValue(undefined);
+    const view = render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={save} />);
+    fireEvent.click(screen.getByText('Добавить подход'));
+    await waitFor(() => expect(edit).toHaveBeenCalledTimes(1));
+    view.unmount();
+    await act(async () => { rejectWrite(new Error('Нет места')); });
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={save} />);
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Нет места');
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(edit).toHaveBeenCalledTimes(3));
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it('retries the failed intent and blocks confirmation until it is persisted', async () => {
     const edit = vi.fn().mockRejectedValue(new Error('Недостаточно места'));
     const get = vi.fn().mockResolvedValue(draft);
-    const drafts = { edit, get } as unknown as WorkoutOccurrenceDraftRepository;
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'edit').mockImplementation(edit);
+    vi.spyOn(drafts, 'get').mockImplementation(get);
     const save = vi.fn().mockResolvedValue(undefined);
     render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={save} />);
     fireEvent.click(screen.getByText('Добавить подход'));
@@ -53,7 +76,9 @@ describe('draft edit recovery', () => {
     let finish: () => void = () => {};
     const pending = new Promise<void>(resolve => { finish = resolve; });
     const get = vi.fn().mockResolvedValue(draft);
-    const drafts = { edit: vi.fn(() => pending), get } as unknown as WorkoutOccurrenceDraftRepository;
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'edit').mockImplementation(() => pending);
+    vi.spyOn(drafts, 'get').mockImplementation(get);
     const save = vi.fn().mockResolvedValue(undefined);
     render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={save} />);
     fireEvent.click(screen.getByText('Добавить подход'));

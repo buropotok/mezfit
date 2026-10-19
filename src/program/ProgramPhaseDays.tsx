@@ -110,9 +110,11 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       const scheduling = new WorkoutSchedulingRepository(cloud.db, repository.actorUserId);
       const athlete = program.clientUserId ?? repository.actorUserId;
       const entries = (await Promise.all([scheduling.listCalendar(athlete),
+        draftStore.list(),
         ...(format === 'coached' ? [scheduling.listCalendar()] : []),
       ])).flat().filter(occurrence =>
         occurrence.athleteUserId === athlete
+        || (occurrence.coachUserId === athlete && occurrence.format === 'coached')
         || (format === 'coached' && occurrence.athleteUserId === repository.actorUserId)
         || (format === 'coached' && occurrence.coachUserId === repository.actorUserId
           && occurrence.format === 'coached'));
@@ -122,9 +124,9 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       const draft = draftFromProgramDay(repository.actorUserId, program, item,
         format, slot.toISOString(), durationMinutes, phaseStatus);
       await draftStore.create(draft);
-      planning.openDraft(draft.id);
+      if (alive.current) planning.openDraft(draft.id);
     } catch (reason) {
-      setError(programMutationMessage(reason));
+      if (alive.current) setError(programMutationMessage(reason));
     } finally {
       running.current = false;
       if (alive.current) setBusy(false);

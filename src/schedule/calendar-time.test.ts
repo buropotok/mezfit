@@ -26,4 +26,20 @@ describe('local schedule calendar', () => {
     expect(() => localScheduleEnd(new Date('2026-10-24T21:30:00.000Z'), '02:30'))
       .toThrow(/повторяется/);
   });
+
+  it('splits fallback at the offset change without displaying a false ending', () => {
+    vi.stubEnv('TZ', 'Europe/Berlin');
+    expect(calendarSegments('2026-10-24T23:30:00.000Z', 180)).toEqual([
+      { date: '2026-10-25', startMinutes: 90, durationMinutes: 90 },
+      { date: '2026-10-25', startMinutes: 120, durationMinutes: 90 },
+    ]);
+  });
+
+  it('leaves the spring wall-clock gap empty', () => {
+    vi.stubEnv('TZ', 'Europe/Berlin');
+    expect(calendarSegments('2026-03-29T00:30:00.000Z', 180)).toEqual([
+      { date: '2026-03-29', startMinutes: 90, durationMinutes: 30 },
+      { date: '2026-03-29', startMinutes: 180, durationMinutes: 150 },
+    ]);
+  });
 });

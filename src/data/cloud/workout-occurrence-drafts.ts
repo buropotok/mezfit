@@ -4,6 +4,12 @@ import type { LocalWorkoutOccurrenceDraft, WorkoutOccurrencePlan } from './worko
 import { isLocalWorkoutOccurrenceDraft, isWorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { validateScheduleTiming } from './workout-scheduling-time';
 
+type DraftEdit = (draft: LocalWorkoutOccurrenceDraft) => LocalWorkoutOccurrenceDraft;
+interface EditQueue { pending: DraftEdit[]; running: Promise<void>; error: string }
+// Owned by the local database/account, not by an editor's mount lifetime.
+// This is only an IndexedDB write queue; Dexie Cloud still owns replication.
+const editQueues = new WeakMap<MezfitCloudDatabase, Map<string, EditQueue>>();
+
 /** Unsynced, private account-local records in the app's single Dexie database. */
 export class WorkoutOccurrenceDraftRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {
@@ -32,6 +38,42 @@ export class WorkoutOccurrenceDraftRepository {
     return liveQuery(() => this.list()).subscribe({ next: onChange, error: onError });
   }
 
+  private queue(id: string): EditQueue {
+    let queues = editQueues.get(this.db);
+    if (!queues) { queues = new Map(); editQueues.set(this.db, queues); }
+    const key = this.actorUserId + ':' + id;
+    let queue = queues.get(key);
+    if (!queue) {
+      queue = { pending: [], running: Promise.resolve(), error: '' };
+      queues.set(key, queue);
+    }
+    return queue;
+  }
+
+  pendingEditError(id: string): string { return this.queue(id).error; }
+
+  enqueueEdit(id: string, apply: DraftEdit): Promise<void> {
+    this.queue(id).pending.push(apply);
+    return this.flushEdits(id);
+  }
+
+  flushEdits(id: string): Promise<void> {
+    const queue = this.queue(id);
+    if (!queue.pending.length) return queue.running;
+    const next = queue.running.catch(() => undefined).then(async () => {
+      while (queue.pending.length) {
+        await this.edit(id, queue.pending[0]);
+        queue.pending.shift();
+      }
+      queue.error = '';
+    });
+    queue.running = next;
+    void next.catch(reason => {
+      queue.error = reason instanceof Error ? reason.message : 'Не удалось сохранить черновик';
+    });
+    return next;
+  }
+
   /** Each action commits immediately, avoiding lost edits from debounced unmounts. */
   async edit(id: string, apply: (draft: LocalWorkoutOccurrenceDraft) => LocalWorkoutOccurrenceDraft): Promise<void> {
     await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
@@ -54,10 +96,16 @@ export class WorkoutOccurrenceDraftRepository {
   }
 
   async delete(id: string): Promise<void> {
+    // Explicit deletion discards failed intents, but waits for in-flight writes
+    // so they cannot recreate the draft after the deletion transaction.
+    const queue = this.queue(id);
+    await queue.running.catch(() => undefined);
     await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
       const current = await this.get(id);
       if (!current) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
       await this.db.localWorkoutOccurrenceDrafts.delete(id);
     });
+    queue.pending.length = 0;
+    editQueues.get(this.db)?.delete(this.actorUserId + ':' + id);
   }
 }

@@ -32,6 +32,25 @@ export function localScheduleEnd(start: Date, time: string): string {
   return localScheduleInstant(calendarDate(next), time);
 }
 
+/** Locate an offset transition so every segment uses one wall-clock offset. */
+function offsetBoundary(from: number, until: number): number {
+  const offset = new Date(from).getTimezoneOffset();
+  for (let probe = from; probe < until;) {
+    const next = Math.min(probe + 30 * 60_000, until);
+    if (new Date(next).getTimezoneOffset() !== offset) {
+      let low = probe, high = next;
+      while (high - low > 1) {
+        const middle = Math.floor((low + high) / 2);
+        if (new Date(middle).getTimezoneOffset() === offset) low = middle;
+        else high = middle;
+      }
+      return high;
+    }
+    probe = next;
+  }
+  return until;
+}
+
 export function calendarSegments(startsAtUtc: string, durationMinutes: number): Array<{
   date: string; startMinutes: number; durationMinutes: number;
 }> {
@@ -40,7 +59,7 @@ export function calendarSegments(startsAtUtc: string, durationMinutes: number): 
   let from = new Date(startsAtUtc);
   while (from.getTime() < end) {
     const midnight = new Date(from.getFullYear(), from.getMonth(), from.getDate() + 1);
-    const until = Math.min(end, midnight.getTime());
+    const until = offsetBoundary(from.getTime(), Math.min(end, midnight.getTime()));
     const startMinutes = from.getHours() * 60 + from.getMinutes();
     segments.push({ date: calendarDate(from), startMinutes,
       durationMinutes: (until - from.getTime()) / 60_000 });
