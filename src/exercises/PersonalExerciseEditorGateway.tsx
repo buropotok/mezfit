@@ -101,7 +101,11 @@ function EditPersonalExercise({
   const fileInput = useRef<HTMLInputElement>(null);
   const inFlight = useRef(false);
   const saveController = useRef(new AbortController());
-  useEffect(() => () => saveController.current.abort(), []);
+  useEffect(() => {
+    // React StrictMode may clean up and remount effects without recreating refs.
+    if (saveController.current.signal.aborted) saveController.current = new AbortController();
+    return () => saveController.current.abort();
+  }, []);
   const isActive = () => !saveController.current.signal.aborted;
   const stagedImage = useRef<{ file: File; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
