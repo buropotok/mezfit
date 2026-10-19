@@ -22,6 +22,8 @@ export interface LocalWorkoutOccurrenceDraft {
   durationMinutes: number;
   plan: WorkoutOccurrencePlan;
   originalPlan: WorkoutOccurrencePlan;
+  /** Persisted before the HTTP call; retries must keep the exact command. */
+  submissionPending?: boolean;
   createdAt: string;
   updatedAt: string;
 }

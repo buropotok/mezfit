@@ -43,6 +43,32 @@ const make = () => draftFromProgramDay('tg:101', program, outline, 'independent'
   '2026-10-19T08:00:00.000Z', 60, 'active');
 
 describe('local workout occurrence drafts', () => {
+  it('persists the first submission and forbids editing/deleting until confirmation', async () => {
+    const store = repo(), draft = make();
+    await store.create(draft);
+    const first = await store.prepareSubmission(draft.id);
+    expect(first.isNewSubmission).toBe(true);
+    await expect(store.edit(draft.id, current => ({ ...current, durationMinutes: 90 })))
+      .rejects.toThrow('Сначала подтвердите');
+    await expect(repo().enqueueEdit(draft.id, current => ({ ...current, durationMinutes: 90 })))
+      .rejects.toThrow('Сначала подтвердите');
+    await expect(repo().delete(draft.id)).rejects.toThrow('Сначала подтвердите');
+    const retry = await repo().prepareSubmission(draft.id);
+    expect(retry.isNewSubmission).toBe(false);
+    expect(retry.draft).toEqual(first.draft);
+    await repo().delete(draft.id, true);
+    expect(await repo().get(draft.id)).toBeNull();
+  });
+
+  it('can unlock a definitively rejected first submission', async () => {
+    const store = repo(), draft = make();
+    await store.create(draft);
+    await store.prepareSubmission(draft.id);
+    await store.releaseSubmission(draft.id);
+    await store.edit(draft.id, current => ({ ...current, durationMinutes: 90 }));
+    expect((await store.get(draft.id))?.durationMinutes).toBe(90);
+  });
+
   it('retains a failed write across repository/editor recreation and isolates accounts', async () => {
     const first = repo(), draft = make();
     await first.create(draft);

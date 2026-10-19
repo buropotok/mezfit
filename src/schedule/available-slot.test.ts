@@ -3,6 +3,15 @@ import { nextAvailableSlot } from './available-slot';
 
 afterEach(() => vi.unstubAllEnvs());
 describe('local free-slot suggestion', () => {
+  it.each([
+    ['2026-10-19T10:15:40.000Z', '2026-10-19T10:30:00.000Z'],
+    ['2026-10-19T10:15:00.001Z', '2026-10-19T10:30:00.000Z'],
+    ['2026-10-19T10:15:00.000Z', '2026-10-19T10:15:00.000Z'],
+  ])('never rounds %s backwards', (start, expected) => {
+    vi.stubEnv('TZ', 'UTC');
+    expect(nextAvailableSlot([], new Date(start), 60)?.toISOString()).toBe(expected);
+  });
+
   it('returns no suggestion when the search is exhausted', () => {
     vi.stubEnv('TZ', 'UTC');
     const from = new Date('2026-10-19T08:00:00.000Z');

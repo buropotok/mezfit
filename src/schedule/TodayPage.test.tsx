@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
-import { confirmCloudWorkoutOccurrence, getScheduleOccurrences } from '../api';
+import { ApiError, confirmCloudWorkoutOccurrence, getScheduleOccurrences } from '../api';
 import { TodayPage } from './TodayPage';
 
 const state = vi.hoisted(() => ({
@@ -46,6 +46,18 @@ vi.mock('../data/cloud/workout-occurrence-drafts', () => ({
       return { unsubscribe: vi.fn() };
     }
     async get(id: string) { return state.localRows.find(row => row.id === id) ?? null; }
+    async prepareSubmission(id: string) {
+      const current = state.localRows.find(row => row.id === id);
+      if (!current) throw new Error('Черновик не найден');
+      const isNewSubmission = !current.submissionPending;
+      current.submissionPending = true;
+      state.draftsChanged?.([...state.localRows]);
+      return { draft: structuredClone(current), isNewSubmission };
+    }
+    async releaseSubmission(id: string) {
+      const current = state.localRows.find(row => row.id === id);
+      if (current) current.submissionPending = false;
+    }
     async delete(id: string) {
       state.localRows = state.localRows.filter(row => row.id !== id);
       state.draftsChanged?.(state.localRows);
@@ -117,6 +129,34 @@ const open = () => render(<TodayPage initData="telegram-session" role="coach" cu
   onNavigationContextChange={vi.fn()} />);
 
 describe('Dexie-backed schedule', () => {
+  it('does not unlock an earlier ambiguous submission after a later refusal', async () => {
+    state.localRows = [structuredClone(baseDraft)];
+    vi.mocked(confirmCloudWorkoutOccurrence).mockRejectedValueOnce(new Error('Ответ потерян'))
+      .mockRejectedValueOnce(new ApiError(403, 'Нет доступа', 'SCHEDULE_FORBIDDEN'));
+    open();
+    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(2));
+    expect(state.localRows[0].submissionPending).toBe(true);
+  });
+
+  it('retries the persisted identical command after an ambiguous HTTP failure', async () => {
+    state.localRows = [structuredClone(baseDraft)];
+    vi.mocked(confirmCloudWorkoutOccurrence).mockRejectedValueOnce(new Error('Ответ потерян'))
+      .mockResolvedValueOnce('occ-confirmed');
+    open();
+    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
+    expect(state.localRows[0].submissionPending).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
+    expect(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[1][1])
+      .toEqual(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[0][1]);
+  });
+
   it('renders confirmed occurrences without fetching obsolete D1 calendar rows', async () => {
     state.cloudRows = [occurrence];
     open();
@@ -125,7 +165,7 @@ describe('Dexie-backed schedule', () => {
   });
 
   it('keeps a device-only draft on the timeline and reopens its plan', async () => {
-    state.localRows = [baseDraft];
+    state.localRows = [structuredClone(baseDraft)];
     open();
     await waitFor(() => expect(screen.getByText(/Черновик · День 1/)).toBeTruthy());
     fireEvent.click(screen.getByText(/Черновик · День 1/));
@@ -135,7 +175,7 @@ describe('Dexie-backed schedule', () => {
   });
 
   it('removes the local draft only after the booking API confirms a real occurrence', async () => {
-    state.localRows = [baseDraft];
+    state.localRows = [structuredClone(baseDraft)];
     vi.mocked(confirmCloudWorkoutOccurrence).mockResolvedValue('occ-confirmed');
     open();
     fireEvent.click(await screen.findByText(/Черновик · День 1/));
@@ -146,7 +186,7 @@ describe('Dexie-backed schedule', () => {
   });
 
   it('retires a confirmation after cloud observation so cancellation cannot resurrect it', async () => {
-    state.localRows = [baseDraft];
+    state.localRows = [structuredClone(baseDraft)];
     vi.mocked(confirmCloudWorkoutOccurrence).mockResolvedValue('occ-confirmed');
     open();
     fireEvent.click(await screen.findByText(/Черновик · День 1/));
@@ -159,7 +199,7 @@ describe('Dexie-backed schedule', () => {
   });
 
   it('does not recreate a confirmation if cloud observation and removal preceded the API receipt', async () => {
-    state.localRows = [baseDraft];
+    state.localRows = [structuredClone(baseDraft)];
     let confirm: (id: string) => void = () => {};
     vi.mocked(confirmCloudWorkoutOccurrence).mockImplementation(() => new Promise(resolve => { confirm = resolve; }));
     open();
@@ -174,7 +214,7 @@ describe('Dexie-backed schedule', () => {
   });
 
   it('retains the draft and editor when booking fails', async () => {
-    state.localRows = [baseDraft];
+    state.localRows = [structuredClone(baseDraft)];
     vi.mocked(confirmCloudWorkoutOccurrence).mockRejectedValue(new Error('Сеть недоступна'));
     open();
     fireEvent.click(await screen.findByText(/Черновик · День 1/));

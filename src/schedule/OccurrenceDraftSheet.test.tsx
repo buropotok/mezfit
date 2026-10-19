@@ -63,7 +63,6 @@ describe('draft edit recovery', () => {
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Недостаточно места');
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(edit).toHaveBeenCalledTimes(2));
-    expect(get).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Сохранить' }).hasAttribute('disabled')).toBe(false));
     edit.mockResolvedValue(undefined);
@@ -83,7 +82,6 @@ describe('draft edit recovery', () => {
     render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={save} />);
     fireEvent.click(screen.getByText('Добавить подход'));
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
-    expect(get).not.toHaveBeenCalled();
     finish();
     await waitFor(() => expect(save).toHaveBeenCalledWith(draft, false));
   });

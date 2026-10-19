@@ -5,7 +5,7 @@ import { isLocalWorkoutOccurrenceDraft, isWorkoutOccurrencePlan } from './workou
 import { validateScheduleTiming } from './workout-scheduling-time';
 
 type DraftEdit = (draft: LocalWorkoutOccurrenceDraft) => LocalWorkoutOccurrenceDraft;
-interface EditQueue { pending: DraftEdit[]; running: Promise<void>; error: string }
+interface EditQueue { pending: DraftEdit[]; running: Promise<void>; error: string; submitting: boolean }
 // Owned by the local database/account, not by an editor's mount lifetime.
 // This is only an IndexedDB write queue; Dexie Cloud still owns replication.
 const editQueues = new WeakMap<MezfitCloudDatabase, Map<string, EditQueue>>();
@@ -44,7 +44,7 @@ export class WorkoutOccurrenceDraftRepository {
     const key = this.actorUserId + ':' + id;
     let queue = queues.get(key);
     if (!queue) {
-      queue = { pending: [], running: Promise.resolve(), error: '' };
+      queue = { pending: [], running: Promise.resolve(), error: '', submitting: false };
       queues.set(key, queue);
     }
     return queue;
@@ -52,7 +52,9 @@ export class WorkoutOccurrenceDraftRepository {
 
   pendingEditError(id: string): string { return this.queue(id).error; }
 
-  enqueueEdit(id: string, apply: DraftEdit): Promise<void> {
+  async enqueueEdit(id: string, apply: DraftEdit): Promise<void> {
+    const queue = this.queue(id);
+    if (queue.submitting || (await this.get(id))?.submissionPending || queue.submitting) throw new Error('Сначала подтвердите сохранение тренировки');
     this.queue(id).pending.push(apply);
     return this.flushEdits(id);
   }
@@ -79,6 +81,7 @@ export class WorkoutOccurrenceDraftRepository {
     await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
       const current = await this.get(id);
       if (!current) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
+      if (current.submissionPending) throw new Error('Сначала подтвердите сохранение тренировки');
       const changed = apply(structuredClone(current));
       if (changed.id !== current.id || changed.actorUserId !== current.actorUserId
         || changed.realmId !== current.realmId || changed.programDayId !== current.programDayId
@@ -95,14 +98,45 @@ export class WorkoutOccurrenceDraftRepository {
     await this.edit(id, draft => ({ ...draft, plan: structuredClone(plan) }));
   }
 
-  async delete(id: string): Promise<void> {
+  async prepareSubmission(id: string): Promise<{ draft: LocalWorkoutOccurrenceDraft; isNewSubmission: boolean }> {
+    const queue = this.queue(id);
+    const previous = queue.submitting;
+    queue.submitting = true;
+    try {
+      await this.flushEdits(id);
+      return await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
+        const draft = await this.get(id);
+        if (!draft) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
+        const isNewSubmission = !draft.submissionPending;
+        if (isNewSubmission) {
+          draft.submissionPending = true;
+          await this.db.localWorkoutOccurrenceDrafts.put(draft);
+        }
+        return { draft, isNewSubmission };
+      });
+    } catch (reason) { queue.submitting = previous; throw reason; }
+  }
+
+  /** Only used after a definite refusal of the very first submission. */
+  async releaseSubmission(id: string): Promise<void> {
+    await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
+      const draft = await this.get(id);
+      if (!draft) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
+      await this.db.localWorkoutOccurrenceDrafts.put({ ...draft, submissionPending: false });
+    });
+    this.queue(id).submitting = false;
+  }
+
+  async delete(id: string, confirmed = false): Promise<void> {
     // Explicit deletion discards failed intents, but waits for in-flight writes
     // so they cannot recreate the draft after the deletion transaction.
     const queue = this.queue(id);
+    if (queue.submitting && !confirmed) throw new Error('Сначала подтвердите сохранение тренировки');
     await queue.running.catch(() => undefined);
     await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
       const current = await this.get(id);
       if (!current) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
+      if (current.submissionPending && !confirmed) throw new Error('Сначала подтвердите сохранение тренировки');
       await this.db.localWorkoutOccurrenceDrafts.delete(id);
     });
     queue.pending.length = 0;

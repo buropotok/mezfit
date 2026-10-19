@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { confirmCloudWorkoutOccurrence, type Role } from '../api';
+import { ApiError, confirmCloudWorkoutOccurrence, type Role } from '../api';
 import type { NavigationContext } from '../NavigationShell';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -135,10 +135,21 @@ export function TodayPage({
     return grouped as Record<LocalDate, TimelineItem[]>;
   }, [merged]);
 
-  const save = async (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => {
+  const save = async (selectedDraft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => {
     if (!cloud || !draftRepository) throw new Error('Сохранение недоступно');
     const seen = observedIds.current;
-    const id = await confirmCloudWorkoutOccurrence(initData, draft);
+    const prepared = await draftRepository.prepareSubmission(selectedDraft.id);
+    const draft = prepared.draft;
+    let id: string;
+    try { id = await confirmCloudWorkoutOccurrence(initData, draft); }
+    catch (reason) {
+      // Only the first, definitively rejected request can unlock the editor.
+      // A later refusal cannot disprove creation by an earlier ambiguous attempt.
+      if (prepared.isNewSubmission && reason instanceof ApiError
+        && [400, 401, 403, 413].includes(reason.status))
+        await draftRepository.releaseSubmission(draft.id);
+      throw reason;
+    }
     if (seen !== observedIds.current) throw new Error('Аккаунт изменился. Откройте расписание заново');
     // This record is displayed only after the privileged server confirmed persistence.
     // Dexie Cloud Addon remains the durable read authority and will replace it on sync.
@@ -156,7 +167,7 @@ export function TodayPage({
       const repository = new ProgramManagementRepository(cloud.db, cloud.actorUserId);
       await repository.applyOccurrencePlan(draft.trainingPlanId, draft.programDayId, draft.plan, draft.originalPlan);
     }
-    await draftRepository.delete(draft.id);
+    await draftRepository.delete(draft.id, true);
     setOpenedDraftId(null);
   };
 

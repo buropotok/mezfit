@@ -6,8 +6,9 @@ export function nextAvailableSlot(
   from: Date, durationMinutes: number,
 ): Date | null {
   const slot = new Date(from);
+  const minute = slot.getMinutes() + (slot.getSeconds() || slot.getMilliseconds() ? 1 : 0);
   slot.setSeconds(0, 0);
-  slot.setMinutes(Math.ceil(slot.getMinutes() / 15) * 15);
+  slot.setMinutes(Math.ceil(minute / 15) * 15);
   if (slot.getHours() < 8) slot.setHours(8, 0, 0, 0);
   for (let i = 0; i < 14 * 96; i++) {
     if (slot.getHours() >= 22 || slot.getHours() * 60 + slot.getMinutes() + durationMinutes > 22 * 60) {
