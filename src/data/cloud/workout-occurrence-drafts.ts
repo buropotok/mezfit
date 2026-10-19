@@ -58,13 +58,13 @@ export class WorkoutOccurrenceDraftRepository {
             || current.coachUserId !== draft.coachUserId || current.clientUserId !== draft.clientUserId
             || current.format !== draft.format) continue;
           await this.db.workoutOccurrences.update(id, { plan: draft.plan, originalPlan: draft.originalPlan,
-            publishedPlan: current.plan, publicationStatus: 'draft' });
+            publishedPlan: current.plan, publicationStatus: 'draft', draftAuthorUserId: this.actorUserId });
         } else {
           id = await this.db.workoutOccurrences.add({ realmId: draft.realmId, owner: draft.realmId,
             trainingPlanId: draft.trainingPlanId, programDayId: draft.programDayId,
             athleteUserId: draft.athleteUserId, coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
             format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
-            status: 'scheduled', workoutSessionId: null, publicationStatus: 'draft', plan: draft.plan,
+            status: 'scheduled', workoutSessionId: null, publicationStatus: 'draft', draftAuthorUserId: this.actorUserId, plan: draft.plan,
             originalPlan: draft.originalPlan, publishedPlan: null, createdByUserId: this.actorUserId,
             createdAt: draft.createdAt, updatedAt: draft.updatedAt });
         }
@@ -85,7 +85,7 @@ export class WorkoutOccurrenceDraftRepository {
         trainingPlanId: draft.trainingPlanId, programDayId: draft.programDayId,
         athleteUserId: draft.athleteUserId, coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
         format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
-        status: 'scheduled', workoutSessionId: null, publicationStatus: 'draft',
+        status: 'scheduled', workoutSessionId: null, publicationStatus: 'draft', draftAuthorUserId: this.actorUserId,
         plan: structuredClone(draft.plan), originalPlan: structuredClone(draft.originalPlan), publishedPlan: null,
         createdByUserId: this.actorUserId, createdAt: draft.createdAt, updatedAt: draft.updatedAt,
       });
@@ -100,7 +100,7 @@ export class WorkoutOccurrenceDraftRepository {
     const row = await this.db.workoutOccurrences.get(id.slice(6));
     if (!row || row.status === 'cancelled' || row.cancelledAt) return null;
     if (row.publicationStatus === 'draft' && (row.coachUserId ?? row.athleteUserId) !== this.actorUserId
-      && row.createdByUserId !== this.actorUserId) return null;
+      && (row.draftAuthorUserId ?? row.createdByUserId) !== this.actorUserId) return null;
     try { await this.authorize(row); }
     catch (reason) { if (reason instanceof WorkoutEditRejected) return null; throw reason; }
     return draftFromOccurrence(this.actorUserId, row);
@@ -197,7 +197,7 @@ export class WorkoutOccurrenceDraftRepository {
         if (!row) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
         await this.db.workoutOccurrences.update(row.id, {
           ...(timingChanged ? { startsAtUtc: changed.startsAtUtc, durationMinutes: changed.durationMinutes } : {}),
-          ...(contentChanged ? { plan: structuredClone(changed.plan), publicationStatus: 'draft' as const,
+          ...(contentChanged ? { plan: structuredClone(changed.plan), publicationStatus: 'draft' as const, draftAuthorUserId: this.actorUserId,
             publishedPlan: current.saved ? structuredClone(current.plan) : row.publishedPlan ?? null } : {}),
           updatedAt: new Date().toISOString(),
         });

@@ -25,6 +25,7 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
     || (row.cancelledAt !== undefined && row.cancelledAt !== null && !isUtcInstant(row.cancelledAt))
     || typeof row.programDayId !== 'string' || !row.programDayId
     || !isWorkoutOccurrencePlan(row.plan)
+    || (row.draftAuthorUserId !== undefined && !validCloudUserId(row.draftAuthorUserId))
     || (row.publicationStatus !== undefined && !['draft', 'published'].includes(row.publicationStatus))
     || (row.originalPlan !== undefined && !isWorkoutOccurrencePlan(row.originalPlan))
     || (row.publishedPlan != null && !isWorkoutOccurrencePlan(row.publishedPlan))
@@ -104,7 +105,7 @@ export class WorkoutSchedulingRepository {
     const dayIds = await this.visibleDayIds(plan);
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
     return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled' && !row.cancelledAt
-      && (row.publicationStatus !== 'draft' || (row.coachUserId ?? row.athleteUserId) === this.actorUserId || row.createdByUserId === this.actorUserId)
+      && (row.publicationStatus !== 'draft' || (row.coachUserId ?? row.athleteUserId) === this.actorUserId || (row.draftAuthorUserId ?? row.createdByUserId) === this.actorUserId)
       && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
       && row.athleteUserId === (plan.clientUserId ?? this.actorUserId)
       && row.coachUserId === plan.coachUserId
@@ -151,7 +152,7 @@ export class WorkoutSchedulingRepository {
     return occurrences.filter(row => {
       if (!validOccurrence(row) || (row.status === 'cancelled' || row.cancelledAt)) return false;
       if (!includeDrafts && row.publicationStatus === 'draft' && (row.coachUserId ?? row.athleteUserId) !== this.actorUserId
-        && row.createdByUserId !== this.actorUserId) return false;
+        && (row.draftAuthorUserId ?? row.createdByUserId) !== this.actorUserId) return false;
       if (row.coachUserId === null && row.clientUserId === null)
         return row.realmId === this.actorUserId && row.athleteUserId === this.actorUserId
           && (participantUserId === null || row.athleteUserId === participantUserId)

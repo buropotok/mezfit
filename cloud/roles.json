@@ -32,7 +32,8 @@
             "plan",
             "publicationStatus",
             "originalPlan",
-            "publishedPlan"
+            "publishedPlan",
+            "draftAuthorUserId"
           ]
         },
         "add": [
@@ -62,7 +63,8 @@
             "durationMinutes",
             "cancelledAt",
             "updatedAt",
-            "publicationStatus"
+            "publicationStatus",
+            "draftAuthorUserId"
           ]
         },
         "add": [

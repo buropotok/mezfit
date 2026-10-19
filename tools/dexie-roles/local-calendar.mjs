@@ -162,7 +162,8 @@ const APPROVED = {
           "plan",
           "publicationStatus",
           "originalPlan",
-          "publishedPlan"
+          "publishedPlan",
+          "draftAuthorUserId"
         ]
       },
       "add": [
@@ -192,7 +193,8 @@ const APPROVED = {
           "durationMinutes",
           "cancelledAt",
           "updatedAt",
-          "publicationStatus"
+          "publicationStatus",
+          "draftAuthorUserId"
         ]
       },
       "add": [

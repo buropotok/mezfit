@@ -407,7 +407,7 @@ Visibility and resource occupancy are separate: independent client workouts do
 not book the coach. All authorized relationship records remain accessible.
 
 Ordinary Coach grants include PLAN/publication baselines (`originalPlan`,
-`publishedPlan`) and publication state; Client may update publication state but
+`publishedPlan`) and publication state; Client may update publication state/draft author but
 not assigned PLAN/baselines. Execution status/session fields remain protected.
 The protected calendar ACL installer may upgrade either the frozen pre-calendar
 policy or its frozen v1 calendar grants to this exact reviewed manifest. Other

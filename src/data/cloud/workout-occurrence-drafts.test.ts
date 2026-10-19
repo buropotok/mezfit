@@ -142,6 +142,21 @@ describe('local workout occurrence drafts', () => {
     expect(await repo('tg:303').get('draft:' + id)).toBeNull();
   });
 
+  it('hides a coach revision even when the original occurrence was created by the client', async () => {
+    const pair = await relationshipMembership('101', '202');
+    await db.table('realms').put(pair.realm); await db.table('members').bulkAdd(pair.members);
+    const shared = { ...make(), actorUserId: 'tg:202', realmId: pair.realm.realmId, athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
+    const draftId = await repo('tg:202').create(shared);
+    expect(await repo('tg:202').get(draftId)).not.toBeNull();
+    const id = await repo('tg:202').save(draftId);
+    await repo().replacePlan('draft:' + id, { ...shared.plan, name: 'Черновик тренера' });
+    expect(await repo('tg:202').get('draft:' + id)).toBeNull();
+    expect(await repo('tg:202').list()).toEqual([]);
+    expect((await db.table('workoutOccurrences').get(id)).createdByUserId).toBe('tg:202');
+    await repo().save('draft:' + id);
+    expect((await repo('tg:202').get('draft:' + id))?.plan.name).toBe('Черновик тренера');
+  });
+
   it('retains a failed write across repository/editor recreation and isolates accounts', async () => {
     const first = repo(), draft = make();
     draft.id = await first.create(draft);

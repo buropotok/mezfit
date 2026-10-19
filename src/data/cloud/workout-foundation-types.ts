@@ -115,6 +115,7 @@ export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'>
   cancelledAt?: string | null;
   /** Publication is business state, independent from replication and execution. */
   publicationStatus?: 'draft' | 'published';
+  draftAuthorUserId?: string;
   originalPlan?: WorkoutOccurrencePlan;
   publishedPlan?: WorkoutOccurrencePlan | null;
   /** Every PLAN edit, including a draft, is synchronized by Addon. */
