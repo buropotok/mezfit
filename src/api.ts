@@ -507,6 +507,24 @@ export async function fetchCloudContactAvatar(
   return blob;
 }
 
+/** Authenticated binary upload; JSON API helper must not set a JSON content-type here. */
+export async function uploadPersonalExerciseMedia(initData: string, image: Blob, signal?: AbortSignal): Promise<string> {
+  if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');
+  const response = await fetch('/api/exercise-media/personal', {
+    method: 'POST',
+    headers: { 'x-telegram-init-data': initData, 'content-type': image.type },
+    body: image,
+    signal,
+  });
+  if (!response.ok) throw new ApiError(response.status, 'Не удалось загрузить изображение', 'IMAGE_UPLOAD_FAILED');
+  const value: unknown = await response.json();
+  if (!isRecord(value) || typeof value.url !== 'string'
+    || !/^\/api\/exercise-media\/personal\/[a-f0-9-]{36}\?v=[a-f0-9]{64}$/.test(value.url)) {
+    throw new ApiError(502, 'Некорректная ссылка изображения', 'INVALID_API_RESPONSE');
+  }
+  return value.url;
+}
+
 export function getMe(initData: string): Promise<MeResponse> {
   return apiRequest(initData, '/api/me');
 }

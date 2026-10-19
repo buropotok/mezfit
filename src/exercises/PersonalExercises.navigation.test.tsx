@@ -52,7 +52,7 @@ vi.mock('./ExerciseCatalogContent', async () => {
 });
 vi.mock('./PersonalExerciseEditorGateway', () => ({
   PersonalExerciseEditorGateway: ({ request }: { request: { mode: string } | null }) =>
-    request ? <div data-testid="exercise-modal">{request.mode}</div> : null,
+    request ? <div data-testid="exercise-editor">{request.mode}</div> : null,
 }));
 vi.mock('../ui', () => ({
   Surface: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -61,8 +61,8 @@ vi.mock('../ui', () => ({
 
 afterEach(cleanup);
 
-describe('personal exercise dialog navigation ownership', () => {
-  it('uses the dialog as the active Back target and restores the catalogue detail after dismissal', async () => {
+describe('personal exercise editor navigation ownership', () => {
+  it('uses the editor as the active Back target and restores the catalogue detail after cancellation', async () => {
     const setNavigation = vi.fn<(context: NavigationContext | null) => void>();
     render(<PersonalExercises role="coach" onNavigationContextChange={setNavigation} />);
 
@@ -72,7 +72,7 @@ describe('personal exercise dialog navigation ownership', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Новое' }));
     await waitFor(() => expect(setNavigation).toHaveBeenLastCalledWith(
       expect.objectContaining({ title: 'Новое упражнение' })));
-    expect(screen.getByTestId('exercise-modal').textContent).toBe('create');
+    expect(screen.getByTestId('exercise-editor').textContent).toBe('create');
 
     act(() => {
       const context = setNavigation.mock.lastCall?.[0];
@@ -83,8 +83,8 @@ describe('personal exercise dialog navigation ownership', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Копировать' }));
     await waitFor(() => expect(setNavigation).toHaveBeenLastCalledWith(
-      expect.objectContaining({ title: 'Создать мою копию' })));
-    expect(screen.getByTestId('exercise-modal').textContent).toBe('copy');
+      expect.objectContaining({ title: 'Редактировать копию' })));
+    expect(screen.getByTestId('exercise-editor').textContent).toBe('copy');
 
     act(() => {
       const context = setNavigation.mock.lastCall?.[0];

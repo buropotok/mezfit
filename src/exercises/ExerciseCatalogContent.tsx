@@ -75,13 +75,25 @@ export function anatomyMuscleIds(ids: readonly string[]): string[] {
   ))];
 }
 
-export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayout = 'default' }: {
+export type ExerciseDetailEditorSlots = {
+  name: ReactNode;
+  metadata: ReactNode;
+  instructions: ReactNode;
+  anatomy: ReactNode;
+  actions: ReactNode;
+};
+
+export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayout = 'default',
+  editor, mediaAccountId,
+}: {
   row: CatalogueExerciseRow;
   taxonomy: PublicTaxonomyRow[];
   onEdit?: () => void;
   origin?: 'personal' | 'trainer' | null;
   media?: ReactNode;
   mediaLayout?: 'default' | 'square';
+  editor?: ExerciseDetailEditorSlots;
+  mediaAccountId?: string;
 }) {
   const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
   const primaryIds = new Set(primary);
@@ -99,23 +111,24 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
       <GlassSurface preset="modalTuned" optics={false}
         className={`mezfit-public-exercises__media-placeholder${mediaLayout === 'square' ? ' mezfit-public-exercises__media-placeholder--square' : ''}`}
         contentClassName={`mezfit-public-exercises__media-content${mediaLayout === 'square' ? ' mezfit-public-exercises__media-content--square' : ''}`}>
-        {media ?? <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" />}
+        {media ?? <PublicExerciseMedia key={`detail:${row.id}:${row.sourceSha256}`} row={row} variant="detail" mediaAccountId={mediaAccountId} />}
       </GlassSurface>
-      <Text variant="headline">{row.name_ru || row.name}</Text>
+      {editor ? <div className="mezfit-public-exercises__detail-actions">{editor.actions}</div> : null}
+      {editor ? editor.name : <Text variant="headline">{row.name_ru || row.name}</Text>}
       {origin ? <Text variant="caption" tone="muted">
         {origin === 'personal' ? 'Пользовательское' : 'Тренерское'}
       </Text> : null}
-      {row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
-      <Text variant="footnote">{categories[row.category] ?? row.category} · {row.subcategory_ru} · {row.equipment}</Text>
-      {row.realmId === 'rlm-public' && row.owner === null ? (
+      {!editor && row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
+      {editor ? editor.metadata : <Text variant="footnote">{categories[row.category] ?? row.category} · {row.subcategory_ru} · {row.equipment}</Text>}
+      {!editor && row.realmId === 'rlm-public' && row.owner === null ? (
         <Text variant="footnote">Тип учёта: {isExerciseTrackingType(row.tracking_type)
           ? `${TRACKING_TYPE_LABELS[row.tracking_type]} (${row.tracking_type})` : 'Не указан'}</Text>
       ) : null}
-      {onEdit ? <div className="mezfit-public-exercises__detail-actions"><Button onClick={onEdit}>Изменить</Button></div> : null}
+      {!editor && onEdit ? <div className="mezfit-public-exercises__detail-actions"><Button onClick={onEdit}>Изменить</Button></div> : null}
       <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
         contentClassName="mezfit-public-exercises__detail-section-content">
         <Text variant="headline">Инструкция</Text>
-        {row.instruction_steps.ru.length ? (
+        {editor ? editor.instructions : row.instruction_steps.ru.length ? (
           <ol>{row.instruction_steps.ru.map((step, i) => (
             <li key={`${row.id}-${i}`}><Text variant="body">{step}</Text></li>
           ))}</ol>
@@ -124,7 +137,7 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
       <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
         contentClassName="mezfit-public-exercises__detail-section-content">
         <Text variant="headline">Анатомия</Text>
-        {sections.map(([title, ids]) => ids.length ? (
+        {editor ? editor.anatomy : sections.map(([title, ids]) => ids.length ? (
           <div key={title} className="mezfit-public-exercises__anatomy-line">
             <Text variant="footnote" tone="muted">{title}</Text>
             <Text>{uniqueMuscles(ids, taxonomy)}</Text>
@@ -144,7 +157,7 @@ export function ExerciseCatalogContent({
   scope = 'public', catalogueExercises, favouriteIds = EMPTY_FAVOURITES,
   personalIds = EMPTY_FAVOURITES, assignedIds = EMPTY_FAVOURITES,
   selectedCoachUserId = null, initialTab = 'all',
-  onToggleFavourite, onCreateExercise, onEditExercise,
+  onToggleFavourite, onCreateExercise, onEditExercise, mediaAccountId,
 }: {
   snapshot: PublishedSnapshot;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -162,6 +175,7 @@ export function ExerciseCatalogContent({
   onToggleFavourite?: (exerciseId: string) => void;
   onCreateExercise?: (category: string | null) => void;
   onEditExercise?: (exerciseId: string) => void;
+  mediaAccountId?: string;
 }) {
   const { taxonomy, catalogue } = snapshot;
   const exercises = catalogueExercises ?? snapshot.exercises;
@@ -253,7 +267,8 @@ export function ExerciseCatalogContent({
 
   if (selected) return <ExerciseDetail row={selected} taxonomy={taxonomy}
     origin={personalIds.has(selected.id) ? 'personal' : assignedIds.has(selected.id) ? 'trainer' : null}
-    onEdit={isPersonal && onEditExercise ? () => onEditExercise(selected.id) : undefined} />;
+    onEdit={isPersonal && onEditExercise ? () => onEditExercise(selected.id) : undefined}
+    mediaAccountId={mediaAccountId} />;
   return (
     <section className="mezfit-public-exercises stack">
       {isPersonal && onCreateExercise ? <CoachExerciseCatalogFab onCreate={() => onCreateExercise(category)} /> : null}
@@ -334,7 +349,7 @@ export function ExerciseCatalogContent({
                   key={row.id}
                   leadingShape="square"
                   leading={<span className="mezfit-public-exercises__exercise-fallback">
-                    <PublicExerciseMedia key={`thumbnail:${row.id}:${row.sourceSha256}`} row={row} variant="thumbnail" />
+                    <PublicExerciseMedia key={`thumbnail:${row.id}:${row.sourceSha256}`} row={row} variant="thumbnail" mediaAccountId={mediaAccountId} />
                   </span>}
                   title={<span className="mezfit-public-exercises__exercise-title">
                     {row.name_ru || row.name}

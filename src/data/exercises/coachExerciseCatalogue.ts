@@ -1,4 +1,5 @@
 import { liveQuery } from 'dexie';
+import { blankPersonalExercise } from './blankPersonalExercise';
 import { AssignedCoachExercisesRepository } from './assignedCoachExercises';
 import type { MezfitCloudDatabase } from '../cloud/database';
 import { isPublicExerciseRow, type PublicExercise } from './publicExerciseTypes';
@@ -55,41 +56,36 @@ export class CoachExerciseCatalogueRepository {
   }
 
   /** Global base exercises are immutable. The only supported edit path is a private copy. */
-  async duplicatePublicExercise(sourceExerciseId: string): Promise<string> {
+  async duplicatePublicExercise(sourceExerciseId: string, changes: CoachExerciseChanges = {}): Promise<string> {
+    if (!isCoachExerciseChanges(changes)) throw new Error('INVALID_CUSTOM_EXERCISE');
     if (!/^\d{4}$/.test(sourceExerciseId)) throw new Error('EXERCISE_NOT_FOUND');
     const source = await this.db.publicExerciseDefinitions.get(sourceExerciseId);
     if (!isPublicExerciseRow(source)) throw new Error('EXERCISE_NOT_FOUND');
     const { id: _id, realmId: _realmId, owner: _owner, sourceSha256: _sha, ...data } = source;
-    return this.createExercise({ ...structuredClone(data), created_at: new Date().toISOString() }, {
+    return this.createExercise({ ...structuredClone(data), ...changes, created_at: new Date().toISOString() }, {
       copiedFromExerciseId: source.id, copiedFromScope: 'public',
     });
   }
 
   /** Authorize the copy from CURRENT assigned relationship snapshots, not caller-supplied data. */
-  async duplicateAssignedCoachExercise(coachUserId: string, sourceExerciseId: string): Promise<string> {
+  async duplicateAssignedCoachExercise(coachUserId: string, sourceExerciseId: string, changes: CoachExerciseChanges = {}): Promise<string> {
+    if (!isCoachExerciseChanges(changes)) throw new Error('INVALID_CUSTOM_EXERCISE');
     const assigned = new AssignedCoachExercisesRepository(this.db, this.actorUserId);
     const source = (await assigned.read(coachUserId)).find(row => row.id === sourceExerciseId);
     if (!source) throw new Error('EXERCISE_NOT_ASSIGNED');
     const { id: _id, realmId: _realmId, owner: _owner, sourceSha256: _sha, ...data } = source;
-    return this.createExercise({ ...structuredClone(data), created_at: new Date().toISOString() }, {
+    return this.createExercise({ ...structuredClone(data), ...changes, created_at: new Date().toISOString() }, {
       copiedFromExerciseId: source.id, copiedFromScope: 'coach',
     });
   }
 
   /** Blank personal item for FAB create. Does not require a trainer relationship. */
-  async createBlankExercise(category: string | null, name: string): Promise<string> {
+  async createBlankExercise(category: string | null, name: string, changes: CoachExerciseChanges = {}): Promise<string> {
     const title = name.trim();
     if (!title || title.length > 120) throw new Error('INVALID_CUSTOM_EXERCISE_NAME');
+    if (!isCoachExerciseChanges(changes)) throw new Error('INVALID_CUSTOM_EXERCISE');
     return this.createExercise({
-      name: title, name_ru: title, name_en: '', category: category ?? 'other',
-      subcategory: '', subcategory_ru: '', movement_type: 'resistance',
-      muscles: { primary: [], secondary: [], stabilizers: [], emphasis: [] },
-      mobility_targets: [], equipment: '', body_part: '', target: '', muscle_group: '',
-      secondary_muscles: [], media_id: '', image: '', gif_url: '', attribution: '',
-      created_at: new Date().toISOString(),
-      instructions: { ru: '', en: '' }, instruction_steps: { ru: [], en: [] },
-      source_consistency_issue: null,
-      anatomy_evidence: { classification_family: '', basis: '', external_individual_match: false },
+      ...blankPersonalExercise(category), ...changes, name: title, name_ru: title,
     });
   }
 
@@ -112,20 +108,55 @@ export class CoachExerciseCatalogueRepository {
     return id;
   }
 
-  async updateExercise(id: string, changes: CoachExerciseChanges): Promise<void> {
-    const previous = await this.db.coachExerciseDefinitions.get(id);
-    if (!isCoachExerciseDefinition(previous, this.actorUserId) || previous.archivedAt !== null) {
-      throw new Error('EXERCISE_NOT_FOUND');
-    }
+  async updateExercise(
+    id: string, changes: CoachExerciseChanges,
+    baseline?: Pick<PublicExercise, 'muscles' | 'instructions' | 'instruction_steps'>,
+  ): Promise<void> {
     if (!isCoachExerciseChanges(changes) || Object.keys(changes).length === 0) {
       throw new Error('INVALID_CUSTOM_EXERCISE');
     }
-    const updated = { ...previous, ...changes, updatedAt: new Date().toISOString() };
-    if (!updated.name_ru.trim() || updated.name_ru.trim().length > 120) throw new Error('INVALID_CUSTOM_EXERCISE_NAME');
-    if (!isCoachExerciseDefinition(updated, this.actorUserId)) {
-      throw new Error('INVALID_CUSTOM_EXERCISE');
-    }
-    await this.db.coachExerciseDefinitions.put(updated);
+    // Read and modify in one local transaction: preserve nested keys changed by
+    // other synchronized edits since this editor was opened.
+    await this.db.transaction('rw', this.db.coachExerciseDefinitions, async () => {
+      const previous = await this.db.coachExerciseDefinitions.get(id);
+      if (!isCoachExerciseDefinition(previous, this.actorUserId) || previous.archivedAt !== null) {
+        throw new Error('EXERCISE_NOT_FOUND');
+      }
+      const updated: CoachExerciseDefinitionRow = {
+        ...previous, ...changes, updatedAt: new Date().toISOString(),
+      };
+      if (baseline && changes.muscles) {
+        updated.muscles = { ...previous.muscles };
+        for (const key of ['primary', 'secondary', 'stabilizers', 'emphasis'] as const) {
+          if (JSON.stringify(changes.muscles[key]) !== JSON.stringify(baseline.muscles[key])) {
+            updated.muscles[key] = changes.muscles[key];
+          }
+        }
+      }
+      if (baseline && changes.instructions) {
+        updated.instructions = { ...previous.instructions };
+        for (const language of ['ru', 'en'] as const) {
+          if (changes.instructions[language] !== baseline.instructions[language]) {
+            updated.instructions[language] = changes.instructions[language];
+          }
+        }
+      }
+      if (baseline && changes.instruction_steps) {
+        updated.instruction_steps = { ...previous.instruction_steps };
+        for (const language of ['ru', 'en'] as const) {
+          const stepsEdited = JSON.stringify(changes.instruction_steps[language])
+            !== JSON.stringify(baseline.instruction_steps[language]);
+          const instructionTextEdited = changes.instructions?.[language] !== undefined
+            && changes.instructions[language] !== baseline.instructions[language];
+          if (stepsEdited || instructionTextEdited) {
+            updated.instruction_steps[language] = changes.instruction_steps[language];
+          }
+        }
+      }
+      if (!updated.name_ru.trim() || updated.name_ru.trim().length > 120) throw new Error('INVALID_CUSTOM_EXERCISE_NAME');
+      if (!isCoachExerciseDefinition(updated, this.actorUserId)) throw new Error('INVALID_CUSTOM_EXERCISE');
+      await this.db.coachExerciseDefinitions.put(updated);
+    });
   }
 
   async archiveExercise(id: string): Promise<void> {

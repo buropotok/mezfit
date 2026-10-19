@@ -1,4 +1,5 @@
-import { isPublicExerciseRow, type PublicExercise, type PublicExerciseRow } from './publicExerciseTypes';
+import { isExerciseTrackingType, isPublicExerciseRow, type PublicExercise, type PublicExerciseRow } from './publicExerciseTypes';
+import { isPersonalExerciseMediaUrl } from './personalExerciseMediaReference';
 
 /** Shared display model: public catalogue rows or coach-owned definitions. */
 export type CatalogueExerciseRow = PublicExercise & {
@@ -13,6 +14,7 @@ export type CoachExerciseChanges = Partial<Pick<PublicExercise,
   'name' | 'name_ru' | 'name_en' | 'category' | 'subcategory' | 'subcategory_ru'
   | 'movement_type' | 'muscles' | 'mobility_targets' | 'equipment' | 'body_part'
   | 'target' | 'muscle_group' | 'secondary_muscles' | 'instructions' | 'instruction_steps'
+  | 'tracking_type' | 'image'
 >>;
 
 export interface CoachExerciseOverrideRow {
@@ -64,6 +66,7 @@ const editableFields: ReadonlySet<string> = new Set([
   'name', 'name_ru', 'name_en', 'category', 'subcategory', 'subcategory_ru',
   'movement_type', 'muscles', 'mobility_targets', 'equipment', 'body_part',
   'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps',
+  'tracking_type', 'image',
 ]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -82,6 +85,10 @@ export function isCoachExerciseChanges(value: unknown): value is CoachExerciseCh
       if (!isRecord(item) || typeof item.ru !== 'string' || typeof item.en !== 'string') return false;
     } else if (key === 'instruction_steps') {
       if (!isRecord(item) || !strings(item.ru) || !strings(item.en)) return false;
+    } else if (key === 'tracking_type') {
+      if (item !== undefined && !isExerciseTrackingType(item)) return false;
+    } else if (key === 'image') {
+      if (!isPersonalExerciseMediaUrl(item)) return false;
     } else if (typeof item !== 'string') return false;
   }
   return true;
