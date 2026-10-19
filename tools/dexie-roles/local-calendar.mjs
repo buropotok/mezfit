@@ -207,6 +207,57 @@ const APPROVED = {
 function record(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
 function fail(code) { throw new Error(code); }
 
+// Log only vocabulary already present in the reviewed policies. Unknown cloud
+// strings/keys may contain private data and must never enter Actions logs.
+const diagnosticWords = new Set(['id', 'name', 'realmId', 'owner']);
+function collectDiagnosticWords(value) {
+  if (typeof value === 'string') diagnosticWords.add(value);
+  else if (Array.isArray(value)) value.forEach(collectDiagnosticWords);
+  else if (record(value)) for (const [key, child] of Object.entries(value)) {
+    diagnosticWords.add(key);
+    collectDiagnosticWords(child);
+  }
+}
+[BEFORE, CALENDAR_V1, APPROVED].forEach(collectDiagnosticWords);
+
+function diagnosticValue(value) {
+  if (value === undefined) return '<absent>';
+  if (value === 1 || value === 2) return value;
+  if (typeof value === 'string') return diagnosticWords.has(value) ? value : '<redacted:string>';
+  if (Array.isArray(value)) {
+    const items = value.slice(0, 50).map(item =>
+      typeof item === 'string' && diagnosticWords.has(item) ? item : '<redacted>');
+    if (value.length > 50) items.push('<truncated>');
+    return items;
+  }
+  return '<' + (value === null ? 'null' : typeof value) + '>';
+}
+
+function roleDifferences(expected, actual, path = '$') {
+  if (isDeepStrictEqual(expected, actual)) return [];
+  if (record(expected) && record(actual)) {
+    const keys = new Set([...Object.keys(expected), ...Object.keys(actual)]);
+    return [...keys].flatMap(key => {
+      const childPath = path + '.' + (diagnosticWords.has(key) ? key : '<redacted-key>');
+      // Never descend into unexpected properties or dump their values.
+      if (!Object.hasOwn(expected, key)) return [{ path: childPath, kind: 'unexpected-key' }];
+      return roleDifferences(expected[key], actual[key], childPath);
+    });
+  }
+  return [{ path, expected: diagnosticValue(expected), actual: diagnosticValue(actual) }];
+}
+
+class SchedulingRoleMismatchError extends Error {
+  constructor(mismatches) {
+    super('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
+    this.diagnostics = mismatches.map(([role, actual]) => ({
+      role,
+      comparisons: Object.entries({ preCalendar: BEFORE, calendarV1: CALENDAR_V1, approved: APPROVED })
+        .map(([baseline, roles]) => ({ baseline, differences: roleDifferences(roles[role], actual) })),
+    }));
+  }
+}
+
 /** Refuse a changed committed manifest, even if someone changes the JSON and its tests. */
 export function assertApprovedManifest(manifest) {
   if (!record(manifest) || !record(manifest.roles)
@@ -233,14 +284,16 @@ export function planSchedulingAcl(manifest, schema, exportedRoles) {
   const desired = assertApprovedManifest(manifest);
   assertCloudStructure(schema, exportedRoles);
   const updates = {};
+  const mismatches = [];
   for (const name of ROLES) {
     const actual = exportedRoles.roles[name];
     if (isDeepStrictEqual(actual, desired[name])) continue;
     if (!isDeepStrictEqual(actual, BEFORE[name]) && !isDeepStrictEqual(actual, CALENDAR_V1[name])) {
-      fail('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
+      mismatches.push([name, actual]);
     }
     updates[name] = desired[name];
   }
+  if (mismatches.length) throw new SchedulingRoleMismatchError(mismatches);
   return {
     importPayload: { roles: updates },
     changedNames: Object.keys(updates),
@@ -354,6 +407,9 @@ async function main() {
 
 if (process.argv[1]?.endsWith('/tools/dexie-roles/local-calendar.mjs')) {
   main().catch(error => {
+    if (error instanceof SchedulingRoleMismatchError) {
+      for (const diagnostic of error.diagnostics) console.error(JSON.stringify(diagnostic));
+    }
     // Deliberately do not print CLI response bodies or secrets.
     console.error(error instanceof Error && /^[A-Z0-9_]+$/.test(error.message)
       ? error.message : 'SCHEDULING_ACL_OPERATION_FAILED');
