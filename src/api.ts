@@ -1,6 +1,4 @@
-import type { WorkoutBookingAccess } from '../shared/workout-booking-access';
 import type { DexieCloudOptions } from 'dexie-cloud-addon';
-import type { LocalWorkoutOccurrenceDraft } from './data/cloud/workout-occurrence-plan';
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
 import type { ActiveWorkoutSession, OpenWorkoutSessionSummary, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
@@ -884,31 +882,4 @@ export async function completeWorkoutSession(
     body: JSON.stringify({}),
   });
   return { session: localizeWorkoutSession(result.session) };
-}
-
-/** A local draft becomes a booked workout only after this API confirms persistence. */
-export async function confirmCloudWorkoutOccurrence(initData: string,
-  draft: LocalWorkoutOccurrenceDraft): Promise<string> {
-  const response = await apiRequest<unknown>(initData, '/api/cloud/schedule/confirm', {
-    method: 'POST',
-    body: JSON.stringify({
-      requestKey: draft.id.slice('draft:'.length),
-      targetOccurrenceId: draft.targetOccurrenceId,
-      cancelRequested: draft.cancelRequested,
-      updatePlan: draft.targetOccurrenceId ? !draft.cancelRequested && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId : undefined,
-      trainingPlanId: draft.trainingPlanId,
-      programDayId: draft.programDayId,
-      access: { realmId: draft.realmId, athleteUserId: draft.athleteUserId,
-        coachUserId: draft.coachUserId, clientUserId: draft.clientUserId } satisfies WorkoutBookingAccess,
-      format: draft.format,
-      startsAtUtc: draft.startsAtUtc,
-      durationMinutes: draft.durationMinutes,
-      plan: draft.plan,
-    }),
-  });
-  if (!isRecord(response) || typeof response.occurrenceId !== 'string'
-    || !response.occurrenceId || response.confirmed !== true) {
-    throw new ApiError(502, 'Не удалось подтвердить сохранение тренировки', 'INVALID_API_RESPONSE');
-  }
-  return response.occurrenceId;
 }

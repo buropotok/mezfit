@@ -1,41 +1,87 @@
 import { liveQuery } from 'dexie';
-import type { MezfitCloudDatabase } from './database';
+import type { LocalProgramSyncRow, MezfitCloudDatabase } from './database';
+import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft, WorkoutOccurrencePlan } from './workout-occurrence-plan';
-import { isLocalWorkoutOccurrenceDraft, isWorkoutOccurrencePlan } from './workout-occurrence-plan';
+import { draftFromOccurrence, isLocalWorkoutOccurrenceDraft, isWorkoutOccurrencePlan } from './workout-occurrence-plan';
+import { occurrencePlanChanged } from './workout-occurrence-edit';
 import { validateScheduleTiming } from './workout-scheduling-time';
+import { assertLocalWorkoutSlot, WorkoutSlotConflict } from './workout-slot-validation';
+import { isApprovedAssignedPair } from './assigned-programs';
+import { WorkoutSchedulingRepository } from './workout-scheduling';
+import { markWorkoutChanged } from './workout-sync';
+
+class WorkoutEditRejected extends Error {}
 
 type DraftEdit = (draft: LocalWorkoutOccurrenceDraft) => LocalWorkoutOccurrenceDraft;
-interface EditQueue { pending: DraftEdit[]; running: Promise<void>; error: string; submitting: boolean }
-// Owned by the local database/account, not by an editor's mount lifetime.
-// This is only an IndexedDB write queue; Dexie Cloud still owns replication.
+interface EditQueue { pending: DraftEdit[]; running: Promise<void>; error: string }
+// Only local storage intents. Addon owns all replication, independently of editors.
 const editQueues = new WeakMap<MezfitCloudDatabase, Map<string, EditQueue>>();
 
-/** Unsynced, private account-local records in the app's single Dexie database. */
 export class WorkoutOccurrenceDraftRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {
     if (!/^tg:[1-9]\d*$/.test(actorUserId)) throw new Error('INVALID_CLOUD_USER_ID');
   }
 
-  async create(draft: LocalWorkoutOccurrenceDraft): Promise<string> {
-    if (!isLocalWorkoutOccurrenceDraft(draft) || draft.actorUserId !== this.actorUserId)
-      throw new Error('INVALID_OCCURRENCE_DRAFT');
-    await this.db.localWorkoutOccurrenceDrafts.add(structuredClone(draft));
-    return draft.id;
+  private transaction<T>(work: () => Promise<T>): Promise<T> {
+    return this.db.transaction('rw', ['localWorkoutOccurrenceDrafts', 'workoutOccurrences',
+      'localWorkoutSync', 'realms', 'members'], work);
   }
 
+  private async authorize(row: Pick<LocalWorkoutOccurrenceDraft, 'realmId' | 'athleteUserId' | 'coachUserId' | 'clientUserId' | 'format'>): Promise<void> {
+    if (!row.coachUserId && !row.clientUserId && row.realmId === this.actorUserId
+      && row.athleteUserId === this.actorUserId && row.format === 'independent') return;
+    if (!row.coachUserId || !row.clientUserId || row.athleteUserId !== row.clientUserId
+      || (this.actorUserId !== row.coachUserId && this.actorUserId !== row.clientUserId)
+      || (row.format === 'coached' && this.actorUserId !== row.coachUserId)) throw new WorkoutEditRejected('SCHEDULE_FORBIDDEN');
+    const realm = await this.db.realms.get(row.realmId);
+    const members = await this.db.members.where('realmId').equals(row.realmId).toArray();
+    if (!await isApprovedAssignedPair(realm, members, row.coachUserId, row.clientUserId)) throw new WorkoutEditRejected('SCHEDULE_FORBIDDEN');
+  }
+
+  async create(draft: LocalWorkoutOccurrenceDraft): Promise<string> {
+    if (!isLocalWorkoutOccurrenceDraft(draft) || draft.actorUserId !== this.actorUserId)
+      throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
+    return this.transaction(async () => {
+      await this.authorize(draft);
+      await assertLocalWorkoutSlot(this.db, draft);
+      await this.db.localWorkoutOccurrenceDrafts.add({ ...structuredClone(draft), saved: false });
+      return draft.id;
+    });
+  }
+
+  /** Opening a saved occurrence is a read, never a persisted draft creation. */
   async get(id: string): Promise<LocalWorkoutOccurrenceDraft | null> {
     const value: unknown = await this.db.localWorkoutOccurrenceDrafts.get(id);
-    return isLocalWorkoutOccurrenceDraft(value) && value.actorUserId === this.actorUserId ? value : null;
+    if (isLocalWorkoutOccurrenceDraft(value) && value.actorUserId === this.actorUserId)
+      return { ...value, saved: false };
+    if (!id.startsWith('draft:')) return null;
+    const row = await this.db.workoutOccurrences.get(id.slice(6));
+    if (!row || row.status === 'cancelled') return null;
+    try { await this.authorize(row); }
+    catch (reason) { if (reason instanceof WorkoutEditRejected) return null; throw reason; }
+    return draftFromOccurrence(this.actorUserId, row);
   }
 
   async list(): Promise<LocalWorkoutOccurrenceDraft[]> {
     const rows: unknown[] = await this.db.localWorkoutOccurrenceDrafts.toArray();
     return rows.filter(isLocalWorkoutOccurrenceDraft).filter(draft => draft.actorUserId === this.actorUserId)
+      .map(draft => ({ ...draft, saved: false }))
       .sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc) || a.id.localeCompare(b.id));
   }
 
   observe(onChange: (drafts: LocalWorkoutOccurrenceDraft[]) => void, onError: (reason: unknown) => void) {
     return liveQuery(() => this.list()).subscribe({ next: onChange, error: onError });
+  }
+
+  observeWorkspace(onChange: (value: { occurrences: CloudWorkoutOccurrenceRow[]; drafts: LocalWorkoutOccurrenceDraft[] }) => void,
+    onError: (reason: unknown) => void) {
+    const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
+    return liveQuery(async () => ({ occurrences: await scheduling.listCalendar(), drafts: await this.list() }))
+      .subscribe({ next: onChange, error: onError });
+  }
+
+  observeSync(id: string, onChange: (row: LocalProgramSyncRow | undefined) => void, onError: (reason: unknown) => void) {
+    return liveQuery(() => this.db.localWorkoutSync.get(id)).subscribe({ next: onChange, error: onError });
   }
 
   private queue(id: string): EditQueue {
@@ -44,7 +90,7 @@ export class WorkoutOccurrenceDraftRepository {
     const key = this.actorUserId + ':' + id;
     let queue = queues.get(key);
     if (!queue) {
-      queue = { pending: [], running: Promise.resolve(), error: '', submitting: false };
+      queue = { pending: [], running: Promise.resolve(), error: '' };
       queues.set(key, queue);
     }
     return queue;
@@ -53,92 +99,124 @@ export class WorkoutOccurrenceDraftRepository {
   pendingEditError(id: string): string { return this.queue(id).error; }
 
   async enqueueEdit(id: string, apply: DraftEdit): Promise<void> {
-    const queue = this.queue(id);
-    if (queue.submitting || (await this.get(id))?.submissionPending || queue.submitting) throw new Error('Сначала подтвердите сохранение тренировки');
     this.queue(id).pending.push(apply);
     return this.flushEdits(id);
   }
 
   flushEdits(id: string): Promise<void> {
     const queue = this.queue(id);
-    if (!queue.pending.length) return queue.running;
+    if (!queue.pending.length) return queue.running.catch(() => undefined);
     const next = queue.running.catch(() => undefined).then(async () => {
       while (queue.pending.length) {
-        await this.edit(id, queue.pending[0]);
+        try { await this.edit(id, queue.pending[0]); }
+        catch (reason) {
+          // Rejected user choices are discarded. Storage failures retain the intent for retry.
+          if (reason instanceof WorkoutEditRejected || reason instanceof WorkoutSlotConflict) queue.pending.shift();
+          throw reason;
+        }
         queue.pending.shift();
       }
       queue.error = '';
     });
     queue.running = next;
     void next.catch(reason => {
-      queue.error = reason instanceof Error ? reason.message : 'Не удалось сохранить черновик';
+      queue.error = queue.pending.length ? reason instanceof Error ? reason.message : 'Не удалось сохранить черновик' : '';
     });
     return next;
   }
 
-  /** Each action commits immediately, avoiding lost edits from debounced unmounts. */
-  async edit(id: string, apply: (draft: LocalWorkoutOccurrenceDraft) => LocalWorkoutOccurrenceDraft): Promise<void> {
-    await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
+  /** Content edits become private drafts; timing edits commit immediately without changing that status. */
+  async edit(id: string, apply: DraftEdit): Promise<void> {
+    await this.transaction(async () => {
       const current = await this.get(id);
-      if (!current) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
-      if (current.submissionPending) throw new Error('Сначала подтвердите сохранение тренировки');
+      if (!current) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
+      await this.authorize(current);
       const changed = apply(structuredClone(current));
       if (changed.id !== current.id || changed.actorUserId !== current.actorUserId
         || changed.targetOccurrenceId !== current.targetOccurrenceId
-        || changed.cancelRequested !== current.cancelRequested
         || changed.realmId !== current.realmId || changed.programDayId !== current.programDayId
         || changed.trainingPlanId !== current.trainingPlanId
         || changed.clientUserId !== current.clientUserId || changed.coachUserId !== current.coachUserId
-        || changed.athleteUserId !== current.athleteUserId
-        || !isWorkoutOccurrencePlan(changed.plan)) throw new Error('INVALID_OCCURRENCE_DRAFT');
-      validateScheduleTiming(changed);
-      await this.db.localWorkoutOccurrenceDrafts.put({ ...changed, updatedAt: new Date().toISOString() });
+        || changed.athleteUserId !== current.athleteUserId || changed.format !== current.format
+        || !isWorkoutOccurrencePlan(changed.plan)) throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
+      const contentChanged = occurrencePlanChanged(changed.plan, current.plan);
+      if (contentChanged && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId)
+        throw new WorkoutEditRejected('SCHEDULE_PLAN_FORBIDDEN');
+      try { validateScheduleTiming(changed); }
+      catch (reason) { throw new WorkoutEditRejected(reason instanceof Error ? reason.message : 'INVALID_SCHEDULE_TIMING'); }
+      const timingChanged = changed.startsAtUtc !== current.startsAtUtc || changed.durationMinutes !== current.durationMinutes;
+      if (timingChanged) {
+        await assertLocalWorkoutSlot(this.db, changed);
+        if (current.targetOccurrenceId) {
+          await this.db.workoutOccurrences.update(current.targetOccurrenceId, {
+            startsAtUtc: changed.startsAtUtc, durationMinutes: changed.durationMinutes, updatedAt: new Date().toISOString(),
+          });
+          await markWorkoutChanged(this.db, current.targetOccurrenceId);
+        }
+      }
+      if (contentChanged || !current.saved) {
+        await this.db.localWorkoutOccurrenceDrafts.put({ ...changed, saved: false, updatedAt: new Date().toISOString() });
+      }
     });
   }
 
   async replacePlan(id: string, plan: WorkoutOccurrencePlan): Promise<void> {
-    await this.edit(id, draft => ({ ...draft, plan: structuredClone(plan) }));
+    await this.enqueueEdit(id, draft => ({ ...draft, plan: structuredClone(plan) }));
   }
 
-  async prepareSubmission(id: string): Promise<{ draft: LocalWorkoutOccurrenceDraft; isNewSubmission: boolean }> {
-    const queue = this.queue(id);
-    const previous = queue.submitting;
-    queue.submitting = true;
-    try {
-      await this.flushEdits(id);
-      return await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
-        const draft = await this.get(id);
-        if (!draft) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
-        const isNewSubmission = !draft.submissionPending;
-        if (isNewSubmission) {
-          draft.submissionPending = true;
-          await this.db.localWorkoutOccurrenceDrafts.put(draft);
-        }
-        return { draft, isNewSubmission };
-      });
-    } catch (reason) { queue.submitting = previous; throw reason; }
-  }
-
-  /** Only used after a definite refusal of the very first submission. */
-  async releaseSubmission(id: string): Promise<void> {
-    await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
+  /** One local transaction publishes the PLAN and retires the private draft. No HTTP or sync barrier. */
+  async save(id: string): Promise<string> {
+    await this.flushEdits(id);
+    return this.transaction(async () => {
       const draft = await this.get(id);
-      if (!draft) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
-      await this.db.localWorkoutOccurrenceDrafts.put({ ...draft, submissionPending: false });
+      if (!draft) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
+      await this.authorize(draft);
+      await assertLocalWorkoutSlot(this.db, draft);
+      const now = new Date().toISOString();
+      let occurrenceId = draft.targetOccurrenceId;
+      if (occurrenceId) {
+        const current = await this.db.workoutOccurrences.get(occurrenceId);
+        if (!current || current.realmId !== draft.realmId || current.athleteUserId !== draft.athleteUserId
+          || current.coachUserId !== draft.coachUserId || current.clientUserId !== draft.clientUserId
+          || current.format !== draft.format) throw new WorkoutEditRejected('SCHEDULE_FORBIDDEN');
+        if (occurrencePlanChanged(draft.plan, current.plan)
+          && (draft.coachUserId ?? draft.athleteUserId) !== this.actorUserId) throw new WorkoutEditRejected('SCHEDULE_PLAN_FORBIDDEN');
+        await this.db.workoutOccurrences.update(occurrenceId, { plan: structuredClone(draft.plan), updatedAt: now });
+      } else {
+        const row: Omit<CloudWorkoutOccurrenceRow, 'id'> = {
+          realmId: draft.realmId, owner: draft.realmId === this.actorUserId ? this.actorUserId : null,
+          trainingPlanId: draft.trainingPlanId, programDayId: draft.programDayId,
+          athleteUserId: draft.athleteUserId, coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
+          format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
+          status: 'scheduled', workoutSessionId: null, plan: structuredClone(draft.plan),
+          createdByUserId: this.actorUserId, createdAt: now, updatedAt: now,
+        };
+        occurrenceId = await this.db.workoutOccurrences.add(row);
+      }
+      await markWorkoutChanged(this.db, occurrenceId);
+      await this.db.localWorkoutOccurrenceDrafts.delete(id);
+      return occurrenceId;
     });
-    this.queue(id).submitting = false;
   }
 
-  async delete(id: string, confirmed = false): Promise<void> {
-    // Explicit deletion discards failed intents, but waits for in-flight writes
-    // so they cannot recreate the draft after the deletion transaction.
+  async cancel(occurrenceId: string): Promise<void> {
+    await this.transaction(async () => {
+      const row = await this.db.workoutOccurrences.get(occurrenceId);
+      if (!row) throw new Error('OCCURRENCE_NOT_FOUND');
+      await this.authorize(row);
+      await this.db.workoutOccurrences.update(occurrenceId, { status: 'cancelled', updatedAt: new Date().toISOString() });
+      const drafts = await this.list();
+      await this.db.localWorkoutOccurrenceDrafts.bulkDelete(drafts.filter(draft => draft.targetOccurrenceId === occurrenceId).map(draft => draft.id));
+      await markWorkoutChanged(this.db, occurrenceId);
+    });
+  }
+
+  async delete(id: string): Promise<void> {
     const queue = this.queue(id);
-    if (queue.submitting && !confirmed) throw new Error('Сначала подтвердите сохранение тренировки');
     await queue.running.catch(() => undefined);
     await this.db.transaction('rw', this.db.localWorkoutOccurrenceDrafts, async () => {
-      const current = await this.get(id);
-      if (!current) throw new Error('OCCURRENCE_DRAFT_NOT_FOUND');
-      if (current.submissionPending && !confirmed) throw new Error('Сначала подтвердите сохранение тренировки');
+      const draft = await this.db.localWorkoutOccurrenceDrafts.get(id);
+      if (!draft || draft.actorUserId !== this.actorUserId) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       await this.db.localWorkoutOccurrenceDrafts.delete(id);
     });
     queue.pending.length = 0;

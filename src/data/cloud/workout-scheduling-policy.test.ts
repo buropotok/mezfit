@@ -5,13 +5,15 @@ import { CLOUD_DATABASE_STORES_V9, CLOUD_DATABASE_STORES_V10, CLOUD_DATABASE_VER
 const roles = roleConfig.roles;
 
 describe('occurrence scheduling policy', () => {
-  it('keeps lifecycle writes privileged while preserving Coach PLAN and shared FACT grants', () => {
-    expect(roles.coach.permissions).not.toHaveProperty('add');
-    expect(roles.client.permissions).not.toHaveProperty('add');
+  it('keeps session lifecycle writes privileged while preserving Coach PLAN and shared FACT grants', () => {
+    expect(roles.coach.permissions.add).toEqual(['workoutOccurrences']);
+    expect(roles.client.permissions.add).toEqual(['workoutOccurrences']);
+    expect(roles.coach.permissions.update.workoutOccurrences).toContain('plan');
+    expect(roles.client.permissions.update.workoutOccurrences).not.toContain('plan');
+    expect(roles.client.permissions.update.workoutOccurrences).not.toContain('realmId');
     expect(roles.coach.permissions.manage).toEqual([
       'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
     ]);
-    expect(JSON.stringify(roles)).not.toContain('"workoutOccurrences"');
     expect(JSON.stringify(roles)).not.toContain('"workoutSessions"');
     expect(roles.client.permissions).not.toHaveProperty('manage');
     expect(roles.coach.permissions.update).toHaveProperty('sessionSetFacts');
@@ -19,7 +21,7 @@ describe('occurrence scheduling policy', () => {
   });
 
   it('drops only the retired local intent table and retains drafts and workout data', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(10);
+    expect(CLOUD_DATABASE_VERSION).toBe(11);
     expect(CLOUD_DATABASE_STORES_V10.workoutScheduleRequests).toBeNull();
     const { workoutScheduleRequests: retired, ...previous } = CLOUD_DATABASE_STORES_V9;
     const { workoutScheduleRequests: removed, ...current } = CLOUD_DATABASE_STORES_V10;

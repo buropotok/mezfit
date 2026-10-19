@@ -21,7 +21,8 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
   const row = value as Partial<CloudWorkoutOccurrenceRow>;
   if (typeof row.id !== 'string' || !row.id
     || typeof row.realmId !== 'string' || !row.realmId
-    || row.owner !== null
+    || (row.owner !== null && !(row.coachUserId === null && row.clientUserId === null
+      && row.realmId === row.athleteUserId && row.owner === row.athleteUserId))
     || typeof row.programDayId !== 'string' || !row.programDayId
     || !isWorkoutOccurrencePlan(row.plan)
     || !validCloudUserId(row.athleteUserId)
@@ -49,7 +50,7 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
   } catch { return false; }
 }
 
-/** Confirmed bookings are created only by the privileged Worker. */
+/** Calendar reads use the authorized local Dexie working set. */
 export type WorkoutOccurrenceView = 'program' | 'calendar';
 export class WorkoutSchedulingRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {}

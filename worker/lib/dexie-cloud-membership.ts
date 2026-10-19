@@ -202,11 +202,13 @@ function assertRemoteRoles(value: unknown): void {
       && candidate.realmId === 'rlm-public' && candidate.name === name);
     if (!isObject(remote) || !isObject(remote.permissions)) failUnavailable();
     const permissions = remote.permissions;
-    const keys = name === 'coach' ? ['manage', 'update'] : ['update'];
+    const keys = name === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
     if (!sameStrings(Object.keys(permissions), keys)
       || (name === 'coach' && !sameStrings(permissions.manage, expected.coach.permissions.manage))
       || !isObject(permissions.update)
-      || !sameStrings(Object.keys(permissions.update), ['sessionSetFacts'])
+      || !sameStrings(permissions.add, ['workoutOccurrences'])
+      || !sameStrings(Object.keys(permissions.update), ['sessionSetFacts', 'workoutOccurrences'])
+      || !sameStrings(permissions.update.workoutOccurrences, expected[name].permissions.update.workoutOccurrences)
       || !sameStrings(permissions.update.sessionSetFacts, expectedFacts)) failUnavailable();
   }
 }

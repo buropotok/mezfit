@@ -7,6 +7,7 @@ import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurren
 import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 
+vi.mock('./WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => null }));
 vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSelectionSheet: () => null }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
@@ -35,6 +36,17 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 
 describe('draft edit recovery', () => {
+  it('shows Save only for a draft, while saved content remains editable', () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const view = render(<OccurrenceDraftSheet draft={{ ...draft, saved: true }} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
+    expect(screen.queryByText('Проверить сохранение')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Добавить подход' })).toBeTruthy();
+    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, saved: false }} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeTruthy();
+  });
+
   it('reports a write which failed after navigating away when the editor is reopened', async () => {
     let rejectWrite: (reason: Error) => void = () => {};
     const pending = new Promise<void>((_, reject) => { rejectWrite = reject; });

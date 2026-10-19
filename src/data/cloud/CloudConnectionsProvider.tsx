@@ -1,3 +1,5 @@
+import { ContactAvatarUrls } from './contact-avatar-urls';
+import { observeWorkoutSyncConfirmation } from './workout-sync';
 import { confirmProgramSync, observeProgramSyncConfirmation } from './program-sync';
 import { createSyncNotificationBudget, SyncNotificationBudgetContext } from './sync-notification-budget';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -49,6 +51,7 @@ interface CloudConnectionsValue {
   refresh: () => Promise<void>;
   retrySync: () => Promise<void>;
   loadAvatar: (contact: CloudContact) => Promise<Blob | null>;
+  avatarUrls?: ContactAvatarUrls;
 }
 
 const Context = createContext<CloudConnectionsValue | null>(null);
@@ -152,6 +155,8 @@ export function CloudConnectionsProvider({
   telegramUserId, initData, children,
 }: { telegramUserId: string; initData: string; children: ReactNode }) {
   const db = useMemo(() => createCloudDatabase(telegramUserId, initData), [telegramUserId, initData]);
+  const avatarUrls = useMemo(() => new ContactAvatarUrls(), [db]);
+  useEffect(() => () => avatarUrls.dispose(), [avatarUrls]);
   const notificationBudget = useMemo(() => createSyncNotificationBudget(), []);
   const actorUserId = `tg:${telegramUserId}`;
   const [clients, setClients] = useState<CloudContact[]>([]);
@@ -165,12 +170,13 @@ export function CloudConnectionsProvider({
   const avatarPermissionsReadyRef = useRef<Promise<void>>(Promise.resolve());
 
   const reconcileAvatarPermissions = useCallback((next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
+    avatarUrls.retain([...next.clients, ...next.coaches]);
     // Serialize snapshots before media loads: stale asynchronous downloads cannot
     // restore revoked portraits once the latest permissions have been persisted.
     avatarPermissionsReadyRef.current = avatarPermissionsReadyRef.current
       .then(() => pruneUnlinkedContactAvatars(telegramUserId, [...next.clients, ...next.coaches]))
       .catch(() => {});
-  }, [telegramUserId]);
+  }, [telegramUserId, avatarUrls]);
 
   useEffect(() => {
     alive.current = true;
@@ -275,6 +281,11 @@ export function CloudConnectionsProvider({
     setSyncError(reason instanceof Error ? reason.message : 'Не удалось подтвердить синхронизацию программ');
   }), [db]);
 
+  useEffect(() => observeWorkoutSyncConfirmation(db, reason => {
+    setSyncStatus('error');
+    setSyncError(reason instanceof Error ? reason.message : 'Не удалось синхронизировать тренировки');
+  }), [db]);
+
   // Profile writes are privileged and change-only; failures must not block offline lists.
   useEffect(() => {
     let active = true;
@@ -331,9 +342,9 @@ export function CloudConnectionsProvider({
 
   const value = useMemo<CloudConnectionsValue>(() => ({
     db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
-    refresh, retrySync, loadAvatar,
+    refresh, retrySync, loadAvatar, avatarUrls,
   }), [db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
-    refresh, retrySync, loadAvatar]);
+    refresh, retrySync, loadAvatar, avatarUrls]);
 
   return <Context.Provider value={value}>
     <SyncNotificationBudgetContext.Provider value={notificationBudget}>{children}</SyncNotificationBudgetContext.Provider>

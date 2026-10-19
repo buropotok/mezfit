@@ -22,10 +22,9 @@ export interface LocalWorkoutOccurrenceDraft {
   durationMinutes: number;
   plan: WorkoutOccurrencePlan;
   originalPlan: WorkoutOccurrencePlan;
-  /** Persisted before the HTTP call; retries must keep the exact command. */
-  submissionPending?: boolean;
+  /** View of a saved occurrence. Only content edits create a private draft. */
+  saved?: boolean;
   targetOccurrenceId?: string;
-  cancelRequested?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -88,8 +87,11 @@ const bounded = (n: unknown, max: number): n is number =>
 export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWorkoutOccurrenceDraft {
   if (!object(value) || typeof value.id !== 'string' || !value.id.startsWith('draft:')
     || (value.targetOccurrenceId !== undefined && (typeof value.targetOccurrenceId !== 'string' || !value.targetOccurrenceId))
-    || (value.cancelRequested !== undefined && typeof value.cancelRequested !== 'boolean')
     || !/^tg:[1-9]\d*$/.test(String(value.actorUserId))
+    || !/^tg:[1-9]\d*$/.test(String(value.athleteUserId))
+    || (value.coachUserId !== null && !/^tg:[1-9]\d*$/.test(String(value.coachUserId)))
+    || (value.clientUserId !== null && !/^tg:[1-9]\d*$/.test(String(value.clientUserId)))
+    || (value.saved !== undefined && typeof value.saved !== 'boolean')
     || typeof value.realmId !== 'string'
     || typeof value.trainingPlanId !== 'string'
     || typeof value.programDayId !== 'string'
@@ -106,7 +108,7 @@ export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWor
 
 export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurrenceRow): LocalWorkoutOccurrenceDraft {
   const now = new Date().toISOString();
-  return { id: 'draft:' + freshId(), actorUserId, realmId: row.realmId,
+  return { id: 'draft:' + row.id, actorUserId, realmId: row.realmId, saved: true,
     targetOccurrenceId: row.id, trainingPlanId: row.trainingPlanId ?? '', programDayId: row.programDayId,
     athleteUserId: row.athleteUserId, coachUserId: row.coachUserId, clientUserId: row.clientUserId,
     format: row.format, startsAtUtc: row.startsAtUtc, durationMinutes: row.durationMinutes,

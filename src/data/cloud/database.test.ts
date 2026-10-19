@@ -69,18 +69,18 @@ describe('Dexie Cloud schema and access policy', () => {
       'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
     ]);
     expect(Object.hasOwn(cloudRoles.roles.client.permissions, 'manage')).toBe(false);
-    expect(cloudRoles.roles.coach.permissions).not.toHaveProperty('add');
-    expect(cloudRoles.roles.client.permissions).not.toHaveProperty('add');
+    expect(cloudRoles.roles.coach.permissions.add).toEqual(['workoutOccurrences']);
+    expect(cloudRoles.roles.client.permissions.add).toEqual(['workoutOccurrences']);
   });
 
   it('grants both participants only field-scoped updates to existing set FACT records', () => {
     const coach = cloudRoles.roles.coach.permissions;
     const client = cloudRoles.roles.client.permissions;
-    expect(coach.update).toEqual({ sessionSetFacts: factFields });
-    expect(client.update).toEqual({ sessionSetFacts: factFields });
+    expect(coach.update.sessionSetFacts).toEqual(factFields);
+    expect(client.update.sessionSetFacts).toEqual(factFields);
     expect(coach.update.sessionSetFacts).not.toContain('*');
-    expect(Object.keys(coach.update)).toEqual(['sessionSetFacts']);
-    expect(Object.keys(client.update)).toEqual(['sessionSetFacts']);
+    expect(Object.keys(coach.update)).toEqual(['sessionSetFacts', 'workoutOccurrences']);
+    expect(Object.keys(client.update)).toEqual(['sessionSetFacts', 'workoutOccurrences']);
     expect(client.update.sessionSetFacts).not.toContain('*');
   });
 
@@ -109,7 +109,7 @@ describe('Dexie Cloud schema and access policy', () => {
       for (const field of protectedFields) {
         expect(editable).not.toContain(field);
       }
-      expect(Object.keys(permissions.update)).toEqual(['sessionSetFacts']);
+      expect(Object.keys(permissions.update)).toEqual(['sessionSetFacts', 'workoutOccurrences']);
       expect(JSON.stringify(permissions)).not.toContain('"workoutSessions"');
       expect(JSON.stringify(permissions)).not.toContain('"sessionSets"');
       expect(JSON.stringify(permissions)).not.toContain('"realms"');
