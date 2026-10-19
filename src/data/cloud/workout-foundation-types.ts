@@ -109,7 +109,10 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
 
 /** Each locally saved booking owns its PLAN snapshot, independent from the program template. */
 export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'> {
+  /** Realm ID is a truthy non-participant owner preserved by Addon 4.4.15. */
   owner: string | null;
+  /** Calendar cancellation is separate from execution/session lifecycle status. */
+  cancelledAt?: string | null;
   /** Published prescription; unsaved content edits live in a separate private draft. */
   plan: WorkoutOccurrencePlan;
   /** Source provenance, independent of current cloud program availability. */

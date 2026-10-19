@@ -27,7 +27,7 @@
           "workoutOccurrences": [
             "startsAtUtc",
             "durationMinutes",
-            "status",
+            "cancelledAt",
             "updatedAt",
             "plan"
           ]
@@ -57,7 +57,7 @@
           "workoutOccurrences": [
             "startsAtUtc",
             "durationMinutes",
-            "status",
+            "cancelledAt",
             "updatedAt"
           ]
         },

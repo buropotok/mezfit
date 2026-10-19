@@ -56,7 +56,7 @@ export class WorkoutOccurrenceDraftRepository {
       return { ...value, saved: false };
     if (!id.startsWith('draft:')) return null;
     const row = await this.db.workoutOccurrences.get(id.slice(6));
-    if (!row || row.status === 'cancelled') return null;
+    if (!row || row.status === 'cancelled' || row.cancelledAt) return null;
     try { await this.authorize(row); }
     catch (reason) { if (reason instanceof WorkoutEditRejected) return null; throw reason; }
     return draftFromOccurrence(this.actorUserId, row);
@@ -186,8 +186,9 @@ export class WorkoutOccurrenceDraftRepository {
           updatedAt: now,
         });
       } else {
+        // Addon 4.4.15 replaces null owners. A realm ID cannot match a verified tg:<id> subject.
         const row: Omit<CloudWorkoutOccurrenceRow, 'id'> = {
-          realmId: draft.realmId, owner: draft.realmId === this.actorUserId ? this.actorUserId : null,
+          realmId: draft.realmId, owner: draft.realmId,
           trainingPlanId: draft.trainingPlanId, programDayId: draft.programDayId,
           athleteUserId: draft.athleteUserId, coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
           format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
@@ -208,7 +209,7 @@ export class WorkoutOccurrenceDraftRepository {
       const row = await this.db.workoutOccurrences.get(occurrenceId);
       if (!row) throw new Error('OCCURRENCE_NOT_FOUND');
       await this.authorize(row);
-      await this.db.workoutOccurrences.update(occurrenceId, { status: 'cancelled', updatedAt: new Date().toISOString() });
+      await this.db.workoutOccurrences.update(occurrenceId, { cancelledAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       const drafts = await this.list();
       await this.db.localWorkoutOccurrenceDrafts.bulkDelete(drafts.filter(draft => draft.targetOccurrenceId === occurrenceId).map(draft => draft.id));
       await markWorkoutChanged(this.db, occurrenceId);

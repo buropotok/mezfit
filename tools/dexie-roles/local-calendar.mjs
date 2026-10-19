@@ -89,7 +89,7 @@ const APPROVED = {
         "workoutOccurrences": [
           "startsAtUtc",
           "durationMinutes",
-          "status",
+          "cancelledAt",
           "updatedAt",
           "plan"
         ]
@@ -119,7 +119,7 @@ const APPROVED = {
         "workoutOccurrences": [
           "startsAtUtc",
           "durationMinutes",
-          "status",
+          "cancelledAt",
           "updatedAt"
         ]
       },

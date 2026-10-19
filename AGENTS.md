@@ -221,7 +221,7 @@ with ordinary Dexie writes. `tools/dexie-roles/local-calendar.mjs` and
 `.github/workflows/dexie-local-calendar-acl.yml` may install only the exact reviewed
 Coach/Client `workoutOccurrences` grants in `cloud/roles.json`, from the exact
 previous role baseline embedded in the operator. Both roles may add calendar
-occurrences; timing/status updates are allowed; only Coach may update assigned
+occurrences; timing/cancelledAt updates are allowed, while execution status is not; only Coach may update assigned
 occurrence PLAN. Realm/participant identity fields, source PLAN grants, session
 lifecycle, FACT grants, schema and other roles must remain unchanged. Use the
 existing protected publisher only, owner/main manual dispatch, explicit apply

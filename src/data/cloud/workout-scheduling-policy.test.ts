@@ -11,6 +11,9 @@ describe('occurrence scheduling policy', () => {
     expect(roles.coach.permissions.update.workoutOccurrences).toContain('plan');
     expect(roles.client.permissions.update.workoutOccurrences).not.toContain('plan');
     expect(roles.client.permissions.update.workoutOccurrences).not.toContain('realmId');
+    expect(roles.coach.permissions.update.workoutOccurrences).not.toContain('status');
+    expect(roles.client.permissions.update.workoutOccurrences).not.toContain('status');
+    expect(roles.client.permissions.update.workoutOccurrences).toContain('cancelledAt');
     expect(roles.coach.permissions.manage).toEqual([
       'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
     ]);

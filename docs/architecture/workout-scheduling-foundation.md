@@ -27,9 +27,14 @@ confirmation, independently from whether the content is a private draft.
 
 Both client and coach use the same typed local repository. A personal occurrence
 uses the personal realm; assigned occurrences use the verified relationship realm
-and owner:null. Field-scoped cloud roles protect participant/realm identity and
+and owner equal to that realm ID. Addon 4.4.15 rewrites falsy owner values; a
+truthy realm ID cannot match a verified Telegram user ID, so it grants neither
+participant implicit owner privileges. Server-created owner:null rows remain readable. Field-scoped cloud roles protect participant/realm identity and
 source PLAN/session tables. Coach can edit assigned occurrence prescriptions;
-client can schedule independent workouts and change timing, not coach PLAN.
+client can schedule independent workouts and change timing, not coach PLAN. Calendar cancellation writes cancelledAt;
+execution status and workoutSessionId are never included in ordinary member
+update grants. No new privileged cancellation request or synchronization barrier
+is introduced.
 Static membership is checked locally from the authorized subset and by cloud ACL.
 No Worker business validation, cloud-template comparison or synchronization barrier
 participates in saving. Session Start remains outside this scheduling correction.

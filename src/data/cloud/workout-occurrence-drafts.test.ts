@@ -98,7 +98,7 @@ describe('local workout occurrence drafts', () => {
     const draft = make(); await repo().create(draft);
     const id = await repo().save(draft.id);
     await repo().cancel(id);
-    expect((await db.table('workoutOccurrences').get(id)).status).toBe('cancelled');
+    expect(await db.table('workoutOccurrences').get(id)).toMatchObject({ status: 'scheduled', cancelledAt: expect.any(String) });
     expect(await repo().get('draft:' + id)).toBeNull();
   });
 
@@ -107,14 +107,18 @@ describe('local workout occurrence drafts', () => {
     await db.table('realms').put(pair.realm); await db.table('members').bulkAdd(pair.members);
     const shared = { ...make(), realmId: pair.realm.realmId, athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
     await repo().create(shared); const id = await repo().save(shared.id);
+    expect((await db.table('workoutOccurrences').get(id)).owner).toBe(pair.realm.realmId);
     await repo().replacePlan('draft:' + id, { ...shared.plan, name: 'Новый план тренера' });
     expect((await repo('tg:202').get('draft:' + id))?.plan.name).toBe(shared.plan.name);
     await repo('tg:202').enqueueEdit('draft:' + id, current => ({ ...current, durationMinutes: 90 }));
     expect((await db.table('workoutOccurrences').get(id)).durationMinutes).toBe(90);
-    const update = vi.spyOn(db.table('workoutOccurrences'), 'update');
+    const patches: Record<string, unknown>[] = [];
+    const capture = (changes: Record<string, unknown>) => { patches.push(changes); };
+    db.table('workoutOccurrences').hook('updating', capture);
     await repo('tg:202').save('draft:' + id);
-    expect(update.mock.calls.at(-1)?.[1]).not.toHaveProperty('plan');
-    update.mockRestore();
+    db.table('workoutOccurrences').hook('updating').unsubscribe(capture);
+    expect(patches).toHaveLength(1);
+    expect(patches[0]).not.toHaveProperty('plan');
     await expect(repo('tg:202').replacePlan('draft:' + id, { ...shared.plan, name: 'Подмена' }))
       .rejects.toThrow('SCHEDULE_PLAN_FORBIDDEN');
     expect((await repo().get('draft:' + id))?.plan.name).toBe('Новый план тренера');
