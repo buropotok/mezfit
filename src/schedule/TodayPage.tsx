@@ -33,7 +33,7 @@ function timelineEvents(
   row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow, type: 'draft' | 'occurrence',
 ): TimelineItem[] {
   return calendarSegments(row.startsAtUtc, row.durationMinutes).map((segment, index) => {
-    const base = { ...segment, id: `${type}:${row.id}:${segment.date}:${index}` };
+    const base = { ...segment, id: `${type}:${row.id}:${index}` };
     return type === 'draft' ? { ...base, type, draft: row as LocalWorkoutOccurrenceDraft }
       : { ...base, type, occurrence: row as CloudWorkoutOccurrenceRow };
   });
@@ -71,7 +71,7 @@ export function TodayPage({
   const [error, setError] = useState('');
   const [programUpdateError, setProgramUpdateError] = useState('');
   const activeRepository = useRef<WorkoutOccurrenceDraftRepository | null>(null);
-  const changingEvent = useRef(false);
+  const [timingOverrides, setTimingOverrides] = useState<Record<string, { startsAtUtc: string; durationMinutes: number }>>({});
   const draftRepository = useMemo(() => cloud
     ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
@@ -79,10 +79,15 @@ export function TodayPage({
   useEffect(() => {
     if (!draftRepository) return undefined;
     activeRepository.current = draftRepository;
-    setProgramUpdateError('');
+    setProgramUpdateError(''); setTimingOverrides({});
     setLoading(true); setOccurrences([]); setDrafts([]); setOpenedDraftId(null); setViewed(null);
     const subscription = draftRepository.observeWorkspace(({ occurrences, drafts }) => {
       setOccurrences(occurrences); setDrafts(drafts); setLoading(false); setError('');
+      setTimingOverrides(current => Object.fromEntries(Object.entries(current).filter(([key, timing]) => {
+        const row = key.startsWith('draft:') ? drafts.find(row => 'draft:' + row.id === key)
+          : occurrences.find(row => 'occurrence:' + row.id === key);
+        return row && (row.startsAtUtc !== timing.startsAtUtc || row.durationMinutes !== timing.durationMinutes);
+      })));
     }, reason => {
       setLoading(false);
       setError(reason instanceof Error ? reason.message : 'Не удалось прочитать расписание');
@@ -134,12 +139,14 @@ export function TodayPage({
   }, [date, selected?.id, onNavigationContextChange]);
 
   const merged = useMemo(() => {
+    const withTiming = <T extends LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow>(row: T, type: string): T =>
+      timingOverrides[type + ':' + row.id] ? { ...row, ...timingOverrides[type + ':' + row.id] } : row;
     return [
       ...occurrences.filter(row => !drafts.some(draft => draft.targetOccurrenceId === row.id))
-        .flatMap(row => timelineEvents(row, 'occurrence')),
-      ...drafts.flatMap(row => timelineEvents(row, 'draft')),
+        .flatMap(row => timelineEvents(withTiming(row, 'occurrence'), 'occurrence')),
+      ...drafts.flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
     ];
-  }, [occurrences, drafts]);
+  }, [occurrences, drafts, timingOverrides]);
 
   const eventsByDate = useMemo<Record<LocalDate, TimelineItem[]>>(() => {
     const grouped: Record<string, TimelineItem[]> = {};
@@ -159,7 +166,7 @@ export function TodayPage({
     if (!draft) throw new Error('Черновик не найден');
     const id = await draftRepository.save(draft.id);
     if (activeRepository.current !== draftRepository) return;
-    setOpenedDraftId('draft:' + id);
+    setOpenedDraftId(current => current === selectedDraft.id ? 'draft:' + id : current);
     if (updateProgram) {
       // Updating the source is a separate local operation; the workout is already saved.
       const repository = new ProgramManagementRepository(cloud.db, cloud.actorUserId);
@@ -185,26 +192,34 @@ export function TodayPage({
     setOpenedDraftId(existing?.id ?? draft.id);
   };
   const changeEvent = async (id: string, date?: LocalDate, minutes?: number, duration?: number, cancel = false) => {
-    if (!cloud || !draftRepository || changingEvent.current) return;
-    changingEvent.current = true;
+    if (!cloud || !draftRepository) return;
+    const event = merged.find(item => item.id === id);
+    if (!event) return;
+    const current = event.type === 'draft' ? event.draft : event.occurrence;
+    const start = date !== undefined && minutes !== undefined
+      ? localScheduleInstant(date, `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}` as LocalTime)
+      : current.startsAtUtc;
+    if (event.type === 'occurrence' && !mayEdit(event.occurrence)) return;
+    if (cancel) {
+      const target = event.type === 'occurrence' ? event.occurrence.id : event.draft.targetOccurrenceId;
+      if (target) await draftRepository.cancel(target);
+      else await draftRepository.delete(current.id);
+      return;
+    }
+    const editorId = event.type === 'draft' ? event.draft.id : 'draft:' + event.occurrence.id;
+    const key = event.type + ':' + current.id;
+    const timing = { startsAtUtc: start, durationMinutes: duration ?? current.durationMinutes };
+    setTimingOverrides(previous => ({ ...previous, [key]: timing }));
     try {
-      const event = merged.find(item => item.id === id);
-      if (!event) return;
-      const current = event.type === 'draft' ? event.draft : event.occurrence;
-      const start = date !== undefined && minutes !== undefined
-        ? localScheduleInstant(date, `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}` as LocalTime)
-        : current.startsAtUtc;
-      if (event.type === 'occurrence' && !mayEdit(event.occurrence)) return;
-      if (cancel) {
-        const target = event.type === 'occurrence' ? event.occurrence.id : event.draft.targetOccurrenceId;
-        if (target) await draftRepository.cancel(target);
-        else await draftRepository.delete(current.id);
-        return;
-      }
-      const editorId = event.type === 'draft' ? event.draft.id : 'draft:' + event.occurrence.id;
       await draftRepository.enqueueEdit(editorId, row => ({ ...row, startsAtUtc: start,
         durationMinutes: duration ?? row.durationMinutes }));
-    } finally { changingEvent.current = false; }
+    } catch (reason) {
+      if (activeRepository.current === draftRepository) setTimingOverrides(previous => {
+        if (previous[key] !== timing) return previous;
+        const next = { ...previous }; delete next[key]; return next;
+      });
+      throw reason;
+    }
   };
   const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить тренировку')); };
 
@@ -215,7 +230,7 @@ export function TodayPage({
         eventsShareResource={(event, other) => bookingsShareParticipant(
           event.type === 'draft' ? event.draft : event.occurrence,
           other.type === 'draft' ? other.draft : other.occurrence)}
-        isEventEditable={event => !changingEvent.current && (event.type === 'draft'
+        isEventEditable={event => (event.type === 'draft'
           ? event.durationMinutes === event.draft.durationMinutes
           : mayEdit(event.occurrence) && event.durationMinutes === event.occurrence.durationMinutes)}
         onEventMove={move => report(changeEvent(move.eventId, move.targetDate, move.startMinutes))}

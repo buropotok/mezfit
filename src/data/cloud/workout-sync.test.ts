@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MezfitCloudDatabase } from './database';
-import { confirmWorkoutSync, markWorkoutChanged, workoutHasDelta } from './workout-sync';
+import { confirmWorkoutSync, markWorkoutChanged, observeWorkoutSyncConfirmation, workoutHasDelta } from './workout-sync';
 
 const databases: Dexie[] = [];
 afterEach(async () => { for (const db of databases.splice(0)) await db.delete(); });
@@ -18,6 +18,27 @@ async function fixture() {
 }
 
 describe('per-workout local cloud confirmation', () => {
+  it('requests native background push for local edits without a preceding in-sync event or manual button', async () => {
+    const { db, sync, change } = await fixture();
+    const unsubscribe = vi.fn();
+    // The connection may still be starting, or recovering from an earlier failure.
+    Object.assign(db.cloud, { syncState: { subscribe: () => ({ unsubscribe }) } });
+    let finish: () => void = () => {};
+    sync.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    const stop = observeWorkoutSyncConfirmation(db, vi.fn());
+    try {
+      await vi.waitFor(() => expect(sync).toHaveBeenCalledTimes(1));
+      // A pending native upload must never prevent another local mutation.
+      await change('a');
+      finish();
+      await vi.waitFor(async () => expect(workoutHasDelta(await db.localWorkoutSync.get('a'))).toBe(false));
+      await change('a');
+      await vi.waitFor(async () => expect(workoutHasDelta(await db.localWorkoutSync.get('a'))).toBe(false));
+      expect(sync).toHaveBeenCalledWith({ purpose: 'push', wait: true });
+    } finally { stop(); }
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
   it('keeps each workout independent and persists revisions across reopening', async () => {
     const { db, change } = await fixture();
     expect(workoutHasDelta(undefined)).toBe(true);

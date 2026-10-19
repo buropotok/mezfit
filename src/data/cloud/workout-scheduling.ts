@@ -127,10 +127,13 @@ export class WorkoutSchedulingRepository {
       && row.coachUserId !== null && row.clientUserId !== null)
       .map(row => [pairKey(row.realmId, row.coachUserId as string, row.clientUserId as string),
         { realmId: row.realmId, coach: row.coachUserId as string, client: row.clientUserId as string }]));
-    const allowed = new Set((await Promise.all([...pairs].map(async ([key, pair]) =>
-      await isApprovedAssignedPair(byRealm.get(pair.realmId),
-        members.filter(member => member.realmId === pair.realmId), pair.coach, pair.client)
-        ? key : null))).filter((key): key is string => key !== null));
+    // Membership verification uses Dexie.waitFor(WebCrypto). Never overlap those
+    // waits inside one write transaction (real Addon/WebView can deadlock).
+    const allowed = new Set<string>();
+    for (const [key, pair] of pairs) {
+      if (await isApprovedAssignedPair(byRealm.get(pair.realmId),
+        members.filter(member => member.realmId === pair.realmId), pair.coach, pair.client)) allowed.add(key);
+    }
     return occurrences.filter(row => {
       if (!validOccurrence(row) || (row.status === 'cancelled' || row.cancelledAt)) return false;
       if (row.coachUserId === null && row.clientUserId === null)

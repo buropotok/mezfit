@@ -19,7 +19,8 @@ vi.mock('../ui', () => ({
   Avatar: () => null,
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
-  IconButton: () => null, Icon: () => null, TimePicker: () => null,
+  IconButton: ({ label, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
+    <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: () => null, TimePicker: () => null,
   DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) => opened ? <div>
     <button onClick={() => onChange('2026-10-20')}>Занятая дата</button>
     <button onClick={() => onChange('invalid')}>Некорректная дата</button>
@@ -72,6 +73,19 @@ describe('draft edit recovery', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Нет' }));
     await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ startsAtUtc: '2026-10-21T08:00:00.000Z' }), false));
+  });
+
+  it('allows closing while a local Save is pending', async () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue(draft);
+    const close = vi.fn();
+    const save = vi.fn(() => new Promise<void>(() => {}));
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={close} onSave={save} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(save).toHaveBeenCalledOnce());
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it('displays the parent-owned program result inside the open saved editor', () => {
