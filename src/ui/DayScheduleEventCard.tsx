@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import { List, ListItem } from 'konsta/react';
+import { Text } from './primitives';
 import type { DayScheduleRenderState } from './DaySchedule';
 import './DayScheduleEventCard.css';
 
 export type DayScheduleEventCardProps = {
   title: ReactNode;
   detail?: ReactNode;
+  status?: ReactNode;
   media?: ReactNode;
   state: DayScheduleRenderState;
   className?: string;
@@ -22,6 +24,7 @@ function formatMinutes(totalMinutes: number): string {
 export function DayScheduleEventCard({
   title,
   detail,
+  status,
   media,
   state,
   className = '',
@@ -29,11 +32,10 @@ export function DayScheduleEventCard({
 }: DayScheduleEventCardProps) {
   const endMinutes = state.startMinutes + state.durationMinutes;
   const timeRange = `${formatMinutes(state.startMinutes)}–${formatMinutes(endMinutes)}`;
-  const subtitle = detail && !state.compact ? (
-    <>
-      {detail} · {timeRange}
-    </>
-  ) : timeRange;
+  const subtitle = <div className="ui-day-schedule-event-card__row">
+    <Text variant="footnote" className="ui-day-schedule-event-card__fixed">{timeRange}</Text>
+    {detail && !state.compact ? <Text variant="footnote" className="ui-day-schedule-event-card__truncate">{detail}</Text> : null}
+  </div>;
   const resolvedMedia = !state.compact && media ? (
     <span className="ui-day-schedule-event-card__media">{media}</span>
   ) : undefined;
@@ -55,7 +57,10 @@ export function DayScheduleEventCard({
           innerClassName="!py-0 !pe-[6px] min-h-0 flex flex-col justify-center"
           titleWrapClassName="!min-h-0"
           media={resolvedMedia}
-          title={title}
+          title={<div className="ui-day-schedule-event-card__row">
+            <Text variant="body" className="ui-day-schedule-event-card__truncate">{title}</Text>
+            {status ? <span className="ui-day-schedule-event-card__fixed">{status}</span> : null}
+          </div>}
           subtitle={subtitle}
           onClick={onClick}
         />

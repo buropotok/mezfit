@@ -34,6 +34,7 @@ import pencilUrl from './pencil-outline.svg';
 import plusOutlineUrl from './plus-outline.svg';
 import textPlusUrl from './text-plus.svg';
 import userPlusUrl from './user-plus-outline.svg';
+import userUrl from './user-outline.svg';
 import settingsFilledUrl from './liquid-glass-settings-filled.svg';
 import shareUrl from './share-outline.svg';
 import settingsOutlineUrl from './liquid-glass-settings-outline.svg';
@@ -73,6 +74,7 @@ const uiIconRegistry = {
   plus: { outline: plusOutlineUrl, filled: plusOutlineUrl },
   'text-plus': { outline: textPlusUrl, filled: textPlusUrl },
   'user-plus': { outline: userPlusUrl, filled: userPlusUrl },
+  user: { outline: userUrl, filled: userUrl },
   settings: { outline: settingsOutlineUrl, filled: settingsFilledUrl },
   share: { outline: shareUrl, filled: shareUrl },
   'user-share': { outline: userShareUrl, filled: userShareUrl },

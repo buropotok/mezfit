@@ -1,4 +1,4 @@
-import type { CloudProgramDayOutline, CloudProgramPhaseRow } from './workout-foundation-types';
+import type { CloudProgramDayOutline, CloudProgramPhaseRow, CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 import type { CloudTrainingPlanRow } from './database';
 import { validateScheduleTiming } from './workout-scheduling-time';
 
@@ -24,6 +24,8 @@ export interface LocalWorkoutOccurrenceDraft {
   originalPlan: WorkoutOccurrencePlan;
   /** Persisted before the HTTP call; retries must keep the exact command. */
   submissionPending?: boolean;
+  targetOccurrenceId?: string;
+  cancelRequested?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,6 +87,8 @@ const bounded = (n: unknown, max: number): n is number =>
 
 export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWorkoutOccurrenceDraft {
   if (!object(value) || typeof value.id !== 'string' || !value.id.startsWith('draft:')
+    || (value.targetOccurrenceId !== undefined && (typeof value.targetOccurrenceId !== 'string' || !value.targetOccurrenceId))
+    || (value.cancelRequested !== undefined && typeof value.cancelRequested !== 'boolean')
     || !/^tg:[1-9]\d*$/.test(String(value.actorUserId))
     || typeof value.realmId !== 'string'
     || typeof value.trainingPlanId !== 'string'
@@ -98,4 +102,13 @@ export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWor
       durationMinutes: value.durationMinutes });
     return true;
   } catch { return false; }
+}
+
+export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurrenceRow): LocalWorkoutOccurrenceDraft {
+  const now = new Date().toISOString();
+  return { id: 'draft:' + freshId(), actorUserId, realmId: row.realmId,
+    targetOccurrenceId: row.id, trainingPlanId: row.trainingPlanId ?? '', programDayId: row.programDayId,
+    athleteUserId: row.athleteUserId, coachUserId: row.coachUserId, clientUserId: row.clientUserId,
+    format: row.format, startsAtUtc: row.startsAtUtc, durationMinutes: row.durationMinutes,
+    plan: structuredClone(row.plan), originalPlan: structuredClone(row.plan), createdAt: now, updatedAt: now };
 }

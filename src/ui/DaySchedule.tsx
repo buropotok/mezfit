@@ -89,6 +89,8 @@ export type DayScheduleProps<TEvent extends DayScheduleEvent = DayScheduleEvent>
   onDateChange: (date: LocalDate) => void;
   renderEvent: (event: TEvent, state: DayScheduleRenderState) => ReactNode;
   isEventEditable?: (event: TEvent) => boolean;
+  /** Resource policy; interval geometry is still checked by the timeline. */
+  eventsShareResource?: (event: TEvent, other: TEvent) => boolean;
   onEventMove?: (move: DayScheduleEventMove) => void;
   onEventResize?: (resize: DayScheduleEventResize) => void;
   onEventDelete?: (deletion: DayScheduleEventDelete) => void;
@@ -114,6 +116,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
   onDateChange,
   renderEvent,
   isEventEditable,
+  eventsShareResource,
   onEventMove,
   onEventResize,
   onEventDelete,
@@ -640,7 +643,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
       event.delta.y,
     );
     const fits = eventFitsSlot(
-      eventsByDate[targetDate] ?? [],
+      (eventsByDate[targetDate] ?? []).filter(other => !eventsShareResource || eventsShareResource(currentEvent, other)),
       currentEvent.id,
       startMinutes,
       currentEvent.durationMinutes,
@@ -673,7 +676,7 @@ export function DaySchedule<TEvent extends DayScheduleEvent>({
 
   const handleEventResize = (entryDate: LocalDate, event: TEvent, startMinutes: number, durationMinutes: number) => {
     if (!onEventResize || isEventEditable?.(event) === false) return;
-    if (!eventFitsSlot(eventsByDate[entryDate] ?? [], event.id, startMinutes, durationMinutes)) return;
+    if (!eventFitsSlot((eventsByDate[entryDate] ?? []).filter(other => !eventsShareResource || eventsShareResource(event, other)), event.id, startMinutes, durationMinutes)) return;
     onEventResize({
       eventId: event.id,
       date: entryDate,

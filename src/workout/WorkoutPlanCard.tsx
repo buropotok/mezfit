@@ -124,9 +124,9 @@ export function WorkoutPlanCard({
               triggerRef={scheduleTriggerRef} label="Формат тренировки"
               preset={glass.preset} optics={glass.optics}
               items={[
-                { id: 'coached', label: 'В зале с клиентом', icon: 'user-plus',
+                { id: 'coached', label: 'В зале с клиентом', icon: 'users',
                   onSelect: () => onSchedule('coached') },
-                { id: 'independent', label: 'Самостоятельная', icon: 'users',
+                { id: 'independent', label: 'Самостоятельная', icon: 'user',
                   onSelect: () => onSchedule('independent') },
               ]}
               trigger={<GlassSurface component={PlanGlassButton} ref={scheduleTriggerRef}

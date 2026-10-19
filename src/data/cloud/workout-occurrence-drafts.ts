@@ -84,6 +84,8 @@ export class WorkoutOccurrenceDraftRepository {
       if (current.submissionPending) throw new Error('Сначала подтвердите сохранение тренировки');
       const changed = apply(structuredClone(current));
       if (changed.id !== current.id || changed.actorUserId !== current.actorUserId
+        || changed.targetOccurrenceId !== current.targetOccurrenceId
+        || changed.cancelRequested !== current.cancelRequested
         || changed.realmId !== current.realmId || changed.programDayId !== current.programDayId
         || changed.trainingPlanId !== current.trainingPlanId
         || changed.clientUserId !== current.clientUserId || changed.coachUserId !== current.coachUserId

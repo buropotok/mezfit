@@ -19,7 +19,7 @@ vi.mock('../ui', () => ({
     items: LiquidPopoverItem[]; trigger: ReactNode;
   }) => <div>
     <div onClick={() => onOpenChange(true)}>{trigger}</div>
-    {isOpen ? items.map(item => <button key={item.id} onClick={() => item.onSelect?.()}>{item.label}</button>) : null}
+    {isOpen ? items.map(item => <button key={item.id} data-icon={item.icon} onClick={() => item.onSelect?.()}>{item.label}</button>) : null}
   </div>,
 }));
 vi.mock('./SessionExercise', () => ({ SessionExercise: () => null }));
@@ -51,6 +51,7 @@ describe('day scheduling formats', () => {
     fireEvent.click(screen.getByRole('button', {
       name: format === 'coached' ? 'В зале с клиентом' : 'Самостоятельная',
     }));
+    expect(screen.getByRole('button', { name: format === 'coached' ? 'В зале с клиентом' : 'Самостоятельная' }).getAttribute('data-icon')).toBe(format === 'coached' ? 'users' : 'user');
     expect(schedule).toHaveBeenCalledWith(format);
   });
 });

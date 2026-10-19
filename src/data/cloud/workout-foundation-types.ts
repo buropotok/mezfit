@@ -127,6 +127,8 @@ export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   sourceRequestId?: string | null;
   /** Immutable submitted-command identity; not a comparison with mutable PLAN. */
   sourceRequestHash?: string;
+  lastMutationId?: string;
+  lastMutationHash?: string;
   createdByUserId?: string;
   createdAt?: string;
   updatedAt?: string;

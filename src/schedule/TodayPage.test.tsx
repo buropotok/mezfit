@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DayScheduleEventMove, DayScheduleEventResize, DayScheduleEventDelete, LocalDate } from '../ui';
 import type { ReactNode } from 'react';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { ApiError, confirmCloudWorkoutOccurrence, getScheduleOccurrences } from '../api';
+import { assertLocalWorkoutSlot } from '../data/cloud/workout-slot-validation';
 import { TodayPage } from './TodayPage';
+
+vi.mock('../data/cloud/workout-slot-validation', () => ({ assertLocalWorkoutSlot: vi.fn(async () => {}) }));
 
 const state = vi.hoisted(() => ({
   cloudRows: [] as CloudWorkoutOccurrenceRow[],
@@ -16,6 +20,10 @@ const state = vi.hoisted(() => ({
   actorUserId: 'tg:101',
   db: {},
   closed: 0,
+  move: null as null | ((event: DayScheduleEventMove) => void),
+  resize: null as null | ((event: DayScheduleEventResize) => void),
+  remove: null as null | ((event: DayScheduleEventDelete) => void),
+  eventId: '',
 }));
 
 vi.mock('../api', async importOriginal => ({
@@ -45,6 +53,7 @@ vi.mock('../data/cloud/workout-occurrence-drafts', () => ({
       onChange(state.localRows);
       return { unsubscribe: vi.fn() };
     }
+    async create(draft: LocalWorkoutOccurrenceDraft) { state.localRows.push(draft); state.draftsChanged?.([...state.localRows]); return draft.id; }
     async get(id: string) { return state.localRows.find(row => row.id === id) ?? null; }
     async prepareSubmission(id: string) {
       const current = state.localRows.find(row => row.id === id);
@@ -84,20 +93,26 @@ vi.mock('./OccurrenceDraftSheet', () => ({
 }));
 vi.mock('../ui', async importOriginal => ({
   ...await importOriginal<typeof import('../ui')>(),
-  DaySchedule: ({ eventsByDate, renderEvent }: {
+  DaySchedule: ({ eventsByDate, renderEvent, onEventMove, onEventResize, onEventDelete }: {
+    onEventMove?: (event: DayScheduleEventMove) => void;
+    onEventResize?: (event: DayScheduleEventResize) => void;
+    onEventDelete?: (event: DayScheduleEventDelete) => void;
     eventsByDate: Record<string, Array<{ id: string; startMinutes: number; durationMinutes: number }>>;
     renderEvent: (item: { id: string; startMinutes: number; durationMinutes: number }, state: unknown) => ReactNode;
-  }) => <div data-testid="calendar">
+  }) => {
+    state.move = onEventMove ?? null; state.resize = onEventResize ?? null; state.remove = onEventDelete ?? null;
+    state.eventId = Object.values(eventsByDate).flat()[0]?.id ?? '';
+    return <div data-testid="calendar">
     {Object.values(eventsByDate).flat().map(item => (
       <div key={item.id}>{renderEvent(item, {
         startMinutes: item.startMinutes, durationMinutes: item.durationMinutes,
         compact: false, editing: false, lifted: false,
       })}</div>
     ))}
-  </div>,
-  DayScheduleEventCard: ({ title, detail, onClick }: {
-    title: ReactNode; detail?: ReactNode; onClick?: () => void;
-  }) => <button onClick={onClick}>{title} {detail}</button>,
+  </div>; },
+  DayScheduleEventCard: ({ title, detail, status, onClick }: {
+    title: ReactNode; detail?: ReactNode; status?: ReactNode; onClick?: () => void;
+  }) => <button onClick={onClick}>{title} {status} {detail}</button>,
 }));
 
 const prescription = { name: 'День 1', comment: null, exercises: [] };
@@ -123,8 +138,9 @@ beforeEach(() => {
   state.closed = 0; state.actorUserId = 'tg:101';
   vi.mocked(confirmCloudWorkoutOccurrence).mockReset();
   vi.mocked(getScheduleOccurrences).mockReset();
+  vi.mocked(assertLocalWorkoutSlot).mockReset().mockResolvedValue(undefined);
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
 const open = () => render(<TodayPage initData="telegram-session" role="coach" currentUserId={101}
   onNavigationContextChange={vi.fn()} />);
 
@@ -134,7 +150,7 @@ describe('Dexie-backed schedule', () => {
     vi.mocked(confirmCloudWorkoutOccurrence).mockRejectedValueOnce(new Error('Ответ потерян'))
       .mockRejectedValueOnce(new ApiError(403, 'Нет доступа', 'SCHEDULE_FORBIDDEN'));
     open();
-    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
@@ -147,55 +163,101 @@ describe('Dexie-backed schedule', () => {
     vi.mocked(confirmCloudWorkoutOccurrence).mockRejectedValueOnce(new Error('Ответ потерян'))
       .mockResolvedValueOnce('occ-confirmed');
     open();
-    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
     expect(state.localRows[0].submissionPending).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
-    await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Черновик')).toBeNull());
     expect(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[1][1])
       .toEqual(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[0][1]);
+  });
+
+  it('opens a saved workout and updates that occurrence instead of creating a second one', async () => {
+    state.cloudRows = [occurrence];
+    vi.mocked(confirmCloudWorkoutOccurrence).mockResolvedValue(occurrence.id);
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: /Вы.*День 1/ }));
+    await waitFor(() => expect(state.localRows[0]?.targetOccurrenceId).toBe(occurrence.id));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[0][1].targetOccurrenceId).toBe(occurrence.id);
+    await waitFor(() => expect(state.localRows).toHaveLength(0));
+    expect(screen.getAllByRole('button', { name: /Вы.*День 1/ })).toHaveLength(1);
+  });
+
+  it('connects timeline move, resize and deletion to existing-occurrence mutations', async () => {
+    vi.stubEnv('TZ', 'UTC');
+    state.cloudRows = [occurrence];
+    vi.mocked(confirmCloudWorkoutOccurrence).mockResolvedValue(occurrence.id);
+    open();
+    await waitFor(() => expect(state.move).not.toBeNull());
+    await act(async () => { state.move?.({ eventId: state.eventId, date: '2026-10-19' as LocalDate,
+      targetDate: '2026-10-20' as LocalDate, previousStartMinutes: 480, startMinutes: 600 }); });
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[0][1])
+      .toMatchObject({ targetOccurrenceId: occurrence.id, startsAtUtc: '2026-10-20T10:00:00.000Z' });
+    await waitFor(() => expect(state.localRows).toHaveLength(0));
+    await act(async () => { state.resize?.({ eventId: state.eventId, date: '2026-10-20' as LocalDate,
+      previousStartMinutes: 600, startMinutes: 600, previousDurationMinutes: 60, durationMinutes: 90 }); });
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[1][1].durationMinutes).toBe(90);
+    await waitFor(() => expect(state.localRows).toHaveLength(0));
+    await act(async () => { state.remove?.({ eventId: state.eventId, date: '2026-10-20' as LocalDate }); });
+    await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(3));
+    expect(vi.mocked(confirmCloudWorkoutOccurrence).mock.calls[2][1].cancelRequested).toBe(true);
+  });
+
+  it('does not submit a booking which failed the local occupancy check', async () => {
+    state.localRows = [structuredClone(baseDraft)];
+    vi.mocked(assertLocalWorkoutSlot).mockRejectedValueOnce(new Error('Время занято'));
+    open();
+    fireEvent.click(await screen.findByText('Черновик'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(assertLocalWorkoutSlot).toHaveBeenCalledTimes(1));
+    expect(confirmCloudWorkoutOccurrence).not.toHaveBeenCalled();
+    expect(state.localRows).toHaveLength(1);
   });
 
   it('renders confirmed occurrences without fetching obsolete D1 calendar rows', async () => {
     state.cloudRows = [occurrence];
     open();
-    await waitFor(() => expect(screen.getByText(/Самостоятельная · День 1/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Вы.*День 1/ })).toBeTruthy());
     expect(vi.mocked(getScheduleOccurrences)).not.toHaveBeenCalled();
   });
 
   it('keeps a device-only draft on the timeline and reopens its plan', async () => {
     state.localRows = [structuredClone(baseDraft)];
     open();
-    await waitFor(() => expect(screen.getByText(/Черновик · День 1/)).toBeTruthy());
-    fireEvent.click(screen.getByText(/Черновик · День 1/));
+    await waitFor(() => expect(screen.getByText('Черновик')).toBeTruthy());
+    fireEvent.click(screen.getByText('Черновик'));
     await waitFor(() => expect(screen.getByRole('dialog', { name: 'Запланировать тренировку' })).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
-    expect(screen.getByText(/Черновик · День 1/)).toBeTruthy();
+    expect(screen.getByText('Черновик')).toBeTruthy();
   });
 
   it('removes the local draft only after the booking API confirms a real occurrence', async () => {
     state.localRows = [structuredClone(baseDraft)];
     vi.mocked(confirmCloudWorkoutOccurrence).mockResolvedValue('occ-confirmed');
     open();
-    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
-    await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Черновик')).toBeNull());
     expect(vi.mocked(confirmCloudWorkoutOccurrence)).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/Самостоятельная · День 1/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Вы.*День 1/ })).toBeTruthy();
   });
 
   it('retires a confirmation after cloud observation so cancellation cannot resurrect it', async () => {
     state.localRows = [structuredClone(baseDraft)];
     vi.mocked(confirmCloudWorkoutOccurrence).mockResolvedValue('occ-confirmed');
     open();
-    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
-    await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Черновик')).toBeNull());
     await act(async () => { state.calendarChanged?.([{ ...occurrence, id: 'occ-confirmed' }]); });
-    expect(screen.getAllByText(/Самостоятельная · День 1/)).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Вы.*День 1/ })).toHaveLength(1);
     await act(async () => { state.calendarChanged?.([]); });
-    expect(screen.queryByText(/Самостоятельная · День 1/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Вы.*День 1/ })).toBeNull();
   });
 
   it('does not recreate a confirmation if cloud observation and removal preceded the API receipt', async () => {
@@ -203,23 +265,23 @@ describe('Dexie-backed schedule', () => {
     let confirm: (id: string) => void = () => {};
     vi.mocked(confirmCloudWorkoutOccurrence).mockImplementation(() => new Promise(resolve => { confirm = resolve; }));
     open();
-    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(confirmCloudWorkoutOccurrence).toHaveBeenCalledTimes(1));
     await act(async () => { state.calendarChanged?.([{ ...occurrence, id: 'occ-confirmed' }]); });
     await act(async () => { state.calendarChanged?.([]); });
     await act(async () => { confirm('occ-confirmed'); });
-    await waitFor(() => expect(screen.queryByText(/Черновик · День 1/)).toBeNull());
-    expect(screen.queryByText(/Самостоятельная · День 1/)).toBeNull();
+    await waitFor(() => expect(screen.queryByText('Черновик')).toBeNull());
+    expect(screen.queryByRole('button', { name: /Вы.*День 1/ })).toBeNull();
   });
 
   it('retains the draft and editor when booking fails', async () => {
     state.localRows = [structuredClone(baseDraft)];
     vi.mocked(confirmCloudWorkoutOccurrence).mockRejectedValue(new Error('Сеть недоступна'));
     open();
-    fireEvent.click(await screen.findByText(/Черновик · День 1/));
+    fireEvent.click(await screen.findByText('Черновик'));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
-    await waitFor(() => expect(screen.getByText(/Черновик · День 1/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Черновик')).toBeTruthy());
     expect(screen.getByRole('dialog', { name: 'Запланировать тренировку' })).toBeTruthy();
     expect(state.localRows).toHaveLength(1);
   });

@@ -14,6 +14,7 @@ vi.mock('../workout/WorkoutPlanCard', () => ({
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>,
 }));
 vi.mock('../ui', () => ({
+  Avatar: () => null,
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
   IconButton: () => null, Icon: () => null, DatePicker: () => null, TimePicker: () => null,
@@ -22,7 +23,10 @@ vi.mock('../ui', () => ({
   MezfitDialog: () => null, MezfitDialogButton: () => null,
 }));
 afterEach(cleanup);
-const plan = { name: 'День', comment: null, exercises: [] };
+const plan = { name: 'День', comment: null, exercises: [{
+  id: 'exercise', sourceProgramExerciseId: null, position: 0, notes: null, sets: [],
+  exercise: { exerciseDefinitionId: '0001', scope: 'public' as const, name: 'Жим', nameEn: null, mediaUrl: null },
+}] };
 const draft: LocalWorkoutOccurrenceDraft = {
   id: 'draft:one', actorUserId: 'tg:101', realmId: 'tg:101', trainingPlanId: 'program',
   programDayId: 'day', athleteUserId: 'tg:101', coachUserId: null, clientUserId: null,

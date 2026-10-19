@@ -93,3 +93,26 @@ Code deployment does not apply cloud permissions. In this nonproduction
 rollout, membership provisioning intentionally fails closed until the exact
 cloud ACL is installed. Complete the protected retirement before verifying new
 invitations and two-account access. PR CI never mutates cloud configuration.
+
+## Calendar interaction corrections
+
+The timeline card always identifies the athlete (name and photograph). Its first
+row reserves space for the complete draft badge; its second reserves space for
+the complete time range before the ellipsized day name. The planning editor uses
+the PLAN owner's identity. The future Start action is not part of this change.
+
+A saved occurrence opens the existing PLAN editor through a private local draft
+with targetOccurrenceId; submission updates that occurrence rather than creating
+another. Completed/in-progress records remain viewable, with lifecycle eligibility
+checked locally. Moves and resizes use the same mutation path; deletion cancels
+the occurrence. Mutations preserve the immutable source booking identity and
+carry a separate command identity for retry/readback. The Worker authorizes the
+target realm/participants and writable fields, never current business statuses,
+source templates or slot availability. Clients can change their independent
+booking's time but cannot change coach PLAN content. Cloud roles/schema are unchanged.
+
+Overlap is checked locally against the athlete and, for coached sessions, coach
+calendars, private drafts and acknowledged records awaiting Addon projection.
+The timeline accepts a resource predicate so unrelated athletes' independent
+sessions do not block each other. It retains the existing touch/drag/resize
+mechanics. Repeated uncertain submissions preserve the accepted command.

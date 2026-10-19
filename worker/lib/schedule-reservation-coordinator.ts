@@ -34,7 +34,7 @@ async function requestCloud(
   } catch { return reject(502, 'CLOUD_BOOKING_UNAVAILABLE'); }
   if (response.status === 404 && !init.body) return null;
   if (!response.ok) return reject(502, 'CLOUD_BOOKING_UNAVAILABLE');
-  if (init.method === 'POST') return { ok: true };
+  if (init.method === 'POST' || init.method === 'PATCH') return { ok: true };
   try { return await response.json(); }
   catch { return reject(502, 'CLOUD_BOOKING_INVALID_RESPONSE'); }
 }
@@ -72,7 +72,7 @@ export async function confirmWorkoutOccurrence(
 ): Promise<Response> {
   if (!user(actor) || !record(input)
     || typeof input.requestKey !== 'string' || !keyPattern.test(input.requestKey)
-    || typeof input.trainingPlanId !== 'string' || !input.trainingPlanId
+    || typeof input.trainingPlanId !== 'string' || (!input.trainingPlanId && input.targetOccurrenceId === undefined)
     || typeof input.programDayId !== 'string' || !input.programDayId
     || (input.format !== 'coached' && input.format !== 'independent')
     || !isWorkoutBookingAccess(input.access)
@@ -107,7 +107,23 @@ export async function confirmWorkoutOccurrence(
 
   const fingerprint = await requestHash(input);
   const requestId = 'req:' + actor + ':' + input.requestKey;
-  const existing = await rows(env, token, 'workoutOccurrences', { sourceRequestId: requestId });
+  if (input.targetOccurrenceId !== undefined) {
+    if (typeof input.targetOccurrenceId !== 'string' || !input.targetOccurrenceId
+      || typeof input.updatePlan !== 'boolean'
+      || (input.cancelRequested !== undefined && typeof input.cancelRequested !== 'boolean'))
+      reject(400, 'INVALID_SCHEDULE_REQUEST');
+    const target = await getRow(env, token, 'workoutOccurrences', input.targetOccurrenceId);
+    if (!target || target.realmId !== access.realmId || target.athleteUserId !== athlete
+      || target.coachUserId !== coach || target.clientUserId !== access.clientUserId
+      || target.format !== input.format) reject(403, 'SCHEDULE_FORBIDDEN');
+    if (input.updatePlan && actor !== (coach ?? athlete)) reject(403, 'SCHEDULE_FORBIDDEN');
+    if (target.lastMutationId === requestId && target.lastMutationHash === fingerprint)
+      return response({ occurrenceId: input.targetOccurrenceId, confirmed: true });
+    if (target.lastMutationId === requestId) reject(409, 'SCHEDULE_KEY_CONFLICT');
+    // Authorize fields, never compare dynamic status/template/slot state.
+    // Exercise access for PLAN updates is checked by the same path below.
+  }
+  const existing = input.targetOccurrenceId ? [] : await rows(env, token, 'workoutOccurrences', { sourceRequestId: requestId });
   if (existing.length > 1) reject(502, 'CLOUD_BOOKING_INTEGRITY_ERROR');
   if (existing.length === 1) {
     const booking = existing[0];
@@ -120,7 +136,7 @@ export async function confirmWorkoutOccurrence(
   // Deduplicate by catalogue + ID, with at most six reads in flight.
   const definitions = new Map<string, Json | null>();
   const lookups = new Map<string, { table: string; id: string }>();
-  for (const { exercise } of input.plan.exercises) {
+  for (const { exercise } of (input.targetOccurrenceId && !input.updatePlan ? [] : input.plan.exercises)) {
     const table = exercise.scope === 'public' ? 'publicExerciseDefinitions'
       : exercise.scope === 'coach' ? 'coachExerciseDefinitions' : null;
     if (!table) reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
@@ -134,7 +150,7 @@ export async function confirmWorkoutOccurrence(
   }
 
   // Source IDs are provenance. No reads of cloud program/day/phase/set state.
-  for (const { exercise } of input.plan.exercises) {
+  for (const { exercise } of (input.targetOccurrenceId && !input.updatePlan ? [] : input.plan.exercises)) {
     const definitionId = exercise.exerciseDefinitionId;
     if (exercise.scope === 'public') {
       const definition = definitions.get('publicExerciseDefinitions:' + definitionId);
@@ -152,6 +168,20 @@ export async function confirmWorkoutOccurrence(
     } else reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
   }
 
+  if (typeof input.targetOccurrenceId === 'string') {
+    const patch = input.cancelRequested ? { status: 'cancelled' } : {
+      startsAtUtc: input.startsAtUtc, durationMinutes: input.durationMinutes,
+      ...(input.updatePlan ? { plan: input.plan } : {}),
+    };
+    await requestCloud(env, token, '/all/workoutOccurrences/' + encodeURIComponent(input.targetOccurrenceId), {
+      method: 'PATCH', body: JSON.stringify({ ...patch, updatedAt: new Date().toISOString(),
+        lastMutationId: requestId, lastMutationHash: fingerprint }),
+    });
+    const stored = await getRow(env, token, 'workoutOccurrences', input.targetOccurrenceId);
+    if (!stored || stored.lastMutationId !== requestId || stored.lastMutationHash !== fingerprint)
+      reject(502, 'CLOUD_BOOKING_NOT_CONFIRMED');
+    return response({ occurrenceId: input.targetOccurrenceId, confirmed: true });
+  }
   const now = new Date().toISOString();
   await requestCloud(env, token, '/all/workoutOccurrences', {
     method: 'POST',
