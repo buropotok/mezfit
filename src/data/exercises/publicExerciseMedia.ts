@@ -1,4 +1,5 @@
 import type { CatalogueExerciseRow } from './coachExerciseTypes';
+import { isPersonalExerciseMediaUrl } from './personalExerciseMediaReference';
 import approvedMediaRelease from '../../../shared/approved-exercise-media.json';
 
 /** Only the approved immutable Dexie catalogue may reference the existing media library. */
@@ -29,4 +30,11 @@ export function publicExerciseMediaUrl(
       ? row.media_id : null;
   if (!publicId || typeof row.gif_url !== 'string' || !row.gif_url.trim()) return null;
   return `/api/exercise-media/gym_keeper_apk/${publicId}?v=${approvedMediaRelease.datasetGitRevision}`;
+}
+
+/** A single verified media reference for the catalogue card and immutable PLAN snapshot. */
+export function exerciseImageUrl(row: MediaIdentity & { image?: string }): string | null {
+  if ((row.sourceSha256 === 'coach-custom' || row.sourceSha256 === 'assigned-coach-snapshot')
+    && isPersonalExerciseMediaUrl(row.image)) return row.image;
+  return publicExerciseMediaUrl(row);
 }
