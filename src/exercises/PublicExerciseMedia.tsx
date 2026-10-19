@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
-import { publicExerciseMediaUrl } from '../data/exercises/publicExerciseMedia';
+import { exerciseImageUrl } from '../data/exercises/publicExerciseMedia';
 import { isPersonalExerciseMediaUrl } from '../data/exercises/personalExerciseMediaReference';
 import { loadPersonalExerciseMedia } from '../data/exercises/personalExerciseMediaCache';
 import { Icon, Text } from '../ui';
 
-export { publicExerciseMediaUrl } from '../data/exercises/publicExerciseMedia';
+export { publicExerciseMediaUrl, exerciseImageUrl } from '../data/exercises/publicExerciseMedia';
 type Variant = 'thumbnail' | 'detail';
 type MediaRow = Pick<CatalogueExerciseRow, 'id' | 'sourceSha256' | 'gif_url' | 'name' | 'name_ru'>
   & Partial<Pick<CatalogueExerciseRow,
     'media_id' | 'copiedFromExerciseId' | 'copiedFromScope' | 'image'>>;
-
-export function exerciseImageUrl(row: MediaRow): string | null {
-  if ((row.sourceSha256 === 'coach-custom' || row.sourceSha256 === 'assigned-coach-snapshot')
-    && isPersonalExerciseMediaUrl(row.image)) return row.image;
-  return publicExerciseMediaUrl(row);
-}
 
 /** Shared rendering for GIF, uploaded R2 imagery and a local-first cache on personal devices. */
 export function PublicExerciseMedia({
