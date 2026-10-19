@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+vi.mock('./workout-sync', () => ({ observeWorkoutSyncConfirmation: vi.fn(() => () => {}) }));
 import { cleanup, render } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { liveQuery } from 'dexie';

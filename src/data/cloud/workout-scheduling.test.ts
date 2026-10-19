@@ -115,6 +115,21 @@ describe('confirmed workout calendar projections', () => {
     expect(await f.stranger.listCalendar('tg:202')).toEqual([]);
   });
 
+  it('reads realm-owned shared inserts and filters calendar cancellation without changing session status', async () => {
+    const f = await fixture();
+    const row = { id: 'realm-owned', realmId: f.pair.realm.realmId, owner: f.pair.realm.realmId,
+      coachUserId: 'tg:101', clientUserId: 'tg:202', athleteUserId: 'tg:202',
+      programDayId: 'assigned-day', workoutSessionId: 'session-one', format: 'coached',
+      startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60, status: 'in_progress' };
+    await seedOccurrence(f.db, row);
+    expect((await f.client.listCalendar()).map(item => item.id)).toEqual([row.id]);
+    await f.db.table('workoutOccurrences').update(row.id, { cancelledAt: '2026-10-19T09:00:00.000Z' });
+    expect(await f.client.listCalendar()).toEqual([]);
+    expect(await f.coach.listOccurrences('assigned', 'program')).toEqual([]);
+    expect(await f.db.table('workoutOccurrences').get(row.id))
+      .toMatchObject({ status: 'in_progress', workoutSessionId: 'session-one' });
+  });
+
   it('excludes cancelled occurrences from active program and calendar projections', async () => {
     const f = await fixture();
     const rows = [

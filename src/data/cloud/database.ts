@@ -15,7 +15,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 10;
+export const CLOUD_DATABASE_VERSION = 11;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -208,6 +208,7 @@ export function cloudDatabaseName(telegramUserId: string): string {
 
 export class MezfitCloudDatabase extends Dexie {
   localProgramSync!: Table<LocalProgramSyncRow, string>;
+  localWorkoutSync!: Table<LocalProgramSyncRow, string>;
   localWorkoutOccurrenceDrafts!: Table<LocalWorkoutOccurrenceDraft, string>;
   trainingPlans!: Table<CloudTrainingPlanRow, string, Omit<CloudTrainingPlanRow, 'id'>>;
   programPhases!: Table<CloudProgramPhaseRow, string, Omit<CloudProgramPhaseRow, 'id'>>;
@@ -240,11 +241,12 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(7).stores({ ...CLOUD_DATABASE_STORES_V6, localProgramSync: 'id' });
     this.version(8).stores({ ...CLOUD_DATABASE_STORES_V8, localProgramSync: 'id' });
     this.version(9).stores({ ...CLOUD_DATABASE_STORES_V9, localProgramSync: 'id' });
-    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id' });
+    this.version(10).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id' });
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
-      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts'],
+      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts', 'localWorkoutSync'],
       // Disable the email OTP UI: the Worker verifies Telegram initData.
       fetchTokens: (params) => getDexieCloudTokens(initData, params),
     });

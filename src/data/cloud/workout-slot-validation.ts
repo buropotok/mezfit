@@ -1,7 +1,9 @@
 import type { MezfitCloudDatabase } from './database';
 import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
-import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
+import { isLocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
+
+export class WorkoutSlotConflict extends Error {}
 
 type Booking = Pick<LocalWorkoutOccurrenceDraft, 'athleteUserId' | 'coachUserId' | 'format' | 'startsAtUtc' | 'durationMinutes'>;
 export function bookingsShareParticipant(a: Booking, b: Booking): boolean {
@@ -16,19 +18,18 @@ export function bookingsOverlap(a: Booking, b: Booking): boolean {
 }
 
 /** Dynamic eligibility is evaluated only against the authorized local calendars. */
-export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: LocalWorkoutOccurrenceDraft,
-  acknowledged: readonly (Booking & { id: string; status?: string })[] = []): Promise<void> {
-  if (draft.cancelRequested || draft.submissionPending) return;
+export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: LocalWorkoutOccurrenceDraft): Promise<void> {
   const scheduling = new WorkoutSchedulingRepository(db, draft.actorUserId);
   const [athlete, coach, drafts] = await Promise.all([
     scheduling.listCalendar(draft.athleteUserId),
     draft.format === 'coached' && draft.coachUserId ? scheduling.listCalendar(draft.coachUserId) : [],
-    new WorkoutOccurrenceDraftRepository(db, draft.actorUserId).list(),
+    db.localWorkoutOccurrenceDrafts.toArray(),
   ]);
-  const rows = [...athlete, ...coach, ...acknowledged.filter(row => row.status !== 'cancelled')]
+  const rows = [...athlete, ...coach]
     .filter(row => row.id !== draft.targetOccurrenceId);
-  const local = drafts.filter(row => row.id !== draft.id
+  const local = drafts.filter(isLocalWorkoutOccurrenceDraft).filter(row => row.actorUserId === draft.actorUserId
+    && row.id !== draft.id
     && (!draft.targetOccurrenceId || row.targetOccurrenceId !== draft.targetOccurrenceId));
   if ([...rows, ...local].some(row => bookingsOverlap(draft, row)))
-    throw new Error('Это время занято другой тренировкой атлета или тренера. Выберите свободное время');
+    throw new WorkoutSlotConflict('Это время занято другой тренировкой атлета или тренера. Выберите свободное время');
 }

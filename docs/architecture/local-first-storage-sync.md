@@ -81,6 +81,19 @@ Initial sign-in, new realm membership and initial hydration require connectivity
 
 A local mutation changes the smallest relevant records/fields in one Dexie transaction and updates the UI immediately. Never replace a stale whole-workout snapshot to update one set. On reconnection, Dexie Cloud Addon handles synchronization. Where edits to the same field conflict, use the documented Dexie Cloud behavior; do not promise that both competing values are preserved.
 
+### Calendar acceptance invariant
+
+Creating, saving, reopening, editing, moving, resizing and cancelling a scheduled
+workout commit to local Dexie without HTTP or an awaited cloud push. Saving
+atomically writes `workoutOccurrences` and removes the private draft. Addon owns
+background replication. A sync error or offline state never freezes local edits.
+Opening a saved workout is a read. Only prescription/content edits create a private
+draft; date/time changes update the occurrence directly and preserve draft status.
+Private unsaved prescription content stays device-only and invisible to the client.
+A capsule reports synchronization independently from the content's draft status.
+The scoped protected calendar ACL operation grants ordinary scheduling writes;
+Workout Start/session materialization remains a separate existing concern.
+
 ## 6. PLAN, FACT and workout lifecycle
 
 **PLAN:** Coach authors and changes assigned source programs. Accepting an occurrence snapshot is a separate operation and must not revalidate cloud template contents or status. The client may read but must not mutate PLAN; enforce this on the cloud server through tested permissions, not merely UI restrictions. Take care with Dexie Cloud owner privileges: role settings alone may not constrain record owners.

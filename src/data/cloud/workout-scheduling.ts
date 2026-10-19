@@ -21,7 +21,8 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
   const row = value as Partial<CloudWorkoutOccurrenceRow>;
   if (typeof row.id !== 'string' || !row.id
     || typeof row.realmId !== 'string' || !row.realmId
-    || row.owner !== null
+    || (row.owner !== null && row.owner !== row.realmId)
+    || (row.cancelledAt !== undefined && row.cancelledAt !== null && !isUtcInstant(row.cancelledAt))
     || typeof row.programDayId !== 'string' || !row.programDayId
     || !isWorkoutOccurrencePlan(row.plan)
     || !validCloudUserId(row.athleteUserId)
@@ -49,7 +50,7 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
   } catch { return false; }
 }
 
-/** Confirmed bookings are created only by the privileged Worker. */
+/** Calendar reads use the authorized local Dexie working set. */
 export type WorkoutOccurrenceView = 'program' | 'calendar';
 export class WorkoutSchedulingRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {}
@@ -99,7 +100,7 @@ export class WorkoutSchedulingRepository {
     const plan = await this.readablePlan(trainingPlanId);
     const dayIds = await this.visibleDayIds(plan);
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
-    return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled'
+    return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled' && !row.cancelledAt
       && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
       && row.athleteUserId === (plan.clientUserId ?? this.actorUserId)
       && row.coachUserId === plan.coachUserId
@@ -131,7 +132,7 @@ export class WorkoutSchedulingRepository {
         members.filter(member => member.realmId === pair.realmId), pair.coach, pair.client)
         ? key : null))).filter((key): key is string => key !== null));
     return occurrences.filter(row => {
-      if (!validOccurrence(row) || row.status === 'cancelled') return false;
+      if (!validOccurrence(row) || (row.status === 'cancelled' || row.cancelledAt)) return false;
       if (row.coachUserId === null && row.clientUserId === null)
         return row.realmId === this.actorUserId && row.athleteUserId === this.actorUserId
           && row.athleteUserId === participantUserId

@@ -3,6 +3,7 @@ import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayOutline } from './workout-foundation-types';
+import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { draftFromProgramDay } from './workout-occurrence-plan';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 
@@ -15,6 +16,10 @@ beforeEach(() => {
   db = new Dexie('occurrence-drafts-' + crypto.randomUUID());
   db.version(1).stores({
     localWorkoutOccurrenceDrafts: 'id, actorUserId, startsAtUtc, programDayId, updatedAt',
+    workoutOccurrences: 'id, realmId', localWorkoutSync: 'id', realms: 'realmId', members: 'id, realmId',
+  });
+  db.table('workoutOccurrences').hook('creating', (key, row) => {
+    if (!key) { row.id = 'occ' + crypto.randomUUID().replaceAll('-', ''); return row.id; }
   });
   opened.push(db);
 });
@@ -43,30 +48,82 @@ const make = () => draftFromProgramDay('tg:101', program, outline, 'independent'
   '2026-10-19T08:00:00.000Z', 60, 'active');
 
 describe('local workout occurrence drafts', () => {
-  it('persists the first submission and forbids editing/deleting until confirmation', async () => {
+  it('saves, reopens, edits content and timing, and saves again without contacting the cloud', async () => {
     const store = repo(), draft = make();
-    await store.create(draft);
-    const first = await store.prepareSubmission(draft.id);
-    expect(first.isNewSubmission).toBe(true);
-    await expect(store.edit(draft.id, current => ({ ...current, durationMinutes: 90 })))
-      .rejects.toThrow('Сначала подтвердите');
-    await expect(repo().enqueueEdit(draft.id, current => ({ ...current, durationMinutes: 90 })))
-      .rejects.toThrow('Сначала подтвердите');
-    await expect(repo().delete(draft.id)).rejects.toThrow('Сначала подтвердите');
-    const retry = await repo().prepareSubmission(draft.id);
-    expect(retry.isNewSubmission).toBe(false);
-    expect(retry.draft).toEqual(first.draft);
-    await repo().delete(draft.id, true);
-    expect(await repo().get(draft.id)).toBeNull();
+    const fetch = vi.fn(() => Promise.reject(new Error('offline')));
+    vi.stubGlobal('fetch', fetch);
+    try {
+      await store.create(draft);
+      const id = await store.save(draft.id);
+      expect(await store.list()).toEqual([]);
+      let saved = await store.get('draft:' + id);
+      expect(saved?.saved).toBe(true);
+      // Recreate the repository and reopen the actual IndexedDB connection.
+      db.close(); await db.open();
+      expect((await repo().get('draft:' + id))?.plan).toEqual(draft.plan);
+      await repo().enqueueEdit('draft:' + id, row => ({ ...row, durationMinutes: 90 }));
+      expect(await repo().list()).toEqual([]);
+      expect((await repo().get('draft:' + id))?.durationMinutes).toBe(90);
+      await repo().replacePlan('draft:' + id, { ...draft.plan, name: 'Изменённый день' });
+      expect((await repo().list())[0].saved).toBe(false);
+      expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe(draft.plan.name);
+      await repo().enqueueEdit('draft:' + id, row => ({ ...row, startsAtUtc: '2026-10-20T09:00:00.000Z' }));
+      expect((await db.table('workoutOccurrences').get(id)).startsAtUtc).toBe('2026-10-20T09:00:00.000Z');
+      expect((await repo().list())[0].saved).toBe(false);
+      expect(await repo().save('draft:' + id)).toBe(id);
+      saved = await repo().get('draft:' + id);
+      expect(saved?.saved).toBe(true);
+      expect(saved?.plan.name).toBe('Изменённый день');
+      expect(await db.table('workoutOccurrences').count()).toBe(1);
+      expect((await db.table('localWorkoutSync').get(id)).confirmed).toBe(false);
+      expect(fetch).not.toHaveBeenCalled();
+    } finally { vi.unstubAllGlobals(); }
   });
 
-  it('can unlock a definitively rejected first submission', async () => {
-    const store = repo(), draft = make();
-    await store.create(draft);
-    await store.prepareSubmission(draft.id);
-    await store.releaseSubmission(draft.id);
-    await store.edit(draft.id, current => ({ ...current, durationMinutes: 90 }));
-    expect((await store.get(draft.id))?.durationMinutes).toBe(90);
+  it('rejects overlapping local intervals and rolls back without losing the draft', async () => {
+    const first = make(), second = make();
+    await repo().create(first);
+    await expect(repo().create(second)).rejects.toThrow(/время занято/);
+    const id = await repo().save(first.id);
+    const later = { ...second, startsAtUtc: '2026-10-19T10:00:00.000Z' };
+    await repo().create(later);
+    await expect(repo().enqueueEdit(later.id, row => ({ ...row, startsAtUtc: first.startsAtUtc }))).rejects.toThrow(/время занято/);
+    expect((await repo().get(later.id))?.startsAtUtc).toBe(later.startsAtUtc);
+    expect((await repo().get('draft:' + id))?.saved).toBe(true);
+    await repo().enqueueEdit(later.id, row => ({ ...row, startsAtUtc: '2026-10-19T11:00:00.000Z' }));
+    expect((await repo().get(later.id))?.startsAtUtc).toBe('2026-10-19T11:00:00.000Z');
+  });
+
+  it('cancels a saved workout locally and does not require a confirmation receipt', async () => {
+    const draft = make(); await repo().create(draft);
+    const id = await repo().save(draft.id);
+    await repo().cancel(id);
+    expect(await db.table('workoutOccurrences').get(id)).toMatchObject({ status: 'scheduled', cancelledAt: expect.any(String) });
+    expect(await repo().get('draft:' + id)).toBeNull();
+  });
+
+  it('keeps private coach content out of the client view while timing edits stay local-first', async () => {
+    const pair = await relationshipMembership('101', '202');
+    await db.table('realms').put(pair.realm); await db.table('members').bulkAdd(pair.members);
+    const shared = { ...make(), realmId: pair.realm.realmId, athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
+    await repo().create(shared); const id = await repo().save(shared.id);
+    expect((await db.table('workoutOccurrences').get(id)).owner).toBe(pair.realm.realmId);
+    await repo().replacePlan('draft:' + id, { ...shared.plan, name: 'Новый план тренера' });
+    expect((await repo('tg:202').get('draft:' + id))?.plan.name).toBe(shared.plan.name);
+    await repo('tg:202').enqueueEdit('draft:' + id, current => ({ ...current, durationMinutes: 90 }));
+    expect((await db.table('workoutOccurrences').get(id)).durationMinutes).toBe(90);
+    const patches: Record<string, unknown>[] = [];
+    const updating = db.table('workoutOccurrences').hook.updating;
+    const capture: Parameters<typeof updating.subscribe>[0] = changes => { patches.push({ ...changes }); };
+    updating.subscribe(capture);
+    await repo('tg:202').save('draft:' + id);
+    updating.unsubscribe(capture);
+    for (const patch of patches) expect(patch).not.toHaveProperty('plan');
+    expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe(shared.plan.name);
+    await expect(repo('tg:202').replacePlan('draft:' + id, { ...shared.plan, name: 'Подмена' }))
+      .rejects.toThrow('SCHEDULE_PLAN_FORBIDDEN');
+    expect((await repo().get('draft:' + id))?.plan.name).toBe('Новый план тренера');
+    expect(await repo('tg:303').get('draft:' + id)).toBeNull();
   });
 
   it('retains a failed write across repository/editor recreation and isolates accounts', async () => {
@@ -136,7 +193,7 @@ describe('local workout occurrence drafts', () => {
   });
 
   it('deletes only the explicitly selected draft', async () => {
-    const store = repo(), a = make(), b = make();
+    const store = repo(), a = make(), b = { ...make(), startsAtUtc: '2026-10-20T08:00:00.000Z' };
     await store.create(a); await store.create(b);
     expect(await store.list()).toHaveLength(2);
     await store.delete(a.id);

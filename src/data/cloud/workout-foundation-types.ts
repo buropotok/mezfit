@@ -107,11 +107,15 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
   plannedDistanceMeters: number | null;
 }
 
-/** Each confirmed booking owns its PLAN snapshot; session Start later freezes it into FACT context. */
-export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
-  /** Frozen-at-confirmation workout prescription, not a live program reference. */
+/** Each locally saved booking owns its PLAN snapshot, independent from the program template. */
+export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'> {
+  /** Realm ID is a truthy non-participant owner preserved by Addon 4.4.15. */
+  owner: string | null;
+  /** Calendar cancellation is separate from execution/session lifecycle status. */
+  cancelledAt?: string | null;
+  /** Published prescription; unsaved content edits live in a separate private draft. */
   plan: WorkoutOccurrencePlan;
-  /** Optional for historical rows; confirmed Worker bookings include this provenance. */
+  /** Source provenance, independent of current cloud program availability. */
   trainingPlanId?: string;
   /** Assigned workouts have a coach; personal workouts do not. */
   coachUserId: string | null;

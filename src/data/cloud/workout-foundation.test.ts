@@ -19,7 +19,7 @@ const newTables = [
 
 describe('Dexie Cloud v4 workout foundation', () => {
   it('keeps eight relationship domain tables with globally unique keys', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(10);
+    expect(CLOUD_DATABASE_VERSION).toBe(11);
     // v5's coach-private catalogue survives PLAN v6.
     expect(Object.keys(CLOUD_DATABASE_STORES_V5)).toContain('coachExerciseDefinitions');
     expect(Object.keys(CLOUD_DATABASE_STORES_V6)).toEqual(Object.keys(CLOUD_DATABASE_STORES_V5));
@@ -50,10 +50,10 @@ describe('Dexie Cloud v4 workout foundation', () => {
     const coach = currentRoles.roles.coach.permissions;
     const client = currentRoles.roles.client.permissions;
     expect(coach.manage).toEqual(['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets']);
-    for (const table of newTables.filter((name) => !['programPhases', 'programDays', 'programExercises', 'programSets'].includes(name))) {
+    for (const table of newTables.filter((name) => !['programPhases', 'programDays', 'programExercises', 'programSets', 'workoutOccurrences'].includes(name))) {
       expect(JSON.stringify(coach)).not.toContain('"' + table + '"');
     }
-    for (const table of newTables) {
+    for (const table of newTables.filter(name => name !== 'workoutOccurrences')) {
       expect(JSON.stringify(client)).not.toContain('"' + table + '"');
     }
     expect(coach.update.sessionSetFacts).not.toContain('*');

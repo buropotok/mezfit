@@ -1,48 +1,137 @@
 #!/usr/bin/env node
-/**
- * One-time retirement of the old global Coach/Client scheduling grant.
- * Delete this operator after readback confirms retirement; it never adds a grant.
- * Cloud writes are possible only from the protected manual workflow after merge.
- * The schema CLI owns ephemeral credential preparation; this script never reads secrets.
- */
+/** Protected one-time install of the exact reviewed local-calendar role delta. */
 import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
-const CONFIRMATION = 'REVOKE_SCHEDULING_COACH_CLIENT_ACL';
+const CONFIRMATION = 'APPLY_LOCAL_CALENDAR_COACH_CLIENT_ACL';
 const ROLES = ['coach', 'client'];
 const PLAN_TABLES = ['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'];
 const FACT_FIELDS = [
   'actualReps', 'actualWeightKg', 'actualDurationSeconds', 'actualDistanceMeters',
   'setLabel', 'rpe', 'comment', 'bands', 'setStatus',
 ];
-const DESCRIPTIONS = {
-  coach: {
-    before: 'Can author assigned PLAN and edit set FACT; session lifecycle stays privileged',
-    after: 'Can author assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged',
+const BEFORE = {
+  "coach": {
+    "displayName": "Coach",
+    "description": "Can author assigned PLAN and edit set FACT; session lifecycle stays privileged",
+    "sortOrder": 1,
+    "permissions": {
+      "manage": [
+        "trainingPlans",
+        "programPhases",
+        "programDays",
+        "programExercises",
+        "programSets"
+      ],
+      "update": {
+        "sessionSetFacts": [
+          "actualReps",
+          "actualWeightKg",
+          "actualDurationSeconds",
+          "actualDistanceMeters",
+          "setLabel",
+          "rpe",
+          "comment",
+          "bands",
+          "setStatus"
+        ]
+      }
+    }
   },
-  client: {
-    before: 'Can read assigned PLAN and edit only set FACT; session lifecycle stays privileged',
-    after: 'Can read assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged',
+  "client": {
+    "displayName": "Client",
+    "description": "Can read assigned PLAN and edit only set FACT; session lifecycle stays privileged",
+    "sortOrder": 2,
+    "permissions": {
+      "update": {
+        "sessionSetFacts": [
+          "actualReps",
+          "actualWeightKg",
+          "actualDurationSeconds",
+          "actualDistanceMeters",
+          "setLabel",
+          "rpe",
+          "comment",
+          "bands",
+          "setStatus"
+        ]
+      }
+    }
+  }
+};
+const APPROVED = {
+  "coach": {
+    "displayName": "Coach",
+    "description": "Can author assigned PLAN and scheduled workouts; session lifecycle stays privileged",
+    "sortOrder": 1,
+    "permissions": {
+      "manage": [
+        "trainingPlans",
+        "programPhases",
+        "programDays",
+        "programExercises",
+        "programSets"
+      ],
+      "update": {
+        "sessionSetFacts": [
+          "actualReps",
+          "actualWeightKg",
+          "actualDurationSeconds",
+          "actualDistanceMeters",
+          "setLabel",
+          "rpe",
+          "comment",
+          "bands",
+          "setStatus"
+        ],
+        "workoutOccurrences": [
+          "startsAtUtc",
+          "durationMinutes",
+          "cancelledAt",
+          "updatedAt",
+          "plan"
+        ]
+      },
+      "add": [
+        "workoutOccurrences"
+      ]
+    }
   },
+  "client": {
+    "displayName": "Client",
+    "description": "Can schedule workouts and update calendar timing; assigned PLAN and session lifecycle stay protected",
+    "sortOrder": 2,
+    "permissions": {
+      "update": {
+        "sessionSetFacts": [
+          "actualReps",
+          "actualWeightKg",
+          "actualDurationSeconds",
+          "actualDistanceMeters",
+          "setLabel",
+          "rpe",
+          "comment",
+          "bands",
+          "setStatus"
+        ],
+        "workoutOccurrences": [
+          "startsAtUtc",
+          "durationMinutes",
+          "cancelledAt",
+          "updatedAt"
+        ]
+      },
+      "add": [
+        "workoutOccurrences"
+      ]
+    }
+  }
 };
 
 function record(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
 function fail(code) { throw new Error(code); }
-
-function expectedRole(name, withScheduling) {
-  return {
-    displayName: name === 'coach' ? 'Coach' : 'Client',
-    description: DESCRIPTIONS[name][withScheduling ? 'after' : 'before'],
-    sortOrder: name === 'coach' ? 1 : 2,
-    permissions: {
-      ...(withScheduling ? { add: ['workoutScheduleRequests'] } : {}),
-      ...(name === 'coach' ? { manage: PLAN_TABLES } : {}),
-      update: { sessionSetFacts: FACT_FIELDS },
-    },
-  };
-}
 
 /** Refuse a changed committed manifest, even if someone changes the JSON and its tests. */
 export function assertApprovedManifest(manifest) {
@@ -52,7 +141,7 @@ export function assertApprovedManifest(manifest) {
     fail('INVALID_SCHEDULING_ROLE_MANIFEST');
   }
   for (const name of ROLES) {
-    if (!isDeepStrictEqual(manifest.roles[name], expectedRole(name, false))) {
+    if (!isDeepStrictEqual(manifest.roles[name], APPROVED[name])) {
       fail('INVALID_SCHEDULING_ROLE_MANIFEST');
     }
   }
@@ -73,7 +162,7 @@ export function planSchedulingAcl(manifest, schema, exportedRoles) {
   for (const name of ROLES) {
     const actual = exportedRoles.roles[name];
     if (isDeepStrictEqual(actual, desired[name])) continue;
-    if (!isDeepStrictEqual(actual, expectedRole(name, true))) {
+    if (!isDeepStrictEqual(actual, BEFORE[name])) {
       fail('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
     }
     updates[name] = desired[name];
@@ -147,7 +236,7 @@ async function main() {
   }
   validateAclDispatch(process.env);
   if (mode === 'preflight') {
-    console.log('Protected main-only scheduling grant retirement authorized.');
+    console.log('Protected main-only local calendar ACL authorized.');
     return;
   }
   const config = await load('dexie-cloud.json');
@@ -167,13 +256,9 @@ async function main() {
     if (plan.changedNames.length === 0) {
       console.log('Scheduling roles already match approved ACL: no import needed.');
     } else {
-      for (const name of plan.changedNames) {
-        console.log(name + ': permissions.add [workoutScheduleRequests] -> absent');
-        console.log(name + ': description "' + DESCRIPTIONS[name].after
-          + '" -> "' + DESCRIPTIONS[name].before + '"');
-      }
+      console.log('Approved local calendar grants: ' + plan.changedNames.join(', '));
     }
-    console.log('No tables, other roles, PLAN grants or FACT grants are in the import.');
+    console.log('Only workoutOccurrences scheduling grants change. Schema, session lifecycle, source PLAN and FACT grants remain unchanged.');
     return;
   }
 
@@ -190,10 +275,10 @@ async function main() {
   if (process.env.DEXIE_ACL_OPERATION !== 'apply') fail('VERIFY_REQUIRES_APPLY');
   verifySchedulingAcl(manifest, beforeSchema, beforeRoles,
     await load(join(dir, 'after-schema.json')), await load(join(dir, 'after-roles.json')));
-  console.log('Verified retirement of Coach/Client scheduling grants. Other roles and schema unchanged.');
+  console.log('Verified local calendar Coach/Client grants. Other roles and schema unchanged.');
 }
 
-if (process.argv[1]?.endsWith('/tools/dexie-roles/retire-scheduling.mjs')) {
+if (process.argv[1]?.endsWith('/tools/dexie-roles/local-calendar.mjs')) {
   main().catch(error => {
     // Deliberately do not print CLI response bodies or secrets.
     console.error(error instanceof Error && /^[A-Z0-9_]+$/.test(error.message)

@@ -202,13 +202,19 @@ export function assertRolePolicy(remoteRoles, localRoles) {
       throw new Error('CLOUD_ROLE_MISMATCH');
     }
     const permissionKeys = Object.keys(remote.permissions).sort();
-    const expectedKeys = roleName === 'coach' ? ['manage', 'update'] : ['update'];
+    const expectedKeys = roleName === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
+    const calendarFields = ['startsAtUtc', 'durationMinutes', 'cancelledAt', 'updatedAt', ...(roleName === 'coach' ? ['plan'] : [])];
     if (!equalItems(permissionKeys, expectedKeys)
       || !equalItems(Object.keys(local.permissions), expectedKeys)
       || (roleName === 'coach' && (!equalItems(remote.permissions.manage, COACH_PLAN_TABLES)
         || !equalItems(local.permissions.manage, COACH_PLAN_TABLES)))
       || !isRecord(remote.permissions.update)
-      || !equalItems(Object.keys(remote.permissions.update), ['sessionSetFacts'])
+      || !equalItems(remote.permissions.add, ['workoutOccurrences'])
+      || !equalItems(local.permissions.add, ['workoutOccurrences'])
+      || !equalItems(Object.keys(remote.permissions.update), ['sessionSetFacts', 'workoutOccurrences'])
+      || !equalItems(Object.keys(local.permissions.update), ['sessionSetFacts', 'workoutOccurrences'])
+      || !equalItems(remote.permissions.update.workoutOccurrences, calendarFields)
+      || !equalItems(local.permissions.update.workoutOccurrences, calendarFields)
       || !equalItems(remote.permissions.update.sessionSetFacts, FACT_FIELDS)
       || !equalItems(local.permissions.update.sessionSetFacts, FACT_FIELDS)) {
       throw new Error('CLOUD_ROLE_MISMATCH');
