@@ -192,7 +192,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
       {draft ? <section className="occurrence-draft-sheet">
         <header className="occurrence-draft-sheet__header">
           <Text variant="headline">Запланировать тренировку</Text>
-          <IconButton label="Закрыть" disabled={busy} onClick={onClose}>✕</IconButton>
+          <IconButton label="Закрыть" onClick={onClose}>✕</IconButton>
         </header>
         <div className="occurrence-draft-sheet__body">
           {error || saveNotice ? <Text variant="footnote" role="alert">{error || saveNotice}</Text> : null}

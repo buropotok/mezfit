@@ -44,7 +44,7 @@ vi.mock('../ui', async original => ({
   }) => {
     const events = Object.values(eventsByDate).flat(); state.eventId = events[0]?.id ?? '';
     state.move = onEventMove; state.resize = onEventResize; state.remove = onEventDelete;
-    return <div>{events.map(event => <div key={event.id} data-testid="segment" data-editable={isEventEditable(event)}>
+    return <div>{events.map(event => <div key={event.id} data-testid="segment" data-event-id={event.id} data-start={event.startMinutes} data-duration={event.durationMinutes} data-editable={isEventEditable(event)}>
       {renderEvent(event, { startMinutes: event.startMinutes, durationMinutes: event.durationMinutes, compact: false })}
     </div>)}</div>;
   },
@@ -122,6 +122,39 @@ describe('local-first calendar experience', () => {
     expect(await screen.findByText('Сохранённая тренировка')).toBeTruthy();
     expect(fetch).not.toHaveBeenCalled();
   });
+  it('keeps the drop position immediately while Dexie is pending and preserves identity across days', async () => {
+    await repo().create(draft); const id = await repo().save(draft.id); open();
+    await screen.findByRole('button', { name: /Вы.*День 1/ });
+    const eventId = state.eventId;
+    const original = Repository.prototype.enqueueEdit;
+    let finish: () => void = () => {};
+    const pending = new Promise<void>(resolve => { finish = resolve; });
+    vi.spyOn(Repository.prototype, 'enqueueEdit').mockImplementation(async function (this: Repository, ...args) {
+      await pending; await original.apply(this, args);
+    });
+    act(() => { state.move?.({ eventId, date: '2026-10-19', targetDate: '2026-10-20', previousStartMinutes: 480, startMinutes: 600 }); });
+    expect(screen.getByTestId('segment').getAttribute('data-start')).toBe('600');
+    expect(screen.getByTestId('segment').getAttribute('data-event-id')).toBe(eventId);
+    expect(screen.getByTestId('segment').getAttribute('data-editable')).toBe('true');
+    expect((await db.table('workoutOccurrences').get(id)).startsAtUtc).toBe(draft.startsAtUtc);
+    await act(async () => { finish(); });
+    await waitFor(async () => expect((await db.table('workoutOccurrences').get(id)).startsAtUtc).toBe('2026-10-20T10:00:00.000Z'));
+    expect(screen.getByTestId('segment').getAttribute('data-start')).toBe('600');
+    // Extend the same booking upwards, retaining its end time and saved status.
+    act(() => { state.resize?.({ eventId, date: '2026-10-20', previousStartMinutes: 600, startMinutes: 585, previousDurationMinutes: 60, durationMinutes: 75 }); });
+    await waitFor(async () => expect(await db.table('workoutOccurrences').get(id)).toMatchObject({ startsAtUtc: '2026-10-20T09:45:00.000Z', durationMinutes: 75 }));
+    expect(screen.queryByText('Черновик')).toBeNull();
+  });
+
+  it('rolls a refused drop back visibly instead of retaining an optimistic booking', async () => {
+    await repo().create(draft); await repo().save(draft.id); open();
+    await screen.findByRole('button', { name: /Вы.*День 1/ });
+    vi.spyOn(Repository.prototype, 'enqueueEdit').mockRejectedValueOnce(new Error('Это время занято'));
+    await act(async () => { state.move?.({ eventId: state.eventId, date: '2026-10-19', targetDate: '2026-10-19', previousStartMinutes: 480, startMinutes: 600 }); });
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Это время занято');
+    expect(screen.getByTestId('segment').getAttribute('data-start')).toBe('480');
+  });
+
   it('moves and resizes saved workouts without creating a draft or calling an API', async () => {
     await repo().create(draft); const id = await repo().save(draft.id); open();
     await screen.findByRole('button', { name: /Вы.*День 1/ });

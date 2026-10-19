@@ -20,11 +20,11 @@ export function bookingsOverlap(a: Booking, b: Booking): boolean {
 /** Dynamic eligibility is evaluated only against the authorized local calendars. */
 export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: LocalWorkoutOccurrenceDraft): Promise<void> {
   const scheduling = new WorkoutSchedulingRepository(db, draft.actorUserId);
-  const [athlete, coach, drafts] = await Promise.all([
-    scheduling.listCalendar(draft.athleteUserId),
-    draft.format === 'coached' && draft.coachUserId ? scheduling.listCalendar(draft.coachUserId) : [],
-    db.localWorkoutOccurrenceDrafts.toArray(),
-  ]);
+  // Serialize WebCrypto-backed membership checks within the enclosing transaction.
+  const athlete = await scheduling.listCalendar(draft.athleteUserId);
+  const coach = draft.format === 'coached' && draft.coachUserId
+    ? await scheduling.listCalendar(draft.coachUserId) : [];
+  const drafts = await db.localWorkoutOccurrenceDrafts.toArray();
   const rows = [...athlete, ...coach]
     .filter(row => row.id !== draft.targetOccurrenceId);
   const local = drafts.filter(isLocalWorkoutOccurrenceDraft).filter(row => row.actorUserId === draft.actorUserId
