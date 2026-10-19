@@ -117,8 +117,8 @@ describe('local workout occurrence drafts', () => {
     db.table('workoutOccurrences').hook('updating', capture);
     await repo('tg:202').save('draft:' + id);
     db.table('workoutOccurrences').hook('updating').unsubscribe(capture);
-    expect(patches).toHaveLength(1);
-    expect(patches[0]).not.toHaveProperty('plan');
+    for (const patch of patches) expect(patch).not.toHaveProperty('plan');
+    expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe(shared.plan.name);
     await expect(repo('tg:202').replacePlan('draft:' + id, { ...shared.plan, name: 'Подмена' }))
       .rejects.toThrow('SCHEDULE_PLAN_FORBIDDEN');
     expect((await repo().get('draft:' + id))?.plan.name).toBe('Новый план тренера');

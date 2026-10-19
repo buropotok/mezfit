@@ -18,7 +18,7 @@ describe('pinned Addon shared occurrence ownership', () => {
     databases.push(db);
     db.version(1).stores({ workoutOccurrences: '@id, realmId' });
     // A local-only Addon instance exercises its actual middleware without authentication/network.
-    db.cloud.configure({ requireAuth: false, disableEagerSync: true, disableWebSocket: true, tryUseServiceWorker: false });
+    db.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true, disableWebSocket: true, tryUseServiceWorker: false });
     const table = db.table('workoutOccurrences');
     const realmId = 'rlm' + 'a'.repeat(28);
     const missingOwnerId = await table.add({ realmId, owner: null });
