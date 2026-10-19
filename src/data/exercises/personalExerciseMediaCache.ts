@@ -40,22 +40,31 @@ export async function loadPersonalExerciseMedia(
   const active = downloads.get(key);
   if (active) return active;
   const task = (async () => {
-    const db = new PersonalExerciseMediaDatabase(accountId);
+    let db: PersonalExerciseMediaDatabase | null = null;
     try {
-      const stored = await db.images.get(url);
-      if (stored?.blob instanceof Blob) return stored.blob;
+      try {
+        db = new PersonalExerciseMediaDatabase(accountId);
+        const stored = await db.images.get(url);
+        if (stored?.blob instanceof Blob) return stored.blob;
+      } catch {
+        // IndexedDB may be disabled or over quota. Media retrieval must still work.
+        db?.close();
+        db = null;
+      }
       if (signal?.aborted) return null;
       const response = await fetchImage(url, { signal, cache: 'force-cache' });
       if (!response.ok || signal?.aborted) return null;
       const blob = await response.blob();
       if (!blob.type.startsWith('image/') || blob.size > 8 * 1024 * 1024) return null;
-      if (!signal?.aborted) await db.images.put({ url, blob });
+      if (db && !signal?.aborted) {
+        try { await db.images.put({ url, blob }); } catch { /* optional cache write */ }
+      }
       return blob;
     } catch {
-      // Offline and private-browsing storage failures must not break the exercise card.
+      // Network failures return no media; IndexedDB failures alone never discard it.
       return null;
     } finally {
-      db.close();
+      db?.close();
     }
   })();
   downloads.set(key, task);
