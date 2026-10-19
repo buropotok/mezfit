@@ -6,6 +6,8 @@ import type { LocalProgramSyncRow, CloudProgramStatus, CloudTrainingPlanRow, Mez
 import { belongsToPlan, orderedPlanRows, readProgramDays } from './program-day-tree';
 import { isProgramExerciseSnapshot } from './workout-foundation-types';
 import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
+import { isWorkoutOccurrencePlan, snapshotProgramDay, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
+import { occurrencePlanChanged } from './workout-occurrence-edit';
 import type { CloudProgramDayOutline, CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
 import type { CatalogueExerciseRow } from '../exercises/coachExerciseTypes';
 import type { PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
@@ -589,6 +591,83 @@ export class ProgramManagementRepository {
         programExerciseId: exerciseId, position, status: 'active', setLabel: 'normal', comment: null,
         materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
         plannedDurationSeconds: null, plannedDistanceMeters: null });
+    });
+  }
+
+  /** Explicit owner opt-in: copy the edited occurrence prescription back into its source day.
+   * Keep the scheduled occurrence independent. Reject stale template versions. */
+  async applyOccurrencePlan(id: string, dayId: string, edited: WorkoutOccurrencePlan,
+    original: WorkoutOccurrencePlan): Promise<void> {
+    if (!isWorkoutOccurrencePlan(edited) || !isWorkoutOccurrencePlan(original))
+      throw new Error('Некорректный план тренировки');
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.write(['trainingPlans', 'programPhases', 'programDays',
+      'programExercises', 'programSets'], async () => {
+      const current = await this.currentParent(plan);
+      const day = await this.currentDay(current, dayId);
+      const phase = await this.currentPhase(current, day.programPhaseId);
+      const outlines = await readProgramDays(this.db, current, [phase]);
+      const source = outlines.find(row => row.day.id === dayId);
+      if (!source) throw new Error('День программы не найден');
+      if (occurrencePlanChanged(snapshotProgramDay(source), original))
+        throw new Error('Этот день программы уже изменился. Обновление отменено, запланированная тренировка сохранена.');
+      const previous = new Map(source.exercises.map(row => [row.exercise.id, row]));
+      const remaining = new Set(previous.keys());
+      const owner = this.ownerForRealm(current.realmId);
+      const nextSetRows: Array<{ exerciseId: string; items: WorkoutOccurrencePlan['exercises'][number]['sets'] }> = [];
+      await this.beginChange(current);
+      await this.db.programDays.update(dayId, {
+        name: validName(edited.name), comment: edited.comment,
+        category: edited.category ?? null,
+      });
+      for (const [position, next] of edited.exercises.entries()) {
+        const existing = next.sourceProgramExerciseId
+          ? previous.get(next.sourceProgramExerciseId) : undefined;
+        if (next.sourceProgramExerciseId && !existing) throw new Error('Упражнение изменилось');
+        if (existing && JSON.stringify(existing.exercise.exercise) !== JSON.stringify(next.exercise))
+          throw new Error('Нельзя заменить упражнение, сохранив идентификатор');
+        const exerciseId = existing?.exercise.id ?? await this.db.programExercises.add({
+          realmId: current.realmId, owner, programDayId: dayId, exercise: structuredClone(next.exercise),
+          position, status: 'active', notes: next.notes,
+        });
+        if (existing) {
+          remaining.delete(exerciseId);
+          await this.db.programExercises.update(exerciseId, { position, notes: next.notes });
+        }
+        nextSetRows.push({ exerciseId, items: next.sets });
+      }
+      for (const idToRemove of remaining) {
+        await this.db.programExercises.update(idToRemove, { status: 'deprecated' });
+      }
+      for (const { exerciseId, items } of nextSetRows) {
+        const old = source.exercises.find(row => row.exercise.id === exerciseId);
+        const oldSets = new Map((old?.sets ?? []).map(row => [row.id, row]));
+        const retained = new Set<string>();
+        for (const [position, next] of items.entries()) {
+          const prev = next.sourceProgramSetId ? oldSets.get(next.sourceProgramSetId) : undefined;
+          if (next.sourceProgramSetId && !prev) throw new Error('Подход изменился');
+          const values = {
+            position, setLabel: next.setLabel ?? 'normal', comment: next.comment,
+            materialLinks: next.materialLinks, chatLinks: next.chatLinks,
+            plannedReps: next.plannedReps, plannedWeightKg: next.plannedWeightKg,
+            plannedDurationSeconds: next.plannedDurationSeconds,
+            plannedDistanceMeters: next.plannedDistanceMeters,
+          };
+          if (prev) {
+            retained.add(prev.id);
+            await this.db.programSets.update(prev.id, values);
+          } else {
+            await this.db.programSets.add({
+              realmId: current.realmId, owner, programExerciseId: exerciseId,
+              status: 'active', ...values,
+            });
+          }
+        }
+        for (const oldSet of oldSets.values()) {
+          if (!retained.has(oldSet.id)) await this.db.programSets.update(oldSet.id, { status: 'deprecated' });
+        }
+      }
     });
   }
 

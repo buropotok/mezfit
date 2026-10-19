@@ -362,7 +362,7 @@ export function CloudProgramDetailsPage({
           })}
         >
           {(collapsed, bodyId) => <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
-            days={(details.days ?? []).filter((item) => item.day.programPhaseId === phase.id)}
+            phaseStatus={phase.status} days={(details.days ?? []).filter((item) => item.day.programPhaseId === phase.id)}
             collapsed={collapsed} bodyId={bodyId} viewerRole={viewerRole} onNavigationContextChange={onNavigationContextChange} readOnly={readOnly} actor={actor} /> }
         </PhaseHeading>
       )) : <Text variant="footnote" tone="muted">{readOnly ? 'В программе пока нет подготовленных фаз.' : 'Добавьте первую фазу через кнопку «Добавить».'}</Text>}

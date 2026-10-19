@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
-import type { CloudWorkoutScheduleRequestRow } from './workout-scheduling-types';
+import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
 import type { CoachExerciseOverrideRow, CoachExerciseDefinitionRow, CoachExerciseFavouriteRow } from '../exercises/coachExerciseTypes';
@@ -15,7 +15,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 8;
+export const CLOUD_DATABASE_VERSION = 10;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -175,6 +175,18 @@ export const CLOUD_DATABASE_STORES_V8 = {
   workoutScheduleRequests: 'id, realmId, requestKey, trainingPlanId, programDayId, targetOccurrenceId, startsAtUtc, [realmId+startsAtUtc]',
 } as const;
 
+/** Device-only draft storage; no corresponding Dexie Cloud table or ACL. */
+export const CLOUD_DATABASE_STORES_V9 = {
+  ...CLOUD_DATABASE_STORES_V8,
+  localWorkoutOccurrenceDrafts: 'id, actorUserId, startsAtUtc, programDayId, updatedAt',
+} as const;
+
+/** Remove the retired intent table from devices upgraded from v8/v9. */
+export const CLOUD_DATABASE_STORES_V10 = {
+  ...CLOUD_DATABASE_STORES_V9,
+  workoutScheduleRequests: null,
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -196,13 +208,13 @@ export function cloudDatabaseName(telegramUserId: string): string {
 
 export class MezfitCloudDatabase extends Dexie {
   localProgramSync!: Table<LocalProgramSyncRow, string>;
+  localWorkoutOccurrenceDrafts!: Table<LocalWorkoutOccurrenceDraft, string>;
   trainingPlans!: Table<CloudTrainingPlanRow, string, Omit<CloudTrainingPlanRow, 'id'>>;
   programPhases!: Table<CloudProgramPhaseRow, string, Omit<CloudProgramPhaseRow, 'id'>>;
   programDays!: Table<CloudProgramDayRow, string, Omit<CloudProgramDayRow, 'id'>>;
   programExercises!: Table<CloudProgramExerciseRow, string, Omit<CloudProgramExerciseRow, 'id'>>;
   programSets!: Table<CloudProgramSetRow, string, Omit<CloudProgramSetRow, 'id'>>;
   workoutOccurrences!: Table<CloudWorkoutOccurrenceRow, string, Omit<CloudWorkoutOccurrenceRow, 'id'>>;
-  workoutScheduleRequests!: Table<CloudWorkoutScheduleRequestRow, string>;
   sessionExercises!: Table<CloudSessionExerciseRow, string, Omit<CloudSessionExerciseRow, 'id'>>;
   sessionFactExercises!: Table<CloudSessionFactExerciseRow, string, Omit<CloudSessionFactExerciseRow, 'id'>>;
   sessionFactSets!: Table<CloudSessionFactSetRow, string, Omit<CloudSessionFactSetRow, 'id'>>;
@@ -226,11 +238,13 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(5).stores(CLOUD_DATABASE_STORES_V5);
     this.version(6).stores(CLOUD_DATABASE_STORES_V6);
     this.version(7).stores({ ...CLOUD_DATABASE_STORES_V6, localProgramSync: 'id' });
-    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V8, localProgramSync: 'id' });
+    this.version(8).stores({ ...CLOUD_DATABASE_STORES_V8, localProgramSync: 'id' });
+    this.version(9).stores({ ...CLOUD_DATABASE_STORES_V9, localProgramSync: 'id' });
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id' });
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
-      unsyncedTables: ['localProgramSync'],
+      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts'],
       // Disable the email OTP UI: the Worker verifies Telegram initData.
       fetchTokens: (params) => getDexieCloudTokens(initData, params),
     });

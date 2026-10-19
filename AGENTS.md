@@ -94,13 +94,45 @@ Keep authorization logic auditable and avoid subtly different duplicated checks.
 
 Treat JSON bodies, query/route parameters, Telegram data, and legacy persisted data as untrusted. Validate before domain mutation. Use deliberate status codes and stable error shapes. Do not expose stack traces, SQL details, tokens, secrets, or unnecessary personal data.
 
+### Local-first operation validation: mandatory architectural rule
+
+Separate structural authorization from dynamic business eligibility. The server
+checks only structural access boundaries: verified identity, personal realm,
+Coach/Client relationship membership, operation permissions and exercise access
+or immutable custom-exercise ownership. Payload decoding, size limits and
+idempotent operation identity remain required protocol checks.
+
+Dynamic business checks belong to the local domain/repository at the time the
+user performs the action. Examples include program/phase status, deletion or
+archive state, scheduling eligibility, calendar availability, current exercise
+metadata, and a PLAN's contents/order/sets. A locally accepted operation must
+not be rejected, deleted, rewritten or silently discarded because the cloud has
+a different dynamic state or because dependent local records synchronize later.
+Never compare the submitted PLAN with a cloud template or rebuild/normalize its
+business content from cloud state. Do not introduce wait-for-sync barriers,
+server business locks or compensating rollbacks to work around replication order.
+
+For scheduling from a program, both program and phase must be Active locally
+when creating the draft. Subsequent source changes do not revoke that accepted
+operation. Source IDs are provenance, not access grants or prerequisites that
+must already exist in the cloud. Authorize the target realm independently of
+those business records. A complete self-contained exercise snapshot may precede
+its own definition's cloud synchronization; do not treat absence as proof of
+foreign ownership. Such a snapshot grants no access to private catalogue rows.
+An existing foreign-owned definition remains forbidden; its current metadata
+or archive state must not be used to revalidate the business action.
+
+These rules govern domain operations, not credential verification or explicit
+protected infrastructure/schema/ACL maintenance. Existing code outside a scoped
+PR is audited separately; do not expand a task into a repository-wide migration.
+
 ## 11. Dexie Cloud persistence and access
 
 Dexie Cloud is the sole authoritative business database; local IndexedDB is each user's offline-capable working subset, not a copy of all users' data. One Dexie Cloud database/environment is sufficient for pre-MVP. Keep storage-specific code inside adapters/repositories, never React components.
 
 Use personal realms for private records and a separate shared realm per coach-client relationship for jointly visible data. Every nested program/workout record must carry the appropriate realmId; references do not grant access. A coach can see all their relationships, while a client must never see another client's private data. Design membership, record ownership, and permissions explicitly; ownership defaults must not bypass role restrictions. Public catalogue data may use a public realm. Media blobs may remain in R2; D1 is not a second business database.
 
-PLAN authoring is coach-controlled and must be enforced by server-side permissions. FACT is intentionally editable by both participants in a shared relationship realm: handoff is a workflow convention, not a server-enforced single-writer lock. The product accepts rare same-field edit conflicts in pre-MVP. Prefer granular per-record/per-field updates; never replace an entire stale workout snapshot for an unrelated set change.
+PLAN authoring in source program tables is coach-controlled and must be enforced by server-side permissions. Accepting a locally authorized occurrence snapshot does not mutate those source tables and must not introduce cloud-template content/status comparisons. FACT is intentionally editable by both participants in a shared relationship realm: handoff is a workflow convention, not a server-enforced single-writer lock. The product accepts rare same-field edit conflicts in pre-MVP. Prefer granular per-record/per-field updates; never replace an entire stale workout snapshot for an unrelated set change.
 
 Preserve domain invariants, stable IDs, deletion semantics, and atomic local transactions. Do not implement a custom SyncEngine, change-feed cursor, shadow cloud database, or generic merge/locking system alongside Dexie Cloud Addon.
 
@@ -176,7 +208,7 @@ Avoid mutable `window.*` state and global registries. If a platform-level global
 
 ## 21. Security and secrets
 
-Never put bot tokens, API keys, Cloudflare credentials, signing secrets, or privileged credentials in browser code or committed source. Secrets belong in server/Cloudflare secret storage. The sole approved GitHub Actions credential for privileged Dexie Cloud writes is the existing `DEXIE_CLOUD_WRITE_KEY` **environment secret** in `dexie-production`, configured with required reviewers and restricted to `main`. It may be consumed only by explicitly dispatched, owner-restricted, reviewer-approved jobs for (1) initial public catalogue publication and narrowly scoped versioned updates of existing public exercise definitions plus their publication manifest (with exact ID allowlist, approved-field diff, private backup, full readback verification and stable realm/owner/provenance), (2) additive-only workout schema imports using an exact reviewed table allowlist, (3) additive-only coach exercise personal-catalogue schema imports limited to `coachExerciseOverrides`, `coachExerciseDefinitions`, and `coachExerciseFavourites` with primary key `id`, and (4) the **dedicated Coach/Client scheduling ACL rollout** in `.github/workflows/dexie-scheduling-acl.yml`. The fourth operation may update **only** the two global roles `coach` and `client` from the exact approved baseline to the exact committed `cloud/roles.json`, limited to `add: ['workoutScheduleRequests']` and the corresponding role descriptions. It must provide read-only preview, an explicit apply confirmation, a protected manual `main`/repository-owner run, a pre-import configuration recheck, and full readback verification. Other roles, their permissions, all existing Coach PLAN / Client FACT grants, schema, realm membership and business data must remain unchanged. Schema imports must validate the exact reviewed allowlist and verify before/after schema and roles; no other table changes are authorized. All catalogue and schema workflows are **forbidden** to mutate cloud roles; the dedicated ACL workflow is forbidden to mutate cloud schema or business data. None of these workflows may run on PR/push. The key must never be a repository-level secret, appear in PR/push jobs, or share credentials with browser/Worker token exchange. This exception reuses the existing publisher; it does not authorize new keys or roles. Read-only diagnostics continue to use their separate least-privilege account.
+Never put bot tokens, API keys, Cloudflare credentials, signing secrets, or privileged credentials in browser code or committed source. Secrets belong in server/Cloudflare secret storage. The sole approved GitHub Actions credential for privileged Dexie Cloud writes is the existing `DEXIE_CLOUD_WRITE_KEY` **environment secret** in `dexie-production`, configured with required reviewers and restricted to `main`. It may be consumed only by explicitly dispatched, owner-restricted, reviewer-approved jobs for (1) initial public catalogue publication and narrowly scoped versioned updates of existing public exercise definitions plus their publication manifest (with exact ID allowlist, approved-field diff, private backup, full readback verification and stable realm/owner/provenance), (2) additive-only workout schema imports using an exact reviewed table allowlist, (3) additive-only coach exercise personal-catalogue schema imports limited to `coachExerciseOverrides`, `coachExerciseDefinitions`, and `coachExerciseFavourites` with primary key `id`, and (4) the **one-time Coach/Client scheduling ACL retirement** in `.github/workflows/dexie-retire-scheduling-acl.yml`. The fourth operation may update **only** the two global roles `coach` and `client` from the exact previously approved scheduling policy to the exact committed `cloud/roles.json`, limited to removing `add: ['workoutScheduleRequests']` and restoring the corresponding role descriptions. It must never grant scheduling permissions. Remove this one-time retirement operator after verified cloud readback. It must provide read-only preview, an explicit apply confirmation, a protected manual `main`/repository-owner run, a pre-import configuration recheck, and full readback verification. Other roles, their permissions, all existing Coach PLAN / Client FACT grants, schema, realm membership and business data must remain unchanged. Schema imports must validate the exact reviewed allowlist and verify before/after schema and roles; no other table changes are authorized. All catalogue and schema workflows are **forbidden** to mutate cloud roles; the dedicated ACL workflow is forbidden to mutate cloud schema or business data. None of these workflows may run on PR/push. The key must never be a repository-level secret, appear in PR/push jobs, or share credentials with browser/Worker token exchange. This exception reuses the existing publisher; it does not authorize new keys or roles. Read-only diagnostics continue to use their separate least-privilege account.
 
 Public exercise definitions remain read-only to all ordinary Coach/Client accounts. This user-facing immutability does not prohibit operator-approved corrections to the central catalogue. Such corrections must use the existing protected Dexie Cloud publication service account, must not modify private realms or server roles, and must retain compatibility with clients already synchronized to the public realm.
 

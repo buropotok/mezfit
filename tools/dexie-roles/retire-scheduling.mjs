@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Exact, single-purpose global Coach/Client role rollout.
+ * One-time retirement of the old global Coach/Client scheduling grant.
+ * Delete this operator after readback confirms retirement; it never adds a grant.
  * Cloud writes are possible only from the protected manual workflow after merge.
  * The schema CLI owns ephemeral credential preparation; this script never reads secrets.
  */
@@ -9,7 +10,7 @@ import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
-const CONFIRMATION = 'APPLY_SCHEDULING_COACH_CLIENT_ACL';
+const CONFIRMATION = 'REVOKE_SCHEDULING_COACH_CLIENT_ACL';
 const ROLES = ['coach', 'client'];
 const PLAN_TABLES = ['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'];
 const FACT_FIELDS = [
@@ -51,7 +52,7 @@ export function assertApprovedManifest(manifest) {
     fail('INVALID_SCHEDULING_ROLE_MANIFEST');
   }
   for (const name of ROLES) {
-    if (!isDeepStrictEqual(manifest.roles[name], expectedRole(name, true))) {
+    if (!isDeepStrictEqual(manifest.roles[name], expectedRole(name, false))) {
       fail('INVALID_SCHEDULING_ROLE_MANIFEST');
     }
   }
@@ -60,7 +61,6 @@ export function assertApprovedManifest(manifest) {
 
 function assertCloudStructure(schema, exportedRoles) {
   if (!record(schema) || !record(schema.schema)
-    || schema.schema.workoutScheduleRequests !== 'id'
     || !record(exportedRoles) || !record(exportedRoles.roles)) {
     fail('INVALID_SCHEDULING_CLOUD_STRUCTURE');
   }
@@ -73,7 +73,7 @@ export function planSchedulingAcl(manifest, schema, exportedRoles) {
   for (const name of ROLES) {
     const actual = exportedRoles.roles[name];
     if (isDeepStrictEqual(actual, desired[name])) continue;
-    if (!isDeepStrictEqual(actual, expectedRole(name, false))) {
+    if (!isDeepStrictEqual(actual, expectedRole(name, true))) {
       fail('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
     }
     updates[name] = desired[name];
@@ -147,7 +147,7 @@ async function main() {
   }
   validateAclDispatch(process.env);
   if (mode === 'preflight') {
-    console.log('Protected main-only scheduling ACL operation authorized.');
+    console.log('Protected main-only scheduling grant retirement authorized.');
     return;
   }
   const config = await load('dexie-cloud.json');
@@ -168,9 +168,9 @@ async function main() {
       console.log('Scheduling roles already match approved ACL: no import needed.');
     } else {
       for (const name of plan.changedNames) {
-        console.log(name + ': permissions.add absent -> [workoutScheduleRequests]');
-        console.log(name + ': description "' + DESCRIPTIONS[name].before
-          + '" -> "' + DESCRIPTIONS[name].after + '"');
+        console.log(name + ': permissions.add [workoutScheduleRequests] -> absent');
+        console.log(name + ': description "' + DESCRIPTIONS[name].after
+          + '" -> "' + DESCRIPTIONS[name].before + '"');
       }
     }
     console.log('No tables, other roles, PLAN grants or FACT grants are in the import.');
@@ -190,10 +190,10 @@ async function main() {
   if (process.env.DEXIE_ACL_OPERATION !== 'apply') fail('VERIFY_REQUIRES_APPLY');
   verifySchedulingAcl(manifest, beforeSchema, beforeRoles,
     await load(join(dir, 'after-schema.json')), await load(join(dir, 'after-roles.json')));
-  console.log('Verified exact Coach/Client scheduling ACL. Other roles and schema unchanged.');
+  console.log('Verified retirement of Coach/Client scheduling grants. Other roles and schema unchanged.');
 }
 
-if (process.argv[1]?.endsWith('/tools/dexie-roles/scheduling.mjs')) {
+if (process.argv[1]?.endsWith('/tools/dexie-roles/retire-scheduling.mjs')) {
   main().catch(error => {
     // Deliberately do not print CLI response bodies or secrets.
     console.error(error instanceof Error && /^[A-Z0-9_]+$/.test(error.message)

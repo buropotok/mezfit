@@ -122,7 +122,7 @@ async function storeAvatarIfMissing(
   }
 }
 
-async function validatedPair(
+export async function validatedPair(
   fetchImpl: typeof fetch, bearer: string, id: string,
 ): Promise<Row[] | null> {
   const [realm, value] = await Promise.all([

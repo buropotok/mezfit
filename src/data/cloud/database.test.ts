@@ -69,8 +69,8 @@ describe('Dexie Cloud schema and access policy', () => {
       'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
     ]);
     expect(Object.hasOwn(cloudRoles.roles.client.permissions, 'manage')).toBe(false);
-    expect(cloudRoles.roles.coach.permissions.add).toEqual(['workoutScheduleRequests']);
-    expect(cloudRoles.roles.client.permissions.add).toEqual(['workoutScheduleRequests']);
+    expect(cloudRoles.roles.coach.permissions).not.toHaveProperty('add');
+    expect(cloudRoles.roles.client.permissions).not.toHaveProperty('add');
   });
 
   it('grants both participants only field-scoped updates to existing set FACT records', () => {

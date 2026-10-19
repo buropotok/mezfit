@@ -1,4 +1,5 @@
-import { useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { forwardRef, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -7,6 +8,10 @@ import { SessionExercise } from './SessionExercise';
 export interface WorkoutPlanCardProps {
   mode: 'planning';
   programName?: string;
+  canScheduleCoached?: boolean;
+  onSchedule?: (format: WorkoutScheduleFormat) => void;
+  hideProgramMenu?: boolean;
+  hideWorkoutActions?: boolean;
   onReorderExercises?: (ids: string[]) => void;
   day: CloudProgramDayOutline;
   creatorName: string;
@@ -18,6 +23,8 @@ export interface WorkoutPlanCardProps {
   onAddExercise?: () => void;
   onAddSet?: (programExerciseId: string) => void;
   onDeleteExercise?: (programExerciseId: string) => void;
+  onOpenSet?: (programExerciseId: string, setId: string) => void;
+  onDeleteSet?: (programExerciseId: string, setId: string) => void;
   onExerciseInformation?: (programExerciseId: string) => void;
   onEdit: () => void;
   onComment: () => void;
@@ -26,19 +33,25 @@ export interface WorkoutPlanCardProps {
   onDelete: () => void;
 }
 
-function PlanGlassButton({ 'aria-disabled': disabled, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" disabled={disabled === true || disabled === 'true'} {...props} />;
-}
+const PlanGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
+  ({ 'aria-disabled': disabled, ...props }, ref) =>
+    <button type="button" ref={ref} disabled={disabled === true || disabled === 'true'} {...props} />,
+);
+PlanGlassButton.displayName = 'PlanGlassButton';
 
 /** Program template mode deliberately has neither a session nor numeric PLAN/FACT.
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
-  day: outline, programName = 'Без программы', onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
+  day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule,
+  hideProgramMenu = false, hideWorkoutActions = false,
+  onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
-  onDeleteExercise, onExerciseInformation,
+  onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
+  const scheduleTriggerRef = useRef<HTMLElement>(null);
   const [afterMenu, setAfterMenu] = useState<(() => void) | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const glass = loadBrowserGlassSettings();
@@ -46,20 +59,24 @@ export function WorkoutPlanCard({
     setAfterMenu(() => action);
     setMenuOpen(false);
   };
-  const menu: LiquidPopoverItem[] = readOnly ? [] : [
+  const menu: LiquidPopoverItem[] = readOnly || hideProgramMenu ? [] : [
     { id: 'edit', label: 'Переименовать', icon: 'pencil', disabled: busy, onSelect: () => defer(onEdit) },
     { id: 'up', label: 'Вверх', icon: 'arrow-up', disabled: busy || !canMoveUp, onSelect: () => defer(() => onMove('up')) },
     { id: 'down', label: 'Вниз', icon: 'arrow-down', disabled: busy || !canMoveDown, onSelect: () => defer(() => onMove('down')) },
     { id: 'duplicate', label: 'Дублировать', icon: 'copy-outline', disabled: busy, onSelect: () => defer(onDuplicate) },
     { id: 'comment', label: 'Комментарий', icon: 'message-circle', disabled: busy, onSelect: () => defer(onComment) },
     { id: 'start', label: 'Начать тренировку', icon: 'treadmill', disabled: true, dividerBefore: true },
-    { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: true },
+    { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: busy || !onSchedule,
+      onSelect: () => defer(() => canScheduleCoached
+        ? setSchedulePopoverOpen(true) : onSchedule?.('independent')) },
     { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(onDelete) },
   ];
   const items = exercises.map((item) => ({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={!readOnly}
       busy={busy} onAddSet={onAddSet ? () => onAddSet(item.exercise.id) : undefined}
+      onOpenSet={onOpenSet ? setId => onOpenSet(item.exercise.id, setId) : undefined}
+      onDeleteSet={onDeleteSet ? setId => onDeleteSet(item.exercise.id, setId) : undefined}
       onDelete={onDeleteExercise ? () => onDeleteExercise(item.exercise.id) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
@@ -100,19 +117,40 @@ export function WorkoutPlanCard({
           <Text variant="body">Добавить упражнение</Text>
         </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
-        {!readOnly ? <div className="workout-plan-card__actions">
-          <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
-            glass={{ tintR: 244, tintG: 218, tintB: 139, tintA: 0.14 }} aria-disabled="true"
-            className="workout-plan-card__action">
-            <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
-            <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
-          </GlassSurface>
-          <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+
+        {!hideWorkoutActions && (!readOnly || onSchedule) ? <div className="workout-plan-card__actions">
+          {onSchedule ? canScheduleCoached ? (
+            <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}
+              triggerRef={scheduleTriggerRef} label="Формат тренировки"
+              preset={glass.preset} optics={glass.optics}
+              items={[
+                { id: 'coached', label: 'В зале с клиентом', icon: 'user-plus',
+                  onSelect: () => onSchedule('coached') },
+                { id: 'independent', label: 'Самостоятельная', icon: 'users',
+                  onSelect: () => onSchedule('independent') },
+              ]}
+              trigger={<GlassSurface component={PlanGlassButton} ref={scheduleTriggerRef}
+                wrapContent={false} shape="capsule" preset="modalTuned"
+                glass={{ tintR: 244, tintG: 218, tintB: 139, tintA: 0.14 }}
+                aria-disabled={busy} className="workout-plan-card__action">
+                <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
+                <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
+              </GlassSurface>} />
+          ) : (
+            <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+              glass={{ tintR: 244, tintG: 218, tintB: 139, tintA: 0.14 }}
+              aria-disabled={busy} onClick={() => { if (!busy) onSchedule('independent'); }}
+              className="workout-plan-card__action">
+              <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
+              <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
+            </GlassSurface>
+          ) : null}
+          {!readOnly ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
             glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled="true"
             className="workout-plan-card__action">
             <Icon name="treadmill" className="workout-plan-card__action-icon" />
             <Text variant="body">Начать</Text>
-          </GlassSurface>
+          </GlassSurface> : null}
         </div> : null}
       </div>} />
   </article>;

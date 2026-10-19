@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
-import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
+import type { CloudProgramDayOutline, CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -9,16 +9,22 @@ import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Text } from '../ui';
 import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import { ProgramDayDialog } from './ProgramDayDialog';
+import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import { draftFromProgramDay } from '../data/cloud/workout-occurrence-plan';
+import { WorkoutSchedulingRepository } from '../data/cloud/workout-scheduling';
+import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
+import { useSchedulePlanning } from '../schedule/SchedulePlanningContext';
 import { PlanActionDialog } from './PlanActionDialog';
 import type { ProgramActor } from './ProgramSummary';
 import { usePhaseDayMotion } from './usePhaseDayMotion';
 import { ProgramDayExercisePicker } from './ProgramDayExercisePicker';
+import { nextAvailableSlot } from '../schedule/available-slot';
 import { programMutationMessage } from './programPresentation';
 
 const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
   .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
-export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach' }: {
+export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft' }: {
   repository: ProgramManagementRepository;
   program: CloudTrainingPlanRow;
   days: readonly CloudProgramDayOutline[];
@@ -27,6 +33,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   collapsed?: boolean;
   bodyId?: string;
   viewerRole?: 'coach' | 'client';
+  phaseStatus?: CloudProgramPhaseRow['status'];
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
@@ -35,6 +42,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const [exerciseInformation, setExerciseInformation] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const cloud = useCloudConnections();
+  const planning = useSchedulePlanning();
   const authorId = planAuthorUserId(program);
   const self = authorId === repository.actorUserId;
   const contact = [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])].find((person) =>
@@ -90,6 +98,40 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     catch (reason) { if (alive.current) setError(programMutationMessage(reason)); }
     finally { running.current = false; if (alive.current) setBusy(false); }
   };
+  const schedule = async (item: CloudProgramDayOutline, format: WorkoutScheduleFormat) => {
+    if (running.current || !cloud || !planning
+      || program.status !== 'active' || phaseStatus !== 'active') return;
+    running.current = true;
+    setBusy(true);
+    setError('');
+    const draftStore = new WorkoutOccurrenceDraftRepository(cloud.db, repository.actorUserId);
+    try {
+      // Suggest the next free 15-minute slot from authorized local calendar data.
+      const scheduling = new WorkoutSchedulingRepository(cloud.db, repository.actorUserId);
+      const athlete = program.clientUserId ?? repository.actorUserId;
+      const entries = (await Promise.all([scheduling.listCalendar(athlete),
+        draftStore.list(),
+        ...(format === 'coached' ? [scheduling.listCalendar()] : []),
+      ])).flat().filter(occurrence =>
+        occurrence.athleteUserId === athlete
+        || (occurrence.coachUserId === athlete && occurrence.format === 'coached')
+        || (format === 'coached' && occurrence.athleteUserId === repository.actorUserId)
+        || (format === 'coached' && occurrence.coachUserId === repository.actorUserId
+          && occurrence.format === 'coached'));
+      const durationMinutes = 60;
+      const slot = nextAvailableSlot(entries, new Date(), durationMinutes);
+      if (!slot) throw new Error('Не удалось найти свободное время. Выберите другой период в расписании');
+      const draft = draftFromProgramDay(repository.actorUserId, program, item,
+        format, slot.toISOString(), durationMinutes, phaseStatus);
+      await draftStore.create(draft);
+      if (alive.current) planning.openDraft(draft.id);
+    } catch (reason) {
+      if (alive.current) setError(programMutationMessage(reason));
+    } finally {
+      running.current = false;
+      if (alive.current) setBusy(false);
+    }
+  };
   const selected = dialog?.item.day;
   return <>
     <div ref={viewport} id={bodyId} className="cloud-plan-days-viewport" aria-hidden={collapsed} inert={collapsed}>
@@ -100,7 +142,9 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       ref={(node) => { if (node) nodes.current.set(item.day.id, node); else nodes.current.delete(item.day.id); }}>
       <WorkoutSessionCard mode="planning" day={item} programName={program.name}
         onReorderExercises={(ids) => { void run(() => repository.reorderDayExercises(program.id, item.day.id, ids)); }} creatorName={creatorName} creatorAvatar={creatorAvatar}
-        readOnly={readOnly} busy={busy || exerciseDayId !== null} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
+        readOnly={readOnly} busy={busy || exerciseDayId !== null}
+        canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
+          && program.clientUserId !== null} onSchedule={planning && program.status === 'active' && phaseStatus === 'active' ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
         onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}

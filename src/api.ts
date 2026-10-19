@@ -1,4 +1,6 @@
+import type { WorkoutBookingAccess } from '../shared/workout-booking-access';
 import type { DexieCloudOptions } from 'dexie-cloud-addon';
+import type { LocalWorkoutOccurrenceDraft } from './data/cloud/workout-occurrence-plan';
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
 import type { ActiveWorkoutSession, OpenWorkoutSessionSummary, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
@@ -211,6 +213,20 @@ const russianApiErrors: Record<string, string> = {
   SET_NOT_FOUND: 'Подход не найден',
   INVALID_SET_FACT: 'Не удалось сохранить данные подхода',
   INVALID_EXERCISE_ORDER: 'Не удалось сохранить порядок упражнений',
+  INVALID_SCHEDULE_REQUEST: 'Не удалось сохранить параметры тренировки',
+  SCHEDULE_TOO_LARGE: 'План тренировки слишком большой. Уменьшите количество упражнений или материалов',
+  SCHEDULE_FORBIDDEN: 'Нет доступа к расписанию этого спортсмена',
+  SCHEDULE_COACH_REQUIRED: 'Тренировку с тренером может назначить только этот тренер',
+  SCHEDULE_EXERCISE_UNAVAILABLE: 'Одно из упражнений недоступно для этой тренировки',
+  SCHEDULE_KEY_CONFLICT: 'Этот черновик уже был отправлен с другими параметрами. Откройте расписание заново',
+  CLOUD_BOOKING_UNAVAILABLE: 'Облако временно недоступно. Черновик сохранён, попробуйте ещё раз',
+  CLOUD_BOOKING_INVALID_RESPONSE: 'Не удалось получить подтверждение из облака. Черновик сохранён',
+  CLOUD_BOOKING_INTEGRITY_ERROR: 'Не удалось проверить сохранённую тренировку. Черновик сохранён',
+  CLOUD_BOOKING_NOT_CONFIRMED: 'Сохранение тренировки пока не подтверждено. Черновик сохранён, попробуйте ещё раз',
+  BOOKING_FAILED: 'Не удалось сохранить тренировку. Черновик сохранён, попробуйте ещё раз',
+  INVALID_ACTOR: 'Не удалось подтвердить пользователя. Откройте приложение заново',
+  INVALID_JSON: 'Не удалось отправить параметры тренировки',
+  METHOD_NOT_ALLOWED: 'Это действие сейчас недоступно',
   INVALID_SCHEDULE_ROLE: 'Режим расписания недоступен',
   INVALID_SCHEDULE_RANGE: 'Выбран слишком большой диапазон расписания',
   INVALID_SCHEDULE_TARGET: 'Не удалось определить клиента или день программы',
@@ -868,4 +884,28 @@ export async function completeWorkoutSession(
     body: JSON.stringify({}),
   });
   return { session: localizeWorkoutSession(result.session) };
+}
+
+/** A local draft becomes a booked workout only after this API confirms persistence. */
+export async function confirmCloudWorkoutOccurrence(initData: string,
+  draft: LocalWorkoutOccurrenceDraft): Promise<string> {
+  const response = await apiRequest<unknown>(initData, '/api/cloud/schedule/confirm', {
+    method: 'POST',
+    body: JSON.stringify({
+      requestKey: draft.id.slice('draft:'.length),
+      trainingPlanId: draft.trainingPlanId,
+      programDayId: draft.programDayId,
+      access: { realmId: draft.realmId, athleteUserId: draft.athleteUserId,
+        coachUserId: draft.coachUserId, clientUserId: draft.clientUserId } satisfies WorkoutBookingAccess,
+      format: draft.format,
+      startsAtUtc: draft.startsAtUtc,
+      durationMinutes: draft.durationMinutes,
+      plan: draft.plan,
+    }),
+  });
+  if (!isRecord(response) || typeof response.occurrenceId !== 'string'
+    || !response.occurrenceId || response.confirmed !== true) {
+    throw new ApiError(502, 'Не удалось подтвердить сохранение тренировки', 'INVALID_API_RESPONSE');
+  }
+  return response.occurrenceId;
 }

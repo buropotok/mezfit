@@ -28,6 +28,7 @@ import {
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
 import { TodayPage } from './schedule/TodayPage';
+import { SchedulePlanningContext } from './schedule/SchedulePlanningContext';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
@@ -187,6 +188,7 @@ export function App() {
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
+  const [requestedScheduleDraftId, setRequestedScheduleDraftId] = useState<string | null>(null);
   const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null | undefined>(undefined);
   const [workoutStatusLoadFailed, setWorkoutStatusLoadFailed] = useState(false);
   const workoutStatusVersionRef = useRef(0);
@@ -358,6 +360,7 @@ export function App() {
   };
   const switchRole = (role: Role) => {
     setNavigationContext(null);
+    setRequestedScheduleDraftId(null);
     dispatch({ type: 'switch-role', role });
   };
   const shellContext = state.activeRole === 'coach' && destination === 'settings'
@@ -396,6 +399,11 @@ export function App() {
           initData={state.initData}
           enabled={CLOUD_ASSIGNED_PROGRAMS_ENABLED && destination === 'programs'}
         >
+        <SchedulePlanningContext.Provider value={{
+          requestedDraftId: requestedScheduleDraftId,
+          openDraft: (id) => { setRequestedScheduleDraftId(id); changeDestination('today'); },
+          clearDraft: () => setRequestedScheduleDraftId(null),
+        }}>
         <NavigationShell
           me={state.me}
           activeRole={state.activeRole}
@@ -446,6 +454,7 @@ export function App() {
           />
           )}
         </NavigationShell>
+        </SchedulePlanningContext.Provider>
         </AssignedProgramsProvider>
       </ClientCoachProvider>
       </CloudConnectionsProvider>

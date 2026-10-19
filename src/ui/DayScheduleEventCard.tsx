@@ -9,6 +9,7 @@ export type DayScheduleEventCardProps = {
   media?: ReactNode;
   state: DayScheduleRenderState;
   className?: string;
+  onClick?: () => void;
 };
 
 function formatMinutes(totalMinutes: number): string {
@@ -24,6 +25,7 @@ export function DayScheduleEventCard({
   media,
   state,
   className = '',
+  onClick,
 }: DayScheduleEventCardProps) {
   const endMinutes = state.startMinutes + state.durationMinutes;
   const timeRange = `${formatMinutes(state.startMinutes)}–${formatMinutes(endMinutes)}`;
@@ -55,6 +57,7 @@ export function DayScheduleEventCard({
           media={resolvedMedia}
           title={title}
           subtitle={subtitle}
+          onClick={onClick}
         />
       </List>
     </div>

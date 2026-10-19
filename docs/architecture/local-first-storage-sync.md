@@ -83,7 +83,7 @@ A local mutation changes the smallest relevant records/fields in one Dexie trans
 
 ## 6. PLAN, FACT and workout lifecycle
 
-**PLAN:** Coach authors and changes assigned plans. The client may read but must not mutate PLAN; enforce this on the cloud server through tested permissions, not merely UI restrictions. Take care with Dexie Cloud owner privileges: role settings alone may not constrain record owners.
+**PLAN:** Coach authors and changes assigned source programs. Accepting an occurrence snapshot is a separate operation and must not revalidate cloud template contents or status. The client may read but must not mutate PLAN; enforce this on the cloud server through tested permissions, not merely UI restrictions. Take care with Dexie Cloud owner privileges: role settings alone may not constrain record owners.
 
 **FACT:** Coach and client may both edit the shared workout FACT. The normal product workflow is sequential: coach records the completed sets/exercises, then asks the client to continue with **subsequent** sets/exercises. Deliberate alternating edits to the same set are not a supported MVP workflow. This handoff is a UX/business convention, not a privileged ownership-transfer operation. No per-session edit locks, leases, separate FACT realms, server-side editor handoff, trusted per-mutation audit log or custom conflict-resolution engine in pre-MVP. Rare accidental same-field conflicts are tolerated and resolved by standard Dexie Cloud behavior; they do not justify custom backend machinery.
 
@@ -98,6 +98,20 @@ Telegram `initData` is untrusted until verified by the Worker using the bot secr
 Invitation links are reusable until revoked. Worker validates the invitation, verifies the actor, creates or reuses the relationship realm, and grants the minimum membership/role permissions through privileged Dexie Cloud APIs. Repeated acceptance by the same client must be idempotent; revoking a link blocks new joins but does not automatically delete existing relationships. A client cannot grant themselves access by inventing realm IDs.
 
 Privileged REST endpoints require server-side authorization, input validation, safe error contracts and appropriate idempotency. Confirm exact API/role semantics with the chosen Dexie Cloud version before implementation; never assume arbitrary backend business transactions are automatically atomic.
+
+### Structural authorization versus local business validation
+
+Server authorization checks identity, realm/relationship boundaries and immutable
+exercise access. Dynamic business eligibility is owned by the local domain at
+operation acceptance: program/phase status, deletion/archive state, slot
+availability and the submitted PLAN must not be checked against a possibly
+older cloud copy. An accepted operation is not rejected, removed or rewritten
+because dependent records arrive later or cloud business state differs. Source
+records are provenance, not synchronization barriers. Self-contained snapshots
+may arrive before their author-owned definitions, without granting private reads.
+Payload shape/size and immutable idempotency identity remain protocol checks.
+See AGENTS.md §10 for the mandatory rule; unrelated runtime is corrected in
+separate scoped PRs.
 
 ## 8. Schema evolution and CI/CD
 

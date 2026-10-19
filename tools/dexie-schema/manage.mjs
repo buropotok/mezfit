@@ -11,7 +11,6 @@ export const EXPECTED_TABLES = Object.freeze([
   'programPhases', 'programDays', 'programExercises', 'programSets',
   'workoutOccurrences', 'sessionExercises', 'sessionFactExercises', 'sessionFactSets',
 ]);
-export const SCHEDULING_SCHEMA = Object.freeze({ workoutScheduleRequests: 'id' });
 const EXPECTED_URL = 'https://zjv60oxag.dexie.cloud';
 
 function record(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
@@ -20,7 +19,7 @@ function fail(message) { throw new Error(message); }
 export function validateManifest(value, target = 'workout_v4') {
   const expected = target === 'workout_v4'
     ? Object.fromEntries(EXPECTED_TABLES.map(name => [name, '@id']))
-    : target === 'scheduling_v1' ? SCHEDULING_SCHEMA : null;
+    : null;
   if (!expected || !record(value) || Object.keys(value).join(',') !== 'schema'
     || !record(value.schema) || Object.keys(value.schema).length !== Object.keys(expected).length
     || Object.entries(expected).some(([name, key]) => value.schema[name] !== key)) {
@@ -120,9 +119,8 @@ async function main() {
   }
 
   const target = process.env.DEXIE_SCHEMA_TARGET || 'workout_v4';
-  if (!['workout_v4', 'scheduling_v1'].includes(target)) fail('INVALID_SCHEMA_TARGET');
-  const manifest = await load(target === 'scheduling_v1'
-    ? 'cloud/schema-scheduling-foundation.json' : 'cloud/schema-workout-foundation.json');
+  if (target !== 'workout_v4') fail('INVALID_SCHEMA_TARGET');
+  const manifest = await load('cloud/schema-workout-foundation.json');
   if (mode === 'plan') {
     const remote = await load(join(directory, 'before-schema.json'));
     const plan = planAdditiveSchema(manifest, remote, target);

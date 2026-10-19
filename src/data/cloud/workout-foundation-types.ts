@@ -2,23 +2,10 @@ import { isCoachExerciseDefinition } from '../exercises/coachExerciseTypes';
 import type { ExerciseTrackingType as TrackingType, PublicExercise } from '../exercises/publicExerciseTypes';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { CloudSharedRow } from './database';
+import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
 
-/** Canonical exercise identity. Keep a self-contained snapshot for coach-private
- * exercises that a client may not be able to query outside this relationship. */
-export interface CloudProgramExerciseSnapshot {
-  exerciseDefinitionId: string;
-  scope: 'public' | 'coach' | 'client';
-  name: string;
-  nameEn: string | null;
-  /** Legacy program records may contain this metadata. Program authoring and
-   * projection deliberately ignore it; newly added program exercises omit it. */
-  trackingType?: unknown;
-  mediaUrl: string | null;
-  /** Immutable full definition captured when a coach assigns a private exercise. */
-  catalogueDefinition?: PublicExercise;
-  /** Original author; must match the selected, accepted relationship coach. */
-  catalogueCoachUserId?: string;
-}
+import type { CloudProgramExerciseSnapshot } from '../../../shared/program-exercise-snapshot';
+export type { CloudProgramExerciseSnapshot } from '../../../shared/program-exercise-snapshot';
 
 /** Result entry belongs to a concrete workout, not its reusable program. */
 export interface CloudWorkoutExerciseSnapshot extends CloudProgramExerciseSnapshot {
@@ -120,8 +107,12 @@ export interface CloudProgramSetRow extends CloudPlanChildRow {
   plannedDistanceMeters: number | null;
 }
 
-/** Scheduling is not a workout PLAN snapshot. Only a privileged Start freezes PLAN. */
+/** Each confirmed booking owns its PLAN snapshot; session Start later freezes it into FACT context. */
 export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
+  /** Frozen-at-confirmation workout prescription, not a live program reference. */
+  plan: WorkoutOccurrencePlan;
+  /** Optional for historical rows; confirmed Worker bookings include this provenance. */
+  trainingPlanId?: string;
   /** Assigned workouts have a coach; personal workouts do not. */
   coachUserId: string | null;
   /** Null only for personal programs; assigned records always identify the client. */
@@ -129,11 +120,13 @@ export interface CloudWorkoutOccurrenceRow extends CloudSharedRow {
   athleteUserId: string;
   programDayId: string;
   workoutSessionId: string | null;
-  /** Current scheduling contract requires an explicit workout format and IANA zone. */
+  /** The scheduling contract requires an explicit workout format. */
   format: 'independent' | 'coached';
   /** Canonical UTC start; local calendar day is calculated by the viewer's device. */
   startsAtUtc: string;
   sourceRequestId?: string | null;
+  /** Immutable submitted-command identity; not a comparison with mutable PLAN. */
+  sourceRequestHash?: string;
   createdByUserId?: string;
   createdAt?: string;
   updatedAt?: string;
