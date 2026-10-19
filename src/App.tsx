@@ -157,6 +157,7 @@ function ClientShell({
   if (destination === 'today') {
     return (
       <TodayPage
+        actor={actor}
         initData={initData}
         role="client"
         currentUserId={currentUserId}

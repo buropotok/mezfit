@@ -11,6 +11,9 @@ import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelecti
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   Text, TimePicker, Icon, IconButton, type LocalDate, type LocalTime } from '../ui';
 import { localScheduleInstant, localScheduleEnd } from './calendar-time';
+import { useWorkoutPerson } from './WorkoutPerson';
+import type { ProgramActor } from '../program/ProgramSummary';
+import { assertLocalWorkoutSlot } from '../data/cloud/workout-slot-validation';
 import './occurrence-draft-sheet.css';
 
 function localDate(date: Date): LocalDate {
@@ -48,12 +51,15 @@ function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
 export interface OccurrenceDraftSheetProps {
   draft: LocalWorkoutOccurrenceDraft | null;
   drafts: WorkoutOccurrenceDraftRepository;
+  actor?: ProgramActor;
+  readOnly?: boolean;
   onClose: () => void;
   onSave: (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => Promise<void>;
 }
 
-export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: OccurrenceDraftSheetProps) {
+export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, readOnly = false }: OccurrenceDraftSheetProps) {
   const cloud = useCloudConnections();
+  const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
   const [dateOpened, setDateOpened] = useState(false);
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
   const [exercisePickerOpened, setExercisePickerOpened] = useState(false);
@@ -64,8 +70,9 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
   const [error, setError] = useState(() => draft ? drafts.pendingEditError(draft.id) : '');
   const startRef = useRef<HTMLSpanElement>(null);
   const endRef = useRef<HTMLSpanElement>(null);
+  const validating = useRef<Promise<void>>(Promise.resolve());
   useEffect(() => {
-    if (!draft) return;
+    if (!draft || readOnly) return;
     let active = true;
     // Reattach to pending/failed writes when reopening, including writes which
     // failed after the previous editor unmounted through Back or a tab change.
@@ -73,18 +80,35 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
       if (active) setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
     });
     return () => { active = false; };
-  }, [draft?.id, drafts]);
+  }, [draft?.id, drafts, readOnly]);
 
-  const flushEdits = () => draft ? drafts.flushEdits(draft.id) : Promise.resolve();
+  const flushEdits = async () => {
+    await validating.current;
+    if (draft) await drafts.flushEdits(draft.id);
+  };
   const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1]) => {
-    if (!draft || busy || draft.submissionPending) return;
+    if (!draft || busy || readOnly || draft.submissionPending) return;
     setError('');
-    void drafts.enqueueEdit(draft.id, apply).catch(reason => {
+    let accepted = false;
+    const next = validating.current.catch(() => undefined).then(async () => {
+      const current = await drafts.get(draft.id);
+      if (!current) throw new Error('Черновик не найден');
+      const changed = apply(structuredClone(current));
+      if (cloud && (changed.startsAtUtc !== current.startsAtUtc || changed.durationMinutes !== current.durationMinutes))
+        await assertLocalWorkoutSlot(cloud.db, changed);
+      accepted = true;
+      await drafts.enqueueEdit(draft.id, apply);
+    });
+    // Invalid local choices block Save. A storage failure is retained by the
+    // repository queue instead, so Save can retry that accepted edit.
+    validating.current = next.catch(reason => { if (!accepted) throw reason; });
+    void validating.current.catch(() => undefined);
+    void next.catch(reason => {
       setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
     });
   };
   const save = async (updateProgram: boolean) => {
-    if (!draft || busy) return;
+    if (!draft || busy || readOnly) return;
     setBusy(true);
     setError('');
     try {
@@ -98,7 +122,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
     } finally { setBusy(false); }
   };
   const beginSave = async () => {
-    if (!draft || busy) return;
+    if (!draft || busy || readOnly) return;
     setBusy(true);
     setError('');
     try {
@@ -106,7 +130,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
       const owner = (latest.coachUserId ?? latest.athleteUserId) === latest.actorUserId;
-      if (owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
+      if (!latest.targetOccurrenceId && owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
         setProgramUpdateOpen(true);
       } else {
         await onSave(latest, false);
@@ -139,7 +163,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
       setError(reason instanceof Error ? reason.message : 'Не удалось добавить упражнения');
     } finally { setBusy(false); }
   };
-  const mayEditStructure = Boolean(draft && !draft.submissionPending && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
+  const mayEditStructure = Boolean(draft && !readOnly && !draft.submissionPending && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
   return <>
@@ -153,19 +177,19 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {draft.submissionPending ? <Text variant="footnote">Проверяем сохранение тренировки. До подтверждения её нельзя изменить или удалить. Нажмите «Проверить сохранение», чтобы повторить запрос.</Text> : null}
           <div className="occurrence-draft-sheet__timing">
-            <Button variant="secondary" disabled={busy || draft.submissionPending} onClick={() => setDateOpened(true)}>
+            <Button variant="secondary" disabled={busy || readOnly || draft.submissionPending} onClick={() => setDateOpened(true)}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
-            <span ref={startRef}><Button variant="secondary" disabled={busy || draft.submissionPending} onClick={() => setTimeOpened('start')}>
+            <span ref={startRef}><Button variant="secondary" disabled={busy || readOnly || draft.submissionPending} onClick={() => setTimeOpened('start')}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
             </Button></span>
-            <span ref={endRef}><Button variant="secondary" disabled={busy || draft.submissionPending} onClick={() => setTimeOpened('end')}>
+            <span ref={endRef}><Button variant="secondary" disabled={busy || readOnly || draft.submissionPending} onClick={() => setTimeOpened('end')}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
             </Button></span>
           </div>
           <Text variant="body">Введите план на тренировку (не обязательно)</Text>
           <WorkoutPlanCard mode="planning" day={outline(draft)} programName={draft.plan.name}
-            creatorName="План тренировки" hideProgramMenu hideWorkoutActions
+            creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
             onEdit={() => {}} onComment={() => {}} onMove={() => {}}
             onDuplicate={() => {}} onDelete={() => {}}
@@ -185,12 +209,12 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave }: Occurre
             onOpenSet={() => setSetPlaceholderOpen(true)}
           />
         </div>
-        <footer className="occurrence-draft-sheet__footer">
-          <Button variant="secondary" color="red" disabled={busy || draft.submissionPending} onClick={() => setDeleteOpen(true)}>
-            Удалить черновик
+        {!readOnly ? <footer className="occurrence-draft-sheet__footer">
+          <Button variant="secondary" color="red" disabled={busy || readOnly || draft.submissionPending} onClick={() => setDeleteOpen(true)}>
+            {draft.targetOccurrenceId ? 'Отменить изменения' : 'Удалить черновик'}
           </Button>
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : draft.submissionPending ? 'Проверить сохранение' : 'Сохранить'}</Button>
-        </footer>
+        </footer> : null}
       </section> : null}
     </MezfitBottomSheet>
     {draft ? <>

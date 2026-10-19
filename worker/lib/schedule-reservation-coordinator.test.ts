@@ -40,6 +40,15 @@ beforeEach(() => {
     const parsed = new URL(url);
     const table = parsed.pathname.split('/').filter(Boolean).slice(1).join('/');
     requests.push(table + parsed.search);
+    if (table.startsWith('workoutOccurrences/')) {
+      const row = saved.find(item => item.id === table.split('/')[1]);
+      if (!row) return new Response(null, { status: 404 });
+      if (init?.method === 'PATCH') {
+        const patch = JSON.parse(String(init.body)); writes.push(patch); Object.assign(row, patch);
+        return new Response(null, { status: 200 });
+      }
+      return Response.json(row);
+    }
     if (table === 'workoutOccurrences') {
       if (init?.method === 'POST') {
         const rows = JSON.parse(String(init.body)) as Record<string, unknown>[];
@@ -60,6 +69,38 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('structural-only booking validation', () => {
+  it('updates the existing occurrence and retries without creating another booking', async () => {
+    saved = [{ id: 'existing', ...access, format: 'independent', plan, status: 'scheduled', sourceRequestId: 'original' }];
+    const input = command({ targetOccurrenceId: 'existing', updatePlan: true,
+      plan: { ...plan, name: 'Обновлено' }, startsAtUtc: '2026-10-20T08:00:00.000Z' });
+    expect((await confirmWorkoutOccurrence(env, 'tg:101', input)).status).toBe(200);
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({ id: 'existing', sourceRequestId: 'original', plan: input.plan, startsAtUtc: input.startsAtUtc });
+    expect((await confirmWorkoutOccurrence(env, 'tg:101', input)).status).toBe(200);
+    expect(writes).toHaveLength(1);
+  });
+
+  it('allows client timing changes but never their PLAN mutations', async () => {
+    saved = [{ id: 'existing', ...access, format: 'independent', plan }];
+    const input = command({ targetOccurrenceId: 'existing', updatePlan: false,
+      plan: { ...plan, name: 'Не должно записаться' }, durationMinutes: 90 });
+    await confirmWorkoutOccurrence(env, 'tg:202', input);
+    expect(saved[0].plan).toEqual(plan);
+    expect(saved[0].durationMinutes).toBe(90);
+    await expect(confirmWorkoutOccurrence(env, 'tg:202', { ...input, updatePlan: true }))
+      .rejects.toMatchObject({ status: 403 });
+  });
+
+  it('binds edits to the authorized occurrence and supports cancellation', async () => {
+    saved = [{ id: 'existing', ...access, realmId: 'foreign', format: 'independent', plan }];
+    const input = command({ targetOccurrenceId: 'existing', updatePlan: false, cancelRequested: true });
+    await expect(confirmWorkoutOccurrence(env, 'tg:101', input)).rejects.toMatchObject({ status: 403 });
+    saved[0].realmId = realmId;
+    await confirmWorkoutOccurrence(env, 'tg:101', input);
+    expect(saved[0].status).toBe('cancelled');
+    expect(saved[0].plan).toEqual(plan);
+  });
+
   it('deduplicates a large PLAN and reads definitions concurrently with a bound', async () => {
     const backend = fetch;
     let active = 0, peak = 0;

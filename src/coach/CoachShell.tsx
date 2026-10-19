@@ -247,6 +247,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   if (destination === 'today') {
     return (
       <TodayPage
+        actor={actor}
         initData={initData}
         role="coach"
         onNavigationContextChange={onNavigationContextChange}

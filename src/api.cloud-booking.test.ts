@@ -10,6 +10,18 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 afterEach(() => vi.unstubAllGlobals());
 describe('cloud booking protocol', () => {
+  it('targets an existing occurrence and requests only fields authorized for the actor', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => Response.json({ occurrenceId: 'existing', confirmed: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const changed = { ...draft, targetOccurrenceId: 'existing' };
+    expect(await confirmCloudWorkoutOccurrence('signed-init-data', changed)).toBe('existing');
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)))
+      .toMatchObject({ targetOccurrenceId: 'existing', updatePlan: true });
+    await confirmCloudWorkoutOccurrence('signed-init-data', { ...changed, cancelRequested: true });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)))
+      .toMatchObject({ targetOccurrenceId: 'existing', cancelRequested: true, updatePlan: false });
+  });
+
   it('sends structural access separately from the unchanged local PLAN', async () => {
     const fetchMock = vi.fn<typeof fetch>(async () => Response.json({ occurrenceId: 'confirmed', confirmed: true }));
     vi.stubGlobal('fetch', fetchMock);
