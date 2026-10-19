@@ -144,7 +144,11 @@ export class CoachExerciseCatalogueRepository {
       if (baseline && changes.instruction_steps) {
         updated.instruction_steps = { ...previous.instruction_steps };
         for (const language of ['ru', 'en'] as const) {
-          if (JSON.stringify(changes.instruction_steps[language]) !== JSON.stringify(baseline.instruction_steps[language])) {
+          const stepsEdited = JSON.stringify(changes.instruction_steps[language])
+            !== JSON.stringify(baseline.instruction_steps[language]);
+          const instructionTextEdited = changes.instructions?.[language] !== undefined
+            && changes.instructions[language] !== baseline.instructions[language];
+          if (stepsEdited || instructionTextEdited) {
             updated.instruction_steps[language] = changes.instruction_steps[language];
           }
         }
