@@ -139,7 +139,7 @@ describe('personal exercise card editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     const { uploadPersonalExerciseMedia } = await import('../api');
     const { storePersonalExerciseMedia } = await import('../data/exercises/personalExerciseMediaCache');
-    await waitFor(() => expect(uploadPersonalExerciseMedia).toHaveBeenCalledWith('signed-init', file));
+    await waitFor(() => expect(uploadPersonalExerciseMedia).toHaveBeenCalledWith('signed-init', file, expect.any(AbortSignal)));
     await waitFor(() => expect(storePersonalExerciseMedia).toHaveBeenCalledWith(
       'tg:202', expect.stringContaining('/api/exercise-media/personal/'), file));
     await waitFor(() => expect(repository.updateExercise).toHaveBeenCalledWith(
@@ -164,6 +164,71 @@ describe('personal exercise card editor', () => {
     await waitFor(() => expect(screen.getByText('R2 недоступен')).toBeTruthy());
     expect(repository.createBlankExercise).not.toHaveBeenCalled();
     expect(screen.getByRole('textbox', { name: 'Название' })).toHaveProperty('value', 'Упражнение');
+  });
+
+  it('keeps the original edit baseline when cloud sync updates the row while the card is open', async () => {
+    const repository = api(), p = props(repository);
+    const view = render(<PersonalExerciseEditorGateway
+      request={{ mode: 'edit', exerciseId: customId }} {...p} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Название' }), {
+      target: { value: 'Название пользователя' },
+    });
+    const newer = { ...own, name_ru: 'Название с другого устройства',
+      tracking_type: 'time_reps' as const };
+    view.rerender(<PersonalExerciseEditorGateway
+      request={{ mode: 'edit', exerciseId: customId }} {...p} rows={[newer]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(repository.updateExercise).toHaveBeenCalledWith(
+      customId, expect.objectContaining({ name_ru: 'Название пользователя' }),
+      expect.objectContaining({ tracking_type: 'weight_reps' }),
+    ));
+    const changes = repository.updateExercise.mock.calls[0][1] as Record<string, unknown>;
+    expect(Object.hasOwn(changes, 'tracking_type')).toBe(false);
+  });
+
+  it('continues to save after a noncritical local image-cache write failure', async () => {
+    const { storePersonalExerciseMedia } = await import('../data/exercises/personalExerciseMediaCache');
+    vi.mocked(storePersonalExerciseMedia).mockRejectedValueOnce(new Error('IndexedDB unavailable'));
+    const repository = api(), p = props(repository);
+    render(<PersonalExerciseEditorGateway
+      request={{ mode: 'edit', exerciseId: customId }} {...p} />);
+    fireEvent.change(screen.getByLabelText('Выбрать изображение'), {
+      target: { files: [new File(['image'], 'sample.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(repository.updateExercise).toHaveBeenCalledWith(
+      customId, expect.objectContaining({ image: expect.stringContaining('/api/exercise-media/personal/') }),
+      expect.anything(),
+    ));
+    await waitFor(() => expect(p.onClose).toHaveBeenCalledOnce());
+  });
+
+  it('cancels pending upload when the editor is dismissed and never creates a ghost exercise', async () => {
+    const { uploadPersonalExerciseMedia } = await import('../api');
+    let finishUpload: ((url: string) => void) | undefined;
+    vi.mocked(uploadPersonalExerciseMedia).mockImplementationOnce(() => new Promise(resolve => {
+      finishUpload = resolve;
+    }));
+    const repository = api(), p = props(repository);
+    const view = render(<PersonalExerciseEditorGateway
+      request={{ mode: 'create', category: 'chest' }} {...p} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Название' }), {
+      target: { value: 'Несохранённое упражнение' },
+    });
+    fireEvent.change(screen.getByLabelText('Выбрать изображение'), {
+      target: { files: [new File(['image'], 'sample.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(uploadPersonalExerciseMedia).toHaveBeenCalledOnce());
+    const signal = vi.mocked(uploadPersonalExerciseMedia).mock.calls.at(-1)?.[2];
+    view.unmount();
+    expect(signal?.aborted).toBe(true);
+    finishUpload?.('/api/exercise-media/personal/11111111-1111-4111-8111-111111111111?v=' + 'a'.repeat(64));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(repository.createBlankExercise).not.toHaveBeenCalled();
+    expect(p.onCreated).not.toHaveBeenCalled();
+    expect(p.onClose).not.toHaveBeenCalled();
   });
 
   it('copies the authorized trainer snapshot only after Save', async () => {
