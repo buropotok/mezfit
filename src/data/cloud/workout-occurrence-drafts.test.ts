@@ -111,6 +111,10 @@ describe('local workout occurrence drafts', () => {
     expect((await repo('tg:202').get('draft:' + id))?.plan.name).toBe(shared.plan.name);
     await repo('tg:202').enqueueEdit('draft:' + id, current => ({ ...current, durationMinutes: 90 }));
     expect((await db.table('workoutOccurrences').get(id)).durationMinutes).toBe(90);
+    const update = vi.spyOn(db.table('workoutOccurrences'), 'update');
+    await repo('tg:202').save('draft:' + id);
+    expect(update.mock.calls.at(-1)?.[1]).not.toHaveProperty('plan');
+    update.mockRestore();
     await expect(repo('tg:202').replacePlan('draft:' + id, { ...shared.plan, name: 'Подмена' }))
       .rejects.toThrow('SCHEDULE_PLAN_FORBIDDEN');
     expect((await repo().get('draft:' + id))?.plan.name).toBe('Новый план тренера');

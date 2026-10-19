@@ -181,7 +181,10 @@ export class WorkoutOccurrenceDraftRepository {
           || current.format !== draft.format) throw new WorkoutEditRejected('SCHEDULE_FORBIDDEN');
         if (occurrencePlanChanged(draft.plan, current.plan)
           && (draft.coachUserId ?? draft.athleteUserId) !== this.actorUserId) throw new WorkoutEditRejected('SCHEDULE_PLAN_FORBIDDEN');
-        await this.db.workoutOccurrences.update(occurrenceId, { plan: structuredClone(draft.plan), updatedAt: now });
+        await this.db.workoutOccurrences.update(occurrenceId, {
+          ...((draft.coachUserId ?? draft.athleteUserId) === this.actorUserId ? { plan: structuredClone(draft.plan) } : {}),
+          updatedAt: now,
+        });
       } else {
         const row: Omit<CloudWorkoutOccurrenceRow, 'id'> = {
           realmId: draft.realmId, owner: draft.realmId === this.actorUserId ? this.actorUserId : null,
@@ -194,7 +197,8 @@ export class WorkoutOccurrenceDraftRepository {
         occurrenceId = await this.db.workoutOccurrences.add(row);
       }
       await markWorkoutChanged(this.db, occurrenceId);
-      await this.db.localWorkoutOccurrenceDrafts.delete(id);
+      const privateDraft = await this.db.localWorkoutOccurrenceDrafts.get(id);
+      if (privateDraft?.actorUserId === this.actorUserId) await this.db.localWorkoutOccurrenceDrafts.delete(id);
       return occurrenceId;
     });
   }
