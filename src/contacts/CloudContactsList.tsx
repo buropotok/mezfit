@@ -1,4 +1,4 @@
-import { List, ListGroup, ListItem } from 'konsta/react';
+import { Checkbox, List, ListGroup, ListItem } from 'konsta/react';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudContactAvatar } from './CloudContactAvatar';
 
@@ -40,10 +40,11 @@ function groupClientsForContacts(clients: CloudContact[]): Array<{ title: string
 }
 
 /** Pure contact presentation; callers own selection, search, navigation and FAB. */
-export function CloudContactsList({ contacts, onSelect, actionLabel = 'Открыть клиента' }: {
+export function CloudContactsList({ contacts, onSelect, actionLabel = 'Открыть клиента', selectedUserIds }: {
   contacts: readonly CloudContact[];
   onSelect: (contact: CloudContact) => void;
   actionLabel?: string;
+  selectedUserIds?: readonly string[];
 }) {
   return <List dividers={false}>
     {groupClientsForContacts([...contacts]).map((group) => <ListGroup key={group.title}>
@@ -51,7 +52,9 @@ export function CloudContactsList({ contacts, onSelect, actionLabel = 'Откр�
       {group.clients.map((contact) => <ListItem key={contact.relationshipId}
         contacts link chevron={false} media={<CloudContactAvatar contact={contact} />}
         title={contact.displayName} linkComponent="button"
+        after={selectedUserIds ? <Checkbox component="div" checked={selectedUserIds.includes(contact.userId)} /> : undefined}
         linkProps={{ type: 'button', 'aria-label': `${actionLabel} ${contact.displayName}`,
+          'aria-pressed': selectedUserIds ? selectedUserIds.includes(contact.userId) : undefined,
           onClick: () => onSelect(contact) }} />)}
     </ListGroup>)}
   </List>;

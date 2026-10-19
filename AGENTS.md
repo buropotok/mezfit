@@ -409,7 +409,9 @@ table is read only for an atomic one-time transfer of existing user work.
 Coach calendar default: coach's own workouts plus coached client workouts.
 Independent planning opens a client context: all that client's workouts, including
 coached ones. Save and closing the editor retain that context; leaving/reopening
-or tapping the calendar tab restores the coach context. Do not add filter UI.
+or tapping the calendar tab restores the coach context. The coach may also select
+multiple clients through calendar search. Applied clients appear as deletable Konsta
+chips with avatars; filter only the local projection, never replication or access.
 Visibility and resource occupancy are separate: independent client workouts do
 not book the coach. All authorized relationship records remain accessible.
 

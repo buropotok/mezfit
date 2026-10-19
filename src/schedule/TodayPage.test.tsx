@@ -6,21 +6,26 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { DayScheduleEventMove, DayScheduleEventResize, DayScheduleEventDelete } from '../ui';
+import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import type { MezfitCloudDatabase } from '../data/cloud/database';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { WorkoutOccurrenceDraftRepository as Repository } from '../data/cloud/workout-occurrence-drafts';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { TodayPage } from './TodayPage';
-const state = vi.hoisted(() => ({ db: null as MezfitCloudDatabase | null,
+const state = vi.hoisted(() => ({ clients: [] as CloudContact[], filterAction: null as null | { onClick: () => void }, db: null as MezfitCloudDatabase | null,
   move: null as null | ((value: DayScheduleEventMove) => void),
   resize: null as null | ((value: DayScheduleEventResize) => void),
   remove: null as null | ((value: DayScheduleEventDelete) => void), eventId: '',
   planning: null as null | { requestedDraftId: string | null; requestedClientUserId: string | null; viewResetKey?: number; clearDraft: () => void; openDraft: () => void },
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
-  db: state.db, actorUserId: 'tg:101', clients: [], coaches: [], syncStatus: 'offline',
+  db: state.db, actorUserId: 'tg:101', clients: state.clients, coaches: [], syncStatus: 'offline',
 }) }));
+vi.mock('../NavigationShell', async original => ({
+  ...await original<typeof import('../NavigationShell')>(),
+  useNavigationSurfaceFloatingAction: (action: typeof state.filterAction) => { state.filterAction = action; },
+}));
 vi.mock('./SchedulePlanningContext', () => ({ useSchedulePlanning: () => state.planning }));
 vi.mock('./OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ draft, drafts, onSave, onClose, saveNotice }: {
   draft: LocalWorkoutOccurrenceDraft | null; drafts: WorkoutOccurrenceDraftRepository; saveNotice?: string;
@@ -68,12 +73,42 @@ beforeEach(() => {
   db.table('workoutOccurrences').hook('creating', (key, row) => {
     if (!key) { row.id = 'occ' + crypto.randomUUID().replaceAll('-', ''); return row.id; }
   });
-  state.db = db as MezfitCloudDatabase; state.planning = null;
+  state.db = db as MezfitCloudDatabase; state.planning = null; state.clients = []; state.filterAction = null;
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
   vi.stubEnv('TZ', 'UTC');
 });
 afterEach(async () => { cleanup(); await db.delete(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe('local-first calendar experience', () => {
+  it('applies multiple clients only on confirmation, supports search and deleting a chip', async () => {
+    for (const [id, name] of [['202', 'Анна'], ['303', 'Борис'], ['404', 'Вера']]) {
+      const pair = await relationshipMembership('101', id);
+      await db.table('realms').put(pair.realm); await db.table('members').bulkPut(pair.members);
+      state.clients.push({ userId: 'tg:' + id, telegramUserId: id, relationshipId: pair.realm.realmId, displayName: name });
+      await repo().create({ ...draft, realmId: pair.realm.realmId, athleteUserId: 'tg:' + id,
+        coachUserId: 'tg:101', clientUserId: 'tg:' + id, plan: { ...plan, name }, format: 'independent' });
+    }
+    open();
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Расписание' }).getAttribute('aria-busy')).toBeNull());
+    expect(screen.queryAllByTestId('segment')).toHaveLength(0);
+    act(() => state.filterAction?.onClick());
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента Анна' }));
+    fireEvent.change(screen.getByPlaceholderText('Поиск клиента'), { target: { value: 'Бор' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента Борис' }));
+    expect(screen.queryAllByTestId('segment')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Применить фильтр' }));
+    await waitFor(() => expect(screen.getAllByTestId('segment')).toHaveLength(2));
+    const chips = screen.getByLabelText('Выбранные клиенты');
+    expect(chips.textContent).toContain('Анна'); expect(chips.textContent).toContain('Борис');
+    fireEvent.click(chips.querySelector('[role="button"]')!);
+    await waitFor(() => expect(screen.getAllByTestId('segment')).toHaveLength(1));
+    expect(screen.getByTestId('segment').textContent).toContain('Борис');
+    act(() => state.filterAction?.onClick());
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента Вера' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть поиск клиентов' }));
+    expect(screen.getAllByTestId('segment')).toHaveLength(1);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it.each(['independent', 'coached'] as const)('keeps a client %s card visible after Save and after reopening', async format => {
     const pair = await relationshipMembership('101', '202');
     await db.table('realms').put(pair.realm); await db.table('members').bulkPut(pair.members);

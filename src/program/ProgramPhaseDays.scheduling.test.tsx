@@ -39,6 +39,22 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('program scheduling lifecycle', () => {
+  it('waits for activation and reads the freshly activated program before creating the draft', async () => {
+    let onActivated: (() => Promise<void>) | undefined;
+    const activate = vi.fn((_phase: string, next: () => Promise<void>) => { onActivated = next; });
+    const details = vi.fn().mockResolvedValue({ program, days: [day], phases: [{ id: 'phase', status: 'active' }] });
+    render(<ProgramPhaseDays repository={{ actorUserId: 'tg:101', details } as unknown as ProgramManagementRepository}
+      program={{ ...program, status: 'draft' }} phaseStatus="pending" days={[day]} readOnly={false}
+      onActivateForScheduling={activate} />);
+    fireEvent.click(screen.getByText('Запланировать'));
+    expect(activate).toHaveBeenCalledWith('phase', expect.any(Function));
+    expect(state.create).not.toHaveBeenCalled();
+    await act(async () => { await onActivated?.(); });
+    expect(details).toHaveBeenCalledWith('program');
+    expect(state.create).toHaveBeenCalledTimes(1);
+    expect(state.openDraft).toHaveBeenCalled();
+  });
+
   it('includes private local drafts when suggesting the next slot', async () => {
     const draft = { startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60, athleteUserId: 'tg:101', coachUserId: null };
     state.listDrafts.mockResolvedValue([draft]);

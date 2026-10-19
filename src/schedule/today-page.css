@@ -26,3 +26,11 @@
   pointer-events: none;
   text-align: center;
 }
+
+.today-page--filtered .today-page__schedule { --ui-day-schedule-top-clearance: calc(176px + max(16px, var(--k-safe-area-top, 0px))); }
+.today-page__filters { position: absolute; z-index: 1; top: calc(116px + max(16px, var(--k-safe-area-top, 0px))); left: 12px; right: 12px; display: flex; gap: 8px; overflow-x: auto; padding-block: 4px; }
+.today-page__filters > * { flex-shrink: 0; }
+.schedule-client-avatar { width: 28px; height: 28px; }
+.schedule-client-filter { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.schedule-client-filter__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.schedule-client-filter__apply { padding: 0; border: 0; background: transparent; color: var(--ui-color-primary, #329bff); }

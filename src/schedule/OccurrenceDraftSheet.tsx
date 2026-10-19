@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { isWorkoutEditRejected, type WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -9,7 +10,7 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
-  Text, TimePicker, Icon, IconButton, type LocalDate, type LocalTime } from '../ui';
+  Badge, Text, TimePicker, Icon, IconButton, type LocalDate, type LocalTime } from '../ui';
 import { localScheduleInstant, localScheduleEnd } from './calendar-time';
 import { useWorkoutPerson } from './WorkoutPerson';
 import type { ProgramActor } from '../program/ProgramSummary';
@@ -58,7 +59,7 @@ export interface OccurrenceDraftSheetProps {
   onSave: (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => Promise<void>;
 }
 
-export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '' }: OccurrenceDraftSheetProps) {
+function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', container }: OccurrenceDraftSheetProps & { container: HTMLDivElement }) {
   const cloud = useCloudConnections();
   const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
   const [dateOpened, setDateOpened] = useState(false);
@@ -188,15 +189,18 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
   return <>
-    <MezfitBottomSheet opened={draft !== null} label="Запланировать тренировку" lazyMount>
-      {draft ? <section className="occurrence-draft-sheet">
+      {draft ? createPortal(<section className="occurrence-draft-sheet">
         <header className="occurrence-draft-sheet__header">
-          <Text variant="headline">Запланировать тренировку</Text>
+          <Text variant="headline">Запланированная тренировка</Text>
           <IconButton label="Закрыть" onClick={onClose}>✕</IconButton>
         </header>
         <div className="occurrence-draft-sheet__body">
           {error || saveNotice ? <Text variant="footnote" role="alert">{error || saveNotice}</Text> : null}
-          <WorkoutSyncStatus draft={draft} repository={drafts} />
+          <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
+          <div className="occurrence-draft-sheet__statuses">
+            <WorkoutSyncStatus draft={draft} repository={drafts} />
+            <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>
+          </div>
           <div className="occurrence-draft-sheet__timing">
             <Button variant="secondary" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
@@ -208,7 +212,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
               <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
             </Button></span>
           </div>
-          <Text variant="body">Введите план на тренировку (не обязательно)</Text>
+          <Text variant="body">План на тренировку</Text>
           <WorkoutPlanCard mode="planning" day={outline(draft)} programName={draft.plan.name}
             creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
@@ -236,8 +240,7 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
           </Button>
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer> : null}
-      </section> : null}
-    </MezfitBottomSheet>
+      </section>, container) : null}
     {draft ? <>
       <DatePicker opened={dateOpened} value={localDate(start)}
         onChange={date => editStart(date, localTime(start))}
@@ -288,5 +291,20 @@ export function OccurrenceDraftSheet({ draft, drafts, onClose, onSave, actor, re
         <Text variant="body">Несохранённые изменения будут потеряны.</Text>
       </MezfitDialog>
     </> : null}
+  </>;
+}
+
+/** Keep the animated shell mounted closed before opening; reset each editor by ID. */
+export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
+  const [retained, setRetained] = useState(props.draft);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  useEffect(() => { if (props.draft) setRetained(props.draft); }, [props.draft]);
+  const draft = props.draft ?? retained;
+  return <><MezfitBottomSheet opened={props.draft !== null} label="Запланированная тренировка" lazyMount
+    onClosed={() => { if (!props.draft) setRetained(null); }}>
+    <div ref={setContainer} className="occurrence-draft-sheet__host" />
+  </MezfitBottomSheet>
+    {/* Only form content enters our host; pickers/dialogs remain outside the animated transform. */}
+    {draft && container ? <OccurrenceDraftEditor key={draft.id} {...props} draft={draft} container={container} /> : null}
   </>;
 }
