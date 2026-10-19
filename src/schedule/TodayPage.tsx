@@ -257,7 +257,8 @@ export function TodayPage({
         eventsShareResource={(event, other) => bookingsShareParticipant(
           event.type === 'draft' ? event.draft : event.occurrence,
           other.type === 'draft' ? other.draft : other.occurrence)}
-        isEventEditable={event => !changingEvent.current && (event.type === 'draft' ? !event.draft.submissionPending
+        isEventEditable={event => !changingEvent.current && (event.type === 'draft'
+          ? !event.draft.submissionPending && event.durationMinutes === event.draft.durationMinutes
           : mayEdit(event.occurrence) && event.durationMinutes === event.occurrence.durationMinutes)}
         onEventMove={move => report(changeEvent(move.eventId, move.targetDate, move.startMinutes))}
         onEventResize={resize => report(changeEvent(resize.eventId, resize.date, resize.startMinutes, resize.durationMinutes))}

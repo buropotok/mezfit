@@ -93,10 +93,11 @@ vi.mock('./OccurrenceDraftSheet', () => ({
 }));
 vi.mock('../ui', async importOriginal => ({
   ...await importOriginal<typeof import('../ui')>(),
-  DaySchedule: ({ eventsByDate, renderEvent, onEventMove, onEventResize, onEventDelete }: {
+  DaySchedule: ({ eventsByDate, renderEvent, onEventMove, onEventResize, onEventDelete, isEventEditable }: {
     onEventMove?: (event: DayScheduleEventMove) => void;
     onEventResize?: (event: DayScheduleEventResize) => void;
     onEventDelete?: (event: DayScheduleEventDelete) => void;
+    isEventEditable?: (item: { id: string; startMinutes: number; durationMinutes: number }) => boolean;
     eventsByDate: Record<string, Array<{ id: string; startMinutes: number; durationMinutes: number }>>;
     renderEvent: (item: { id: string; startMinutes: number; durationMinutes: number }, state: unknown) => ReactNode;
   }) => {
@@ -104,7 +105,7 @@ vi.mock('../ui', async importOriginal => ({
     state.eventId = Object.values(eventsByDate).flat()[0]?.id ?? '';
     return <div data-testid="calendar">
     {Object.values(eventsByDate).flat().map(item => (
-      <div key={item.id}>{renderEvent(item, {
+      <div key={item.id} data-testid="timeline-segment" data-editable={isEventEditable?.(item)}>{renderEvent(item, {
         startMinutes: item.startMinutes, durationMinutes: item.durationMinutes,
         compact: false, editing: false, lifted: false,
       })}</div>
@@ -145,6 +146,33 @@ const open = () => render(<TodayPage initData="telegram-session" role="coach" cu
   onNavigationContextChange={vi.fn()} />);
 
 describe('Dexie-backed schedule', () => {
+  it.each([
+    ['midnight', 'UTC', '2026-10-19T23:30:00.000Z', 120],
+    ['spring offset change', 'Europe/Berlin', '2026-03-29T00:30:00.000Z', 180],
+    ['autumn offset change', 'Europe/Berlin', '2026-10-24T23:30:00.000Z', 180],
+  ] as const)('keeps every draft segment across %s out of timeline gestures but opens the whole interval', async (_case, zone, startsAtUtc, durationMinutes) => {
+    vi.stubEnv('TZ', zone);
+    state.localRows = [{ ...structuredClone(baseDraft), startsAtUtc, durationMinutes }];
+    open();
+    const segments = await screen.findAllByTestId('timeline-segment');
+    expect(segments).toHaveLength(2);
+    for (const segment of segments) expect(segment.getAttribute('data-editable')).toBe('false');
+    // The later segment must still open the same complete draft, without rewriting its timing.
+    fireEvent.click(screen.getAllByRole('button', { name: /Вы.*Черновик.*День 1/ })[1]);
+    expect(await screen.findByRole('dialog', { name: 'Запланировать тренировку' })).toBeTruthy();
+    expect(state.localRows).toHaveLength(1);
+    expect(state.localRows[0]).toMatchObject({ id: baseDraft.id, startsAtUtc, durationMinutes });
+    expect(confirmCloudWorkoutOccurrence).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('allows whole-draft timeline gestures only before submission (pending=%s)', async submissionPending => {
+    vi.stubEnv('TZ', 'UTC');
+    state.localRows = [{ ...structuredClone(baseDraft), submissionPending }];
+    open();
+    const segment = await screen.findByTestId('timeline-segment');
+    expect(segment.getAttribute('data-editable')).toBe(String(!submissionPending));
+  });
+
   it('does not unlock an earlier ambiguous submission after a later refusal', async () => {
     state.localRows = [structuredClone(baseDraft)];
     vi.mocked(confirmCloudWorkoutOccurrence).mockRejectedValueOnce(new Error('Ответ потерян'))
