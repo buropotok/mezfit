@@ -87,19 +87,22 @@ function EditPersonalExercise({
   onCreated: (id: string) => void;
   onClose: () => void;
 }) {
-  const initial = useMemo<CatalogueExerciseRow>(() => {
+  const [initial] = useState<CatalogueExerciseRow>(() => {
     if (source) return structuredClone(source);
     return {
       ...blankPersonalExercise(request.mode === 'create' ? request.category : null),
       id: 'custom:unsaved', realmId: mediaAccountId,
       owner: mediaAccountId, sourceSha256: 'coach-custom',
     };
-  }, [source, request, mediaAccountId]);
+  });
   const [draft, setDraft] = useState<CatalogueExerciseRow>(initial);
   const [upload, setUpload] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const inFlight = useRef(false);
+  const saveController = useRef(new AbortController());
+  useEffect(() => () => saveController.current.abort(), []);
+  const isActive = () => !saveController.current.signal.aborted;
   const stagedImage = useRef<{ file: File; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -180,17 +183,24 @@ function EditPersonalExercise({
       if (upload) {
         const previous = stagedImage.current;
         const url = previous?.file === upload ? previous.url
-          : await uploadPersonalExerciseMedia(getTelegramWebApp()?.initData ?? '', upload);
+          : await uploadPersonalExerciseMedia(
+            getTelegramWebApp()?.initData ?? '', upload, saveController.current.signal,
+          );
+        if (!isActive()) return;
         stagedImage.current = { file: upload, url };
-        await storePersonalExerciseMedia(mediaAccountId, url, upload);
+        // R2 is durable; a full or unavailable WebView IndexedDB cache must
+        // not block saving the reference or trigger repeated uploads.
+        try { await storePersonalExerciseMedia(mediaAccountId, url, upload); } catch { /* optional cache */ }
+        if (!isActive()) return;
         changes.image = url;
       }
       if (request.mode === 'edit' && Object.keys(changes).length === 0) {
         onClose();
         return;
       }
+      if (!isActive()) return;
       const id = request.mode === 'edit'
-        ? (await repository.updateExercise(request.exerciseId, changes), request.exerciseId)
+        ? (await repository.updateExercise(request.exerciseId, changes, initial), request.exerciseId)
         : request.mode === 'create'
           ? await repository.createBlankExercise(request.category, name, changes)
           : request.source === 'public'
@@ -199,13 +209,14 @@ function EditPersonalExercise({
               ? await repository.duplicateAssignedCoachExercise(selectedCoachUserId, request.exerciseId, changes)
               : null;
       if (!id) throw new Error('Не выбран тренер');
+      if (!isActive()) return;
       if (request.mode === 'edit') onClose();
       else onCreated(id);
     } catch (cause) {
-      setError(errorMessage(cause));
+      if (isActive()) setError(errorMessage(cause));
     } finally {
       inFlight.current = false;
-      setBusy(false);
+      if (isActive()) setBusy(false);
     }
   };
 
