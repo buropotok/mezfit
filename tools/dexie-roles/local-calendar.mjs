@@ -61,6 +61,20 @@ const BEFORE = {
     }
   }
 };
+// Exact cloud/roles.json policy from d1af376781503b5209aba8fa0e873a155d989c80.
+// Compose only with the frozen pre-calendar policy, never the current manifest.
+const SCHEDULING_REQUESTS = {
+  coach: {
+    ...BEFORE.coach,
+    description: 'Can author assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged',
+    permissions: { ...BEFORE.coach.permissions, add: ['workoutScheduleRequests'] },
+  },
+  client: {
+    ...BEFORE.client,
+    description: 'Can read assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged',
+    permissions: { ...BEFORE.client.permissions, add: ['workoutScheduleRequests'] },
+  },
+};
 const CALENDAR_V1 = {
   "coach": {
     "displayName": "Coach",
@@ -218,7 +232,7 @@ function collectDiagnosticWords(value) {
     collectDiagnosticWords(child);
   }
 }
-[BEFORE, CALENDAR_V1, APPROVED].forEach(collectDiagnosticWords);
+[BEFORE, SCHEDULING_REQUESTS, CALENDAR_V1, APPROVED].forEach(collectDiagnosticWords);
 
 function diagnosticValue(value) {
   if (value === undefined) return '<absent>';
@@ -252,7 +266,8 @@ class SchedulingRoleMismatchError extends Error {
     super('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
     this.diagnostics = mismatches.map(([role, actual]) => ({
       role,
-      comparisons: Object.entries({ preCalendar: BEFORE, calendarV1: CALENDAR_V1, approved: APPROVED })
+      comparisons: Object.entries({ preCalendar: BEFORE, schedulingRequests: SCHEDULING_REQUESTS,
+        calendarV1: CALENDAR_V1, approved: APPROVED })
         .map(([baseline, roles]) => ({ baseline, differences: roleDifferences(roles[role], actual) })),
     }));
   }
@@ -288,7 +303,8 @@ export function planSchedulingAcl(manifest, schema, exportedRoles) {
   for (const name of ROLES) {
     const actual = exportedRoles.roles[name];
     if (isDeepStrictEqual(actual, desired[name])) continue;
-    if (!isDeepStrictEqual(actual, BEFORE[name]) && !isDeepStrictEqual(actual, CALENDAR_V1[name])) {
+    if (!isDeepStrictEqual(actual, BEFORE[name]) && !isDeepStrictEqual(actual, CALENDAR_V1[name])
+      && !isDeepStrictEqual(actual, SCHEDULING_REQUESTS[name])) {
       mismatches.push([name, actual]);
     }
     updates[name] = desired[name];
@@ -385,7 +401,13 @@ async function main() {
     } else {
       console.log('Approved local calendar grants: ' + plan.changedNames.join(', '));
     }
-    console.log('Only workoutOccurrences scheduling grants change. Schema, session lifecycle, source PLAN and FACT grants remain unchanged.');
+    const retiredRequestRoles = plan.changedNames.filter(name =>
+      isDeepStrictEqual(beforeRoles.roles[name], SCHEDULING_REQUESTS[name]));
+    if (retiredRequestRoles.length) {
+      console.log('Replace add-only workoutScheduleRequests grants with approved calendar grants: '
+        + retiredRequestRoles.join(', '));
+    }
+    console.log('Only approved calendar grants and retirement of scheduling-request grants change. Schema, session lifecycle, source PLAN and FACT grants remain unchanged.');
     return;
   }
 

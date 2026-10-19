@@ -14,11 +14,82 @@ for (const [name, role] of Object.entries(previous.roles)) {
     ? 'Can author assigned PLAN and edit set FACT; session lifecycle stays privileged'
     : 'Can read assigned PLAN and edit only set FACT; session lifecycle stays privileged';
 }
+// Historical policy in cloud/roles.json at d1af376781503b5209aba8fa0e873a155d989c80.
+const schedulingRequests = structuredClone(previous);
+for (const [name, role] of Object.entries(schedulingRequests.roles)) {
+  role.permissions.add = ['workoutScheduleRequests'];
+  role.description = name === 'coach'
+    ? 'Can author assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged'
+    : 'Can read assigned PLAN, request scheduling, and edit set FACT; session lifecycle stays privileged';
+}
 const schema = { sealed: true, schema: { workoutOccurrences: '@id' } };
 const trusted = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main',
   GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok',
   DEXIE_ACL_OPERATION: 'apply', DEXIE_ACL_CONFIRMATION: 'APPLY_LOCAL_CALENDAR_COACH_CLIENT_ACL' };
 describe('protected local calendar ACL', () => {
+  it('replaces the exact installed request policy and preserves PLAN, FACT and other roles', () => {
+    const before = structuredClone(schedulingRequests);
+    before.roles.unrelated = { permissions: { add: ['otherTable'] } };
+    const untouched = structuredClone(before);
+    const plan = planSchedulingAcl(manifest, schema, before);
+    expect(plan.changedNames).toEqual(['coach', 'client']);
+    expect(plan.importPayload).toEqual(manifest);
+    expect(before).toEqual(untouched);
+    for (const name of ['coach', 'client']) {
+      expect(plan.importPayload.roles[name].permissions.update.sessionSetFacts)
+        .toEqual(before.roles[name].permissions.update.sessionSetFacts);
+      expect(plan.importPayload.roles[name].permissions.manage).toEqual(before.roles[name].permissions.manage);
+      expect(plan.importPayload.roles[name].permissions.add).toEqual(['workoutOccurrences']);
+    }
+    const after = structuredClone({ roles: { ...before.roles, ...plan.importPayload.roles } });
+    expect(() => verifySchedulingAcl(manifest, schema, before, schema, after)).not.toThrow();
+    after.roles.client.permissions.add = ['workoutOccurrences', 'workoutScheduleRequests'];
+    expect(() => verifySchedulingAcl(manifest, schema, before, schema, after)).toThrow('SCHEDULING_ROLE_NOT_APPLIED');
+  });
+
+  it('supports a partially upgraded cloud without reimporting an already approved role', () => {
+    const before = { roles: { coach: manifest.roles.coach, client: schedulingRequests.roles.client } };
+    expect(planSchedulingAcl(manifest, schema, before)).toEqual({
+      changedNames: ['client'], importPayload: { roles: { client: manifest.roles.client } },
+    });
+  });
+
+  describe.each(['coach', 'client'])('rejects changed historical %s permissions', name => {
+    it.each([
+      ['extra add grant', role => role.permissions.add.push('workoutSessions')],
+      ['wrong add grant', role => { role.permissions.add = ['workoutOccurrences']; }],
+      ['missing add grant', role => { delete role.permissions.add; }],
+      ['different FACT', role => { role.permissions.update.sessionSetFacts = ['actualReps']; }],
+      ['new manage grant', role => { role.permissions.manage = ['workoutOccurrences']; }],
+      ['different description', role => { role.description = 'unexpected'; }],
+    ])('%s', (_label, mutate) => {
+      const before = structuredClone(schedulingRequests);
+      mutate(before.roles[name]);
+      expect(() => planSchedulingAcl(manifest, schema, before)).toThrow('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
+    });
+  });
+
+  it('previews the historical upgrade with explicit retirement reporting and only approved role payload', () => {
+    const temp = mkdtempSync(join(tmpdir(), 'calendar-acl-request-preview-'));
+    const folder = join(temp, 'dexie-schema-123-1');
+    mkdirSync(folder);
+    writeFileSync(join(folder, 'before-schema.json'), JSON.stringify(schema));
+    writeFileSync(join(folder, 'before-roles.json'), JSON.stringify(schedulingRequests));
+    try {
+      const result = spawnSync(process.execPath, ['tools/dexie-roles/local-calendar.mjs', 'plan'], {
+        cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8',
+        env: { ...process.env, ...trusted, DEXIE_ACL_OPERATION: 'preview', DEXIE_ACL_CONFIRMATION: '',
+          RUNNER_TEMP: temp, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1',
+          GITHUB_OUTPUT: join(temp, 'output') },
+      });
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).toContain('Replace add-only workoutScheduleRequests grants with approved calendar grants: coach, client');
+      expect(JSON.parse(readFileSync(join(folder, 'roles-only-import.json'), 'utf8'))).toEqual(manifest);
+      expect(readFileSync(join(temp, 'output'), 'utf8')).toBe('change_count=2\n');
+    } finally { rmSync(temp, { recursive: true, force: true }); }
+  });
+
   it('reports both rejected roles and their grant differences against every supported policy', () => {
     const unexpected = structuredClone(previous);
     unexpected.roles.coach.permissions.update.sessionSetFacts = ['actualReps'];
@@ -28,7 +99,8 @@ describe('protected local calendar ACL', () => {
     expect(failure?.message).toBe('UNEXPECTED_INSTALLED_SCHEDULING_ROLE');
     expect(failure?.diagnostics.map(item => item.role)).toEqual(['coach', 'client']);
     for (const item of failure.diagnostics) {
-      expect(item.comparisons.map(entry => entry.baseline)).toEqual(['preCalendar', 'calendarV1', 'approved']);
+      expect(item.comparisons.map(entry => entry.baseline))
+        .toEqual(['preCalendar', 'schedulingRequests', 'calendarV1', 'approved']);
       expect(item.comparisons[0].differences).toContainEqual({
         path: '$.permissions.update.sessionSetFacts',
         expected: previous.roles[item.role].permissions.update.sessionSetFacts,

@@ -228,6 +228,13 @@ existing protected publisher only, owner/main manual dispatch, explicit apply
 confirmation, immediate configuration recheck and full readback. Never execute
 ACL writes on PR/push. The prior retirement operator is replaced by this workflow.
 
+The same protected operation may also accept the exact frozen scheduling-request
+role policy from commit `d1af376781503b5209aba8fa0e873a155d989c80` and replace its
+sole `add: ["workoutScheduleRequests"]` grant with the approved calendar grants.
+This retires an installed cloud permission; it does not restore the old runtime.
+Reject any other difference in the installed policy. Keep source PLAN, FACT,
+membership, schema and unrelated roles unchanged.
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.
@@ -409,6 +416,6 @@ not book the coach. All authorized relationship records remain accessible.
 Ordinary Coach grants include PLAN/publication baselines (`originalPlan`,
 `publishedPlan`) and publication state; Client may update publication state/draft author but
 not assigned PLAN/baselines. Execution status/session fields remain protected.
-The protected calendar ACL installer may upgrade either the frozen pre-calendar
-policy or its frozen v1 calendar grants to this exact reviewed manifest. Other
+The protected calendar ACL installer may upgrade the frozen pre-calendar,
+scheduling-request or v1 calendar policy to this exact reviewed manifest. Other
 roles, source programs, FACT, schema and membership stay unchanged.
