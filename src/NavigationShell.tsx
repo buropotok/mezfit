@@ -505,6 +505,7 @@ export function NavigationShell({
             }))}
             value={primaryDestination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}
+            onReselect={value => { if (value === 'today') chooseDestination('today'); }}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
             fab={resolvedPrimaryFloatingAction ? renderFloatingAction(resolvedPrimaryFloatingAction) : undefined}

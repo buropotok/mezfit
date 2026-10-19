@@ -16,7 +16,7 @@ const state = vi.hoisted(() => ({ db: null as MezfitCloudDatabase | null,
   move: null as null | ((value: DayScheduleEventMove) => void),
   resize: null as null | ((value: DayScheduleEventResize) => void),
   remove: null as null | ((value: DayScheduleEventDelete) => void), eventId: '',
-  planning: null as null | { requestedDraftId: string | null; requestedClientUserId: string | null; clearDraft: () => void; openDraft: () => void },
+  planning: null as null | { requestedDraftId: string | null; requestedClientUserId: string | null; viewResetKey?: number; clearDraft: () => void; openDraft: () => void },
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
   db: state.db, actorUserId: 'tg:101', clients: [], coaches: [], syncStatus: 'offline',
@@ -86,6 +86,11 @@ describe('local-first calendar experience', () => {
     expect(screen.getByRole('button', { name: /День 1/ })).toBeTruthy();
     expect(screen.queryByText('Черновик')).toBeNull();
     expect(await repo().list()).toEqual([]);
+    if (format === 'independent' && state.planning) {
+      state.planning.viewResetKey = 1;
+      page.rerender(<TodayPage initData="" role="coach" onNavigationContextChange={vi.fn()} />);
+      await waitFor(() => expect(screen.queryByTestId('segment')).toBeNull());
+    }
     page.unmount(); state.planning = null; open();
     if (format === 'coached') expect(await screen.findByRole('button', { name: /День 1/ })).toBeTruthy();
     else await waitFor(() => expect(screen.queryByTestId('segment')).toBeNull());
