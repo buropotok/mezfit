@@ -13,6 +13,7 @@ import {
   type RefObject,
 } from 'react';
 import { Text } from './primitives';
+import { useSpotlightHintPause } from './SpotlightHint';
 import { paintLiquidPopoverText } from './liquidPopoverText';
 import { GlassSurface } from './GlassSurface';
 import { Icon, type UiIconName } from './Icon';
@@ -430,6 +431,7 @@ export function LiquidPopover({
   }, [isOpen]);
 
   const sourcePresented = isOpen || presented;
+  useSpotlightHintPause(sourcePresented);
 
   useLayoutEffect(() => {
     onPresentationChange?.(sourcePresented);

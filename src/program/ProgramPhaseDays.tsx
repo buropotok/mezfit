@@ -1,3 +1,4 @@
+import { useSpotlightHintPause } from '../ui/SpotlightHint';
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline, CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
@@ -21,7 +22,8 @@ import { programMutationMessage } from './programPresentation';
 const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
   .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
-export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft', onActivateForScheduling }: {
+export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft', onActivateForScheduling, onMutationAttempt }: {
+  onMutationAttempt?: () => void;
   onActivateForScheduling?: (phaseId: string, onActivated: () => Promise<void>) => void;
   repository: ProgramManagementRepository;
   program: CloudTrainingPlanRow;
@@ -38,6 +40,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const content = useRef<HTMLDivElement>(null);
   const [exerciseDayId, setExerciseDayId] = useState<string | null>(null);
   const [exerciseInformation, setExerciseInformation] = useState<{ dayId: string; exerciseId: string } | null>(null);
+  useSpotlightHintPause(exerciseInformation !== null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
@@ -133,7 +136,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       ref={(node) => { if (node) nodes.current.set(item.day.id, node); else nodes.current.delete(item.day.id); }}>
       <WorkoutSessionCard mode="planning" day={item} programName={program.name}
         onReorderExercises={(ids) => { void run(() => repository.reorderDayExercises(program.id, item.day.id, ids)); }} creatorName={creatorName} creatorAvatar={creatorAvatar}
-        readOnly={readOnly} busy={busy || exerciseDayId !== null}
+        readOnly={readOnly} onMutationAttempt={onMutationAttempt} busy={busy || exerciseDayId !== null}
         canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
           && program.clientUserId !== null} onSchedule={planning && ((program.status === 'active' && phaseStatus === 'active') || (!readOnly && onActivateForScheduling)) ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}

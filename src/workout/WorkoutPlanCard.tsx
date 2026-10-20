@@ -4,6 +4,7 @@ import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-ty
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { SessionExercise } from './SessionExercise';
+import { SpotlightTarget } from '../ui/SpotlightHint';
 
 export interface WorkoutPlanCardProps {
   mode: 'planning';
@@ -11,6 +12,8 @@ export interface WorkoutPlanCardProps {
   hideProgramName?: boolean;
   canScheduleCoached?: boolean;
   onSchedule?: (format: WorkoutScheduleFormat) => void;
+  /** Source-selection mode: keep controls visible, explain instead of mutating. */
+  onMutationAttempt?: () => void;
   hideProgramMenu?: boolean;
   hideWorkoutActions?: boolean;
   onReorderExercises?: (ids: string[]) => void;
@@ -47,9 +50,11 @@ export function WorkoutPlanCard({
   hideProgramMenu = false, hideWorkoutActions = false, hideProgramName = false,
   onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
-  onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet,
+  onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
+  const authoringVisible = !readOnly || Boolean(onMutationAttempt);
+  const mutate = (action?: () => void) => { if (onMutationAttempt) onMutationAttempt(); else action?.(); };
   const [menuOpen, setMenuOpen] = useState(false);
   const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
   const scheduleTriggerRef = useRef<HTMLElement>(null);
@@ -60,30 +65,30 @@ export function WorkoutPlanCard({
     setAfterMenu(() => action);
     setMenuOpen(false);
   };
-  const menu: LiquidPopoverItem[] = readOnly || hideProgramMenu ? [] : [
-    { id: 'edit', label: 'Переименовать', icon: 'pencil', disabled: busy, onSelect: () => defer(onEdit) },
-    { id: 'up', label: 'Вверх', icon: 'arrow-up', disabled: busy || !canMoveUp, onSelect: () => defer(() => onMove('up')) },
-    { id: 'down', label: 'Вниз', icon: 'arrow-down', disabled: busy || !canMoveDown, onSelect: () => defer(() => onMove('down')) },
-    { id: 'duplicate', label: 'Дублировать', icon: 'copy-outline', disabled: busy, onSelect: () => defer(onDuplicate) },
-    { id: 'comment', label: 'Комментарий', icon: 'message-circle', disabled: busy, onSelect: () => defer(onComment) },
-    { id: 'start', label: 'Начать тренировку', icon: 'treadmill', disabled: true, dividerBefore: true },
+  const menu: LiquidPopoverItem[] = !authoringVisible || hideProgramMenu ? [] : [
+    { id: 'edit', label: 'Переименовать', icon: 'pencil', disabled: busy, onSelect: () => defer(() => mutate(onEdit)) },
+    { id: 'up', label: 'Вверх', icon: 'arrow-up', disabled: busy || (!onMutationAttempt && !canMoveUp), onSelect: () => defer(() => mutate(() => onMove('up'))) },
+    { id: 'down', label: 'Вниз', icon: 'arrow-down', disabled: busy || (!onMutationAttempt && !canMoveDown), onSelect: () => defer(() => mutate(() => onMove('down'))) },
+    { id: 'duplicate', label: 'Дублировать', icon: 'copy-outline', disabled: busy, onSelect: () => defer(() => mutate(onDuplicate)) },
+    { id: 'comment', label: 'Комментарий', icon: 'message-circle', disabled: busy, onSelect: () => defer(() => mutate(onComment)) },
+    ...(!onMutationAttempt ? [{ id: 'start', label: 'Начать тренировку', icon: 'treadmill' as const, disabled: true, dividerBefore: true }] : []),
     { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: busy || !onSchedule,
       onSelect: () => defer(() => canScheduleCoached
         ? setSchedulePopoverOpen(true) : onSchedule?.('independent')) },
-    { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(onDelete) },
+    { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(() => mutate(onDelete)) },
   ];
   const items = exercises.map((item) => ({
     id: item.exercise.id,
-    content: <SessionExercise mode="program" data={item} surface="transparent" editable={!readOnly}
-      busy={busy} onAddSet={onAddSet ? () => onAddSet(item.exercise.id) : undefined}
-      onOpenSet={onOpenSet ? setId => onOpenSet(item.exercise.id, setId) : undefined}
-      onDeleteSet={onDeleteSet ? setId => onDeleteSet(item.exercise.id, setId) : undefined}
-      onDelete={onDeleteExercise ? () => onDeleteExercise(item.exercise.id) : undefined}
+    content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
+      busy={busy} onAddSet={onMutationAttempt || onAddSet ? () => mutate(() => onAddSet?.(item.exercise.id)) : undefined}
+      onOpenSet={onMutationAttempt || onOpenSet ? setId => mutate(() => onOpenSet?.(item.exercise.id, setId)) : undefined}
+      onDeleteSet={onMutationAttempt || onDeleteSet ? setId => mutate(() => onDeleteSet?.(item.exercise.id, setId)) : undefined}
+      onDelete={onMutationAttempt || onDeleteExercise ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
-    <SortableList items={items} disabled={readOnly || busy || !onReorderExercises} showSeparators={false}
-      onReorder={(rows) => onReorderExercises?.(rows.map((row) => String(row.id)))}
+    <SortableList items={items} disabled={Boolean(onMutationAttempt) || readOnly || busy || !onReorderExercises} showSeparators={false}
+      onReorder={(rows) => mutate(() => onReorderExercises?.(rows.map((row) => String(row.id))))}
       header={<div className="workout-session-card__header">
         <span className="workout-session-card__icon">
           <Icon name="barbell" className="workout-session-card__icon-artwork" />
@@ -111,16 +116,16 @@ export function WorkoutPlanCard({
       </div>}
       footer={<div className="workout-session-card__footer">
         {!exercises.length ? <Text variant="footnote" tone="muted">В этом дне пока нет упражнений</Text> : null}
-        {!readOnly ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
-          className="workout-session-card__add-exercise" aria-disabled={busy || !onAddExercise}
-          onClick={() => { if (!busy) onAddExercise?.(); }}>
+        {authoringVisible ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+          className="workout-session-card__add-exercise" aria-disabled={busy || (!onMutationAttempt && !onAddExercise)}
+          onClick={() => { if (!busy) mutate(onAddExercise); }}>
           <Icon name="plus" className="workout-session-card__add-exercise-icon" />
           <Text variant="body">Добавить упражнение</Text>
         </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
 
-        {!hideWorkoutActions && (!readOnly || onSchedule) ? <div className="workout-plan-card__actions">
-          {onSchedule ? canScheduleCoached ? (
+        {!hideWorkoutActions && (authoringVisible || onSchedule) ? <div className="workout-plan-card__actions">
+          {onSchedule ? <SpotlightTarget>{canScheduleCoached ? (
             <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}
               triggerRef={scheduleTriggerRef} label="Формат тренировки"
               preset={glass.preset} optics={glass.optics}
@@ -145,8 +150,8 @@ export function WorkoutPlanCard({
               <Icon name="calendar-plus" className="workout-plan-card__action-icon" />
               <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
             </GlassSurface>
-          ) : null}
-          {!readOnly ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+          )}</SpotlightTarget> : null}
+          {!readOnly && !onMutationAttempt ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
             glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled="true"
             className="workout-plan-card__action">
             <Icon name="treadmill" className="workout-plan-card__action-icon" />

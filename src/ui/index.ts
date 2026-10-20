@@ -37,5 +37,7 @@ export { LIQUID_POPOVER_DEFAULTS } from './liquidPopoverGeometry';
 export type { LiquidMotionOptions } from './liquidPopoverGeometry';
 export type { FloatingActionButtonAction } from './MetaballFab';
 
+export { SpotlightHint, SpotlightTarget, useSpotlightHintPause, type SpotlightHintProps } from './SpotlightHint';
+
 export { SpeechCloud, type SpeechCloudProps } from './SpeechCloud';
 export { SPEECH_CLOUD_DEFAULTS, type SpeechCloudArea } from './speechCloudGeometry';

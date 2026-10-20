@@ -1,0 +1,30 @@
+.ui-spotlight-hint__scope { min-width: 0; }
+.ui-spotlight-hint__target { display: flex; flex: 1; min-width: 0; }
+.ui-spotlight-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  color: white;
+}
+.ui-spotlight-hint__mask { position: absolute; inset: 0; pointer-events: none; }
+.ui-spotlight-hint__copy {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
+  display: grid;
+  gap: 12px;
+}
+.ui-spotlight-hint__controls { display: flex; justify-content: space-between; gap: 12px; }
+.ui-spotlight-hint__controls button {
+  appearance: none;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: white;
+  pointer-events: auto;
+  cursor: pointer;
+}

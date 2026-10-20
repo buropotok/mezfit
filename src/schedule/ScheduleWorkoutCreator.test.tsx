@@ -17,23 +17,25 @@ vi.mock('../data/cloud/workout-planning', () => ({
     programs = { listForAthlete: state.readable, listForScheduling: state.authorable };
   },
 }));
-vi.mock('../program/ProgramClientPicker', () => ({ ProgramClientPicker: () => null }));
+vi.mock('../program/ProgramClientPicker', () => ({ ProgramClientPicker: ({ opened, onSelect }: { opened: boolean; onSelect: (client: { userId: string }) => void }) =>
+  opened ? <button onClick={() => onSelect({ userId: 'tg:303' })}>Выбрать Анну</button> : null }));
 vi.mock('../program/CloudProgramDetailsPage', () => ({
-  CloudProgramDetailsPage: ({ planId, readOnly }: { planId: string; readOnly?: boolean }) =>
-    <div data-testid="program-details" data-plan={planId} data-readonly={Boolean(readOnly)} />,
+  CloudProgramDetailsPage: ({ planId, readOnly, selectionMode }: { planId: string; readOnly?: boolean; selectionMode?: boolean }) =>
+    <div data-testid="program-details" data-plan={planId} data-readonly={Boolean(readOnly)} data-selection={Boolean(selectionMode)} />,
 }));
 vi.mock('konsta/react', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button disabled={disabled} onClick={onClick}>{children}</button>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  ListItem: ({ title, onClick }: { title: string; onClick: () => void }) =>
-    <button onClick={onClick}>{title}</button>,
+  ListItem: ({ title, after, subtitle, onClick }: { title: string; after?: ReactNode; subtitle?: ReactNode; onClick: () => void }) =>
+    <><button onClick={onClick}>{title} {after}</button>{subtitle ? <span>{subtitle}</span> : null}</>,
 }));
 vi.mock('../ui', () => ({
   MezfitBottomSheet: ({ opened, children }: { opened: boolean; children: ReactNode }) => opened ? <div>{children}</div> : null,
   MezfitDialog: ({ opened, children, buttons }: { opened: boolean; children: ReactNode; buttons: ReactNode }) => opened ? <div>{children}{buttons}</div> : null,
   MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button disabled={disabled} onClick={onClick}>{children}</button>,
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 const assigned: CloudTrainingPlanRow = {
@@ -52,10 +54,14 @@ beforeEach(() => { vi.clearAllMocks(); state.readable.mockResolvedValue([assigne
 afterEach(cleanup);
 
 describe('calendar program source permissions', () => {
-  it('opens an active coach assignment for a client through the athlete-readable query', async () => {
+  it('lists active coach assignments before opening an athlete-readable source', async () => {
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
-    const details = await screen.findByTestId('program-details');
+    const source = await screen.findByRole('button', { name: 'От тренера Активная' });
+    expect(screen.queryByTestId('program-details')).toBeNull();
+    fireEvent.click(source);
+    const details = screen.getByTestId('program-details');
+    expect(details.getAttribute('data-selection')).toBe('true');
     expect(state.readable).toHaveBeenCalledOnce();
     expect(state.authorable).not.toHaveBeenCalled();
     expect(details.getAttribute('data-plan')).toBe('assigned');
@@ -66,15 +72,18 @@ describe('calendar program source permissions', () => {
     state.readable.mockResolvedValue([{ ...assigned, status: 'finished' }]);
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'От тренера' }));
+    expect(await screen.findByText('Только просмотр: для планирования тренер должен активировать программу и фазу.')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'От тренера Завершена' }));
     expect(screen.getByTestId('program-details').getAttribute('data-readonly')).toBe('true');
   });
 
-  it('keeps a client personal program editable', async () => {
+  it('separates personal source authorization from selection mode', async () => {
     state.readable.mockResolvedValue([personal]);
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
-    expect((await screen.findByTestId('program-details')).getAttribute('data-readonly')).toBe('false');
+    fireEvent.click(await screen.findByRole('button', { name: 'Личная Активная' }));
+    expect(screen.getByTestId('program-details').getAttribute('data-readonly')).toBe('false');
+    expect(screen.getByTestId('program-details').getAttribute('data-selection')).toBe('true');
   });
 
   it('keeps coach source selection within the selected authoring scope', async () => {
@@ -83,6 +92,31 @@ describe('calendar program source permissions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
     await waitFor(() => expect(state.authorable).toHaveBeenCalledWith('tg:202'));
     expect(state.readable).not.toHaveBeenCalled();
-    expect((await screen.findByTestId('program-details')).getAttribute('data-readonly')).toBe('false');
+    fireEvent.click(await screen.findByRole('button', { name: 'Личная Активная' }));
+    expect(screen.getByTestId('program-details').getAttribute('data-readonly')).toBe('false');
   });
+  it('uses the chosen client and returns from details to the source list', async () => {
+    state.authorable.mockResolvedValue([{ ...assigned, clientUserId: 'tg:303', athleteUserId: 'tg:303' }]);
+    open('coach');
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать Анну' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'От тренера Активная' }));
+    expect(state.authorable).toHaveBeenCalledWith('tg:303');
+    expect(screen.getByTestId('program-details').getAttribute('data-selection')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    expect(screen.queryByTestId('program-details')).toBeNull();
+    expect(screen.getByRole('button', { name: 'От тренера Активная' })).toBeTruthy();
+  });
+
+  it('labels every source program status', async () => {
+    state.readable.mockResolvedValue(['active', 'draft', 'finished', 'cancelled'].map(status => ({
+      ...personal, id: status, name: status, status,
+    })));
+    open();
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
+    for (const label of ['active Активная', 'draft Черновик', 'finished Завершена', 'cancelled Отменена'])
+      expect(await screen.findByRole('button', { name: label })).toBeTruthy();
+  });
+
 });
