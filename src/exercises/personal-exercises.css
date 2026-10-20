@@ -40,7 +40,7 @@
   justify-content: space-between;
   min-width: 0;
 }
-.mezfit-personal-exercise-picker__value-row > .ui-text {
+.mezfit-personal-exercise-picker__selected {
   min-width: 0;
   overflow-wrap: anywhere;
 }
