@@ -12,3 +12,12 @@
   gap: 12px;
 }
 .workout-planning-sheet__programs { display: flex; flex-direction: column; gap: 12px; }
+.workout-planning-sheet__owner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
