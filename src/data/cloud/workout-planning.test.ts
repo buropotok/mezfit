@@ -104,6 +104,19 @@ describe('quick workout planning', () => {
     expect((await client.programs.listForScheduling('tg:202'))).toEqual([]);
   });
 
+  it('lets a client read assigned sources without granting assigned program authoring', async () => {
+    await relationship();
+    const assignedId = await planner.programs.createAssigned('tg:202', 'От тренера');
+    await db.table('trainingPlans').update(assignedId, { status: 'active' });
+    const client = new WorkoutPlanningRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    const personalId = await client.programs.createPersonal('Личная');
+    expect((await client.programs.listForAthlete()).map(row => row.id)).toEqual(expect.arrayContaining([assignedId, personalId]));
+    expect((await client.programs.listForScheduling('tg:202')).map(row => row.id)).toEqual([personalId]);
+    await expect(client.programs.saveWorkoutAsDay('tg:202', {
+      programId: assignedId, phaseId: 'not-authorable', name: 'Попытка изменения',
+    }, { name: 'Тренировка', comment: null, exercises: [] })).rejects.toThrow('Недостаточно прав');
+  });
+
   it('rejects a foreign client without leaving a program or occurrence', async () => {
     await expect(planner.createBlank('tg:999', 'independent')).rejects.toThrow('Нет доступа');
     expect(await db.table('trainingPlans').count()).toBe(0);
