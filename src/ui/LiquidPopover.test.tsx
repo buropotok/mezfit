@@ -169,6 +169,21 @@ it('keeps the multi-selection menu open until Done while respecting selected sta
   expect(setOpen).toHaveBeenCalledWith(false);
 });
 
+it('announces multi-select commands as actions rather than checkboxes', async () => {
+  const triggerRef = createRef<HTMLButtonElement>();
+  const change = vi.fn();
+  render(<LiquidPopover isOpen selectionMode="multi"
+    trigger={<button ref={triggerRef}>Выбрать</button>} triggerRef={triggerRef}
+    onOpenChange={change} items={[
+      { id: 'clear', label: 'Очистить выбор', kind: 'action', onSelect: vi.fn() },
+      { id: 'chest', label: 'Грудь', active: true, onSelect: vi.fn() },
+    ]} />);
+  await act(async () => { vi.advanceTimersByTime(32); });
+  expect(screen.getByRole('menuitem', { name: 'Очистить выбор' })).toBeTruthy();
+  expect(screen.getByRole('menuitemcheckbox', { name: 'Грудь' })
+    .getAttribute('aria-checked')).toBe('true');
+});
+
 it('finishes opening and fully reverses the same animation on close', async () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
   vi.stubGlobal('CSS', { supports: () => true });
