@@ -37,7 +37,7 @@ describe('activation before scheduling', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Запланировать' }));
     expect(screen.getByRole('dialog', { name: 'Программа будет активирована.' })).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Планирование тренировки' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Программа будет активирована.' })).getByRole('button', { name: 'Отмена' }));
     expect(activate).not.toHaveBeenCalled();
   });
 
