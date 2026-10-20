@@ -91,11 +91,11 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
 }) {
   const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
   const primaryIds = new Set(primary);
-  const secondary = anatomyMuscleIds([...row.muscles.secondary, ...row.secondary_muscles, ...row.muscles.stabilizers])
+  const secondary = anatomyMuscleIds([...row.muscles.secondary, ...row.muscles.stabilizers])
     .filter((id) => !primaryIds.has(id));
   const sections: Array<[string, readonly string[]]> = [
     ['Основные мышцы', row.muscles.primary],
-    ['Вспомогательные мышцы', [...new Set([...row.muscles.secondary, ...row.secondary_muscles])]],
+    ['Вспомогательные мышцы', row.muscles.secondary],
     ['Стабилизаторы', row.muscles.stabilizers],
     ['Акцент', row.muscles.emphasis],
     ['Цели подвижности', row.mobility_targets],
