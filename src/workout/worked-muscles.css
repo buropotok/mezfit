@@ -78,13 +78,13 @@
   width: 100%;
 }
 
-/* Female figure proportions differ from the original male atlas. */
+/* Equalize visual heights using each atlas's native aspect ratio. */
 .worked-muscles__canvas--female-front {
-  width: 100%;
+  width: 88.9%;
 }
 
 .worked-muscles__canvas--female-rear {
-  width: 94%;
+  width: 100%;
 }
 
 .worked-muscles__tap-result {

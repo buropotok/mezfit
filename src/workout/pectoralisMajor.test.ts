@@ -16,36 +16,34 @@ describe('Pectoralis major catalogue-to-atlas contract', () => {
     expect(WORKED_MUSCLE_LABELS.pectoralis_major).toBe('Большая грудная мышца');
   });
 
-  it.each(['male', 'female'] as const)(
-    'reuses both sides of all three original %s front zones as six alias sprites',
-    (sex) => {
-      const width = getWorkedMuscleViewConfig(sex, 'front').width;
-      const center = Math.floor(width / 2);
-      const sprites: Record<string, AtlasSprite> = {};
-      PECTORALIS_MAJOR_PART_IDS.forEach((id, i) => {
-        sprites[String(i + 1)] = {
-          index: i + 1, id, label: id, category: 'Грудь',
-          atlasX: i * 120, atlasY: 0,
-          targetX: center - 50, targetY: i * 30, width: 100, height: 20,
-        };
-      });
+  it('reuses both sides of the three original male front zones as six virtual aliases', () => {
+  const sex = 'male' as const;
+  const width = getWorkedMuscleViewConfig(sex, 'front').width;
+  const center = Math.floor(width / 2);
+  const sprites: Record<string, AtlasSprite> = {};
+  PECTORALIS_MAJOR_PART_IDS.forEach((id, i) => {
+    sprites[String(i + 1)] = {
+      index: i + 1, id, label: id, category: 'Грудь',
+      atlasX: i * 120, atlasY: 0,
+      targetX: center - 50, targetY: i * 30, width: 100, height: 20,
+    };
+  });
 
-      const copies = createPectoralisMajorSprites(sprites, width);
-      expect(copies).toHaveLength(6);
-      for (let i = 0; i < 3; i += 1) {
-        const left = copies[i * 2];
-        const right = copies[i * 2 + 1];
-        const original = sprites[String(i + 1)];
-        expect([left.id, right.id]).toEqual(['pectoralis_major', 'pectoralis_major']);
-        expect([left.width, right.width]).toEqual([50, 50]);
-        expect([left.targetX, right.targetX]).toEqual([original.targetX, center]);
-        expect([left.atlasX, right.atlasX]).toEqual([original.atlasX, original.atlasX + 50]);
-        expect(left.index).toBe(original.index);
-        expect(right.index).toBe(original.index);
-        expect(original.id).toBe(PECTORALIS_MAJOR_PART_IDS[i]);
-      }
-    },
-  );
+  const copies = createPectoralisMajorSprites(sprites, width);
+  expect(copies).toHaveLength(6);
+  for (let i = 0; i < 3; i += 1) {
+    const left = copies[i * 2];
+    const right = copies[i * 2 + 1];
+    const original = sprites[String(i + 1)];
+    expect([left.id, right.id]).toEqual(['pectoralis_major', 'pectoralis_major']);
+    expect([left.width, right.width]).toEqual([50, 50]);
+    expect([left.targetX, right.targetX]).toEqual([original.targetX, center]);
+    expect([left.atlasX, right.atlasX]).toEqual([original.atlasX, original.atlasX + 50]);
+    expect(left.index).toBe(original.index);
+    expect(right.index).toBe(original.index);
+    expect(original.id).toBe(PECTORALIS_MAJOR_PART_IDS[i]);
+  }
+  });
 
   it('preserves source priority and visibility toggles for aggregate or individual selections', () => {
     const primary = new Set(['pectoralis_major']);

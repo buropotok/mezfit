@@ -15,18 +15,23 @@ function preparedMask(view: 'front' | 'rear', sex: 'female' | 'male'): ArrayBuff
   return buffer;
 }
 
-describe('female anatomy shifted native-resolution hit maps', () => {
-  it.each(['front', 'rear'] as const)('shifts %s pixel IDs to match the relocated muscle sprites', (view) => {
+describe('female anatomy native-resolution hit maps', () => {
+  it.each(['front', 'rear'] as const)('aligns %s pixel IDs with the current atlas geometry', (view) => {
     const raw = preparedMask(view, 'female');
     const { width, height } = getWorkedMuscleViewConfig('female', view);
     const shift = FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS[view];
     const pixels = decodeWorkedMuscleMask(raw, view, 'female');
 
     expect(pixels).toHaveLength(width * height);
-    expect(pixels[20 * width + 17]).toBe(0);
     expect(pixels[(20 + shift) * width + 17]).toBe(5);
-    expect(pixels[(height - 1) * width + 17]).toBe(0);
-    expect(pixels[shift * width - 1]).toBe(0);
+    if (shift > 0) {
+      expect(pixels[20 * width + 17]).toBe(0);
+      expect(pixels[(height - 1) * width + 17]).toBe(0);
+      expect(pixels[shift * width - 1]).toBe(0);
+    } else {
+      expect(pixels[20 * width + 17]).toBe(5);
+      expect(pixels[(height - 1) * width + 17]).toBe(13);
+    }
   });
 
   it.each(['front', 'rear'] as const)('leaves male %s pixel IDs at their original coordinates', (view) => {

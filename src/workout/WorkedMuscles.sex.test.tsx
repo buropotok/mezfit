@@ -54,12 +54,16 @@ describe('Female anatomy contracts', () => {
   });
 
   it('provides canonical muscle IDs across both female projections', () => {
-    const union = new Set([
+    const union = new Set<string>([
       ...Object.values(FEMALE_WORKED_MUSCLE_VIEWS.front.indices),
       ...Object.values(FEMALE_WORKED_MUSCLE_VIEWS.rear.indices),
     ]);
-    expect(union).toEqual(new Set(WORKED_MUSCLES.map((m) => m.id)));
-    expect(getWorkedMuscleViewConfig('female', 'front').width).toBe(1229);
+    const canonical = new Set<string>(WORKED_MUSCLES.map((m) => m.id));
+    // Full replacement with the approved 3/4 art no longer shows two deep areas.
+    expect([...union].filter((id) => id !== 'pectoralis_major').every((id) => canonical.has(id))).toBe(true);
+    expect([...canonical].filter((id) => !union.has(id)).sort()).toEqual(['brachialis', 'iliopsoas']);
+    expect(union.has('pectoralis_major')).toBe(true);
+    expect(getWorkedMuscleViewConfig('female', 'front').width).toBe(1024);
     expect(getWorkedMuscleViewConfig('female', 'rear').height).toBe(1448);
   });
 
@@ -72,11 +76,11 @@ describe('Female anatomy contracts', () => {
       atlasX: 5, atlasY: 10, targetX: 15, targetY: 30, width: 20, height: 40,
     };
     const manifest = {
-      view: 'front', width: 1229, height: 1536, tonePercent: null,
+      view: 'front', width: 1024, height: 1536, tonePercent: null,
       sprites: { '1': sprite },
     };
     expect(parseWorkedMuscleAtlasManifest(manifest, 'front', 100, 100, 'female')['1'].id).toBe(sprite.id);
-    expect(() => parseWorkedMuscleAtlasManifest({ ...manifest, width: 1024 }, 'front', 100, 100, 'female')).toThrow();
+    expect(() => parseWorkedMuscleAtlasManifest({ ...manifest, width: 1229 }, 'front', 100, 100, 'female')).toThrow();
     expect(() => parseWorkedMuscleAtlasManifest({
       ...manifest, sprites: { '1': { ...sprite, id: 'unknown' } },
     }, 'front', 100, 100, 'female')).toThrow();

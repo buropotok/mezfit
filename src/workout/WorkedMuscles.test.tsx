@@ -11,7 +11,7 @@ describe('WorkedMuscles presentation contract', () => {
       />,
     );
 
-    expect(html).toContain('Вид спереди');
+    expect(html).toContain('Вид 3/4 спереди');
     expect(html).toContain('Вид сзади');
     expect(html).toContain('Основные');
     expect(html).toContain('Вспомогательные');
