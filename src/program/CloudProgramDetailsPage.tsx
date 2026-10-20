@@ -423,6 +423,7 @@ export function CloudProgramDetailsPage({
         title="Добавить день" onClose={() => setDayCreatePhaseId(null)}
         onSave={async (value) => { await repository.createDay(planId, dayCreatePhaseId, value.name, value.category); }} /> : null}
       <MezfitDialog opened={editNoticeOpen} title="Планирование тренировки"
+        role="dialog" aria-modal="true" aria-label="Планирование тренировки" aria-hidden={!editNoticeOpen}
         content="Изменение планируемой тренировки будет возможно после нажатия кнопки «Запланировать»."
         onBackdropClick={() => setEditNoticeOpen(false)}
         buttons={<MezfitDialogButton onClick={() => setEditNoticeOpen(false)}>Закрыть</MezfitDialogButton>} />
