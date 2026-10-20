@@ -35,17 +35,22 @@ vi.mock('../ui', () => ({
   TextArea: ({ label, value, onChange }: {
     label: string; value: string; onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   }) => <textarea aria-label={label} value={value} onChange={onChange} />,
-  Dropdown: ({ mode, triggerProps, value, options, onChange }: {
-    mode: 'single' | 'multi'; triggerProps?: { 'aria-label'?: string };
-    value: string | null | string[]; options: { value: string; label: string }[];
-    onChange: (value: string | string[]) => void;
-  }) => <select aria-label={triggerProps?.['aria-label']}
-    multiple={mode === 'multi'}
-    value={mode === 'multi' ? value as string[] : value as string ?? ''}
-    onChange={event => mode === 'multi'
-      ? onChange(Array.from(event.currentTarget.selectedOptions).map(option => option.value))
-      : onChange(event.currentTarget.value)}>
-    {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+}));
+vi.mock('./ExerciseAttributePicker', () => ({
+  SingleExerciseAttributePicker: ({ label, value, options, onChange }: {
+    label: string; value: string | undefined;
+    options: { id: string; label: string }[]; onChange: (value: string) => void;
+  }) => <select aria-label={label} value={value ?? ''}
+    onChange={event => onChange(event.currentTarget.value)}>
+    <option value="">Не указано</option>
+    {options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+  </select>,
+  MultiExerciseAttributePicker: ({ label, value, options, onChange }: {
+    label: string; value: string[];
+    options: { id: string; label: string }[]; onChange: (value: string[]) => void;
+  }) => <select aria-label={label} multiple value={value}
+    onChange={event => onChange(Array.from(event.currentTarget.selectedOptions).map(option => option.value))}>
+    {options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
   </select>,
 }));
 const customId = 'custom:11111111-1111-4111-8111-111111111111';
