@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import type { FilterOption } from '../data/exercises/publicExerciseFilters';
-import { GlassSurface, LiquidPopover, Text } from '../ui';
+import { GlassSurface, LiquidPopover, Text, type LiquidPopoverItem } from '../ui';
 
 type BaseProps = {
   label: string;
@@ -18,7 +18,7 @@ function AttributePicker({ label, selected, options, disabled = false, multiple,
   const [open, setOpen] = useState(false);
   const settings = loadBrowserGlassSettings();
   const current = selected.map(id => options.find(option => option.id === id)?.label ?? 'Без названия');
-  const items = [
+  const items: LiquidPopoverItem[] = [
     ...(!multiple ? [{ id: '', label: 'Не указано' }] : []),
     ...options,
   ].map(option => ({
@@ -33,7 +33,7 @@ function AttributePicker({ label, selected, options, disabled = false, multiple,
     id: '__exercise-clear-selection__',
     label: 'Очистить выбор',
     active: false,
-    kind: 'action' as const,
+    kind: 'action',
     onSelect: () => onSelect([]),
   });
 
