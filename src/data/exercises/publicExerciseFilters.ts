@@ -18,12 +18,14 @@ export const FILTER_GROUPS: ReadonlyArray<{ id: FilterGroup; label: string }> = 
   { id: 'category', label: 'Категория' },
   { id: 'equipment', label: 'Оборудование' },
   { id: 'movement_type', label: 'Тип движения' },
-  { id: 'muscle', label: 'Мышцы' },
+  { id: 'primary', label: 'Основные мышцы' },
+  { id: 'secondary', label: 'Вспомогательные мышцы' },
+  { id: 'stabilizers', label: 'Стабилизаторы' },
+  { id: 'emphasis', label: 'Акцент' },
 ];
 const ALL_GROUPS: readonly FilterGroup[] = [
   ...FILTER_GROUPS.map(({ id }) => id),
-  'subcategory', 'all_muscles', 'primary', 'secondary', 'stabilizers',
-  'emphasis', 'mobility_targets', 'zone',
+  'subcategory', 'all_muscles', 'mobility_targets', 'zone',
 ];
 
 export const EQUIPMENT_LABELS: Readonly<Record<string, string>> = {
@@ -96,8 +98,8 @@ function muscleIds(row: CatalogueExerciseRow, group: FilterGroup, zones: Readonl
     ];
     case 'muscle': return [
       ...row.muscles.primary, ...row.muscles.secondary, ...row.muscles.stabilizers,
-      ...row.muscles.emphasis, ...row.mobility_targets, ...row.secondary_muscles,
-    ].filter(id => !zones.has(id));
+      ...row.muscles.emphasis, ...row.mobility_targets,
+    ];
     case 'zone': return [
       ...row.muscles.primary, ...row.muscles.secondary,
       ...row.muscles.stabilizers, ...row.muscles.emphasis,
@@ -186,7 +188,7 @@ export function editorFieldOptions(
 ): FilterOption[] {
   if (group === 'category') return filterOptions('category', exercises, taxonomy, {});
   if (group === 'muscle') {
-    const used = new Set([...taxonomy.filter(node => node.kind !== 'zone').map(node => node.id), ...current]);
+    const used = new Set([...taxonomy.map(node => node.id), ...current]);
     return [...used].map(id => ({ id, label: exerciseMuscleLabel(id, taxonomy) }))
       .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   }
@@ -198,7 +200,7 @@ export function editorFieldOptions(
   // Duplicate source aliases may share one Russian label. Prefer a currently
   // selected legacy ID so the editor keeps displaying the exact stored value.
   const seen = new Set<string>();
-  return [...ids].sort((a, b) => Number(current.includes(b)) - Number(current.includes(a)))
+  return [...ids].sort((a, b) => a.localeCompare(b))
     .map(id => ({ id, label: exerciseValueLabel(group, id) }))
     .filter(option => {
       if (seen.has(option.label)) return false;
