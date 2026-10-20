@@ -48,6 +48,8 @@ type NavigationFloatingActionBase = {
   placement?: 'left' | 'right';
   disabled?: boolean;
   isShown?: boolean;
+  /** Reports the popover's full presentation, including its closing animation. */
+  onPresentationChange?: (presented: boolean) => void;
 };
 
 export type NavigationFloatingAction = NavigationFloatingActionBase & (
@@ -221,6 +223,7 @@ function NavigationFloatingActionPopover({ action, glassPreset, glassOptics }: {
     <LiquidPopover
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      onPresentationChange={action.onPresentationChange}
       triggerActivation="controlled"
       triggerRef={triggerRef}
       label={action.label}
