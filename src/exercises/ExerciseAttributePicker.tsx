@@ -43,7 +43,7 @@ function AttributePicker({ label, selected, options, disabled = false, multiple,
       <LiquidPopover
         isOpen={open} onOpenChange={setOpen} triggerRef={triggerRef}
         label={label} selectionMode={multiple ? 'multi' : 'single'}
-        preset={settings.preset} optics={settings.optics}
+        preset={settings.preset} optics={settings.optics} blur={settings.blur}
         items={items}
         trigger={<GlassSurface component="button" ref={triggerRef}
           shape="capsule" blur={0} optics={false}
