@@ -4,10 +4,12 @@ import type { NavigationContext } from '../NavigationShell';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
+import { planAuthorUserId } from '../data/cloud/program-ownership';
+import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { ProgramClientPicker } from '../program/ProgramClientPicker';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
-import { Badge, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { Avatar, Badge, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { SpotlightSurface } from '../ui/SpotlightHint';
 import './workout-planning.css';
 
@@ -79,6 +81,18 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
     setPrograms(rows);
     setPlanId(null); setStep('programs');
   });
+  const programOwner = (plan: CloudTrainingPlanRow) => {
+    const ownerId = planAuthorUserId(plan);
+    const self = ownerId === cloud?.actorUserId;
+    const contact = [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])]
+      .find(person => person.userId === ownerId && person.relationshipId === plan.realmId);
+    const name = self ? actor?.name || 'Вы' : contact?.displayName || 'Автор программы';
+    return <div className="workout-planning-sheet__owner" aria-label={`Владелец: ${name}`}>
+      {contact ? <CloudContactAvatar contact={contact} />
+        : <Avatar name={name} src={self ? actor?.photoUrl ?? undefined : undefined} />}
+      <Text variant="caption">{name}</Text>
+    </div>;
+  };
   const isDialog = intent === 'workout' && ['athlete', 'source', 'format'].includes(step);
   const sheetOpen = intent === 'event' || (intent === 'workout' && (step === 'programs' || step === 'details'));
   return <>
@@ -121,7 +135,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
             onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync} onNavigationContextChange={setNestedNavigation} /> : null}
           {step === 'programs' ? <>
             <Text variant="headline">Выбрать программу</Text>
-            <KonstaList nested>{programs.map(plan => <KonstaListItem key={plan.id} link title={plan.name}
+            <KonstaList nested>{programs.map(plan => <KonstaListItem key={plan.id} link title={plan.name} media={programOwner(plan)}
               subtitle={role === 'client' && plan.coachUserId && plan.status !== 'active'
                 ? 'Только просмотр: для планирования тренер должен активировать программу и фазу.' : undefined}
               after={<Badge color={plan.status === 'active' ? 'green' : plan.status === 'finished' ? 'blue' : plan.status === 'cancelled' ? 'red' : 'gray'}>
