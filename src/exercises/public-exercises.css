@@ -116,3 +116,9 @@
   flex-wrap: wrap;
   gap: var(--space-1);
 }
+
+.mezfit-public-exercises__detail-metadata {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
