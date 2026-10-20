@@ -32,13 +32,14 @@ vi.mock('../ui', async original => {
 });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
-function setup(readOnly = false) {
+function setup(readOnly = false, programStatus: 'active' | 'finished' = 'active',
+  phaseStatus: 'active' | 'pending' | 'draft' = readOnly ? 'active' : 'draft', hasDays = true) {
   const details: ProgramDetails = {
     program: { id: 'plan', realmId: 'tg:101', owner: 'tg:101', athleteUserId: 'tg:101',
-      coachUserId: null, clientUserId: null, name: 'Программа', position: 0, status: 'active',
+      coachUserId: null, clientUserId: null, name: 'Программа', position: 0, status: programStatus,
       startedAt: null, finishedAt: null, createdAt: '', updatedAt: '' },
     phases: [{ id: 'phase', realmId: 'tg:101', owner: 'tg:101', trainingPlanId: 'plan',
-      name: 'Фаза', position: 0, status: readOnly ? 'active' : 'draft', plannedStartDate: null, plannedEndDate: null }],
+      name: 'Фаза', position: 0, status: phaseStatus, plannedStartDate: null, plannedEndDate: null }],
     days: [{ day: { id: 'day', realmId: 'tg:101', owner: 'tg:101', programPhaseId: 'phase',
       name: 'День А', position: 0, status: 'active' },
       exercises: [{ exercise: { id: 'exercise', realmId: 'tg:101', owner: 'tg:101', programDayId: 'day',
@@ -47,6 +48,7 @@ function setup(readOnly = false) {
         sets: [{ id: 'set', realmId: 'tg:101', owner: 'tg:101', programExerciseId: 'exercise', position: 0,
           status: 'active', plannedReps: null, plannedWeightKg: null, plannedDurationSeconds: null, plannedDistanceMeters: null }] }] }],
   };
+  if (!hasDays) details.days = [];
   const observe = vi.fn((_id: string, next: (value: ProgramDetails) => void) => {
     next(details); return { unsubscribe: vi.fn() };
   });
@@ -111,4 +113,26 @@ describe('program source selection', () => {
       if (key !== 'observeDetails' && key !== 'observeAthleteDetails' && typeof method === 'function')
         expect(method, key).not.toHaveBeenCalled();
   });
+  it.each([
+    ['finished', 'active', true, 'Эта программа доступна только для просмотра.'],
+    ['active', 'pending', true, 'В программе нет активной доступной фазы.'],
+    ['active', 'active', false, 'В активной фазе пока нет доступных дней для планирования.'],
+  ] as const)('explains an unavailable assigned source (%s, %s, days=%s)', async (programStatus, phaseStatus, hasDays, message) => {
+    const repository = setup(true, programStatus, phaseStatus, hasDays);
+    const reason = await screen.findByRole('status');
+    expect(reason.textContent).toContain(message);
+    expect(screen.queryByLabelText('Подсказка')).toBeNull();
+    for (const button of screen.queryAllByRole<HTMLButtonElement>('button', { name: 'Запланировать' }))
+      expect(button.disabled).toBe(true);
+    expect(repository.activate).not.toHaveBeenCalled();
+  });
+
+  it('does not prevent an author from using the existing activation flow', async () => {
+    setup(false, 'finished', 'pending');
+    await screen.findByRole('article', { name: 'День День А' });
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getAllByRole<HTMLButtonElement>('button', { name: 'Запланировать' })
+      .some(button => !button.disabled)).toBe(true);
+  });
+
 });
