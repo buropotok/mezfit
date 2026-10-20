@@ -4,7 +4,7 @@ import type { PublicExercise } from './publicExerciseTypes';
 export function blankPersonalExercise(category: string | null): Omit<PublicExercise, 'id'> {
   return {
     name: '', name_ru: '', name_en: '', category: category ?? '',
-    subcategory: '', subcategory_ru: '', movement_type: 'resistance',
+    subcategory: '', subcategory_ru: '', movement_type: '',
     muscles: { primary: [], secondary: [], stabilizers: [], emphasis: [] },
     mobility_targets: [], equipment: '', body_part: '', target: '', muscle_group: '',
     secondary_muscles: [], media_id: '', image: '', gif_url: '', attribution: '',
