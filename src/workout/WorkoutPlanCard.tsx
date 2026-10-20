@@ -4,7 +4,7 @@ import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-ty
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { SessionExercise } from './SessionExercise';
-import { SpotlightTarget, useSpotlightHintPause } from '../ui/SpotlightHint';
+import { SpotlightTarget } from '../ui/SpotlightHint';
 
 export interface WorkoutPlanCardProps {
   mode: 'planning';
@@ -57,7 +57,6 @@ export function WorkoutPlanCard({
   const mutate = (action?: () => void) => { if (onMutationAttempt) onMutationAttempt(); else action?.(); };
   const [menuOpen, setMenuOpen] = useState(false);
   const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
-  useSpotlightHintPause(menuOpen || schedulePopoverOpen);
   const scheduleTriggerRef = useRef<HTMLElement>(null);
   const [afterMenu, setAfterMenu] = useState<(() => void) | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
