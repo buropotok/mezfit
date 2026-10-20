@@ -39,7 +39,9 @@ function AttributePicker({ label, selected, options, disabled = false, multiple,
   return <div className="mezfit-personal-exercise-picker">
     <Text variant="footnote" tone="muted">{label}</Text>
     <div className="mezfit-personal-exercise-picker__value-row">
-      <Text variant="body">{current.length ? current.join(', ') : 'Не указано'}</Text>
+      <div className="mezfit-personal-exercise-picker__selected">
+        <Text variant="body">{current.length ? current.join(', ') : 'Не указано'}</Text>
+      </div>
       <LiquidPopover
         isOpen={open} onOpenChange={setOpen} triggerRef={triggerRef}
         label={label} selectionMode={multiple ? 'multi' : 'single'}
