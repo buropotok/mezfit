@@ -1,4 +1,4 @@
-import type { PublicTaxonomyRow, ExerciseTrackingType } from './publicExerciseTypes';
+import { isExerciseTrackingType, type PublicTaxonomyRow, type ExerciseTrackingType } from './publicExerciseTypes';
 import type { CatalogueExerciseRow } from './coachExerciseTypes';
 
 export const PUBLIC_EXERCISE_CATEGORIES = [
@@ -73,7 +73,7 @@ export function exerciseValueLabel(
   if (group === 'category') return CATEGORY_LABELS[id] ?? 'Другая категория';
   if (group === 'equipment') return EQUIPMENT_LABELS[id] ?? 'Другое оборудование';
   if (group === 'movement_type') return MOVEMENT_LABELS[id] ?? 'Другой тип движения';
-  return TRACKING_TYPE_LABELS[id as ExerciseTrackingType] ?? 'Другой тип учёта';
+  return isExerciseTrackingType(id) ? TRACKING_TYPE_LABELS[id] : 'Другой тип учёта';
 }
 
 export function exerciseMuscleLabel(id: string, taxonomy: readonly PublicTaxonomyRow[]): string {
@@ -195,6 +195,15 @@ export function editorFieldOptions(
     ...Object.keys(group === 'equipment' ? EQUIPMENT_LABELS : MOVEMENT_LABELS),
     ...current,
   ].filter(Boolean));
-  return [...ids].map(id => ({ id, label: exerciseValueLabel(group, id) }))
+  // Duplicate source aliases may share one Russian label. Prefer a currently
+  // selected legacy ID so the editor keeps displaying the exact stored value.
+  const seen = new Set<string>();
+  return [...ids].sort((a, b) => Number(current.includes(b)) - Number(current.includes(a)))
+    .map(id => ({ id, label: exerciseValueLabel(group, id) }))
+    .filter(option => {
+      if (seen.has(option.label)) return false;
+      seen.add(option.label);
+      return true;
+    })
     .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
 }
