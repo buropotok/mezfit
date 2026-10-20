@@ -59,7 +59,7 @@ type PublishedSnapshot = Extract<PublicExerciseSnapshot, { status: 'ready' }>;
 
 function uniqueMuscles(ids: readonly string[], taxonomy: readonly PublicTaxonomyRow[]): string {
   const labels = new Map(taxonomy.map((node) => [node.id, node.subcategory_ru]));
-  return [...new Set(ids)].map((id) => labels.get(id) ?? id).join(', ') || 'Не указано';
+  return [...new Set(ids)].map((id) => labels.get(id) ?? 'Анатомическая структура').join(', ') || 'Не указано';
 }
 
 /** Atlas zone IDs are canonical taxonomy IDs; never infer matches from display labels. */
@@ -91,11 +91,11 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
 }) {
   const primary = anatomyMuscleIds([...row.muscles.primary, ...row.muscles.emphasis]);
   const primaryIds = new Set(primary);
-  const secondary = anatomyMuscleIds([...row.muscles.secondary, ...row.muscles.stabilizers])
+  const secondary = anatomyMuscleIds([...row.muscles.secondary, ...row.secondary_muscles, ...row.muscles.stabilizers])
     .filter((id) => !primaryIds.has(id));
   const sections: Array<[string, readonly string[]]> = [
     ['Основные мышцы', row.muscles.primary],
-    ['Вспомогательные мышцы', row.muscles.secondary],
+    ['Вспомогательные мышцы', [...new Set([...row.muscles.secondary, ...row.secondary_muscles])]],
     ['Стабилизаторы', row.muscles.stabilizers],
     ['Акцент', row.muscles.emphasis],
     ['Цели подвижности', row.mobility_targets],
