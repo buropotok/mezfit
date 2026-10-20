@@ -3,7 +3,7 @@ import type { PublicExercise } from './publicExerciseTypes';
 /** In-memory exercise draft. It never creates a record until explicit Save. */
 export function blankPersonalExercise(category: string | null): Omit<PublicExercise, 'id'> {
   return {
-    name: '', name_ru: '', name_en: '', category: category ?? 'other',
+    name: '', name_ru: '', name_en: '', category: category ?? '',
     subcategory: '', subcategory_ru: '', movement_type: 'resistance',
     muscles: { primary: [], secondary: [], stabilizers: [], emphasis: [] },
     mobility_targets: [], equipment: '', body_part: '', target: '', muscle_group: '',
