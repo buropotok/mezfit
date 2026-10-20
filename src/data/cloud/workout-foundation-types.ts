@@ -127,7 +127,10 @@ export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'>
   /** Null only for personal programs; assigned records always identify the client. */
   clientUserId: string | null;
   athleteUserId: string;
-  programDayId: string;
+  /** Absent for a workout authored outside a program. */
+  programDayId?: string;
+  /** Immutable provenance: first publication also fills the automatically created day. */
+  autoCreatedProgram?: boolean;
   workoutSessionId: string | null;
   /** The scheduling contract requires an explicit workout format. */
   format: 'independent' | 'coached';
