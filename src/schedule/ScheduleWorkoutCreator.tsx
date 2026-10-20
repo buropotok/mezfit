@@ -69,7 +69,10 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
   });
   const fromProgram = () => run(async token => {
     if (!planner) return;
-    const rows = await planner.programs.listForScheduling(athlete);
+    // Source selection includes coach assignments; export targets stay authorable-only.
+    const rows = role === 'client'
+      ? await planner.programs.listForAthlete()
+      : await planner.programs.listForScheduling(athlete);
     if (token !== generation.current) return;
     setPrograms(rows);
     const active = rows.find(row => row.status === 'active');
@@ -111,6 +114,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {step === 'details' && planId && planner && cloud ? <CloudProgramDetailsPage key={planId}
             repository={planner.programs} planId={planId} viewerRole={role} actor={actor}
+            readOnly={role === 'client' && Boolean(programs.find(plan => plan.id === planId)?.coachUserId)}
             cloudStatus={cloud.status} cloudError={cloud.error} syncStatus={cloud.syncStatus} syncError={cloud.syncError}
             onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync} onNavigationContextChange={setNestedNavigation} /> : null}
           {step === 'programs' ? <>
