@@ -62,6 +62,7 @@ type LiquidPresentationSnapshot = {
   label: string;
   preset: GlassPresetName;
   optics: boolean;
+  blur?: number;
   options: LiquidMotionOptions;
 };
 
@@ -100,6 +101,7 @@ export interface LiquidPopoverProps {
   label?: string;
   preset?: GlassPresetName;
   optics?: boolean;
+  blur?: number;
   layout?: LiquidPopoverLayout;
   columns?: number;
   role?: LiquidPopoverRole;
@@ -249,6 +251,7 @@ export function LiquidPopover({
   triggerActivation = 'automatic',
   preset = 'frosted',
   optics = false,
+  blur,
   layout: requestedLayout = 'menu',
   columns = 4,
   role: requestedRole,
@@ -309,9 +312,10 @@ export function LiquidPopover({
       label,
       preset,
       optics,
+      blur,
       options,
     }),
-    [items, text, label, layout, optics, options, preset, resolvedColumns, role],
+    [items, text, label, layout, optics, blur, options, preset, resolvedColumns, role],
   );
   const presentationRef = useRef<LiquidPresentationSnapshot>(currentPresentation),
     useCurrentPresentation = !presented || (isOpen && settled),
@@ -347,6 +351,7 @@ export function LiquidPopover({
     presentation.columns,
     presentation.preset,
     presentation.optics,
+    presentation.blur,
     presentation.options,
     resolvedRenderMode,
     presentation.items.map((item) => [
@@ -823,6 +828,7 @@ export function LiquidPopover({
           ref={glassRef}
           preset={presentation.preset}
           optics={presentation.optics}
+          blur={presentation.blur}
           className="ui-liquid-popover__glass"
           aria-hidden="true"
         />
