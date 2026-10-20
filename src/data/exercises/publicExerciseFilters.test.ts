@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { filterPublicExercises, filterOptions, type SelectedFilters } from './publicExerciseFilters';
+import {
+  filterPublicExercises, filterOptions, facetedFilterOptions, editorFieldOptions,
+  exerciseValueLabel, FILTER_GROUPS, type SelectedFilters,
+} from './publicExerciseFilters';
 import type { PublicExerciseRow, PublicTaxonomyRow } from './publicExerciseTypes';
 
 const base: PublicExerciseRow = {
@@ -57,5 +60,65 @@ describe('read-only public exercise filters', () => {
   it('exposes only populated filter options', () => {
     expect(filterOptions('primary', exercises, taxonomy, {}).map((option) => option.id))
       .toEqual(expect.arrayContaining(['pectoralis_major', 'pectoralis_minor', 'latissimus']));
+  });
+});
+
+describe('connected facets and independent editor vocabulary', () => {
+  const labels = { upper_chest: 'Верх груди' };
+  const facet = (group: Parameters<typeof facetedFilterOptions>[0], filters: SelectedFilters = {}) =>
+    facetedFilterOptions(group, exercises, taxonomy, labels, filters).map(option => option.id);
+
+  it('keeps only four meaningful filter groups', () => {
+    expect(FILTER_GROUPS.map(item => item.id)).toEqual([
+      'category', 'equipment', 'movement_type', 'muscle',
+    ]);
+  });
+
+  it('limits muscle choices to exercises connected to selected categories', () => {
+    expect(facet('muscle', { category: ['chest'] })).toEqual(expect.arrayContaining([
+      'pectoralis_major', 'pectoralis_minor', 'triceps', 'serratus',
+    ]));
+    expect(facet('muscle', { category: ['chest'] })).not.toContain('latissimus');
+    expect(facet('muscle', { category: ['back'] })).toContain('latissimus');
+  });
+
+  it('intersects other filter groups and search terms without applying a group to itself', () => {
+    expect(facet('muscle', { category: ['chest'], equipment: ['dumbbell'] })).toEqual([
+      'pectoralis_minor',
+    ]);
+    expect(facet('equipment', { category: ['chest'], muscle: ['pectoralis_minor'] })).toEqual([
+      'dumbbell',
+    ]);
+    expect(facet('category', { equipment: ['dumbbell'] })).toEqual(['chest']);
+    expect(facetedFilterOptions('equipment', exercises, taxonomy, labels,
+      { category: ['chest'] }, 'разведение').map(option => option.id)).toEqual(['dumbbell']);
+  });
+
+  it('ORs multiple muscles in one facet while retaining AND against equipment', () => {
+    expect(run({ muscle: ['pectoralis_major', 'latissimus'] })).toEqual(['0001', '0003']);
+    expect(run({ muscle: ['pectoralis_major', 'latissimus'], equipment: ['dumbbell'] })).toEqual([]);
+    expect(facet('muscle', { category: ['chest'], muscle: ['pectoralis_major'] }))
+      .toContain('pectoralis_minor');
+  });
+
+  it('honors user-authored combinations through real exercise links', () => {
+    const custom = {
+      ...base, id: 'custom:new', category: 'chest', muscles: {
+        primary: ['latissimus'], secondary: [], stabilizers: [], emphasis: [],
+      },
+    };
+    expect(facetedFilterOptions('muscle', [...exercises, custom], taxonomy, labels,
+      { category: ['chest'] }).map(option => option.id)).toContain('latissimus');
+  });
+
+  it('never applies facets to editor options and always returns Russian labels', () => {
+    const editor = editorFieldOptions('muscle', exercises, taxonomy);
+    expect(editor.map(option => option.id)).toContain('latissimus');
+    expect(editorFieldOptions('equipment', exercises, taxonomy).find(option => option.id === 'barbell')?.label)
+      .toBe('Штанга');
+    expect(exerciseValueLabel('movement_type', 'resistance')).toBe('Силовые');
+    expect(exerciseValueLabel('equipment', 'dumbbell')).toBe('Гантели');
+    expect(editorFieldOptions('category', exercises, taxonomy).find(option => option.id === 'legs')?.label)
+      .toBe('Ноги');
   });
 });
