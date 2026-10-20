@@ -8,6 +8,7 @@ import type { ProgramActor } from '../program/ProgramSummary';
 import { ProgramClientPicker } from '../program/ProgramClientPicker';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { Badge, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { SpotlightSurface } from '../ui/SpotlightHint';
 import './workout-planning.css';
 
 type Step = 'athlete' | 'client' | 'source' | 'format' | 'programs' | 'details' | 'event';
@@ -28,6 +29,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [nestedNavigation, setNestedNavigation] = useState<NavigationContext | null>(null);
+  const planningSurfaceRef = useRef<HTMLDivElement>(null);
   const generation = useRef(0);
   const running = useRef(false);
   useEffect(() => {
@@ -104,6 +106,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       loading={cloud?.status === 'loading'} onClose={back}
       onSelect={client => { setAthlete(client.userId); setStep('source'); }} />
     <MezfitBottomSheet opened={sheetOpen} label={intent === 'event' ? 'Событие' : 'Выбрать программу'} lazyMount>
+      <SpotlightSurface ref={planningSurfaceRef}>
       <section className="workout-planning-sheet">
         <header className="workout-planning-sheet__header">
           <span />
@@ -112,7 +115,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
         {intent !== 'event' ? <>
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {step === 'details' && planId && planner && cloud ? <CloudProgramDetailsPage key={planId}
-            repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode
+            repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode planningSurfaceRef={planningSurfaceRef}
             readOnly={role === 'client' && Boolean(programs.find(plan => plan.id === planId)?.coachUserId)}
             cloudStatus={cloud.status} cloudError={cloud.error} syncStatus={cloud.syncStatus} syncError={cloud.syncError}
             onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync} onNavigationContextChange={setNestedNavigation} /> : null}
@@ -130,6 +133,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
           <KonstaButton tonal onClick={() => setStep('source')}>Создать с нуля</KonstaButton>
         </> : null}
       </section>
+      </SpotlightSurface>
     </MezfitBottomSheet>
   </>;
 }
