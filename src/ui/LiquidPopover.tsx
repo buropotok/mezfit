@@ -104,6 +104,9 @@ export interface LiquidPopoverProps {
   columns?: number;
   role?: LiquidPopoverRole;
   scrollActiveIntoView?: boolean;
+  /** Keep choices open until Done when selecting several values. */
+  selectionMode?: 'single' | 'multi';
+  doneLabel?: string;
   /** Reports whether the source surface must remain visually hidden. */
   onPresentationChange?: (presented: boolean) => void;
   motion?: Partial<LiquidMotionOptions>;
@@ -240,7 +243,7 @@ export function LiquidPopover({
   onOpenChange,
   trigger,
   triggerRef,
-  items = EMPTY_ITEMS,
+  items: sourceItems = EMPTY_ITEMS,
   text,
   label = text === undefined ? 'Меню' : 'Информация',
   triggerActivation = 'automatic',
@@ -250,10 +253,17 @@ export function LiquidPopover({
   columns = 4,
   role: requestedRole,
   scrollActiveIntoView = false,
+  selectionMode = 'single',
+  doneLabel = 'Готово',
   onPresentationChange,
   motion,
   renderMode = 'auto',
 }: LiquidPopoverProps) {
+  const doneItemId = '__liquid-popover-done__';
+  // The Done row shares item geometry and texture so animation stays in sync.
+  const items = useMemo(() => selectionMode === 'multi'
+    ? [...sourceItems, { id: doneItemId, label: doneLabel, dividerBefore: true }]
+    : sourceItems, [sourceItems, selectionMode, doneLabel]);
   const layout = text === undefined ? requestedLayout : 'text';
   const role = requestedRole ?? (layout === 'text' ? 'dialog' : 'menu');
   const id = useId().replace(/:/g, ''),
@@ -855,15 +865,22 @@ export function LiquidPopover({
                     else nativeRowRefs.current.delete(item.id);
                   }}
                   type="button"
-                  role={presentation.role === 'menu' ? 'menuitem' : undefined}
+                  role={presentation.role === 'menu'
+                    ? selectionMode === 'multi' && item.id !== doneItemId ? 'menuitemcheckbox' : 'menuitem'
+                    : undefined}
                   disabled={item.disabled}
                   data-disabled={item.disabled || undefined}
                   className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
                   onClick={() => {
-                    item.onSelect?.();
-                    onOpenChange(false);
+                    if (selectionMode === 'multi' && item.id === doneItemId) {
+                      onOpenChange(false);
+                    } else {
+                      item.onSelect?.();
+                      if (selectionMode !== 'multi') onOpenChange(false);
+                    }
                   }}
-                  aria-checked={item['aria-checked']}
+                  aria-checked={selectionMode === 'multi' && item.id !== doneItemId
+                    ? Boolean(item.active) : item['aria-checked']}
                   aria-current={item['aria-current']}
                 >
                   {item.icon && presentation.layout === 'menu' ? (
