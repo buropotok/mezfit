@@ -206,8 +206,8 @@ export function editorFieldOptions(
     ...Object.keys(group === 'equipment' ? EQUIPMENT_LABELS : MOVEMENT_LABELS),
     ...current,
   ].filter(Boolean));
-  // Duplicate source aliases may share one Russian label. Prefer a currently
-  // selected legacy ID so the editor keeps displaying the exact stored value.
+  // UI offers one deterministic representative for each translated label.
+  // Stored source IDs remain unchanged until the user explicitly selects a value.
   const seen = new Set<string>();
   return [...ids].sort((a, b) => a.localeCompare(b))
     .map(id => ({ id, label: exerciseValueLabel(group, id) }))
