@@ -1,6 +1,7 @@
 import type { NavigationContext } from '../NavigationShell';
 import { useEffect, useRef, useState } from 'react';
 import { Preloader } from 'konsta/react';
+import { useSpotlightHintPause } from '../ui/SpotlightHint';
 import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 
 /** Cancel dismisses presentation; the Addon continues its owned synchronization. */
@@ -10,6 +11,7 @@ export function ProgramSyncDialog({ opened, onClose, onSync, onNavigationContext
   onClose: () => void;
   onSync: () => Promise<void>;
 }) {
+  useSpotlightHintPause(opened);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const running = useRef(false), active = useRef(true), visible = useRef(opened);
