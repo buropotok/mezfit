@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
@@ -106,7 +106,7 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, viewerRole = 'coach', readOnly = false, selectionMode = false, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
+  repository, planId, viewerRole = 'coach', readOnly = false, selectionMode = false, planningSurfaceRef, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
 }: {
   repository: ProgramManagementRepository;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -115,6 +115,7 @@ export function CloudProgramDetailsPage({
   readOnly?: boolean;
   /** Pick a source day without editing the program. Authorization stays separate. */
   selectionMode?: boolean;
+  planningSurfaceRef?: RefObject<HTMLDivElement | null>;
   actor?: ProgramActor;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
@@ -163,8 +164,8 @@ export function CloudProgramDetailsPage({
   }, [repository, planId, retryKey, readOnly]);
 
   const run = useCallback(async (task: () => Promise<unknown>) => {
-    if (selectionMode) { explainSelection(); return; }
     if (busy || readOnly) return;
+    if (selectionMode) { explainSelection(); return; }
     setBusy(true);
     setError('');
     try { await task(); }
@@ -174,15 +175,16 @@ export function CloudProgramDetailsPage({
   }, [busy, readOnly, selectionMode, explainSelection]);
 
   const addPhase = useCallback(() => {
+    if (readOnly) return;
     if (selectionMode) { explainSelection(); return; }
     setPhaseName('');
     setPhaseNameRequired(false);
     setPhaseCreateError('');
     setPhaseCreateOpen(true);
-  }, [selectionMode, explainSelection]);
+  }, [readOnly, selectionMode, explainSelection]);
   const savePhase = async () => {
-    if (selectionMode) { explainSelection(); return; }
     if (readOnly || busy || phaseCreateBusy) return;
+    if (selectionMode) { explainSelection(); return; }
     const name = phaseName.trim();
     if (!name) {
       setPhaseNameRequired(true);
@@ -202,8 +204,8 @@ export function CloudProgramDetailsPage({
     }
   };
   const addDay = useCallback(() => {
-    if (selectionMode) { explainSelection(); return; }
     if (!details || readOnly || busy || phaseCreateBusy) return;
+    if (selectionMode) { explainSelection(); return; }
     if (details.phases.length === 1) setDayCreatePhaseId(details.phases[0].id);
     else if (details.phases.length > 1) setDialog({
       kind: 'select', title: 'Выберите фазу',
@@ -211,7 +213,7 @@ export function CloudProgramDetailsPage({
       onConfirm: async (phaseId) => { setDialog(null); setDayCreatePhaseId(phaseId); },
     });
   }, [details, readOnly, busy, phaseCreateBusy, selectionMode, explainSelection]);
-  const floatingAction = useMemo(() => details && (!readOnly || selectionMode) ? {
+  const floatingAction = useMemo(() => details && !readOnly ? {
     label: 'Добавить',
     onPresentationChange: setFabPresented,
     icon: 'plus' as const,
@@ -268,8 +270,8 @@ export function CloudProgramDetailsPage({
   };
 
   const action = (key: string, phase: CloudProgramPhaseRow) => {
+    if (!details || readOnly || busy) return;
     if (selectionMode) { explainSelection(); return; }
-    if (!details || busy) return;
     if (key === 'rename') {
       setDialog({
         kind: 'text', title: 'Переименовать фазу', initial: phase.name,
@@ -353,7 +355,7 @@ export function CloudProgramDetailsPage({
     : null;
   return (
     <SpotlightHint hintId="schedule.program.pick-day" version={1} userId={repository.actorUserId}
-      enabled={selectionMode} paused={Boolean(fabPresented || schedulingUnavailable || dialog || editNoticeOpen || phaseCreateOpen || dayCreatePhaseId)}
+      enabled={selectionMode} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || editNoticeOpen || phaseCreateOpen || dayCreatePhaseId)}
       text="Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.">
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
       {syncNotice}
@@ -377,7 +379,7 @@ export function CloudProgramDetailsPage({
       {schedulingUnavailable ? <Text variant="body" role="status">{schedulingUnavailable}</Text> : null}
       <Text variant="title">Фазы</Text>
       {details.phases.length ? details.phases.map((phase) => (
-        <PhaseHeading key={phase.id} phase={phase} disabled={busy} readOnly={readOnly && !selectionMode}
+        <PhaseHeading key={phase.id} phase={phase} disabled={busy} readOnly={readOnly}
           onAction={action}
           onPublish={(item) => { if (selectionMode) { explainSelection(); return; } setDialog({
             kind: 'confirm', title: 'Завершить заполнение фазы?',
@@ -401,7 +403,7 @@ export function CloudProgramDetailsPage({
                 description: 'После активации можно будет запланировать тренировку.',
                 onConfirm: () => requestActivation(target, onActivated, true) });
             }}
-            onMutationAttempt={selectionMode ? explainSelection : undefined}
+            onMutationAttempt={selectionMode && !readOnly ? explainSelection : undefined}
             phaseStatus={phase.status} days={(details.days ?? []).filter((item) => item.day.programPhaseId === phase.id)}
             collapsed={collapsed} bodyId={bodyId} viewerRole={viewerRole} onNavigationContextChange={onNavigationContextChange} readOnly={readOnly} actor={actor} /></> }
         </PhaseHeading>
