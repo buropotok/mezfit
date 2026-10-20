@@ -6,7 +6,7 @@ import {
   type WorkedMuscleSex, type WorkedMuscleView,
 } from './workedMuscleData';
 import {
-  loadWorkedMuscleAtlas, pickWorkedMuscleAt,
+  getPectoralisSourceSprite, loadWorkedMuscleAtlas, pickWorkedMuscleAt,
   type WorkedMuscleAtlas,
 } from './workedMuscleAtlas';
 import './worked-muscles.css';
@@ -121,7 +121,7 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
     }
     if (majorRole) {
       for (const sprite of atlas.pectoralisMajorSprites) {
-        const original = atlas.sprites[String(sprite.index)];
+        const original = getPectoralisSourceSprite(sprite, atlas.sprites);
         const originalRole = original ? roleFor(original.id) : null;
         const role = majorRole === 'primary' || originalRole === 'primary' ? 'primary' : 'secondary';
         visible.push({ sprite, role });
