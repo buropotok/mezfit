@@ -7,7 +7,7 @@ import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { ProgramClientPicker } from '../program/ProgramClientPicker';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
-import { MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { Badge, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import './workout-planning.css';
 
 type Step = 'athlete' | 'client' | 'source' | 'format' | 'programs' | 'details' | 'event';
@@ -75,8 +75,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       : await planner.programs.listForScheduling(athlete);
     if (token !== generation.current) return;
     setPrograms(rows);
-    const active = rows.find(row => row.status === 'active');
-    setPlanId(active?.id ?? null); setStep(active ? 'details' : 'programs');
+    setPlanId(null); setStep('programs');
   });
   const isDialog = intent === 'workout' && ['athlete', 'source', 'format'].includes(step);
   const sheetOpen = intent === 'event' || (intent === 'workout' && (step === 'programs' || step === 'details'));
@@ -113,13 +112,16 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
         {intent !== 'event' ? <>
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {step === 'details' && planId && planner && cloud ? <CloudProgramDetailsPage key={planId}
-            repository={planner.programs} planId={planId} viewerRole={role} actor={actor}
+            repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode
             readOnly={role === 'client' && Boolean(programs.find(plan => plan.id === planId)?.coachUserId)}
             cloudStatus={cloud.status} cloudError={cloud.error} syncStatus={cloud.syncStatus} syncError={cloud.syncError}
             onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync} onNavigationContextChange={setNestedNavigation} /> : null}
           {step === 'programs' ? <>
             <Text variant="headline">Выбрать программу</Text>
             <KonstaList nested>{programs.map(plan => <KonstaListItem key={plan.id} link title={plan.name}
+              after={<Badge color={plan.status === 'active' ? 'green' : plan.status === 'finished' ? 'blue' : plan.status === 'cancelled' ? 'red' : 'gray'}>
+                {plan.status === 'active' ? 'Активная' : plan.status === 'draft' ? 'Черновик' : plan.status === 'finished' ? 'Завершена' : 'Отменена'}
+              </Badge>}
               onClick={() => { setPlanId(plan.id); setStep('details'); }} />)}</KonstaList>
             {!programs.length ? <Text variant="body">У атлета пока нет программ</Text> : null}
           </> : null}
