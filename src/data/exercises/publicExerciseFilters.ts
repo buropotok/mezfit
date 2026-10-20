@@ -82,6 +82,13 @@ export function exerciseMuscleLabel(id: string, taxonomy: readonly PublicTaxonom
   return taxonomy.find(node => node.id === id)?.subcategory_ru || 'Анатомическая структура';
 }
 
+/** UI aliases share a label; filter selection covers every underlying source ID. */
+function matchesValue(group: 'category' | 'equipment' | 'movement_type', id: string, selected: ReadonlySet<string>): boolean {
+  if (selected.has(id)) return true;
+  const label = exerciseValueLabel(group, id);
+  return [...selected].some(value => exerciseValueLabel(group, value) === label);
+}
+
 export function normalizeExerciseSearch(value: string): string {
   return value.normalize('NFKC').toLocaleLowerCase('ru-RU').trim();
 }
@@ -129,7 +136,8 @@ export function filterPublicExercises(
     return selected.every(([group, values]) => {
       if (group === 'category' || group === 'subcategory'
         || group === 'equipment' || group === 'movement_type') {
-        return values.has(row[group]);
+        return group === 'subcategory' ? values.has(row[group])
+          : matchesValue(group, row[group], values);
       }
       return muscleIds(row, group, zones).some(id => values.has(id));
     });
@@ -158,6 +166,7 @@ export function filterOptions(
       label: group === 'subcategory' ? subcategoryLabels[id] ?? 'Подкатегория'
         : exerciseValueLabel(group, id),
     }))
+    .filter((option, index, all) => all.findIndex(other => other.label === option.label) === index)
     .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
 }
 
