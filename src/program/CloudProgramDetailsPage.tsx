@@ -356,7 +356,8 @@ export function CloudProgramDetailsPage({
   return (
     <SpotlightHint hintId="schedule.program.pick-day" version={1} userId={repository.actorUserId}
       enabled={selectionMode} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || editNoticeOpen || phaseCreateOpen || dayCreatePhaseId)}
-      text="Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.">
+      text={readOnly ? 'Нажмите «Запланировать» у нужного дня, чтобы выбрать дату и время.'
+        : 'Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.'}>
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
       {syncNotice}
       <div className="cloud-plan-title-row">
