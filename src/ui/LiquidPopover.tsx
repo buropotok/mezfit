@@ -45,6 +45,8 @@ export type LiquidPopoverItem = {
   disabled?: boolean;
   active?: boolean;
   dividerBefore?: boolean;
+  /** Action row, not a checkable choice in multi-selection mode. */
+  kind?: 'option' | 'action';
   'aria-checked'?: boolean;
   'aria-current'?: 'page' | 'date';
 };
@@ -877,7 +879,7 @@ export function LiquidPopover({
                   }}
                   type="button"
                   role={presentation.role === 'menu'
-                    ? selectionMode === 'multi' && item.id !== doneItemId ? 'menuitemcheckbox' : 'menuitem'
+                    ? selectionMode === 'multi' && item.id !== doneItemId && item.kind !== 'action' ? 'menuitemcheckbox' : 'menuitem'
                     : undefined}
                   disabled={item.disabled}
                   data-disabled={item.disabled || undefined}
@@ -890,7 +892,7 @@ export function LiquidPopover({
                       if (selectionMode !== 'multi') onOpenChange(false);
                     }
                   }}
-                  aria-checked={selectionMode === 'multi' && item.id !== doneItemId
+                  aria-checked={selectionMode === 'multi' && item.id !== doneItemId && item.kind !== 'action'
                     ? Boolean(item.active) : item['aria-checked']}
                   aria-current={item['aria-current']}
                 >
