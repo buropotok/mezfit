@@ -26,60 +26,7 @@ export type WorkedMuscleAtlas = {
   readonly neutral: HTMLImageElement;
   readonly colorAtlas: HTMLImageElement;
   readonly glowAtlas: HTMLImageElement;
-  readonly femaleLowerChest: HTMLCanvasElement | null;
 };
-
-/** Uploaded female chest artwork is cropped losslessly from native canvas coordinates. */
-export const FEMALE_LOWER_CHEST_ARTWORK = {
-  path: 'anatomy/female/front/pectoralis-lower-replacement.png',
-  index: 3,
-  x: 455,
-  y: 400,
-  width: 243,
-  height: 149,
-} as const;
-
-/**
- * Restrict replacement artwork to the same native pixel IDs as touch selection.
- * Other chest zones and background must never receive lower-chest highlighting.
- * Called once during the female-front atlas load, not on each React render.
- */
-export function clipMuscleArtworkToHitMask(
-  rgba: Uint8ClampedArray, imageWidth: number, imageHeight: number,
-  targetX: number, targetY: number,
-  hitMask: Uint8Array, canvasWidth: number, canvasHeight: number,
-  muscleIndex: number,
-): void {
-  if (rgba.length !== imageWidth * imageHeight * 4 || hitMask.length !== canvasWidth * canvasHeight) {
-    throw new Error('Размеры замещающего спрайта или маски не совпадают');
-  }
-  for (let row = 0; row < imageHeight; row += 1) {
-    const canvasY = targetY + row;
-    for (let column = 0; column < imageWidth; column += 1) {
-      const canvasX = targetX + column;
-      if (canvasX < 0 || canvasY < 0 || canvasX >= canvasWidth || canvasY >= canvasHeight
-        || hitMask[canvasY * canvasWidth + canvasX] !== muscleIndex) {
-        rgba[(row * imageWidth + column) * 4 + 3] = 0;
-      }
-    }
-  }
-}
-
-function prepareFemaleLowerChestSprite(
-  source: HTMLImageElement, mask: Uint8Array, canvasWidth: number, canvasHeight: number,
-): HTMLCanvasElement {
-  const { x, y, width, height, index } = FEMALE_LOWER_CHEST_ARTWORK;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context) throw new Error('Не удалось подготовить спрайт низа груди');
-  context.drawImage(source, 0, 0);
-  const pixels = context.getImageData(0, 0, width, height);
-  clipMuscleArtworkToHitMask(pixels.data, width, height, x, y, mask, canvasWidth, canvasHeight, index);
-  context.putImageData(pixels, 0, 0);
-  return canvas;
-}
 
 type HitRect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>;
 const cache = new Map<string, Promise<WorkedMuscleAtlas>>();
@@ -99,7 +46,7 @@ function nonnegativeInteger(value: unknown): value is number {
 function assetUrl(relativePath: string, view: WorkedMuscleView, sex: WorkedMuscleSex): string {
   const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
   const revision = sex === 'female'
-    ? (view === 'front' ? 'female-front-v4-lower-chest' : 'female-rear-v3-shifted')
+    ? (view === 'front' ? 'female-three-quarter-v1' : 'female-rear-v4')
     : (view === 'front' ? 'front84-mask3-atlas1' : 'rear59-atlas2-transparent');
   return new URL(base + relativePath + '?v=' + revision, window.location.origin).href;
 }
@@ -206,15 +153,12 @@ export function createPectoralisMajorSprites(
 
 async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex): Promise<WorkedMuscleAtlas> {
   const config = getWorkedMuscleViewConfig(sex, view);
-  const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas, lowerChestSource] = await Promise.all([
+  const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas] = await Promise.all([
     getStaticFile(assetUrl(config.manifest, view, sex)),
     getStaticFile(assetUrl(config.mask, view, sex)),
     loadStaticImage(assetUrl(config.neutral, view, sex)),
     loadStaticImage(assetUrl(config.colorAtlas, view, sex)),
     loadStaticImage(assetUrl(config.glowAtlas, view, sex)),
-    sex === 'female' && view === 'front'
-      ? loadStaticImage(assetUrl(FEMALE_LOWER_CHEST_ARTWORK.path, view, sex))
-      : Promise.resolve(null),
   ]);
   const [rawManifest, maskBytes] = await Promise.all([
     manifestResponse.json() as Promise<unknown>,
@@ -229,18 +173,14 @@ async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleS
   const sprites = parseWorkedMuscleAtlasManifest(
     rawManifest, view, colorAtlas.naturalWidth, colorAtlas.naturalHeight, sex,
   );
-  if (lowerChestSource
-    && (lowerChestSource.naturalWidth !== FEMALE_LOWER_CHEST_ARTWORK.width
-      || lowerChestSource.naturalHeight !== FEMALE_LOWER_CHEST_ARTWORK.height
-      || sprites[String(FEMALE_LOWER_CHEST_ARTWORK.index)]?.id !== 'pectoralis_lower')) {
-    throw new Error('Неверный размер или ID спрайта низа груди');
-  }
-  const femaleLowerChest = lowerChestSource
-    ? prepareFemaleLowerChestSprite(lowerChestSource, mask, config.width, config.height)
-    : null;
-  const pectoralisMajorSprites = view === 'front'
-    ? createPectoralisMajorSprites(sprites, config.width) : [];
-  return { width: config.width, height: config.height, sprites, pectoralisMajorSprites, mask, neutral, colorAtlas, glowAtlas, femaleLowerChest };
+  // The female three-quarter atlas contains three independent pectoralis-major
+  // sprite copies; the original upper/middle/lower regions stay independently tappable.
+  // Male anatomy still uses the original six virtual left/right alias slices.
+  const pectoralisMajorSprites = view !== 'front' ? []
+    : sex === 'female'
+      ? Object.values(sprites).filter((sprite) => sprite.id === 'pectoralis_major')
+      : createPectoralisMajorSprites(sprites, config.width);
+  return { width: config.width, height: config.height, sprites, pectoralisMajorSprites, mask, neutral, colorAtlas, glowAtlas };
 }
 
 /**
