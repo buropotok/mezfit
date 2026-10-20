@@ -135,6 +135,24 @@ describe('personal exercise card editor', () => {
       })));
   });
 
+  it('allows changing the category without erasing anatomically unrelated muscles', async () => {
+    const repository = api(), p = props(repository);
+    render(<PersonalExerciseEditorGateway
+      request={{ mode: 'edit', exerciseId: customId }} {...p} />);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Категория' }), {
+      target: { value: 'legs' },
+    });
+    expect(screen.getByRole('listbox', { name: 'Основные мышцы' })).toHaveProperty(
+      'value', 'pectoralis_major',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(repository.updateExercise).toHaveBeenCalledWith(
+      customId, expect.objectContaining({ category: 'legs' }), expect.anything(),
+    ));
+    const changes = repository.updateExercise.mock.calls[0][1];
+    expect(Object.hasOwn(changes, 'muscles')).toBe(false);
+  });
+
   it('uploads a selected image, caches it locally, then saves its R2 reference', async () => {
     const repository = api(), p = props(repository);
     render(<PersonalExerciseEditorGateway
