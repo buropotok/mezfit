@@ -352,12 +352,12 @@ export type WorkedMuscleView = keyof typeof WORKED_MUSCLE_VIEWS;
 export type WorkedMuscleSex = 'male' | 'female';
 
 /** Align female hit maps with the translated neutral figures and manifest sprite targets. */
-export const FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS = { front: 82, rear: 60 } as const;
+export const FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS = { front: 0, rear: 60 } as const;
 
 /** Female assets use the same canonical muscle IDs and separate pixel geometry. */
 export const FEMALE_WORKED_MUSCLE_VIEWS = {
   "front": {
-    "width": 1229,
+    "width": 1024,
     "height": 1536,
     "manifest": "anatomy/female/front/manifest.json",
     "neutral": "anatomy/female/front/neutral.png",
@@ -366,29 +366,45 @@ export const FEMALE_WORKED_MUSCLE_VIEWS = {
     "mask": "anatomy/female/front/mask.mezmask",
     "indices": {
       "1": "pectoralis_clavicular",
-      "2": "pectoralis_sternal",
-      "3": "pectoralis_lower",
-      "4": "serratus_anterior",
-      "5": "deltoid_anterior",
-      "6": "deltoid_lateral",
-      "7": "biceps_long_head",
-      "8": "biceps_short_head",
-      "9": "brachialis",
-      "10": "brachioradialis",
-      "11": "forearm_flexors",
-      "12": "forearm_extensors",
-      "13": "forearm_grip",
-      "14": "rectus_abdominis",
-      "15": "rectus_abdominis_lower_zone",
+      "2": "biceps_long_head",
+      "3": "rectus_femoris",
+      "4": "peroneals",
+      "5": "gastrocnemius_medial",
+      "6": "deltoid_anterior",
+      "7": "pectoralis_sternal",
+      "8": "serratus_anterior",
+      "9": "rectus_abdominis_lower_zone",
+      "10": "vastus_lateralis",
+      "11": "forearm_extensors",
+      "12": "soleus",
+      "13": "peroneals",
+      "14": "gastrocnemius_medial",
+      "15": "tibialis_anterior",
       "16": "obliques",
-      "17": "iliopsoas",
-      "18": "rectus_femoris",
-      "19": "vastus_lateralis",
-      "20": "vastus_medialis",
-      "21": "hip_adductors",
-      "22": "tibialis_anterior",
-      "23": "peroneals",
-      "24": "ankle_stabilizers"
+      "17": "latissimus_dorsi",
+      "18": "triceps_lateral_head",
+      "19": "ankle_stabilizers",
+      "20": "deltoid_lateral",
+      "21": "pectoralis_lower",
+      "22": "vastus_medialis",
+      "23": "rectus_abdominis",
+      "24": "hip_adductors",
+      "25": "forearm_flexors",
+      "26": "gluteus_maximus",
+      "27": "levator_scapulae",
+      "28": "trapezius_upper",
+      "29": "cervical_extensors",
+      "30": "forearm_grip",
+      "31": "forearm_grip",
+      "32": "forearm_extensors",
+      "33": "biceps_short_head",
+      "34": "forearm_pronators",
+      "35": "forearm_flexors",
+      "36": "biceps_short_head",
+      "37": "pectoralis_major",
+      "38": "pectoralis_major",
+      "39": "pectoralis_major",
+      "40": "brachioradialis"
     }
   },
   "rear": {
