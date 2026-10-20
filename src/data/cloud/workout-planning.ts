@@ -36,7 +36,9 @@ export class WorkoutPlanningRepository {
   async suggestSlot(athleteUserId: string, coachUserId: string | null,
     format: 'independent' | 'coached'): Promise<string> {
     const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
-    const entries = await scheduling.listCalendar(athleteUserId, true);
+    const entries: Pick<LocalWorkoutOccurrenceDraft,
+      'athleteUserId' | 'coachUserId' | 'format' | 'startsAtUtc' | 'durationMinutes'>[]
+      = await scheduling.listCalendar(athleteUserId, true);
     entries.push(...await this.drafts.list());
     if (format === 'coached' && coachUserId) entries.push(...await scheduling.listCalendar(coachUserId, true));
     const relevant = entries.filter(row => row.athleteUserId === athleteUserId
