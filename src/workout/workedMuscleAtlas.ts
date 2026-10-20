@@ -151,6 +151,22 @@ export function createPectoralisMajorSprites(
   return copies;
 }
 
+
+/** Map either a male virtual chest slice or a female physical copy to its original zone. */
+export function getPectoralisSourceSprite(
+  alias: AtlasSprite,
+  sprites: Readonly<Record<string, AtlasSprite>>,
+): AtlasSprite | undefined {
+  if (alias.id !== 'pectoralis_major') return undefined;
+  const indexed = sprites[String(alias.index)];
+  if (indexed && indexed.id !== 'pectoralis_major') return indexed;
+  return Object.values(sprites).find((part) =>
+    PECTORALIS_MAJOR_PART_IDS.some((id) => id === part.id)
+    && part.targetX === alias.targetX && part.targetY === alias.targetY
+    && part.width === alias.width && part.height === alias.height,
+  );
+}
+
 async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex): Promise<WorkedMuscleAtlas> {
   const config = getWorkedMuscleViewConfig(sex, view);
   const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas] = await Promise.all([
