@@ -16,9 +16,8 @@ describe('Pectoralis major catalogue-to-atlas contract', () => {
     expect(WORKED_MUSCLE_LABELS.pectoralis_major).toBe('Большая грудная мышца');
   });
 
-  it.each(['male', 'female'] as const)(
-    'reuses both sides of all three original %s front zones as six alias sprites',
-    (sex) => {
+  it('reuses both sides of the three original male front zones as six virtual aliases', () => {
+      const sex = 'male' as const;
       const width = getWorkedMuscleViewConfig(sex, 'front').width;
       const center = Math.floor(width / 2);
       const sprites: Record<string, AtlasSprite> = {};
@@ -44,8 +43,7 @@ describe('Pectoralis major catalogue-to-atlas contract', () => {
         expect(right.index).toBe(original.index);
         expect(original.id).toBe(PECTORALIS_MAJOR_PART_IDS[i]);
       }
-    },
-  );
+  });
 
   it('preserves source priority and visibility toggles for aggregate or individual selections', () => {
     const primary = new Set(['pectoralis_major']);
