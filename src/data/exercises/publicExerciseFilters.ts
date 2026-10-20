@@ -146,7 +146,7 @@ export function filterOptions(
     const zones = new Set(taxonomy.filter(node => node.kind === 'zone').map(node => node.id));
     const used = new Set(exercises.flatMap(row => muscleIds(row, group, zones)));
     return taxonomy.filter(node => used.has(node.id) && (group !== 'zone' || node.kind === 'zone'))
-      .map(node => ({ id: node.id, label: node.subcategory_ru }))
+      .map(node => ({ id: node.id, label: node.subcategory_ru || 'Анатомическая структура' }))
       .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   }
   if (group !== 'subcategory' && group !== 'equipment' && group !== 'movement_type') return [];
