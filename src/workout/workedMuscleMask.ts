@@ -28,10 +28,10 @@ export function decodeWorkedMuscleMask(buffer: ArrayBuffer, view: WorkedMuscleVi
   const pixels = bytes.subarray(HEADER_BYTES);
   if (sex === 'male') return pixels;
 
-  // The female neutral figures and manifest targets are shifted down without
-  // scaling any muscle. Translate the exact pixel IDs once when loading, rather
-  // than stretching the masks or changing the native male mask contract.
+  // The 3/4 front mask is native; only the existing female rear map
+  // still needs a fixed vertical translation to match its sprite targets.
   const offset = FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS[view];
+  if (offset === 0) return pixels;
   const shifted = new Uint8Array(width * height);
   shifted.set(pixels.subarray(0, width * (height - offset)), width * offset);
   return shifted;
