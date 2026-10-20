@@ -54,7 +54,7 @@ describe('Female anatomy contracts', () => {
   });
 
   it('provides canonical muscle IDs across both female projections', () => {
-    const union = new Set([
+    const union = new Set<string>([
       ...Object.values(FEMALE_WORKED_MUSCLE_VIEWS.front.indices),
       ...Object.values(FEMALE_WORKED_MUSCLE_VIEWS.rear.indices),
     ]);
