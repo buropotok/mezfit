@@ -89,7 +89,7 @@ describe('reusable spotlight guide', () => {
 });
 
 function ScrollGuide({ autoScroll = false, paused = false, scrollTo }: {
-  autoScroll?: boolean; paused?: boolean; scrollTo?: (options?: ScrollToOptions) => void;
+  autoScroll?: boolean; paused?: boolean; scrollTo?: HTMLElement['scrollTo'];
 }) {
   const surface = useRef<HTMLDivElement>(null);
   return <div data-testid="scroll-viewport" style={{ overflowY: 'auto' }}
