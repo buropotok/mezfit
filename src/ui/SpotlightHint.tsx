@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Text } from './primitives';
 import './spotlight-hint.css';
@@ -14,6 +14,10 @@ export interface SpotlightHintProps {
   userId: string;
   enabled: boolean;
   paused?: boolean;
+  /** Whole scrolling content, including surrounding controls. Never the scroll viewport itself. */
+  surfaceRef?: RefObject<HTMLDivElement | null>;
+  /** Reveal the first available target once per entry, even when hints are dismissed. */
+  autoScroll?: boolean;
   text: string;
   children: ReactNode;
 }
@@ -22,17 +26,34 @@ function hidden(key: string): boolean {
   try { return localStorage.getItem(key) === 'hidden'; } catch { return false; }
 }
 
-/** Measure only registered targets, clipping to their scroll containers and viewport. */
-function visibleRect(node: HTMLElement): Rect | null {
-  if (!node.isConnected || !node.getClientRects().length) return null;
-  const rect = node.getBoundingClientRect();
-  let left = Math.max(0, rect.left), top = Math.max(0, rect.top);
-  let right = Math.min(window.innerWidth, rect.right), bottom = Math.min(window.innerHeight, rect.bottom);
+function scrollContainer(surface: HTMLElement): HTMLElement | null {
+  for (let parent = surface.parentElement; parent; parent = parent.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) return parent;
+  }
+  return null;
+}
+
+/** Local content coordinates do not change during compositor-driven scrolling. */
+function targetRect(node: HTMLElement, surface: HTMLElement, origin: DOMRect): Rect | null {
+  if (!node.isConnected || !surface.contains(node) || !node.getClientRects().length) return null;
   for (let parent: HTMLElement | null = node; parent; parent = parent.parentElement) {
     const style = getComputedStyle(parent);
-    if (parent.hidden || parent.inert || style.visibility === 'hidden' || style.display === 'none') return null;
-    if (parent === node) continue;
-    const bounds = parent.getBoundingClientRect();
+    if (parent.hidden || parent.hasAttribute('inert') || style.visibility === 'hidden' || style.display === 'none') return null;
+  }
+  const rect = node.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0
+    ? { left: rect.left - origin.left, top: rect.top - origin.top, width: rect.width, height: rect.height }
+    : null;
+}
+
+/** Only the non-scrolling viewport boundary belongs to the fixed outer shade. */
+function surfaceViewport(surface: HTMLElement): Rect | null {
+  const viewport = scrollContainer(surface);
+  const rect = (viewport ?? surface).getBoundingClientRect();
+  let left = Math.max(0, rect.left), top = Math.max(0, rect.top);
+  let right = Math.min(window.innerWidth, rect.right), bottom = Math.min(window.innerHeight, rect.bottom);
+  for (let parent = viewport?.parentElement; parent; parent = parent.parentElement) {
+    const style = getComputedStyle(parent), bounds = parent.getBoundingClientRect();
     if (/(auto|scroll|hidden|clip)/.test(style.overflowX)) {
       left = Math.max(left, bounds.left); right = Math.min(right, bounds.right);
     }
@@ -44,12 +65,13 @@ function visibleRect(node: HTMLElement): Rect | null {
 }
 
 /** A non-modal guide: real controls remain interactive and scrolling stays native. */
-export function SpotlightHint({ hintId, version, userId, enabled, paused = false, text, children }: SpotlightHintProps) {
+export function SpotlightHint({ hintId, version, userId, enabled, paused = false, surfaceRef, autoScroll = false, text, children }: SpotlightHintProps) {
   const preferenceKey = 'mezfit:hint:' + encodeURIComponent(userId) + ':' + encodeURIComponent(hintId) + ':' + version;
   const [closedKey, setClosedKey] = useState<string | null>(null);
   const [suppressedKey, setSuppressedKey] = useState<string | null>(null);
   const [targets, setTargets] = useState<HTMLDivElement[]>([]);
-  const [rects, setRects] = useState<Rect[]>([]);
+  const [geometry, setGeometry] = useState<{ surface: HTMLElement; rects: Rect[]; viewport: Rect } | null>(null);
+  const scrolledEntry = useRef<string | null>(null);
   const [suspensions, setSuspensions] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const maskId = useId().replace(/:/g, '') + '-spotlight';
@@ -67,43 +89,64 @@ export function SpotlightHint({ hintId, version, userId, enabled, paused = false
 
   useEffect(() => {
     // A temporary close lasts for this entry; permanent dismissal survives re-entry.
-    if (!enabled) setClosedKey(null);
+    if (!enabled) { setClosedKey(null); scrolledEntry.current = null; }
   }, [enabled]);
 
   useLayoutEffect(() => {
+    if (!enabled || paused || suspensions || !autoScroll || scrolledEntry.current === preferenceKey) return;
+    const surface = surfaceRef?.current ?? root.current;
+    if (!surface) return;
+    const origin = surface.getBoundingClientRect();
+    const node = targets.find(target => targetRect(target, surface, origin));
+    if (!node) return;
+    scrolledEntry.current = preferenceKey;
+    const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    const viewport = scrollContainer(surface);
+    if (viewport) {
+      const target = node.getBoundingClientRect(), bounds = viewport.getBoundingClientRect();
+      const top = Math.max(0, viewport.scrollTop + target.top - bounds.top
+        - ((viewport.clientHeight || bounds.height) - target.height) / 2);
+      if (typeof viewport.scrollTo === 'function') viewport.scrollTo({ top, behavior });
+      else viewport.scrollTop = top;
+    } else node.scrollIntoView?.({ block: 'center', inline: 'nearest', behavior });
+  }, [enabled, paused, suspensions, autoScroll, preferenceKey, surfaceRef, targets]);
+
+  useLayoutEffect(() => {
     if (!active) return;
+    const surface = surfaceRef?.current ?? root.current;
+    if (!surface) return;
     let frame = 0;
     const measure = () => {
       frame = 0;
-      setRects(targets.flatMap(node => {
-        const rect = visibleRect(node);
+      const origin = surface.getBoundingClientRect(), viewport = surfaceViewport(surface);
+      const rects = targets.flatMap(node => {
+        const rect = targetRect(node, surface, origin);
         return rect ? [rect] : [];
-      }));
+      });
+      setGeometry(viewport && rects.length ? { surface, rects, viewport } : null);
     };
     const invalidate = () => {
       if (!frame) frame = requestAnimationFrame(measure);
     };
     const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(invalidate);
-    const intersection = typeof IntersectionObserver === 'undefined' ? null
-      : new IntersectionObserver(invalidate, { threshold: [0, 0.25, 0.5, 0.75, 1] });
-    targets.forEach(node => { resize?.observe(node); intersection?.observe(node); });
-    if (root.current) resize?.observe(root.current);
-    window.addEventListener('scroll', invalidate, true);
+    targets.forEach(node => resize?.observe(node));
+    resize?.observe(surface);
+    const viewport = scrollContainer(surface);
+    if (viewport) resize?.observe(viewport);
     window.addEventListener('resize', invalidate);
     window.addEventListener('transitionend', invalidate, true);
     window.visualViewport?.addEventListener('resize', invalidate);
-    window.visualViewport?.addEventListener('scroll', invalidate);
+    surface.ownerDocument.fonts?.addEventListener('loadingdone', invalidate);
     measure();
     return () => {
       cancelAnimationFrame(frame);
-      resize?.disconnect(); intersection?.disconnect();
-      window.removeEventListener('scroll', invalidate, true);
+      resize?.disconnect();
       window.removeEventListener('resize', invalidate);
       window.removeEventListener('transitionend', invalidate, true);
       window.visualViewport?.removeEventListener('resize', invalidate);
-      window.visualViewport?.removeEventListener('scroll', invalidate);
+      surface.ownerDocument.fonts?.removeEventListener('loadingdone', invalidate);
     };
-  }, [active, targets]);
+  }, [active, targets, surfaceRef]);
 
   const neverShow = () => {
     try { localStorage.setItem(preferenceKey, 'hidden'); } catch { /* Private WebViews may deny storage. */ }
@@ -112,15 +155,25 @@ export function SpotlightHint({ hintId, version, userId, enabled, paused = false
   };
   return <TargetContext.Provider value={context}>
     <div ref={root} className="ui-spotlight-hint__scope">{children}</div>
-    {active && rects.length > 0 ? createPortal(
+    {active && geometry ? createPortal(
+      <svg className="ui-spotlight-hint__local-mask" width="100%" height="100%" aria-hidden="true">
+        <defs><mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+          <rect width="100%" height="100%" fill="white" />
+          {geometry.rects.map((rect, index) => <rect key={index} x={rect.left} y={rect.top}
+            width={rect.width} height={rect.height} rx={Math.min(22, rect.height / 2)} fill="black" />)}
+        </mask></defs>
+        <rect width="100%" height="100%" fill="rgba(0,0,0,0.78)" mask={'url(#' + maskId + ')'} />
+      </svg>, geometry.surface,
+    ) : null}
+    {active && geometry ? createPortal(
       <aside className="ui-spotlight-hint" aria-label="Подсказка">
         <svg className="ui-spotlight-hint__mask" width="100%" height="100%" aria-hidden="true">
-          <defs><mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+          <defs><mask id={maskId + '-viewport'} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
             <rect width="100%" height="100%" fill="white" />
-            {rects.map((rect, index) => <rect key={index} x={rect.left} y={rect.top}
-              width={rect.width} height={rect.height} rx={Math.min(22, rect.height / 2)} fill="black" />)}
+            <rect x={geometry.viewport.left} y={geometry.viewport.top}
+              width={geometry.viewport.width} height={geometry.viewport.height} fill="black" />
           </mask></defs>
-          <rect width="100%" height="100%" fill="rgba(0,0,0,0.78)" mask={'url(#' + maskId + ')'} />
+          <rect width="100%" height="100%" fill="rgba(0,0,0,0.78)" mask={'url(#' + maskId + '-viewport)'} />
         </svg>
         <div className="ui-spotlight-hint__copy">
           <div className="ui-spotlight-hint__controls">
@@ -152,4 +205,9 @@ export function useSpotlightHintPause(paused: boolean) {
   useEffect(() => {
     if (paused && context) return context.suspend();
   }, [paused, context]);
+}
+
+/** The surface and its target holes share the browser's native scrolling plane. */
+export function SpotlightSurface({ children, ref }: { children: ReactNode; ref?: RefObject<HTMLDivElement | null> }) {
+  return <div ref={ref} className="ui-spotlight-hint__surface">{children}</div>;
 }
