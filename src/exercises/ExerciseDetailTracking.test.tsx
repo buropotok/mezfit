@@ -64,7 +64,7 @@ describe('localized metadata on shared exercise detail cards', () => {
     expect(screen.getByText('Тип учёта: Время и дистанция')).toBeTruthy();
   });
 
-  it('shows a missing value explicitly rather than silently defaulting to weight/reps', () => {
+  it('omits a missing metric without silently defaulting to weight/reps', () => {
     render(<ExerciseDetail row={{ ...publicExercise, tracking_type: undefined }} taxonomy={[]} />);
     expect(screen.queryByText(/Тип учёта:/)).toBeNull();
   });
