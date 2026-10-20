@@ -4,9 +4,9 @@ import {
   FEMALE_WORKED_MUSCLE_VERTICAL_OFFSETS, getWorkedMuscleViewConfig,
 } from './workedMuscleData.ts';
 
-describe('shifted female anatomy assets', () => {
+describe('aligned female anatomy assets', () => {
   it.each([
-    ['front', 'pectoralis_clavicular', 276],
+    ['front', 'pectoralis_clavicular', 257],
     ['rear', 'latissimus_dorsi', 334],
   ])('keeps the %s atlas, neutral PNG, and shifted sprite targets aligned', (view, firstId, originalY) => {
     const directory = new URL(`../../public/anatomy/female/${view}/`, import.meta.url);
