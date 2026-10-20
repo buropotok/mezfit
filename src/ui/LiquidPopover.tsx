@@ -509,6 +509,10 @@ export function LiquidPopover({
       if (!cancelled) finishTarget();
     };
 
+    // A settled multi-choice menu changes its checked items in place. Do not
+    // replay the liquid opening animation for every selection change.
+    if (isOpen && progressRef.current >= 1 && settled) return;
+
     setSettled(false);
     scene.style.display = 'block';
     canvas.style.display = 'block';
@@ -763,6 +767,7 @@ export function LiquidPopover({
     host,
     isOpen,
     positioned,
+    settled,
     presentationKey,
     resolvedRenderMode,
     triggerRef,
