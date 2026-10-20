@@ -13,7 +13,7 @@ vi.mock('./ProgramPhaseDays', () => ({ ProgramPhaseDays: ({ onActivateForSchedul
 }) => <button onClick={() => onActivateForScheduling('phase', continuation)}>Запланировать</button> }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
-function setup(fail = false) {
+function setup(fail = false, selectionMode = false) {
   const program = { id: 'plan', realmId: 'tg:101', owner: 'tg:101', athleteUserId: 'tg:101',
     coachUserId: null, clientUserId: null, name: 'Новая программа', position: 0, status: 'draft' as const,
     startedAt: null, finishedAt: null, createdAt: '', updatedAt: '' };
@@ -26,12 +26,21 @@ function setup(fail = false) {
       next(details); return { unsubscribe: () => {} };
     },
   } as unknown as ProgramManagementRepository;
-  render(<CloudProgramDetailsPage repository={repository} planId="plan" cloudStatus="ready" cloudError=""
+  render(<CloudProgramDetailsPage selectionMode={selectionMode} repository={repository} planId="plan" cloudStatus="ready" cloudError=""
     syncStatus="offline" syncError="" onRetryCloud={async () => {}} onRetrySync={async () => {}} />);
   return activate;
 }
 
 describe('activation before scheduling', () => {
+  it('allows the standard activation confirmation in source-selection mode', async () => {
+    const activate = setup(false, true);
+    fireEvent.click(await screen.findByRole('button', { name: 'Запланировать' }));
+    expect(screen.getByRole('dialog', { name: 'Программа будет активирована.' })).toBeTruthy();
+    expect(screen.queryByText(/Изменение планируемой тренировки/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(activate).not.toHaveBeenCalled();
+  });
+
   it('warns, uses the standard previous-program status dialog, then continues', async () => {
     const activate = setup();
     fireEvent.click(await screen.findByRole('button', { name: 'Запланировать' }));
