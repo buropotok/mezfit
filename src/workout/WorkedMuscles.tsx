@@ -6,7 +6,7 @@ import {
   type WorkedMuscleSex, type WorkedMuscleView,
 } from './workedMuscleData';
 import {
-  FEMALE_LOWER_CHEST_ARTWORK, loadWorkedMuscleAtlas, pickWorkedMuscleAt,
+  loadWorkedMuscleAtlas, pickWorkedMuscleAt,
   type WorkedMuscleAtlas,
 } from './workedMuscleAtlas';
 import './worked-muscles.css';
@@ -61,7 +61,7 @@ export function clampWorkedMusclePan(
 
 function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary }: AnatomyViewProps) {
   const config = getWorkedMuscleViewConfig(sex, view);
-  const viewLabel = view === 'front' ? 'Вид спереди' : 'Вид сзади';
+  const viewLabel = view === 'front' ? (sex === 'female' ? 'Вид 3/4 спереди' : 'Вид спереди') : 'Вид сзади';
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [atlas, setAtlas] = useState<WorkedMuscleAtlas | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +111,8 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
     const majorRole = roleFor('pectoralis_major');
 
     for (const sprite of Object.values(atlas.sprites)) {
+      // Physical aggregate copies are drawn through pectoralisMajorSprites.
+      if (sprite.id === 'pectoralis_major') continue;
       // Draw the alias copies instead of the original bilateral sprites when
       // the whole pectoralis major is selected. Never double-blend the same pixels.
       if (majorRole && PECTORALIS_MAJOR_PART_IDS.some((id) => id === sprite.id)) continue;
@@ -137,19 +139,9 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
       context.globalAlpha = role === 'primary' ? 1 : 0.58;
       drawSprite(atlas.glowAtlas, sprite);
     }
-    let femaleLowerChestDrawn = false;
     for (const { sprite, role } of visible) {
       context.globalAlpha = role === 'primary' ? 1 : 0.54;
-      if (atlas.femaleLowerChest && sprite.index === FEMALE_LOWER_CHEST_ARTWORK.index) {
-        // The uploaded artwork has a wider outline than the packed atlas cell.
-        // Draw its native pixels once, including when pectoralis_major splits
-        // the source into left/right virtual sprites.
-        if (femaleLowerChestDrawn) continue;
-        context.drawImage(atlas.femaleLowerChest, FEMALE_LOWER_CHEST_ARTWORK.x, FEMALE_LOWER_CHEST_ARTWORK.y);
-        femaleLowerChestDrawn = true;
-      } else {
-        drawSprite(atlas.colorAtlas, sprite);
-      }
+      drawSprite(atlas.colorAtlas, sprite);
     }
     context.globalAlpha = 1;
   }, [atlas, primary, secondary, showPrimary, showSecondary]);
