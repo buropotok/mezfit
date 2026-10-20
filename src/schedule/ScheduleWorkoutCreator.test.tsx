@@ -27,8 +27,8 @@ vi.mock('konsta/react', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button disabled={disabled} onClick={onClick}>{children}</button>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  ListItem: ({ title, after, onClick }: { title: string; after?: ReactNode; onClick: () => void }) =>
-    <button onClick={onClick}>{title} {after}</button>,
+  ListItem: ({ title, after, subtitle, onClick }: { title: string; after?: ReactNode; subtitle?: ReactNode; onClick: () => void }) =>
+    <><button onClick={onClick}>{title} {after}</button>{subtitle ? <span>{subtitle}</span> : null}</>,
 }));
 vi.mock('../ui', () => ({
   MezfitBottomSheet: ({ opened, children }: { opened: boolean; children: ReactNode }) => opened ? <div>{children}</div> : null,
@@ -72,6 +72,7 @@ describe('calendar program source permissions', () => {
     state.readable.mockResolvedValue([{ ...assigned, status: 'finished' }]);
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
+    expect(await screen.findByText('Только просмотр: для планирования тренер должен активировать программу и фазу.')).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: 'От тренера Завершена' }));
     expect(screen.getByTestId('program-details').getAttribute('data-readonly')).toBe('true');
   });
