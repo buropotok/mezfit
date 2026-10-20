@@ -28,7 +28,7 @@ vi.mock('konsta/react', () => ({
     <button disabled={disabled} onClick={onClick}>{children}</button>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ListItem: ({ title, after, onClick }: { title: string; after?: ReactNode; onClick: () => void }) =>
-    <button onClick={onClick}>{title}{after}</button>,
+    <button onClick={onClick}>{title} {after}</button>,
 }));
 vi.mock('../ui', () => ({
   MezfitBottomSheet: ({ opened, children }: { opened: boolean; children: ReactNode }) => opened ? <div>{children}</div> : null,
