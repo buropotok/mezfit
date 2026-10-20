@@ -119,6 +119,8 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
           {step === 'programs' ? <>
             <Text variant="headline">Выбрать программу</Text>
             <KonstaList nested>{programs.map(plan => <KonstaListItem key={plan.id} link title={plan.name}
+              subtitle={role === 'client' && plan.coachUserId && plan.status !== 'active'
+                ? 'Только просмотр: для планирования тренер должен активировать программу и фазу.' : undefined}
               after={<Badge color={plan.status === 'active' ? 'green' : plan.status === 'finished' ? 'blue' : plan.status === 'cancelled' ? 'red' : 'gray'}>
                 {plan.status === 'active' ? 'Активная' : plan.status === 'draft' ? 'Черновик' : plan.status === 'finished' ? 'Завершена' : 'Отменена'}
               </Badge>}
