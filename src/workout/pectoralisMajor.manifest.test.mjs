@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createPectoralisMajorSprites, parseWorkedMuscleAtlasManifest } from './workedMuscleAtlas.ts';
+import { createPectoralisMajorSprites, getPectoralisSourceSprite, parseWorkedMuscleAtlasManifest } from './workedMuscleAtlas.ts';
 import { getWorkedMuscleViewConfig, PECTORALIS_MAJOR_PART_IDS } from './workedMuscleData.ts';
 
 describe('Pectoralis major real atlas manifests', () => {
@@ -15,6 +15,7 @@ describe('Pectoralis major real atlas manifests', () => {
       const slices = aliases.filter((sprite) => sprite.index === source?.index);
       expect(slices).toHaveLength(2);
       expect(slices[0].width + slices[1].width).toBe(source?.width);
+      expect(slices.map((slice) => getPectoralisSourceSprite(slice, parsed)?.id)).toEqual([id, id]);
     }
   });
 
@@ -28,6 +29,7 @@ describe('Pectoralis major real atlas manifests', () => {
     aliases.forEach((copy, index) => {
       const original = originals[index];
       expect(copy.index).not.toBe(original.index);
+      expect(getPectoralisSourceSprite(copy, parsed)?.id).toBe(original.id);
       expect([copy.targetX, copy.targetY, copy.width, copy.height])
         .toEqual([original.targetX, original.targetY, original.width, original.height]);
     });
