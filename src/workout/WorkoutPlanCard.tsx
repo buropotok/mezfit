@@ -53,8 +53,8 @@ export function WorkoutPlanCard({
   onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
-  const authoringVisible = !readOnly || Boolean(onMutationAttempt);
-  const mutate = (action?: () => void) => { if (onMutationAttempt) onMutationAttempt(); else action?.(); };
+  const authoringVisible = !readOnly;
+  const mutate = (action?: () => void) => { if (readOnly) return; if (onMutationAttempt) onMutationAttempt(); else action?.(); };
   const [menuOpen, setMenuOpen] = useState(false);
   const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
   const scheduleTriggerRef = useRef<HTMLElement>(null);
@@ -80,10 +80,10 @@ export function WorkoutPlanCard({
   const items = exercises.map((item) => ({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
-      busy={busy} onAddSet={onMutationAttempt || onAddSet ? () => mutate(() => onAddSet?.(item.exercise.id)) : undefined}
-      onOpenSet={onMutationAttempt || onOpenSet ? setId => mutate(() => onOpenSet?.(item.exercise.id, setId)) : undefined}
-      onDeleteSet={onMutationAttempt || onDeleteSet ? setId => mutate(() => onDeleteSet?.(item.exercise.id, setId)) : undefined}
-      onDelete={onMutationAttempt || onDeleteExercise ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
+      busy={busy} onAddSet={authoringVisible && (onMutationAttempt || onAddSet) ? () => mutate(() => onAddSet?.(item.exercise.id)) : undefined}
+      onOpenSet={authoringVisible && (onMutationAttempt || onOpenSet) ? setId => mutate(() => onOpenSet?.(item.exercise.id, setId)) : undefined}
+      onDeleteSet={authoringVisible && (onMutationAttempt || onDeleteSet) ? setId => mutate(() => onDeleteSet?.(item.exercise.id, setId)) : undefined}
+      onDelete={authoringVisible && (onMutationAttempt || onDeleteExercise) ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
