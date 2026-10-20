@@ -135,6 +135,55 @@ describe('LiquidPopover lifecycle and menu ownership', () => {
   });
 });
 
+it('keeps the multi-selection menu open until Done while respecting selected state', async () => {
+  const triggerRef = createRef<HTMLButtonElement>();
+  const setOpen = vi.fn();
+  const choose = vi.fn();
+  const props = {
+    trigger: <button ref={triggerRef}>Выбрать мышцы</button>,
+    triggerRef, onOpenChange: setOpen, selectionMode: 'multi' as const,
+    items: [
+      { id: 'chest', label: 'Грудная мышца', active: true, onSelect: () => choose('chest') },
+      { id: 'leg', label: 'Четырёхглавая мышца', active: false, onSelect: () => choose('leg') },
+    ],
+  };
+  const view = render(<LiquidPopover {...props} isOpen />);
+  await act(async () => { vi.advanceTimersByTime(32); });
+
+  const chest = screen.getByRole('menuitemcheckbox', { name: 'Грудная мышца' });
+  const leg = screen.getByRole('menuitemcheckbox', { name: 'Четырёхглавая мышца' });
+  expect(chest.getAttribute('aria-checked')).toBe('true');
+  expect(leg.getAttribute('aria-checked')).toBe('false');
+
+  fireEvent.click(leg);
+  expect(choose).toHaveBeenCalledWith('leg');
+  expect(setOpen).not.toHaveBeenCalled();
+  // Parent updates checked values while the popup is still open.
+  view.rerender(<LiquidPopover {...props} isOpen items={props.items.map(item => ({
+    ...item, active: true,
+  }))} />);
+  expect(screen.getByRole('menuitemcheckbox', { name: 'Четырёхглавая мышца' })
+    .getAttribute('aria-checked')).toBe('true');
+  expect(screen.getByRole('menu')?.querySelector('canvas')?.style.display).toBe('none');
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Готово' }));
+  expect(setOpen).toHaveBeenCalledWith(false);
+});
+
+it('announces multi-select commands as actions rather than checkboxes', async () => {
+  const triggerRef = createRef<HTMLButtonElement>();
+  const change = vi.fn();
+  render(<LiquidPopover isOpen selectionMode="multi"
+    trigger={<button ref={triggerRef}>Выбрать</button>} triggerRef={triggerRef}
+    onOpenChange={change} items={[
+      { id: 'clear', label: 'Очистить выбор', kind: 'action', onSelect: vi.fn() },
+      { id: 'chest', label: 'Грудь', active: true, onSelect: vi.fn() },
+    ]} />);
+  await act(async () => { vi.advanceTimersByTime(32); });
+  expect(screen.getByRole('menuitem', { name: 'Очистить выбор' })).toBeTruthy();
+  expect(screen.getByRole('menuitemcheckbox', { name: 'Грудь' })
+    .getAttribute('aria-checked')).toBe('true');
+});
+
 it('finishes opening and fully reverses the same animation on close', async () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
   vi.stubGlobal('CSS', { supports: () => true });

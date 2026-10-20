@@ -45,6 +45,8 @@ export type LiquidPopoverItem = {
   disabled?: boolean;
   active?: boolean;
   dividerBefore?: boolean;
+  /** Action row, not a checkable choice in multi-selection mode. */
+  kind?: 'option' | 'action';
   'aria-checked'?: boolean;
   'aria-current'?: 'page' | 'date';
 };
@@ -62,6 +64,7 @@ type LiquidPresentationSnapshot = {
   label: string;
   preset: GlassPresetName;
   optics: boolean;
+  blur?: number;
   options: LiquidMotionOptions;
 };
 
@@ -100,10 +103,14 @@ export interface LiquidPopoverProps {
   label?: string;
   preset?: GlassPresetName;
   optics?: boolean;
+  blur?: number;
   layout?: LiquidPopoverLayout;
   columns?: number;
   role?: LiquidPopoverRole;
   scrollActiveIntoView?: boolean;
+  /** Keep choices open until Done when selecting several values. */
+  selectionMode?: 'single' | 'multi';
+  doneLabel?: string;
   /** Reports whether the source surface must remain visually hidden. */
   onPresentationChange?: (presented: boolean) => void;
   motion?: Partial<LiquidMotionOptions>;
@@ -240,20 +247,28 @@ export function LiquidPopover({
   onOpenChange,
   trigger,
   triggerRef,
-  items = EMPTY_ITEMS,
+  items: sourceItems = EMPTY_ITEMS,
   text,
   label = text === undefined ? 'Меню' : 'Информация',
   triggerActivation = 'automatic',
   preset = 'frosted',
   optics = false,
+  blur,
   layout: requestedLayout = 'menu',
   columns = 4,
   role: requestedRole,
   scrollActiveIntoView = false,
+  selectionMode = 'single',
+  doneLabel = 'Готово',
   onPresentationChange,
   motion,
   renderMode = 'auto',
 }: LiquidPopoverProps) {
+  const doneItemId = '__liquid-popover-done__';
+  // The Done row shares item geometry and texture so animation stays in sync.
+  const items = useMemo(() => selectionMode === 'multi'
+    ? [...sourceItems, { id: doneItemId, label: doneLabel, dividerBefore: true }]
+    : sourceItems, [sourceItems, selectionMode, doneLabel]);
   const layout = text === undefined ? requestedLayout : 'text';
   const role = requestedRole ?? (layout === 'text' ? 'dialog' : 'menu');
   const id = useId().replace(/:/g, ''),
@@ -299,9 +314,10 @@ export function LiquidPopover({
       label,
       preset,
       optics,
+      blur,
       options,
     }),
-    [items, text, label, layout, optics, options, preset, resolvedColumns, role],
+    [items, text, label, layout, optics, blur, options, preset, resolvedColumns, role],
   );
   const presentationRef = useRef<LiquidPresentationSnapshot>(currentPresentation),
     useCurrentPresentation = !presented || (isOpen && settled),
@@ -337,6 +353,7 @@ export function LiquidPopover({
     presentation.columns,
     presentation.preset,
     presentation.optics,
+    presentation.blur,
     presentation.options,
     resolvedRenderMode,
     presentation.items.map((item) => [
@@ -493,6 +510,10 @@ export function LiquidPopover({
       animationSessionRef.current = null;
       if (!cancelled) finishTarget();
     };
+
+    // A settled multi-choice menu changes its checked items in place. Do not
+    // replay the liquid opening animation for every selection change.
+    if (isOpen && progressRef.current >= 1 && settled) return;
 
     setSettled(false);
     scene.style.display = 'block';
@@ -748,6 +769,7 @@ export function LiquidPopover({
     host,
     isOpen,
     positioned,
+    settled,
     presentationKey,
     resolvedRenderMode,
     triggerRef,
@@ -813,6 +835,7 @@ export function LiquidPopover({
           ref={glassRef}
           preset={presentation.preset}
           optics={presentation.optics}
+          blur={presentation.blur}
           className="ui-liquid-popover__glass"
           aria-hidden="true"
         />
@@ -855,15 +878,22 @@ export function LiquidPopover({
                     else nativeRowRefs.current.delete(item.id);
                   }}
                   type="button"
-                  role={presentation.role === 'menu' ? 'menuitem' : undefined}
+                  role={presentation.role === 'menu'
+                    ? selectionMode === 'multi' && item.id !== doneItemId && item.kind !== 'action' ? 'menuitemcheckbox' : 'menuitem'
+                    : undefined}
                   disabled={item.disabled}
                   data-disabled={item.disabled || undefined}
                   className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
                   onClick={() => {
-                    item.onSelect?.();
-                    onOpenChange(false);
+                    if (selectionMode === 'multi' && item.id === doneItemId) {
+                      onOpenChange(false);
+                    } else {
+                      item.onSelect?.();
+                      if (selectionMode !== 'multi') onOpenChange(false);
+                    }
                   }}
-                  aria-checked={item['aria-checked']}
+                  aria-checked={selectionMode === 'multi' && item.id !== doneItemId && item.kind !== 'action'
+                    ? Boolean(item.active) : item['aria-checked']}
                   aria-current={item['aria-current']}
                 >
                   {item.icon && presentation.layout === 'menu' ? (

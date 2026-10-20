@@ -4,10 +4,14 @@ import type { CoachExerciseCatalogueRepository } from '../data/exercises/coachEx
 import { blankPersonalExercise } from '../data/exercises/blankPersonalExercise';
 import type { CatalogueExerciseRow, CoachExerciseChanges, CoachExerciseDefinitionRow } from '../data/exercises/coachExerciseTypes';
 import { storePersonalExerciseMedia } from '../data/exercises/personalExerciseMediaCache';
-import { PUBLIC_EXERCISE_CATEGORIES } from '../data/exercises/publicExerciseFilters';
-import { isExerciseTrackingType, type ExerciseTrackingType, type PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import {
+  editorFieldOptions, TRACKING_TYPE_LABELS,
+  type FilterOption,
+} from '../data/exercises/publicExerciseFilters';
+import { isExerciseTrackingType, type PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
 import { getTelegramWebApp } from '../telegram';
-import { Button, Dropdown, Icon, Text, TextArea, TextInput, type DropdownOption } from '../ui';
+import { Button, Icon, Text, TextArea, TextInput } from '../ui';
+import { MultiExerciseAttributePicker, SingleExerciseAttributePicker } from './ExerciseAttributePicker';
 import { ExerciseDetail } from './ExerciseCatalogContent';
 import './personal-exercises.css';
 
@@ -16,13 +20,6 @@ export type PersonalExerciseEditorRequest =
   | { mode: 'create'; category: string | null }
   | { mode: 'edit'; exerciseId: string };
 
-const TRACKING: Array<{ value: ExerciseTrackingType; label: string }> = [
-  { value: 'weight_reps', label: 'Вес и повторения' },
-  { value: 'time', label: 'Время' },
-  { value: 'time_distance', label: 'Время и дистанция' },
-  { value: 'time_reps', label: 'Время и повторения' },
-  { value: 'time_weight', label: 'Время и вес' },
-];
 const MUSCLES = [
   ['primary', 'Основные мышцы'],
   ['secondary', 'Вспомогательные мышцы'],
@@ -32,45 +29,6 @@ const MUSCLES = [
 
 function errorMessage(cause: unknown): string {
   return cause instanceof Error ? cause.message : 'Не удалось сохранить упражнение';
-}
-
-function textOptions(values: readonly string[], current: string): DropdownOption[] {
-  const unique = new Set([...values, current].map(value => value.trim()).filter(Boolean));
-  return [
-    { value: '', label: 'Не указано' },
-    ...[...unique].sort((a, b) => a.localeCompare(b, 'ru'))
-      .map(value => ({ value, label: value })),
-  ];
-}
-
-function Field({ label, value, options, onChange, disabled }: {
-  label: string;
-  value: string | null;
-  options: DropdownOption[];
-  onChange: (value: string) => void;
-  disabled: boolean;
-}) {
-  return <div className="mezfit-personal-exercise-field">
-    <Text variant="footnote" tone="muted">{label}</Text>
-    <Dropdown mode="single" variant="field" title={label} placeholder="Выбрать"
-      triggerProps={{ 'aria-label': label }}
-      value={value} options={options} onChange={onChange} disabled={disabled} />
-  </div>;
-}
-
-function MultiField({ label, value, options, onChange, disabled }: {
-  label: string;
-  value: string[];
-  options: DropdownOption[];
-  onChange: (value: string[]) => void;
-  disabled: boolean;
-}) {
-  return <div className="mezfit-personal-exercise-field">
-    <Text variant="footnote" tone="muted">{label}</Text>
-    <Dropdown mode="multi" variant="field" title={label} placeholder="Не указано"
-      triggerProps={{ 'aria-label': label }}
-      value={value} options={options} onChange={onChange} disabled={disabled} />
-  </div>;
 }
 
 function EditPersonalExercise({
@@ -121,28 +79,20 @@ function EditPersonalExercise({
     return () => URL.revokeObjectURL(url);
   }, [upload]);
 
-  const scalarFields = useMemo(() => {
-    const fields = ['subcategory', 'equipment', 'movement_type', 'body_part', 'target', 'muscle_group'] as const;
-    return new Map<string, DropdownOption[]>(fields.map(field => [
-      field, textOptions(sourceRows.map(row => row[field]), draft[field]),
-    ] as const));
-  }, [sourceRows, draft.subcategory, draft.equipment, draft.movement_type,
-    draft.body_part, draft.target, draft.muscle_group]);
-
-  const muscleOptions = useMemo<DropdownOption[]>(() => {
-    const labels = new Map(taxonomy.map(item => [item.id, item.subcategory_ru]));
-    const ids = new Set(taxonomy.map(item => item.id));
-    for (const row of sourceRows) {
-      for (const values of Object.values(row.muscles)) values.forEach(id => ids.add(id));
-      row.mobility_targets.forEach(id => ids.add(id));
-      row.secondary_muscles.forEach(id => ids.add(id));
-    }
-    for (const values of Object.values(draft.muscles)) values.forEach(id => ids.add(id));
-    draft.mobility_targets.forEach(id => ids.add(id));
-    draft.secondary_muscles.forEach(id => ids.add(id));
-    return [...ids].sort((a, b) => (labels.get(a) ?? a).localeCompare(labels.get(b) ?? b, 'ru'))
-      .map(id => ({ value: id, label: labels.get(id) ?? id }));
-  }, [sourceRows, taxonomy, draft.muscles, draft.mobility_targets, draft.secondary_muscles]);
+  // Editor options are always calculated from the complete catalogue, NEVER
+  // from filter facets or category-specific matches.
+  const categoryOptions = useMemo(() => editorFieldOptions('category', sourceRows, taxonomy),
+    [sourceRows, taxonomy]);
+  const equipmentOptions = useMemo(() => editorFieldOptions('equipment', sourceRows, taxonomy, [draft.equipment]),
+    [sourceRows, taxonomy, draft.equipment]);
+  const movementOptions = useMemo(() => editorFieldOptions('movement_type', sourceRows, taxonomy, [draft.movement_type]),
+    [sourceRows, taxonomy, draft.movement_type]);
+  const muscleOptions = useMemo(() => editorFieldOptions('muscle', sourceRows, taxonomy, [
+    ...draft.muscles.primary, ...draft.muscles.secondary,
+    ...draft.muscles.stabilizers, ...draft.muscles.emphasis, ...draft.mobility_targets,
+  ]), [sourceRows, taxonomy, draft.muscles, draft.mobility_targets]);
+  const trackingOptions: FilterOption[] = Object.entries(TRACKING_TYPE_LABELS)
+    .map(([id, label]) => ({ id, label }));
 
   const update = <K extends keyof CatalogueExerciseRow>(key: K, value: CatalogueExerciseRow[K]) =>
     setDraft(current => ({ ...current, [key]: value }));
@@ -224,25 +174,6 @@ function EditPersonalExercise({
     }
   };
 
-  const categoryOptions = [...PUBLIC_EXERCISE_CATEGORIES].map(([value, label]) => ({ value, label }));
-  const subcategories = new Map(sourceRows.filter(row => row.category === draft.category)
-    .map(row => [row.subcategory, row.subcategory_ru]));
-  if (draft.subcategory) subcategories.set(draft.subcategory, draft.subcategory_ru);
-  const subcategoryOptions = [
-    { value: '', label: 'Не указано' },
-    ...[...subcategories.entries()].filter(([value]) => value).map(([value, label]) =>
-      ({ value, label: label || value })),
-  ];
-  const option = (key: 'subcategory' | 'equipment' | 'movement_type' | 'body_part' | 'target' | 'muscle_group', label: string) =>
-    <Field key={key} label={label} value={draft[key] || null} options={
-      key === 'subcategory' ? subcategoryOptions : scalarFields.get(key) ?? []
-    } disabled={busy} onChange={value => {
-      if (key === 'subcategory') {
-        setDraft(current => ({ ...current, subcategory: value,
-          subcategory_ru: subcategories.get(value) ?? '' }));
-      } else update(key, value);
-    }} />;
-
   const editor: {
     name: ReactNode; metadata: ReactNode; instructions: ReactNode;
     anatomy: ReactNode; actions: ReactNode;
@@ -270,40 +201,31 @@ function EditPersonalExercise({
     name: <div className="mezfit-personal-exercise-fields">
       <TextInput label="Название" value={draft.name_ru} maxLength={120}
         disabled={busy} onChange={event => update('name_ru', event.currentTarget.value)} />
-      <TextInput label="Название на английском" value={draft.name_en} maxLength={120}
-        disabled={busy} onChange={event => update('name_en', event.currentTarget.value)} />
     </div>,
     metadata: <div className="mezfit-personal-exercise-fields">
-      <Field label="Тип учёта" value={draft.tracking_type ?? null}
-        options={[{ value: '', label: 'Не указан' }, ...TRACKING]}
-        disabled={busy}
+      <SingleExerciseAttributePicker label="Категория" value={draft.category} options={categoryOptions}
+        disabled={busy} onChange={value => update('category', value)} />
+      <SingleExerciseAttributePicker label="Оборудование" value={draft.equipment} options={equipmentOptions}
+        disabled={busy} onChange={value => update('equipment', value)} />
+      <SingleExerciseAttributePicker label="Тип движения" value={draft.movement_type} options={movementOptions}
+        disabled={busy} onChange={value => update('movement_type', value)} />
+      <SingleExerciseAttributePicker label="Тип учёта" value={draft.tracking_type}
+        options={trackingOptions} disabled={busy}
         onChange={value => {
           if (!value) update('tracking_type', undefined);
           else if (isExerciseTrackingType(value)) update('tracking_type', value);
         }} />
-      <Field label="Категория" value={draft.category} options={categoryOptions}
-        disabled={busy} onChange={value => setDraft(current => current.category === value
-          ? current : { ...current, category: value, subcategory: '', subcategory_ru: '' })} />
-      {option('subcategory', 'Подкатегория')}
-      {option('equipment', 'Оборудование')}
-      {option('movement_type', 'Тип движения')}
-      {option('body_part', 'Часть тела')}
-      {option('target', 'Целевая мышца')}
-      {option('muscle_group', 'Группа мышц')}
     </div>,
     instructions: <TextArea label="Инструкция" rows={5} disabled={busy}
       value={draft.instructions.ru}
       onChange={event => update('instructions', { ...draft.instructions, ru: event.currentTarget.value })} />,
     anatomy: <div className="mezfit-personal-exercise-fields">
-      {MUSCLES.map(([key, label]) => <MultiField key={key} label={label}
-        value={draft.muscles[key]} options={muscleOptions} disabled={busy}
+      {MUSCLES.map(([key, label]) => <MultiExerciseAttributePicker key={key}
+        label={label} value={draft.muscles[key]} options={muscleOptions} disabled={busy}
         onChange={values => updateMuscles(key, values)} />)}
-      <MultiField label="Цели подвижности" value={draft.mobility_targets}
+      <MultiExerciseAttributePicker label="Цели подвижности" value={draft.mobility_targets}
         options={muscleOptions} disabled={busy}
         onChange={values => update('mobility_targets', values)} />
-      <MultiField label="Дополнительные мышцы" value={draft.secondary_muscles}
-        options={muscleOptions} disabled={busy}
-        onChange={values => update('secondary_muscles', values)} />
     </div>,
   };
 

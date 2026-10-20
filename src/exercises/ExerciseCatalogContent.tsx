@@ -4,9 +4,10 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import type { PublicExerciseSnapshot } from '../data/exercises/publicExerciseCatalogue';
 import {
   FILTER_GROUPS, PUBLIC_EXERCISE_CATEGORIES, filterOptions, filterPublicExercises,
+  facetedFilterOptions, exerciseValueLabel, TRACKING_TYPE_LABELS,
   type FilterGroup, type SelectedFilters,
 } from '../data/exercises/publicExerciseFilters';
-import { isExerciseTrackingType, type ExerciseTrackingType, type PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
+import { isExerciseTrackingType, type PublicTaxonomyRow } from '../data/exercises/publicExerciseTypes';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import { PublicExerciseMedia } from './PublicExerciseMedia';
 import { WorkedMuscles } from '../workout/WorkedMuscles';
@@ -53,19 +54,12 @@ function TablerBarbell() {
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
 const PAGE_SIZE = 80;
-const TRACKING_TYPE_LABELS: Record<ExerciseTrackingType, string> = {
-  weight_reps: 'Вес и повторения',
-  time: 'Время',
-  time_distance: 'Время и дистанция',
-  time_reps: 'Время и повторения',
-  time_weight: 'Время и вес',
-};
 
 type PublishedSnapshot = Extract<PublicExerciseSnapshot, { status: 'ready' }>;
 
 function uniqueMuscles(ids: readonly string[], taxonomy: readonly PublicTaxonomyRow[]): string {
   const labels = new Map(taxonomy.map((node) => [node.id, node.subcategory_ru]));
-  return [...new Set(ids)].map((id) => labels.get(id) ?? id).join(', ') || 'Не указано';
+  return [...new Set(ids)].map((id) => labels.get(id) ?? 'Анатомическая структура').join(', ') || 'Не указано';
 }
 
 /** Atlas zone IDs are canonical taxonomy IDs; never infer matches from display labels. */
@@ -118,12 +112,13 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
       {origin ? <Text variant="caption" tone="muted">
         {origin === 'personal' ? 'Пользовательское' : 'Тренерское'}
       </Text> : null}
-      {!editor && row.name_en ? <Text variant="footnote" tone="muted">{row.name_en}</Text> : null}
-      {editor ? editor.metadata : <Text variant="footnote">{categories[row.category] ?? row.category} · {row.subcategory_ru} · {row.equipment}</Text>}
-      {!editor && row.realmId === 'rlm-public' && row.owner === null ? (
-        <Text variant="footnote">Тип учёта: {isExerciseTrackingType(row.tracking_type)
-          ? `${TRACKING_TYPE_LABELS[row.tracking_type]} (${row.tracking_type})` : 'Не указан'}</Text>
-      ) : null}
+      {editor ? editor.metadata : <div className="mezfit-public-exercises__detail-metadata">
+        {row.category ? <Text variant="footnote">Категория: {exerciseValueLabel('category', row.category)}</Text> : null}
+        {row.equipment ? <Text variant="footnote">Оборудование: {exerciseValueLabel('equipment', row.equipment)}</Text> : null}
+        {row.movement_type ? <Text variant="footnote">Тип движения: {exerciseValueLabel('movement_type', row.movement_type)}</Text> : null}
+        {isExerciseTrackingType(row.tracking_type)
+          ? <Text variant="footnote">Тип учёта: {TRACKING_TYPE_LABELS[row.tracking_type]}</Text> : null}
+      </div>}
       {!editor && onEdit ? <div className="mezfit-public-exercises__detail-actions"><Button onClick={onEdit}>Изменить</Button></div> : null}
       <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
         contentClassName="mezfit-public-exercises__detail-section-content">
@@ -239,8 +234,9 @@ export function ExerciseCatalogContent({
     filterPublicExercises(tabExercises, taxonomy, filters, query, category),
   [tabExercises, taxonomy, filters, query, category]);
 
-  const groupOptions = filterDialogGroup ? filterOptions(
+  const groupOptions = filterDialogGroup ? facetedFilterOptions(
     filterDialogGroup, tabExercises, taxonomy, catalogue.subcategoryLabelsRu,
+    draft, query, category,
   ) : [];
 
   const closeFilter = () => setFilterDialogGroup(null);
