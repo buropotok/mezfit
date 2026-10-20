@@ -12,8 +12,9 @@ export interface LocalWorkoutOccurrenceDraft {
   id: string;
   actorUserId: string;
   realmId: string;
-  trainingPlanId: string;
-  programDayId: string;
+  trainingPlanId?: string;
+  programDayId?: string;
+  autoCreatedProgram?: boolean;
   athleteUserId: string;
   coachUserId: string | null;
   clientUserId: string | null;
@@ -94,8 +95,11 @@ export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWor
     || (value.clientUserId !== null && !/^tg:[1-9]\d*$/.test(String(value.clientUserId)))
     || (value.saved !== undefined && typeof value.saved !== 'boolean')
     || typeof value.realmId !== 'string'
-    || typeof value.trainingPlanId !== 'string'
-    || typeof value.programDayId !== 'string'
+    || (value.trainingPlanId !== undefined && (typeof value.trainingPlanId !== 'string' || !value.trainingPlanId))
+    || (value.programDayId !== undefined && (typeof value.programDayId !== 'string' || !value.programDayId))
+    || Boolean(value.trainingPlanId) !== Boolean(value.programDayId)
+    || (value.autoCreatedProgram !== undefined && typeof value.autoCreatedProgram !== 'boolean')
+    || (value.autoCreatedProgram === true && !value.programDayId)
     || typeof value.createdAt !== 'string' || typeof value.updatedAt !== 'string'
     || (value.format !== 'independent' && value.format !== 'coached')
     || !bounded(value.durationMinutes, 1440)
@@ -111,7 +115,8 @@ export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurr
   const now = new Date().toISOString();
   return { id: 'draft:' + row.id, actorUserId, realmId: row.realmId, saved: row.publicationStatus !== 'draft',
     previouslyPublished: row.publicationStatus !== 'draft' || !!row.publishedPlan,
-    targetOccurrenceId: row.id, trainingPlanId: row.trainingPlanId ?? '', programDayId: row.programDayId,
+    targetOccurrenceId: row.id, trainingPlanId: row.trainingPlanId, programDayId: row.programDayId,
+    autoCreatedProgram: row.autoCreatedProgram,
     athleteUserId: row.athleteUserId, coachUserId: row.coachUserId, clientUserId: row.clientUserId,
     format: row.format, startsAtUtc: row.startsAtUtc, durationMinutes: row.durationMinutes,
     plan: structuredClone(row.plan), originalPlan: structuredClone(row.originalPlan ?? row.plan), createdAt: now, updatedAt: now };
