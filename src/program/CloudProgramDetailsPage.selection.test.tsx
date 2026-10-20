@@ -74,7 +74,7 @@ describe('program source selection', () => {
     const card = await screen.findByRole('article', { name: 'День День А' });
     expect(screen.queryByRole('button', { name: 'Начать' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
-    expect(within(card).getByRole('button', { name: 'Запланировать' })).toBeTruthy();
+    expect(within(card).getAllByRole('button', { name: 'Запланировать' }).length).toBeGreaterThan(0);
     expect(screen.getByTestId('sortable').getAttribute('data-disabled')).toBe('true');
 
     for (const id of ['add-phase', 'add-day']) {
