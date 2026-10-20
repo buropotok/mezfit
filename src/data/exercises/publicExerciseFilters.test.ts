@@ -68,25 +68,23 @@ describe('connected facets and independent editor vocabulary', () => {
   const facet = (group: Parameters<typeof facetedFilterOptions>[0], filters: SelectedFilters = {}) =>
     facetedFilterOptions(group, exercises, taxonomy, labels, filters).map(option => option.id);
 
-  it('keeps only four meaningful filter groups', () => {
+  it('keeps four separate anatomical roles without a generic muscle facet', () => {
     expect(FILTER_GROUPS.map(item => item.id)).toEqual([
-      'category', 'equipment', 'movement_type', 'muscle',
+      'category', 'equipment', 'movement_type', 'primary', 'secondary', 'stabilizers', 'emphasis',
     ]);
   });
 
   it('limits muscle choices to exercises connected to selected categories', () => {
-    expect(facet('muscle', { category: ['chest'] })).toEqual(expect.arrayContaining([
-      'pectoralis_major', 'pectoralis_minor', 'triceps', 'serratus',
+    expect(facet('primary', { category: ['chest'] })).toEqual(expect.arrayContaining([
+      'pectoralis_major', 'pectoralis_minor',
     ]));
-    expect(facet('muscle', { category: ['chest'] })).not.toContain('latissimus');
-    expect(facet('muscle', { category: ['back'] })).toContain('latissimus');
+    expect(facet('primary', { category: ['chest'] })).not.toContain('latissimus');
+    expect(facet('primary', { category: ['back'] })).toContain('latissimus');
   });
 
   it('intersects other filter groups and search terms without applying a group to itself', () => {
-    expect(facet('muscle', { category: ['chest'], equipment: ['dumbbell'] })).toEqual([
-      'pectoralis_minor',
-    ]);
-    expect(facet('equipment', { category: ['chest'], muscle: ['pectoralis_minor'] })).toEqual([
+    expect(facet('primary', { category: ['chest'], equipment: ['dumbbell'] })).toEqual(['pectoralis_minor']);
+    expect(facet('equipment', { category: ['chest'], primary: ['pectoralis_minor'] })).toEqual([
       'dumbbell',
     ]);
     expect(facet('category', { equipment: ['dumbbell'] })).toEqual(['chest']);
@@ -95,9 +93,9 @@ describe('connected facets and independent editor vocabulary', () => {
   });
 
   it('ORs multiple muscles in one facet while retaining AND against equipment', () => {
-    expect(run({ muscle: ['pectoralis_major', 'latissimus'] })).toEqual(['0001', '0003']);
-    expect(run({ muscle: ['pectoralis_major', 'latissimus'], equipment: ['dumbbell'] })).toEqual([]);
-    expect(facet('muscle', { category: ['chest'], muscle: ['pectoralis_major'] }))
+    expect(run({ primary: ['pectoralis_major', 'latissimus'] })).toEqual(['0001', '0003']);
+    expect(run({ primary: ['pectoralis_major', 'latissimus'], equipment: ['dumbbell'] })).toEqual([]);
+    expect(facet('primary', { category: ['chest'], primary: ['pectoralis_major'] }))
       .toContain('pectoralis_minor');
   });
 
@@ -107,18 +105,48 @@ describe('connected facets and independent editor vocabulary', () => {
         primary: ['latissimus'], secondary: [], stabilizers: [], emphasis: [],
       },
     };
-    expect(facetedFilterOptions('muscle', [...exercises, custom], taxonomy, labels,
+    expect(facetedFilterOptions('primary', [...exercises, custom], taxonomy, labels,
       { category: ['chest'] }).map(option => option.id)).toContain('latissimus');
   });
 
   it('never applies facets to editor options and always returns Russian labels', () => {
     const editor = editorFieldOptions('muscle', exercises, taxonomy);
     expect(editor.map(option => option.id)).toContain('latissimus');
+    expect(editor.map(option => option.id)).toContain('pectoral_zone');
     expect(editorFieldOptions('equipment', exercises, taxonomy).find(option => option.id === 'barbell')?.label)
       .toBe('Штанга');
     expect(exerciseValueLabel('movement_type', 'resistance')).toBe('Силовые');
     expect(exerciseValueLabel('equipment', 'dumbbell')).toBe('Гантели');
     expect(editorFieldOptions('category', exercises, taxonomy).find(option => option.id === 'legs')?.label)
       .toBe('Ноги');
+  });
+});
+
+describe('same-label aliases and taxonomy zones', () => {
+  it('matches all underlying equipment IDs when one shared Russian label is selected', () => {
+    const aliases = [
+      { ...base, id: 'a', equipment: 'unknown-a' },
+      { ...base, id: 'b', equipment: 'unknown-b' },
+    ];
+    const options = filterOptions('equipment', aliases, taxonomy, {});
+    expect(options.filter(option => option.label === 'Другое оборудование')).toHaveLength(1);
+    expect(filterPublicExercises(aliases, taxonomy, {
+      equipment: [options.find(option => option.label === 'Другое оборудование')!.id],
+    }, '').map(row => row.id)).toEqual(['a', 'b']);
+  });
+
+  it('includes original zone IDs in every editor anatomical role and matching filter', () => {
+    const custom = { ...base, id: 'zone-example', muscles: {
+      primary: ['pectoral_zone'], secondary: ['pectoral_zone'],
+      stabilizers: ['pectoral_zone'], emphasis: ['pectoral_zone'],
+    } };
+    expect(editorFieldOptions('muscle', [custom], taxonomy).map(option => option.id))
+      .toContain('pectoral_zone');
+    for (const role of ['primary', 'secondary', 'stabilizers', 'emphasis'] as const) {
+      expect(filterPublicExercises([custom], taxonomy, { [role]: ['pectoral_zone'] }, ''))
+        .toHaveLength(1);
+      expect(facetedFilterOptions(role, [custom], taxonomy, {}, {}).map(option => option.id))
+        .toContain('pectoral_zone');
+    }
   });
 });
