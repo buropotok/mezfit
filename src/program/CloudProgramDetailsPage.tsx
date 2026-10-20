@@ -137,6 +137,7 @@ export function CloudProgramDetailsPage({
   const [dayCreatePhaseId, setDayCreatePhaseId] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [editNoticeOpen, setEditNoticeOpen] = useState(false);
+  const [fabPresented, setFabPresented] = useState(false);
   const explainSelection = useCallback(() => setEditNoticeOpen(true), []);
 
   useEffect(() => {
@@ -212,6 +213,7 @@ export function CloudProgramDetailsPage({
   }, [details, readOnly, busy, phaseCreateBusy, selectionMode, explainSelection]);
   const floatingAction = useMemo(() => details && (!readOnly || selectionMode) ? {
     label: 'Добавить',
+    onPresentationChange: setFabPresented,
     icon: 'plus' as const,
     popoverItems: [
       { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: addPhase, disabled: busy || phaseCreateBusy },
@@ -339,9 +341,19 @@ export function CloudProgramDetailsPage({
       <Button onClick={() => setRetryKey((n) => n + 1)}>Повторить</Button>
     </section>
   );
+  const schedulingUnavailable = selectionMode && readOnly
+    ? details.program.status !== 'active'
+      ? 'Эта программа доступна только для просмотра. Запланировать тренировку можно после того, как тренер активирует программу и фазу.'
+      : !details.phases.some(phase => phase.status === 'active')
+        ? 'В программе нет активной доступной фазы. Запланировать тренировку можно после того, как тренер активирует фазу.'
+        : !(details.days ?? []).some(item => item.day.status === 'active'
+          && details.phases.some(phase => phase.id === item.day.programPhaseId && phase.status === 'active'))
+          ? 'В активной фазе пока нет доступных дней для планирования. Обратитесь к тренеру или выберите другую программу.'
+          : null
+    : null;
   return (
     <SpotlightHint hintId="schedule.program.pick-day" version={1} userId={repository.actorUserId}
-      enabled={selectionMode} paused={Boolean(dialog || editNoticeOpen || phaseCreateOpen || dayCreatePhaseId)}
+      enabled={selectionMode} paused={Boolean(fabPresented || schedulingUnavailable || dialog || editNoticeOpen || phaseCreateOpen || dayCreatePhaseId)}
       text="Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.">
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
       {syncNotice}
@@ -362,6 +374,7 @@ export function CloudProgramDetailsPage({
           Чтобы подготовленная фаза появилась у клиента, завершите её заполнение.
         </Text>
       ) : null}
+      {schedulingUnavailable ? <Text variant="body" role="status">{schedulingUnavailable}</Text> : null}
       <Text variant="title">Фазы</Text>
       {details.phases.length ? details.phases.map((phase) => (
         <PhaseHeading key={phase.id} phase={phase} disabled={busy} readOnly={readOnly && !selectionMode}
@@ -377,7 +390,10 @@ export function CloudProgramDetailsPage({
             },
           }); }}
         >
-          {(collapsed, bodyId) => <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
+          {(collapsed, bodyId) => <>
+            {selectionMode && readOnly && !schedulingUnavailable && phase.status !== 'active'
+              ? <Text variant="footnote">Из этой фазы пока нельзя запланировать тренировку. Фазу должен активировать тренер.</Text> : null}
+            <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
             onActivateForScheduling={(phaseId, onActivated) => {
               const target = details.phases.find(item => item.id === phaseId);
               if (!target || readOnly || busy) return;
@@ -387,7 +403,7 @@ export function CloudProgramDetailsPage({
             }}
             onMutationAttempt={selectionMode ? explainSelection : undefined}
             phaseStatus={phase.status} days={(details.days ?? []).filter((item) => item.day.programPhaseId === phase.id)}
-            collapsed={collapsed} bodyId={bodyId} viewerRole={viewerRole} onNavigationContextChange={onNavigationContextChange} readOnly={readOnly} actor={actor} /> }
+            collapsed={collapsed} bodyId={bodyId} viewerRole={viewerRole} onNavigationContextChange={onNavigationContextChange} readOnly={readOnly} actor={actor} /></> }
         </PhaseHeading>
       )) : <Text variant="footnote" tone="muted">{readOnly ? 'В программе пока нет подготовленных фаз.' : 'Добавьте первую фазу через кнопку «Добавить».'}</Text>}
       <MezfitDialog
