@@ -90,7 +90,7 @@ describe('SettingsPage modules gallery', () => {
 
     const workedMusclesModule = screen.getByRole('region', { name: 'WorkedMuscles' });
     expect(within(workedMusclesModule).getByText('Проработанные мышцы')).toBeTruthy();
-    expect(within(workedMusclesModule).getByRole('region', { name: 'Вид спереди' })).toBeTruthy();
+    expect(within(workedMusclesModule).getByRole('region', { name: 'Вид 3/4 спереди' })).toBeTruthy();
     expect(within(workedMusclesModule).getByRole('region', { name: 'Вид сзади' })).toBeTruthy();
     expect(within(workedMusclesModule).getAllByRole('img')).toHaveLength(2);
     expect(within(workedMusclesModule).getAllByRole('checkbox')).toHaveLength(2);
