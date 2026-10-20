@@ -33,6 +33,7 @@ function AttributePicker({ label, selected, options, disabled = false, multiple,
     id: '__exercise-clear-selection__',
     label: 'Очистить выбор',
     active: false,
+    kind: 'action' as const,
     onSelect: () => onSelect([]),
   });
 
