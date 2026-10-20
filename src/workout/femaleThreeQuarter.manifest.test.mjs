@@ -42,10 +42,12 @@ describe('approved female 3/4 atlas media', () => {
     expect(data.length).toBe(16 + width * height);
     const ids = data.subarray(16);
     const counts = new Uint32Array(41);
+    let highestId = 0;
     for (const id of ids) {
-      expect(id).toBeLessThanOrEqual(40);
-      counts[id] += 1;
+      if (id > highestId) highestId = id;
+      if (id < counts.length) counts[id] += 1;
     }
+    expect(highestId).toBeLessThanOrEqual(40);
     expect(counts[1]).toBeGreaterThan(0);
     expect(counts[7]).toBeGreaterThan(0);
     expect(counts[21]).toBeGreaterThan(0);
