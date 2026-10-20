@@ -50,10 +50,10 @@ const publicExercise: CatalogueExerciseRow = {
 
 afterEach(cleanup);
 
-describe('tracking type on the public exercise detail card', () => {
+describe('localized metadata on shared exercise detail cards', () => {
   it('shows the synchronized weight/reps value rather than guessing from category', () => {
     render(<ExerciseDetail row={publicExercise} taxonomy={[]} />);
-    expect(screen.getByText('Тип учёта: Вес и повторения (weight_reps)')).toBeTruthy();
+    expect(screen.getByText('Тип учёта: Вес и повторения')).toBeTruthy();
   });
 
   it('shows the cardio value supplied by the public exercise row', () => {
@@ -61,12 +61,12 @@ describe('tracking type on the public exercise detail card', () => {
       ...publicExercise, id: '0002', tracking_type: 'time_distance',
       // The category is intentionally unchanged: the UI reads the field, not a heuristic.
     }} taxonomy={[]} />);
-    expect(screen.getByText('Тип учёта: Время и дистанция (time_distance)')).toBeTruthy();
+    expect(screen.getByText('Тип учёта: Время и дистанция')).toBeTruthy();
   });
 
   it('shows a missing value explicitly rather than silently defaulting to weight/reps', () => {
     render(<ExerciseDetail row={{ ...publicExercise, tracking_type: undefined }} taxonomy={[]} />);
-    expect(screen.getByText('Тип учёта: Не указан')).toBeTruthy();
+    expect(screen.queryByText(/Тип учёта:/)).toBeNull();
   });
 
   it('keeps square media an explicit opt-in for exercise detail', () => {
@@ -78,11 +78,18 @@ describe('tracking type on the public exercise detail card', () => {
     expect(container.querySelector('.mezfit-public-exercises__media-content--square')).not.toBeNull();
   });
 
-  it('does not claim a public tracking type for a private exercise', () => {
+  it('shows the same Russian tracking type for a private exercise', () => {
     render(<ExerciseDetail row={{
       ...publicExercise, id: 'custom:example', realmId: 'tg:1234', owner: 'tg:1234',
       sourceSha256: 'coach-custom',
     }} taxonomy={[]} origin="personal" />);
-    expect(screen.queryByText(/Тип учёта:/)).toBeNull();
+    expect(screen.getByText('Тип учёта: Вес и повторения')).toBeTruthy();
+  });
+  it('shows equipment and movement in Russian without leaking technical IDs', () => {
+    render(<ExerciseDetail row={publicExercise} taxonomy={[]} />);
+    expect(screen.getByText('Категория: Грудь')).toBeTruthy();
+    expect(screen.getByText('Оборудование: Штанга')).toBeTruthy();
+    expect(screen.getByText('Тип движения: Силовые')).toBeTruthy();
+    expect(screen.queryByText(/barbell|resistance|weight_reps/)).toBeNull();
   });
 });
