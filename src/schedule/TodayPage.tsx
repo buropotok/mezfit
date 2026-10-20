@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Chip } from 'konsta/react';
 import type { Role } from '../api';
 import { useNavigationSurfaceFloatingAction, type NavigationContext } from '../NavigationShell';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
+import { ScheduleWorkoutCreator } from './ScheduleWorkoutCreator';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { draftFromOccurrence } from '../data/cloud/workout-occurrence-plan';
 import { bookingsShareParticipant } from '../data/cloud/workout-slot-validation';
@@ -13,7 +15,7 @@ import { useWorkoutPerson } from './WorkoutPerson';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import { Badge, DaySchedule, DayScheduleEventCard, Text, getDayScheduleValue,
-  type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
+  IconButton, type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
 import { useSchedulePlanning } from './SchedulePlanningContext';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 import { ScheduleClientFilter } from './ScheduleClientFilter';
@@ -67,6 +69,12 @@ export function TodayPage({
   const planning = useSchedulePlanning();
   const [clientUserIds, setClientUserIds] = useState<string[]>([]);
   const [filterOpened, setFilterOpened] = useState(false);
+  const [creation, setCreation] = useState<'workout' | 'event' | null>(null);
+  const [creationNotice, setCreationNotice] = useState('');
+  const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
+  const closeCreation = useCallback(() => setCreation(null), []);
+  const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
+    [cloud?.db, cloud?.actorUserId]);
   const clients = useMemo(() => [...new Map((cloud?.clients ?? []).map(client => [client.userId, client])).values()], [cloud?.clients]);
   const [date, setDate] = useState<LocalDate>(currentDate);
   const [occurrences, setOccurrences] = useState<CloudWorkoutOccurrenceRow[]>([]);
@@ -104,11 +112,12 @@ export function TodayPage({
     };
   }, [draftRepository]);
 
-  useEffect(() => { setClientUserIds([]); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); }, [planning?.viewResetKey, cloud?.actorUserId]);
+  useEffect(() => { setClientUserIds([]); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
 
   useEffect(() => {
     if (!planning?.requestedDraftId) return;
     setClientUserIds(role === 'coach' && planning.requestedClientUserId ? [planning.requestedClientUserId] : []);
+    setCreation(null);
     setOpenedDraftId(planning.requestedDraftId);
     planning.clearDraft();
   }, [planning?.requestedDraftId]);
@@ -119,11 +128,15 @@ export function TodayPage({
     const row = occurrences.find(item => 'draft:' + item.id === openedDraftId);
     return row && cloud ? draftFromOccurrence(cloud.actorUserId, row) : viewed;
   }, [drafts, occurrences, openedDraftId, viewed, cloud?.actorUserId]);
-  const closeEditor = () => { setOpenedDraftId(null); setViewed(null); };
-  const filterAction = useMemo(() => role === 'coach' && !selected ? {
-    label: 'Поиск клиента', icon: 'search' as const, isShown: !filterOpened, onClick: () => setFilterOpened(true),
-  } : null, [role, selected?.id, filterOpened]);
-  useNavigationSurfaceFloatingAction(filterAction);
+  const closeEditor = useCallback(() => { setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
+  const createAction = useMemo(() => !selected && !creation && !filterOpened ? {
+    label: 'Создать', icon: 'plus' as const,
+    popoverItems: [
+      { id: 'workout', label: '+ Тренировка', icon: 'barbell' as const, onSelect: () => setCreation('workout') },
+      { id: 'event', label: '+ Событие', icon: 'calendar-event' as const, onSelect: () => setCreation('event') },
+    ],
+  } : null, [selected?.id, creation, filterOpened]);
+  useNavigationSurfaceFloatingAction(createAction);
   const mayEdit = (row: CloudWorkoutOccurrenceRow) => row.status === 'scheduled' && !row.workoutSessionId
     && (row.athleteUserId === cloud?.actorUserId || row.coachUserId === cloud?.actorUserId)
     && (row.format !== 'coached' || row.coachUserId === cloud?.actorUserId);
@@ -132,7 +145,10 @@ export function TodayPage({
   }, [selected?.id, selected?.startsAtUtc]);
 
   useEffect(() => {
-    if (selected) {
+    if (creation) return;
+    if (editorNavigation && selected) {
+      onNavigationContextChange(editorNavigation);
+    } else if (selected) {
       onNavigationContextChange({
         level: 2, title: 'Запланированная тренировка',
         scrollKey: 'schedule:draft:' + selected.id,
@@ -154,7 +170,7 @@ export function TodayPage({
       });
     }
     return () => onNavigationContextChange(null);
-  }, [date, selected?.id, filterOpened, onNavigationContextChange]);
+  }, [date, selected?.id, filterOpened, creation, editorNavigation, onNavigationContextChange]);
 
   const merged = useMemo(() => {
     const withTiming = <T extends LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow>(row: T, type: string): T =>
@@ -187,10 +203,11 @@ export function TodayPage({
     setProgramUpdateError('');
     const draft = await draftRepository.get(selectedDraft.id);
     if (!draft) throw new Error('Черновик не найден');
-    const id = await draftRepository.save(draft.id);
+    const id = draft.autoCreatedProgram && !draft.previouslyPublished && planner
+      ? await planner.publish(draft.id) : await draftRepository.save(draft.id);
     if (activeRepository.current !== draftRepository) return;
     setOpenedDraftId(current => current === selectedDraft.id ? 'draft:' + id : current);
-    if (updateProgram) {
+    if (updateProgram && draft.trainingPlanId && draft.programDayId) {
       // Updating the source is a separate local operation; the workout is already saved.
       const repository = new ProgramManagementRepository(cloud.db, cloud.actorUserId);
       try {
@@ -247,7 +264,7 @@ export function TodayPage({
   const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить тренировку')); };
 
   return (
-    <section className={`today-page${clientUserIds.length && role === 'coach' ? ' today-page--filtered' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
+    <section className={`today-page${creation || selected || filterOpened ? ' today-page--sheet-open' : ''}${clientUserIds.length && role === 'coach' ? ' today-page--filtered' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
       <DaySchedule date={date} eventsByDate={eventsByDate} onDateChange={setDate}
         className="today-page__schedule"
         eventsShareResource={(event, other) => bookingsShareParticipant(
@@ -262,6 +279,10 @@ export function TodayPage({
         renderEvent={(event, state) => <BookingCard event={event} state={state} actor={actor}
           onClick={() => report(openEvent(event))} />} />
 
+      {role === 'coach' && !selected && !creation && !filterOpened ? <div className="today-page__search-action">
+        <IconButton theme="glass" icon="search" label="Поиск клиента" style={{ width: 44, height: 44 }}
+          onClick={() => setFilterOpened(true)} />
+      </div> : null}
       {role === 'coach' && clientUserIds.length ? <div className="today-page__filters" aria-label="Выбранные клиенты">
         {clientUserIds.map(id => {
           const client = clients.find(person => person.userId === id);
@@ -286,8 +307,15 @@ export function TodayPage({
           </Text>
         </div>
       ) : null}
+      <ScheduleWorkoutCreator intent={creation} role={role} actor={actor} onClose={closeCreation}
+        onNavigationContextChange={onNavigationContextChange} onCreated={(id, client, message) => {
+          setCreation(null); setCreationNotice(message);
+          setClientUserIds(role === 'coach' && client ? [client] : []);
+          setViewed(null); setOpenedDraftId(id);
+        }} />
       {draftRepository ? <OccurrenceDraftSheet draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
-        onClose={closeEditor} onSave={save} saveNotice={programUpdateError} /> : null}
+        onClose={closeEditor} onSave={save} saveNotice={programUpdateError || creationNotice}
+        onNavigationContextChange={setEditorNavigation} /> : null}
     </section>
   );
 }
