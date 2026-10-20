@@ -147,7 +147,7 @@ it('keeps the multi-selection menu open until Done while respecting selected sta
       { id: 'leg', label: 'Четырёхглавая мышца', active: false, onSelect: () => choose('leg') },
     ],
   };
-  render(<LiquidPopover {...props} isOpen />);
+  const view = render(<LiquidPopover {...props} isOpen />);
   await act(async () => { vi.advanceTimersByTime(32); });
 
   const chest = screen.getByRole('menuitemcheckbox', { name: 'Грудная мышца' });
@@ -158,6 +158,13 @@ it('keeps the multi-selection menu open until Done while respecting selected sta
   fireEvent.click(leg);
   expect(choose).toHaveBeenCalledWith('leg');
   expect(setOpen).not.toHaveBeenCalled();
+  // Parent updates checked values while the popup is still open.
+  view.rerender(<LiquidPopover {...props} isOpen items={props.items.map(item => ({
+    ...item, active: true,
+  }))} />);
+  expect(screen.getByRole('menuitemcheckbox', { name: 'Четырёхглавая мышца' })
+    .getAttribute('aria-checked')).toBe('true');
+  expect(screen.getByRole('menu')?.querySelector('canvas')?.style.display).toBe('none');
   fireEvent.click(screen.getByRole('menuitem', { name: 'Готово' }));
   expect(setOpen).toHaveBeenCalledWith(false);
 });
