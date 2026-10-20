@@ -12,7 +12,7 @@ import { ProgramPhaseDays } from './ProgramPhaseDays';
 import { ProgramDayDialog } from './ProgramDayDialog';
 import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogState, type PlanDialogOption } from './PlanActionDialog';
-import { SpotlightHint, useSpotlightHintPause } from '../ui/SpotlightHint';
+import { SpotlightHint } from '../ui/SpotlightHint';
 import './cloud-plan-management.css';
 
 const INACTIVE: readonly PlanDialogOption[] = [
@@ -48,7 +48,6 @@ function PhaseHeading({
   onPublish: (phase: CloudProgramPhaseRow) => void;
 }) {
   const [open, setOpen] = useState(false);
-  useSpotlightHintPause(open);
   const [collapsed, setCollapsed] = useState(false);
   const [toggled, setToggled] = useState(false);
   const bodyId = useId();
