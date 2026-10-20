@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
@@ -10,9 +10,13 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
-  Badge, Text, TimePicker, Icon, IconButton, type LocalDate, type LocalTime } from '../ui';
+  Badge, Text, TimePicker, Icon, IconButton, LiquidPopover, type LocalDate, type LocalTime } from '../ui';
 import { localScheduleInstant, localScheduleEnd } from './calendar-time';
 import { useWorkoutPerson } from './WorkoutPerson';
+import type { NavigationContext } from '../NavigationShell';
+import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
+import { WorkoutProgramSheet } from './WorkoutProgramSheet';
+import { loadBrowserGlassSettings } from '../glassSettings';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { WorkoutSyncStatus } from './WorkoutSyncStatus';
 import './occurrence-draft-sheet.css';
@@ -29,12 +33,12 @@ function currentEnd(draft: LocalWorkoutOccurrenceDraft): Date {
 }
 function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
   return {
-    day: { id: draft.programDayId, realmId: draft.realmId, owner: null,
+    day: { id: draft.programDayId ?? draft.id, realmId: draft.realmId, owner: null,
       programPhaseId: '', status: 'active', position: 0, name: draft.plan.name,
       comment: draft.plan.comment, category: draft.plan.category ?? null },
     exercises: draft.plan.exercises.map(ex => ({
       exercise: { id: ex.id, realmId: draft.realmId, owner: null,
-        programDayId: draft.programDayId, position: ex.position,
+        programDayId: draft.programDayId ?? draft.id, position: ex.position,
         exercise: ex.exercise, notes: ex.notes, status: 'active' },
       sets: ex.sets.map(set => ({
         id: set.id, realmId: draft.realmId, owner: null, programExerciseId: ex.id,
@@ -55,12 +59,21 @@ export interface OccurrenceDraftSheetProps {
   actor?: ProgramActor;
   readOnly?: boolean;
   saveNotice?: string;
+  onNavigationContextChange?: (value: NavigationContext | null) => void;
   onClose: () => void;
   onSave: (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => Promise<void>;
 }
 
-function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', container }: OccurrenceDraftSheetProps & { container: HTMLDivElement }) {
+function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', container, onNavigationContextChange }: OccurrenceDraftSheetProps & { container: HTMLDivElement }) {
   const cloud = useCloudConnections();
+  const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
+    [cloud?.db, cloud?.actorUserId]);
+  const [programSheetOpen, setProgramSheetOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [openProgramAfterMenu, setOpenProgramAfterMenu] = useState(false);
+  const actionsRef = useRef<HTMLButtonElement>(null);
+  const closeProgramSheet = useCallback(() => setProgramSheetOpen(false), []);
+  const glass = loadBrowserGlassSettings();
   const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
   const [dateOpened, setDateOpened] = useState(false);
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
@@ -150,7 +163,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
       const owner = (latest.coachUserId ?? latest.athleteUserId) === latest.actorUserId;
-      if (!latest.previouslyPublished && owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
+      if (!latest.autoCreatedProgram && latest.trainingPlanId && latest.programDayId
+        && !latest.previouslyPublished && owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
         setProgramUpdateOpen(true);
       } else {
         await onSave(latest, false);
@@ -192,6 +206,17 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       {draft ? createPortal(<section className="occurrence-draft-sheet">
         <header className="occurrence-draft-sheet__header">
           <Text variant="headline">Запланированная тренировка</Text>
+          {planner ? <LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
+            triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
+            trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
+            items={[{ id: 'program', label: 'Добавить в программу', icon: 'copy', disabled: busy,
+              onSelect: () => { setOpenProgramAfterMenu(true); setActionsOpen(false); } }]}
+            onPresentationChange={presented => {
+              if (presented || !openProgramAfterMenu) return;
+              setOpenProgramAfterMenu(false);
+              void flushEdits().then(() => setProgramSheetOpen(true))
+                .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось сохранить правки'));
+            }} /> : null}
           <IconButton label="Закрыть" onClick={onClose}>✕</IconButton>
         </header>
         <div className="occurrence-draft-sheet__body">
@@ -213,7 +238,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             </Button></span>
           </div>
           <Text variant="body">План на тренировку</Text>
-          <WorkoutPlanCard mode="planning" day={outline(draft)} programName={draft.plan.name}
+          <WorkoutPlanCard mode="planning" day={outline(draft)} programName={draft.plan.name} hideProgramName={!draft.trainingPlanId}
             creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
             onEdit={() => {}} onComment={() => {}} onMove={() => {}}
@@ -242,6 +267,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         </footer> : null}
       </section>, container) : null}
     {draft ? <>
+      {planner ? <WorkoutProgramSheet opened={programSheetOpen} planner={planner} draft={draft}
+        onClose={closeProgramSheet} onNavigationContextChange={onNavigationContextChange} /> : null}
       <DatePicker opened={dateOpened} value={localDate(start)}
         onChange={date => editStart(date, localTime(start))}
         onClose={() => setDateOpened(false)} />

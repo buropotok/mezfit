@@ -23,7 +23,11 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
     || typeof row.realmId !== 'string' || !row.realmId
     || (row.owner !== null && row.owner !== row.realmId)
     || (row.cancelledAt !== undefined && row.cancelledAt !== null && !isUtcInstant(row.cancelledAt))
-    || typeof row.programDayId !== 'string' || !row.programDayId
+    || (row.programDayId !== undefined && (typeof row.programDayId !== 'string' || !row.programDayId))
+    || (row.trainingPlanId !== undefined && (typeof row.trainingPlanId !== 'string' || !row.trainingPlanId))
+    || (row.trainingPlanId !== undefined && row.programDayId === undefined)
+    || (row.autoCreatedProgram !== undefined && typeof row.autoCreatedProgram !== 'boolean')
+    || (row.autoCreatedProgram === true && !row.programDayId)
     || !isWorkoutOccurrencePlan(row.plan)
     || (row.draftAuthorUserId !== undefined && !validCloudUserId(row.draftAuthorUserId))
     || (row.publicationStatus !== undefined && !['draft', 'published'].includes(row.publicationStatus))
@@ -106,7 +110,7 @@ export class WorkoutSchedulingRepository {
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
     return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled' && !row.cancelledAt
       && (row.publicationStatus !== 'draft' || (row.coachUserId ?? row.athleteUserId) === this.actorUserId || (row.draftAuthorUserId ?? row.createdByUserId) === this.actorUserId)
-      && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
+      && row.programDayId !== undefined && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
       && row.athleteUserId === (plan.clientUserId ?? this.actorUserId)
       && row.coachUserId === plan.coachUserId
       && (view !== 'calendar' || this.actorUserId !== plan.coachUserId

@@ -1,0 +1,14 @@
+.workout-planning-sheet {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.workout-planning-sheet__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.workout-planning-sheet__programs { display: flex; flex-direction: column; gap: 12px; }

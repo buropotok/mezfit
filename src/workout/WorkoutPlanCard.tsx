@@ -8,6 +8,7 @@ import { SessionExercise } from './SessionExercise';
 export interface WorkoutPlanCardProps {
   mode: 'planning';
   programName?: string;
+  hideProgramName?: boolean;
   canScheduleCoached?: boolean;
   onSchedule?: (format: WorkoutScheduleFormat) => void;
   hideProgramMenu?: boolean;
@@ -43,7 +44,7 @@ PlanGlassButton.displayName = 'PlanGlassButton';
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
   day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule,
-  hideProgramMenu = false, hideWorkoutActions = false,
+  hideProgramMenu = false, hideWorkoutActions = false, hideProgramName = false,
   onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
   onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet,
@@ -89,9 +90,9 @@ export function WorkoutPlanCard({
         </span>
         <div className="workout-session-card__copy">
           <Text variant="body" className="workout-session-card__workout-name">{day.name}</Text>
-          <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
+          {!hideProgramName ? <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
             {programName}
-          </Text>
+          </Text> : null}
         </div>
         {menu.length ? <LiquidPopover isOpen={menuOpen} onOpenChange={setMenuOpen}
           triggerRef={triggerRef} label={`Меню дня ${day.name}`} items={menu}

@@ -9,16 +9,13 @@ import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Text } from '../ui';
 import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import { ProgramDayDialog } from './ProgramDayDialog';
-import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
-import { draftFromProgramDay } from '../data/cloud/workout-occurrence-plan';
-import { WorkoutSchedulingRepository } from '../data/cloud/workout-scheduling';
+import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
 import { useSchedulePlanning } from '../schedule/SchedulePlanningContext';
 import { PlanActionDialog } from './PlanActionDialog';
 import type { ProgramActor } from './ProgramSummary';
 import { usePhaseDayMotion } from './usePhaseDayMotion';
 import { ProgramDayExercisePicker } from './ProgramDayExercisePicker';
-import { nextAvailableSlot } from '../schedule/available-slot';
 import { programMutationMessage } from './programPresentation';
 
 const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
@@ -108,7 +105,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     running.current = true;
     setBusy(true);
     setError('');
-    const draftStore = new WorkoutOccurrenceDraftRepository(cloud.db, repository.actorUserId);
+    const planner = new WorkoutPlanningRepository(cloud.db, repository.actorUserId);
     try {
       const fresh = activated ? await repository.details(program.id) : null;
       if (!alive.current) return;
@@ -117,24 +114,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       const sourcePhase = activated ? fresh?.phases.find(phase => phase.id === item.day.programPhaseId)?.status : phaseStatus;
       if (!sourceDay || source.status !== 'active' || sourcePhase !== 'active')
         throw new Error('Программа и фаза должны быть активны для планирования');
-      // Suggest the next free 15-minute slot from authorized local calendar data.
-      const scheduling = new WorkoutSchedulingRepository(cloud.db, repository.actorUserId);
-      const athlete = source.clientUserId ?? repository.actorUserId;
-      const entries = (await Promise.all([scheduling.listCalendar(athlete),
-        draftStore.list(),
-        ...(format === 'coached' ? [scheduling.listCalendar()] : []),
-      ])).flat().filter(occurrence =>
-        occurrence.athleteUserId === athlete
-        || (occurrence.coachUserId === athlete && occurrence.format === 'coached')
-        || (format === 'coached' && occurrence.athleteUserId === repository.actorUserId)
-        || (format === 'coached' && occurrence.coachUserId === repository.actorUserId
-          && occurrence.format === 'coached'));
-      const durationMinutes = 60;
-      const slot = nextAvailableSlot(entries, new Date(), durationMinutes);
-      if (!slot) throw new Error('Не удалось найти свободное время. Выберите другой период в расписании');
-      const draft = draftFromProgramDay(repository.actorUserId, source, sourceDay,
-        format, slot.toISOString(), durationMinutes, sourcePhase);
-      const id = await draftStore.create(draft);
+      const id = await planner.createFromProgramDay(source, sourceDay, format, sourcePhase);
       if (alive.current) planning.openDraft(id, format === 'independent' && program.clientUserId ? program.clientUserId : null);
     } catch (reason) {
       if (alive.current) setError(programMutationMessage(reason));

@@ -83,6 +83,7 @@ export class WorkoutOccurrenceDraftRepository {
       const id = await this.db.workoutOccurrences.add({
         realmId: draft.realmId, owner: draft.realmId,
         trainingPlanId: draft.trainingPlanId, programDayId: draft.programDayId,
+        ...(draft.autoCreatedProgram ? { autoCreatedProgram: true } : {}),
         athleteUserId: draft.athleteUserId, coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
         format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
         status: 'scheduled', workoutSessionId: null, publicationStatus: 'draft', draftAuthorUserId: this.actorUserId,
@@ -182,6 +183,7 @@ export class WorkoutOccurrenceDraftRepository {
         || changed.targetOccurrenceId !== current.targetOccurrenceId
         || changed.realmId !== current.realmId || changed.programDayId !== current.programDayId
         || changed.trainingPlanId !== current.trainingPlanId
+        || changed.autoCreatedProgram !== current.autoCreatedProgram
         || changed.clientUserId !== current.clientUserId || changed.coachUserId !== current.coachUserId
         || changed.athleteUserId !== current.athleteUserId || changed.format !== current.format
         || !isWorkoutOccurrencePlan(changed.plan)) throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
@@ -221,6 +223,7 @@ export class WorkoutOccurrenceDraftRepository {
       const occurrenceId = id.slice(6);
       await this.db.workoutOccurrences.update(occurrenceId, {
         publicationStatus: 'published', updatedAt: new Date().toISOString(),
+        ...(draft.autoCreatedProgram && !draft.previouslyPublished ? { publishedPlan: structuredClone(draft.plan) } : {}),
       });
       await markWorkoutChanged(this.db, occurrenceId);
       return occurrenceId;

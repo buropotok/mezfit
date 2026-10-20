@@ -275,6 +275,27 @@ export class ProgramManagementRepository {
       return id;
     });
   }
+  /** Authorable programs in one athlete/coach scope, independent of status. */
+  async listForScheduling(athleteUserId: string): Promise<CloudTrainingPlanRow[]> {
+    const candidates = (await this.db.trainingPlans.toArray()).filter(plan => athleteUserId === this.actorUserId
+      ? this.own(plan) : plan.clientUserId === athleteUserId && plan.coachUserId === this.actorUserId);
+    const result: CloudTrainingPlanRow[] = [];
+    for (const plan of candidates) if (await this.readable(plan)) result.push(plan);
+    return sortAssignedPlans(result);
+  }
+
+  observeWorkoutTargets(athleteUserId: string,
+    onChange: (rows: ProgramDetails[]) => void, onError: (reason: unknown) => void) {
+    return liveQuery(async () => {
+      const result: ProgramDetails[] = [];
+      for (const plan of await this.listForScheduling(athleteUserId)) {
+        const details = await this.details(plan.id);
+        if (details) result.push(details);
+      }
+      return result;
+    }).subscribe({ next: onChange, error: onError });
+  }
+
   async renameProgram(id: string, name: string): Promise<void> {
     const plan = await this.writable(id);
     await this.write(['trainingPlans'], async () => {
@@ -668,6 +689,57 @@ export class ProgramManagementRepository {
           if (!retained.has(oldSet.id)) await this.db.programSets.update(oldSet.id, { status: 'deprecated' });
         }
       }
+    });
+  }
+
+  /** Explicit copy into an authorable day. Source occurrence/history remain untouched. */
+  async saveWorkoutAsDay(athleteUserId: string, target: {
+    programId: string; phaseId: string; dayId?: string; name: string;
+    expected?: WorkoutOccurrencePlan;
+  }, prescription: WorkoutOccurrencePlan): Promise<string> {
+    if (!isWorkoutOccurrencePlan(prescription)) throw new Error('Некорректный план тренировки');
+    const plan = await this.writable(target.programId);
+    if ((athleteOf(plan) ?? this.actorUserId) !== athleteUserId)
+      throw new Error('Выберите программу этого атлета');
+    await this.dayAuthoringReady(plan);
+    // Program days prescribe structure, never numeric PLAN or FACT values.
+    const copy: WorkoutOccurrencePlan = { ...structuredClone(prescription), name: validName(target.name),
+      exercises: prescription.exercises.map(ex => ({ ...structuredClone(ex),
+        sourceProgramExerciseId: null,
+        sets: ex.sets.map(set => ({ ...structuredClone(set), sourceProgramSetId: null,
+          plannedReps: null, plannedWeightKg: null, plannedDurationSeconds: null, plannedDistanceMeters: null })),
+      })) };
+    for (const ex of copy.exercises) {
+      if (!isProgramExerciseSnapshot(ex.exercise)
+        || (ex.exercise.scope !== 'public' && !ex.exercise.catalogueDefinition))
+        throw new Error('Недостаточно данных упражнения для копирования');
+    }
+    return this.write(['trainingPlans', 'programPhases', 'programDays',
+      'programExercises', 'programSets', 'realms', 'members', 'roles'], async () => {
+      const current = await this.writable(plan.id);
+      await this.currentPhase(current, target.phaseId);
+      let dayId = target.dayId;
+      let original = target.expected;
+      if (dayId) {
+        const day = await this.currentDay(current, dayId);
+        if (day.programPhaseId !== target.phaseId || !original)
+          throw new Error('Выбранный день изменился. Выберите его повторно.');
+        const phase = await this.currentPhase(current, target.phaseId);
+        const outline = (await readProgramDays(this.db, current, [phase])).find(row => row.day.id === dayId);
+        if (!outline) throw new Error('День программы не найден');
+        const latest = snapshotProgramDay(outline);
+        if (occurrencePlanChanged(latest, original)
+          || (latest.category ?? null) !== (original.category ?? null)
+          || JSON.stringify(latest.exercises.map(row => row.exercise))
+            !== JSON.stringify(original.exercises.map(row => row.exercise)))
+          throw new Error('Этот день программы уже изменился. Выберите его повторно.');
+      } else {
+        dayId = await this.createDay(current.id, target.phaseId, target.name);
+        original = { name: target.name.trim(), category: null, comment: null, exercises: [] };
+      }
+      if (!original) throw new Error('Выберите день программы');
+      await this.applyOccurrencePlan(current.id, dayId, copy, original);
+      return dayId;
     });
   }
 

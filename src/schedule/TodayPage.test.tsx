@@ -90,7 +90,7 @@ describe('local-first calendar experience', () => {
     open();
     await waitFor(() => expect(screen.getByRole('region', { name: 'Расписание' }).getAttribute('aria-busy')).toBeNull());
     expect(screen.queryAllByTestId('segment')).toHaveLength(0);
-    act(() => state.filterAction?.onClick());
+    fireEvent.click(screen.getByRole('button', { name: 'Поиск клиента' }));
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента Анна' }));
     fireEvent.change(screen.getByPlaceholderText('Поиск клиента'), { target: { value: 'Бор' } });
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента Борис' }));
@@ -102,7 +102,7 @@ describe('local-first calendar experience', () => {
     fireEvent.click(chips.querySelector('[role="button"]')!);
     await waitFor(() => expect(screen.getAllByTestId('segment')).toHaveLength(1));
     expect(screen.getByTestId('segment').textContent).toContain('Борис');
-    act(() => state.filterAction?.onClick());
+    fireEvent.click(screen.getByRole('button', { name: 'Поиск клиента' }));
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента Вера' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть поиск клиентов' }));
     expect(screen.getAllByTestId('segment')).toHaveLength(1);
