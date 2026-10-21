@@ -9,3 +9,5 @@
 .occurrence-sync-status { align-self: flex-start; }
 .occurrence-draft-sheet__statuses { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .occurrence-sync-status__badge { display: inline-flex; padding: 0; border: 0; background: transparent; }
+
+.occurrence-draft-sheet__format { display: flex; align-items: center; gap: 8px; }
