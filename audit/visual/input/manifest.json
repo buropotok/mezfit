@@ -1,0 +1,92 @@
+{
+  "format": "stage-scoped lossless projections of source exercises[]",
+  "source_catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
+  "source_queue_sha256": "62a15d05444b763cbc29dbb04afabb585ca361d0236afb9be0339c8a593595db",
+  "records": 1324,
+  "stages": [
+    {
+      "stage": 1,
+      "file": "input/catalogue_stage_01.jsonl",
+      "count": 100,
+      "sha256": "3ea5a0ada89329723a1f484251db4dab8d7de4a2c064121b915cc8bca647e65b"
+    },
+    {
+      "stage": 2,
+      "file": "input/catalogue_stage_02.jsonl",
+      "count": 100,
+      "sha256": "1c84d19c4f8f88205fd592f871ce8ca657a18683f906942661b579e57b8e0650"
+    },
+    {
+      "stage": 3,
+      "file": "input/catalogue_stage_03.jsonl",
+      "count": 100,
+      "sha256": "4af4b16f54cfcc38fec5a8bc7b10404080e7aee3c72a09f212f98fe8367f1de5"
+    },
+    {
+      "stage": 4,
+      "file": "input/catalogue_stage_04.jsonl",
+      "count": 100,
+      "sha256": "0ca4f3725e2f5ffba361c2e919c768856e2e90294692033a45812b39f22fc157"
+    },
+    {
+      "stage": 5,
+      "file": "input/catalogue_stage_05.jsonl",
+      "count": 100,
+      "sha256": "aad5264e10f951f6684e857672e7a32fc919a57bc8c422a48b2308d1f483688a"
+    },
+    {
+      "stage": 6,
+      "file": "input/catalogue_stage_06.jsonl",
+      "count": 100,
+      "sha256": "f91390cd01912a30414fe44a952f1f8cf3883177f23e8a189e53be5a9c4098be"
+    },
+    {
+      "stage": 7,
+      "file": "input/catalogue_stage_07.jsonl",
+      "count": 100,
+      "sha256": "8e576dd8b4681acc42660bfeb007ef5de793459d257844082786de917e1224c5"
+    },
+    {
+      "stage": 8,
+      "file": "input/catalogue_stage_08.jsonl",
+      "count": 100,
+      "sha256": "a77837712c360cb9d28ef2e4aed3284e54bab298be096c1d4d2cf4c115057db6"
+    },
+    {
+      "stage": 9,
+      "file": "input/catalogue_stage_09.jsonl",
+      "count": 100,
+      "sha256": "5581fdd2cb5428bbc226b29aff5734c35f7be87c55be7fc301a5ea429e60966a"
+    },
+    {
+      "stage": 10,
+      "file": "input/catalogue_stage_10.jsonl",
+      "count": 100,
+      "sha256": "448ed1edffb899d92f869d68b590098b950035e36a7c0a94e0f6962f58f45568"
+    },
+    {
+      "stage": 11,
+      "file": "input/catalogue_stage_11.jsonl",
+      "count": 100,
+      "sha256": "0fd41d55ec54f818bdd5b9ab32746888784ef3cf66c9c8e65d618dca2ef3d847"
+    },
+    {
+      "stage": 12,
+      "file": "input/catalogue_stage_12.jsonl",
+      "count": 100,
+      "sha256": "4494d2b9fca797ed3578c230630fc068f2dd609fdec88dad0de12fcd35bee9d2"
+    },
+    {
+      "stage": 13,
+      "file": "input/catalogue_stage_13.jsonl",
+      "count": 100,
+      "sha256": "0e5203464651f667fa398b4b5fd028fd6f89cd5beb5a3c99d785ade47de8df3f"
+    },
+    {
+      "stage": 14,
+      "file": "input/catalogue_stage_14.jsonl",
+      "count": 24,
+      "sha256": "c4141d665cbba4f057b89736ad733686e7fd50754508ca22eccc27b3f3366786"
+    }
+  ]
+}
