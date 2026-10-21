@@ -32,6 +32,11 @@ function ClientSelection({ clients, loading, initial, onApply, onClose }: {
       </button>
       <IconButton label="Закрыть поиск клиентов" onClick={onClose}>✕</IconButton>
     </header>
+    <button type="button" className="schedule-client-filter__select-all"
+      disabled={loading || !clients.length}
+      onClick={() => setSelected([...new Set(clients.map(client => client.userId))])}>
+      <Text variant="body">Выбрать все</Text>
+    </button>
     <MezfitSearchbar inputId="schedule-client-search" placeholder="Поиск клиента" value={query}
       glassPreset="modalTuned" glassOptics={false}
       onChange={event => setQuery(event.currentTarget.value)} onClear={() => setQuery('')} />
