@@ -221,7 +221,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         </header>
         <div className="occurrence-draft-sheet__body">
           {error || saveNotice ? <Text variant="footnote" role="alert">{error || saveNotice}</Text> : null}
-          <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
+          <div className="occurrence-draft-sheet__format">
+            <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
+            <Icon name={draft.format === 'coached' ? 'users' : 'user'} style={{ width: 22, height: 22 }} />
+          </div>
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />
             <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>
