@@ -1,0 +1,554 @@
+{
+  "schema_version": "2.0.0",
+  "catalogue": "mezfit.exercise_catalog.ru_anatomy",
+  "metadata": {
+    "source_dataset": "hasaneyldrm/exercises-dataset",
+    "source_file_sha256": "656634224b8977b99a6d765470ee123260d4979715eaa4e7c0b7c8bb0d79f93d",
+    "exercise_count": 1324,
+    "source_id_preserved": true,
+    "media_id_and_paths_preserved": true,
+    "label_review": "bilingual lexical screening and targeted editorial corrections on English title/technique",
+    "anatomy_review": "all records reassessed by English title and exercise mechanics; 85 atypical records individually reconciled against source English instructions",
+    "external_reference_scope": "representative exercise movement families, not individual certification of all 1324 exercises",
+    "classification_note": "Primary/secondary/stabilizers are qualitative, not measured activation or equivalent training sets. Head/zone records nest under parent tissues; do not sum child and parent twice. Mobility target tissues stored separately; cardio records are not assigned fabricated hypertrophy muscles.",
+    "source_consistency_issues_count": 9
+  },
+  "taxonomy": {
+    "pectoralis_clavicular": {
+      "category_ru": "Грудь",
+      "subcategory_ru": "Верх груди",
+      "anatomical_description_ru": "Ключичная часть большой грудной мышцы (тренировочный акцент на верх груди)",
+      "kind": "zone",
+      "parent_id": "pectoralis_major"
+    },
+    "pectoralis_sternal": {
+      "category_ru": "Грудь",
+      "subcategory_ru": "Средняя часть груди",
+      "anatomical_description_ru": "Большая грудная мышца, преимущественно грудинно-рёберная часть",
+      "kind": "zone",
+      "parent_id": "pectoralis_major"
+    },
+    "pectoralis_lower": {
+      "category_ru": "Грудь",
+      "subcategory_ru": "Низ груди",
+      "anatomical_description_ru": "Нижняя тренировочная зона большой грудной мышцы; не отдельная анатомическая мышца",
+      "kind": "zone",
+      "parent_id": "pectoralis_major"
+    },
+    "pectoralis_major": {
+      "category_ru": "Грудь",
+      "subcategory_ru": "Большая грудная мышца",
+      "anatomical_description_ru": "Большая грудная мышца (без уточнения акцента)",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "pectoralis_minor": {
+      "category_ru": "Грудь",
+      "subcategory_ru": "Малая грудная",
+      "anatomical_description_ru": "Малая грудная мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "serratus_anterior": {
+      "category_ru": "Грудь",
+      "subcategory_ru": "Передняя зубчатая",
+      "anatomical_description_ru": "Передняя зубчатая мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "latissimus_dorsi": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Широчайшие",
+      "anatomical_description_ru": "Широчайшая мышца спины",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "rhomboids": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Ромбовидные",
+      "anatomical_description_ru": "Большая и малая ромбовидные мышцы",
+      "kind": "group",
+      "parent_id": null
+    },
+    "trapezius_upper": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Верх трапеции",
+      "anatomical_description_ru": "Верхние пучки трапециевидной",
+      "kind": "part",
+      "parent_id": "trapezius"
+    },
+    "trapezius_middle": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Середина трапеции",
+      "anatomical_description_ru": "Средние пучки трапециевидной",
+      "kind": "part",
+      "parent_id": "trapezius"
+    },
+    "trapezius_lower": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Низ трапеции",
+      "anatomical_description_ru": "Нижние пучки трапециевидной",
+      "kind": "part",
+      "parent_id": "trapezius"
+    },
+    "erector_spinae": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Разгибатели позвоночника",
+      "anatomical_description_ru": "Выпрямляющая позвоночник группа",
+      "kind": "group",
+      "parent_id": null
+    },
+    "teres_major": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Большая круглая",
+      "anatomical_description_ru": "Большая круглая мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "deltoid_anterior": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Передняя дельта",
+      "anatomical_description_ru": "Передний пучок дельтовидной",
+      "kind": "part",
+      "parent_id": "deltoideus"
+    },
+    "deltoid_lateral": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Средняя дельта",
+      "anatomical_description_ru": "Средний пучок дельтовидной",
+      "kind": "part",
+      "parent_id": "deltoideus"
+    },
+    "deltoid_posterior": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Задняя дельта",
+      "anatomical_description_ru": "Задний пучок дельтовидной",
+      "kind": "part",
+      "parent_id": "deltoideus"
+    },
+    "rotator_cuff": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Ротаторная манжета",
+      "anatomical_description_ru": "Группа мышц вращательной манжеты плеча",
+      "kind": "group",
+      "parent_id": null
+    },
+    "infraspinatus": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Подостная",
+      "anatomical_description_ru": "Подостная мышца",
+      "kind": "muscle",
+      "parent_id": "rotator_cuff"
+    },
+    "teres_minor": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Малая круглая",
+      "anatomical_description_ru": "Малая круглая мышца",
+      "kind": "muscle",
+      "parent_id": "rotator_cuff"
+    },
+    "subscapularis": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Подлопаточная",
+      "anatomical_description_ru": "Подлопаточная мышца",
+      "kind": "muscle",
+      "parent_id": "rotator_cuff"
+    },
+    "biceps_long_head": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Длинная головка бицепса",
+      "anatomical_description_ru": "Длинная головка двуглавой мышцы плеча",
+      "kind": "head",
+      "parent_id": "biceps_brachii"
+    },
+    "biceps_short_head": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Короткая головка бицепса",
+      "anatomical_description_ru": "Короткая головка двуглавой мышцы плеча",
+      "kind": "head",
+      "parent_id": "biceps_brachii"
+    },
+    "brachialis": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Брахиалис",
+      "anatomical_description_ru": "Плечевая мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "brachioradialis": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Плечелучевая",
+      "anatomical_description_ru": "Плечелучевая мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "triceps_long_head": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Длинная головка трицепса",
+      "anatomical_description_ru": "Длинная головка трёхглавой мышцы плеча",
+      "kind": "head",
+      "parent_id": "triceps_brachii"
+    },
+    "triceps_lateral_head": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Латеральная головка трицепса",
+      "anatomical_description_ru": "Латеральная головка трёхглавой мышцы плеча",
+      "kind": "head",
+      "parent_id": "triceps_brachii"
+    },
+    "triceps_medial_head": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Медиальная головка трицепса",
+      "anatomical_description_ru": "Медиальная головка трёхглавой мышцы плеча",
+      "kind": "head",
+      "parent_id": "triceps_brachii"
+    },
+    "forearm_flexors": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Сгибатели запястья и пальцев",
+      "anatomical_description_ru": "Группа сгибателей предплечья",
+      "kind": "group",
+      "parent_id": null
+    },
+    "forearm_extensors": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Разгибатели запястья и пальцев",
+      "anatomical_description_ru": "Группа разгибателей предплечья",
+      "kind": "group",
+      "parent_id": null
+    },
+    "forearm_pronators": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Пронаторы",
+      "anatomical_description_ru": "Круглый и квадратный пронаторы",
+      "kind": "group",
+      "parent_id": null
+    },
+    "forearm_supinators": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Супинаторы",
+      "anatomical_description_ru": "Мышцы супинации предплечья",
+      "kind": "group",
+      "parent_id": null
+    },
+    "forearm_grip": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Хват",
+      "anatomical_description_ru": "Комплекс мышц кисти и предплечья",
+      "kind": "function",
+      "parent_id": null
+    },
+    "rectus_abdominis": {
+      "category_ru": "Корпус",
+      "subcategory_ru": "Прямая мышца живота",
+      "anatomical_description_ru": "Прямая мышца живота",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "rectus_abdominis_lower_zone": {
+      "category_ru": "Корпус",
+      "subcategory_ru": "Нижняя зона пресса",
+      "anatomical_description_ru": "Нижняя тренировочная зона прямой мышцы живота",
+      "kind": "zone",
+      "parent_id": "rectus_abdominis"
+    },
+    "obliques": {
+      "category_ru": "Корпус",
+      "subcategory_ru": "Косые мышцы живота",
+      "anatomical_description_ru": "Внутренние и наружные косые мышцы живота",
+      "kind": "group",
+      "parent_id": null
+    },
+    "transversus_abdominis": {
+      "category_ru": "Корпус",
+      "subcategory_ru": "Поперечная мышца живота",
+      "anatomical_description_ru": "Поперечная мышца живота",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "quadratus_lumborum": {
+      "category_ru": "Корпус",
+      "subcategory_ru": "Квадратная мышца поясницы",
+      "anatomical_description_ru": "Квадратная мышца поясницы",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "iliopsoas": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Подвздошно-поясничная",
+      "anatomical_description_ru": "Подвздошно-поясничная мышца",
+      "kind": "group",
+      "parent_id": null
+    },
+    "rectus_femoris": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Прямая мышца бедра",
+      "anatomical_description_ru": "Прямая мышца бедра",
+      "kind": "muscle",
+      "parent_id": "quadriceps_femoris"
+    },
+    "vastus_lateralis": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Латеральная широкая мышца бедра",
+      "anatomical_description_ru": "Латеральная широкая мышца бедра",
+      "kind": "muscle",
+      "parent_id": "quadriceps_femoris"
+    },
+    "vastus_medialis": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Медиальная широкая мышца бедра",
+      "anatomical_description_ru": "Медиальная широкая мышца бедра",
+      "kind": "muscle",
+      "parent_id": "quadriceps_femoris"
+    },
+    "vastus_intermedius": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Промежуточная широкая мышца бедра",
+      "anatomical_description_ru": "Промежуточная широкая мышца бедра",
+      "kind": "muscle",
+      "parent_id": "quadriceps_femoris"
+    },
+    "gluteus_maximus": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Большая ягодичная",
+      "anatomical_description_ru": "Большая ягодичная мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "gluteus_medius": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Средняя ягодичная",
+      "anatomical_description_ru": "Средняя ягодичная мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "gluteus_minimus": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Малая ягодичная",
+      "anatomical_description_ru": "Малая ягодичная мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "biceps_femoris_long": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Длинная головка бицепса бедра",
+      "anatomical_description_ru": "Длинная головка двуглавой мышцы бедра",
+      "kind": "head",
+      "parent_id": "biceps_femoris"
+    },
+    "biceps_femoris_short": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Короткая головка бицепса бедра",
+      "anatomical_description_ru": "Короткая головка двуглавой мышцы бедра",
+      "kind": "head",
+      "parent_id": "biceps_femoris"
+    },
+    "semitendinosus": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Полусухожильная",
+      "anatomical_description_ru": "Полусухожильная мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "semimembranosus": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Полуперепончатая",
+      "anatomical_description_ru": "Полуперепончатая мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "hip_adductors": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Приводящие бедра",
+      "anatomical_description_ru": "Группа приводящих мышц бедра",
+      "kind": "group",
+      "parent_id": null
+    },
+    "hip_external_rotators": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Наружные ротаторы бедра",
+      "anatomical_description_ru": "Глубокие наружные ротаторы бедра",
+      "kind": "group",
+      "parent_id": null
+    },
+    "gastrocnemius_medial": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Медиальная головка икроножной",
+      "anatomical_description_ru": "Медиальная головка икроножной мышцы",
+      "kind": "head",
+      "parent_id": "gastrocnemius"
+    },
+    "gastrocnemius_lateral": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Латеральная головка икроножной",
+      "anatomical_description_ru": "Латеральная головка икроножной мышцы",
+      "kind": "head",
+      "parent_id": "gastrocnemius"
+    },
+    "soleus": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Камбаловидная",
+      "anatomical_description_ru": "Камбаловидная мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "tibialis_anterior": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Передняя большеберцовая",
+      "anatomical_description_ru": "Передняя большеберцовая мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "tibialis_posterior": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Задняя большеберцовая",
+      "anatomical_description_ru": "Задняя большеберцовая мышца",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "peroneals": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Малоберцовые",
+      "anatomical_description_ru": "Малоберцовые мышцы",
+      "kind": "group",
+      "parent_id": null
+    },
+    "ankle_stabilizers": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Стабилизаторы голеностопа",
+      "anatomical_description_ru": "Комплекс мышц стабилизации голеностопа",
+      "kind": "function",
+      "parent_id": null
+    },
+    "levator_scapulae": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Мышца, поднимающая лопатку",
+      "anatomical_description_ru": "Мышца, поднимающая лопатку",
+      "kind": "muscle",
+      "parent_id": null
+    },
+    "cervical_flexors": {
+      "category_ru": "Другое",
+      "subcategory_ru": "Сгибатели шеи",
+      "anatomical_description_ru": "Сгибатели шеи",
+      "kind": "group",
+      "parent_id": null
+    },
+    "cervical_extensors": {
+      "category_ru": "Другое",
+      "subcategory_ru": "Разгибатели шеи",
+      "anatomical_description_ru": "Разгибатели шеи",
+      "kind": "group",
+      "parent_id": null
+    },
+    "supraspinatus": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Надостная мышца",
+      "anatomical_description_ru": "Надостная мышца — компонент вращательной манжеты плеча",
+      "kind": "muscle",
+      "parent_id": "rotator_cuff"
+    },
+    "triceps_brachii": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Трёхглавая мышца плеча",
+      "anatomical_description_ru": "Трёхглавая мышца плеча",
+      "kind": "group",
+      "parent_id": null
+    },
+    "biceps_brachii": {
+      "category_ru": "Руки",
+      "subcategory_ru": "Двуглавая мышца плеча",
+      "anatomical_description_ru": "Двуглавая мышца плеча",
+      "kind": "group",
+      "parent_id": null
+    },
+    "quadriceps_femoris": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Четырёхглавая мышца бедра",
+      "anatomical_description_ru": "Четырёхглавая мышца бедра",
+      "kind": "group",
+      "parent_id": null
+    },
+    "biceps_femoris": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Двуглавая мышца бедра",
+      "anatomical_description_ru": "Двуглавая мышца бедра",
+      "kind": "group",
+      "parent_id": null
+    },
+    "gastrocnemius": {
+      "category_ru": "Ноги",
+      "subcategory_ru": "Икроножная мышца",
+      "anatomical_description_ru": "Икроножная мышца",
+      "kind": "group",
+      "parent_id": null
+    },
+    "trapezius": {
+      "category_ru": "Спина",
+      "subcategory_ru": "Трапециевидная мышца",
+      "anatomical_description_ru": "Трапециевидная мышца",
+      "kind": "group",
+      "parent_id": null
+    },
+    "deltoideus": {
+      "category_ru": "Плечи",
+      "subcategory_ru": "Дельтовидная мышца",
+      "anatomical_description_ru": "Дельтовидная мышца",
+      "kind": "group",
+      "parent_id": null
+    }
+  },
+  "subcategory_labels_ru": {
+    "upper_chest": "Верх груди",
+    "middle_chest": "Середина груди",
+    "lower_chest": "Низ груди",
+    "chest_general": "Грудные мышцы",
+    "serratus_anterior": "Передняя зубчатая",
+    "lats": "Широчайшие",
+    "upper_back": "Верх спины",
+    "trapezius": "Трапеции",
+    "spinal_erectors": "Разгибатели позвоночника",
+    "levator_scapulae": "Мышца, поднимающая лопатку",
+    "biceps": "Бицепс",
+    "triceps": "Трицепс",
+    "forearms": "Предплечья",
+    "forearm_flexors": "Сгибатели предплечья",
+    "forearm_extensors": "Разгибатели предплечья",
+    "forearm_pronators": "Пронаторы предплечья",
+    "forearm_supinators": "Супинаторы предплечья",
+    "grip": "Хват",
+    "deltoids": "Дельтовидные",
+    "front_deltoid": "Передняя дельта",
+    "lateral_deltoid": "Средняя дельта",
+    "rear_deltoid": "Задняя дельта",
+    "rotator_cuff": "Ротаторная манжета",
+    "abdominals": "Пресс",
+    "obliques": "Косые мышцы живота",
+    "lower_abs": "Нижняя зона пресса",
+    "core_stability": "Стабилизаторы корпуса",
+    "glutes": "Ягодичные",
+    "hamstrings": "Задняя поверхность бедра",
+    "quadriceps": "Квадрицепс",
+    "adductors": "Приводящие мышцы бедра",
+    "abductors": "Отводящие мышцы бедра",
+    "calves": "Икроножные и камбаловидная",
+    "tibialis_anterior": "Передняя большеберцовая",
+    "ankle_stability": "Стабилизаторы голеностопа",
+    "peroneals": "Малоберцовые",
+    "tibialis_posterior": "Задняя большеберцовая",
+    "cardio": "Кардио",
+    "unspecified": "Не определено",
+    "explosive_lift": "Взрывные многосуставные упражнения"
+  },
+  "movement_family_references": {
+    "ace_library": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/",
+    "ace_bench": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/chest/pectorals%28pecs%29/",
+    "strengthlog_fly": "https://www.strengthlog.com/standing-cable-chest-fly/",
+    "strengthlog_squat": "https://www.strengthlog.com/squat/",
+    "ace_rdl": "https://www.acefitness.org/continuing-education/certified/may-2025/8865/the-ace-do-it-better-series-the-romanian-deadlift/",
+    "ace_reverse_fly": "https://www.acefitness.org/resources/everyone/exercise-library/34/incline-reverse-fly/",
+    "ace_external_rotation": "https://www.acefitness.org/resources/everyone/exercise-library/352/rotator-cuff-external-rotation/",
+    "ace_biceps_curl": "https://www.acefitness.org/resources/everyone/exercise-library/44/seated-biceps-curl/",
+    "maeo_overhead_triceps": "https://pubmed.ncbi.nlm.nih.gov/35819335/"
+  }
+}
