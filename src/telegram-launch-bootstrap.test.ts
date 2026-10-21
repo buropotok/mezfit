@@ -4,6 +4,8 @@ import html from '../index.html?raw';
 
 interface TestBootRuntime {
   getLaunchStartParam?(): string | null;
+  mark(stage: string): void;
+  finish(): void;
 }
 
 type TestWindow = Window & typeof globalThis & {
@@ -43,6 +45,7 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
   delete (window as TestWindow).__MEZFIT_BOOT__;
   delete window.Telegram;
+  document.getElementById('mezfit-boot-diagnostics')?.remove();
 });
 
 describe('Telegram launch bootstrap', () => {
@@ -53,6 +56,31 @@ describe('Telegram launch bootstrap', () => {
 
     expect(window.Telegram).toBeUndefined();
     expect(runtime?.getLaunchStartParam?.()).toBe(startParam);
+  });
+
+  it('keeps diagnostics visible until React confirms its first mount', () => {
+    const runtime = runBootstrapBeforeTelegramSdk('/');
+    runtime?.mark('theme-applied');
+
+    vi.advanceTimersByTime(8000);
+    expect(document.getElementById('mezfit-boot-diagnostics')?.textContent)
+      .toContain('Последний этап: theme-applied');
+
+    runtime?.finish();
+    expect(document.getElementById('mezfit-boot-diagnostics')).toBeNull();
+  });
+
+  it('clears the watchdog panel after a delayed React mount', () => {
+    const runtime = runBootstrapBeforeTelegramSdk('/');
+    runtime?.mark('theme-request-start');
+
+    vi.advanceTimersByTime(8000);
+    expect(document.getElementById('mezfit-boot-diagnostics')?.textContent)
+      .toContain('Последний этап: theme-request-start');
+
+    runtime?.finish();
+    runtime?.mark('theme-applied');
+    expect(document.getElementById('mezfit-boot-diagnostics')).toBeNull();
   });
 
   it('captures a fragment launch parameter before Telegram SDK execution', () => {

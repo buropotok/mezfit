@@ -117,6 +117,7 @@
         }
 
         function mark(stage) {
+          if (finished) return;
           if (typeof stage === 'string') lastStage = stage.slice(0, 64);
         }
 
@@ -225,10 +226,6 @@
         window.setTimeout(function () {
           if (finished) return;
           var observedStage = lastStage;
-          if (observedStage === 'theme-applied' && !failed) {
-            finish();
-            return;
-          }
           if (failed && panel) return;
           renderPanel(observedStage, { reason: 'watchdog' });
         }, 8000);

@@ -1,4 +1,4 @@
-import { BootTimeoutError, errorName, markBoot, reportBoot, withBootTimeout } from './bootDiagnostics';
+import { BootTimeoutError, errorName, markBoot, withBootTimeout } from './bootDiagnostics';
 
 export const THEME_NAMES = [
   'default',
@@ -42,11 +42,11 @@ export async function loadGlobalTheme(): Promise<ThemeName> {
       theme = normalizeThemeName(payload.theme);
       markBoot('theme-request-success', { httpStatus: response.status });
     } else {
-      reportBoot('theme-request-http-error', { httpStatus: response.status });
+      markBoot('theme-request-http-error', { httpStatus: response.status });
     }
   } catch (error) {
     if (!(error instanceof BootTimeoutError)) {
-      reportBoot('theme-request-error', { errorName: errorName(error) });
+      markBoot('theme-request-error', { errorName: errorName(error) });
     }
     // The default theme is intentionally usable without the config endpoint.
   }

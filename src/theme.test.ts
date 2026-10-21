@@ -20,6 +20,9 @@ describe('global theme names', () => {
   it('aborts a config request whose response body stalls and applies the default theme', async () => {
     vi.useFakeTimers();
     const dataset: Record<string, string> = {};
+    const mark = vi.fn();
+    const report = vi.fn();
+    vi.stubGlobal('window', { __MEZFIT_BOOT__: { mark, report } });
     const json = vi.fn(() => new Promise<never>(() => undefined));
     vi.stubGlobal('document', { documentElement: { dataset } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json }));
@@ -32,5 +35,22 @@ describe('global theme names', () => {
     expect(json).toHaveBeenCalledTimes(1);
     expect(abort).toHaveBeenCalledTimes(1);
     expect(dataset.theme).toBe('default');
+    expect(mark).toHaveBeenCalledWith('theme-request-timeout', { timeoutMs: 5000 });
+    expect(mark).toHaveBeenCalledWith('theme-applied', { reason: 'default' });
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('falls back without fatal diagnostics when theme endpoint returns an error', async () => {
+    const dataset: Record<string, string> = {};
+    const mark = vi.fn();
+    const report = vi.fn();
+    vi.stubGlobal('window', { __MEZFIT_BOOT__: { mark, report } });
+    vi.stubGlobal('document', { documentElement: { dataset } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+
+    await expect(loadGlobalTheme()).resolves.toBe('default');
+    expect(dataset.theme).toBe('default');
+    expect(mark).toHaveBeenCalledWith('theme-request-http-error', { httpStatus: 503 });
+    expect(report).not.toHaveBeenCalled();
   });
 });
