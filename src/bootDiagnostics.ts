@@ -16,6 +16,7 @@ export interface BootDetails {
 interface BootRuntime {
   mark(stage: string, details?: BootDetails): void;
   report(stage: string, details?: BootDetails): void;
+  finish(): void;
   getLaunchStartParam?(): string | null;
 }
 
@@ -38,6 +39,10 @@ export function markBoot(stage: BootStage, details?: BootDetails): void {
 
 export function reportBoot(stage: BootStage, details?: BootDetails): void {
   getBootRuntime()?.report(stage, details);
+}
+
+export function finishBoot(): void {
+  getBootRuntime()?.finish();
 }
 
 export class BootTimeoutError extends Error {
@@ -66,7 +71,7 @@ export function withBootTimeout<T>(
       } catch {
         // Cancellation is best-effort; the timeout result remains authoritative.
       }
-      reportBoot(timeoutStage, { timeoutMs });
+      markBoot(timeoutStage, { timeoutMs });
       reject(new BootTimeoutError(timeoutStage, timeoutMs));
     }, timeoutMs);
 
