@@ -3,7 +3,8 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { applyBackgroundSettings, loadBrowserBackgroundSettings } from './backgroundSettings';
-import { loadGlobalTheme } from './theme';
+import { finishBoot } from './bootDiagnostics';
+import { applyTheme, loadGlobalTheme } from './theme';
 import { applyTypographySettings, loadBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp } from './telegram';
 import './ui/konsta.css';
@@ -27,10 +28,18 @@ function resolveRoot(): HTMLElement {
 
 const root = resolveRoot();
 
+function BootCompletion({ children }: { children: React.ReactNode }) {
+  React.useEffect(() => {
+    finishBoot();
+  }, []);
+  return <>{children}</>;
+}
+
 async function bootstrap(): Promise<void> {
   applyBackgroundSettings(loadBrowserBackgroundSettings());
   applyTypographySettings(loadBrowserTypographySettings());
-  await loadGlobalTheme();
+  applyTheme('default');
+  void loadGlobalTheme();
   root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;
   const isFullscreenDayScheduleUiKit = (
@@ -53,7 +62,7 @@ async function bootstrap(): Promise<void> {
   createRoot(root).render(
     <React.StrictMode>
       <KonstaProvider theme="ios" dark>
-        {content}
+        <BootCompletion>{content}</BootCompletion>
       </KonstaProvider>
     </React.StrictMode>,
   );
