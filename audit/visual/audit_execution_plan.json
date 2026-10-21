@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "paused",
-  "status_reason": "Initial GitHub bootstrap required: place source files, completed stage 1 output, and this plan in main; enable hourly polling only after verifying those files.",
+  "status": "ready",
+  "status_reason": "Bootstrap validated in main: all 14 stage catalogue snapshots, manifest, taxonomy, queue, protocol and completed stage 1 result are available. Await next hourly poll.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
@@ -10,12 +10,16 @@
   "current_stage": null,
   "next_stage": 2,
   "source": {
-    "catalogue": "mezfit_exercises_FINAL_ru_anatomy.json",
+    "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
-    "audit_queue": "audit_queue.json",
+    "audit_queue": "input/audit_queue.json",
     "audit_queue_sha256": "62a15d05444b763cbc29dbb04afabb585ca361d0236afb9be0339c8a593595db",
-    "prompt": "NEW_CHAT_VISUAL_AUDIT_PROMPT.md",
-    "priority_first_count": 82
+    "prompt": "input/NEW_CHAT_VISUAL_AUDIT_PROMPT.md",
+    "priority_first_count": 82,
+    "original_catalogue_filename": "mezfit_exercises_FINAL_ru_anatomy.json",
+    "taxonomy": "input/taxonomy.json",
+    "manifest": "input/manifest.json",
+    "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
   "lock": null,
   "stages": [
@@ -129,7 +133,7 @@
         "to": 100
       },
       "result_file": "results/batch_01.jsonl",
-      "results_committed": false,
+      "results_committed": true,
       "reviewed_count": 100,
       "checkpoint_file": "results/audit_checkpoint_stage_01.json"
     },
