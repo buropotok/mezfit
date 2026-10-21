@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Chip } from 'konsta/react';
 import type { Role } from '../api';
 import { useNavigationSurfaceFloatingAction, type NavigationContext } from '../NavigationShell';
-import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
@@ -15,9 +13,10 @@ import { useWorkoutPerson } from './WorkoutPerson';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import { Badge, DaySchedule, DayScheduleEventCard, Text, getDayScheduleValue,
-  IconButton, type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
+  Icon, type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
 import { useSchedulePlanning } from './SchedulePlanningContext';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
+import { ScheduleFilterBar } from './ScheduleFilterBar';
 import { ScheduleClientFilter } from './ScheduleClientFilter';
 import { calendarSegments, localScheduleInstant } from './calendar-time';
 import './today-page.css';
@@ -51,6 +50,8 @@ function BookingCard({ event, state, actor, onClick }: {
   const row = event.type === 'draft' ? event.draft : event.occurrence;
   const person = useWorkoutPerson(row.athleteUserId, row.realmId, actor);
   return <DayScheduleEventCard title={person.name} detail={row.plan.name} media={person.avatar}
+    corner={<Icon name={row.format === 'coached' ? 'users' : 'user'} />}
+    cornerSize={Math.min(32, (state.height ?? 62) / 2)}
     status={event.type === 'draft' ? <Badge color="yellow" textVariant="caption">Черновик</Badge> : undefined}
     state={state} onClick={onClick} />;
 }
@@ -264,7 +265,7 @@ export function TodayPage({
   const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить тренировку')); };
 
   return (
-    <section className={`today-page${creation || selected || filterOpened ? ' today-page--sheet-open' : ''}${clientUserIds.length && role === 'coach' ? ' today-page--filtered' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
+    <section className={`today-page${creation || selected || filterOpened ? ' today-page--sheet-open' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
       <DaySchedule date={date} eventsByDate={eventsByDate} onDateChange={setDate}
         className="today-page__schedule"
         eventsShareResource={(event, other) => bookingsShareParticipant(
@@ -279,20 +280,9 @@ export function TodayPage({
         renderEvent={(event, state) => <BookingCard event={event} state={state} actor={actor}
           onClick={() => report(openEvent(event))} />} />
 
-      {role === 'coach' && !selected && !creation && !filterOpened ? <div className="today-page__search-action">
-        <IconButton theme="glass" icon="search" label="Поиск клиента" style={{ width: 44, height: 44 }}
-          onClick={() => setFilterOpened(true)} />
-      </div> : null}
-      {role === 'coach' && clientUserIds.length ? <div className="today-page__filters" aria-label="Выбранные клиенты">
-        {clientUserIds.map(id => {
-          const client = clients.find(person => person.userId === id);
-          return <Chip key={id} deleteButton
-            media={client ? <CloudContactAvatar contact={client} className="schedule-client-avatar" /> : undefined}
-            onDelete={() => setClientUserIds(current => current.filter(value => value !== id))}>
-            {client?.displayName ?? 'Клиент'}
-          </Chip>;
-        })}
-      </div> : null}
+      {role === 'coach' && !selected && !creation && !filterOpened ? <ScheduleFilterBar
+        clients={clients} selected={clientUserIds} onOpen={() => setFilterOpened(true)}
+        onRemove={id => setClientUserIds(current => current.filter(value => value !== id))} /> : null}
       {role === 'coach' ? <ScheduleClientFilter opened={filterOpened} clients={clients}
         loading={cloud?.status === 'loading'} selected={clientUserIds}
         onClose={() => setFilterOpened(false)} onApply={ids => {
