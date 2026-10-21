@@ -265,7 +265,7 @@ export function TodayPage({
   const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить тренировку')); };
 
   return (
-    <section className={`today-page${creation || selected || filterOpened ? ' today-page--sheet-open' : ''}${clientUserIds.length && role === 'coach' ? ' today-page--filtered' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
+    <section className={`today-page${creation || selected || filterOpened ? ' today-page--sheet-open' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
       <DaySchedule date={date} eventsByDate={eventsByDate} onDateChange={setDate}
         className="today-page__schedule"
         eventsShareResource={(event, other) => bookingsShareParticipant(
