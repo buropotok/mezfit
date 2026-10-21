@@ -15,7 +15,6 @@ export interface BootDetails {
 
 interface BootRuntime {
   mark(stage: string, details?: BootDetails): void;
-  report(stage: string, details?: BootDetails): void;
   finish(): void;
   getLaunchStartParam?(): string | null;
 }
@@ -35,10 +34,6 @@ export function errorName(error: unknown): string {
 
 export function markBoot(stage: BootStage, details?: BootDetails): void {
   getBootRuntime()?.mark(stage, details);
-}
-
-export function reportBoot(stage: BootStage, details?: BootDetails): void {
-  getBootRuntime()?.report(stage, details);
 }
 
 export function finishBoot(): void {
