@@ -50,9 +50,10 @@ export function CloudContactsList({ contacts, onSelect, actionLabel = 'Откр�
     {groupClientsForContacts([...contacts]).map((group) => <ListGroup key={group.title}>
       <ListItem title={group.title} groupTitle className="sticky top-0" />
       {group.clients.map((contact) => <ListItem key={contact.relationshipId}
+        contentClassName="w-full text-left" innerClassName="min-w-0" titleWrapClassName="w-full"
         contacts link chevron={false} media={<CloudContactAvatar contact={contact} />}
         title={contact.displayName} linkComponent="button"
-        after={selectedUserIds ? <Checkbox component="div" checked={selectedUserIds.includes(contact.userId)} /> : undefined}
+        after={selectedUserIds ? <span aria-hidden="true" className="pointer-events-none"><Checkbox component="div" readOnly tabIndex={-1} checked={selectedUserIds.includes(contact.userId)} /></span> : undefined}
         linkProps={{ type: 'button', 'aria-label': `${actionLabel} ${contact.displayName}`,
           'aria-pressed': selectedUserIds ? selectedUserIds.includes(contact.userId) : undefined,
           onClick: () => onSelect(contact) }} />)}
