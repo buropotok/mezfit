@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DaySchedule, getDayScheduleValue, type DayScheduleEvent } from './DaySchedule';
+import { DayScheduleEventCard } from './DayScheduleEventCard';
 import { yForMinutes } from './day-schedule/DayPanel';
 import type { LocalDate } from './date-picker/DatePicker';
 
@@ -1181,4 +1182,20 @@ it('moves the day track without rerendering event cards on each pointer move', (
   fireEvent.pointerMove(day, { pointerId: 1, clientX: 180, clientY: 200 });
   fireEvent.pointerMove(day, { pointerId: 1, clientX: 120, clientY: 200 });
   expect(renderer).not.toHaveBeenCalled();
+});
+
+it('keeps the real card touch layer eligible for long-press drag', () => {
+  const view = render(<DaySchedule date="2026-09-28" today="2026-09-28"
+    eventsByDate={events} onDateChange={changed} onEventMove={vi.fn()}
+    renderEvent={(event, state) => <DayScheduleEventCard title={event.id} state={state} />} />);
+  const frame = view.container.querySelector<HTMLElement>('[data-event-id="a"]')!;
+  const surface = frame.querySelector('button')!;
+  const schedule = view.container.querySelector('.ui-day-schedule')!;
+  const touch = { identifier: 88, target: surface, clientX: 100, clientY: 100,
+    pageX: 100, pageY: 100, screenX: 100, screenY: 100 };
+  fireEvent.touchStart(surface, { touches: [touch], targetTouches: [touch], changedTouches: [touch] });
+  act(() => vi.advanceTimersByTime(300));
+  expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(true);
+  fireEvent.touchEnd(surface, { touches: [], targetTouches: [], changedTouches: [touch] });
+  expect(schedule.classList.contains('ui-day-schedule--event-dragging')).toBe(false);
 });
