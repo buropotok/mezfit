@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SpotlightHint, SpotlightTarget, useSpotlightHintPause } from './SpotlightHint';
+import { SpotlightHint, SpotlightTarget, SpotlightSurface, useSpotlightHintPause } from './SpotlightHint';
 
 beforeEach(() => {
   localStorage.clear();
@@ -31,8 +31,8 @@ const guide = (userId = 'tg:101', version = 1, enabled = true, paused = false) =
 
 describe('reusable spotlight guide', () => {
   it('highlights several real targets and preserves the target action state when dismissed', () => {
-    render(guide());
-    expect(screen.getByLabelText('Подсказка').querySelectorAll('mask rect')).toHaveLength(3);
+    const view = render(guide());
+    expect(view.container.querySelectorAll('.ui-spotlight-hint__local-mask mask rect')).toHaveLength(3);
     fireEvent.click(screen.getByRole('button', { name: 'Запланировать' }));
     expect(screen.queryByLabelText('Подсказка')).toBeNull();
     expect(screen.getByText('Формат открыт')).toBeTruthy();
@@ -85,5 +85,70 @@ describe('reusable spotlight guide', () => {
     render(guide());
     fireEvent.click(screen.getByRole('button', { name: 'Больше не показывать' }));
     expect(screen.queryByLabelText('Подсказка')).toBeNull();
+  });
+});
+
+function ScrollGuide({ autoScroll = false, paused = false, scrollTo }: {
+  autoScroll?: boolean; paused?: boolean; scrollTo?: HTMLElement['scrollTo'];
+}) {
+  const surface = useRef<HTMLDivElement>(null);
+  return <div data-testid="scroll-viewport" style={{ overflowY: 'auto' }}
+    ref={node => { if (node && scrollTo) node.scrollTo = scrollTo; }}>
+    <SpotlightSurface ref={surface}>
+      <SpotlightHint hintId="scroll-target" version={1} userId="tg:101" enabled
+        autoScroll={autoScroll} paused={paused} surfaceRef={surface} text="Выберите день">
+        <SpotlightTarget><button>Запланировать</button></SpotlightTarget>
+      </SpotlightHint>
+    </SpotlightSurface>
+  </div>;
+}
+
+describe('native scrolling and initial target reveal', () => {
+  function mockScrollingLayout() {
+    let scrollTop = 0;
+    vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('ui-spotlight-hint__target'))
+        return DOMRect.fromRect({ x: 20, y: 100 + 900 - scrollTop, width: 140, height: 44 });
+      if (this.classList.contains('ui-spotlight-hint__surface'))
+        return DOMRect.fromRect({ x: 0, y: 100 - scrollTop, width: 390, height: 1400 });
+      return DOMRect.fromRect({ x: 0, y: 100, width: 390, height: 400 });
+    });
+    return (value: number) => { scrollTop = value; };
+  }
+
+  it('keeps target holes in scrolling content without waiting for scroll-event measurements', () => {
+    const move = mockScrollingLayout();
+    const view = render(<ScrollGuide />);
+    const viewport = screen.getByTestId('scroll-viewport');
+    const surface = view.container.querySelector('.ui-spotlight-hint__surface')!;
+    const shade = surface.querySelector('.ui-spotlight-hint__local-mask')!;
+    expect(shade.parentElement).toBe(surface);
+    const hole = shade.querySelectorAll('mask rect')[1];
+    expect(hole.getAttribute('y')).toBe('900');
+    const calls = vi.mocked(HTMLElement.prototype.getBoundingClientRect).mock.calls.length;
+    move(700);
+    viewport.scrollTop = 700;
+    fireEvent.scroll(viewport);
+    // The browser scrolls this SVG with the real target; no JS frame needs to catch up.
+    expect(shade.parentElement).toBe(surface);
+    expect(hole.getAttribute('y')).toBe('900');
+    expect(vi.mocked(HTMLElement.prototype.getBoundingClientRect).mock.calls.length).toBe(calls);
+    expect(screen.getByLabelText('Подсказка')).toBeTruthy();
+  });
+
+  it('reveals the first target once per entry, independently of the hint preference', () => {
+    mockScrollingLayout();
+    localStorage.setItem('mezfit:hint:tg%3A101:scroll-target:1', 'hidden');
+    const scrollTo = vi.fn();
+    const view = render(<ScrollGuide autoScroll scrollTo={scrollTo} />);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 722 }));
+    expect(screen.queryByLabelText('Подсказка')).toBeNull();
+    view.rerender(<ScrollGuide autoScroll paused scrollTo={scrollTo} />);
+    view.rerender(<ScrollGuide autoScroll scrollTo={scrollTo} />);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    view.unmount();
+    render(<ScrollGuide autoScroll scrollTo={scrollTo} />);
+    expect(scrollTo).toHaveBeenCalledTimes(2);
   });
 });

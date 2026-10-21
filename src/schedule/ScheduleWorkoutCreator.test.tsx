@@ -2,14 +2,15 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { ScheduleWorkoutCreator } from './ScheduleWorkoutCreator';
 
 const state = vi.hoisted(() => ({
-  readable: vi.fn(), authorable: vi.fn(),
+  readable: vi.fn(), authorable: vi.fn(), coaches: [] as CloudContact[],
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
-  useCloudConnections: () => ({ db: {}, actorUserId: 'tg:202', clients: [], status: 'ready' }),
+  useCloudConnections: () => ({ db: {}, actorUserId: 'tg:202', clients: [], coaches: state.coaches, status: 'ready' }),
 }));
 vi.mock('../data/cloud/workout-planning', () => ({
   WorkoutPlanningRepository: class {
@@ -27,14 +28,15 @@ vi.mock('konsta/react', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button disabled={disabled} onClick={onClick}>{children}</button>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  ListItem: ({ title, after, subtitle, onClick }: { title: string; after?: ReactNode; subtitle?: ReactNode; onClick: () => void }) =>
-    <><button onClick={onClick}>{title} {after}</button>{subtitle ? <span>{subtitle}</span> : null}</>,
+  ListItem: ({ title, after, subtitle, media, onClick }: { title: string; after?: ReactNode; subtitle?: ReactNode; media?: ReactNode; onClick: () => void }) =>
+    <>{media}<button onClick={onClick}>{title} {after}</button>{subtitle ? <span>{subtitle}</span> : null}</>,
 }));
 vi.mock('../ui', () => ({
   MezfitBottomSheet: ({ opened, children }: { opened: boolean; children: ReactNode }) => opened ? <div>{children}</div> : null,
   MezfitDialog: ({ opened, children, buttons }: { opened: boolean; children: ReactNode; buttons: ReactNode }) => opened ? <div>{children}{buttons}</div> : null,
   MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button disabled={disabled} onClick={onClick}>{children}</button>,
+  Avatar: ({ name }: { name: string }) => <span role="img" aria-label={name} />,
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
@@ -50,7 +52,7 @@ const personal: CloudTrainingPlanRow = {
 const open = (role: 'coach' | 'client' = 'client') =>
   render(<ScheduleWorkoutCreator intent="workout" role={role}
     onClose={vi.fn()} onCreated={vi.fn()} onNavigationContextChange={vi.fn()} />);
-beforeEach(() => { vi.clearAllMocks(); state.readable.mockResolvedValue([assigned]); state.authorable.mockResolvedValue([personal]); });
+beforeEach(() => { vi.clearAllMocks(); state.coaches = []; state.readable.mockResolvedValue([assigned]); state.authorable.mockResolvedValue([personal]); });
 afterEach(cleanup);
 
 describe('calendar program source permissions', () => {
@@ -119,4 +121,25 @@ describe('calendar program source permissions', () => {
       expect(await screen.findByRole('button', { name: label })).toBeTruthy();
   });
 
+  it('shows each coach owner from the matching relationship in the leading slot', async () => {
+    state.coaches = [
+      { userId: 'tg:101', telegramUserId: '101', relationshipId: 'other', displayName: 'Чужая связь' },
+      { userId: 'tg:101', telegramUserId: '101', relationshipId: 'relationship', displayName: 'Иван' },
+      { userId: 'tg:404', telegramUserId: '404', relationshipId: 'second', displayName: 'Мария' },
+    ];
+    state.readable.mockResolvedValue([assigned, { ...assigned, id: 'second', realmId: 'second', coachUserId: 'tg:404' }]);
+    open();
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
+    expect(await screen.findByLabelText('Владелец: Иван')).toBeTruthy();
+    expect(screen.getByLabelText('Владелец: Мария')).toBeTruthy();
+    expect(screen.queryByText('Чужая связь')).toBeNull();
+  });
+
+  it('identifies a personal owner and falls back honestly when a coach profile is unavailable', async () => {
+    state.readable.mockResolvedValue([personal, assigned]);
+    open();
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
+    expect(await screen.findByLabelText('Владелец: Вы')).toBeTruthy();
+    expect(screen.getByLabelText('Владелец: Автор программы')).toBeTruthy();
+  });
 });

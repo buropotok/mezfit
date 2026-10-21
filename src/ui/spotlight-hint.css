@@ -1,4 +1,11 @@
-.ui-spotlight-hint__scope { min-width: 0; }
+.ui-spotlight-hint__scope,
+.ui-spotlight-hint__surface { position: relative; min-width: 0; }
+.ui-spotlight-hint__local-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 2147483646;
+  pointer-events: none;
+}
 .ui-spotlight-hint__target { display: flex; flex: 1; min-width: 0; }
 .ui-spotlight-hint {
   position: fixed;

@@ -71,7 +71,8 @@ function notice() {
 }
 
 describe('program source selection', () => {
-  it.each([false, true])('explains all source mutations without writing (readOnly=%s)', async readOnly => {
+  it('explains source mutations in author-owned programs without writing', async () => {
+    const readOnly = false;
     const repository = setup(readOnly);
     const card = await screen.findByRole('article', { name: 'День День А' });
     expect(screen.queryByRole('button', { name: 'Начать' })).toBeNull();
@@ -133,6 +134,24 @@ describe('program source selection', () => {
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.getAllByRole<HTMLButtonElement>('button', { name: 'Запланировать' })
       .some(button => !button.disabled)).toBe(true);
+  });
+
+  it('preserves assigned-program read-only controls while allowing scheduling and information', async () => {
+    const repository = setup(true);
+    const card = await screen.findByRole('article', { name: 'День День А' });
+    expect(floating.items).toEqual([]);
+    expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();
+    expect(screen.queryByRole('menu', { name: 'Меню дня День А' })).toBeNull();
+    expect(screen.queryByRole('menu', { name: 'Действия с фазой Фаза' })).toBeNull();
+    expect(within(card).getByRole('button', { name: 'Запланировать' })).toBeTruthy();
+    expect(within(card).getByRole('menu', { name: 'Меню упражнения' }).textContent).toContain('Информация');
+    fireEvent.click(screen.getByText('Подход 1'));
+    expect(screen.queryByRole('dialog', { name: 'Планирование тренировки' })).toBeNull();
+    for (const [key, method] of Object.entries(repository))
+      if (key !== 'observeDetails' && key !== 'observeAthleteDetails' && typeof method === 'function')
+        expect(method, key).not.toHaveBeenCalled();
   });
 
 });
