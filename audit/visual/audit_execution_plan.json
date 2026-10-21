@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "ready",
-  "status_reason": "Bootstrap validated in main: all 14 stage catalogue snapshots, manifest, taxonomy, queue, protocol and completed stage 1 result are available. Await next hourly poll.",
+  "status": "in_progress",
+  "status_reason": "Stage 2 manual visual verification started on explicit user command",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
   "completed_exercises": 100,
-  "current_stage": null,
+  "current_stage": 2,
   "next_stage": 2,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
@@ -21,7 +21,11 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": null,
+  "lock": {
+    "stage": 2,
+    "owner": "chat-user-command-stage-02-2026-10-21",
+    "started_at": "2026-10-21T07:35:00+03:00"
+  },
   "stages": [
     {
       "number": 1,
@@ -139,7 +143,7 @@
     },
     {
       "number": 2,
-      "status": "pending",
+      "status": "in_progress",
       "exercise_ids": [
         "0025",
         "0026",
@@ -247,7 +251,8 @@
         "to": 200
       },
       "result_file": "results/batch_02.jsonl",
-      "results_committed": false
+      "results_committed": false,
+      "started_at": "2026-10-21T07:35:00+03:00"
     },
     {
       "number": 3,
