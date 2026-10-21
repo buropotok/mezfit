@@ -21,7 +21,7 @@ vi.mock('../ui', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
   IconButton: ({ label, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
-    <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: () => null, TimePicker: () => null,
+    <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />, TimePicker: () => null,
   DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) => opened ? <div>
     <button onClick={() => onChange('2026-10-20')}>Занятая дата</button>
     <button onClick={() => onChange('invalid')}>Некорректная дата</button>
@@ -68,6 +68,8 @@ describe('draft edit recovery', () => {
     expect(screen.getByText(format === 'coached' ? 'С тренером в зале' : 'Самостоятельная')).toBeTruthy();
     expect(screen.getByText('Черновик')).toBeTruthy();
     expect(screen.getByText('План на тренировку')).toBeTruthy();
+    const label = screen.getByText(format === 'coached' ? 'С тренером в зале' : 'Самостоятельная');
+    expect(label.nextElementSibling?.getAttribute('data-testid')).toBe(format === 'coached' ? 'icon-users' : 'icon-user');
     view.rerender(<OccurrenceDraftSheet draft={{ ...draft, format, saved: true }} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
     expect(screen.getByText('Запланировано')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
