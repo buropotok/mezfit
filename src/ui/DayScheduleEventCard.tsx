@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { List, ListItem } from 'konsta/react';
 import { Text } from './primitives';
 import type { DayScheduleRenderState } from './DaySchedule';
@@ -9,6 +9,8 @@ export type DayScheduleEventCardProps = {
   detail?: ReactNode;
   status?: ReactNode;
   media?: ReactNode;
+  corner?: ReactNode;
+  cornerSize?: number;
   state: DayScheduleRenderState;
   className?: string;
   onClick?: () => void;
@@ -26,10 +28,13 @@ export function DayScheduleEventCard({
   detail,
   status,
   media,
+  corner,
+  cornerSize = 24,
   state,
   className = '',
   onClick,
 }: DayScheduleEventCardProps) {
+  const contentId = useId();
   const endMinutes = state.startMinutes + state.durationMinutes;
   const timeRange = `${formatMinutes(state.startMinutes)}–${formatMinutes(endMinutes)}`;
   const subtitle = <div className="ui-day-schedule-event-card__row">
@@ -42,6 +47,8 @@ export function DayScheduleEventCard({
 
   return (
     <div
+      onContextMenu={event => event.preventDefault()}
+      onDragStart={event => event.preventDefault()}
       className={[
         'ui-day-schedule-event-card',
         state.lifted ? 'ui-day-schedule-event-card--lifted' : '',
@@ -50,6 +57,8 @@ export function DayScheduleEventCard({
         className,
       ].filter(Boolean).join(' ')}
     >
+      <div id={contentId} className="ui-day-schedule-event-card__content" aria-hidden="true"
+        style={corner ? { paddingInlineEnd: cornerSize + 10 } : undefined}>
       <List nested dividers={false} className="w-full">
         <ListItem
           contentClassName="!ps-[6px] min-h-0"
@@ -62,9 +71,13 @@ export function DayScheduleEventCard({
             {status ? <span className="ui-day-schedule-event-card__fixed">{status}</span> : null}
           </div>}
           subtitle={subtitle}
-          onClick={onClick}
         />
       </List>
+      </div>
+      {corner ? <span className="ui-day-schedule-event-card__corner"
+        style={{ width: cornerSize, height: cornerSize }}>{corner}</span> : null}
+      <button type="button" className="ui-day-schedule-event-card__touch"
+        data-ui-dnd-handle="" aria-labelledby={contentId} onClick={onClick} />
     </div>
   );
 }
