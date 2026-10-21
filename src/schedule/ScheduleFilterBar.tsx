@@ -67,7 +67,7 @@ export function ScheduleFilterBar({ clients, selected, onRemove, onOpen }: {
     <div className="today-page__filter-measure" aria-hidden="true" inert>
       <div ref={measurements} className="today-page__filter-measure-chips">
         {people.map(({ id, contact }) => <span key={id}><Chip deleteButton
-          media={contact ? <span className="schedule-client-avatar" /> : undefined}
+          media={contact ? <span className="schedule-client-avatar inline-block" /> : undefined}
         >{contact?.displayName ?? 'Клиент'}</Chip></span>)}
       </div>
       <button ref={more} type="button" className="today-page__all"><Text variant="body">Все...</Text></button>
