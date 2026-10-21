@@ -23,7 +23,10 @@ vi.mock('./typographySettings', () => ({
   applyTypographySettings: vi.fn(),
   loadBrowserTypographySettings: () => ({}),
 }));
-vi.mock('./telegram', () => ({ getTelegramWebApp: () => null }));
+vi.mock('./telegram', () => ({
+  getTelegramWebApp: () => null,
+  getTelegramLaunchStartParam: () => null,
+}));
 vi.mock('./bootDiagnostics', () => ({ finishBoot: vi.fn() }));
 
 beforeEach(() => {
