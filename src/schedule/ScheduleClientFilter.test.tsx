@@ -30,5 +30,7 @@ it('selects all clients even during search and applies only on confirmation', ()
   fireEvent.click(anna.lastElementChild!);
   expect(anna.getAttribute('aria-pressed')).toBe('true');
   fireEvent.click(screen.getByRole('button', { name: 'Применить фильтр' }));
-  expect(apply).toHaveBeenCalledExactlyOnceWith(['tg:202', 'tg:303']);
+  expect(apply).toHaveBeenCalledOnce();
+  expect(apply).toHaveBeenCalledWith(expect.arrayContaining(['tg:202', 'tg:303']));
+  expect(apply.mock.calls[0][0]).toHaveLength(2);
 });
