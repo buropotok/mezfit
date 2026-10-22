@@ -29,16 +29,21 @@
 
 .screen-diagnostics__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: baseline;
   gap: var(--ui-space-3);
   min-width: 0;
   padding-block: var(--ui-space-2);
-  border-bottom: 1px solid var(--ui-color-surface-border);
+  border-bottom: 1px solid var(--ui-color-border);
 }
 
 .screen-diagnostics__row > :last-child {
   overflow-wrap: anywhere;
   min-width: 0;
   text-align: right;
+}
+
+.screen-diagnostics__link {
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
