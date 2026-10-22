@@ -3,6 +3,15 @@
 export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const owner = root.ownerDocument;
   const host = root.getElementById('iconLayer');
+  // The React-owned wrapper may be uniformly scaled for narrow viewports.
+  // Event client coordinates are visual pixels; selector/lens geometry is
+  // local, untransformed CSS pixels. Keep the approved interaction state
+  // machine unchanged and only convert at those coordinate boundaries.
+  function outerScale() {
+    const intrinsicWidth = root.host.offsetWidth;
+    const visualWidth = root.host.getBoundingClientRect().width;
+    return intrinsicWidth > 0 && visualWidth > 0 ? visualWidth / intrinsicWidth : 1;
+  }
   const events = new EventTarget();
   const timers = new Set(), frames = new Set(), observers = new Set(), animations = new Set(), disposers = [];
   let disposed = false, pointerId = null, selectIndex = () => {}, clearSelection = () => {};
@@ -306,7 +315,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         { startLens = true, holdStart = false } = {}
       ) {
         const rect = tabStrip.getBoundingClientRect();
-        const contentX = e.clientX - rect.left + tabStrip.scrollLeft;
+        const contentX = (e.clientX - rect.left) / outerScale() + tabStrip.scrollLeft;
 
         const centers = links.map((link) => link.offsetLeft + link.offsetWidth / 2);
         const closestCenter = centers.reduce((prev, curr) =>
@@ -425,7 +434,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
       }
 
       function moveManualScroll(clientX) {
-        const dx = clientX - data.touchStartX;
+        const dx = (clientX - data.touchStartX) / outerScale();
         const maxScroll = Math.max(0, tabStrip.scrollWidth - tabStrip.clientWidth);
         tabStrip.scrollLeft = Math.max(
           0,
@@ -602,8 +611,8 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
       function setGlassLightPosition(e) {
         const g = data.glass;
         if (!g.lightEl) return;
-        const offsetX = e.clientX - g.rect.x;
-        const offsetY = e.clientY - g.rect.y;
+        const offsetX = (e.clientX - g.rect.x) / outerScale();
+        const offsetY = (e.clientY - g.rect.y) / outerScale();
         g.lightEl.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
       }
 
@@ -651,7 +660,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         light.className = 'glass-light';
 
         const { width, height } = g.rect;
-        const radius = Math.sqrt(width ** 2 + height ** 2);
+        const radius = Math.sqrt(width ** 2 + height ** 2) / outerScale();
 
         light.style.width = `${radius * 2}px`;
         light.style.height = `${radius * 2}px`;
@@ -1255,7 +1264,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
             Math.max(1, pane.offsetWidth);
 
           const livePaneScale =
-            paneRect.width / basePaneWidth;
+            paneRect.width / basePaneWidth * outerScale();
 
           const paneCenter =
             basePaneWidth / 2;
@@ -1565,8 +1574,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
             tabStrip.getBoundingClientRect();
 
           const contentX =
-            clientX -
-            rect.left +
+            (clientX - rect.left) / outerScale() +
             tabStrip.scrollLeft;
 
           let bestIndex = 0;
