@@ -189,9 +189,9 @@ export async function cloudMembershipAdminUpsertProfiles(
 
 /** Store private media in Dexie Cloud's own blob service (not Cloudflare R2). */
 export async function cloudMembershipAdminUploadAvatar(
-  fetchImpl: typeof fetch, bearer: string, blobId: string, bytes: ArrayBuffer,
+  fetchImpl: typeof fetch, bearer: string, blobId: string, bytes: ArrayBuffer, maxBytes = 245_000,
 ): Promise<{ _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' }> {
-  if (!/^[a-f0-9]{64}$/.test(blobId) || bytes.byteLength < 16 || bytes.byteLength > 256_000) {
+  if (!/^[a-f0-9]{64}$/.test(blobId) || bytes.byteLength < 16 || bytes.byteLength > maxBytes) {
     failUnavailable();
   }
   let response: Response;
