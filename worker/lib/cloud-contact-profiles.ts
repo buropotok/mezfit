@@ -243,12 +243,10 @@ export async function syncOwnContactProfile(
     .map((row) => [row.id as string, row]));
 
   const name = profileName(identity.user);
-  const eligibleForSession = eligible.filter(({ id }) => {
-    const row = known.get(id);
-    return !newerSource(row, sourceAuthAt)
-      && (typeof row?.sourceAuthAt !== 'number' || row.sourceAuthAt < sourceAuthAt
-        || row.name !== name || !hasBothAvatars(row));
-  });
+  // Telegram may reuse the same signed auth_date across Mini App reopenings.
+  // Always re-check the Bot API photo for an authorized, non-stale session.
+  // Unchanged photos do not download, transform, upload or rewrite profile rows.
+  const eligibleForSession = eligible.filter(({ id }) => !newerSource(known.get(id), sourceAuthAt));
   if (eligibleForSession.length === 0) {
     return Response.json({ changed: false }, { headers: { 'cache-control': 'no-store' } });
   }
@@ -304,6 +302,12 @@ export async function syncOwnContactProfile(
   for (const entry of eligibleForSession) {
     const previous = current.get(entry.id);
     if (newerSource(previous, sourceAuthAt)) continue;
+    // If another check published a different photo while this lookup was in flight,
+    // do not let an older equal-auth-date observation replace that newer result.
+    const originallyKnownVersion = known.get(entry.id)?.avatarVersion ?? null;
+    if (previous?.sourceAuthAt === sourceAuthAt
+      && (previous.avatarVersion ?? null) !== originallyKnownVersion
+      && newVersion !== undefined && newVersion !== previous.avatarVersion) continue;
     if (previous && (previous.realmId !== entry.realmId || previous.userId !== account
       || previous.owner !== null)) continue;
     const previousVersion = version(previous?.avatarVersion) ? previous.avatarVersion : null;
