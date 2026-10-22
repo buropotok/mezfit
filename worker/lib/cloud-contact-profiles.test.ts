@@ -54,6 +54,7 @@ async function setup() {
   let uploadFails = false;
   let invalidImage = false;
   let largeUploadFails = false;
+  let photoLookupFails = false;
   const fetchImpl = vi.fn<typeof fetch>(async (input, init) => {
     const url = new URL(String(input));
     const method = init?.method ?? 'GET';
@@ -102,6 +103,7 @@ async function setup() {
       return Response.json({ ref: '1:' + url.pathname.split('/').at(-1) });
     }
     if (url.pathname.endsWith('/getUserProfilePhotos')) {
+      if (photoLookupFails) return new Response(null, { status: 503 });
       return Response.json({ ok: true, result: {
         photos: noPhoto ? [] : [[{ file_id: photo, file_unique_id: photo }]],
       } });
@@ -125,6 +127,8 @@ async function setup() {
     failUpload() { uploadFails = true; },
     failLarge() { largeUploadFails = true; },
     resumeLarge() { largeUploadFails = false; },
+    failPhotoLookup() { photoLookupFails = true; },
+    resumePhotoLookup() { photoLookupFails = false; },
     invalidateImage() { invalidImage = true; },
   };
 }
@@ -269,6 +273,21 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(repaired.avatarLarge).toMatchObject({ _bt: 'Blob' });
     expect(repaired.avatarSmall?.ref).toBe(first.avatarSmall?.ref);
     expect(cloud.uploads()).toBe(3);
+  });
+
+  it('retries an unavailable Telegram photo with the same verified initData', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    cloud.failPhotoLookup();
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    expect([...cloud.profiles.values()][0].avatarVersion).toBeNull();
+    cloud.resumePhotoLookup();
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    expect([...cloud.profiles.values()][0].avatarSmall).toMatchObject({ _bt: 'Blob' });
+    expect([...cloud.profiles.values()][0].avatarLarge).toMatchObject({ _bt: 'Blob' });
+    expect(cloud.uploads()).toBe(2);
   });
 
   it('upgrades an existing one-size Dexie avatar even with the same signed auth time', async () => {
