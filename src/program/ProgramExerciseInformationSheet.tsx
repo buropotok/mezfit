@@ -6,14 +6,17 @@ import { ExerciseDetail } from '../exercises/ExerciseCatalogContent';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { Button, MezfitBottomSheet, Text } from '../ui';
 
-export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, snapshot, realmId, onClose, onNavigationContextChange }: {
+type ProgramExerciseInformationSheetProps = {
   repository: ProgramManagementRepository;
   exerciseId: string;
-  programId?: string; dayId?: string;
-  snapshot?: CloudProgramExerciseSnapshot; realmId?: string;
   onClose: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
-}) {
+} & (
+  | { programId: string; dayId: string; snapshot?: never; realmId?: never }
+  | { snapshot: CloudProgramExerciseSnapshot; realmId: string; programId?: never; dayId?: never }
+);
+
+export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, snapshot, realmId, onClose, onNavigationContextChange }: ProgramExerciseInformationSheetProps) {
   const [open, setOpen] = useState(true);
   const [data, setData] = useState<ProgramExerciseInformation | null>(null);
   const [error, setError] = useState('');
