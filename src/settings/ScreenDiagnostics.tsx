@@ -177,7 +177,7 @@ export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
           <Button onClick={refresh}>Обновить измерения</Button>
           <Button variant="secondary" onClick={() => { void copyLink(); }}>Копировать ссылку</Button>
         </div>
-        <Text variant="caption" tone="muted">{SCREEN_DIAGNOSTICS_DEEP_LINK}</Text>
+        <Text variant="caption" tone="muted" className="screen-diagnostics__link">{SCREEN_DIAGNOSTICS_DEEP_LINK}</Text>
         {copyStatus ? <Text variant="footnote" role="status">{copyStatus}</Text> : null}
       </GlassSurface>
     </section>
