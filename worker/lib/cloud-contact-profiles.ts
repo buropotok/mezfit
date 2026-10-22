@@ -94,11 +94,19 @@ async function currentTelegramPhoto(
  * The only avatar storage is Dexie Cloud's authenticated blob service.
  * BlobRefs are attached to relationship-scoped profile rows with _hasBlobRefs.
  */
-function cloudAvatar(value: unknown): boolean {
+function cloudAvatar(value: unknown): value is Row {
   return record(value) && (
     value._bt === 'Blob' && typeof value.ref === 'string'
     || value.$t === 'Blob' && typeof value.v === 'string'
   );
+}
+
+/** REST reads return fresh JSON objects; compare blob references, not object identities. */
+function sameCloudAvatar(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (!cloudAvatar(left) || !cloudAvatar(right)) return false;
+  return left._bt === right._bt && left.ref === right.ref
+    && left.$t === right.$t && left.v === right.v;
 }
 
 async function fetchTelegramAvatar(
@@ -162,7 +170,7 @@ function hasBothAvatars(row: Row | undefined): boolean {
 function reusableAvatar(row: Row | undefined, photoVersion: string, variant: ContactAvatarVariant): Row | null {
   if (row?.avatarVersion !== photoVersion) return null;
   const avatar = row[variant === 'small' ? 'avatarSmall' : 'avatarLarge'];
-  return cloudAvatar(avatar) ? avatar as Row : null;
+  return cloudAvatar(avatar) ? avatar : null;
 }
 
 function profileName(user: TelegramInitUser): string {
@@ -294,8 +302,9 @@ export async function syncOwnContactProfile(
     const isBlobRef = [avatarSmall, avatarLarge, avatar].some(value =>
       record(value) && value._bt === 'Blob');
     if (previous?.name === name && previous.avatarVersion === avatarVersion
-      && previous.avatarSmall === avatarSmall && previous.avatarLarge === avatarLarge
-      && previous.avatar === avatar) continue;
+      && sameCloudAvatar(previous.avatarSmall, avatarSmall)
+      && sameCloudAvatar(previous.avatarLarge, avatarLarge)
+      && sameCloudAvatar(previous.avatar, avatar)) continue;
     changed.push({
       id: entry.id,
       realmId: entry.realmId,
