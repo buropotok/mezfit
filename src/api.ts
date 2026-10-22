@@ -479,34 +479,6 @@ export async function syncCloudContactProfile(initData: string): Promise<boolean
   return payload.changed;
 }
 
-/** Authenticated binary read. Contact metadata comes from the synced cloud membership. */
-export type AvatarFetchStep = 'http-accepted' | 'mime-accepted' | 'blob-validated';
-
-/** Explicit, label-only tracing for the opt-in Telegram diagnostic. */
-export async function fetchCloudContactAvatar(
-  initData: string, realmId: string, userId: string, version: string,
-  report?: (step: AvatarFetchStep) => void,
-): Promise<Blob> {
-  const query = new URLSearchParams({ realmId, userId, version });
-  const response = await fetch('/api/cloud/profile/avatar?' + query, {
-    headers: { 'x-telegram-init-data': initData },
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new ApiError(response.status, 'Аватар недоступен', 'AVATAR_UNAVAILABLE');
-  report?.('http-accepted');
-  const length = Number(response.headers.get('content-length') || 0);
-  if (length > 2_000_000 || !response.headers.get('content-type')?.startsWith('image/jpeg')) {
-    throw new ApiError(502, 'Некорректное изображение', 'INVALID_AVATAR_RESPONSE');
-  }
-  report?.('mime-accepted');
-  const blob = await response.blob();
-  if (blob.size < 16 || blob.size > 2_000_000) {
-    throw new ApiError(502, 'Некорректное изображение', 'INVALID_AVATAR_RESPONSE');
-  }
-  report?.('blob-validated');
-  return blob;
-}
-
 /** Authenticated binary upload; JSON API helper must not set a JSON content-type here. */
 export async function uploadPersonalExerciseMedia(initData: string, image: Blob, signal?: AbortSignal): Promise<string> {
   if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');

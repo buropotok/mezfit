@@ -3,6 +3,7 @@ import { stableCloudRelationshipId } from '../../shared/relationship-id';
 import {
   cloudMembershipAdminRead,
   cloudMembershipAdminToken,
+  cloudMembershipAdminUploadAvatar,
   cloudMembershipAdminUpsertProfiles,
   relationshipMembership,
   type CloudMembershipEnv,
@@ -10,7 +11,6 @@ import {
 
 export interface ContactProfileEnv extends CloudMembershipEnv {
   TELEGRAM_BOT_TOKEN: string;
-  R2_BINDING_MEZFIT: R2Bucket;
 }
 
 type Row = Record<string, unknown>;
@@ -48,10 +48,6 @@ function realmId(value: unknown): value is string {
 
 function version(value: unknown): value is string {
   return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
-}
-
-function avatarKey(account: string, mediaVersion: string): Promise<string> {
-  return sha(account).then((digest) => `contact-avatars/${digest}/${mediaVersion}.jpg`);
 }
 
 async function sha(input: string): Promise<string> {
@@ -92,33 +88,39 @@ async function currentTelegramPhoto(
   }
 }
 
-async function storeAvatarIfMissing(
-  env: ContactProfileEnv, fetchImpl: typeof fetch, account: string, photo: Exclude<Photo, null>,
-): Promise<boolean> {
-  const key = await avatarKey(account, photo.version);
+/**
+ * The only avatar storage is Dexie Cloud's authenticated blob service.
+ * BlobRefs are attached to relationship-scoped profile rows with _hasBlobRefs.
+ */
+function cloudAvatar(value: unknown): boolean {
+  return record(value) && (
+    value._bt === 'Blob' && typeof value.ref === 'string'
+    || value.$t === 'Blob' && typeof value.v === 'string'
+  );
+}
+
+async function fetchTelegramAvatar(
+  fetchImpl: typeof fetch, botToken: string, photo: Exclude<Photo, null>,
+): Promise<ArrayBuffer | null> {
   try {
-    if (await env.R2_BINDING_MEZFIT.head(key)) return true;
-    const result = await getJson(fetchImpl, `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getFile`, {
+    const result = await getJson(fetchImpl, `https://api.telegram.org/bot${botToken}/getFile`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ file_id: photo.fileId }),
     });
     if (!record(result) || result.ok !== true || !record(result.result)
-      || typeof result.result.file_path !== 'string') return false;
+      || typeof result.result.file_path !== 'string') return null;
     const filePath = result.result.file_path;
-    if (!/^[A-Za-z0-9_./-]+$/.test(filePath) || filePath.includes('..')) return false;
-    const image = await fetchImpl(`https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${filePath}`);
-    if (!image.ok || Number(image.headers.get('content-length') || 0) > 2_000_000) return false;
+    if (!/^[A-Za-z0-9_./-]+$/.test(filePath) || filePath.includes('..')) return null;
+    const image = await fetchImpl(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
+    if (!image.ok || Number(image.headers.get('content-length') || 0) > 256_000) return null;
     const bytes = await image.arrayBuffer();
-    if (bytes.byteLength < 16 || bytes.byteLength > 2_000_000) return false;
     const signature = new Uint8Array(bytes);
-    if (signature[0] !== 0xff || signature[1] !== 0xd8 || signature[2] !== 0xff) return false;
-    await env.R2_BINDING_MEZFIT.put(key, bytes, {
-      httpMetadata: { contentType: 'image/jpeg' },
-    });
-    return true;
+    if (signature.length < 16 || signature.length > 256_000
+      || signature[0] !== 0xff || signature[1] !== 0xd8 || signature[2] !== 0xff) return null;
+    return bytes;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -210,14 +212,27 @@ export async function syncOwnContactProfile(
   const name = profileName(identity.user);
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
   const hasNewVersion = photo !== undefined && eligibleForSession.some(({ id }) =>
-    known.get(id)?.avatarVersion !== (photo?.version ?? null));
+    known.get(id)?.avatarVersion !== (photo?.version ?? null)
+    || (photo !== null && !cloudAvatar(known.get(id)?.avatar)));
   let newVersion: string | null | undefined;
-  if (photo === null) newVersion = null;
-  else if (photo && hasNewVersion) {
-    if (await storeAvatarIfMissing(env, fetchImpl, account, photo)) newVersion = photo.version;
+  let newAvatar: Row | null | undefined;
+  if (photo === null) {
+    newVersion = null;
+    newAvatar = null;
+  } else if (photo && hasNewVersion) {
+    const downloaded = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
+    if (downloaded) {
+      try {
+        const id = await sha(account + ':' + photo.version);
+        newAvatar = await cloudMembershipAdminUploadAvatar(fetchImpl, bearer, id, downloaded);
+        newVersion = photo.version;
+      } catch {
+        // Keep the last valid version; a later verified launch can retry.
+      }
+    }
   }
 
-  // The Bot API / R2 calls above may take time. Re-read cloud timestamps
+  // The Telegram Bot API calls above may take time. Re-read cloud timestamps
   // just before committing so a slower, older Mini App session does not
   // restore a name that a newer session has already persisted.
   const latest = await cloudMembershipAdminRead(
@@ -233,10 +248,14 @@ export async function syncOwnContactProfile(
     if (hasNewerOrSameSource(previous, sourceAuthAt)) continue;
     if (previous && (previous.realmId !== entry.realmId || previous.userId !== account
       || previous.owner !== null)) continue;
-    const previousVersion = previous?.avatarVersion;
+    const previousAvatar = cloudAvatar(previous?.avatar) ? previous?.avatar : null;
     const avatarVersion = newVersion === undefined
-      ? (version(previousVersion) ? previousVersion : null) : newVersion;
-    if (previous?.name === name && previous.avatarVersion === avatarVersion) continue;
+      ? (previousAvatar && version(previous?.avatarVersion) ? previous.avatarVersion : null)
+      : newVersion;
+    const avatar = newAvatar === undefined ? previousAvatar : newAvatar;
+    const isBlobRef = record(avatar) && avatar._bt === 'Blob';
+    if (previous?.name === name && previous.avatarVersion === avatarVersion
+      && (avatarVersion === null || cloudAvatar(previous.avatar))) continue;
     changed.push({
       id: entry.id,
       realmId: entry.realmId,
@@ -244,6 +263,8 @@ export async function syncOwnContactProfile(
       userId: account,
       name,
       avatarVersion,
+      avatar,
+      ...(isBlobRef ? { _hasBlobRefs: 1 } : {}),
       sourceAuthAt,
     });
   }
@@ -251,45 +272,3 @@ export async function syncOwnContactProfile(
   return Response.json({ changed: changed.length > 0 }, { headers: { 'cache-control': 'no-store' } });
 }
 
-/** Private avatar: only the actual coach/client in a canonical accepted realm can retrieve it. */
-export async function getContactAvatar(
-  request: Request, env: ContactProfileEnv, fetchImpl: typeof fetch = fetch,
-): Promise<Response> {
-  if (request.method !== 'GET') return new Response(null, { status: 405 });
-  const identity = await validateTelegramInitData(
-    request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
-  );
-  const url = new URL(request.url);
-  const target = url.searchParams.get('userId');
-  const realm = url.searchParams.get('realmId');
-  const expectedVersion = url.searchParams.get('version');
-  if (!userId(target) || !realmId(realm) || !version(expectedVersion)) {
-    return new Response(null, { status: 404 });
-  }
-  const bearer = await cloudMembershipAdminToken(env, fetchImpl);
-  const pair = await validatedPair(fetchImpl, bearer, realm);
-  const me = pair?.find((member) => member.userId === 'tg:' + identity.user.id);
-  if (!me || !pair?.some((member) => member.userId === target)) {
-    return new Response(null, { status: 404 });
-  }
-  const profiles = await cloudMembershipAdminRead(
-    fetchImpl, bearer, '/all/contactProfiles?realmId=' + encodeURIComponent(realm),
-  );
-  const profileId = await stableCloudRelationshipId('prf', realm + ':' + target);
-  const profile = Array.isArray(profiles)
-    ? profiles.find((row: unknown) => record(row) && row.id === profileId) : undefined;
-  if (!record(profile) || profile.realmId !== realm || profile.userId !== target
-    || profile.owner !== null || profile.avatarVersion !== expectedVersion) {
-    return new Response(null, { status: 404 });
-  }
-  const key = await avatarKey(target, expectedVersion);
-  const asset = await env.R2_BINDING_MEZFIT.get(key);
-  if (!asset) return new Response(null, { status: 404 });
-  return new Response(asset.body, {
-    headers: {
-      'content-type': 'image/jpeg',
-      'cache-control': 'private, no-store',
-      'x-content-type-options': 'nosniff',
-    },
-  });
-}

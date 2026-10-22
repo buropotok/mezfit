@@ -28,7 +28,7 @@ Privileged control operations only:
 
 The app never receives privileged Dexie Cloud credentials or Telegram bot secrets. The Worker is not the transport for ordinary domain CRUD or synchronization. Dexie Cloud is managed infrastructure; no second Dexie Cloud Worker is deployed.
 
-Cloudflare may still host the application and store exercise media in R2. Cloudflare D1 is not a second business database. There is one Dexie Cloud environment for pre-MVP; staging and migration of test users are not required.
+Cloudflare may still host the application and store exercise media in R2. **Telegram contact avatars are the explicit exception:** JPEG bytes reside in the authenticated Dexie Cloud blob service, referenced by relationship-scoped `contactProfiles` along with version metadata and resolved by the Addon into authorized IndexedDB subsets; avatar reads do not depend on R2 or D1. Cloudflare D1 is not a second business database. There is one Dexie Cloud environment for pre-MVP; staging and migration of test users are not required.
 
 **Rollout boundary:** The repository currently contains D1-backed code and custom sync design. This document specifies the target; documentation alone does not migrate the running application. Replace obsolete runtime paths in focused implementation PRs, rather than silently maintaining two active authorities.
 
@@ -77,7 +77,7 @@ Client mode keeps the client's permitted working data locally. Coach mode keeps 
 - workout/session history;
 - local analytics and charts.
 
-Initial sign-in, new realm membership and initial hydration require connectivity. Previously synchronized data remains locally readable offline subject to session/account security policy. Show synchronization and offline status honestly; do not claim remote persistence until confirmed. Media blobs have a separate cache policy; local records hold metadata/URLs rather than permanent copies of all videos.
+Initial sign-in, new realm membership and initial hydration require connectivity. Previously synchronized data remains locally readable offline subject to session/account security policy. Show synchronization and offline status honestly; do not claim remote persistence until confirmed. Exercise/video media blobs have a separate cache policy; local records hold metadata/URLs rather than permanent copies of all videos. Telegram avatar JPEGs instead live inside Dexie Cloud profiles and follow Dexie Cloud's local-first caching and relationship-realm access.
 
 A local mutation changes the smallest relevant records/fields in one Dexie transaction and updates the UI immediately. Never replace a stale whole-workout snapshot to update one set. On reconnection, Dexie Cloud Addon handles synchronization. Where edits to the same field conflict, use the documented Dexie Cloud behavior; do not promise that both competing values are preserved.
 

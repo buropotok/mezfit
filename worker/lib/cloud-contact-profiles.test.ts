@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from './dexie-cloud-membership';
-import { getContactAvatar, syncOwnContactProfile, type ContactProfileEnv } from './cloud-contact-profiles';
+import { syncOwnContactProfile, type ContactProfileEnv } from './cloud-contact-profiles';
 import { validateTelegramInitData } from './telegram';
 
 vi.mock('./telegram', async (importOriginal) => {
@@ -9,18 +9,12 @@ vi.mock('./telegram', async (importOriginal) => {
 });
 
 const jpeg = Uint8Array.from([255, 216, 255, 224, ...Array(32).fill(0)]);
-const objects = new Map<string, ArrayBuffer>();
-const head = vi.fn(async (key: string) => objects.has(key) ? { key } : null);
-const put = vi.fn(async (key: string, bytes: ArrayBuffer) => { objects.set(key, bytes); });
-const get = vi.fn(async (key: string) => objects.has(key)
-  ? { body: new Blob([objects.get(key)!], { type: 'image/jpeg' }).stream() } : null);
 const env = {
   TELEGRAM_BOT_TOKEN: 'test-bot-secret',
   DEXIE_CLOUD_CLIENT_ID: 'auth-id',
   DEXIE_CLOUD_CLIENT_SECRET: 'auth-secret',
   DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID: 'manager-id',
   DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET: 'manager-secret',
-  R2_BINDING_MEZFIT: { head, put, get },
 } as unknown as ContactProfileEnv;
 
 const FIRST_AUTH_AT = new Date('2026-10-12T19:00:00Z');
@@ -35,12 +29,15 @@ async function setup() {
   const pair = await relationshipMembership('101', '202');
   const members = pair.members.map((member) => ({ ...member, name: undefined as string | undefined, avatarVersion: undefined as string | null | undefined }));
   const store = new Map(members.map((member) => [member.id, member]));
-  const profiles = new Map<string, { id: string; realmId: string; owner: null; userId: string; name: string; avatarVersion: string | null; sourceAuthAt: number }>();
+  const profiles = new Map<string, { id: string; realmId: string; owner: null; userId: string; name: string; avatarVersion: string | null; avatar: { _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' } | null; _hasBlobRefs?: number; sourceAuthAt: number }>();
   let photo = 'photo-one';
   let noPhoto = false;
   let postCount = 0;
   let memberWrites = 0;
   let downloads = 0;
+  let uploads = 0;
+  let uploadFails = false;
+  let invalidImage = false;
   const fetchImpl = vi.fn<typeof fetch>(async (input, init) => {
     const url = new URL(String(input));
     const method = init?.method ?? 'GET';
@@ -66,12 +63,22 @@ async function setup() {
       postCount++;
       const rows = JSON.parse(String(init?.body)) as Array<{
         id: string; realmId: string; owner: null; userId: string;
-        name: string; avatarVersion: string | null; sourceAuthAt: number;
+        name: string; avatarVersion: string | null; avatar: { _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' } | null; _hasBlobRefs?: number; sourceAuthAt: number;
       }>;
       rows.forEach((profile) => profiles.set(profile.id, profile));
       return new Response(null, { status: 204 });
     }
     if (url.pathname.startsWith('/all/realms/')) return Response.json(pair.realm);
+    if (url.pathname.startsWith('/blob/') && method === 'PUT') {
+      uploads++;
+      if (uploadFails) return new Response(null, { status: 503 });
+      expect(new Uint8Array(init?.body as ArrayBuffer)).toEqual(jpeg);
+      expect(init?.headers).toMatchObject({
+        Authorization: 'Bearer manager',
+        'Content-Type': 'image/jpeg',
+      });
+      return Response.json({ ref: '1:' + url.pathname.split('/').at(-1) });
+    }
     if (url.pathname.endsWith('/getUserProfilePhotos')) {
       return Response.json({ ok: true, result: {
         photos: noPhoto ? [] : [[{ file_id: photo, file_unique_id: photo }]],
@@ -82,26 +89,29 @@ async function setup() {
     }
     if (url.pathname.startsWith('/file/bot')) {
       downloads++;
-      return new Response(jpeg.slice(), { headers: { 'content-type': 'image/jpeg' } });
+      return new Response(invalidImage ? new Uint8Array(36) : jpeg.slice(), {
+        headers: { 'content-type': 'image/jpeg' },
+      });
     }
     throw new Error('unexpected test route');
   });
   return {
     pair, store, profiles, fetchImpl, postCount: () => postCount,
-    memberWrites: () => memberWrites, downloads: () => downloads,
+    memberWrites: () => memberWrites, downloads: () => downloads, uploads: () => uploads,
     setPhoto(value: string) { photo = value; },
     removePhoto() { noPhoto = true; },
+    failUpload() { uploadFails = true; },
+    invalidateImage() { invalidImage = true; },
   };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  objects.clear();
   auth(101);
 });
 
 describe('privileged Telegram contact profile synchronization', () => {
-  it('updates absent names and R2 avatar once, then skips identical writes and downloads', async () => {
+  it('stores Telegram JPEG in Dexie Cloud profiles once, without R2 or duplicate uploads', async () => {
     const cloud = await setup();
     const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
       method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
@@ -122,7 +132,10 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect((await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())).toEqual({ changed: false });
     expect(cloud.postCount()).toBe(1);
     expect(cloud.downloads()).toBe(1);
-    expect(put).toHaveBeenCalledTimes(1);
+    expect(own.avatar).toMatchObject({ _bt: 'Blob', size: jpeg.length, ct: 'image/jpeg' });
+    expect(own.avatar?.ref).toMatch(/^1:[a-f0-9]{64}$/);
+    expect(own._hasBlobRefs).toBe(1);
+    expect(cloud.uploads()).toBe(1);
   });
 
   it('updates only a changed Telegram name without downloading a new avatar', async () => {
@@ -142,6 +155,8 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(current.name).toBe('Новое Имя');
     expect(cloud.downloads()).toBe(firstDownloads);
     expect(cloud.postCount()).toBe(firstWrites + 1);
+    expect(current._hasBlobRefs).toBe(1);
+    expect(cloud.uploads()).toBe(1);
   });
 
   it('refreshes only the changed avatar version and preserves existing relationship metadata', async () => {
@@ -160,14 +175,51 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(updated.name).toBe(original.name);
     expect(updated.realmId).toBe(original.realmId);
     expect(cloud.downloads()).toBe(2);
+    expect(cloud.uploads()).toBe(2);
 
     cloud.removePhoto();
     auth(101, new Date('2026-10-12T19:02:00Z'));
     await syncOwnContactProfile(request, env, cloud.fetchImpl);
     const removed = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(removed.avatarVersion).toBeNull();
+    expect(removed.avatar).toBeNull();
     expect(cloud.downloads()).toBe(2);
     expect(cloud.memberWrites()).toBe(0);
+  });
+
+  it('keeps an existing cloud avatar if new blob upload fails and still updates the name', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const before = [...cloud.profiles.values()][0];
+    cloud.setPhoto('photo-replacement');
+    cloud.failUpload();
+    vi.mocked(validateTelegramInitData).mockResolvedValue({
+      user: { id: 101, first_name: 'Новое', last_name: 'Имя' },
+      authDate: new Date('2026-10-12T19:01:00Z'),
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const after = [...cloud.profiles.values()][0];
+    expect(after.name).toBe('Новое Имя');
+    expect(after.avatarVersion).toBe(before.avatarVersion);
+    expect(after.avatar).toEqual(before.avatar);
+    expect(after._hasBlobRefs).toBe(1);
+  });
+
+  it('does not publish malformed image bytes to Dexie Cloud', async () => {
+    const cloud = await setup();
+    cloud.invalidateImage();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const profile = [...cloud.profiles.values()][0];
+    expect(profile.name).toBe('Новый Профиль');
+    expect(profile.avatarVersion).toBeNull();
+    expect(profile.avatar).toBeNull();
+    expect(cloud.uploads()).toBe(0);
   });
 
   it('does not restore an older verified Telegram name after a newer session saved it', async () => {
@@ -235,27 +287,22 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.postCount()).toBe(1);
   });
 
-  it('serves a cached R2 photo only to real members of the linked canonical realm', async () => {
+  it('replaces legacy R2-only version with a JPEG stored in Dexie Cloud', async () => {
     const cloud = await setup();
-    await syncOwnContactProfile(new Request('https://mezfit.test/api/cloud/profile/sync', {
+    const { realmId } = cloud.pair.realm;
+    const { stableCloudRelationshipId } = await import('../../shared/relationship-id');
+    const id = await stableCloudRelationshipId('prf', realmId + ':tg:101');
+    cloud.profiles.set(id, {
+      id, realmId, owner: null, userId: 'tg:101', name: 'Новый Профиль',
+      avatarVersion: 'a'.repeat(64), avatar: null,
+      sourceAuthAt: new Date('2026-10-12T18:00:00Z').getTime(),
+    });
+    const result = await syncOwnContactProfile(new Request('https://mezfit.test/api/cloud/profile/sync', {
       method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
     }), env, cloud.fetchImpl);
-    const version = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')?.avatarVersion;
-    expect(version).toBeTruthy();
-    const url = `https://mezfit.test/api/cloud/profile/avatar?userId=tg%3A101&realmId=${cloud.pair.realm.realmId}&version=${version}`;
-    auth(202);
-    const request = new Request(url, { headers: { 'x-telegram-init-data': 'signed' } });
-    const allowed = await getContactAvatar(request, env, cloud.fetchImpl);
-    expect(allowed.status).toBe(200);
-    expect(allowed.headers.get('content-type')).toBe('image/jpeg');
-    expect(allowed.headers.get('cache-control')).toContain('no-store');
-
-    auth(303);
-    expect((await getContactAvatar(request, env, cloud.fetchImpl)).status).toBe(404);
-    auth(202);
-    expect((await getContactAvatar(new Request(url.replace(String(version), '0'.repeat(64)), {
-      headers: { 'x-telegram-init-data': 'signed' },
-    }), env, cloud.fetchImpl)).status).toBe(404);
+    expect(result.status).toBe(200);
+    expect(cloud.profiles.get(id)?.avatar).toMatchObject({ _bt: 'Blob' });
+    expect(cloud.downloads()).toBe(1);
   });
 
   it('never writes another member profile or unvalidated relationship', async () => {

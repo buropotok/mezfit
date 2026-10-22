@@ -14,6 +14,7 @@ describe('relationship-scoped contact profile projection', () => {
       userId: 'tg:202',
       name: 'Новое имя клиента',
       avatarVersion: photoVersion,
+      avatar: new Blob([new Uint8Array(36)], { type: 'image/jpeg' }),
     };
     const coach = await deriveCloudContacts('tg:101', [realm], members, [profile]);
     expect(coach.clients[0]).toMatchObject({
@@ -26,12 +27,24 @@ describe('relationship-scoped contact profile projection', () => {
     expect(members.map((member) => member.roles)).toEqual([['coach'], ['client']]);
   });
 
+  it('does not advertise legacy R2-only metadata as a downloadable avatar', async () => {
+    const { realm, members } = await relationshipMembership('101', '202');
+    const profile = {
+      id: await stableCloudRelationshipId('prf', realm.realmId + ':tg:202'),
+      realmId: realm.realmId, userId: 'tg:202', owner: null,
+      name: 'София', avatarVersion: 'a'.repeat(64),
+    };
+    const { clients } = await deriveCloudContacts('tg:101', [realm], members, [profile]);
+    expect(clients[0].displayName).toBe('София');
+    expect(clients[0].avatarVersion).toBeNull();
+  });
+
   it('rejects forged, owned and unrelated profile rows without losing approved relationships', async () => {
     const { realm, members } = await relationshipMembership('101', '202');
     const canonical = {
       id: await stableCloudRelationshipId('prf', realm.realmId + ':tg:202'),
       realmId: realm.realmId, userId: 'tg:202', owner: null,
-      name: 'Анна', avatarVersion: 'b'.repeat(64),
+      name: 'Анна', avatarVersion: 'b'.repeat(64), avatar: new Blob([new Uint8Array(36)]),
     };
     for (const forged of [
       { ...canonical, id: 'prfforged' },

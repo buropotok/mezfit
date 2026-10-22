@@ -38,6 +38,8 @@ export interface CloudContactProfileRow extends CloudSharedRow {
   userId: string;
   name: string;
   avatarVersion: string | null;
+  /** Realm-scoped JPEG; Dexie Cloud Addon resolves the binary value locally. */
+  avatar?: Blob | null;
   /** Verified Telegram initData auth_date in Unix milliseconds. */
   sourceAuthAt: number;
 }

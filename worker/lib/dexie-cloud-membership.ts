@@ -187,6 +187,35 @@ export async function cloudMembershipAdminUpsertProfiles(
   }
 }
 
+/** Store private media in Dexie Cloud's own blob service (not Cloudflare R2). */
+export async function cloudMembershipAdminUploadAvatar(
+  fetchImpl: typeof fetch, bearer: string, blobId: string, bytes: ArrayBuffer,
+): Promise<{ _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' }> {
+  if (!/^[a-f0-9]{64}$/.test(blobId) || bytes.byteLength < 16 || bytes.byteLength > 256_000) {
+    failUnavailable();
+  }
+  let response: Response;
+  try {
+    response = await fetchImpl(
+      cloudConfig.dbUrl + '/blob/' + blobId + '?ct=image%2Fjpeg', {
+        method: 'PUT',
+        headers: {
+          Authorization: 'Bearer ' + bearer,
+          'Content-Type': 'image/jpeg',
+          Accept: 'application/json',
+        },
+        body: bytes,
+      },
+    );
+  } catch {
+    return failUnavailable();
+  }
+  const value = await json(response);
+  if (!isObject(value) || typeof value.ref !== 'string'
+    || !/^[0-9]+:[a-zA-Z0-9_-]{6,}$/.test(value.ref)) failUnavailable();
+  return { _bt: 'Blob', ref: value.ref, size: bytes.byteLength, ct: 'image/jpeg' };
+}
+
 function sameStrings(value: unknown, expected: string[]): boolean {
   return Array.isArray(value) && value.length === expected.length
     && expected.every((item) => value.includes(item))
