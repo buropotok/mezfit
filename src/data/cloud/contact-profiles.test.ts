@@ -62,7 +62,7 @@ describe('relationship-scoped contact profile projection', () => {
     const hydrated = await deriveCloudContacts('tg:101', [realm], members, [{
       ...profile, avatarSmall: new Blob([new Uint8Array(32_000)], { type: 'image/jpeg' }),
     }]);
-    expect(hydrated.clients[0].avatarMode).toBe('br0');
+    expect(hydrated.clients[0].avatarMode).toBe('1r0');
     expect(hydrated.clients[0].avatarVersion).toBe(profile.avatarVersion);
   });
 
