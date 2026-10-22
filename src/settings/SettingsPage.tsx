@@ -328,9 +328,7 @@ export function SettingsPage({
       return () => onNavigationContextChange(null);
     }
 
-    if (screenDiagnosticsOpen) return <ScreenDiagnostics glassBlur={effectiveGlassBlur} />;
-
-  if (glassSettingsOpen) {
+    if (glassSettingsOpen) {
       onNavigationContextChange({ title: 'Настройки стекла', scrollKey: 'settings:glass', onBack: closeGlassSettings });
       return () => onNavigationContextChange(null);
     }
@@ -379,6 +377,8 @@ export function SettingsPage({
       </section>
     );
   }
+
+  if (screenDiagnosticsOpen) return <ScreenDiagnostics glassBlur={effectiveGlassBlur} />;
 
   if (glassSettingsOpen) {
     const changeGlassPreset = (value: string) => {
