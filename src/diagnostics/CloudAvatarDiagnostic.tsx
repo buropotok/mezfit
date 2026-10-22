@@ -9,20 +9,12 @@ import { loadContactAvatar, type AvatarTraceStage } from '../data/cloud/contact-
 
 const stageNames: Record<AvatarTraceStage, string> = {
   'invalid-reference': 'Неверные метаданные изображения',
-  'waiting-for-download': 'Ожидаем уже начатую загрузку',
-  'indexeddb-reading': 'Чтение локального кэша',
-  'permission-not-found': 'Нет локального разрешения для аватара',
-  'permission-version-changed': 'Локальная версия отличается от облачной',
-  'cache-hit': 'Фотография найдена в IndexedDB',
-  'requesting-worker': 'Запрос фотографии через Worker',
-  'http-accepted': 'Worker: HTTP 200',
-  'mime-accepted': 'Проверка типа и размера ответа пройдена',
-  'blob-validated': 'Blob прочитан и проверен',
-  'worker-request-failed': 'Ошибка запроса, проверки HTTP или Blob',
-  'indexeddb-writing': 'Сохранение в IndexedDB',
-  'cache-saved': 'Blob получен из кэша или сохранён',
-  'cache-write-skipped': 'Запись отменена: доступ или версия изменились',
-  'indexeddb-error': 'Ошибка чтения или записи IndexedDB',
+  'reading-dexie': 'Чтение изображения из Dexie Cloud (IndexedDB)',
+  'profile-not-found': 'В синхронизированном профиле нет фотографии',
+  'permission-version-changed': 'Версия аватара в профиле изменилась',
+  'blob-validated': 'Изображение прочитано из Dexie Cloud',
+  'indexeddb-error': 'Ошибка чтения локальной Dexie Cloud',
+
 };
 
 type ProbeState = 'idle' | 'pending' | 'ok' | 'failed';
@@ -51,6 +43,7 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const mounted = useRef(false);
   const urlRef = useRef<string | null>(null);
+  const dbRef = useRef<MezfitCloudDatabase | null>(null);
 
   useEffect(() => {
     mounted.current = true;
@@ -65,6 +58,7 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
         const id = me.user.telegramUserId;
         if (!/^[1-9][0-9]*$/.test(id)) throw new Error('INVALID_ACCOUNT');
         db = createCloudDatabase(id, initData);
+        dbRef.current = db;
         const cloudDb = db;
         await cloudDb.open();
         if (!active) return;
@@ -98,6 +92,7 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
       active = false;
       mounted.current = false;
       subscription?.unsubscribe();
+      dbRef.current = null;
       db?.close({ disableAutoOpen: false });
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
       urlRef.current = null;
@@ -108,7 +103,7 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
   const withAvatar = contacts.filter((contact) => contact.avatarVersion).length;
 
   const check = async () => {
-    if (!telegramUserId || !selected || result === 'pending') return;
+    if (!dbRef.current || !selected || result === 'pending') return;
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     urlRef.current = null;
     setImageUrl(null);
@@ -123,7 +118,7 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
     };
 
     try {
-      const blob = await loadContactAvatar(telegramUserId, initData, selected, push);
+      const blob = await loadContactAvatar(dbRef.current, selected, push);
       if (!mounted.current) return;
       if (!blob) {
         setResult('failed');

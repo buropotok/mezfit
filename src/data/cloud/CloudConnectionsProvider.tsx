@@ -8,7 +8,7 @@ import { isApprovedAssignedPair } from './assigned-programs';
 import { stableCloudRelationshipId } from '../../../shared/relationship-id';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { syncCloudContactProfile } from '../../api';
-import { loadContactAvatar, pruneUnlinkedContactAvatars } from './contact-avatar-cache';
+import { loadContactAvatar } from './contact-avatar-cache';
 
 /** Telegram's verified identity, not the former D1 integer, is the contact ID. */
 export interface CloudContact {
@@ -90,6 +90,7 @@ type ProfileView = {
   userId: string;
   name: string;
   avatarVersion: string | null;
+  avatar?: Blob | null;
 };
 
 /** Derived presentation only: server-enforced memberships remain the access boundary. */
@@ -119,7 +120,7 @@ export async function deriveCloudContacts(
     const peer = contact(mine.realmId, {
       userId: partner.userId,
       name: profile?.name || partner.name,
-      avatarVersion: profile?.avatarVersion,
+      avatarVersion: profile?.avatar instanceof Blob ? profile.avatarVersion : null,
     }, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
     return peer ? { peer, asCoach } : null;
   }));
@@ -167,16 +168,11 @@ export function CloudConnectionsProvider({
   const [syncError, setSyncError] = useState('');
   const alive = useRef(false);
   const initialPullSucceededRef = useRef(false);
-  const avatarPermissionsReadyRef = useRef<Promise<void>>(Promise.resolve());
-
   const reconcileAvatarPermissions = useCallback((next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
+    // Revoked or replaced portraits lose their in-memory blob URL immediately.
+    // The only persistent image cache is the realm-authorized Dexie Cloud subset.
     avatarUrls.retain([...next.clients, ...next.coaches]);
-    // Serialize snapshots before media loads: stale asynchronous downloads cannot
-    // restore revoked portraits once the latest permissions have been persisted.
-    avatarPermissionsReadyRef.current = avatarPermissionsReadyRef.current
-      .then(() => pruneUnlinkedContactAvatars(telegramUserId, [...next.clients, ...next.coaches]))
-      .catch(() => {});
-  }, [telegramUserId, avatarUrls]);
+  }, [avatarUrls]);
 
   useEffect(() => {
     alive.current = true;
@@ -297,10 +293,8 @@ export function CloudConnectionsProvider({
     return () => { active = false; };
   }, [db, initData]);
 
-  const loadAvatar = useCallback(async (peer: CloudContact) => {
-    await avatarPermissionsReadyRef.current;
-    return loadContactAvatar(telegramUserId, initData, peer);
-  }, [telegramUserId, initData]);
+  const loadAvatar = useCallback((peer: CloudContact) =>
+    loadContactAvatar(db, peer), [db]);
 
   const refresh = useCallback(async () => {
     try {

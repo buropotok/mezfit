@@ -76,25 +76,19 @@ afterEach(() => {
 });
 
 describe('on-demand cloud avatar diagnostic', () => {
-  it('reports a successful Worker response followed by local IndexedDB failure without leaking identifiers', async () => {
-    vi.mocked(loadContactAvatar).mockImplementation(async (_account, _initData, _peer, trace) => {
-      trace?.('requesting-worker');
-      trace?.('http-accepted');
-      trace?.('mime-accepted');
-      trace?.('blob-validated');
-      trace?.('indexeddb-writing');
-      trace?.('indexeddb-error');
+  it('reports a missing local Dexie avatar without leaking identifiers', async () => {
+    vi.mocked(loadContactAvatar).mockImplementation(async (_db, _peer, trace) => {
+      trace?.('reading-dexie');
+      trace?.('profile-not-found');
       return null;
     });
     render(<CloudAvatarDiagnostic initData="secret-signed-telegram-initdata" />);
     await waitFor(() => expect(screen.getByText('С версией аватара: 1')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Проверить загрузку аватара' }));
     await waitFor(() => expect(screen.getByText('Результат: ошибка')).toBeTruthy());
-    expect(screen.getByText('Worker: HTTP 200')).toBeTruthy();
-    expect(screen.getByText('Blob прочитан и проверен')).toBeTruthy();
-    expect(screen.getAllByText('Ошибка чтения или записи IndexedDB').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('В синхронизированном профиле нет фотографии').length).toBeGreaterThan(0);
     expect(loadContactAvatar).toHaveBeenCalledWith(
-      '101', 'secret-signed-telegram-initdata', peer, expect.any(Function),
+      db, peer, expect.any(Function),
     );
     const output = document.body.textContent ?? '';
     for (const secret of [
@@ -103,8 +97,8 @@ describe('on-demand cloud avatar diagnostic', () => {
   });
 
   it('decodes a returned Blob and passes its object URL to unchanged UIkit Avatar', async () => {
-    vi.mocked(loadContactAvatar).mockImplementation(async (_account, _initData, _peer, trace) => {
-      trace?.('cache-hit');
+    vi.mocked(loadContactAvatar).mockImplementation(async (_db, _peer, trace) => {
+      trace?.('blob-validated');
       return new Blob(['file content'], { type: 'image/jpeg' });
     });
     const view = render(<CloudAvatarDiagnostic initData="signed" />);
