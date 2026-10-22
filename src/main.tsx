@@ -2,10 +2,8 @@ import { KonstaProvider } from 'konsta/react';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
-import { applyBackgroundSettings, loadBrowserBackgroundSettings } from './backgroundSettings';
+import { startAppBootstrap } from './appBootstrap';
 import { finishBoot } from './bootDiagnostics';
-import { applyTheme, loadGlobalTheme } from './theme';
-import { applyTypographySettings, loadBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp } from './telegram';
 import './ui/konsta.css';
 import './style.css';
@@ -36,10 +34,6 @@ function BootCompletion({ children }: { children: React.ReactNode }) {
 }
 
 async function bootstrap(): Promise<void> {
-  applyBackgroundSettings(loadBrowserBackgroundSettings());
-  applyTypographySettings(loadBrowserTypographySettings());
-  applyTheme('default');
-  void loadGlobalTheme();
   root.classList.add('k-ios', 'dark', 'safe-areas');
   let content = <App />;
   const isFullscreenDayScheduleUiKit = (
@@ -68,4 +62,4 @@ async function bootstrap(): Promise<void> {
   );
 }
 
-void bootstrap();
+void startAppBootstrap(bootstrap);
