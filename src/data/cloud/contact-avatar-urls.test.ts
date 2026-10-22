@@ -12,6 +12,24 @@ describe('account-owned avatar URLs', () => {
     cache.retain([]); expect(cache.get(peer)).toBeUndefined();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:portrait');
   });
+  it('caches both sizes independently and drops stale same-version legacy blobs', async () => {
+    let count = 0;
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:portrait-' + (++count)),
+      revokeObjectURL: vi.fn(),
+    });
+    const cache = new ContactAvatarUrls();
+    const load = vi.fn(async () => new Blob(['portrait']));
+    expect(await cache.load(peer, load)).toBe('blob:portrait-1');
+    expect(await cache.load(peer, load, 'large')).toBe('blob:portrait-2');
+    expect(load).toHaveBeenCalledTimes(2);
+    const upgraded = { ...peer, avatarMode: '110' };
+    cache.retain([upgraded]);
+    expect(cache.get(peer)).toBeUndefined();
+    expect(await cache.load(upgraded, load)).toBe('blob:portrait-3');
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
+  });
+
   it('discards pending bytes after revocation or account disposal', async () => {
     vi.stubGlobal('URL', { createObjectURL: vi.fn(), revokeObjectURL: vi.fn() });
     let finish: (value: Blob) => void = () => {};
