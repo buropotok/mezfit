@@ -8,12 +8,29 @@ import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { WorkoutSlotConflict } from '../data/cloud/workout-slot-validation';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 
+const cloudEnabled = vi.hoisted(() => ({ value: false }));
+
 vi.mock('./WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
-vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => null }));
+vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => cloudEnabled.value
+  ? { db: {}, actorUserId: 'tg:101' } : null }));
 vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSelectionSheet: () => null }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
-  WorkoutPlanCard: ({ onAddSet }: { onAddSet?: (id: string) => void }) =>
-    <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>,
+  WorkoutPlanCard: ({ onAddSet, onExerciseInformation }: {
+    onAddSet?: (id: string) => void; onExerciseInformation?: (id: string) => void;
+  }) => <>
+    <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>
+    {onExerciseInformation ? <button onClick={() => onExerciseInformation('exercise')}>
+      Информация упражнения
+    </button> : null}
+  </>,
+}));
+vi.mock('../program/ProgramExerciseInformationSheet', () => ({
+  ProgramExerciseInformationSheet: ({ snapshot, onClose }: {
+    snapshot?: { exerciseDefinitionId: string }; onClose: () => void;
+  }) => <div role="dialog" aria-label="Информация об упражнении">
+    <span>Снимок: {snapshot?.exerciseDefinitionId}</span>
+    <button onClick={onClose}>Закрыть информацию</button>
+  </div>,
 }));
 vi.mock('../ui', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
@@ -34,7 +51,7 @@ vi.mock('../ui', () => ({
   MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
 }));
-afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
+afterEach(() => { cleanup(); vi.unstubAllEnvs(); cloudEnabled.value = false; });
 const plan = { name: 'День', comment: null, exercises: [{
   id: 'exercise', sourceProgramExerciseId: null, position: 0, notes: null, sets: [],
   exercise: { exerciseDefinitionId: '0001', scope: 'public' as const, name: 'Жим', nameEn: null, mediaUrl: null },
@@ -47,6 +64,16 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 
 describe('draft edit recovery', () => {
+  it('opens the shared information sheet from an occurrence snapshot even for read-only planning', async () => {
+    cloudEnabled.value = true;
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} readOnly onClose={() => {}} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Информация упражнения' }));
+    expect(await screen.findByText('Снимок: 0001')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть информацию' }));
+    expect(screen.queryByText('Снимок: 0001')).toBeNull();
+  });
   it('keeps one closed shell mounted before opening and across workout changes', () => {
     const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
     vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
