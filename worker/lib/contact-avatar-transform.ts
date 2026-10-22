@@ -44,7 +44,10 @@ export async function optimizeContactAvatar(
     const response = result.response();
     if (!response.ok) throw new Error('AVATAR_TRANSFORM_FAILED');
     const size = Number(response.headers.get('content-length'));
-    if (Number.isFinite(size) && size > AVATAR_LIMITS[variant].bytes) continue;
+    if (Number.isFinite(size) && size > AVATAR_LIMITS[variant].bytes) {
+      await response.body?.cancel();
+      continue;
+    }
     const bytes = await response.arrayBuffer();
     if (bytes.byteLength <= AVATAR_LIMITS[variant].bytes && jpeg(bytes)) return bytes;
   }
