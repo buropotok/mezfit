@@ -310,6 +310,11 @@ export async function syncOwnContactProfile(
       && newVersion !== undefined && newVersion !== previous.avatarVersion) continue;
     if (previous && (previous.realmId !== entry.realmId || previous.userId !== account
       || previous.owner !== null)) continue;
+    // Telegram initData timestamps have second precision. An equal-timestamp
+    // request cannot establish that its name is newer than the persisted one;
+    // preserve the committed name while still repairing/replacing photo blobs.
+    const resolvedName = previous?.sourceAuthAt === sourceAuthAt
+      && typeof previous.name === 'string' ? previous.name : name;
     const previousVersion = version(previous?.avatarVersion) ? previous.avatarVersion : null;
     const avatarVersion = newVersion === undefined ? previousVersion : newVersion;
     const unchangedSource = avatarVersion !== null && previousVersion === avatarVersion;
@@ -322,7 +327,7 @@ export async function syncOwnContactProfile(
       ? null : unchangedSource && cloudAvatar(previous?.avatar) ? previous?.avatar : null;
     const isBlobRef = [avatarSmall, avatarLarge, avatar].some(value =>
       record(value) && value._bt === 'Blob');
-    if (previous?.name === name && previous.avatarVersion === avatarVersion
+    if (previous?.name === resolvedName && previous.avatarVersion === avatarVersion
       && sameCloudAvatar(previous.avatarSmall, avatarSmall)
       && sameCloudAvatar(previous.avatarLarge, avatarLarge)
       && sameCloudAvatar(previous.avatar, avatar)) continue;
@@ -331,7 +336,7 @@ export async function syncOwnContactProfile(
       realmId: entry.realmId,
       owner: null,
       userId: account,
-      name,
+      name: resolvedName,
       avatarVersion,
       avatarSmall,
       avatarLarge,
