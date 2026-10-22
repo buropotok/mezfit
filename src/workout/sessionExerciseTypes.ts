@@ -52,6 +52,7 @@ interface SessionExerciseSharedProps {
   editable?: boolean;
   onAddSet?: (sessionExerciseId: number) => void;
   onOpenExerciseMenu?: (sessionExerciseId: number) => void;
+  onInformation?: () => void;
   onOpenHistory?: (exerciseDefinitionId: number) => void;
   onOpenChat?: () => void;
 }
