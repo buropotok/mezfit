@@ -6,7 +6,7 @@ import { ExerciseDetail } from '../exercises/ExerciseCatalogContent';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { Button, MezfitBottomSheet, Text } from '../ui';
 
-export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, onClose, onNavigationContextChange }: {
+export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, snapshot, realmId, onClose, onNavigationContextChange }: {
   repository: ProgramManagementRepository;
   exerciseId: string;
   programId?: string; dayId?: string;
