@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
@@ -20,6 +20,9 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { WorkoutSyncStatus } from './WorkoutSyncStatus';
 import './occurrence-draft-sheet.css';
+
+const ProgramExerciseInformationSheet = lazy(() => import('../program/ProgramExerciseInformationSheet')
+  .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
 function localDate(date: Date): LocalDate {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
@@ -78,6 +81,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const [dateOpened, setDateOpened] = useState(false);
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
   const [exercisePickerOpened, setExercisePickerOpened] = useState(false);
+  const [exerciseInformationId, setExerciseInformationId] = useState<string | null>(null);
   const [setPlaceholderOpen, setSetPlaceholderOpen] = useState(false);
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -200,6 +204,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     } finally { setBusy(false); }
   };
   const mayEditStructure = Boolean(draft && !readOnly && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
+  const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
   return <>
@@ -260,6 +265,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
               ...current, plan: removeOccurrenceSet(current.plan, exerciseId, setId),
             })) : undefined}
             onOpenSet={() => setSetPlaceholderOpen(true)}
+            onExerciseInformation={planner ? setExerciseInformationId : undefined}
           />
         </div>
         {!readOnly && !draft.saved ? <footer className="occurrence-draft-sheet__footer">
@@ -270,6 +276,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         </footer> : null}
       </section>, container) : null}
     {draft ? <>
+      {planner && informationExercise ? <Suspense fallback={<Text variant="footnote">Загружаем информацию…</Text>}>
+        <ProgramExerciseInformationSheet key={informationExercise.id} repository={planner.programs}
+          exerciseId={informationExercise.id} snapshot={informationExercise.exercise} realmId={draft.realmId}
+          onClose={() => setExerciseInformationId(null)} onNavigationContextChange={onNavigationContextChange} />
+      </Suspense> : null}
       {planner ? <WorkoutProgramSheet opened={programSheetOpen} planner={planner} draft={draft}
         onClose={closeProgramSheet} onNavigationContextChange={onNavigationContextChange} /> : null}
       <DatePicker opened={dateOpened} value={localDate(start)}
