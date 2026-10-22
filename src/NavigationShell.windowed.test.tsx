@@ -26,6 +26,16 @@ beforeEach(() => {
     observe() {}
     disconnect() {}
   });
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  vi.stubGlobal('PointerEvent', class extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+      this.pointerType = init.pointerType ?? 'touch';
+    }
+  });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 });
 
