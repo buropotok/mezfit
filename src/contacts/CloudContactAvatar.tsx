@@ -11,6 +11,7 @@ export function CloudContactAvatar({ contact, className, variant = 'small' }: {
   const connections = useCloudConnections();
   const loadAvatar = connections?.loadAvatar;
   const cache = connections?.avatarUrls;
+  const avatarLoadRevision = connections?.avatarLoadRevision ?? 0;
   const identity = [contact.relationshipId, contact.userId, contact.avatarVersion ?? '', contact.avatarMode ?? 'legacy', variant].join(':');
   const [image, setImage] = useState<{ identity: string; src?: string }>();
   const src = cache ? cache.get(contact, variant) : image?.identity === identity ? image.src : undefined;
@@ -34,7 +35,7 @@ export function CloudContactAvatar({ contact, className, variant = 'small' }: {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [identity, cache, loadAvatar, variant]);
+  }, [identity, cache, loadAvatar, variant, avatarLoadRevision]);
 
   return <Avatar name={contact.displayName} src={src} className={className} />;
 }
