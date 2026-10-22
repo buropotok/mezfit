@@ -5,6 +5,7 @@ export interface AvatarContactRef {
   relationshipId: string;
   userId: string;
   avatarVersion?: string | null;
+  avatarMode?: string;
 }
 
 export type AvatarTraceStage =
@@ -27,6 +28,7 @@ export async function loadContactAvatar(
   db: Pick<MezfitCloudDatabase, 'contactProfiles'>,
   contact: AvatarContactRef,
   trace?: AvatarTrace,
+  variant: 'small' | 'large' = 'small',
 ): Promise<Blob | null> {
   const version = contact.avatarVersion;
   if (!version || !/^[a-f0-9]{64}$/.test(version)
@@ -50,8 +52,13 @@ export async function loadContactAvatar(
       trace?.('permission-version-changed');
       return null;
     }
-    const image = profile.avatar;
-    if (!(image instanceof Blob) || image.size < 16 || image.size > 256_000) {
+    const optimized = variant === 'small' ? profile.avatarSmall
+      : (profile.avatarLarge ?? profile.avatarSmall);
+    const image = optimized instanceof Blob ? optimized : profile.avatar;
+    const maxBytes = optimized instanceof Blob
+      ? (variant === 'small' && optimized === profile.avatarSmall ? 50_000 : 245_000)
+      : 256_000; // Existing one-size Dexie avatar, removed during next verified profile refresh.
+    if (!(image instanceof Blob) || image.size < 16 || image.size > maxBytes) {
       trace?.('profile-not-found');
       return null;
     }
