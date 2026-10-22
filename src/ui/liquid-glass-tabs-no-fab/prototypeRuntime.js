@@ -1264,7 +1264,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
             Math.max(1, pane.offsetWidth);
 
           const livePaneScale =
-            paneRect.width / basePaneWidth * outerScale();
+            paneRect.width / (basePaneWidth * outerScale());
 
           const paneCenter =
             basePaneWidth / 2;
