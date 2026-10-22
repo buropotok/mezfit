@@ -126,11 +126,28 @@ async function fetchTelegramAvatar(
     // The original can be much larger than either stored variant.
     // Cloudflare Images accepts raw inputs up to 20 MB.
     if (!image.ok || Number(image.headers.get('content-length') || 0) > 20_000_000) return null;
-    const bytes = await image.arrayBuffer();
-    const signature = new Uint8Array(bytes);
-    if (signature.length < 16 || signature.length > 20_000_000
-      || signature[0] !== 0xff || signature[1] !== 0xd8 || signature[2] !== 0xff) return null;
-    return bytes;
+    const reader = image.body?.getReader();
+    if (!reader) return null;
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    while (true) {
+      const next = await reader.read();
+      if (next.done) break;
+      length += next.value.byteLength;
+      if (length > 20_000_000) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(next.value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    if (bytes.length < 16 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) return null;
+    return bytes.buffer;
   } catch {
     return null;
   }
