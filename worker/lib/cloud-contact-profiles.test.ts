@@ -10,7 +10,7 @@ vi.mock('./telegram', async (importOriginal) => {
 
 const jpeg = Uint8Array.from([255, 216, 255, 224, ...Array(32).fill(0)]);
 const largeJpeg = Uint8Array.from([255, 216, 255, 224, ...Array(48).fill(0)]);
-const transform = vi.fn((stream: ReadableStream<Uint8Array>) => ({
+const transform = vi.fn((_stream: ReadableStream<Uint8Array>) => ({
   transform: ({ width }: { width: number }) => ({
     output: async () => ({
       response: () => new Response(width > 128 ? largeJpeg.slice() : jpeg.slice(), {
