@@ -4,6 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell } from './NavigationShell';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({ ClientCoachSelectorModal: () => null }));
+vi.mock('./ui', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./ui')>();
+  return {
+    ...original,
+    LiquidGlassIconOnly: ({ scale }: { scale?: number }) => <div data-tab-scale={scale} />,
+  };
+});
 
 const me = {
   user: {
@@ -58,7 +65,6 @@ describe('NavigationShell responsive tab scale', () => {
     );
     const nav = view.container.querySelector<HTMLElement>('.navigation-primary-tabs');
     expect(nav?.style.height).toBe('44px');
-    const sceneWrapper = nav?.firstElementChild as HTMLElement;
-    expect(sceneWrapper.style.transform).toBe('scale(0.6875)');
+    expect(nav?.querySelector('[data-tab-scale]')?.getAttribute('data-tab-scale')).toBe('0.6875');
   });
 });
