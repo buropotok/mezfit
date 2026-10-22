@@ -347,7 +347,7 @@ export function SettingsPage({
   if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
-        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__diagnostics-entry">
           <Text variant="title">Диагностика экрана</Text>
           <Text variant="footnote" tone="muted">Размеры, плотность пикселей и масштаб Telegram WebView.</Text>
           <span className="settings-page__action">
