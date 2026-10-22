@@ -9,7 +9,18 @@ vi.mock('./telegram', async (importOriginal) => {
 });
 
 const jpeg = Uint8Array.from([255, 216, 255, 224, ...Array(32).fill(0)]);
+const largeJpeg = Uint8Array.from([255, 216, 255, 224, ...Array(48).fill(0)]);
+const transform = vi.fn((stream: ReadableStream<Uint8Array>) => ({
+  transform: ({ width }: { width: number }) => ({
+    output: async () => ({
+      response: () => new Response(width > 128 ? largeJpeg.slice() : jpeg.slice(), {
+        headers: { 'content-type': 'image/jpeg' },
+      }),
+    }),
+  }),
+}));
 const env = {
+  IMAGES: { input: transform },
   TELEGRAM_BOT_TOKEN: 'test-bot-secret',
   DEXIE_CLOUD_CLIENT_ID: 'auth-id',
   DEXIE_CLOUD_CLIENT_SECRET: 'auth-secret',
@@ -29,7 +40,11 @@ async function setup() {
   const pair = await relationshipMembership('101', '202');
   const members = pair.members.map((member) => ({ ...member, name: undefined as string | undefined, avatarVersion: undefined as string | null | undefined }));
   const store = new Map(members.map((member) => [member.id, member]));
-  const profiles = new Map<string, { id: string; realmId: string; owner: null; userId: string; name: string; avatarVersion: string | null; avatar: { _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' } | null; _hasBlobRefs?: number; sourceAuthAt: number }>();
+  type StoredBlob = { _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' };
+  type Profile = { id: string; realmId: string; owner: null; userId: string; name: string;
+    avatarVersion: string | null; avatar: StoredBlob | null; avatarSmall?: StoredBlob | null;
+    avatarLarge?: StoredBlob | null; _hasBlobRefs?: number; sourceAuthAt: number };
+  const profiles = new Map<string, Profile>();
   let photo = 'photo-one';
   let noPhoto = false;
   let postCount = 0;
@@ -38,6 +53,7 @@ async function setup() {
   let uploads = 0;
   let uploadFails = false;
   let invalidImage = false;
+  let largeUploadFails = false;
   const fetchImpl = vi.fn<typeof fetch>(async (input, init) => {
     const url = new URL(String(input));
     const method = init?.method ?? 'GET';
@@ -63,7 +79,9 @@ async function setup() {
       postCount++;
       const rows = JSON.parse(String(init?.body)) as Array<{
         id: string; realmId: string; owner: null; userId: string;
-        name: string; avatarVersion: string | null; avatar: { _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' } | null; _hasBlobRefs?: number; sourceAuthAt: number;
+        name: string; avatarVersion: string | null; avatar: StoredBlob | null;
+        avatarSmall?: StoredBlob | null; avatarLarge?: StoredBlob | null;
+        _hasBlobRefs?: number; sourceAuthAt: number;
       }>;
       rows.forEach((profile) => profiles.set(profile.id, profile));
       return new Response(null, { status: 204 });
@@ -71,8 +89,12 @@ async function setup() {
     if (url.pathname.startsWith('/all/realms/')) return Response.json(pair.realm);
     if (url.pathname.startsWith('/blob/') && method === 'PUT') {
       uploads++;
-      if (uploadFails) return new Response(null, { status: 503 });
-      expect(new Uint8Array(init?.body as ArrayBuffer)).toEqual(jpeg);
+      const written = new Uint8Array(init?.body as ArrayBuffer);
+      if (uploadFails || (largeUploadFails && written.length === largeJpeg.length)) {
+        return new Response(null, { status: 503 });
+      }
+      expect([jpeg.length, largeJpeg.length]).toContain(written.length);
+      expect(written.slice(0, 3)).toEqual(new Uint8Array([255, 216, 255]));
       expect(init?.headers).toMatchObject({
         Authorization: 'Bearer manager',
         'Content-Type': 'image/jpeg',
@@ -101,6 +123,8 @@ async function setup() {
     setPhoto(value: string) { photo = value; },
     removePhoto() { noPhoto = true; },
     failUpload() { uploadFails = true; },
+    failLarge() { largeUploadFails = true; },
+    resumeLarge() { largeUploadFails = false; },
     invalidateImage() { invalidImage = true; },
   };
 }
@@ -132,10 +156,13 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect((await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())).toEqual({ changed: false });
     expect(cloud.postCount()).toBe(1);
     expect(cloud.downloads()).toBe(1);
-    expect(own.avatar).toMatchObject({ _bt: 'Blob', size: jpeg.length, ct: 'image/jpeg' });
-    expect(own.avatar?.ref).toMatch(/^1:[a-f0-9]{64}$/);
+    expect(own.avatarSmall).toMatchObject({ _bt: 'Blob', size: jpeg.length, ct: 'image/jpeg' });
+    expect(own.avatarLarge).toMatchObject({ _bt: 'Blob', size: largeJpeg.length, ct: 'image/jpeg' });
+    expect(own.avatarSmall?.ref).toMatch(/^1:[a-f0-9]{64}$/);
+    expect(own.avatarLarge?.ref).not.toBe(own.avatarSmall?.ref);
+    expect(own.avatar).toBeNull();
     expect(own._hasBlobRefs).toBe(1);
-    expect(cloud.uploads()).toBe(1);
+    expect(cloud.uploads()).toBe(2);
   });
 
   it('updates only a changed Telegram name without downloading a new avatar', async () => {
@@ -156,7 +183,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.downloads()).toBe(firstDownloads);
     expect(cloud.postCount()).toBe(firstWrites + 1);
     expect(current._hasBlobRefs).toBe(1);
-    expect(cloud.uploads()).toBe(1);
+    expect(cloud.uploads()).toBe(2);
   });
 
   it('refreshes only the changed avatar version and preserves existing relationship metadata', async () => {
@@ -175,7 +202,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(updated.name).toBe(original.name);
     expect(updated.realmId).toBe(original.realmId);
     expect(cloud.downloads()).toBe(2);
-    expect(cloud.uploads()).toBe(2);
+    expect(cloud.uploads()).toBe(4);
 
     cloud.removePhoto();
     auth(101, new Date('2026-10-12T19:02:00Z'));
@@ -183,6 +210,8 @@ describe('privileged Telegram contact profile synchronization', () => {
     const removed = [...cloud.profiles.values()].find((profile) => profile.userId === 'tg:101')!;
     expect(removed.avatarVersion).toBeNull();
     expect(removed.avatar).toBeNull();
+    expect(removed.avatarSmall).toBeNull();
+    expect(removed.avatarLarge).toBeNull();
     expect(cloud.downloads()).toBe(2);
     expect(cloud.memberWrites()).toBe(0);
   });
@@ -204,7 +233,8 @@ describe('privileged Telegram contact profile synchronization', () => {
     const after = [...cloud.profiles.values()][0];
     expect(after.name).toBe('Новое Имя');
     expect(after.avatarVersion).toBe(before.avatarVersion);
-    expect(after.avatar).toEqual(before.avatar);
+    expect(after.avatarSmall).toEqual(before.avatarSmall);
+    expect(after.avatarLarge).toEqual(before.avatarLarge);
     expect(after._hasBlobRefs).toBe(1);
   });
 
@@ -220,6 +250,43 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(profile.avatarVersion).toBeNull();
     expect(profile.avatar).toBeNull();
     expect(cloud.uploads()).toBe(0);
+  });
+
+  it('repairs a missing large variant on the same Telegram session without reuploading small', async () => {
+    const cloud = await setup();
+    cloud.failLarge();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const first = [...cloud.profiles.values()][0];
+    expect(first.avatarSmall).toMatchObject({ _bt: 'Blob' });
+    expect(first.avatarLarge).toBeNull();
+    expect(cloud.uploads()).toBe(2);
+    cloud.resumeLarge();
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const repaired = [...cloud.profiles.values()][0];
+    expect(repaired.avatarLarge).toMatchObject({ _bt: 'Blob' });
+    expect(repaired.avatarSmall?.ref).toBe(first.avatarSmall?.ref);
+    expect(cloud.uploads()).toBe(3);
+  });
+
+  it('upgrades an existing one-size Dexie avatar even with the same signed auth time', async () => {
+    const cloud = await setup();
+    const { stableCloudRelationshipId } = await import('../../shared/relationship-id');
+    const id = await stableCloudRelationshipId('prf', cloud.pair.realm.realmId + ':tg:101');
+    cloud.profiles.set(id, {
+      id, realmId: cloud.pair.realm.realmId, owner: null, userId: 'tg:101',
+      name: 'Новый Профиль', avatarVersion: 'a'.repeat(64),
+      avatar: { _bt: 'Blob', ref: '1:legacy', ct: 'image/jpeg', size: 36 },
+      sourceAuthAt: FIRST_AUTH_AT.getTime(),
+    });
+    await syncOwnContactProfile(new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    }), env, cloud.fetchImpl);
+    expect(cloud.profiles.get(id)?.avatarSmall).toMatchObject({ _bt: 'Blob' });
+    expect(cloud.profiles.get(id)?.avatarLarge).toMatchObject({ _bt: 'Blob' });
+    expect(cloud.profiles.get(id)?.avatar).toBeNull();
   });
 
   it('does not restore an older verified Telegram name after a newer session saved it', async () => {
@@ -301,7 +368,8 @@ describe('privileged Telegram contact profile synchronization', () => {
       method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
     }), env, cloud.fetchImpl);
     expect(result.status).toBe(200);
-    expect(cloud.profiles.get(id)?.avatar).toMatchObject({ _bt: 'Blob' });
+    expect(cloud.profiles.get(id)?.avatarSmall).toMatchObject({ _bt: 'Blob' });
+    expect(cloud.profiles.get(id)?.avatarLarge).toMatchObject({ _bt: 'Blob' });
     expect(cloud.downloads()).toBe(1);
   });
 
