@@ -81,7 +81,11 @@ function formatMeasuredElement(value: MeasuredElement | null): string {
     : 'недоступно';
 }
 
-export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
+export function ScreenDiagnostics({ glassBlur, previewWidth = null, onPreviewWidthChange }: {
+  glassBlur: number;
+  previewWidth?: 320 | null;
+  onPreviewWidthChange?: (width: 320 | null) => void;
+}) {
   const headlineRef = useRef<HTMLDivElement>(null);
   const reference44Ref = useRef<HTMLDivElement>(null);
   const reference88Ref = useRef<HTMLDivElement>(null);
@@ -148,6 +152,21 @@ export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
         className="settings-page__section"
       >
         <Text variant="title">Диагностика экрана</Text>
+        <div className="screen-diagnostics__window-mode">
+          <Text variant="headline">Тестовый оконный режим</Text>
+          <Text variant="footnote" tone="muted">
+            Показывает Mezfit в колонке шириной 320 CSS-пикселей, без увеличения шрифта,
+            иконок и высоты кнопок. Это тест компоновки: реальный viewport и CSS media queries не изменяются.
+          </Text>
+          <Button
+            variant={previewWidth === 320 ? 'secondary' : 'primary'}
+            disabled={!onPreviewWidthChange}
+            onClick={() => onPreviewWidthChange?.(previewWidth === 320 ? null : 320)}
+          >
+            {previewWidth === 320 ? 'Выключить режим 320px' : 'Включить окно 320px'}
+          </Button>
+          {previewWidth === 320 ? <Text variant="footnote">Активно: окно 320px, масштаб 100%.</Text> : null}
+        </div>
         <Text variant="footnote" tone="muted">
           Значения измеряются на этом устройстве. Откройте ту же страницу на втором телефоне
           и сравните ширину окна, масштаб и размеры контрольных элементов.

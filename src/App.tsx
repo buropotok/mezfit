@@ -189,6 +189,7 @@ export function App() {
   const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [initialScreenDiagnosticsOpen, setInitialScreenDiagnosticsOpen] = useState(false);
+  const [previewWidth, setPreviewWidth] = useState<320 | null>(null);
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [scheduleViewResetKey, setScheduleViewResetKey] = useState(0);
@@ -422,6 +423,7 @@ export function App() {
           floatingAction={clientWorkoutFloatingAction}
           glassPreset={glassSettings.preset}
           glassOptics={glassSettings.optics}
+          previewWidth={previewWidth}
         >
           {destination === 'training' ? (
             <WorkoutSessionScreen
@@ -445,6 +447,8 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
             initialScreenDiagnosticsOpen={initialScreenDiagnosticsOpen}
             onScreenDiagnosticsDeepLinkConsumed={() => setInitialScreenDiagnosticsOpen(false)}
+            previewWidth={previewWidth}
+            onPreviewWidthChange={setPreviewWidth}
           />
         ) : state.activeRole === 'coach' ? (
           <CoachShell

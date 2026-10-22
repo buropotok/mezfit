@@ -47,3 +47,10 @@
   overflow-wrap: anywhere;
   min-width: 0;
 }
+
+.screen-diagnostics__window-mode {
+  display: grid;
+  justify-items: start;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}

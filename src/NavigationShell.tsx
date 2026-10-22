@@ -204,6 +204,7 @@ interface Props {
   floatingAction?: NavigationFloatingAction | null;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
+  previewWidth?: 320 | null;
   children: ReactNode;
 }
 
@@ -258,6 +259,7 @@ export function NavigationShell({
   floatingAction,
   glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
   glassOptics = false,
+  previewWidth = null,
   children,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -466,7 +468,12 @@ export function NavigationShell({
     <NavigationBackTransitionContext.Provider value={requestBackTransition}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
-        <main className="app-shell navigation-shell">
+        <main
+          className={previewWidth === 320
+            ? 'app-shell navigation-shell navigation-shell--windowed'
+            : 'app-shell navigation-shell'}
+          data-preview-width={previewWidth ?? undefined}
+        >
         <div className="navigation-navbar-frame">
           <MezfitNavbar
             level={level}
