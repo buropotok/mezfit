@@ -35,6 +35,7 @@ import { Button, DatePicker, Divider, Dropdown, GlassBackgroundColorControls, Gl
 import { hsvToHex } from '../ui/colorMath';
 import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkedMuscleId, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
+import { ScreenDiagnostics } from './ScreenDiagnostics';
 import './settings-page.css';
 
 // Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
@@ -166,6 +167,8 @@ interface SettingsPageProps {
   typographySettings?: Readonly<TypographySettings>;
   onTypographySettingsChange?: (settings: TypographySettings) => void;
   onNavigationContextChange: (context: NavigationContext | null) => void;
+  initialScreenDiagnosticsOpen?: boolean;
+  onScreenDiagnosticsDeepLinkConsumed?: () => void;
 }
 
 const glassPresetOptions = GLASS_PRESET_NAMES.map((preset) => ({ value: preset, label: preset }));
@@ -258,7 +261,10 @@ export function SettingsPage({
   typographySettings = defaultTypographySettings(),
   onTypographySettingsChange = () => {},
   onNavigationContextChange,
+  initialScreenDiagnosticsOpen = false,
+  onScreenDiagnosticsDeepLinkConsumed,
 }: SettingsPageProps) {
+  const [screenDiagnosticsOpen, setScreenDiagnosticsOpen] = useState(initialScreenDiagnosticsOpen);
   const [modulesOpen, setModulesOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
   const [backgroundSettingsOpen, setBackgroundSettingsOpen] = useState(false);
@@ -285,6 +291,10 @@ export function SettingsPage({
   const runProbe = (kind: HapticProbeKind) => {
     setHapticProbe({ kind, result: runHapticProbe(kind, telegramWebApp) });
   };
+  const closeScreenDiagnostics = useCallback(() => setScreenDiagnosticsOpen(false), []);
+  useEffect(() => {
+    if (initialScreenDiagnosticsOpen) onScreenDiagnosticsDeepLinkConsumed?.();
+  }, [initialScreenDiagnosticsOpen, onScreenDiagnosticsDeepLinkConsumed]);
   const closeModules = useCallback(() => {
     setTimePickerOpen(false);
     setDatePickerOpen(false);
@@ -303,6 +313,11 @@ export function SettingsPage({
   }, []);
 
   useEffect(() => {
+    if (screenDiagnosticsOpen) {
+      onNavigationContextChange({ title: 'Диагностика экрана', scrollKey: 'settings:diagnostics', onBack: closeScreenDiagnostics });
+      return () => onNavigationContextChange(null);
+    }
+
     if (backgroundSettingsOpen) {
       onNavigationContextChange({ title: 'Цвет фона', scrollKey: 'settings:background', onBack: closeBackgroundSettings });
       return () => onNavigationContextChange(null);
@@ -313,7 +328,9 @@ export function SettingsPage({
       return () => onNavigationContextChange(null);
     }
 
-    if (glassSettingsOpen) {
+    if (screenDiagnosticsOpen) return <ScreenDiagnostics glassBlur={effectiveGlassBlur} />;
+
+  if (glassSettingsOpen) {
       onNavigationContextChange({ title: 'Настройки стекла', scrollKey: 'settings:glass', onBack: closeGlassSettings });
       return () => onNavigationContextChange(null);
     }
@@ -325,11 +342,19 @@ export function SettingsPage({
 
     onNavigationContextChange(null);
     return undefined;
-  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, typographySettingsOpen]);
+  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeScreenDiagnostics, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, screenDiagnosticsOpen, typographySettingsOpen]);
 
-  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen) {
+  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
+          <Text variant="title">Диагностика экрана</Text>
+          <Text variant="footnote" tone="muted">Размеры, плотность пикселей и масштаб Telegram WebView.</Text>
+          <span className="settings-page__action">
+            <Button onClick={() => setScreenDiagnosticsOpen(true)}>Открыть диагностику</Button>
+          </span>
+        </GlassSurface>
+
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Интерфейс</Text>
           <Text variant="footnote" tone="muted">
