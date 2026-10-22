@@ -468,7 +468,12 @@ export function NavigationShell({
     <NavigationBackTransitionContext.Provider value={requestBackTransition}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
-        <main className={`app-shell navigation-shell${previewWidth === 320 ? " navigation-shell--windowed" : ""}`} data-preview-width={previewWidth ?? undefined}>
+        <main
+          className={previewWidth === 320
+            ? 'app-shell navigation-shell navigation-shell--windowed'
+            : 'app-shell navigation-shell'}
+          data-preview-width={previewWidth ?? undefined}
+        >
         <div className="navigation-navbar-frame">
           <MezfitNavbar
             level={level}
