@@ -106,7 +106,12 @@ describe('scaled liquid tab pointer jitter', () => {
       bubbles: false, composed: true, pointerId: 1, pointerType: 'touch',
       clientX: startX - movement, clientY: 32 * scale,
     }));
-    fireEvent.click(target);
+    // On a tap, the approved pointerup handler already invokes link.click().
+    // The browser's following trusted click is suppressed inside the primitive;
+    // jsdom's extra fireEvent.click is untrusted and would incorrectly select twice.
+    // After a real scroll, check that even a synthetic click remains suppressed.
+    if (!selected) fireEvent.click(target);
+
     if (selected) {
       expect(onValueChange).toHaveBeenCalledExactlyOnceWith('2');
     } else {
