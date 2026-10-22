@@ -60,5 +60,11 @@ describe('ScreenDiagnostics', () => {
       expect(writeText).toHaveBeenCalledWith(SCREEN_DIAGNOSTICS_DEEP_LINK);
     });
     expect(screen.getByRole('status').textContent).toContain('Ссылка скопирована');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Копировать измерения' }));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining('devicePixelRatio:'));
+    });
+    expect(screen.getByRole('status').textContent).toContain('Измерения скопированы');
   });
 });
