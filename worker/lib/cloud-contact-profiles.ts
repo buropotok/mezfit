@@ -1,4 +1,5 @@
 import { validateTelegramInitData, type TelegramInitUser } from './telegram';
+import { optimizeContactAvatar, type ContactAvatarVariant } from './contact-avatar-transform';
 import { stableCloudRelationshipId } from '../../shared/relationship-id';
 import {
   cloudMembershipAdminRead,
@@ -11,6 +12,7 @@ import {
 
 export interface ContactProfileEnv extends CloudMembershipEnv {
   TELEGRAM_BOT_TOKEN: string;
+  IMAGES: ImagesBinding;
 }
 
 type Row = Record<string, unknown>;
@@ -92,11 +94,19 @@ async function currentTelegramPhoto(
  * The only avatar storage is Dexie Cloud's authenticated blob service.
  * BlobRefs are attached to relationship-scoped profile rows with _hasBlobRefs.
  */
-function cloudAvatar(value: unknown): boolean {
+function cloudAvatar(value: unknown): value is Row {
   return record(value) && (
     value._bt === 'Blob' && typeof value.ref === 'string'
     || value.$t === 'Blob' && typeof value.v === 'string'
   );
+}
+
+/** REST reads return fresh JSON objects; compare blob references, not object identities. */
+function sameCloudAvatar(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (!cloudAvatar(left) || !cloudAvatar(right)) return false;
+  return left._bt === right._bt && left.ref === right.ref
+    && left.$t === right.$t && left.v === right.v;
 }
 
 async function fetchTelegramAvatar(
@@ -113,12 +123,31 @@ async function fetchTelegramAvatar(
     const filePath = result.result.file_path;
     if (!/^[A-Za-z0-9_./-]+$/.test(filePath) || filePath.includes('..')) return null;
     const image = await fetchImpl(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
-    if (!image.ok || Number(image.headers.get('content-length') || 0) > 256_000) return null;
-    const bytes = await image.arrayBuffer();
-    const signature = new Uint8Array(bytes);
-    if (signature.length < 16 || signature.length > 256_000
-      || signature[0] !== 0xff || signature[1] !== 0xd8 || signature[2] !== 0xff) return null;
-    return bytes;
+    // The original can be much larger than either stored variant.
+    // Cloudflare Images accepts raw inputs up to 20 MB.
+    if (!image.ok || Number(image.headers.get('content-length') || 0) > 20_000_000) return null;
+    const reader = image.body?.getReader();
+    if (!reader) return null;
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    while (true) {
+      const next = await reader.read();
+      if (next.done) break;
+      length += next.value.byteLength;
+      if (length > 20_000_000) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(next.value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    if (bytes.length < 16 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) return null;
+    return bytes.buffer;
   } catch {
     return null;
   }
@@ -145,10 +174,20 @@ export async function validatedPair(
   return rows;
 }
 
-/** Later verified Telegram launches take precedence over older still-valid initData. */
-function hasNewerOrSameSource(row: Row | undefined, sourceAuthAt: number): boolean {
+/** Reject older launch data but permit repair of incomplete variants on the same signed launch. */
+function newerSource(row: Row | undefined, sourceAuthAt: number): boolean {
   return typeof row?.sourceAuthAt === 'number' && Number.isSafeInteger(row.sourceAuthAt)
-    && row.sourceAuthAt >= sourceAuthAt;
+    && row.sourceAuthAt > sourceAuthAt;
+}
+
+function hasBothAvatars(row: Row | undefined): boolean {
+  return cloudAvatar(row?.avatarSmall) && cloudAvatar(row?.avatarLarge);
+}
+
+function reusableAvatar(row: Row | undefined, photoVersion: string, variant: ContactAvatarVariant): Row | null {
+  if (row?.avatarVersion !== photoVersion) return null;
+  const avatar = row[variant === 'small' ? 'avatarSmall' : 'avatarLarge'];
+  return cloudAvatar(avatar) ? avatar : null;
 }
 
 function profileName(user: TelegramInitUser): string {
@@ -203,33 +242,50 @@ export async function syncOwnContactProfile(
   const known = new Map(existing.filter((row) => typeof row.id === 'string')
     .map((row) => [row.id as string, row]));
 
-  const eligibleForSession = eligible.filter(({ id }) =>
-    !hasNewerOrSameSource(known.get(id), sourceAuthAt));
+  const name = profileName(identity.user);
+  // Telegram may reuse the same signed auth_date across Mini App reopenings.
+  // Always re-check the Bot API photo for an authorized, non-stale session.
+  // Unchanged photos do not download, transform, upload or rewrite profile rows.
+  const eligibleForSession = eligible.filter(({ id }) => !newerSource(known.get(id), sourceAuthAt));
   if (eligibleForSession.length === 0) {
     return Response.json({ changed: false }, { headers: { 'cache-control': 'no-store' } });
   }
 
-  const name = profileName(identity.user);
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
-  const hasNewVersion = photo !== undefined && eligibleForSession.some(({ id }) =>
-    known.get(id)?.avatarVersion !== (photo?.version ?? null)
-    || (photo !== null && !cloudAvatar(known.get(id)?.avatar)));
+  const needsVariants = photo !== undefined && photo !== null && eligibleForSession.some(({ id }) =>
+    known.get(id)?.avatarVersion !== photo.version || !hasBothAvatars(known.get(id)));
+
+  // One verified Telegram photo is transformed per account, shared as references
+  // across the separate realm-scoped contactProfiles of all authorized coaches.
+  const newImages: Partial<Record<ContactAvatarVariant, Row>> = {};
   let newVersion: string | null | undefined;
-  let newAvatar: Row | null | undefined;
   if (photo === null) {
     newVersion = null;
-    newAvatar = null;
-  } else if (photo && hasNewVersion) {
-    const downloaded = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
-    if (downloaded) {
-      try {
-        const id = await sha(account + ':' + photo.version);
-        newAvatar = await cloudMembershipAdminUploadAvatar(fetchImpl, bearer, id, downloaded);
-        newVersion = photo.version;
-      } catch {
-        // Keep the last valid version; a later verified launch can retry.
+  } else if (photo && needsVariants) {
+    for (const variant of ['small', 'large'] as const) {
+      const reused = eligibleForSession.map(({ id }) =>
+        reusableAvatar(known.get(id), photo.version, variant)).find((value) => value !== null);
+      if (reused) newImages[variant] = reused;
+    }
+    if (!newImages.small || !newImages.large) {
+      const downloaded = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
+      if (downloaded) {
+        for (const variant of ['small', 'large'] as const) {
+          if (newImages[variant]) continue;
+          try {
+            const encoded = await optimizeContactAvatar(env.IMAGES, downloaded, variant);
+            if (!encoded) continue;
+            const id = await sha(account + ':' + photo.version + ':' + variant);
+            newImages[variant] = await cloudMembershipAdminUploadAvatar(
+              fetchImpl, bearer, id, encoded, variant === 'small' ? 50_000 : 245_000,
+            );
+          } catch {
+            // The successfully encoded other variant remains reusable on next launch.
+          }
+        }
       }
     }
+    if (newImages.small || newImages.large) newVersion = photo.version;
   }
 
   // The Telegram Bot API calls above may take time. Re-read cloud timestamps
@@ -245,24 +301,45 @@ export async function syncOwnContactProfile(
   const changed: Row[] = [];
   for (const entry of eligibleForSession) {
     const previous = current.get(entry.id);
-    if (hasNewerOrSameSource(previous, sourceAuthAt)) continue;
+    if (newerSource(previous, sourceAuthAt)) continue;
+    // If another check published a different photo while this lookup was in flight,
+    // do not let an older equal-auth-date observation replace that newer result.
+    const originallyKnownVersion = known.get(entry.id)?.avatarVersion ?? null;
+    if (previous?.sourceAuthAt === sourceAuthAt
+      && (previous.avatarVersion ?? null) !== originallyKnownVersion
+      && newVersion !== undefined && newVersion !== previous.avatarVersion) continue;
     if (previous && (previous.realmId !== entry.realmId || previous.userId !== account
       || previous.owner !== null)) continue;
-    const previousAvatar = cloudAvatar(previous?.avatar) ? previous?.avatar : null;
-    const avatarVersion = newVersion === undefined
-      ? (previousAvatar && version(previous?.avatarVersion) ? previous.avatarVersion : null)
-      : newVersion;
-    const avatar = newAvatar === undefined ? previousAvatar : newAvatar;
-    const isBlobRef = record(avatar) && avatar._bt === 'Blob';
-    if (previous?.name === name && previous.avatarVersion === avatarVersion
-      && (avatarVersion === null || cloudAvatar(previous.avatar))) continue;
+    // Telegram initData timestamps have second precision. An equal-timestamp
+    // request cannot establish that its name is newer than the persisted one;
+    // preserve the committed name while still repairing/replacing photo blobs.
+    const resolvedName = previous?.sourceAuthAt === sourceAuthAt
+      && typeof previous.name === 'string' ? previous.name : name;
+    const previousVersion = version(previous?.avatarVersion) ? previous.avatarVersion : null;
+    const avatarVersion = newVersion === undefined ? previousVersion : newVersion;
+    const unchangedSource = avatarVersion !== null && previousVersion === avatarVersion;
+    const avatarSmall = newVersion === null ? null
+      : newImages.small ?? (unchangedSource && cloudAvatar(previous?.avatarSmall) ? previous?.avatarSmall : null);
+    const avatarLarge = newVersion === null ? null
+      : newImages.large ?? (unchangedSource && cloudAvatar(previous?.avatarLarge) ? previous?.avatarLarge : null);
+    // Keep a legacy Dexie blob for existing contacts until both optimized copies exist.
+    const avatar = newVersion === null || (cloudAvatar(avatarSmall) && cloudAvatar(avatarLarge))
+      ? null : unchangedSource && cloudAvatar(previous?.avatar) ? previous?.avatar : null;
+    const isBlobRef = [avatarSmall, avatarLarge, avatar].some(value =>
+      record(value) && value._bt === 'Blob');
+    if (previous?.name === resolvedName && previous.avatarVersion === avatarVersion
+      && sameCloudAvatar(previous.avatarSmall, avatarSmall)
+      && sameCloudAvatar(previous.avatarLarge, avatarLarge)
+      && sameCloudAvatar(previous.avatar, avatar)) continue;
     changed.push({
       id: entry.id,
       realmId: entry.realmId,
       owner: null,
       userId: account,
-      name,
+      name: resolvedName,
       avatarVersion,
+      avatarSmall,
+      avatarLarge,
       avatar,
       ...(isBlobRef ? { _hasBlobRefs: 1 } : {}),
       sourceAuthAt,

@@ -59,6 +59,13 @@ describe('CloudContactAvatar', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mezfit-portrait');
   });
 
+  it('uses small by default and large only when explicitly requested', async () => {
+    const first = render(<CloudContactAvatar contact={peer} />);
+    await waitFor(() => expect(loadAvatar).toHaveBeenCalledWith(peer, 'small'));
+    first.rerender(<CloudContactAvatar contact={peer} variant="large" />);
+    await waitFor(() => expect(loadAvatar).toHaveBeenCalledWith(peer, 'large'));
+  });
+
   it('keeps initials if no Telegram photo is available', () => {
     render(<CloudContactAvatar contact={{ ...peer, avatarVersion: null }} />);
     expect(screen.getByRole('img', { name: 'Анна Иванова' })).toBeTruthy();

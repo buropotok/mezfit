@@ -23,6 +23,7 @@
       "database_id": "REPLACE_WITH_D1_DATABASE_ID"
     }
   ],
+  "images": { "binding": "IMAGES" },
   "r2_buckets": [
     {
       "binding": "R2_BINDING_MEZFIT",

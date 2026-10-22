@@ -17,6 +17,7 @@ export interface CloudContact {
   telegramUserId: string;
   displayName: string;
   avatarVersion?: string | null;
+  avatarMode?: string;
 }
 
 export type CloudSyncStatus = 'pending' | 'synced' | 'offline' | 'error';
@@ -50,13 +51,13 @@ interface CloudConnectionsValue {
   syncError: string;
   refresh: () => Promise<void>;
   retrySync: () => Promise<void>;
-  loadAvatar: (contact: CloudContact) => Promise<Blob | null>;
+  loadAvatar: (contact: CloudContact, variant?: 'small' | 'large') => Promise<Blob | null>;
   avatarUrls?: ContactAvatarUrls;
 }
 
 const Context = createContext<CloudConnectionsValue | null>(null);
 
-function contact(realmId: string, member: { userId?: string; name?: string; avatarVersion?: string | null }, fallback: string): CloudContact | null {
+function contact(realmId: string, member: { userId?: string; name?: string; avatarVersion?: string | null; avatarMode?: string }, fallback: string): CloudContact | null {
   const userId = member.userId;
   if (!userId || !/^tg:[1-9]\d*$/.test(userId)) return null;
   return {
@@ -64,6 +65,7 @@ function contact(realmId: string, member: { userId?: string; name?: string; avat
     userId,
     telegramUserId: userId.slice(3),
     displayName: member.name?.trim() || fallback,
+    avatarMode: member.avatarMode,
     avatarVersion: typeof member.avatarVersion === 'string' && /^[a-f0-9]{64}$/.test(member.avatarVersion)
       ? member.avatarVersion : null,
   };
@@ -91,6 +93,8 @@ type ProfileView = {
   name: string;
   avatarVersion: string | null;
   avatar?: Blob | null;
+  avatarSmall?: Blob | null;
+  avatarLarge?: Blob | null;
 };
 
 /** Derived presentation only: server-enforced memberships remain the access boundary. */
@@ -120,7 +124,10 @@ export async function deriveCloudContacts(
     const peer = contact(mine.realmId, {
       userId: partner.userId,
       name: profile?.name || partner.name,
-      avatarVersion: profile?.avatar instanceof Blob ? profile.avatarVersion : null,
+      avatarVersion: profile && [profile.avatarSmall, profile.avatarLarge, profile.avatar].some(value => value instanceof Blob)
+        ? profile.avatarVersion : null,
+      avatarMode: profile ? [profile.avatarSmall, profile.avatarLarge, profile.avatar]
+        .map(value => value instanceof Blob ? '1' : '0').join('') : '000',
     }, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
     return peer ? { peer, asCoach } : null;
   }));
@@ -293,8 +300,8 @@ export function CloudConnectionsProvider({
     return () => { active = false; };
   }, [db, initData]);
 
-  const loadAvatar = useCallback((peer: CloudContact) =>
-    loadContactAvatar(db, peer), [db]);
+  const loadAvatar = useCallback((peer: CloudContact, variant: 'small' | 'large' = 'small') =>
+    loadContactAvatar(db, peer, undefined, variant), [db]);
 
   const refresh = useCallback(async () => {
     try {

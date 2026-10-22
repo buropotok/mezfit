@@ -27,6 +27,24 @@ describe('relationship-scoped contact profile projection', () => {
     expect(members.map((member) => member.roles)).toEqual([['coach'], ['client']]);
   });
 
+  it('publishes variant availability to refresh render caches after a same-version upgrade', async () => {
+    const { realm, members } = await relationshipMembership('101', '202');
+    const legacy = new Blob([new Uint8Array(36)]);
+    const profile = {
+      id: await stableCloudRelationshipId('prf', realm.realmId + ':tg:202'),
+      realmId: realm.realmId, owner: null, userId: 'tg:202', name: 'София',
+      avatarVersion: 'a'.repeat(64), avatar: legacy,
+    };
+    const before = await deriveCloudContacts('tg:101', [realm], members, [profile]);
+    const after = await deriveCloudContacts('tg:101', [realm], members, [{
+      ...profile, avatar: null, avatarSmall: new Blob([new Uint8Array(36)]),
+      avatarLarge: new Blob([new Uint8Array(100)]),
+    }]);
+    expect(before.clients[0].avatarMode).toBe('001');
+    expect(after.clients[0].avatarMode).toBe('110');
+    expect(before.clients[0].avatarVersion).toBe(after.clients[0].avatarVersion);
+  });
+
   it('does not advertise legacy R2-only metadata as a downloadable avatar', async () => {
     const { realm, members } = await relationshipMembership('101', '202');
     const profile = {

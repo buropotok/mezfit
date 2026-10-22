@@ -15,6 +15,7 @@ const image = new Blob([new Uint8Array([255, 216, 255, ...Array(33).fill(0)])], 
 let current: {
   id: string; realmId: string; userId: string; owner: null | string;
   avatarVersion: string | null; avatar: Blob | null;
+  avatarSmall?: Blob | null; avatarLarge?: Blob | null;
 } | undefined;
 const get = vi.fn(async (id: string) => id === current?.id ? current : undefined);
 const db = { contactProfiles: { get } } as unknown as MezfitCloudDatabase;
@@ -24,7 +25,8 @@ beforeEach(async () => {
   current = {
     id: await stableCloudRelationshipId('prf', peer.relationshipId + ':' + peer.userId),
     realmId: peer.relationshipId, userId: peer.userId, owner: null,
-    avatarVersion: peer.avatarVersion, avatar: image,
+    avatarVersion: peer.avatarVersion, avatar: null, avatarSmall: image,
+    avatarLarge: new Blob([new Uint8Array(100)], { type: 'image/jpeg' }),
   };
 });
 
@@ -64,10 +66,31 @@ describe('Dexie Cloud local-first contact avatars', () => {
     current.avatarVersion = 'c'.repeat(64);
     expect(await loadContactAvatar(db, peer)).toBeNull();
     current.avatarVersion = peer.avatarVersion;
-    current.avatar = new Blob(['small']);
+    current.avatarSmall = new Blob(['small']);
     expect(await loadContactAvatar(db, peer)).toBeNull();
     current = undefined;
     expect(await loadContactAvatar(db, peer)).toBeNull();
+  });
+
+  it('selects the large image explicitly without affecting the default small image', async () => {
+    expect(await loadContactAvatar(db, peer)).toBe(image);
+    expect(await loadContactAvatar(db, peer, undefined, 'large')).toBe(current?.avatarLarge);
+  });
+
+  it('supports the pre-migration single Dexie blob until variants are published', async () => {
+    if (!current) throw new Error('MISSING_FIXTURE');
+    current.avatar = image;
+    current.avatarSmall = null;
+    current.avatarLarge = null;
+    expect(await loadContactAvatar(db, peer)).toBe(image);
+    expect(await loadContactAvatar(db, peer, undefined, 'large')).toBe(image);
+  });
+
+  it('never serves an optimized small blob over 50 KB', async () => {
+    if (!current) throw new Error('MISSING_FIXTURE');
+    current.avatarSmall = new Blob([new Uint8Array(50_001)]);
+    expect(await loadContactAvatar(db, peer)).toBeNull();
+    expect(await loadContactAvatar(db, peer, undefined, 'large')).not.toBeNull();
   });
 
   it('isolates local Dexie read errors and reports only safe stage names', async () => {
