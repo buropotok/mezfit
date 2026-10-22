@@ -1,4 +1,9 @@
 :root {
+  /* Keep rem-based UI dimensions independent of the host WebView root text size. */
+  font-size: 16px;
+  /* Prevent mobile text inflation from changing the semantic typography presets. */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
   font-family: var(--ui-font-family);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
