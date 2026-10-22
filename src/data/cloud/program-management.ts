@@ -12,6 +12,7 @@ import type { CloudProgramDayOutline, CloudProgramDayRow, CloudProgramPhaseRow }
 import type { CatalogueExerciseRow } from '../exercises/coachExerciseTypes';
 import type { PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
 import { PublicExerciseCatalogueRepository } from '../exercises/publicExerciseCatalogue';
+import type { CloudProgramExerciseSnapshot } from '../../../shared/program-exercise-snapshot';
 
 export type PhaseStatus = CloudProgramPhaseRow['status'];
 export type InactiveStatus = Exclude<CloudProgramStatus, 'active'>;
@@ -570,10 +571,15 @@ export class ProgramManagementRepository {
       throw new Error('День недоступен');
     const snapshot = day.exercises.find(item => item.exercise.id === exerciseId)?.exercise.exercise;
     if (!snapshot) throw new Error('Упражнение недоступно');
+    return this.snapshotExerciseInformation(snapshot, details.program.realmId);
+  }
+
+  /** Resolve metadata from the immutable exercise snapshot, not a mutable source program. */
+  async snapshotExerciseInformation(snapshot: CloudProgramExerciseSnapshot, realmId: string): Promise<ProgramExerciseInformation> {
     const catalogue = await new PublicExerciseCatalogueRepository(this.db).read();
     let row: CatalogueExerciseRow | null = null;
     if (snapshot.catalogueDefinition) {
-      row = { ...snapshot.catalogueDefinition, realmId: details.program.realmId, owner: null, sourceSha256: 'program-snapshot' };
+      row = { ...snapshot.catalogueDefinition, realmId, owner: null, sourceSha256: 'program-snapshot' };
     } else if (snapshot.scope === 'public' && catalogue.status === 'ready') {
       row = catalogue.exercises.find(item => item.id === snapshot.exerciseDefinitionId) ?? null;
     }
