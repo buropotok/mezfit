@@ -107,13 +107,13 @@ export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
     };
   }, [refresh]);
 
-  const copyLink = async () => {
+  const copyText = async (value: string, successMessage: string) => {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(SCREEN_DIAGNOSTICS_DEEP_LINK);
-      setCopyStatus('Ссылка скопирована');
+      await navigator.clipboard.writeText(value);
+      setCopyStatus(successMessage);
     } catch {
-      setCopyStatus('Не удалось скопировать. Ссылку можно выделить ниже.');
+      setCopyStatus('Копирование недоступно. Сделайте скриншот или выделите ссылку ниже.');
     }
   };
 
@@ -175,7 +175,12 @@ export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
         </Text>
         <div className="settings-page__actions">
           <Button onClick={refresh}>Обновить измерения</Button>
-          <Button variant="secondary" onClick={() => { void copyLink(); }}>Копировать ссылку</Button>
+          <Button variant="secondary" onClick={() => {
+            void copyText(['Mezfit — диагностика экрана', ...rows.map(([label, value]) => `${label}: ${value}`)].join('\n'), 'Измерения скопированы');
+          }}>Копировать измерения</Button>
+          <Button variant="secondary" onClick={() => {
+            void copyText(SCREEN_DIAGNOSTICS_DEEP_LINK, 'Ссылка скопирована');
+          }}>Копировать ссылку</Button>
         </div>
         <Text variant="caption" tone="muted" className="screen-diagnostics__link">{SCREEN_DIAGNOSTICS_DEEP_LINK}</Text>
         {copyStatus ? <Text variant="footnote" role="status">{copyStatus}</Text> : null}
