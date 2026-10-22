@@ -75,7 +75,9 @@ describe('CloudContactAvatar', () => {
     );
     const view = render(<CloudContactAvatar contact={peer} />);
     await waitFor(() => expect(loadAvatar).toHaveBeenCalledTimes(1));
-    expect(document.querySelector('img.ui-avatar')?.getAttribute('src')).toBeNull();
+    // Without bytes the unmodified UIkit Avatar renders initials, not an <img>.
+    expect(screen.getByRole('img', { name: 'Анна Иванова' }).textContent).toBe('АИ');
+    expect(document.querySelector('img.ui-avatar')).toBeNull();
     avatarLoadRevision += 1;
     view.rerender(<CloudContactAvatar contact={peer} />);
     await waitFor(() => expect(loadAvatar).toHaveBeenCalledTimes(2));
