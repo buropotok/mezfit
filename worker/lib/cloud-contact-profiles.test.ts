@@ -220,6 +220,68 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.memberWrites()).toBe(0);
   });
 
+  it('refreshes a watermarked Telegram avatar after reopening with the same auth_date', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'same-signed-session' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const first = [...cloud.profiles.values()][0];
+    const firstVersion = first.avatarVersion;
+
+    // Telegram can keep initData/auth_date identical while its photo changes.
+    cloud.setPhoto('new-watermarked-telegram-photo');
+    const changed = await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    expect(await changed.json()).toEqual({ changed: true });
+    const updated = [...cloud.profiles.values()][0];
+    expect(updated.avatarVersion).not.toBe(firstVersion);
+    expect(updated.avatarSmall?.ref).not.toBe(first.avatarSmall?.ref);
+    expect(updated.avatarLarge?.ref).not.toBe(first.avatarLarge?.ref);
+    expect(cloud.downloads()).toBe(2);
+    expect(cloud.uploads()).toBe(4);
+
+    // Checking again with no change must not download, upload or write.
+    const unchanged = await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    expect(await unchanged.json()).toEqual({ changed: false });
+    expect(cloud.downloads()).toBe(2);
+    expect(cloud.uploads()).toBe(4);
+    expect(cloud.postCount()).toBe(2);
+  });
+
+  it('does not overwrite a newer avatar observed in a concurrent equal-auth-date launch', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'same-signed-session' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+
+    let resumeOlder: (() => void) | undefined;
+    const waiting = new Promise<void>(resolve => { resumeOlder = resolve; });
+    let blocked = false;
+    const delayedFetch = vi.fn<typeof fetch>(async (input, init) => {
+      if (new URL(String(input)).pathname.endsWith('/getFile') && !blocked) {
+        blocked = true;
+        await waiting;
+      }
+      return cloud.fetchImpl(input, init);
+    });
+
+    cloud.setPhoto('older-observation');
+    const pending = syncOwnContactProfile(request, env, delayedFetch);
+    await vi.waitFor(() => expect(blocked).toBe(true));
+
+    cloud.setPhoto('latest-watermarked-photo');
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const latest = [...cloud.profiles.values()][0];
+    resumeOlder?.();
+    expect(await (await pending).json()).toEqual({ changed: false });
+    const persisted = [...cloud.profiles.values()][0];
+    expect(persisted.avatarVersion).toBe(latest.avatarVersion);
+    expect(persisted.avatarSmall?.ref).toBe(latest.avatarSmall?.ref);
+    expect(persisted.avatarLarge?.ref).toBe(latest.avatarLarge?.ref);
+    expect(cloud.postCount()).toBe(2);
+  });
+
   it('keeps an existing cloud avatar if new blob upload fails and still updates the name', async () => {
     const cloud = await setup();
     const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
