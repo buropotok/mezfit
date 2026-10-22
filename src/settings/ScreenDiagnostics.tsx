@@ -82,7 +82,7 @@ function formatMeasuredElement(value: MeasuredElement | null): string {
 }
 
 export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
-  const headlineRef = useRef<HTMLSpanElement>(null);
+  const headlineRef = useRef<HTMLDivElement>(null);
   const reference44Ref = useRef<HTMLDivElement>(null);
   const reference88Ref = useRef<HTMLDivElement>(null);
   const [measurements, setMeasurements] = useState<ScreenMeasurements | null>(null);
@@ -90,7 +90,7 @@ export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
 
   const refresh = useCallback(() => {
     setMeasurements(readScreenMeasurements(
-      headlineRef.current,
+      headlineRef.current?.firstElementChild as HTMLElement | null,
       reference44Ref.current,
       reference88Ref.current,
     ));
@@ -156,7 +156,7 @@ export function ScreenDiagnostics({ glassBlur }: { glassBlur: number }) {
         <div className="screen-diagnostics__samples" aria-label="Контрольные размеры">
           <div ref={reference44Ref} className="screen-diagnostics__reference--44" aria-hidden="true" />
           <div ref={reference88Ref} className="screen-diagnostics__reference--88" aria-hidden="true" />
-          <Text ref={headlineRef} variant="headline">Образец Headline</Text>
+          <div ref={headlineRef}><Text variant="headline">Образец Headline</Text></div>
         </div>
 
         <div className="screen-diagnostics__measurements">
