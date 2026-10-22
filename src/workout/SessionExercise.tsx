@@ -237,7 +237,7 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
         reference_source: null, reference_key: null }} sourceUrl={snapshot.mediaUrl} variant="thumbnail" />}
       subtitle={formatSetCount(sets.length)} notes={item.notes}
       surface={props.surface} collapsed={props.collapsed} defaultCollapsed={props.defaultCollapsed}
-      onCollapsedChange={props.onCollapsedChange} onInformation={props.onInformation}
+      onCollapsedChange={props.onCollapsedChange} onInformation={props.busy ? undefined : props.onInformation}
       actions={<ExerciseActionsMenu busy={props.busy}
         onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
