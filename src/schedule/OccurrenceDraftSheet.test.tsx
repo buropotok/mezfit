@@ -35,6 +35,7 @@ vi.mock('../program/ProgramExerciseInformationSheet', () => ({
 vi.mock('../ui', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Avatar: () => null,
+  LiquidPopover: ({ trigger }: { trigger: ReactNode }) => <>{trigger}</>,
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
   IconButton: ({ label, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
