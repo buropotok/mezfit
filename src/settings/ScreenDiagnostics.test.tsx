@@ -11,7 +11,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
-  delete (window as Window & { visualViewport?: VisualViewport }).visualViewport;
+  Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined });
 });
 
 describe('ScreenDiagnostics', () => {
@@ -34,7 +34,7 @@ describe('ScreenDiagnostics', () => {
     expect(screen.getByRole('region', { name: 'Диагностика экрана' })).toBeTruthy();
     expect(screen.getByText('VisualViewport: масштаб')).toBeTruthy();
     expect(screen.getByText('devicePixelRatio')).toBeTruthy();
-    expect(screen.getByText('Контрольные размеры')).toBeTruthy();
+    expect(view.container.querySelector('[aria-label="Контрольные размеры"]')).toBeTruthy();
     expect(screen.getByText('Образец Headline')).toBeTruthy();
     expect(screen.getByText('320 px')).toBeTruthy();
     expect(addEventListener).toHaveBeenCalledWith('resize', expect.any(Function));
