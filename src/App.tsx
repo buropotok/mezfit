@@ -27,6 +27,7 @@ import {
   type NavigationFloatingAction,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
+import { isScreenDiagnosticsStartParam } from './settings/screenDiagnosticsRoute';
 import { TodayPage } from './schedule/TodayPage';
 import { SchedulePlanningContext } from './schedule/SchedulePlanningContext';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
@@ -187,6 +188,7 @@ export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
   const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
+  const [initialScreenDiagnosticsOpen, setInitialScreenDiagnosticsOpen] = useState(false);
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [scheduleViewResetKey, setScheduleViewResetKey] = useState(0);
@@ -248,12 +250,13 @@ export function App() {
     let cancelled = false;
     getMe(webApp.initData)
       .then((me) => {
-        if (!cancelled) dispatch({
-          type: 'loaded',
-          initData: webApp.initData,
-          startParam,
-          me,
-        });
+        if (cancelled) return;
+        if (isScreenDiagnosticsStartParam(startParam)) {
+          setCoachDestination('settings');
+          setClientDestination('settings');
+          setInitialScreenDiagnosticsOpen(true);
+        }
+        dispatch({ type: 'loaded', initData: webApp.initData, startParam, me });
       })
       .catch((error: unknown) => {
         if (!cancelled) dispatch({ type: 'error', message: error instanceof Error ? error.message : 'Не удалось загрузить профиль' });
@@ -440,6 +443,8 @@ export function App() {
             typographySettings={typographySettings}
             onTypographySettingsChange={setTypographySettings}
             onNavigationContextChange={handleNavigationContextChange}
+            initialScreenDiagnosticsOpen={initialScreenDiagnosticsOpen}
+            onScreenDiagnosticsDeepLinkConsumed={() => setInitialScreenDiagnosticsOpen(false)}
           />
         ) : state.activeRole === 'coach' ? (
           <CoachShell
@@ -453,7 +458,7 @@ export function App() {
             initData={state.initData}
             currentUserId={state.me.user.id}
             actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
-            startParam={state.startParam}
+            startParam={isScreenDiagnosticsStartParam(state.startParam) ? null : state.startParam}
             destination={clientDestination}
             onNavigationContextChange={handleNavigationContextChange}
           />
