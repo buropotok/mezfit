@@ -100,8 +100,8 @@ type ProfileView = {
 };
 
 /** Dexie Cloud can sync an authenticated BlobRef before the image bytes are ready. */
-function profileAvatarKind(value: unknown): 'b' | 'r' | '0' {
-  if (value instanceof Blob) return value.size >= 16 ? 'b' : '0';
+function profileAvatarKind(value: unknown): '1' | 'r' | '0' {
+  if (value instanceof Blob) return value.size >= 16 ? '1' : '0';
   if (value && typeof value === 'object') {
     const ref = value as Record<string, unknown>;
     if (ref._bt === 'Blob' && typeof ref.ref === 'string'
