@@ -131,6 +131,7 @@ interface SessionExerciseLayoutProps {
   collapsed?: boolean;
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  onInformation?: () => void;
   onOpenExerciseMenu?: () => void;
   actions?: ReactNode;
   onAddSet?: () => void;
@@ -144,7 +145,7 @@ interface SessionExerciseLayoutProps {
 function SessionExerciseLayout({
   exerciseId, exerciseName, media, subtitle, badge, notes, surface = 'default',
   collapsed: controlledCollapsed, defaultCollapsed = false, onCollapsedChange,
-  onOpenExerciseMenu, actions, onAddSet, busy = false, summary, editor, children,
+  onInformation, onOpenExerciseMenu, actions, onAddSet, busy = false, summary, editor, children,
 }: SessionExerciseLayoutProps) {
   const bodyId = useId();
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
@@ -162,7 +163,9 @@ function SessionExerciseLayout({
           <ListItem
             className="session-exercise__header-toggle"
             leadingShape="square"
-            leading={media}
+            leading={onInformation ? <span className="session-exercise__media-tap" data-no-dnd
+              onPointerDown={event => event.stopPropagation()}
+              onClick={event => { event.stopPropagation(); onInformation(); }}>{media}</span> : media}
             title={exerciseName}
             subtitle={subtitle}
             trailing={badge}
@@ -234,7 +237,7 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
         reference_source: null, reference_key: null }} sourceUrl={snapshot.mediaUrl} variant="thumbnail" />}
       subtitle={formatSetCount(sets.length)} notes={item.notes}
       surface={props.surface} collapsed={props.collapsed} defaultCollapsed={props.defaultCollapsed}
-      onCollapsedChange={props.onCollapsedChange}
+      onCollapsedChange={props.onCollapsedChange} onInformation={props.onInformation}
       actions={<ExerciseActionsMenu busy={props.busy}
         onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
@@ -275,6 +278,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
     onAddSet,
     onCollapsedChange,
     onOpenExerciseMenu,
+    onInformation,
     onOpenHistory,
     onOpenChat,
   } = props;
@@ -303,6 +307,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
       collapsed={controlledCollapsed}
       defaultCollapsed={defaultCollapsed}
       onCollapsedChange={onCollapsedChange}
+      onInformation={onInformation}
       onOpenExerciseMenu={onOpenExerciseMenu ? () => onOpenExerciseMenu(data.sessionExerciseId) : undefined}
       onAddSet={props.mode !== 'plan' && editable && onAddSet ? () => onAddSet(data.sessionExerciseId) : undefined}
       summary={(
