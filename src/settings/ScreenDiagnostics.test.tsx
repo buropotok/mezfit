@@ -12,6 +12,7 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined });
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
 });
 
 describe('ScreenDiagnostics', () => {
