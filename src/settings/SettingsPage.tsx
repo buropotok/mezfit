@@ -169,6 +169,8 @@ interface SettingsPageProps {
   onNavigationContextChange: (context: NavigationContext | null) => void;
   initialScreenDiagnosticsOpen?: boolean;
   onScreenDiagnosticsDeepLinkConsumed?: () => void;
+  previewWidth?: 320 | null;
+  onPreviewWidthChange?: (width: 320 | null) => void;
 }
 
 const glassPresetOptions = GLASS_PRESET_NAMES.map((preset) => ({ value: preset, label: preset }));
@@ -263,6 +265,8 @@ export function SettingsPage({
   onNavigationContextChange,
   initialScreenDiagnosticsOpen = false,
   onScreenDiagnosticsDeepLinkConsumed,
+  previewWidth = null,
+  onPreviewWidthChange,
 }: SettingsPageProps) {
   const [screenDiagnosticsOpen, setScreenDiagnosticsOpen] = useState(initialScreenDiagnosticsOpen);
   const [modulesOpen, setModulesOpen] = useState(false);
@@ -378,7 +382,7 @@ export function SettingsPage({
     );
   }
 
-  if (screenDiagnosticsOpen) return <ScreenDiagnostics glassBlur={effectiveGlassBlur} />;
+  if (screenDiagnosticsOpen) return <ScreenDiagnostics glassBlur={effectiveGlassBlur} previewWidth={previewWidth} onPreviewWidthChange={onPreviewWidthChange} />;
 
   if (glassSettingsOpen) {
     const changeGlassPreset = (value: string) => {
