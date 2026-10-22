@@ -54,7 +54,7 @@ interface CloudConnectionsValue {
   loadAvatar: (contact: CloudContact, variant?: 'small' | 'large') => Promise<Blob | null>;
   avatarUrls?: ContactAvatarUrls;
   /** Incremented when Dexie Cloud finishes downloading pending avatar blobs. */
-  avatarLoadRevision: number;
+  avatarLoadRevision?: number;
 }
 
 const Context = createContext<CloudConnectionsValue | null>(null);
