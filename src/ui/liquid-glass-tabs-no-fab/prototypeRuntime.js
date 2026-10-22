@@ -12,6 +12,11 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
     const visualWidth = root.host.getBoundingClientRect().width;
     return intrinsicWidth > 0 && visualWidth > 0 ? visualWidth / intrinsicWidth : 1;
   }
+  // ScrollLeft is measured in untransformed layout px, while the legacy
+  // 4px tap/jitter threshold describes actual on-screen finger movement.
+  function visualScrollDistance(localDistance) {
+    return Math.abs(localDistance) * outerScale();
+  }
   const events = new EventTarget();
   const timers = new Set(), frames = new Set(), observers = new Set(), animations = new Set(), disposers = [];
   let disposed = false, pointerId = null, selectIndex = () => {}, clearSelection = () => {};
@@ -217,7 +222,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
       });
 
       listen(tabStrip, 'scroll', () => {
-        if (Math.abs(tabStrip.scrollLeft - stripScrollStart) > 4) {
+        if (visualScrollDistance(tabStrip.scrollLeft - stripScrollStart) > 4) {
           stripDidScroll = true;
         }
 
@@ -537,7 +542,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
           // Result:
           //   1-4px micro-jitter -> still a tap -> lens appears;
           //   >4px movement      -> real scroll -> no lens.
-          const scrollDistance = Math.abs(
+          const scrollDistance = visualScrollDistance(
             tabStrip.scrollLeft - data.touchStartScrollLeft
           );
           const wasRealScroll = wasScroll && scrollDistance > 4;
@@ -1769,7 +1774,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
             );
 
           const scrollDistance =
-            Math.abs(
+            visualScrollDistance(
               tabStrip.scrollLeft -
               startScrollLeft
             );
