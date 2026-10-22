@@ -6,7 +6,7 @@ import { CloudContactAvatar } from './CloudContactAvatar';
 
 let cache: ContactAvatarUrls | undefined;
 let avatarLoadRevision = 0;
-const loadAvatar = vi.fn(async () => new Blob(['portrait'], { type: 'image/jpeg' }));
+const loadAvatar = vi.fn(async (): Promise<Blob | null> => new Blob(['portrait'], { type: 'image/jpeg' }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({ loadAvatar, avatarUrls: cache, avatarLoadRevision }),
 }));
