@@ -53,6 +53,8 @@ interface CloudConnectionsValue {
   retrySync: () => Promise<void>;
   loadAvatar: (contact: CloudContact, variant?: 'small' | 'large') => Promise<Blob | null>;
   avatarUrls?: ContactAvatarUrls;
+  /** Incremented when Dexie Cloud finishes downloading pending avatar blobs. */
+  avatarLoadRevision: number;
 }
 
 const Context = createContext<CloudConnectionsValue | null>(null);
@@ -92,10 +94,23 @@ type ProfileView = {
   userId: string;
   name: string;
   avatarVersion: string | null;
-  avatar?: Blob | null;
-  avatarSmall?: Blob | null;
-  avatarLarge?: Blob | null;
+  avatar?: unknown;
+  avatarSmall?: unknown;
+  avatarLarge?: unknown;
 };
+
+/** Dexie Cloud can sync an authenticated BlobRef before the image bytes are ready. */
+function profileAvatarKind(value: unknown): 'b' | 'r' | '0' {
+  if (value instanceof Blob) return value.size >= 16 ? 'b' : '0';
+  if (value && typeof value === 'object') {
+    const ref = value as Record<string, unknown>;
+    if (ref._bt === 'Blob' && typeof ref.ref === 'string'
+      && /^[0-9]+:[a-zA-Z0-9_-]{6,}$/.test(ref.ref)
+      && typeof ref.size === 'number' && ref.size >= 16 && ref.size <= 256_000
+      && ref.ct === 'image/jpeg') return 'r';
+  }
+  return '0';
+}
 
 /** Derived presentation only: server-enforced memberships remain the access boundary. */
 export async function deriveCloudContacts(
@@ -124,10 +139,12 @@ export async function deriveCloudContacts(
     const peer = contact(mine.realmId, {
       userId: partner.userId,
       name: profile?.name || partner.name,
-      avatarVersion: profile && [profile.avatarSmall, profile.avatarLarge, profile.avatar].some(value => value instanceof Blob)
-        ? profile.avatarVersion : null,
+      // An authorized cloud BlobRef advertises the version even before lazy/eager
+      // binary hydration. The loader will resolve it through the Dexie Addon.
+      avatarVersion: profile && [profile.avatarSmall, profile.avatarLarge, profile.avatar]
+        .some(value => profileAvatarKind(value) !== '0') ? profile.avatarVersion : null,
       avatarMode: profile ? [profile.avatarSmall, profile.avatarLarge, profile.avatar]
-        .map(value => value instanceof Blob ? '1' : '0').join('') : '000',
+        .map(profileAvatarKind).join('') : '000',
     }, asCoach ? 'Клиент Mezfit' : 'Тренер Mezfit');
     return peer ? { peer, asCoach } : null;
   }));
@@ -173,6 +190,7 @@ export function CloudConnectionsProvider({
   const [error, setError] = useState('');
   const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>('pending');
   const [syncError, setSyncError] = useState('');
+  const [avatarLoadRevision, setAvatarLoadRevision] = useState(0);
   const alive = useRef(false);
   const initialPullSucceededRef = useRef(false);
   const reconcileAvatarPermissions = useCallback((next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
@@ -279,6 +297,21 @@ export function CloudConnectionsProvider({
     return () => subscription?.unsubscribe();
   }, [db, notificationBudget]);
 
+  // Blob downloads are independent of contact metadata sync. A first lookup may
+  // observe a BlobRef before its bytes are available; retry after hydration.
+  useEffect(() => {
+    let previousRemaining: number | undefined;
+    const subscription = db.cloud.blobProgress?.subscribe({
+      next: (progress) => {
+        if (previousRemaining !== undefined && progress.blobsRemaining < previousRemaining) {
+          setAvatarLoadRevision((revision) => revision + 1);
+        }
+        previousRemaining = progress.blobsRemaining;
+      },
+    });
+    return () => subscription?.unsubscribe();
+  }, [db]);
+
   useEffect(() => observeProgramSyncConfirmation(db, (reason) => {
     setSyncStatus('error');
     setSyncError(reason instanceof Error ? reason.message : 'Не удалось подтвердить синхронизацию программ');
@@ -343,9 +376,9 @@ export function CloudConnectionsProvider({
 
   const value = useMemo<CloudConnectionsValue>(() => ({
     db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
-    refresh, retrySync, loadAvatar, avatarUrls,
+    refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision,
   }), [db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
-    refresh, retrySync, loadAvatar, avatarUrls]);
+    refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision]);
 
   return <Context.Provider value={value}>
     <SyncNotificationBudgetContext.Provider value={notificationBudget}>{children}</SyncNotificationBudgetContext.Provider>
