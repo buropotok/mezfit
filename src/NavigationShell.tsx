@@ -18,6 +18,7 @@ import {
   type MezfitNavbarIdentity,
   type UiIconName,
 } from './ui';
+import { liquidTabScale, LIQUID_TAB_BASE_HEIGHT } from './ui/liquid-glass-icon-only/adaptiveScale';
 
 export type AppDestination =
   | 'clients'
@@ -274,6 +275,8 @@ export function NavigationShell({
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
   const historySequenceRef = useRef(0);
   const contentRef = useRef<HTMLElement | null>(null);
+  const shellRef = useRef<HTMLElement | null>(null);
+  const [shellWidth, setShellWidth] = useState<number | null>(null);
   const scrollPositionsRef = useRef(new Map<string, number>());
   const currentScrollSurfaceRef = useRef<string | null>(null);
   const restoreScrollOnNextSurfaceRef = useRef(false);
@@ -299,6 +302,24 @@ export function NavigationShell({
   const onCalendarDateChange = context?.calendar?.onChange ?? setSelectedDate;
   const calendarDayStatuses = context?.calendar?.dayStatuses;
   const viewportContent = context?.contentMode === 'viewport';
+  const liquidTabRenderScale = liquidTabScale(shellWidth ?? 406);
+
+  useLayoutEffect(() => {
+    const element = shellRef.current;
+    if (!element) return undefined;
+    const syncWidth = () => {
+      const width = element.clientWidth;
+      if (width > 0) setShellWidth(current => current === width ? current : width);
+    };
+    syncWidth();
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(syncWidth);
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+    window.addEventListener('resize', syncWidth);
+    return () => window.removeEventListener('resize', syncWidth);
+  }, []);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -469,6 +490,7 @@ export function NavigationShell({
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
         <main
+          ref={shellRef}
           className={previewWidth === 320
             ? 'app-shell navigation-shell navigation-shell--windowed'
             : 'app-shell navigation-shell'}
@@ -505,7 +527,13 @@ export function NavigationShell({
           {children}
         </section>
 
-        <div className="navigation-primary-tabs" style={level === 2 ? { pointerEvents: 'none' } : undefined}>
+        <div
+          className="navigation-primary-tabs"
+          style={{
+            height: level === 1 ? LIQUID_TAB_BASE_HEIGHT * liquidTabRenderScale : undefined,
+            pointerEvents: level === 2 ? 'none' : undefined,
+          }}
+        >
           <LiquidGlassIconOnly
             hidden={level !== 1}
             tabs={primaryItems.map((item) => ({
@@ -518,6 +546,7 @@ export function NavigationShell({
             onReselect={value => { if (value === 'today') chooseDestination('today'); }}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
+            scale={liquidTabRenderScale}
             fab={resolvedPrimaryFloatingAction ? renderFloatingAction(resolvedPrimaryFloatingAction) : undefined}
           />
           {resolvedSurfaceFloatingAction ? (
