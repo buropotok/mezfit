@@ -247,7 +247,7 @@ export async function syncOwnContactProfile(
     const row = known.get(id);
     return !newerSource(row, sourceAuthAt)
       && (typeof row?.sourceAuthAt !== 'number' || row.sourceAuthAt < sourceAuthAt
-        || row.name !== name || (row.avatarVersion !== null && !hasBothAvatars(row)));
+        || row.name !== name || !hasBothAvatars(row));
   });
   if (eligibleForSession.length === 0) {
     return Response.json({ changed: false }, { headers: { 'cache-control': 'no-store' } });
