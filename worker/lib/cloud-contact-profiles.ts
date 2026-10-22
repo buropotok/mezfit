@@ -1,4 +1,5 @@
 import { validateTelegramInitData, type TelegramInitUser } from './telegram';
+import { optimizeContactAvatar, type ContactAvatarVariant } from './contact-avatar-transform';
 import { stableCloudRelationshipId } from '../../shared/relationship-id';
 import {
   cloudMembershipAdminRead,
