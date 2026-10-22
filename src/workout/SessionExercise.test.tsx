@@ -75,6 +75,7 @@ function renderExercise(overrides?: {
   surface?: 'default' | 'transparent';
   editable?: boolean;
   onAddSet?: (sessionExerciseId: number) => void;
+  onInformation?: () => void;
 }) {
   const onSaveSet = vi.fn(async () => undefined);
   const onOpenExerciseMenu = vi.fn();
@@ -91,6 +92,7 @@ function renderExercise(overrides?: {
       onAddSet={overrides?.onAddSet}
       onSaveSet={onSaveSet}
       onOpenExerciseMenu={onOpenExerciseMenu}
+      onInformation={overrides?.onInformation}
       onOpenHistory={onOpenHistory}
       onOpenChat={onOpenChat}
     />,
@@ -153,6 +155,16 @@ describe('SessionExercise rendering', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Опции упражнения' }));
     expect(onOpenExerciseMenu).toHaveBeenCalledWith(200);
     expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
+  });
+
+  it('uses the same media information callback without changing workout disclosure', () => {
+    const onInformation = vi.fn();
+    const { container } = renderExercise({ onInformation });
+    fireEvent.click(container.querySelector('.session-exercise__media-tap')!);
+    expect(onInformation).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
+    fireEvent.click(screen.getByText('Жим лёжа').closest('button')!);
+    expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
   });
 
   it('uses the full 44px row as the add-set action while keeping the glass plus as artwork', () => {
