@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "blocked",
-  "status_reason": "Stage 5 incomplete: only original GIF 0381 verified by six decoded frames. Batch renderer returned AioRpcError; other 99 GIFs not visually verified. Partial batch/CSV/checkpoint saved and verified; 400 completed-stage records preserved. Manual resume required.",
+  "status": "in_progress",
+  "status_reason": "Explicit user-requested retry of incomplete stage 5; resume at ID 0382 without re-reviewing 0381.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
@@ -21,7 +21,13 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": null,
+  "lock": {
+    "owner": "chatgpt_visual_audit",
+    "token": "mezfit-stage05-retry-mvka1g5f",
+    "stage": 5,
+    "started_at": "2026-10-23T04:12:43+03:00",
+    "resume_from_id": "0382"
+  },
   "stages": [
     {
       "number": 1,
@@ -487,7 +493,7 @@
     },
     {
       "number": 5,
-      "status": "blocked",
+      "status": "in_progress",
       "exercise_ids": [
         "0381",
         "0382",
@@ -599,7 +605,7 @@
       "started_at": "2026-10-23T03:56:43+03:00",
       "reviewed_count": 1,
       "checkpoint_file": "results/audit_checkpoint_stage_05.json",
-      "status_reason": "Incomplete 1/100 due to visual renderer RPC error; other 99 not checked",
+      "status_reason": "Resumed blocked stage 5 by explicit user request",
       "blocked_at": "2026-10-23T04:01:39+03:00"
     },
     {
