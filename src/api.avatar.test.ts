@@ -76,4 +76,29 @@ describe('client-only Telegram avatar compression API flow', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(compressTelegramAvatar).not.toHaveBeenCalled();
   });
+  it('retries once when the Telegram photo changes while Canvas compression was running', async () => {
+    let sourceCalls = 0;
+    let uploadCalls = 0;
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      if (String(input).endsWith('/source')) {
+        sourceCalls += 1;
+        return new Response(new Uint8Array(36).buffer, {
+          headers: {
+            'content-type': 'image/jpeg',
+            'x-mezfit-photo-version': String(sourceCalls).repeat(64),
+          },
+        });
+      }
+      uploadCalls += 1;
+      return uploadCalls === 1
+        ? Response.json({ error: { code: 'STALE_AVATAR_SOURCE' } }, { status: 409 })
+        : Response.json({ changed: true });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await syncCloudContactProfile('signed')).toBe(true);
+    expect(sourceCalls).toBe(2);
+    expect(uploadCalls).toBe(2);
+    expect(compressTelegramAvatar).toHaveBeenCalledTimes(2);
+  });
+
 });
