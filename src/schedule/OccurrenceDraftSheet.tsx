@@ -56,6 +56,20 @@ function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
   };
 }
 
+/** Read only the public Mezfit sheet surface; Konsta keeps ownership of its animation. */
+function openingTransitionDuration(element: Element): number {
+  const style = window.getComputedStyle(element);
+  if (style.transitionProperty === 'none') return 0;
+  const milliseconds = (value: string) => {
+    const token = value.trim();
+    const amount = Number.parseFloat(token) || 0;
+    return token.endsWith('ms') ? amount : amount * 1000;
+  };
+  const durations = style.transitionDuration.split(',').map(milliseconds);
+  const delays = style.transitionDelay.split(',').map(milliseconds);
+  return Math.max(0, ...durations.map((duration, index) => duration + (delays[index % delays.length] ?? 0)));
+}
+
 export interface OccurrenceDraftSheetProps {
   draft: LocalWorkoutOccurrenceDraft | null;
   drafts: WorkoutOccurrenceDraftRepository;
@@ -67,7 +81,7 @@ export interface OccurrenceDraftSheetProps {
   onSave: (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => Promise<void>;
 }
 
-function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', container, onNavigationContextChange }: OccurrenceDraftSheetProps & { container: HTMLDivElement }) {
+function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', container, onNavigationContextChange, auxiliaryReady }: OccurrenceDraftSheetProps & { container: HTMLDivElement; auxiliaryReady: boolean }) {
   const cloud = useCloudConnections();
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
@@ -293,7 +307,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer> : null}
       </section>, container) : null}
-    {draft ? <>
+    {draft && auxiliaryReady ? <>
       {planner && informationExercise ? <Suspense fallback={<Text variant="footnote">Загружаем информацию…</Text>}>
         <ProgramExerciseInformationSheet key={informationExercise.id} repository={planner.programs}
           exerciseId={informationExercise.id} snapshot={informationExercise.exercise} realmId={draft.realmId}
@@ -355,15 +369,57 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
 
 /** Keep the animated shell mounted closed before opening; reset each editor by ID. */
 export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
+  const opened = props.draft !== null;
   const [retained, setRetained] = useState(props.draft);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const [auxiliaryReady, setAuxiliaryReady] = useState(false);
+  const openingFrame = useRef<number | null>(null);
   useEffect(() => { if (props.draft) setRetained(props.draft); }, [props.draft]);
   const draft = props.draft ?? retained;
-  return <><MezfitBottomSheet opened={props.draft !== null} label="Запланированная тренировка" lazyMount
+
+  const finishOpening = useCallback(() => {
+    if (openingFrame.current !== null) return;
+    // Mount offscreen pickers after the completed transition has painted.
+    openingFrame.current = window.requestAnimationFrame(() => {
+      openingFrame.current = null;
+      setAuxiliaryReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!opened) {
+      setAuxiliaryReady(false);
+      return;
+    }
+    if (!container) return;
+    // No animated sheet (e.g. embedded/unanimated host): overlays can mount at once.
+    const sheet = container.closest('.ui-mezfit-bottom-sheet');
+    const duration = sheet ? openingTransitionDuration(sheet) : 0;
+    if (duration === 0) {
+      setAuxiliaryReady(true);
+      return;
+    }
+    // Fallback for interrupted/missing transitionend in mobile WebViews.
+    const timer = window.setTimeout(finishOpening, duration + 32);
+    return () => {
+      window.clearTimeout(timer);
+      if (openingFrame.current !== null) {
+        window.cancelAnimationFrame(openingFrame.current);
+        openingFrame.current = null;
+      }
+    };
+  }, [opened, container, finishOpening]);
+
+  return <><MezfitBottomSheet opened={opened} label="Запланированная тренировка" lazyMount
+    onTransitionEnd={(event) => {
+      if (opened && event.target === event.currentTarget
+        && (event.propertyName === 'transform' || event.propertyName === 'translate')) finishOpening();
+    }}
     onClosed={() => { if (!props.draft) setRetained(null); }}>
     <div ref={setContainer} className="occurrence-draft-sheet__host" />
   </MezfitBottomSheet>
-    {/* Only form content enters our host; pickers/dialogs remain outside the animated transform. */}
-    {draft && container ? <OccurrenceDraftEditor key={draft.id} {...props} draft={draft} container={container} /> : null}
+    {/* Form renders during slide; closed pickers/dialogs mount only after it finishes. */}
+    {draft && container ? <OccurrenceDraftEditor key={draft.id} {...props} draft={draft}
+      container={container} auxiliaryReady={opened && auxiliaryReady} /> : null}
   </>;
 }
