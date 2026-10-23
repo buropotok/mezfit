@@ -18,6 +18,7 @@
 }
 
 .session-exercise__header-list {
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
 }
@@ -26,11 +27,24 @@
   min-width: 0;
 }
 
-.session-exercise__media-tap {
-  display: block;
-  width: 100%;
-  height: 100%;
+/* App-owned hit target overlays the 3rem ListItem leading slot without nesting buttons. */
+.session-exercise__media-action {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: .5rem;
+  inset-inline-start: .5rem;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
   cursor: pointer;
+}
+
+.session-exercise__media-action:focus-visible {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: 2px;
 }
 
 .session-exercise__set-trailing {
