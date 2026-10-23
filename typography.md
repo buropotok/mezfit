@@ -63,6 +63,37 @@ Typography settings are persisted in browser/WebView local storage and applied b
 
 The static values in `src/ui/tokens/typography.css` remain the product defaults and fallback when no valid stored settings exist.
 
+## Responsive presentation in narrow Mezfit viewports
+
+The six semantic presets remain authoritative and are not rewritten or persisted
+when the application is viewed on a narrower screen. The application shell
+derives `--ui-responsive-type-scale` from its measured content width, including
+the Settings **Окно 320px** preview. It publishes that value both on the shell
+and on `document.documentElement`, so app-owned semantic `Text` rendered in
+body-level portals (dialogs, hints, sheets) inherits the same scale.
+The global override restores the previous inline value when the shell unmounts.
+
+The initial scale policy is:
+
+- 320 CSS px and below: `0.9`;
+- 406 CSS px and above: `1`;
+- intermediate widths: linear interpolation.
+
+Shared `Text` preset styles multiply their font size, line height, and letter
+spacing by this coefficient. Footnote uses a minimum factor of `12 / 13` and
+Caption remains at `1`, preserving the product-default minimum Caption
+12px/16px at 320px. Font weight and style do not change. The calculation
+uses the existing, potentially user-configured preset values, and never
+overwrites the settings in local storage. Unscaled viewports continue to
+render those values as configured.
+
+This affects app-owned semantic `Text` inside the shell, not the intrinsic
+typography of native Konsta primitives. Other visual geometry, icon sizes,
+press mechanics and Navbar height are not affected.
+
+The responsive coefficient is an initial design value to validate on physical
+devices before committing to a final visual calibration.
+
 ## Component mapping rules
 
 All text-bearing UI must map to the shared type scale. The standard mapping is:

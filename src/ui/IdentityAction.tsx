@@ -3,6 +3,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ButtonHTMLAttributes,
@@ -31,7 +32,8 @@ type IdentityActionVisual =
       icon: UiIconName;
       iconVariant?: UiIconVariant;
       iconSize?: CSSProperties['width'];
-    };
+    }
+  | { avatar?: never; icon?: never; iconVariant?: never; iconSize?: never };
 
 export type IdentityActionItem = {
   icon: UiIconName;
@@ -64,6 +66,8 @@ type IdentityActionSingleProps = IdentityActionBaseProps & IdentityActionVisual 
   'aria-label'?: string;
   width?: CSSProperties['width'];
   titleRole?: IdentityActionTitleRole;
+  /** Hide a decorative icon only when the full label would overflow. Never hides an avatar. */
+  autoHideIcon?: boolean;
 };
 
 type IdentityActionDoubleProps = IdentityActionBaseProps & {
@@ -103,6 +107,15 @@ export function IdentityAction(props: IdentityActionProps) {
     disabled = false,
   } = props;
   const [isAnimating, setIsAnimating] = useState(false);
+  const [hideDecorativeIcon, setHideDecorativeIcon] = useState(false);
+  const iconVisualRef = useRef<HTMLSpanElement>(null);
+  const textMeasureRef = useRef<HTMLSpanElement>(null);
+  const canHideIcon = props.variant !== 'double'
+    && props.autoHideIcon === true
+    && !!props.icon
+    && (props.variant === undefined || props.variant === 'labeled' || props.variant === 'default');
+  const measuredTitle = props.variant === 'double' ? undefined : props.title;
+  const measuredRole = props.variant === 'double' ? undefined : props.titleRole;
   const rootRef = useRef<HTMLElement>(null);
   const surfaceRef = props.surfaceRef;
   const setSurfaceRef = useCallback((element: HTMLElement | null) => {
@@ -114,6 +127,47 @@ export function IdentityAction(props: IdentityActionProps) {
   const pointerPressRef = useRef(false);
   const animationFinishedRef = useRef(false);
   const pendingActionRef = useRef<(() => void) | null>(null);
+
+  useLayoutEffect(() => {
+    if (!canHideIcon) {
+      setHideDecorativeIcon(false);
+      return undefined;
+    }
+
+    const root = rootRef.current;
+    const visual = iconVisualRef.current;
+    const probe = textMeasureRef.current;
+    if (!root || !visual || !probe) return undefined;
+
+    const measure = () => {
+      const rootWidth = root.clientWidth;
+      const naturalTextWidth = Math.max(probe.scrollWidth, probe.getBoundingClientRect().width);
+      if (!rootWidth || !naturalTextWidth) return;
+
+      const style = getComputedStyle(root);
+      const visualStyle = getComputedStyle(visual);
+      const left = Number.parseFloat(style.paddingLeft) || 0;
+      const right = Number.parseFloat(style.paddingRight) || 0;
+      const gap = Number.parseFloat(style.columnGap) || 0;
+      const iconSlotWidth = Number.parseFloat(visualStyle.width) || visual.offsetWidth;
+      const availableWithIcon = rootWidth - left - right - gap - iconSlotWidth;
+
+      // Always compare against the space WITH the icon: measuring the current
+      // truncated title after hiding would make the icon flicker on/off.
+      setHideDecorativeIcon(naturalTextWidth > availableWithIcon + 0.5);
+    };
+
+    measure();
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(measure);
+      observer.observe(root);
+      observer.observe(probe);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [canHideIcon, measuredTitle, measuredRole]);
 
   const finishActivation = useCallback(() => {
     const action = pendingActionRef.current;
@@ -268,7 +322,12 @@ export function IdentityAction(props: IdentityActionProps) {
       onPointerLeave={cancelPointerActivation}
       onClick={handleClick}
     >
-      <span className="ui-identity-action__visual" aria-hidden="true">
+      {(icon || avatar) && <span
+        ref={iconVisualRef}
+        className="ui-identity-action__visual"
+        aria-hidden="true"
+        style={canHideIcon && hideDecorativeIcon ? { display: 'none' } : undefined}
+      >
         {icon ? (
           <Icon
             className="ui-identity-action__icon"
@@ -286,8 +345,11 @@ export function IdentityAction(props: IdentityActionProps) {
             src={avatar.src}
           />
         ) : null}
-      </span>
+      </span>}
       {showTitle && <Text variant={titleRole ?? 'body'} className="ui-identity-action__title">{title}</Text>}
+      {canHideIcon && <span ref={textMeasureRef} className="ui-identity-action__title-measure" aria-hidden="true">
+        <Text variant={titleRole ?? 'body'}>{title}</Text>
+      </span>}
     </GlassSurface>
   );
 }
