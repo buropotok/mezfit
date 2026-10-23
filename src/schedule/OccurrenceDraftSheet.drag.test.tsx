@@ -98,14 +98,14 @@ describe('scheduled workout reorder inside a scrollable bottom sheet', () => {
   it('rolls the immediate order back when the draft repository rejects the reorder', async () => {
     const { drafts, props } = fixture();
     let rejectWrite: (reason: Error) => void = () => {};
-    vi.spyOn(drafts, 'enqueueEdit').mockImplementation(() => new Promise<void>((_, reject) => {
+    const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockImplementation(() => new Promise<void>((_, reject) => {
       rejectWrite = reject;
     }));
     render(<OccurrenceDraftSheet {...props} draft={draft} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Переставить упражнения' }));
     expect(screen.getByTestId('exercise-order').textContent).toBe('second,first');
-    await waitFor(() => expect(rejectWrite).not.toBeNull());
+    await waitFor(() => expect(enqueue).toHaveBeenCalledOnce());
 
     await act(async () => rejectWrite(new Error('Ошибка сохранения')));
     await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('first,second'));
