@@ -25,7 +25,8 @@ import './NavbarMetaball.css';
 
 export type NavbarMetaballIdentity =
   | { title: string; icon: UiIconName; avatar?: never }
-  | { title: string; avatar: IdentityActionAvatar; icon?: never };
+  | { title: string; avatar: IdentityActionAvatar; icon?: never }
+  | { title: string; icon?: never; avatar?: never };
 
 type NavbarMetaballProps = {
   level: 1 | 2;
@@ -240,6 +241,21 @@ export function NavbarMetaball({
             icon={identity.icon}
             iconVariant="outline"
             iconSize={32}
+            autoHideIcon
+            title={identity.title}
+            titleRole="headline"
+            width="100%"
+            glassPreset={glassPreset}
+            glassOptics={movingOptics}
+            glass={movingIdentityGlass}
+            glassBezelOpacity={1}
+            glassBezelHighlights={identityBezelHighlights}
+            onClick={onIdentityClick}
+          />
+        ) : identity.avatar ? (
+          <IdentityAction
+            variant="labeled"
+            avatar={identity.avatar}
             title={identity.title}
             titleRole="headline"
             width="100%"
@@ -253,7 +269,6 @@ export function NavbarMetaball({
         ) : (
           <IdentityAction
             variant="labeled"
-            avatar={identity.avatar}
             title={identity.title}
             titleRole="headline"
             width="100%"
