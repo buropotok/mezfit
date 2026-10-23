@@ -79,6 +79,8 @@ describe('program source selection', () => {
     expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
     expect(within(card).getAllByRole('button', { name: 'Запланировать' }).length).toBeGreaterThan(0);
     expect(screen.getByTestId('sortable').getAttribute('data-disabled')).toBe('true');
+    expect(within(card).queryByRole('button', { name: 'Добавить подход' })).toBeNull();
+    fireEvent.click(within(card).getByRole('button', { name: 'Развернуть упражнение' }));
 
     for (const id of ['add-phase', 'add-day']) {
       act(() => floating.items.find(item => item.id === id)?.onSelect?.());
@@ -140,6 +142,7 @@ describe('program source selection', () => {
     const repository = setup(true);
     const card = await screen.findByRole('article', { name: 'День День А' });
     expect(floating.items).toEqual([]);
+    fireEvent.click(within(card).getByRole('button', { name: 'Развернуть упражнение' }));
     expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();

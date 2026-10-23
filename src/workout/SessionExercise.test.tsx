@@ -86,7 +86,7 @@ function renderExercise(overrides?: {
     <SessionExercise
       context={overrides?.context ?? context}
       data={overrides?.data ?? data}
-      defaultCollapsed={overrides?.defaultCollapsed}
+      defaultCollapsed={overrides?.defaultCollapsed ?? false}
       surface={overrides?.surface}
       editable={overrides?.editable}
       onAddSet={overrides?.onAddSet}
@@ -142,6 +142,65 @@ describe('SessionExercise rendering', () => {
 
     fireEvent.click(header!);
     expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
+  });
+
+  it('defaults to collapsed, defers set rendering and retains mounted rows after first expand', () => {
+    let factReads = 0;
+    const lazyData: SessionExerciseData = {
+      ...data,
+      sets: [{
+        ...data.sets[0],
+        get fact() {
+          factReads += 1;
+          return data.sets[0].fact;
+        },
+      }],
+    };
+    const { container } = render(<SessionExercise context={context} data={lazyData}
+      onSaveSet={vi.fn(async () => undefined)} />);
+
+    expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
+    expect(container.querySelector('.session-exercise__set-row')).toBeNull();
+    expect(factReads).toBe(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    const row = container.querySelector('.session-exercise__set-row');
+    expect(row).not.toBeNull();
+    expect(factReads).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Свернуть упражнение' }));
+    expect(container.querySelector('.session-exercise__set-row')).toBe(row);
+    expect(container.querySelector('.session-exercise__body')?.hasAttribute('hidden')).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    expect(container.querySelector('.session-exercise__set-row')).toBe(row);
+  });
+
+  it('supports external collapsed state without losing the mounted detail subtree', () => {
+    const onSaveSet = vi.fn(async () => undefined);
+    const view = (collapsed: boolean) => <SessionExercise context={context} data={data}
+      onSaveSet={onSaveSet} collapsed={collapsed} />;
+    const { container, rerender } = render(view(true));
+    expect(container.querySelector('.session-exercise__set-row')).toBeNull();
+
+    rerender(view(false));
+    const row = container.querySelector('.session-exercise__set-row');
+    expect(row).not.toBeNull();
+
+    rerender(view(true));
+    expect(container.querySelector('.session-exercise__set-row')).toBe(row);
+    expect(container.querySelector('.session-exercise__body')?.hasAttribute('hidden')).toBe(true);
+  });
+
+  it('does not mount detail when an external owner rejects an expand request', () => {
+    const onCollapsedChange = vi.fn();
+    const { container } = render(<SessionExercise context={context} data={data}
+      onSaveSet={vi.fn(async () => undefined)} collapsed onCollapsedChange={onCollapsedChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    expect(onCollapsedChange).toHaveBeenCalledWith(false);
+    expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
+    expect(container.querySelector('.session-exercise__set-row')).toBeNull();
   });
 
   it('starts collapsed when requested', () => {

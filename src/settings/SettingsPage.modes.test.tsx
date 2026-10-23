@@ -10,6 +10,7 @@ describe('SettingsPage module modes', () => {
     render(<SettingsPage onNavigationContextChange={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
     const workout = screen.getByRole('region', { name: 'Карточка упражнения и подходов' });
+    fireEvent.click(within(workout).getByRole('button', { name: 'Развернуть упражнение' }));
     fireEvent.click(within(workout).getByRole('button', { name: 'Открыть подход 1' }));
     expect(screen.getByText('План: 80 кг')).toBeTruthy();
     expect(screen.getByText('Оценка подхода')).toBeTruthy();
@@ -21,6 +22,7 @@ describe('SettingsPage module modes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
     const plan = screen.getByRole('region', { name: 'Карточка упражнения и подходов · plan' });
     expect(within(plan).getByText('2 подхода', { exact: false })).toBeTruthy();
+    fireEvent.click(within(plan).getByRole('button', { name: 'Развернуть упражнение' }));
     fireEvent.click(within(plan).getByRole('button', { name: 'Открыть подход 3' }));
     expect(screen.getByText('Предыдущая тренировка: 77,5 кг')).toBeTruthy();
     expect(screen.queryByText('План: 80 кг')).toBeNull();
