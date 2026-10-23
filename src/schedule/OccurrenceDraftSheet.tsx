@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
@@ -56,7 +56,7 @@ function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
   };
 }
 
-/** Read only the public Mezfit sheet surface; Konsta keeps ownership of its animation. */
+/** Read the transition timing through our own sheet id; Konsta still owns the animation. */
 function openingTransitionDuration(element: Element): number {
   const style = window.getComputedStyle(element);
   if (style.transitionProperty === 'none') return 0;
@@ -370,6 +370,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
 /** Keep the animated shell mounted closed before opening; reset each editor by ID. */
 export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
   const opened = props.draft !== null;
+  const sheetId = useId();
   const [retained, setRetained] = useState(props.draft);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [auxiliaryReady, setAuxiliaryReady] = useState(false);
@@ -393,7 +394,7 @@ export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
     }
     if (!container) return;
     // No animated sheet (e.g. embedded/unanimated host): overlays can mount at once.
-    const sheet = container.closest('.ui-mezfit-bottom-sheet');
+    const sheet = document.getElementById(sheetId);
     const duration = sheet ? openingTransitionDuration(sheet) : 0;
     if (duration === 0) {
       setAuxiliaryReady(true);
@@ -408,9 +409,9 @@ export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
         openingFrame.current = null;
       }
     };
-  }, [opened, container, finishOpening]);
+  }, [opened, container, finishOpening, sheetId]);
 
-  return <><MezfitBottomSheet opened={opened} label="Запланированная тренировка" lazyMount
+  return <><MezfitBottomSheet id={sheetId} opened={opened} label="Запланированная тренировка" lazyMount
     onTransitionEnd={(event) => {
       if (opened && event.target === event.currentTarget
         && (event.propertyName === 'transform' || event.propertyName === 'translate')) finishOpening();
