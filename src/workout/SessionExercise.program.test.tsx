@@ -26,8 +26,35 @@ const item: CloudProgramDayOutline['exercises'][number] = {
 };
 
 describe('existing exercise component in program mode', () => {
+  it('leaves program set details unmounted until first expand and retains them afterwards', () => {
+    let labelReads = 0;
+    const lazyItem: typeof item = {
+      ...item,
+      sets: [{
+        ...item.sets[0],
+        get setLabel() {
+          labelReads += 1;
+          return item.sets[0].setLabel;
+        },
+      }],
+    };
+    const { container } = render(<SessionExercise mode="program" data={lazyItem} />);
+    expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
+    expect(container.querySelector('.session-exercise__set-row')).toBeNull();
+    expect(labelReads).toBe(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    const row = container.querySelector('.session-exercise__set-row');
+    expect(row).not.toBeNull();
+    expect(labelReads).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Свернуть упражнение' }));
+    expect(container.querySelector('.session-exercise__set-row')).toBe(row);
+    expect(container.querySelector('.session-exercise__body')?.hasAttribute('hidden')).toBe(true);
+  });
+
   it('places the exercise menu to the right of the independent disclosure button', () => {
-    render(<SessionExercise mode="program" data={item} onInformation={() => {}} onDelete={() => {}} />);
+    render(<SessionExercise mode="program" data={item} defaultCollapsed={false} onInformation={() => {}} onDelete={() => {}} />);
     const chevron = screen.getByRole('button', { name: 'Свернуть упражнение' });
     const menu = screen.getByRole('button', { name: 'Меню упражнения' });
     expect(chevron.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -36,7 +63,7 @@ describe('existing exercise component in program mode', () => {
   });
   it('opens the existing information action by tapping media without collapsing the card', () => {
     const onInformation = vi.fn();
-    const { container } = render(<SessionExercise mode="program" data={item} onInformation={onInformation} />);
+    const { container } = render(<SessionExercise mode="program" data={item} defaultCollapsed={false} onInformation={onInformation} />);
     expect(container.querySelector('.ui-list-item__leading img')?.getAttribute('src')).toBe('/exercise-image');
     const information = screen.getByRole('button', { name: 'Информация об упражнении: Жим' });
     expect(information.parentElement?.classList.contains('session-exercise__header-list')).toBe(true);
@@ -52,7 +79,7 @@ describe('existing exercise component in program mode', () => {
 
   it('keeps media, disclosure, numbered set rows and the glass add-set control without FACT or an editor', () => {
     const addSet = vi.fn();
-    const { container } = render(<SessionExercise mode="program" data={item} onAddSet={addSet} />);
+    const { container } = render(<SessionExercise mode="program" data={item} defaultCollapsed={false} onAddSet={addSet} />);
     expect(container.querySelector('.session-exercise')).not.toBeNull();
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/exercise-image');
     expect(screen.getByText('1 подход')).toBeTruthy();
@@ -79,13 +106,13 @@ describe('existing exercise component in program mode', () => {
   it('disables creation during a mutation and omits authoring for read-only programs', () => {
     const addSet = vi.fn();
     const onInformation = vi.fn();
-    const view = render(<SessionExercise mode="program" data={item} busy onAddSet={addSet} onInformation={onInformation} />);
+    const view = render(<SessionExercise mode="program" data={item} defaultCollapsed={false} busy onAddSet={addSet} onInformation={onInformation} />);
     expect(screen.queryByRole('button', { name: 'Информация об упражнении: Жим' })).toBeNull();
     const add = screen.getByRole('button', { name: 'Добавить подход' });
     expect(add.hasAttribute('disabled')).toBe(true);
     fireEvent.click(add);
     expect(addSet).not.toHaveBeenCalled();
-    view.rerender(<SessionExercise mode="program" data={item} editable={false} onAddSet={addSet} />);
+    view.rerender(<SessionExercise mode="program" data={item} defaultCollapsed={false} editable={false} onAddSet={addSet} />);
     expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Свернуть упражнение' })).toBeTruthy();
   });
@@ -97,6 +124,8 @@ describe('existing exercise component in program mode', () => {
         category: null, comment: null, position: 0, status: 'active' }, exercises: [item],
     }} creatorName="Тренер" onAddSet={addSet} onEdit={() => {}} onComment={() => {}}
       onMove={() => {}} onDuplicate={() => {}} onDelete={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
     fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
     expect(addSet).toHaveBeenCalledWith('program-exercise');
   });
