@@ -44,6 +44,8 @@ interface CloudConnectionsValue {
   actorUserId: string;
   clients: CloudContact[];
   coaches: CloudContact[];
+  /** Own profile, scoped to each server-validated coach/client relationship. */
+  selfAvatars?: CloudContact[];
   status: 'loading' | 'ready' | 'error';
   error: string;
   /** Real Dexie Cloud upload/download state; contacts can be ready while sync is offline. */
@@ -155,6 +157,29 @@ export async function deriveCloudContacts(
   };
 }
 
+/** Own portrait uses the same authorized realm-scoped contactProfiles source as peer portraits. */
+export async function deriveCloudSelfAvatars(
+  actorUserId: string,
+  authorizedPeers: readonly CloudContact[],
+  profiles: readonly ProfileView[],
+): Promise<CloudContact[]> {
+  const realms = [...new Set(authorizedPeers.map(peer => peer.relationshipId))];
+  return (await Promise.all(realms.map(async realmId => {
+    const profileId = await stableCloudRelationshipId('prf', realmId + ':' + actorUserId);
+    const profile = profiles.find(row => row.id === profileId && row.realmId === realmId
+      && row.userId === actorUserId && row.owner === null);
+    if (!profile) return null;
+    return contact(realmId, {
+      userId: actorUserId,
+      name: profile.name,
+      avatarVersion: [profile.avatarSmall, profile.avatarLarge, profile.avatar]
+        .some(value => profileAvatarKind(value) !== '0') ? profile.avatarVersion : null,
+      avatarMode: [profile.avatarSmall, profile.avatarLarge, profile.avatar]
+        .map(profileAvatarKind).join(''),
+    }, 'Вы');
+  }))).filter((self): self is CloudContact => self !== null);
+}
+
 /** One local snapshot; access control still belongs to Dexie Cloud server. */
 async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string) {
   const [realms, members, profiles] = await Promise.all([
@@ -162,8 +187,10 @@ async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string)
     // Missing/older profile projection must not hide an otherwise valid membership.
     db.contactProfiles?.toArray() ?? Promise.resolve([]),
   ]);
+  const contacts = await deriveCloudContacts(actorUserId, realms, members, profiles);
   return {
-    contacts: await deriveCloudContacts(actorUserId, realms, members, profiles),
+    contacts,
+    selfAvatars: await deriveCloudSelfAvatars(actorUserId, [...contacts.clients, ...contacts.coaches], profiles),
     hasRelationshipMembership: members.some((member) => member.userId === actorUserId
       && (member.roles?.includes('coach') || member.roles?.includes('client'))),
   };
@@ -186,6 +213,7 @@ export function CloudConnectionsProvider({
   const actorUserId = `tg:${telegramUserId}`;
   const [clients, setClients] = useState<CloudContact[]>([]);
   const [coaches, setCoaches] = useState<CloudContact[]>([]);
+  const [selfAvatars, setSelfAvatars] = useState<CloudContact[]>([]);
   const [status, setStatus] = useState<CloudConnectionsValue['status']>('loading');
   const [error, setError] = useState('');
   const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>('pending');
@@ -193,10 +221,13 @@ export function CloudConnectionsProvider({
   const [avatarLoadRevision, setAvatarLoadRevision] = useState(0);
   const alive = useRef(false);
   const initialPullSucceededRef = useRef(false);
-  const reconcileAvatarPermissions = useCallback((next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
+  const reconcileAvatarPermissions = useCallback((
+    next: { clients: CloudContact[]; coaches: CloudContact[] },
+    own: readonly CloudContact[],
+  ) => {
     // Revoked or replaced portraits lose their in-memory blob URL immediately.
     // The only persistent image cache is the realm-authorized Dexie Cloud subset.
-    avatarUrls.retain([...next.clients, ...next.coaches]);
+    avatarUrls.retain([...next.clients, ...next.coaches, ...own]);
   }, [avatarUrls]);
 
   useEffect(() => {
@@ -205,15 +236,17 @@ export function CloudConnectionsProvider({
     initialPullSucceededRef.current = false;
     let locallyAvailable = false;
 
-    const publish = (next: { clients: CloudContact[]; coaches: CloudContact[] }) => {
+    const publish = (next: { contacts: { clients: CloudContact[]; coaches: CloudContact[] }; selfAvatars: CloudContact[] }) => {
+      const { contacts: directory } = next;
       if (!active) return;
-      const hasContacts = next.clients.length > 0 || next.coaches.length > 0;
+      const hasContacts = directory.clients.length > 0 || directory.coaches.length > 0;
       locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
       if (!initialPullSucceededRef.current && !hasContacts) return;
-      reconcileAvatarPermissions(next);
-      setClients(next.clients);
-      setCoaches(next.coaches);
+      reconcileAvatarPermissions(directory, next.selfAvatars);
+      setClients(directory.clients);
+      setCoaches(directory.coaches);
+      setSelfAvatars(next.selfAvatars);
       setError('');
       setStatus('ready');
     };
@@ -221,14 +254,15 @@ export function CloudConnectionsProvider({
     const readContacts = () => readContactSnapshot(db, actorUserId);
 
     const subscription = liveQuery(readContacts).subscribe({
-      next: ({ contacts, hasRelationshipMembership }) => {
+      next: (snapshot) => {
+        const { contacts, hasRelationshipMembership } = snapshot;
         if (!active) return;
         if (initialPullSucceededRef.current && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
           return;
         }
-        publish(contacts);
+        publish(snapshot);
       },
       error: (reason: unknown) => {
         if (!active) return;
@@ -254,7 +288,7 @@ export function CloudConnectionsProvider({
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
         } else {
-          publish(contacts);
+          publish({ contacts, selfAvatars: (await readContacts()).selfAvatars });
         }
       } catch {
         if (!active) return;
@@ -379,9 +413,10 @@ export function CloudConnectionsProvider({
       if (!alive.current) return;
       if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
       initialPullSucceededRef.current = true;
-      reconcileAvatarPermissions(snapshot.contacts);
+      reconcileAvatarPermissions(snapshot.contacts, snapshot.selfAvatars);
       setClients(snapshot.contacts.clients);
       setCoaches(snapshot.contacts.coaches);
+      setSelfAvatars(snapshot.selfAvatars);
       setError('');
       setStatus('ready');
     } catch (reason) {
@@ -410,9 +445,9 @@ export function CloudConnectionsProvider({
   }, [db]);
 
   const value = useMemo<CloudConnectionsValue>(() => ({
-    db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
+    db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError,
     refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision,
-  }), [db, actorUserId, clients, coaches, status, error, syncStatus, syncError,
+  }), [db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError,
     refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision]);
 
   return <Context.Provider value={value}>
