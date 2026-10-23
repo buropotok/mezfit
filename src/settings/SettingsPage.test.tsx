@@ -80,6 +80,8 @@ describe('SettingsPage modules gallery', () => {
     expect(screen.getByText('Собранные модули')).toBeTruthy();
     const sessionExerciseModule = screen.getByRole('region', { name: /^Карточка упражнения и подходов$/ });
     expect(within(sessionExerciseModule).getByText('Жим штанги лёжа')).toBeTruthy();
+    expect(within(sessionExerciseModule).queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
+    fireEvent.click(within(sessionExerciseModule).getByRole('button', { name: 'Развернуть упражнение' }));
     expect(within(sessionExerciseModule).getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
     expect(onNavigationContextChange).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Модули' }));
   });
@@ -102,6 +104,7 @@ describe('SettingsPage modules gallery', () => {
 
     const workoutCardModule = screen.getByRole('region', { name: 'Карточка тренировки' });
     expect(within(workoutCardModule).getByRole('button', { name: 'Добавить упражнение' })).toBeTruthy();
+    fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Развернуть упражнение' }));
     expect(within(workoutCardModule).getByRole('button', { name: 'Добавить подход' })).toBeTruthy();
 
     fireEvent.click(within(workoutCardModule).getByRole('button', { name: 'Меню тренировки' }));
