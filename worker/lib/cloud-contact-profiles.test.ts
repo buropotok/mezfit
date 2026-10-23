@@ -733,12 +733,12 @@ describe('privileged Telegram contact profile synchronization', () => {
     });
   });
 
-  it('rejects stale or malformed client-supplied variants without replacing cloud photos', async () => {
+  it('rejects a stale source version even when both JPEG variants are valid', async () => {
     const cloud = await setup();
     const form = new FormData();
     form.set('photoVersion', 'a'.repeat(64));
-    form.set('small', new Blob([jpeg.slice().buffer], { type: 'image/jpeg' }), 'small.jpg');
-    form.set('large', new Blob([largeJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
+    form.set('small', new Blob([validAvatarJpeg.slice().buffer], { type: 'image/jpeg' }), 'small.jpg');
+    form.set('large', new Blob([validAvatarJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
     const response = await syncOwnContactProfile(new Request(
       'https://mezfit.test/api/cloud/profile/sync', {
         method: 'POST', headers: { 'x-telegram-init-data': 'signed' }, body: form,
@@ -810,6 +810,58 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(source.status).toBe(204);
     expect(source.headers.get('x-mezfit-photo-status')).toBe('unchanged');
     expect(cloud.downloads()).toBe(before);
+  });
+
+  it('returns 409 if Telegram photo changes between a 204 source response and bodyless sync', async () => {
+    const cloud = await setup();
+    const legacy = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(legacy, env, cloud.fetchImpl);
+    const source = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+      },
+    ), env, cloud.fetchImpl);
+    expect(source.status).toBe(204);
+    cloud.setPhoto('a-second-photo');
+    const response = await syncOwnContactProfile(new Request(
+      'https://mezfit.test/api/cloud/profile/sync', {
+        method: 'POST', headers: {
+          'x-telegram-init-data': 'signed',
+          'x-mezfit-client-avatar-compression': '1',
+        },
+      },
+    ), env, cloud.fetchImpl);
+    expect(response.status).toBe(409);
+    expect(cloud.postCount()).toBe(1);
+    expect(cloud.uploads()).toBe(2);
+    const retried = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+      },
+    ), env, cloud.fetchImpl);
+    expect(retried.status).toBe(200);
+  });
+
+  it('allows a metadata-only fallback after source failure without retrying endlessly', async () => {
+    const cloud = await setup();
+    cloud.failPhotoLookup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
+      method: 'POST', headers: {
+        'x-telegram-init-data': 'signed',
+        'x-mezfit-client-avatar-compression': '1',
+        'x-mezfit-avatar-source-unavailable': '1',
+      },
+    });
+    const response = await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    expect(await response.json()).toEqual({ changed: true, avatarStatus: 'telegram-unavailable' });
+    expect(cloud.postCount()).toBe(1);
+    expect(cloud.uploads()).toBe(0);
+    cloud.resumePhotoLookup();
+    const unchangedAvatar = await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    expect(unchangedAvatar.status).toBe(200);
+    expect(cloud.uploads()).toBe(0);
   });
 
 });
