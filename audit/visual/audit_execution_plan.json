@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "ready",
-  "status_reason": "Stage 09 complete: 100 original GIFs verified and 37 findings; 900 cumulative records saved and validated.",
+  "status": "in_progress",
+  "status_reason": "Stage 10: original GIF frame inspections in progress",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
   "completed_exercises": 900,
-  "current_stage": null,
+  "current_stage": 10,
   "next_stage": 10,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
@@ -21,7 +21,12 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": null,
+  "lock": {
+    "token": "manual-stage10-20261023-144552-msk",
+    "stage": 10,
+    "started_at": "2026-10-23T14:45:52+03:00",
+    "owner": "manual-user-request"
+  },
   "stages": [
     {
       "number": 1,
@@ -1072,7 +1077,7 @@
     },
     {
       "number": 10,
-      "status": "pending",
+      "status": "in_progress",
       "exercise_ids": [
         "1396",
         "1397",
@@ -1180,7 +1185,8 @@
         "to": 1000
       },
       "result_file": "results/batch_10.jsonl",
-      "results_committed": false
+      "results_committed": false,
+      "started_at": "2026-10-23T14:45:52+03:00"
     },
     {
       "number": 11,
