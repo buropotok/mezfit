@@ -382,11 +382,14 @@ export async function syncOwnContactProfile(
     if (!Array.isArray(stored) || !stored.every(record)) {
       return respond(false, 'upload-failed');
     }
-    const saved = new Map(stored.filter(row => typeof row.id === 'string')
-      .map(row => [row.id as string, row]));
+    const saved = new Map<string, Row>();
+    for (const row of stored) {
+      if (record(row) && typeof row.id === 'string') saved.set(row.id, row);
+    }
     const confirmed = changed.every(row => {
-      const actual = saved.get(row.id as string);
-      return actual && actual.avatarVersion === row.avatarVersion
+      if (typeof row.id !== 'string') return false;
+      const actual = saved.get(row.id);
+      return actual !== undefined && actual.avatarVersion === row.avatarVersion
         && sameCloudAvatar(actual.avatarSmall, row.avatarSmall)
         && sameCloudAvatar(actual.avatarLarge, row.avatarLarge);
     });
