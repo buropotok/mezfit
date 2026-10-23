@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 5,
   "total_stages": 14,
-  "stage_verified_count": 76,
-  "verified_count": 476,
+  "stage_verified_count": 100,
+  "verified_count": 500,
   "verified_ids": [
     "3637",
     "0059",
@@ -483,20 +483,7 @@
     "0469",
     "0471",
     "0472",
-    "0473"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 39,
-    "confirmed_mismatch": 22,
-    "likely_mismatch": 8,
-    "naming_clarification": 6,
-    "potential_duplicate": 1,
-    "blocked": 0
-  },
-  "remaining_count": 848,
-  "remaining_ids": [
+    "0473",
     "0474",
     "0475",
     "0476",
@@ -520,7 +507,20 @@
     "0514",
     "0517",
     "0518",
-    "0519",
+    "0519"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 52,
+    "confirmed_mismatch": 30,
+    "likely_mismatch": 9,
+    "naming_clarification": 8,
+    "potential_duplicate": 1,
+    "blocked": 0
+  },
+  "remaining_count": 824,
+  "remaining_ids": [
     "0520",
     "0521",
     "0522",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 477,
-  "next_id": "0474",
-  "next_gif_url": "videos/0474-pj0X0tF.gif",
+  "next_queue_index": 501,
+  "next_id": "0520",
+  "next_gif_url": "videos/0520-5KLbZWx.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_05.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частичный этап 76/100: проверены оригинальные GIF после декодирования и просмотра шести кадров на упражнение. Финальная верификация и добавление в accumulated будут только после завершения всего этапа."
+  "evidence_note": "Этап №5: 100 GIF действительно получены из оригинального hasaneyldrm/exercises-dataset, декодированы и просмотрены по шести реальным фазам каждый. 12-кадровые GIF: [0,2,4,6,8,10]; 24 кадра: [0,4,8,12,16,20]; 30 кадров: [0,5,10,15,20,25]. Индивидуальные результаты, исходные имена и URL сохранены; контактные листы использовались для просмотра, но не публиковались как файлы. Мышечная активация не объявляется экспериментально доказанной. Накопленный реестр дополняется только после проверки этой пачки."
 }
