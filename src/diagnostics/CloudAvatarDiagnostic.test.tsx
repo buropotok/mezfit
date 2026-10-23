@@ -133,6 +133,7 @@ describe('on-demand cloud avatar diagnostic', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Скрыть диагностику аватаров' }));
     expect(close).toHaveBeenCalledWith({ disableAutoOpen: false });
   });
+
   it('shows a safe stage when a new Telegram photo cannot be uploaded to Dexie Cloud', async () => {
     vi.mocked(diagnoseCloudContactProfileSync).mockResolvedValue({
       changed: false, avatarStatus: 'upload-failed',
@@ -144,6 +145,4 @@ describe('on-demand cloud avatar diagnostic', () => {
     expect(diagnoseCloudContactProfileSync).toHaveBeenCalledWith('signed');
     expect(document.body.textContent).not.toContain('tg:202');
   });
-
-
 });
