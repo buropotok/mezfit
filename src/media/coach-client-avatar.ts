@@ -60,7 +60,11 @@ async function renderVariant(image: HTMLImageElement, variant: Variant): Promise
 }
 
 export async function prepareCoachClientAvatar(file: File): Promise<{ small: Blob; large: Blob }> {
-  if (!file.type.startsWith('image/') || file.size === 0 || file.size > 20_000_000) {
+  // Never decode active SVG or other document formats as a portrait.
+  const rasterTypes = new Set([
+    'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif',
+  ]);
+  if (!rasterTypes.has(file.type.toLowerCase()) || file.size === 0 || file.size > 20_000_000) {
     throw new Error('INVALID_AVATAR_FILE');
   }
   const image = await decodeLocalImage(file);
