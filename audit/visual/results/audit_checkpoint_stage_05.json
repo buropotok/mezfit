@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 5,
   "total_stages": 14,
-  "stage_verified_count": 1,
-  "verified_count": 401,
+  "stage_verified_count": 4,
+  "verified_count": 404,
   "verified_ids": [
     "3637",
     "0059",
@@ -408,23 +408,23 @@
     "0378",
     "0379",
     "0380",
-    "0381"
+    "0381",
+    "0382",
+    "0383",
+    "0385"
   ],
   "blocked_ids": [],
   "blocked_count": 0,
   "status_counts": {
-    "clean": 1,
-    "confirmed_mismatch": 0,
+    "clean": 2,
+    "confirmed_mismatch": 1,
     "likely_mismatch": 0,
-    "naming_clarification": 0,
+    "naming_clarification": 1,
     "potential_duplicate": 0,
     "blocked": 0
   },
-  "remaining_count": 923,
+  "remaining_count": 920,
   "remaining_ids": [
-    "0382",
-    "0383",
-    "0385",
     "0386",
     "0387",
     "0388",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 402,
-  "next_id": "0382",
-  "next_gif_url": "videos/0382-e4ojVhP.gif",
+  "next_queue_index": 405,
+  "next_id": "0386",
+  "next_gif_url": "videos/0386-prbWx1D.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_05.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Неполный этап (1/100). Только ID 0381 реально покадрово проверен (кадры 0,2,4,6,8,10 из 12; 180×180). Для групповой визуализации получена AioRpcError; достоверно проверить остальные 99 не удалось. Файл audit_results_all.jsonl остаётся неизменным (400 записей завершённых этапов)."
+  "evidence_note": "Неполный этап (4/100): по шести реальным кадрам проверены 0381,0382,0383,0385 (12 кадров каждый, 180x180). Пакетная обработка 6 GIF вызвала AioRpcError: непроверенные анимации не засчитаны. Накопленный завершённый реестр из 400 записей остаётся неизменным."
 }
