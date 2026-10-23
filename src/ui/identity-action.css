@@ -101,6 +101,16 @@
   white-space: nowrap;
 }
 
+/* When an optional icon gives way to the title, center the label inside
+   the same pill. Existing ellipsis and press animation remain untouched. */
+.ui-identity-action--title-centered {
+  justify-content: center;
+}
+
+.ui-identity-action--title-centered .ui-identity-action__title {
+  text-align: center;
+}
+
 /* Intrinsic title measurement uses the same semantic Text preset as the
    visible label, without consuming any space or altering the glass surface. */
 .ui-identity-action__title-measure {
