@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 8,
   "total_stages": 14,
-  "stage_verified_count": 21,
-  "verified_count": 721,
+  "stage_verified_count": 45,
+  "verified_count": 745,
   "verified_ids": [
     "3637",
     "0059",
@@ -728,20 +728,7 @@
     "0971",
     "0972",
     "0974",
-    "0975"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 9,
-    "confirmed_mismatch": 9,
-    "likely_mismatch": 1,
-    "naming_clarification": 2,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 603,
-  "remaining_ids": [
+    "0975",
     "0976",
     "0977",
     "0978",
@@ -765,7 +752,20 @@
     "0999",
     "1001",
     "1002",
-    "1003",
+    "1003"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 19,
+    "confirmed_mismatch": 19,
+    "likely_mismatch": 4,
+    "naming_clarification": 2,
+    "potential_duplicate": 1,
+    "blocked": 0
+  },
+  "remaining_count": 579,
+  "remaining_ids": [
     "1004",
     "1005",
     "1007",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 722,
-  "next_id": "0976",
-  "next_gif_url": "videos/0976-kmVVAfu.gif",
+  "next_queue_index": 746,
+  "next_id": "1004",
+  "next_gif_url": "videos/1004-TUZLh71.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_08.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частичный этап №8: реально декодированы и просмотрены 21 оригинальный 12-кадровый GIF (фазы 0,2,4,6,8,10). Оставшиеся 79 упражнений этапа не засчитаны. Накопленный завершённый реестр 700 упражнений пока не изменён."
+  "evidence_note": "Частичный этап 08 — 45/100 оригинальных GIF просмотрено по шести кадрам каждого. Остальные 55 на этом этапе пока не засчитаны. Накопленный 700-строчный реестр предыдущих этапов не затронут."
 }
