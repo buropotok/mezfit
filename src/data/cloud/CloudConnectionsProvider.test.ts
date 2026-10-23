@@ -57,4 +57,25 @@ describe('Dexie Cloud coach-client directory', () => {
     });
     expect(clients[0].relationshipId).toBe(pair.realm.realmId);
   });
+  it('projects a coach-owned photo only for that coach, never for the client or another coach', async () => {
+    const pair = await link('101', '202');
+    const row = {
+      id: 'coach-client-avatar:' + pair.realm.realmId,
+      realmId: 'tg:101', owner: 'tg:101',
+      relationshipId: pair.realm.realmId, clientUserId: 'tg:202',
+      version: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      avatarSmall: new Blob([new Uint8Array(32)], { type: 'image/jpeg' }),
+      avatarLarge: new Blob([new Uint8Array(64)], { type: 'image/jpeg' }),
+    };
+    const coach = await deriveCloudContacts('tg:101', [pair.realm], pair.members, [], [row]);
+    expect(coach.clients[0].coachAvatarVersion).toBe(row.version);
+    expect(coach.clients[0].coachAvatarMode).toBe('11');
+    const client = await deriveCloudContacts('tg:202', [pair.realm], pair.members, [], [row]);
+    expect(client.coaches[0].coachAvatarVersion).toBeUndefined();
+    const wrongOwner = await deriveCloudContacts('tg:101', [pair.realm], pair.members, [], [{
+      ...row, owner: 'tg:999',
+    }]);
+    expect(wrongOwner.clients[0].coachAvatarVersion).toBeUndefined();
+  });
+
 });
