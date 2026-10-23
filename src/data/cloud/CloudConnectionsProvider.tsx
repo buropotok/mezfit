@@ -196,7 +196,7 @@ async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string)
   };
 }
 
-function hasRejectedContacts(snapshot: Awaited<ReturnType<typeof readContactSnapshot>>): boolean {
+function hasRejectedContacts(snapshot: Pick<Awaited<ReturnType<typeof readContactSnapshot>>, 'contacts' | 'hasRelationshipMembership'>): boolean {
   return snapshot.hasRelationshipMembership
     && snapshot.contacts.clients.length === 0 && snapshot.contacts.coaches.length === 0;
 }
