@@ -236,17 +236,18 @@ export function CloudConnectionsProvider({
     initialPullSucceededRef.current = false;
     let locallyAvailable = false;
 
-    const publish = (next: { contacts: { clients: CloudContact[]; coaches: CloudContact[] }; selfAvatars: CloudContact[] }) => {
+    const publish = (next: { contacts: { clients: CloudContact[]; coaches: CloudContact[] }; selfAvatars?: CloudContact[] }) => {
       const { contacts: directory } = next;
+      const own = next.selfAvatars ?? [];
       if (!active) return;
       const hasContacts = directory.clients.length > 0 || directory.coaches.length > 0;
       locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
       if (!initialPullSucceededRef.current && !hasContacts) return;
-      reconcileAvatarPermissions(directory, next.selfAvatars);
+      reconcileAvatarPermissions(directory, own);
       setClients(directory.clients);
       setCoaches(directory.coaches);
-      setSelfAvatars(next.selfAvatars);
+      setSelfAvatars(own);
       setError('');
       setStatus('ready');
     };
