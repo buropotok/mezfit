@@ -574,4 +574,106 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())
       .toEqual({ changed: false, avatarStatus: 'telegram-unavailable' });
   });
+  it('refreshes a changed photo from Telegram with an older signed auth_date without restoring the older name', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const newerAuthDate = new Date(FIRST_AUTH_AT.getTime() + 120_000);
+    vi.mocked(validateTelegramInitData).mockResolvedValue({
+      user: { id: 101, first_name: 'Актуальное', last_name: 'Имя' },
+      authDate: newerAuthDate,
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const before = [...cloud.profiles.values()].find((row) => row.userId === 'tg:101')!;
+    expect(before.sourceAuthAt).toBe(newerAuthDate.getTime());
+    expect(before.name).toBe('Актуальное Имя');
+
+    // A still-valid Mini App launch may carry the previous auth_date even
+    // though Telegram already has a newer portrait.
+    auth(101, FIRST_AUTH_AT);
+    cloud.setPhoto('newer-telegram-photo');
+    expect(await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())
+      .toEqual({ changed: true, avatarStatus: 'updated' });
+    const after = [...cloud.profiles.values()].find((row) => row.userId === 'tg:101')!;
+    expect(after.avatarVersion).not.toBe(before.avatarVersion);
+    expect(after.avatarSmall).toMatchObject({ _bt: 'Blob' });
+    expect(after.avatarLarge).toMatchObject({ _bt: 'Blob' });
+    expect(after.name).toBe('Актуальное Имя');
+    expect(after.sourceAuthAt).toBe(newerAuthDate.getTime());
+    expect(cloud.uploads()).toBe(4);
+  });
+
+  it('does not overwrite a new photo if a stale session finishes after a different photo was committed', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const newerAuthDate = new Date(FIRST_AUTH_AT.getTime() + 120_000);
+    vi.mocked(validateTelegramInitData).mockResolvedValue({
+      user: { id: 101, first_name: 'Актуальное', last_name: 'Имя' },
+      authDate: newerAuthDate,
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+
+    let resumeOld: (() => void) | undefined;
+    let oldStarted: (() => void) | undefined;
+    const blocked = new Promise<void>(resolve => { resumeOld = resolve; });
+    const started = new Promise<void>(resolve => { oldStarted = resolve; });
+    let oldCaptured = false;
+    const delayedFetch = vi.fn<typeof fetch>(async (input, init) => {
+      if (new URL(String(input)).pathname.endsWith('/getUserProfilePhotos') && !oldCaptured) {
+        oldCaptured = true;
+        const oldPhoto = await cloud.fetchImpl(input, init);
+        oldStarted?.();
+        await blocked;
+        return oldPhoto;
+      }
+      return cloud.fetchImpl(input, init);
+    });
+    cloud.setPhoto('stale-snapshot-photo');
+    vi.mocked(validateTelegramInitData).mockImplementation(async (initData) => ({
+      user: { id: 101, first_name: initData === 'old' ? 'Старое' : 'Актуальное', last_name: 'Имя' },
+      authDate: initData === 'old' ? FIRST_AUTH_AT : newerAuthDate,
+    }));
+    const oldRequest = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'old' },
+    });
+    const newRequest = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'new' },
+    });
+    const pendingOld = syncOwnContactProfile(oldRequest, env, delayedFetch);
+    await started;
+    cloud.setPhoto('newest-photo');
+    await syncOwnContactProfile(newRequest, env, cloud.fetchImpl);
+    const committed = [...cloud.profiles.values()].find((row) => row.userId === 'tg:101')!;
+    resumeOld?.();
+    expect(await (await pendingOld).json()).toEqual({ changed: false });
+    const final = [...cloud.profiles.values()].find((row) => row.userId === 'tg:101')!;
+    expect(final.avatarVersion).toBe(committed.avatarVersion);
+    expect(final.name).toBe('Актуальное Имя');
+    expect(final.sourceAuthAt).toBe(newerAuthDate.getTime());
+  });
+
+  it('does not report updated when Dexie Cloud cannot read back the newly referenced blobs', async () => {
+    const cloud = await setup();
+    let profileReads = 0;
+    const inconsistentFetch = vi.fn<typeof fetch>(async (input, init) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/all/contactProfiles' && (init?.method ?? 'GET') === 'GET') {
+        profileReads += 1;
+        if (profileReads === 3) return Response.json([]);
+      }
+      return cloud.fetchImpl(input, init);
+    });
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    expect(await (await syncOwnContactProfile(request, env, inconsistentFetch)).json())
+      .toEqual({ changed: false, avatarStatus: 'upload-failed' });
+    expect(profileReads).toBe(3);
+  });
+
 });
