@@ -9,6 +9,7 @@ import { stableCloudRelationshipId } from '../../../shared/relationship-id';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { syncCloudContactProfile } from '../../api';
 import { loadContactAvatar } from './contact-avatar-cache';
+import { CoachClientAvatarRepository, isOwnCoachClientAvatar, type CoachClientAvatarRow } from './coach-client-avatars';
 
 /** Telegram's verified identity, not the former D1 integer, is the contact ID. */
 export interface CloudContact {
@@ -18,6 +19,9 @@ export interface CloudContact {
   displayName: string;
   avatarVersion?: string | null;
   avatarMode?: string;
+  /** Coach-only override, never part of the client's shared Telegram profile. */
+  coachAvatarVersion?: string;
+  coachAvatarMode?: string;
 }
 
 export type CloudSyncStatus = 'pending' | 'synced' | 'offline' | 'error';
@@ -118,6 +122,7 @@ export async function deriveCloudContacts(
   realms: readonly RealmView[],
   members: readonly MemberView[],
   profiles: readonly ProfileView[] = [],
+  coachAvatars: readonly CoachClientAvatarRow[] = [],
 ): Promise<{ clients: CloudContact[]; coaches: CloudContact[] }> {
   const realmById = new Map(realms.map((realm) => [realm.realmId, realm]));
   const own = members.filter((member) => member.userId === actorUserId);
@@ -150,20 +155,30 @@ export async function deriveCloudContacts(
   }));
   const connections = links.filter((link): link is { peer: CloudContact; asCoach: boolean } => link !== null);
   return {
-    clients: connections.filter((link) => link.asCoach).map((link) => link.peer),
+    clients: connections.filter((link) => link.asCoach).map((link) => {
+      const peer = link.peer;
+      const avatar = coachAvatars.find((row) =>
+        isOwnCoachClientAvatar(row, actorUserId, peer));
+      return avatar ? {
+        ...peer,
+        coachAvatarVersion: avatar.version,
+        coachAvatarMode: [profileAvatarKind(avatar.avatarSmall), profileAvatarKind(avatar.avatarLarge)].join(''),
+      } : peer;
+    }),
     coaches: connections.filter((link) => !link.asCoach).map((link) => link.peer),
   };
 }
 
 /** One local snapshot; access control still belongs to Dexie Cloud server. */
 async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string) {
-  const [realms, members, profiles] = await Promise.all([
+  const [realms, members, profiles, coachAvatars] = await Promise.all([
     db.realms.toArray(), db.members.toArray(),
     // Missing/older profile projection must not hide an otherwise valid membership.
     db.contactProfiles?.toArray() ?? Promise.resolve([]),
+    db.coachClientAvatars?.toArray() ?? Promise.resolve([]),
   ]);
   return {
-    contacts: await deriveCloudContacts(actorUserId, realms, members, profiles),
+    contacts: await deriveCloudContacts(actorUserId, realms, members, profiles, coachAvatars),
     hasRelationshipMembership: members.some((member) => member.userId === actorUserId
       && (member.roles?.includes('coach') || member.roles?.includes('client'))),
   };
@@ -184,6 +199,8 @@ export function CloudConnectionsProvider({
   useEffect(() => () => avatarUrls.dispose(), [avatarUrls]);
   const notificationBudget = useMemo(() => createSyncNotificationBudget(), []);
   const actorUserId = `tg:${telegramUserId}`;
+  const coachAvatarRepository = useMemo(() =>
+    new CoachClientAvatarRepository(db, actorUserId), [db, actorUserId]);
   const [clients, setClients] = useState<CloudContact[]>([]);
   const [coaches, setCoaches] = useState<CloudContact[]>([]);
   const [status, setStatus] = useState<CloudConnectionsValue['status']>('loading');
@@ -368,8 +385,12 @@ export function CloudConnectionsProvider({
     };
   }, [db, initData]);
 
-  const loadAvatar = useCallback((peer: CloudContact, variant: 'small' | 'large' = 'small') =>
-    loadContactAvatar(db, peer, undefined, variant), [db]);
+  const loadAvatar = useCallback(async (peer: CloudContact, variant: 'small' | 'large' = 'small') => {
+    if (peer.coachAvatarVersion) {
+      return coachAvatarRepository.load(peer, peer.coachAvatarVersion, variant);
+    }
+    return loadContactAvatar(db, peer, undefined, variant);
+  }, [db, coachAvatarRepository]);
 
   const refresh = useCallback(async () => {
     try {
