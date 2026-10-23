@@ -126,6 +126,24 @@ describe('deferred editor auxiliaries', () => {
     await waitFor(() => expect(overlayProbe.dates).toBeGreaterThan(0));
   });
 
+  it('falls back to the computed transition duration if WebView drops transitionend', async () => {
+    overlayProbe.animated = true;
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+
+    try {
+      render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+      expect(overlayProbe.dates).toBe(0);
+      await act(async () => { vi.runAllTimers(); });
+      expect(overlayProbe.dates).toBeGreaterThan(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('mounts helpers immediately when transitions are disabled', () => {
     overlayProbe.animated = true;
     overlayProbe.zeroDuration = true;
