@@ -72,17 +72,26 @@ function setup(onSync = vi.fn(async () => {})) {
       languageCode: 'ru', photoUrl: null, isPremium: false },
     roles: ['coach' as const],
   };
-  render(<NavigationShell me={me} activeRole="coach" destination="today"
-    context={{ level: 2, title: 'Программа тренировок' }} onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
-    <CloudProgramDetailsPage repository={repository as unknown as ProgramManagementRepository}
-      planId="plan" selectionMode cloudStatus="ready" cloudError="" syncStatus="offline" syncError=""
-      onRetryCloud={async () => {}} onRetrySync={onSync} />
-  </NavigationShell>);
-  return repository;
+  const blockedEdit = vi.fn();
+  const navigationContext = { level: 2 as const, title: 'Программа тренировок' };
+  const onDestinationChange = vi.fn();
+  const onRoleSwitch = vi.fn();
+  const page = (selectionFeedbackVisible: boolean) => (
+    <NavigationShell me={me} activeRole="coach" destination="today"
+      context={navigationContext} onDestinationChange={onDestinationChange} onRoleSwitch={onRoleSwitch}>
+      <CloudProgramDetailsPage repository={repository as unknown as ProgramManagementRepository}
+        planId="plan" selectionMode onSelectionMutationAttempt={blockedEdit}
+        selectionFeedbackVisible={selectionFeedbackVisible}
+        cloudStatus="ready" cloudError="" syncStatus="offline" syncError=""
+        onRetryCloud={async () => {}} onRetrySync={onSync} />
+    </NavigationShell>
+  );
+  const view = render(page(false));
+  return { ...repository, blockedEdit, setFeedbackVisible: (visible: boolean) => view.rerender(page(visible)) };
 }
 
 describe('planning guidance with production overlay owners', () => {
-  it('pauses for the sibling navigation FAB and its mutation dialog, then resumes', async () => {
+  it('pauses for the sibling navigation FAB and blocked-edit feedback, then resumes', async () => {
     const repository = setup();
     expect(await screen.findByLabelText('Подсказка')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Добавить' }));
@@ -91,10 +100,16 @@ describe('planning guidance with production overlay owners', () => {
     const addPhase = within(menu).getByRole('menuitem', { name: 'Фаза' });
     await waitFor(() => expect(addPhase.closest('[inert]')).toBeNull());
     fireEvent.click(addPhase);
-    const notice = await screen.findByRole('dialog', { name: 'Планирование тренировки' });
-    expect(screen.queryByLabelText('Подсказка')).toBeNull();
+    expect(repository.blockedEdit).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog', { name: 'Планирование тренировки' })).toBeNull();
     expect(repository.createPhase).not.toHaveBeenCalled();
-    fireEvent.click(within(notice).getByRole('button', { name: 'Закрыть' }));
+    await waitFor(() => expect(screen.getByLabelText('Подсказка')).toBeTruthy());
+
+    // The scheduling owner shows a toast and passes its visibility to the
+    // program details page. Preserve this real FAB/Spotlight integration.
+    repository.setFeedbackVisible(true);
+    await waitFor(() => expect(screen.queryByLabelText('Подсказка')).toBeNull());
+    repository.setFeedbackVisible(false);
     await waitFor(() => expect(screen.getByLabelText('Подсказка')).toBeTruthy());
     expect(localStorage.length).toBe(0);
   });

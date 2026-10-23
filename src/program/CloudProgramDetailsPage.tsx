@@ -106,7 +106,7 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, viewerRole = 'coach', readOnly = false, selectionMode = false, planningSurfaceRef, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
+  repository, planId, viewerRole = 'coach', readOnly = false, selectionMode = false, onSelectionMutationAttempt, selectionFeedbackVisible = false, planningSurfaceRef, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
 }: {
   repository: ProgramManagementRepository;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -115,6 +115,10 @@ export function CloudProgramDetailsPage({
   readOnly?: boolean;
   /** Pick a source day without editing the program. Authorization stays separate. */
   selectionMode?: boolean;
+  /** Explain a blocked program edit while a workout day is being selected. */
+  onSelectionMutationAttempt?: () => void;
+  /** Suspend the program-picking spotlight while blocked-edit feedback is visible. */
+  selectionFeedbackVisible?: boolean;
   planningSurfaceRef?: RefObject<HTMLDivElement | null>;
   actor?: ProgramActor;
   cloudStatus: 'loading' | 'ready' | 'error';
@@ -137,9 +141,8 @@ export function CloudProgramDetailsPage({
   const [phaseCreateError, setPhaseCreateError] = useState('');
   const [dayCreatePhaseId, setDayCreatePhaseId] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
-  const [editNoticeOpen, setEditNoticeOpen] = useState(false);
   const [fabPresented, setFabPresented] = useState(false);
-  const explainSelection = useCallback(() => setEditNoticeOpen(true), []);
+  const explainSelection = useCallback(() => onSelectionMutationAttempt?.(), [onSelectionMutationAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -148,7 +151,6 @@ export function CloudProgramDetailsPage({
     setDialog(null);
     setPhaseCreateOpen(false);
     setDayCreatePhaseId(null);
-    setEditNoticeOpen(false);
     setError('');
     const observe = readOnly ? repository.observeAthleteDetails.bind(repository) : repository.observeDetails.bind(repository);
     const subscription = observe(planId, (value) => {
@@ -355,7 +357,7 @@ export function CloudProgramDetailsPage({
     : null;
   return (
     <SpotlightHint hintId="schedule.program.pick-day" version={1} userId={repository.actorUserId}
-      enabled={selectionMode} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || editNoticeOpen || phaseCreateOpen || dayCreatePhaseId)}
+      enabled={selectionMode} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || selectionFeedbackVisible || phaseCreateOpen || dayCreatePhaseId)}
       text={readOnly ? 'Нажмите «Запланировать» у нужного дня, чтобы выбрать дату и время.'
         : 'Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.'}>
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
@@ -441,11 +443,6 @@ export function CloudProgramDetailsPage({
       {dayCreatePhaseId && !readOnly ? <ProgramDayDialog key={`${planId}:${dayCreatePhaseId}`}
         title="Добавить день" onClose={() => setDayCreatePhaseId(null)}
         onSave={async (value) => { await repository.createDay(planId, dayCreatePhaseId, value.name, value.category); }} /> : null}
-      <MezfitDialog opened={editNoticeOpen} title="Планирование тренировки"
-        role="dialog" aria-modal="true" aria-label="Планирование тренировки" aria-hidden={!editNoticeOpen}
-        content="Изменение планируемой тренировки будет возможно после нажатия кнопки «Запланировать»."
-        onBackdropClick={() => setEditNoticeOpen(false)}
-        buttons={<MezfitDialogButton onClick={() => setEditNoticeOpen(false)}>Закрыть</MezfitDialogButton>} />
       <PlanActionDialog dialog={dialog} onClose={() => setDialog(null)} />
     </section>
     </SpotlightHint>

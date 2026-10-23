@@ -5,6 +5,7 @@ import type { ProgramDetails, ProgramManagementRepository } from '../data/cloud/
 import { CloudProgramDetailsPage } from './CloudProgramDetailsPage';
 
 const floating = vi.hoisted(() => ({ items: [] as { id: string; onSelect?: () => void }[] }));
+const blockedSelectionEdit = vi.hoisted(() => vi.fn());
 vi.mock('../NavigationShell', () => ({
   useNavigationSurfaceFloatingAction: (action: { popoverItems?: typeof floating.items } | null) => {
     floating.items = action?.popoverItems ?? [];
@@ -59,19 +60,21 @@ function setup(readOnly = false, programStatus: 'active' | 'finished' = 'active'
     editDay: vi.fn(), commentDay: vi.fn(), moveDay: vi.fn(), duplicateDay: vi.fn(), deleteDay: vi.fn(),
     addDayExercise: vi.fn(), addExerciseSet: vi.fn(), deleteDayExercise: vi.fn(), reorderDayExercises: vi.fn(),
   };
-  render(<CloudProgramDetailsPage selectionMode readOnly={readOnly} repository={repository as unknown as ProgramManagementRepository}
+  render(<CloudProgramDetailsPage selectionMode onSelectionMutationAttempt={blockedSelectionEdit}
+    readOnly={readOnly} repository={repository as unknown as ProgramManagementRepository}
     planId="plan" cloudStatus="ready" cloudError="" syncStatus="offline" syncError=""
     onRetryCloud={async () => {}} onRetrySync={async () => {}} />);
   return repository;
 }
 
 function notice() {
-  expect(screen.getByText('Изменение планируемой тренировки будет возможно после нажатия кнопки «Запланировать».')).toBeTruthy();
-  fireEvent.click(within(screen.getByRole('dialog', { name: 'Планирование тренировки' })).getByRole('button', { name: 'Закрыть' }));
+  expect(blockedSelectionEdit).toHaveBeenCalledOnce();
+  blockedSelectionEdit.mockClear();
+  expect(screen.queryByRole('dialog', { name: 'Планирование тренировки' })).toBeNull();
 }
 
 describe('program source selection', () => {
-  it('explains source mutations in author-owned programs without writing', async () => {
+  it('delegates blocked source mutations to the scheduling toast without writing', async () => {
     const readOnly = false;
     const repository = setup(readOnly);
     const card = await screen.findByRole('article', { name: 'День День А' });

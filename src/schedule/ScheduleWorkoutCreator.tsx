@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button as KonstaButton, List as KonstaList, ListItem as KonstaListItem } from 'konsta/react';
+import { Button as KonstaButton, List as KonstaList, ListItem as KonstaListItem, Toast as KonstaToast } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
@@ -30,8 +30,18 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
   const [planId, setPlanId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [editToastVersion, setEditToastVersion] = useState(0);
   const [nestedNavigation, setNestedNavigation] = useState<NavigationContext | null>(null);
   const planningSurfaceRef = useRef<HTMLDivElement>(null);
+  const showEditToast = useCallback(() => setEditToastVersion(version => version + 1), []);
+  useEffect(() => {
+    if (step !== 'details' || !intent || !editToastVersion) return;
+    const timeout = window.setTimeout(() => setEditToastVersion(0), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [intent, step, editToastVersion]);
+  useEffect(() => {
+    if (step !== 'details' || !intent) setEditToastVersion(0);
+  }, [intent, step]);
   const generation = useRef(0);
   const running = useRef(false);
   useEffect(() => {
@@ -129,7 +139,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
         {intent !== 'event' ? <>
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {step === 'details' && planId && planner && cloud ? <CloudProgramDetailsPage key={planId}
-            repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode planningSurfaceRef={planningSurfaceRef}
+            repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode onSelectionMutationAttempt={showEditToast} selectionFeedbackVisible={editToastVersion > 0} planningSurfaceRef={planningSurfaceRef}
             readOnly={role === 'client' && Boolean(programs.find(plan => plan.id === planId)?.coachUserId)}
             cloudStatus={cloud.status} cloudError={cloud.error} syncStatus={cloud.syncStatus} syncError={cloud.syncError}
             onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync} onNavigationContextChange={setNestedNavigation} /> : null}
@@ -149,5 +159,8 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       </section>
       </SpotlightSurface>
     </MezfitBottomSheet>
+    <KonstaToast opened={step === 'details' && editToastVersion > 0} position="center" role="status" aria-live="polite">
+      <Text variant="body">Нажмите Запланировать, чтобы начать изменение плана тренировки</Text>
+    </KonstaToast>
   </>;
 }
