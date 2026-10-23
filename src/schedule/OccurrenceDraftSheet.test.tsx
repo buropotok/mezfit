@@ -56,10 +56,9 @@ vi.mock('../ui', () => ({
   </div> : null;
   },
   Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
-  MezfitBottomSheet: ({ children, opened, onTransitionEnd }: { children: ReactNode; opened: boolean;
-    onTransitionEnd?: TransitionEventHandler<HTMLDivElement> }) =>
-    <div data-testid="sheet-shell" data-open={opened}
-      className={overlayProbe.animated ? 'ui-mezfit-bottom-sheet' : undefined}
+  MezfitBottomSheet: ({ children, opened, id, onTransitionEnd }: { children: ReactNode; opened: boolean;
+    id?: string; onTransitionEnd?: TransitionEventHandler<HTMLDivElement> }) =>
+    <div id={id} data-testid="sheet-shell" data-open={opened}
       style={overlayProbe.animated ? { transitionProperty: 'transform',
         transitionDuration: overlayProbe.zeroDuration ? '0ms' : '400ms', transitionDelay: '0ms' } : undefined}
       onTransitionEnd={onTransitionEnd}>{children}</div>,
