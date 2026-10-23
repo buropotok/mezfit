@@ -5,9 +5,10 @@ import { ContactAvatarUrls } from '../data/cloud/contact-avatar-urls';
 import { CloudContactAvatar } from './CloudContactAvatar';
 
 let cache: ContactAvatarUrls | undefined;
-const loadAvatar = vi.fn(async () => new Blob(['portrait'], { type: 'image/jpeg' }));
+let avatarLoadRevision = 0;
+const loadAvatar = vi.fn(async (): Promise<Blob | null> => new Blob(['portrait'], { type: 'image/jpeg' }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
-  useCloudConnections: () => ({ loadAvatar, avatarUrls: cache }),
+  useCloudConnections: () => ({ loadAvatar, avatarUrls: cache, avatarLoadRevision }),
 }));
 
 const peer = {
@@ -20,6 +21,7 @@ const peer = {
 
 beforeEach(() => {
   cache = undefined;
+  avatarLoadRevision = 0;
   vi.clearAllMocks();
   const NativeURL = URL;
   vi.stubGlobal('URL', class extends NativeURL {
@@ -64,6 +66,22 @@ describe('CloudContactAvatar', () => {
     await waitFor(() => expect(loadAvatar).toHaveBeenCalledWith(peer, 'small'));
     first.rerender(<CloudContactAvatar contact={peer} variant="large" />);
     await waitFor(() => expect(loadAvatar).toHaveBeenCalledWith(peer, 'large'));
+  });
+
+  it('retries a pending remote BlobRef once the blob downloader reports hydration', async () => {
+    cache = new ContactAvatarUrls();
+    loadAvatar.mockResolvedValueOnce(null).mockResolvedValueOnce(
+      new Blob(['hydrated portrait'], { type: 'image/jpeg' }),
+    );
+    const view = render(<CloudContactAvatar contact={peer} />);
+    await waitFor(() => expect(loadAvatar).toHaveBeenCalledTimes(1));
+    // Without bytes the unmodified UIkit Avatar renders initials, not an <img>.
+    expect(screen.getByRole('img', { name: 'Анна Иванова' }).textContent).toBe('АИ');
+    expect(document.querySelector('img.ui-avatar')).toBeNull();
+    avatarLoadRevision += 1;
+    view.rerender(<CloudContactAvatar contact={peer} />);
+    await waitFor(() => expect(loadAvatar).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(document.querySelector('img.ui-avatar')?.getAttribute('src')).toBe('blob:mezfit-portrait'));
   });
 
   it('keeps initials if no Telegram photo is available', () => {

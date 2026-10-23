@@ -45,6 +45,47 @@ describe('relationship-scoped contact profile projection', () => {
     expect(before.clients[0].avatarVersion).toBe(after.clients[0].avatarVersion);
   });
 
+  it('advertises an authorized BlobRef before bytes finish hydrating on the coach device', async () => {
+    const { realm, members } = await relationshipMembership('101', '202');
+    const ref = {
+      _bt: 'Blob', ref: '1:abc123def456', size: 32000, ct: 'image/jpeg',
+    };
+    const profile = {
+      id: await stableCloudRelationshipId('prf', realm.realmId + ':tg:202'),
+      realmId: realm.realmId, owner: null, userId: 'tg:202',
+      name: 'София', avatarVersion: 'd'.repeat(64),
+      avatarSmall: ref, avatarLarge: { ...ref, ref: '1:def456abc123' },
+    };
+    const derived = await deriveCloudContacts('tg:101', [realm], members, [profile]);
+    expect(derived.clients[0].avatarVersion).toBe(profile.avatarVersion);
+    expect(derived.clients[0].avatarMode).toBe('rr0');
+    const hydrated = await deriveCloudContacts('tg:101', [realm], members, [{
+      ...profile, avatarSmall: new Blob([new Uint8Array(32_000)], { type: 'image/jpeg' }),
+    }]);
+    expect(hydrated.clients[0].avatarMode).toBe('1r0');
+    expect(hydrated.clients[0].avatarVersion).toBe(profile.avatarVersion);
+  });
+
+  it('rejects malformed or untrusted blob references instead of advertising avatars', async () => {
+    const { realm, members } = await relationshipMembership('101', '202');
+    const base = {
+      id: await stableCloudRelationshipId('prf', realm.realmId + ':tg:202'),
+      realmId: realm.realmId, owner: null, userId: 'tg:202',
+      name: 'София', avatarVersion: 'd'.repeat(64),
+    };
+    for (const value of [
+      { _bt: 'Blob', ref: 'broken', size: 32_000, ct: 'image/jpeg' },
+      { _bt: 'Blob', ref: '1:abc123def456', size: 900_000, ct: 'image/jpeg' },
+      { _bt: 'Blob', ref: '1:abc123def456', size: 32_000, ct: 'text/plain' },
+      { _bt: 'File', ref: '1:abc123def456', size: 32_000, ct: 'image/jpeg' },
+    ]) {
+      const result = await deriveCloudContacts('tg:101', [realm], members, [{
+        ...base, avatarSmall: value,
+      }]);
+      expect(result.clients[0].avatarVersion).toBeNull();
+    }
+  });
+
   it('does not advertise legacy R2-only metadata as a downloadable avatar', async () => {
     const { realm, members } = await relationshipMembership('101', '202');
     const profile = {
