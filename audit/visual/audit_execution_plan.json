@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "in_progress",
-  "status_reason": "Visual audit stage 13 claimed; original GIF inspection underway.",
+  "status": "ready",
+  "status_reason": "Stage 13 completed and GitHub artifacts verified. Next stage 14 ready.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
-  "completed_exercises": 1200,
-  "current_stage": 13,
-  "next_stage": 13,
+  "completed_exercises": 1300,
+  "current_stage": null,
+  "next_stage": 14,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
@@ -21,11 +21,7 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": {
-    "run_id": "gpt6-20261024-mvlgryeq-epyp0j56",
-    "started_at": "2026-10-23T21:10:30.386Z",
-    "stage": 13
-  },
+  "lock": null,
   "stages": [
     {
       "number": 1,
@@ -1427,7 +1423,7 @@
     },
     {
       "number": 13,
-      "status": "in_progress",
+      "status": "completed",
       "exercise_ids": [
         "3116",
         "3117",
@@ -1535,8 +1531,12 @@
         "to": 1300
       },
       "result_file": "results/batch_13.jsonl",
-      "results_committed": false,
-      "started_at": "2026-10-23T21:10:30.386Z"
+      "results_committed": true,
+      "started_at": "2026-10-23T21:10:30.386Z",
+      "reviewed_count": 100,
+      "checkpoint_file": "results/audit_checkpoint_stage_13.json",
+      "completed_at": "2026-10-23T21:22:25.532Z",
+      "status_reason": "100 original GIFs visually inspected; 58 findings. Batch, issue CSV, checkpoint, cumulative 1300-row register saved, read back and validated."
     },
     {
       "number": 14,
