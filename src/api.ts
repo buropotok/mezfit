@@ -495,6 +495,9 @@ async function clientCompressedProfileSync(initData: string, diagnostic: boolean
   const headers: Record<string, string> = {
     'x-telegram-init-data': initData,
     'x-mezfit-client-avatar-compression': '1',
+    // An unavailable Telegram source is not a 204 "unchanged" result. Allow
+    // verified name metadata to sync even if the avatar cannot be fetched.
+    ...(sourceFailure ? { 'x-mezfit-avatar-source-unavailable': '1' } : {}),
   };
   let body: FormData | undefined;
   if (multipart) {
