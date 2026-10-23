@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 7,
   "total_stages": 14,
-  "stage_verified_count": 48,
-  "verified_count": 648,
+  "stage_verified_count": 60,
+  "verified_count": 660,
   "verified_ids": [
     "3637",
     "0059",
@@ -655,20 +655,7 @@
     "0757",
     "0758",
     "0759",
-    "0760"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 19,
-    "confirmed_mismatch": 23,
-    "likely_mismatch": 3,
-    "naming_clarification": 3,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 676,
-  "remaining_ids": [
+    "0760",
     "0761",
     "0762",
     "0763",
@@ -680,7 +667,20 @@
     "0770",
     "0771",
     "0772",
-    "0773",
+    "0773"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 21,
+    "confirmed_mismatch": 32,
+    "likely_mismatch": 4,
+    "naming_clarification": 3,
+    "potential_duplicate": 0,
+    "blocked": 0
+  },
+  "remaining_count": 664,
+  "remaining_ids": [
     "0774",
     "0775",
     "0776",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 649,
-  "next_id": "0761",
-  "next_gif_url": "videos/0761-JGKowMS.gif",
+  "next_queue_index": 661,
+  "next_id": "0774",
+  "next_gif_url": "videos/0774-jjUPrze.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_07.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частично проверено 48 из 100 GIF этапа 7. Просмотрены реальные декодированные фазы, зафиксированы проверяемые URL и индексы кадров; исходный накопленный реестр из 600 результатов не менялся."
+  "evidence_note": "Частичный этап 60/100: оригинальные GIF действительно декодированы и визуально сопоставлены с метаданными по шести кадрам каждый; исходный накопленный реестр 600 не изменён."
 }
