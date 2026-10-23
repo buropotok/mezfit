@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import {
   DndContext,
   DragOverlay,
@@ -7,6 +8,7 @@ import {
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
+  type Modifier,
   type UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
@@ -34,7 +36,15 @@ export type SortableListProps = {
   disabled?: boolean;
   header?: ReactNode;
   footer?: ReactNode;
+  /** Fired when a long press lifts an item. Callers can prepare compact drag content. */
+  onDragStart?: (id: UniqueIdentifier) => void;
+  /** Keep the lifted item under its original horizontal touch coordinate. */
+  lockToVerticalAxis?: boolean;
+  /** Commit the visual order before dnd-kit measures the drop-animation destination. */
+  syncDropLayout?: boolean;
 };
+
+const verticalOnlyModifier: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 
 function SortableRow({ item, disabled }: { item: SortableListItem; disabled: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id, disabled });
@@ -60,6 +70,9 @@ export function SortableList({
   disabled = false,
   header,
   footer,
+  onDragStart,
+  lockToVerticalAxis = false,
+  syncDropLayout = false,
 }: SortableListProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const activationConstraint = { delay: longPressDelay, tolerance: DRAG_ACTIVATION_TOLERANCE };
@@ -72,19 +85,26 @@ export function SortableList({
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id);
+    onDragStart?.(event.active.id);
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    if (event.over && event.active.id !== event.over.id) {
+      const from = items.findIndex((item) => item.id === event.active.id);
+      const to = items.findIndex((item) => item.id === event.over?.id);
+      if (from >= 0 && to >= 0) {
+        const reordered = arrayMove(items, from, to);
+        // With an optimistic caller, dnd-kit must measure the NEW row position
+        // before starting the drop animation, not the old source position.
+        if (syncDropLayout) flushSync(() => onReorder(reordered));
+        else onReorder(reordered);
+      }
+    }
     setActiveId(null);
-    if (!event.over || event.active.id === event.over.id) return;
-    const from = items.findIndex((item) => item.id === event.active.id);
-    const to = items.findIndex((item) => item.id === event.over?.id);
-    if (from < 0 || to < 0) return;
-    onReorder(arrayMove(items, from, to));
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragCancel={() => setActiveId(null)} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} modifiers={lockToVerticalAxis ? [verticalOnlyModifier] : undefined} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragCancel={() => setActiveId(null)} onDragEnd={handleDragEnd}>
       <GlassSurface preset="modalTuned" className="ui-sortable-list__surface">
         {header != null ? <div className="ui-sortable-list__header">{header}</div> : null}
         <div className={`ui-sortable-list${showSeparators ? '' : ' ui-sortable-list--no-separators'} ${className}`.trim()} role="list">
