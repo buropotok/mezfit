@@ -139,7 +139,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
         {intent !== 'event' ? <>
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {step === 'details' && planId && planner && cloud ? <CloudProgramDetailsPage key={planId}
-            repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode onSelectionMutationAttempt={showEditToast} planningSurfaceRef={planningSurfaceRef}
+            repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode onSelectionMutationAttempt={showEditToast} selectionFeedbackVisible={editToastVersion > 0} planningSurfaceRef={planningSurfaceRef}
             readOnly={role === 'client' && Boolean(programs.find(plan => plan.id === planId)?.coachUserId)}
             cloudStatus={cloud.status} cloudError={cloud.error} syncStatus={cloud.syncStatus} syncError={cloud.syncError}
             onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync} onNavigationContextChange={setNestedNavigation} /> : null}
