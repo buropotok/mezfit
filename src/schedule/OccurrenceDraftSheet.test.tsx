@@ -43,9 +43,16 @@ vi.mock('../ui', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
   IconButton: ({ label, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
-    <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />, TimePicker: () => {
+    <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />, TimePicker: ({ opened, value, onChange, onClose }: {
+    opened: boolean; value: string; onChange: (time: string) => void; onClose: () => void;
+  }) => {
     overlayProbe.times += 1;
-    return null;
+    return opened ? <div role="dialog" aria-label="Выбор времени">
+      <output data-testid="time-picker-value">{value}</output>
+      <button onClick={() => onChange('09:30')}>Выбрать 09:30</button>
+      <button onClick={() => onChange('10:45')}>Выбрать 10:45</button>
+      <button onClick={onClose}>Скрыть выбор времени</button>
+    </div> : null;
   },
   DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) => {
     overlayProbe.dates += 1;
@@ -152,6 +159,28 @@ describe('deferred editor auxiliaries', () => {
     render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
     expect(overlayProbe.dates).toBeGreaterThan(0);
     expect(overlayProbe.dialogs).toBeGreaterThan(0);
+  });
+});
+
+describe('time selection while local edits are queued', () => {
+  it.each([
+    { button: /^Начало:/, initial: '08:00' },
+    { button: /^Конец:/, initial: '09:00' },
+  ])('keeps $initial wheel responsive before the persisted draft updates', ({ button, initial }) => {
+    vi.stubEnv('TZ', 'UTC');
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue(draft);
+    vi.spyOn(drafts, 'enqueueEdit').mockImplementation(() => new Promise<void>(() => {}));
+
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: button }));
+    expect(screen.getByTestId('time-picker-value').textContent).toBe(initial);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать 09:30' }));
+    expect(screen.getByTestId('time-picker-value').textContent).toBe('09:30');
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать 10:45' }));
+    expect(screen.getByTestId('time-picker-value').textContent).toBe('10:45');
   });
 });
 

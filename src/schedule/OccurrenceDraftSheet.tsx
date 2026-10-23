@@ -94,6 +94,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
   const [dateOpened, setDateOpened] = useState(false);
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
+  const [timeSelection, setTimeSelection] = useState<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
   const [exercisePickerOpened, setExercisePickerOpened] = useState(false);
   const [exerciseInformationId, setExerciseInformationId] = useState<string | null>(null);
   const [setPlaceholderOpen, setSetPlaceholderOpen] = useState(false);
@@ -264,10 +265,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             <Button variant="secondary" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
-            <span ref={startRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => setTimeOpened('start')}>
+            <span ref={startRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => { setTimeSelection(null); setTimeOpened('start'); }}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
             </Button></span>
-            <span ref={endRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => setTimeOpened('end')}>
+            <span ref={endRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => { setTimeSelection(null); setTimeOpened('end'); }}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
             </Button></span>
           </div>
@@ -318,12 +319,13 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       <DatePicker opened={dateOpened} value={localDate(start)}
         onChange={date => editStart(date, localTime(start))}
         onClose={() => setDateOpened(false)} />
-      <TimePicker opened={timeOpened === 'start'} value={localTime(start)}
-        target={startRef.current} onClose={() => setTimeOpened(null)}
-        onChange={time => editStart(localDate(start), time)} />
-      <TimePicker opened={timeOpened === 'end'} value={localTime(end)}
-        target={endRef.current} onClose={() => setTimeOpened(null)}
+      <TimePicker opened={timeOpened === 'start'} value={timeSelection?.kind === 'start' ? timeSelection.value : localTime(start)}
+        target={startRef.current} onClose={() => { setTimeOpened(null); setTimeSelection(null); }}
+        onChange={time => { setTimeSelection({ kind: 'start', value: time }); editStart(localDate(start), time); }} />
+      <TimePicker opened={timeOpened === 'end'} value={timeSelection?.kind === 'end' ? timeSelection.value : localTime(end)}
+        target={endRef.current} onClose={() => { setTimeOpened(null); setTimeSelection(null); }}
         onChange={time => {
+          setTimeSelection({ kind: 'end', value: time });
           try {
             const target = Date.parse(localScheduleEnd(start, time));
             const duration = Math.round((target - start.getTime()) / 60_000);
