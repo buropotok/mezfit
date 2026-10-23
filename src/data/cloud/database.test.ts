@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import cloudRoles from '../../../cloud/roles.json';
 import {
   CLOUD_DATABASE_STORES_V1,
+  CLOUD_DATABASE_STORES_V12, CLOUD_DATABASE_VERSION,
   type CloudSessionSetFactRow,
   cloudDatabaseName,
   sessionSetFactId,
@@ -33,6 +34,13 @@ describe('sessionSetFactId', () => {
 });
 
 describe('Dexie Cloud schema and access policy', () => {
+  it('separates personal coach portraits from read-only Telegram contact profiles', () => {
+    expect(CLOUD_DATABASE_VERSION).toBe(12);
+    expect(CLOUD_DATABASE_STORES_V12.contactProfiles).toBe('id, realmId, userId');
+    expect(CLOUD_DATABASE_STORES_V12.coachClientAvatars)
+      .toBe('id, realmId, clientUserId, relationshipId');
+  });
+
   it('uses globally unique string IDs and explicit realm partition indexes', () => {
     expect(CLOUD_DATABASE_STORES_V1.trainingPlans).toContain('@id');
     expect(CLOUD_DATABASE_STORES_V1.trainingPlans).toContain('realmId');
