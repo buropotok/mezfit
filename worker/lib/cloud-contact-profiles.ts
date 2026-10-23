@@ -222,10 +222,35 @@ export async function currentTelegramAvatarSource(
   if (photo === null) return new Response(null, {
     status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'no-photo' },
   });
-  if (request.headers.get('x-mezfit-known-avatar-version') === photo.version) {
-    return new Response(null, {
-      status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'unchanged' },
-    });
+  // An untrusted browser hint is never enough to skip a photo refresh: read
+  // every currently authorized relationship from the authoritative cloud.
+  // Missing/incomplete realm variants must still trigger the client encoder.
+  const account = 'tg:' + identity.user.id;
+  const bearer = await cloudMembershipAdminToken(env, fetchImpl);
+  const own = await cloudMembershipAdminRead(
+    fetchImpl, bearer, '/all/members?userId=' + encodeURIComponent(account),
+  );
+  if (!Array.isArray(own) || !own.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
+  const eligibleIds: string[] = [];
+  for (const member of own) {
+    if (!realmId(member.realmId)) continue;
+    const pair = await validatedPair(fetchImpl, bearer, member.realmId);
+    const self = pair?.find(row => row.userId === account && row.id === member.id);
+    if (self) eligibleIds.push(await stableCloudRelationshipId('prf', member.realmId + ':' + account));
+  }
+  if (eligibleIds.length > 0) {
+    const existing = await cloudMembershipAdminRead(
+      fetchImpl, bearer, '/all/contactProfiles?userId=' + encodeURIComponent(account),
+    );
+    if (!Array.isArray(existing) || !existing.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
+    const known = new Map(existing.filter(row => typeof row.id === 'string')
+      .map(row => [row.id as string, row]));
+    if (eligibleIds.every(id => known.get(id)?.avatarVersion === photo.version
+      && hasBothAvatars(known.get(id)))) {
+      return new Response(null, {
+        status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'unchanged' },
+      });
+    }
   }
   const bytes = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
   if (!bytes) return error(502, 'TELEGRAM_PHOTO_DOWNLOAD_FAILED');
