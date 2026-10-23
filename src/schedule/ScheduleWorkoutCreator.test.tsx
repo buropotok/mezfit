@@ -21,10 +21,12 @@ vi.mock('../data/cloud/workout-planning', () => ({
 vi.mock('../program/ProgramClientPicker', () => ({ ProgramClientPicker: ({ opened, onSelect }: { opened: boolean; onSelect: (client: { userId: string }) => void }) =>
   opened ? <button onClick={() => onSelect({ userId: 'tg:303' })}>Выбрать Анну</button> : null }));
 vi.mock('../program/CloudProgramDetailsPage', () => ({
-  CloudProgramDetailsPage: ({ planId, readOnly, selectionMode, onSelectionMutationAttempt }: {
+  CloudProgramDetailsPage: ({ planId, readOnly, selectionMode, onSelectionMutationAttempt, selectionFeedbackVisible }: {
     planId: string; readOnly?: boolean; selectionMode?: boolean; onSelectionMutationAttempt?: () => void;
+    selectionFeedbackVisible?: boolean;
   }) =>
-    <div data-testid="program-details" data-plan={planId} data-readonly={Boolean(readOnly)} data-selection={Boolean(selectionMode)}>
+    <div data-testid="program-details" data-plan={planId} data-readonly={Boolean(readOnly)} data-selection={Boolean(selectionMode)}
+      data-feedback-visible={Boolean(selectionFeedbackVisible)}>
       {selectionMode && !readOnly ? <button onClick={onSelectionMutationAttempt}>Попытаться изменить план</button> : null}
     </div>,
 }));
@@ -74,6 +76,7 @@ describe('calendar program source permissions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Попытаться изменить план' }));
     const message = 'Нажмите Запланировать, чтобы начать изменение плана тренировки';
     expect(screen.getByRole('status').textContent).toBe(message);
+    expect(screen.getByTestId('program-details').getAttribute('data-feedback-visible')).toBe('true');
     expect(onCreated).not.toHaveBeenCalled();
 
     act(() => vi.advanceTimersByTime(2900));
@@ -83,6 +86,7 @@ describe('calendar program source permissions', () => {
 
     act(() => vi.advanceTimersByTime(2800));
     expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByTestId('program-details').getAttribute('data-feedback-visible')).toBe('false');
     expect(onCreated).not.toHaveBeenCalled();
   });
 
