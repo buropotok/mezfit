@@ -158,7 +158,6 @@ function SessionExerciseLayout({
   const mountBody = hasExpanded || !collapsed;
   const toggleCollapsed = () => {
     const nextCollapsed = !collapsed;
-    if (!nextCollapsed) setHasExpanded(true);
     if (controlledCollapsed === undefined) setInternalCollapsed(nextCollapsed);
     onCollapsedChange?.(nextCollapsed);
   };
