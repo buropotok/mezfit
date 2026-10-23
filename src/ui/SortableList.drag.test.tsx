@@ -86,7 +86,8 @@ describe('SortableList mobile drop coordination', () => {
 
   it('commits reordered DOM before the drop handler returns so overlay lands at the target', () => {
     render(<TestList />);
-    const order = () => screen.getAllByTestId('sort-row').map((node) => node.textContent);
+    const order = () => [...document.querySelectorAll('.ui-sortable-list [data-testid="sort-row"]')]
+      .map((node) => node.textContent);
     expect(order()).toEqual(['first', 'second']);
 
     act(() => {
