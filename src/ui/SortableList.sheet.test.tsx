@@ -8,7 +8,7 @@ const harness = vi.hoisted(() => ({
   start: null as null | ((event: { active: { id: string } }) => void),
   end: null as null | ((event: { active: { id: string }; over: { id: string } | null }) => void),
   cancel: null as null | (() => void),
-  dropAnimation: null as null | { sideEffects?: () => (() => void) | void },
+  dropAnimation: null as null | { sideEffects?: (args: { active: { node: HTMLElement }; dragOverlay: { node: HTMLElement } }) => (() => void) | void },
 }));
 
 vi.mock('./GlassSurface', () => ({
@@ -97,7 +97,10 @@ describe('SortableList inside an animated, scrollable sheet', () => {
     act(() => harness.end?.({ active: { id: 'first' }, over: { id: 'second' } }));
     expect(list?.style.minHeight).toBe('420px');
 
-    const cleanupDrop = harness.dropAnimation?.sideEffects?.();
+    const cleanupDrop = harness.dropAnimation?.sideEffects?.({
+      active: { node: list?.querySelector('.ui-sortable-list__row') as HTMLElement },
+      dragOverlay: { node: document.querySelector('[data-testid="lifted-overlay"]') as HTMLElement },
+    });
     act(() => cleanupDrop?.());
     expect(list?.style.minHeight).toBe('');
     height.mockRestore();
