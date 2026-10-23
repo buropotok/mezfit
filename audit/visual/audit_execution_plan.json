@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "ready",
-  "status_reason": "Stage 13 completed and GitHub artifacts verified. Next stage 14 ready.",
+  "status": "in_progress",
+  "status_reason": "Stage 14 claimed after checking stage 13 and full repository protocols.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
   "completed_exercises": 1300,
-  "current_stage": null,
+  "current_stage": 14,
   "next_stage": 14,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
@@ -21,7 +21,11 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": null,
+  "lock": {
+    "run_id": "gpt6-visual-stage14-20261023214516704-xk4rf6xv",
+    "started_at": "2026-10-23T21:45:16.704Z",
+    "stage": 14
+  },
   "stages": [
     {
       "number": 1,
@@ -1540,7 +1544,7 @@
     },
     {
       "number": 14,
-      "status": "pending",
+      "status": "in_progress",
       "exercise_ids": [
         "3644",
         "3645",
@@ -1572,7 +1576,8 @@
         "to": 1324
       },
       "result_file": "results/batch_14.jsonl",
-      "results_committed": false
+      "results_committed": false,
+      "started_at": "2026-10-23T21:45:16.704Z"
     }
   ]
 }
