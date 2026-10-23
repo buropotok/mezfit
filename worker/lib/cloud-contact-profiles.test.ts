@@ -538,4 +538,41 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.postCount()).toBe(0);
     expect(cloud.memberWrites()).toBe(0);
   });
+  it('distinguishes a stored avatar from an upload failure in an explicit diagnostic without exposing identifiers', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    cloud.failUpload();
+    const failed = await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json();
+    expect(failed).toEqual({ changed: true, avatarStatus: 'upload-failed' });
+    expect([...cloud.profiles.values()][0].avatarVersion).toBeNull();
+    expect(JSON.stringify(failed)).not.toContain('photo-one');
+
+    const plain = await (await syncOwnContactProfile(new Request(
+      'https://mezfit.test/api/cloud/profile/sync', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+      },
+    ), env, cloud.fetchImpl)).json();
+    expect(plain).toEqual({ changed: false });
+  });
+
+  it('reports actual Telegram photo changes and does not attribute an unchanged photo to the cache', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    expect(await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())
+      .toEqual({ changed: true, avatarStatus: 'updated' });
+    expect(await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())
+      .toEqual({ changed: false, avatarStatus: 'unchanged' });
+    cloud.setPhoto('new-photo');
+    expect(await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())
+      .toEqual({ changed: true, avatarStatus: 'updated' });
+    cloud.failPhotoLookup();
+    expect(await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())
+      .toEqual({ changed: false, avatarStatus: 'telegram-unavailable' });
+  });
+
+
 });
