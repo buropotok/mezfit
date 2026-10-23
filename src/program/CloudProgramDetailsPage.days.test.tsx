@@ -212,6 +212,28 @@ describe('days inside program phases', () => {
     await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('second,first'));
   });
 
+  it('drops an optimistic preview when a concurrent authoritative exercise order arrives', async () => {
+    const f = fixture();
+    const entry = (id: string, position: number) => ({
+      exercise: { id, realmId: 'tg:101', owner: 'tg:101', programDayId: day.day.id, position,
+        status: 'active' as const, notes: null,
+        exercise: { exerciseDefinitionId: id, scope: 'public' as const, name: id, nameEn: null, mediaUrl: null } },
+      sets: [],
+    });
+    const original = { ...day, exercises: [entry('first', 0), entry('second', 1), entry('third', 2)] };
+    f.repo.reorderDayExercises.mockImplementation(() => new Promise<void>(() => {}));
+    const page = (value: CloudProgramDayOutline) => <ProgramPhaseDays
+      repository={f.repo as unknown as ProgramManagementRepository}
+      program={f.details.program} days={[value]} readOnly={false} />;
+    const view = render(page(original));
+    fireEvent.click(screen.getByRole('button', { name: 'Переставить упражнения' }));
+    expect(screen.getByTestId('exercise-order').textContent).toBe('third,second,first');
+    const concurrent = [original.exercises[1], original.exercises[0], original.exercises[2]]
+      .map((item, position) => ({ ...item, exercise: { ...item.exercise, position } }));
+    view.rerender(page({ ...original, exercises: concurrent }));
+    await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('second,first,third'));
+  });
+
   it('keeps assigned cards read-only and omits all authoring controls', async () => {
     const f = fixture();
     f.details.days = [day];
