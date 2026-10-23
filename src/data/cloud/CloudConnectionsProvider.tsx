@@ -328,9 +328,14 @@ export function CloudConnectionsProvider({
   useEffect(() => {
     let active = true;
     let running = false;
+    let rerunWhenIdle = false;
     let wasHidden = document.visibilityState === 'hidden';
     const refreshOwnProfile = () => {
-      if (!active || running) return;
+      if (!active) return;
+      if (running) {
+        rerunWhenIdle = true;
+        return;
+      }
       running = true;
       void syncCloudContactProfile(initData)
         .then((changed) => {
@@ -339,7 +344,13 @@ export function CloudConnectionsProvider({
         .catch(() => {
           // Offline contact lists stay readable; an explicit diagnostic surfaces the failure stage.
         })
-        .finally(() => { running = false; });
+        .finally(() => {
+          running = false;
+          if (active && rerunWhenIdle) {
+            rerunWhenIdle = false;
+            refreshOwnProfile();
+          }
+        });
     };
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
