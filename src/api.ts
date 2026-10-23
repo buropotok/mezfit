@@ -512,9 +512,19 @@ async function clientCompressedProfileSync(initData: string, diagnostic: boolean
   return payload;
 }
 
+/** Retry once if Telegram's photo changed while Canvas was compressing its predecessor. */
+async function refreshProfileWithSourceRetry(initData: string, diagnostic: boolean): Promise<unknown> {
+  try {
+    return await clientCompressedProfileSync(initData, diagnostic);
+  } catch (reason) {
+    if (!(reason instanceof ApiError) || reason.status !== 409) throw reason;
+    return clientCompressedProfileSync(initData, diagnostic);
+  }
+}
+
 /** The source is downloaded from Telegram, but both JPEG variants are encoded in the WebView. */
 export async function syncCloudContactProfile(initData: string): Promise<boolean> {
-  const payload = await clientCompressedProfileSync(initData, false);
+  const payload = await refreshProfileWithSourceRetry(initData, false);
   if (!isRecord(payload) || typeof payload.changed !== 'boolean') {
     throw new ApiError(502, 'Некорректный ответ обновления профиля', 'INVALID_API_RESPONSE');
   }
@@ -538,7 +548,7 @@ export async function diagnoseCloudContactProfileSync(initData: string): Promise
   changed: boolean;
   avatarStatus: CloudAvatarSyncStatus;
 }> {
-  const payload = await clientCompressedProfileSync(initData, true);
+  const payload = await refreshProfileWithSourceRetry(initData, true);
   if (!isRecord(payload) || typeof payload.changed !== 'boolean'
     || !isCloudAvatarSyncStatus(payload.avatarStatus)) {
     throw new ApiError(502, 'Некорректный ответ проверки аватара', 'INVALID_API_RESPONSE');
