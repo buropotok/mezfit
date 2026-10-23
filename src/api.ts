@@ -479,6 +479,28 @@ export async function syncCloudContactProfile(initData: string): Promise<boolean
   return payload.changed;
 }
 
+/** Explicit self-check: only safe server-side stages, no photo metadata or identifiers. */
+export const CLOUD_AVATAR_SYNC_STATUSES = [
+  'no-relationship', 'stale-session', 'telegram-unavailable', 'no-photo',
+  'unchanged', 'download-failed', 'transform-failed', 'upload-failed',
+  'partial', 'updated',
+] as const;
+export type CloudAvatarSyncStatus = typeof CLOUD_AVATAR_SYNC_STATUSES[number];
+
+export async function diagnoseCloudContactProfileSync(initData: string): Promise<{
+  changed: boolean;
+  avatarStatus: CloudAvatarSyncStatus;
+}> {
+  const payload = await apiRequest<unknown>(initData, '/api/cloud/profile/sync?diagnostic=1', {
+    method: 'POST',
+  });
+  if (!isRecord(payload) || typeof payload.changed !== 'boolean'
+    || !CLOUD_AVATAR_SYNC_STATUSES.some((status) => status === payload.avatarStatus)) {
+    throw new ApiError(502, 'Некорректный ответ проверки аватара', 'INVALID_API_RESPONSE');
+  }
+  return { changed: payload.changed, avatarStatus: payload.avatarStatus as CloudAvatarSyncStatus };
+}
+
 /** Authenticated binary upload; JSON API helper must not set a JSON content-type here. */
 export async function uploadPersonalExerciseMedia(initData: string, image: Blob, signal?: AbortSignal): Promise<string> {
   if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');
