@@ -50,6 +50,10 @@ describe('program exercise long-press reordering', () => {
     render(<WorkoutPlanCard {...defaults} />);
 
     expect(bodies()).toHaveLength(2);
+    expect(bodies().map((body) => body.hidden)).toEqual([true, true]);
+    for (const button of screen.getAllByRole('button', { name: 'Развернуть упражнение' })) {
+      fireEvent.click(button);
+    }
     expect(bodies().every((body) => !body.hidden)).toBe(true);
     fireEvent.click(screen.getAllByRole('button', { name: 'Свернуть упражнение' })[0]);
     expect(bodies().map((body) => body.hidden)).toEqual([true, false]);
