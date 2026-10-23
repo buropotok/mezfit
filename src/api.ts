@@ -487,6 +487,11 @@ export const CLOUD_AVATAR_SYNC_STATUSES = [
 ] as const;
 export type CloudAvatarSyncStatus = typeof CLOUD_AVATAR_SYNC_STATUSES[number];
 
+function isCloudAvatarSyncStatus(value: unknown): value is CloudAvatarSyncStatus {
+  return typeof value === 'string'
+    && CLOUD_AVATAR_SYNC_STATUSES.some((status) => status === value);
+}
+
 export async function diagnoseCloudContactProfileSync(initData: string): Promise<{
   changed: boolean;
   avatarStatus: CloudAvatarSyncStatus;
@@ -495,10 +500,10 @@ export async function diagnoseCloudContactProfileSync(initData: string): Promise
     method: 'POST',
   });
   if (!isRecord(payload) || typeof payload.changed !== 'boolean'
-    || !CLOUD_AVATAR_SYNC_STATUSES.some((status) => status === payload.avatarStatus)) {
+    || !isCloudAvatarSyncStatus(payload.avatarStatus)) {
     throw new ApiError(502, 'Некорректный ответ проверки аватара', 'INVALID_API_RESPONSE');
   }
-  return { changed: payload.changed, avatarStatus: payload.avatarStatus as CloudAvatarSyncStatus };
+  return { changed: payload.changed, avatarStatus: payload.avatarStatus };
 }
 
 /** Authenticated binary upload; JSON API helper must not set a JSON content-type here. */
