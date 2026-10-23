@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 7,
   "total_stages": 14,
-  "stage_verified_count": 84,
-  "verified_count": 684,
+  "stage_verified_count": 100,
+  "verified_count": 700,
   "verified_ids": [
     "3637",
     "0059",
@@ -691,20 +691,7 @@
     "0818",
     "0826",
     "0830",
-    "0832"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 28,
-    "confirmed_mismatch": 47,
-    "likely_mismatch": 5,
-    "naming_clarification": 4,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 640,
-  "remaining_ids": [
+    "0832",
     "0833",
     "0835",
     "0840",
@@ -720,7 +707,20 @@
     "0853",
     "0854",
     "0856",
-    "0857",
+    "0857"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 34,
+    "confirmed_mismatch": 55,
+    "likely_mismatch": 7,
+    "naming_clarification": 4,
+    "potential_duplicate": 0,
+    "blocked": 0
+  },
+  "remaining_count": 624,
+  "remaining_ids": [
     "0858",
     "0859",
     "0860",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 685,
-  "next_id": "0833",
-  "next_gif_url": "videos/0833-LmaFNZS.gif",
+  "next_queue_index": 701,
+  "next_id": "0858",
+  "next_gif_url": "videos/0858-Qoujh3Q.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_07.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частичный этап: 84 из 100 оригинальных GIF декодированы и независимо визуально проверены по шести фактическим фазам. Прогресс накопленного завершённого реестра 600 не изменён."
+  "evidence_note": "Этап №7: все 100 оригинальных GIF получены из hasaneyldrm/exercises-dataset в виде GIF-байтов, декодированы и сравнены по шести действительным временным кадрам (в том числе GIF с 12, 18, 24 кадрами). Просмотренные контактные листы не опубликованы; номера кадров и ссылки на оригиналы сохранены. Физиологическая активация мышц не объявляется доказанной. Предыдущие 600 записей не изменяются."
 }
