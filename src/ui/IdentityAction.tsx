@@ -285,7 +285,9 @@ export function IdentityAction(props: IdentityActionProps) {
               disabled={disabled || action.disabled}
               onPointerDown={(event) => {
                 if (event.pointerType === 'mouse' && event.button !== 0) return;
-                if (!disabled && !action.disabled) setIconSwapIndex(action.iconSwapTo ? index : null);
+                if (!disabled && !action.disabled && !pendingActionRef.current) {
+                  setIconSwapIndex(action.iconSwapTo ? index : null);
+                }
               }}
               onClick={() => queueActivation(action.onClick, action.iconSwapTo ? index : undefined)}
             >
