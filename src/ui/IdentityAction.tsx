@@ -235,8 +235,12 @@ export function IdentityAction(props: IdentityActionProps) {
     startAnimation(false);
   };
 
+  const centerTitle = (variant === 'labeled' || variant === 'default')
+    && props.variant !== 'double'
+    && ((!props.icon && !props.avatar) || (canHideIcon && hideDecorativeIcon));
   const className = [
     'ui-identity-action',
+    centerTitle ? 'ui-identity-action--title-centered' : '',
     variant === 'double' ? 'ui-identity-action--double' : '',
     variant === 'labeled' || variant === 'default' ? 'ui-identity-action--labeled' : '',
     variant === 'single' || variant === 'avatar-only' ? 'ui-identity-action--single' : '',
