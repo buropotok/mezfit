@@ -341,7 +341,7 @@ export async function syncOwnContactProfile(
   if (photo === null) {
     newVersion = null;
     avatarStatus = 'no-photo';
-  } else if (photo && needsVariants) {
+  } else if (photo && needsVariants && (clientVariants || request.headers.get('x-mezfit-client-avatar-compression') !== '1')) {
     avatarStatus = 'download-failed';
     for (const variant of ['small', 'large'] as const) {
       const reused = eligible.map(({ id }) =>
