@@ -92,4 +92,30 @@ describe('remote blob download completion', () => {
     view.unmount();
   });
 
+  it('queues a return refresh if the startup profile request has not finished', async () => {
+    let finishStartup: ((value: boolean) => void) | undefined;
+    const startup = new Promise<boolean>(resolve => { finishStartup = resolve; });
+    vi.mocked(syncCloudContactProfile).mockImplementationOnce(() => startup);
+    const view = render(
+      <CloudConnectionsProvider telegramUserId="101" initData="verified">
+        <AvatarRevision />
+      </CloudConnectionsProvider>,
+    );
+    await waitFor(() => expect(syncCloudContactProfile).toHaveBeenCalledTimes(1));
+
+    const visibility = vi.spyOn(document, 'visibilityState', 'get');
+    visibility.mockReturnValue('hidden');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    visibility.mockReturnValue('visible');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(syncCloudContactProfile).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      finishStartup?.(false);
+      await startup;
+    });
+    await waitFor(() => expect(syncCloudContactProfile).toHaveBeenCalledTimes(2));
+    view.unmount();
+  });
+
 });
