@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 7,
   "total_stages": 14,
-  "stage_verified_count": 72,
-  "verified_count": 672,
+  "stage_verified_count": 84,
+  "verified_count": 684,
   "verified_ids": [
     "3637",
     "0059",
@@ -679,20 +679,7 @@
     "0796",
     "0803",
     "0805",
-    "0806"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 27,
-    "confirmed_mismatch": 37,
-    "likely_mismatch": 5,
-    "naming_clarification": 3,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 652,
-  "remaining_ids": [
+    "0806",
     "0807",
     "0808",
     "0809",
@@ -704,7 +691,20 @@
     "0818",
     "0826",
     "0830",
-    "0832",
+    "0832"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 28,
+    "confirmed_mismatch": 47,
+    "likely_mismatch": 5,
+    "naming_clarification": 4,
+    "potential_duplicate": 0,
+    "blocked": 0
+  },
+  "remaining_count": 640,
+  "remaining_ids": [
     "0833",
     "0835",
     "0840",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 673,
-  "next_id": "0807",
-  "next_gif_url": "videos/0807-R1WYG5D.gif",
+  "next_queue_index": 685,
+  "next_id": "0833",
+  "next_gif_url": "videos/0833-LmaFNZS.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_07.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частичный этап: 72 из 100 упражнений действительно проверены по оригинальным GIF, декодированным и просмотренным по шести кадрам. Накопленный реестр 600 прежних упражнений сохранён."
+  "evidence_note": "Частичный этап: 84 из 100 оригинальных GIF декодированы и независимо визуально проверены по шести фактическим фазам. Прогресс накопленного завершённого реестра 600 не изменён."
 }
