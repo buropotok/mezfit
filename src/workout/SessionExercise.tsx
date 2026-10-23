@@ -154,6 +154,7 @@ function SessionExerciseLayout({
   useEffect(() => {
     if (!collapsed) setHasExpanded(true);
   }, [collapsed]);
+  // A collapsed card never mounts its set rows until first expanded; keep them mounted thereafter.
   const mountBody = hasExpanded || !collapsed;
   const toggleCollapsed = () => {
     const nextCollapsed = !collapsed;
@@ -199,34 +200,34 @@ function SessionExerciseLayout({
 
       <div id={bodyId} className="session-exercise__body" hidden={collapsed}>
         {mountBody ? <>
-        {notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{notes}</Text> : null}
+          {notes ? <Text variant="footnote" tone="muted" className="session-exercise__notes">{notes}</Text> : null}
 
-        {children}
-        {onAddSet ? (
-          <div className="session-exercise__add-set">
-            <button
-              type="button"
-              className="session-exercise__add-set-hit"
-              data-no-dnd
-              aria-label="Добавить подход"
-              onClick={onAddSet}
-              disabled={busy}
-            >
-              <GlassSurface
-                component="span"
-                wrapContent={false}
-                shape="capsule"
-                className="session-exercise__add-set-button"
-                aria-hidden="true"
+          {children}
+          {onAddSet ? (
+            <div className="session-exercise__add-set">
+              <button
+                type="button"
+                className="session-exercise__add-set-hit"
+                data-no-dnd
+                aria-label="Добавить подход"
+                onClick={onAddSet}
+                disabled={busy}
               >
-                <Icon name="plus" variant="outline" className="session-exercise__add-set-icon" />
-              </GlassSurface>
-            </button>
-            <Text variant="body" className="session-exercise__add-set-label">Добавить подход</Text>
-          </div>
-        ) : null}
+                <GlassSurface
+                  component="span"
+                  wrapContent={false}
+                  shape="capsule"
+                  className="session-exercise__add-set-button"
+                  aria-hidden="true"
+                >
+                  <Icon name="plus" variant="outline" className="session-exercise__add-set-icon" />
+                </GlassSurface>
+              </button>
+              <Text variant="body" className="session-exercise__add-set-label">Добавить подход</Text>
+            </div>
+          ) : null}
 
-        {summary}
+          {summary}
         </> : null}
       </div>
       {editor}
@@ -300,7 +301,6 @@ function WorkoutExerciseSets({ exercise, onSelectSet }: {
     <List className="session-exercise__sets" divider="inset">
       {renderedSets.map((set) => {
         const setNumber = set.position + 1;
-        
         const metrics = formatSessionSetMetrics(
           planMode ? set.plan : set.fact?.metrics ?? null,
           exercise.data.exercise.tracking_type,
