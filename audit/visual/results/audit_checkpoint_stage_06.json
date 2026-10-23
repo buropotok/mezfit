@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 6,
   "total_stages": 14,
-  "stage_verified_count": 20,
-  "verified_count": 520,
+  "stage_verified_count": 40,
+  "verified_count": 540,
   "verified_ids": [
     "3637",
     "0059",
@@ -527,20 +527,7 @@
     "0536",
     "0537",
     "0538",
-    "0539"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 12,
-    "confirmed_mismatch": 6,
-    "likely_mismatch": 1,
-    "naming_clarification": 1,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 804,
-  "remaining_ids": [
+    "0539",
     "0540",
     "0541",
     "0542",
@@ -560,7 +547,20 @@
     "0562",
     "0570",
     "0571",
-    "0572",
+    "0572"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 23,
+    "confirmed_mismatch": 13,
+    "likely_mismatch": 2,
+    "naming_clarification": 2,
+    "potential_duplicate": 0,
+    "blocked": 0
+  },
+  "remaining_count": 784,
+  "remaining_ids": [
     "0573",
     "0575",
     "0578",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 521,
-  "next_id": "0540",
-  "next_gif_url": "videos/0540-osdXT3K.gif",
+  "next_queue_index": 541,
+  "next_id": "0573",
+  "next_gif_url": "videos/0573-rUXfn3R.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_06.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Partial stage 06 (20/100). Original GIF frames (12/18/24 frame sizes) actually decoded from hasaneyldrm/exercises-dataset; reviewed six temporal phases for each. Prior 500 records remain untouched. Original contact sheets visualized but not persisted as attachments."
+  "evidence_note": "Partial stage 06 (40/100). Original source GIFs decoded and each reviewed using six real temporal frames (including 18/24/54-frame animations); previous 500 accumulated records unchanged."
 }
