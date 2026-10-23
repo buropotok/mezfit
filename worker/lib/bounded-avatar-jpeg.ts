@@ -4,7 +4,7 @@
  * instead of using a Cloudflare image decoder or trusting the supplied MIME.
  * This checks dimensions and truncation, but does not decode DCT coefficients.
  */
-export function isBoundedJpeg(source: ArrayBuffer, maxSide: number): boolean {
+export function isBoundedJpeg(source: ArrayBufferLike, maxSide: number): boolean {
   const bytes = new Uint8Array(source);
   if (bytes.length < 32 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return false;
   let pos = 2;
