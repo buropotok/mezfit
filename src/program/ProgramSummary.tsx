@@ -25,7 +25,9 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
   const cloud = useCloudConnections();
   const people = [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])];
   const resolve = (id: string | null, fallback: string) => {
-    if (id === actorUserId) return { name: actor?.name || 'Вы', self: true, contact: undefined };
+    if (id === actorUserId) return { name: actor?.name || 'Вы', self: true,
+      contact: cloud?.selfAvatars?.find(person => person.userId === id
+        && person.relationshipId === program.realmId && person.avatarVersion) };
     const contact = people.find((person) => person.userId === id && person.relationshipId === program.realmId);
     return { name: contact?.displayName || fallback, self: false, contact };
   };
