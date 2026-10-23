@@ -102,4 +102,19 @@ describe('CloudContactAvatar', () => {
     expect(screen.getByRole('img', { name: 'Анна Иванова' })).toBeTruthy();
     expect(loadAvatar).not.toHaveBeenCalled();
   });
+  it('loads a coach-only portrait even when the client has no Telegram avatar', async () => {
+    const privatePeer = {
+      ...peer,
+      avatarVersion: null,
+      coachAvatarVersion: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      coachAvatarMode: '11',
+    };
+    cache = new ContactAvatarUrls();
+    render(<CloudContactAvatar contact={privatePeer} />);
+    await waitFor(() => expect(loadAvatar).toHaveBeenCalledWith(privatePeer, 'small'));
+    await waitFor(() => expect(document.querySelector('img.ui-avatar')?.getAttribute('src'))
+      .toBe('blob:mezfit-portrait'));
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+  });
+
 });
