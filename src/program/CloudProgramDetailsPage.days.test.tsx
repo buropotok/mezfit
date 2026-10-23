@@ -22,8 +22,12 @@ vi.mock('../NavigationShell', () => ({
 vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
   return { ...actual,
-    SortableList: ({ items, header, footer }: React.ComponentProps<typeof actual.SortableList>) =>
-      <div>{header}{items.map((item) => <div key={item.id}>{item.content}</div>)}{footer}</div>,
+    SortableList: ({ items, header, footer, disabled, onReorder }: React.ComponentProps<typeof actual.SortableList>) =>
+      <div>{header}<span data-testid="exercise-order">{items.map((item) => item.id).join(',')}</span>
+        {items.map((item) => <div key={item.id}>{item.content}</div>)}
+        {!disabled && items.length > 1
+          ? <button onClick={() => onReorder([...items].reverse())}>Переставить упражнения</button> : null}
+        {footer}</div>,
     LiquidPopover: ({ trigger, label, items = [], onPresentationChange }: React.ComponentProps<typeof actual.LiquidPopover>) =>
       <div>{trigger}<div role="menu" aria-label={label}>
         {items.map((item) => <button key={item.id} disabled={item.disabled} onClick={item.onSelect}>{item.label}</button>)}
@@ -60,6 +64,8 @@ function fixture(phaseCount = 1) {
     commentDay: vi.fn(async () => {}), moveDay: vi.fn(async () => {}),
     duplicateDay: vi.fn(async () => 'copy'), deleteDay: vi.fn(async () => {}),
     deleteDayExercise: vi.fn(async () => {}),
+    deleteExerciseSet: vi.fn(async () => {}),
+    reorderDayExercises: vi.fn(async () => {}),
     exerciseInformation: vi.fn(async () => ({ row: null, taxonomy: [], name: 'Жим', mediaUrl: null })),
   };
   const page = (readOnly = false) => <CloudProgramDetailsPage
@@ -153,6 +159,79 @@ describe('days inside program phases', () => {
     expect(within(dialog).queryByRole('textbox', { name: 'Категория' })).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(f.repo.editDay).toHaveBeenCalledWith('plan', 'day-string-id', 'Новый день', ''));
+  });
+
+  it('shows set deletion for the coach and confirms before mutating PLAN', async () => {
+    const f = fixture();
+    f.details.days = [{ ...day, exercises: [{
+      exercise: { id: 'exercise', realmId: 'tg:101', owner: 'tg:101', programDayId: day.day.id,
+        position: 0, status: 'active', notes: null,
+        exercise: { exerciseDefinitionId: '0001', scope: 'public', name: 'Жим', nameEn: null, mediaUrl: null } },
+      sets: [{ id: 'set', realmId: 'tg:101', owner: 'tg:101', programExerciseId: 'exercise',
+        position: 0, status: 'active', setLabel: 'normal', comment: null,
+        plannedWeightKg: null, plannedReps: null, plannedDurationSeconds: null, plannedDistanceMeters: null }],
+    }] }];
+    render(f.page());
+    fireEvent.click(await screen.findByRole('button', { name: 'Удалить подход 1' }));
+    expect(f.repo.deleteExerciseSet).not.toHaveBeenCalled();
+    const confirm = screen.getByRole('dialog', { name: 'Удалить подход?' });
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Удалить' }));
+    await waitFor(() => expect(f.repo.deleteExerciseSet).toHaveBeenCalledWith('plan', day.day.id, 'exercise', 'set'));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Удалить подход?' })).toBeNull());
+  });
+
+  it('keeps an optimistic exercise order until Dexie confirms and rolls back on failure', async () => {
+    const f = fixture();
+    const exercise = (id: string, position: number) => ({
+      exercise: { id, realmId: 'tg:101', owner: 'tg:101', programDayId: day.day.id, position,
+        status: 'active' as const, notes: null,
+        exercise: { exerciseDefinitionId: id, scope: 'public' as const, name: id, nameEn: null, mediaUrl: null } },
+      sets: [],
+    });
+    const source = { ...day, exercises: [exercise('first', 0), exercise('second', 1)] };
+    const page = (value: CloudProgramDayOutline) => <ProgramPhaseDays
+      repository={f.repo as unknown as ProgramManagementRepository}
+      program={f.details.program} days={[value]} readOnly={false} />;
+    const view = render(page(source));
+    expect(screen.getByTestId('exercise-order').textContent).toBe('first,second');
+    let rejectWrite: (reason: Error) => void = () => {};
+    f.repo.reorderDayExercises.mockImplementation(() => new Promise<void>((_resolve, reject) => { rejectWrite = reject; }));
+    fireEvent.click(screen.getByRole('button', { name: 'Переставить упражнения' }));
+    expect(screen.getByTestId('exercise-order').textContent).toBe('second,first');
+    expect(f.repo.reorderDayExercises).toHaveBeenCalledWith('plan', day.day.id, ['second', 'first']);
+    await act(async () => rejectWrite(new Error('Запись недоступна')));
+    await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('first,second'));
+    expect(screen.getByRole('alert').textContent).toBe('Запись недоступна');
+    f.repo.reorderDayExercises.mockResolvedValue(undefined);
+    fireEvent.click(screen.getByRole('button', { name: 'Переставить упражнения' }));
+    expect(screen.getByTestId('exercise-order').textContent).toBe('second,first');
+    await waitFor(() => expect(f.repo.reorderDayExercises).toHaveBeenCalledTimes(2));
+    view.rerender(page({ ...source, exercises: [...source.exercises].reverse().map((item, position) => ({
+      ...item, exercise: { ...item.exercise, position },
+    })) }));
+    await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('second,first'));
+  });
+
+  it('drops an optimistic preview when a concurrent authoritative exercise order arrives', async () => {
+    const f = fixture();
+    const entry = (id: string, position: number) => ({
+      exercise: { id, realmId: 'tg:101', owner: 'tg:101', programDayId: day.day.id, position,
+        status: 'active' as const, notes: null,
+        exercise: { exerciseDefinitionId: id, scope: 'public' as const, name: id, nameEn: null, mediaUrl: null } },
+      sets: [],
+    });
+    const original = { ...day, exercises: [entry('first', 0), entry('second', 1), entry('third', 2)] };
+    f.repo.reorderDayExercises.mockImplementation(() => new Promise<void>(() => {}));
+    const page = (value: CloudProgramDayOutline) => <ProgramPhaseDays
+      repository={f.repo as unknown as ProgramManagementRepository}
+      program={f.details.program} days={[value]} readOnly={false} />;
+    const view = render(page(original));
+    fireEvent.click(screen.getByRole('button', { name: 'Переставить упражнения' }));
+    expect(screen.getByTestId('exercise-order').textContent).toBe('third,second,first');
+    const concurrent = [original.exercises[1], original.exercises[0], original.exercises[2]]
+      .map((item, position) => ({ ...item, exercise: { ...item.exercise, position } }));
+    view.rerender(page({ ...original, exercises: concurrent }));
+    await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('second,first,third'));
   });
 
   it('keeps assigned cards read-only and omits all authoring controls', async () => {

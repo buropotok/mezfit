@@ -58,6 +58,11 @@
   cursor: grabbing;
 }
 
+/* A vertically constrained touch drag keeps the pickup point stationary. */
+.ui-sortable-list__overlay--vertical {
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ui-sortable-list__row {
     transition: none !important;

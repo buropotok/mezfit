@@ -42,6 +42,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const [exerciseInformation, setExerciseInformation] = useState<{ dayId: string; exerciseId: string } | null>(null);
   useSpotlightHintPause(exerciseInformation !== null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
+  const [deletingSet, setDeletingSet] = useState<{ dayId: string; exerciseId: string; setId: string } | null>(null);
+  const [optimisticExerciseOrders, setOptimisticExerciseOrders] = useState<Record<string, { previous: string[]; next: string[] }>>({});
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
   const authorId = planAuthorUserId(program);
@@ -65,6 +67,26 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     return () => { alive.current = false; animations.current.forEach((animation) => animation.cancel()); };
   }, []);
   usePhaseDayMotion(collapsed, viewport, content, nodes);
+  useEffect(() => {
+    setOptimisticExerciseOrders((current) => {
+      const next = { ...current };
+      for (const [dayId, order] of Object.entries(current)) {
+        const day = days.find((item) => item.day.id === dayId);
+        const actual = day?.exercises.map((item) => item.exercise.id);
+        // Any canonical change (including a concurrent reorder) supersedes the preview.
+        if (!actual || actual.length !== order.previous.length
+          || actual.some((id, index) => id !== order.previous[index])) delete next[dayId];
+      }
+      return Object.keys(next).length === Object.keys(current).length ? current : next;
+    });
+  }, [days]);
+  const displayDays = days.map((item) => {
+    const order = optimisticExerciseOrders[item.day.id];
+    if (!order) return item;
+    const positions = new Map(order.next.map((id, index) => [id, index]));
+    return { ...item, exercises: [...item.exercises].sort((a, b) =>
+      (positions.get(a.exercise.id) ?? a.exercise.position) - (positions.get(b.exercise.id) ?? b.exercise.position)) };
+  });
   const orderKey = days.map((row) => row.day.id).join('|');
   // Animate only our own day wrappers; no access to UI Kit/private DOM or DnD sensors.
   useLayoutEffect(() => {
@@ -131,16 +153,34 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     <div ref={viewport} id={bodyId} className="cloud-plan-days-viewport" aria-hidden={collapsed} inert={collapsed}>
     <div ref={content} className="cloud-plan-days">
     {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-    {days.map((item, index) => <div key={item.day.id}
+    {displayDays.map((item, index) => <div key={item.day.id}
       style={{ position: 'relative', zIndex: days.length - index }}
       ref={(node) => { if (node) nodes.current.set(item.day.id, node); else nodes.current.delete(item.day.id); }}>
       <WorkoutSessionCard mode="planning" day={item} programName={program.name}
-        onReorderExercises={(ids) => { void run(() => repository.reorderDayExercises(program.id, item.day.id, ids)); }} creatorName={creatorName} creatorAvatar={creatorAvatar}
+        onReorderExercises={(ids) => {
+          if (running.current || readOnly) return;
+          setOptimisticExerciseOrders((current) => ({ ...current, [item.day.id]: {
+            previous: item.exercises.map((entry) => entry.exercise.id), next: ids,
+          } }));
+          void run(async () => {
+            try { await repository.reorderDayExercises(program.id, item.day.id, ids); }
+            catch (reason) {
+              if (alive.current) setOptimisticExerciseOrders((current) => {
+                if (current[item.day.id]?.next !== ids) return current;
+                const next = { ...current };
+                delete next[item.day.id];
+                return next;
+              });
+              throw reason;
+            }
+          });
+        }} creatorName={creatorName} creatorAvatar={creatorAvatar}
         readOnly={readOnly} onMutationAttempt={onMutationAttempt} busy={busy || exerciseDayId !== null}
         canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
           && program.clientUserId !== null} onSchedule={planning && ((program.status === 'active' && phaseStatus === 'active') || (!readOnly && onActivateForScheduling)) ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
+        onDeleteSet={!readOnly ? (exerciseId, setId) => setDeletingSet({ dayId: item.day.id, exerciseId, setId }) : undefined}
         onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}
         onExerciseInformation={exerciseId => setExerciseInformation({ dayId: item.day.id, exerciseId })}
         onEdit={() => setDialog({ kind: 'edit', item })}
@@ -163,6 +203,14 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     {exerciseInformation ? <Suspense fallback={<Text variant="footnote">Загружаем информацию…</Text>}><ProgramExerciseInformationSheet key={exerciseInformation.exerciseId}
       repository={repository} programId={program.id} {...exerciseInformation}
       onClose={() => setExerciseInformation(null)} onNavigationContextChange={onNavigationContextChange} /></Suspense> : null}
+    <PlanActionDialog onClose={() => setDeletingSet(null)} dialog={deletingSet ? {
+      kind: 'confirm', title: 'Удалить подход?', confirmLabel: 'Удалить', destructive: true,
+      description: 'Подход будет удалён из программы. История выполненных тренировок сохранится.',
+      onConfirm: async () => {
+        await repository.deleteExerciseSet(program.id, deletingSet.dayId, deletingSet.exerciseId, deletingSet.setId);
+        if (alive.current) setDeletingSet(null);
+      },
+    } : null} />
     <PlanActionDialog onClose={() => setDeletingExercise(null)} dialog={deletingExercise ? {
       kind: 'confirm', title: 'Удалить упражнение?', confirmLabel: 'Удалить', destructive: true,
       description: 'Упражнение будет удалено из этого дня программы. История тренировок сохранится.',
