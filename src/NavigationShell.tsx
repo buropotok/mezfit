@@ -306,6 +306,24 @@ export function NavigationShell({
   const liquidTabRenderScale = liquidTabScale(shellWidth ?? previewWidth ?? 406);
   const typeScale = responsiveTypographyScale(shellWidth ?? previewWidth ?? 406);
 
+  // Portaled dialogs, hints and speech clouds render under document.body,
+  // outside the app shell. Publish the same derived semantic scale at their
+  // common ancestor, without changing the persisted typography presets.
+  useLayoutEffect(() => {
+    const root = shellRef.current?.ownerDocument.documentElement;
+    if (!root) return undefined;
+
+    const name = '--ui-responsive-type-scale';
+    const previous = root.style.getPropertyValue(name);
+    const previousPriority = root.style.getPropertyPriority(name);
+    root.style.setProperty(name, String(typeScale));
+
+    return () => {
+      if (previous) root.style.setProperty(name, previous, previousPriority);
+      else root.style.removeProperty(name);
+    };
+  }, [typeScale]);
+
   useLayoutEffect(() => {
     const element = shellRef.current;
     if (!element) return undefined;
