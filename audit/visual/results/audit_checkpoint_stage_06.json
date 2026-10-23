@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 6,
   "total_stages": 14,
-  "stage_verified_count": 80,
-  "verified_count": 580,
+  "stage_verified_count": 100,
+  "verified_count": 600,
   "verified_ids": [
     "3637",
     "0059",
@@ -587,20 +587,7 @@
     "0635",
     "0636",
     "0637",
-    "0638"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 41,
-    "confirmed_mismatch": 32,
-    "likely_mismatch": 5,
-    "naming_clarification": 2,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 744,
-  "remaining_ids": [
+    "0638",
     "0639",
     "0640",
     "0642",
@@ -620,7 +607,20 @@
     "0666",
     "0668",
     "0669",
-    "0670",
+    "0670"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 55,
+    "confirmed_mismatch": 36,
+    "likely_mismatch": 6,
+    "naming_clarification": 2,
+    "potential_duplicate": 1,
+    "blocked": 0
+  },
+  "remaining_count": 724,
+  "remaining_ids": [
     "0672",
     "0673",
     "0674",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 581,
-  "next_id": "0639",
-  "next_gif_url": "videos/0639-FAoIFMw.gif",
+  "next_queue_index": 601,
+  "next_id": "0672",
+  "next_gif_url": "videos/0672-NZ5Qqkz.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_06.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Partial stage 06 (80/100). Independently decoded original GIFs and reviewed six real phases per exercise, including 24-frame file 0630. Prior accumulated 500 records preserved."
+  "evidence_note": "Stage 06: all 100 original GIFs from hasaneyldrm/exercises-dataset independently downloaded, decoded, and checked on six actual temporal frames (12/18/24/54 frame GIFs). No original catalogue changes, no physiological activation inferred solely from animation. Contact sheets viewed for audit but not stored as evidence files; original URLs and real frame indices retained. Results must be read back before marking completion."
 }
