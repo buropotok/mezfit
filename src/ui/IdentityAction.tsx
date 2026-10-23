@@ -305,7 +305,7 @@ export function IdentityAction(props: IdentityActionProps) {
           );
 
           return (
-            <Fragment key={action.label}>
+            <Fragment key={index}>
               {action.renderControl ? action.renderControl(control) : control}
             </Fragment>
           );
