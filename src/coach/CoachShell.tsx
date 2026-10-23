@@ -247,7 +247,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   }, [programDetailNavigation, destination, selectedClient, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
-    return <ClientWorkspace client={selectedClient} />;
+    return <ClientWorkspace key={selectedClient.relationshipId} client={selectedClient} />;
   }
 
   if (destination === 'today') {
