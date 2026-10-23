@@ -14,6 +14,7 @@ import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation'
 import { CoachExercises } from '../exercises/CoachExercises';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { CloudProgramsPage } from '../program/CloudProgramsPage';
+import { CoachClientAvatarEditor } from './CoachClientAvatarEditor';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
@@ -73,7 +74,10 @@ function ClientWorkspace({ client }: { client: CloudContact }) {
         {tabs.map((item) => <TabsTrigger key={item.id} value={item.id}>{item.label}</TabsTrigger>)}
       </TabsList>
 
-      <TabsContent value="overview"><Placeholder title="Обзор" text="Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера." /></TabsContent>
+      <TabsContent value="overview">
+        <CoachClientAvatarEditor client={client} />
+        <Placeholder title="Обзор" text="Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера." />
+      </TabsContent>
       <TabsContent value="program"><Placeholder title="Программа" text="Редактор назначенной программы будет следующим вертикальным срезом." /></TabsContent>
       <TabsContent value="exercises"><Placeholder title="Упражнения" text="Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud." /></TabsContent>
       <TabsContent value="calendar"><Placeholder title="Календарь" text="Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence." /></TabsContent>
