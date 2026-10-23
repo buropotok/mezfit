@@ -174,7 +174,7 @@ function WorkoutFactCard({
         data={exercise}
         surface="transparent"
         editable={active}
-        collapsed={collapsedByExerciseId[exercise.sessionExerciseId] ?? false}
+        collapsed={collapsedByExerciseId[exercise.sessionExerciseId] ?? true}
         onCollapsedChange={(collapsed) => {
           setCollapsedByExerciseId((current) => ({
             ...current,
