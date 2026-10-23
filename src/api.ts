@@ -478,7 +478,17 @@ async function clientCompressedProfileSync(initData: string, diagnostic: boolean
     method: 'POST',
     headers: { 'x-telegram-init-data': initData },
   });
-  if (source.status !== 200 && source.status !== 204) {
+  let sourceFailure: 'telegram-unavailable' | 'download-failed' | null = null;
+  if (source.status === 502) {
+    // Telegram can temporarily fail while the verified user's profile name
+    // remains writable. Only fall back for explicitly classified photo failures.
+    const errorPayload: unknown = await source.json().catch(() => null);
+    const code = isRecord(errorPayload) && isRecord(errorPayload.error)
+      ? errorPayload.error.code : null;
+    if (code === 'TELEGRAM_PROFILE_UNAVAILABLE') sourceFailure = 'telegram-unavailable';
+    else if (code === 'TELEGRAM_PHOTO_DOWNLOAD_FAILED') sourceFailure = 'download-failed';
+  }
+  if (source.status !== 200 && source.status !== 204 && !sourceFailure) {
     throw new ApiError(source.status, 'Не удалось получить фотографию Telegram', 'TELEGRAM_AVATAR_SOURCE_FAILED');
   }
   const multipart = source.status === 200;
@@ -508,6 +518,12 @@ async function clientCompressedProfileSync(initData: string, diagnostic: boolean
   const payload: unknown = await result.json();
   if (!isRecord(payload) || typeof payload.changed !== 'boolean') {
     throw new ApiError(502, 'Некорректный ответ обновления профиля', 'INVALID_API_RESPONSE');
+  }
+  // The first verified source error is the truthful diagnostic stage, even if
+  // the subsequent metadata-only sync successfully checks the photo version.
+  if (diagnostic && sourceFailure
+    && (payload.avatarStatus === 'unchanged' || payload.avatarStatus === 'telegram-unavailable')) {
+    return { ...payload, avatarStatus: sourceFailure };
   }
   return payload;
 }
