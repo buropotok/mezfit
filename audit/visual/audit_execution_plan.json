@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "in_progress",
-  "status_reason": "Explicit user-requested retry of incomplete stage 5; resume at ID 0382 without re-reviewing 0381.",
+  "status": "ready",
+  "status_reason": "Stage 5 completed and verified: 100 original GIFs decoded and reviewed, 48 findings; batch_05, issues_batch_05, checkpoint and 500-record accumulated results read back and checked. Next stage 6.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
-  "completed_exercises": 400,
-  "current_stage": 5,
-  "next_stage": 5,
+  "completed_exercises": 500,
+  "current_stage": null,
+  "next_stage": 6,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
@@ -21,13 +21,7 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": {
-    "owner": "chatgpt_visual_audit",
-    "token": "mezfit-stage05-retry-mvka1g5f",
-    "stage": 5,
-    "started_at": "2026-10-23T04:12:43+03:00",
-    "resume_from_id": "0382"
-  },
+  "lock": null,
   "stages": [
     {
       "number": 1,
@@ -493,7 +487,7 @@
     },
     {
       "number": 5,
-      "status": "in_progress",
+      "status": "completed",
       "exercise_ids": [
         "0381",
         "0382",
@@ -601,12 +595,12 @@
         "to": 500
       },
       "result_file": "results/batch_05.jsonl",
-      "results_committed": false,
+      "results_committed": true,
       "started_at": "2026-10-23T03:56:43+03:00",
-      "reviewed_count": 1,
+      "reviewed_count": 100,
       "checkpoint_file": "results/audit_checkpoint_stage_05.json",
-      "status_reason": "Resumed blocked stage 5 by explicit user request",
-      "blocked_at": "2026-10-23T04:01:39+03:00"
+      "status_reason": "100 GIFs verified, records saved and validated; 48 issues",
+      "completed_at": "2026-10-23T04:34:17+03:00"
     },
     {
       "number": 6,
