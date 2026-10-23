@@ -210,11 +210,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     } finally { setBusy(false); }
   };
   const mayEditStructure = Boolean(draft && !readOnly && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
-  const displayedDay = draft ? outline(draft) : null;
+  let displayedDay = draft ? outline(draft) : null;
   if (displayedDay && optimisticOrder) {
     const positions = new Map(optimisticOrder.next.map((id, index) => [id, index]));
-    displayedDay.exercises.sort((a, b) =>
-      (positions.get(a.exercise.id) ?? a.exercise.position) - (positions.get(b.exercise.id) ?? b.exercise.position));
+    displayedDay = { ...displayedDay, exercises: [...displayedDay.exercises].sort((a, b) =>
+      (positions.get(a.exercise.id) ?? a.exercise.position) - (positions.get(b.exercise.id) ?? b.exercise.position)) };
   }
   const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
