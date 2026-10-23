@@ -271,7 +271,7 @@ async function readClientVariants(request: Request): Promise<ClientVariants | nu
     offset += chunk.byteLength;
   }
   const bounded = new Request(request.url, {
-    method: 'POST', headers: request.headers, body: bytes,
+    method: 'POST', headers: request.headers, body: bytes.buffer,
   });
   const form = await bounded.formData();
   const version = form.get('photoVersion');
