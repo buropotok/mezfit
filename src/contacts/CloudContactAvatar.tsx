@@ -8,7 +8,8 @@ export function useCloudContactAvatarUrl(contact: CloudContact | null, variant: 
   const loadAvatar = connections?.loadAvatar;
   const cache = connections?.avatarUrls;
   const avatarLoadRevision = connections?.avatarLoadRevision ?? 0;
-  const identity = contact ? [contact.relationshipId, contact.userId, contact.avatarVersion ?? '', contact.avatarMode ?? 'legacy', variant].join(':') : '';
+  const identity = contact ? [contact.relationshipId, contact.userId, contact.avatarVersion ?? '', contact.avatarMode ?? 'legacy', contact.coachAvatarVersion ?? '',
+    contact.coachAvatarMode ?? '', variant].join(':') : '';
   const [image, setImage] = useState<{ identity: string; src?: string }>();
   const src = contact && cache ? cache.get(contact, variant) : image?.identity === identity ? image.src : undefined;
 
@@ -16,7 +17,7 @@ export function useCloudContactAvatarUrl(contact: CloudContact | null, variant: 
     let active = true;
     let objectUrl: string | undefined;
 
-    if (contact?.avatarVersion && loadAvatar) {
+    if ((contact?.avatarVersion || contact?.coachAvatarVersion) && loadAvatar) {
       const loading = cache ? cache.load(contact, () => loadAvatar(contact, variant), variant) : loadAvatar(contact, variant).then(blob => {
         if (!blob || !active) return undefined;
         objectUrl = URL.createObjectURL(blob);
