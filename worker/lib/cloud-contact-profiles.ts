@@ -1,5 +1,6 @@
 import { validateTelegramInitData, type TelegramInitUser } from './telegram';
 import { optimizeContactAvatar, type ContactAvatarVariant } from './contact-avatar-transform';
+import { isBoundedJpeg } from './bounded-avatar-jpeg';
 import { stableCloudRelationshipId } from '../../shared/relationship-id';
 import {
   cloudMembershipAdminRead,
@@ -206,6 +207,118 @@ function error(status: number, code: string): Response {
   });
 }
 
+/** Only the signed account can request its current Telegram Bot API JPEG.
+ * The Worker forwards bytes; decoding/resizing happens in the browser.
+ */
+export async function currentTelegramAvatarSource(
+  request: Request, env: ContactProfileEnv, fetchImpl: typeof fetch = fetch,
+): Promise<Response> {
+  if (request.method !== 'POST') return error(405, 'METHOD_NOT_ALLOWED');
+  const identity = await validateTelegramInitData(
+    request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
+  );
+  const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
+  const headers = { 'cache-control': 'no-store' };
+  if (photo === undefined) return error(502, 'TELEGRAM_PROFILE_UNAVAILABLE');
+  if (photo === null) return new Response(null, {
+    status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'no-photo' },
+  });
+  // An untrusted browser hint is never enough to skip a photo refresh: read
+  // every currently authorized relationship from the authoritative cloud.
+  // Missing/incomplete realm variants must still trigger the client encoder.
+  const account = 'tg:' + identity.user.id;
+  const bearer = await cloudMembershipAdminToken(env, fetchImpl);
+  const own = await cloudMembershipAdminRead(
+    fetchImpl, bearer, '/all/members?userId=' + encodeURIComponent(account),
+  );
+  if (!Array.isArray(own) || !own.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
+  const eligibleIds: string[] = [];
+  for (const member of own) {
+    if (!realmId(member.realmId)) continue;
+    const pair = await validatedPair(fetchImpl, bearer, member.realmId);
+    const self = pair?.find(row => row.userId === account && row.id === member.id);
+    if (self) eligibleIds.push(await stableCloudRelationshipId('prf', member.realmId + ':' + account));
+  }
+  if (eligibleIds.length > 0) {
+    const existing = await cloudMembershipAdminRead(
+      fetchImpl, bearer, '/all/contactProfiles?userId=' + encodeURIComponent(account),
+    );
+    if (!Array.isArray(existing) || !existing.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
+    const known = new Map(existing.filter(row => typeof row.id === 'string')
+      .map(row => [row.id as string, row]));
+    if (eligibleIds.every(id => known.get(id)?.avatarVersion === photo.version
+      && hasBothAvatars(known.get(id)))) {
+      return new Response(null, {
+        status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'unchanged' },
+      });
+    }
+  }
+  const bytes = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
+  if (!bytes) return error(502, 'TELEGRAM_PHOTO_DOWNLOAD_FAILED');
+  return new Response(bytes, {
+    status: 200,
+    headers: {
+      ...headers,
+      'content-type': 'image/jpeg',
+      'x-mezfit-photo-version': photo.version,
+    },
+  });
+}
+
+type ClientVariants = {
+  version: string;
+  small: ArrayBuffer;
+  large: ArrayBuffer;
+};
+
+async function readClientVariants(request: Request): Promise<ClientVariants | null> {
+  const contentType = request.headers.get('content-type') ?? '';
+  if (!contentType.startsWith('multipart/form-data')) return null;
+  const size = Number(request.headers.get('content-length') ?? '0');
+  if (!Number.isFinite(size) || size < 0 || size > 340_000) throw new Error('INVALID_CLIENT_AVATAR');
+  const reader = request.body?.getReader();
+  if (!reader) throw new Error('INVALID_CLIENT_AVATAR');
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const part = await reader.read();
+    if (part.done) break;
+    total += part.value.byteLength;
+    if (total > 340_000) {
+      await reader.cancel();
+      throw new Error('INVALID_CLIENT_AVATAR');
+    }
+    chunks.push(part.value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const bounded = new Request(request.url, {
+    method: 'POST', headers: request.headers, body: bytes.buffer,
+  });
+  const form = await bounded.formData();
+  const version = form.get('photoVersion');
+  const small = form.get('small');
+  const large = form.get('large');
+  if (typeof version !== 'string' || !/^[a-f0-9]{64}$/.test(version)
+    || !(small instanceof Blob) || !(large instanceof Blob)
+    || small.type !== 'image/jpeg' || large.type !== 'image/jpeg'
+    || small.size < 16 || large.size < 16
+    || small.size > 50_000 || large.size > 245_000) {
+    throw new Error('INVALID_CLIENT_AVATAR');
+  }
+  const [smallBytes, largeBytes] = await Promise.all([small.arrayBuffer(), large.arrayBuffer()]);
+  // Client inputs can bypass Canvas. Validate both JPEG structures and pixel
+  // bounds on the server before storing their BlobRefs in shared realms.
+  if (!isBoundedJpeg(smallBytes, 128) || !isBoundedJpeg(largeBytes, 512)) {
+    throw new Error('INVALID_CLIENT_AVATAR');
+  }
+  return { version, small: smallBytes, large: largeBytes };
+}
+
 /** Privileged, change-only refresh of the signed user's own relationship labels. */
 export async function syncOwnContactProfile(
   request: Request, env: ContactProfileEnv, fetchImpl: typeof fetch = fetch,
@@ -219,6 +332,12 @@ export async function syncOwnContactProfile(
   const identity = await validateTelegramInitData(
     request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
   );
+  let clientVariants: ClientVariants | null;
+  try {
+    clientVariants = await readClientVariants(request);
+  } catch {
+    return error(400, 'INVALID_CLIENT_AVATAR');
+  }
   const account = 'tg:' + identity.user.id;
   const sourceAuthAt = identity.authDate.getTime();
   if (!Number.isSafeInteger(sourceAuthAt) || sourceAuthAt <= 0) {
@@ -252,15 +371,25 @@ export async function syncOwnContactProfile(
     .map((row) => [row.id as string, row]));
 
   const name = profileName(identity.user);
-  // Telegram may reuse the same signed auth_date across Mini App reopenings.
-  // Always re-check the Bot API photo for an authorized, non-stale session.
+  // A signed session's auth_date orders profile names, NOT Telegram photo changes.
+  // Even an older (but still valid) session must check the current Bot API photo.
+  // Never use its old name or timestamp to replace newer cloud identity metadata.
   // Unchanged photos do not download, transform, upload or rewrite profile rows.
-  const eligibleForSession = eligible.filter(({ id }) => !newerSource(known.get(id), sourceAuthAt));
-  if (eligibleForSession.length === 0) return respond(false, 'stale-session');
-
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
-  const needsVariants = photo !== undefined && photo !== null && eligibleForSession.some(({ id }) =>
+  if (clientVariants && (!photo || photo.version !== clientVariants.version)) {
+    return error(409, 'STALE_AVATAR_SOURCE');
+  }
+  const needsVariants = photo !== undefined && photo !== null && eligible.some(({ id }) =>
     known.get(id)?.avatarVersion !== photo.version || !hasBothAvatars(known.get(id)));
+  // A browser that received a 204 (unchanged/no-photo) did not send JPEGs.
+  // If the current photo now needs variants, signal a race rather than report
+  // success and silently skip it. A separately marked upstream 502 must still
+  // be allowed to commit the person's name without changing their last avatar.
+  if (needsVariants && !clientVariants
+    && request.headers.get('x-mezfit-client-avatar-compression') === '1'
+    && request.headers.get('x-mezfit-avatar-source-unavailable') !== '1') {
+    return error(409, 'STALE_AVATAR_SOURCE');
+  }
 
   // One verified Telegram photo is transformed per account, shared as references
   // across the separate realm-scoped contactProfiles of all authorized coaches.
@@ -270,21 +399,25 @@ export async function syncOwnContactProfile(
   if (photo === null) {
     newVersion = null;
     avatarStatus = 'no-photo';
-  } else if (photo && needsVariants) {
+  } else if (photo && needsVariants && (clientVariants || request.headers.get('x-mezfit-client-avatar-compression') !== '1')) {
     avatarStatus = 'download-failed';
     for (const variant of ['small', 'large'] as const) {
-      const reused = eligibleForSession.map(({ id }) =>
+      const reused = eligible.map(({ id }) =>
         reusableAvatar(known.get(id), photo.version, variant)).find((value) => value !== null);
       if (reused) newImages[variant] = reused;
     }
     if (!newImages.small || !newImages.large) {
-      const downloaded = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
-      if (downloaded) {
+      const downloaded = clientVariants
+        ? null
+        : await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
+      if (clientVariants || downloaded) {
         avatarStatus = 'transform-failed';
         for (const variant of ['small', 'large'] as const) {
           if (newImages[variant]) continue;
           try {
-            const encoded = await optimizeContactAvatar(env.IMAGES, downloaded, variant);
+            const encoded = clientVariants
+              ? clientVariants[variant]
+              : downloaded && await optimizeContactAvatar(env.IMAGES, downloaded, variant);
             if (!encoded) continue;
             avatarStatus = 'upload-failed';
             const id = await sha(account + ':' + photo.version + ':' + variant);
@@ -313,12 +446,21 @@ export async function syncOwnContactProfile(
     .map((row) => [row.id as string, row]));
 
   const changed: Row[] = [];
-  for (const entry of eligibleForSession) {
+  let committedAvatarChange = false;
+  for (const entry of eligible) {
     const previous = current.get(entry.id);
-    if (newerSource(previous, sourceAuthAt)) continue;
+    const initiallyKnown = known.get(entry.id);
+    const staleSession = newerSource(previous, sourceAuthAt);
+    if (staleSession) {
+      // A stale signed session may update the avatar, but only if the cloud row
+      // has not changed while its Bot API request was in flight.
+      if (newVersion === undefined || !previous
+        || previous.sourceAuthAt !== initiallyKnown?.sourceAuthAt
+        || (previous.avatarVersion ?? null) !== (initiallyKnown?.avatarVersion ?? null)) continue;
+    }
     // If another check published a different photo while this lookup was in flight,
     // do not let an older equal-auth-date observation replace that newer result.
-    const originallyKnownVersion = known.get(entry.id)?.avatarVersion ?? null;
+    const originallyKnownVersion = initiallyKnown?.avatarVersion ?? null;
     if (previous?.sourceAuthAt === sourceAuthAt
       && (previous.avatarVersion ?? null) !== originallyKnownVersion
       && newVersion !== undefined && newVersion !== previous.avatarVersion) continue;
@@ -327,8 +469,8 @@ export async function syncOwnContactProfile(
     // Telegram initData timestamps have second precision. An equal-timestamp
     // request cannot establish that its name is newer than the persisted one;
     // preserve the committed name while still repairing/replacing photo blobs.
-    const resolvedName = previous?.sourceAuthAt === sourceAuthAt
-      && typeof previous.name === 'string' ? previous.name : name;
+    const resolvedName = previous && typeof previous.name === 'string'
+      && (staleSession || previous.sourceAuthAt === sourceAuthAt) ? previous.name : name;
     const previousVersion = version(previous?.avatarVersion) ? previous.avatarVersion : null;
     const avatarVersion = newVersion === undefined ? previousVersion : newVersion;
     const unchangedSource = avatarVersion !== null && previousVersion === avatarVersion;
@@ -345,6 +487,9 @@ export async function syncOwnContactProfile(
       && sameCloudAvatar(previous.avatarSmall, avatarSmall)
       && sameCloudAvatar(previous.avatarLarge, avatarLarge)
       && sameCloudAvatar(previous.avatar, avatar)) continue;
+    if (newVersion !== undefined && (previousVersion !== avatarVersion
+      || !sameCloudAvatar(previous?.avatarSmall, avatarSmall)
+      || !sameCloudAvatar(previous?.avatarLarge, avatarLarge))) committedAvatarChange = true;
     changed.push({
       id: entry.id,
       realmId: entry.realmId,
@@ -356,10 +501,35 @@ export async function syncOwnContactProfile(
       avatarLarge,
       avatar,
       ...(isBlobRef ? { _hasBlobRefs: 1 } : {}),
-      sourceAuthAt,
+      sourceAuthAt: staleSession ? previous?.sourceAuthAt : sourceAuthAt,
     });
   }
   await cloudMembershipAdminUpsertProfiles(fetchImpl, bearer, changed);
+  if (avatarStatus === 'updated' && !committedAvatarChange) {
+    avatarStatus = 'stale-session';
+  }
+  // A successful blob upload is not proof that a contact profile now points
+  // to it. Verify the committed REST projection when explicitly diagnosing.
+  if (diagnostic && committedAvatarChange) {
+    const stored = await cloudMembershipAdminRead(
+      fetchImpl, bearer, '/all/contactProfiles?userId=' + encodeURIComponent(account),
+    );
+    if (!Array.isArray(stored) || !stored.every(record)) {
+      return respond(false, 'upload-failed');
+    }
+    const saved = new Map<string, Row>();
+    for (const row of stored) {
+      if (record(row) && typeof row.id === 'string') saved.set(row.id, row);
+    }
+    const confirmed = changed.every(row => {
+      if (typeof row.id !== 'string') return false;
+      const actual = saved.get(row.id);
+      return actual !== undefined && actual.avatarVersion === row.avatarVersion
+        && sameCloudAvatar(actual.avatarSmall, row.avatarSmall)
+        && sameCloudAvatar(actual.avatarLarge, row.avatarLarge);
+    });
+    if (!confirmed) return respond(false, 'upload-failed');
+  }
   return respond(changed.length > 0, avatarStatus);
 }
 
