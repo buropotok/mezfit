@@ -101,10 +101,12 @@
   white-space: nowrap;
 }
 
-/* When an optional icon gives way to the title, center the label inside
-   the same pill. Existing ellipsis and press animation remain untouched. */
+/* The base Identity uses asymmetric 2px/14px padding to align its icon.
+   Once no icon is visible, use equal 8px insets so the label is centered
+   within the full pill while preserving the original 16px padding budget. */
 .ui-identity-action--title-centered {
   justify-content: center;
+  padding-inline: var(--ui-space-2);
 }
 
 .ui-identity-action--title-centered .ui-identity-action__title {
