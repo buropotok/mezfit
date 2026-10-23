@@ -334,7 +334,7 @@ export async function syncOwnContactProfile(
     // Telegram initData timestamps have second precision. An equal-timestamp
     // request cannot establish that its name is newer than the persisted one;
     // preserve the committed name while still repairing/replacing photo blobs.
-    const resolvedName = typeof previous?.name === 'string'
+    const resolvedName = previous && typeof previous.name === 'string'
       && (staleSession || previous.sourceAuthAt === sourceAuthAt) ? previous.name : name;
     const previousVersion = version(previous?.avatarVersion) ? previous.avatarVersion : null;
     const avatarVersion = newVersion === undefined ? previousVersion : newVersion;
