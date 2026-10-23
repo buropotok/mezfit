@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "in_progress",
-  "status_reason": "Stage 14 claimed after checking stage 13 and full repository protocols.",
+  "status": "completed",
+  "status_reason": "All 14 stages completed. 1324 original GIF review results committed and checked; no unreviewed exercises remain.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
-  "completed_exercises": 1300,
-  "current_stage": 14,
-  "next_stage": 14,
+  "completed_exercises": 1324,
+  "current_stage": null,
+  "next_stage": null,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
@@ -21,11 +21,7 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": {
-    "run_id": "gpt6-visual-stage14-20261023214516704-xk4rf6xv",
-    "started_at": "2026-10-23T21:45:16.704Z",
-    "stage": 14
-  },
+  "lock": null,
   "stages": [
     {
       "number": 1,
@@ -1544,7 +1540,7 @@
     },
     {
       "number": 14,
-      "status": "in_progress",
+      "status": "completed",
       "exercise_ids": [
         "3644",
         "3645",
@@ -1576,8 +1572,12 @@
         "to": 1324
       },
       "result_file": "results/batch_14.jsonl",
-      "results_committed": false,
-      "started_at": "2026-10-23T21:45:16.704Z"
+      "results_committed": true,
+      "started_at": "2026-10-23T21:45:16.704Z",
+      "reviewed_count": 24,
+      "completed_at": "2026-10-23T21:51:10.396Z",
+      "checkpoint_file": "results/audit_checkpoint_stage_14.json",
+      "status_reason": "24 original GIFs visually inspected. 13 findings. All four artifacts saved, read back and validated; 1324 unique cumulative results."
     }
   ]
 }
