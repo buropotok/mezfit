@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import { createPortal } from 'react-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationShell } from './NavigationShell';
+import { Text } from './ui/primitives';
 
 vi.mock('./client/ClientCoachSelectorModal', () => ({ ClientCoachSelectorModal: () => null }));
 
@@ -88,7 +89,7 @@ describe('responsive semantic typography in NavigationShell', () => {
         onRoleSwitch={vi.fn()}
         previewWidth={320}
       >
-        {createPortal(<span data-testid="portal-title">Portal title</span>, document.body)}
+        {createPortal(<Text variant="headline" data-testid="portal-title">Portal title</Text>, document.body)}
       </NavigationShell>,
     );
     const shell = view.container.querySelector<HTMLElement>('.navigation-shell');
