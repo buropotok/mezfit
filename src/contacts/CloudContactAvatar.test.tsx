@@ -84,7 +84,6 @@ describe('CloudContactAvatar', () => {
     await waitFor(() => expect(document.querySelector('img.ui-avatar')?.getAttribute('src')).toBe('blob:mezfit-portrait'));
   });
 
-
   it('shares the same small Blob URL between the contacts row and navbar identity', async () => {
     cache = new ContactAvatarUrls();
     function NavbarAvatar() {
