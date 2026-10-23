@@ -74,7 +74,7 @@ export function CoachClientAvatarEditor({ client }: { client: CloudContact }) {
     <input
       ref={inputRef}
       type="file"
-      accept="image/*"
+      accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif"
       className="sr-only"
       aria-label="Выбрать фотографию клиента"
       onChange={(event) => { void save(event); }}
