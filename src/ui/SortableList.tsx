@@ -4,6 +4,7 @@ import {
   DndContext,
   DragOverlay,
   closestCenter,
+  defaultDropAnimationSideEffects,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -122,7 +123,10 @@ export function SortableList({
   const overlay = (
     <DragOverlay dropAnimation={preserveListHeightOnDrag ? {
       duration: 180, easing: 'ease-out',
-      sideEffects: () => () => setReservedHeight(null),
+      sideEffects: (args) => {
+        const restore = defaultDropAnimationSideEffects({ styles: { active: { opacity: '0' } } })(args);
+        return () => { restore?.(); setReservedHeight(null); };
+      },
     } : { duration: 180, easing: 'ease-out' }}>
       {activeItem ? <GlassSurface className={`ui-sortable-list__overlay${lockToVerticalAxis ? ' ui-sortable-list__overlay--vertical' : ''}`} preset="modalTuned" halo="lifted">{activeItem.content}</GlassSurface> : null}
     </DragOverlay>
