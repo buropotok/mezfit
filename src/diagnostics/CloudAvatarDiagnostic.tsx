@@ -199,7 +199,7 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
         ? <ol>{trace.map((step, index) => <li key={index}><Text variant="footnote">{stageNames[step]}</Text></li>)}</ol>
         : null}
       {imageUrl && result === 'ok' ? <Avatar name="Контакт" src={imageUrl} /> : null}
-      <p><Text variant="footnote" tone="muted">Отображаются только этапы и количества. Telegram ID, токены, URL и содержимое фотографий не выводятся. Данные облака не изменяются.</Text></p>
+      <p><Text variant="footnote" tone="muted">Отображаются только этапы и количества. Проверка своего фото может обновить ваш профиль в Dexie Cloud; проверка фотографии контакта ничего не записывает. Telegram ID, токены, URL и фотографии текстом не выводятся.</Text></p>
     </section>
   );
 }
