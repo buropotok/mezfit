@@ -62,7 +62,7 @@ export function WorkoutPlanCard({
   const mutate = (action?: () => void) => { if (readOnly) return; if (onMutationAttempt) onMutationAttempt(); else action?.(); };
   const [menuOpen, setMenuOpen] = useState(false);
   const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
-  const [collapsedExercises, setCollapsedExercises] = useState<ReadonlySet<string>>(() => new Set());
+  const [expandedExercises, setExpandedExercises] = useState<ReadonlySet<string>>(() => new Set());
   const scheduleTriggerRef = useRef<HTMLElement>(null);
   const [afterMenu, setAfterMenu] = useState<(() => void) | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -86,11 +86,11 @@ export function WorkoutPlanCard({
   const items = exercises.map((item) => ({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
-      collapsed={collapsedExercises.has(item.exercise.id)}
-      onCollapsedChange={(collapsed) => setCollapsedExercises((current) => {
+      collapsed={!expandedExercises.has(item.exercise.id)}
+      onCollapsedChange={(collapsed) => setExpandedExercises((current) => {
         const next = new Set(current);
-        if (collapsed) next.add(item.exercise.id);
-        else next.delete(item.exercise.id);
+        if (collapsed) next.delete(item.exercise.id);
+        else next.add(item.exercise.id);
         return next;
       })}
       busy={busy} onAddSet={authoringVisible && (onMutationAttempt || onAddSet) ? () => mutate(() => onAddSet?.(item.exercise.id)) : undefined}
@@ -102,7 +102,7 @@ export function WorkoutPlanCard({
   return <article aria-label={`День ${day.name}`}>
     <SortableList items={items} disabled={Boolean(onMutationAttempt) || readOnly || busy || !onReorderExercises} showSeparators={false}
       lockToVerticalAxis syncDropLayout portalOverlay={portalDragOverlay} preserveListHeightOnDrag={preserveDragHeight}
-      onDragStart={() => setCollapsedExercises(new Set(exercises.map((item) => item.exercise.id)))}
+      onDragStart={() => setExpandedExercises(new Set())}
       onReorder={(rows) => mutate(() => onReorderExercises?.(rows.map((row) => String(row.id))))}
       header={<div className="workout-session-card__header">
         <span className="workout-session-card__icon">
