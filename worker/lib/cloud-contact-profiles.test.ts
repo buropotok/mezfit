@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from './dexie-cloud-membership';
 import { currentTelegramAvatarSource, syncOwnContactProfile, type ContactProfileEnv } from './cloud-contact-profiles';
 import { validateTelegramInitData } from './telegram';
+import { validAvatarJpeg } from './test-fixtures/avatar-jpeg';
 
 vi.mock('./telegram', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./telegram')>();
@@ -94,7 +95,7 @@ async function setup() {
       if (uploadFails || (largeUploadFails && written.length === largeJpeg.length)) {
         return new Response(null, { status: 503 });
       }
-      expect([jpeg.length, largeJpeg.length]).toContain(written.length);
+      expect([jpeg.length, largeJpeg.length, validAvatarJpeg.length]).toContain(written.length);
       expect(written.slice(0, 3)).toEqual(new Uint8Array([255, 216, 255]));
       expect(init?.headers).toMatchObject({
         Authorization: 'Bearer manager',
@@ -709,8 +710,8 @@ describe('privileged Telegram contact profile synchronization', () => {
     ), env, cloud.fetchImpl);
     const form = new FormData();
     form.set('photoVersion', source.headers.get('x-mezfit-photo-version')!);
-    form.set('small', new Blob([jpeg.slice().buffer], { type: 'image/jpeg' }), 'small.jpg');
-    form.set('large', new Blob([largeJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
+    form.set('small', new Blob([validAvatarJpeg.slice().buffer], { type: 'image/jpeg' }), 'small.jpg');
+    form.set('large', new Blob([validAvatarJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
     const response = await syncOwnContactProfile(new Request(
       'https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
         method: 'POST', headers: {
@@ -762,6 +763,51 @@ describe('privileged Telegram contact profile synchronization', () => {
     });
     expect(transform).not.toHaveBeenCalled();
     expect(cloud.uploads()).toBe(0);
+  });
+
+  it('rejects browser uploads with malformed or excessive JPEG dimensions before any blob write', async () => {
+    const cloud = await setup();
+    const source = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+      },
+    ), env, cloud.fetchImpl);
+    const jpegWithBadDimension = validAvatarJpeg.slice();
+    const frame = jpegWithBadDimension.findIndex((value, i) =>
+      value === 0xff && jpegWithBadDimension[i + 1] === 0xc0);
+    expect(frame).toBeGreaterThan(0);
+    jpegWithBadDimension[frame + 7] = 0x02;
+    jpegWithBadDimension[frame + 8] = 0x01; // 513px > small limit
+    const form = new FormData();
+    form.set('photoVersion', source.headers.get('x-mezfit-photo-version')!);
+    form.set('small', new Blob([jpegWithBadDimension.buffer], { type: 'image/jpeg' }), 'small.jpg');
+    form.set('large', new Blob([validAvatarJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
+    const response = await syncOwnContactProfile(new Request(
+      'https://mezfit.test/api/cloud/profile/sync', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' }, body: form,
+      },
+    ), env, cloud.fetchImpl);
+    expect(response.status).toBe(400);
+    expect(cloud.uploads()).toBe(0);
+    expect(cloud.postCount()).toBe(0);
+    expect(transform).not.toHaveBeenCalled();
+  });
+
+  it('does not download unchanged JPEG from Telegram when every authorized realm has both variants', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/sync', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    await syncOwnContactProfile(request, env, cloud.fetchImpl);
+    const before = cloud.downloads();
+    const source = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+      },
+    ), env, cloud.fetchImpl);
+    expect(source.status).toBe(204);
+    expect(source.headers.get('x-mezfit-photo-status')).toBe('unchanged');
+    expect(cloud.downloads()).toBe(before);
   });
 
 });
