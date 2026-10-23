@@ -9,12 +9,13 @@ vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
   return {
     ...actual,
-    SortableList: ({ items, header, onDragStart, disabled, lockToVerticalAxis, syncDropLayout }: SortableListProps) =>
+    SortableList: ({ items, header, onDragStart, onReorder, disabled, lockToVerticalAxis, syncDropLayout }: SortableListProps) =>
       <div data-testid="program-sortable-list" data-vertical={String(lockToVerticalAxis)}
         data-sync-drop={String(syncDropLayout)}>
         {header}
         {items.map((item) => <div key={item.id}>{item.content}</div>)}
         <button disabled={disabled} onClick={() => onDragStart?.(items[0].id)}>Поднять карточку</button>
+        <button disabled={disabled} onClick={() => onReorder([...items].reverse())}>Отпустить карточку</button>
       </div>,
   };
 });
@@ -54,6 +55,8 @@ describe('program exercise long-press reordering', () => {
     expect(bodies().map((body) => body.hidden)).toEqual([true, false]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Поднять карточку' }));
+    expect(bodies().map((body) => body.hidden)).toEqual([true, true]);
+    fireEvent.click(screen.getByRole('button', { name: 'Отпустить карточку' }));
     expect(bodies().map((body) => body.hidden)).toEqual([true, true]);
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[1]);
