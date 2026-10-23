@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "in_progress",
-  "status_reason": "Stage 10: original GIF frame inspections in progress",
+  "status": "ready",
+  "status_reason": "Stage 10 complete: 100 original GIFs visually reviewed and 46 findings; batch, CSV, checkpoint and 1000 cumulative entries saved and read back.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
-  "completed_exercises": 900,
-  "current_stage": 10,
-  "next_stage": 10,
+  "completed_exercises": 1000,
+  "current_stage": null,
+  "next_stage": 11,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
@@ -21,12 +21,7 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": {
-    "token": "manual-stage10-20261023-144552-msk",
-    "stage": 10,
-    "started_at": "2026-10-23T14:45:52+03:00",
-    "owner": "manual-user-request"
-  },
+  "lock": null,
   "stages": [
     {
       "number": 1,
@@ -1077,7 +1072,7 @@
     },
     {
       "number": 10,
-      "status": "in_progress",
+      "status": "completed",
       "exercise_ids": [
         "1396",
         "1397",
@@ -1185,8 +1180,12 @@
         "to": 1000
       },
       "result_file": "results/batch_10.jsonl",
-      "results_committed": false,
-      "started_at": "2026-10-23T14:45:52+03:00"
+      "results_committed": true,
+      "started_at": "2026-10-23T14:45:52+03:00",
+      "reviewed_count": 100,
+      "checkpoint_file": "results/audit_checkpoint_stage_10.json",
+      "completed_at": "2026-10-23T14:57:43+03:00",
+      "status_reason": "100 genuine GIF inspections, 46 findings, all batch and cumulative artifacts validated"
     },
     {
       "number": 11,
