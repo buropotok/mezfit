@@ -898,7 +898,7 @@ describe('privileged Telegram contact profile synchronization', () => {
 
   it('reports no photo without downloading or writing anything during source inspection', async () => {
     const cloud = await setup();
-    cloud.setPhoto(null);
+    cloud.removePhoto();
     const response = await currentTelegramAvatarSource(new Request(
       'https://mezfit.test/api/cloud/profile/source?diagnostic=1', {
         method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
