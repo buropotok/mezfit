@@ -621,6 +621,25 @@ export class ProgramManagementRepository {
     });
   }
 
+  async deleteExerciseSet(id: string, dayId: string, exerciseId: string, setId: string): Promise<void> {
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises',
+      'programSets'], async () => {
+      const current = await this.currentParent(plan);
+      await this.currentDay(current, dayId);
+      const exercise = await this.db.programExercises.get(exerciseId);
+      if (!exercise || exercise.programDayId !== dayId || !belongsToPlan(exercise, current)
+        || exercise.status !== 'active') throw new Error('Упражнение не найдено');
+      const set = await this.db.programSets.get(setId);
+      if (!set || set.programExerciseId !== exerciseId || !belongsToPlan(set, current)
+        || set.status !== 'active') throw new Error('Подход не найден');
+      await this.beginChange(current);
+      // Preserve source identity for historical sessions and late synchronization.
+      await this.db.programSets.update(setId, { status: 'deprecated' });
+    });
+  }
+
   /** Explicit owner opt-in: copy the edited occurrence prescription back into its source day.
    * Keep the scheduled occurrence independent. Reject stale template versions. */
   async applyOccurrencePlan(id: string, dayId: string, edited: WorkoutOccurrencePlan,
