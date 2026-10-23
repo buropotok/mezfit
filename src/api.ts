@@ -471,6 +471,39 @@ export async function getDexieCloudTokens(
   return result;
 }
 
+/** Explicit read-only source inspection; the Bot API image never enters application storage. */
+export type TelegramAvatarSourceComparison = 'same' | 'different' | 'mixed' | 'not-stored';
+
+export async function inspectTelegramAvatarSource(
+  initData: string, signal?: AbortSignal,
+): Promise<{ comparison: TelegramAvatarSourceComparison | 'no-photo'; image: Blob | null }> {
+  if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');
+  const response = await fetch('/api/cloud/profile/source?diagnostic=1', {
+    method: 'POST', headers: { 'x-telegram-init-data': initData }, signal,
+  });
+  if (response.status === 204) {
+    if (response.headers.get('x-mezfit-photo-status') !== 'no-photo') {
+      throw new ApiError(502, 'Некорректный ответ проверки фотографии Telegram', 'INVALID_API_RESPONSE');
+    }
+    return { comparison: 'no-photo', image: null };
+  }
+  if (!response.ok) {
+    throw new ApiError(response.status, 'Не удалось получить фотографию Telegram', 'TELEGRAM_AVATAR_SOURCE_FAILED');
+  }
+  const comparison = response.headers.get('x-mezfit-photo-comparison');
+  const length = Number(response.headers.get('content-length') ?? '0');
+  if (response.status !== 200 || response.headers.get('content-type') !== 'image/jpeg'
+    || !['same', 'different', 'mixed', 'not-stored'].includes(comparison ?? '')
+    || !Number.isFinite(length) || length > 20_000_000) {
+    throw new ApiError(502, 'Некорректный ответ проверки фотографии Telegram', 'INVALID_API_RESPONSE');
+  }
+  const image = await response.blob();
+  if (image.type !== 'image/jpeg' || image.size < 16 || image.size > 20_000_000) {
+    throw new ApiError(502, 'Некорректная фотография Telegram', 'INVALID_TELEGRAM_AVATAR_SOURCE');
+  }
+  return { comparison: comparison as TelegramAvatarSourceComparison, image };
+}
+
 /** Browser-only image encoding; Worker only authenticates, fetches Telegram bytes and writes cloud references. */
 async function clientCompressedProfileSync(initData: string, diagnostic: boolean): Promise<unknown> {
   if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');
