@@ -29,8 +29,18 @@ vi.mock('../contacts/CloudContactsList', () => ({
   }) => <button onClick={() => onSelect(contacts[0])}>Выбрать клиента</button>,
 }));
 
-beforeEach(() => { navbarAvatarUrl = undefined; });
-afterEach(cleanup);
+beforeEach(() => {
+  navbarAvatarUrl = undefined;
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  });
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe('coach client navbar identity', () => {
   it('receives the small cloud avatar URL when the image finishes loading', async () => {
