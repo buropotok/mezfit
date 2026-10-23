@@ -1,5 +1,6 @@
 import { validateTelegramInitData, type TelegramInitUser } from './telegram';
 import { optimizeContactAvatar, type ContactAvatarVariant } from './contact-avatar-transform';
+import { isBoundedJpeg } from './bounded-avatar-jpeg';
 import { stableCloudRelationshipId } from '../../shared/relationship-id';
 import {
   cloudMembershipAdminRead,
@@ -310,11 +311,11 @@ async function readClientVariants(request: Request): Promise<ClientVariants | nu
     throw new Error('INVALID_CLIENT_AVATAR');
   }
   const [smallBytes, largeBytes] = await Promise.all([small.arrayBuffer(), large.arrayBuffer()]);
-  const jpeg = (bytes: ArrayBuffer) => {
-    const b = new Uint8Array(bytes);
-    return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
-  };
-  if (!jpeg(smallBytes) || !jpeg(largeBytes)) throw new Error('INVALID_CLIENT_AVATAR');
+  // Client inputs can bypass Canvas. Validate both JPEG structures and pixel
+  // bounds on the server before storing their BlobRefs in shared realms.
+  if (!isBoundedJpeg(smallBytes, 128) || !isBoundedJpeg(largeBytes, 512)) {
+    throw new Error('INVALID_CLIENT_AVATAR');
+  }
   return { version, small: smallBytes, large: largeBytes };
 }
 
