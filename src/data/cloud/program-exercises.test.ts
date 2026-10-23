@@ -127,6 +127,22 @@ describe('program exercise authoring', () => {
     expect(exercises?.every(item => item.sets.length === 0)).toBe(true);
     expect(exercises?.every(item => item.exercise.realmId === 'tg:101' && item.exercise.owner === 'tg:101')).toBe(true);
   });
+  it.each([false, true])('persists reordered exercises for the coach (assigned: %s)', async (assigned) => {
+    const { db, repo, planId, dayId } = await fixture(assigned);
+    await repo.addDayExercises(planId, dayId, ['0001', '0002']);
+    const before = (await repo.details(planId))?.days?.[0].exercises.map(item => item.exercise.id) ?? [];
+    const revision = (await db.table('localProgramSync').get(planId)).revision;
+    await repo.reorderDayExercises(planId, dayId, [...before].reverse());
+    db.close(); await db.open();
+    expect((await repo.details(planId))?.days?.[0].exercises.map(item => item.exercise.id))
+      .toEqual([...before].reverse());
+    expect((await db.table('localProgramSync').get(planId)).revision).toBe(revision + 1);
+    if (assigned) {
+      const client = new ProgramManagementRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+      await expect(client.reorderDayExercises(planId, dayId, before)).rejects.toThrow('прав');
+    }
+  });
+
   it('rolls back the whole selection when a later record is missing', async () => {
     const { db, repo, planId, dayId } = await fixture();
     await expect(repo.addDayExercises(planId, dayId, ['0001', '9999'])).rejects.toThrow();
