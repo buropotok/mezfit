@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { diagnoseCloudContactProfileSync, syncCloudContactProfile } from './api';
+import { diagnoseCloudContactProfileSync, inspectTelegramAvatarSource, syncCloudContactProfile } from './api';
 import { compressTelegramAvatar } from './media/telegram-avatar-compress';
 
 vi.mock('./media/telegram-avatar-compress', () => ({
@@ -181,4 +181,70 @@ describe('client-only Telegram avatar compression API flow', () => {
     expect(compressTelegramAvatar).toHaveBeenCalledTimes(1);
   });
 
+});
+
+describe('read-only Telegram Bot API photo inspection', () => {
+  const payload = new Blob([new Uint8Array(36)], { type: 'image/jpeg' });
+
+  it('downloads matching source bytes without compression or cloud writes', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe('/api/cloud/profile/source?diagnostic=1');
+      expect(init?.method).toBe('POST');
+      expect(init?.headers).toEqual({ 'x-telegram-init-data': 'signed' });
+      return new Response(payload, {
+        headers: { 'content-type': 'image/jpeg', 'x-mezfit-photo-comparison': 'same' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await inspectTelegramAvatarSource('signed');
+    expect(result.comparison).toBe('same');
+    expect(result.image?.size).toBe(36);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(compressTelegramAvatar).not.toHaveBeenCalled();
+  });
+
+  it('reports an unsaved version and supports cancellation of the read', async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn<typeof fetch>(async (_input, init) => {
+      expect(init?.signal).toBe(controller.signal);
+      return new Response(payload, {
+        headers: { 'content-type': 'image/jpeg', 'x-mezfit-photo-comparison': 'different' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await inspectTelegramAvatarSource('signed', controller.signal)).comparison).toBe('different');
+  });
+
+  it('handles no visible Telegram photo without inspecting cloud or starting image decoding', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, {
+      status: 204, headers: { 'x-mezfit-photo-status': 'no-photo' },
+    })));
+    expect(await inspectTelegramAvatarSource('signed')).toEqual({ comparison: 'no-photo', image: null });
+    expect(compressTelegramAvatar).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed status, mime, comparison and oversized binary data', async () => {
+    for (const response of [
+      new Response(null, { status: 204, headers: { 'x-mezfit-photo-status': 'unchanged' } }),
+      new Response(payload, { headers: { 'content-type': 'image/png', 'x-mezfit-photo-comparison': 'same' } }),
+      new Response(payload, { headers: { 'content-type': 'image/jpeg', 'x-mezfit-photo-comparison': 'unexpected' } }),
+      new Response(payload, { headers: {
+        'content-type': 'image/jpeg', 'x-mezfit-photo-comparison': 'same', 'content-length': '20000001',
+      } }),
+      new Response(new Blob(['short'], { type: 'image/jpeg' }), {
+        headers: { 'content-type': 'image/jpeg', 'x-mezfit-photo-comparison': 'same' },
+      }),
+    ]) {
+      vi.stubGlobal('fetch', vi.fn(async () => response));
+      await expect(inspectTelegramAvatarSource('signed')).rejects.toThrow();
+    }
+  });
+
+  it('requires signed Telegram identity and surfaces Worker errors safely', async () => {
+    const fetchMock = vi.fn(async () => Response.json({ error: { code: 'TELEGRAM_PROFILE_UNAVAILABLE' } }, { status: 502 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(inspectTelegramAvatarSource('')).rejects.toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
+    await expect(inspectTelegramAvatarSource('signed')).rejects.toThrow('Не удалось получить фотографию Telegram');
+  });
 });
