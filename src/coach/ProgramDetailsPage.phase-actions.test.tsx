@@ -91,6 +91,8 @@ describe('ProgramDetailsPage phase actions', () => {
     expect(await screen.findByRole('heading', { name: 'Добавить упражнение' })).toBeTruthy();
     expect(await screen.findByText('Bench Press')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Опции упражнения' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
     expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Открыть подход 3' })).toBeTruthy();
 
