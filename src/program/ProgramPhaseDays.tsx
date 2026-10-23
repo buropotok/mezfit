@@ -43,7 +43,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   useSpotlightHintPause(exerciseInformation !== null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const [deletingSet, setDeletingSet] = useState<{ dayId: string; exerciseId: string; setId: string } | null>(null);
-  const [optimisticExerciseOrders, setOptimisticExerciseOrders] = useState<Record<string, string[]>>({});
+  const [optimisticExerciseOrders, setOptimisticExerciseOrders] = useState<Record<string, { previous: string[]; next: string[] }>>({});
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
   const authorId = planAuthorUserId(program);
@@ -73,9 +73,9 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       for (const [dayId, order] of Object.entries(current)) {
         const day = days.find((item) => item.day.id === dayId);
         const actual = day?.exercises.map((item) => item.exercise.id);
-        if (!actual || actual.length !== order.length
-          || actual.some((id) => !order.includes(id))
-          || actual.every((id, index) => id === order[index])) delete next[dayId];
+        // Any canonical change (including a concurrent reorder) supersedes the preview.
+        if (!actual || actual.length !== order.previous.length
+          || actual.some((id, index) => id !== order.previous[index])) delete next[dayId];
       }
       return Object.keys(next).length === Object.keys(current).length ? current : next;
     });
@@ -83,7 +83,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const displayDays = days.map((item) => {
     const order = optimisticExerciseOrders[item.day.id];
     if (!order) return item;
-    const positions = new Map(order.map((id, index) => [id, index]));
+    const positions = new Map(order.next.map((id, index) => [id, index]));
     return { ...item, exercises: [...item.exercises].sort((a, b) =>
       (positions.get(a.exercise.id) ?? a.exercise.position) - (positions.get(b.exercise.id) ?? b.exercise.position)) };
   });
@@ -159,12 +159,14 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       <WorkoutSessionCard mode="planning" day={item} programName={program.name}
         onReorderExercises={(ids) => {
           if (running.current || readOnly) return;
-          setOptimisticExerciseOrders((current) => ({ ...current, [item.day.id]: ids }));
+          setOptimisticExerciseOrders((current) => ({ ...current, [item.day.id]: {
+            previous: item.exercises.map((entry) => entry.exercise.id), next: ids,
+          } }));
           void run(async () => {
             try { await repository.reorderDayExercises(program.id, item.day.id, ids); }
             catch (reason) {
               if (alive.current) setOptimisticExerciseOrders((current) => {
-                if (current[item.day.id] !== ids) return current;
+                if (current[item.day.id]?.next !== ids) return current;
                 const next = { ...current };
                 delete next[item.day.id];
                 return next;
