@@ -93,6 +93,12 @@ describe('scheduled workout reorder inside a scrollable bottom sheet', () => {
     } };
     view.rerender(<OccurrenceDraftSheet {...props} draft={canonical} />);
     await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('second,first'));
+
+    // A later authoritative content change wins over a stale local preview.
+    view.rerender(<OccurrenceDraftSheet {...props} draft={{ ...canonical, plan: {
+      ...canonical.plan, exercises: [canonical.plan.exercises[0]],
+    } }} />);
+    await waitFor(() => expect(screen.getByTestId('exercise-order').textContent).toBe('second'));
   });
 
   it('rolls the immediate order back when the draft repository rejects the reorder', async () => {
