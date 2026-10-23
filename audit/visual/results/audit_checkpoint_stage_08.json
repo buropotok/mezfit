@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 8,
   "total_stages": 14,
-  "stage_verified_count": 45,
-  "verified_count": 745,
+  "stage_verified_count": 75,
+  "verified_count": 775,
   "verified_ids": [
     "3637",
     "0059",
@@ -752,20 +752,7 @@
     "0999",
     "1001",
     "1002",
-    "1003"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 19,
-    "confirmed_mismatch": 19,
-    "likely_mismatch": 4,
-    "naming_clarification": 2,
-    "potential_duplicate": 1,
-    "blocked": 0
-  },
-  "remaining_count": 579,
-  "remaining_ids": [
+    "1003",
     "1004",
     "1005",
     "1007",
@@ -795,7 +782,20 @@
     "1263",
     "1264",
     "1265",
-    "1266",
+    "1266"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 31,
+    "confirmed_mismatch": 36,
+    "likely_mismatch": 5,
+    "naming_clarification": 2,
+    "potential_duplicate": 1,
+    "blocked": 0
+  },
+  "remaining_count": 549,
+  "remaining_ids": [
     "1267",
     "1268",
     "1269",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 746,
-  "next_id": "1004",
-  "next_gif_url": "videos/1004-TUZLh71.gif",
+  "next_queue_index": 776,
+  "next_id": "1267",
+  "next_gif_url": "videos/1267-MKIelrR.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_08.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частичный этап 08 — 45/100 оригинальных GIF просмотрено по шести кадрам каждого. Остальные 55 на этом этапе пока не засчитаны. Накопленный 700-строчный реестр предыдущих этапов не затронут."
+  "evidence_note": "Частичный этап 08 — 75 оригинальных GIF проверены по шести декодированным кадрам каждый (1160,1201: 30-кадровые), ещё 25 результатов этапа до сохранения не засчитаны. Накопленный реестр 700 завершённых этапов не изменён."
 }
