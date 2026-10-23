@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
@@ -21,10 +21,16 @@ vi.mock('../data/cloud/workout-planning', () => ({
 vi.mock('../program/ProgramClientPicker', () => ({ ProgramClientPicker: ({ opened, onSelect }: { opened: boolean; onSelect: (client: { userId: string }) => void }) =>
   opened ? <button onClick={() => onSelect({ userId: 'tg:303' })}>Выбрать Анну</button> : null }));
 vi.mock('../program/CloudProgramDetailsPage', () => ({
-  CloudProgramDetailsPage: ({ planId, readOnly, selectionMode }: { planId: string; readOnly?: boolean; selectionMode?: boolean }) =>
-    <div data-testid="program-details" data-plan={planId} data-readonly={Boolean(readOnly)} data-selection={Boolean(selectionMode)} />,
+  CloudProgramDetailsPage: ({ planId, readOnly, selectionMode, onSelectionMutationAttempt }: {
+    planId: string; readOnly?: boolean; selectionMode?: boolean; onSelectionMutationAttempt?: () => void;
+  }) =>
+    <div data-testid="program-details" data-plan={planId} data-readonly={Boolean(readOnly)} data-selection={Boolean(selectionMode)}>
+      {selectionMode && !readOnly ? <button onClick={onSelectionMutationAttempt}>Попытаться изменить план</button> : null}
+    </div>,
 }));
 vi.mock('konsta/react', () => ({
+  Toast: ({ opened, role, children }: { opened: boolean; role?: string; children: ReactNode }) =>
+    opened ? <div role={role}>{children}</div> : null,
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button disabled={disabled} onClick={onClick}>{children}</button>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -53,9 +59,40 @@ const open = (role: 'coach' | 'client' = 'client') =>
   render(<ScheduleWorkoutCreator intent="workout" role={role}
     onClose={vi.fn()} onCreated={vi.fn()} onNavigationContextChange={vi.fn()} />);
 beforeEach(() => { vi.clearAllMocks(); state.coaches = []; state.readable.mockResolvedValue([assigned]); state.authorable.mockResolvedValue([personal]); });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe('calendar program source permissions', () => {
+  it('shows a timed Konsta toast when attempting to edit a program before scheduling', async () => {
+    state.readable.mockResolvedValue([personal]);
+    const onCreated = vi.fn();
+    render(<ScheduleWorkoutCreator intent="workout" role="client"
+      onClose={vi.fn()} onCreated={onCreated} onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Личная Активная' }));
+
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'Попытаться изменить план' }));
+    const message = 'Нажмите Запланировать, чтобы начать изменение плана тренировки';
+    expect(screen.getByRole('status').textContent).toBe(message);
+    expect(onCreated).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(2900));
+    fireEvent.click(screen.getByRole('button', { name: 'Попытаться изменить план' }));
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.getByRole('status').textContent).toBe(message);
+
+    act(() => vi.advanceTimersByTime(2800));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(onCreated).not.toHaveBeenCalled();
+  });
+
+  it('does not show the edit toast on the ordinary program chooser', async () => {
+    open();
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
+    await screen.findByRole('button', { name: 'От тренера Активная' });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('lists active coach assignments before opening an athlete-readable source', async () => {
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать из программы' }));
