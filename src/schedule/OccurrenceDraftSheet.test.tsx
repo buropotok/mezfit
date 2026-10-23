@@ -50,10 +50,10 @@ vi.mock('../ui', () => ({
   DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) => {
     overlayProbe.dates += 1;
     return opened ? <div>
-    <button onClick={() => onChange('2026-10-20')}>Занятая дата</button>
-    <button onClick={() => onChange('invalid')}>Некорректная дата</button>
-    <button onClick={() => onChange('2026-10-21')}>Свободная дата</button>
-  </div> : null;
+      <button onClick={() => onChange('2026-10-20')}>Занятая дата</button>
+      <button onClick={() => onChange('invalid')}>Некорректная дата</button>
+      <button onClick={() => onChange('2026-10-21')}>Свободная дата</button>
+    </div> : null;
   },
   Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
   MezfitBottomSheet: ({ children, opened, id, onTransitionEnd }: { children: ReactNode; opened: boolean;
