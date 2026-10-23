@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 5,
   "total_stages": 14,
-  "stage_verified_count": 40,
-  "verified_count": 440,
+  "stage_verified_count": 64,
+  "verified_count": 464,
   "verified_ids": [
     "3637",
     "0059",
@@ -447,20 +447,7 @@
     "0420",
     "0421",
     "0422",
-    "0423"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 23,
-    "confirmed_mismatch": 8,
-    "likely_mismatch": 5,
-    "naming_clarification": 4,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 884,
-  "remaining_ids": [
+    "0423",
     "0424",
     "0425",
     "0426",
@@ -484,7 +471,20 @@
     "0450",
     "0451",
     "0453",
-    "0454",
+    "0454"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 35,
+    "confirmed_mismatch": 15,
+    "likely_mismatch": 7,
+    "naming_clarification": 6,
+    "potential_duplicate": 1,
+    "blocked": 0
+  },
+  "remaining_count": 860,
+  "remaining_ids": [
     "0455",
     "0456",
     "0457",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 441,
-  "next_id": "0424",
-  "next_gif_url": "videos/0424-ocYc6Db.gif",
+  "next_queue_index": 465,
+  "next_id": "0455",
+  "next_gif_url": "videos/0455-awG04cF.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_05.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частичный результат 40/100 этапа №5: просмотрены реальные декодированные GIF с шестью фазами на запись (12 кадров в основном, 0414 — 24). Остальные 60 на этом этапе не засчитаны. Накопленный реестр завершённых этапов (400) не изменён."
+  "evidence_note": "Частичный этап 64/100: GIF реально декодированы и изучены (по шести фазам; 0439 — 24 кадра). Полный этап ещё не завершён. Файл результатов завершённых этапов (400 записей) не менялся."
 }
