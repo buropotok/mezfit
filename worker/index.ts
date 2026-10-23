@@ -26,7 +26,7 @@ import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
 import { handleCloudSchedulingConfirm } from './lib/cloud-scheduling-api';
 export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coordinator';
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
-import { syncOwnContactProfile } from './lib/cloud-contact-profiles';
+import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 
 type Role = 'coach' | 'client';
 
@@ -306,6 +306,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return handleDexieCloudTokenRoute(request, env);
   }
 
+  if (url.pathname === '/api/cloud/profile/source') {
+    return currentTelegramAvatarSource(request, env);
+  }
   if (url.pathname === '/api/cloud/profile/sync') {
     return syncOwnContactProfile(request, env);
   }
