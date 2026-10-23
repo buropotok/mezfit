@@ -476,7 +476,10 @@ export type TelegramAvatarSourceComparison = 'same' | 'different' | 'mixed' | 'n
 
 export async function inspectTelegramAvatarSource(
   initData: string, signal?: AbortSignal,
-): Promise<{ comparison: TelegramAvatarSourceComparison | 'no-photo'; image: Blob | null }> {
+): Promise<
+  | { comparison: 'no-photo'; image: null }
+  | { comparison: TelegramAvatarSourceComparison; image: Blob }
+> {
   if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');
   const response = await fetch('/api/cloud/profile/source?diagnostic=1', {
     method: 'POST', headers: { 'x-telegram-init-data': initData }, signal,
