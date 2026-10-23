@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "ready",
+  "status": "in_progress",
   "status_reason": "Stage 4 completed and verified: 100 original GIFs reviewed, 32 issues saved; batch_04, issues_batch_04, checkpoint and accumulated results checked. Next stage 5.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
   "completed_exercises": 400,
-  "current_stage": null,
+  "current_stage": 5,
   "next_stage": 5,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
@@ -21,7 +21,12 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": null,
+  "lock": {
+    "owner": "chatgpt_visual_audit",
+    "token": "mezfit-stage05-mvk9fljx-ztjdzbgd",
+    "started_at": "2026-10-23T03:56:43+03:00",
+    "stage": 5
+  },
   "stages": [
     {
       "number": 1,
@@ -487,7 +492,7 @@
     },
     {
       "number": 5,
-      "status": "pending",
+      "status": "in_progress",
       "exercise_ids": [
         "0381",
         "0382",
@@ -595,7 +600,8 @@
         "to": 500
       },
       "result_file": "results/batch_05.jsonl",
-      "results_committed": false
+      "results_committed": false,
+      "started_at": "2026-10-23T03:56:43+03:00"
     },
     {
       "number": 6,
