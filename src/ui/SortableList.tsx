@@ -123,6 +123,14 @@ export function SortableList({
   const overlay = (
     <DragOverlay dropAnimation={preserveListHeightOnDrag ? {
       duration: 180, easing: 'ease-out',
+      keyframes: ({ transform: { initial, final } }) => {
+        const from = CSS.Transform.toString(initial);
+        const to = CSS.Transform.toString(final);
+        // dnd-kit skips its animation (and sideEffects cleanup) for identical
+        // keyframes. Release the reserved scroll height on that path too.
+        if (from === to) setReservedHeight(null);
+        return [{ transform: from }, { transform: to }];
+      },
       sideEffects: (args) => {
         const restore = defaultDropAnimationSideEffects({ styles: { active: { opacity: '0' } } })(args);
         return () => { restore?.(); setReservedHeight(null); };
