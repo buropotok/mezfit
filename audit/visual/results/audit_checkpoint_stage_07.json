@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 7,
   "total_stages": 14,
-  "stage_verified_count": 12,
-  "verified_count": 612,
+  "stage_verified_count": 24,
+  "verified_count": 624,
   "verified_ids": [
     "3637",
     "0059",
@@ -619,20 +619,7 @@
     "0687",
     "0688",
     "0689",
-    "0690"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 6,
-    "confirmed_mismatch": 4,
-    "likely_mismatch": 2,
-    "naming_clarification": 0,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 712,
-  "remaining_ids": [
+    "0690",
     "0691",
     "0696",
     "0697",
@@ -644,7 +631,20 @@
     "0717",
     "0720",
     "0721",
-    "0725",
+    "0725"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 9,
+    "confirmed_mismatch": 12,
+    "likely_mismatch": 3,
+    "naming_clarification": 0,
+    "potential_duplicate": 0,
+    "blocked": 0
+  },
+  "remaining_count": 700,
+  "remaining_ids": [
     "0727",
     "0730",
     "0735",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 613,
-  "next_id": "0691",
-  "next_gif_url": "videos/0691-Y9hNPcN.gif",
+  "next_queue_index": 625,
+  "next_id": "0727",
+  "next_gif_url": "videos/0727-fKZgDEO.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_07.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Неполный этап №7: фактически декодированы и просмотрены первые 12 GIF, по шести фазам каждый. Приоритеты — предварительные по наблюдаемой механике. 600 исходных результатов завершённых этапов не изменены."
+  "evidence_note": "Частичный этап №7, просмотрено 24/100. Реальные GIF покадрово декодированы, шесть фаз просмотрены для каждого. Аккумулированные результаты первых 600 остаются неизменными."
 }
