@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 5,
   "total_stages": 14,
-  "stage_verified_count": 4,
-  "verified_count": 404,
+  "stage_verified_count": 10,
+  "verified_count": 410,
   "verified_ids": [
     "3637",
     "0059",
@@ -411,26 +411,26 @@
     "0381",
     "0382",
     "0383",
-    "0385"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 2,
-    "confirmed_mismatch": 1,
-    "likely_mismatch": 0,
-    "naming_clarification": 1,
-    "potential_duplicate": 0,
-    "blocked": 0
-  },
-  "remaining_count": 920,
-  "remaining_ids": [
+    "0385",
     "0386",
     "0387",
     "0388",
     "0389",
     "0390",
-    "0391",
+    "0391"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 7,
+    "confirmed_mismatch": 2,
+    "likely_mismatch": 0,
+    "naming_clarification": 1,
+    "potential_duplicate": 0,
+    "blocked": 0
+  },
+  "remaining_count": 914,
+  "remaining_ids": [
     "0392",
     "0393",
     "0394",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 405,
-  "next_id": "0386",
-  "next_gif_url": "videos/0386-prbWx1D.gif",
+  "next_queue_index": 411,
+  "next_id": "0392",
+  "next_gif_url": "videos/0392-Ys97II0.gif",
   "priority_first_count": 82,
   "current_stage_results": "results/batch_05.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Неполный этап (4/100): по шести реальным кадрам проверены 0381,0382,0383,0385 (12 кадров каждый, 180x180). Пакетная обработка 6 GIF вызвала AioRpcError: непроверенные анимации не засчитаны. Накопленный завершённый реестр из 400 записей остаётся неизменным."
+  "evidence_note": "Частичный этап (10/100), оригинальные 12-кадровые GIF 180×180 декодированы и визуально проверены по шести реальным фазам каждого упражнения. Накопленный реестр завершённых этапов (400) не изменён."
 }
