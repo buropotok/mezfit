@@ -146,6 +146,7 @@ describe('WorkoutSessionScreen mutation reconciliation', () => {
     expect(screen.getByTestId('sortable-order').textContent).toBe('2,1');
     await waitFor(() => expect(reorderMock).toHaveBeenCalledTimes(1));
 
+    fireEvent.click(screen.getByText('Exercise 1').closest('button')!);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
     expect(saveSetMock).not.toHaveBeenCalled();
