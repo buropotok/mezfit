@@ -17,6 +17,10 @@ export interface WorkoutPlanCardProps {
   hideProgramMenu?: boolean;
   hideWorkoutActions?: boolean;
   onReorderExercises?: (ids: string[]) => void;
+  /** Use the viewport as the drag-overlay coordinate space inside animated sheets. */
+  portalDragOverlay?: boolean;
+  /** Keep the scrollable sheet at its current offset while exercise cards collapse. */
+  preserveDragHeight?: boolean;
   day: CloudProgramDayOutline;
   creatorName: string;
   creatorAvatar?: ReactNode;
@@ -48,7 +52,8 @@ PlanGlassButton.displayName = 'PlanGlassButton';
 export function WorkoutPlanCard({
   day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule,
   hideProgramMenu = false, hideWorkoutActions = false, hideProgramName = false,
-  onReorderExercises, creatorName, creatorAvatar, readOnly = false, busy = false,
+  onReorderExercises, portalDragOverlay = false, preserveDragHeight = false,
+  creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
   onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt,
 }: WorkoutPlanCardProps) {
@@ -96,7 +101,7 @@ export function WorkoutPlanCard({
   }));
   return <article aria-label={`День ${day.name}`}>
     <SortableList items={items} disabled={Boolean(onMutationAttempt) || readOnly || busy || !onReorderExercises} showSeparators={false}
-      lockToVerticalAxis syncDropLayout
+      lockToVerticalAxis syncDropLayout portalOverlay={portalDragOverlay} preserveListHeightOnDrag={preserveDragHeight}
       onDragStart={() => setCollapsedExercises(new Set(exercises.map((item) => item.exercise.id)))}
       onReorder={(rows) => mutate(() => onReorderExercises?.(rows.map((row) => String(row.id))))}
       header={<div className="workout-session-card__header">

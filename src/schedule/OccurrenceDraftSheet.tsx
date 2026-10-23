@@ -87,6 +87,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(() => draft ? drafts.pendingEditError(draft.id) : '');
+  const [optimisticOrder, setOptimisticOrder] = useState<{ previous: string; next: string[] } | null>(null);
+  const canonicalOrder = JSON.stringify(draft?.plan.exercises.map(exercise => exercise.id) ?? []);
+  useEffect(() => {
+    setOptimisticOrder((current) => current && current.previous !== canonicalOrder ? null : current);
+  }, [canonicalOrder]);
   const startRef = useRef<HTMLSpanElement>(null);
   const endRef = useRef<HTMLSpanElement>(null);
   const validating = useRef<Promise<void>>(Promise.resolve());
@@ -143,6 +148,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       if (timing && intent !== timingIntent.current) return;
       setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
     });
+    return next;
   };
   const save = async (updateProgram: boolean) => {
     if (!draft || busy || readOnly) return;
@@ -204,6 +210,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     } finally { setBusy(false); }
   };
   const mayEditStructure = Boolean(draft && !readOnly && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
+  let displayedDay = draft ? outline(draft) : null;
+  if (displayedDay && optimisticOrder) {
+    const positions = new Map(optimisticOrder.next.map((id, index) => [id, index]));
+    displayedDay = { ...displayedDay, exercises: [...displayedDay.exercises].sort((a, b) =>
+      (positions.get(a.exercise.id) ?? a.exercise.position) - (positions.get(b.exercise.id) ?? b.exercise.position)) };
+  }
   const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
@@ -246,14 +258,20 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             </Button></span>
           </div>
           <Text variant="body">План на тренировку</Text>
-          <WorkoutPlanCard mode="planning" day={outline(draft)} programName={draft.plan.name} hideProgramName={!draft.trainingPlanId}
+          <WorkoutPlanCard mode="planning" day={displayedDay!} programName={draft.plan.name} hideProgramName={!draft.trainingPlanId}
+            portalDragOverlay preserveDragHeight
             creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
             onEdit={() => {}} onComment={() => {}} onMove={() => {}}
             onDuplicate={() => {}} onDelete={() => {}}
-            onReorderExercises={mayEditStructure ? ids => edit(current => ({
-              ...current, plan: reorderOccurrenceExercises(current.plan, ids),
-            })) : undefined}
+            onReorderExercises={mayEditStructure ? ids => {
+              setOptimisticOrder({ previous: canonicalOrder, next: ids });
+              const write = edit(current => ({
+                ...current, plan: reorderOccurrenceExercises(current.plan, ids),
+              }));
+              if (!write) setOptimisticOrder(null);
+              else void write.catch(() => setOptimisticOrder((current) => current?.next === ids ? null : current));
+            } : undefined}
             onAddExercise={mayEditStructure ? () => setExercisePickerOpened(true) : undefined}
             onAddSet={mayEditStructure ? id => edit(current => ({
               ...current, plan: appendOccurrenceSet(current.plan, id),
