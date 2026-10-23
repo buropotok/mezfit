@@ -106,7 +106,7 @@ function PhaseHeading({
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, viewerRole = 'coach', readOnly = false, selectionMode = false, onSelectionMutationAttempt, planningSurfaceRef, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
+  repository, planId, viewerRole = 'coach', readOnly = false, selectionMode = false, onSelectionMutationAttempt, selectionFeedbackVisible = false, planningSurfaceRef, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
 }: {
   repository: ProgramManagementRepository;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -117,6 +117,8 @@ export function CloudProgramDetailsPage({
   selectionMode?: boolean;
   /** Explain a blocked program edit while a workout day is being selected. */
   onSelectionMutationAttempt?: () => void;
+  /** Suspend the program-picking spotlight while blocked-edit feedback is visible. */
+  selectionFeedbackVisible?: boolean;
   planningSurfaceRef?: RefObject<HTMLDivElement | null>;
   actor?: ProgramActor;
   cloudStatus: 'loading' | 'ready' | 'error';
@@ -355,7 +357,7 @@ export function CloudProgramDetailsPage({
     : null;
   return (
     <SpotlightHint hintId="schedule.program.pick-day" version={1} userId={repository.actorUserId}
-      enabled={selectionMode} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || phaseCreateOpen || dayCreatePhaseId)}
+      enabled={selectionMode} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || selectionFeedbackVisible || phaseCreateOpen || dayCreatePhaseId)}
       text={readOnly ? 'Нажмите «Запланировать» у нужного дня, чтобы выбрать дату и время.'
         : 'Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.'}>
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
