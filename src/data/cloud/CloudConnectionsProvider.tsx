@@ -323,14 +323,49 @@ export function CloudConnectionsProvider({
   }), [db]);
 
   // Profile writes are privileged and change-only; failures must not block offline lists.
+  // Telegram may keep the WebView mounted while the user changes their photo.
+  // Refresh the signed user's profile once more when returning to the Mini App.
   useEffect(() => {
     let active = true;
-    void syncCloudContactProfile(initData)
-      .then((changed) => {
-        if (active && changed) void db.cloud.sync({ purpose: 'pull', wait: false }).catch(() => {});
-      })
-      .catch(() => {});
-    return () => { active = false; };
+    let running = false;
+    let rerunWhenIdle = false;
+    let wasHidden = document.visibilityState === 'hidden';
+    const refreshOwnProfile = () => {
+      if (!active) return;
+      if (running) {
+        rerunWhenIdle = true;
+        return;
+      }
+      running = true;
+      void syncCloudContactProfile(initData)
+        .then((changed) => {
+          if (active && changed) void db.cloud.sync({ purpose: 'pull', wait: false }).catch(() => {});
+        })
+        .catch(() => {
+          // Offline contact lists stay readable; an explicit diagnostic surfaces the failure stage.
+        })
+        .finally(() => {
+          running = false;
+          if (active && rerunWhenIdle) {
+            rerunWhenIdle = false;
+            refreshOwnProfile();
+          }
+        });
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        wasHidden = true;
+      } else if (wasHidden) {
+        wasHidden = false;
+        refreshOwnProfile();
+      }
+    };
+    refreshOwnProfile();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      active = false;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [db, initData]);
 
   const loadAvatar = useCallback((peer: CloudContact, variant: 'small' | 'large' = 'small') =>

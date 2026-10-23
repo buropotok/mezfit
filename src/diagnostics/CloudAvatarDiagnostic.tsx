@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { liveQuery } from 'dexie';
 import { Button } from 'konsta/react';
-import { getMe } from '../api';
+import { diagnoseCloudContactProfileSync, getMe, type CloudAvatarSyncStatus } from '../api';
 import { Avatar, Text } from '../ui';
 import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/database';
 import { deriveCloudContacts, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
@@ -19,6 +19,19 @@ const stageNames: Record<AvatarTraceStage, string> = {
 
 type ProbeState = 'idle' | 'pending' | 'ok' | 'failed';
 
+const ownAvatarStages: Record<CloudAvatarSyncStatus, string> = {
+  'no-relationship': 'Нет подтверждённой связи тренер–клиент для сохранения фотографии',
+  'stale-session': 'Telegram передал более старую сессию, чем сохранена в облаке',
+  'telegram-unavailable': 'Не удалось получить сведения о фотографии из Telegram',
+  'no-photo': 'Telegram сообщает, что доступной фотографии нет',
+  unchanged: 'Telegram возвращает уже сохранённую версию фотографии',
+  'download-failed': 'Не удалось скачать новую фотографию из Telegram',
+  'transform-failed': 'Не удалось обработать новую фотографию',
+  'upload-failed': 'Не удалось записать новую фотографию в Dexie Cloud',
+  partial: 'Сохранена только часть вариантов; повторите проверку',
+  updated: 'Оба варианта фотографии обработаны и переданы в Dexie Cloud',
+};
+
 async function decodeImage(url: string): Promise<boolean> {
   // Exercise the WebView's native decoder without reading another user's DOM.
   return new Promise((resolve) => {
@@ -30,9 +43,9 @@ async function decodeImage(url: string): Promise<boolean> {
 }
 
 /**
- * On-demand read-only cloud diagnostic for the actual client avatar pipeline.
- * Never renders names, IDs, URLs, initData, raw errors or photo bytes as text.
- * It never creates cloud data or resets browser storage.
+ * On-demand diagnostic: the owner's explicit check may refresh their own
+ * authenticated relationship profile through the Worker. Peer reads remain
+ * local/read-only. No private IDs, token, blob data or URLs are printed.
  */
 export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
   const [telegramUserId, setTelegramUserId] = useState<string | null>(null);
@@ -41,6 +54,8 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
   const [trace, setTrace] = useState<AvatarTraceStage[]>([]);
   const [result, setResult] = useState<ProbeState>('idle');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [ownAvatarStage, setOwnAvatarStage] = useState<string | null>(null);
+  const [ownAvatarPending, setOwnAvatarPending] = useState(false);
   const mounted = useRef(false);
   const urlRef = useRef<string | null>(null);
   const dbRef = useRef<MezfitCloudDatabase | null>(null);
@@ -99,6 +114,25 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
     };
   }, [initData]);
 
+  const checkOwnAvatar = async () => {
+    if (ownAvatarPending) return;
+    setOwnAvatarPending(true);
+    setOwnAvatarStage(null);
+    try {
+      const response = await diagnoseCloudContactProfileSync(initData);
+      if (mounted.current) {
+        setOwnAvatarStage(ownAvatarStages[response.avatarStatus]);
+        if (response.changed) {
+          void dbRef.current?.cloud.sync({ purpose: 'pull', wait: false }).catch(() => {});
+        }
+      }
+    } catch {
+      if (mounted.current) setOwnAvatarStage('Ошибка запроса Worker или Dexie Cloud; обновление не подтверждено');
+    } finally {
+      if (mounted.current) setOwnAvatarPending(false);
+    }
+  };
+
   const selected = contacts.find((contact) => contact.avatarVersion) ?? null;
   const withAvatar = contacts.filter((contact) => contact.avatarVersion).length;
 
@@ -150,6 +184,10 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
   return (
     <section aria-label="Диагностика аватаров">
       <Text variant="headline" role="heading" aria-level={2}>Диагностика аватаров</Text>
+      <Button onClick={() => { void checkOwnAvatar(); }} disabled={!telegramUserId || ownAvatarPending}>
+        {ownAvatarPending ? 'Проверяем собственный Telegram-аватар…' : 'Проверить обновление моего Telegram-аватара'}
+      </Button>
+      {ownAvatarStage && <p role="status"><Text variant="body">{ownAvatarStage}</Text></p>}
       <p><Text variant="body">Найдено контактов: {contacts.length}</Text></p>
       <p><Text variant="body">С версией аватара: {withAvatar}</Text></p>
       <Button onClick={() => { void check(); }} disabled={!selected || !telegramUserId || result === 'pending'}>
@@ -161,7 +199,7 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
         ? <ol>{trace.map((step, index) => <li key={index}><Text variant="footnote">{stageNames[step]}</Text></li>)}</ol>
         : null}
       {imageUrl && result === 'ok' ? <Avatar name="Контакт" src={imageUrl} /> : null}
-      <p><Text variant="footnote" tone="muted">Отображаются только этапы и количества. Telegram ID, токены, URL и содержимое фотографий не выводятся. Данные облака не изменяются.</Text></p>
+      <p><Text variant="footnote" tone="muted">Отображаются только этапы и количества. Проверка своего фото может обновить ваш профиль в Dexie Cloud; проверка фотографии контакта ничего не записывает. Telegram ID, токены, URL и фотографии текстом не выводятся.</Text></p>
     </section>
   );
 }

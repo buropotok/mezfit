@@ -65,6 +65,12 @@ async function getJson(fetchImpl: typeof fetch, url: string, init?: RequestInit)
 
 type Photo = { fileId: string; version: string } | null;
 
+/** Safe stage only; never include Telegram IDs, file IDs, hashes, URLs or secrets. */
+export type AvatarProfileSyncStatus =
+  | 'no-relationship' | 'stale-session' | 'telegram-unavailable' | 'no-photo'
+  | 'unchanged' | 'download-failed' | 'transform-failed' | 'upload-failed'
+  | 'partial' | 'updated';
+
 /** The Bot API can report no visible avatar; on transport failure preserve the last good version. */
 async function currentTelegramPhoto(
   fetchImpl: typeof fetch, botToken: string, telegramId: number,
@@ -205,6 +211,11 @@ export async function syncOwnContactProfile(
   request: Request, env: ContactProfileEnv, fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
   if (request.method !== 'POST') return error(405, 'METHOD_NOT_ALLOWED');
+  const diagnostic = new URL(request.url).searchParams.get('diagnostic') === '1';
+  const respond = (changed: boolean, avatarStatus: AvatarProfileSyncStatus) =>
+    Response.json(diagnostic ? { changed, avatarStatus } : { changed }, {
+      headers: { 'cache-control': 'no-store' },
+    });
   const identity = await validateTelegramInitData(
     request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
   );
@@ -229,9 +240,7 @@ export async function syncOwnContactProfile(
       id: await stableCloudRelationshipId('prf', member.realmId + ':' + account),
     });
   }
-  if (eligible.length === 0) {
-    return Response.json({ changed: false }, { headers: { 'cache-control': 'no-store' } });
-  }
+  if (eligible.length === 0) return respond(false, 'no-relationship');
 
   // Profile rows are separate from system-managed access memberships. REST upserts
   // must never replace member records: doing so could resurrect a revoked grant.
@@ -247,9 +256,7 @@ export async function syncOwnContactProfile(
   // Always re-check the Bot API photo for an authorized, non-stale session.
   // Unchanged photos do not download, transform, upload or rewrite profile rows.
   const eligibleForSession = eligible.filter(({ id }) => !newerSource(known.get(id), sourceAuthAt));
-  if (eligibleForSession.length === 0) {
-    return Response.json({ changed: false }, { headers: { 'cache-control': 'no-store' } });
-  }
+  if (eligibleForSession.length === 0) return respond(false, 'stale-session');
 
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
   const needsVariants = photo !== undefined && photo !== null && eligibleForSession.some(({ id }) =>
@@ -259,9 +266,12 @@ export async function syncOwnContactProfile(
   // across the separate realm-scoped contactProfiles of all authorized coaches.
   const newImages: Partial<Record<ContactAvatarVariant, Row>> = {};
   let newVersion: string | null | undefined;
+  let avatarStatus: AvatarProfileSyncStatus = photo === undefined ? 'telegram-unavailable' : 'unchanged';
   if (photo === null) {
     newVersion = null;
+    avatarStatus = 'no-photo';
   } else if (photo && needsVariants) {
+    avatarStatus = 'download-failed';
     for (const variant of ['small', 'large'] as const) {
       const reused = eligibleForSession.map(({ id }) =>
         reusableAvatar(known.get(id), photo.version, variant)).find((value) => value !== null);
@@ -270,22 +280,26 @@ export async function syncOwnContactProfile(
     if (!newImages.small || !newImages.large) {
       const downloaded = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
       if (downloaded) {
+        avatarStatus = 'transform-failed';
         for (const variant of ['small', 'large'] as const) {
           if (newImages[variant]) continue;
           try {
             const encoded = await optimizeContactAvatar(env.IMAGES, downloaded, variant);
             if (!encoded) continue;
+            avatarStatus = 'upload-failed';
             const id = await sha(account + ':' + photo.version + ':' + variant);
             newImages[variant] = await cloudMembershipAdminUploadAvatar(
               fetchImpl, bearer, id, encoded, variant === 'small' ? 50_000 : 245_000,
             );
           } catch {
-            // The successfully encoded other variant remains reusable on next launch.
+            // Preserve the last good avatar; the diagnostic exposes a safe stage.
           }
         }
       }
     }
     if (newImages.small || newImages.large) newVersion = photo.version;
+    if (newImages.small && newImages.large) avatarStatus = 'updated';
+    else if (newImages.small || newImages.large) avatarStatus = 'partial';
   }
 
   // The Telegram Bot API calls above may take time. Re-read cloud timestamps
@@ -346,6 +360,6 @@ export async function syncOwnContactProfile(
     });
   }
   await cloudMembershipAdminUpsertProfiles(fetchImpl, bearer, changed);
-  return Response.json({ changed: changed.length > 0 }, { headers: { 'cache-control': 'no-store' } });
+  return respond(changed.length > 0, avatarStatus);
 }
 
