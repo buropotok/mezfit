@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import { useState } from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -102,6 +103,55 @@ describe('MezfitNavbar', () => {
 
     const closeCalendar = view.getByRole('button', { name: 'Закрыть календарь' });
     expect(closeCalendar.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('morphs the calendar icon to a close icon during the existing press and reverses on closing', () => {
+    function CalendarNavbar() {
+      const [calendarOpen, setCalendarOpen] = useState(false);
+      return (
+        <MezfitNavbar
+          level={1}
+          identity={{ title: 'Сегодня', icon: 'calendar-event' }}
+          onBack={vi.fn()}
+          onMenu={vi.fn()}
+          onCalendar={() => setCalendarOpen(value => !value)}
+          calendarOpen={calendarOpen}
+        />
+      );
+    }
+
+    const view = renderWithKonsta(<CalendarNavbar />);
+    const capsule = view.container.querySelector('.ui-identity-action--double');
+    if (!capsule) throw new Error('Missing calendar capsule');
+
+    const open = view.getByRole('button', { name: 'Открыть календарь' });
+    const primary = open.querySelector<HTMLElement>('.ui-identity-action__segment-icon');
+    const alternate = open.querySelector<HTMLElement>('.ui-identity-action__segment-swap-icon');
+    expect(primary?.style.maskImage).toContain(getUiIconAsset('calendar', 'outline'));
+    expect(alternate?.style.maskImage).toContain(getUiIconAsset('x', 'outline'));
+
+    fireEvent.pointerDown(open, { pointerType: 'touch', button: 0 });
+    fireEvent.click(open);
+    expect(capsule.classList.contains('ui-identity-action--animating')).toBe(true);
+    expect(open.classList.contains('ui-identity-action__segment--icon-swapping')).toBe(true);
+    expect(open.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.animationEnd(capsule);
+    const close = view.getByRole('button', { name: 'Закрыть календарь' });
+    expect(close).toBe(open);
+    expect(close.getAttribute('aria-expanded')).toBe('true');
+    expect(primary?.style.maskImage).toContain(getUiIconAsset('x', 'outline'));
+    expect(alternate?.style.maskImage).toContain(getUiIconAsset('calendar', 'outline'));
+    expect(close.classList.contains('ui-identity-action__segment--icon-swapping')).toBe(false);
+
+    fireEvent.pointerDown(close, { pointerType: 'touch', button: 0 });
+    fireEvent.click(close);
+    expect(close.classList.contains('ui-identity-action__segment--icon-swapping')).toBe(true);
+    fireEvent.animationEnd(capsule);
+
+    expect(view.getByRole('button', { name: 'Открыть календарь' })).toBe(open);
+    expect(primary?.style.maskImage).toContain(getUiIconAsset('calendar', 'outline'));
+    expect(alternate?.style.maskImage).toContain(getUiIconAsset('x', 'outline'));
   });
 
   it('passes the configured navbar glass preset to every identity action', () => {

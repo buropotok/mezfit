@@ -86,7 +86,8 @@ export function MezfitNavbar({
               glassOptics={glassOptics}
               actions={[
                 {
-                  icon: 'calendar',
+                  icon: calendarOpen ? 'x' : 'calendar',
+                  iconSwapTo: calendarOpen ? 'calendar' : 'x',
                   iconVariant: 'outline',
                   iconSize: 32,
                   label: calendarOpen ? 'Закрыть календарь' : 'Открыть календарь',

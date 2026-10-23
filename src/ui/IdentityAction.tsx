@@ -39,6 +39,8 @@ export type IdentityActionItem = {
   icon: UiIconName;
   iconVariant?: UiIconVariant;
   iconSize?: CSSProperties['width'];
+  /** Optional icon revealed during the existing capsule press animation. */
+  iconSwapTo?: UiIconName;
   label: string;
   'aria-expanded'?: boolean;
   onClick?: () => void;
@@ -107,6 +109,7 @@ export function IdentityAction(props: IdentityActionProps) {
     disabled = false,
   } = props;
   const [isAnimating, setIsAnimating] = useState(false);
+  const [iconSwapIndex, setIconSwapIndex] = useState<number | null>(null);
   const [hideDecorativeIcon, setHideDecorativeIcon] = useState(false);
   const iconVisualRef = useRef<HTMLSpanElement>(null);
   const textMeasureRef = useRef<HTMLSpanElement>(null);
@@ -174,6 +177,7 @@ export function IdentityAction(props: IdentityActionProps) {
     pendingActionRef.current = null;
     pointerPressRef.current = false;
     animationFinishedRef.current = false;
+    setIconSwapIndex(null);
     if (!disabled) action?.();
   }, [disabled]);
 
@@ -215,10 +219,12 @@ export function IdentityAction(props: IdentityActionProps) {
     if (pendingActionRef.current) return;
     pointerPressRef.current = false;
     animationFinishedRef.current = false;
+    setIconSwapIndex(null);
   };
 
-  const queueActivation = (action?: () => void) => {
+  const queueActivation = (action?: () => void, swapIndex?: number) => {
     if (disabled || !action || pendingActionRef.current) return;
+    if (swapIndex !== undefined) setIconSwapIndex(swapIndex);
 
     if (animationActiveRef.current) {
       pendingActionRef.current = action;
@@ -264,15 +270,26 @@ export function IdentityAction(props: IdentityActionProps) {
         onPointerCancel={cancelPointerActivation}
         onPointerLeave={cancelPointerActivation}
       >
-        {props.actions.map((action) => {
+        {props.actions.map((action, index) => {
+          const swapping = iconSwapIndex === index && action.iconSwapTo !== undefined;
           const control = (
             <button
-              className="ui-identity-action__segment"
+              className={[
+                'ui-identity-action__segment',
+                swapping && isAnimating ? 'ui-identity-action__segment--icon-swapping' : '',
+                swapping && !isAnimating ? 'ui-identity-action__segment--icon-swapped' : '',
+              ].filter(Boolean).join(' ')}
               type="button"
               aria-label={action.label}
               aria-expanded={action['aria-expanded']}
               disabled={disabled || action.disabled}
-              onClick={() => queueActivation(action.onClick)}
+              onPointerDown={(event) => {
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
+                if (!disabled && !action.disabled && !pendingActionRef.current) {
+                  setIconSwapIndex(action.iconSwapTo ? index : null);
+                }
+              }}
+              onClick={() => queueActivation(action.onClick, action.iconSwapTo ? index : undefined)}
             >
               <Icon
                 className="ui-identity-action__segment-icon"
@@ -280,11 +297,17 @@ export function IdentityAction(props: IdentityActionProps) {
                 variant={action.iconVariant ?? 'filled'}
                 style={action.iconSize === undefined ? undefined : { width: action.iconSize, height: action.iconSize }}
               />
+              {action.iconSwapTo && <Icon
+                className="ui-identity-action__segment-swap-icon"
+                name={action.iconSwapTo}
+                variant={action.iconVariant ?? 'filled'}
+                style={action.iconSize === undefined ? undefined : { width: action.iconSize, height: action.iconSize }}
+              />}
             </button>
           );
 
           return (
-            <Fragment key={action.label}>
+            <Fragment key={index}>
               {action.renderControl ? action.renderControl(control) : control}
             </Fragment>
           );
