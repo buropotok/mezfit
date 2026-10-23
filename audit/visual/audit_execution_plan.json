@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "in_progress",
-  "status_reason": "Stage 6 completed: 100 genuine source GIFs decoded, inspected, results written and read back. Total 600 unique records; next stage 7.",
+  "status": "ready",
+  "status_reason": "Stage 07 completed: 100 original GIFs verified and 66 findings saved; batch, issue register, checkpoint and accumulated 700 exercise results read back and validated.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
-  "completed_exercises": 600,
-  "current_stage": 7,
-  "next_stage": 7,
+  "completed_exercises": 700,
+  "current_stage": null,
+  "next_stage": 8,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
@@ -21,12 +21,7 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": {
-    "owner": "chatgpt_visual_audit",
-    "token": "mezfit-stage07-mvkd7unq",
-    "stage": 7,
-    "started_at": "2026-10-23T05:42:00+03:00"
-  },
+  "lock": null,
   "stages": [
     {
       "number": 1,
@@ -726,7 +721,7 @@
     },
     {
       "number": 7,
-      "status": "in_progress",
+      "status": "completed",
       "exercise_ids": [
         "0672",
         "0673",
@@ -834,8 +829,12 @@
         "to": 700
       },
       "result_file": "results/batch_07.jsonl",
-      "results_committed": false,
-      "started_at": "2026-10-23T05:42:00+03:00"
+      "results_committed": true,
+      "started_at": "2026-10-23T05:42:00+03:00",
+      "reviewed_count": 100,
+      "checkpoint_file": "results/audit_checkpoint_stage_07.json",
+      "completed_at": "2026-10-23T05:58:45+03:00",
+      "status_reason": "100 genuine GIF inspections completed; 66 issues; JSONL/CSV/checkpoint/700 cumulative entries validated"
     },
     {
       "number": 8,
