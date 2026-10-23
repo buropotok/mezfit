@@ -160,7 +160,13 @@ describe('SessionExercise rendering', () => {
   it('uses the same media information callback without changing workout disclosure', () => {
     const onInformation = vi.fn();
     const { container } = renderExercise({ onInformation });
-    fireEvent.click(container.querySelector('.session-exercise__media-tap')!);
+    const information = screen.getByRole('button', { name: 'Информация об упражнении: Жим лёжа' });
+    expect(information.parentElement?.classList.contains('session-exercise__header-list')).toBe(true);
+    expect(information.closest('.ui-list-item')).toBeNull();
+    expect(information.closest('[aria-hidden="true"]')).toBeNull();
+    expect(information.hasAttribute('data-no-dnd')).toBe(true);
+    expect(container.querySelector('.ui-list-item__leading')).not.toBeNull();
+    fireEvent.click(information);
     expect(onInformation).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Открыть подход 1' })).toBeTruthy();
     fireEvent.click(screen.getByText('Жим лёжа').closest('button')!);
