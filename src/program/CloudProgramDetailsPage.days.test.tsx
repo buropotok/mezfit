@@ -172,7 +172,8 @@ describe('days inside program phases', () => {
         plannedWeightKg: null, plannedReps: null, plannedDurationSeconds: null, plannedDistanceMeters: null }],
     }] }];
     render(f.page());
-    fireEvent.click(await screen.findByRole('button', { name: 'Удалить подход 1' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Развернуть упражнение' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить подход 1' }));
     expect(f.repo.deleteExerciseSet).not.toHaveBeenCalled();
     const confirm = screen.getByRole('dialog', { name: 'Удалить подход?' });
     fireEvent.click(within(confirm).getByRole('button', { name: 'Удалить' }));
@@ -293,6 +294,8 @@ describe('days inside program phases', () => {
         plannedWeightKg: 123, plannedReps: 15, plannedDurationSeconds: null, plannedDistanceMeters: null }],
     }] }} creatorName="Тренер" readOnly onEdit={() => {}} onComment={() => {}}
       onMove={() => {}} onDuplicate={() => {}} onDelete={() => {}} />);
+    expect(screen.queryByText('Разминочный')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
     expect(screen.getByText('Разминочный')).toBeTruthy();
     expect(screen.getByText('Контроль техники')).toBeTruthy();
     expect(screen.queryByText(/123/)).toBeNull();
