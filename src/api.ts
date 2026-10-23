@@ -1,4 +1,5 @@
 import type { DexieCloudOptions } from 'dexie-cloud-addon';
+import { compressTelegramAvatar } from './media/telegram-avatar-compress';
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
 import type { ActiveWorkoutSession, OpenWorkoutSessionSummary, WorkoutSessionState, WorkoutStartInput } from './workout/workoutSessionTypes';
@@ -470,9 +471,50 @@ export async function getDexieCloudTokens(
   return result;
 }
 
-/** Privileged refresh checks verified Telegram identity; unchanged profiles are not rewritten. */
+/** Browser-only image encoding; Worker only authenticates, fetches Telegram bytes and writes cloud references. */
+async function clientCompressedProfileSync(initData: string, diagnostic: boolean): Promise<unknown> {
+  if (!initData) throw new ApiError(401, 'Не удалось подтвердить Telegram авторизацию', 'TELEGRAM_AUTH_REQUIRED');
+  const source = await fetch('/api/cloud/profile/source', {
+    method: 'POST',
+    headers: { 'x-telegram-init-data': initData },
+  });
+  if (source.status !== 200 && source.status !== 204) {
+    throw new ApiError(source.status, 'Не удалось получить фотографию Telegram', 'TELEGRAM_AVATAR_SOURCE_FAILED');
+  }
+  const multipart = source.status === 200;
+  const headers: Record<string, string> = {
+    'x-telegram-init-data': initData,
+    'x-mezfit-client-avatar-compression': '1',
+  };
+  let body: FormData | undefined;
+  if (multipart) {
+    const photoVersion = source.headers.get('x-mezfit-photo-version');
+    const length = Number(source.headers.get('content-length') ?? '0');
+    if (!photoVersion || !/^[a-f0-9]{64}$/.test(photoVersion)
+      || (length > 20_000_000) || source.headers.get('content-type') !== 'image/jpeg') {
+      throw new ApiError(502, 'Некорректная фотография Telegram', 'INVALID_TELEGRAM_AVATAR_SOURCE');
+    }
+    const original = await source.blob();
+    const variants = await compressTelegramAvatar(original);
+    body = new FormData();
+    body.set('photoVersion', photoVersion);
+    body.set('small', variants.small, 'avatar-small.jpg');
+    body.set('large', variants.large, 'avatar-large.jpg');
+  }
+  const result = await fetch('/api/cloud/profile/sync' + (diagnostic ? '?diagnostic=1' : ''), {
+    method: 'POST', headers, body,
+  });
+  if (!result.ok) throw new ApiError(result.status, 'Не удалось записать аватар в Dexie Cloud', 'CLOUD_AVATAR_WRITE_FAILED');
+  const payload: unknown = await result.json();
+  if (!isRecord(payload) || typeof payload.changed !== 'boolean') {
+    throw new ApiError(502, 'Некорректный ответ обновления профиля', 'INVALID_API_RESPONSE');
+  }
+  return payload;
+}
+
+/** The source is downloaded from Telegram, but both JPEG variants are encoded in the WebView. */
 export async function syncCloudContactProfile(initData: string): Promise<boolean> {
-  const payload = await apiRequest<unknown>(initData, '/api/cloud/profile/sync', { method: 'POST' });
+  const payload = await clientCompressedProfileSync(initData, false);
   if (!isRecord(payload) || typeof payload.changed !== 'boolean') {
     throw new ApiError(502, 'Некорректный ответ обновления профиля', 'INVALID_API_RESPONSE');
   }
@@ -496,9 +538,7 @@ export async function diagnoseCloudContactProfileSync(initData: string): Promise
   changed: boolean;
   avatarStatus: CloudAvatarSyncStatus;
 }> {
-  const payload = await apiRequest<unknown>(initData, '/api/cloud/profile/sync?diagnostic=1', {
-    method: 'POST',
-  });
+  const payload = await clientCompressedProfileSync(initData, true);
   if (!isRecord(payload) || typeof payload.changed !== 'boolean'
     || !isCloudAvatarSyncStatus(payload.avatarStatus)) {
     throw new ApiError(502, 'Некорректный ответ проверки аватара', 'INVALID_API_RESPONSE');
