@@ -101,4 +101,45 @@ describe('client-only Telegram avatar compression API flow', () => {
     expect(compressTelegramAvatar).toHaveBeenCalledTimes(2);
   });
 
+  it('still synchronizes profile names when the Telegram photo service is unavailable', async () => {
+    const calls: string[] = [];
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      calls.push(String(input));
+      if (String(input).endsWith('/source')) {
+        return Response.json({ error: { code: 'TELEGRAM_PROFILE_UNAVAILABLE' } }, { status: 502 });
+      }
+      expect(init?.body).toBeUndefined();
+      expect(init?.headers).toMatchObject({ 'x-mezfit-client-avatar-compression': '1' });
+      return Response.json({ changed: true });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await syncCloudContactProfile('signed')).toBe(true);
+    expect(calls).toEqual(['/api/cloud/profile/source', '/api/cloud/profile/sync']);
+    expect(compressTelegramAvatar).not.toHaveBeenCalled();
+  });
+
+  it('reports Telegram download errors while still committing other profile metadata', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      if (String(input).endsWith('/source')) {
+        return Response.json({ error: { code: 'TELEGRAM_PHOTO_DOWNLOAD_FAILED' } }, { status: 502 });
+      }
+      expect(init?.body).toBeUndefined();
+      return Response.json({ changed: true, avatarStatus: 'unchanged' });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await diagnoseCloudContactProfileSync('signed'))
+      .toEqual({ changed: true, avatarStatus: 'download-failed' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(compressTelegramAvatar).not.toHaveBeenCalled();
+  });
+
+  it('does not silently hide unrelated server-side 502 failures as Telegram photo errors', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => Response.json(
+      { error: { code: 'CLOUD_PROFILE_UNAVAILABLE' } }, { status: 502 },
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(syncCloudContactProfile('signed')).rejects.toThrow('Не удалось получить фотографию Telegram');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
 });
