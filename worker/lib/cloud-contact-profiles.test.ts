@@ -538,6 +538,7 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.postCount()).toBe(0);
     expect(cloud.memberWrites()).toBe(0);
   });
+
   it('distinguishes a stored avatar from an upload failure in an explicit diagnostic without exposing identifiers', async () => {
     const cloud = await setup();
     const request = new Request('https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
@@ -573,6 +574,4 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(await (await syncOwnContactProfile(request, env, cloud.fetchImpl)).json())
       .toEqual({ changed: false, avatarStatus: 'telegram-unavailable' });
   });
-
-
 });
