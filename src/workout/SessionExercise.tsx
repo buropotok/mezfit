@@ -162,15 +162,15 @@ function SessionExerciseLayout({
         <div className="session-exercise__header-list">
           <List>
             <ListItem
-            className="session-exercise__header-toggle"
-            leadingShape="square"
-            leading={media}
-            title={exerciseName}
-            subtitle={subtitle}
-            trailing={badge}
-            aria-expanded={!collapsed}
-            aria-controls={bodyId}
-            onClick={toggleCollapsed}
+              className="session-exercise__header-toggle"
+              leadingShape="square"
+              leading={media}
+              title={exerciseName}
+              subtitle={subtitle}
+              trailing={badge}
+              aria-expanded={!collapsed}
+              aria-controls={bodyId}
+              onClick={toggleCollapsed}
             />
           </List>
           {onInformation ? <button type="button" className="session-exercise__media-action"
