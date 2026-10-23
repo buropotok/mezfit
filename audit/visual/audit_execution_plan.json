@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "in_progress",
-  "status_reason": "Stage 09 locked for visual examination of 100 original GIFs.",
+  "status": "ready",
+  "status_reason": "Stage 09 complete: 100 original GIFs verified and 37 findings; 900 cumulative records saved and validated.",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
-  "completed_exercises": 800,
-  "current_stage": 9,
-  "next_stage": 9,
+  "completed_exercises": 900,
+  "current_stage": null,
+  "next_stage": 10,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
@@ -21,11 +21,7 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": {
-    "owner": "chatgpt-stage-09-20261023T122405-msk",
-    "started_at": "2026-10-23T12:24:05+03:00",
-    "stage": 9
-  },
+  "lock": null,
   "stages": [
     {
       "number": 1,
@@ -959,7 +955,7 @@
     },
     {
       "number": 9,
-      "status": "in_progress",
+      "status": "completed",
       "exercise_ids": [
         "1292",
         "1293",
@@ -1067,8 +1063,12 @@
         "to": 900
       },
       "result_file": "results/batch_09.jsonl",
-      "results_committed": false,
-      "started_at": "2026-10-23T12:24:05+03:00"
+      "results_committed": true,
+      "started_at": "2026-10-23T12:24:05+03:00",
+      "reviewed_count": 100,
+      "checkpoint_file": "results/audit_checkpoint_stage_09.json",
+      "completed_at": "2026-10-23T12:37:49+03:00",
+      "status_reason": "100 original GIFs visually reviewed; 37 findings; JSONL, CSV, checkpoint, and 900 cumulative results written, read back and validated."
     },
     {
       "number": 10,
