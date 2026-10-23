@@ -74,9 +74,11 @@ function setup(onSync = vi.fn(async () => {})) {
   };
   const blockedEdit = vi.fn();
   const navigationContext = { level: 2 as const, title: 'Программа тренировок' };
+  const onDestinationChange = vi.fn();
+  const onRoleSwitch = vi.fn();
   const page = (selectionFeedbackVisible: boolean) => (
     <NavigationShell me={me} activeRole="coach" destination="today"
-      context={navigationContext} onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
+      context={navigationContext} onDestinationChange={onDestinationChange} onRoleSwitch={onRoleSwitch}>
       <CloudProgramDetailsPage repository={repository as unknown as ProgramManagementRepository}
         planId="plan" selectionMode onSelectionMutationAttempt={blockedEdit}
         selectionFeedbackVisible={selectionFeedbackVisible}
@@ -101,6 +103,7 @@ describe('planning guidance with production overlay owners', () => {
     expect(repository.blockedEdit).toHaveBeenCalledOnce();
     expect(screen.queryByRole('dialog', { name: 'Планирование тренировки' })).toBeNull();
     expect(repository.createPhase).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByLabelText('Подсказка')).toBeTruthy());
 
     // The scheduling owner shows a toast and passes its visibility to the
     // program details page. Preserve this real FAB/Spotlight integration.
