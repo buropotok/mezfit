@@ -5,8 +5,8 @@
   "batch_limit_verified": 100,
   "stage": 8,
   "total_stages": 14,
-  "stage_verified_count": 75,
-  "verified_count": 775,
+  "stage_verified_count": 100,
+  "verified_count": 800,
   "verified_ids": [
     "3637",
     "0059",
@@ -782,20 +782,7 @@
     "1263",
     "1264",
     "1265",
-    "1266"
-  ],
-  "blocked_ids": [],
-  "blocked_count": 0,
-  "status_counts": {
-    "clean": 31,
-    "confirmed_mismatch": 36,
-    "likely_mismatch": 5,
-    "naming_clarification": 2,
-    "potential_duplicate": 1,
-    "blocked": 0
-  },
-  "remaining_count": 549,
-  "remaining_ids": [
+    "1266",
     "1267",
     "1268",
     "1269",
@@ -820,7 +807,20 @@
     "1288",
     "1289",
     "1290",
-    "1291",
+    "1291"
+  ],
+  "blocked_ids": [],
+  "blocked_count": 0,
+  "status_counts": {
+    "clean": 41,
+    "confirmed_mismatch": 46,
+    "likely_mismatch": 5,
+    "naming_clarification": 5,
+    "potential_duplicate": 3,
+    "blocked": 0
+  },
+  "remaining_count": 524,
+  "remaining_ids": [
     "1292",
     "1293",
     "1294",
@@ -1346,12 +1346,12 @@
     "3888",
     "5201"
   ],
-  "next_queue_index": 776,
-  "next_id": "1267",
-  "next_gif_url": "videos/1267-MKIelrR.gif",
-  "priority_first_count": 82,
+  "next_queue_index": 801,
+  "next_id": "1292",
+  "next_gif_url": "videos/1292-pH2x2jj.gif",
+  "priority_first_count": 46,
   "current_stage_results": "results/batch_08.jsonl",
   "accumulated_results": "results/audit_results_all.jsonl",
   "source_archive": "mezfit_visual_audit_handoff.zip",
-  "evidence_note": "Частичный этап 08 — 75 оригинальных GIF проверены по шести декодированным кадрам каждый (1160,1201: 30-кадровые), ещё 25 результатов этапа до сохранения не засчитаны. Накопленный реестр 700 завершённых этапов не изменён."
+  "evidence_note": "Этап 08: 100 оригинальных GIF из hasaneyldrm/exercises-dataset действительно получены в бинарном виде, декодированы и визуально просмотрены по шести фазам. GIF обычно содержат 12 кадров, у 1160/1201 — 30, у 1275 — 24. Каждая запись содержит реально использованные индексы кадров, оригинальное имя RU/EN, URL и наблюдение. Мышечные метаданные визуально сверены с движением, но фактическая мышечная активация анимацией не доказывается. Накопленный реестр 700 прежних записей не изменялся до финальной проверки."
 }
