@@ -29,6 +29,7 @@ import homeUrl from './home.svg';
 import historyUrl from './history-outline.svg';
 import infoCircleUrl from './info-circle.svg';
 import menu2Url from './menu-2.svg';
+import xUrl from './x.svg';
 import messageCircleUrl from './message-circle-outline.svg';
 import pencilUrl from './pencil-outline.svg';
 import plusOutlineUrl from './plus-outline.svg';
@@ -69,6 +70,7 @@ const uiIconRegistry = {
   history: { outline: historyUrl, filled: historyUrl },
   'info-circle': { outline: infoCircleUrl, filled: infoCircleUrl },
   'menu-2': { outline: menu2Url, filled: menu2Url },
+  x: { outline: xUrl, filled: xUrl },
   'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
   pencil: { outline: pencilUrl, filled: pencilUrl },
   plus: { outline: plusOutlineUrl, filled: plusOutlineUrl },
