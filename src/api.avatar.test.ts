@@ -142,4 +142,43 @@ describe('client-only Telegram avatar compression API flow', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('retries a bodyless 204 source when the photo changes before the second request', async () => {
+    let sourceCalls = 0;
+    let syncCalls = 0;
+    const calls: string[] = [];
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input);
+      calls.push(url);
+      if (url.endsWith('/source')) {
+        sourceCalls++;
+        if (sourceCalls === 1) {
+          return new Response(null, { status: 204, headers: { 'x-mezfit-photo-status': 'unchanged' } });
+        }
+        return new Response(new Uint8Array(36).buffer, {
+          headers: {
+            'content-type': 'image/jpeg',
+            'x-mezfit-photo-version': 'a'.repeat(64),
+          },
+        });
+      }
+      syncCalls++;
+      if (syncCalls === 1) {
+        expect(init?.body).toBeUndefined();
+        expect(init?.headers).toMatchObject({
+          'x-mezfit-client-avatar-compression': '1',
+        });
+        return Response.json({ error: { code: 'STALE_AVATAR_SOURCE' } }, { status: 409 });
+      }
+      expect(init?.body).toBeInstanceOf(FormData);
+      return Response.json({ changed: true });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await syncCloudContactProfile('signed')).toBe(true);
+    expect(calls).toEqual([
+      '/api/cloud/profile/source', '/api/cloud/profile/sync',
+      '/api/cloud/profile/source', '/api/cloud/profile/sync',
+    ]);
+    expect(compressTelegramAvatar).toHaveBeenCalledTimes(1);
+  });
+
 });
