@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ButtonHTMLAttributes, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react';
 import type { MeResponse, Role } from './api';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
@@ -19,6 +19,7 @@ import {
   type UiIconName,
 } from './ui';
 import { liquidTabScale, LIQUID_TAB_BASE_HEIGHT } from './ui/liquid-glass-icon-only/adaptiveScale';
+import { responsiveTypographyScale } from './ui/responsiveTypographyScale';
 
 export type AppDestination =
   | 'clients'
@@ -302,7 +303,8 @@ export function NavigationShell({
   const onCalendarDateChange = context?.calendar?.onChange ?? setSelectedDate;
   const calendarDayStatuses = context?.calendar?.dayStatuses;
   const viewportContent = context?.contentMode === 'viewport';
-  const liquidTabRenderScale = liquidTabScale(shellWidth ?? 406);
+  const liquidTabRenderScale = liquidTabScale(shellWidth ?? previewWidth ?? 406);
+  const typeScale = responsiveTypographyScale(shellWidth ?? previewWidth ?? 406);
 
   useLayoutEffect(() => {
     const element = shellRef.current;
@@ -495,6 +497,7 @@ export function NavigationShell({
             ? 'app-shell navigation-shell navigation-shell--windowed'
             : 'app-shell navigation-shell'}
           data-preview-width={previewWidth ?? undefined}
+          style={{ '--ui-responsive-type-scale': String(typeScale) } as CSSProperties}
         >
         <div className="navigation-navbar-frame">
           <MezfitNavbar
