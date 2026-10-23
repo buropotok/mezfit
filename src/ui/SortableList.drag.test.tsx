@@ -76,6 +76,7 @@ describe('SortableList mobile drop coordination', () => {
 
     act(() => dnd.start?.({ active: { id: 'first' } }));
     expect(onStart).toHaveBeenCalledWith('first');
+    expect(document.querySelector('.ui-sortable-list__overlay--vertical')).not.toBeNull();
     const modifiers = dnd.modifiers as Array<(arg: { transform: {
       x: number; y: number; scaleX: number; scaleY: number;
     } }) => { x: number; y: number; scaleX: number; scaleY: number }>;
