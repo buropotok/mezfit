@@ -4,6 +4,7 @@ import dexieCloud from 'dexie-cloud-addon';
 import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
+import type { CoachClientAvatarRow } from './coach-client-avatars';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
 import type { CoachExerciseOverrideRow, CoachExerciseDefinitionRow, CoachExerciseFavouriteRow } from '../exercises/coachExerciseTypes';
@@ -16,7 +17,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 11;
+export const CLOUD_DATABASE_VERSION = 12;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -193,6 +194,12 @@ export const CLOUD_DATABASE_STORES_V10 = {
   workoutScheduleRequests: null,
 } as const;
 
+/** Private coach-only contact portraits, synced in the coach's personal realm. */
+export const CLOUD_DATABASE_STORES_V12 = {
+  ...CLOUD_DATABASE_STORES_V10,
+  coachClientAvatars: 'id, realmId, clientUserId, relationshipId',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -226,6 +233,7 @@ export class MezfitCloudDatabase extends Dexie {
   sessionFactExercises!: Table<CloudSessionFactExerciseRow, string, Omit<CloudSessionFactExerciseRow, 'id'>>;
   sessionFactSets!: Table<CloudSessionFactSetRow, string, Omit<CloudSessionFactSetRow, 'id'>>;
   contactProfiles!: Table<CloudContactProfileRow, string>;
+  coachClientAvatars!: Table<CoachClientAvatarRow, string>;
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
   sessionSets!: Table<CloudSessionSetRow, string>;
   sessionSetFacts!: Table<CloudSessionSetFactRow, string>;
@@ -248,7 +256,8 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(8).stores({ ...CLOUD_DATABASE_STORES_V8, localProgramSync: 'id' });
     this.version(9).stores({ ...CLOUD_DATABASE_STORES_V9, localProgramSync: 'id' });
     this.version(10).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id' });
-    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id', localWorkoutSync: 'id' });
+    this.version(11).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id', localWorkoutSync: 'id' });
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V12, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.on('ready', () => new WorkoutOccurrenceDraftRepository(this, 'tg:' + telegramUserId).importDeviceDrafts());
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
