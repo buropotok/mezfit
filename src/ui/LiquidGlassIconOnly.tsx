@@ -8,6 +8,7 @@ import type { UiIconSource } from './iconPair';
 import { mountPrototype as mountNoFabPrototype, type PrototypeController } from './liquid-glass-tabs-no-fab/prototypeRuntime';
 import noFabPrototypeCss from './liquid-glass-tabs-no-fab/prototype.css?inline';
 import { settledFabSlot } from './liquid-glass-icon-only/fabGeometry';
+import { LIQUID_TAB_BASE_HEIGHT } from './liquid-glass-icon-only/adaptiveScale';
 
 export type LiquidGlassIconOnlyTab = {
   value: string;
@@ -24,6 +25,8 @@ export type LiquidGlassIconOnlyProps = {
   hidden: boolean;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
+  /** Uniform presentation scale; the visible bar width is preserved. */
+  scale?: number;
   fab?: ReactNode;
 };
 
@@ -279,6 +282,9 @@ export function LiquidGlassFloatingActionSlot({ children }: { children: ReactNod
 
 /** Approved no-FAB tab runtime, with an independently rendered optional FAB. */
 export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
+  const scale = Number.isFinite(props.scale) && props.scale !== undefined
+    ? Math.max(44 / LIQUID_TAB_BASE_HEIGHT, Math.min(1, props.scale))
+    : 1;
   const previousHidden = useRef(props.hidden);
   const entrance = previousHidden.current && !props.hidden;
 
@@ -292,7 +298,14 @@ export function LiquidGlassIconOnly(props: LiquidGlassIconOnlyProps) {
     <div
       hidden={props.hidden}
       aria-hidden={props.hidden || undefined}
-      style={{ position: 'relative', width: '100%', overflow: 'visible' }}
+      style={{
+        position: 'relative',
+        width: scale === 1 ? '100%' : `${100 / scale}%`,
+        height: props.hidden ? undefined : LIQUID_TAB_BASE_HEIGHT,
+        transform: scale === 1 ? undefined : `scale(${scale})`,
+        transformOrigin: 'top left',
+        overflow: 'visible',
+      }}
     >
       {!props.hidden && props.tabs.length > 0 && (
         <Scene
