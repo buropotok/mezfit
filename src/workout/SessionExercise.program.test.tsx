@@ -37,9 +37,13 @@ describe('existing exercise component in program mode', () => {
   it('opens the existing information action by tapping media without collapsing the card', () => {
     const onInformation = vi.fn();
     const { container } = render(<SessionExercise mode="program" data={item} onInformation={onInformation} />);
-    const image = container.querySelector('.session-exercise__media-tap img');
-    expect(image).not.toBeNull();
-    fireEvent.click(image!);
+    expect(container.querySelector('.ui-list-item__leading img')?.getAttribute('src')).toBe('/exercise-image');
+    const information = screen.getByRole('button', { name: 'Информация об упражнении: Жим' });
+    expect(information.parentElement?.classList.contains('session-exercise__header-list')).toBe(true);
+    expect(information.closest('.ui-list-item')).toBeNull();
+    expect(information.closest('[aria-hidden="true"]')).toBeNull();
+    expect(information.hasAttribute('data-no-dnd')).toBe(true);
+    fireEvent.click(information);
     expect(onInformation).toHaveBeenCalledOnce();
     expect(screen.getByText('Подход 1')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Свернуть упражнение' }).getAttribute('aria-expanded')).toBe('true');
@@ -76,7 +80,7 @@ describe('existing exercise component in program mode', () => {
     const addSet = vi.fn();
     const onInformation = vi.fn();
     const view = render(<SessionExercise mode="program" data={item} busy onAddSet={addSet} onInformation={onInformation} />);
-    expect(view.container.querySelector('.session-exercise__media-tap')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Информация об упражнении: Жим' })).toBeNull();
     const add = screen.getByRole('button', { name: 'Добавить подход' });
     expect(add.hasAttribute('disabled')).toBe(true);
     fireEvent.click(add);
