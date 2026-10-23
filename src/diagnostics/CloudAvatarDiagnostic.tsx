@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { liveQuery } from 'dexie';
 import { Button } from 'konsta/react';
-import { diagnoseCloudContactProfileSync, getMe, type CloudAvatarSyncStatus } from '../api';
+import { diagnoseCloudContactProfileSync, getMe, inspectTelegramAvatarSource, type CloudAvatarSyncStatus, type TelegramAvatarSourceComparison } from '../api';
 import { Avatar, Text } from '../ui';
 import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/database';
 import { deriveCloudContacts, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
@@ -32,6 +32,13 @@ const ownAvatarStages: Record<CloudAvatarSyncStatus, string> = {
   updated: 'Оба варианта фотографии обработаны и переданы в Dexie Cloud',
 };
 
+const sourceComparisonLabels: Record<TelegramAvatarSourceComparison, string> = {
+  same: 'Версия фотографии из Telegram совпадает с Dexie Cloud. Проверьте, соответствует ли показанное ниже изображение текущему фото Telegram.',
+  different: 'Telegram вернул версию, которой нет в сохранённом профиле. Следует проверить обычную синхронизацию фотографии.',
+  mixed: 'Для разных связей сохранены разные версии. Требуется проверка синхронизации между профилями.',
+  'not-stored': 'Нет сохранённой версии для сравнения. Показано изображение, доступное боту.',
+};
+
 async function decodeImage(url: string): Promise<boolean> {
   // Exercise the WebView's native decoder without reading another user's DOM.
   return new Promise((resolve) => {
@@ -56,6 +63,12 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [ownAvatarStage, setOwnAvatarStage] = useState<string | null>(null);
   const [ownAvatarPending, setOwnAvatarPending] = useState(false);
+  const [sourcePreviewPending, setSourcePreviewPending] = useState(false);
+  const [sourcePreviewStatus, setSourcePreviewStatus] = useState<string | null>(null);
+  const [sourcePreviewUrl, setSourcePreviewUrl] = useState<string | null>(null);
+  const sourcePreviewUrlRef = useRef<string | null>(null);
+  const sourceRequestRef = useRef<AbortController | null>(null);
+  const sourceRequestPendingRef = useRef(false);
   const mounted = useRef(false);
   const urlRef = useRef<string | null>(null);
   const dbRef = useRef<MezfitCloudDatabase | null>(null);
@@ -111,6 +124,10 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
       db?.close({ disableAutoOpen: false });
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
       urlRef.current = null;
+      sourceRequestRef.current?.abort();
+      sourceRequestRef.current = null;
+      if (sourcePreviewUrlRef.current) URL.revokeObjectURL(sourcePreviewUrlRef.current);
+      sourcePreviewUrlRef.current = null;
     };
   }, [initData]);
 
@@ -130,6 +147,47 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
       if (mounted.current) setOwnAvatarStage('Ошибка запроса Worker или Dexie Cloud; обновление не подтверждено');
     } finally {
       if (mounted.current) setOwnAvatarPending(false);
+    }
+  };
+
+  /** A separate, authenticated read-only request: it never writes to Dexie Cloud. */
+  const inspectSource = async () => {
+    if (!telegramUserId || sourceRequestPendingRef.current) return;
+    sourceRequestPendingRef.current = true;
+    setSourcePreviewPending(true);
+    setSourcePreviewStatus(null);
+    setSourcePreviewUrl(null);
+    if (sourcePreviewUrlRef.current) URL.revokeObjectURL(sourcePreviewUrlRef.current);
+    sourcePreviewUrlRef.current = null;
+    const controller = new AbortController();
+    sourceRequestRef.current = controller;
+    try {
+      const result = await inspectTelegramAvatarSource(initData, controller.signal);
+      if (!mounted.current || controller.signal.aborted) return;
+      if (!result.image) {
+        setSourcePreviewStatus('Bot API сообщает, что доступной фотографии нет.');
+        return;
+      }
+      const url = URL.createObjectURL(result.image);
+      const decoded = await decodeImage(url);
+      if (!mounted.current || controller.signal.aborted || !decoded) {
+        URL.revokeObjectURL(url);
+        if (mounted.current && !controller.signal.aborted) {
+          setSourcePreviewStatus('Полученное изображение не декодируется в Telegram WebView.');
+        }
+        return;
+      }
+      sourcePreviewUrlRef.current = url;
+      setSourcePreviewUrl(url);
+      setSourcePreviewStatus(sourceComparisonLabels[result.comparison]);
+    } catch {
+      if (mounted.current && !controller.signal.aborted) {
+        setSourcePreviewStatus('Не удалось проверить изображение Telegram. Данные не изменены.');
+      }
+    } finally {
+      sourceRequestPendingRef.current = false;
+      if (sourceRequestRef.current === controller) sourceRequestRef.current = null;
+      if (mounted.current) setSourcePreviewPending(false);
     }
   };
 
@@ -188,6 +246,17 @@ export function CloudAvatarDiagnostic({ initData }: { initData: string }) {
         {ownAvatarPending ? 'Проверяем собственный Telegram-аватар…' : 'Проверить обновление моего Telegram-аватара'}
       </Button>
       {ownAvatarStage && <p role="status"><Text variant="body">{ownAvatarStage}</Text></p>}
+      <Button onClick={() => { void inspectSource(); }} disabled={!telegramUserId || sourcePreviewPending}>
+        {sourcePreviewPending ? 'Читаем изображение Telegram…' : 'Посмотреть фото, которое Telegram отдаёт Mezfit'}
+      </Button>
+      {sourcePreviewStatus && <p role="status"><Text variant="body">{sourcePreviewStatus}</Text></p>}
+      {sourcePreviewUrl && (
+        <img src={sourcePreviewUrl} width={256} height={256} style={{ objectFit: 'contain' }}
+          alt="Фотография, которую Telegram Bot API возвращает приложению" />
+      )}
+      <p><Text variant="footnote" tone="muted">
+        Это отдельная проверка без записи: изображение получается напрямую через проверенный Worker, показывается только на вашем устройстве и удаляется из памяти при закрытии диагностики. Telegram ID, служебные идентификаторы и ссылки не отображаются.
+      </Text></p>
       <p><Text variant="body">Найдено контактов: {contacts.length}</Text></p>
       <p><Text variant="body">С версией аватара: {withAvatar}</Text></p>
       <Button onClick={() => { void check(); }} disabled={!selected || !telegramUserId || result === 'pending'}>
