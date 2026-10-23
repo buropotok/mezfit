@@ -5,12 +5,12 @@ import { IdentityAction } from './IdentityAction';
 import { NavbarMetaball } from './NavbarMetaball';
 
 let availableWidth = 200;
-let intrinsicTextWidth = 140;
+let intrinsicTextWidth = 130;
 const observers: ResizeObserverCallback[] = [];
 
 beforeEach(() => {
   availableWidth = 200;
-  intrinsicTextWidth = 140;
+  intrinsicTextWidth = 130;
   observers.length = 0;
   vi.stubGlobal('ResizeObserver', class {
     constructor(callback: ResizeObserverCallback) { observers.push(callback); }
