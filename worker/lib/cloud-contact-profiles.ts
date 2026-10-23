@@ -218,7 +218,11 @@ export async function currentTelegramAvatarSource(
     request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
   );
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
+  // Diagnostic is an explicit read-only inspection of what the Bot API returns
+  // *now*, not the cached 204 comparison used by routine profile refresh.
+  const diagnostic = new URL(request.url).searchParams.get('diagnostic') === '1';
   const headers = { 'cache-control': 'no-store' };
+  let comparison: 'same' | 'different' | 'mixed' | 'not-stored' = 'not-stored';
   if (photo === undefined) return error(502, 'TELEGRAM_PROFILE_UNAVAILABLE');
   if (photo === null) return new Response(null, {
     status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'no-photo' },
@@ -246,7 +250,14 @@ export async function currentTelegramAvatarSource(
     if (!Array.isArray(existing) || !existing.every(record)) return error(502, 'CLOUD_PROFILE_UNAVAILABLE');
     const known = new Map(existing.filter(row => typeof row.id === 'string')
       .map(row => [row.id as string, row]));
-    if (eligibleIds.every(id => known.get(id)?.avatarVersion === photo.version
+    const stored = eligibleIds.map(id => known.get(id)?.avatarVersion)
+      .filter(version);
+    if (stored.length > 0) {
+      const matching = stored.filter(value => value === photo.version).length;
+      comparison = matching === stored.length && stored.length === eligibleIds.length
+        ? 'same' : matching === 0 ? 'different' : 'mixed';
+    }
+    if (!diagnostic && eligibleIds.every(id => known.get(id)?.avatarVersion === photo.version
       && hasBothAvatars(known.get(id)))) {
       return new Response(null, {
         status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'unchanged' },
@@ -260,7 +271,10 @@ export async function currentTelegramAvatarSource(
     headers: {
       ...headers,
       'content-type': 'image/jpeg',
-      'x-mezfit-photo-version': photo.version,
+      // Never expose a Telegram file ID, source URL, or version fingerprint
+      // through the user-visible inspection response.
+      ...(diagnostic ? { 'x-mezfit-photo-comparison': comparison }
+        : { 'x-mezfit-photo-version': photo.version }),
     },
   });
 }

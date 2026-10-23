@@ -854,6 +854,63 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.downloads()).toBe(before);
   });
 
+  it('inspects actual Telegram JPEG even when the cloud version matches, without exposing source identifiers', async () => {
+    const cloud = await setup();
+    const signed = { method: 'POST', headers: { 'x-telegram-init-data': 'signed' } };
+    await syncOwnContactProfile(new Request(
+      'https://mezfit.test/api/cloud/profile/sync', signed,
+    ), env, cloud.fetchImpl);
+    const priorWrites = cloud.postCount();
+    const priorUploads = cloud.uploads();
+    const priorDownloads = cloud.downloads();
+
+    const standard = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source', signed,
+    ), env, cloud.fetchImpl);
+    expect(standard.status).toBe(204);
+    expect(cloud.downloads()).toBe(priorDownloads);
+
+    const inspect = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source?diagnostic=1', signed,
+    ), env, cloud.fetchImpl);
+    expect(inspect.status).toBe(200);
+    expect(inspect.headers.get('cache-control')).toBe('no-store');
+    expect(inspect.headers.get('x-mezfit-photo-comparison')).toBe('same');
+    expect(inspect.headers.get('x-mezfit-photo-version')).toBeNull();
+    expect(inspect.headers.get('content-type')).toBe('image/jpeg');
+    expect(new Uint8Array(await inspect.arrayBuffer()).slice(0, 3))
+      .toEqual(new Uint8Array([255, 216, 255]));
+    expect(cloud.downloads()).toBe(priorDownloads + 1);
+    expect(cloud.uploads()).toBe(priorUploads);
+    expect(cloud.postCount()).toBe(priorWrites);
+
+    cloud.setPhoto('new-photo-after-saved-version');
+    const changed = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source?diagnostic=1', signed,
+    ), env, cloud.fetchImpl);
+    expect(changed.status).toBe(200);
+    expect(changed.headers.get('x-mezfit-photo-comparison')).toBe('different');
+    expect(changed.headers.get('x-mezfit-photo-version')).toBeNull();
+    expect(cloud.downloads()).toBe(priorDownloads + 2);
+    expect(cloud.uploads()).toBe(priorUploads);
+    expect(cloud.postCount()).toBe(priorWrites);
+  });
+
+  it('reports no photo without downloading or writing anything during source inspection', async () => {
+    const cloud = await setup();
+    cloud.removePhoto();
+    const response = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source?diagnostic=1', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+      },
+    ), env, cloud.fetchImpl);
+    expect(response.status).toBe(204);
+    expect(response.headers.get('x-mezfit-photo-status')).toBe('no-photo');
+    expect(cloud.downloads()).toBe(0);
+    expect(cloud.uploads()).toBe(0);
+    expect(cloud.postCount()).toBe(0);
+  });
+
   it('returns 409 if Telegram photo changes between a 204 source response and bodyless sync', async () => {
     const cloud = await setup();
     const legacy = new Request('https://mezfit.test/api/cloud/profile/sync', {
