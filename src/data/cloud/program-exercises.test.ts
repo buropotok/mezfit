@@ -191,6 +191,40 @@ describe('program set creation without a result editor', () => {
     })]));
   });
 
+  it.each([false, true])('removes a set from PLAN, retaining its source row and history (assigned: %s)', async (assigned) => {
+    const { db, repo, planId, dayId } = await fixture(assigned);
+    await repo.addDayExercises(planId, dayId, ['0001']);
+    const exercise = (await db.table('programExercises').toArray())[0];
+    await repo.addExerciseSet(planId, dayId, exercise.id);
+    await repo.addExerciseSet(planId, dayId, exercise.id);
+    const sets = await db.table('programSets').where('programExerciseId').equals(exercise.id).toArray();
+    const before = await db.table('localProgramSync').get(planId);
+    await repo.deleteExerciseSet(planId, dayId, exercise.id, sets[0].id);
+    db.close(); await db.open();
+    expect((await repo.details(planId))?.days?.[0].exercises[0].sets.map(set => set.id)).toEqual([sets[1].id]);
+    expect((await db.table('programSets').get(sets[0].id)).status).toBe('deprecated');
+    expect(await db.table('programSets').count()).toBe(2);
+    expect((await db.table('localProgramSync').get(planId)).revision).toBe(before.revision + 1);
+  });
+
+  it('forbids deletion by clients or with foreign, missing and inactive set identity', async () => {
+    const { db, repo, planId, dayId } = await fixture(true);
+    await repo.addDayExercises(planId, dayId, ['0001', '0002']);
+    const exercises = (await db.table('programExercises').toArray()).sort((a, b) => a.position - b.position);
+    await repo.addExerciseSet(planId, dayId, exercises[0].id);
+    const set = (await db.table('programSets').toArray())[0];
+    const client = new ProgramManagementRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    await expect(client.deleteExerciseSet(planId, dayId, exercises[0].id, set.id)).rejects.toThrow('прав');
+    await expect(repo.deleteExerciseSet(planId, 'missing', exercises[0].id, set.id)).rejects.toThrow('День не найден');
+    await expect(repo.deleteExerciseSet(planId, dayId, exercises[1].id, set.id)).rejects.toThrow('Подход не найден');
+    await expect(repo.deleteExerciseSet(planId, dayId, exercises[0].id, 'missing')).rejects.toThrow('Подход не найден');
+    await db.table('programSets').update(set.id, { owner: 'tg:303' });
+    await expect(repo.deleteExerciseSet(planId, dayId, exercises[0].id, set.id)).rejects.toThrow('Подход не найден');
+    await db.table('programSets').update(set.id, { owner: null });
+    await repo.deleteExerciseSet(planId, dayId, exercises[0].id, set.id);
+    await expect(repo.deleteExerciseSet(planId, dayId, exercises[0].id, set.id)).rejects.toThrow('Подход не найден');
+  });
+
   it('rejects clients, foreign exercise ownership, wrong days and deleted ancestors without adding a set', async () => {
     const { db, repo, planId, dayId } = await fixture(true);
     await repo.addDayExercises(planId, dayId, ['0001']);
