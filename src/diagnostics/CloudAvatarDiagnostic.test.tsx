@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { liveQuery } from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getMe } from '../api';
+import { diagnoseCloudContactProfileSync, getMe } from '../api';
 import { loadContactAvatar } from '../data/cloud/contact-avatar-cache';
 import { createCloudDatabase, type MezfitCloudDatabase } from '../data/cloud/database';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
@@ -11,7 +11,7 @@ import { CloudAuthDiagnostic } from './CloudAuthDiagnostic';
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>();
-  return { ...actual, getMe: vi.fn() };
+  return { ...actual, getMe: vi.fn(), diagnoseCloudContactProfileSync: vi.fn() };
 });
 vi.mock('../data/cloud/database', () => ({ createCloudDatabase: vi.fn() }));
 vi.mock('../data/cloud/contact-avatar-cache', () => ({ loadContactAvatar: vi.fn() }));
@@ -44,6 +44,7 @@ let visibleContacts: CloudContact[] = [peer];
 beforeEach(() => {
   vi.clearAllMocks();
   visibleContacts = [peer];
+  vi.mocked(diagnoseCloudContactProfileSync).mockResolvedValue({ changed: false, avatarStatus: 'unchanged' });
   vi.mocked(getMe).mockResolvedValue({
     user: { telegramUserId: '101' },
   } as Awaited<ReturnType<typeof getMe>>);
@@ -132,4 +133,17 @@ describe('on-demand cloud avatar diagnostic', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Скрыть диагностику аватаров' }));
     expect(close).toHaveBeenCalledWith({ disableAutoOpen: false });
   });
+  it('shows a safe stage when a new Telegram photo cannot be uploaded to Dexie Cloud', async () => {
+    vi.mocked(diagnoseCloudContactProfileSync).mockResolvedValue({
+      changed: false, avatarStatus: 'upload-failed',
+    });
+    render(<CloudAvatarDiagnostic initData="signed" />);
+    await waitFor(() => expect(screen.getByText('С версией аватара: 1')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Проверить обновление моего Telegram-аватара' }));
+    await waitFor(() => expect(screen.getByText('Не удалось записать новую фотографию в Dexie Cloud')).toBeTruthy());
+    expect(diagnoseCloudContactProfileSync).toHaveBeenCalledWith('signed');
+    expect(document.body.textContent).not.toContain('tg:202');
+  });
+
+
 });
