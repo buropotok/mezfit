@@ -159,21 +159,24 @@ function SessionExerciseLayout({
     <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={typeof exerciseId === 'number' ? exerciseId : undefined}
       data-program-exercise-id={typeof exerciseId === 'string' ? exerciseId : undefined}>
       <div className="session-exercise__header">
-        <List className="session-exercise__header-list">
-          <ListItem
+        <div className="session-exercise__header-list">
+          <List>
+            <ListItem
             className="session-exercise__header-toggle"
             leadingShape="square"
-            leading={onInformation ? <span className="session-exercise__media-tap" data-no-dnd
-              onPointerDown={event => event.stopPropagation()}
-              onClick={event => { event.stopPropagation(); onInformation(); }}>{media}</span> : media}
+            leading={media}
             title={exerciseName}
             subtitle={subtitle}
             trailing={badge}
             aria-expanded={!collapsed}
             aria-controls={bodyId}
             onClick={toggleCollapsed}
-          />
-        </List>
+            />
+          </List>
+          {onInformation ? <button type="button" className="session-exercise__media-action"
+            data-no-dnd aria-label={`Информация об упражнении: ${exerciseName}`}
+            onClick={onInformation} /> : null}
+        </div>
         <IconButton
           className={`session-exercise__collapse${collapsed ? ' session-exercise__collapse--collapsed' : ''}`}
           data-no-dnd
