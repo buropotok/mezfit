@@ -281,14 +281,15 @@ export function CloudConnectionsProvider({
         if (!active) return;
         await db.cloud.sync({ purpose: 'pull', wait: true });
         if (!active) return;
-        const { contacts, hasRelationshipMembership } = await readContacts();
+        const snapshot = await readContacts();
+        const { contacts, hasRelationshipMembership } = snapshot;
         if (!active) return;
         initialPullSucceededRef.current = true;
         if (hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
         } else {
-          publish({ contacts, selfAvatars: (await readContacts()).selfAvatars });
+          publish(snapshot);
         }
       } catch {
         if (!active) return;
