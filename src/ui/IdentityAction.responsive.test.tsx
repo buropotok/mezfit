@@ -22,13 +22,22 @@ beforeEach(() => {
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElt) => {
     const style = actualStyle(element, pseudoElt);
     if (!(element instanceof HTMLElement)) return style;
-    if (element.classList.contains('ui-identity-action')) {
-      return { ...style, paddingLeft: '2px', paddingRight: '14px', columnGap: '8px' } as CSSStyleDeclaration;
-    }
-    if (element.classList.contains('ui-identity-action__visual')) {
-      return { ...style, width: '40px' } as CSSStyleDeclaration;
-    }
-    return style;
+    const overrides = element.classList.contains('ui-identity-action')
+      ? { paddingLeft: '2px', paddingRight: '14px', columnGap: '8px' }
+      : element.classList.contains('ui-identity-action__visual')
+        ? { width: '40px' }
+        : null;
+    if (!overrides) return style;
+    // Preserve the real CSSStyleDeclaration API used by glass primitives.
+    return new Proxy(style, {
+      get(target, key) {
+        if (typeof key === 'string' && key in overrides) {
+          return overrides[key as keyof typeof overrides];
+        }
+        const value = Reflect.get(target, key, target) as unknown;
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
   });
   vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
     return this.classList.contains('ui-identity-action') ? availableWidth : 0;
