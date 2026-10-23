@@ -381,6 +381,15 @@ export async function syncOwnContactProfile(
   }
   const needsVariants = photo !== undefined && photo !== null && eligible.some(({ id }) =>
     known.get(id)?.avatarVersion !== photo.version || !hasBothAvatars(known.get(id)));
+  // A browser that received a 204 (unchanged/no-photo) did not send JPEGs.
+  // If the current photo now needs variants, signal a race rather than report
+  // success and silently skip it. A separately marked upstream 502 must still
+  // be allowed to commit the person's name without changing their last avatar.
+  if (needsVariants && !clientVariants
+    && request.headers.get('x-mezfit-client-avatar-compression') === '1'
+    && request.headers.get('x-mezfit-avatar-source-unavailable') !== '1') {
+    return error(409, 'STALE_AVATAR_SOURCE');
+  }
 
   // One verified Telegram photo is transformed per account, shared as references
   // across the separate realm-scoped contactProfiles of all authorized coaches.
