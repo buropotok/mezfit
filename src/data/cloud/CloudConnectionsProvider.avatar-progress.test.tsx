@@ -72,6 +72,7 @@ describe('remote blob download completion', () => {
     view.unmount();
     expect(unsubscribe).toHaveBeenCalledOnce();
   });
+
   it('re-checks the owner avatar on returning to the Mini App without polling while visible', async () => {
     const view = render(
       <CloudConnectionsProvider telegramUserId="101" initData="verified">
