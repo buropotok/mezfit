@@ -1,0 +1,67 @@
+/* Reproducible temporary GIF frame inspection for Mezfit visual audit.
+ * Pure JavaScript: returns six decoded animation phases as PNG contact sheets.
+ * Audit-only utility, no application imports or runtime effects. */
+({
+base64ToBytes(s){
+ const C="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+ let a=[],v=0,n=0;for(const c of s){let x=C.indexOf(c);if(x<0)continue;v=v<<6|x;n+=6;if(n>=8){n-=8;a.push(v>>n&255)}}return Uint8Array.from(a);
+},
+decodeGIF(a){
+ let p=6,u=()=>a[p++],w=()=>u()|u()<<8,W=w(),H=w(),z=u();u();u();
+ const pal=n=>a.slice(p,p+=n*3);
+ let G=z&128?pal(1<<((z&7)+1)):null,cv=new Uint8Array(W*H*4).fill(255),d={d:0,t:-1},pr=null,frames=[];
+ function LZW(a,min){
+  let bit=0,n=min+1,cl=1<<min,end=cl+1,next=end+1,D=[],prev=null,out=[];
+  const reset=()=>{D=[];for(let i=0;i<cl;i++)D[i]=[i];n=min+1;next=end+1};
+  const get=()=>{let c=0;for(let i=0;i<n;i++){if(bit>>3>=a.length)return -1;c|=(a[bit>>3]>>(bit&7)&1)<<i;bit++}return c};
+  reset();for(;;){let c=get();if(c<0||c===end)break;if(c===cl){reset();prev=null;continue}
+   let e=D[c]||(c===next&&prev?prev.concat(prev[0]):null);if(!e)break;out.push(...e);
+   if(prev){D[next++]=prev.concat(e[0]);if(next===1<<n&&n<12)n++}prev=e;
+  }return out;
+ }
+ while(p<a.length){
+  let cmd=u();if(cmd===59)break;
+  if(cmd===33){let t=u();if(t===249){u();let f=u();w();let tr=u();u();d={d:f>>2&7,t:f&1?tr:-1}}else{let n;while(n=u())p+=n}continue}
+  if(cmd!==44)throw Error("invalid GIF image block "+cmd);
+  if(pr?.d===2)for(let y=pr.y;y<pr.y+pr.h;y++)for(let x=pr.x;x<pr.x+pr.w;x++){let k=(y*W+x)*4;cv[k]=cv[k+1]=cv[k+2]=cv[k+3]=255}
+  if(pr?.d===3&&pr.b)cv=pr.b;
+  let X=w(),Y=w(),iw=w(),ih=w(),f=u(),P=f&128?pal(1<<((f&7)+1)):G,min=u(),src=[],num;
+  while(num=u())for(let i=0;i<num;i++)src.push(u());
+  let pixels=LZW(src,min),q=0,ofs=f&64?[0,4,2,1]:[0],stride=f&64?[8,8,4,2]:[1],backup=d.d===3?cv.slice():null;
+  for(let j=0;j<ofs.length;j++)for(let y=ofs[j];y<ih;y+=stride[j])for(let x=0;x<iw;x++){
+   let id=pixels[q++];if(id===d.t||id===undefined)continue;let i=((Y+y)*W+X+x)*4;
+   cv[i]=P[id*3]||0;cv[i+1]=P[id*3+1]||0;cv[i+2]=P[id*3+2]||0;cv[i+3]=255;
+  }
+  frames.push(cv.slice());pr={x:X,y:Y,w:iw,h:ih,d:d.d,b:backup};d={d:0,t:-1};
+ }
+ return {W,H,frames};
+},
+mosaic(all,imageSink,textSink,size=100){
+ const C="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+ const be=x=>[x>>>24&255,x>>>16&255,x>>>8&255,x&255];
+ const table=new Uint32Array(256);for(let i=0;i<256;i++){let x=i;for(let j=0;j<8;j++)x=x&1?0xedb88320^x>>>1:x>>>1;table[i]=x>>>0}
+ const chunk=(s,data)=>{let a=[...s].map(c=>c.charCodeAt(0)).concat(data),v=0xffffffff;for(const c of a)v=table[(v^c)&255]^v>>>8;return[...be(data.length),...a,...be((v^0xffffffff)>>>0)]};
+ function png(W,H,pixels){
+  let raw=new Uint8Array(H*(1+4*W));for(let y=0;y<H;y++)raw.set(pixels.subarray(4*y*W,4*(y+1)*W),y*(1+4*W)+1);
+  let z=[120,1],a=1,b=0;for(let i=0;i<raw.length;){let n=Math.min(65535,raw.length-i);z.push(i+n===raw.length?1:0,n&255,n>>8,~n&255,~n>>8&255);for(let j=i;j<i+n;j++)z.push(raw[j]);i+=n}
+  for(const x of raw){a=(a+x)%65521;b=(b+a)%65521}z.push(...be((b<<16|a)>>>0));
+  let bytes=[137,80,78,71,13,10,26,10,...chunk("IHDR",[...be(W),...be(H),8,6,0,0,0]),...chunk("IDAT",z),...chunk("IEND",[])],s="";
+  for(let i=0;i<bytes.length;i+=3){let v=bytes[i]<<16|(bytes[i+1]||0)<<8|(bytes[i+2]||0);s+=C[v>>>18&63]+C[v>>>12&63]+(i+1<bytes.length?C[v>>>6&63]:"=")+(i+2<bytes.length?C[v&63]:"=")}
+  return s;
+ }
+ for(let g=0;g<all.length;g+=3){
+  const set=all.slice(g,g+3),W=size*6,H=size*set.length,pixels=new Uint8Array(W*H*4).fill(255);
+  for(let row=0;row<set.length;row++){
+   let d=set[row].im;if(!d)continue;
+   for(let col=0;col<6;col++){let f=d.frames[Math.floor(col*d.frames.length/6)];if(!f)continue;
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+     let from=(Math.floor(y*d.H/size)*d.W+Math.floor(x*d.W/size))*4,to=((row*size+y)*W+col*size+x)*4;
+     pixels[to]=f[from];pixels[to+1]=f[from+1];pixels[to+2]=f[from+2];
+    }
+   }
+  }
+  imageSink("data:image/png;base64,"+png(W,H,pixels));
+  textSink(set.map(x=>x.id+" "+x.name_ru).join(" | "));
+ }
+}
+})
