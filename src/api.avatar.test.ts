@@ -184,7 +184,9 @@ describe('client-only Telegram avatar compression API flow', () => {
 });
 
 describe('read-only Telegram Bot API photo inspection', () => {
-  const payload = new Blob([new Uint8Array(36)], { type: 'image/jpeg' });
+  // In Vitest's jsdom environment, its Blob is not a streaming BodyInit for Node Response.
+  // Use raw network bytes; Response.blob() still verifies the runtime JPEG MIME/size contract.
+  const payload = new ArrayBuffer(36);
 
   it('downloads matching source bytes without compression or cloud writes', async () => {
     const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
@@ -231,7 +233,7 @@ describe('read-only Telegram Bot API photo inspection', () => {
       new Response(payload, { headers: {
         'content-type': 'image/jpeg', 'x-mezfit-photo-comparison': 'same', 'content-length': '20000001',
       } }),
-      new Response(new Blob(['short'], { type: 'image/jpeg' }), {
+      new Response(new ArrayBuffer(5), {
         headers: { 'content-type': 'image/jpeg', 'x-mezfit-photo-comparison': 'same' },
       }),
     ]) {
