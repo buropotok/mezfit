@@ -2,7 +2,8 @@ import type { AvatarContactRef } from './contact-avatar-cache';
 
 const keyOf = (contact: AvatarContactRef, variant: 'small' | 'large') =>
   [contact.relationshipId, contact.userId, contact.avatarVersion ?? '',
-    contact.avatarMode ?? 'legacy', variant].join(':');
+    contact.avatarMode ?? 'legacy', contact.coachAvatarVersion ?? '',
+    contact.coachAvatarMode ?? '', variant].join(':');
 
 /** Provider/account-owned render cache. A cached Blob URL survives calendar page remounts. */
 export class ContactAvatarUrls {
@@ -13,7 +14,7 @@ export class ContactAvatarUrls {
   }
 
   async load(contact: AvatarContactRef, loader: () => Promise<Blob | null>, variant: 'small' | 'large' = 'small'): Promise<string | undefined> {
-    if (!contact.avatarVersion) return undefined;
+    if (!contact.avatarVersion && !contact.coachAvatarVersion) return undefined;
     const key = keyOf(contact, variant);
     let entry = this.images.get(key);
     if (entry?.url) return entry.url;
