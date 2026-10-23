@@ -6,6 +6,8 @@ export interface AvatarContactRef {
   userId: string;
   avatarVersion?: string | null;
   avatarMode?: string;
+  coachAvatarVersion?: string;
+  coachAvatarMode?: string;
 }
 
 export type AvatarTraceStage =
