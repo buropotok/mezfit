@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, TransitionEventHandler } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
@@ -9,11 +9,15 @@ import { WorkoutSlotConflict } from '../data/cloud/workout-slot-validation';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 
 const cloudEnabled = vi.hoisted(() => ({ value: false }));
+const overlayProbe = vi.hoisted(() => ({ animated: false, zeroDuration: false, dates: 0, times: 0, dialogs: 0, selectors: 0 }));
 
 vi.mock('./WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => cloudEnabled.value
   ? { db: {}, actorUserId: 'tg:101' } : null }));
-vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSelectionSheet: () => null }));
+vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSelectionSheet: () => {
+  overlayProbe.selectors += 1;
+  return null;
+} }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
   WorkoutPlanCard: ({ onAddSet, onExerciseInformation }: {
     onAddSet?: (id: string) => void; onExerciseInformation?: (id: string) => void;
@@ -39,20 +43,36 @@ vi.mock('../ui', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
   IconButton: ({ label, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
-    <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />, TimePicker: () => null,
-  DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) => opened ? <div>
-    <button onClick={() => onChange('2026-10-20')}>Занятая дата</button>
-    <button onClick={() => onChange('invalid')}>Некорректная дата</button>
-    <button onClick={() => onChange('2026-10-21')}>Свободная дата</button>
-  </div> : null,
+    <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />, TimePicker: () => {
+    overlayProbe.times += 1;
+    return null;
+  },
+  DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) => {
+    overlayProbe.dates += 1;
+    return opened ? <div>
+      <button onClick={() => onChange('2026-10-20')}>Занятая дата</button>
+      <button onClick={() => onChange('invalid')}>Некорректная дата</button>
+      <button onClick={() => onChange('2026-10-21')}>Свободная дата</button>
+    </div> : null;
+  },
   Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
-  MezfitBottomSheet: ({ children, opened }: { children: ReactNode; opened: boolean }) =>
-    <div data-testid="sheet-shell" data-open={opened}>{children}</div>,
-  MezfitDialog: ({ opened, children, buttons }: { opened: boolean; children: ReactNode; buttons: ReactNode }) => opened ? <div>{children}{buttons}</div> : null,
+  MezfitBottomSheet: ({ children, opened, id, onTransitionEnd }: { children: ReactNode; opened: boolean;
+    id?: string; onTransitionEnd?: TransitionEventHandler<HTMLDivElement> }) =>
+    <div id={id} data-testid="sheet-shell" data-open={opened}
+      style={overlayProbe.animated ? { transitionProperty: 'transform',
+        transitionDuration: overlayProbe.zeroDuration ? '0ms' : '400ms', transitionDelay: '0ms' } : undefined}
+      onTransitionEnd={onTransitionEnd}>{children}</div>,
+  MezfitDialog: ({ opened, children, buttons }: { opened: boolean; children: ReactNode; buttons: ReactNode }) => {
+    overlayProbe.dialogs += 1;
+    return opened ? <div>{children}{buttons}</div> : null;
+  },
   MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
 }));
-afterEach(() => { cleanup(); vi.unstubAllEnvs(); cloudEnabled.value = false; });
+afterEach(() => {
+  cleanup(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); cloudEnabled.value = false;
+  Object.assign(overlayProbe, { animated: false, zeroDuration: false, dates: 0, times: 0, dialogs: 0, selectors: 0 });
+});
 const plan = { name: 'День', comment: null, exercises: [{
   id: 'exercise', sourceProgramExerciseId: null, position: 0, notes: null, sets: [],
   exercise: { exerciseDefinitionId: '0001', scope: 'public' as const, name: 'Жим', nameEn: null, mediaUrl: null },
@@ -63,6 +83,77 @@ const draft: LocalWorkoutOccurrenceDraft = {
   format: 'independent', startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60,
   plan, originalPlan: plan, createdAt: '2026-10-18T08:00:00.000Z', updatedAt: '2026-10-18T08:00:00.000Z',
 };
+
+describe('deferred editor auxiliaries', () => {
+  it('renders the real form during slide but mounts closed pickers and dialogs only after opening', async () => {
+    overlayProbe.animated = true;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    expect(screen.getByText('План на тренировку')).toBeTruthy();
+    expect([overlayProbe.dates, overlayProbe.times, overlayProbe.dialogs, overlayProbe.selectors]).toEqual([0, 0, 0, 0]);
+
+    fireEvent.transitionEnd(screen.getByTestId('sheet-shell'), { propertyName: 'transform' });
+    await waitFor(() => {
+      expect(overlayProbe.dates).toBeGreaterThan(0);
+      expect(overlayProbe.times).toBeGreaterThan(0);
+      expect(overlayProbe.dialogs).toBeGreaterThan(0);
+      expect(overlayProbe.selectors).toBeGreaterThan(0);
+    });
+  });
+
+  it('ignores a closing transition and defers helpers again on a new opening', async () => {
+    overlayProbe.animated = true;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const props = { drafts, onClose: vi.fn(), onSave: vi.fn() };
+    const view = render(<OccurrenceDraftSheet {...props} draft={draft} />);
+    const shell = screen.getByTestId('sheet-shell');
+
+    view.rerender(<OccurrenceDraftSheet {...props} draft={null} />);
+    fireEvent.transitionEnd(shell, { propertyName: 'transform' });
+    expect(overlayProbe.dates).toBe(0);
+
+    view.rerender(<OccurrenceDraftSheet {...props} draft={draft} />);
+    expect(overlayProbe.dates).toBe(0);
+    fireEvent.transitionEnd(shell, { propertyName: 'transform' });
+    await waitFor(() => expect(overlayProbe.dates).toBeGreaterThan(0));
+  });
+
+  it('falls back to the computed transition duration if WebView drops transitionend', async () => {
+    overlayProbe.animated = true;
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+
+    try {
+      render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+      expect(overlayProbe.dates).toBe(0);
+      await act(async () => { vi.runAllTimers(); });
+      expect(overlayProbe.dates).toBeGreaterThan(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('mounts helpers immediately when transitions are disabled', () => {
+    overlayProbe.animated = true;
+    overlayProbe.zeroDuration = true;
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    expect(overlayProbe.dates).toBeGreaterThan(0);
+    expect(overlayProbe.dialogs).toBeGreaterThan(0);
+  });
+});
 
 describe('draft edit recovery', () => {
   it('opens the shared information sheet from an occurrence snapshot even for read-only planning', async () => {
