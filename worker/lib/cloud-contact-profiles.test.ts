@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from './dexie-cloud-membership';
-import { syncOwnContactProfile, type ContactProfileEnv } from './cloud-contact-profiles';
+import { currentTelegramAvatarSource, syncOwnContactProfile, type ContactProfileEnv } from './cloud-contact-profiles';
 import { validateTelegramInitData } from './telegram';
 
 vi.mock('./telegram', async (importOriginal) => {
@@ -674,6 +674,94 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(await (await syncOwnContactProfile(request, env, inconsistentFetch)).json())
       .toEqual({ changed: false, avatarStatus: 'upload-failed' });
     expect(profileReads).toBe(3);
+  });
+
+  it('streams the signed account Telegram original to the browser without calling Cloudflare Images', async () => {
+    const cloud = await setup();
+    const request = new Request('https://mezfit.test/api/cloud/profile/source', {
+      method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+    });
+    const source = await currentTelegramAvatarSource(request, env, cloud.fetchImpl);
+    expect(source.status).toBe(200);
+    expect(source.headers.get('content-type')).toBe('image/jpeg');
+    expect(source.headers.get('x-mezfit-photo-version')).toMatch(/^[a-f0-9]{64}$/);
+    expect(new Uint8Array(await source.arrayBuffer()).slice(0, 3))
+      .toEqual(new Uint8Array([255, 216, 255]));
+    expect(cloud.downloads()).toBe(1);
+    expect(transform).not.toHaveBeenCalled();
+    const unchanged = await currentTelegramAvatarSource(new Request(request.url, {
+      method: 'POST',
+      headers: {
+        'x-telegram-init-data': 'signed',
+        'x-mezfit-known-avatar-version': source.headers.get('x-mezfit-photo-version')!,
+      },
+    }), env, cloud.fetchImpl);
+    expect(unchanged.status).toBe(204);
+    expect(cloud.downloads()).toBe(1);
+  });
+
+  it('writes browser-compressed variants directly to Dexie Cloud without Worker image transforms', async () => {
+    const cloud = await setup();
+    const source = await currentTelegramAvatarSource(new Request(
+      'https://mezfit.test/api/cloud/profile/source', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' },
+      },
+    ), env, cloud.fetchImpl);
+    const form = new FormData();
+    form.set('photoVersion', source.headers.get('x-mezfit-photo-version')!);
+    form.set('small', new Blob([jpeg.slice().buffer], { type: 'image/jpeg' }), 'small.jpg');
+    form.set('large', new Blob([largeJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
+    const response = await syncOwnContactProfile(new Request(
+      'https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
+        method: 'POST', headers: {
+          'x-telegram-init-data': 'signed',
+          'x-mezfit-client-avatar-compression': '1',
+        }, body: form,
+      },
+    ), env, cloud.fetchImpl);
+    expect(await response.json()).toEqual({ changed: true, avatarStatus: 'updated' });
+    expect(transform).not.toHaveBeenCalled();
+    expect(cloud.downloads()).toBe(1);
+    expect(cloud.uploads()).toBe(2);
+    expect(cloud.postCount()).toBe(1);
+    expect([...cloud.profiles.values()][0]).toMatchObject({
+      avatarSmall: { _bt: 'Blob' },
+      avatarLarge: { _bt: 'Blob' },
+    });
+  });
+
+  it('rejects stale or malformed client-supplied variants without replacing cloud photos', async () => {
+    const cloud = await setup();
+    const form = new FormData();
+    form.set('photoVersion', 'a'.repeat(64));
+    form.set('small', new Blob([jpeg.slice().buffer], { type: 'image/jpeg' }), 'small.jpg');
+    form.set('large', new Blob([largeJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
+    const response = await syncOwnContactProfile(new Request(
+      'https://mezfit.test/api/cloud/profile/sync', {
+        method: 'POST', headers: { 'x-telegram-init-data': 'signed' }, body: form,
+      },
+    ), env, cloud.fetchImpl);
+    expect(response.status).toBe(409);
+    expect(cloud.uploads()).toBe(0);
+    expect(cloud.postCount()).toBe(0);
+  });
+
+  it('never invokes Cloudflare Images on the browser-only name or deletion refresh', async () => {
+    const cloud = await setup();
+    const response = await syncOwnContactProfile(new Request(
+      'https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
+        method: 'POST',
+        headers: {
+          'x-telegram-init-data': 'signed',
+          'x-mezfit-client-avatar-compression': '1',
+        },
+      },
+    ), env, cloud.fetchImpl);
+    expect(await response.json()).toEqual({
+      changed: true, avatarStatus: 'unchanged',
+    });
+    expect(transform).not.toHaveBeenCalled();
+    expect(cloud.uploads()).toBe(0);
   });
 
 });
