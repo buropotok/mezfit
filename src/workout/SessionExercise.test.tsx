@@ -192,6 +192,17 @@ describe('SessionExercise rendering', () => {
     expect(container.querySelector('.session-exercise__body')?.hasAttribute('hidden')).toBe(true);
   });
 
+  it('does not mount detail when an external owner rejects an expand request', () => {
+    const onCollapsedChange = vi.fn();
+    const { container } = render(<SessionExercise context={context} data={data}
+      onSaveSet={vi.fn(async () => undefined)} collapsed onCollapsedChange={onCollapsedChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    expect(onCollapsedChange).toHaveBeenCalledWith(false);
+    expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
+    expect(container.querySelector('.session-exercise__set-row')).toBeNull();
+  });
+
   it('starts collapsed when requested', () => {
     renderExercise({ defaultCollapsed: true });
     expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
