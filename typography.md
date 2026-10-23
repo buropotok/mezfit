@@ -71,7 +71,9 @@ derives `--ui-responsive-type-scale` from its measured content width, including
 the Settings **Окно 320px** preview. It publishes that value both on the shell
 and on `document.documentElement`, so app-owned semantic `Text` rendered in
 body-level portals (dialogs, hints, sheets) inherits the same scale.
-The global override restores the previous inline value when the shell unmounts:
+The global override restores the previous inline value when the shell unmounts.
+
+The initial scale policy is:
 
 - 320 CSS px and below: `0.9`;
 - 406 CSS px and above: `1`;
