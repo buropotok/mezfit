@@ -115,7 +115,7 @@ export function SortableList({
         {footer != null ? <div className="ui-sortable-list__footer">{footer}</div> : null}
       </GlassSurface>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
-        {activeItem ? <GlassSurface className="ui-sortable-list__overlay" preset="modalTuned" halo="lifted">{activeItem.content}</GlassSurface> : null}
+        {activeItem ? <GlassSurface className={`ui-sortable-list__overlay${lockToVerticalAxis ? ' ui-sortable-list__overlay--vertical' : ''}`} preset="modalTuned" halo="lifted">{activeItem.content}</GlassSurface> : null}
       </DragOverlay>
     </DndContext>
   );
