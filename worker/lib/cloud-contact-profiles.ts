@@ -252,14 +252,12 @@ export async function syncOwnContactProfile(
     .map((row) => [row.id as string, row]));
 
   const name = profileName(identity.user);
-  // Telegram may reuse the same signed auth_date across Mini App reopenings.
-  // Always re-check the Bot API photo for an authorized, non-stale session.
+  // A signed session's auth_date orders profile names, NOT Telegram photo changes.
+  // Even an older (but still valid) session must check the current Bot API photo.
+  // Never use its old name or timestamp to replace newer cloud identity metadata.
   // Unchanged photos do not download, transform, upload or rewrite profile rows.
-  const eligibleForSession = eligible.filter(({ id }) => !newerSource(known.get(id), sourceAuthAt));
-  if (eligibleForSession.length === 0) return respond(false, 'stale-session');
-
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
-  const needsVariants = photo !== undefined && photo !== null && eligibleForSession.some(({ id }) =>
+  const needsVariants = photo !== undefined && photo !== null && eligible.some(({ id }) =>
     known.get(id)?.avatarVersion !== photo.version || !hasBothAvatars(known.get(id)));
 
   // One verified Telegram photo is transformed per account, shared as references
@@ -273,7 +271,7 @@ export async function syncOwnContactProfile(
   } else if (photo && needsVariants) {
     avatarStatus = 'download-failed';
     for (const variant of ['small', 'large'] as const) {
-      const reused = eligibleForSession.map(({ id }) =>
+      const reused = eligible.map(({ id }) =>
         reusableAvatar(known.get(id), photo.version, variant)).find((value) => value !== null);
       if (reused) newImages[variant] = reused;
     }
@@ -313,12 +311,21 @@ export async function syncOwnContactProfile(
     .map((row) => [row.id as string, row]));
 
   const changed: Row[] = [];
-  for (const entry of eligibleForSession) {
+  let committedAvatarChange = false;
+  for (const entry of eligible) {
     const previous = current.get(entry.id);
-    if (newerSource(previous, sourceAuthAt)) continue;
+    const initiallyKnown = known.get(entry.id);
+    const staleSession = newerSource(previous, sourceAuthAt);
+    if (staleSession) {
+      // A stale signed session may update the avatar, but only if the cloud row
+      // has not changed while its Bot API request was in flight.
+      if (newVersion === undefined || !previous
+        || previous.sourceAuthAt !== initiallyKnown?.sourceAuthAt
+        || (previous.avatarVersion ?? null) !== (initiallyKnown?.avatarVersion ?? null)) continue;
+    }
     // If another check published a different photo while this lookup was in flight,
     // do not let an older equal-auth-date observation replace that newer result.
-    const originallyKnownVersion = known.get(entry.id)?.avatarVersion ?? null;
+    const originallyKnownVersion = initiallyKnown?.avatarVersion ?? null;
     if (previous?.sourceAuthAt === sourceAuthAt
       && (previous.avatarVersion ?? null) !== originallyKnownVersion
       && newVersion !== undefined && newVersion !== previous.avatarVersion) continue;
@@ -327,8 +334,8 @@ export async function syncOwnContactProfile(
     // Telegram initData timestamps have second precision. An equal-timestamp
     // request cannot establish that its name is newer than the persisted one;
     // preserve the committed name while still repairing/replacing photo blobs.
-    const resolvedName = previous?.sourceAuthAt === sourceAuthAt
-      && typeof previous.name === 'string' ? previous.name : name;
+    const resolvedName = staleSession || previous?.sourceAuthAt === sourceAuthAt
+      && typeof previous.name === 'string' ? previous?.name : name;
     const previousVersion = version(previous?.avatarVersion) ? previous.avatarVersion : null;
     const avatarVersion = newVersion === undefined ? previousVersion : newVersion;
     const unchangedSource = avatarVersion !== null && previousVersion === avatarVersion;
@@ -345,6 +352,9 @@ export async function syncOwnContactProfile(
       && sameCloudAvatar(previous.avatarSmall, avatarSmall)
       && sameCloudAvatar(previous.avatarLarge, avatarLarge)
       && sameCloudAvatar(previous.avatar, avatar)) continue;
+    if (newVersion !== undefined && (previousVersion !== avatarVersion
+      || !sameCloudAvatar(previous?.avatarSmall, avatarSmall)
+      || !sameCloudAvatar(previous?.avatarLarge, avatarLarge))) committedAvatarChange = true;
     changed.push({
       id: entry.id,
       realmId: entry.realmId,
@@ -356,10 +366,32 @@ export async function syncOwnContactProfile(
       avatarLarge,
       avatar,
       ...(isBlobRef ? { _hasBlobRefs: 1 } : {}),
-      sourceAuthAt,
+      sourceAuthAt: staleSession ? previous?.sourceAuthAt : sourceAuthAt,
     });
   }
   await cloudMembershipAdminUpsertProfiles(fetchImpl, bearer, changed);
+  if (avatarStatus === 'updated' && !committedAvatarChange) {
+    avatarStatus = 'stale-session';
+  }
+  // A successful blob upload is not proof that a contact profile now points
+  // to it. Verify the committed REST projection when explicitly diagnosing.
+  if (diagnostic && committedAvatarChange) {
+    const stored = await cloudMembershipAdminRead(
+      fetchImpl, bearer, '/all/contactProfiles?userId=' + encodeURIComponent(account),
+    );
+    if (!Array.isArray(stored) || !stored.every(record)) {
+      return respond(false, 'upload-failed');
+    }
+    const saved = new Map(stored.filter(row => typeof row.id === 'string')
+      .map(row => [row.id as string, row]));
+    const confirmed = changed.every(row => {
+      const actual = saved.get(row.id as string);
+      return actual && actual.avatarVersion === row.avatarVersion
+        && sameCloudAvatar(actual.avatarSmall, row.avatarSmall)
+        && sameCloudAvatar(actual.avatarLarge, row.avatarLarge);
+    });
+    if (!confirmed) return respond(false, 'upload-failed');
+  }
   return respond(changed.length > 0, avatarStatus);
 }
 
