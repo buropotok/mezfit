@@ -493,7 +493,8 @@ export async function inspectTelegramAvatarSource(
   const comparison = response.headers.get('x-mezfit-photo-comparison');
   const length = Number(response.headers.get('content-length') ?? '0');
   if (response.status !== 200 || response.headers.get('content-type') !== 'image/jpeg'
-    || !['same', 'different', 'mixed', 'not-stored'].includes(comparison ?? '')
+    || (comparison !== 'same' && comparison !== 'different'
+      && comparison !== 'mixed' && comparison !== 'not-stored')
     || !Number.isFinite(length) || length > 20_000_000) {
     throw new ApiError(502, 'Некорректный ответ проверки фотографии Telegram', 'INVALID_API_RESPONSE');
   }
@@ -501,7 +502,7 @@ export async function inspectTelegramAvatarSource(
   if (image.type !== 'image/jpeg' || image.size < 16 || image.size > 20_000_000) {
     throw new ApiError(502, 'Некорректная фотография Telegram', 'INVALID_TELEGRAM_AVATAR_SOURCE');
   }
-  return { comparison: comparison as TelegramAvatarSourceComparison, image };
+  return { comparison, image };
 }
 
 /** Browser-only image encoding; Worker only authenticates, fetches Telegram bytes and writes cloud references. */
