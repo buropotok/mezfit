@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "task": "mezfit_visual_audit",
-  "status": "in_progress",
-  "status_reason": "Stage 11 locked for GIF review",
+  "status": "ready",
+  "status_reason": "Stage 11 completed and audit artifacts validated; next stage 12 ready",
   "total_exercises": 1324,
   "batch_limit": 100,
   "stage_count": 14,
-  "completed_exercises": 1000,
-  "current_stage": 11,
-  "next_stage": 11,
+  "completed_exercises": 1100,
+  "current_stage": null,
+  "next_stage": 12,
   "source": {
     "catalogue": "input/catalogue_stage_{NN}.jsonl",
     "catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
@@ -21,11 +21,7 @@
     "manifest": "input/manifest.json",
     "automation_protocol": "AUTOMATION_PROTOCOL.md"
   },
-  "lock": {
-    "owner": "chatgpt-audit-stage-11-20261023-1509",
-    "started_at": "2026-10-23T15:09:02+03:00",
-    "stage": 11
-  },
+  "lock": null,
   "stages": [
     {
       "number": 1,
@@ -1193,7 +1189,7 @@
     },
     {
       "number": 11,
-      "status": "in_progress",
+      "status": "completed",
       "exercise_ids": [
         "1645",
         "1648",
@@ -1301,8 +1297,12 @@
         "to": 1100
       },
       "result_file": "results/batch_11.jsonl",
-      "results_committed": false,
-      "started_at": "2026-10-23T15:09:02+03:00"
+      "results_committed": true,
+      "started_at": "2026-10-23T15:09:02+03:00",
+      "reviewed_count": 100,
+      "checkpoint_file": "results/audit_checkpoint_stage_11.json",
+      "completed_at": "2026-10-23T15:20:02+03:00",
+      "status_reason": "100 original animated GIFs verified; 53 issues; batch, CSV, checkpoint, 1100 accumulated records verified by GitHub readback"
     },
     {
       "number": 12,
