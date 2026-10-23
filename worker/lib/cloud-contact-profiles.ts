@@ -373,16 +373,16 @@ export async function syncOwnContactProfile(
     }
     if (!newImages.small || !newImages.large) {
       const downloaded = clientVariants
-        ? new ArrayBuffer(16)
+        ? null
         : await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
-      if (downloaded) {
+      if (clientVariants || downloaded) {
         avatarStatus = 'transform-failed';
         for (const variant of ['small', 'large'] as const) {
           if (newImages[variant]) continue;
           try {
             const encoded = clientVariants
               ? clientVariants[variant]
-              : await optimizeContactAvatar(env.IMAGES, downloaded, variant);
+              : downloaded && await optimizeContactAvatar(env.IMAGES, downloaded, variant);
             if (!encoded) continue;
             avatarStatus = 'upload-failed';
             const id = await sha(account + ':' + photo.version + ':' + variant);
