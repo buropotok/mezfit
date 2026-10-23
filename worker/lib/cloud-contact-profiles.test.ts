@@ -749,22 +749,64 @@ describe('privileged Telegram contact profile synchronization', () => {
     expect(cloud.postCount()).toBe(0);
   });
 
-  it('never invokes Cloudflare Images on the browser-only name or deletion refresh', async () => {
+  it('never invokes Cloudflare Images for browser-only name or photo deletion refreshes', async () => {
     const cloud = await setup();
-    const response = await syncOwnContactProfile(new Request(
-      'https://mezfit.test/api/cloud/profile/sync?diagnostic=1', {
-        method: 'POST',
-        headers: {
-          'x-telegram-init-data': 'signed',
-          'x-mezfit-client-avatar-compression': '1',
-        },
-      },
-    ), env, cloud.fetchImpl);
-    expect(await response.json()).toEqual({
-      changed: true, avatarStatus: 'unchanged',
-    });
+    // First store the current photo using the browser-only JPEG upload flow.
+    // A bodyless first sync is intentionally rejected with 409 because it
+    // must not silently skip an avatar missing from Dexie Cloud.
+    const url = 'https://mezfit.test/api/cloud/profile/';
+    const signedHeaders = { 'x-telegram-init-data': 'signed' };
+    const source = await currentTelegramAvatarSource(new Request(url + 'source', {
+      method: 'POST', headers: signedHeaders,
+    }), env, cloud.fetchImpl);
+    expect(source.status).toBe(200);
+    const form = new FormData();
+    form.set('photoVersion', source.headers.get('x-mezfit-photo-version')!);
+    form.set('small', new Blob([validAvatarJpeg.slice().buffer], { type: 'image/jpeg' }), 'small.jpg');
+    form.set('large', new Blob([validAvatarJpeg.slice().buffer], { type: 'image/jpeg' }), 'large.jpg');
+    const initial = await syncOwnContactProfile(new Request(url + 'sync', {
+      method: 'POST', headers: {
+        ...signedHeaders, 'x-mezfit-client-avatar-compression': '1',
+      }, body: form,
+    }), env, cloud.fetchImpl);
+    expect(initial.status).toBe(200);
+    expect(cloud.uploads()).toBe(2);
     expect(transform).not.toHaveBeenCalled();
-    expect(cloud.uploads()).toBe(0);
+
+    // A subsequent 204 source permits a name-only sync with no new JPEGs.
+    const unchanged = await currentTelegramAvatarSource(new Request(url + 'source', {
+      method: 'POST', headers: signedHeaders,
+    }), env, cloud.fetchImpl);
+    expect(unchanged.status).toBe(204);
+    vi.mocked(validateTelegramInitData).mockResolvedValue({
+      user: { id: 101, first_name: 'Обновлённое', last_name: 'Имя' },
+      authDate: new Date(FIRST_AUTH_AT.getTime() + 60_000),
+    });
+    const nameUpdate = await syncOwnContactProfile(new Request(url + 'sync?diagnostic=1', {
+      method: 'POST', headers: {
+        ...signedHeaders, 'x-mezfit-client-avatar-compression': '1',
+      },
+    }), env, cloud.fetchImpl);
+    expect(await nameUpdate.json()).toEqual({ changed: true, avatarStatus: 'unchanged' });
+    expect([...cloud.profiles.values()][0].name).toBe('Обновлённое Имя');
+    expect(cloud.uploads()).toBe(2);
+    expect(transform).not.toHaveBeenCalled();
+
+    // If Telegram removes its avatar, no image transform or upload is needed.
+    cloud.removePhoto();
+    const noPhoto = await currentTelegramAvatarSource(new Request(url + 'source', {
+      method: 'POST', headers: signedHeaders,
+    }), env, cloud.fetchImpl);
+    expect(noPhoto.status).toBe(204);
+    const removed = await syncOwnContactProfile(new Request(url + 'sync?diagnostic=1', {
+      method: 'POST', headers: {
+        ...signedHeaders, 'x-mezfit-client-avatar-compression': '1',
+      },
+    }), env, cloud.fetchImpl);
+    expect(await removed.json()).toEqual({ changed: true, avatarStatus: 'no-photo' });
+    expect([...cloud.profiles.values()][0].avatarVersion).toBeNull();
+    expect(cloud.uploads()).toBe(2);
+    expect(transform).not.toHaveBeenCalled();
   });
 
   it('rejects browser uploads with malformed or excessive JPEG dimensions before any blob write', async () => {
