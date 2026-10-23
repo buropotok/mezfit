@@ -3,12 +3,16 @@ import { useState, type ReactNode } from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SortableList, type SortableListItem } from './SortableList';
+import type { Transform } from '@dnd-kit/utilities';
 
 const harness = vi.hoisted(() => ({
   start: null as null | ((event: { active: { id: string } }) => void),
   end: null as null | ((event: { active: { id: string }; over: { id: string } | null }) => void),
   cancel: null as null | (() => void),
-  dropAnimation: null as null | { sideEffects?: (args: { active: { node: HTMLElement }; dragOverlay: { node: HTMLElement } }) => (() => void) | void },
+  dropAnimation: null as null | {
+    sideEffects?: (args: { active: { node: HTMLElement }; dragOverlay: { node: HTMLElement } }) => (() => void) | void;
+    keyframes?: (args: { transform: { initial: Transform; final: Transform } }) => Keyframe[];
+  },
 }));
 
 vi.mock('./GlassSurface', () => ({
@@ -104,6 +108,48 @@ describe('SortableList inside an animated, scrollable sheet', () => {
     act(() => cleanupDrop?.());
     expect(list?.style.minHeight).toBe('');
     height.mockRestore();
+  });
+
+  it('releases reserved height when dnd-kit skips an aligned drop without invoking side effects', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(420);
+    const view = render(<Fixture />);
+    const list = view.container.querySelector<HTMLElement>('.ui-sortable-list');
+    act(() => harness.start?.({ active: { id: 'first' } }));
+    act(() => harness.end?.({ active: { id: 'first' }, over: { id: 'second' } }));
+    expect(list?.style.minHeight).toBe('420px');
+
+    const position = { x: 0, y: 0, scaleX: 1, scaleY: 1 };
+    act(() => {
+      const frames = harness.dropAnimation?.keyframes?.({
+        transform: { initial: position, final: { ...position } },
+      });
+      expect(frames?.[0]).toEqual(frames?.[1]);
+    });
+    expect(list?.style.minHeight).toBe('');
+  });
+
+  it('retains reserved height for a real landing animation until its cleanup executes', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(420);
+    const view = render(<Fixture />);
+    const list = view.container.querySelector<HTMLElement>('.ui-sortable-list');
+    act(() => harness.start?.({ active: { id: 'first' } }));
+    act(() => harness.end?.({ active: { id: 'first' }, over: { id: 'second' } }));
+
+    const position = { x: 0, y: 0, scaleX: 1, scaleY: 1 };
+    act(() => {
+      const frames = harness.dropAnimation?.keyframes?.({
+        transform: { initial: position, final: { ...position, y: 30 } },
+      });
+      expect(frames?.[0]).not.toEqual(frames?.[1]);
+    });
+    expect(list?.style.minHeight).toBe('420px');
+
+    const cleanupDrop = harness.dropAnimation?.sideEffects?.({
+      active: { node: list?.querySelector('.ui-sortable-list__row') as HTMLElement },
+      dragOverlay: { node: document.querySelector('[data-testid="lifted-overlay"]') as HTMLElement },
+    });
+    act(() => cleanupDrop?.());
+    expect(list?.style.minHeight).toBe('');
   });
 
   it('releases the reserved height on canceled drag and keeps in-place overlay by default', () => {
