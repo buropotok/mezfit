@@ -6,7 +6,7 @@ import {
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '../ui';
-import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
+import { CloudContactAvatar, useCloudContactAvatarUrl } from '../contacts/CloudContactAvatar';
 import { CloudContactsList } from '../contacts/CloudContactsList';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
@@ -156,6 +156,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
+  const selectedClientAvatarUrl = useCloudContactAvatarUrl(selectedClient);
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
   const [programDetailNavigation, setProgramDetailNavigation] = useState<NavigationContext | null>(null);
   const [selectedCloudProgram, setSelectedCloudProgram] = useState<CloudTrainingPlanRow | null>(null);
@@ -233,12 +234,13 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         title: selectedClientName,
         avatar: {
           name: selectedClientName,
-                  },
+          src: selectedClientAvatarUrl,
+        },
       },
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [programDetailNavigation, destination, selectedClient, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [programDetailNavigation, destination, selectedClient, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
     return <ClientWorkspace client={selectedClient} />;

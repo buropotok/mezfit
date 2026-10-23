@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContactAvatarUrls } from '../data/cloud/contact-avatar-urls';
-import { CloudContactAvatar } from './CloudContactAvatar';
+import { CloudContactAvatar, useCloudContactAvatarUrl } from './CloudContactAvatar';
 
 let cache: ContactAvatarUrls | undefined;
 let avatarLoadRevision = 0;
@@ -82,6 +82,19 @@ describe('CloudContactAvatar', () => {
     view.rerender(<CloudContactAvatar contact={peer} />);
     await waitFor(() => expect(loadAvatar).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(document.querySelector('img.ui-avatar')?.getAttribute('src')).toBe('blob:mezfit-portrait'));
+  });
+
+  it('shares the same small Blob URL between the contacts row and navbar identity', async () => {
+    cache = new ContactAvatarUrls();
+    function NavbarAvatar() {
+      const src = useCloudContactAvatarUrl(peer);
+      return <span data-testid="navbar-avatar-source">{src ?? 'initials'}</span>;
+    }
+    render(<><CloudContactAvatar contact={peer} /><NavbarAvatar /></>);
+    await waitFor(() => expect(screen.getByTestId('navbar-avatar-source').textContent).toBe('blob:mezfit-portrait'));
+    expect(document.querySelector('img.ui-avatar')?.getAttribute('src')).toBe('blob:mezfit-portrait');
+    expect(loadAvatar).toHaveBeenCalledTimes(1);
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
   });
 
   it('keeps initials if no Telegram photo is available', () => {
