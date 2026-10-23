@@ -690,15 +690,17 @@ describe('privileged Telegram contact profile synchronization', () => {
       .toEqual(new Uint8Array([255, 216, 255]));
     expect(cloud.downloads()).toBe(1);
     expect(transform).not.toHaveBeenCalled();
-    const unchanged = await currentTelegramAvatarSource(new Request(request.url, {
+    // A browser-supplied version is not a proof that all authorized realms
+    // have the image. Without committed cloud variants, it must be fetched.
+    const uncommitted = await currentTelegramAvatarSource(new Request(request.url, {
       method: 'POST',
       headers: {
         'x-telegram-init-data': 'signed',
         'x-mezfit-known-avatar-version': source.headers.get('x-mezfit-photo-version')!,
       },
     }), env, cloud.fetchImpl);
-    expect(unchanged.status).toBe(204);
-    expect(cloud.downloads()).toBe(1);
+    expect(uncommitted.status).toBe(200);
+    expect(cloud.downloads()).toBe(2);
   });
 
   it('writes browser-compressed variants directly to Dexie Cloud without Worker image transforms', async () => {
