@@ -101,6 +101,19 @@
   white-space: nowrap;
 }
 
+/* Intrinsic title measurement uses the same semantic Text preset as the
+   visible label, without consuming any space or altering the glass surface. */
+.ui-identity-action__title-measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  width: max-content;
+  max-width: none;
+  height: 0;
+  overflow: visible;
+}
+
 @keyframes ui-identity-action-press {
   0%,
   100% {
