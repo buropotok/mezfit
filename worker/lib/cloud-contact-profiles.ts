@@ -249,8 +249,31 @@ async function readClientVariants(request: Request): Promise<ClientVariants | nu
   const contentType = request.headers.get('content-type') ?? '';
   if (!contentType.startsWith('multipart/form-data')) return null;
   const size = Number(request.headers.get('content-length') ?? '0');
-  if (size > 340_000) throw new Error('INVALID_CLIENT_AVATAR');
-  const form = await request.formData();
+  if (!Number.isFinite(size) || size < 0 || size > 340_000) throw new Error('INVALID_CLIENT_AVATAR');
+  const reader = request.body?.getReader();
+  if (!reader) throw new Error('INVALID_CLIENT_AVATAR');
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const part = await reader.read();
+    if (part.done) break;
+    total += part.value.byteLength;
+    if (total > 340_000) {
+      await reader.cancel();
+      throw new Error('INVALID_CLIENT_AVATAR');
+    }
+    chunks.push(part.value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const bounded = new Request(request.url, {
+    method: 'POST', headers: request.headers, body: bytes,
+  });
+  const form = await bounded.formData();
   const version = form.get('photoVersion');
   const small = form.get('small');
   const large = form.get('large');
@@ -275,12 +298,6 @@ export async function syncOwnContactProfile(
   request: Request, env: ContactProfileEnv, fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
   if (request.method !== 'POST') return error(405, 'METHOD_NOT_ALLOWED');
-  let clientVariants: ClientVariants | null;
-  try {
-    clientVariants = await readClientVariants(request);
-  } catch {
-    return error(400, 'INVALID_CLIENT_AVATAR');
-  }
   const diagnostic = new URL(request.url).searchParams.get('diagnostic') === '1';
   const respond = (changed: boolean, avatarStatus: AvatarProfileSyncStatus) =>
     Response.json(diagnostic ? { changed, avatarStatus } : { changed }, {
@@ -289,6 +306,12 @@ export async function syncOwnContactProfile(
   const identity = await validateTelegramInitData(
     request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
   );
+  let clientVariants: ClientVariants | null;
+  try {
+    clientVariants = await readClientVariants(request);
+  } catch {
+    return error(400, 'INVALID_CLIENT_AVATAR');
+  }
   const account = 'tg:' + identity.user.id;
   const sourceAuthAt = identity.authDate.getTime();
   if (!Number.isSafeInteger(sourceAuthAt) || sourceAuthAt <= 0) {
