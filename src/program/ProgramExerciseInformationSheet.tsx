@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import type { ProgramExerciseInformation, ProgramManagementRepository } from '../data/cloud/program-management';
+import type { CloudProgramExerciseSnapshot } from '../../shared/program-exercise-snapshot';
 import { ExerciseDetail } from '../exercises/ExerciseCatalogContent';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { Button, MezfitBottomSheet, Text } from '../ui';
 
-export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, onClose, onNavigationContextChange }: {
+type ProgramExerciseInformationSheetProps = {
   repository: ProgramManagementRepository;
-  programId: string; dayId: string; exerciseId: string;
+  exerciseId: string;
   onClose: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
-}) {
+} & (
+  | { programId: string; dayId: string; snapshot?: never; realmId?: never }
+  | { snapshot: CloudProgramExerciseSnapshot; realmId: string; programId?: never; dayId?: never }
+);
+
+export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, snapshot, realmId, onClose, onNavigationContextChange }: ProgramExerciseInformationSheetProps) {
   const [open, setOpen] = useState(true);
   const [data, setData] = useState<ProgramExerciseInformation | null>(null);
   const [error, setError] = useState('');
@@ -18,11 +24,16 @@ export function ProgramExerciseInformationSheet({ repository, programId, dayId, 
     let active = true;
     setData(null);
     setError('');
-    void repository.exerciseInformation(programId, dayId, exerciseId).then(value => {
+    const request = snapshot && realmId
+      ? repository.snapshotExerciseInformation(snapshot, realmId)
+      : programId && dayId
+        ? repository.exerciseInformation(programId, dayId, exerciseId)
+        : Promise.reject(new Error('Не указан источник информации об упражнении'));
+    void request.then(value => {
       if (active) setData(value);
     }).catch(() => { if (active) setError('Не удалось открыть информацию об упражнении.'); });
     return () => { active = false; };
-  }, [repository, programId, dayId, exerciseId]);
+  }, [repository, programId, dayId, exerciseId, snapshot, realmId]);
   useEffect(() => {
     if (!open) return;
     onNavigationContextChange?.({ title: 'Информация об упражнении', scrollKey: `exercise-info:${exerciseId}`, onBack: () => setOpen(false) });

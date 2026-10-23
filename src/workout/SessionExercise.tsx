@@ -131,6 +131,7 @@ interface SessionExerciseLayoutProps {
   collapsed?: boolean;
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  onInformation?: () => void;
   onOpenExerciseMenu?: () => void;
   actions?: ReactNode;
   onAddSet?: () => void;
@@ -144,7 +145,7 @@ interface SessionExerciseLayoutProps {
 function SessionExerciseLayout({
   exerciseId, exerciseName, media, subtitle, badge, notes, surface = 'default',
   collapsed: controlledCollapsed, defaultCollapsed = false, onCollapsedChange,
-  onOpenExerciseMenu, actions, onAddSet, busy = false, summary, editor, children,
+  onInformation, onOpenExerciseMenu, actions, onAddSet, busy = false, summary, editor, children,
 }: SessionExerciseLayoutProps) {
   const bodyId = useId();
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
@@ -158,19 +159,24 @@ function SessionExerciseLayout({
     <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={typeof exerciseId === 'number' ? exerciseId : undefined}
       data-program-exercise-id={typeof exerciseId === 'string' ? exerciseId : undefined}>
       <div className="session-exercise__header">
-        <List className="session-exercise__header-list">
-          <ListItem
-            className="session-exercise__header-toggle"
-            leadingShape="square"
-            leading={media}
-            title={exerciseName}
-            subtitle={subtitle}
-            trailing={badge}
-            aria-expanded={!collapsed}
-            aria-controls={bodyId}
-            onClick={toggleCollapsed}
-          />
-        </List>
+        <div className="session-exercise__header-list">
+          <List>
+            <ListItem
+              className="session-exercise__header-toggle"
+              leadingShape="square"
+              leading={media}
+              title={exerciseName}
+              subtitle={subtitle}
+              trailing={badge}
+              aria-expanded={!collapsed}
+              aria-controls={bodyId}
+              onClick={toggleCollapsed}
+            />
+          </List>
+          {onInformation ? <button type="button" className="session-exercise__media-action"
+            data-no-dnd aria-label={`Информация об упражнении: ${exerciseName}`}
+            onClick={onInformation} /> : null}
+        </div>
         <IconButton
           className={`session-exercise__collapse${collapsed ? ' session-exercise__collapse--collapsed' : ''}`}
           data-no-dnd
@@ -234,7 +240,7 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
         reference_source: null, reference_key: null }} sourceUrl={snapshot.mediaUrl} variant="thumbnail" />}
       subtitle={formatSetCount(sets.length)} notes={item.notes}
       surface={props.surface} collapsed={props.collapsed} defaultCollapsed={props.defaultCollapsed}
-      onCollapsedChange={props.onCollapsedChange}
+      onCollapsedChange={props.onCollapsedChange} onInformation={props.busy ? undefined : props.onInformation}
       actions={<ExerciseActionsMenu busy={props.busy}
         onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
@@ -275,6 +281,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
     onAddSet,
     onCollapsedChange,
     onOpenExerciseMenu,
+    onInformation,
     onOpenHistory,
     onOpenChat,
   } = props;
@@ -303,6 +310,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
       collapsed={controlledCollapsed}
       defaultCollapsed={defaultCollapsed}
       onCollapsedChange={onCollapsedChange}
+      onInformation={onInformation}
       onOpenExerciseMenu={onOpenExerciseMenu ? () => onOpenExerciseMenu(data.sessionExerciseId) : undefined}
       onAddSet={props.mode !== 'plan' && editable && onAddSet ? () => onAddSet(data.sessionExerciseId) : undefined}
       summary={(

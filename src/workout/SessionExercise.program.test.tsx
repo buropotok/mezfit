@@ -34,6 +34,22 @@ describe('existing exercise component in program mode', () => {
     expect(menu.hasAttribute('data-no-dnd')).toBe(true);
     expect(screen.getByText('Подход 1')).toBeTruthy();
   });
+  it('opens the existing information action by tapping media without collapsing the card', () => {
+    const onInformation = vi.fn();
+    const { container } = render(<SessionExercise mode="program" data={item} onInformation={onInformation} />);
+    expect(container.querySelector('.ui-list-item__leading img')?.getAttribute('src')).toBe('/exercise-image');
+    const information = screen.getByRole('button', { name: 'Информация об упражнении: Жим' });
+    expect(information.parentElement?.classList.contains('session-exercise__header-list')).toBe(true);
+    expect(information.closest('.ui-list-item')).toBeNull();
+    expect(information.closest('[aria-hidden="true"]')).toBeNull();
+    expect(information.hasAttribute('data-no-dnd')).toBe(true);
+    fireEvent.click(information);
+    expect(onInformation).toHaveBeenCalledOnce();
+    expect(screen.getByText('Подход 1')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Свернуть упражнение' }).getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Меню упражнения' })).toBeTruthy();
+  });
+
   it('keeps media, disclosure, numbered set rows and the glass add-set control without FACT or an editor', () => {
     const addSet = vi.fn();
     const { container } = render(<SessionExercise mode="program" data={item} onAddSet={addSet} />);
@@ -62,7 +78,9 @@ describe('existing exercise component in program mode', () => {
 
   it('disables creation during a mutation and omits authoring for read-only programs', () => {
     const addSet = vi.fn();
-    const view = render(<SessionExercise mode="program" data={item} busy onAddSet={addSet} />);
+    const onInformation = vi.fn();
+    const view = render(<SessionExercise mode="program" data={item} busy onAddSet={addSet} onInformation={onInformation} />);
+    expect(screen.queryByRole('button', { name: 'Информация об упражнении: Жим' })).toBeNull();
     const add = screen.getByRole('button', { name: 'Добавить подход' });
     expect(add.hasAttribute('disabled')).toBe(true);
     fireEvent.click(add);
