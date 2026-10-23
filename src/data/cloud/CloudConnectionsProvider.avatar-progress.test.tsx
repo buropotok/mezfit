@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { liveQuery } from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { syncCloudContactProfile } from '../../api';
 import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { CloudConnectionsProvider, useCloudConnections } from './CloudConnectionsProvider';
 
@@ -48,7 +49,10 @@ beforeEach(() => {
   } as unknown as ReturnType<typeof liveQuery>);
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe('remote blob download completion', () => {
   it('retries previously unresolved avatar content only when download progress advances', async () => {
@@ -68,4 +72,24 @@ describe('remote blob download completion', () => {
     view.unmount();
     expect(unsubscribe).toHaveBeenCalledOnce();
   });
+  it('re-checks the owner avatar on returning to the Mini App without polling while visible', async () => {
+    const view = render(
+      <CloudConnectionsProvider telegramUserId="101" initData="verified">
+        <AvatarRevision />
+      </CloudConnectionsProvider>,
+    );
+    await waitFor(() => expect(syncCloudContactProfile).toHaveBeenCalledTimes(1));
+
+    const visibility = vi.spyOn(document, 'visibilityState', 'get');
+    visibility.mockReturnValue('hidden');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    visibility.mockReturnValue('visible');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    await waitFor(() => expect(syncCloudContactProfile).toHaveBeenCalledTimes(2));
+
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(syncCloudContactProfile).toHaveBeenCalledTimes(2);
+    view.unmount();
+  });
+
 });
