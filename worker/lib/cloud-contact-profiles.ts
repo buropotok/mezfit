@@ -206,11 +206,81 @@ function error(status: number, code: string): Response {
   });
 }
 
+/** Only the signed account can request its current Telegram Bot API JPEG.
+ * The Worker forwards bytes; decoding/resizing happens in the browser.
+ */
+export async function currentTelegramAvatarSource(
+  request: Request, env: ContactProfileEnv, fetchImpl: typeof fetch = fetch,
+): Promise<Response> {
+  if (request.method !== 'POST') return error(405, 'METHOD_NOT_ALLOWED');
+  const identity = await validateTelegramInitData(
+    request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
+  );
+  const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
+  const headers = { 'cache-control': 'no-store' };
+  if (photo === undefined) return error(502, 'TELEGRAM_PROFILE_UNAVAILABLE');
+  if (photo === null) return new Response(null, {
+    status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'no-photo' },
+  });
+  if (request.headers.get('x-mezfit-known-avatar-version') === photo.version) {
+    return new Response(null, {
+      status: 204, headers: { ...headers, 'x-mezfit-photo-status': 'unchanged' },
+    });
+  }
+  const bytes = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
+  if (!bytes) return error(502, 'TELEGRAM_PHOTO_DOWNLOAD_FAILED');
+  return new Response(bytes, {
+    status: 200,
+    headers: {
+      ...headers,
+      'content-type': 'image/jpeg',
+      'x-mezfit-photo-version': photo.version,
+    },
+  });
+}
+
+type ClientVariants = {
+  version: string;
+  small: ArrayBuffer;
+  large: ArrayBuffer;
+};
+
+async function readClientVariants(request: Request): Promise<ClientVariants | null> {
+  const contentType = request.headers.get('content-type') ?? '';
+  if (!contentType.startsWith('multipart/form-data')) return null;
+  const size = Number(request.headers.get('content-length') ?? '0');
+  if (size > 340_000) throw new Error('INVALID_CLIENT_AVATAR');
+  const form = await request.formData();
+  const version = form.get('photoVersion');
+  const small = form.get('small');
+  const large = form.get('large');
+  if (typeof version !== 'string' || !/^[a-f0-9]{64}$/.test(version)
+    || !(small instanceof Blob) || !(large instanceof Blob)
+    || small.type !== 'image/jpeg' || large.type !== 'image/jpeg'
+    || small.size < 16 || large.size < 16
+    || small.size > 50_000 || large.size > 245_000) {
+    throw new Error('INVALID_CLIENT_AVATAR');
+  }
+  const [smallBytes, largeBytes] = await Promise.all([small.arrayBuffer(), large.arrayBuffer()]);
+  const jpeg = (bytes: ArrayBuffer) => {
+    const b = new Uint8Array(bytes);
+    return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  };
+  if (!jpeg(smallBytes) || !jpeg(largeBytes)) throw new Error('INVALID_CLIENT_AVATAR');
+  return { version, small: smallBytes, large: largeBytes };
+}
+
 /** Privileged, change-only refresh of the signed user's own relationship labels. */
 export async function syncOwnContactProfile(
   request: Request, env: ContactProfileEnv, fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
   if (request.method !== 'POST') return error(405, 'METHOD_NOT_ALLOWED');
+  let clientVariants: ClientVariants | null;
+  try {
+    clientVariants = await readClientVariants(request);
+  } catch {
+    return error(400, 'INVALID_CLIENT_AVATAR');
+  }
   const diagnostic = new URL(request.url).searchParams.get('diagnostic') === '1';
   const respond = (changed: boolean, avatarStatus: AvatarProfileSyncStatus) =>
     Response.json(diagnostic ? { changed, avatarStatus } : { changed }, {
@@ -257,6 +327,9 @@ export async function syncOwnContactProfile(
   // Never use its old name or timestamp to replace newer cloud identity metadata.
   // Unchanged photos do not download, transform, upload or rewrite profile rows.
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
+  if (clientVariants && (!photo || photo.version !== clientVariants.version)) {
+    return error(409, 'STALE_AVATAR_SOURCE');
+  }
   const needsVariants = photo !== undefined && photo !== null && eligible.some(({ id }) =>
     known.get(id)?.avatarVersion !== photo.version || !hasBothAvatars(known.get(id)));
 
@@ -276,13 +349,17 @@ export async function syncOwnContactProfile(
       if (reused) newImages[variant] = reused;
     }
     if (!newImages.small || !newImages.large) {
-      const downloaded = await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
+      const downloaded = clientVariants
+        ? new ArrayBuffer(16)
+        : await fetchTelegramAvatar(fetchImpl, env.TELEGRAM_BOT_TOKEN, photo);
       if (downloaded) {
         avatarStatus = 'transform-failed';
         for (const variant of ['small', 'large'] as const) {
           if (newImages[variant]) continue;
           try {
-            const encoded = await optimizeContactAvatar(env.IMAGES, downloaded, variant);
+            const encoded = clientVariants
+              ? clientVariants[variant]
+              : await optimizeContactAvatar(env.IMAGES, downloaded, variant);
             if (!encoded) continue;
             avatarStatus = 'upload-failed';
             const id = await sha(account + ':' + photo.version + ':' + variant);
