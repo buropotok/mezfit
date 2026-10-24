@@ -34,3 +34,23 @@ it('uses one touch surface for avatar and text, prevents native callouts and kee
   expect(clicked).toHaveBeenCalledOnce();
   expect(view.container.querySelector<HTMLElement>('.ui-day-schedule-event-card__corner')?.style.height).toBe('31px');
 });
+
+it('selects purple event styling without changing the workout default in all visual states', () => {
+  const base = { startMinutes: 600, durationMinutes: 60, height: 62, compact: false };
+  for (const state of [
+    { ...base, lifted: false, editing: false },
+    { ...base, lifted: true, editing: false },
+    { ...base, lifted: false, editing: true },
+  ]) {
+    const { container, unmount } = render(<DayScheduleEventCard title="Личные дела" variant="event" state={state} />);
+    const card = container.querySelector('.ui-day-schedule-event-card');
+    expect(card?.classList.contains('ui-day-schedule-event-card--event')).toBe(true);
+    expect(card?.classList.contains('ui-day-schedule-event-card--lifted')).toBe(state.lifted);
+    expect(card?.classList.contains('ui-day-schedule-event-card--editing')).toBe(state.editing);
+    unmount();
+  }
+  const workout = render(<DayScheduleEventCard title="Тренировка" state={{
+    ...base, lifted: false, editing: false,
+  }} />);
+  expect(workout.container.querySelector('.ui-day-schedule-event-card--event')).toBeNull();
+});

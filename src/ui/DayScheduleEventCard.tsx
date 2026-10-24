@@ -12,6 +12,8 @@ export type DayScheduleEventCardProps = {
   corner?: ReactNode;
   cornerSize?: number;
   state: DayScheduleRenderState;
+  /** Visual color only; scheduling interactions remain identical. */
+  variant?: 'workout' | 'event';
   className?: string;
   onClick?: () => void;
 };
@@ -31,6 +33,7 @@ export function DayScheduleEventCard({
   corner,
   cornerSize = 24,
   state,
+  variant = 'workout',
   className = '',
   onClick,
 }: DayScheduleEventCardProps) {
@@ -51,6 +54,7 @@ export function DayScheduleEventCard({
       onDragStart={event => event.preventDefault()}
       className={[
         'ui-day-schedule-event-card',
+        variant === 'event' ? 'ui-day-schedule-event-card--event' : '',
         state.lifted ? 'ui-day-schedule-event-card--lifted' : '',
         state.editing ? 'ui-day-schedule-event-card--editing' : '',
         state.compact ? 'ui-day-schedule-event-card--compact' : '',
