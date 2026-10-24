@@ -92,6 +92,18 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const closeProgramSheet = useCallback(() => setProgramSheetOpen(false), []);
   const glass = loadBrowserGlassSettings();
   const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
+  const [programTitle, setProgramTitle] = useState<{ id: string; name: string | null } | null>(null);
+  useEffect(() => {
+    const id = draft?.trainingPlanId;
+    setProgramTitle(null);
+    if (!id || !planner) return;
+    let active = true;
+    const subscription = planner.programs.observeName(id,
+      name => { if (active) setProgramTitle({ id, name }); },
+      () => { if (active) setProgramTitle({ id, name: null }); });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [draft?.trainingPlanId, planner]);
+  const programName = programTitle?.id === draft?.trainingPlanId ? programTitle.name : null;
   const [dateOpened, setDateOpened] = useState(false);
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
   const [timeSelection, setTimeSelection] = useState<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
@@ -310,7 +322,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             </div>
           </div>
           <Text variant="body">План на тренировку</Text>
-          <WorkoutPlanCard mode="planning" day={displayedDay!} programName={draft.plan.name} hideProgramName={!draft.trainingPlanId}
+          <WorkoutPlanCard mode="planning" day={displayedDay!} programName={programName ?? undefined} hideProgramName={!programName}
             portalDragOverlay preserveDragHeight
             creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
