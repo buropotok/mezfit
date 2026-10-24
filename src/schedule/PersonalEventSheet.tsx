@@ -120,7 +120,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
         </div>
         <footer className="personal-event-sheet__footer">
           {event ? <Button tonal disabled={busy} onClick={() => setDeleteOpened(true)}>Удалить</Button> : <span />}
-          <Button strong disabled={busy || !repository || !title.trim()} onClick={() => void save()}>
+          <Button disabled={busy || !repository || !title.trim()} onClick={() => void save()}>
             {busy ? 'Сохраняем…' : event ? 'Сохранить' : 'Создать событие'}
           </Button>
         </footer>
