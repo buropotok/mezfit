@@ -109,12 +109,6 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
         <div className="personal-event-sheet__body">
           <Text variant="footnote" tone="muted">Личное событие. Видно только вам и занимает время в расписании.</Text>
           <PersonalEventStatuses eventId={event?.id ?? null} repository={repository} />
-          <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
-            <ListInput type="text" label="Название" floatingLabel outline
-              colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={120}
-              value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="Например, личные дела" />
-          </List>
           <div className="personal-event-sheet__timing">
             <Button variant="secondary" size="compact" disabled={busy} onClick={() => setDateOpened(true)}>
               <Text variant="body" className="personal-event-sheet__timing-label">
@@ -138,6 +132,12 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
             </div>
           </div>
           <Text variant="caption" tone="muted">Если окончание не позже начала, событие заканчивается на следующий день.</Text>
+          <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
+            <ListInput type="text" label="Название" floatingLabel outline
+              colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={120}
+              value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="Например, личные дела" />
+          </List>
           <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
             <ListInput type="textarea" label="Описание (необязательно)" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={4000}
