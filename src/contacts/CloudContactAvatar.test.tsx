@@ -61,6 +61,17 @@ describe('CloudContactAvatar', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mezfit-portrait');
   });
 
+  it('uses the 32px UIkit size for both initials and the loaded photo', async () => {
+    render(<CloudContactAvatar contact={peer} size="small" />);
+    const fallback = screen.getByRole('img', { name: 'Анна Иванова' });
+    expect(fallback.className).toContain('ui-avatar--small');
+    await waitFor(() => {
+      const photo = document.querySelector('img.ui-avatar--small');
+      expect(photo?.getAttribute('src')).toBe('blob:mezfit-portrait');
+    });
+    expect(loadAvatar).toHaveBeenCalledWith(peer, 'small');
+  });
+
   it('uses small by default and large only when explicitly requested', async () => {
     const first = render(<CloudContactAvatar contact={peer} />);
     await waitFor(() => expect(loadAvatar).toHaveBeenCalledWith(peer, 'small'));

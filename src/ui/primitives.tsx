@@ -86,17 +86,23 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 
   return <button ref={ref} type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} style={liquidStyle} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{theme === 'liquidGlass' ? <LiquidGlassIconButtonFilter id={liquidGlassFilterId} /> : null}{content}</button>;
 });
-type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError'> & { name: string; src?: string };
+export type AvatarSize = 'default' | 'small';
+type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError' | 'size'> & {
+  name: string;
+  src?: string;
+  size?: AvatarSize;
+};
 
-export function Avatar({ name, src, className = '', ...props }: AvatarProps) {
+export function Avatar({ name, src, size = 'default', className = '', ...props }: AvatarProps) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [src]);
+  const sizeClass = size === 'small' ? ' ui-avatar--small' : '';
 
   if (src && !imageFailed) {
-    return <img className={`ui-avatar ${className}`.trim()} src={src} alt="" onError={() => setImageFailed(true)} {...props} />;
+    return <img className={`ui-avatar${sizeClass} ${className}`.trim()} src={src} alt="" onError={() => setImageFailed(true)} {...props} />;
   }
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'M';
-  return <span className={`ui-avatar ui-avatar--fallback ui-text--footnote ${className}`.trim()} aria-label={name} role="img">{initials}</span>;
+  return <span className={`ui-avatar ui-avatar--fallback ui-text--footnote${sizeClass} ${className}`.trim()} aria-label={name} role="img">{initials}</span>;
 }
 
 export function Divider({ className = '', ...props }: HTMLAttributes<HTMLHRElement>) {

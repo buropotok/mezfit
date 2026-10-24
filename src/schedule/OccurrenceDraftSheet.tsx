@@ -291,14 +291,14 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
             <Icon name={draft.format === 'coached' ? 'users' : 'user'} style={{ width: 22, height: 22 }} />
             {draft.format === 'coached' && draft.coachUserId
-              ? <span className="occurrence-draft-sheet__coach-avatar">{owner.avatar}</span> : null}
+              ? <span className="occurrence-draft-sheet__coach-avatar">{owner.compactAvatar}</span> : null}
           </div>
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />
             <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>
           </div>
           <div className="occurrence-draft-sheet__timing">
-            <Button variant="secondary" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
+            <Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
             <div className="occurrence-draft-sheet__time-row">
