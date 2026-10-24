@@ -48,14 +48,13 @@
 }
 
 /*
- * Konsta's outlined ListInput reserves its own iOS ListItem inset plus the
- * input's outlined margins (32px start, 16px end). Compensate on the external
- * List only so its visible border aligns with adjacent body content.
- * No Konsta internals or primitive typography are overridden.
+ * Konsta 5.4.0 outlined ListInput places its visible border 16px inside
+ * the List on both sides. Offset only that public List wrapper so the border
+ * aligns with the sheet body's 16px content inset (never with the viewport edge).
+ * Leave Konsta's internal structure, controls and typography untouched.
  */
 .personal-event-sheet__field-list {
-  margin-inline-start: -32px;
-  margin-inline-end: -16px;
+  margin-inline: -16px;
 }
 
 .personal-event-sheet__statuses {
