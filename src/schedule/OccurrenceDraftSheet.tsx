@@ -291,7 +291,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
             <Icon name={draft.format === 'coached' ? 'users' : 'user'} style={{ width: 22, height: 22 }} />
             {draft.format === 'coached' && draft.coachUserId
-              ? <span className="occurrence-draft-sheet__coach-avatar">{owner.avatar}</span> : null}
+              ? <span className="occurrence-draft-sheet__coach-avatar">{owner.compactAvatar}</span> : null}
           </div>
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />
