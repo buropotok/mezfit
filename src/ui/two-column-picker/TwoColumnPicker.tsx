@@ -584,7 +584,8 @@ export function TwoColumnPicker({
 
   const handleTouchCancel = (side: TwoColumnPickerSide) => {
     delete touchStartRef.current[side];
-    setQuarterSnapMode(side, false);
+    // Native WebView scrolling can take over a touch and emit touchcancel.
+    // Keep the active snap targets through that same momentum gesture.
   };
 
   const handleScroll = (side: TwoColumnPickerSide, event: UIEvent<HTMLDivElement>) => {
@@ -622,7 +623,8 @@ export function TwoColumnPicker({
   const handleSelect = (side: TwoColumnPickerSide, index: number) => {
     if (!openedRef.current) return;
 
-    handleTouchCancel(side);
+    delete touchStartRef.current[side];
+    setQuarterSnapMode(side, false);
     commitIndex(side, index);
     const column = side === 'left' ? columns[0] : columns[1];
     const nextIndex = column.circular ? wheelIndex(column, index % column.values.length) : index;
