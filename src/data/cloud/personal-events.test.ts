@@ -95,6 +95,18 @@ describe('personal calendar events', () => {
     await expect(f.coach.move(id, input)).rejects.toThrow('PERSONAL_EVENT_NOT_FOUND');
   });
 
+  it('rejects conflicting event moves while retaining the previous committed slot', async () => {
+    const f = await fixture();
+    await f.coach.create(input);
+    const second = await f.coach.create({ ...input, title: 'Другое дело',
+      startsAtUtc: '2026-10-28T11:00:00.000Z' });
+    await expect(f.coach.move(second, {
+      startsAtUtc: '2026-10-28T08:30:00.000Z', durationMinutes: 60,
+    })).rejects.toThrow(/время занято/);
+    expect((await f.db.table('workoutOccurrences').get(second)).startsAtUtc)
+      .toBe('2026-10-28T11:00:00.000Z');
+  });
+
   it('rejects malformed event identities and keeps regular workouts out of event operations', async () => {
     const f = await fixture();
     const id = await f.coach.create(input);
