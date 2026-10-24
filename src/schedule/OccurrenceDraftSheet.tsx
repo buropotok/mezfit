@@ -95,6 +95,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const [dateOpened, setDateOpened] = useState(false);
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
   const [timeSelection, setTimeSelection] = useState<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
+  const timeSelectionRef = useRef<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
   const [exercisePickerOpened, setExercisePickerOpened] = useState(false);
   const [exerciseInformationId, setExerciseInformationId] = useState<string | null>(null);
   const [setPlaceholderOpen, setSetPlaceholderOpen] = useState(false);
@@ -208,6 +209,38 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       setError(rejectedTiming.current);
     }
   };
+  const openTimePicker = (kind: 'start' | 'end') => {
+    timeSelectionRef.current = null;
+    setTimeSelection(null);
+    setTimeOpened(kind);
+  };
+  const chooseTime = (kind: 'start' | 'end', value: LocalTime) => {
+    timeSelectionRef.current = { kind, value };
+    setTimeSelection({ kind, value });
+  };
+  const closeTimePicker = () => {
+    const choice = timeSelectionRef.current;
+    timeSelectionRef.current = null;
+    setTimeSelection(null);
+    setTimeOpened(null);
+    if (!choice || !draft || busy || readOnly) return;
+    const start = new Date(draft.startsAtUtc);
+    const end = currentEnd(draft);
+    if (choice.kind === 'start') {
+      if (choice.value !== localTime(start)) editStart(localDate(start), choice.value);
+      return;
+    }
+    if (choice.value === localTime(end)) return;
+    try {
+      const target = Date.parse(localScheduleEnd(start, choice.value));
+      const duration = Math.round((target - start.getTime()) / 60_000);
+      edit(current => ({ ...current, durationMinutes: duration }), true);
+    } catch (reason) {
+      ++timingIntent.current;
+      rejectedTiming.current = reason instanceof Error ? reason.message : 'Некорректное время окончания';
+      setError(rejectedTiming.current);
+    }
+  };
   const selectExercises = async (ids: string[]) => {
     if (!draft || !cloud || busy) return;
     setBusy(true); setError('');
@@ -265,10 +298,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             <Button variant="secondary" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
-            <span ref={startRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => { setTimeSelection(null); setTimeOpened('start'); }}>
+            <span ref={startRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => openTimePicker('start')}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
             </Button></span>
-            <span ref={endRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => { setTimeSelection(null); setTimeOpened('end'); }}>
+            <span ref={endRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => openTimePicker('end')}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
             </Button></span>
           </div>
@@ -320,22 +353,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         onChange={date => editStart(date, localTime(start))}
         onClose={() => setDateOpened(false)} />
       <TimePicker opened={timeOpened === 'start'} value={timeSelection?.kind === 'start' ? timeSelection.value : localTime(start)}
-        target={startRef.current} onClose={() => { setTimeOpened(null); setTimeSelection(null); }}
-        onChange={time => { setTimeSelection({ kind: 'start', value: time }); editStart(localDate(start), time); }} />
+        target={startRef.current} onClose={closeTimePicker}
+        onChange={time => chooseTime('start', time)} />
       <TimePicker opened={timeOpened === 'end'} value={timeSelection?.kind === 'end' ? timeSelection.value : localTime(end)}
-        target={endRef.current} onClose={() => { setTimeOpened(null); setTimeSelection(null); }}
-        onChange={time => {
-          setTimeSelection({ kind: 'end', value: time });
-          try {
-            const target = Date.parse(localScheduleEnd(start, time));
-            const duration = Math.round((target - start.getTime()) / 60_000);
-            edit(current => ({ ...current, durationMinutes: duration }), true);
-          } catch (reason) {
-            ++timingIntent.current;
-            rejectedTiming.current = reason instanceof Error ? reason.message : 'Некорректное время окончания';
-            setError(rejectedTiming.current);
-          }
-        }} />
+        target={endRef.current} onClose={closeTimePicker}
+        onChange={time => chooseTime('end', time)} />
       <WorkoutExerciseSelectionSheet opened={exercisePickerOpened} initData=""
         personalCatalogueRole={draft.coachUserId === draft.actorUserId ? 'coach' : 'client'}
         saving={busy} actionError={error}

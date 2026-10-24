@@ -184,6 +184,43 @@ describe('time selection while local edits are queued', () => {
   });
 });
 
+describe('committing the final time on picker dismissal', () => {
+  it.each([
+    { button: /^Начало:/, changedField: 'startsAtUtc' },
+    { button: /^Конец:/, changedField: 'durationMinutes' },
+  ] as const)('writes $changedField only after closing, once per selection session', async ({ button, changedField }) => {
+    vi.stubEnv('TZ', 'UTC');
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue(draft);
+    const write = vi.spyOn(drafts, 'enqueueEdit').mockResolvedValue(undefined);
+
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: button }));
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать 09:30' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать 10:45' }));
+    expect(screen.getByTestId('time-picker-value').textContent).toBe('10:45');
+    expect(screen.getByRole('button', { name: button }).textContent).toMatch(changedField === 'startsAtUtc' ? /08:00/ : /09:00/);
+    expect(write).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скрыть выбор времени' }));
+    await waitFor(() => expect(write).toHaveBeenCalledTimes(1));
+    const updated = write.mock.calls[0][1](structuredClone(draft));
+    if (changedField === 'startsAtUtc') expect(updated.startsAtUtc).toBe('2026-10-19T10:45:00.000Z');
+    else expect(updated.durationMinutes).toBe(165);
+  });
+
+  it('does not persist a value when the picker closes without a change', () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const write = vi.spyOn(drafts, 'enqueueEdit').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Начало:/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Скрыть выбор времени' }));
+    expect(write).not.toHaveBeenCalled();
+  });
+});
+
 describe('draft edit recovery', () => {
   it('opens the shared information sheet from an occurrence snapshot even for read-only planning', async () => {
     cloudEnabled.value = true;
