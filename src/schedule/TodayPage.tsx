@@ -140,7 +140,8 @@ export function TodayPage({
       () => { if (active) setSelectedProgramTitle({ id, name: null }); });
     return () => { active = false; subscription.unsubscribe(); };
   }, [selected?.trainingPlanId, planner]);
-  const sourceProgramName = selectedProgramTitle?.id === selected?.trainingPlanId ? selectedProgramTitle.name : null;
+  const sourceProgramName = selectedProgramTitle && selectedProgramTitle.id === selected?.trainingPlanId
+    ? selectedProgramTitle.name : null;
   const closeEditor = useCallback(() => { setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
   const createAction = useMemo(() => !selected && !creation && !filterOpened ? {
     label: 'Создать', icon: 'plus' as const,
