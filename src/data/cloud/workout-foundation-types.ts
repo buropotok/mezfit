@@ -118,6 +118,8 @@ export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'>
   draftAuthorUserId?: string;
   originalPlan?: WorkoutOccurrencePlan;
   publishedPlan?: WorkoutOccurrencePlan | null;
+  /** Absent on legacy bookings: only an explicit personal_event is not a workout. */
+  entryKind?: 'workout' | 'personal_event';
   /** Every PLAN edit, including a draft, is synchronized by Addon. */
   plan: WorkoutOccurrencePlan;
   /** Source provenance, independent of current cloud program availability. */
