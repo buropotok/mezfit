@@ -99,7 +99,9 @@ describe('cyclic TimePicker wheels', () => {
     { stoppedAt: 53, expected: '08:00' },
   ])('lets native inertia land a fast minute swipe near $stoppedAt on $expected in one motion', ({ stoppedAt, expected }) => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const { minutes, onChange } = renderWheel();
+    // Use a non-quarter initial minute: a 53 → 00 landing must now
+    // emit a real value change rather than returning to the initial 08:00.
+    const { minutes, onChange } = renderWheel('08:01');
     dispatchTouch(minutes, 'touchstart', 230, 100);
     dispatchTouch(minutes, 'touchmove', 100, 200);
     expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
@@ -123,6 +125,22 @@ describe('cyclic TimePicker wheels', () => {
     flushFrames();
     expect(onChange).toHaveBeenCalledTimes(callsAtLanding);
     expect(minutes.scrollTop).toBe(nativeLanding * 48);
+  });
+
+  it('does not emit a duplicate change when a native quarter landing equals the current time', () => {
+    const { minutes, onChange } = renderWheel('08:00');
+    dispatchTouch(minutes, 'touchstart', 230, 100);
+    dispatchTouch(minutes, 'touchmove', 100, 200);
+    dispatchTouch(minutes, 'touchend', 100, 300);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+
+    // Two scroll cycles render minute 00, which is already the selected value.
+    minutes.scrollTop = 120 * 48;
+    fireEvent.scroll(minutes);
+    flushFrames();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(within(minutes).getByRole('option', { name: '00' })
+      .getAttribute('aria-selected')).toBe('true');
   });
 
   it('keeps an exact minute during deliberate slow dragging', () => {
