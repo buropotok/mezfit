@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import { ProgramManagementRepository } from '../data/cloud/program-management';
 import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { WorkoutSlotConflict } from '../data/cloud/workout-slot-validation';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
@@ -19,9 +20,11 @@ vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSele
   return null;
 } }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
-  WorkoutPlanCard: ({ onAddSet, onExerciseInformation }: {
+  WorkoutPlanCard: ({ onAddSet, onExerciseInformation, programName, hideProgramName }: {
     onAddSet?: (id: string) => void; onExerciseInformation?: (id: string) => void;
+    programName?: string; hideProgramName?: boolean;
   }) => <>
+    <span data-testid="scheduled-program-name">{hideProgramName ? null : programName}</span>
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>
     {onExerciseInformation ? <button onClick={() => onExerciseInformation('exercise')}>
       Информация упражнения
@@ -77,7 +80,7 @@ vi.mock('../ui', () => ({
     <button onClick={onClick} disabled={disabled}>{children}</button>,
 }));
 afterEach(() => {
-  cleanup(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); cloudEnabled.value = false;
+  cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); cloudEnabled.value = false;
   Object.assign(overlayProbe, { animated: false, zeroDuration: false, dates: 0, times: 0, dialogs: 0, selectors: 0 });
 });
 const plan = { name: 'День', comment: null, exercises: [{
@@ -253,6 +256,49 @@ describe('scheduled workout summary layout', () => {
     view.rerender(<OccurrenceDraftSheet draft={{ ...coached, format: 'independent' }} {...props} />);
     expect(screen.getByText('Самостоятельная').parentElement?.querySelector('.occurrence-draft-sheet__coach-avatar'))
       .toBeNull();
+  });
+});
+
+describe('source program subtitle', () => {
+  it('displays the actual program title, not the workout day name', async () => {
+    cloudEnabled.value = true;
+    const observe = vi.spyOn(ProgramManagementRepository.prototype, 'observeName')
+      .mockImplementation((_id, onChange) => {
+        onChange('Программа на силу');
+        return { unsubscribe: () => {} };
+      });
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+
+    const view = render(<OccurrenceDraftSheet draft={{ ...draft, plan: { ...plan, name: 'День 1' } }}
+      drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    await waitFor(() => expect(screen.getByTestId('scheduled-program-name').textContent).toBe('Программа на силу'));
+    expect(observe).toHaveBeenCalledWith('program', expect.any(Function), expect.any(Function));
+
+    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, trainingPlanId: undefined, programDayId: undefined }}
+      drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    expect(screen.getByTestId('scheduled-program-name').textContent).toBe('');
+  });
+
+  it('does not reuse a previous program name while another workout loads', async () => {
+    cloudEnabled.value = true;
+    const callbacks = new Map<string, (name: string | null) => void>();
+    vi.spyOn(ProgramManagementRepository.prototype, 'observeName')
+      .mockImplementation((id, onChange) => {
+        callbacks.set(id, onChange);
+        return { unsubscribe: () => { callbacks.delete(id); } };
+      });
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const props = { drafts, onClose: vi.fn(), onSave: vi.fn() };
+    const view = render(<OccurrenceDraftSheet draft={draft} {...props} />);
+    act(() => callbacks.get('program')?.('Первая программа'));
+    expect(screen.getByTestId('scheduled-program-name').textContent).toBe('Первая программа');
+
+    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, trainingPlanId: 'next-program' }} {...props} />);
+    expect(screen.getByTestId('scheduled-program-name').textContent).toBe('');
+    act(() => callbacks.get('next-program')?.('Вторая программа'));
+    expect(screen.getByTestId('scheduled-program-name').textContent).toBe('Вторая программа');
   });
 });
 
