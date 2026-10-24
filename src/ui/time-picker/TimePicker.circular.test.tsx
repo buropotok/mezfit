@@ -6,6 +6,19 @@ import { TimePicker } from './TimePicker';
 
 vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn() }));
 
+// RequestAnimationFrame runs on the next frame in WebViews, not synchronously.
+// An immediate callback stub leaves the picker's frame-id guard permanently set.
+const frames = new Map<number, FrameRequestCallback>();
+let nextFrame = 0;
+
+function flushFrames() {
+  act(() => {
+    const pending = [...frames.values()];
+    frames.clear();
+    pending.forEach(callback => callback(0));
+  });
+}
+
 function dispatchTouch(element: Element, type: string, y: number, time: number) {
   const event = new Event(type, { bubbles: true });
   Object.defineProperty(event, 'timeStamp', { value: time });
@@ -26,6 +39,7 @@ function renderWheel(value = '08:00') {
       </div>
     </KonstaProvider>,
   );
+  flushFrames();
   return {
     onChange,
     hours: screen.getByRole('listbox', { name: 'Часы' }),
@@ -34,17 +48,21 @@ function renderWheel(value = '08:00') {
 }
 
 beforeEach(() => {
+  frames.clear();
+  nextFrame = 0;
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    callback(0);
-    return 1;
+    const id = ++nextFrame;
+    frames.set(id, callback);
+    return id;
   });
-  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 });
 
 afterEach(() => {
   cleanup();
+  frames.clear();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -58,16 +76,20 @@ describe('cyclic TimePicker wheels', () => {
 
     hours.scrollTop = 48 * 48; // 23 -> 00
     fireEvent.scroll(hours);
+    flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('00:59');
     minutes.scrollTop = 120 * 48; // 59 -> 00
     fireEvent.scroll(minutes);
+    flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('00:00');
 
     hours.scrollTop = 23 * 48; // 00 -> 23 (previous cycle)
     fireEvent.scroll(hours);
+    flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('23:00');
     minutes.scrollTop = 59 * 48; // 00 -> 59 (previous cycle)
     fireEvent.scroll(minutes);
+    flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('23:59');
   });
 
@@ -81,9 +103,11 @@ describe('cyclic TimePicker wheels', () => {
     dispatchTouch(minutes, 'touchstart', 230, 100);
     minutes.scrollTop = (60 + stoppedAt) * 48;
     fireEvent.scroll(minutes);
+    flushFrames();
     dispatchTouch(minutes, 'touchend', 100, 300);
 
     act(() => { vi.advanceTimersByTime(190); });
+    flushFrames();
     expect(onChange).toHaveBeenLastCalledWith(expected);
   });
 
@@ -93,9 +117,11 @@ describe('cyclic TimePicker wheels', () => {
     dispatchTouch(minutes, 'touchstart', 230, 100);
     minutes.scrollTop = (60 + 32) * 48;
     fireEvent.scroll(minutes);
+    flushFrames();
     dispatchTouch(minutes, 'touchend', 100, 800);
 
     act(() => { vi.advanceTimersByTime(250); });
+    flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('08:32');
   });
 
