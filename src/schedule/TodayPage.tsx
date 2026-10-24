@@ -271,7 +271,7 @@ export function TodayPage({
       ? localScheduleInstant(date, `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}` as LocalTime)
       : current.startsAtUtc;
     if (event.type === 'occurrence' && !mayEdit(event.occurrence)) return;
-    if (event.type === 'occurrence' && current.entryKind === 'personal_event') {
+    if (event.type === 'occurrence' && event.occurrence.entryKind === 'personal_event') {
       if (!personalEvents) return;
       if (cancel) { await personalEvents.cancel(current.id); return; }
       const key = 'occurrence:' + current.id;
