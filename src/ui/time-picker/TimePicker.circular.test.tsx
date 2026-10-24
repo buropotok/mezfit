@@ -98,7 +98,8 @@ describe('cyclic TimePicker wheels', () => {
     { stoppedAt: 32, expected: '08:30' },
     { stoppedAt: 53, expected: '08:00' },
   ])('settles a quick minute swipe from $stoppedAt to the closest quarter', ({ stoppedAt, expected }) => {
-    vi.useFakeTimers();
+    // Fake the wheel's settle timeout without replacing the frame queue stub.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const { minutes, onChange } = renderWheel();
     dispatchTouch(minutes, 'touchstart', 230, 100);
     minutes.scrollTop = (60 + stoppedAt) * 48;
@@ -115,7 +116,8 @@ describe('cyclic TimePicker wheels', () => {
   });
 
   it('keeps an exact minute during deliberate slow dragging', () => {
-    vi.useFakeTimers();
+    // Fake the wheel's settle timeout without replacing the frame queue stub.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const { minutes, onChange } = renderWheel();
     dispatchTouch(minutes, 'touchstart', 230, 100);
     minutes.scrollTop = (60 + 32) * 48;
