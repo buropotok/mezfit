@@ -8,6 +8,8 @@ import { isWorkoutOccurrencePlan } from './workout-occurrence-plan';
  * A personal event books its owner's time in workoutOccurrences without becoming
  * a workout. The PLAN-shaped metadata container is never used to start a session.
  * A personal event is stored only in the authenticated user's personal realm.
+ * Clients cannot see the coach's private busy intervals when scheduling coached
+ * workouts; busy-only sharing across realms requires a separate product decision.
  */
 export interface PersonalEventInput {
   title: string;
