@@ -108,6 +108,7 @@ describe('cyclic TimePicker wheels', () => {
     expect(within(minutes).getByRole('option', { name: '10' })
       .classList.contains('ui-time-picker__option--quarter-stop')).toBe(false);
     dispatchTouch(minutes, 'touchend', 100, 300);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
 
     // jsdom has no layout or native CSS scroll snap: simulate the browser's
     // single inertial landing at the quarter target instead of a JS correction.
@@ -155,6 +156,20 @@ describe('cyclic TimePicker wheels', () => {
     fireEvent.scroll(minutes);
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('08:32');
+  });
+
+  it('keeps quarter targets if native WebView scrolling cancels the touch', () => {
+    const { minutes, onChange } = renderWheel();
+    dispatchTouch(minutes, 'touchstart', 230, 100);
+    dispatchTouch(minutes, 'touchmove', 100, 180);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+    dispatchTouch(minutes, 'touchcancel', 100, 190);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+
+    // Tapping a specific value returns to exact-minute selection.
+    fireEvent.click(within(minutes).getByRole('option', { name: '12' }));
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
+    expect(onChange).toHaveBeenLastCalledWith('08:12');
   });
 
   it('does not add quarter-hour snapping to a plain tap', () => {
