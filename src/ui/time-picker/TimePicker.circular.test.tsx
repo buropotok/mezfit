@@ -104,10 +104,13 @@ describe('cyclic TimePicker wheels', () => {
     minutes.scrollTop = (60 + stoppedAt) * 48;
     fireEvent.scroll(minutes);
     flushFrames();
+    expect(onChange).toHaveBeenLastCalledWith(`08:${String(stoppedAt).padStart(2, '0')}`);
+    const changesBeforeSettle = onChange.mock.calls.length;
     dispatchTouch(minutes, 'touchend', 100, 300);
 
     act(() => { vi.advanceTimersByTime(190); });
     flushFrames();
+    expect(onChange.mock.calls.length).toBeGreaterThan(changesBeforeSettle);
     expect(onChange).toHaveBeenLastCalledWith(expected);
   });
 
