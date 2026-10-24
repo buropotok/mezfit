@@ -52,12 +52,12 @@ export function PersonalEventStatuses({ eventId, repository }: {
     : 'Событие сохранено на устройстве и ожидает синхронизации с облаком.';
 
   return <div className="personal-event-sheet__statuses" aria-label="Статусы личного события">
-    <div className="occurrence-sync-status" role="status" aria-label="Статус синхронизации события">
+    <div className="personal-event-sheet__sync" role="status" aria-label="Статус синхронизации события">
       {eventId
         ? <LiquidPopover isOpen={opened} onOpenChange={setOpened} triggerRef={trigger}
             label="О синхронизации события" text={explanation}
             preset={glass.preset} optics={glass.optics}
-            trigger={<button type="button" ref={trigger} className="occurrence-sync-status__badge"
+            trigger={<button type="button" ref={trigger} className="personal-event-sheet__sync-badge"
               aria-label={`О статусе: ${label}`}>
               <Badge color={color} textVariant="caption">{label}</Badge>
             </button>} />
