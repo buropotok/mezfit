@@ -99,7 +99,6 @@ describe('local-first calendar experience', () => {
     expect(screen.getByTestId('program-name').textContent).toBe('Переименованная программа');
   });
 
-
   it('applies multiple clients only on confirmation, supports search and deleting a chip', async () => {
     for (const [id, name] of [['202', 'Анна'], ['303', 'Борис'], ['404', 'Вера']]) {
       const pair = await relationshipMembership('101', id);
