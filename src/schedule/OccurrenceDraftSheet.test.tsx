@@ -42,8 +42,8 @@ vi.mock('../ui', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Avatar: ({ name }: { name: string }) => <span role="img" aria-label={name} />,
   LiquidPopover: ({ trigger }: { trigger: ReactNode }) => <>{trigger}</>,
-  Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
-    <button onClick={onClick} disabled={disabled}>{children}</button>,
+  Button: ({ children, onClick, disabled, size }: ButtonHTMLAttributes<HTMLButtonElement> & { size?: 'default' | 'compact' }) =>
+    <button onClick={onClick} disabled={disabled} data-size={size}>{children}</button>,
   IconButton: ({ label, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
     <button aria-label={label} onClick={onClick} disabled={disabled} />, Icon: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />, TimePicker: ({ opened, value, onChange, onClose }: {
     opened: boolean; value: string; onChange: (time: string) => void; onClose: () => void;
@@ -232,6 +232,9 @@ describe('scheduled workout summary layout', () => {
     const date = screen.getByRole('button', { name: /^Дата:/ });
     const start = screen.getByRole('button', { name: /^Начало:/ });
     const end = screen.getByRole('button', { name: /^Конец:/ });
+    // All three labels share the compact Button's leading inset, so the feature container
+    // can align their contents with the sheet title and sync status.
+    expect([date, start, end].map(button => button.getAttribute('data-size'))).toEqual(['compact', 'compact', 'compact']);
     const timeRow = start.closest('.occurrence-draft-sheet__time-row');
     expect(timeRow).toBeTruthy();
     expect(timeRow).toBe(end.closest('.occurrence-draft-sheet__time-row'));
