@@ -58,7 +58,7 @@ it('creates a private event using selected calendar date, time and metadata', as
   await waitFor(() => expect(f.create).toHaveBeenCalledWith({
     title: 'Встреча', notes: 'Заметка', startsAtUtc: expect.any(String), durationMinutes: 60,
   }));
-  expect(f.onSaved).toHaveBeenCalledOnce();
+  await waitFor(() => expect(f.onSaved).toHaveBeenCalledOnce());
 });
 
 it('edits existing event without generating a new one and confirms cancellation', async () => {
@@ -71,6 +71,6 @@ it('edits existing event without generating a new one and confirms cancellation'
   expect(f.create).not.toHaveBeenCalled();
   fireEvent.click(screen.getByText('Удалить'));
   expect(screen.getByRole('alertdialog')).not.toBeNull();
-  fireEvent.click(screen.getByRole('alertdialog').querySelectorAll('button')[1]);
+  fireEvent.click(screen.getByRole('alertdialog').querySelectorAll('button')[1]!);
   await waitFor(() => expect(f.cancel).toHaveBeenCalledWith('personal-1'));
 });
