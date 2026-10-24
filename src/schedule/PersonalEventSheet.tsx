@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from 'konsta/react';
+import { Button, List, ListInput } from 'konsta/react';
 import { DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text,
-  TextInput, TextArea, TimePicker, type LocalDate, type LocalTime } from '../ui';
+  TimePicker, type LocalDate, type LocalTime } from '../ui';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { PersonalEventRepository, PersonalEventInput } from '../data/cloud/personal-events';
 import { calendarDate, calendarTime, localScheduleEnd, localScheduleInstant } from './calendar-time';
 import './personal-event-sheet.css';
 
 type Picker = 'start' | 'end' | null;
+
+// These are public ListInput color slots, not overrides of Konsta's internal CSS.
+const EVENT_FIELD_COLORS = {
+  bgIos: 'bg-black',
+  outlineLabelBgIos: 'bg-black',
+};
 
 export function PersonalEventSheet({ opened, event, date, repository, onClose, onSaved }: {
   opened: boolean;
@@ -97,8 +103,12 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
         </header>
         <div className="personal-event-sheet__body">
           <Text variant="footnote" tone="muted">Личное событие. Видно только вам и занимает время в расписании.</Text>
-          <TextInput label="Название" disabled={busy} maxLength={120} value={title} onChange={e => setTitle(e.target.value)}
-            placeholder="Например, личные дела" />
+          <List nested dividers={false}>
+            <ListInput type="text" label="Название" floatingLabel outline
+              colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={120}
+              value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="Например, личные дела" />
+          </List>
           <div className="personal-event-sheet__timing">
             <Text variant="footnote" tone="muted">Дата</Text>
             <Button tonal disabled={busy} onClick={() => setDateOpened(true)}><Text variant="body">{selectedDate}</Text></Button>
@@ -114,8 +124,11 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
             </div>
           </div>
           <Text variant="caption" tone="muted">Если окончание не позже начала, событие заканчивается на следующий день.</Text>
-          <TextArea label="Описание (необязательно)" disabled={busy} rows={3} maxLength={4000}
-            value={notes} onChange={e => setNotes(e.target.value)} />
+          <List nested dividers={false}>
+            <ListInput type="textarea" label="Описание (необязательно)" floatingLabel outline
+              colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={4000}
+              value={notes} onChange={e => setNotes(e.target.value)} />
+          </List>
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
         <footer className="personal-event-sheet__footer">
