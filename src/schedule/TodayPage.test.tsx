@@ -87,7 +87,8 @@ describe('local-first calendar experience', () => {
       .mockImplementation((_id, onChange) => {
         notify = onChange;
         onChange('Силовая программа');
-        return { unsubscribe: () => { notify = null; } };
+        const subscription = { closed: false, unsubscribe: () => { subscription.closed = true; notify = null; } };
+        return subscription;
       });
     const id = await repo().create({ ...draft });
     state.planning = { requestedDraftId: id, requestedClientUserId: null,
