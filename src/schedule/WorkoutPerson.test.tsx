@@ -21,6 +21,18 @@ it('uses the current athlete name and photograph rather than a program day title
   expect(screen.getByText('Андрей')).toBeTruthy();
   expect(container.querySelector('img')?.getAttribute('src')).toBe('/me.jpg');
 });
+it('provides a compact avatar without changing the ordinary portrait size', () => {
+  function Avatars() {
+    const person = useWorkoutPerson('tg:101', 'pair', { name: 'Андрей', photoUrl: '/me.jpg' });
+    return <>{person.avatar}{person.compactAvatar}</>;
+  }
+  const { container } = render(<Avatars />);
+  const avatars = container.querySelectorAll('img.ui-avatar');
+  expect(avatars).toHaveLength(2);
+  expect(avatars[0].classList.contains('ui-avatar--small')).toBe(false);
+  expect(avatars[1].classList.contains('ui-avatar--small')).toBe(true);
+});
+
 it('resolves a contact by the athlete and relationship', () => {
   render(<Person id="tg:202" />);
   expect(screen.getByText('Фото контакта')).toBeTruthy();
