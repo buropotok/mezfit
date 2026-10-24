@@ -11,7 +11,7 @@ vi.mock('konsta/react', () => ({
     <button disabled={disabled} onClick={onClick}>{children}</button>,
 }));
 vi.mock('../ui', () => ({
-  Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Text: ({ children, variant }: { children: ReactNode; variant?: string }) => <span data-text-variant={variant}>{children}</span>,
   TextInput: ({ label, value, onChange }: { label: string; value: string; onChange: (e: { target: { value: string } }) => void }) =>
     <input aria-label={label} value={value} onChange={onChange} />,
   TextArea: ({ label, value, onChange }: { label: string; value: string; onChange: (e: { target: { value: string } }) => void }) =>
@@ -73,4 +73,19 @@ it('edits existing event without generating a new one and confirms cancellation'
   expect(screen.getByRole('alertdialog')).not.toBeNull();
   fireEvent.click(screen.getByRole('alertdialog').querySelectorAll('button')[1]!);
   await waitFor(() => expect(f.cancel).toHaveBeenCalledWith('personal-1'));
+});
+
+it('uses semantic Body typography for every event-sheet and confirmation button', () => {
+  setup(inputEvent);
+  const buttons = screen.getByRole('dialog').querySelectorAll('button');
+  expect(buttons.length).toBeGreaterThanOrEqual(6);
+  for (const button of buttons) {
+    expect(button.querySelector('[data-text-variant="body"]')).not.toBeNull();
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить' }));
+  const dialogButtons = screen.getByRole('alertdialog').querySelectorAll('button');
+  expect(dialogButtons).toHaveLength(2);
+  for (const button of dialogButtons) {
+    expect(button.querySelector('[data-text-variant="body"]')).not.toBeNull();
+  }
 });
