@@ -2,6 +2,7 @@ import type { MezfitCloudDatabase } from './database';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 import { assertLocalWorkoutSlot } from './workout-slot-validation';
 import { validateScheduleTiming } from './workout-scheduling-time';
+import { isWorkoutOccurrencePlan } from './workout-occurrence-plan';
 
 /**
  * A personal event books its owner's time in workoutOccurrences without becoming
@@ -41,7 +42,8 @@ export class PersonalEventRepository {
       || row.coachUserId !== null || row.clientUserId !== null || row.format !== 'independent'
       || row.workoutSessionId !== null || row.status !== 'scheduled' || row.cancelledAt
       || row.trainingPlanId !== undefined || row.programDayId !== undefined
-      || row.autoCreatedProgram !== undefined || row.plan.exercises.length !== 0) throw new Error('PERSONAL_EVENT_NOT_FOUND');
+      || row.autoCreatedProgram !== undefined || !isWorkoutOccurrencePlan(row.plan)
+      || row.plan.exercises.length !== 0) throw new Error('PERSONAL_EVENT_NOT_FOUND');
     return row;
   }
 
