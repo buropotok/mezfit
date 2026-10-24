@@ -1,4 +1,4 @@
-export { Avatar, Button, Divider, IconButton, Surface, Text, type ButtonColor, type IconButtonProps, type SurfaceProps } from './primitives';
+export { Avatar, Button, Divider, IconButton, Surface, Text, type AvatarSize, type ButtonColor, type IconButtonProps, type SurfaceProps } from './primitives';
 export type { UiComponentTheme } from './componentTheme';
 export { Icon, type IconProps, type UiIconName, type UiIconVariant } from './Icon';
 export type { UiIconPair, UiIconSource } from './iconPair';
