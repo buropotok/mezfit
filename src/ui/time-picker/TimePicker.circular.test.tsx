@@ -97,27 +97,53 @@ describe('cyclic TimePicker wheels', () => {
     { stoppedAt: 10, expected: '08:15' },
     { stoppedAt: 32, expected: '08:30' },
     { stoppedAt: 53, expected: '08:00' },
-  ])('settles a quick minute swipe from $stoppedAt to the closest quarter', ({ stoppedAt, expected }) => {
-    // Fake the wheel's settle timeout without replacing the frame queue stub.
+  ])('lets native inertia land a fast minute swipe near $stoppedAt on $expected in one motion', ({ stoppedAt, expected }) => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const { minutes, onChange } = renderWheel();
+    // Use a non-quarter initial minute: a 53 → 00 landing must now
+    // emit a real value change rather than returning to the initial 08:00.
+    const { minutes, onChange } = renderWheel('08:01');
     dispatchTouch(minutes, 'touchstart', 230, 100);
-    minutes.scrollTop = (60 + stoppedAt) * 48;
+    dispatchTouch(minutes, 'touchmove', 100, 200);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+    expect(within(minutes).getByRole('option', { name: '15' })
+      .classList.contains('ui-time-picker__option--quarter-stop')).toBe(true);
+    expect(within(minutes).getByRole('option', { name: '10' })
+      .classList.contains('ui-time-picker__option--quarter-stop')).toBe(false);
+    dispatchTouch(minutes, 'touchend', 100, 300);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+
+    // jsdom has no layout or native CSS scroll snap: simulate the browser's
+    // single inertial landing at the quarter target instead of a JS correction.
+    const nativeLanding = 60 + Math.round(stoppedAt / 15) * 15;
+    minutes.scrollTop = nativeLanding * 48;
     fireEvent.scroll(minutes);
     flushFrames();
-    expect(onChange).toHaveBeenLastCalledWith(`08:${String(stoppedAt).padStart(2, '0')}`);
-    const changesBeforeSettle = onChange.mock.calls.length;
-    dispatchTouch(minutes, 'touchend', 100, 300);
-
-    act(() => { vi.advanceTimersByTime(190); });
-    flushFrames();
-    expect(onChange.mock.calls.length).toBeGreaterThan(changesBeforeSettle);
     expect(onChange).toHaveBeenLastCalledWith(expected);
+
+    const callsAtLanding = onChange.mock.calls.length;
+    act(() => { vi.advanceTimersByTime(400); });
+    flushFrames();
+    expect(onChange).toHaveBeenCalledTimes(callsAtLanding);
+    expect(minutes.scrollTop).toBe(nativeLanding * 48);
+  });
+
+  it('does not emit a duplicate change when a native quarter landing equals the current time', () => {
+    const { minutes, onChange } = renderWheel('08:00');
+    dispatchTouch(minutes, 'touchstart', 230, 100);
+    dispatchTouch(minutes, 'touchmove', 100, 200);
+    dispatchTouch(minutes, 'touchend', 100, 300);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+
+    // Two scroll cycles render minute 00, which is already the selected value.
+    minutes.scrollTop = 120 * 48;
+    fireEvent.scroll(minutes);
+    flushFrames();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(within(minutes).getByRole('option', { name: '00' })
+      .getAttribute('aria-selected')).toBe('true');
   });
 
   it('keeps an exact minute during deliberate slow dragging', () => {
-    // Fake the wheel's settle timeout without replacing the frame queue stub.
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const { minutes, onChange } = renderWheel();
     dispatchTouch(minutes, 'touchstart', 230, 100);
     minutes.scrollTop = (60 + 32) * 48;
@@ -125,9 +151,43 @@ describe('cyclic TimePicker wheels', () => {
     flushFrames();
     dispatchTouch(minutes, 'touchend', 100, 800);
 
-    act(() => { vi.advanceTimersByTime(250); });
+    flushFrames();
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
+    expect(onChange).toHaveBeenLastCalledWith('08:32');
+  });
+
+  it('returns to exact-minute mode on the next touch and on a slow release', () => {
+    const { minutes, onChange } = renderWheel();
+    dispatchTouch(minutes, 'touchstart', 230, 100);
+    dispatchTouch(minutes, 'touchmove', 100, 180);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+    dispatchTouch(minutes, 'touchend', 100, 250);
+
+    dispatchTouch(minutes, 'touchstart', 230, 400);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
+    dispatchTouch(minutes, 'touchmove', 100, 480);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+    dispatchTouch(minutes, 'touchend', 100, 1200);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
+
+    minutes.scrollTop = (60 + 32) * 48;
+    fireEvent.scroll(minutes);
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('08:32');
+  });
+
+  it('keeps quarter targets if native WebView scrolling cancels the touch', () => {
+    const { minutes, onChange } = renderWheel();
+    dispatchTouch(minutes, 'touchstart', 230, 100);
+    dispatchTouch(minutes, 'touchmove', 100, 180);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+    dispatchTouch(minutes, 'touchcancel', 100, 190);
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
+
+    // Tapping a specific value returns to exact-minute selection.
+    fireEvent.click(within(minutes).getByRole('option', { name: '12' }));
+    expect(minutes.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
+    expect(onChange).toHaveBeenLastCalledWith('08:12');
   });
 
   it('does not add quarter-hour snapping to a plain tap', () => {
