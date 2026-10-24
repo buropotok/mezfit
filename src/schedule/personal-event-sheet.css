@@ -65,6 +65,13 @@
   gap: 12px;
 }
 
-.personal-event-sheet__statuses .occurrence-sync-status {
+.personal-event-sheet__sync {
   align-self: flex-start;
+}
+
+.personal-event-sheet__sync-badge {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
