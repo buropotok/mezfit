@@ -379,11 +379,13 @@ export function TwoColumnPicker({
   const leftRef = useRef<HTMLDivElement | null>(null);
   const rightRef = useRef<HTMLDivElement | null>(null);
   const draftRef = useRef<TwoColumnPickerParts>(value);
+  const controlledRef = useRef<TwoColumnPickerParts>(value);
   const onChangeRef = useRef(onChange);
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const leftFrameRef = useRef<number | null>(null);
   const rightFrameRef = useRef<number | null>(null);
+  const reconcileFrameRef = useRef<number | null>(null);
   const touchStartRef = useRef<Partial<Record<TwoColumnPickerSide, { y: number; time: number }>>>({});
   const flickPendingRef = useRef<Record<TwoColumnPickerSide, boolean>>({ left: false, right: false });
   const settleTimerRef = useRef<Record<TwoColumnPickerSide, number | null>>({ left: null, right: null });
@@ -394,6 +396,7 @@ export function TwoColumnPicker({
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
 
+  controlledRef.current = value;
   onChangeRef.current = onChange;
   openedRef.current = opened;
 
@@ -434,6 +437,10 @@ export function TwoColumnPicker({
         settleTimerRef.current[side] = null;
       });
 
+      if (reconcileFrameRef.current !== null) {
+        view.cancelAnimationFrame(reconcileFrameRef.current);
+        reconcileFrameRef.current = null;
+      }
       if (leftFrameRef.current !== null) {
         view.cancelAnimationFrame(leftFrameRef.current);
         leftFrameRef.current = null;
@@ -445,6 +452,10 @@ export function TwoColumnPicker({
       return;
     }
 
+    if (reconcileFrameRef.current !== null) {
+      view.cancelAnimationFrame(reconcileFrameRef.current);
+      reconcileFrameRef.current = null;
+    }
     const justOpened = !wasOpenedRef.current;
     wasOpenedRef.current = true;
     const currentDraft = draftRef.current;
@@ -478,6 +489,7 @@ export function TwoColumnPicker({
     const view = target?.ownerDocument.defaultView ?? window;
     if (leftFrameRef.current !== null) view.cancelAnimationFrame(leftFrameRef.current);
     if (rightFrameRef.current !== null) view.cancelAnimationFrame(rightFrameRef.current);
+    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     (['left', 'right'] as const).forEach(side => {
       if (settleTimerRef.current[side] !== null) view.clearTimeout(settleTimerRef.current[side]);
     });
@@ -509,7 +521,26 @@ export function TwoColumnPicker({
     setDraft(next);
     onChangeRef.current(next);
 
-
+    // Legacy finite pickers remain strictly controlled. Circular time wheels use
+    // an editable in-flight value so momentum never fights a pending parent update.
+    if (!columns[0].circular && !columns[1].circular) {
+      const view = target?.ownerDocument.defaultView ?? window;
+      if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
+      reconcileFrameRef.current = view.requestAnimationFrame(() => {
+        reconcileFrameRef.current = null;
+        if (!openedRef.current) return;
+        const canonical = controlledRef.current;
+        if (canonical.left === next.left && canonical.right === next.right) return;
+        draftRef.current = canonical;
+        feedbackValueRef.current = canonical;
+        setDraft(canonical);
+        const tops = partsToScrollTops(columns, canonical);
+        pendingScrollRef.current = tops;
+        setScrollTops(tops);
+        scrollColumn(leftRef.current, valueIndex(columns[0], canonical.left));
+        scrollColumn(rightRef.current, valueIndex(columns[1], canonical.right));
+      });
+    }
   };
 
   const stopSettle = (side: TwoColumnPickerSide) => {
@@ -518,7 +549,7 @@ export function TwoColumnPicker({
     settleTimerRef.current[side] = null;
   };
 
-  const settleFlick = (side: TwoColumnPickerSide) => {
+  const settleFlick = (side: TwoColumnPickerSide, closing = false) => {
     if (!flickPendingRef.current[side]) return;
     flickPendingRef.current[side] = false;
     stopSettle(side);
@@ -528,12 +559,16 @@ export function TwoColumnPicker({
     const index = Math.round(element.scrollTop / ROW_HEIGHT);
     const snapIndex = Math.max(0, Math.min(renderedLength(column) - 1,
       Math.round(index / column.flickSnapStep) * column.flickSnapStep));
-    commitIndex(side, snapIndex);
     const nextTop = snapIndex * ROW_HEIGHT;
+    if (!closing && typeof element.scrollTo === 'function' && nextTop !== element.scrollTop) {
+      // Let the native smooth scroll drive the lens and selected text frame by frame.
+      element.scrollTo({ top: nextTop, behavior: 'smooth' });
+      return;
+    }
+    commitIndex(side, snapIndex);
     pendingScrollRef.current = { ...pendingScrollRef.current, [side]: nextTop };
     setScrollTops(current => ({ ...current, [side]: nextTop }));
-    if (typeof element.scrollTo === 'function') element.scrollTo({ top: nextTop, behavior: 'smooth' });
-    else element.scrollTop = nextTop;
+    if (closing || typeof element.scrollTo !== 'function') element.scrollTop = nextTop;
   };
 
   const scheduleSettle = (side: TwoColumnPickerSide) => {
@@ -621,7 +656,7 @@ export function TwoColumnPicker({
 
   const handleClose = () => {
     (['left', 'right'] as const).forEach(side => {
-      if (flickPendingRef.current[side]) settleFlick(side);
+      if (flickPendingRef.current[side]) settleFlick(side, true);
       else stopSettle(side);
     });
     onClose();
