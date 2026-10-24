@@ -559,20 +559,26 @@ export function TwoColumnPicker({
     const element = side === 'left' ? leftRef.current : rightRef.current;
     if (!element || !column.flickSnapStep) return;
     const index = Math.round(element.scrollTop / ROW_HEIGHT);
-    const snapIndex = Math.max(0, Math.min(renderedLength(column) - 1,
-      Math.round(index / column.flickSnapStep) * column.flickSnapStep));
+    const nearestIndex = Math.round(index / column.flickSnapStep) * column.flickSnapStep;
+    // The upper duplicate can snap to the first item of the next cycle.
+    // Normalize to an equivalent rendered row rather than clamping to minute 59.
+    const snapIndex = column.circular && nearestIndex >= renderedLength(column)
+      ? nearestIndex - column.values.length
+      : Math.max(0, Math.min(renderedLength(column) - 1, nearestIndex));
     const nextTop = snapIndex * ROW_HEIGHT;
-    if (!closing && typeof element.scrollTo === 'function' && nextTop !== element.scrollTop) {
-      // Let the native smooth scroll drive the lens and selected text frame by frame.
-      snapTargetRef.current[side] = snapIndex;
-      element.scrollTo({ top: nextTop, behavior: 'smooth' });
-      return;
-    }
-    snapTargetRef.current[side] = null;
+    // Commit the snapped value independently of scroll animation support. On
+    // WebKit the lens still follows native smooth scrolling, but a missing or
+    // interrupted scroll event must not leave a stale final selection.
     commitIndex(side, snapIndex);
     pendingScrollRef.current = { ...pendingScrollRef.current, [side]: nextTop };
-    setScrollTops(current => ({ ...current, [side]: nextTop }));
-    if (closing || typeof element.scrollTo !== 'function') element.scrollTop = nextTop;
+    if (!closing && typeof element.scrollTo === 'function' && nextTop !== element.scrollTop) {
+      snapTargetRef.current[side] = snapIndex;
+      element.scrollTo({ top: nextTop, behavior: 'smooth' });
+    } else {
+      snapTargetRef.current[side] = null;
+      setScrollTops(current => ({ ...current, [side]: nextTop }));
+      element.scrollTop = nextTop;
+    }
   };
 
   const scheduleSettle = (side: TwoColumnPickerSide) => {
