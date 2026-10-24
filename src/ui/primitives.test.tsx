@@ -21,6 +21,19 @@ describe('UI Kit primitives', () => {
     expect(html).toContain('aria-label="Mezfit User"');
   });
 
+  it('supports a 32px small avatar for both photo and fallback, keeping 40px as default', () => {
+    const defaultHtml = renderToStaticMarkup(<Avatar name="Mezfit User" />);
+    const smallFallback = renderToStaticMarkup(<Avatar name="Mezfit User" size="small" />);
+    const smallPhoto = renderToStaticMarkup(<Avatar name="Coach" src="/coach.jpg" size="small" />);
+
+    expect(defaultHtml).not.toContain('ui-avatar--small');
+    expect(smallFallback).toContain('ui-avatar--fallback');
+    expect(smallFallback).toContain('ui-avatar--small');
+    expect(smallFallback).toContain('aria-label="Mezfit User"');
+    expect(smallPhoto).toContain('ui-avatar--small');
+    expect(smallPhoto).toContain('src="/coach.jpg"');
+  });
+
   it('renders semantic surface elements', () => {
     const html = renderToStaticMarkup(<Surface as="section"><Text>Content</Text></Surface>);
     expect(html).toContain('<section');
