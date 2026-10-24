@@ -693,7 +693,7 @@ export function TwoColumnPicker({
       aria-modal="true"
       aria-label={ariaLabel}
     >
-      <div className="ui-time-picker">
+      {opened ? <div className="ui-time-picker">
         <div className="ui-time-picker__wheel">
           <div className="ui-time-picker__columns">
             <PickerColumnWheel
@@ -731,7 +731,7 @@ export function TwoColumnPicker({
             lensMode={resolvedLensMode}
           />
         </div>
-      </div>
+      </div> : null}
     </MezfitPopover>
   );
 }
