@@ -7,15 +7,16 @@ import { DatePicker, type LocalDate } from './date-picker/DatePicker';
 import { addDays, currentLocalDate, dayIndex } from './day-schedule/dateMath';
 import './DayScheduleCatalog.css';
 
-type DemoEvent = DayScheduleEvent & { title: string; purpose: string };
+type DemoEvent = DayScheduleEvent & { title: string; purpose: string; kind: 'workout' | 'event' };
 const names = ['Иван Петров', 'Анна Смирнова', 'Олег Морозов', 'Мария Орлова', 'Елена Волкова', 'Дмитрий Соколов', 'Ирина Белова'];
 
 /** Fixtures for every browsed date, not a production data source. */
 function demoDay(date: LocalDate): DemoEvent[] {
   const index = dayIndex(date);
   return [
-    { id: `${date}-morning`, startMinutes: 480 + index * 15, durationMinutes: 60, title: names[index], purpose: 'Персональная' },
-    { id: `${date}-midday`, startMinutes: 660 + index * 15, durationMinutes: 90, title: names[(index + 2) % 7], purpose: 'Силовая' },
+    { id: `${date}-morning`, startMinutes: 480 + index * 15, durationMinutes: 60, title: names[index], purpose: 'Персональная', kind: 'workout' },
+    { id: `${date}-midday`, startMinutes: 660 + index * 15, durationMinutes: 90, title: names[(index + 2) % 7], purpose: 'Силовая', kind: 'workout' },
+    { id: `${date}-personal-event`, startMinutes: 840 + index * 15, durationMinutes: 45, title: 'Личное событие', purpose: 'Личные дела', kind: 'event' },
   ];
 }
 
@@ -78,7 +79,8 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
         <DayScheduleEventCard
           title={event.title}
           detail={event.purpose}
-          media={<Avatar name={event.title} />}
+          media={event.kind === 'workout' ? <Avatar name={event.title} /> : undefined}
+          variant={event.kind}
           state={state}
         />
       )}
@@ -128,8 +130,8 @@ export function DayScheduleCatalog({ fullScreen = false }: { fullScreen?: boolea
           <dt><Text variant="footnote" className="ui-kit-day-schedule__text">onDateChange(nextDate)</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Запрос смены даты после тапа или свайпа. Родитель синхронно принимает значение через setDate.</Text></dd>
           <dt><Text variant="footnote" className="ui-kit-day-schedule__text">getDayScheduleValue(date, today?)</Text></dt><dd><Text variant="footnote" className="ui-kit-day-schedule__text">Возвращает {'{ date, title, weekdayIndex, isToday }'} для внешнего Navbar, в том числе до первого жеста. Это производные данные, не второе состояние.</Text></dd>
         </dl>
-        <p><Text variant="footnote" className="ui-kit-day-schedule__text">Демо создаёт события для любой выбранной даты. Диапазон: 00:00–24:00, 64 px/час. Фон календаря — чистый чёрный canvas. Обычная карточка полупрозрачна через --ui-day-schedule-event-card-color; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; режим редактирования делает карточку непрозрачной, показывает resize-точки и кнопку удаления. Тап вне выбранной карточки завершает режим редактирования.</Text></p>
-        <pre><Text variant="footnote" className="ui-kit-day-schedule__text">{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  isEventEditable={event => event.editable}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  onEventDelete={handleEventDelete}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} state={state} />\n  )}\n/>`}</Text></pre>
+        <p><Text variant="footnote" className="ui-kit-day-schedule__text">Демо создаёт события для любой выбранной даты. Диапазон: 00:00–24:00, 64 px/час. Фон календаря — чистый чёрный canvas. Карточки тренировок зелёные, а личные события используют #96489E через variant="event" с той же прозрачностью: обычная 58%, lifted — прозрачный фон на GlassSurface, редактирование — 100%. Цвет наследует --ui-day-schedule-event-card-color для тренировок; lifted-состояние сохраняет тот же ListItem-контент на GlassSurface; режим редактирования делает карточку непрозрачной, показывает resize-точки и кнопку удаления. Тап вне выбранной карточки завершает режим редактирования.</Text></p>
+        <pre><Text variant="footnote" className="ui-kit-day-schedule__text">{`<DaySchedule\n  date={date}\n  onDateChange={setDate}\n  isEventEditable={event => event.editable}\n  onEventMove={handleEventMove}\n  onEventResize={handleEventResize}\n  onEventDelete={handleEventDelete}\n  eventsByDate={events}\n  renderEvent={(event, state) => (\n    <DayScheduleEventCard title={event.title} detail={event.type} variant={event.kind} state={state} />\n  )}\n/>`}</Text></pre>
       </div>
     </section>
   );
