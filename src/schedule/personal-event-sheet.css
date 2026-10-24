@@ -23,17 +23,55 @@
   gap: 20px;
   padding: 0 16px 24px;
 }
+/* Match the existing workout editor's compact UIkit timing layout. */
 .personal-event-sheet__timing {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 0;
+  margin-inline-start: -10px;
 }
 .personal-event-sheet__time-row {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 24px;
+  gap: 4px;
+  max-width: 100%;
+}
+.personal-event-sheet__timing-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 .personal-event-sheet__footer {
   padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+/*
+ * Konsta's outlined ListInput reserves its own iOS ListItem inset plus the
+ * input's outlined margins (32px start, 16px end). Compensate on the external
+ * List only so its visible border aligns with adjacent body content.
+ * No Konsta internals or primitive typography are overridden.
+ */
+.personal-event-sheet__field-list {
+  margin-inline-start: -32px;
+  margin-inline-end: -16px;
+}
+
+.personal-event-sheet__statuses {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.personal-event-sheet__sync {
+  align-self: flex-start;
+}
+
+.personal-event-sheet__sync-badge {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }

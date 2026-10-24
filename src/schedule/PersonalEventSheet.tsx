@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, List, ListInput } from 'konsta/react';
+import { Button as KonstaButton, List, ListInput } from 'konsta/react';
+import { Button } from '../ui/primitives';
+import { Icon } from '../ui/Icon';
 import { DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text,
   TimePicker, type LocalDate, type LocalTime } from '../ui';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { PersonalEventRepository, PersonalEventInput } from '../data/cloud/personal-events';
 import { calendarDate, calendarTime, localScheduleEnd, localScheduleInstant } from './calendar-time';
+import { PersonalEventStatuses } from './PersonalEventStatuses';
 import './personal-event-sheet.css';
 
 type Picker = 'start' | 'end' | null;
@@ -101,32 +104,41 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
       <section className="personal-event-sheet">
         <header className="personal-event-sheet__header">
           <Text variant="headline">{event ? 'Редактировать событие' : 'Новое событие'}</Text>
-          <Button clear inline disabled={busy} onClick={onClose}><Text variant="body">Назад</Text></Button>
+          <KonstaButton clear inline disabled={busy} onClick={onClose}><Text variant="body">Назад</Text></KonstaButton>
         </header>
         <div className="personal-event-sheet__body">
           <Text variant="footnote" tone="muted">Личное событие. Видно только вам и занимает время в расписании.</Text>
-          <List nested strong dividers={false} colors={EVENT_LIST_COLORS}>
+          <PersonalEventStatuses eventId={event?.id ?? null} repository={repository} />
+          <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
             <ListInput type="text" label="Название" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={120}
               value={title} onChange={e => setTitle(e.target.value)}
               placeholder="Например, личные дела" />
           </List>
           <div className="personal-event-sheet__timing">
-            <Text variant="footnote" tone="muted">Дата</Text>
-            <Button tonal disabled={busy} onClick={() => setDateOpened(true)}><Text variant="body">{selectedDate}</Text></Button>
-          </div>
-          <div className="personal-event-sheet__time-row">
-            <div className="personal-event-sheet__timing">
-              <Text variant="footnote" tone="muted">Начало</Text>
-              <span ref={startRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('start')}><Text variant="body">{startTime}</Text></Button></span>
-            </div>
-            <div className="personal-event-sheet__timing">
-              <Text variant="footnote" tone="muted">Окончание</Text>
-              <span ref={endRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('end')}><Text variant="body">{endTime}</Text></Button></span>
+            <Button variant="secondary" size="compact" disabled={busy} onClick={() => setDateOpened(true)}>
+              <Text variant="body" className="personal-event-sheet__timing-label">
+                <Icon name="calendar" style={{ width: 18, height: 18, flex: '0 0 18px' }} />
+                Дата: <span>{selectedDate}</span>
+              </Text>
+            </Button>
+            <div className="personal-event-sheet__time-row">
+              <span ref={startRef}><Button variant="secondary" size="compact" disabled={busy} onClick={() => setTimeOpened('start')}>
+                <Text variant="body" className="personal-event-sheet__timing-label">
+                  <Icon name="clock" style={{ width: 18, height: 18, flex: '0 0 18px' }} />
+                  Начало: {startTime}
+                </Text>
+              </Button></span>
+              <span ref={endRef}><Button variant="secondary" size="compact" disabled={busy} onClick={() => setTimeOpened('end')}>
+                <Text variant="body" className="personal-event-sheet__timing-label">
+                  <Icon name="clock" style={{ width: 18, height: 18, flex: '0 0 18px' }} />
+                  Конец: {endTime}
+                </Text>
+              </Button></span>
             </div>
           </div>
           <Text variant="caption" tone="muted">Если окончание не позже начала, событие заканчивается на следующий день.</Text>
-          <List nested strong dividers={false} colors={EVENT_LIST_COLORS}>
+          <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
             <ListInput type="textarea" label="Описание (необязательно)" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={4000}
               value={notes} onChange={e => setNotes(e.target.value)} />
@@ -134,7 +146,12 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
         <footer className="personal-event-sheet__footer">
-          {event ? <Button tonal disabled={busy} onClick={() => setDeleteOpened(true)}><Text variant="body">Удалить</Text></Button> : <span />}
+          <Button variant="secondary" color="red" disabled={busy} onClick={() => {
+            if (event) setDeleteOpened(true);
+            else onClose();
+          }}>
+            <Text variant="body">{event ? 'Удалить' : 'Удалить черновик'}</Text>
+          </Button>
           <Button disabled={busy || !repository || !title.trim()} onClick={() => void save()}>
             <Text variant="body">{busy ? 'Сохраняем…' : event ? 'Сохранить' : 'Создать событие'}</Text>
           </Button>
