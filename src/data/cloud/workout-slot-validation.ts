@@ -16,8 +16,11 @@ export function bookingsOverlap(a: Booking, b: Booking): boolean {
     && Date.parse(b.startsAtUtc) < Date.parse(a.startsAtUtc) + a.durationMinutes * 60_000;
 }
 
+/* Training and personal-event bookings share one slot validation path. */
+type SlotCandidate = Booking & Pick<LocalWorkoutOccurrenceDraft, 'actorUserId'> & { targetOccurrenceId?: string };
+
 /** Dynamic eligibility is evaluated only against the authorized local calendars. */
-export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: LocalWorkoutOccurrenceDraft): Promise<void> {
+export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: SlotCandidate): Promise<void> {
   const scheduling = new WorkoutSchedulingRepository(db, draft.actorUserId);
   // Serialize WebCrypto-backed membership checks within the enclosing transaction.
   const athlete = await scheduling.listCalendar(draft.athleteUserId, true);
@@ -25,5 +28,5 @@ export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: Loc
     ? await scheduling.listCalendar(draft.coachUserId, true) : [];
   const rows = [...athlete, ...coach].filter(row => row.id !== draft.targetOccurrenceId);
   if (rows.some(row => bookingsOverlap(draft, row)))
-    throw new WorkoutSlotConflict('Это время занято другой тренировкой атлета или тренера. Выберите свободное время');
+    throw new WorkoutSlotConflict('Это время уже занято в расписании. Выберите свободный слот');
 }
