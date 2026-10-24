@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import type { ReactNode } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 import type { PersonalEventRepository } from '../data/cloud/personal-events';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import { PersonalEventSheet } from './PersonalEventSheet';
@@ -9,13 +9,27 @@ import { PersonalEventSheet } from './PersonalEventSheet';
 vi.mock('konsta/react', () => ({
   Button: ({ children, onClick, disabled }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) =>
     <button disabled={disabled} onClick={onClick}>{children}</button>,
+  List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ListInput: ({ type, label, value, onChange, disabled, maxLength, placeholder, floatingLabel, outline, colors, media }: {
+    type: 'text' | 'textarea'; label: string; value: string;
+    onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    disabled?: boolean; maxLength?: number; placeholder?: string; floatingLabel?: boolean; outline?: boolean;
+    colors?: { bgIos?: string; outlineLabelBgIos?: string }; media?: ReactNode;
+  }) => (
+    <label data-konsta-list-input={type} data-floating-label={floatingLabel ? 'true' : 'false'}
+      data-outline={outline ? 'true' : 'false'} data-field-bg={colors?.bgIos}
+      data-label-bg={colors?.outlineLabelBgIos} data-has-media={media ? 'true' : 'false'}>
+      <span>{label}</span>
+      {type === 'textarea'
+        ? <textarea aria-label={label} value={value} onChange={onChange}
+            disabled={disabled} maxLength={maxLength} placeholder={placeholder} />
+        : <input aria-label={label} value={value} onChange={onChange}
+            disabled={disabled} maxLength={maxLength} placeholder={placeholder} />}
+    </label>
+  ),
 }));
 vi.mock('../ui', () => ({
   Text: ({ children, variant }: { children: ReactNode; variant?: string }) => <span data-text-variant={variant}>{children}</span>,
-  TextInput: ({ label, value, onChange }: { label: string; value: string; onChange: (e: { target: { value: string } }) => void }) =>
-    <input aria-label={label} value={value} onChange={onChange} />,
-  TextArea: ({ label, value, onChange }: { label: string; value: string; onChange: (e: { target: { value: string } }) => void }) =>
-    <textarea aria-label={label} value={value} onChange={onChange} />,
   MezfitBottomSheet: ({ opened, children }: { opened: boolean; children: ReactNode }) =>
     opened ? <div role="dialog">{children}</div> : null,
   DatePicker: ({ opened, onChange }: { opened: boolean; onChange: (date: string) => void }) =>
@@ -88,4 +102,21 @@ it('uses semantic Body typography for every event-sheet and confirmation button'
   for (const button of dialogButtons) {
     expect(button.querySelector('[data-text-variant="body"]')).not.toBeNull();
   }
+});
+
+it('uses native Konsta floating outlined fields with a black surface and no icons', () => {
+  setup(inputEvent);
+  const fields = screen.getByRole('dialog').querySelectorAll('[data-konsta-list-input]');
+  expect(fields).toHaveLength(2);
+  expect(fields[0].getAttribute('data-konsta-list-input')).toBe('text');
+  expect(fields[1].getAttribute('data-konsta-list-input')).toBe('textarea');
+  for (const field of fields) {
+    expect(field.getAttribute('data-floating-label')).toBe('true');
+    expect(field.getAttribute('data-outline')).toBe('true');
+    expect(field.getAttribute('data-field-bg')).toBe('bg-black');
+    expect(field.getAttribute('data-label-bg')).toBe('bg-black');
+    expect(field.getAttribute('data-has-media')).toBe('false');
+  }
+  expect(screen.getByRole('textbox', { name: 'Название' })).toHaveProperty('maxLength', 120);
+  expect(screen.getByRole('textbox', { name: 'Описание (необязательно)' })).toHaveProperty('maxLength', 4000);
 });
