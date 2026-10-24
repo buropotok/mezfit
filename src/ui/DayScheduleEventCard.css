@@ -13,6 +13,11 @@
   background: rgb(var(--ui-day-schedule-event-card-color, 132 163 150) / 0.58);
 }
 
+.ui-day-schedule-event-card--event {
+  /* #96489E: personal events use the workout card's existing opacity states. */
+  --ui-day-schedule-event-card-color: 150 72 158;
+}
+
 .ui-day-schedule-event-card--lifted {
   background: transparent;
 }
