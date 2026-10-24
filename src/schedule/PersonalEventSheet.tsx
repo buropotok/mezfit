@@ -7,6 +7,7 @@ import { DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text,
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { PersonalEventRepository, PersonalEventInput } from '../data/cloud/personal-events';
 import { calendarDate, calendarTime, localScheduleEnd, localScheduleInstant } from './calendar-time';
+import { PersonalEventStatuses } from './PersonalEventStatuses';
 import './personal-event-sheet.css';
 
 type Picker = 'start' | 'end' | null;
@@ -107,7 +108,8 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
         </header>
         <div className="personal-event-sheet__body">
           <Text variant="footnote" tone="muted">Личное событие. Видно только вам и занимает время в расписании.</Text>
-          <List nested strong dividers={false} colors={EVENT_LIST_COLORS}>
+          <PersonalEventStatuses eventId={event?.id ?? null} repository={repository} />
+          <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
             <ListInput type="text" label="Название" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={120}
               value={title} onChange={e => setTitle(e.target.value)}
@@ -136,7 +138,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
             </div>
           </div>
           <Text variant="caption" tone="muted">Если окончание не позже начала, событие заканчивается на следующий день.</Text>
-          <List nested strong dividers={false} colors={EVENT_LIST_COLORS}>
+          <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
             <ListInput type="textarea" label="Описание (необязательно)" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={4000}
               value={notes} onChange={e => setNotes(e.target.value)} />
@@ -144,10 +146,15 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
         <footer className="personal-event-sheet__footer">
-          {event ? <KonstaButton tonal disabled={busy} onClick={() => setDeleteOpened(true)}><Text variant="body">Удалить</Text></KonstaButton> : <span />}
-          <KonstaButton disabled={busy || !repository || !title.trim()} onClick={() => void save()}>
+          <Button variant="secondary" color="red" disabled={busy} onClick={() => {
+            if (event) setDeleteOpened(true);
+            else onClose();
+          }}>
+            <Text variant="body">{event ? 'Удалить' : 'Удалить черновик'}</Text>
+          </Button>
+          <Button disabled={busy || !repository || !title.trim()} onClick={() => void save()}>
             <Text variant="body">{busy ? 'Сохраняем…' : event ? 'Сохранить' : 'Создать событие'}</Text>
-          </KonstaButton>
+          </Button>
         </footer>
       </section>
     </MezfitBottomSheet>
