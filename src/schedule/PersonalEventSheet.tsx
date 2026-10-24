@@ -113,7 +113,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
               <span ref={endRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('end')}>{endTime}</Button></span>
             </div>
           </div>
-          <Text variant="caption" tone="muted">Если окончание раньше начала, событие заканчивается на следующий день.</Text>
+          <Text variant="caption" tone="muted">Если окончание не позже начала, событие заканчивается на следующий день.</Text>
           <TextArea label="Описание (необязательно)" disabled={busy} rows={3} maxLength={4000}
             value={notes} onChange={e => setNotes(e.target.value)} />
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
