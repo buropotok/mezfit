@@ -28,10 +28,12 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const running = useRef(false);
+  const generation = useRef(0);
   const startRef = useRef<HTMLSpanElement>(null);
   const endRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
+    const token = ++generation.current;
     if (!opened) return;
     setTitle(event?.plan.name ?? '');
     setNotes(event?.plan.comment ?? '');
@@ -42,6 +44,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
     setEndTime(end ? calendarTime(end) as LocalTime : '10:00' as LocalTime);
     setDateOpened(false); setTimeOpened(null); setDeleteOpened(false);
     setError(''); setBusy(false); running.current = false;
+    return () => { if (generation.current === token) generation.current++; };
   }, [opened, event?.id, date]);
 
   const timing = (): PersonalEventInput => {
@@ -54,30 +57,34 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
   const save = async () => {
     if (!repository || running.current) return;
     running.current = true; setBusy(true); setError('');
+    const token = generation.current;
     try {
       const input = timing();
       if (event) await repository.update(event.id, input);
       else await repository.create(input);
-      onSaved(input.startsAtUtc);
+      if (generation.current === token) onSaved(input.startsAtUtc);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить событие');
+      if (generation.current === token)
+        setError(reason instanceof Error ? reason.message : 'Не удалось сохранить событие');
     } finally {
-      running.current = false; setBusy(false);
+      if (generation.current === token) { running.current = false; setBusy(false); }
     }
   };
 
   const remove = async () => {
     if (!repository || !event || running.current) return;
     running.current = true; setBusy(true); setError('');
+    const token = generation.current;
     try {
       await repository.cancel(event.id);
-      setDeleteOpened(false);
-      onClose();
+      if (generation.current === token) { setDeleteOpened(false); onClose(); }
     } catch (reason) {
-      setDeleteOpened(false);
-      setError(reason instanceof Error ? reason.message : 'Не удалось удалить событие');
+      if (generation.current === token) {
+        setDeleteOpened(false);
+        setError(reason instanceof Error ? reason.message : 'Не удалось удалить событие');
+      }
     } finally {
-      running.current = false; setBusy(false);
+      if (generation.current === token) { running.current = false; setBusy(false); }
     }
   };
 
@@ -90,24 +97,24 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
         </header>
         <div className="personal-event-sheet__body">
           <Text variant="footnote" tone="muted">Личное событие. Видно только вам и занимает время в расписании.</Text>
-          <TextInput label="Название" maxLength={120} value={title} onChange={e => setTitle(e.target.value)}
+          <TextInput label="Название" disabled={busy} maxLength={120} value={title} onChange={e => setTitle(e.target.value)}
             placeholder="Например, личные дела" />
           <div className="personal-event-sheet__timing">
             <Text variant="footnote" tone="muted">Дата</Text>
-            <Button tonal onClick={() => setDateOpened(true)}>{selectedDate}</Button>
+            <Button tonal disabled={busy} onClick={() => setDateOpened(true)}>{selectedDate}</Button>
           </div>
           <div className="personal-event-sheet__time-row">
             <div className="personal-event-sheet__timing">
               <Text variant="footnote" tone="muted">Начало</Text>
-              <span ref={startRef}><Button tonal onClick={() => setTimeOpened('start')}>{startTime}</Button></span>
+              <span ref={startRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('start')}>{startTime}</Button></span>
             </div>
             <div className="personal-event-sheet__timing">
               <Text variant="footnote" tone="muted">Окончание</Text>
-              <span ref={endRef}><Button tonal onClick={() => setTimeOpened('end')}>{endTime}</Button></span>
+              <span ref={endRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('end')}>{endTime}</Button></span>
             </div>
           </div>
           <Text variant="caption" tone="muted">Если окончание раньше начала, событие заканчивается на следующий день.</Text>
-          <TextArea label="Описание (необязательно)" rows={3} maxLength={4000}
+          <TextArea label="Описание (необязательно)" disabled={busy} rows={3} maxLength={4000}
             value={notes} onChange={e => setNotes(e.target.value)} />
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
