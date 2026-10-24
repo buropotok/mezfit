@@ -38,7 +38,7 @@ vi.mock('../program/ProgramExerciseInformationSheet', () => ({
 }));
 vi.mock('../ui', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Avatar: () => null,
+  Avatar: ({ name }: { name: string }) => <span role="img" aria-label={name} />,
   LiquidPopover: ({ trigger }: { trigger: ReactNode }) => <>{trigger}</>,
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
@@ -218,6 +218,41 @@ describe('committing the final time on picker dismissal', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Начало:/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Скрыть выбор времени' }));
     expect(write).not.toHaveBeenCalled();
+  });
+});
+
+describe('scheduled workout summary layout', () => {
+  it('keeps start and end in one row beneath the date', () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={draft} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+
+    const date = screen.getByRole('button', { name: /^Дата:/ });
+    const start = screen.getByRole('button', { name: /^Начало:/ });
+    const end = screen.getByRole('button', { name: /^Конец:/ });
+    const timeRow = start.closest('.occurrence-draft-sheet__time-row');
+    expect(timeRow).toBeTruthy();
+    expect(timeRow).toBe(end.closest('.occurrence-draft-sheet__time-row'));
+    expect(timeRow?.previousElementSibling).toBe(date);
+  });
+
+  it('shows the coach avatar beside users only for coached workouts with a coach', () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const props = { drafts, onClose: vi.fn(), onSave: vi.fn() };
+    const coached = { ...draft, format: 'coached' as const, coachUserId: 'tg:202' };
+    const view = render(<OccurrenceDraftSheet draft={coached} {...props} />);
+    const format = screen.getByText('С тренером в зале').parentElement;
+    expect(format?.querySelector('[data-testid="icon-users"]')?.nextElementSibling?.className)
+      .toBe('occurrence-draft-sheet__coach-avatar');
+    expect(format?.querySelector('.occurrence-draft-sheet__coach-avatar [role="img"]')).toBeTruthy();
+
+    view.rerender(<OccurrenceDraftSheet draft={{ ...coached, coachUserId: null }} {...props} />);
+    expect(screen.queryByText('С тренером в зале')?.parentElement?.querySelector('.occurrence-draft-sheet__coach-avatar'))
+      .toBeNull();
+    view.rerender(<OccurrenceDraftSheet draft={{ ...coached, format: 'independent' }} {...props} />);
+    expect(screen.getByText('Самостоятельная').parentElement?.querySelector('.occurrence-draft-sheet__coach-avatar'))
+      .toBeNull();
   });
 });
 
