@@ -4,6 +4,8 @@ import { useNavigationSurfaceFloatingAction, type NavigationContext } from '../N
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
+import { PersonalEventRepository } from '../data/cloud/personal-events';
+import { PersonalEventSheet } from './PersonalEventSheet';
 import { ScheduleWorkoutCreator } from './ScheduleWorkoutCreator';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { draftFromOccurrence } from '../data/cloud/workout-occurrence-plan';
@@ -49,8 +51,11 @@ function BookingCard({ event, state, actor, onClick }: {
 }) {
   const row = event.type === 'draft' ? event.draft : event.occurrence;
   const person = useWorkoutPerson(row.athleteUserId, row.realmId, actor);
-  return <DayScheduleEventCard title={person.name} detail={row.plan.name} media={person.avatar}
-    corner={<Icon name={row.format === 'coached' ? 'users' : 'user'} />}
+  const personalEvent = event.type === 'occurrence' && event.occurrence.entryKind === 'personal_event';
+  return <DayScheduleEventCard title={personalEvent ? row.plan.name : person.name}
+    detail={personalEvent ? row.plan.comment : row.plan.name} media={personalEvent ? undefined : person.avatar}
+    variant={personalEvent ? 'event' : 'workout'}
+    corner={<Icon name={personalEvent ? 'calendar-event' : row.format === 'coached' ? 'users' : 'user'} />}
     cornerSize={Math.min(32, (state.height ?? 62) / 2)}
     status={event.type === 'draft' ? <Badge color="yellow" textVariant="caption">Черновик</Badge> : undefined}
     state={state} onClick={onClick} />;
@@ -71,10 +76,13 @@ export function TodayPage({
   const [clientUserIds, setClientUserIds] = useState<string[]>([]);
   const [filterOpened, setFilterOpened] = useState(false);
   const [creation, setCreation] = useState<'workout' | 'event' | null>(null);
+  const [personalEventId, setPersonalEventId] = useState<string | null>(null);
   const [creationNotice, setCreationNotice] = useState('');
   const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
   const closeCreation = useCallback(() => setCreation(null), []);
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
+    [cloud?.db, cloud?.actorUserId]);
+  const personalEvents = useMemo(() => cloud ? new PersonalEventRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const clients = useMemo(() => [...new Map((cloud?.clients ?? []).map(client => [client.userId, client])).values()], [cloud?.clients]);
   const [date, setDate] = useState<LocalDate>(currentDate);
@@ -114,7 +122,7 @@ export function TodayPage({
     };
   }, [draftRepository]);
 
-  useEffect(() => { setClientUserIds([]); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
+  useEffect(() => { setClientUserIds([]); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setPersonalEventId(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
 
   useEffect(() => {
     if (!planning?.requestedDraftId) return;
@@ -124,6 +132,10 @@ export function TodayPage({
     planning.clearDraft();
   }, [planning?.requestedDraftId]);
 
+  const selectedPersonalEvent = occurrences.find(row => row.id === personalEventId && row.entryKind === 'personal_event') ?? null;
+  useEffect(() => {
+    if (!loading && personalEventId && !selectedPersonalEvent) setPersonalEventId(null);
+  }, [loading, personalEventId, selectedPersonalEvent]);
   const selected = useMemo(() => {
     const draft = drafts.find(item => item.id === openedDraftId);
     if (draft) return draft;
@@ -143,13 +155,14 @@ export function TodayPage({
   const sourceProgramName = selectedProgramTitle && selectedProgramTitle.id === selected?.trainingPlanId
     ? selectedProgramTitle.name : null;
   const closeEditor = useCallback(() => { setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
-  const createAction = useMemo(() => !selected && !creation && !filterOpened ? {
+  const closePersonalEvent = useCallback(() => { setPersonalEventId(null); setCreation(current => current === 'event' ? null : current); }, []);
+  const createAction = useMemo(() => !selected && !personalEventId && !creation && !filterOpened ? {
     label: 'Создать', icon: 'plus' as const,
     popoverItems: [
       { id: 'workout', label: '+ Тренировка', icon: 'barbell' as const, onSelect: () => setCreation('workout') },
       { id: 'event', label: '+ Событие', icon: 'calendar-event' as const, onSelect: () => setCreation('event') },
     ],
-  } : null, [selected?.id, creation, filterOpened]);
+  } : null, [selected?.id, personalEventId, creation, filterOpened]);
   useNavigationSurfaceFloatingAction(createAction);
   const mayEdit = (row: CloudWorkoutOccurrenceRow) => row.status === 'scheduled' && !row.workoutSessionId
     && (row.athleteUserId === cloud?.actorUserId || row.coachUserId === cloud?.actorUserId)
@@ -159,8 +172,11 @@ export function TodayPage({
   }, [selected?.id, selected?.startsAtUtc]);
 
   useEffect(() => {
-    if (creation) return;
-    if (editorNavigation && selected) {
+    if (creation === 'workout') return;
+    if (creation === 'event' || personalEventId) {
+      onNavigationContextChange({ level: 2, title: creation === 'event' ? 'Новое событие' : 'Личное событие',
+        contentMode: 'viewport', onBack: closePersonalEvent });
+    } else if (editorNavigation && selected) {
       onNavigationContextChange(editorNavigation);
     } else if (selected) {
       onNavigationContextChange({
@@ -184,7 +200,7 @@ export function TodayPage({
       });
     }
     return () => onNavigationContextChange(null);
-  }, [date, selected?.id, filterOpened, creation, editorNavigation, onNavigationContextChange]);
+  }, [date, selected?.id, personalEventId, filterOpened, creation, editorNavigation, closePersonalEvent, onNavigationContextChange]);
 
   const merged = useMemo(() => {
     const withTiming = <T extends LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow>(row: T, type: string): T =>
@@ -240,6 +256,7 @@ export function TodayPage({
     if (!cloud || !draftRepository) return;
     setViewed(null);
     const row = event.occurrence;
+    if (row.entryKind === 'personal_event') { setPersonalEventId(row.id); return; }
     const draft = draftFromOccurrence(cloud.actorUserId, row);
     if (!mayEdit(row)) { setOpenedDraftId(null); setViewed(draft); return; }
     const existing = drafts.find(item => item.targetOccurrenceId === row.id);
@@ -254,6 +271,22 @@ export function TodayPage({
       ? localScheduleInstant(date, `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}` as LocalTime)
       : current.startsAtUtc;
     if (event.type === 'occurrence' && !mayEdit(event.occurrence)) return;
+    if (event.type === 'occurrence' && event.occurrence.entryKind === 'personal_event') {
+      if (!personalEvents) return;
+      if (cancel) { await personalEvents.cancel(current.id); return; }
+      const key = 'occurrence:' + current.id;
+      const timing = { startsAtUtc: start, durationMinutes: duration ?? current.durationMinutes };
+      setTimingOverrides(previous => ({ ...previous, [key]: timing }));
+      try { await personalEvents.move(current.id, timing); }
+      catch (reason) {
+        setTimingOverrides(previous => {
+          if (previous[key] !== timing) return previous;
+          const next = { ...previous }; delete next[key]; return next;
+        });
+        throw reason;
+      }
+      return;
+    }
     if (cancel) {
       const target = event.type === 'occurrence' ? event.occurrence.id : event.draft.targetOccurrenceId;
       if (target) await draftRepository.cancel(target);
@@ -275,10 +308,10 @@ export function TodayPage({
       throw reason;
     }
   };
-  const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить тренировку')); };
+  const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить запись в расписании')); };
 
   return (
-    <section className={`today-page${creation || selected || filterOpened ? ' today-page--sheet-open' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
+    <section className={`today-page${creation || selected || personalEventId || filterOpened ? ' today-page--sheet-open' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
       <DaySchedule date={date} eventsByDate={eventsByDate} onDateChange={setDate}
         className="today-page__schedule"
         eventsShareResource={(event, other) => bookingsShareParticipant(
@@ -293,7 +326,7 @@ export function TodayPage({
         renderEvent={(event, state) => <BookingCard event={event} state={state} actor={actor}
           onClick={() => report(openEvent(event))} />} />
 
-      {role === 'coach' && !selected && !creation && !filterOpened ? <ScheduleFilterBar
+      {role === 'coach' && !selected && !personalEventId && !creation && !filterOpened ? <ScheduleFilterBar
         clients={clients} selected={clientUserIds} onOpen={() => setFilterOpened(true)}
         onRemove={id => setClientUserIds(current => current.filter(value => value !== id))} /> : null}
       {role === 'coach' ? <ScheduleClientFilter opened={filterOpened} clients={clients}
@@ -310,11 +343,16 @@ export function TodayPage({
           </Text>
         </div>
       ) : null}
-      <ScheduleWorkoutCreator intent={creation} role={role} actor={actor} onClose={closeCreation}
+      <ScheduleWorkoutCreator intent={creation === 'workout' ? creation : null} role={role} actor={actor} onClose={closeCreation}
         onNavigationContextChange={onNavigationContextChange} onCreated={(id, client, message) => {
           setCreation(null); setCreationNotice(message);
           setClientUserIds(role === 'coach' && client ? [client] : []);
           setViewed(null); setOpenedDraftId(id);
+        }} />
+      <PersonalEventSheet opened={creation === 'event' || Boolean(selectedPersonalEvent)}
+        event={selectedPersonalEvent} date={date} repository={personalEvents} onClose={closePersonalEvent}
+        onSaved={instant => {
+          setCreation(null); setPersonalEventId(null); setClientUserIds([]); setDate(datePart(instant));
         }} />
       {draftRepository ? <OccurrenceDraftSheet draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
         sourceProgramName={sourceProgramName} onClose={closeEditor} onSave={save} saveNotice={programUpdateError || creationNotice}

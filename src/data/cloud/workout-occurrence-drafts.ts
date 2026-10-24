@@ -54,7 +54,7 @@ export class WorkoutOccurrenceDraftRepository {
         let id = draft.targetOccurrenceId;
         if (id) {
           const current = await this.db.workoutOccurrences.get(id);
-          if (!current || current.realmId !== draft.realmId || current.athleteUserId !== draft.athleteUserId
+          if (!current || current.entryKind === 'personal_event' || current.realmId !== draft.realmId || current.athleteUserId !== draft.athleteUserId
             || current.coachUserId !== draft.coachUserId || current.clientUserId !== draft.clientUserId
             || current.format !== draft.format) continue;
           await this.db.workoutOccurrences.update(id, { plan: draft.plan, originalPlan: draft.originalPlan,
@@ -99,7 +99,7 @@ export class WorkoutOccurrenceDraftRepository {
   async get(id: string): Promise<LocalWorkoutOccurrenceDraft | null> {
     if (!id.startsWith('draft:')) return null;
     const row = await this.db.workoutOccurrences.get(id.slice(6));
-    if (!row || row.status === 'cancelled' || row.cancelledAt) return null;
+    if (!row || row.entryKind === 'personal_event' || row.status === 'cancelled' || row.cancelledAt) return null;
     if (row.publicationStatus === 'draft' && (row.coachUserId ?? row.athleteUserId) !== this.actorUserId
       && (row.draftAuthorUserId ?? row.createdByUserId) !== this.actorUserId) return null;
     try { await this.authorize(row); }
@@ -109,7 +109,8 @@ export class WorkoutOccurrenceDraftRepository {
 
   async list(): Promise<LocalWorkoutOccurrenceDraft[]> {
     const rows = await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
-    return rows.filter(row => row.publicationStatus === 'draft').map(row => draftFromOccurrence(this.actorUserId, row));
+    return rows.filter(row => row.entryKind !== 'personal_event' && row.publicationStatus === 'draft')
+      .map(row => draftFromOccurrence(this.actorUserId, row));
   }
 
   observe(onChange: (drafts: LocalWorkoutOccurrenceDraft[]) => void, onError: (reason: unknown) => void) {
@@ -121,8 +122,9 @@ export class WorkoutOccurrenceDraftRepository {
     const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
     return liveQuery(async () => {
       const rows = await scheduling.listWorkspace();
-      return { occurrences: rows.filter(row => row.publicationStatus !== 'draft'),
-        drafts: rows.filter(row => row.publicationStatus === 'draft').map(row => draftFromOccurrence(this.actorUserId, row)) };
+      return { occurrences: rows.filter(row => row.entryKind === 'personal_event' || row.publicationStatus !== 'draft'),
+        drafts: rows.filter(row => row.entryKind !== 'personal_event' && row.publicationStatus === 'draft')
+          .map(row => draftFromOccurrence(this.actorUserId, row)) };
     }).subscribe({ next: onChange, error: onError });
   }
 
@@ -233,7 +235,7 @@ export class WorkoutOccurrenceDraftRepository {
   async cancel(occurrenceId: string): Promise<void> {
     await this.transaction(async () => {
       const row = await this.db.workoutOccurrences.get(occurrenceId);
-      if (!row) throw new Error('OCCURRENCE_NOT_FOUND');
+      if (!row || row.entryKind === 'personal_event') throw new Error('OCCURRENCE_NOT_FOUND');
       await this.authorize(row);
       await this.db.workoutOccurrences.update(occurrenceId, { cancelledAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       await markWorkoutChanged(this.db, occurrenceId);

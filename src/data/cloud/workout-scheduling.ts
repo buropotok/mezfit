@@ -29,6 +29,12 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
     || (row.autoCreatedProgram !== undefined && typeof row.autoCreatedProgram !== 'boolean')
     || (row.autoCreatedProgram === true && !row.programDayId)
     || !isWorkoutOccurrencePlan(row.plan)
+    || (row.entryKind !== undefined && row.entryKind !== 'workout' && row.entryKind !== 'personal_event')
+    || (row.entryKind === 'personal_event' && (
+      row.realmId !== row.athleteUserId || row.coachUserId !== null || row.clientUserId !== null
+      || row.format !== 'independent' || row.status !== 'scheduled' || row.workoutSessionId !== null
+      || row.trainingPlanId !== undefined || row.programDayId !== undefined
+      || row.autoCreatedProgram !== undefined || row.publicationStatus !== 'published' || row.plan?.exercises.length !== 0))
     || (row.draftAuthorUserId !== undefined && !validCloudUserId(row.draftAuthorUserId))
     || (row.publicationStatus !== undefined && !['draft', 'published'].includes(row.publicationStatus))
     || (row.originalPlan !== undefined && !isWorkoutOccurrencePlan(row.originalPlan))
@@ -108,7 +114,8 @@ export class WorkoutSchedulingRepository {
     const plan = await this.readablePlan(trainingPlanId);
     const dayIds = await this.visibleDayIds(plan);
     const rows = await this.db.workoutOccurrences.where('realmId').equals(plan.realmId).toArray();
-    return rows.filter(row => validOccurrence(row) && row.status !== 'cancelled' && !row.cancelledAt
+    return rows.filter(row => validOccurrence(row) && row.entryKind !== 'personal_event'
+      && row.status !== 'cancelled' && !row.cancelledAt
       && (row.publicationStatus !== 'draft' || (row.coachUserId ?? row.athleteUserId) === this.actorUserId || (row.draftAuthorUserId ?? row.createdByUserId) === this.actorUserId)
       && row.programDayId !== undefined && dayIds.has(row.programDayId) && row.clientUserId === plan.clientUserId
       && row.athleteUserId === (plan.clientUserId ?? this.actorUserId)
