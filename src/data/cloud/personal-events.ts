@@ -1,8 +1,10 @@
-import type { MezfitCloudDatabase } from './database';
+import { liveQuery } from 'dexie';
+import type { LocalProgramSyncRow, MezfitCloudDatabase } from './database';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 import { assertLocalWorkoutSlot } from './workout-slot-validation';
 import { validateScheduleTiming } from './workout-scheduling-time';
 import { isWorkoutOccurrencePlan } from './workout-occurrence-plan';
+import { markWorkoutChanged } from './workout-sync';
 
 /**
  * A personal event books its owner's time in workoutOccurrences without becoming
@@ -31,11 +33,17 @@ function validateEvent(input: PersonalEventInput): PersonalEventInput {
   return { ...input, title, notes: input.notes?.trim() || null };
 }
 
-const TABLES = ['workoutOccurrences', 'realms', 'members'];
+const TABLES = ['workoutOccurrences', 'realms', 'members', 'localWorkoutSync'];
 
 export class PersonalEventRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {
     if (!/^tg:[1-9]\d*$/.test(actorUserId)) throw new Error('INVALID_CLOUD_USER_ID');
+  }
+
+  /** Device-local synchronization metadata; no cloud data is accessed directly by UI. */
+  observeSync(id: string, onChange: (row: LocalProgramSyncRow | undefined) => void,
+    onError: (reason: unknown) => void): { unsubscribe(): void } {
+    return liveQuery(() => this.db.localWorkoutSync.get(id)).subscribe({ next: onChange, error: onError });
   }
 
   private authorized(row: CloudWorkoutOccurrenceRow | undefined): CloudWorkoutOccurrenceRow {
@@ -64,7 +72,7 @@ export class PersonalEventRepository {
       await this.assertSlot(value);
       const now = new Date().toISOString();
       const plan = { name: value.title, comment: value.notes, exercises: [] };
-      return this.db.workoutOccurrences.add({
+      const id = await this.db.workoutOccurrences.add({
         realmId: this.actorUserId, owner: this.actorUserId,
         entryKind: 'personal_event',
         athleteUserId: this.actorUserId, coachUserId: null, clientUserId: null,
@@ -72,6 +80,8 @@ export class PersonalEventRepository {
         durationMinutes: value.durationMinutes, status: 'scheduled', workoutSessionId: null,
         publicationStatus: 'published', plan, createdByUserId: this.actorUserId, createdAt: now, updatedAt: now,
       });
+      await markWorkoutChanged(this.db, id);
+      return id;
     });
   }
 
@@ -86,6 +96,7 @@ export class PersonalEventRepository {
         startsAtUtc: value.startsAtUtc, durationMinutes: value.durationMinutes,
         updatedAt: new Date().toISOString(),
       });
+      await markWorkoutChanged(this.db, id);
     });
   }
 
@@ -97,6 +108,7 @@ export class PersonalEventRepository {
       if (row.startsAtUtc === timing.startsAtUtc && row.durationMinutes === timing.durationMinutes) return;
       await this.assertSlot(timing, id);
       await this.db.workoutOccurrences.update(id, { ...timing, updatedAt: new Date().toISOString() });
+      await markWorkoutChanged(this.db, id);
     });
   }
 
@@ -105,6 +117,7 @@ export class PersonalEventRepository {
       this.authorized(await this.db.workoutOccurrences.get(id));
       const now = new Date().toISOString();
       await this.db.workoutOccurrences.update(id, { cancelledAt: now, updatedAt: now });
+      await markWorkoutChanged(this.db, id);
     });
   }
 }
