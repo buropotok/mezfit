@@ -9,7 +9,9 @@ import './personal-event-sheet.css';
 
 type Picker = 'start' | 'end' | null;
 
-// These are public ListInput color slots, not overrides of Konsta's internal CSS.
+// In Konsta 5.4.0, ListInput's bgIos slot applies only without outline.
+// The outlined input is transparent, so its List owns the black surface instead.
+const EVENT_LIST_COLORS = { strongBgIos: 'bg-black' };
 const EVENT_FIELD_COLORS = {
   bgIos: 'bg-black',
   outlineLabelBgIos: 'bg-black',
@@ -103,7 +105,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
         </header>
         <div className="personal-event-sheet__body">
           <Text variant="footnote" tone="muted">Личное событие. Видно только вам и занимает время в расписании.</Text>
-          <List nested dividers={false}>
+          <List nested strong dividers={false} colors={EVENT_LIST_COLORS}>
             <ListInput type="text" label="Название" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={120}
               value={title} onChange={e => setTitle(e.target.value)}
@@ -124,7 +126,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
             </div>
           </div>
           <Text variant="caption" tone="muted">Если окончание не позже начала, событие заканчивается на следующий день.</Text>
-          <List nested dividers={false}>
+          <List nested strong dividers={false} colors={EVENT_LIST_COLORS}>
             <ListInput type="textarea" label="Описание (необязательно)" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={4000}
               value={notes} onChange={e => setNotes(e.target.value)} />
