@@ -40,7 +40,8 @@ vi.mock('../program/ProgramExerciseInformationSheet', () => ({
 }));
 vi.mock('../ui', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Avatar: ({ name }: { name: string }) => <span role="img" aria-label={name} />,
+  Avatar: ({ name, size }: { name: string; size?: 'default' | 'small' }) =>
+    <span role="img" aria-label={name} data-size={size} />,
   LiquidPopover: ({ trigger }: { trigger: ReactNode }) => <>{trigger}</>,
   Button: ({ children, onClick, disabled, size }: ButtonHTMLAttributes<HTMLButtonElement> & { size?: 'default' | 'compact' }) =>
     <button onClick={onClick} disabled={disabled} data-size={size}>{children}</button>,
@@ -250,7 +251,8 @@ describe('scheduled workout summary layout', () => {
     const format = screen.getByText('С тренером в зале').parentElement;
     expect(format?.querySelector('[data-testid="icon-users"]')?.nextElementSibling?.className)
       .toBe('occurrence-draft-sheet__coach-avatar');
-    expect(format?.querySelector('.occurrence-draft-sheet__coach-avatar [role="img"]')).toBeTruthy();
+    expect(format?.querySelector('.occurrence-draft-sheet__coach-avatar [role="img"]')?.getAttribute('data-size'))
+      .toBe('small');
 
     view.rerender(<OccurrenceDraftSheet draft={{ ...coached, coachUserId: null }} {...props} />);
     expect(screen.queryByText('С тренером в зале')?.parentElement?.querySelector('.occurrence-draft-sheet__coach-avatar'))
