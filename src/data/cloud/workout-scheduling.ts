@@ -34,7 +34,7 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
       row.realmId !== row.athleteUserId || row.coachUserId !== null || row.clientUserId !== null
       || row.format !== 'independent' || row.status !== 'scheduled' || row.workoutSessionId !== null
       || row.trainingPlanId !== undefined || row.programDayId !== undefined
-      || row.publicationStatus !== 'published' || row.plan?.exercises.length !== 0))
+      || row.autoCreatedProgram !== undefined || row.publicationStatus !== 'published' || row.plan?.exercises.length !== 0))
     || (row.draftAuthorUserId !== undefined && !validCloudUserId(row.draftAuthorUserId))
     || (row.publicationStatus !== undefined && !['draft', 'published'].includes(row.publicationStatus))
     || (row.originalPlan !== undefined && !isWorkoutOccurrencePlan(row.originalPlan))
