@@ -3,7 +3,8 @@
 .occurrence-draft-sheet__header, .occurrence-draft-sheet__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; flex-shrink: 0; }
 .occurrence-draft-sheet__header { padding-bottom: 8px; }
 .occurrence-draft-sheet__body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; gap: 16px; padding: 0 16px 24px; overscroll-behavior: contain; }
-.occurrence-draft-sheet__timing { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+/* Compact UIkit Buttons have a 10px leading inset; offset their container, not the primitive. */
+.occurrence-draft-sheet__timing { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin-inline-start: -10px; }
 .occurrence-draft-sheet__time-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; max-width: 100%; }
 .occurrence-draft-sheet__footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 
