@@ -47,6 +47,35 @@ async function fixture() {
   };
 }
 
+describe('program name observation for scheduled workouts', () => {
+  it('tracks a readable program name, rename, and removal without loading its days', async () => {
+    const { db, client } = await fixture();
+    const next = vi.fn();
+    const error = vi.fn();
+    const subscription = client.observeName('plan', next, error);
+    try {
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toBe('Программа'));
+      await db.table('trainingPlans').update('plan', { name: 'Силовая программа' });
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toBe('Силовая программа'));
+      await db.table('trainingPlans').update('plan', { deletedAt: new Date().toISOString() });
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toBeNull());
+      expect(error).not.toHaveBeenCalled();
+    } finally { subscription.unsubscribe(); }
+  });
+
+  it('does not expose a program from another coach-client relationship', async () => {
+    const { db } = await fixture();
+    const outsider = new ProgramManagementRepository(db as MezfitCloudDatabase, 'tg:303');
+    const next = vi.fn();
+    const error = vi.fn();
+    const subscription = outsider.observeName('plan', next, error);
+    try {
+      await vi.waitFor(() => expect(next).toHaveBeenCalledWith(null));
+      expect(error).not.toHaveBeenCalled();
+    } finally { subscription.unsubscribe(); }
+  });
+});
+
 describe('assigned phase observation across WebCrypto authorization', () => {
   it('updates the client directory after personal create, duplicate and delete', async () => {
     const { client } = await fixture();
