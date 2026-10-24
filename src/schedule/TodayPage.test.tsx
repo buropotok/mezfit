@@ -27,11 +27,13 @@ vi.mock('../NavigationShell', async original => ({
   useNavigationSurfaceFloatingAction: (action: typeof state.filterAction) => { state.filterAction = action; },
 }));
 vi.mock('./SchedulePlanningContext', () => ({ useSchedulePlanning: () => state.planning }));
-vi.mock('./OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ draft, drafts, onSave, onClose, saveNotice }: {
+vi.mock('./OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ draft, drafts, onSave, onClose, saveNotice, sourceProgramName }: {
   draft: LocalWorkoutOccurrenceDraft | null; drafts: WorkoutOccurrenceDraftRepository; saveNotice?: string;
+  sourceProgramName?: string | null;
   onSave: (draft: LocalWorkoutOccurrenceDraft, update: boolean) => Promise<void>; onClose: () => void;
 }) => draft ? <div role="dialog">
   {saveNotice ? <span role="alert">{saveNotice}</span> : null}
+  <span data-testid="program-name">{sourceProgramName ?? ''}</span>
   <span>{draft.saved ? 'Сохранённая тренировка' : 'Редактируется черновик'}</span>
   <button onClick={() => { void drafts.enqueueEdit(draft.id, row => ({ ...row, plan: { ...row.plan, name: 'Новый план' } })); }}>Изменить план</button>
   <button onClick={() => { void drafts.enqueueEdit(draft.id, row => ({ ...row, durationMinutes: 90 })); }}>Изменить время</button>
@@ -79,6 +81,25 @@ beforeEach(() => {
 });
 afterEach(async () => { cleanup(); await db.delete(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe('local-first calendar experience', () => {
+  it('displays the selected program name and follows local program renames', async () => {
+    let notify: ((name: string | null) => void) | null = null;
+    const observed = vi.spyOn(ProgramManagementRepository.prototype, 'observeName')
+      .mockImplementation((_id, onChange) => {
+        notify = onChange;
+        onChange('Силовая программа');
+        return { unsubscribe: () => { notify = null; } };
+      });
+    const id = await repo().create({ ...draft });
+    state.planning = { requestedDraftId: id, requestedClientUserId: null,
+      clearDraft: () => { if (state.planning) state.planning.requestedDraftId = null; }, openDraft: () => {} };
+    open();
+    await waitFor(() => expect(screen.getByTestId('program-name').textContent).toBe('Силовая программа'));
+    expect(observed).toHaveBeenCalledWith('program', expect.any(Function), expect.any(Function));
+    act(() => { notify?.('Переименованная программа'); });
+    expect(screen.getByTestId('program-name').textContent).toBe('Переименованная программа');
+  });
+
+
   it('applies multiple clients only on confirmation, supports search and deleting a chip', async () => {
     for (const [id, name] of [['202', 'Анна'], ['303', 'Борис'], ['404', 'Вера']]) {
       const pair = await relationshipMembership('101', id);
