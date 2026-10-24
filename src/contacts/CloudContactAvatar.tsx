@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Avatar } from '../ui';
+import { Avatar, type AvatarSize } from '../ui';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 
 /** Shared cloud avatar source for contacts rows and navigation identities. */
@@ -37,11 +37,12 @@ export function useCloudContactAvatarUrl(contact: CloudContact | null, variant: 
 }
 
 /** Presentation adapter only: the UIkit Avatar retains all existing mechanics and styling. */
-export function CloudContactAvatar({ contact, className, variant = 'small' }: {
+export function CloudContactAvatar({ contact, className, variant = 'small', size }: {
   contact: CloudContact;
   className?: string;
   variant?: 'small' | 'large';
+  size?: AvatarSize;
 }) {
   const src = useCloudContactAvatarUrl(contact, variant);
-  return <Avatar name={contact.displayName} src={src} className={className} />;
+  return <Avatar name={contact.displayName} src={src} className={className} size={size} />;
 }
