@@ -46,3 +46,25 @@
 .personal-event-sheet__footer {
   padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
+
+/*
+ * Konsta's outlined ListInput reserves its own iOS ListItem inset plus the
+ * input's outlined margins (32px start, 16px end). Compensate on the external
+ * List only so its visible border aligns with adjacent body content.
+ * No Konsta internals or primitive typography are overridden.
+ */
+.personal-event-sheet__field-list {
+  margin-inline-start: -32px;
+  margin-inline-end: -16px;
+}
+
+.personal-event-sheet__statuses {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.personal-event-sheet__statuses .occurrence-sync-status {
+  align-self: flex-start;
+}
