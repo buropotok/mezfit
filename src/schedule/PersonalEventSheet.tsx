@@ -93,7 +93,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
       <section className="personal-event-sheet">
         <header className="personal-event-sheet__header">
           <Text variant="headline">{event ? 'Редактировать событие' : 'Новое событие'}</Text>
-          <Button clear inline disabled={busy} onClick={onClose}>Назад</Button>
+          <Button clear inline disabled={busy} onClick={onClose}><Text variant="body">Назад</Text></Button>
         </header>
         <div className="personal-event-sheet__body">
           <Text variant="footnote" tone="muted">Личное событие. Видно только вам и занимает время в расписании.</Text>
@@ -101,16 +101,16 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
             placeholder="Например, личные дела" />
           <div className="personal-event-sheet__timing">
             <Text variant="footnote" tone="muted">Дата</Text>
-            <Button tonal disabled={busy} onClick={() => setDateOpened(true)}>{selectedDate}</Button>
+            <Button tonal disabled={busy} onClick={() => setDateOpened(true)}><Text variant="body">{selectedDate}</Text></Button>
           </div>
           <div className="personal-event-sheet__time-row">
             <div className="personal-event-sheet__timing">
               <Text variant="footnote" tone="muted">Начало</Text>
-              <span ref={startRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('start')}>{startTime}</Button></span>
+              <span ref={startRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('start')}><Text variant="body">{startTime}</Text></Button></span>
             </div>
             <div className="personal-event-sheet__timing">
               <Text variant="footnote" tone="muted">Окончание</Text>
-              <span ref={endRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('end')}>{endTime}</Button></span>
+              <span ref={endRef}><Button tonal disabled={busy} onClick={() => setTimeOpened('end')}><Text variant="body">{endTime}</Text></Button></span>
             </div>
           </div>
           <Text variant="caption" tone="muted">Если окончание не позже начала, событие заканчивается на следующий день.</Text>
@@ -119,9 +119,9 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
         <footer className="personal-event-sheet__footer">
-          {event ? <Button tonal disabled={busy} onClick={() => setDeleteOpened(true)}>Удалить</Button> : <span />}
+          {event ? <Button tonal disabled={busy} onClick={() => setDeleteOpened(true)}><Text variant="body">Удалить</Text></Button> : <span />}
           <Button disabled={busy || !repository || !title.trim()} onClick={() => void save()}>
-            {busy ? 'Сохраняем…' : event ? 'Сохранить' : 'Создать событие'}
+            <Text variant="body">{busy ? 'Сохраняем…' : event ? 'Сохранить' : 'Создать событие'}</Text>
           </Button>
         </footer>
       </section>
@@ -136,8 +136,8 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
     <MezfitDialog opened={opened && deleteOpened} title="Удалить личное событие?"
       content="Событие исчезнет из расписания и освободит время."
       buttons={<>
-        <MezfitDialogButton onClick={() => setDeleteOpened(false)}>Отмена</MezfitDialogButton>
-        <MezfitDialogButton tone="danger" strong onClick={() => void remove()}>Удалить</MezfitDialogButton>
+        <MezfitDialogButton onClick={() => setDeleteOpened(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
+        <MezfitDialogButton tone="danger" strong onClick={() => void remove()}><Text variant="body">Удалить</Text></MezfitDialogButton>
       </>} />
   </>;
 }
