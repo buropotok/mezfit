@@ -76,12 +76,13 @@ export interface OccurrenceDraftSheetProps {
   actor?: ProgramActor;
   readOnly?: boolean;
   saveNotice?: string;
+  sourceProgramName?: string | null;
   onNavigationContextChange?: (value: NavigationContext | null) => void;
   onClose: () => void;
   onSave: (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => Promise<void>;
 }
 
-function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', container, onNavigationContextChange, auxiliaryReady }: OccurrenceDraftSheetProps & { container: HTMLDivElement; auxiliaryReady: boolean }) {
+function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', sourceProgramName, container, onNavigationContextChange, auxiliaryReady }: OccurrenceDraftSheetProps & { container: HTMLDivElement; auxiliaryReady: boolean }) {
   const cloud = useCloudConnections();
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
@@ -289,6 +290,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
           <div className="occurrence-draft-sheet__format">
             <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
             <Icon name={draft.format === 'coached' ? 'users' : 'user'} style={{ width: 22, height: 22 }} />
+            {draft.format === 'coached' && draft.coachUserId
+              ? <span className="occurrence-draft-sheet__coach-avatar">{owner.avatar}</span> : null}
           </div>
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />
@@ -298,15 +301,17 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             <Button variant="secondary" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
-            <span ref={startRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => openTimePicker('start')}>
-              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
-            </Button></span>
-            <span ref={endRef}><Button variant="secondary" disabled={busy || readOnly} onClick={() => openTimePicker('end')}>
-              <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
-            </Button></span>
+            <div className="occurrence-draft-sheet__time-row">
+              <span ref={startRef}><Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => openTimePicker('start')}>
+                <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
+              </Button></span>
+              <span ref={endRef}><Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => openTimePicker('end')}>
+                <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
+              </Button></span>
+            </div>
           </div>
           <Text variant="body">План на тренировку</Text>
-          <WorkoutPlanCard mode="planning" day={displayedDay!} programName={draft.plan.name} hideProgramName={!draft.trainingPlanId}
+          <WorkoutPlanCard mode="planning" day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
             creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
