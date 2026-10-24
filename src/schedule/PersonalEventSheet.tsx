@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button as KonstaButton, List, ListInput } from 'konsta/react';
-import { Button, DatePicker, Icon, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text,
+import { Button } from '../ui/primitives';
+import { Icon } from '../ui/Icon';
+import { DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text,
   TimePicker, type LocalDate, type LocalTime } from '../ui';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { PersonalEventRepository, PersonalEventInput } from '../data/cloud/personal-events';
