@@ -28,5 +28,5 @@ export async function assertLocalWorkoutSlot(db: MezfitCloudDatabase, draft: Slo
     ? await scheduling.listCalendar(draft.coachUserId, true) : [];
   const rows = [...athlete, ...coach].filter(row => row.id !== draft.targetOccurrenceId);
   if (rows.some(row => bookingsOverlap(draft, row)))
-    throw new WorkoutSlotConflict('Это время уже занято в расписании. Выберите свободный слот');
+    throw new WorkoutSlotConflict('Это время занято другой записью календаря. Выберите свободное время');
 }
