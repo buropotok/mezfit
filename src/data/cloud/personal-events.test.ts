@@ -59,13 +59,8 @@ describe('personal calendar events', () => {
     const id = await f.coach.create(input);
     await expect(f.coach.create({ ...input, title: 'Накладка' })).rejects.toThrow(/время занято/);
     await expect(assertLocalWorkoutSlot(f.typed, {
-      id: 'draft:coach-session', actorUserId: 'tg:101',
-      athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202',
-      format: 'coached', realmId: f.pair.realm.realmId,
-      startsAtUtc: '2026-10-28T08:30:00.000Z', durationMinutes: 45,
-      plan: { name: 'Тренировка', comment: null, exercises: [] },
-      originalPlan: { name: 'Тренировка', comment: null, exercises: [] },
-      createdAt: input.startsAtUtc, updatedAt: input.startsAtUtc,
+      actorUserId: 'tg:101', athleteUserId: 'tg:202', coachUserId: 'tg:101',
+      format: 'coached', startsAtUtc: '2026-10-28T08:30:00.000Z', durationMinutes: 45,
     })).rejects.toThrow(/время занято/);
     await expect(f.client.create(input)).resolves.toEqual(expect.any(String));
     await f.coach.cancel(id);
