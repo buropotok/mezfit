@@ -389,6 +389,7 @@ export function TwoColumnPicker({
   const touchStartRef = useRef<Partial<Record<TwoColumnPickerSide, { y: number; time: number }>>>({});
   const flickPendingRef = useRef<Record<TwoColumnPickerSide, boolean>>({ left: false, right: false });
   const settleTimerRef = useRef<Record<TwoColumnPickerSide, number | null>>({ left: null, right: null });
+  const snapTargetRef = useRef<Record<TwoColumnPickerSide, number | null>>({ left: null, right: null });
   const feedbackValueRef = useRef<TwoColumnPickerParts>(value);
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, value));
 
@@ -432,6 +433,7 @@ export function TwoColumnPicker({
     if (!opened) {
       wasOpenedRef.current = false;
       flickPendingRef.current = { left: false, right: false };
+      snapTargetRef.current = { left: null, right: null };
       (['left', 'right'] as const).forEach(side => {
         if (settleTimerRef.current[side] !== null) view.clearTimeout(settleTimerRef.current[side]);
         settleTimerRef.current[side] = null;
@@ -562,9 +564,11 @@ export function TwoColumnPicker({
     const nextTop = snapIndex * ROW_HEIGHT;
     if (!closing && typeof element.scrollTo === 'function' && nextTop !== element.scrollTop) {
       // Let the native smooth scroll drive the lens and selected text frame by frame.
+      snapTargetRef.current[side] = snapIndex;
       element.scrollTo({ top: nextTop, behavior: 'smooth' });
       return;
     }
+    snapTargetRef.current[side] = null;
     commitIndex(side, snapIndex);
     pendingScrollRef.current = { ...pendingScrollRef.current, [side]: nextTop };
     setScrollTops(current => ({ ...current, [side]: nextTop }));
@@ -581,6 +585,7 @@ export function TwoColumnPicker({
     if (!touch) return;
     touchStartRef.current[side] = { y: touch.clientY, time: event.timeStamp };
     flickPendingRef.current[side] = false;
+    snapTargetRef.current[side] = null;
     stopSettle(side);
   };
 
@@ -602,6 +607,7 @@ export function TwoColumnPicker({
   const handleTouchCancel = (side: TwoColumnPickerSide) => {
     delete touchStartRef.current[side];
     flickPendingRef.current[side] = false;
+    snapTargetRef.current[side] = null;
     stopSettle(side);
   };
 
@@ -616,6 +622,10 @@ export function TwoColumnPicker({
       if (top < cycleHeight * 0.25) top += cycleHeight;
       else if (top > cycleHeight * 2.75) top -= cycleHeight;
       if (top !== event.currentTarget.scrollTop) event.currentTarget.scrollTop = top;
+    }
+    const targetIndex = snapTargetRef.current[side];
+    if (targetIndex !== null && Math.abs(top - targetIndex * ROW_HEIGHT) < 2) {
+      snapTargetRef.current[side] = null;
     }
     if (flickPendingRef.current[side]) scheduleSettle(side);
     pendingScrollRef.current = {
@@ -657,7 +667,14 @@ export function TwoColumnPicker({
   const handleClose = () => {
     (['left', 'right'] as const).forEach(side => {
       if (flickPendingRef.current[side]) settleFlick(side, true);
-      else stopSettle(side);
+      else {
+        stopSettle(side);
+        const targetIndex = snapTargetRef.current[side];
+        if (targetIndex !== null) {
+          snapTargetRef.current[side] = null;
+          commitIndex(side, targetIndex);
+        }
+      }
     });
     onClose();
   };
