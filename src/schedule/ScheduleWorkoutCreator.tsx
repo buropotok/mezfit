@@ -13,10 +13,10 @@ import { Avatar, Badge, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Tex
 import { SpotlightSurface } from '../ui/SpotlightHint';
 import './workout-planning.css';
 
-type Step = 'athlete' | 'client' | 'source' | 'format' | 'programs' | 'details' | 'event';
+type Step = 'athlete' | 'client' | 'source' | 'format' | 'programs' | 'details';
 
 export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated, onNavigationContextChange }: {
-  intent: 'workout' | 'event' | null; role: 'coach' | 'client'; actor?: ProgramActor;
+  intent: 'workout' | null; role: 'coach' | 'client'; actor?: ProgramActor;
   onClose: () => void;
   onCreated: (id: string, clientUserId: string | null, notice: string) => void;
   onNavigationContextChange: (value: NavigationContext | null) => void;
@@ -47,7 +47,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
   useEffect(() => {
     ++generation.current; running.current = false; setBusy(false); setError(''); setPlanId(null);
     setNestedNavigation(null); setAthlete(cloud?.actorUserId ?? '');
-    setStep(intent === 'event' ? 'event' : role === 'coach' ? 'athlete' : 'source');
+    setStep(role === 'coach' ? 'athlete' : 'source');
     return () => { ++generation.current; };
   }, [intent, role, cloud?.actorUserId]);
   const back = useCallback(() => {
@@ -61,7 +61,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
   }, [step, role, onClose]);
   useEffect(() => {
     if (!intent) return;
-    const title = step === 'event' ? 'Событие' : step === 'client' ? 'Выбрать клиента'
+    const title = step === 'client' ? 'Выбрать клиента'
       : step === 'details' ? 'Программа тренировок' : step === 'programs' ? 'Выбрать программу' : 'Создать тренировку';
     onNavigationContextChange(nestedNavigation ?? { level: 2, title, contentMode: 'viewport', onBack: back });
     return () => onNavigationContextChange(null);
@@ -105,7 +105,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
     </div>;
   };
   const isDialog = intent === 'workout' && ['athlete', 'source', 'format'].includes(step);
-  const sheetOpen = intent === 'event' || (intent === 'workout' && (step === 'programs' || step === 'details'));
+  const sheetOpen = intent === 'workout' && (step === 'programs' || step === 'details');
   return <>
     <MezfitDialog opened={isDialog} title={step === 'athlete' ? 'Создать тренировку' : step === 'format' ? 'Формат тренировки' : 'Источник тренировки'}
       buttons={<MezfitDialogButton disabled={busy} onClick={back}>Назад</MezfitDialogButton>}>
@@ -130,14 +130,14 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
     <ProgramClientPicker opened={intent === 'workout' && step === 'client'} clients={cloud?.clients ?? []}
       loading={cloud?.status === 'loading'} onClose={back}
       onSelect={client => { setAthlete(client.userId); setStep('source'); }} />
-    <MezfitBottomSheet opened={sheetOpen} label={intent === 'event' ? 'Событие' : 'Выбрать программу'} lazyMount>
+    <MezfitBottomSheet opened={sheetOpen} label="Выбрать программу" lazyMount>
       <SpotlightSurface ref={planningSurfaceRef}>
       <section className="workout-planning-sheet">
         <header className="workout-planning-sheet__header">
           <span />
           <KonstaButton clear inline disabled={busy} onClick={back}>Назад</KonstaButton>
         </header>
-        {intent !== 'event' ? <>
+        <>
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {step === 'details' && planId && planner && cloud ? <CloudProgramDetailsPage key={planId}
             repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode onSelectionMutationAttempt={showEditToast} selectionFeedbackVisible={editToastVersion > 0} planningSurfaceRef={planningSurfaceRef}
@@ -156,7 +156,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
             {!programs.length ? <Text variant="body">У атлета пока нет программ</Text> : null}
           </> : null}
           <KonstaButton tonal onClick={() => setStep('source')}>Создать с нуля</KonstaButton>
-        </> : null}
+        </>
       </section>
       </SpotlightSurface>
     </MezfitBottomSheet>
