@@ -20,7 +20,7 @@ export function isPersonalEvent(row: CloudWorkoutOccurrenceRow): boolean {
 }
 
 function validateEvent(input: PersonalEventInput): PersonalEventInput {
-  const title = input.title.trim();
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!title || title.length > 120) throw new Error('Название события должно содержать от 1 до 120 символов');
   if (input.notes !== null && (typeof input.notes !== 'string' || input.notes.length > 4000))
     throw new Error('Описание события слишком длинное');
@@ -66,8 +66,7 @@ export class PersonalEventRepository {
         athleteUserId: this.actorUserId, coachUserId: null, clientUserId: null,
         format: 'independent', startsAtUtc: value.startsAtUtc,
         durationMinutes: value.durationMinutes, status: 'scheduled', workoutSessionId: null,
-        publicationStatus: 'published', plan, originalPlan: structuredClone(plan),
-        publishedPlan: null, createdByUserId: this.actorUserId, createdAt: now, updatedAt: now,
+        publicationStatus: 'published', plan, createdByUserId: this.actorUserId, createdAt: now, updatedAt: now,
       });
     });
   }
