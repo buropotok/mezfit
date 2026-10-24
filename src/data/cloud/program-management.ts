@@ -144,6 +144,14 @@ export class ProgramManagementRepository {
     return liveQuery(() => this.db.localProgramSync.get(id)).subscribe({ next: onChange, error: onError });
   }
 
+  /** Observe only the readable program header, without loading the full PLAN tree. */
+  observeName(id: string, onChange: (name: string | null) => void, onError: (reason: unknown) => void) {
+    return liveQuery(async () => {
+      const plan = await this.db.trainingPlans.get(id);
+      return plan && await this.readable(plan) ? plan.name : null;
+    }).subscribe({ next: onChange, error: onError });
+  }
+
   async listReadable(): Promise<CloudTrainingPlanRow[]> {
     const list = await Promise.all((await this.db.trainingPlans.toArray())
       .map(async plan => await this.readable(plan) ? plan : null));
