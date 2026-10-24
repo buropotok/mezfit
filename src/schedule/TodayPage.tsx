@@ -85,6 +85,7 @@ export function TodayPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [programUpdateError, setProgramUpdateError] = useState('');
+  const [selectedProgramTitle, setSelectedProgramTitle] = useState<{ id: string; name: string | null } | null>(null);
   const activeRepository = useRef<WorkoutOccurrenceDraftRepository | null>(null);
   const [timingOverrides, setTimingOverrides] = useState<Record<string, { startsAtUtc: string; durationMinutes: number }>>({});
   const draftRepository = useMemo(() => cloud
@@ -129,6 +130,17 @@ export function TodayPage({
     const row = occurrences.find(item => 'draft:' + item.id === openedDraftId);
     return row && cloud ? draftFromOccurrence(cloud.actorUserId, row) : viewed;
   }, [drafts, occurrences, openedDraftId, viewed, cloud?.actorUserId]);
+  useEffect(() => {
+    const id = selected?.trainingPlanId;
+    setSelectedProgramTitle(null);
+    if (!id || !planner) return;
+    let active = true;
+    const subscription = planner.programs.observeName(id,
+      name => { if (active) setSelectedProgramTitle({ id, name }); },
+      () => { if (active) setSelectedProgramTitle({ id, name: null }); });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [selected?.trainingPlanId, planner]);
+  const sourceProgramName = selectedProgramTitle?.id === selected?.trainingPlanId ? selectedProgramTitle.name : null;
   const closeEditor = useCallback(() => { setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
   const createAction = useMemo(() => !selected && !creation && !filterOpened ? {
     label: 'Создать', icon: 'plus' as const,
@@ -304,7 +316,7 @@ export function TodayPage({
           setViewed(null); setOpenedDraftId(id);
         }} />
       {draftRepository ? <OccurrenceDraftSheet draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
-        onClose={closeEditor} onSave={save} saveNotice={programUpdateError || creationNotice}
+        sourceProgramName={sourceProgramName} onClose={closeEditor} onSave={save} saveNotice={programUpdateError || creationNotice}
         onNavigationContextChange={setEditorNavigation} /> : null}
     </section>
   );
