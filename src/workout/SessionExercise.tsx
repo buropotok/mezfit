@@ -1,4 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
+import { SET_TYPE_LABELS } from '../../shared/set-type';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
@@ -110,7 +111,8 @@ function SetStatus({ set }: { set: SessionExerciseSetData }) {
 function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, planMode: boolean): ReactNode | undefined {
   const plan = formatSessionSetMetrics(set.plan, trackingType);
   const previous = formatSessionSetMetrics(set.previous?.metrics ?? null, trackingType);
-  if ((!plan || planMode) && !previous) return undefined;
+  if (planMode) return set.setType ? <Text variant="caption" tone="muted">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : undefined;
+  if (!plan && !previous) return undefined;
 
   return (
     <span className="session-exercise__set-context">
@@ -234,10 +236,6 @@ function SessionExerciseLayout({
   );
 }
 
-const programSetLabels = {
-  warmup: 'Разминочный', easy: 'Лёгкий', normal: 'Обычный', hard: 'Тяжёлый', drop: 'Дроп-сет',
-};
-
 function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet }: {
   sets: ProgramSessionExerciseProps['data']['sets'];
   onOpenSet?: ProgramSessionExerciseProps['onOpenSet'];
@@ -251,9 +249,9 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet }: {
           trailing={onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
             onClick={(event) => { event.stopPropagation(); onDeleteSet?.(set.id); }} /> : undefined}
           leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
-          title={<Text variant="body">Подход {index + 1}</Text>}
+          title={<Text variant="body">Подход {index + 1}. План: {formatSessionSetMetrics({ weightKg: set.plannedWeightKg, reps: set.plannedReps, durationSeconds: null, distanceMeters: null }, 'weight_reps') ?? 'ввести план'}</Text>}
           subtitle={<span className="session-exercise__set-recommendations">
-            <Text variant="footnote">{programSetLabels[set.setLabel ?? 'normal']}</Text>
+            {set.setType ? <Text variant="footnote">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : null}
             {set.comment ? <Text variant="footnote" tone="muted">{set.comment}</Text> : null}
             {set.materialLinks?.length ? <Text variant="caption" tone="muted">Материалы: {set.materialLinks.length}</Text> : null}
             {set.chatLinks?.length ? <Text variant="caption" tone="muted">Обсуждения: {set.chatLinks.length}</Text> : null}
@@ -312,7 +310,7 @@ function WorkoutExerciseSets({ exercise, onSelectSet }: {
             leading={<SetStatus set={set} />}
             title={(
               <span className="session-exercise__set-title">
-                <span>Подход {setNumber}</span>
+                <span>{planMode ? `Подход ${setNumber}. План:` : `Подход ${setNumber}`}</span>
                 <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
                   {metrics ?? (planMode ? 'ввести план' : 'ввести факт')}
                 </span>
