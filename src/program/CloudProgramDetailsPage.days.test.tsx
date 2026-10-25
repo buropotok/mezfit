@@ -168,7 +168,7 @@ describe('days inside program phases', () => {
         position: 0, status: 'active', notes: null,
         exercise: { exerciseDefinitionId: '0001', scope: 'public', name: 'Жим', nameEn: null, mediaUrl: null } },
       sets: [{ id: 'set', realmId: 'tg:101', owner: 'tg:101', programExerciseId: 'exercise',
-        position: 0, status: 'active', setLabel: 'normal', comment: null,
+        position: 0, status: 'active', setType: null, comment: null,
         plannedWeightKg: null, plannedReps: null, plannedDurationSeconds: null, plannedDistanceMeters: null }],
     }] }];
     render(f.page());
@@ -284,21 +284,26 @@ describe('days inside program phases', () => {
     Reflect.deleteProperty(HTMLElement.prototype, 'animate');
   });
 
-  it('shows template recommendations without numeric plan/fact or a legacy workout session', () => {
+  it('shows the weight/reps PLAN and technique on a read-only program without FACT controls', () => {
     render(<WorkoutSessionCard mode="planning" day={{ ...day, exercises: [{
       exercise: { id: 'exercise', realmId: 'tg:101', owner: 'tg:101', programDayId: day.day.id,
         position: 0, status: 'active', notes: null, exercise: { exerciseDefinitionId: 'catalogue-id',
           scope: 'public', name: 'Жим', nameEn: null, trackingType: 'weight_reps', mediaUrl: null } },
       sets: [{ id: 'set', realmId: 'tg:101', owner: 'tg:101', programExerciseId: 'exercise', position: 0,
-        status: 'active', setLabel: 'warmup', comment: 'Контроль техники',
+        status: 'active', setType: 'dropset', comment: 'Контроль техники',
         plannedWeightKg: 123, plannedReps: 15, plannedDurationSeconds: null, plannedDistanceMeters: null }],
     }] }} creatorName="Тренер" readOnly onEdit={() => {}} onComment={() => {}}
       onMove={() => {}} onDuplicate={() => {}} onDelete={() => {}} />);
-    expect(screen.queryByText('Разминочный')).toBeNull();
+    // Preserve lazy rendering while the exercise is collapsed.
+    expect(screen.queryByText('Тип подхода: Дропсет')).toBeNull();
+    expect(screen.queryByText('Подход 1. План: 123 кг × 15')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
-    expect(screen.getByText('Разминочный')).toBeTruthy();
+    expect(screen.getByText('Подход 1. План: 123 кг × 15')).toBeTruthy();
+    expect(screen.getByText('Тип подхода: Дропсет')).toBeTruthy();
     expect(screen.getByText('Контроль техники')).toBeTruthy();
-    expect(screen.queryByText(/123/)).toBeNull();
-    expect(screen.queryByText(/План:/)).toBeNull();
+    // A program PLAN must not expose an execution result or an editor in read-only mode.
+    expect(screen.queryByText(/Пред\.:|ввести факт|выполнено|RPE/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
   });
 });
