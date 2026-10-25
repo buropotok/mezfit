@@ -80,6 +80,53 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.getByText('Не заполнено')).toBeTruthy();
   });
 
+  it('records the displayed PLAN values as FACT only after explicit confirmation', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
+    expect(screen.getByText('Не заполнено')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Записать 80 кг × 10 как факт' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('saves PLAN changes through the registered navigation Back action before closing', async () => {
+    const onPlanSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    let back: (() => void) | undefined;
+    const onNavigationContextChange = vi.fn((context: { onBack?: () => void } | null) => {
+      back = context?.onBack;
+    });
+    render(<SetEntry mode="program-plan" isOpen data={baseData}
+      onClose={onClose} onPlanSave={onPlanSave}
+      onNavigationContextChange={onNavigationContextChange} />);
+    expect(back).toBeTypeOf('function');
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    // Back before the 300ms debounce must still persist the latest value.
+    back?.();
+    await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({
+      weightKg: 80, reps: 10, setType: 'cluster',
+    }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('does not navigate away when saving through Back fails', async () => {
+    const onPlanSave = vi.fn(async () => { throw new Error('Нет доступа к хранилищу'); });
+    const onClose = vi.fn();
+    let back: (() => void) | undefined;
+    render(<SetEntry mode="program-plan" isOpen data={baseData}
+      onClose={onClose} onPlanSave={onPlanSave}
+      onNavigationContextChange={context => { back = context?.onBack; }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
+    back?.();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Нет доступа к хранилищу'));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('preserves the previous non-weight entry until its UI Kit picker exists', () => {
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType: 'time',
       plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
