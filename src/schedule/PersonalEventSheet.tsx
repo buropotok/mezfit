@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button as KonstaButton, List, ListInput } from 'konsta/react';
+import { MezfitAutosizeTextarea } from '../ui/konsta-mezfit/AutosizeTextarea';
 import { Button } from '../ui/primitives';
 import { Icon } from '../ui/Icon';
 import { DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text,
@@ -139,7 +140,7 @@ export function PersonalEventSheet({ opened, event, date, repository, onClose, o
               placeholder="Например, личные дела" />
           </List>
           <List nested strong dividers={false} colors={EVENT_LIST_COLORS} className="personal-event-sheet__field-list">
-            <ListInput type="textarea" label="Описание (необязательно)" floatingLabel outline
+            <MezfitAutosizeTextarea label="Описание (необязательно)" floatingLabel outline
               colors={EVENT_FIELD_COLORS} disabled={busy} maxLength={4000}
               value={notes} onChange={e => setNotes(e.target.value)} />
           </List>
