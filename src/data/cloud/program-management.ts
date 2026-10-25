@@ -1,6 +1,5 @@
 import { liveQuery } from 'dexie';
 import { isSetType, type SetType } from '../../../shared/set-type';
-import type { CloudProgramExerciseSnapshot } from '../../../shared/program-exercise-snapshot';
 import { isExerciseTrackingType, type ExerciseTrackingType } from '../exercises/publicExerciseTypes';
 import { markProgramChanged } from './program-sync';
 import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
