@@ -277,7 +277,6 @@ export const WORKED_MUSCLE_VIEWS = {
     "manifest": "anatomy/front/manifest.json",
     "neutral": "anatomy/front/neutral.png",
     "colorAtlas": "anatomy/front/color-atlas.png",
-    "glowAtlas": "anatomy/front/glow-atlas.png",
     "mask": "anatomy/front/mask.mezmask",
     "indices": {
       "1": "pectoralis_clavicular",
@@ -312,7 +311,6 @@ export const WORKED_MUSCLE_VIEWS = {
     "manifest": "anatomy/rear/manifest.json",
     "neutral": "anatomy/rear/neutral.png",
     "colorAtlas": "anatomy/rear/color-atlas.png",
-    "glowAtlas": "anatomy/rear/glow-atlas.png",
     "mask": "anatomy/rear/mask.mezmask",
     "indices": {
       "1": "cervical_extensors",
@@ -362,7 +360,6 @@ export const FEMALE_WORKED_MUSCLE_VIEWS = {
     "manifest": "anatomy/female/front/manifest.json",
     "neutral": "anatomy/female/front/neutral.png",
     "colorAtlas": "anatomy/female/front/color-atlas.png",
-    "glowAtlas": "anatomy/female/front/glow-atlas.png",
     "mask": "anatomy/female/front/mask.mezmask",
     "indices": {
       "1": "pectoralis_clavicular",
@@ -413,7 +410,6 @@ export const FEMALE_WORKED_MUSCLE_VIEWS = {
     "manifest": "anatomy/female/rear/manifest.json",
     "neutral": "anatomy/female/rear/neutral.png",
     "colorAtlas": "anatomy/female/rear/color-atlas.png",
-    "glowAtlas": "anatomy/female/rear/glow-atlas.png",
     "mask": "anatomy/female/rear/mask.mezmask",
     "indices": {
       "1": "latissimus_dorsi",

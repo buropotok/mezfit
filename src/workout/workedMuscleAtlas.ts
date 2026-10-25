@@ -25,7 +25,6 @@ export type WorkedMuscleAtlas = {
   readonly mask: Uint8Array;
   readonly neutral: HTMLImageElement;
   readonly colorAtlas: HTMLImageElement;
-  readonly glowAtlas: HTMLImageElement;
 };
 
 type HitRect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>;
@@ -169,21 +168,18 @@ export function getPectoralisSourceSprite(
 
 async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleSex): Promise<WorkedMuscleAtlas> {
   const config = getWorkedMuscleViewConfig(sex, view);
-  const [manifestResponse, maskResponse, neutral, colorAtlas, glowAtlas] = await Promise.all([
+  const [manifestResponse, maskResponse, neutral, colorAtlas] = await Promise.all([
     getStaticFile(assetUrl(config.manifest, view, sex)),
     getStaticFile(assetUrl(config.mask, view, sex)),
     loadStaticImage(assetUrl(config.neutral, view, sex)),
     loadStaticImage(assetUrl(config.colorAtlas, view, sex)),
-    loadStaticImage(assetUrl(config.glowAtlas, view, sex)),
   ]);
   const [rawManifest, maskBytes] = await Promise.all([
     manifestResponse.json() as Promise<unknown>,
     maskResponse.arrayBuffer(),
   ]);
   const mask = decodeWorkedMuscleMask(maskBytes, view, sex);
-  if (neutral.naturalWidth !== config.width || neutral.naturalHeight !== config.height
-    || colorAtlas.naturalWidth !== glowAtlas.naturalWidth
-    || colorAtlas.naturalHeight !== glowAtlas.naturalHeight) {
+  if (neutral.naturalWidth !== config.width || neutral.naturalHeight !== config.height) {
     throw new Error('Размеры PNG не совпадают с анатомической маской');
   }
   const sprites = parseWorkedMuscleAtlasManifest(
@@ -196,7 +192,7 @@ async function fetchWorkedMuscleAtlas(view: WorkedMuscleView, sex: WorkedMuscleS
     : sex === 'female'
       ? Object.values(sprites).filter((sprite) => sprite.id === 'pectoralis_major')
       : createPectoralisMajorSprites(sprites, config.width);
-  return { width: config.width, height: config.height, sprites, pectoralisMajorSprites, mask, neutral, colorAtlas, glowAtlas };
+  return { width: config.width, height: config.height, sprites, pectoralisMajorSprites, mask, neutral, colorAtlas };
 }
 
 /**
