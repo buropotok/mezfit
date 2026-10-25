@@ -319,6 +319,7 @@ export function WorkoutSessionScreen({
             session={activeSession}
             onReorderExerciseIds={handleReorder}
             onSaveSet={handleSaveSet}
+            onNavigationContextChange={onNavigationContextChange}
             onAddExercise={() => {
               setExerciseSelectionError('');
               setExerciseSelectionOpen(true);
