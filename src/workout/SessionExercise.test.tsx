@@ -273,8 +273,8 @@ describe('SessionExercise and SetEntry boundary', () => {
       sessionSetId: 302,
       fact: {
         metrics: {
-          weightKg: 85,
-          reps: 8,
+          weightKg: null,
+          reps: null,
           durationSeconds: null,
           distanceMeters: null,
         },
