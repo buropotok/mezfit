@@ -66,7 +66,8 @@ function fixture() {
   };
   const manifest = { id: 'mezfit:exercise-catalogue', realmId: 'rlm-public', owner: null,
     sourceSha256: SHA, schemaVersion: '2.0.0', exerciseCount: 1324, taxonomyCount: 69,
-    publishedAt: '2026-10-01T12:00:00.000Z', trackingReleaseSha256: 'existing-tracking' };
+    publishedAt: '2026-10-01T12:00:00.000Z', trackingSchemaVersion: '2.1.0',
+    trackingReleaseSha256: 'ee0f313fa15dd8a35a7e6cc558ccd6012810128948e8c8a9e6b5381bf6449c66' };
   const current = {
     publicExerciseDefinitions: exercises.map(row => ({
       ...structuredClone(row), realmId: 'rlm-public', owner: null, sourceSha256: SHA, tracking_type: 'weight_reps',
