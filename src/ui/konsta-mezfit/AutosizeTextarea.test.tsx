@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { forwardRef, useState, type CSSProperties, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { MezfitAutosizeTextarea } from './AutosizeTextarea';
 
 // Keep the public Konsta inputStyle/ref/event contract without replacing the
 // adapter's measurement behavior with a handcrafted fake autosize control.
-vi.mock('konsta/react', () => ({
-  ListInput: forwardRef<HTMLLIElement, {
+vi.mock('konsta/react', async () => {
+  const { forwardRef } = await import('react');
+  return { ListInput: forwardRef<HTMLLIElement, {
     label: string; value: string; inputStyle?: CSSProperties;
     onInput?: (event: FormEvent<HTMLTextAreaElement>) => void;
     onChange?: (event: ChangeEvent<HTMLTextAreaElement>) => void;
@@ -15,8 +16,8 @@ vi.mock('konsta/react', () => ({
   }>(function MockKonstaListInput({ label, value, inputStyle, onInput, onChange }, ref) {
     return <li ref={ref}><textarea aria-label={label} value={value} style={inputStyle}
       onInput={onInput} onChange={onChange} /></li>;
-  }),
-}));
+  }) };
+});
 
 const originalScrollHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollHeight');
 afterEach(() => {
