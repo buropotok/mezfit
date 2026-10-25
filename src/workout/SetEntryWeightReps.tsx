@@ -138,8 +138,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             </div>
             {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
               triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
-              trigger={<IconButton ref={bandTarget} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}
-                onClick={() => setBandOpen(true)}><span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" /></IconButton>} /> : null}
+              trigger={<IconButton ref={bandTarget} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}><span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" /></IconButton>} /> : null}
             {props.onOpenHistory ? <IconButton icon="history" label="История упражнения" onClick={props.onOpenHistory} /> : null}
           </div>
           <Divider />
