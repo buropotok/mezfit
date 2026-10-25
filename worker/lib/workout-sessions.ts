@@ -91,6 +91,7 @@ export interface WorkoutSessionSetData {
   sourceProgramSetId: number | null;
   position: number;
   status: SessionSetStatus;
+  setType?: SetType | null;
   plan: WorkoutMetrics | null;
   previous: PreviousWorkoutSet | null;
   fact: ExistingWorkoutSetFact | null;
@@ -782,7 +783,7 @@ export async function saveWorkoutSet(
           rpe = ?,
           comment = ?,
           bands_json = ?,
-          status = 'completed',
+          status = CASE WHEN ? THEN 'completed' ELSE 'pending' END,
           updated_by_user_id = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
@@ -796,6 +797,7 @@ export async function saveWorkoutSet(
       fact.rpe,
       fact.comment,
       JSON.stringify(fact.bands),
+      Object.values(fact.metrics).some(value => value !== null) ? 1 : 0,
       userId,
       sessionSetId,
     ),
@@ -1071,6 +1073,7 @@ export async function getWorkoutSessionProjection(
       sourceProgramSetId: row.source_program_set_id,
       position: row.set_position,
       status: row.set_status,
+      setType: row.set_type,
       plan: hasMetrics(planMetrics) ? planMetrics : null,
       previous: row.previous_date && hasMetrics(previousMetrics)
         ? { workoutDate: row.previous_date, metrics: previousMetrics }
