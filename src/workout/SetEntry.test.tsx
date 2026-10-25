@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SetEntry } from './SetEntry';
 import { createSetEntryDraft, type SetEntryData } from './setEntryTypes';
@@ -70,14 +70,41 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({ weightKg: 80, reps: 10, setType: 'dropset' }));
   });
 
-  it('does not silently round an unsupported historical picker value', () => {
+  it('accepts a supported new FACT without rounding an unsupported PLAN', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={{ ...baseData,
       plan: { ...baseData.plan!, weightKg: 80.75 },
-    }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
-    expect(screen.getByText('Существующее значение не поддерживается текущим пикером')).toBeTruthy();
-    // Before FACT is entered, the plan remains comparison context—not an actual result.
+    }} onClose={onClose} onSave={onSave} />);
     expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
     expect(screen.getByText('Не заполнено')).toBeTruthy();
+    expect(screen.getByText(/Значение PLAN недоступно в пикере/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+    const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(within(picker).getByRole('listbox', { name: 'Килограммы' })
+      .querySelector<HTMLButtonElement>('button[aria-label="80"]')!);
+    // Selecting a valid FACT does not rewrite the immutable PLAN comparison.
+    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('does not round an existing unsupported FACT to a different editable weight', () => {
+    render(<SetEntry mode="workout" isOpen data={{ ...baseData, fact: {
+      metrics: { weightKg: 80.75, reps: 10, durationSeconds: null, distanceMeters: null },
+      setLabel: null, rpe: null, comment: null, bands: [],
+    } }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+    expect(screen.getByText('Существующее значение FACT не поддерживается текущим пикером')).toBeTruthy();
+    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Изменить вес и повторения' }).disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+    expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
   });
 
   it('records the displayed PLAN values as FACT only after explicit confirmation', async () => {
