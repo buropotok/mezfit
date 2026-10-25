@@ -104,7 +104,7 @@ describe('REM-01 protected catalogue correction operator', () => {
     expect(plan.updates.map(row => row.id)).toEqual(SIX);
     expect(plan.approved).toBe(false);
     const original = f.current.publicExerciseDefinitions.find(row => row.id === '3637');
-    const replacement = plan.updates[0];
+    const replacement = plan.updates.find(row => row.id === '3637');
     expect(original).not.toBe(replacement);
     expect(replacement.tracking_type).toBe('weight_reps');
     expect(replacement.media_id).toBe(original.media_id);
