@@ -36,6 +36,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const draftRef = useRef(draft);
   const dirtyRevision = useRef(0);
   const savedRevision = useRef(0);
+  const queuedRevision = useRef(0);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const [revision, setRevision] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -57,7 +58,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
 
   const persist = (): Promise<void> => {
     const atRevision = dirtyRevision.current;
-    if (atRevision === savedRevision.current) return queue.current;
+    if (atRevision <= Math.max(savedRevision.current, queuedRevision.current)) return queue.current;
+    queuedRevision.current = atRevision;
     const snapshot = draftRef.current;
     // Serializes all auto-saves: a stale network response cannot apply a later draft first.
     queue.current = queue.current.catch(() => undefined).then(async () => {
@@ -75,6 +77,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
       setError('');
     }).catch(reason => {
       const message = reason instanceof Error ? reason.message : 'Не удалось сохранить подход';
+      queuedRevision.current = savedRevision.current;
       setError(message);
       throw reason;
     }).finally(() => setSaving(false));
