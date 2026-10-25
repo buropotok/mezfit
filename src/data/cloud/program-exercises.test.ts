@@ -199,9 +199,11 @@ describe('program set creation without a result editor', () => {
     const sets = (await repo.details(planId))?.days?.[0].exercises[0].sets;
     expect(sets?.map(set => set.position)).toEqual([0, 1]);
     expect(new Set(sets?.map(set => set.id)).size).toBe(2);
+    // New approaches have no legacy categories: null technique denotes an ordinary set.
+    expect(sets?.every(set => !Object.hasOwn(set, 'setLabel'))).toBe(true);
     expect(sets).toEqual(expect.arrayContaining([expect.objectContaining({
       programExerciseId: exercise.id, realmId: assigned ? pair.realm.realmId : 'tg:101',
-      owner: assigned ? null : 'tg:101', status: 'active', setLabel: 'normal', comment: null,
+      owner: assigned ? null : 'tg:101', status: 'active', setType: null, comment: null,
       materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
       plannedDurationSeconds: null, plannedDistanceMeters: null,
     })]));
