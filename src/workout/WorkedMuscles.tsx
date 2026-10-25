@@ -134,16 +134,11 @@ function AnatomyView({ view, sex, primary, secondary, showPrimary, showSecondary
       );
     };
 
-    // Both layers are baked PNGs. No runtime pixel loops, filters or blurs.
-    for (const { sprite, role } of visible) {
-      context.globalAlpha = role === 'primary' ? 1 : 0.58;
-      drawSprite(atlas.glowAtlas, sprite);
-    }
-    for (const { sprite, role } of visible) {
-      context.globalAlpha = role === 'primary' ? 1 : 0.54;
+    // Both muscle roles use the original baked texture at full opacity.
+    // Primary/secondary affect visibility and tap labels, not color intensity.
+    for (const { sprite } of visible) {
       drawSprite(atlas.colorAtlas, sprite);
     }
-    context.globalAlpha = 1;
   }, [atlas, primary, secondary, showPrimary, showSecondary]);
 
   const onTap = (clientX: number, clientY: number) => {
