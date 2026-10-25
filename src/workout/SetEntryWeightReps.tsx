@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { Button, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
-import { createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
+import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
 type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'program-plan' }> |
@@ -29,7 +29,10 @@ function pickerCompatible(weightKg: number, reps: number): boolean {
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
 export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const isPlan = props.mode === 'program-plan';
-  const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data));
+  const [draft, setDraft] = useState<SetEntryFactDraft>(() => {
+    const initial = createSetEntryDraft(props.data);
+    return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
+  });
   const draftRef = useRef(draft);
   const dirtyRevision = useRef(0);
   const savedRevision = useRef(0);
@@ -100,8 +103,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     }
   };
 
-  const currentWeight = draft.metrics.weightKg ?? 0;
-  const currentReps = draft.metrics.reps ?? 0;
+  const currentWeight = draft.metrics.weightKg ?? props.data.plan?.weightKg ?? 0;
+  const currentReps = draft.metrics.reps ?? props.data.plan?.reps ?? 0;
   const validPicker = pickerCompatible(currentWeight, currentReps);
   const selectedBand = draft.bands[0] ?? null;
   const bandItems: LiquidPopoverItem[] = [
