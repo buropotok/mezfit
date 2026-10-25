@@ -1,6 +1,7 @@
 import { addWorkoutExercises, listWorkoutExerciseOptions, resolvePublicWorkoutExerciseIds } from './workout-exercise-actions';
 import type { ExerciseCategoryCode } from './exercises';
 import { parseCalendarDay } from './schedule';
+import { isSetType } from '../../shared/set-type';
 import {
   completeWorkoutSession,
   getOpenWorkoutSessionSummary,
@@ -73,7 +74,8 @@ function parseFact(value: unknown): WorkoutSetFactInput | null {
   const metrics = parseMetrics(raw.metrics);
   if (!metrics) return null;
 
-  if (raw.setLabel !== null && (typeof raw.setLabel !== 'string' || !setLabels.has(raw.setLabel as WorkoutSetLabel))) return null;
+  if (raw.setLabel !== null && raw.setLabel !== undefined && (typeof raw.setLabel !== 'string' || !setLabels.has(raw.setLabel as WorkoutSetLabel))) return null;
+  if (raw.setType !== undefined && raw.setType !== null && !isSetType(raw.setType)) return null;
   if (raw.rpe !== null && (typeof raw.rpe !== 'number' || !Number.isInteger(raw.rpe) || raw.rpe < 1 || raw.rpe > 10)) return null;
   if (raw.comment !== null && typeof raw.comment !== 'string') return null;
   if (!Array.isArray(raw.bands)) return null;
@@ -86,7 +88,8 @@ function parseFact(value: unknown): WorkoutSetFactInput | null {
 
   return {
     metrics,
-    setLabel: raw.setLabel as WorkoutSetLabel | null,
+    setLabel: (raw.setLabel ?? null) as WorkoutSetLabel | null,
+    setType: isSetType(raw.setType) ? raw.setType : null,
     rpe: raw.rpe as number | null,
     comment: typeof raw.comment === 'string' ? raw.comment.trim().slice(0, 1000) || null : null,
     bands,
