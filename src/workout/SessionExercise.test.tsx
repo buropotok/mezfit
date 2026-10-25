@@ -47,7 +47,8 @@ const data: SessionExerciseData = {
       },
       fact: {
         metrics: { weightKg: 82.5, reps: 10, durationSeconds: null, distanceMeters: null },
-        setLabel: 'hard',
+        setLabel: null,
+        setType: 'cluster',
         rpe: 8,
         comment: null,
         bands: [],
@@ -259,11 +260,11 @@ describe('SessionExercise and SetEntry boundary', () => {
     const { onSaveSet } = renderExercise();
 
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
-    expect(screen.getByRole('heading', { name: 'Подход 2' })).toBeTruthy();
-    expect(screen.getByText(/Силовой блок · 15 сентября 2026/)).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Подход 2' })).toBeTruthy();
+    expect(screen.getByText('Силовой блок')).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText('Вес, КГ'), { target: { value: '87.5' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
 
     await waitFor(() => expect(onSaveSet).toHaveBeenCalledTimes(1));
     expect(onSaveSet).toHaveBeenCalledWith({
@@ -272,12 +273,13 @@ describe('SessionExercise and SetEntry boundary', () => {
       sessionSetId: 302,
       fact: {
         metrics: {
-          weightKg: 87.5,
+          weightKg: 85,
           reps: 8,
           durationSeconds: null,
           distanceMeters: null,
         },
         setLabel: null,
+        setType: 'dropset',
         rpe: null,
         comment: null,
         bands: [],
@@ -304,8 +306,8 @@ describe('SessionExercise and SetEntry boundary', () => {
     renderExercise({ context: ownContext, data: ownData });
     expect(screen.queryByText(/^План:/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
-    expect(screen.getByText(/15 сентября 2026/)).toBeTruthy();
-    expect(screen.queryByText(/Своя тренировка/)).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Подход 2' })).toBeTruthy();
+    expect(screen.queryByText(/Силовой блок/)).toBeNull();
   });
 
   it('bubbles history and chat actions from SetEntry to their external owners', () => {
