@@ -45,7 +45,7 @@ function outline(draft: LocalWorkoutOccurrenceDraft): CloudProgramDayOutline {
         exercise: ex.exercise, notes: ex.notes, status: 'active' },
       sets: ex.sets.map(set => ({
         id: set.id, realmId: draft.realmId, owner: null, programExerciseId: ex.id,
-        position: set.position, status: 'active', setLabel: set.setLabel,
+        position: set.position, status: 'active', setType: set.setType ?? null, setLabel: set.setLabel,
         comment: set.comment, materialLinks: set.materialLinks, chatLinks: set.chatLinks,
         plannedReps: set.plannedReps,
         plannedWeightKg: set.plannedWeightKg,
