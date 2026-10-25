@@ -209,6 +209,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       const set = source?.sets.find(entry => entry.id === editingSet.setId);
       if (!set || !source) return null;
       return <SetEntry key={set.id} mode="program-plan" isOpen
+        onNavigationContextChange={onNavigationContextChange}
         data={{
           identity: { programId: program.id, programName: program.name,
             exerciseDefinitionId: source.exercise.exercise.exerciseDefinitionId,
