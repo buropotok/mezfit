@@ -114,7 +114,7 @@ describe('REM-01 protected catalogue correction operator', () => {
     f.proposal.exercises[0].field_replacements.equipment = { expected_current: 'bodyweight', proposed_value: 'rings' };
     expect(() => remediationPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/allowlist/);
     f = fixture();
-    f.proposal.exercises[0].field_replacements.name_ru.expected_current = 'forged';
+    f.proposal.exercises.find(item => item.id === '3637').field_replacements.name_ru.expected_current = 'forged';
     expect(() => remediationPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/ungrounded/);
     f = fixture();
     f.current.publicExerciseDefinitions[0].realmId = 'private-realm';
