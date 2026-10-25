@@ -1,0 +1,201 @@
+import { useEffect, useRef, useState } from 'react';
+import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
+import { Button, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
+import './set-entry-weight-reps.css';
+
+type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'program-plan' }> |
+  Extract<SetEntryProps, { mode?: 'workout' }>;
+
+const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+const bands = [
+  ['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
+  ['blue', 'Синяя'], ['purple', 'Фиолетовая'], ['black', 'Чёрная'],
+] as const;
+
+function metricsText(weightKg: number | null, reps: number | null): string {
+  if (weightKg === null && reps === null) return 'Не заполнено';
+  return `${weightKg === null ? '—' : numberFormatter.format(weightKg)} кг × ${reps ?? '—'}`;
+}
+
+function pickerCompatible(weightKg: number, reps: number): boolean {
+  const fraction = Math.round(weightKg * 100) % 100;
+  return Number.isInteger(reps) && reps >= 0 && reps <= 100
+    && weightKg >= 0 && weightKg <= 399.5 && [0, 25, 50].includes(fraction)
+    && Math.abs(weightKg * 100 - Math.round(weightKg * 100)) < 0.001;
+}
+
+/** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
+export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
+  const isPlan = props.mode === 'program-plan';
+  const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data));
+  const draftRef = useRef(draft);
+  const dirtyRevision = useRef(0);
+  const savedRevision = useRef(0);
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const [revision, setRevision] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [pickerOpened, setPickerOpened] = useState(false);
+  const [bandOpen, setBandOpen] = useState(false);
+  const target = useRef<HTMLButtonElement>(null);
+  const bandTarget = useRef<HTMLButtonElement>(null);
+  const [closing, setClosing] = useState(false);
+
+  const change = (mutate: (current: SetEntryFactDraft) => SetEntryFactDraft) => {
+    const next = mutate(draftRef.current);
+    draftRef.current = next;
+    setDraft(next);
+    dirtyRevision.current += 1;
+    setRevision(dirtyRevision.current);
+    setError('');
+  };
+
+  const persist = (): Promise<void> => {
+    const atRevision = dirtyRevision.current;
+    if (atRevision === savedRevision.current) return queue.current;
+    const snapshot = draftRef.current;
+    // Serializes all auto-saves: a stale network response cannot apply a later draft first.
+    queue.current = queue.current.catch(() => undefined).then(async () => {
+      setSaving(true);
+      if (isPlan) {
+        await props.onPlanSave({
+          weightKg: snapshot.metrics.weightKg,
+          reps: snapshot.metrics.reps,
+          setType: snapshot.setType ?? null,
+        });
+      } else {
+        await props.onSave({ ...snapshot, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands] });
+      }
+      savedRevision.current = Math.max(savedRevision.current, atRevision);
+      setError('');
+    }).catch(reason => {
+      const message = reason instanceof Error ? reason.message : 'Не удалось сохранить подход';
+      setError(message);
+      throw reason;
+    }).finally(() => setSaving(false));
+    return queue.current;
+  };
+
+  // Interaction is local-first. Changes are saved after a short pause, not on every wheel tick.
+  useEffect(() => {
+    if (revision === 0) return;
+    const timer = window.setTimeout(() => { void persist().catch(() => undefined); }, isPlan ? 300 : 650);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision]);
+
+  const close = async () => {
+    if (closing) return;
+    setClosing(true);
+    try {
+      await persist();
+      if (dirtyRevision.current !== savedRevision.current) await persist();
+      setPickerOpened(false);
+      setBandOpen(false);
+      props.onClose();
+    } catch {
+      setClosing(false);
+    }
+  };
+
+  const currentWeight = draft.metrics.weightKg ?? 0;
+  const currentReps = draft.metrics.reps ?? 0;
+  const validPicker = pickerCompatible(currentWeight, currentReps);
+  const selectedBand = draft.bands[0] ?? null;
+  const bandItems: LiquidPopoverItem[] = [
+    ...bands.map(([value, label]) => ({
+      id: value,
+      label,
+      onSelect: () => change(old => ({ ...old, bands: old.bands[0] === value ? [] : [value] })),
+    })),
+    { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
+  ];
+
+  return (
+    <MezfitBottomSheet opened={props.isOpen} label={`Подход ${props.data.identity.setNumber}`} lazyMount>
+      <div className="set-entry-weight-reps">
+        <header className="set-entry-weight-reps__header">
+          <div>
+            <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
+            <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
+          </div>
+          <IconButton icon="close" label="Закрыть подход" disabled={closing}
+            onClick={() => { void close(); }} />
+        </header>
+        <div className="set-entry-weight-reps__body">
+          <div className="set-entry-weight-reps__exercise">
+            <div className="set-entry-weight-reps__exercise-copy">
+              <Text variant="body">{props.data.identity.exerciseName}</Text>
+              {props.data.identity.programName ? <Text variant="footnote" tone="muted">{props.data.identity.programName}</Text> : null}
+            </div>
+            {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
+              triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
+              trigger={<IconButton ref={bandTarget} icon="waves" label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}
+                onClick={() => setBandOpen(true)} />} /> : null}
+            {props.onOpenHistory ? <IconButton icon="history" label="История упражнения" onClick={props.onOpenHistory} /> : null}
+          </div>
+          <Divider />
+          <div className="set-entry-weight-reps__section-heading">
+            <Text variant="footnote">Показатели подхода</Text>
+            <Text variant="caption" tone="muted">2 показателя</Text>
+          </div>
+          <GlassSurface component="button" ref={target} wrapContent={false} shape="auto"
+            className="set-entry-weight-reps__metric-tile"
+            onClick={() => { if (validPicker && !closing) setPickerOpened(true); }}
+            aria-label="Изменить вес и повторения">
+            <Text variant="headline">Повторения × Вес</Text>
+            <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
+          </GlassSurface>
+          {!validPicker ? <Text variant="footnote" role="alert">Существующее значение не поддерживается текущим пикером</Text> : null}
+          {!isPlan ? <div className="set-entry-weight-reps__context">
+            <Text variant="caption" tone="muted">План: {metricsText(props.data.plan?.weightKg ?? null, props.data.plan?.reps ?? null)}</Text>
+            <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous?.metrics.weightKg ?? null, props.data.previous?.metrics.reps ?? null)}</Text>
+          </div> : null}
+          <div className="set-entry-weight-reps__section">
+            <div className="set-entry-weight-reps__section-heading">
+              <Text variant="footnote">Тип подхода</Text>
+              <Text variant="caption" tone="muted">необязательно</Text>
+            </div>
+            <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
+              {SET_TYPES.map((type: SetType) => <Button key={type} variant="secondary" size="compact"
+                selected={(draft.setType ?? null) === type}
+                disabled={closing}
+                onClick={() => change(old => ({ ...old, setType: old.setType === type ? null : type }))}>
+                {SET_TYPE_LABELS[type]}
+              </Button>)}
+            </div>
+          </div>
+          {!isPlan ? <>
+            <div className="set-entry-weight-reps__section">
+              <div className="set-entry-weight-reps__section-heading">
+                <Text variant="footnote">RPE</Text>
+                <Text variant="caption" tone="muted">необязательно</Text>
+              </div>
+              <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
+                {Array.from({ length: 10 }, (_, index) => index + 1).map(rpe =>
+                  <Button key={rpe} variant="secondary" size="compact" selected={draft.rpe === rpe}
+                    disabled={closing} onClick={() => change(old => ({ ...old, rpe: old.rpe === rpe ? null : rpe }))}>{rpe}</Button>)}
+              </div>
+            </div>
+            <div className="set-entry-weight-reps__section">
+              <Text variant="footnote">Комментарий</Text>
+              <MezfitAutosizeTextarea label="Как прошёл подход?" floatingLabel outline
+                value={draft.comment ?? ''} disabled={closing} maxLength={1000}
+                onChange={event => change(old => ({ ...old, comment: event.currentTarget.value || null }))} />
+            </div>
+          </> : null}
+          {props.onOpenChat ? <Button className="set-entry-weight-reps__chat" onClick={props.onOpenChat}>Открыть чат</Button> : null}
+          {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
+          <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
+            {saving ? 'Сохраняем изменения…' : error ? 'Не удалось сохранить · повторите' : 'Изменения сохраняются автоматически'}
+          </Text>
+          {error ? <Button variant="secondary" onClick={() => { void persist().catch(() => undefined); }}>Повторить сохранение</Button> : null}
+        </div>
+      </div>
+      <WeightRepsPicker opened={pickerOpened && validPicker} value={{ reps: currentReps, weightKg: currentWeight }}
+        target={target.current} onClose={() => setPickerOpened(false)}
+        onChange={value => change(old => ({ ...old, metrics: { ...old.metrics, reps: value.reps, weightKg: value.weightKg } }))} />
+    </MezfitBottomSheet>
+  );
+}
