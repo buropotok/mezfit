@@ -46,7 +46,7 @@ function nonnegativeInteger(value: unknown): value is number {
 function assetUrl(relativePath: string, view: WorkedMuscleView, sex: WorkedMuscleSex): string {
   const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
   const revision = sex === 'female'
-    ? (view === 'front' ? 'female-three-quarter-v2-corrected-underlay' : 'female-rear-v5-saturated')
+    ? (view === 'front' ? 'female-three-quarter-v3-saturated-sternal-reference' : 'female-rear-v5-saturated')
     : (view === 'front' ? 'front84-mask3-atlas1' : 'rear59-atlas2-transparent');
   return new URL(base + relativePath + '?v=' + revision, window.location.origin).href;
 }
