@@ -29,7 +29,7 @@ export interface ExistingSetFact {
 }
 
 export type SetEntryProgramIdentity =
-  | { programId: number; programName: string }
+  | { programId: string | number; programName: string }
   | { programId: null; programName: null };
 
 export type SetEntryIdentity = SetEntryProgramIdentity & {
