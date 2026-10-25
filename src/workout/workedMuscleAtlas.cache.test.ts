@@ -66,7 +66,7 @@ describe('Shared prepared anatomy cache', () => {
     expect(await loadWorkedMuscleAtlas('front')).toBe(first);
     expect(first.mask[80 * 1024 + 50]).toBe(1);
     expect(fetchSpy).toHaveBeenCalledTimes(2);
-    expect(getImageCreations()).toBe(3);
+    expect(getImageCreations()).toBe(2);
   });
 
   it('evicts a failed load so a subsequent component open can retry', async () => {
