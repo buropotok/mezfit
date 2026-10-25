@@ -5,6 +5,7 @@ import type {
   TrackingType,
 } from './exercises';
 import { parseCalendarDay } from './schedule';
+import type { SetType } from '../../shared/set-type';
 
 export type WorkoutSessionStatus = 'draft' | 'active' | 'completed';
 export type SessionExerciseStatus = 'planned' | 'active' | 'completed' | 'skipped' | 'inactive';
@@ -25,6 +26,7 @@ export interface WorkoutMetrics {
 export interface WorkoutSetFactInput {
   metrics: WorkoutMetrics;
   setLabel: WorkoutSetLabel | null;
+  setType?: SetType | null;
   rpe: number | null;
   comment: string | null;
   bands: ResistanceBandCode[];
@@ -78,6 +80,7 @@ export interface PreviousWorkoutSet {
 export interface ExistingWorkoutSetFact {
   metrics: WorkoutMetrics;
   setLabel: WorkoutSetLabel | null;
+  setType?: SetType | null;
   rpe: number | null;
   comment: string | null;
   bands: ResistanceBandCode[];
@@ -221,6 +224,7 @@ interface ProjectionSetRow {
   actual_duration_seconds: number | null;
   actual_distance_meters: number | null;
   set_label: WorkoutSetLabel | null;
+  set_type: SetType | null;
   rpe: number | null;
   comment: string | null;
   bands_json: string | null;
@@ -774,6 +778,7 @@ export async function saveWorkoutSet(
           actual_duration_seconds = ?,
           actual_distance_meters = ?,
           set_label = ?,
+          set_type = ?,
           rpe = ?,
           comment = ?,
           bands_json = ?,
@@ -787,6 +792,7 @@ export async function saveWorkoutSet(
       fact.metrics.durationSeconds,
       fact.metrics.distanceMeters,
       fact.setLabel,
+      fact.setType ?? null,
       fact.rpe,
       fact.comment,
       JSON.stringify(fact.bands),
@@ -970,6 +976,7 @@ export async function getWorkoutSessionProjection(
         ss.actual_duration_seconds,
         ss.actual_distance_meters,
         ss.set_label,
+        ss.set_type,
         ss.rpe,
         ss.comment,
         ss.bands_json,
@@ -1072,6 +1079,7 @@ export async function getWorkoutSessionProjection(
         ? {
             metrics: factMetrics,
             setLabel: row.set_label,
+            setType: row.set_type,
             rpe: row.rpe,
             comment: row.comment,
             bands: parseBands(row.bands_json),
