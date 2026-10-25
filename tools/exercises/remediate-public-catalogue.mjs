@@ -234,7 +234,7 @@ export async function runRemediation({ sourceBytes, proposalBytes, dbUrl, rawKey
   const patchSha256 = digest(proposalBytes);
   const session = await openPublicSession({ dbUrl, rawKey, mode, fetchFn });
   const current = await readPublic(session);
-  const plan = remissionPlan(current, source, patch, patchSha256);
+  const plan = remediationPlan(current, source, patch, patchSha256);
   if (mode === 'preview') return { status: 'preview', batch: 'REM-01', totalIds: 6,
     pending: plan.updates.length, alreadyCorrect: 6 - plan.updates.length,
     editorApproved: plan.approved, publishAllowed: plan.approved, proposalSha256: patchSha256 };
