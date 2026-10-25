@@ -173,6 +173,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           <GlassSurface component="button" ref={target} wrapContent={false} shape="auto"
             className="set-entry-weight-reps__metric-tile"
             onClick={() => { if (validPicker && !closing) setPickerOpened(true); }}
+            aria-disabled={!validPicker || closing}
             aria-label="Изменить вес и повторения">
             <Text variant="headline">Повторения × Вес</Text>
             <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
