@@ -1,3 +1,4 @@
+import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { ExerciseDefinition } from '../api';
 import type { ExistingSetFact, PreviousSet, SetEntryFactDraft, SetMetrics } from './setEntryTypes';
@@ -57,6 +58,7 @@ interface SessionExerciseSharedProps {
   onInformation?: () => void;
   onOpenHistory?: (exerciseDefinitionId: number) => void;
   onOpenChat?: () => void;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
 export type WorkoutSessionExerciseProps =
