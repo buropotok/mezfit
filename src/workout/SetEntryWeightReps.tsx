@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { Button, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
@@ -58,14 +59,14 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     // Serializes all auto-saves: a stale network response cannot apply a later draft first.
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
-      if (isPlan) {
+      if (props.mode === 'program-plan') {
         await props.onPlanSave({
           weightKg: snapshot.metrics.weightKg,
           reps: snapshot.metrics.reps,
           setType: snapshot.setType ?? null,
         });
       } else {
-        await props.onSave({ ...snapshot, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands] });
+        await props.onSave({ ...snapshot, setLabel: null, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands] });
       }
       savedRevision.current = Math.max(savedRevision.current, atRevision);
       setError('');
@@ -120,7 +121,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
           </div>
-          <IconButton icon="close" label="Закрыть подход" disabled={closing}
+          <IconButton icon="x" label="Закрыть подход" disabled={closing}
             onClick={() => { void close(); }} />
         </header>
         <div className="set-entry-weight-reps__body">
@@ -131,8 +132,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             </div>
             {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
               triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
-              trigger={<IconButton ref={bandTarget} icon="waves" label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}
-                onClick={() => setBandOpen(true)} />} /> : null}
+              trigger={<IconButton ref={bandTarget} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}
+                onClick={() => setBandOpen(true)}><span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" /></IconButton>} /> : null}
             {props.onOpenHistory ? <IconButton icon="history" label="История упражнения" onClick={props.onOpenHistory} /> : null}
           </div>
           <Divider />
@@ -180,9 +181,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             </div>
             <div className="set-entry-weight-reps__section">
               <Text variant="footnote">Комментарий</Text>
-              <MezfitAutosizeTextarea label="Как прошёл подход?" floatingLabel outline
+              <List nested strong dividers={false}><MezfitAutosizeTextarea label="Как прошёл подход?" floatingLabel outline
                 value={draft.comment ?? ''} disabled={closing} maxLength={1000}
-                onChange={event => change(old => ({ ...old, comment: event.currentTarget.value || null }))} />
+                onChange={event => change(old => ({ ...old, comment: event.currentTarget.value || null }))} /></List>
             </div>
           </> : null}
           {props.onOpenChat ? <Button className="set-entry-weight-reps__chat" onClick={props.onOpenChat}>Открыть чат</Button> : null}
