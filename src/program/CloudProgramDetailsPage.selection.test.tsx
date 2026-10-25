@@ -108,7 +108,7 @@ describe('program source selection', () => {
       fireEvent.click(within(card).getByRole('button', { name }));
       notice();
     }
-    fireEvent.click(screen.getByText('Подход 1'));
+    fireEvent.click(within(card).getByText('Подход 1. План: ввести план'));
     notice();
     const exerciseMenu = within(card).getByRole('menu', { name: 'Меню упражнения' });
     expect(within(exerciseMenu).getByRole('button', { name: 'Информация' })).toBeTruthy();
@@ -153,7 +153,7 @@ describe('program source selection', () => {
     expect(screen.queryByRole('menu', { name: 'Действия с фазой Фаза' })).toBeNull();
     expect(within(card).getByRole('button', { name: 'Запланировать' })).toBeTruthy();
     expect(within(card).getByRole('menu', { name: 'Меню упражнения' }).textContent).toContain('Информация');
-    fireEvent.click(screen.getByText('Подход 1'));
+    fireEvent.click(within(card).getByText('Подход 1. План: ввести план'));
     expect(screen.queryByRole('dialog', { name: 'Планирование тренировки' })).toBeNull();
     for (const [key, method] of Object.entries(repository))
       if (key !== 'observeDetails' && key !== 'observeAthleteDetails' && typeof method === 'function')
