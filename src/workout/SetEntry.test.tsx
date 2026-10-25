@@ -95,16 +95,27 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
-  it('does not round an existing unsupported FACT to a different editable weight', () => {
+  it('preserves unsupported existing FACT and disables editing without converting its weight', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, fact: {
       metrics: { weightKg: 80.75, reps: 10, durationSeconds: null, distanceMeters: null },
       setLabel: null, rpe: null, comment: null, bands: [],
-    } }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+    } }} onClose={onClose} onSave={onSave} />);
     expect(screen.getByText('Существующее значение FACT не поддерживается текущим пикером')).toBeTruthy();
+    const metricButton = screen.getByRole('button', { name: 'Изменить вес и повторения' });
+    expect(metricButton.getAttribute('aria-disabled')).toBe('true');
     expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Изменить вес и повторения' }).disabled).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
-    expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+
+    // UI Kit retains its closed popover in the DOM for animation. Its DOM
+    // presence is not proof that the picker opened.
+    fireEvent.click(metricButton);
+    expect(metricButton.getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it('records the displayed PLAN values as FACT only after explicit confirmation', async () => {
