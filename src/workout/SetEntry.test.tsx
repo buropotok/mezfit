@@ -75,7 +75,9 @@ describe('weight and repetitions SetEntry', () => {
       plan: { ...baseData.plan!, weightKg: 80.75 },
     }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
     expect(screen.getByText('Существующее значение не поддерживается текущим пикером')).toBeTruthy();
-    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
+    // Before FACT is entered, the plan remains comparison context—not an actual result.
+    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
+    expect(screen.getByText('Не заполнено')).toBeTruthy();
   });
 
   it('preserves the previous non-weight entry until its UI Kit picker exists', () => {
