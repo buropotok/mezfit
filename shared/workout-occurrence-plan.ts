@@ -1,8 +1,10 @@
 import { isExerciseDefinition } from './exercise-definition';
 import type { CloudProgramExerciseSnapshot } from './program-exercise-snapshot';
 import type { SetLabel } from './set-label';
+import { isSetType, type SetType } from './set-type';
 
 export interface OccurrencePlanSet {
+  setType?: SetType | null;
   id: string;
   sourceProgramSetId: string | null;
   position: number;
@@ -66,6 +68,7 @@ export function isWorkoutOccurrencePlan(value: unknown): value is WorkoutOccurre
       if (!object(set) || typeof set.id !== 'string' || !set.id || setIds.has(set.id)
         || set.position !== setPosition
         || (set.sourceProgramSetId !== null && typeof set.sourceProgramSetId !== 'string')
+      || (set.setType !== undefined && set.setType !== null && !isSetType(set.setType))
         || (set.comment !== null && typeof set.comment !== 'string')
         || (set.setLabel !== null && !['warmup', 'easy', 'normal', 'hard', 'drop'].includes(String(set.setLabel)))) return false;
       setIds.add(set.id);
