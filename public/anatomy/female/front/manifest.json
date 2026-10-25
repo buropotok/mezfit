@@ -48,7 +48,7 @@
       "height": 407,
       "atlasX": 600,
       "atlasY": 0,
-      "pixels": 21471,
+      "pixels": 22777,
       "sourceSpriteId": "rectus_femoris"
     },
     "4": {
@@ -101,10 +101,10 @@
       "targetX": 380,
       "targetY": 319,
       "width": 249,
-      "height": 59,
+      "height": 84,
       "atlasX": 1759,
       "atlasY": 0,
-      "pixels": 7824,
+      "pixels": 10150,
       "sourceSpriteId": "pectoralis_sternal"
     },
     "8": {
@@ -535,10 +535,10 @@
       "targetX": 380,
       "targetY": 319,
       "width": 249,
-      "height": 59,
+      "height": 84,
       "atlasX": 235,
       "atlasY": 3433,
-      "pixels": 7824,
+      "pixels": 10150,
       "sourceSpriteId": "pectoralis_major_copy_sternal"
     },
     "39": {
