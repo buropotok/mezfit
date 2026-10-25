@@ -194,7 +194,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           {error ? <Button variant="secondary" onClick={() => { void persist().catch(() => undefined); }}>Повторить сохранение</Button> : null}
         </div>
       </div>
-      <WeightRepsPicker opened={pickerOpened && validPicker} value={{ reps: currentReps, weightKg: currentWeight }}
+      <WeightRepsPicker opened={pickerOpened && validPicker} value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
         target={target.current} onClose={() => setPickerOpened(false)}
         onChange={value => change(old => ({ ...old, metrics: { ...old.metrics, reps: value.reps, weightKg: value.weightKg } }))} />
     </MezfitBottomSheet>
