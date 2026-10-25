@@ -90,13 +90,15 @@ function checkProposal(source, patch) {
       fail('Proposed names differ from field replacements');
     for (const field of FIELDS[item.id]) {
       const change = item.field_replacements[field];
-      if (!isRecord(change) || !isDeepStrictEqual(at(sourceRow, field), change.expected_current)
+      const originalValue = at(sourceRow, field);
+      const validReplacement = typeof originalValue === 'string'
+        ? typeof change?.proposed_value === 'string' && change.proposed_value.trim().length > 0
+        : Array.isArray(originalValue) && Array.isArray(change?.proposed_value)
+          && change.proposed_value.length > 0
+          && change.proposed_value.every(x => typeof x === 'string' && x.trim().length > 0);
+      if (!isRecord(change) || !isDeepStrictEqual(originalValue, change.expected_current)
         || isDeepStrictEqual(change.expected_current, change.proposed_value)
-        || !(['string'].includes(typeof change.proposed_value)
-          || (Array.isArray(change.proposed_value)
-              && change.proposed_value.length > 0
-              && change.proposed_value.every(x => typeof x === 'string' && x.length > 0))))
-        fail('Unsafe or ungrounded proposed value');
+        || !validReplacement) fail('Unsafe or ungrounded proposed value');
     }
     for (const lang of ['ru', 'en']) {
       const steps = item.field_replacements['instruction_steps.' + lang].proposed_value;
@@ -156,6 +158,11 @@ export function remediationPlan(current, source, patch, patchSha256) {
     const actual = tables.definitions.get(id);
     if (!actual) fail('Missing REM-01 public row');
     const changedRoots = new Set(FIELDS[id].map(field => field.split('.')[0]));
+    for (const root of ['instructions', 'instruction_steps']) {
+      if (!isRecord(actual[root]) || !isDeepStrictEqual(
+        Object.keys(actual[root]).sort(), Object.keys(sourceRow[root]).sort()))
+        fail('Unexpected nested instruction fields');
+    }
     for (const [key, value] of Object.entries(sourceRow)) {
       if (!changedRoots.has(key) && !isDeepStrictEqual(actual[key], value))
         fail('Unrelated canonical field has changed');
