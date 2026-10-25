@@ -97,7 +97,7 @@ export function createSetEntryDraft(data: SetEntryData): SetEntryFactDraft {
   return {
     metrics: { ...(data.fact?.metrics ?? data.plan ?? emptySetMetrics()) },
     setLabel: data.fact?.setLabel ?? null,
-    setType: data.fact?.setType ?? data.setType ?? null,
+    setType: data.fact?.setType !== undefined ? data.fact.setType : data.setType ?? null,
     rpe: data.fact?.rpe ?? null,
     comment: data.fact?.comment ?? null,
     bands: [...(data.fact?.bands ?? [])],
