@@ -1,0 +1,532 @@
+{
+  "schema_version": 1,
+  "batch_id": "REM-01",
+  "source_registry": "audit/visual/remediation/remediation_registry.jsonl",
+  "source_catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
+  "target": "publicExerciseDefinitions",
+  "exercise_count": 6,
+  "expected_exercise_ids": [
+    "3637",
+    "3235",
+    "3291",
+    "3292",
+    "3315",
+    "3638"
+  ],
+  "approval_state": "editorial_review_pending",
+  "automatic_application_permitted": false,
+  "publication_support": "not_yet_implemented",
+  "notes": "This is a read-only proposal. Merge never changes Dexie Cloud or private immutable R2. Separate protected exact-allowlist operator is required.",
+  "exercises": [
+    {
+      "id": "3637",
+      "original_name_ru": "Бег в колесе",
+      "original_name_en": "wheel run",
+      "proposed_name_ru": "Бег на месте с высоким подниманием коленей",
+      "proposed_name_en": "High-knee running in place",
+      "gif_url": "videos/3637-km2Ljzj.gif",
+      "audit_status": "confirmed_mismatch",
+      "audit_priority": "P0",
+      "source_stage": "audit/visual/input/catalogue_stage_01.jsonl",
+      "audited_fields": [
+        "name_ru",
+        "name_en",
+        "instructions.ru",
+        "instructions.en"
+      ],
+      "consistency_fields": [
+        "instruction_steps.ru",
+        "instruction_steps.en",
+        "name"
+      ],
+      "field_replacements": {
+        "instructions.ru": {
+          "expected_current": "Начните с положения планки, положив руки на руль и выпрямив тело. Включите корпус и начните катить колесо вперед, вытягивая руки. Продолжайте перекатываться до тех пор, пока ваше тело не будет полностью выпрямлено, а руки не окажутся над головой. Выполните обратное движение, потянув колесо назад к телу, используя корпус и руки. Повторите необходимое количество повторений.",
+          "proposed_value": "Встаньте прямо, поставьте стопы примерно на ширине таза и сохраняйте корпус устойчивым. Начните бег на месте, поочерёдно поднимая колени перед собой. Работайте руками в ритме бега и мягко приземляйтесь на стопы. Продолжайте в контролируемом темпе в течение заданного времени."
+        },
+        "instructions.en": {
+          "expected_current": "Start in a plank position with your hands on the wheel and your body straight. Engage your core and start rolling the wheel forward by extending your arms. Continue rolling until your body is fully extended and your arms are overhead. Reverse the movement by pulling the wheel back towards your body, using your core and arms. Repeat for the desired number of repetitions.",
+          "proposed_value": "Stand upright with feet about hip-width apart and keep your torso stable. Begin running in place, alternately lifting your knees in front of you. Move your arms naturally with the running rhythm and land softly on your feet. Continue at a controlled pace for the prescribed duration."
+        },
+        "instruction_steps.ru": {
+          "expected_current": [
+            "Начните с положения планки, положив руки на руль и выпрямив тело.",
+            "Включите корпус и начните катить колесо вперед, вытягивая руки.",
+            "Продолжайте перекатываться до тех пор, пока ваше тело не будет полностью выпрямлено, а руки не окажутся над головой.",
+            "Выполните обратное движение, потянув колесо назад к телу, используя корпус и руки.",
+            "Повторите необходимое количество повторений."
+          ],
+          "proposed_value": [
+            "Встаньте прямо, поставьте стопы примерно на ширине таза и сохраняйте корпус устойчивым.",
+            "Начните бег на месте, поочерёдно поднимая колени перед собой.",
+            "Работайте руками в ритме бега и мягко приземляйтесь на стопы.",
+            "Продолжайте в контролируемом темпе в течение заданного времени."
+          ]
+        },
+        "instruction_steps.en": {
+          "expected_current": [
+            "Start in a plank position with your hands on the wheel and your body straight.",
+            "Engage your core and start rolling the wheel forward by extending your arms.",
+            "Continue rolling until your body is fully extended and your arms are overhead.",
+            "Reverse the movement by pulling the wheel back towards your body, using your core and arms.",
+            "Repeat for the desired number of repetitions."
+          ],
+          "proposed_value": [
+            "Stand upright with feet about hip-width apart and keep your torso stable.",
+            "Begin running in place, alternately lifting your knees in front of you.",
+            "Move your arms naturally with the running rhythm and land softly on your feet.",
+            "Continue at a controlled pace for the prescribed duration."
+          ]
+        },
+        "name_ru": {
+          "expected_current": "Бег в колесе",
+          "proposed_value": "Бег на месте с высоким подниманием коленей"
+        },
+        "name_en": {
+          "expected_current": "wheel run",
+          "proposed_value": "High-knee running in place"
+        },
+        "name": {
+          "expected_current": "Бег в колесе",
+          "proposed_value": "Бег на месте с высоким подниманием коленей"
+        }
+      },
+      "evidence": {
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/3637-km2Ljzj.gif",
+        "reviewed_frames": [
+          0,
+          6,
+          12,
+          18,
+          24,
+          30
+        ],
+        "observed_movement": "Бег на месте с выраженным высоким подъёмом коленей; без колеса и опоры руками",
+        "issue_evidence": [
+          "Оригинальный GIF videos/3637-km2Ljzj.gif, кадры [0, 6, 12, 18, 24, 30]: Бег на месте с выраженным высоким подъёмом коленей; без колеса и опоры руками.",
+          "Оригинальный GIF videos/3637-km2Ljzj.gif, кадры [0, 6, 12, 18, 24, 30]: Бег на месте с выраженным высоким подъёмом коленей; без колеса и опоры руками.",
+          "Оригинальный GIF videos/3637-km2Ljzj.gif, кадры [0, 6, 12, 18, 24, 30]: Бег на месте с выраженным высоким подъёмом коленей; без колеса и опоры руками.",
+          "Оригинальный GIF videos/3637-km2Ljzj.gif, кадры [0, 6, 12, 18, 24, 30]: Бег на месте с выраженным высоким подъёмом коленей; без колеса и опоры руками."
+        ]
+      },
+      "review_reason": "Утвердить редакторские названия RU/EN.",
+      "approval_state": "pending",
+      "applied": false
+    },
+    {
+      "id": "3235",
+      "original_name_ru": "Обратные сгибания ног на блоке с помощью",
+      "original_name_en": "cable assisted inverse leg curl",
+      "proposed_name_ru": "Обратные сгибания ног на блоке с помощью",
+      "proposed_name_en": "cable assisted inverse leg curl",
+      "gif_url": "videos/3235-zHEpuuc.gif",
+      "audit_status": "confirmed_mismatch",
+      "audit_priority": "P0",
+      "source_stage": "audit/visual/input/catalogue_stage_13.jsonl",
+      "audited_fields": [
+        "instructions.ru",
+        "instructions.en",
+        "instruction_steps.ru",
+        "instruction_steps.en"
+      ],
+      "consistency_fields": [],
+      "field_replacements": {
+        "instructions.ru": {
+          "expected_current": "Отрегулируйте тросовую машину так, чтобы крепление голеностопного сустава было на самом низком уровне. Лягте лицом вниз на скамью, выпрямите ноги и закрепите фиксатор лодыжки на лодыжках. Держитесь за ручки скамьи для устойчивости. Удерживая верхнюю часть тела неподвижно, выдохните и согните ноги к ягодицам, согнув колени. Задержитесь на мгновение в верхней точке движения, сжимая мышцы задней поверхности бедра. Вдохните и медленно опустите ноги обратно в исходное положение. Повторите необходимое количество повторений.",
+          "proposed_value": "Встаньте на колени на устойчивую опору и возьмитесь за трос для поддержки. Сохраняйте туловище и таз на одной линии, медленно наклоняя тело вперёд с контролем движения в коленях. Используйте помощь троса, чтобы контролировать амплитуду. Плавно вернитесь в исходное положение и повторите без рывков."
+        },
+        "instructions.en": {
+          "expected_current": "Adjust the cable machine so that the ankle attachment is at the lowest setting. Lie face down on the bench with your legs straight and the ankle attachment secured to your ankles. Hold onto the handles of the bench for stability. Keeping your upper body stationary, exhale and curl your legs up towards your glutes by flexing your knees. Pause for a moment at the top of the movement, squeezing your hamstrings. Inhale and slowly lower your legs back to the starting position. Repeat for the desired number of repetitions.",
+          "proposed_value": "Kneel on a stable support and hold the cable for assistance. Keep your torso and hips aligned as you slowly lean forward, controlling the movement at your knees. Use the cable assistance to maintain control through the range of motion. Return smoothly to the starting position and repeat without jerking."
+        },
+        "instruction_steps.ru": {
+          "expected_current": [
+            "Отрегулируйте тросовую машину так, чтобы крепление голеностопного сустава было на самом низком уровне.",
+            "Лягте лицом вниз на скамью, выпрямите ноги и закрепите фиксатор лодыжки на лодыжках.",
+            "Держитесь за ручки скамьи для устойчивости.",
+            "Удерживая верхнюю часть тела неподвижно, выдохните и согните ноги к ягодицам, согнув колени.",
+            "Задержитесь на мгновение в верхней точке движения, сжимая мышцы задней поверхности бедра.",
+            "Вдохните и медленно опустите ноги обратно в исходное положение.",
+            "Повторите необходимое количество повторений."
+          ],
+          "proposed_value": [
+            "Встаньте на колени на устойчивую опору и возьмитесь за трос для поддержки.",
+            "Сохраняйте туловище и таз на одной линии, медленно наклоняя тело вперёд с контролем движения в коленях.",
+            "Используйте помощь троса, чтобы контролировать амплитуду.",
+            "Плавно вернитесь в исходное положение и повторите без рывков."
+          ]
+        },
+        "instruction_steps.en": {
+          "expected_current": [
+            "Adjust the cable machine so that the ankle attachment is at the lowest setting.",
+            "Lie face down on the bench with your legs straight and the ankle attachment secured to your ankles.",
+            "Hold onto the handles of the bench for stability.",
+            "Keeping your upper body stationary, exhale and curl your legs up towards your glutes by flexing your knees.",
+            "Pause for a moment at the top of the movement, squeezing your hamstrings.",
+            "Inhale and slowly lower your legs back to the starting position.",
+            "Repeat for the desired number of repetitions."
+          ],
+          "proposed_value": [
+            "Kneel on a stable support and hold the cable for assistance.",
+            "Keep your torso and hips aligned as you slowly lean forward, controlling the movement at your knees.",
+            "Use the cable assistance to maintain control through the range of motion.",
+            "Return smoothly to the starting position and repeat without jerking."
+          ]
+        }
+      },
+      "evidence": {
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/3235-zHEpuuc.gif",
+        "reviewed_frames": [
+          0,
+          2,
+          4,
+          6,
+          7,
+          9
+        ],
+        "observed_movement": "Стоя коленями на опоре и удерживая трос, медленно наклоняет прямое туловище вперёд за счёт разгибания колен.",
+        "issue_evidence": [
+          "GIF videos/3235-zHEpuuc.gif; просмотрены декодированные кадры [0,2,4,6,7,9]: Стоя коленями на опоре и удерживая трос, медленно наклоняет прямое туловище вперёд за счёт разгибания колен."
+        ]
+      },
+      "review_reason": "Термин inverse Nordic при наклоне вперёд спорен; проверить вид упражнения и фиксацию ног на оригинальном GIF.",
+      "approval_state": "pending",
+      "applied": false
+    },
+    {
+      "id": "3291",
+      "original_name_ru": "Гимнастический силовой подъём в стойку на руках из угла («Штальдер»)",
+      "original_name_en": "stalder press",
+      "proposed_name_ru": "Гимнастический силовой подъём в стойку на руках из угла («Штальдер»)",
+      "proposed_name_en": "stalder press",
+      "gif_url": "videos/3291-zd4P4B2.gif",
+      "audit_status": "confirmed_mismatch",
+      "audit_priority": "P0",
+      "source_stage": "audit/visual/input/catalogue_stage_13.jsonl",
+      "audited_fields": [
+        "instructions.ru",
+        "instructions.en",
+        "instruction_steps.ru",
+        "instruction_steps.en"
+      ],
+      "consistency_fields": [],
+      "field_replacements": {
+        "instructions.ru": {
+          "expected_current": "Начните с того, что встаньте, поставив ноги на ширине плеч и вытянув руки над головой. Слегка согните колени и задействуйте корпус. Опустите тело в положение приседа, держа руки вытянутыми над головой. Приседая, прижмите руки к земле, задействуя трицепсы. Задержитесь на мгновение в нижней части приседа, затем оттолкнитесь пятками, чтобы снова встать, одновременно поднимая руки над головой. Повторите необходимое количество повторений.",
+          "proposed_value": "Примите устойчивый гимнастический упор на ладонях, перенеся вес тела на прямые руки. Разведите ноги и поднимайте таз выше плеч, контролируя равновесие на кистях. Продолжайте силовой подъём до выхода в стойку на руках без прыжка из положения стоя. Контролируемо вернитесь в упор; разучивайте элемент со страховкой."
+        },
+        "instructions.en": {
+          "expected_current": "Start by standing with your feet shoulder-width apart and your arms extended overhead. Bend your knees slightly and engage your core. Lower your body down into a squat position while keeping your arms extended overhead. As you squat down, press your arms down towards the ground, engaging your triceps. Pause for a moment at the bottom of the squat, then push through your heels to stand back up while simultaneously raising your arms back overhead. Repeat for the desired number of repetitions.",
+          "proposed_value": "Set up in a supported gymnastics position on your hands, bearing your weight through straight arms. Open your legs and raise your hips above your shoulders while balancing through your hands. Continue the controlled press into a handstand without jumping from standing. Lower back under control; practise this advanced skill with a spotter."
+        },
+        "instruction_steps.ru": {
+          "expected_current": [
+            "Начните с того, что встаньте, поставив ноги на ширине плеч и вытянув руки над головой.",
+            "Слегка согните колени и задействуйте корпус.",
+            "Опустите тело в положение приседа, держа руки вытянутыми над головой.",
+            "Приседая, прижмите руки к земле, задействуя трицепсы.",
+            "Задержитесь на мгновение в нижней части приседа, затем оттолкнитесь пятками, чтобы снова встать, одновременно поднимая руки над головой.",
+            "Повторите необходимое количество повторений."
+          ],
+          "proposed_value": [
+            "Примите устойчивый гимнастический упор на ладонях, перенеся вес тела на прямые руки.",
+            "Разведите ноги и поднимайте таз выше плеч, контролируя равновесие на кистях.",
+            "Продолжайте силовой подъём до выхода в стойку на руках без прыжка из положения стоя.",
+            "Контролируемо вернитесь в упор; разучивайте элемент со страховкой."
+          ]
+        },
+        "instruction_steps.en": {
+          "expected_current": [
+            "Start by standing with your feet shoulder-width apart and your arms extended overhead.",
+            "Bend your knees slightly and engage your core.",
+            "Lower your body down into a squat position while keeping your arms extended overhead.",
+            "As you squat down, press your arms down towards the ground, engaging your triceps.",
+            "Pause for a moment at the bottom of the squat, then push through your heels to stand back up while simultaneously raising your arms back overhead.",
+            "Repeat for the desired number of repetitions."
+          ],
+          "proposed_value": [
+            "Set up in a supported gymnastics position on your hands, bearing your weight through straight arms.",
+            "Open your legs and raise your hips above your shoulders while balancing through your hands.",
+            "Continue the controlled press into a handstand without jumping from standing.",
+            "Lower back under control; practise this advanced skill with a spotter."
+          ]
+        }
+      },
+      "evidence": {
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/3291-zd4P4B2.gif",
+        "reviewed_frames": [
+          0,
+          2,
+          4,
+          6,
+          7,
+          9
+        ],
+        "observed_movement": "Из гимнастического упора перемещается в стойку на руках, опираясь на ладони.",
+        "issue_evidence": [
+          "GIF videos/3291-zd4P4B2.gif; просмотрены декодированные кадры [0,2,4,6,7,9]: Из гимнастического упора перемещается в стойку на руках, опираясь на ладони."
+        ]
+      },
+      "review_reason": "Уточнить стартовую позицию и ориентацию ног на GIF.",
+      "approval_state": "pending",
+      "applied": false
+    },
+    {
+      "id": "3292",
+      "original_name_ru": "Подтягивания «лифт» с промежуточными остановками",
+      "original_name_en": "elevator",
+      "proposed_name_ru": "Подтягивания «лифт» с промежуточными остановками",
+      "proposed_name_en": "elevator",
+      "gif_url": "videos/3292-zYmNaoY.gif",
+      "audit_status": "confirmed_mismatch",
+      "audit_priority": "P0",
+      "source_stage": "audit/visual/input/catalogue_stage_13.jsonl",
+      "audited_fields": [
+        "instructions.ru",
+        "instructions.en",
+        "instruction_steps.ru",
+        "instruction_steps.en",
+        "subcategory"
+      ],
+      "consistency_fields": [
+        "subcategory_ru"
+      ],
+      "field_replacements": {
+        "instructions.ru": {
+          "expected_current": "Встаньте, поставив ноги на ширине плеч и слегка согнув колени. Положите руки на бедра или скрестите их перед грудью. Сохраняя спину прямой, медленно наклонитесь вперед в талии, опуская верхнюю часть тела к земле. Задержитесь на мгновение в нижней точке, затем медленно поднимите верхнюю часть тела обратно в исходное положение. Повторите необходимое количество повторений.",
+          "proposed_value": "Повисните на гимнастических кольцах и обеспечьте устойчивый хват. Начните подтягиваться с остановкой на первом промежуточном уровне. Продолжайте подъём с короткими паузами на следующих уровнях без раскачивания. Плавно опуститесь в исходный вис, сохраняя контроль над корпусом."
+        },
+        "instructions.en": {
+          "expected_current": "Stand with your feet shoulder-width apart and your knees slightly bent. Place your hands on your hips or cross them in front of your chest. Keeping your back straight, slowly bend forward at the waist, lowering your upper body towards the ground. Pause for a moment at the bottom, then slowly raise your upper body back up to the starting position. Repeat for the desired number of repetitions.",
+          "proposed_value": "Hang from the gymnastic rings with a secure grip. Begin pulling yourself upward, pausing at the first intermediate level. Continue the pull with brief holds at successive levels without swinging. Lower under control to the starting hang, keeping your torso steady."
+        },
+        "instruction_steps.ru": {
+          "expected_current": [
+            "Встаньте, поставив ноги на ширине плеч и слегка согнув колени.",
+            "Положите руки на бедра или скрестите их перед грудью.",
+            "Сохраняя спину прямой, медленно наклонитесь вперед в талии, опуская верхнюю часть тела к земле.",
+            "Задержитесь на мгновение в нижней точке, затем медленно поднимите верхнюю часть тела обратно в исходное положение.",
+            "Повторите необходимое количество повторений."
+          ],
+          "proposed_value": [
+            "Повисните на гимнастических кольцах и обеспечьте устойчивый хват.",
+            "Начните подтягиваться с остановкой на первом промежуточном уровне.",
+            "Продолжайте подъём с короткими паузами на следующих уровнях без раскачивания.",
+            "Плавно опуститесь в исходный вис, сохраняя контроль над корпусом."
+          ]
+        },
+        "instruction_steps.en": {
+          "expected_current": [
+            "Stand with your feet shoulder-width apart and your knees slightly bent.",
+            "Place your hands on your hips or cross them in front of your chest.",
+            "Keeping your back straight, slowly bend forward at the waist, lowering your upper body towards the ground.",
+            "Pause for a moment at the bottom, then slowly raise your upper body back up to the starting position.",
+            "Repeat for the desired number of repetitions."
+          ],
+          "proposed_value": [
+            "Hang from the gymnastic rings with a secure grip.",
+            "Begin pulling yourself upward, pausing at the first intermediate level.",
+            "Continue the pull with brief holds at successive levels without swinging.",
+            "Lower under control to the starting hang, keeping your torso steady."
+          ]
+        },
+        "subcategory": {
+          "expected_current": "spinal_erectors",
+          "proposed_value": "upper_back"
+        },
+        "subcategory_ru": {
+          "expected_current": "Разгибатели позвоночника",
+          "proposed_value": "Верх спины"
+        }
+      },
+      "evidence": {
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/3292-zYmNaoY.gif",
+        "reviewed_frames": [
+          0,
+          3,
+          6,
+          9,
+          11,
+          14
+        ],
+        "observed_movement": "В висе на гимнастических кольцах поднимает тело в промежуточные положения, выполняя вертикальное подтягивание.",
+        "issue_evidence": [
+          "GIF videos/3292-zYmNaoY.gif; просмотрены декодированные кадры [0,3,6,9,11,14]: В висе на гимнастических кольцах поднимает тело в промежуточные положения, выполняя вертикальное подтягивание."
+        ]
+      },
+      "review_reason": "Согласовать upper_back и отдельно проверить muscles.primary: текущая анатомия противоречит подтягиванию; анатомические поля в этом PR не меняются.",
+      "approval_state": "pending",
+      "applied": false
+    },
+    {
+      "id": "3315",
+      "original_name_ru": "Гимнастический элемент «мальтийский крест»",
+      "original_name_en": "full maltese",
+      "proposed_name_ru": "Гимнастический элемент «мальтийский крест»",
+      "proposed_name_en": "full maltese",
+      "gif_url": "videos/3315-YRaCa5Y.gif",
+      "audit_status": "confirmed_mismatch",
+      "audit_priority": "P0",
+      "source_stage": "audit/visual/input/catalogue_stage_13.jsonl",
+      "audited_fields": [
+        "instructions.ru",
+        "instructions.en",
+        "instruction_steps.ru",
+        "instruction_steps.en"
+      ],
+      "consistency_fields": [],
+      "field_replacements": {
+        "instructions.ru": {
+          "expected_current": "Начните с того, что встаньте, поставив ноги на ширине плеч и вытянув руки в стороны. Медленно наклонитесь вперед, держа руки прямыми, пока верхняя часть тела не станет параллельна земле. Напрягите корпус и удерживайте это положение в течение нескольких секунд. Вернитесь в исходное положение, оттолкнувшись ногами и снова встав. Повторите необходимое количество повторений.",
+          "proposed_value": "Подготовьте надёжную гимнастическую опору и страховку; элемент требует высокой силовой подготовки. Перенесите вес тела на прямые руки, разведённые в стороны, выведя корпус и ноги в горизонтальное положение. Сохраняйте вытянутую линию тела и контролируйте плечи и таз. Удерживайте положение только пока сохраняется контроль, затем безопасно выйдите из упора."
+        },
+        "instructions.en": {
+          "expected_current": "Start by standing with your feet shoulder-width apart and your arms extended straight out to the sides. Slowly lean forward, keeping your arms straight, until your upper body is parallel to the ground. Engage your core and hold this position for a few seconds. Return to the starting position by pushing through your feet and standing back up. Repeat for the desired number of repetitions.",
+          "proposed_value": "Prepare secure gymnastics support and spotting; this advanced hold requires significant strength. Support your body on straight arms spread to the sides and extend your torso and legs horizontally. Keep the body extended while controlling the shoulders and hips. Hold only while fully controlled, then exit the position safely."
+        },
+        "instruction_steps.ru": {
+          "expected_current": [
+            "Начните с того, что встаньте, поставив ноги на ширине плеч и вытянув руки в стороны.",
+            "Медленно наклонитесь вперед, держа руки прямыми, пока верхняя часть тела не станет параллельна земле.",
+            "Напрягите корпус и удерживайте это положение в течение нескольких секунд.",
+            "Вернитесь в исходное положение, оттолкнувшись ногами и снова встав.",
+            "Повторите необходимое количество повторений."
+          ],
+          "proposed_value": [
+            "Подготовьте надёжную гимнастическую опору и страховку; элемент требует высокой силовой подготовки.",
+            "Перенесите вес тела на прямые руки, разведённые в стороны, выведя корпус и ноги в горизонтальное положение.",
+            "Сохраняйте вытянутую линию тела и контролируйте плечи и таз.",
+            "Удерживайте положение только пока сохраняется контроль, затем безопасно выйдите из упора."
+          ]
+        },
+        "instruction_steps.en": {
+          "expected_current": [
+            "Start by standing with your feet shoulder-width apart and your arms extended straight out to the sides.",
+            "Slowly lean forward, keeping your arms straight, until your upper body is parallel to the ground.",
+            "Engage your core and hold this position for a few seconds.",
+            "Return to the starting position by pushing through your feet and standing back up.",
+            "Repeat for the desired number of repetitions."
+          ],
+          "proposed_value": [
+            "Prepare secure gymnastics support and spotting; this advanced hold requires significant strength.",
+            "Support your body on straight arms spread to the sides and extend your torso and legs horizontally.",
+            "Keep the body extended while controlling the shoulders and hips.",
+            "Hold only while fully controlled, then exit the position safely."
+          ]
+        }
+      },
+      "evidence": {
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/3315-YRaCa5Y.gif",
+        "reviewed_frames": [
+          0,
+          2,
+          4,
+          6,
+          7,
+          9
+        ],
+        "observed_movement": "Балансирует горизонтально на прямых руках в гимнастическом мальтийском упоре.",
+        "issue_evidence": [
+          "GIF videos/3315-YRaCa5Y.gif; просмотрены декодированные кадры [0,2,4,6,7,9]: Балансирует горизонтально на прямых руках в гимнастическом мальтийском упоре."
+        ]
+      },
+      "review_reason": "Точная опора (кольца или другая) не подтверждена текстом аудита, нужен просмотр кадров.",
+      "approval_state": "pending",
+      "applied": false
+    },
+    {
+      "id": "3638",
+      "original_name_ru": "Выход из упора лёжа в бег",
+      "original_name_en": "push to run",
+      "proposed_name_ru": "Бег на месте с высоким подъёмом коленей и выбросами ног вперёд",
+      "proposed_name_en": "High knees with alternating forward kicks",
+      "gif_url": "videos/3638-PrQbjvB.gif",
+      "audit_status": "confirmed_mismatch",
+      "audit_priority": "P0",
+      "source_stage": "audit/visual/input/catalogue_stage_13.jsonl",
+      "audited_fields": [
+        "name_ru",
+        "name_en",
+        "instructions.ru",
+        "instructions.en",
+        "instruction_steps.ru",
+        "instruction_steps.en"
+      ],
+      "consistency_fields": [
+        "name"
+      ],
+      "field_replacements": {
+        "instructions.ru": {
+          "expected_current": "Начните с позиции для отжиманий, поставив руки на ширине плеч, а тело образуя прямую линию. Опустите грудь к земле, согнув локти, сохраняя тело прямым. Оттолкнитесь руками, чтобы вытянуть руки и вернуться в исходное положение. Быстро поднесите одно колено к груди, затем быстро поменяйте местами и подтяните другое колено к груди. Продолжайте чередовать колени так быстро, как только можете, сохраняя при этом хорошую форму. Продолжайте желаемую продолжительность или количество повторений.",
+          "proposed_value": "Встаньте прямо, сохраняя устойчивый корпус и свободное движение рук. Начните движение на месте, поочерёдно поднимая колени и вынося ноги вперёд. Чередуйте ноги в ритме бега, не переходя в упор лёжа. Мягко ставьте стопы на пол и продолжайте в контролируемом темпе."
+        },
+        "instructions.en": {
+          "expected_current": "Start in a push-up position with your hands shoulder-width apart and your body in a straight line. Lower your chest towards the ground by bending your elbows, keeping your body straight. Push through your hands to extend your arms and return to the starting position. Quickly bring one knee towards your chest, then quickly switch and bring the other knee towards your chest. Continue alternating knees as fast as you can while maintaining good form. Continue for the desired duration or number of repetitions.",
+          "proposed_value": "Stand upright with a stable torso and let your arms move freely. Begin moving in place, alternately lifting your knees and extending your legs forward. Alternate legs in a running rhythm without dropping into a plank. Land softly and continue at a controlled pace."
+        },
+        "instruction_steps.ru": {
+          "expected_current": [
+            "Начните с позиции для отжиманий, поставив руки на ширине плеч, а тело образуя прямую линию.",
+            "Опустите грудь к земле, согнув локти, сохраняя тело прямым.",
+            "Оттолкнитесь руками, чтобы вытянуть руки и вернуться в исходное положение.",
+            "Быстро поднесите одно колено к груди, затем быстро поменяйте местами и подтяните другое колено к груди.",
+            "Продолжайте чередовать колени так быстро, как только можете, сохраняя при этом хорошую форму.",
+            "Продолжайте желаемую продолжительность или количество повторений."
+          ],
+          "proposed_value": [
+            "Встаньте прямо, сохраняя устойчивый корпус и свободное движение рук.",
+            "Начните движение на месте, поочерёдно поднимая колени и вынося ноги вперёд.",
+            "Чередуйте ноги в ритме бега, не переходя в упор лёжа.",
+            "Мягко ставьте стопы на пол и продолжайте в контролируемом темпе."
+          ]
+        },
+        "instruction_steps.en": {
+          "expected_current": [
+            "Start in a push-up position with your hands shoulder-width apart and your body in a straight line.",
+            "Lower your chest towards the ground by bending your elbows, keeping your body straight.",
+            "Push through your hands to extend your arms and return to the starting position.",
+            "Quickly bring one knee towards your chest, then quickly switch and bring the other knee towards your chest.",
+            "Continue alternating knees as fast as you can while maintaining good form.",
+            "Continue for the desired duration or number of repetitions."
+          ],
+          "proposed_value": [
+            "Stand upright with a stable torso and let your arms move freely.",
+            "Begin moving in place, alternately lifting your knees and extending your legs forward.",
+            "Alternate legs in a running rhythm without dropping into a plank.",
+            "Land softly and continue at a controlled pace."
+          ]
+        },
+        "name_ru": {
+          "expected_current": "Выход из упора лёжа в бег",
+          "proposed_value": "Бег на месте с высоким подъёмом коленей и выбросами ног вперёд"
+        },
+        "name_en": {
+          "expected_current": "push to run",
+          "proposed_value": "High knees with alternating forward kicks"
+        },
+        "name": {
+          "expected_current": "Выход из упора лёжа в бег",
+          "proposed_value": "Бег на месте с высоким подъёмом коленей и выбросами ног вперёд"
+        }
+      },
+      "evidence": {
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/3638-PrQbjvB.gif",
+        "reviewed_frames": [
+          0,
+          6,
+          12,
+          18,
+          23,
+          29
+        ],
+        "observed_movement": "Стоя поочерёдно поднимает колени и выбрасывает ноги вперёд, без перехода в упор лёжа.",
+        "issue_evidence": [
+          "GIF videos/3638-PrQbjvB.gif; просмотрены декодированные кадры [0,6,12,18,23,29]: Стоя поочерёдно поднимает колени и выбрасывает ноги вперёд, без перехода в упор лёжа."
+        ]
+      },
+      "review_reason": "Утвердить точное название стоячей динамической вариации.",
+      "approval_state": "pending",
+      "applied": false
+    }
+  ]
+}
