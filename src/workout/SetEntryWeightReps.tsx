@@ -122,9 +122,17 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   }, [props.isOpen, props.onNavigationContextChange, props.data.identity.setNumber,
       props.data.identity.sourceProgramSetId, props.data.identity.sessionSetId]);
 
-  const currentWeight = draft.metrics.weightKg ?? props.data.plan?.weightKg ?? 0;
-  const currentReps = draft.metrics.reps ?? props.data.plan?.reps ?? 0;
+  // An unsupported PLAN must never make an empty FACT uneditable. Start the
+  // picker at a supported value for the missing FACT field, without modifying
+  // the original PLAN or silently rounding an existing recorded FACT.
+  const suggestedWeight = draft.metrics.weightKg ?? props.data.plan?.weightKg ?? 0;
+  const suggestedReps = draft.metrics.reps ?? props.data.plan?.reps ?? 0;
+  const weightFallback = draft.metrics.weightKg === null && !pickerCompatible(suggestedWeight, 0);
+  const repsFallback = draft.metrics.reps === null && !pickerCompatible(0, suggestedReps);
+  const currentWeight = weightFallback ? 0 : suggestedWeight;
+  const currentReps = repsFallback ? 0 : suggestedReps;
   const validPicker = pickerCompatible(currentWeight, currentReps);
+  const needsFactSelection = weightFallback || repsFallback;
   const selectedBand = draft.bands[0] ?? null;
   const bandItems: LiquidPopoverItem[] = [
     ...bands.map(([value, label]) => ({
@@ -169,8 +177,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">Повторения × Вес</Text>
             <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
           </GlassSurface>
-          {!validPicker ? <Text variant="footnote" role="alert">Существующее значение не поддерживается текущим пикером</Text> : null}
-          {!isPlan && validPicker && (draft.metrics.weightKg === null || draft.metrics.reps === null)
+          {!validPicker ? <Text variant="footnote" role="alert">Существующее значение FACT не поддерживается текущим пикером</Text> : null}
+          {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
+          {!isPlan && validPicker && !needsFactSelection && (draft.metrics.weightKg === null || draft.metrics.reps === null)
             ? <Button variant="secondary" disabled={closing} onClick={() => change(old => ({
               ...old, metrics: { ...old.metrics, weightKg: currentWeight, reps: currentReps },
             }))}>Записать {metricsText(currentWeight, currentReps)} как факт</Button> : null}
