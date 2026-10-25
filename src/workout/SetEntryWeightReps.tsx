@@ -46,6 +46,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const target = useRef<HTMLButtonElement>(null);
   const bandTarget = useRef<HTMLButtonElement>(null);
   const [closing, setClosing] = useState(false);
+  const requestCloseRef = useRef<() => void>(() => undefined);
 
   const change = (mutate: (current: SetEntryFactDraft) => SetEntryFactDraft) => {
     const next = mutate(draftRef.current);
@@ -106,6 +107,21 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     }
   };
 
+  // Route both Telegram BackButton and the app Back action through the same
+  // awaited persistence path as the visible close control.
+  requestCloseRef.current = () => { void close(); };
+  useEffect(() => {
+    if (!props.isOpen || !props.onNavigationContextChange) return;
+    const reportNavigation = props.onNavigationContextChange;
+    reportNavigation({
+      title: `Подход ${props.data.identity.setNumber}`,
+      scrollKey: `set-entry:${props.data.identity.sourceProgramSetId ?? props.data.identity.sessionSetId ?? props.data.identity.setNumber}`,
+      onBack: () => requestCloseRef.current(),
+    });
+    return () => reportNavigation(null);
+  }, [props.isOpen, props.onNavigationContextChange, props.data.identity.setNumber,
+      props.data.identity.sourceProgramSetId, props.data.identity.sessionSetId]);
+
   const currentWeight = draft.metrics.weightKg ?? props.data.plan?.weightKg ?? 0;
   const currentReps = draft.metrics.reps ?? props.data.plan?.reps ?? 0;
   const validPicker = pickerCompatible(currentWeight, currentReps);
@@ -154,6 +170,10 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
           </GlassSurface>
           {!validPicker ? <Text variant="footnote" role="alert">Существующее значение не поддерживается текущим пикером</Text> : null}
+          {!isPlan && validPicker && (draft.metrics.weightKg === null || draft.metrics.reps === null)
+            ? <Button variant="secondary" disabled={closing} onClick={() => change(old => ({
+              ...old, metrics: { ...old.metrics, weightKg: currentWeight, reps: currentReps },
+            }))}>Записать {metricsText(currentWeight, currentReps)} как факт</Button> : null}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
             {props.data.plan ? <Text variant="caption" tone="muted">План: {metricsText(props.data.plan.weightKg, props.data.plan.reps)}</Text> : null}
             {props.data.previous ? <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous.metrics.weightKg, props.data.previous.metrics.reps)}</Text> : null}
