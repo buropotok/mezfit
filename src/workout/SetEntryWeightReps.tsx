@@ -149,9 +149,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
           </GlassSurface>
           {!validPicker ? <Text variant="footnote" role="alert">Существующее значение не поддерживается текущим пикером</Text> : null}
-          {!isPlan ? <div className="set-entry-weight-reps__context">
-            <Text variant="caption" tone="muted">План: {metricsText(props.data.plan?.weightKg ?? null, props.data.plan?.reps ?? null)}</Text>
-            <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous?.metrics.weightKg ?? null, props.data.previous?.metrics.reps ?? null)}</Text>
+          {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
+            {props.data.plan ? <Text variant="caption" tone="muted">План: {metricsText(props.data.plan.weightKg, props.data.plan.reps)}</Text> : null}
+            {props.data.previous ? <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous.metrics.weightKg, props.data.previous.metrics.reps)}</Text> : null}
           </div> : null}
           <div className="set-entry-weight-reps__section">
             <div className="set-entry-weight-reps__section-heading">
