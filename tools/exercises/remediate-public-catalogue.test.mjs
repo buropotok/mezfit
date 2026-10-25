@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { executeRemediation, remissionPlan } from './remediate-public-catalogue.mjs';
+import { executeRemediation, remediationPlan } from './remediate-public-catalogue.mjs';
 
 const SHA = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 const DIGEST = 'a'.repeat(64);
@@ -54,8 +54,10 @@ function fixture() {
       return [field, { expected_current: at(row, field), proposed_value }];
     }));
     return { id, original_name_ru: row.name_ru, original_name_en: row.name_en,
+      proposed_name_ru: field_replacements.name_ru?.proposed_value ?? row.name_ru,
+      proposed_name_en: field_replacements.name_en?.proposed_value ?? row.name_en,
       gif_url: row.gif_url, audit_status: 'confirmed_mismatch', audit_priority: 'P0',
-      field_replacements };
+      approval_state: 'pending', applied: false, field_replacements };
   });
   const proposal = {
     batch_id: 'REM-01', source_catalogue_sha256: SHA, target: 'publicExerciseDefinitions',
@@ -96,11 +98,11 @@ function fakeSession(current, { corrupt = false, failManifest = false } = {}) {
 describe('REM-01 protected catalogue correction operator', () => {
   it('limits the draft to six exact IDs and 32 reviewed field changes', () => {
     const f = fixture();
-    const plan = remissionPlan(f.current, f.source, f.proposal, DIGEST);
+    const plan = remediationPlan(f.current, f.source, f.proposal, DIGEST);
     expect(f.changes).toHaveLength(32);
     expect(plan.updates.map(row => row.id)).toEqual(SIX);
     expect(plan.approved).toBe(false);
-    const original = f.current.publicExerciseDefinitions[0];
+    const original = f.current.publicExerciseDefinitions.find(row => row.id === '3637');
     const replacement = plan.updates[0];
     expect(original).not.toBe(replacement);
     expect(replacement.tracking_type).toBe('weight_reps');
@@ -109,22 +111,23 @@ describe('REM-01 protected catalogue correction operator', () => {
   it('rejects out-of-scope fields, forged old values, unknown ids and foreign realm', () => {
     let f = fixture();
     f.proposal.exercises[0].field_replacements.equipment = { expected_current: 'bodyweight', proposed_value: 'rings' };
-    expect(() => remissionPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/allowlist/);
+    expect(() => remediationPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/allowlist/);
     f = fixture();
     f.proposal.exercises[0].field_replacements.name_ru.expected_current = 'forged';
-    expect(() => remissionPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/ungrounded/);
+    expect(() => remediationPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/ungrounded/);
     f = fixture();
     f.current.publicExerciseDefinitions[0].realmId = 'private-realm';
-    expect(() => remissionPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/Unexpected public row/);
+    expect(() => remediationPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/Unexpected public row/);
     f = fixture();
     f.current.publicExerciseDefinitions[0].id = '9999';
-    expect(() => remissionPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/Unknown public exercise ID/);
+    expect(() => remediationPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/Unknown public exercise ID/);
   });
   it('does not allow publication with pending editorial review or without a private R2 backup', async () => {
     const f = fixture(), db = fakeSession(f.current);
     await expect(executeRemediation({ session: db.session, source: f.source, patch: f.proposal,
       patchSha256: DIGEST, backupApproved: true })).rejects.toThrow(/approved editorial/);
     f.proposal.approval_state = 'approved';
+    f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
     await expect(executeRemediation({ session: db.session, source: f.source, patch: f.proposal,
       patchSha256: DIGEST, backupApproved: false })).rejects.toThrow(/private R2 backup/);
     expect(db.writes).toHaveLength(0);
@@ -132,6 +135,7 @@ describe('REM-01 protected catalogue correction operator', () => {
   it('writes only six definitions, then verifies all records and activates marker last; replay is idempotent', async () => {
     const f = fixture(), db = fakeSession(f.current);
     f.proposal.approval_state = 'approved';
+    f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
     const outcome = await executeRemediation({ session: db.session, source: f.source,
       patch: f.proposal, patchSha256: DIGEST, backupApproved: true });
     expect(outcome).toMatchObject({ status: 'published', updated: 6, verifiedExercises: 1324 });
@@ -149,6 +153,7 @@ describe('REM-01 protected catalogue correction operator', () => {
   it('does not activate manifest after partial failure or readback mutation', async () => {
     const f = fixture(), db = fakeSession(f.current, { corrupt: true });
     f.proposal.approval_state = 'approved';
+    f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
     await expect(executeRemediation({ session: db.session, source: f.source,
       patch: f.proposal, patchSha256: DIGEST, backupApproved: true })).rejects.toThrow(/readback/);
     expect(db.writes.map(w => w.name)).toEqual(['publicExerciseDefinitions']);
