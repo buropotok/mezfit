@@ -104,14 +104,9 @@ const finalSession: ActiveWorkoutSession = {
     ...exercise,
     sets: exercise.sets.map((set) => ({
       ...set,
-      status: 'completed',
-      fact: {
-        metrics: { weightKg: 50, reps: 8, durationSeconds: null, distanceMeters: null },
-        setLabel: null,
-        rpe: null,
-        comment: null,
-        bands: [],
-      },
+      status: 'pending',
+      setType: 'cluster',
+      fact: null,
     })),
   } : exercise),
 };
