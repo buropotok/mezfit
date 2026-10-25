@@ -346,6 +346,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
     onInformation,
     onOpenHistory,
     onOpenChat,
+    onNavigationContextChange,
   } = props;
   const [selectedSessionSetId, setSelectedSessionSetId] = useState<number | null>(null);
   const completedSets = data.sets.filter((set) => set.status === 'completed').length;
@@ -432,6 +433,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
               fact: selectedSet.fact,
             }}
             onClose={() => setSelectedSessionSetId(null)}
+            onNavigationContextChange={onNavigationContextChange}
             onSave={(fact) => props.onSaveSet({
               workoutSessionId: context.workoutSessionId,
               sessionExerciseId: data.sessionExerciseId,
