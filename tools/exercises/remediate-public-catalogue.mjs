@@ -79,9 +79,14 @@ function checkProposal(source, patch) {
       || !isDeepStrictEqual(Object.keys(item.field_replacements).sort(), FIELDS[item.id].slice().sort()))
       fail('Unexpected exercise or field allowlist');
     const sourceRow = original.get(item.id);
-    if (!sourceRow || item.original_name_ru !== sourceRow.name_ru
+    if (!sourceRow || item.applied !== false || !['pending', 'approved'].includes(item.approval_state)
+      || item.original_name_ru !== sourceRow.name_ru
       || item.original_name_en !== sourceRow.name_en || item.gif_url !== sourceRow.gif_url)
       fail('REM-01 exercise provenance mismatch');
+    if (FIELDS[item.id].includes('name') &&
+      (item.proposed_name_ru !== item.field_replacements.name_ru.proposed_value
+       || item.proposed_name_en !== item.field_replacements.name_en.proposed_value))
+      fail('Proposed names differ from field replacements');
     for (const field of FIELDS[item.id]) {
       const change = item.field_replacements[field];
       if (!isRecord(change) || !isDeepStrictEqual(at(sourceRow, field), change.expected_current)
@@ -129,7 +134,7 @@ function checkLiveRows(tables, source) {
 }
 
 /** Pure plan; may be used by tests with synthetic live public tables. */
-export function remissionPlan(current, source, patch, patchSha256) {
+export function remediationPlan(current, source, patch, patchSha256) {
   validateCatalogue(source);
   if (!/^[0-9a-f]{64}$/.test(patchSha256)) fail('Missing proposal digest');
   const changes = checkProposal(source, patch);
@@ -164,11 +169,14 @@ export function remissionPlan(current, source, patch, patchSha256) {
   }
   if (activated && updates.length) fail('Activated release contains outdated rows');
   return { updates, activated, snapshot: structuredClone(current), manifest: structuredClone(manifest),
-    patchSha256, approved: patch.approval_state === 'approved' };
+    patchSha256, approved: patch.approval_state === 'approved'
+      && [...changes.values()].every(({ item }) => item.approval_state === 'approved') };
 }
 async function readPublic(session) {
   const current = {};
-  for (const table of Object.keys(COUNTS)) current[table] = await session.list(table);
+  for (const table of Object.keys(COUNTS)) {
+    current[table] = (await session.list(table)).sort((a, b) => a.id.localeCompare(b.id));
+  }
   return current;
 }
 function backupPayload(snapshot) {
@@ -177,10 +185,11 @@ function backupPayload(snapshot) {
   )) } };
 }
 export async function executeRemediation({ session, source, patch, patchSha256, backupApproved }) {
-  if (!backupApproved || patch.approval_state !== 'approved')
+  if (!backupApproved || patch.approval_state !== 'approved'
+    || patch.exercises.some(item => item.approval_state !== 'approved'))
     fail('REM-01 requires private R2 backup and approved editorial values');
   const before = await readPublic(session);
-  const plan = remissionPlan(before, source, patch, patchSha256);
+  const plan = remediationPlan(before, source, patch, patchSha256);
   if (!plan.approved) fail('Editorial approval is missing');
   // Repeat the full remote read immediately before mutation, including 1318 untouched rows.
   if (!isDeepStrictEqual(before, await readPublic(session))) fail('Public catalogue changed since preflight');
