@@ -1,4 +1,5 @@
 import { liveQuery } from 'dexie';
+import { isSetType, type SetType } from '../../../shared/set-type';
 import { markProgramChanged } from './program-sync';
 import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
 import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
@@ -623,9 +624,33 @@ export class ProgramManagementRepository {
       const position = sets.filter(row => belongsToPlan(row, current))
         .reduce((max, row) => Math.max(max, row.position), -1) + 1;
       await this.db.programSets.add({ realmId: current.realmId, owner: this.ownerForRealm(current.realmId),
-        programExerciseId: exerciseId, position, status: 'active', setLabel: 'normal', comment: null,
+        programExerciseId: exerciseId, position, status: 'active', setType: null, comment: null,
         materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
         plannedDurationSeconds: null, plannedDistanceMeters: null });
+    });
+  }
+
+  /** Update one authored PLAN set, retaining all unrelated fields and stable identity. */
+  async updateExerciseSet(id: string, dayId: string, exerciseId: string, setId: string,
+    input: { weightKg: number | null; reps: number | null; setType: SetType | null }): Promise<void> {
+    if ((input.weightKg !== null && (!Number.isFinite(input.weightKg) || input.weightKg < 0))
+      || (input.reps !== null && (!Number.isInteger(input.reps) || input.reps < 0))
+      || (input.setType !== null && !isSetType(input.setType))) throw new Error('Некорректные значения подхода');
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'], async () => {
+      const current = await this.currentParent(plan);
+      await this.currentDay(current, dayId);
+      const exercise = await this.db.programExercises.get(exerciseId);
+      if (!exercise || exercise.programDayId !== dayId || !belongsToPlan(exercise, current)
+        || exercise.status !== 'active') throw new Error('Упражнение не найдено');
+      const set = await this.db.programSets.get(setId);
+      if (!set || set.programExerciseId !== exerciseId || !belongsToPlan(set, current)
+        || set.status !== 'active') throw new Error('Подход не найден');
+      await this.beginChange(current);
+      await this.db.programSets.update(setId, {
+        plannedWeightKg: input.weightKg, plannedReps: input.reps, setType: input.setType,
+      });
     });
   }
 
@@ -702,7 +727,7 @@ export class ProgramManagementRepository {
           const prev = next.sourceProgramSetId ? oldSets.get(next.sourceProgramSetId) : undefined;
           if (next.sourceProgramSetId && !prev) throw new Error('Подход изменился');
           const values = {
-            position, setLabel: next.setLabel ?? 'normal', comment: next.comment,
+            position, setType: next.setType ?? null, comment: next.comment,
             materialLinks: next.materialLinks, chatLinks: next.chatLinks,
             plannedReps: next.plannedReps, plannedWeightKg: next.plannedWeightKg,
             plannedDurationSeconds: next.plannedDurationSeconds,
