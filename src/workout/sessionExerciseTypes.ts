@@ -1,6 +1,7 @@
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { ExerciseDefinition } from '../api';
 import type { ExistingSetFact, PreviousSet, SetEntryFactDraft, SetMetrics } from './setEntryTypes';
+import type { SetType } from '../../shared/set-type';
 
 export type SessionExerciseStatus = 'planned' | 'active' | 'completed' | 'skipped' | 'inactive';
 export type SessionSetStatus = 'pending' | 'completed' | 'skipped';
@@ -19,6 +20,7 @@ export interface SessionExerciseSetData {
   sourceProgramSetId: number | null;
   position: number;
   status: SessionSetStatus;
+  setType?: SetType | null;
   plan: SetMetrics | null;
   previous: PreviousSet | null;
   fact: ExistingSetFact | null;
