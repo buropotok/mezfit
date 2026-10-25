@@ -1078,7 +1078,8 @@ export async function getWorkoutSessionProjection(
       previous: row.previous_date && hasMetrics(previousMetrics)
         ? { workoutDate: row.previous_date, metrics: previousMetrics }
         : null,
-      fact: row.set_status === 'completed'
+      fact: row.set_status === 'completed' || row.set_type !== null || row.rpe !== null
+        || row.comment !== null || parseBands(row.bands_json).length > 0
         ? {
             metrics: factMetrics,
             setLabel: row.set_label,
