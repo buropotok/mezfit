@@ -177,7 +177,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">Повторения × Вес</Text>
             <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
           </GlassSurface>
-          {!validPicker ? <Text variant="footnote" role="alert">Существующее значение FACT не поддерживается текущим пикером</Text> : null}
+          {!validPicker ? <Text variant="footnote" role="alert">{isPlan
+            ? 'Плановое значение не поддерживается текущим пикером'
+            : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
           {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
           {!isPlan && validPicker && !needsFactSelection && (draft.metrics.weightKg === null || draft.metrics.reps === null)
             ? <Button variant="secondary" disabled={closing} onClick={() => change(old => ({
