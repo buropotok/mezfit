@@ -1,5 +1,7 @@
 import { liveQuery } from 'dexie';
 import { isSetType, type SetType } from '../../../shared/set-type';
+import type { CloudProgramExerciseSnapshot } from '../../../shared/program-exercise-snapshot';
+import { isExerciseTrackingType, type ExerciseTrackingType } from '../exercises/publicExerciseTypes';
 import { markProgramChanged } from './program-sync';
 import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
 import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
@@ -628,6 +630,17 @@ export class ProgramManagementRepository {
         materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
         plannedDurationSeconds: null, plannedDistanceMeters: null });
     });
+  }
+
+  /** Tracking metadata belongs to the canonical exercise definition, never to the PLAN snapshot. */
+  async trackingTypeForExercise(snapshot: CloudProgramExerciseSnapshot): Promise<ExerciseTrackingType | null> {
+    const definition = snapshot.scope === 'public'
+      ? await this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId)
+      : snapshot.scope === 'coach'
+        ? await this.db.coachExerciseDefinitions.get(snapshot.exerciseDefinitionId)
+        : null;
+    const candidate = definition?.tracking_type ?? snapshot.catalogueDefinition?.tracking_type;
+    return isExerciseTrackingType(candidate) ? candidate : null;
   }
 
   /** Update one authored PLAN set, retaining all unrelated fields and stable identity. */
