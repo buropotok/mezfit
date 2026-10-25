@@ -427,6 +427,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
               },
               trackingType: data.exercise.tracking_type,
               plan: selectedSet.plan,
+              setType: selectedSet.setType ?? null,
               previous: selectedSet.previous,
               fact: selectedSet.fact,
             }}
