@@ -21,32 +21,32 @@ const item: CloudProgramDayOutline['exercises'][number] = {
       get trackingType(): never { throw new Error('Program rendering must not read tracking type'); },
     } },
   sets: [{ id: 'program-set', realmId: 'tg:101', owner: 'tg:101', programExerciseId: 'program-exercise',
-    position: 0, status: 'active', setLabel: 'warmup', comment: 'Плавно', materialLinks: [], chatLinks: [],
+    position: 0, status: 'active', setType: 'dropset', comment: 'Плавно', materialLinks: [], chatLinks: [],
     plannedWeightKg: 123, plannedReps: 15, plannedDurationSeconds: 60, plannedDistanceMeters: 100 }],
 };
 
 describe('existing exercise component in program mode', () => {
   it('leaves program set details unmounted until first expand and retains them afterwards', () => {
-    let labelReads = 0;
+    let typeReads = 0;
     const lazyItem: typeof item = {
       ...item,
       sets: [{
         ...item.sets[0],
-        get setLabel() {
-          labelReads += 1;
-          return item.sets[0].setLabel;
+        get setType() {
+          typeReads += 1;
+          return item.sets[0].setType;
         },
       }],
     };
     const { container } = render(<SessionExercise mode="program" data={lazyItem} />);
     expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
     expect(container.querySelector('.session-exercise__set-row')).toBeNull();
-    expect(labelReads).toBe(0);
+    expect(typeReads).toBe(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
     const row = container.querySelector('.session-exercise__set-row');
     expect(row).not.toBeNull();
-    expect(labelReads).toBeGreaterThan(0);
+    expect(typeReads).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Свернуть упражнение' }));
     expect(container.querySelector('.session-exercise__set-row')).toBe(row);
@@ -59,7 +59,7 @@ describe('existing exercise component in program mode', () => {
     const menu = screen.getByRole('button', { name: 'Меню упражнения' });
     expect(chevron.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(menu.hasAttribute('data-no-dnd')).toBe(true);
-    expect(screen.getByText('Подход 1')).toBeTruthy();
+    expect(screen.getByText('Подход 1. План: 123 кг × 15')).toBeTruthy();
   });
   it('opens the existing information action by tapping media without collapsing the card', () => {
     const onInformation = vi.fn();
@@ -72,7 +72,7 @@ describe('existing exercise component in program mode', () => {
     expect(information.hasAttribute('data-no-dnd')).toBe(true);
     fireEvent.click(information);
     expect(onInformation).toHaveBeenCalledOnce();
-    expect(screen.getByText('Подход 1')).toBeTruthy();
+    expect(screen.getByText('Подход 1. План: 123 кг × 15')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Свернуть упражнение' }).getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByRole('button', { name: 'Меню упражнения' })).toBeTruthy();
   });
@@ -83,13 +83,13 @@ describe('existing exercise component in program mode', () => {
     expect(container.querySelector('.session-exercise')).not.toBeNull();
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/exercise-image');
     expect(screen.getByText('1 подход')).toBeTruthy();
-    expect(screen.getByText('Подход 1')).toBeTruthy();
-    expect(screen.getByText('Разминочный')).toBeTruthy();
+    expect(screen.getByText('Подход 1. План: 123 кг × 15')).toBeTruthy();
+    expect(screen.getByText('Тип подхода: Дропсет')).toBeTruthy();
     expect(screen.getByText('Плавно')).toBeTruthy();
-    expect(screen.queryByText(/123|ввести факт|ввести план|План:|Пред.:|выполнено|RPE/)).toBeNull();
+    expect(screen.queryByText(/Пред.:|выполнено|RPE/)).toBeNull();
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
-    fireEvent.click(screen.getByText('Подход 1'));
+    fireEvent.click(screen.getByText('Подход 1. План: 123 кг × 15'));
     expect(screen.queryByRole('dialog')).toBeNull();
     const add = screen.getByRole('button', { name: 'Добавить подход' });
     expect(add.querySelector('.session-exercise__add-set-button')).not.toBeNull();
