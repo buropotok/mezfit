@@ -53,7 +53,7 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalled());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
       setType: 'cluster', setLabel: null, rpe: 8,
-      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+      metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
     }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
