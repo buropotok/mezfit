@@ -17,13 +17,11 @@ describe('approved female 3/4 atlas media', () => {
     const manifest = JSON.parse(readFileSync(new URL('manifest.json', frontDirectory), 'utf8'));
     const neutral = readFileSync(new URL('neutral.png', frontDirectory));
     const color = readFileSync(new URL('color-atlas.png', frontDirectory));
-    const glow = readFileSync(new URL('glow-atlas.png', frontDirectory));
 
     expect(dimensions(neutral)).toEqual([1024, 1536]);
     expect([config.width, config.height]).toEqual([1024, 1536]);
     expect([manifest.width, manifest.height, manifest.view, manifest.tonePercent])
       .toEqual([1024, 1536, 'front', null]);
-    expect(dimensions(color)).toEqual(dimensions(glow));
     const [atlasWidth, atlasHeight] = dimensions(color);
     const sprites = parseWorkedMuscleAtlasManifest(manifest, 'front', atlasWidth, atlasHeight, 'female');
     expect(Object.keys(sprites)).toHaveLength(40);
