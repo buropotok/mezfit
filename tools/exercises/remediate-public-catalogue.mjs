@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { openPublicSession } from './publish-public-catalogue.mjs';
 import { validateCatalogue } from './prepare-public-catalogue.mjs';
+import { TRACKING_RELEASE_SHA256, TRACKING_SCHEMA_VERSION } from './restore-legacy-tracking.mjs';
 
 const SOURCE_SHA = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 const DATABASE_URL = 'https://zjv60oxag.dexie.cloud';
@@ -130,6 +131,11 @@ function checkLiveRows(tables, source) {
   if (!active || active.schemaVersion !== '2.0.0' || active.exerciseCount !== 1324
     || active.taxonomyCount !== 69 || typeof active.publishedAt !== 'string')
     fail('Unexpected public catalogue manifest');
+  const hasTracking = Object.hasOwn(active, 'trackingSchemaVersion')
+    || Object.hasOwn(active, 'trackingReleaseSha256');
+  if (hasTracking && (active.trackingSchemaVersion !== TRACKING_SCHEMA_VERSION
+    || active.trackingReleaseSha256 !== TRACKING_RELEASE_SHA256))
+    fail('Unexpected tracking marker on public catalogue');
   return active;
 }
 
