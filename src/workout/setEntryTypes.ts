@@ -1,4 +1,5 @@
 import type { PlannedSet, TrackingType } from '../api';
+import type { NavigationContext } from '../NavigationShell';
 import type { SetType } from '../../shared/set-type';
 
 import type { SetLabel } from '../../shared/set-label';
@@ -63,6 +64,8 @@ interface SetEntrySharedProps {
   isOpen: boolean;
   data: SetEntryData;
   onClose: () => void;
+  /** Register the editor as the active nested navigation surface. */
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
   onOpenHistory?: () => void;
   onOpenChat?: () => void;
 }
