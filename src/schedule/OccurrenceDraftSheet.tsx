@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { isWorkoutEditRejected, type WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
-import { appendOccurrenceExercise, appendOccurrenceSet, occurrencePlanChanged,
+import { appendOccurrenceExercise, appendOccurrenceSet, occurrenceStructureChanged,
   removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises, updateOccurrenceSetPlan } from '../data/cloud/workout-occurrence-edit';
 import { readProgramCatalogueExercise, programExerciseSnapshot } from '../data/cloud/program-exercise-selection';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -195,7 +195,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       if (!latest) throw new Error('Черновик не найден');
       const owner = (latest.coachUserId ?? latest.athleteUserId) === latest.actorUserId;
       if (!latest.autoCreatedProgram && latest.trainingPlanId && latest.programDayId
-        && !latest.previouslyPublished && owner && occurrencePlanChanged(latest.plan, latest.originalPlan)) {
+        && !latest.previouslyPublished && owner && occurrenceStructureChanged(latest.plan, latest.originalPlan)) {
         setProgramUpdateOpen(true);
       } else {
         await onSave(latest, false);
