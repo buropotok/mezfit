@@ -104,7 +104,7 @@ describe('WorkoutSessionCard capability ownership', () => {
     expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
   });
 
-  it('routes Back from the active workout card to saving the opened FACT SetEntry', async () => {
+  it('routes Back from the active workout card to FACT discard confirmation without saving', async () => {
     const session: ActiveWorkoutSession = { ...baseSession, exercises: [{
       sessionExerciseId: 200, workoutSessionId: 501, sourceProgramExerciseId: null,
       position: 0, status: 'active', notes: null,
@@ -142,15 +142,14 @@ describe('WorkoutSessionCard capability ownership', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     act(() => navigation.onBack?.());
-
-    await waitFor(() => expect(onSaveSet).toHaveBeenCalledWith(expect.objectContaining({
-      workoutSessionId: 501, sessionExerciseId: 200, sessionSetId: 301,
-      fact: expect.objectContaining({
-        setType: 'cluster',
-        metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
-      }),
-    })));
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onSaveSet).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
+    act(() => navigation.onBack?.());
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
+    expect(onSaveSet).not.toHaveBeenCalled();
   });
 
   it('keeps completed sessions read-only even when structural callbacks exist', () => {
