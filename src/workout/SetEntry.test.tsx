@@ -99,6 +99,28 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
+  it('clears an existing optional weight/reps RPE when slider returns to zero', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{
+        ...baseData, fact: {
+          metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+          setLabel: null, setType: null, rpe: 8, comment: null, bands: [],
+        },
+      }} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    expect(screen.getByText('RPE: 8')).toBeTruthy();
+    fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '0' } });
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      rpe: null, setLabel: null,
+      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
   it('saves cloud PLAN without showing FACT-only controls or PREVIOUS', async () => {
     const onPlanSave = vi.fn(async () => undefined);
     render(<SetEntry mode="occurrence-plan" isOpen data={{ ...baseData, setType: null }}
