@@ -157,8 +157,9 @@ describe('calendar PLAN versus reusable template', () => {
       onEdit={() => {}} onComment={() => {}} onMove={() => {}}
       onDuplicate={() => {}} onDelete={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
-    expect(screen.getByText(/План:.*123 кг.*15 повт.*1:00.*0,10 км/)).toBeTruthy();
-    fireEvent.click(screen.getByText('Подход 1'));
+    const planLine = screen.getByText(/^Подход 1\\. План: 15×123 · 1:00 · 0,10 км$/);
+    expect(planLine.classList.contains('ui-text--body')).toBe(true);
+    fireEvent.click(planLine);
     expect(open).toHaveBeenCalledWith('program-exercise', 'program-set');
     expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();
