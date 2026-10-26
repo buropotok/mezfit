@@ -7,7 +7,7 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
-type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'program-plan' | 'occurrence-plan' }> |
+type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
   Extract<SetEntryProps, { mode?: 'workout' }>;
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -29,7 +29,7 @@ function pickerCompatible(weightKg: number, reps: number): boolean {
 
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
 export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
-  const isPlan = props.mode === 'program-plan' || props.mode === 'occurrence-plan';
+  const isPlan = props.mode === 'occurrence-plan';
   const glass = loadBrowserGlassSettings();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => {
