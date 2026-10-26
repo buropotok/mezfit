@@ -18,7 +18,7 @@ export interface SetEntryMetricTileProps {
   value: string;
   ariaLabel: string;
   disabled: boolean;
-  blur: number;
+  blur?: number;
   buttonRef?: Ref<HTMLElement>;
   onClick: () => void;
 }
