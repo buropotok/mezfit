@@ -87,7 +87,10 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
         },
       }} onClose={onClose} onSave={onSave} />
     </KonstaProvider>);
-    fireEvent.change(screen.getByRole('textbox', { name: /Как прошёл подход/ }), {
+    // Konsta's floating textarea label is visually present, but the input's
+    // accessible name is empty in its current public ListInput contract.
+    expect(screen.getByText('Как прошёл подход?')).toBeTruthy();
+    fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Лучше предыдущего' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
