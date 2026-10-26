@@ -3,8 +3,8 @@
   "status": "partial_not_for_publication",
   "metadata": {
     "record_count": 112,
-    "verified_data_sheet_count": 98,
-    "pending_data_sheet_count": 14,
+    "verified_data_sheet_count": 99,
+    "pending_data_sheet_count": 13,
     "canonical_mezfit_catalogue_count": 1324,
     "source_catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
     "description": "Non-authoritative additive staging metadata; never automatically import into Dexie Cloud or overwrite its immutable source",
@@ -13,14 +13,15 @@
     "name_similarity_candidate_count": 28,
     "name_similarity_candidate_note": "Heuristic name matching is not semantic identity; review equipment, position and animation before any deduplication.",
     "reference_validation_note": "The product page may omit the numeric Reference in text; a matched page title is not a verified Reference-code match.",
-    "product_page_found_count": 99,
+    "product_page_found_count": 100,
     "reference_confirmed_listing_count": 40,
     "data_sheet_review_date": "2026-10-26",
     "verified_exact_gif_datasheet_count": 88,
-    "verified_alternate_media_datasheet_count": 10,
+    "verified_alternate_media_datasheet_count": 11,
     "explicitly_refuted_duplicate_ids": [
       "5120"
-    ]
+    ],
+    "reference_confirmed_product_count": 1
   },
   "records": [
     {
@@ -2434,13 +2435,23 @@
       "gym_keeper_apk_reference_key": "81891305-Wide-Chin-Up-(male)_Back_180.gif",
       "apk_category": "back",
       "apk_equipment_code": "other",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/illustrations/19058-wide-chin-up-male.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Back"
+        ],
+        "equipment_type": "Body weight",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_product_page",
+      "data_sheet_evidence_media_type": "illustration",
+      "data_sheet_evidence_url": "https://gymvisual.com/illustrations/19058-wide-chin-up-male.html",
+      "gymvisual_reference_on_page": "8189"
     },
     {
       "id": "8190",
