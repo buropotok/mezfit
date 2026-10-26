@@ -133,7 +133,9 @@ export function MezfitSlider({
 
   const handleInput = (event: FormEvent<HTMLInputElement>) => {
     const nextValue = clamp(Number(event.currentTarget.value), min, max);
-    if (nextValue === value) return;
+    // Keep the existing uncontrolled Range event contract unchanged.
+    // Controlled consumers suppress duplicate notifications for unchanged values.
+    if (controlledValue !== undefined && nextValue === value) return;
     if (controlledValue === undefined) setValue(nextValue);
     onValueChange?.(nextValue);
   };
