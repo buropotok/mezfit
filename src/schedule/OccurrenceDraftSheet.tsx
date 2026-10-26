@@ -276,8 +276,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     if (!exercise?.sets.some(item => item.id === setId)) return;
     try {
       const type = await planner.programs.trackingTypeForExercise(exercise.exercise);
-      if (type !== 'weight_reps') {
-        setError('Пикер этого типа учёта ещё не подключён к планированию тренировки');
+      if (!type) {
+        setError('Не удалось определить тип учёта упражнения');
         return;
       }
       setEditingSet({ exerciseId, setId, trackingType: type });
@@ -412,7 +412,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             ...current, plan: { ...current.plan,
               exercises: current.plan.exercises.map(ex => ex.id !== editingSet.exerciseId ? ex : ({
                 ...ex, sets: ex.sets.map(set => set.id !== editingSet.setId ? set : ({
-                  ...set, plannedWeightKg: input.weightKg, plannedReps: input.reps, setType: input.setType,
+                  ...set,
+                  plannedWeightKg: input.weightKg !== undefined ? input.weightKg : set.plannedWeightKg,
+                  plannedReps: input.reps !== undefined ? input.reps : set.plannedReps,
+                  plannedDurationSeconds: input.durationSeconds !== undefined ? input.durationSeconds : set.plannedDurationSeconds,
+                  plannedDistanceMeters: input.distanceMeters !== undefined ? input.distanceMeters : set.plannedDistanceMeters,
+                  setType: input.setType,
                 })),
               })) },
           }));
