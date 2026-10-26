@@ -60,6 +60,7 @@
   background: transparent;
   font-family: var(--ui-font-family);
   -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
 }
 
 .ui-time-picker__column--free-momentum .ui-time-picker__option {
@@ -132,7 +133,12 @@
 }
 
 .ui-time-picker__lens-text,
-.ui-time-picker__lens-separator {
+.ui-time-picker__lens-separator,
+.ui-time-picker__lens-unit {
   fill: var(--ui-color-surface-text);
   font-family: var(--ui-font-family);
+}
+
+.ui-time-picker__lens-text {
+  font-variant-numeric: tabular-nums;
 }

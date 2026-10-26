@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
 import { MezfitPopover } from '../konsta-mezfit';
+import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
   resolveTwoColumnPickerLensMode,
@@ -141,7 +142,7 @@ function LensText({
       {visibleLensItems(column.values, scrollTop).map(({ index, value, y }) => {
         const scale = lensMode === 'ios' ? iosLensScale(y) : 1;
         const transform = lensMode === 'ios' && scale !== 1
-          ? `translate(${x} ${y}) scale(${scale}) translate(${-x} ${-y})`
+          ? centeredLensScale(x, y, scale)
           : undefined;
 
         return (
@@ -199,7 +200,7 @@ function PickerLens({
           x={x}
           y={LENS_HEIGHT / 2}
           transform={lensMode === 'ios'
-            ? `translate(${x} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-x} ${-LENS_HEIGHT / 2})`
+            ? centeredLensScale(x, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
             : undefined}
           textAnchor="middle"
           dominantBaseline="central"
@@ -415,7 +416,7 @@ export function ThreeColumnPicker({
     let cancelled = false;
     const view = documentRef.defaultView;
     const build = () => {
-      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef));
+      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef, lensXs));
     };
 
     if (!view || typeof view.requestAnimationFrame !== 'function') {
@@ -430,7 +431,7 @@ export function ThreeColumnPicker({
       cancelled = true;
       view.cancelAnimationFrame(frame);
     };
-  }, [lensAssets, opened, resolvedLensMode, target]);
+  }, [lensAssets, lensXs, opened, resolvedLensMode, target]);
 
   useEffect(() => {
     const view = target?.ownerDocument.defaultView ?? window;

@@ -10,13 +10,17 @@ const COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
   {
     ariaLabel: 'Километры',
     values: KILOMETERS,
-    format: (value) => `${value} км`,
+    format: String,
+    formatAria: (value) => `${value} км`,
+    fixedUnit: 'км',
     freeMomentum: true,
   },
   {
     ariaLabel: 'Метры',
     values: METERS,
-    format: (value) => `${String(value).padStart(3, '0')} м`,
+    format: (value) => String(value).padStart(3, '0'),
+    formatAria: (value) => `${String(value).padStart(3, '0')} м`,
+    fixedUnit: 'м',
     freeMomentum: true,
   },
 ];

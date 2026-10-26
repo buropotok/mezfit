@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
 import { MezfitPopover } from '../konsta-mezfit';
+import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
   resolveTwoColumnPickerLensMode,
@@ -25,6 +26,10 @@ const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
 const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
+// The wheel reserves 2.5rem for its center separator; column centers
+// on a 288px track are 62px and 226px, not 72px and 216px.
+const LENS_COLUMN_XS = [62, 226] as const;
+const UNIT_OFFSET_X = 36;
 
 export type TwoColumnPickerSide = 'left' | 'right';
 
@@ -38,6 +43,7 @@ export interface TwoColumnPickerColumn {
   values: readonly number[];
   format: (value: number) => string;
   formatAria?: (value: number) => string;
+  fixedUnit?: string;
   freeMomentum?: boolean;
   circular?: boolean;
   flickSnapStep?: number;
@@ -146,7 +152,7 @@ function LensText({
       {visibleLensItems(column, scrollTop).map(({ index, value, y }) => {
         const scale = lensMode === 'ios' ? iosLensScale(y) : 1;
         const transform = lensMode === 'ios' && scale !== 1
-          ? `translate(${x} ${y}) scale(${scale}) translate(${-x} ${-y})`
+          ? centeredLensScale(x, y, scale)
           : undefined;
 
         return (
@@ -185,14 +191,33 @@ function PickerLens({
   const clipId = `ui-time-picker-lens-clip-${reactId}`;
   const sourceClipId = `ui-time-picker-lens-source-clip-${reactId}`;
   const separatorTransform = lensMode === 'ios'
-    ? `translate(${LENS_WIDTH * 0.5} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-LENS_WIDTH * 0.5} ${-LENS_HEIGHT / 2})`
+    ? centeredLensScale(LENS_WIDTH / 2, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
     : undefined;
+
+  // Fixed units are composited after the displacement filter so they never
+  // shift optically or scroll with any numeric ribbon.
+  const fixedUnitLabels = (
+    <>
+      {columns.map((column, index) => column.fixedUnit ? (
+        <text
+          key={column.ariaLabel}
+          x={LENS_COLUMN_XS[index] + UNIT_OFFSET_X}
+          y={LENS_HEIGHT / 2}
+          textAnchor="start"
+          dominantBaseline="central"
+          className="ui-time-picker__lens-unit ui-text--footnote"
+        >
+          {column.fixedUnit}
+        </text>
+      ) : null)}
+    </>
+  );
 
   const lensContent = (
     <>
       <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
       <LensText
-        x={LENS_WIDTH * 0.25}
+        x={LENS_COLUMN_XS[0]}
         column={columns[0]}
         scrollTop={scrollTops.left}
         lensMode={lensMode}
@@ -210,7 +235,7 @@ function PickerLens({
         </text>
       ) : null}
       <LensText
-        x={LENS_WIDTH * 0.75}
+        x={LENS_COLUMN_XS[1]}
         column={columns[1]}
         scrollTop={scrollTops.right}
         lensMode={lensMode}
@@ -290,12 +315,13 @@ function PickerLens({
         </defs>
 
         {lensMode === 'ios' ? (
-          <g clipPath={`url(#${clipId})`}>{lensContent}</g>
+          <g clipPath={`url(#${clipId})`}>{lensContent}{fixedUnitLabels}</g>
         ) : (
           <g clipPath={`url(#${clipId})`}>
             <g filter={assets ? `url(#${filterId})` : undefined}>
               <g clipPath={`url(#${sourceClipId})`}>{lensContent}</g>
             </g>
+            {fixedUnitLabels}
           </g>
         )}
       </svg>
@@ -415,7 +441,7 @@ export function TwoColumnPicker({
     let cancelled = false;
     const view = documentRef.defaultView;
     const build = () => {
-      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef));
+      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef, LENS_COLUMN_XS));
     };
 
     if (!view || typeof view.requestAnimationFrame !== 'function') {
