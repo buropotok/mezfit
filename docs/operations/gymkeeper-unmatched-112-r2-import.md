@@ -32,20 +32,22 @@ exercise-media/gym_keeper_apk/unmatched-112/v1/01461305-Butt-Kicks-(female)_Card
 ```
 
 For each reference, GitHub Actions:
-1. Tries the existing private R2 object
-   `exercise-media/gym_keeper_apk/<original APK reference key>` first.
-2. If the existing source object is definitively absent, downloads from the
-   approved **original Gym Keeper APK URL**
+1. Downloads the original bytes from the approved **Gym Keeper APK URL**
    `https://47-1594.s.cdn13.com/img/gifs/180/<original APK reference key>`.
    No downloads from `gymvisual.com` occur.
-3. Validates GIF87a/GIF89a signature, exact 180×180 frame dimensions and a
+2. Validates GIF87a/GIF89a signature, exact 180×180 frame dimensions and a
    maximum size of 8 MiB.
-4. Checks the destination object; if already present, verifies exact SHA-256
+3. Checks the destination object; if already present, verifies exact SHA-256
    equality and skips. A different existing object is **never overwritten**.
-5. Writes any missing object via Wrangler `r2 object put --remote`, reads it
+4. Writes any missing object via Wrangler `r2 object put --remote`, reads it
    back via `r2 object get --remote`, and verifies identical SHA-256.
-6. Writes only a summary and object hashes to GitHub Actions logs, not GIF
+5. Writes only a summary and object hashes to GitHub Actions logs, not GIF
    bytes, credentials or tokens.
+
+The importer deliberately does **not** copy from legacy
+`exercise-media/gym_keeper_apk/<reference_key>` objects, because the old
+importer could have populated them through approximate name matching. This
+workflow uses exact URLs from the APK and checks their bytes before writing.
 
 The importer treats authentication, network, and bucket errors as fatal rather
 than treating them as a missing object. It may complete some entries before a
