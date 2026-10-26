@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { updateOccurrenceSetPlan } from './workout-occurrence-edit';
+import { updateOccurrenceSetPlan, occurrenceStructureChanged, occurrencePlanChanged } from './workout-occurrence-edit';
 import { snapshotProgramDay } from './workout-occurrence-plan';
 import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
 import type { CloudProgramDayOutline } from './workout-foundation-types';
@@ -50,6 +50,12 @@ describe('instance-only set PLAN ownership', () => {
       plannedDurationSeconds: null, plannedDistanceMeters: null, setType: 'dropset',
     });
     expect(updated.exercises[0].sets[0]).toMatchObject({ plannedWeightKg: 70.75, plannedReps: 8, setType: 'dropset' });
+    expect(occurrencePlanChanged(updated, first)).toBe(true);
+    expect(occurrenceStructureChanged(updated, first)).toBe(false);
+    const newStructure = { ...updated, exercises: [...updated.exercises, {
+      ...updated.exercises[0], id: 'second', position: 1,
+    }] };
+    expect(occurrenceStructureChanged(newStructure, first)).toBe(true);
     expect(first).toEqual(base);
     expect(second).toEqual(base);
     expect(() => updateOccurrenceSetPlan(first, 'exercise', 'missing', {
