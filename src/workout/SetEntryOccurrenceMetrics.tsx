@@ -102,7 +102,9 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     return valid(key, value) ? value : 0;
   };
   const selectedBand = draft.bands[0] ?? null;
+  const inputLocked = closing || (!isPlan && saving);
   const change = (update: (value: typeof draft) => typeof draft) => {
+    if (!isPlan && factSavingRef.current) return;
     const next = update(draftRef.current);
     draftRef.current = next;
     setDraft(next);
@@ -166,6 +168,8 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     setSaving(true);
     setError('');
     const snapshot = draftRef.current;
+    setPicker(null);
+    setBandOpen(false);
     try {
       await props.onSave({
         ...snapshot, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands],
@@ -231,7 +235,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
               triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
               trigger={<IconButton ref={bandTarget}
-                label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}>
+                disabled={inputLocked} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}>
                 <span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" />
               </IconButton>} /> : null}
             {props.onOpenHistory ? <IconButton icon="history" label="История упражнения"
@@ -246,10 +250,10 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <GlassSurface component="button" wrapContent={false} shape="auto" preset="modalTuned"
               optics={false} blur={glass.blur} halo="lifted" className="set-entry-weight-reps__metric-tile"
               ref={node => { targets.current[key] = node as HTMLButtonElement | null; }}
-              aria-disabled={closing || !valid(key, suggested(key))}
+              aria-disabled={inputLocked || !valid(key, suggested(key))}
               aria-label={EDIT_LABELS[key]}
               onClick={() => {
-                if (!closing && valid(key, suggested(key))) setPicker(key);
+                if (!inputLocked && valid(key, suggested(key))) setPicker(key);
               }}>
               <Text variant="body">{LABELS[key]}</Text>
               <Text variant="body">{display(key, draft.metrics[key])}</Text>
@@ -272,7 +276,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
               {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray"
-                selected={(draft.setType ?? null) === type} disabled={closing}
+                selected={(draft.setType ?? null) === type} disabled={inputLocked}
                 onClick={() => change(old => ({
                   ...old, setType: old.setType === type ? null : type,
                 }))}>{SET_TYPE_LABELS[type]}</BadgeChoice>)}
@@ -287,7 +291,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
                 <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0}
                   ariaLabel="RPE" onValueChange={value => {
-                    if (!closing) change(old => ({ ...old, rpe: value === 0 ? null : value }));
+                    if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value }));
                   }} />
               </div>
             </div>
@@ -298,7 +302,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               </div>
               <List nested strong dividers={false}>
                 <MezfitAutosizeTextarea label="Как прошёл подход?" floatingLabel outline
-                  value={draft.comment ?? ''} disabled={closing} maxLength={1000}
+                  value={draft.comment ?? ''} disabled={inputLocked} maxLength={1000}
                   onChange={event => change(old => ({
                     ...old, comment: event.currentTarget.value || null,
                   }))} />
