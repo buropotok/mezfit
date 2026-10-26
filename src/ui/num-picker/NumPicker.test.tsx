@@ -32,13 +32,14 @@ function renderPicker({
 
   return {
     onChange,
+    onClose,
     ...renderResult,
-    setValue(nextValue: number) {
+    setValue(nextValue: number, opened = true) {
       renderResult.rerender(
         <KonstaProvider theme="ios" dark>
           <div className="k-ios dark">
             <NumPicker
-              opened
+              opened={opened}
               target={target}
               value={nextValue}
               onChange={onChange}
@@ -110,6 +111,21 @@ describe('NumPicker', () => {
     expect(within(screen.getByRole('listbox', { name: 'Последние две цифры' })).getByRole('option', { name: '99' }).getAttribute('aria-selected')).toBe('true');
     onChange.mockClear();
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('reopens with the parent value, never emits on unchanged selection and closes without a write', () => {
+    const onChange = vi.fn();
+    const onClose = vi.fn();
+    const picker = renderPicker({ value: 399, onChange, onClose });
+    picker.setValue(999, false);
+    picker.setValue(999, true);
+    expect(within(screen.getByRole('listbox', { name: 'Сотни' }))
+      .getByRole('option', { name: '9' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }));
+    const dialog = screen.getByRole('dialog', { name: 'Выбор числа' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(onClose).toHaveBeenCalledTimes(1);
     expect(onChange).not.toHaveBeenCalled();
   });
 
