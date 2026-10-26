@@ -2,7 +2,7 @@ export { Avatar, Button, Divider, IconButton, Surface, Text, type AvatarSize, ty
 export type { UiComponentTheme } from './componentTheme';
 export { Icon, type IconProps, type UiIconName, type UiIconVariant } from './Icon';
 export type { UiIconPair, UiIconSource } from './iconPair';
-export { Badge, type BadgeColor, type BadgeProps } from './Badge';
+export { Badge, BadgeButton, type BadgeColor, type BadgeProps, type BadgeButtonProps } from './Badge';
 export { DatePicker, type DatePickerDayStatus, type DatePickerDayStatusEntry, type DatePickerProps, type DatePickerSurface, type LocalDate } from './date-picker/DatePicker';
 export { TimePicker, type TimePickerLensMode, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
 export { NumPicker, type NumPickerProps } from './num-picker/NumPicker';
