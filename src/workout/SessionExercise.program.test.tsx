@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { SessionExercise } from './SessionExercise';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
+import { WorkoutPlanCard } from './WorkoutPlanCard';
 
 vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
@@ -128,5 +129,26 @@ describe('existing exercise component in program mode', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
     fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
     expect(addSet).toHaveBeenCalledWith('program-exercise');
+  });
+});
+
+describe('calendar PLAN versus reusable template', () => {
+  it('shows numeric assignments and opens a read-only calendar set without authoring controls', () => {
+    const open = vi.fn();
+    const view = render(<WorkoutPlanCard mode="planning" showPlanMetrics readOnly
+      day={{ day: { id: 'day', realmId: 'tg:101', owner: null, programPhaseId: 'phase',
+        name: 'А', position: 0, status: 'active' }, exercises: [item] }}
+      creatorName="Тренер" onOpenSet={open} hideWorkoutActions hideProgramMenu
+      onEdit={() => {}} onComment={() => {}} onMove={() => {}}
+      onDuplicate={() => {}} onDelete={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    expect(screen.getByText(/План:.*123 кг.*15 повт.*1:00.*0,10 км/)).toBeTruthy();
+    fireEvent.click(screen.getByText('Подход 1'));
+    expect(open).toHaveBeenCalledWith('program-exercise', 'program-set');
+    expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();
+    view.unmount();
+    render(<SessionExercise mode="program" data={item} defaultCollapsed={false} />);
+    expect(screen.queryByText(/План:/)).toBeNull();
   });
 });

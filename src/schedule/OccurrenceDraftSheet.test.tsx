@@ -40,13 +40,14 @@ vi.mock('../workout/WorkoutPlanCard', () => ({
   </>,
 }));
 vi.mock('../workout/SetEntry', () => ({
-  SetEntry: ({ data, onPlanSave, onClose, onDeleteSet }: {
+  SetEntry: ({ data, onPlanSave, onClose, onDeleteSet, readOnly }: {
+    readOnly?: boolean;
     data: { plan: { weightKg: number | null; reps: number | null } };
     onPlanSave: (metrics: { weightKg: number; reps: number; setType: 'cluster' }) => Promise<void>;
     onClose: () => void; onDeleteSet?: () => Promise<void>;
-  }) => <div role="dialog" aria-label="План конкретной тренировки">
+  }) => <div role="dialog" aria-label="План конкретной тренировки" data-read-only={readOnly}>
     <span data-testid="occurrence-plan-weight">{data.plan.weightKg ?? '—'}</span>
-    <button onClick={() => { void onPlanSave({ weightKg: 80.75, reps: 8, setType: 'cluster' }); }}>
+    <button disabled={readOnly} onClick={() => { void onPlanSave({ weightKg: 80.75, reps: 8, setType: 'cluster' }); }}>
       Сохранить план подхода
     </button>
     <button onClick={() => { void onDeleteSet?.(); }}>Удалить план подхода</button>
@@ -529,5 +530,34 @@ describe('draft edit recovery', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     finish();
     await waitFor(() => expect(save).toHaveBeenCalledWith(draft, false));
+  });
+});
+
+describe('client access to assigned calendar PLAN', () => {
+  it.each([false, true])('opens the coach set for inspection with parent readOnly=%s and never writes PLAN', async readOnly => {
+    cloudEnabled.value = true;
+    const scheduled: LocalWorkoutOccurrenceDraft = { ...draft, coachUserId: 'tg:202',
+      clientUserId: 'tg:101', saved: true,
+      plan: { ...plan, exercises: [{ ...plan.exercises[0], sets: [{
+        id: 'assigned-set', sourceProgramSetId: null, position: 0, setType: 'cluster',
+        setLabel: null, comment: null, materialLinks: [], chatLinks: [],
+        plannedWeightKg: 70.75, plannedReps: 8, plannedDurationSeconds: null, plannedDistanceMeters: null,
+      }] }] },
+    };
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts} readOnly={readOnly}
+      onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть план подхода 1' }));
+    const editor = await screen.findByRole('dialog', { name: 'План конкретной тренировки' });
+    expect(editor.getAttribute('data-read-only')).toBe('true');
+    expect(screen.getByTestId('occurrence-plan-weight').textContent).toBe('70.75');
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить план подхода' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить план подхода' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть план' }));
+    expect(screen.queryByRole('dialog', { name: 'План конкретной тренировки' })).toBeNull();
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(scheduled.plan.exercises[0].sets[0].plannedWeightKg).toBe(70.75);
   });
 });

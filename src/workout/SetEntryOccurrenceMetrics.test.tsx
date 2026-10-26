@@ -271,3 +271,36 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     expect(onPlanSave).not.toHaveBeenCalled();
   });
 });
+
+describe('assigned PLAN inspection', () => {
+  it.each(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight'] as const)(
+    '%s lets a client read and close the set without editing the coach PLAN', trackingType => {
+      const save = vi.fn(async () => undefined);
+      const remove = vi.fn(async () => undefined);
+      const close = vi.fn();
+      render(<KonstaProvider theme="ios" dark>
+        <SetEntry mode="occurrence-plan" readOnly isOpen
+          data={{ ...base, trackingType, setType: 'cluster' }}
+          onClose={close} onPlanSave={save} onDeleteSet={remove} />
+      </KonstaProvider>);
+      expect(screen.getByRole('dialog', { name: 'Подход 2' })).toBeTruthy();
+      expect(screen.getByText('План подхода')).toBeTruthy();
+      expect(screen.getAllByText(trackingType === 'weight_reps' ? /70,75/ : '00:02:05').length).toBeGreaterThan(0);
+      for (const metric of screen.getAllByRole('button', { name: /^Изменить / })) {
+        expect(metric.getAttribute('aria-disabled')).toBe('true');
+        fireEvent.click(metric);
+      }
+      const technique = screen.getByRole('button', { name: 'Кластер' });
+      expect(technique.getAttribute('aria-pressed')).toBe('true');
+      expect(technique.hasAttribute('disabled')).toBe(true);
+      fireEvent.click(technique);
+      expect(technique.getAttribute('aria-pressed')).toBe('true');
+      expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Удалить подход' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+      expect(close).toHaveBeenCalledOnce();
+      expect(save).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalled();
+    },
+  );
+});

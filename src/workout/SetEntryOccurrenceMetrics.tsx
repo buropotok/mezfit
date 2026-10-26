@@ -57,6 +57,7 @@ function display(key: EditableMetric, value: number | null) {
 /** An occurrence-scoped editor for non-weight/reps PLAN metrics. Never writes program template rows. */
 export function SetEntryOccurrenceMetrics(props: Props) {
   const isPlan = props.mode === 'occurrence-plan';
+  const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
   const [draft, setDraft] = useState(() => {
     const initial = createSetEntryDraft(props.data);
     if (isPlan || props.data.fact) return initial;
@@ -96,9 +97,9 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     return valid(key, value) ? value : 0;
   };
   const selectedBand = draft.bands[0] ?? null;
-  const inputLocked = saving;
+  const inputLocked = saving || readOnly;
   const change = (update: (value: typeof draft) => typeof draft) => {
-    if (saveInFlightRef.current) return;
+    if (saveInFlightRef.current || readOnly) return;
     const next = update(draftRef.current);
     draftRef.current = next;
     setDraft(next);
@@ -117,7 +118,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
 
   // PLAN and FACT are committed only by the explicit Save action.
   const saveEntry = async () => {
-    if (saveInFlightRef.current) return;
+    if (saveInFlightRef.current || readOnly) return;
     saveInFlightRef.current = true;
     setSaving(true);
     setError('');
@@ -168,12 +169,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <header className="set-entry-weight-reps__header">
           <div>
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
-            <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
+            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
           </div>
-          <KonstaButton clear small inline className="set-entry-weight-reps__save"
+          {!readOnly ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
             disabled={saving} onClick={() => { void saveEntry(); }}>
             <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
-          </KonstaButton>
+          </KonstaButton> : null}
           <IconButton icon="x" label="Закрыть подход" disabled={saving}
             onClick={() => requestClose.current()} />
         </header>
@@ -262,14 +263,14 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             </div>
           </> : null}
           {props.onOpenChat ? <KonstaButton onClick={props.onOpenChat}><Text variant="body">Открыть чат</Text></KonstaButton> : null}
-          {isPlan && props.onDeleteSet ? <KonstaButton clear onClick={() => setDeleteConfirm(true)}>
+          {isPlan && !readOnly && props.onDeleteSet ? <KonstaButton clear onClick={() => setDeleteConfirm(true)}>
             <Text variant="body">Удалить подход</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
       </div>
     </MezfitBottomSheet>, host)}
-    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+    {isPlan && !readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong onClick={() => {

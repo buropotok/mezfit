@@ -85,6 +85,8 @@ export type SetEntryProps =
     })
   | (SetEntrySharedProps & {
       mode: 'occurrence-plan';
+      /** Assigned PLAN can be inspected without granting mutation rights. */
+      readOnly?: boolean;
       onPlanSave: (input: Partial<SetMetrics> & { setType: SetType | null }) => Promise<void>;
       onSave?: never;
     });

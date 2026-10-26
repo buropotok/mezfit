@@ -77,6 +77,8 @@ export type WorkoutSessionExerciseProps =
 /** Program templates use stable cloud IDs and recommendations, without a result-entry contract. */
 export interface ProgramSessionExerciseProps {
   mode: 'program';
+  /** Calendar occurrences retain numeric assignments; reusable templates do not. */
+  showPlanMetrics?: boolean;
   data: CloudProgramDayOutline['exercises'][number];
   surface?: 'default' | 'transparent';
   editable?: boolean;

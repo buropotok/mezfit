@@ -30,6 +30,7 @@ function pickerCompatible(weightKg: number, reps: number): boolean {
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
 export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const isPlan = props.mode === 'occurrence-plan';
+  const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
   const glass = loadBrowserGlassSettings();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data));
@@ -46,7 +47,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const requestCloseRef = useRef<() => void>(() => undefined);
 
   const change = (mutate: (current: SetEntryFactDraft) => SetEntryFactDraft) => {
-    if (saveInFlightRef.current) return;
+    if (saveInFlightRef.current || readOnly) return;
     const next = mutate(draftRef.current);
     draftRef.current = next;
     setDraft(next);
@@ -55,7 +56,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
 
   // Neither FACT nor the scheduled PLAN is persisted until Save is tapped.
   const saveEntry = async () => {
-    if (saveInFlightRef.current) return;
+    if (saveInFlightRef.current || readOnly) return;
     saveInFlightRef.current = true;
     setSaving(true);
     setError('');
@@ -116,7 +117,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const validPicker = pickerCompatible(currentWeight, currentReps);
   const needsFactSelection = weightFallback || repsFallback;
   const selectedBand = draft.bands[0] ?? null;
-  const inputLocked = saving;
+  const inputLocked = saving || readOnly;
   const bandItems: LiquidPopoverItem[] = [
     ...bands.map(([value, label]) => ({
       id: value,
@@ -136,12 +137,12 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         <header className="set-entry-weight-reps__header">
           <div>
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
-            <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
+            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
           </div>
-          <KonstaButton clear small inline className="set-entry-weight-reps__save"
+          {!readOnly ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
             disabled={saving} onClick={() => { void saveEntry(); }}>
             <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
-          </KonstaButton>
+          </KonstaButton> : null}
           <IconButton icon="x" label="Закрыть подход" disabled={saving}
             onClick={() => requestCloseRef.current()} />
         </header>
@@ -212,12 +213,12 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="body">Открыть чат</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-          {isPlan && props.onDeleteSet ? <KonstaButton clear className="set-entry-weight-reps__delete"
+          {isPlan && !readOnly && props.onDeleteSet ? <KonstaButton clear className="set-entry-weight-reps__delete"
             onClick={() => setDeleteConfirm(true)}><Text variant="body">Удалить подход</Text></KonstaButton> : null}
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
-    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+    {isPlan && !readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong onClick={() => {
