@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { buildPlan, DESTINATION_PREFIX } from './import-gym-keeper-unmatched-r2.mjs';
+import { buildPlan, DESTINATION_PREFIX, validateGifBytes } from './import-gym-keeper-unmatched-r2.mjs';
 
 // Intentionally use the actual committed source artifacts. These tests protect
 // 112 exact identities; they do not depend on or change the 99 Data Sheet values.
@@ -50,6 +50,10 @@ describe('Gym Keeper 112 media-only R2 import', () => {
 
   it('rejects a changed catalogue baseline or changed APK source name', () => {
     const { staging, audit, sql } = source();
+    const invalidDigest = structuredClone(audit);
+    invalidDigest.source.catalogue_sha256 = '0'.repeat(64);
+    expect(() => buildPlan(staging, invalidDigest, sql))
+      .toThrow('Unapproved public catalogue SHA-256 baseline');
     const invalidAudit = structuredClone(audit);
     invalidAudit.stages[0].exercise_ids[0] = '0146';
     // Changing the 1324 set must invalidate the 112-item difference.
@@ -62,4 +66,21 @@ describe('Gym Keeper 112 media-only R2 import', () => {
     expect(() => buildPlan(staging, audit, invalidSql))
       .toThrow('Untrusted or inconsistent staging row');
   });
+  it('rejects corrupt, oversized and non-180x180 GIFs before upload', () => {
+    const good = Buffer.alloc(50);
+    good.write('GIF89a', 0, 'ascii');
+    good.writeUInt16LE(180, 6);
+    good.writeUInt16LE(180, 8);
+    expect(() => validateGifBytes(good, 'test')).not.toThrow();
+    const invalidFormat = Buffer.from(good);
+    invalidFormat.write('HTML!!', 0, 'ascii');
+    expect(() => validateGifBytes(invalidFormat, 'test')).toThrow('Not GIF bytes');
+    const invalidDimensions = Buffer.from(good);
+    invalidDimensions.writeUInt16LE(250, 6);
+    expect(() => validateGifBytes(invalidDimensions, 'test')).toThrow('Expected 180x180');
+    expect(() => validateGifBytes(Buffer.alloc(9), 'test')).toThrow('Invalid GIF size');
+    expect(() => validateGifBytes(Buffer.alloc(8 * 1024 * 1024 + 1), 'test'))
+      .toThrow('Invalid GIF size');
+  });
+
 });
