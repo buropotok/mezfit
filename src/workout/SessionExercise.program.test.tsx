@@ -165,6 +165,6 @@ describe('calendar PLAN versus reusable template', () => {
     expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();
     view.unmount();
     render(<SessionExercise mode="program" data={item} defaultCollapsed={false} />);
-    expect(screen.queryByText(/План:/)).toBeNull();
+    expect(screen.queryByText(/^Подход 1\. План\b/)).toBeNull();
   });
 });
