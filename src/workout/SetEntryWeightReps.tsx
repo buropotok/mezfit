@@ -6,7 +6,7 @@ import { Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextare
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
-type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'program-plan' }> |
+type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
   Extract<SetEntryProps, { mode?: 'workout' }>;
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -29,7 +29,7 @@ function pickerCompatible(weightKg: number, reps: number): boolean {
 
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
 export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
-  const isPlan = props.mode === 'program-plan';
+  const isPlan = props.mode === 'occurrence-plan';
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => {
     const initial = createSetEntryDraft(props.data);
     return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
@@ -66,7 +66,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     // Serializes all auto-saves: a stale network response cannot apply a later draft first.
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
-      if (props.mode === 'program-plan') {
+      if (props.mode === 'occurrence-plan') {
         await props.onPlanSave({
           weightKg: snapshot.metrics.weightKg,
           reps: snapshot.metrics.reps,
