@@ -97,12 +97,28 @@ describe('NumPicker', () => {
     expect(onChange).toHaveBeenLastCalledWith(242);
   });
 
+  it('selects the complete 0–999 range and emits exactly 999', () => {
+    const onChange = vi.fn();
+    const picker = renderPicker({ value: 0, onChange });
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }));
+    expect(onChange).toHaveBeenLastCalledWith(900);
+    picker.setValue(900);
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Последние две цифры' })).getByRole('option', { name: '99' }));
+    expect(onChange).toHaveBeenLastCalledWith(999);
+    picker.setValue(999);
+    expect(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }).getAttribute('aria-selected')).toBe('true');
+    expect(within(screen.getByRole('listbox', { name: 'Последние две цифры' })).getByRole('option', { name: '99' }).getAttribute('aria-selected')).toBe('true');
+    onChange.mockClear();
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('rejects values outside the supported integer range', () => {
-    expect(() => renderPicker({ value: 400 })).toThrow(
-      'NumPicker value must be an integer from 0 to 399',
+    expect(() => renderPicker({ value: 1000 })).toThrow(
+      'NumPicker value must be an integer from 0 to 999',
     );
     expect(() => renderPicker({ value: 12.5 })).toThrow(
-      'NumPicker value must be an integer from 0 to 399',
+      'NumPicker value must be an integer from 0 to 999',
     );
   });
 });
