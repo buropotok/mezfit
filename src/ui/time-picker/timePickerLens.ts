@@ -122,11 +122,14 @@ export function buildTimeLensVectorFields({
   height = DEFAULT_HEIGHT,
   pixelRatio = DEFAULT_PIXEL_RATIO,
   includeSpecular = true,
+  zoomCenters,
 }: {
   width?: number;
   height?: number;
   pixelRatio?: number;
   includeSpecular?: boolean;
+  /** Stable SVG-x anchors for independently magnified wheel columns. */
+  zoomCenters?: readonly number[];
 } = {}): TimeLensVectorFields {
   const safeWidth = Math.max(1, width);
   const safeHeight = Math.max(1, height);
@@ -144,6 +147,8 @@ export function buildTimeLensVectorFields({
   const edgeScale = Math.max(1, ...refractionProfile.map(Math.abs));
   const zoomFactor = 1 - 1 / ZOOM_MAGNIFICATION;
   const zoomMaxX = halfWidth * zoomFactor;
+  const sortedCenters = zoomCenters && zoomCenters.length > 0
+    ? [...zoomCenters].sort((a, b) => a - b) : null;
   const zoomMaxY = halfHeight * zoomFactor;
   const zoomScale = Math.max(1, Math.hypot(zoomMaxX, zoomMaxY));
   const lightX = Math.cos(SPECULAR_ANGLE);
@@ -160,7 +165,30 @@ export function buildTimeLensVectorFields({
 
       if (distanceInside < 0) continue;
 
-      const zoomX = -x * zoomFactor;
+      // The original filter zoomed about the center of the entire capsule,
+      // moving the left and right wheel numbers sideways when selected.
+      // Keep each glyph anchored to its own wheel and soften transitions.
+      let zoomX = -x * zoomFactor;
+      if (sortedCenters) {
+        const logicalX = x + halfWidth;
+        let nearest = 0;
+        for (let index = 1; index < sortedCenters.length; index += 1) {
+          if (Math.abs(logicalX - sortedCenters[index]) < Math.abs(logicalX - sortedCenters[nearest])) {
+            nearest = index;
+          }
+        }
+        const center = sortedCenters[nearest];
+        const adjacentDistances = [
+          nearest > 0 ? center - sortedCenters[nearest - 1] : Infinity,
+          nearest < sortedCenters.length - 1 ? sortedCenters[nearest + 1] - center : Infinity,
+        ];
+        const nearestGap = Math.min(...adjacentDistances);
+        const radius = Number.isFinite(nearestGap) ? nearestGap / 2 : halfWidth;
+        const progress = clamp(Math.abs(logicalX - center) / Math.max(radius, 1), 0, 1);
+        const edge = clamp((progress - 0.7) / 0.3, 0, 1);
+        const fade = 1 - edge * edge * (3 - 2 * edge);
+        zoomX = -(logicalX - center) * zoomFactor * fade;
+      }
       const zoomY = -y * zoomFactor;
       writeVector(zoomPixels, offset, zoomX / zoomScale, zoomY / zoomScale);
 
@@ -253,13 +281,14 @@ function fieldToDataUrl(documentRef: Document, field: TimeLensVectorField) {
   }
 }
 
-const assetCache = new WeakMap<Document, TimeLensAssets>();
+const assetCache = new WeakMap<Document, Map<string, TimeLensAssets>>();
 
-export function buildTimeLensAssets(documentRef: Document): TimeLensAssets | null {
-  const cached = assetCache.get(documentRef);
+export function buildTimeLensAssets(documentRef: Document, zoomCenters?: readonly number[]): TimeLensAssets | null {
+  const cacheKey = zoomCenters?.join(',') ?? 'default';
+  const cached = assetCache.get(documentRef)?.get(cacheKey);
   if (cached) return cached;
 
-  const fields = buildTimeLensVectorFields({ includeSpecular: false });
+  const fields = buildTimeLensVectorFields({ includeSpecular: false, zoomCenters });
   const edgeHref = fieldToDataUrl(documentRef, fields.edge);
   const zoomHref = fieldToDataUrl(documentRef, fields.zoom);
   if (!edgeHref || !zoomHref) return null;
@@ -270,6 +299,8 @@ export function buildTimeLensAssets(documentRef: Document): TimeLensAssets | nul
     zoomHref,
     zoomScale: fields.zoom.scale,
   };
-  assetCache.set(documentRef, assets);
+  const cache = assetCache.get(documentRef) ?? new Map<string, TimeLensAssets>();
+  cache.set(cacheKey, assets);
+  assetCache.set(documentRef, cache);
   return assets;
 }
