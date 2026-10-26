@@ -9,7 +9,7 @@ import { BadgeChoice, Divider, DistancePicker, DurationPicker, GlassSurface, Ico
 import { createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
-type Props = Extract<SetEntryProps, { mode: 'program-plan' | 'occurrence-plan' }> |
+type Props = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
   Extract<SetEntryProps, { mode?: 'workout' }>;
 type MetricKey = keyof SetMetrics;
 type EditableMetric = Exclude<MetricKey, never>;
@@ -50,7 +50,7 @@ function display(key: EditableMetric, value: number | null) {
 
 /** An occurrence-scoped editor for non-weight/reps PLAN metrics. Never writes program template rows. */
 export function SetEntryOccurrenceMetrics(props: Props) {
-  const isPlan = props.mode === 'occurrence-plan' || props.mode === 'program-plan';
+  const isPlan = props.mode === 'occurrence-plan';
   const [draft, setDraft] = useState(() => {
     const initial = createSetEntryDraft(props.data);
     return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
@@ -106,7 +106,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     const setType = snapshot.setType ?? null;
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
-      if (props.mode === 'occurrence-plan' || props.mode === 'program-plan') {
+      if (props.mode === 'occurrence-plan') {
         await props.onPlanSave({ ...metrics, setType });
       } else {
         await props.onSave({
