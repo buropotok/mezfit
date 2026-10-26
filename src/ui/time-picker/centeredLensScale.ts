@@ -1,4 +1,4 @@
-/** Scale an SVG glyph around its own anchor instead of the lens origin. */
+/** Magnify around the glyph's own anchor, preserving the original iOS SVG scale contract. */
 export function centeredLensScale(x: number, y: number, scale: number): string {
-  return `matrix(${scale} 0 0 ${scale} ${(1 - scale) * x} ${(1 - scale) * y})`;
+  return `translate(${x} ${y}) scale(${scale}) translate(${-x} ${-y})`;
 }
