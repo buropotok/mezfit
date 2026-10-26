@@ -125,7 +125,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         await props.onPlanSave({ ...metrics, setType });
       } else {
         await props.onSave({
-          ...snapshot, metrics, setType, setLabel: null,
+          ...snapshot, metrics, setType,
         });
       }
       saved.current = Math.max(saved.current, at);
@@ -254,7 +254,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
                 <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0}
                   ariaLabel="RPE" onValueChange={value => {
-                    if (!closing) change(old => ({ ...old, rpe: value }));
+                    if (!closing) change(old => ({ ...old, rpe: value === 0 ? null : value }));
                   }} />
               </div>
             </div>
