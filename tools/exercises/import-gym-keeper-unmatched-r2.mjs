@@ -23,6 +23,7 @@ const CDN_BASE = 'https://47-1594.s.cdn13.com/img/gifs/180/';
 const MAX_BYTES = 8 * 1024 * 1024;
 const REQUIRED_ROWS = 112;
 const REQUIRED_CATALOGUE_IDS = 1324;
+const SOURCE_SHA256 = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 const WRANGLER = './node_modules/.bin/wrangler';
 
 function fail(message) { throw new Error(message); }
@@ -32,7 +33,7 @@ function validKey(key) {
     && /^\d{4}1305-[A-Za-z0-9_.()+-]+_180\.gif$/.test(key)
     && key.length <= 220;
 }
-function gif(bytes, label) {
+export function validateGifBytes(bytes, label) {
   if (bytes.length < 10 || bytes.length > MAX_BYTES) fail('Invalid GIF size for ' + label);
   const signature = bytes.subarray(0, 6).toString('ascii');
   if (signature !== 'GIF87a' && signature !== 'GIF89a') fail('Not GIF bytes: ' + label);
@@ -47,6 +48,9 @@ export function buildPlan(staging, audit, sqlSources) {
       || !audit || !Array.isArray(audit.stages) || !Array.isArray(sqlSources)
       || sqlSources.length !== 7) fail('Unexpected import inputs');
 
+  if (audit.source?.catalogue_sha256 !== SOURCE_SHA256 || audit.total_exercises !== REQUIRED_CATALOGUE_IDS) {
+    fail('Unapproved public catalogue SHA-256 baseline');
+  }
   const catalogueIds = audit.stages.flatMap(s => s.exercise_ids || []);
   if (catalogueIds.length !== REQUIRED_CATALOGUE_IDS
       || new Set(catalogueIds).size !== REQUIRED_CATALOGUE_IDS
@@ -146,7 +150,7 @@ async function downloadApkGif(url, id) {
         fail('APK CDN content too large for ' + id);
       }
       const bytes = Buffer.from(await response.arrayBuffer());
-      gif(bytes, id);
+      validateGifBytes(bytes, id);
       return bytes;
     } catch (error) {
       lastError = error;
@@ -178,12 +182,12 @@ async function upload(plan) {
       let bytes = await r2Get(row.sourceR2, original);
       const source = bytes ? 'existing R2' : 'APK CDN';
       if (!bytes) bytes = await downloadApkGif(row.sourceCdn, row.id);
-      gif(bytes, row.id);
+      validateGifBytes(bytes, row.id);
       await writeFile(local, bytes);
 
       const already = await r2Get(row.targetR2, target);
       if (already) {
-        gif(already, row.id + ' existing destination');
+        validateGifBytes(already, row.id + ' existing destination');
         if (sha(already) !== sha(bytes)) {
           fail('Existing destination differs; refusing overwrite for ' + row.id);
         }
