@@ -72,6 +72,24 @@ export function updateOccurrenceSetPlan(
     : ex) };
 }
 
+/** Only structural edits warrant offering to update a reusable program template.
+ * Numeric metrics and technique choices belong to this dated PLAN instance. */
+export function occurrenceStructureChanged(plan: WorkoutOccurrencePlan,
+  original: WorkoutOccurrencePlan): boolean {
+  const structure = (value: WorkoutOccurrencePlan) => ({
+    name: value.name, category: value.category ?? null, comment: value.comment,
+    exercises: value.exercises.map(exercise => ({
+      sourceProgramExerciseId: exercise.sourceProgramExerciseId,
+      definitionId: exercise.exercise.exerciseDefinitionId, notes: exercise.notes,
+      sets: exercise.sets.map(set => ({
+        sourceProgramSetId: set.sourceProgramSetId, comment: set.comment,
+        materialLinks: set.materialLinks, chatLinks: set.chatLinks,
+      })),
+    })),
+  });
+  return JSON.stringify(structure(plan)) !== JSON.stringify(structure(original));
+}
+
 /** Compare semantic prescription content, not transient local IDs. */
 export function occurrencePlanChanged(plan: WorkoutOccurrencePlan,
   original: WorkoutOccurrencePlan): boolean {
