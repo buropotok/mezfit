@@ -110,7 +110,7 @@ describe('program source selection', () => {
     }
     // The program is a structural template; tapping a set must not offer numeric editing.
     fireEvent.click(within(card).getByText('Подход 1'));
-    notice(); // Source-selection still explains why mutation is forbidden.
+    expect(blockedSelectionEdit).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull();
     const exerciseMenu = within(card).getByRole('menu', { name: 'Меню упражнения' });
     expect(within(exerciseMenu).getByRole('button', { name: 'Информация' })).toBeTruthy();
