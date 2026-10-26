@@ -1,12 +1,19 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Badge } from './Badge';
+import { Badge, BadgeButton } from './Badge';
 
 describe('selectable UI Kit Badge for set types', () => {
   it('keeps the original Badge unchanged unless the outline variant is requested', () => {
     const legacy = renderToStaticMarkup(<Badge color="gray">Кластер</Badge>);
     expect(legacy).not.toContain('ui-badge--outline');
     expect(legacy).not.toContain('ui-badge--selected');
+  });
+
+  it('uses a native button with aria-pressed and the same Badge presentation for type selection', () => {
+    const html = renderToStaticMarkup(<BadgeButton selected color="gray">Дропсет</BadgeButton>);
+    expect(html).toContain('class="ui-badge-button"');
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('ui-badge--gray ui-badge--outline ui-badge--selected');
   });
 
   it('renders neutral and selected prototype states without introducing new colors', () => {
