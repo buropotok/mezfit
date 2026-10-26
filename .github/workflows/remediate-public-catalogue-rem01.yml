@@ -42,21 +42,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Fetch exact immutable v2.0 source from private R2
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          set -euo pipefail
-          install -d -m 700 "$RUNNER_TEMP/rem-01"
-          npx wrangler r2 object get \
-            mezfit/exercise-catalogue/source/2.0.0/sha256-5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c.json \
-            --file "$RUNNER_TEMP/rem-01/source.json" --remote
+      - name: Verify source from checked-out GitHub audit files
+        run: test -s audit/visual/input/manifest.json
       - name: Read-only comparison with all live public records
         env:
           DEXIE_CLOUD_KEY_JSON: ${{ secrets.DEXIE_CLOUD_KEY_JSON }}
         run: |
           node tools/exercises/remediate-public-catalogue.mjs \
-            --mode preview --source "$RUNNER_TEMP/rem-01/source.json"
+            --mode preview --source-dir audit/visual/input
       - name: Cleanup
         if: always()
         run: rm -rf "$RUNNER_TEMP/rem-01"
@@ -81,22 +74,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Fetch immutable catalogue source from private R2
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Verify source from checked-out GitHub audit files
         run: |
           set -euo pipefail
+          test -s audit/visual/input/manifest.json
           install -d -m 700 "$RUNNER_TEMP/rem-01"
-          npx wrangler r2 object get \
-            mezfit/exercise-catalogue/source/2.0.0/sha256-5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c.json \
-            --file "$RUNNER_TEMP/rem-01/source.json" --remote
       - name: Read-only preflight; must report editorApproved true
         env:
           DEXIE_CLOUD_KEY_JSON: ${{ secrets.DEXIE_CLOUD_KEY_JSON }}
         run: |
           set -euo pipefail
           node tools/exercises/remediate-public-catalogue.mjs \
-            --mode preview --source "$RUNNER_TEMP/rem-01/source.json" \
+            --mode preview --source-dir audit/visual/input \
             | tee "$RUNNER_TEMP/rem-01/preview.json"
           node -e "const r=require(process.argv[1]); if (!r.publishAllowed || r.totalIds !== 6) process.exit(1)" \
             "$RUNNER_TEMP/rem-01/preview.json"
@@ -105,26 +94,37 @@ jobs:
           DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
         run: |
           node tools/exercises/remediate-public-catalogue.mjs \
-            --mode backup --source "$RUNNER_TEMP/rem-01/source.json" \
+            --mode backup --source-dir audit/visual/input \
             --out "$RUNNER_TEMP/rem-01/public-before.json"
-      - name: Persist private R2 backup before any changes
+      - name: Upload private public-scope snapshot to GitHub Actions Artifact
         id: backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: rem-01-public-before-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/rem-01/public-before.json
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 6
+      - name: Confirm artifact persisted before any write
+        id: verified-backup
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ARTIFACT_ID: ${{ steps.backup.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.backup.outputs.artifact-digest }}
         run: |
           set -euo pipefail
-          npx wrangler r2 object put \
-            "mezfit/exercise-catalogue/backups/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/before-rem-01.json" \
-            --file "$RUNNER_TEMP/rem-01/public-before.json" --remote
+          test -s "$RUNNER_TEMP/rem-01/public-before.json"
+          test -n "$ARTIFACT_ID"
+          test -n "$ARTIFACT_DIGEST"
           echo "saved=yes" >> "$GITHUB_OUTPUT"
       - name: Correct exactly six definitions; read back 1324 plus taxonomy; mark version last
-        if: steps.backup.outputs.saved == 'yes'
+        if: steps.verified-backup.outputs.saved == 'yes'
         env:
           DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
-          DEXIE_PRIVATE_R2_BACKUP_READY: ${{ steps.backup.outputs.saved }}
+          DEXIE_GITHUB_ARTIFACT_BACKUP_READY: ${{ steps.verified-backup.outputs.saved }}
         run: |
           node tools/exercises/remediate-public-catalogue.mjs \
-            --mode publish --source "$RUNNER_TEMP/rem-01/source.json"
-      - name: Remove source, preview and backup
+            --mode publish --source-dir audit/visual/input \
+            --backup-file "$RUNNER_TEMP/rem-01/public-before.json"
+      - name: Remove preview and local backup
         if: always()
         run: rm -rf "$RUNNER_TEMP/rem-01"
