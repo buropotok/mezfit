@@ -51,7 +51,7 @@ describe('Gym Keeper 112 media-only R2 import', () => {
   it('rejects a changed catalogue baseline or changed APK source name', () => {
     const { staging, audit, sql } = source();
     const invalidAudit = structuredClone(audit);
-    invalidAudit.stages[0].exercise_ids[0] = '9999';
+    invalidAudit.stages[0].exercise_ids[0] = '0146';
     // Changing the 1324 set must invalidate the 112-item difference.
     expect(() => buildPlan(staging, invalidAudit, sql)).toThrow();
     const invalidSql = [...sql];
