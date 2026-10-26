@@ -20,8 +20,32 @@
 .ui-badge--gray { color: var(--ui-color-surface-muted); border-color: color-mix(in srgb, var(--ui-color-surface-muted) 24%, transparent); background: color-mix(in srgb, var(--ui-color-surface-muted) 12%, transparent); }
 
 
+/* The Konsta button owns press behavior; the Badge owns the entire visible capsule. */
+.ui-badge-choice {
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  margin: 0;
+}
+
 .ui-badge--selected { border-color: #315e85; background: color-mix(in srgb, #315e85 13%, transparent); color: var(--ui-color-text, #fff); }
+
+/* Opt-in outline appearance: neutral when idle, strong primary outline when selected. */
+.ui-badge--outline {
+  color: var(--ui-color-surface-muted);
+  border-color: var(--ui-color-border);
+  background: transparent;
+}
+
+.ui-badge--outline.ui-badge--selected {
+  color: var(--ui-color-surface-text);
+  border: 2px solid var(--ui-color-primary);
+  padding: 3px 9px;
+  background: transparent;
+}
 
 @media (max-width: 430px) {
   .ui-badge { padding-inline: 8px; }
+  .ui-badge--outline.ui-badge--selected { padding-inline: 7px; }
 }

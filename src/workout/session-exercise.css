@@ -149,6 +149,14 @@
   white-space: nowrap;
 }
 
+.session-exercise__set-plan-line {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .session-exercise__set-recommendations {
   display: flex;
   flex-direction: column;

@@ -133,6 +133,21 @@ describe('existing exercise component in program mode', () => {
 });
 
 describe('calendar PLAN versus reusable template', () => {
+  it('renders a compact body line for planned repetitions × weight with caption technique', () => {
+    const planItem: typeof item = {
+      ...item, sets: [{ ...item.sets[0], plannedReps: 10, plannedWeightKg: 80.75,
+        plannedDurationSeconds: null, plannedDistanceMeters: null }],
+    };
+    const { container } = render(<SessionExercise mode="program" data={planItem}
+      showPlanMetrics defaultCollapsed={false} />);
+    const line = container.querySelector('.session-exercise__set-plan-line');
+    expect(line?.textContent?.trim()).toBe('Подход 1. План: 10×80.75');
+    expect(line?.classList.contains('ui-text--body')).toBe(true);
+    const technique = screen.getByText('Тип подхода: Дропсет');
+    expect(technique.classList.contains('ui-text--caption')).toBe(true);
+    expect(screen.queryByText(/^План:/)).toBeNull();
+  });
+
   it('shows numeric assignments and opens a read-only calendar set without authoring controls', () => {
     const open = vi.fn();
     const view = render(<WorkoutPlanCard mode="planning" showPlanMetrics readOnly
@@ -142,8 +157,9 @@ describe('calendar PLAN versus reusable template', () => {
       onEdit={() => {}} onComment={() => {}} onMove={() => {}}
       onDuplicate={() => {}} onDelete={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
-    expect(screen.getByText(/План:.*123 кг.*15 повт.*1:00.*0,10 км/)).toBeTruthy();
-    fireEvent.click(screen.getByText('Подход 1'));
+    const planLine = screen.getByText(/^Подход 1\. План: 15×123 · 1:00 · 0,10 км$/);
+    expect(planLine.classList.contains('ui-text--body')).toBe(true);
+    fireEvent.click(planLine);
     expect(open).toHaveBeenCalledWith('program-exercise', 'program-set');
     expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();

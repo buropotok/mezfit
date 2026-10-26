@@ -229,7 +229,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray" textVariant="body"
+              {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray" textVariant="body" appearance="outline"
                 selected={(draft.setType ?? null) === type} disabled={inputLocked}
                 onClick={() => change(old => ({
                   ...old, setType: old.setType === type ? null : type,
