@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
 import { MezfitPopover } from '../konsta-mezfit';
+import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
   resolveTwoColumnPickerLensMode,
@@ -30,10 +31,7 @@ const IOS_LENS_MAGNIFICATION = 1.55;
 const LENS_COLUMN_XS = [62, 226] as const;
 const UNIT_OFFSET_X = 36;
 
-function centeredLensScale(x: number, y: number, scale: number) {
-  // An explicit SVG matrix keeps the selected glyph anchored to its column.
-  return `matrix(${scale} 0 0 ${scale} ${(1 - scale) * x} ${(1 - scale) * y})`;
-}
+
 
 export type TwoColumnPickerSide = 'left' | 'right';
 
