@@ -60,7 +60,7 @@ async function readAuditedSource(dir) {
       || !/^[a-f0-9]{64}$/.test(stage.sha256)) fail('Invalid audited stage manifest');
     const bytes = await readFile(join(dir, filename));
     if (digest(bytes) !== stage.sha256) fail('Audited catalogue stage SHA-256 mismatch: ' + filename);
-    const rows = bytes.toString('utf8').trimEnd().split('\\n').map(line => JSON.parse(line));
+    const rows = bytes.toString('utf8').trimEnd().split('\n').map(line => JSON.parse(line));
     if (rows.length !== stage.count) fail('Audited stage count mismatch: ' + filename);
     exercises.push(...rows);
   }
