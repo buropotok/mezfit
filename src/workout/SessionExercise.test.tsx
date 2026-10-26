@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ExerciseDefinition } from '../api';
 import { SessionExercise, formatSessionSetMetrics } from './SessionExercise';
-import type { SessionExerciseContext, SessionExerciseData } from './sessionExerciseTypes';
+import type { SaveSessionSetInput, SessionExerciseContext, SessionExerciseData } from './sessionExerciseTypes';
 
 const exercise: ExerciseDefinition = {
   id: 20,
@@ -286,6 +287,43 @@ describe('SessionExercise and SetEntry boundary', () => {
         bands: [],
       },
     });
+  });
+
+  it('reopens a saved FACT rather than reinitializing values from PLAN', async () => {
+    const saved = vi.fn();
+    function WorkoutOwner() {
+      const [current, setCurrent] = useState<SessionExerciseData>(data);
+      const onSaveSet = async (input: SaveSessionSetInput) => {
+        saved(input);
+        // The real WorkoutSessionScreen receives the authoritative saved session,
+        // then rerenders SessionExercise with that saved FACT.
+        setCurrent(previous => ({
+          ...previous, sets: previous.sets.map(set => set.sessionSetId !== input.sessionSetId
+            ? set : { ...set, status: 'completed', fact: input.fact }),
+        }));
+      };
+      return <SessionExercise context={context} data={current}
+        onSaveSet={onSaveSet} defaultCollapsed={false} />;
+    }
+    render(<WorkoutOwner />);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
+      .toContain('85 кг × 8');
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+    const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    const repetitions = within(picker).getByRole('listbox', { name: 'Повторения' });
+    const nine = repetitions.querySelector<HTMLButtonElement>('button[aria-label="9"]');
+    expect(nine).not.toBeNull();
+    fireEvent.click(nine!);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
+      .toContain('85 кг × 9');
+    expect(screen.getByText('План: 85 кг × 8')).toBeTruthy();
+    expect(saved).toHaveBeenCalledOnce(); // reopening never writes another FACT
   });
 
   it('supports an exercise from an own workout without program PLAN', () => {
