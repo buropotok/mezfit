@@ -174,6 +174,36 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
+  it.each([
+    ['time', '00:02:30', null],
+    ['time_distance', '00:02:30', '3 км 000 м'],
+    ['time_reps', '00:02:30', '12'],
+    ['time_weight', '00:02:30', '80,75 кг'],
+  ] as const)('%s displays previously saved FACT, not PLAN, on reopen', (trackingType, first, second) => {
+    const onSave = vi.fn(async () => undefined);
+    render(<SetEntry mode="workout" isOpen
+      data={{ ...base, trackingType, fact: {
+        metrics: { durationSeconds: 150, distanceMeters: 3000, reps: 12, weightKg: 80.75 },
+        setLabel: 'hard', setType: 'cluster', rpe: 6, comment: 'Выполнено', bands: [],
+      } }} onClose={vi.fn()} onSave={onSave} />);
+    expect(screen.getByText(first)).toBeTruthy();
+    if (second) expect(screen.getByText(second)).toBeTruthy();
+    expect(screen.getByText('RPE: 6')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Кластер' }).getAttribute('aria-pressed')).toBe('true');
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('uses semantic Mezfit typography for scheduled PLAN deletion dialog', () => {
+    render(<SetEntry mode="occurrence-plan" isOpen
+      data={{ ...base, trackingType: 'time' }}
+      onClose={vi.fn()} onPlanSave={vi.fn(async () => undefined)}
+      onDeleteSet={vi.fn(async () => undefined)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить подход' }));
+    expect(screen.getByText('Удалить подход?').className).toContain('ui-text--headline');
+    expect(screen.getByRole('button', { name: 'Отмена' }).querySelector('.ui-text--body')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Удалить' }).querySelector('.ui-text--body')).not.toBeNull();
+  });
+
   it('shows discard confirmation for edited time-based FACT and never writes on X', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
