@@ -123,14 +123,14 @@ describe('REM-01 protected catalogue correction operator', () => {
     f.current.publicExerciseDefinitions[0].id = '9999';
     expect(() => remediationPlan(f.current, f.source, f.proposal, DIGEST)).toThrow(/Unknown public exercise ID/);
   });
-  it('does not allow publication with pending editorial review or without a private R2 backup', async () => {
+  it('does not allow publication with pending editorial review or without a confirmed artifact backup', async () => {
     const f = fixture(), db = fakeSession(f.current);
     await expect(executeRemediation({ session: db.session, source: f.source, patch: f.proposal,
       patchSha256: DIGEST, backupApproved: true })).rejects.toThrow(/approved editorial/);
     f.proposal.approval_state = 'approved';
     f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
     await expect(executeRemediation({ session: db.session, source: f.source, patch: f.proposal,
-      patchSha256: DIGEST, backupApproved: false })).rejects.toThrow(/private R2 backup/);
+      patchSha256: DIGEST, backupApproved: false })).rejects.toThrow(/confirmed GitHub artifact backup/);
     expect(db.writes).toHaveLength(0);
   });
   it('writes only six definitions, then verifies all records and activates marker last; replay is idempotent', async () => {
