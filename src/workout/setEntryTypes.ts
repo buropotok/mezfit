@@ -68,6 +68,8 @@ interface SetEntrySharedProps {
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   onOpenHistory?: () => void;
   onOpenChat?: () => void;
+  /** Available only for a scheduled occurrence PLAN, never a program template. */
+  onDeleteSet?: () => Promise<void>;
 }
 
 export type SetEntryProps =
@@ -82,7 +84,7 @@ export type SetEntryProps =
       onSave?: never;
     })
   | (SetEntrySharedProps & {
-      mode: 'program-plan';
+      mode: 'program-plan' | 'occurrence-plan';
       onPlanSave: (input: { weightKg: number | null; reps: number | null; setType: SetType | null }) => Promise<void>;
       onSave?: never;
     });
