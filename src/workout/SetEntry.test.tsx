@@ -108,49 +108,33 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({ weightKg: 80, reps: 10, setType: 'dropset' }));
   });
 
-  it('accepts a supported new FACT without rounding an unsupported PLAN', async () => {
-    const onSave = vi.fn(async () => undefined);
-    const onClose = vi.fn();
-    render(<SetEntry mode="workout" isOpen data={{ ...baseData,
-      plan: { ...baseData.plan!, weightKg: 80.75 },
-    }} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
-    expect(screen.getByText('Не заполнено')).toBeTruthy();
-    expect(screen.getByText(/Значение PLAN недоступно в пикере/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
-    expect(onSave).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
-    const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
-    fireEvent.click(within(picker).getByRole('listbox', { name: 'Килограммы' })
-      .querySelector<HTMLButtonElement>('button[aria-label="80"]')!);
-    // Selecting a valid FACT does not rewrite the immutable PLAN comparison.
-    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
+  it('supports 80,75 kg in a scheduled PLAN without rounding', async () => {
+    const onPlanSave = vi.fn(async () => undefined);
+    render(<SetEntry mode="occurrence-plan" isOpen data={{
+      ...baseData, plan: { ...baseData.plan!, weightKg: 80.75 },
+    }} onClose={vi.fn()} onPlanSave={onPlanSave} />);
+    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
+    const trigger = screen.getByRole('button', { name: 'Изменить вес и повторения' });
+    expect(trigger.getAttribute('aria-disabled')).toBe('false');
+    fireEvent.click(trigger);
+    expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
-      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
-    })));
-    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onPlanSave).not.toHaveBeenCalled();
   });
 
-  it('preserves unsupported existing FACT and disables editing without converting its weight', async () => {
+  it('opens existing 80,75 kg FACT and retains its RPE unchanged', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, fact: {
       metrics: { weightKg: 80.75, reps: 10, durationSeconds: null, distanceMeters: null },
-      setLabel: null, rpe: null, comment: null, bands: [],
+      setLabel: null, rpe: 7, comment: null, bands: [],
     } }} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('Существующее значение FACT не поддерживается текущим пикером')).toBeTruthy();
-    const metricButton = screen.getByRole('button', { name: 'Изменить вес и повторения' });
-    expect(metricButton.getAttribute('aria-disabled')).toBe('true');
     expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
-
-    // UI Kit retains its closed popover in the DOM for animation. Its DOM
-    // presence is not proof that the picker opened.
-    fireEvent.click(metricButton);
-    expect(metricButton.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
-    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText('RPE: 7')).toBeTruthy();
+    const trigger = screen.getByRole('button', { name: 'Изменить вес и повторения' });
+    expect(trigger.getAttribute('aria-disabled')).toBe('false');
+    fireEvent.click(trigger);
+    expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
