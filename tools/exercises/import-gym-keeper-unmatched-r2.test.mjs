@@ -23,12 +23,10 @@ describe('Gym Keeper 112 media-only R2 import', () => {
     expect(new Set(plan.map(row => row.id)).size).toBe(112);
     expect(new Set(plan.map(row => row.targetR2)).size).toBe(112);
     expect(plan.every(row => row.targetR2.startsWith(DESTINATION_PREFIX))).toBe(true);
-    expect(plan.every(row => row.sourceR2.startsWith('exercise-media/gym_keeper_apk/'))).toBe(true);
     expect(plan.every(row => row.sourceCdn.startsWith('https://47-1594.s.cdn13.com/img/gifs/180/'))).toBe(true);
     expect(plan.find(row => row.id === '0146')).toEqual({
       id: '0146',
       key: '01461305-Butt-Kicks-(female)_Cardio-FIX_180.gif',
-      sourceR2: 'exercise-media/gym_keeper_apk/01461305-Butt-Kicks-(female)_Cardio-FIX_180.gif',
       sourceCdn: 'https://47-1594.s.cdn13.com/img/gifs/180/01461305-Butt-Kicks-(female)_Cardio-FIX_180.gif',
       targetR2: DESTINATION_PREFIX + '01461305-Butt-Kicks-(female)_Cardio-FIX_180.gif',
     });
