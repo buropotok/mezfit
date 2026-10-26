@@ -185,6 +185,74 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
+  it('discards edited FACT only after Continue in the unsaved-changes dialog', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('does not autosave FACT changes even after the previous debounce interval', async () => {
+    const onSave = vi.fn(async () => undefined);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData}
+        onClose={vi.fn()} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '8' } });
+    await new Promise<void>(resolve => { window.setTimeout(resolve, 750); });
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  });
+
+  it('uses the same discard dialog for navigation Back, without saving FACT', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    let back: (() => void) | undefined;
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData}
+        onClose={onClose} onSave={onSave}
+        onNavigationContextChange={context => { back = context?.onBack; }} />
+    </KonstaProvider>);
+    expect(back).toBeTypeOf('function');
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    back?.();
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('keeps FACT editor open on Save failure and permits retry', async () => {
+    const onSave = vi.fn().mockRejectedValueOnce(new Error('Сервер недоступен'))
+      .mockResolvedValueOnce(undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData}
+        onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Сервер недоступен'));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
   it('saves PLAN changes through the registered navigation Back action before closing', async () => {
     const onPlanSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
