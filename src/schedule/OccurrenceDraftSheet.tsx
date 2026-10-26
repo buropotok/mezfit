@@ -4,10 +4,11 @@ import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-ty
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { isWorkoutEditRejected, type WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { appendOccurrenceExercise, appendOccurrenceSet, occurrencePlanChanged,
-  removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises } from '../data/cloud/workout-occurrence-edit';
+  removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises, updateOccurrenceSetPlan } from '../data/cloud/workout-occurrence-edit';
 import { readProgramCatalogueExercise, programExerciseSnapshot } from '../data/cloud/program-exercise-selection';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
+import { SetEntry } from '../workout/SetEntry';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   Badge, Text, TimePicker, Icon, IconButton, LiquidPopover, type LocalDate, type LocalTime } from '../ui';
@@ -99,7 +100,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const timeSelectionRef = useRef<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
   const [exercisePickerOpened, setExercisePickerOpened] = useState(false);
   const [exerciseInformationId, setExerciseInformationId] = useState<string | null>(null);
-  const [setPlaceholderOpen, setSetPlaceholderOpen] = useState(false);
+  const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string } | null>(null);
+  const [openingSet, setOpeningSet] = useState(false);
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -266,6 +268,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       (positions.get(a.exercise.id) ?? a.exercise.position) - (positions.get(b.exercise.id) ?? b.exercise.position)) };
   }
   const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
+  const editingExercise = draft?.plan.exercises.find(item => item.id === editingSet?.exerciseId);
+  const selectedSet = editingExercise?.sets.find(item => item.id === editingSet?.setId);
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
   return <>
@@ -335,7 +339,16 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             onDeleteSet={mayEditStructure ? (exerciseId, setId) => edit(current => ({
               ...current, plan: removeOccurrenceSet(current.plan, exerciseId, setId),
             })) : undefined}
-            onOpenSet={() => setSetPlaceholderOpen(true)}
+            onOpenSet={mayEditStructure ? (exerciseId, setId) => {
+              const exercise = draft?.plan.exercises.find(item => item.id === exerciseId);
+              if (!exercise || openingSet || !planner) return;
+              setOpeningSet(true);
+              void planner.programs.trackingTypeForExercise(exercise.exercise).then(type => {
+                if (type === 'weight_reps') setEditingSet({ exerciseId, setId });
+                else setError('Пока доступен редактор подходов «Вес + повторения»');
+              }).catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход'))
+                .finally(() => setOpeningSet(false));
+            } : undefined}
             onExerciseInformation={planner ? setExerciseInformationId : undefined}
           />
         </div>
@@ -368,10 +381,39 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         saving={busy} actionError={error}
         onConfirm={ids => { void selectExercises(ids); }}
         onClose={() => setExercisePickerOpened(false)} />
-      <MezfitDialog opened={setPlaceholderOpen} title="Редактор подхода"
-        buttons={<MezfitDialogButton onClick={() => setSetPlaceholderOpen(false)}>Закрыть</MezfitDialogButton>}>
-        <Text variant="body">Редактирование веса, повторений и времени появится в следующей версии.</Text>
-      </MezfitDialog>
+      {editingSet && editingExercise && selectedSet && !readOnly ? <SetEntry
+        key={selectedSet.id} mode="occurrence-plan" isOpen
+        data={{
+          identity: {
+            programId: draft.trainingPlanId ?? null,
+            programName: sourceProgramName ?? null,
+            exerciseDefinitionId: editingExercise.exercise.exerciseDefinitionId,
+            exerciseName: editingExercise.exercise.name,
+            setNumber: selectedSet.position + 1,
+            workoutDate: localDate(start),
+            sourceProgramSetId: selectedSet.sourceProgramSetId,
+            sessionSetId: null,
+          },
+          trackingType: 'weight_reps',
+          setType: selectedSet.setType ?? null,
+          plan: {
+            weightKg: selectedSet.plannedWeightKg, reps: selectedSet.plannedReps,
+            durationSeconds: null, distanceMeters: null,
+          },
+          previous: null, fact: null,
+        }}
+        onNavigationContextChange={onNavigationContextChange}
+        onClose={() => setEditingSet(null)}
+        onPlanSave={async input => {
+          const writing = edit(current => ({
+            ...current,
+            plan: updateOccurrenceSetPlan(current.plan, editingSet.exerciseId, editingSet.setId, {
+              plannedWeightKg: input.weightKg, plannedReps: input.reps, setType: input.setType,
+            }),
+          }));
+          if (!writing) throw new Error('Редактирование подхода недоступно');
+          await writing;
+        }} /> : null}
       <MezfitDialog opened={programUpdateOpen} title="Обновить этот день в программе?"
         buttons={<>
           <MezfitDialogButton disabled={busy} onClick={() => { void save(false); }}>Нет</MezfitDialogButton>
