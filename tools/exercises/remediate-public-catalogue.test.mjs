@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { executeRemediation, remediationPlan } from './remediate-public-catalogue.mjs';
 
@@ -79,6 +80,13 @@ function fixture() {
   };
   return { source, proposal, current, changes };
 }
+function backupDigest(current) {
+  const payload = { data: { 'rlm-public': Object.fromEntries(
+    Object.entries(current).map(([name, rows]) =>
+      [name, Object.fromEntries(rows.map(row => [row.id, row]))]),
+  ) } };
+  return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+}
 function fakeSession(current, { corrupt = false, failManifest = false } = {}) {
   const state = structuredClone(current), writes = [];
   const session = {
@@ -126,7 +134,7 @@ describe('REM-01 protected catalogue correction operator', () => {
   it('does not allow publication with pending editorial review or without a confirmed artifact backup', async () => {
     const f = fixture(), db = fakeSession(f.current);
     await expect(executeRemediation({ session: db.session, source: f.source, patch: f.proposal,
-      patchSha256: DIGEST, backupApproved: true })).rejects.toThrow(/approved editorial/);
+      patchSha256: DIGEST, backupApproved: true, backupDigest: backupDigest(f.current) })).rejects.toThrow(/approved editorial/);
     f.proposal.approval_state = 'approved';
     f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
     await expect(executeRemediation({ session: db.session, source: f.source, patch: f.proposal,
@@ -138,7 +146,7 @@ describe('REM-01 protected catalogue correction operator', () => {
     f.proposal.approval_state = 'approved';
     f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
     const outcome = await executeRemediation({ session: db.session, source: f.source,
-      patch: f.proposal, patchSha256: DIGEST, backupApproved: true });
+      patch: f.proposal, patchSha256: DIGEST, backupApproved: true, backupDigest: backupDigest(f.current) });
     expect(outcome).toMatchObject({ status: 'published', updated: 6, verifiedExercises: 1324 });
     expect(db.writes.map(w => w.name)).toEqual(['publicExerciseDefinitions', 'publicExerciseCatalogues']);
     expect(db.writes[0].rows.map(row => row.id)).toEqual(SIX);
@@ -147,7 +155,7 @@ describe('REM-01 protected catalogue correction operator', () => {
     expect(db.state.publicExerciseDefinitions[100]).toEqual(f.current.publicExerciseDefinitions[100]);
     expect(db.state.publicExerciseCatalogues[0].remediationReleaseSha256).toBe(DIGEST);
     const replay = await executeRemediation({ session: db.session, source: f.source,
-      patch: f.proposal, patchSha256: DIGEST, backupApproved: true });
+      patch: f.proposal, patchSha256: DIGEST, backupApproved: true, backupDigest: backupDigest(db.state) });
     expect(replay).toMatchObject({ status: 'already-active', updated: 0 });
     expect(db.writes).toHaveLength(2);
   });
@@ -156,15 +164,15 @@ describe('REM-01 protected catalogue correction operator', () => {
     f.proposal.approval_state = 'approved';
     f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
     await expect(executeRemediation({ session: db.session, source: f.source,
-      patch: f.proposal, patchSha256: DIGEST, backupApproved: true })).rejects.toThrow(/readback/);
+      patch: f.proposal, patchSha256: DIGEST, backupApproved: true, backupDigest: backupDigest(f.current) })).rejects.toThrow(/readback/);
     expect(db.writes.map(w => w.name)).toEqual(['publicExerciseDefinitions']);
     const clean = fakeSession(f.current, { failManifest: true });
     await expect(executeRemediation({ session: clean.session, source: f.source,
-      patch: f.proposal, patchSha256: DIGEST, backupApproved: true })).rejects.toThrow(/simulated failure/);
+      patch: f.proposal, patchSha256: DIGEST, backupApproved: true, backupDigest: backupDigest(f.current) })).rejects.toThrow(/simulated failure/);
     expect(clean.state.publicExerciseCatalogues[0].remediationReleaseId).toBeUndefined();
     const recovered = fakeSession(clean.state);
     const result = await executeRemediation({ session: recovered.session, source: f.source,
-      patch: f.proposal, patchSha256: DIGEST, backupApproved: true });
+      patch: f.proposal, patchSha256: DIGEST, backupApproved: true, backupDigest: backupDigest(clean.state) });
     expect(result).toMatchObject({ status: 'published', updated: 0 });
   });
 });
