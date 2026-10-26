@@ -12,6 +12,7 @@ import {
 } from './setEntryTypes';
 import './set-entry.css';
 import { SetEntryWeightReps } from './SetEntryWeightReps';
+import { SetEntryOccurrenceMetrics } from './SetEntryOccurrenceMetrics';
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const workoutDateFormatter = new Intl.DateTimeFormat('ru-RU', {
@@ -244,6 +245,9 @@ function setEntryIdentityKey(data: SetEntryProps['data']): string {
 }
 
 export function SetEntry(props: SetEntryProps) {
+  if (props.mode === 'occurrence-plan' && props.data.trackingType !== 'weight_reps') {
+    return <SetEntryOccurrenceMetrics key={setEntryIdentityKey(props.data)} {...props} />;
+  }
   if (props.data.trackingType === 'weight_reps' && (props.mode === undefined || props.mode === 'workout' || props.mode === 'program-plan' || props.mode === 'occurrence-plan')) {
     return <SetEntryWeightReps key={setEntryIdentityKey(props.data)} {...props} />;
   }
