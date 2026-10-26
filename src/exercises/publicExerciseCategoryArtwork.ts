@@ -1,12 +1,12 @@
-/** Static, app-bundled SVG artwork from public/gym-keeper/categories; no R2/API lookup. */
+/** Static, app-bundled category artwork from public; no R2/API lookup. */
 export const PUBLIC_EXERCISE_CATEGORY_ARTWORK: Readonly<Record<string, string>> = {
-  chest: '/gym-keeper/categories/muscles_chest.svg',
-  arms: '/gym-keeper/categories/muscles_arm.svg',
-  back: '/gym-keeper/categories/muscles_back.svg',
-  legs: '/gym-keeper/categories/muscles_leg.svg',
-  shoulders: '/gym-keeper/categories/muscles_shoulders.svg',
-  core: '/gym-keeper/categories/muscles_core.svg',
-  full_body: '/gym-keeper/categories/muscles_fullbody.svg',
+  chest: '/muscles_chest.webp',
+  arms: '/muscles_arm.webp',
+  back: '/muscles_back.webp',
+  legs: '/muscles_leg.webp',
+  shoulders: '/muscles_shoulders.webp',
+  core: '/muscles_core.webp',
+  full_body: '/muscles_fullbody.webp',
   cardio: '/gym-keeper/categories/muscles_cardio.svg',
 };
 
