@@ -16,7 +16,7 @@
 .set-entry-weight-reps__type-button { display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; padding: 0; color: inherit; cursor: pointer; }
 .set-entry-weight-reps__type-button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 3px; border-radius: 999px; }
 .set-entry-weight-reps__metric-value { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; margin-left: auto; white-space: nowrap; }
-.set-entry-weight-reps__metric-value svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--ui-color-surface-muted); }
+.set-entry-weight-reps__metric-value .ui-icon { width: 18px; height: 18px; flex: 0 0 18px; color: var(--ui-color-surface-muted); }
 .set-entry-weight-reps__plan-context { color: var(--ui-color-primary); }
 .set-entry-weight-reps__delete { width: 100%; margin-top: 14px; background: transparent; color: var(--ui-color-danger); border: 0; min-height: 44px; cursor: pointer; }
 .set-entry-weight-reps__delete:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 3px; border-radius: 12px; }
