@@ -3,19 +3,24 @@
   "status": "partial_not_for_publication",
   "metadata": {
     "record_count": 112,
-    "verified_data_sheet_count": 78,
-    "pending_data_sheet_count": 34,
+    "verified_data_sheet_count": 93,
+    "pending_data_sheet_count": 19,
     "canonical_mezfit_catalogue_count": 1324,
     "source_catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
     "description": "Non-authoritative additive staging metadata; never automatically import into Dexie Cloud or overwrite its immutable source",
     "gif_handling": "Existing APK GIF reference keys only; no new GIF files downloaded or committed",
     "reference_suffix": "13 (candidate GymVisual GIF media suffix, not part of 4-digit exercise ID)",
-    "name_similarity_candidate_count": 29,
+    "name_similarity_candidate_count": 28,
     "name_similarity_candidate_note": "Heuristic name matching is not semantic identity; review equipment, position and animation before any deduplication.",
     "reference_validation_note": "The product page may omit the numeric Reference in text; a matched page title is not a verified Reference-code match.",
-    "product_page_found_count": 81,
-    "reference_confirmed_listing_count": 20,
-    "data_sheet_review_date": "2026-10-26"
+    "product_page_found_count": 95,
+    "reference_confirmed_listing_count": 35,
+    "data_sheet_review_date": "2026-10-26",
+    "verified_exact_gif_datasheet_count": 85,
+    "verified_alternate_media_datasheet_count": 8,
+    "explicitly_refuted_duplicate_ids": [
+      "5120"
+    ]
   },
   "records": [
     {
@@ -792,13 +797,23 @@
       "gym_keeper_apk_reference_key": "14751305-Bent-Leg-Side-Kick-(kneeling)_Hips_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "other",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/3222-bent-leg-side-kick-kneeling.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Body weight",
+        "exercise_type": "Strength",
+        "gender": "Female"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/3222-bent-leg-side-kick-kneeling.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=47",
+      "data_sheet_evidence_media_type": "gif"
     },
     {
       "id": "1530",
@@ -808,12 +823,22 @@
       "apk_category": "other",
       "apk_equipment_code": "barbell",
       "gymvisual_product_url": "https://gymvisual.com/animated-gifs/3393-barbell-power-snatch.html",
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "product_page_found_pending_data_sheet",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Weightlifting"
+        ],
+        "equipment_type": "Barbell",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/3393-barbell-power-snatch.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=7",
+      "data_sheet_evidence_media_type": "gif"
     },
     {
       "id": "1543",
@@ -1024,13 +1049,23 @@
       "gym_keeper_apk_reference_key": "18591305-Cable-Kneeling-Triceps-Extension-(VERSION-2)_Upper-Arms_180.gif",
       "apk_category": "arms",
       "apk_equipment_code": "cable",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/4563-cable-kneeling-triceps-extension-version-2.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Upper Arms"
+        ],
+        "equipment_type": "Cable",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": "0176",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
       "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/4563-cable-kneeling-triceps-extension-version-2.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=66",
+      "data_sheet_evidence_media_type": "gif"
     },
     {
       "id": "1870",
@@ -1110,13 +1145,23 @@
       "gym_keeper_apk_reference_key": "22151305-Barbell-Good-Morning-(female)_Thighs_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "barbell",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/4285-barbell-good-morning-female.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Barbell",
+        "exercise_type": "Strength",
+        "gender": "Female"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": "0044",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
       "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/4285-barbell-good-morning-female.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=28",
+      "data_sheet_evidence_media_type": "gif"
     },
     {
       "id": "2216",
@@ -1911,13 +1956,23 @@
       "gym_keeper_apk_reference_key": "51181305-Cable-Twist-(VERSION-2)-(male)_Waist_180.gif",
       "apk_category": "core",
       "apk_equipment_code": "cable",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/11280-cable-twist-version-2-male.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Waist"
+        ],
+        "equipment_type": "Cable",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": "0243",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/11280-cable-twist-version-2-male.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=84",
+      "data_sheet_evidence_media_type": "gif"
     },
     {
       "id": "5119",
@@ -1941,13 +1996,24 @@
       "gym_keeper_apk_reference_key": "51201305-Cable-Kickback-(male)_Hips_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "cable",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": "0860",
-      "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/11282-cable-kickback-male.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Cable",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_product_page",
+      "potential_existing_mezfit_id": null,
+      "potential_existing_mezfit_status": "refuted_different_target_muscle_groups",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/11282-cable-kickback-male.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=13",
+      "data_sheet_evidence_media_type": "gif",
+      "potential_duplicate_rejection_reason": "GymVisual 5120 Cable Kickback (male) targets Hips; Mezfit 0860 cable kickback (triceps) targets Upper Arms. Same words, different exercise."
     },
     {
       "id": "5121",
@@ -1980,13 +2046,23 @@
       "gym_keeper_apk_reference_key": "51221305-Barbell-Clean-and-Jerk_Weightlifting_180.gif",
       "apk_category": "other",
       "apk_equipment_code": "barbell",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/11284-barbell-clean-and-jerk.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Weightlifting"
+        ],
+        "equipment_type": "Barbell",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/11284-barbell-clean-and-jerk.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=25",
+      "data_sheet_evidence_media_type": "gif"
     },
     {
       "id": "5123",
@@ -2066,13 +2142,23 @@
       "gym_keeper_apk_reference_key": "51771305-Curtsey-Squat-(female)_Thighs_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "other",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/11898-curtsey-squat-female.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Thighs"
+        ],
+        "equipment_type": "Body weight",
+        "exercise_type": "Strength",
+        "gender": "Female"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": "3769",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/11898-curtsey-squat-female.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=19",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "5243",
@@ -2134,13 +2220,23 @@
       "gym_keeper_apk_reference_key": "58251305-Smith-Rear-Lunge-(version-2)-(male)_Thighs_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "machine",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/14599-smith-rear-lunge-version-2-male.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Thighs"
+        ],
+        "equipment_type": "Smith machine",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/14599-smith-rear-lunge-version-2-male.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=282",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "6036",
@@ -2149,13 +2245,23 @@
       "gym_keeper_apk_reference_key": "60361305-Cable-Straight-Arm-Pulldown-(VERSION-2)_Back_180.gif",
       "apk_category": "back",
       "apk_equipment_code": "cable",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/15170-cable-straight-arm-pulldown-version-2.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Back"
+        ],
+        "equipment_type": "Cable",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": "0238",
       "potential_existing_mezfit_status": "name_similarity_manual_review_required",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/15170-cable-straight-arm-pulldown-version-2.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=82",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "6363",
@@ -2188,13 +2294,23 @@
       "gym_keeper_apk_reference_key": "65411305-Bodyweight-Bench-Squat-(female)_Thighs_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "bodyweight",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/16366-bodyweight-bench-squat-female.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Thighs"
+        ],
+        "equipment_type": "Body weight",
+        "exercise_type": "Strength",
+        "gender": "Female"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/16366-bodyweight-bench-squat-female.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=48",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "7374",
@@ -2203,13 +2319,23 @@
       "gym_keeper_apk_reference_key": "73741305-Smith-Sumo-Deadlift_Hips_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "machine",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/18097-smith-sumo-deadlift.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Smith machine",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/18097-smith-sumo-deadlift.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=57",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "7578",
@@ -2218,13 +2344,23 @@
       "gym_keeper_apk_reference_key": "75781305-Cable-Front-Squat-with-V-bar_Thighs_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "cable",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/18159-cable-front-squat-with-v-bar.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Thighs"
+        ],
+        "equipment_type": "Cable",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/18159-cable-front-squat-with-v-bar.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=61",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "7588",
@@ -2278,13 +2414,23 @@
       "gym_keeper_apk_reference_key": "81911305-Cable-Standing-Hip-Flexion-(male)_Hips_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "cable",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/19019-cable-standing-hip-flexion-male.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Cable",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/19019-cable-standing-hip-flexion-male.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=15",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "8192",
@@ -2293,13 +2439,23 @@
       "gym_keeper_apk_reference_key": "81921305-Dumbbell-Sumo-Deadlift-(male)_Hips_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "dumbbell_pair",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/videos/19020-dumbbell-sumo-deadlift-male.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Dumbbell",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/videos/19020-dumbbell-sumo-deadlift-male.html",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=28",
+      "data_sheet_evidence_media_type": "video"
     },
     {
       "id": "8193",
