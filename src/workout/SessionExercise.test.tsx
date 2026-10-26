@@ -135,6 +135,12 @@ describe('SessionExercise rendering', () => {
     expect(completedTitle?.textContent).not.toContain('80 кг × 10');
     const completedPlan = within(rows[0]).getByText('План: 80 кг × 10');
     expect(completedPlan.closest('.session-exercise__set-context')).not.toBeNull();
+    const completedPrevious = within(rows[0]).getByText('Пред.: 77,5 кг × 10');
+    expect(completedPrevious.classList.contains('ui-text--caption')).toBe(true);
+    expect(completedPrevious.classList.contains('ui-text--muted')).toBe(true);
+    expect(completedPrevious.closest('.session-exercise__set-context'))
+      .toBe(completedPlan.closest('.session-exercise__set-context'));
+    expect(completedTitle?.textContent).not.toContain('77,5 кг × 10');
 
     const pendingTitle = rows[1].querySelector('.session-exercise__set-title');
     expect(pendingTitle?.textContent).toContain('Подход 2');
@@ -142,6 +148,27 @@ describe('SessionExercise rendering', () => {
     expect(pendingTitle?.textContent).not.toContain('85 кг × 8');
     const pendingPlan = within(rows[1]).getByText('План: 85 кг × 8');
     expect(pendingPlan.closest('.session-exercise__set-context')).not.toBeNull();
+    const pendingPrevious = within(rows[1]).getByText('Пред.: 82,5 кг × 8');
+    expect(pendingPrevious.closest('.session-exercise__set-context'))
+      .toBe(pendingPlan.closest('.session-exercise__set-context'));
+    expect(pendingTitle?.textContent).not.toContain('82,5 кг × 8');
+  });
+
+  it('keeps PREVIOUS beneath FACT when no scheduled PLAN is available', () => {
+    const noPlan: SessionExerciseData = {
+      ...data, sets: [{ ...data.sets[0], plan: null }],
+    };
+    const { container } = renderExercise({ data: noPlan });
+    const row = container.querySelector<HTMLElement>('.session-exercise__set-row');
+    expect(row).not.toBeNull();
+    expect(within(row!).queryByText(/^План:/)).toBeNull();
+    const previous = within(row!).getByText('Пред.: 77,5 кг × 10');
+    expect(previous.classList.contains('ui-text--caption')).toBe(true);
+    expect(previous.closest('.session-exercise__set-context')).not.toBeNull();
+    expect(row?.querySelector('.session-exercise__set-title')?.textContent)
+      .toContain('82,5 кг × 10');
+    expect(row?.querySelector('.session-exercise__set-title')?.textContent)
+      .not.toContain('77,5 кг × 10');
   });
 
   it('does not apply legacy surface geometry when an outer component owns the tile material', () => {
