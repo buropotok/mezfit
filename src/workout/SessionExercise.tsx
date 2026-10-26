@@ -249,7 +249,7 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet }: {
           trailing={onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
             onClick={(event) => { event.stopPropagation(); onDeleteSet?.(set.id); }} /> : undefined}
           leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
-          title={<Text variant="body">Подход {index + 1}. План: {formatSessionSetMetrics({ weightKg: set.plannedWeightKg, reps: set.plannedReps, durationSeconds: null, distanceMeters: null }, 'weight_reps') ?? 'ввести план'}</Text>}
+          title={<Text variant="body">Подход {index + 1}</Text>}
           subtitle={<span className="session-exercise__set-recommendations">
             {set.setType ? <Text variant="footnote">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : null}
             {set.comment ? <Text variant="footnote" tone="muted">{set.comment}</Text> : null}
