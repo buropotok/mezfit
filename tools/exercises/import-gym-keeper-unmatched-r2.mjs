@@ -4,8 +4,9 @@
  * are absent by ID from the pinned 1324-record Mezfit catalogue.
  *
  * Never changes Dexie Cloud, D1, canonical media indexes or existing R2 keys.
- * Copies an existing legacy R2 source when present; only otherwise downloads
- * the exact URL embedded in the Gym Keeper APK migrations (not gymvisual.com).
+ * Downloads only the exact original APK GIF URL (not gymvisual.com).
+ * Legacy R2 objects may have come from approximate name matching and are not
+ * authoritative source bytes for this isolated import.
  */
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
@@ -18,7 +19,6 @@ const STAGING = 'audit/visual/input/gymkeeper_unmatched_112_gymvisual_metadata.j
 const AUDIT = 'audit/visual/audit_execution_plan.json';
 const BUCKET = 'mezfit';
 export const DESTINATION_PREFIX = 'exercise-media/gym_keeper_apk/unmatched-112/v1/';
-const EXISTING_PREFIX = 'exercise-media/gym_keeper_apk/';
 const CDN_BASE = 'https://47-1594.s.cdn13.com/img/gifs/180/';
 const MAX_BYTES = 8 * 1024 * 1024;
 const REQUIRED_ROWS = 112;
@@ -84,7 +84,6 @@ export function buildPlan(staging, audit, sqlSources) {
     rows.set(row.id, {
       id: row.id,
       key: row.gym_keeper_apk_reference_key,
-      sourceR2: EXISTING_PREFIX + row.gym_keeper_apk_reference_key,
       sourceCdn: CDN_BASE + encodeURIComponent(row.gym_keeper_apk_reference_key),
       targetR2: DESTINATION_PREFIX + row.gym_keeper_apk_reference_key,
     });
@@ -171,17 +170,14 @@ async function upload(plan) {
     fail('Protected GitHub Actions upload context required');
   }
   const root = await mkdtemp(join(tmpdir(), 'mezfit-gym-keeper-r2-'));
-  const counts = { copiedFromR2: 0, downloadedFromApkCdn: 0, alreadyPresent: 0, uploaded: 0 };
+  const counts = { downloadedFromApkCdn: 0, alreadyPresent: 0, uploaded: 0 };
   try {
     for (let i = 0; i < plan.length; i++) {
       const row = plan[i];
       const target = join(root, row.id + '-destination.gif');
-      const original = join(root, row.id + '-legacy.gif');
       const local = join(root, row.id + '-source.gif');
 
-      let bytes = await r2Get(row.sourceR2, original);
-      const source = bytes ? 'existing R2' : 'APK CDN';
-      if (!bytes) bytes = await downloadApkGif(row.sourceCdn, row.id);
+      const bytes = await downloadApkGif(row.sourceCdn, row.id);
       validateGifBytes(bytes, row.id);
       await writeFile(local, bytes);
 
@@ -200,11 +196,9 @@ async function upload(plan) {
         }
         counts.uploaded++;
       }
-      if (source === 'existing R2') counts.copiedFromR2++;
-      else counts.downloadedFromApkCdn++;
+      counts.downloadedFromApkCdn++;
       console.log('[' + (i + 1) + '/' + plan.length + '] ' + row.id
-        + ' source=' + source + ' sha256=' + sha(bytes) + ' destination=' + row.targetR2);
-      await rm(original, { force: true });
+        + ' source=original APK CDN sha256=' + sha(bytes) + ' destination=' + row.targetR2);
       await rm(target, { force: true });
       await rm(local, { force: true });
     }
@@ -214,7 +208,6 @@ async function upload(plan) {
       '- Total: ' + plan.length,
       '- Uploaded: ' + counts.uploaded,
       '- Already present (same SHA-256): ' + counts.alreadyPresent,
-      '- Source: existing legacy R2: ' + counts.copiedFromR2,
       '- Source: original Gym Keeper APK CDN: ' + counts.downloadedFromApkCdn,
       '- No existing objects were overwritten. No Dexie Cloud or D1 writes.',
     ].join('\n') + '\n';
