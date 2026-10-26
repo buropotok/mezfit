@@ -207,7 +207,10 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
       onDeleteSet={vi.fn(async () => undefined)} />);
     fireEvent.click(screen.getByRole('button', { name: 'Удалить подход' }));
     expect(screen.getByText('Удалить подход?').className).toContain('ui-text--headline');
-    expect(screen.getByRole('button', { name: 'Отмена' }).querySelector('.ui-text--body')).not.toBeNull();
+    // Konsta keeps closed dialogs mounted; both cancel buttons use Body typography.
+    for (const cancel of screen.getAllByRole('button', { name: 'Отмена' })) {
+      expect(cancel.querySelector('.ui-text--body')).not.toBeNull();
+    }
     expect(screen.getByRole('button', { name: 'Удалить' }).querySelector('.ui-text--body')).not.toBeNull();
   });
 
