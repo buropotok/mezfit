@@ -200,7 +200,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="caption" tone="muted">{keys.length} {keys.length === 1 ? 'показатель' : 'показателя'}</Text>
           </div>
           {keys.map(key => <div key={key}>
-            <GlassSurface component="button" wrapContent={false} shape="auto" preset="modalTuned"
+            <GlassSurface component="button" shape="auto" contentClassName="set-entry-weight-reps__metric-content" preset="modalTuned"
               optics={false} blur={glass.blur} halo="lifted" className="set-entry-weight-reps__metric-tile"
               ref={node => { targets.current[key] = node as HTMLButtonElement | null; }}
               aria-disabled={inputLocked || !valid(key, suggested(key))}

@@ -162,7 +162,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="footnote">Показатели подхода</Text>
             <Text variant="caption" tone="muted">2 показателя</Text>
           </div>
-          <GlassSurface component="button" ref={target} wrapContent={false} shape="auto" preset="modalTuned" optics={false} blur={glass.blur} halo="lifted"
+          <GlassSurface component="button" ref={target} shape="auto" contentClassName="set-entry-weight-reps__metric-content" preset="modalTuned" optics={false} blur={glass.blur} halo="lifted"
             className="set-entry-weight-reps__metric-tile"
             onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }}
             aria-disabled={!validPicker || inputLocked}
