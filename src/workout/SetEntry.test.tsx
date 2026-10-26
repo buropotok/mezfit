@@ -133,7 +133,8 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.queryByText(/Пред\.:/)).toBeNull();
     expect(screen.queryByText(/^План:/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({ weightKg: 80, reps: 10, setType: 'dropset' }));
   });
 
@@ -253,37 +254,41 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
-  it('saves PLAN changes through the registered navigation Back action before closing', async () => {
+  it('never saves scheduled PLAN through Back and confirms discarding changed values', async () => {
     const onPlanSave = vi.fn(async () => undefined);
-    const onClose = vi.fn();
-    let back: (() => void) | undefined;
-    const onNavigationContextChange = vi.fn((context: { onBack?: () => void } | null) => {
-      back = context?.onBack;
-    });
-    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
-      onClose={onClose} onPlanSave={onPlanSave}
-      onNavigationContextChange={onNavigationContextChange} />);
-    expect(back).toBeTypeOf('function');
-    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
-    // Back before the 300ms debounce must still persist the latest value.
-    back?.();
-    await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({
-      weightKg: 80, reps: 10, setType: 'cluster',
-    }));
-    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
-  });
-
-  it('does not navigate away when saving through Back fails', async () => {
-    const onPlanSave = vi.fn(async () => { throw new Error('Нет доступа к хранилищу'); });
     const onClose = vi.fn();
     let back: (() => void) | undefined;
     render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
       onClose={onClose} onPlanSave={onPlanSave}
       onNavigationContextChange={context => { back = context?.onBack; }} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
+    expect(back).toBeTypeOf('function');
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     back?.();
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onPlanSave).not.toHaveBeenCalled();
+  });
+
+  it('does not autosave scheduled PLAN and retries only after explicit Save failure', async () => {
+    const onPlanSave = vi.fn().mockRejectedValueOnce(new Error('Нет доступа к хранилищу'))
+      .mockResolvedValueOnce(undefined);
+    const onClose = vi.fn();
+    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
+      onClose={onClose} onPlanSave={onPlanSave} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
+    await new Promise<void>(resolve => { window.setTimeout(resolve, 450); });
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Нет доступа к хранилищу'));
     expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onPlanSave).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
   it('uses the existing DurationPicker and Mezfit RPE slider for time-based FACT', async () => {
