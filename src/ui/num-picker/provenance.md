@@ -10,8 +10,8 @@ It does not introduce a second wheel or lens implementation. TimePicker and NumP
 - Telegram selection haptic dispatch.
 
 NumPicker changes only the domain mapping presented by that shared mechanism:
-- left ribbon: empty hundreds, 1, 2, 3;
+- left ribbon: empty hundreds, 1 through 9;
 - right ribbon: 00 through 99;
-- public value: integer 0 through 399.
+- public value: integer 0 through 999.
 
 No Konsta private DOM or CSS mechanics are modified.
