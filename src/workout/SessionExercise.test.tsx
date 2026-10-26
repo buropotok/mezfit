@@ -264,7 +264,8 @@ describe('SessionExercise and SetEntry boundary', () => {
     expect(screen.getByText('Силовой блок')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(onSaveSet).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
 
     await waitFor(() => expect(onSaveSet).toHaveBeenCalledTimes(1));
     expect(onSaveSet).toHaveBeenCalledWith({
@@ -273,8 +274,8 @@ describe('SessionExercise and SetEntry boundary', () => {
       sessionSetId: 302,
       fact: {
         metrics: {
-          weightKg: null,
-          reps: null,
+          weightKg: 85,
+          reps: 8,
           durationSeconds: null,
           distanceMeters: null,
         },
