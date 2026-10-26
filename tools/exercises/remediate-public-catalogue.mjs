@@ -30,6 +30,22 @@ const IDS = Object.keys(FIELDS);
 const COUNTS = Object.freeze({
   publicExerciseDefinitions: 1324, publicExerciseTaxonomy: 69, publicExerciseCatalogues: 1,
 });
+const AUDIT_STAGE_SHA256 = Object.freeze([
+  "3ea5a0ada89329723a1f484251db4dab8d7de4a2c064121b915cc8bca647e65b",
+  "1c84d19c4f8f88205fd592f871ce8ca657a18683f906942661b579e57b8e0650",
+  "4af4b16f54cfcc38fec5a8bc7b10404080e7c0b7",
+  "0ca4f3725e2f5ffba361c2e90294692033a45812b39f22fc157",
+  "aad5264e10f951f6684e857672e7a32fc919a57bc8c422a48b2308d1f483688a",
+  "f91390cd01912a30414fe44e952f1f8cf3883177f23e8a189e53be5a9c4098be",
+  "8e576dd8b4681acc42660bfeb007ef5de793459d257844082786de917e1224c5",
+  "a77837712c360cb9d28ef2e4aed3284e54bab298be096c1d4d2cf4c115057db6",
+  "5581fdd2cb5428bbc226b29aff5734c35f7be87c55be7fc301a5ea429e60966a",
+  "448ed1edffb899d92f869d68b590098b950035e36a7c0a94e0f6962f58f45568",
+  "0fd41d55ec54f818bdd5b9ab32746888784ef3cf66c9c8e65d618dca2ef3d847",
+  "4494d2b9fca797ed3578c230630fc068f2dd609fdec88dad0de12fcd35bee9d2",
+  "0e5203464651f667fa398b4b5fd028fd6f89cd5beb5a3c99d785ade47de8df3f",
+  "c4141d665cbba4f057b89736ad733686e7fd50754508ca22eccc27b3f3366786"
+]);
 const PROPOSAL_URL = new URL('../../audit/visual/remediation/REM-01-proposed-corrections.json', import.meta.url);
 
 function fail(message) { throw new Error(message); }
@@ -57,7 +73,7 @@ async function readAuditedSource(dir) {
     const filename = 'catalogue_stage_' + String(index + 1).padStart(2, '0') + '.jsonl';
     if (stage.stage !== index + 1 || stage.file !== 'input/' + filename
       || stage.count !== (index === 13 ? 24 : 100)
-      || !/^[a-f0-9]{64}$/.test(stage.sha256)) fail('Invalid audited stage manifest');
+      || stage.sha256 !== AUDIT_STAGE_SHA256[index]) fail('Invalid audited stage manifest');
     const bytes = await readFile(join(dir, filename));
     if (digest(bytes) !== stage.sha256) fail('Audited catalogue stage SHA-256 mismatch: ' + filename);
     const rows = bytes.toString('utf8').trimEnd().split('\n').map(line => JSON.parse(line));
