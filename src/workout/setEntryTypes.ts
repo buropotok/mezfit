@@ -85,7 +85,7 @@ export type SetEntryProps =
     })
   | (SetEntrySharedProps & {
       mode: 'occurrence-plan';
-      onPlanSave: (input: { weightKg: number | null; reps: number | null; setType: SetType | null }) => Promise<void>;
+      onPlanSave: (input: SetMetrics & { setType: SetType | null }) => Promise<void>;
       onSave?: never;
     });
 
