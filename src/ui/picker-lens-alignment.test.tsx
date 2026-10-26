@@ -58,11 +58,12 @@ describe('picker lens numeric alignment', () => {
     [62, 12, 1.1],
   ])('keeps SVG magnification anchored at (%i, %i) with factor %s', (x, y, scale) => {
     const transform = centeredLensScale(x, y, scale);
-    const parameters = transform.replace(/^matrix\(/, '').replace(/\)$/, '').split(' ').map(Number);
-    expect(parameters).toHaveLength(6);
-    const [a, b, c, d, tx, ty] = parameters;
-    expect(a * x + c * y + tx).toBeCloseTo(x);
-    expect(b * x + d * y + ty).toBeCloseTo(y);
+    const match = transform.match(/^translate\(([^ ]+) ([^)]+)\) scale\(([^)]+)\) translate\(([^ ]+) ([^)]+)\)$/);
+    expect(match).not.toBeNull();
+    const [pivotX, pivotY, factor, inverseX, inverseY] = match!.slice(1).map(Number);
+    expect(factor).toBe(scale);
+    expect(pivotX + factor * (x + inverseX)).toBeCloseTo(x);
+    expect(pivotY + factor * (y + inverseY)).toBeCloseTo(y);
   });
 
   it('places two-wheel numeric lens centers on the actual CSS grid columns', () => {
@@ -81,8 +82,8 @@ describe('picker lens numeric alignment', () => {
     const minutes = texts.find((element) => element.textContent === '34');
     expect(hours?.getAttribute('x')).toBe('62');
     expect(minutes?.getAttribute('x')).toBe('226');
-    expect(hours?.getAttribute('transform')).toMatch(/^matrix\(/);
-    expect(minutes?.getAttribute('transform')).toMatch(/^matrix\(/);
+    expect(hours?.getAttribute('transform')).toContain('scale(1.55)');
+    expect(minutes?.getAttribute('transform')).toContain('scale(1.55)');
   });
 
   it('keeps distance units stationary in the lens, outside the numeric scroll ribbons', () => {
