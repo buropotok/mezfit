@@ -27,7 +27,7 @@ export interface DurationPickerProps {
   target: HTMLElement | null;
 }
 
-export function durationSecondsToParts(value: number): ThreeColumnPickerParts {
+function durationSecondsToParts(value: number): ThreeColumnPickerParts {
   if (!Number.isInteger(value) || value < 0 || value > 86399) {
     throw new Error('DurationPicker value must be an integer from 0 to 86399 seconds');
   }
