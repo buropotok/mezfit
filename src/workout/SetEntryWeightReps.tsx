@@ -22,10 +22,9 @@ function metricsText(weightKg: number | null, reps: number | null): string {
 }
 
 function pickerCompatible(weightKg: number, reps: number): boolean {
-  const fraction = Math.round(weightKg * 100) % 100;
   return Number.isInteger(reps) && reps >= 0 && reps <= 100
-    && weightKg >= 0 && weightKg <= 399.5 && [0, 25, 50].includes(fraction)
-    && Math.abs(weightKg * 100 - Math.round(weightKg * 100)) < 0.001;
+    && Number.isFinite(weightKg) && weightKg >= 0 && weightKg <= 399.75
+    && Number.isInteger(weightKg * 4);
 }
 
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
