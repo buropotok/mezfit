@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { Badge, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { loadBrowserGlassSettings } from '../glassSettings';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
-type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'program-plan' }> |
+type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'program-plan' | 'occurrence-plan' }> |
   Extract<SetEntryProps, { mode?: 'workout' }>;
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -29,7 +30,9 @@ function pickerCompatible(weightKg: number, reps: number): boolean {
 
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
 export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
-  const isPlan = props.mode === 'program-plan';
+  const isPlan = props.mode === 'program-plan' || props.mode === 'occurrence-plan';
+  const glass = loadBrowserGlassSettings();
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => {
     const initial = createSetEntryDraft(props.data);
     return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
@@ -66,7 +69,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     // Serializes all auto-saves: a stale network response cannot apply a later draft first.
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
-      if (props.mode === 'program-plan') {
+      if (isPlan) {
         await props.onPlanSave({
           weightKg: snapshot.metrics.weightKg,
           reps: snapshot.metrics.reps,
@@ -175,7 +178,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="footnote">Показатели подхода</Text>
             <Text variant="caption" tone="muted">2 показателя</Text>
           </div>
-          <GlassSurface component="button" ref={target} wrapContent={false} shape="auto"
+          <GlassSurface component="button" ref={target} wrapContent={false} shape="auto" preset="modalTuned" optics={false} blur={glass.blur} halo="lifted"
             className="set-entry-weight-reps__metric-tile"
             onClick={() => { if (validPicker && !closing) setPickerOpened(true); }}
             aria-disabled={!validPicker || closing}
@@ -201,27 +204,27 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <KonstaButton key={type} small rounded
-                tonal={(draft.setType ?? null) !== type}
-                aria-pressed={(draft.setType ?? null) === type}
-                disabled={closing}
-                onClick={() => change(old => ({ ...old, setType: old.setType === type ? null : type }))}>
-                <Text variant="body">{SET_TYPE_LABELS[type]}</Text>
-              </KonstaButton>)}
+              {SET_TYPES.map((type: SetType) => <Badge key={type} color="gray" textVariant="caption"
+                selected={(draft.setType ?? null) === type} role="button" tabIndex={closing ? -1 : 0}
+                aria-pressed={(draft.setType ?? null) === type} aria-disabled={closing}
+                onClick={() => { if (!closing) change(old => ({ ...old, setType: old.setType === type ? null : type })); }}
+                onKeyDown={event => {
+                  if (!closing && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    change(old => ({ ...old, setType: old.setType === type ? null : type }));
+                  }
+                }}>{SET_TYPE_LABELS[type]}</Badge>)}
             </div>
           </div>
           {!isPlan ? <>
             <div className="set-entry-weight-reps__section">
               <div className="set-entry-weight-reps__section-heading">
-                <Text variant="footnote">RPE</Text>
+                <Text variant="footnote">RPE: {draft.rpe ?? 0}</Text>
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
-                {Array.from({ length: 10 }, (_, index) => index + 1).map(rpe =>
-                  <KonstaButton key={rpe} small rounded tonal={draft.rpe !== rpe} aria-pressed={draft.rpe === rpe}
-                    disabled={closing} onClick={() => change(old => ({ ...old, rpe: old.rpe === rpe ? null : rpe }))}>
-                    <Text variant="body">{rpe}</Text>
-                  </KonstaButton>)}
+                <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0} ariaLabel="RPE"
+                  onValueChange={value => { if (!closing) change(old => ({ ...old, rpe: value })); }} />
               </div>
             </div>
             <div className="set-entry-weight-reps__section">
@@ -238,12 +241,22 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
             {saving ? 'Сохраняем изменения…' : error ? 'Не удалось сохранить · повторите' : 'Изменения сохраняются автоматически'}
           </Text>
+          {isPlan && props.onDeleteSet ? <KonstaButton clear className="set-entry-weight-reps__delete"
+            onClick={() => setDeleteConfirm(true)}>Удалить подход</KonstaButton> : null}
           {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
             <Text variant="body">Повторить сохранение</Text>
           </KonstaButton> : null}
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
+    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} title="Удалить подход?"
+      buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}>Отмена</MezfitDialogButton>
+        <MezfitDialogButton strong onClick={() => {
+          void props.onDeleteSet?.().then(() => { setDeleteConfirm(false); props.onClose(); })
+            .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход'));
+        }}>Удалить</MezfitDialogButton></>}>
+      <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
+    </MezfitDialog>, portalHost) : null}
     {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
       target={target.current} onClose={() => setPickerOpened(false)}
