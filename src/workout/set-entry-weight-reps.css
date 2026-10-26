@@ -15,7 +15,7 @@
 .set-entry-weight-reps__metric-content > :last-child { text-align: right; }
 .set-entry-weight-reps__context { display: flex; flex-wrap: wrap; gap: 6px 12px; }
 .set-entry-weight-reps__section { display: grid; gap: 9px; margin-top: 8px; }
-.set-entry-weight-reps__choices { display: flex; gap: 8px; flex-wrap: wrap; }
+.set-entry-weight-reps__choices { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 6px; }
 .set-entry-weight-reps__rpe { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
 .set-entry-weight-reps__rpe::-webkit-scrollbar { display: none; }
 .set-entry-weight-reps__rpe > * { flex: 0 0 auto; }
