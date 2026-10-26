@@ -1,5 +1,4 @@
 import { liveQuery } from 'dexie';
-import { isSetType, type SetType } from '../../../shared/set-type';
 import { isExerciseTrackingType, type ExerciseTrackingType } from '../exercises/publicExerciseTypes';
 import { markProgramChanged } from './program-sync';
 import { isApprovedAssignedPair, sortAssignedPlans } from './assigned-programs';
@@ -717,9 +716,9 @@ export class ProgramManagementRepository {
           const values = {
             position, setType: next.setType ?? null, comment: next.comment,
             materialLinks: next.materialLinks, chatLinks: next.chatLinks,
-            plannedReps: next.plannedReps, plannedWeightKg: next.plannedWeightKg,
-            plannedDurationSeconds: next.plannedDurationSeconds,
-            plannedDistanceMeters: next.plannedDistanceMeters,
+            // Copying a scheduled workout into a program must discard instance metrics.
+            plannedReps: null, plannedWeightKg: null,
+            plannedDurationSeconds: null, plannedDistanceMeters: null,
           };
           if (prev) {
             retained.add(prev.id);
