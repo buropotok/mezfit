@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react';
+import { Button as KonstaButton } from 'konsta/react';
 import './badge.css';
 
 export type BadgeColor = 'green' | 'yellow' | 'blue' | 'red' | 'orange' | 'purple' | 'cyan' | 'gray';
@@ -18,7 +19,7 @@ export function Badge({ color = 'gray', textVariant = 'body', selected = false, 
   );
 }
 
-/** Native interactive badge choice, reusing the Badge palette and selected styling. */
+/** A selectable Badge composed with the canonical Konsta button mechanics. */
 export type BadgeChoiceProps = {
   children: ReactNode;
   color?: BadgeColor;
@@ -31,8 +32,8 @@ export type BadgeChoiceProps = {
 
 export function BadgeChoice({ children, color = 'gray', textVariant = 'caption',
   selected = false, disabled = false, onClick, className = '' }: BadgeChoiceProps) {
-  return <button type="button" disabled={disabled} onClick={onClick} aria-pressed={selected}
-    className={`ui-badge ui-badge--choice ui-text--${textVariant} ui-badge--${color} ${selected ? 'ui-badge--selected' : ''} ${className}`.trim()}>
-    {children}
-  </button>;
+  return <KonstaButton clear small rounded disabled={disabled} onClick={onClick}
+    aria-pressed={selected} className={className}>
+    <Badge color={color} textVariant={textVariant} selected={selected}>{children}</Badge>
+  </KonstaButton>;
 }
