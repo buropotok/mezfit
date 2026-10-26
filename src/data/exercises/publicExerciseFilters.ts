@@ -3,7 +3,7 @@ import type { CatalogueExerciseRow } from './coachExerciseTypes';
 
 export const PUBLIC_EXERCISE_CATEGORIES = [
   ['chest', 'Грудь'], ['arms', 'Руки'], ['back', 'Спина'],
-  ['legs', 'Ноги'], ['shoulders', 'Плечи'], ['core', 'Пресс и корпус'],
+  ['shoulders', 'Плечи'], ['core', 'Пресс и корпус'], ['legs', 'Ноги'],
   ['full_body', 'Всё тело'], ['cardio', 'Кардио'], ['other', 'Другое'],
 ] as const;
 
