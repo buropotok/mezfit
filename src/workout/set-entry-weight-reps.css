@@ -1,9 +1,11 @@
 .set-entry-weight-reps { display: grid; min-width: 0; }
 .set-entry-weight-reps__header {
   position: sticky; top: 0; z-index: 2; background: #000; padding: 12px 16px 8px 20px;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px;
 }
-.set-entry-weight-reps__header > div { display: grid; gap: 3px; min-width: 0; }
+.set-entry-weight-reps__header > div:first-child { display: grid; grid-column: 1; gap: 3px; min-width: 0; }
+.set-entry-weight-reps__header > :last-child { grid-column: 3; justify-self: end; }
+.set-entry-weight-reps__save { grid-column: 2; justify-self: center; }
 .set-entry-weight-reps__body { padding: 10px 16px 24px; display: grid; gap: 12px; min-width: 0; }
 .set-entry-weight-reps__exercise { display: flex; gap: 8px; align-items: center; }
 .set-entry-weight-reps__exercise-copy { display: grid; gap: 3px; flex: 1; min-width: 0; }
