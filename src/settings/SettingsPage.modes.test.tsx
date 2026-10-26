@@ -13,9 +13,10 @@ describe('SettingsPage module modes', () => {
     fireEvent.click(within(workout).getByRole('button', { name: 'Развернуть упражнение' }));
     fireEvent.click(within(workout).getByRole('button', { name: 'Открыть подход 1' }));
     const sheet = screen.getByRole('dialog', { name: 'Подход 1' });
-    expect(within(sheet).getByText('План: 80 кг × 8')).toBeTruthy();
-    expect(within(sheet).getByText('Пред.: 77,5 кг × 8')).toBeTruthy();
-    expect(within(sheet).getByRole('group', { name: 'RPE' })).toBeTruthy();
+    expect(within(sheet).getByText('План: 80 кг')).toBeTruthy();
+    expect(within(sheet).getByText('Пред.: 77,5 кг')).toBeTruthy();
+    expect(within(sheet).getByText('RPE: 0')).toBeTruthy();
+    expect(within(sheet).getByRole('slider', { name: 'RPE' })).toBeTruthy();
     expect(within(sheet).getByRole('button', { name: 'Изменить вес и повторения' })).toBeTruthy();
     expect(within(sheet).getByRole('group', { name: 'Тип подхода' })).toBeTruthy();
   });
