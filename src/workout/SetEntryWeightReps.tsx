@@ -35,117 +35,63 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data));
   const initialDraftRef = useRef(draft);
   const [discardConfirm, setDiscardConfirm] = useState(false);
-  const factSavingRef = useRef(false);
+  const saveInFlightRef = useRef(false);
   const draftRef = useRef(draft);
-  const dirtyRevision = useRef(0);
-  const savedRevision = useRef(0);
-  const queuedRevision = useRef(0);
-  const queue = useRef<Promise<void>>(Promise.resolve());
-  const [revision, setRevision] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [pickerOpened, setPickerOpened] = useState(false);
   const [bandOpen, setBandOpen] = useState(false);
   const target = useRef<HTMLButtonElement>(null);
   const bandTarget = useRef<HTMLButtonElement>(null);
-  const [closing, setClosing] = useState(false);
   const requestCloseRef = useRef<() => void>(() => undefined);
 
   const change = (mutate: (current: SetEntryFactDraft) => SetEntryFactDraft) => {
-    if (!isPlan && factSavingRef.current) return;
+    if (saveInFlightRef.current) return;
     const next = mutate(draftRef.current);
     draftRef.current = next;
     setDraft(next);
-    dirtyRevision.current += 1;
-    setRevision(dirtyRevision.current);
     setError('');
   };
 
-  const persist = (): Promise<void> => {
-    const atRevision = dirtyRevision.current;
-    if (!isPlan || atRevision <= Math.max(savedRevision.current, queuedRevision.current)) return queue.current;
-    queuedRevision.current = atRevision;
-    const snapshot = draftRef.current;
-    // Serializes all auto-saves: a stale network response cannot apply a later draft first.
-    queue.current = queue.current.catch(() => undefined).then(async () => {
-      setSaving(true);
+  // Neither FACT nor the scheduled PLAN is persisted until Save is tapped.
+  const saveEntry = async () => {
+    if (saveInFlightRef.current) return;
+    saveInFlightRef.current = true;
+    setSaving(true);
+    setError('');
+    const snapshot = { ...draftRef.current,
+      metrics: { ...draftRef.current.metrics }, bands: [...draftRef.current.bands] };
+    setPickerOpened(false);
+    setBandOpen(false);
+    try {
       if (props.mode === 'occurrence-plan') {
         await props.onPlanSave({
           weightKg: snapshot.metrics.weightKg,
           reps: snapshot.metrics.reps,
           setType: snapshot.setType ?? null,
         });
+      } else {
+        await props.onSave(snapshot);
       }
-      savedRevision.current = Math.max(savedRevision.current, atRevision);
-      setError('');
-    }).catch(reason => {
-      const message = reason instanceof Error ? reason.message : 'Не удалось сохранить подход';
-      queuedRevision.current = savedRevision.current;
-      setError(message);
-      throw reason;
-    }).finally(() => setSaving(false));
-    return queue.current;
-  };
-
-  // Interaction is local-first. Changes are saved after a short pause, not on every wheel tick.
-  useEffect(() => {
-    if (!isPlan || revision === 0) return;
-    const timer = window.setTimeout(() => { void persist().catch(() => undefined); }, isPlan ? 300 : 650);
-    return () => window.clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revision]);
-
-  const closePlan = async () => {
-    if (closing) return;
-    setClosing(true);
-    try {
-      await persist();
-      if (dirtyRevision.current !== savedRevision.current) await persist();
-      setPickerOpened(false);
-      setBandOpen(false);
-      props.onClose();
-    } catch {
-      setClosing(false);
-    }
-  };
-
-  const saveFact = async () => {
-    if (props.mode === 'occurrence-plan' || factSavingRef.current) return;
-    factSavingRef.current = true;
-    setSaving(true);
-    setError('');
-    const snapshot = draftRef.current;
-    setPickerOpened(false);
-    setBandOpen(false);
-    try {
-      // FACT exists only after the user explicitly taps Save. Untouched fields
-      // start from PLAN, but that prefill never writes anything on its own.
-      await props.onSave({ ...snapshot,
-        metrics: { ...snapshot.metrics }, bands: [...snapshot.bands],
-      });
-      setPickerOpened(false);
-      setBandOpen(false);
       props.onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить факт');
+      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить подход');
     } finally {
-      factSavingRef.current = false;
+      saveInFlightRef.current = false;
       setSaving(false);
     }
   };
-  const discardFact = () => {
-    if (saving || factSavingRef.current) return;
+
+  // X and Telegram Back discard unsaved values; warn only if anything changed.
+  const discardEntry = () => {
+    if (saveInFlightRef.current) return;
     if (JSON.stringify(draftRef.current) !== JSON.stringify(initialDraftRef.current)) {
       setDiscardConfirm(true);
     } else {
       props.onClose();
     }
   };
-  // Back and X follow the same discard semantics as the visible close action.
-  requestCloseRef.current = () => {
-    if (isPlan) void closePlan();
-    else discardFact();
-  };
+  requestCloseRef.current = discardEntry;
   useEffect(() => {
     if (!props.isOpen || !props.onNavigationContextChange) return;
     const reportNavigation = props.onNavigationContextChange;
@@ -170,7 +116,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const validPicker = pickerCompatible(currentWeight, currentReps);
   const needsFactSelection = weightFallback || repsFallback;
   const selectedBand = draft.bands[0] ?? null;
-  const inputLocked = closing || (!isPlan && saving);
+  const inputLocked = saving;
   const bandItems: LiquidPopoverItem[] = [
     ...bands.map(([value, label]) => ({
       id: value,
@@ -192,11 +138,11 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
           </div>
-          {!isPlan ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
-            disabled={saving || closing} onClick={() => { void saveFact(); }}>
+          <KonstaButton clear small inline className="set-entry-weight-reps__save"
+            disabled={saving} onClick={() => { void saveEntry(); }}>
             <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
-          </KonstaButton> : null}
-          <IconButton icon="x" label="Закрыть подход" disabled={closing || saving}
+          </KonstaButton>
+          <IconButton icon="x" label="Закрыть подход" disabled={saving}
             onClick={() => requestCloseRef.current()} />
         </header>
         <div className="set-entry-weight-reps__body">
@@ -266,26 +212,21 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="body">Открыть чат</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-          {isPlan ? <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
-            {saving ? 'Сохраняем изменения…' : error ? 'Не удалось сохранить · повторите' : 'Изменения сохраняются автоматически'}
-          </Text> : null}
           {isPlan && props.onDeleteSet ? <KonstaButton clear className="set-entry-weight-reps__delete"
             onClick={() => setDeleteConfirm(true)}><Text variant="body">Удалить подход</Text></KonstaButton> : null}
-          {isPlan && error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
-            <Text variant="body">Повторить сохранение</Text>
-          </KonstaButton> : null}
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
-    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} title="Удалить подход?"
-      buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}>Отмена</MezfitDialogButton>
+    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+      title={<Text variant="headline">Удалить подход?</Text>}
+      buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong onClick={() => {
           void props.onDeleteSet?.().then(() => { setDeleteConfirm(false); props.onClose(); })
             .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход'));
-        }}>Удалить</MezfitDialogButton></>}>
+        }}><Text variant="body">Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, portalHost) : null}
-    {!isPlan ? createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
+    {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
       title={<Text variant="headline">Изменения не сохранятся!</Text>}
       buttons={<>
         <MezfitDialogButton onClick={() => setDiscardConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
@@ -297,7 +238,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         }}><Text variant="body">Продолжить</Text></MezfitDialogButton>
       </>}>
       <Text variant="body">Выйти без сохранения введённых данных?</Text>
-    </MezfitDialog>, portalHost) : null}
+    </MezfitDialog>, portalHost)}
     {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker && !saving}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
       target={target.current} onClose={() => setPickerOpened(false)}
