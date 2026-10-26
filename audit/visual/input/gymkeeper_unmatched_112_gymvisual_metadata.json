@@ -9,7 +9,10 @@
     "source_catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
     "description": "Non-authoritative additive staging metadata; never automatically import into Dexie Cloud or overwrite its immutable source",
     "gif_handling": "Existing APK GIF reference keys only; no new GIF files downloaded or committed",
-    "reference_suffix": "13 (candidate GymVisual GIF media suffix, not part of 4-digit exercise ID)"
+    "reference_suffix": "13 (candidate GymVisual GIF media suffix, not part of 4-digit exercise ID)",
+    "name_similarity_candidate_count": 29,
+    "name_similarity_candidate_note": "Heuristic name matching is not semantic identity; review equipment, position and animation before any deduplication.",
+    "reference_validation_note": "The product page may omit the numeric Reference in text; a matched page title is not a verified Reference-code match."
   },
   "records": [
     {
@@ -31,7 +34,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0007_gym_keeper_exercise_seed_01.sql"
+      "source_migration": "migrations/0007_gym_keeper_exercise_seed_01.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0263",
@@ -43,9 +47,10 @@
       "gymvisual_product_url": "https://gymvisual.com/animated-gifs/1756-cross-body-twisting-crunch.html",
       "gymvisual_data_sheet": null,
       "data_sheet_status": "product_page_found_pending_data_sheet",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0008_gym_keeper_exercise_seed_02.sql"
+      "potential_existing_mezfit_id": "0262",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0008_gym_keeper_exercise_seed_02.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0463",
@@ -66,7 +71,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql"
+      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0477",
@@ -87,7 +93,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql"
+      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0512",
@@ -108,7 +115,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql"
+      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0516",
@@ -129,7 +137,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql"
+      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0564",
@@ -150,7 +159,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql"
+      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0612",
@@ -164,7 +174,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql"
+      "source_migration": "migrations/0009_gym_keeper_exercise_seed_03.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0715",
@@ -178,7 +189,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0734",
@@ -199,7 +211,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0801",
@@ -213,7 +226,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0867",
@@ -234,7 +248,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0881",
@@ -255,7 +270,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "0938",
@@ -276,7 +292,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1030",
@@ -295,9 +312,10 @@
         "gender": "Male"
       },
       "data_sheet_status": "verified_product_page",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "potential_existing_mezfit_id": "0596",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1036",
@@ -318,7 +336,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1047",
@@ -332,7 +351,8 @@
       "data_sheet_status": "product_page_found_pending_data_sheet",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1060",
@@ -344,9 +364,10 @@
       "gymvisual_product_url": "https://gymvisual.com/animated-gifs/2520-barbell-hip-thrust.html",
       "gymvisual_data_sheet": null,
       "data_sheet_status": "product_page_found_pending_data_sheet",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "potential_existing_mezfit_id": "0058",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1063",
@@ -367,7 +388,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1161",
@@ -388,7 +410,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1163",
@@ -400,9 +423,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "potential_existing_mezfit_id": "0865",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1165",
@@ -423,7 +447,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1190",
@@ -444,7 +469,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": "0495",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1191",
@@ -465,7 +491,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql"
+      "source_migration": "migrations/0010_gym_keeper_exercise_seed_04.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1197",
@@ -486,7 +513,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1199",
@@ -500,7 +528,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1221",
@@ -521,7 +550,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1238",
@@ -542,7 +572,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1241",
@@ -563,7 +594,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1243",
@@ -582,9 +614,10 @@
         "gender": "Male"
       },
       "data_sheet_status": "verified_product_page",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "potential_existing_mezfit_id": "0276",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1244",
@@ -596,9 +629,10 @@
       "gymvisual_product_url": "https://gymvisual.com/animated-gifs/2689-flutter-kicks-version-3.html",
       "gymvisual_data_sheet": null,
       "data_sheet_status": "product_page_found_pending_data_sheet",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "potential_existing_mezfit_id": "0459",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1249",
@@ -619,7 +653,8 @@
       "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1454",
@@ -638,9 +673,10 @@
         "gender": "Male"
       },
       "data_sheet_status": "verified_product_page",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "potential_existing_mezfit_id": "0603",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1455",
@@ -659,9 +695,10 @@
         "gender": "Male"
       },
       "data_sheet_status": "verified_product_page",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "potential_existing_mezfit_id": "0576",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1474",
@@ -675,7 +712,8 @@
       "data_sheet_status": "product_page_found_pending_data_sheet",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1475",
@@ -689,7 +727,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1530",
@@ -703,7 +742,8 @@
       "data_sheet_status": "product_page_found_pending_data_sheet",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1543",
@@ -717,7 +757,8 @@
       "data_sheet_status": "product_page_found_pending_data_sheet",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1547",
@@ -731,7 +772,8 @@
       "data_sheet_status": "product_page_found_pending_data_sheet",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1555",
@@ -745,7 +787,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": "0413",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1581",
@@ -759,7 +802,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1595",
@@ -771,9 +815,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "potential_existing_mezfit_id": "1433",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1597",
@@ -787,7 +832,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1607",
@@ -801,7 +847,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1845",
@@ -815,7 +862,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql"
+      "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1857",
@@ -829,7 +877,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1859",
@@ -843,7 +892,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": "0176",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "1870",
@@ -857,7 +907,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2072",
@@ -871,7 +922,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2192",
@@ -883,9 +935,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "potential_existing_mezfit_id": "2141",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2215",
@@ -899,7 +952,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": "0044",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2216",
@@ -911,9 +965,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "potential_existing_mezfit_id": "0058",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2259",
@@ -925,9 +980,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "potential_existing_mezfit_id": "3666",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2458",
@@ -941,7 +997,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2471",
@@ -955,7 +1012,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2921",
@@ -969,7 +1027,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2954",
@@ -983,7 +1042,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2960",
@@ -997,7 +1057,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2972",
@@ -1011,7 +1072,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "2980",
@@ -1025,7 +1087,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3030",
@@ -1037,9 +1100,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "potential_existing_mezfit_id": "2810",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3048",
@@ -1053,7 +1117,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3110",
@@ -1065,9 +1130,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "potential_existing_mezfit_id": "0756",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3182",
@@ -1081,7 +1147,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3335",
@@ -1095,7 +1162,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3359",
@@ -1109,7 +1177,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3436",
@@ -1123,7 +1192,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3509",
@@ -1137,7 +1207,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3703",
@@ -1151,7 +1222,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3713",
@@ -1163,9 +1235,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "potential_existing_mezfit_id": "0409",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3730",
@@ -1179,7 +1252,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3821",
@@ -1193,7 +1267,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3859",
@@ -1207,7 +1282,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3892",
@@ -1221,7 +1297,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3967",
@@ -1235,7 +1312,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "3968",
@@ -1249,7 +1327,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "4040",
@@ -1263,7 +1342,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "4235",
@@ -1277,7 +1357,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "4733",
@@ -1291,7 +1372,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql"
+      "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "4761",
@@ -1305,7 +1387,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "4791",
@@ -1319,7 +1402,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "4853",
@@ -1333,7 +1417,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5009",
@@ -1347,7 +1432,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5088",
@@ -1359,9 +1445,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "potential_existing_mezfit_id": "0216",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5090",
@@ -1373,9 +1460,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "potential_existing_mezfit_id": "0234",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5107",
@@ -1387,9 +1475,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "potential_existing_mezfit_id": "2963",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5108",
@@ -1403,7 +1492,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5118",
@@ -1417,7 +1507,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": "0243",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5119",
@@ -1431,7 +1522,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": "0300",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5120",
@@ -1445,7 +1537,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": "0860",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5121",
@@ -1459,7 +1552,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5122",
@@ -1473,7 +1567,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5123",
@@ -1487,7 +1582,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5154",
@@ -1501,7 +1597,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5159",
@@ -1515,7 +1612,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5177",
@@ -1529,7 +1627,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": "3769",
       "potential_existing_mezfit_status": "high_name_similarity_manual_confirmation_required",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5243",
@@ -1541,9 +1640,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "potential_existing_mezfit_id": "0186",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5344",
@@ -1557,7 +1657,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5479",
@@ -1571,7 +1672,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "5825",
@@ -1585,7 +1687,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "6036",
@@ -1597,9 +1700,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "potential_existing_mezfit_id": "0238",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "6363",
@@ -1611,9 +1715,10 @@
       "gymvisual_product_url": null,
       "gymvisual_data_sheet": null,
       "data_sheet_status": "unverified",
-      "potential_existing_mezfit_id": null,
-      "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "potential_existing_mezfit_id": "0210",
+      "potential_existing_mezfit_status": "name_similarity_manual_review_required",
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "6541",
@@ -1627,7 +1732,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "7374",
@@ -1641,7 +1747,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "7578",
@@ -1655,7 +1762,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "7588",
@@ -1669,7 +1777,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "8189",
@@ -1683,7 +1792,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "8190",
@@ -1697,7 +1807,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "8191",
@@ -1711,7 +1822,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "8192",
@@ -1725,7 +1837,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "8193",
@@ -1739,7 +1852,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     },
     {
       "id": "8194",
@@ -1753,7 +1867,8 @@
       "data_sheet_status": "unverified",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
-      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql"
+      "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
+      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
     }
   ]
 }
