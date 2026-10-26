@@ -187,11 +187,22 @@ describe('weight and repetitions SetEntry', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('preserves the previous non-weight entry until its UI Kit picker exists', () => {
+  it('uses the existing DurationPicker and Mezfit RPE slider for time-based FACT', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType: 'time',
       plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
-    }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
-    expect(screen.getByLabelText('Время, минуты')).toBeTruthy();
-    expect(screen.getByLabelText('Время, секунды')).toBeTruthy();
+    }} onClose={onClose} onSave={onSave} />);
+    expect(screen.getByRole('button', { name: 'Изменить продолжительность' })).toBeTruthy();
+    expect(screen.getByText('План: 00:02:05')).toBeTruthy();
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    fireEvent.input(screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' }),
+      { target: { value: '7' } });
+    expect(screen.getByText('RPE: 7')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
+      rpe: 7, metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 });
