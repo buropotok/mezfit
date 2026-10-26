@@ -55,15 +55,15 @@ describe('shared entry metric card for exercise tracking types', () => {
           onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
       }
 
-    const controls = screen.getAllByRole('button', { name: /^Изменить / });
-    expect(controls).toHaveLength(cards.length);
-    for (const { accessibleName, label, value } of cards) {
-      const control = screen.getByRole('button', { name: accessibleName });
-      expect(control.classList.contains('set-entry-weight-reps__metric-tile')).toBe(true);
-      expect(control.getAttribute('aria-disabled')).toBe('false');
-      expect(within(control).getByText(label).classList.contains('ui-text--body')).toBe(true);
-      expect(within(control).getByText(value).classList.contains('ui-text--body')).toBe(true);
-    }
+      const controls = screen.getAllByRole('button', { name: /^Изменить / });
+      expect(controls).toHaveLength(cards.length);
+      for (const { accessibleName, label, value } of cards) {
+        const control = screen.getByRole('button', { name: accessibleName });
+        expect(control.classList.contains('set-entry-weight-reps__metric-tile')).toBe(true);
+        expect(control.getAttribute('aria-disabled')).toBe('false');
+        expect(within(control).getByText(label).classList.contains('ui-text--body')).toBe(true);
+        expect(within(control).getByText(value).classList.contains('ui-text--body')).toBe(true);
+      }
       expect(screen.queryByText('Повторения × Вес')).toBeNull();
     });
   }
