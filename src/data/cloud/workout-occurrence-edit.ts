@@ -44,7 +44,7 @@ export function appendOccurrenceSet(
     if (ex.sets.length >= 100) throw new Error('OCCURRENCE_SET_LIMIT');
     const item: OccurrencePlanSet = {
       id: crypto.randomUUID(), sourceProgramSetId: null, position: ex.sets.length,
-      setLabel: null, comment: null, materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
+      setType: null, setLabel: null, comment: null, materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
       plannedDurationSeconds: null, plannedDistanceMeters: null,
     };
     return { ...ex, sets: [...ex.sets, item] };
@@ -70,7 +70,7 @@ export function occurrencePlanChanged(plan: WorkoutOccurrencePlan,
       definitionId: item.exercise.exerciseDefinitionId,
       notes: item.notes,
       sets: item.sets.map(set => ({
-        sourceProgramSetId: set.sourceProgramSetId, setLabel: set.setLabel,
+        sourceProgramSetId: set.sourceProgramSetId, setType: set.setType ?? null, setLabel: set.setLabel,
         comment: set.comment, materialLinks: set.materialLinks,
         chatLinks: set.chatLinks, plannedReps: set.plannedReps,
         plannedWeightKg: set.plannedWeightKg,

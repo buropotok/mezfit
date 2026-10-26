@@ -9,6 +9,7 @@ import { planAuthorUserId } from '../data/cloud/program-ownership';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Text } from '../ui';
 import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
+import { SetEntry } from '../workout/SetEntry';
 import { ProgramDayDialog } from './ProgramDayDialog';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
@@ -43,6 +44,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   useSpotlightHintPause(exerciseInformation !== null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const [deletingSet, setDeletingSet] = useState<{ dayId: string; exerciseId: string; setId: string } | null>(null);
+  const [editingSet, setEditingSet] = useState<{ dayId: string; exerciseId: string; setId: string } | null>(null);
   const [optimisticExerciseOrders, setOptimisticExerciseOrders] = useState<Record<string, { previous: string[]; next: string[] }>>({});
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
@@ -181,6 +183,15 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
           && program.clientUserId !== null} onSchedule={planning && ((program.status === 'active' && phaseStatus === 'active') || (!readOnly && onActivateForScheduling)) ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
+        onOpenSet={!readOnly ? (exerciseId, setId) => {
+          const source = item.exercises.find(entry => entry.exercise.id === exerciseId);
+          if (!source) return;
+          void repository.trackingTypeForExercise(source.exercise.exercise).then(type => {
+            if (!alive.current) return;
+            if (type === 'weight_reps') setEditingSet({ dayId: item.day.id, exerciseId, setId });
+            else setError('Сейчас доступен ввод только для упражнений «Вес + повторения»');
+          }).catch(reason => { if (alive.current) setError(programMutationMessage(reason)); });
+        } : undefined}
         onDeleteSet={!readOnly ? (exerciseId, setId) => setDeletingSet({ dayId: item.day.id, exerciseId, setId }) : undefined}
         onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}
         onExerciseInformation={exerciseId => setExerciseInformation({ dayId: item.day.id, exerciseId })}
@@ -192,6 +203,28 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     </div>)}
     </div>
     </div>
+    {editingSet && (() => {
+      const day = days.find(entry => entry.day.id === editingSet.dayId);
+      const source = day?.exercises.find(entry => entry.exercise.id === editingSet.exerciseId);
+      const set = source?.sets.find(entry => entry.id === editingSet.setId);
+      if (!set || !source) return null;
+      return <SetEntry key={set.id} mode="program-plan" isOpen
+        onNavigationContextChange={onNavigationContextChange}
+        data={{
+          identity: { programId: program.id, programName: program.name,
+            exerciseDefinitionId: source.exercise.exercise.exerciseDefinitionId,
+            exerciseName: source.exercise.exercise.name, setNumber: set.position + 1,
+            workoutDate: '', sourceProgramSetId: set.id, sessionSetId: null },
+          trackingType: 'weight_reps',
+          setType: set.setType ?? null,
+          plan: { weightKg: set.plannedWeightKg, reps: set.plannedReps,
+            durationSeconds: null, distanceMeters: null },
+          previous: null, fact: null,
+        }}
+        onClose={() => setEditingSet(null)}
+        onPlanSave={input => repository.updateExerciseSet(program.id, editingSet.dayId,
+          editingSet.exerciseId, editingSet.setId, input)} />;
+    })()}
     {!readOnly ? <ProgramDayExercisePicker repository={repository} program={program}
       dayId={exerciseDayId} catalogueRole={viewerRole} onNavigationContextChange={onNavigationContextChange} onClose={() => setExerciseDayId(null)} /> : null}
     {dialog && selected && dialog.kind !== 'delete' ? <ProgramDayDialog key={`${dialog.kind}:${selected.id}`}

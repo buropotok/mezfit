@@ -104,14 +104,9 @@ const finalSession: ActiveWorkoutSession = {
     ...exercise,
     sets: exercise.sets.map((set) => ({
       ...set,
-      status: 'completed',
-      fact: {
-        metrics: { weightKg: 50, reps: 8, durationSeconds: null, distanceMeters: null },
-        setLabel: null,
-        rpe: null,
-        comment: null,
-        bands: [],
-      },
+      status: 'pending',
+      setType: 'cluster',
+      fact: null,
     })),
   } : exercise),
 };
@@ -148,7 +143,8 @@ describe('WorkoutSessionScreen mutation reconciliation', () => {
 
     fireEvent.click(screen.getByText('Exercise 1').closest('button')!);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Кластер' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     expect(saveSetMock).not.toHaveBeenCalled();
 
     await act(async () => resolveReorder({ session: reorderedSession }));
@@ -156,7 +152,7 @@ describe('WorkoutSessionScreen mutation reconciliation', () => {
     expect(screen.getByTestId('sortable-order').textContent).toBe('2,1');
 
     await act(async () => resolveSave({ session: finalSession }));
-    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Подход 1' })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
     expect(screen.getByTestId('sortable-order').textContent).toBe('2,1');
   });
 });

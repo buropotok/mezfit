@@ -47,7 +47,7 @@ export function snapshotProgramDay(outline: CloudProgramDayOutline): WorkoutOccu
         notes: exercise.notes ?? null,
         sets: sets.filter(set => set.status === 'active').map((set, setPosition) => ({
           id: freshId(), sourceProgramSetId: set.id, position: setPosition,
-          setLabel: set.setLabel ?? null, comment: set.comment ?? null,
+          setType: set.setType ?? null, setLabel: set.setLabel ?? null, comment: set.comment ?? null,
           materialLinks: [...(set.materialLinks ?? [])], chatLinks: [...(set.chatLinks ?? [])],
           plannedReps: set.plannedReps, plannedWeightKg: set.plannedWeightKg,
           plannedDurationSeconds: set.plannedDurationSeconds,

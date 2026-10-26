@@ -11,6 +11,7 @@ import {
   type SetMetrics,
 } from './setEntryTypes';
 import './set-entry.css';
+import { SetEntryWeightReps } from './SetEntryWeightReps';
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const workoutDateFormatter = new Intl.DateTimeFormat('ru-RU', {
@@ -243,11 +244,15 @@ function setEntryIdentityKey(data: SetEntryProps['data']): string {
 }
 
 export function SetEntry(props: SetEntryProps) {
+  if (props.data.trackingType === 'weight_reps' && (props.mode === undefined || props.mode === 'workout' || props.mode === 'program-plan')) {
+    return <SetEntryWeightReps key={setEntryIdentityKey(props.data)} {...props} />;
+  }
+  if (props.mode === 'program-plan') return null;
   const lifecycleKey = `${props.mode}:${setEntryIdentityKey(props.data)}:${props.isOpen ? 'open' : 'closed'}`;
   return <SetEntryEditor key={lifecycleKey} {...props} />;
 }
 
-function SetEntryEditor(props: SetEntryProps) {
+function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'program-plan' }>) {
   const { isOpen, data, onClose, onOpenHistory, onOpenChat } = props;
   const isPlan = props.mode === 'plan';
   const bandsId = useId();

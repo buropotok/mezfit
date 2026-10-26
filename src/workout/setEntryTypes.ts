@@ -1,7 +1,10 @@
 import type { PlannedSet, TrackingType } from '../api';
+import type { NavigationContext } from '../NavigationShell';
+import type { SetType } from '../../shared/set-type';
 
 import type { SetLabel } from '../../shared/set-label';
 export type { SetLabel } from '../../shared/set-label';
+export type { SetType } from '../../shared/set-type';
 
 export type ResistanceBandCode = 'yellow' | 'red' | 'green' | 'blue' | 'purple' | 'black';
 
@@ -20,27 +23,29 @@ export interface PreviousSet {
 export interface ExistingSetFact {
   metrics: SetMetrics;
   setLabel: SetLabel | null;
+  setType?: SetType | null;
   rpe: number | null;
   comment: string | null;
   bands: ResistanceBandCode[];
 }
 
 export type SetEntryProgramIdentity =
-  | { programId: number; programName: string }
+  | { programId: string | number; programName: string }
   | { programId: null; programName: null };
 
 export type SetEntryIdentity = SetEntryProgramIdentity & {
-  exerciseDefinitionId: number;
+  exerciseDefinitionId: number | string;
   exerciseName: string;
   setNumber: number;
   workoutDate: string;
-  sourceProgramSetId: number | null;
+  sourceProgramSetId: number | string | null;
   sessionSetId: number | null;
 };
 
 export interface SetEntryData {
   identity: SetEntryIdentity;
   trackingType: TrackingType;
+  setType?: SetType | null;
   plan: SetMetrics | null;
   previous: PreviousSet | null;
   fact: ExistingSetFact | null;
@@ -49,6 +54,7 @@ export interface SetEntryData {
 export interface SetEntryFactDraft {
   metrics: SetMetrics;
   setLabel: SetLabel | null;
+  setType?: SetType | null;
   rpe: number | null;
   comment: string | null;
   bands: ResistanceBandCode[];
@@ -58,6 +64,8 @@ interface SetEntrySharedProps {
   isOpen: boolean;
   data: SetEntryData;
   onClose: () => void;
+  /** Register the editor as the active nested navigation surface. */
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
   onOpenHistory?: () => void;
   onOpenChat?: () => void;
 }
@@ -71,6 +79,11 @@ export type SetEntryProps =
       mode: 'plan';
       programExerciseId: number;
       onPlanSaved?: (set: PlannedSet) => void;
+      onSave?: never;
+    })
+  | (SetEntrySharedProps & {
+      mode: 'program-plan';
+      onPlanSave: (input: { weightKg: number | null; reps: number | null; setType: SetType | null }) => Promise<void>;
       onSave?: never;
     });
 
@@ -87,6 +100,7 @@ export function createSetEntryDraft(data: SetEntryData): SetEntryFactDraft {
   return {
     metrics: { ...(data.fact?.metrics ?? data.plan ?? emptySetMetrics()) },
     setLabel: data.fact?.setLabel ?? null,
+    setType: data.fact?.setType !== undefined ? data.fact.setType : data.setType ?? null,
     rpe: data.fact?.rpe ?? null,
     comment: data.fact?.comment ?? null,
     bands: [...(data.fact?.bands ?? [])],

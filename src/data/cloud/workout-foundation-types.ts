@@ -1,6 +1,7 @@
 import { isCoachExerciseDefinition } from '../exercises/coachExerciseTypes';
 import type { ExerciseTrackingType as TrackingType, PublicExercise } from '../exercises/publicExerciseTypes';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
+import type { SetType } from '../../../shared/set-type';
 import type { CloudSharedRow } from './database';
 import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
 
@@ -94,6 +95,8 @@ export interface CloudProgramExerciseRow extends CloudPlanChildRow {
 }
 
 export interface CloudProgramSetRow extends CloudPlanChildRow {
+  /** Specialized technique; null or absent means an ordinary approach. */
+  setType?: SetType | null;
   programExerciseId: string;
   position: number;
   status: 'active' | 'deprecated';

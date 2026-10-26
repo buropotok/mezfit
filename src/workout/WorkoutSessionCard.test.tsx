@@ -104,6 +104,55 @@ describe('WorkoutSessionCard capability ownership', () => {
     expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
   });
 
+  it('routes Back from the active workout card to saving the opened FACT SetEntry', async () => {
+    const session: ActiveWorkoutSession = { ...baseSession, exercises: [{
+      sessionExerciseId: 200, workoutSessionId: 501, sourceProgramExerciseId: null,
+      position: 0, status: 'active', notes: null,
+      exercise: {
+        id: 20, scope: 'global', name: 'Жим лёжа', description: null,
+        tracking_type: 'weight_reps', category_code: 'chest', equipment_code: 'barbell',
+        reference_source: null, reference_key: null, reference_media_url: null,
+        is_favourite: false, can_edit: false,
+      },
+      sets: [{
+        sessionSetId: 301, sourceProgramSetId: null, position: 0, status: 'pending',
+        plan: { weightKg: 80, reps: 8, durationSeconds: null, distanceMeters: null },
+        previous: null, fact: null,
+      }],
+    }] };
+    const onSaveSet = vi.fn(async () => undefined);
+    const onNavigationContextChange = vi.fn();
+    render(<WorkoutSessionCard session={session} onSaveSet={onSaveSet}
+      onReorderExerciseIds={vi.fn()} onNavigationContextChange={onNavigationContextChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    // Active workouts render inside SortableList. Neither overlay may inherit
+    // its transform/clipping, or the animated Sheet's transform/clipping.
+    const sheet = screen.getByRole('dialog', { name: 'Подход 1' });
+    const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    expect(screen.getByTestId('workout-card').contains(sheet)).toBe(false);
+    expect(sheet.contains(picker)).toBe(false);
+    const navigation = await waitFor(() => {
+      const context = onNavigationContextChange.mock.calls
+        .map(([value]) => value as { onBack?: () => void } | null)
+        .find(value => value?.onBack);
+      expect(context?.onBack).toBeTypeOf('function');
+      return context!;
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    act(() => navigation.onBack?.());
+
+    await waitFor(() => expect(onSaveSet).toHaveBeenCalledWith(expect.objectContaining({
+      workoutSessionId: 501, sessionExerciseId: 200, sessionSetId: 301,
+      fact: expect.objectContaining({
+        setType: 'cluster',
+        metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
+      }),
+    })));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
+  });
+
   it('keeps completed sessions read-only even when structural callbacks exist', () => {
     render(
       <WorkoutSessionCard

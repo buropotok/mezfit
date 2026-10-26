@@ -12,6 +12,7 @@ import {
   Text,
   type LiquidPopoverItem,
 } from '../ui';
+import type { NavigationContext } from '../NavigationShell';
 import { WorkoutPlanCard, type WorkoutPlanCardProps } from './WorkoutPlanCard';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
@@ -106,6 +107,7 @@ export interface WorkoutFactCardProps {
   onOpenExerciseMenu?: (sessionExerciseId: number) => void;
   onOpenExerciseHistory?: (exerciseDefinitionId: number) => void;
   onOpenChat?: () => void;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
 export type WorkoutSessionCardProps = WorkoutFactCardProps | WorkoutPlanCardProps;
@@ -131,6 +133,7 @@ function WorkoutFactCard({
   onOpenExerciseMenu,
   onOpenExerciseHistory,
   onOpenChat,
+  onNavigationContextChange,
 }: WorkoutFactCardProps) {
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = title ?? workoutTitle(session);
@@ -186,6 +189,7 @@ function WorkoutFactCard({
         onOpenExerciseMenu={active ? onOpenExerciseMenu : undefined}
         onOpenHistory={onOpenExerciseHistory}
         onOpenChat={onOpenChat}
+        onNavigationContextChange={onNavigationContextChange}
       />
     ),
   }));

@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes, ReactNode, TransitionEventHandler } from 're
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
+import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { WorkoutSlotConflict } from '../data/cloud/workout-slot-validation';
@@ -19,11 +20,13 @@ vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSele
   return null;
 } }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
-  WorkoutPlanCard: ({ onAddSet, onExerciseInformation, programName, hideProgramName }: {
+  WorkoutPlanCard: ({ onAddSet, onExerciseInformation, programName, hideProgramName, day }: {
     onAddSet?: (id: string) => void; onExerciseInformation?: (id: string) => void;
-    programName?: string; hideProgramName?: boolean;
+    programName?: string; hideProgramName?: boolean; day?: CloudProgramDayOutline;
   }) => <>
     <span data-testid="scheduled-program-name">{hideProgramName ? null : programName}</span>
+    <span data-testid="scheduled-set-techniques">{day?.exercises.flatMap(exercise =>
+      exercise.sets.map(set => set.setType ?? 'ordinary')).join(',') ?? ''}</span>
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>
     {onExerciseInformation ? <button onClick={() => onExerciseInformation('exercise')}>
       Информация упражнения
@@ -93,6 +96,25 @@ const draft: LocalWorkoutOccurrenceDraft = {
   format: 'independent', startsAtUtc: '2026-10-19T08:00:00.000Z', durationMinutes: 60,
   plan, originalPlan: plan, createdAt: '2026-10-18T08:00:00.000Z', updatedAt: '2026-10-18T08:00:00.000Z',
 };
+
+describe('calendar plan technique projection', () => {
+  it('delivers the specialized set technique from the scheduled plan to its rendered card', () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const plannedSet = {
+      id: 'set-one', sourceProgramSetId: 'source-set-one', position: 0,
+      setType: 'dropset' as const, setLabel: null, comment: null,
+      materialLinks: [], chatLinks: [], plannedReps: 8, plannedWeightKg: 80,
+      plannedDurationSeconds: null, plannedDistanceMeters: null,
+    };
+    const plannedDraft: LocalWorkoutOccurrenceDraft = { ...draft,
+      plan: { ...plan, exercises: [{ ...plan.exercises[0], sets: [plannedSet] }] },
+    };
+    render(<OccurrenceDraftSheet draft={plannedDraft} drafts={drafts}
+      onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+    expect(screen.getByTestId('scheduled-set-techniques').textContent).toBe('dropset');
+  });
+});
 
 describe('deferred editor auxiliaries', () => {
   it('renders the real form during slide but mounts closed pickers and dialogs only after opening', async () => {
