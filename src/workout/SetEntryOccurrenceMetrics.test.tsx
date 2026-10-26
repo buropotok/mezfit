@@ -45,11 +45,33 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     render(<SetEntry mode="occurrence-plan" isOpen
       data={{ ...base, trackingType: 'time_distance' }} onClose={onClose} onPlanSave={onPlanSave} />);
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(onPlanSave).toHaveBeenLastCalledWith(expect.objectContaining({
       durationSeconds: 125, distanceMeters: 2500, setType: 'cluster',
     })));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('never autosaves time-based PLAN and never closes its picker during editing', async () => {
+    const onPlanSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<SetEntry mode="occurrence-plan" isOpen
+      data={{ ...base, trackingType: 'time_distance' }}
+      onClose={onClose} onPlanSave={onPlanSave} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить продолжительность' }));
+    const picker = screen.getByRole('dialog', { name: 'Выбор продолжительности' });
+    expect(picker.getAttribute('aria-hidden')).not.toBe('true');
+    await new Promise<void>(resolve => { window.setTimeout(resolve, 440); });
+    expect(onPlanSave).not.toHaveBeenCalled();
+    expect(picker.getAttribute('aria-hidden')).not.toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onPlanSave).not.toHaveBeenCalled();
   });
 
   it('saves only the explicit FACT and RPE chosen through the Mezfit slider', async () => {
