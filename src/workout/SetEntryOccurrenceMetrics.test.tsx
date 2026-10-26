@@ -63,7 +63,10 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     expect(screen.getByText('RPE: 0')).toBeTruthy();
     expect(screen.getByText('План: 00:02:05 · 2 км 500 м')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Записать значения плана как факт' }));
+    const copyPlan = screen.getByRole('button', { name: 'Записать значения плана как факт' });
+    // App-owned Konsta action labels must use Mezfit's semantic Body preset.
+    expect(copyPlan.querySelector('.ui-text--body')?.textContent).toBe('Записать значения плана как факт');
+    fireEvent.click(copyPlan);
     fireEvent.input(screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' }),
       { target: { value: '9' } });
     expect(screen.getByText('RPE: 9')).toBeTruthy();
