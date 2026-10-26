@@ -261,9 +261,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
           {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
           {!isPlan && !needsFactSelection && missingFact &&
-            (isWeightReps ? validPicker : [hasDuration && fieldIsValid('duration'),
-              hasDistance && fieldIsValid('distance'), hasReps && fieldIsValid('reps'), hasWeight && fieldIsValid('weight')]
-              .every(v => v !== false))
+            (isWeightReps ? validPicker : (!hasDuration || fieldIsValid('duration'))
+              && (!hasDistance || fieldIsValid('distance')) && (!hasReps || fieldIsValid('reps'))
+              && (!hasWeight || fieldIsValid('weight')))
             ? <KonstaButton tonal small disabled={closing} onClick={() => change(old => ({
               ...old, metrics: { ...old.metrics, ...factMetrics },
             }))}><Text variant="body">Записать {confirmLabel} как факт</Text></KonstaButton> : null}
@@ -344,10 +344,22 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
       </>}>
       <Text variant="body">Подход будет удалён из этой тренировки.</Text>
     </MezfitDialog>, portalHost)}
-    {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker}
+    {createPortal(<WeightRepsPicker opened={activePicker === 'weight_reps' && validPicker}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
-      target={target.current} onClose={() => setPickerOpened(false)}
+      target={target.current} onClose={() => setActivePicker(null)}
       onChange={value => change(old => ({ ...old, metrics: { ...old.metrics, reps: value.reps, weightKg: value.weightKg } }))} />, portalHost)}
+    {createPortal(<DurationPicker opened={activePicker === 'duration' && fieldIsValid('duration')}
+      value={currentDuration} target={durationTarget.current} onClose={() => setActivePicker(null)}
+      onChange={durationSeconds => change(old => ({ ...old, metrics: { ...old.metrics, durationSeconds } }))} />, portalHost)}
+    {createPortal(<DistancePicker opened={activePicker === 'distance' && fieldIsValid('distance')}
+      value={currentDistance} target={distanceTarget.current} onClose={() => setActivePicker(null)}
+      onChange={distanceMeters => change(old => ({ ...old, metrics: { ...old.metrics, distanceMeters } }))} />, portalHost)}
+    {createPortal(<NumPicker opened={activePicker === 'reps' && fieldIsValid('reps')}
+      value={currentStandaloneReps} target={repsTarget.current} onClose={() => setActivePicker(null)}
+      onChange={reps => change(old => ({ ...old, metrics: { ...old.metrics, reps } }))} />, portalHost)}
+    {createPortal(<WeightPicker opened={activePicker === 'weight' && fieldIsValid('weight')}
+      value={currentStandaloneWeight} target={weightTarget.current} onClose={() => setActivePicker(null)}
+      onChange={weightKg => change(old => ({ ...old, metrics: { ...old.metrics, weightKg } }))} />, portalHost)}
     </>
   );
 }
