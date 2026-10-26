@@ -84,7 +84,7 @@ export type SetEntryProps =
       onSave?: never;
     })
   | (SetEntrySharedProps & {
-      mode: 'program-plan' | 'occurrence-plan';
+      mode: 'occurrence-plan';
       onPlanSave: (input: Partial<SetMetrics> & { setType: SetType | null }) => Promise<void>;
       onSave?: never;
     });
