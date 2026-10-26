@@ -58,6 +58,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   const draftRef = useRef(draft);
   const changed = useRef(0);
   const saved = useRef(0);
+  const queued = useRef(0);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const [revision, setRevision] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -99,7 +100,8 @@ export function SetEntryOccurrenceMetrics(props: Props) {
 
   const persist = (): Promise<void> => {
     const at = changed.current;
-    if (at <= saved.current) return queue.current;
+    if (at <= Math.max(saved.current, queued.current)) return queue.current;
+    queued.current = at;
     const snapshot = { ...draftRef.current, metrics: { ...draftRef.current.metrics },
       bands: [...draftRef.current.bands] };
     const metrics = snapshot.metrics;
@@ -116,6 +118,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
       saved.current = Math.max(saved.current, at);
       setError('');
     }).catch(reason => {
+      queued.current = saved.current;
       setError(reason instanceof Error ? reason.message
         : isPlan ? 'Не удалось сохранить план' : 'Не удалось сохранить результат');
       throw reason;
