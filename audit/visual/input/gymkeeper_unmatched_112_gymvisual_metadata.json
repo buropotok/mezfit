@@ -3,8 +3,8 @@
   "status": "partial_not_for_publication",
   "metadata": {
     "record_count": 112,
-    "verified_data_sheet_count": 93,
-    "pending_data_sheet_count": 19,
+    "verified_data_sheet_count": 97,
+    "pending_data_sheet_count": 15,
     "canonical_mezfit_catalogue_count": 1324,
     "source_catalogue_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
     "description": "Non-authoritative additive staging metadata; never automatically import into Dexie Cloud or overwrite its immutable source",
@@ -13,11 +13,11 @@
     "name_similarity_candidate_count": 28,
     "name_similarity_candidate_note": "Heuristic name matching is not semantic identity; review equipment, position and animation before any deduplication.",
     "reference_validation_note": "The product page may omit the numeric Reference in text; a matched page title is not a verified Reference-code match.",
-    "product_page_found_count": 95,
-    "reference_confirmed_listing_count": 35,
+    "product_page_found_count": 98,
+    "reference_confirmed_listing_count": 39,
     "data_sheet_review_date": "2026-10-26",
-    "verified_exact_gif_datasheet_count": 85,
-    "verified_alternate_media_datasheet_count": 8,
+    "verified_exact_gif_datasheet_count": 87,
+    "verified_alternate_media_datasheet_count": 10,
     "explicitly_refuted_duplicate_ids": [
       "5120"
     ]
@@ -582,13 +582,23 @@
       "gym_keeper_apk_reference_key": "11991305-Sumo-Deadlift-High-Pull_Thighs_Shoulders_180.gif",
       "apk_category": "shoulders",
       "apk_equipment_code": "other",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/2650-sumo-deadlift-high-pull.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Shoulders"
+        ],
+        "equipment_type": "Barbell",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/2650-sumo-deadlift-high-pull.html",
+      "data_sheet_evidence_media_type": "gif",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/13-media-content?p=1025"
     },
     {
       "id": "1221",
@@ -689,13 +699,23 @@
       "gym_keeper_apk_reference_key": "12441305-Flutter-Kicks-(version-3)_Hips-FIX_180.gif",
       "apk_category": "legs",
       "apk_equipment_code": "other",
-      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/2689-flutter-kicks-version-3.html",
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "product_page_found_pending_data_sheet",
+      "gymvisual_product_url": "https://gymvisual.com/illustrations/1461-flutter-kicks-version-3.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Body weight",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": "0459",
       "potential_existing_mezfit_status": "name_similarity_manual_review_required",
       "source_migration": "migrations/0011_gym_keeper_exercise_seed_05.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/illustrations/1461-flutter-kicks-version-3.html",
+      "data_sheet_evidence_media_type": "illustration",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/13-media-content?p=488"
     },
     {
       "id": "1249",
@@ -1512,13 +1532,23 @@
       "gym_keeper_apk_reference_key": "34361305-Superman-(male)_Waist_180.gif",
       "apk_category": "core",
       "apk_equipment_code": "other",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/illustrations/7596-superman-male.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Hips"
+        ],
+        "equipment_type": "Body weight",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_alternate_media_page",
       "potential_existing_mezfit_id": null,
       "potential_existing_mezfit_status": "not_determined",
       "source_migration": "migrations/0012_gym_keeper_exercise_seed_06.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/illustrations/7596-superman-male.html",
+      "data_sheet_evidence_media_type": "illustration",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?p=302"
     },
     {
       "id": "3509",
@@ -2167,13 +2197,23 @@
       "gym_keeper_apk_reference_key": "52431305-Cable-Lying-Triceps-Extension-(Low)_Upper-Arms_180.gif",
       "apk_category": "arms",
       "apk_equipment_code": "cable",
-      "gymvisual_product_url": null,
-      "gymvisual_data_sheet": null,
-      "data_sheet_status": "unverified",
+      "gymvisual_product_url": "https://gymvisual.com/animated-gifs/11541-cable-lying-triceps-extension-low.html",
+      "gymvisual_data_sheet": {
+        "body_part": [
+          "Upper Arms"
+        ],
+        "equipment_type": "Cable",
+        "exercise_type": "Strength",
+        "gender": "Male"
+      },
+      "data_sheet_status": "verified_product_page",
       "potential_existing_mezfit_id": "0186",
       "potential_existing_mezfit_status": "name_similarity_manual_review_required",
       "source_migration": "migrations/0013_gym_keeper_exercise_seed_07.sql",
-      "gymvisual_reference_confirmation": "candidate_from_apk_and_public_listing_not_confirmed_in_product_datasheet"
+      "gymvisual_reference_confirmation": "confirmed_reference_in_gymvisual_gif_listing",
+      "data_sheet_evidence_url": "https://gymvisual.com/animated-gifs/11541-cable-lying-triceps-extension-low.html",
+      "data_sheet_evidence_media_type": "gif",
+      "gymvisual_listing_evidence_url": "https://gymvisual.com/16-animated-gifs?id_category=16&n=100&p=14"
     },
     {
       "id": "5344",
