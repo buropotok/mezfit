@@ -73,4 +73,5 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           IMPORT_CONFIRMATION: ${{ inputs.confirmation }}
+          R2_MEDIA_IMPORT_APPROVAL: ${{ vars.R2_MEDIA_IMPORT_APPROVAL }}
         run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs upload
