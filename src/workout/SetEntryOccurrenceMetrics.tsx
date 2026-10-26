@@ -3,23 +3,18 @@ import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { loadBrowserGlassSettings } from '../glassSettings';
-import { BadgeChoice, Divider, DistancePicker, DurationPicker, GlassSurface, IconButton, LiquidPopover,
+import { BadgeChoice, Divider, DistancePicker, DurationPicker, IconButton, LiquidPopover,
   MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
+import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
 
 type Props = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
   Extract<SetEntryProps, { mode?: 'workout' }>;
 type MetricKey = keyof SetMetrics;
 type EditableMetric = Exclude<MetricKey, never>;
-const LABELS: Record<EditableMetric, string> = {
-  durationSeconds: 'Продолжительность',
-  distanceMeters: 'Дистанция',
-  reps: 'Повторения',
-  weightKg: 'Вес',
-};
 const EDIT_LABELS: Record<EditableMetric, string> = {
   durationSeconds: 'Изменить продолжительность',
   distanceMeters: 'Изменить дистанцию',
@@ -80,7 +75,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [bandOpen, setBandOpen] = useState(false);
   const bandTarget = useRef<HTMLButtonElement>(null);
-  const targets = useRef<Partial<Record<EditableMetric, HTMLButtonElement | null>>>({});
+  const targets = useRef<Partial<Record<EditableMetric, HTMLElement | null>>>({});
   const requestClose = useRef<() => void>(() => undefined);
   const glass = loadBrowserGlassSettings();
   const keys = FIELDS[props.data.trackingType as keyof typeof FIELDS] ?? [];
@@ -201,17 +196,14 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="caption" tone="muted">{keys.length} {keys.length === 1 ? 'показатель' : 'показателя'}</Text>
           </div>
           {keys.map(key => <div key={key}>
-            <GlassSurface component="button" shape="auto" contentClassName="set-entry-weight-reps__metric-content" preset="modalTuned"
-              optics={false} blur={glass.blur} halo="lifted" className="set-entry-weight-reps__metric-tile"
-              ref={node => { targets.current[key] = node as HTMLButtonElement | null; }}
-              aria-disabled={inputLocked || !valid(key, suggested(key))}
-              aria-label={EDIT_LABELS[key]}
+            <SetEntryMetricTile metric={key} blur={glass.blur}
+              buttonRef={node => { targets.current[key] = node; }}
+              value={display(key, draft.metrics[key])}
+              ariaLabel={EDIT_LABELS[key]}
+              disabled={inputLocked || !valid(key, suggested(key))}
               onClick={() => {
                 if (!inputLocked && valid(key, suggested(key))) setPicker(key);
-              }}>
-              <Text variant="body">{LABELS[key]}</Text>
-              <Text variant="body">{display(key, draft.metrics[key])}</Text>
-            </GlassSurface>
+              }} />
             {!valid(key, suggested(key))
               ? <Text variant="footnote" role="alert">Существующее значение не поддерживается пикером</Text> : null}
           </div>)}
