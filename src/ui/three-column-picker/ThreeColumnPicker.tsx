@@ -32,7 +32,7 @@ export interface ThreeColumnPickerParts {
   third: number;
 }
 
-export interface ThreeColumnThreeColumnPickerColumn {
+export interface ThreeColumnPickerColumn {
   ariaLabel: string;
   values: readonly number[];
   format: (value: number) => string;
@@ -51,7 +51,7 @@ export interface ThreeColumnPickerProps {
   onChange: (value: ThreeColumnPickerParts) => void;
   onClose: () => void;
   target: HTMLElement | null;
-  columns: Readonly<Record<ThreeColumnPickerPart, ThreeColumnThreeColumnPickerColumn>>;
+  columns: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>;
   ariaLabel: string;
   lensXs: readonly [number, number, number];
   separators?: readonly ThreeColumnPickerSeparator[];
