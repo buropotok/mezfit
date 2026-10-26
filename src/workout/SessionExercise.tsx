@@ -262,7 +262,8 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, showPlanMetrics = f
             {showPlanMetrics ? `Подход ${index + 1}. План: ${formatProgramPlanMetrics(set)}` : `Подход ${index + 1}`}
           </Text>}
           subtitle={<span className="session-exercise__set-recommendations">
-            {set.setType ? <Text variant="caption" tone="muted">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : null}
+            {set.setType ? <Text variant={showPlanMetrics ? 'caption' : 'footnote'}
+              tone={showPlanMetrics ? 'muted' : undefined}>Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : null}
             {set.comment ? <Text variant="footnote" tone="muted">{set.comment}</Text> : null}
             {set.materialLinks?.length ? <Text variant="caption" tone="muted">Материалы: {set.materialLinks.length}</Text> : null}
             {set.chatLinks?.length ? <Text variant="caption" tone="muted">Обсуждения: {set.chatLinks.length}</Text> : null}
