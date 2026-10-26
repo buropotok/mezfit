@@ -42,7 +42,7 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.getByRole('group', { name: 'Тип подхода' })).toBeTruthy();
     expect(screen.getByText('RPE: 0')).toBeTruthy();
     expect(screen.getByRole('slider', { name: 'RPE' })).toBeTruthy();
-    expect(document.querySelector('.set-entry-weight-reps__metric-tile')?.getAttribute('data-glass-preset')).toBe('modalTuned');
+    expect(document.querySelector('.set-entry-weight-reps__metric-tile')?.classList.contains('ui-glass-surface--halo-lifted')).toBe(true);
   });
 
   it('keeps the sheet and weight picker outside card transforms and sheet clipping', async () => {
