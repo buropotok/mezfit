@@ -322,7 +322,8 @@ describe('SessionExercise and SetEntry boundary', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
     expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
       .toContain('85 кг × 9');
-    expect(screen.getByText('План: 85 кг × 8')).toBeTruthy();
+    expect(within(screen.getByRole('dialog', { name: 'Подход 2' }))
+      .getByText('План: 85 кг × 8')).toBeTruthy();
     expect(saved).toHaveBeenCalledOnce(); // reopening never writes another FACT
   });
 
