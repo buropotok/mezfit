@@ -32,7 +32,7 @@ export type BadgeChoiceProps = {
 
 export function BadgeChoice({ children, color = 'gray', textVariant = 'caption',
   selected = false, disabled = false, onClick, className = '' }: BadgeChoiceProps) {
-  return <KonstaButton clear small rounded disabled={disabled} onClick={onClick}
+  return <KonstaButton clear small inline rounded disabled={disabled} onClick={onClick}
     aria-pressed={selected} className={className}>
     <Badge color={color} textVariant={textVariant} selected={selected}>{children}</Badge>
   </KonstaButton>;
