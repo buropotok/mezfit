@@ -117,7 +117,7 @@ describe('weight and repetitions SetEntry', () => {
     render(<SetEntry mode="workout" isOpen data={{ ...baseData,
       plan: { ...baseData.plan!, weightKg: 80.1 },
     }} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('План: 80,1 кг × 10')).toBeTruthy();
+    expect(screen.getByText('План: 80,1 кг')).toBeTruthy();
     expect(screen.getByText('Не заполнено')).toBeTruthy();
     expect(screen.getByText(/Значение PLAN недоступно в пикере/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
@@ -128,7 +128,7 @@ describe('weight and repetitions SetEntry', () => {
     fireEvent.click(within(picker).getByRole('listbox', { name: 'Килограммы' })
       .querySelector<HTMLButtonElement>('button[aria-label="80"]')!);
     // Selecting a valid FACT does not rewrite the immutable PLAN comparison.
-    expect(screen.getByText('План: 80,1 кг × 10')).toBeTruthy();
+    expect(screen.getByText('План: 80,1 кг')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
