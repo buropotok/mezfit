@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
-import { appendOccurrenceExercise, appendOccurrenceSet, occurrencePlanChanged,
+import { appendOccurrenceExercise, appendOccurrenceSet, occurrencePlanChanged, occurrenceTemplateChanged,
   removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises } from './workout-occurrence-edit';
 const exercise = { exerciseDefinitionId: '0001', scope: 'public' as const,
   name: 'Приседания', nameEn: null, mediaUrl: null };
@@ -25,6 +25,21 @@ describe('occurrence PLAN structured editing', () => {
     expect(removeOccurrenceSet(next, id, next.exercises[0].sets[0].id)).toEqual(base);
     expect(base.exercises[0].sets).toHaveLength(0);
   });
+  it('treats independent numeric PLAN edits as occurrence-only, never program changes', () => {
+    const base = appendOccurrenceExercise(empty, exercise);
+    const withSet = appendOccurrenceSet(base, base.exercises[0].id);
+    const numericEdit: WorkoutOccurrencePlan = { ...withSet, exercises: withSet.exercises.map(ex => ({
+      ...ex, sets: ex.sets.map(set => ({ ...set, plannedWeightKg: 80.75, plannedReps: 8 })),
+    })) };
+    expect(occurrencePlanChanged(numericEdit, withSet)).toBe(true);
+    expect(occurrenceTemplateChanged(numericEdit, withSet)).toBe(false);
+    const techniqueEdit: WorkoutOccurrencePlan = { ...numericEdit, exercises: numericEdit.exercises.map(ex => ({
+      ...ex, sets: ex.sets.map(set => ({ ...set, setType: 'cluster' as const })),
+    })) };
+    expect(occurrenceTemplateChanged(techniqueEdit, withSet)).toBe(true);
+    expect(withSet.exercises[0].sets[0].plannedWeightKg).toBeNull();
+  });
+
   it('refuses omissions/duplication in reorder', () => {
     const value = appendOccurrenceExercise(empty, exercise);
     expect(() => reorderOccurrenceExercises(value, [])).toThrow();
