@@ -416,7 +416,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
           const writing = edit(current => ({
             ...current,
             plan: updateOccurrenceSetPlan(current.plan, editingSet.exerciseId, editingSet.setId, {
-              plannedWeightKg: input.weightKg, plannedReps: input.reps, setType: input.setType,
+              plannedWeightKg: input.weightKg, plannedReps: input.reps,
+              plannedDurationSeconds: input.durationSeconds, plannedDistanceMeters: input.distanceMeters,
+              setType: input.setType,
             }),
           }));
           if (!writing) throw new Error('Редактирование подхода недоступно');
