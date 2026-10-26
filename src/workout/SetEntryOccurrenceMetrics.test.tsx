@@ -51,6 +51,37 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
+  it('saves only the explicit FACT and RPE chosen through the Mezfit slider', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<SetEntry mode="workout" isOpen
+      data={{ ...base, trackingType: 'time_distance', fact: null }}
+      onClose={onClose} onSave={onSave} />);
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    expect(screen.getByText('План: 00:02:05 · 2 км 500 м')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Записать значения плана как факт' }));
+    fireEvent.input(screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' }),
+      { target: { value: '9' } });
+    expect(screen.getByText('RPE: 9')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
+      setLabel: null, rpe: 9,
+      metrics: { durationSeconds: 125, distanceMeters: 2500, reps: null, weightKg: null },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('does not write a FACT when a time-based set is opened and closed unchanged', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<SetEntry mode="workout" isOpen
+      data={{ ...base, trackingType: 'time' }} onClose={onClose} onSave={onSave} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('keeps an unsupported historical duration unchanged and disables its picker', () => {
     const onPlanSave = vi.fn(async () => undefined);
     render(<SetEntry mode="occurrence-plan" isOpen
