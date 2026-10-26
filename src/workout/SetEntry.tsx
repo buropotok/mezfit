@@ -244,15 +244,15 @@ function setEntryIdentityKey(data: SetEntryProps['data']): string {
 }
 
 export function SetEntry(props: SetEntryProps) {
-  if (props.data.trackingType === 'weight_reps' && (props.mode === undefined || props.mode === 'workout' || props.mode === 'program-plan')) {
+  if (props.data.trackingType === 'weight_reps' && (props.mode === undefined || props.mode === 'workout' || props.mode === 'program-plan' || props.mode === 'occurrence-plan')) {
     return <SetEntryWeightReps key={setEntryIdentityKey(props.data)} {...props} />;
   }
-  if (props.mode === 'program-plan') return null;
+  if (props.mode === 'program-plan' || props.mode === 'occurrence-plan') return null;
   const lifecycleKey = `${props.mode}:${setEntryIdentityKey(props.data)}:${props.isOpen ? 'open' : 'closed'}`;
   return <SetEntryEditor key={lifecycleKey} {...props} />;
 }
 
-function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'program-plan' }>) {
+function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'program-plan' | 'occurrence-plan' }>) {
   const { isOpen, data, onClose, onOpenHistory, onOpenChat } = props;
   const isPlan = props.mode === 'plan';
   const bandsId = useId();
