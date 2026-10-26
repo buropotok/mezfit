@@ -58,10 +58,17 @@ describe('occurrence PLAN structured editing', () => {
     expect(copy.chatLinks).not.toBe(previous.chatLinks);
     expect(filled.exercises[0].sets).toHaveLength(1);
 
-    const again = appendOccurrenceSet(added, exerciseId);
+    const editedSecond: WorkoutOccurrencePlan = {
+      ...added, exercises: added.exercises.map(ex => ({
+        ...ex, sets: ex.sets.map((set, index) => index === 1
+          ? { ...set, plannedWeightKg: 60, plannedReps: 12, setType: 'dropset' as const }
+          : set),
+      })),
+    };
+    const again = appendOccurrenceSet(editedSecond, exerciseId);
     expect(again.exercises[0].sets[2]).toMatchObject({
-      sourceProgramSetId: null, position: 2, plannedWeightKg: 57,
-      plannedReps: 19, setType: 'cluster',
+      sourceProgramSetId: null, position: 2, plannedWeightKg: 60,
+      plannedReps: 12, setType: 'dropset',
     });
     expect(new Set(again.exercises[0].sets.map(set => set.id)).size).toBe(3);
     expect(again.exercises[0].sets[2].materialLinks)
