@@ -79,7 +79,7 @@ describe('DurationPicker (elapsed time, not time of day)', () => {
     [0, '00:00:00', '00', '00', '00'],
     [125, '00:02:05', '00', '02', '05'],
     [86399, '23:59:59', '23', '59', '59'],
-  ])('represents %i seconds exactly as %s', (value, formatted, hours, minutes, seconds) => {
+  ] as const)('represents %i seconds exactly as %s', (value, formatted, hours, minutes, seconds) => {
     expect(formatDurationSeconds(value)).toBe(formatted);
     mountPicker(DurationPicker, value);
     selected('Часы продолжительности', hours);
