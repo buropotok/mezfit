@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { Badge, Divider, GlassSurface, Icon, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
+import { loadBrowserGlassSettings } from '../glassSettings';
 import './set-entry-weight-reps.css';
 
 type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
@@ -30,6 +31,8 @@ function pickerCompatible(weightKg: number, reps: number): boolean {
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
 export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const isPlan = props.mode === 'occurrence-plan';
+  const glass = loadBrowserGlassSettings();
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => {
     const initial = createSetEntryDraft(props.data);
     return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
@@ -176,12 +179,16 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="caption" tone="muted">2 показателя</Text>
           </div>
           <GlassSurface component="button" ref={target} wrapContent={false} shape="auto"
+            preset="modalTuned" blur={glass.blur} optics={false} halo="lifted"
             className="set-entry-weight-reps__metric-tile"
             onClick={() => { if (validPicker && !closing) setPickerOpened(true); }}
             aria-disabled={!validPicker || closing}
             aria-label="Изменить вес и повторения">
             <Text variant="headline">Повторения × Вес</Text>
-            <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
+            <span className="set-entry-weight-reps__metric-value">
+              <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
+              <Icon name="chevron-right" aria-hidden="true" />
+            </span>
           </GlassSurface>
           {!validPicker ? <Text variant="footnote" role="alert">{isPlan
             ? 'Плановое значение не поддерживается текущим пикером'
@@ -192,8 +199,14 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               ...old, metrics: { ...old.metrics, weightKg: currentWeight, reps: currentReps },
             }))}><Text variant="body">Записать {metricsText(currentWeight, currentReps)} как факт</Text></KonstaButton> : null}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
-            {props.data.plan ? <Text variant="caption" tone="muted">План: {metricsText(props.data.plan.weightKg, props.data.plan.reps)}</Text> : null}
-            {props.data.previous ? <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous.metrics.weightKg, props.data.previous.metrics.reps)}</Text> : null}
+            {props.data.plan?.reps !== null && props.data.plan?.reps !== undefined
+              ? <Text variant="caption" className="set-entry-weight-reps__plan-context">План: {props.data.plan.reps} повт.</Text> : null}
+            {props.data.previous?.metrics.reps !== null && props.data.previous?.metrics.reps !== undefined
+              ? <Text variant="caption" tone="muted">Пред.: {props.data.previous.metrics.reps} повт.</Text> : null}
+            {props.data.plan?.weightKg !== null && props.data.plan?.weightKg !== undefined
+              ? <Text variant="caption" className="set-entry-weight-reps__plan-context">План: {numberFormatter.format(props.data.plan.weightKg)} кг</Text> : null}
+            {props.data.previous?.metrics.weightKg !== null && props.data.previous?.metrics.weightKg !== undefined
+              ? <Text variant="caption" tone="muted">Пред.: {numberFormatter.format(props.data.previous.metrics.weightKg)} кг</Text> : null}
           </div> : null}
           <div className="set-entry-weight-reps__section">
             <div className="set-entry-weight-reps__section-heading">
@@ -201,28 +214,26 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <KonstaButton key={type} small rounded
-                tonal={(draft.setType ?? null) !== type}
+              {SET_TYPES.map((type: SetType) => <button key={type} type="button"
+                className="set-entry-weight-reps__type-button"
                 aria-pressed={(draft.setType ?? null) === type}
                 disabled={closing}
                 onClick={() => change(old => ({ ...old, setType: old.setType === type ? null : type }))}>
-                <Text variant="body">{SET_TYPE_LABELS[type]}</Text>
-              </KonstaButton>)}
+                <Badge color="gray" textVariant="body" variant="outline"
+                  selected={(draft.setType ?? null) === type}>{SET_TYPE_LABELS[type]}</Badge>
+              </button>)}
             </div>
           </div>
           {!isPlan ? <>
             <div className="set-entry-weight-reps__section">
               <div className="set-entry-weight-reps__section-heading">
-                <Text variant="footnote">RPE</Text>
+                <Text variant="footnote">RPE: {draft.rpe ?? 0}</Text>
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
-              <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
-                {Array.from({ length: 10 }, (_, index) => index + 1).map(rpe =>
-                  <KonstaButton key={rpe} small rounded tonal={draft.rpe !== rpe} aria-pressed={draft.rpe === rpe}
-                    disabled={closing} onClick={() => change(old => ({ ...old, rpe: old.rpe === rpe ? null : rpe }))}>
-                    <Text variant="body">{rpe}</Text>
-                  </KonstaButton>)}
-              </div>
+              <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0}
+                ariaLabel="RPE" onValueChange={rpe => {
+                  if (!closing) change(old => ({ ...old, rpe }));
+                }} />
             </div>
             <div className="set-entry-weight-reps__section">
               <Text variant="footnote">Комментарий</Text>
@@ -241,9 +252,29 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
             <Text variant="body">Повторить сохранение</Text>
           </KonstaButton> : null}
+          {props.onDelete ? <button type="button" className="set-entry-weight-reps__delete"
+            disabled={closing} onClick={() => setDeleteOpen(true)}>Удалить подход</button> : null}
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
+    {createPortal(<MezfitDialog opened={deleteOpen} title="Удалить подход?"
+      buttons={<>
+        <MezfitDialogButton onClick={() => setDeleteOpen(false)}>Отмена</MezfitDialogButton>
+        <MezfitDialogButton strong tone="danger" onClick={() => {
+          if (!props.onDelete) return;
+          setClosing(true);
+          void persist().then(props.onDelete).then(() => {
+            setDeleteOpen(false);
+            props.onClose();
+          }).catch(reason => {
+            setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход');
+            setDeleteOpen(false);
+            setClosing(false);
+          });
+        }}>Удалить</MezfitDialogButton>
+      </>}>
+      <Text variant="body">Подход будет удалён из этой тренировки.</Text>
+    </MezfitDialog>, portalHost)}
     {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
       target={target.current} onClose={() => setPickerOpened(false)}
