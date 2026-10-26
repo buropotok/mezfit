@@ -108,8 +108,9 @@ describe('program source selection', () => {
       fireEvent.click(within(card).getByRole('button', { name }));
       notice();
     }
+    // The program is a structural template; tapping a set must not offer numeric editing.
     fireEvent.click(within(card).getByText('Подход 1'));
-    notice();
+    expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull();
     const exerciseMenu = within(card).getByRole('menu', { name: 'Меню упражнения' });
     expect(within(exerciseMenu).getByRole('button', { name: 'Информация' })).toBeTruthy();
     fireEvent.click(within(exerciseMenu).getByRole('button', { name: 'Удалить' }));
