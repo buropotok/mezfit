@@ -20,3 +20,4 @@
 .set-entry-weight-reps__rpe::-webkit-scrollbar { display: none; }
 .set-entry-weight-reps__rpe > * { flex: 0 0 auto; }
 .set-entry-weight-reps__chat { width: 100%; margin-top: 8px; }
+.set-entry-weight-reps__chat-label { display: inline-flex; align-items: center; gap: 8px; }
