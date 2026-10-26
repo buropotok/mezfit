@@ -238,7 +238,7 @@ function SessionExerciseLayout({
 
 function formatProgramPlanMetrics(set: ProgramSessionExerciseProps['data']['sets'][number]): string {
   const weightAndReps = set.plannedReps !== null && set.plannedWeightKg !== null
-    ? `${set.plannedReps}×${set.plannedWeightKg}`
+    ? `${numberFormatter.format(set.plannedWeightKg)} кг × ${numberFormatter.format(set.plannedReps)}`
     : joinMetrics([formatReps(set.plannedReps), formatWeight(set.plannedWeightKg)]);
   return joinMetrics([weightAndReps, formatDuration(set.plannedDurationSeconds),
     formatDistance(set.plannedDistanceMeters)]) ?? 'Не заполнено';
@@ -259,7 +259,7 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, showPlanMetrics = f
             onClick={(event) => { event.stopPropagation(); onDeleteSet?.(set.id); }} /> : undefined}
           leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
           title={<Text variant="body" className={showPlanMetrics ? 'session-exercise__set-plan-line' : undefined}>
-            {showPlanMetrics ? `Подход ${index + 1}. План: ${formatProgramPlanMetrics(set)}` : `Подход ${index + 1}`}
+            {showPlanMetrics ? `Подход ${index + 1}. План ${formatProgramPlanMetrics(set)}` : `Подход ${index + 1}`}
           </Text>}
           subtitle={<span className="session-exercise__set-recommendations">
             {set.setType ? <Text variant={showPlanMetrics ? 'caption' : 'footnote'}
