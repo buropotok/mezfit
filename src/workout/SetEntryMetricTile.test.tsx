@@ -45,9 +45,15 @@ const scenarios: Array<{
 ];
 
 describe('shared entry metric card for exercise tracking types', () => {
-  it.each(scenarios)('uses the same glass card for $trackingType', ({ trackingType, cards }) => {
-    render(<SetEntry mode="occurrence-plan" isOpen
-      data={{ ...data, trackingType }} onClose={vi.fn()} onPlanSave={vi.fn(async () => undefined)} />);
+  for (const mode of ['occurrence-plan', 'workout'] as const) {
+    it.each(scenarios)(`uses the same glass card for $trackingType in ${mode}`, ({ trackingType, cards }) => {
+      if (mode === 'occurrence-plan') {
+        render(<SetEntry mode="occurrence-plan" isOpen data={{ ...data, trackingType }}
+          onClose={vi.fn()} onPlanSave={vi.fn(async () => undefined)} />);
+      } else {
+        render(<SetEntry mode="workout" isOpen data={{ ...data, trackingType }}
+          onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+      }
 
     const controls = screen.getAllByRole('button', { name: /^Изменить / });
     expect(controls).toHaveLength(cards.length);
@@ -58,6 +64,7 @@ describe('shared entry metric card for exercise tracking types', () => {
       expect(within(control).getByText(label).classList.contains('ui-text--body')).toBe(true);
       expect(within(control).getByText(value).classList.contains('ui-text--body')).toBe(true);
     }
-    expect(screen.queryByText('Повторения × Вес')).toBeNull();
-  });
+      expect(screen.queryByText('Повторения × Вес')).toBeNull();
+    });
+  }
 });
