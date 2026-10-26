@@ -6,7 +6,7 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import { BadgeChoice, Divider, DistancePicker, DurationPicker, GlassSurface, IconButton, LiquidPopover,
   MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
-import { createSetEntryDraft, type SetEntryProps, type SetMetrics } from './setEntryTypes';
+import { createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
 type Props = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
@@ -57,7 +57,17 @@ function display(key: EditableMetric, value: number | null) {
 /** An occurrence-scoped editor for non-weight/reps PLAN metrics. Never writes program template rows. */
 export function SetEntryOccurrenceMetrics(props: Props) {
   const isPlan = props.mode === 'occurrence-plan';
-  const [draft, setDraft] = useState(() => createSetEntryDraft(props.data));
+  const [draft, setDraft] = useState(() => {
+    const initial = createSetEntryDraft(props.data);
+    if (isPlan || props.data.fact) return initial;
+    // Prefill only the metrics tracked by this exercise; never copy unrelated
+    // historic PLAN fields into an otherwise empty FACT.
+    const metrics = emptySetMetrics();
+    for (const key of FIELDS[props.data.trackingType as keyof typeof FIELDS] ?? []) {
+      metrics[key] = props.data.plan?.[key] ?? null;
+    }
+    return { ...initial, metrics };
+  });
   const initialDraftRef = useRef(draft);
   const factSavingRef = useRef(false);
   const [discardConfirm, setDiscardConfirm] = useState(false);
