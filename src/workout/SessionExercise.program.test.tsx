@@ -133,6 +133,22 @@ describe('existing exercise component in program mode', () => {
 });
 
 describe('calendar PLAN versus reusable template', () => {
+  it('renders a compact body line for planned repetitions × weight with caption technique', () => {
+    const planItem: typeof item = {
+      ...item, sets: [{ ...item.sets[0], plannedReps: 10, plannedWeightKg: 80.75,
+        plannedDurationSeconds: null, plannedDistanceMeters: null }],
+    };
+    const { container } = render(<SessionExercise mode="program" data={planItem}
+      showPlanMetrics defaultCollapsed={false} />);
+    const line = container.querySelector('.session-exercise__set-plan-line');
+    expect(line?.textContent?.trim()).toBe('Подход 1. План: 10×80.75');
+    expect(line?.classList.contains('ui-text--body')).toBe(true);
+    const technique = screen.getByText('Тип подхода: Дропсет');
+    expect(technique.classList.contains('ui-text--caption')).toBe(true);
+    expect(screen.queryByText(/^План:/)).toBeNull();
+  });
+
+
   it('shows numeric assignments and opens a read-only calendar set without authoring controls', () => {
     const open = vi.fn();
     const view = render(<WorkoutPlanCard mode="planning" showPlanMetrics readOnly
