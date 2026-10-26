@@ -1,0 +1,76 @@
+name: Import 112 Gym Keeper GIFs to private R2
+
+# Deliberate, data-only operation. Never upload on PR, merge, push or deploy.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Preview the strict import plan or upload to isolated R2 prefix'
+        required: true
+        type: choice
+        default: preview
+        options:
+          - preview
+          - upload
+      confirmation:
+        description: 'For upload type IMPORT_GYM_KEEPER_112_V1'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mezfit-gym-keeper-unmatched-112-r2
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      inputs.operation == 'preview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate the 112 identities and inspect destination paths (no credentials)
+        run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs preview
+
+  upload:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      inputs.operation == 'upload' &&
+      inputs.confirmation == 'IMPORT_GYM_KEEPER_112_V1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    # Required repository setup: GitHub Environment r2-media-import, restricted
+    # to main, required human reviewers, bypass disabled. Without it, DO NOT RUN.
+    environment:
+      name: r2-media-import
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Preflight: verify exactly 112 distinct APK identities
+        run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs preview
+      - name: Copy existing GIFs or fetch original APK URLs to isolated private R2 folder
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          IMPORT_CONFIRMATION: ${{ inputs.confirmation }}
+        run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs upload
