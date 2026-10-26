@@ -4,7 +4,7 @@ import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { BadgeChoice, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
-import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
+import { createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
 type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
@@ -32,10 +32,10 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const isPlan = props.mode === 'occurrence-plan';
   const glass = loadBrowserGlassSettings();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [draft, setDraft] = useState<SetEntryFactDraft>(() => {
-    const initial = createSetEntryDraft(props.data);
-    return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
-  });
+  const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data));
+  const initialDraftRef = useRef(draft);
+  const [discardConfirm, setDiscardConfirm] = useState(false);
+  const factSavingRef = useRef(false);
   const draftRef = useRef(draft);
   const dirtyRevision = useRef(0);
   const savedRevision = useRef(0);
@@ -62,20 +62,18 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
 
   const persist = (): Promise<void> => {
     const atRevision = dirtyRevision.current;
-    if (atRevision <= Math.max(savedRevision.current, queuedRevision.current)) return queue.current;
+    if (!isPlan || atRevision <= Math.max(savedRevision.current, queuedRevision.current)) return queue.current;
     queuedRevision.current = atRevision;
     const snapshot = draftRef.current;
     // Serializes all auto-saves: a stale network response cannot apply a later draft first.
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
-      if (isPlan) {
+      if (props.mode === 'occurrence-plan') {
         await props.onPlanSave({
           weightKg: snapshot.metrics.weightKg,
           reps: snapshot.metrics.reps,
           setType: snapshot.setType ?? null,
         });
-      } else {
-        await props.onSave({ ...snapshot, setLabel: null, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands] });
       }
       savedRevision.current = Math.max(savedRevision.current, atRevision);
       setError('');
@@ -90,13 +88,13 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
 
   // Interaction is local-first. Changes are saved after a short pause, not on every wheel tick.
   useEffect(() => {
-    if (revision === 0) return;
+    if (!isPlan || revision === 0) return;
     const timer = window.setTimeout(() => { void persist().catch(() => undefined); }, isPlan ? 300 : 650);
     return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revision]);
 
-  const close = async () => {
+  const closePlan = async () => {
     if (closing) return;
     setClosing(true);
     try {
@@ -110,9 +108,41 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     }
   };
 
-  // Route both Telegram BackButton and the app Back action through the same
-  // awaited persistence path as the visible close control.
-  requestCloseRef.current = () => { void close(); };
+  const saveFact = async () => {
+    if (props.mode === 'occurrence-plan' || factSavingRef.current) return;
+    factSavingRef.current = true;
+    setSaving(true);
+    setError('');
+    const snapshot = draftRef.current;
+    try {
+      // FACT exists only after the user explicitly taps Save. Untouched fields
+      // start from PLAN, but that prefill never writes anything on its own.
+      await props.onSave({ ...snapshot,
+        metrics: { ...snapshot.metrics }, bands: [...snapshot.bands],
+      });
+      setPickerOpened(false);
+      setBandOpen(false);
+      props.onClose();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить факт');
+    } finally {
+      factSavingRef.current = false;
+      setSaving(false);
+    }
+  };
+  const discardFact = () => {
+    if (saving || factSavingRef.current) return;
+    if (JSON.stringify(draftRef.current) !== JSON.stringify(initialDraftRef.current)) {
+      setDiscardConfirm(true);
+    } else {
+      props.onClose();
+    }
+  };
+  // Back and X follow the same discard semantics as the visible close action.
+  requestCloseRef.current = () => {
+    if (isPlan) void closePlan();
+    else discardFact();
+  };
   useEffect(() => {
     if (!props.isOpen || !props.onNavigationContextChange) return;
     const reportNavigation = props.onNavigationContextChange;
@@ -158,8 +188,12 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
           </div>
-          <IconButton icon="x" label="Закрыть подход" disabled={closing}
-            onClick={() => { void close(); }} />
+          {!isPlan ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
+            disabled={saving || closing} onClick={() => { void saveFact(); }}>
+            <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
+          </KonstaButton> : null}
+          <IconButton icon="x" label="Закрыть подход" disabled={closing || saving}
+            onClick={() => requestCloseRef.current()} />
         </header>
         <div className="set-entry-weight-reps__body">
           <div className="set-entry-weight-reps__exercise">
@@ -189,10 +223,6 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             ? 'Плановое значение не поддерживается текущим пикером'
             : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
           {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
-          {!isPlan && validPicker && !needsFactSelection && (draft.metrics.weightKg === null || draft.metrics.reps === null)
-            ? <KonstaButton tonal small disabled={closing} onClick={() => change(old => ({
-              ...old, metrics: { ...old.metrics, weightKg: currentWeight, reps: currentReps },
-            }))}><Text variant="body">Записать {metricsText(currentWeight, currentReps)} как факт</Text></KonstaButton> : null}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
             {props.data.plan ? <Text variant="caption" tone="muted">План: {metricsText(props.data.plan.weightKg, props.data.plan.reps)}</Text> : null}
             {props.data.previous ? <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous.metrics.weightKg, props.data.previous.metrics.reps)}</Text> : null}
@@ -232,12 +262,12 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="body">Открыть чат</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-          <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
+          {isPlan ? <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
             {saving ? 'Сохраняем изменения…' : error ? 'Не удалось сохранить · повторите' : 'Изменения сохраняются автоматически'}
-          </Text>
+          </Text> : null}
           {isPlan && props.onDeleteSet ? <KonstaButton clear className="set-entry-weight-reps__delete"
             onClick={() => setDeleteConfirm(true)}><Text variant="body">Удалить подход</Text></KonstaButton> : null}
-          {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
+          {isPlan && error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
             <Text variant="body">Повторить сохранение</Text>
           </KonstaButton> : null}
         </div>
@@ -250,6 +280,18 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход'));
         }}>Удалить</MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
+    </MezfitDialog>, portalHost) : null}
+    {!isPlan ? createPortal(<MezfitDialog opened={discardConfirm} title={<Text variant="headline">Изменения не сохранятся!</Text>}
+      buttons={<>
+        <MezfitDialogButton onClick={() => setDiscardConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
+        <MezfitDialogButton strong onClick={() => {
+          setDiscardConfirm(false);
+          setPickerOpened(false);
+          setBandOpen(false);
+          props.onClose();
+        }}><Text variant="body">Продолжить</Text></MezfitDialogButton>
+      </>}>
+      <Text variant="body">Выйти без сохранения введённых данных?</Text>
     </MezfitDialog>, portalHost) : null}
     {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
