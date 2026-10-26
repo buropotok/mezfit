@@ -75,6 +75,52 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
+  it('preserves a historical setLabel when editing a non-weight FACT comment', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{
+        ...base, trackingType: 'time',
+        fact: {
+          metrics: { weightKg: null, reps: null, durationSeconds: 150, distanceMeters: null },
+          setLabel: 'hard', setType: null, rpe: 6, comment: null, bands: [],
+        },
+      }} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.change(screen.getByRole('textbox', { name: /Как прошёл подход/ }), {
+      target: { value: 'Лучше предыдущего' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      setLabel: 'hard', rpe: 6, comment: 'Лучше предыдущего',
+      metrics: { weightKg: null, reps: null, durationSeconds: 150, distanceMeters: null },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('clears existing RPE to null without erasing a historical setLabel', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{
+        ...base, trackingType: 'time_distance',
+        fact: {
+          metrics: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: 2500 },
+          setLabel: 'warmup', setType: null, rpe: 7, comment: null, bands: [],
+        },
+      }} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    expect(screen.getByText('RPE: 7')).toBeTruthy();
+    fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '0' } });
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      setLabel: 'warmup', rpe: null, setType: null,
+      metrics: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: 2500 },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
   it('does not write a FACT when a time-based set is opened and closed unchanged', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
