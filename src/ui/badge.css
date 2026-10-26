@@ -21,9 +21,6 @@
 
 
 .ui-badge--selected { border-color: #315e85; background: color-mix(in srgb, #315e85 13%, transparent); color: var(--ui-color-text, #fff); }
-.ui-badge--choice { appearance: none; cursor: pointer; }
-.ui-badge--choice:focus-visible { outline: 2px solid #5aa9f5; outline-offset: 2px; }
-.ui-badge--choice:disabled { opacity: 0.5; cursor: default; }
 
 @media (max-width: 430px) {
   .ui-badge { padding-inline: 8px; }
