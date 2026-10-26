@@ -12,6 +12,9 @@ vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({ db: {}, actorUserId: 'tg:101' }),
 }));
 vi.mock('./WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
+vi.mock('./WorkoutPerson', () => ({
+  useWorkoutPerson: () => ({ name: 'Тренер', avatar: null, compactAvatar: null }),
+}));
 vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSelectionSheet: () => null }));
 vi.mock('./WorkoutProgramSheet', () => ({ WorkoutProgramSheet: () => null }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
@@ -86,7 +89,7 @@ describe('occurrence-scoped SetEntry routing', () => {
     render(<OccurrenceDraftSheet draft={draft} drafts={drafts}
       onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход в календаре' }));
-    expect(await screen.findByTestId('editor-domain')).toHaveTextContent('occurrence-plan');
+    expect((await screen.findByTestId('editor-domain')).textContent).toBe('occurrence-plan');
     fireEvent.click(screen.getByRole('button', { name: 'Записать PLAN календаря' }));
     await waitFor(() => expect(changed?.plan.exercises[0].sets[0]).toMatchObject({
       plannedWeightKg: 72.5, plannedReps: 10, setType: 'dropset',
