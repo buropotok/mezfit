@@ -64,6 +64,8 @@ interface SetEntrySharedProps {
   isOpen: boolean;
   data: SetEntryData;
   onClose: () => void;
+  /** Optional destructive action owned by the currently edited workout occurrence. */
+  onDelete?: () => Promise<void>;
   /** Register the editor as the active nested navigation surface. */
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   onOpenHistory?: () => void;
