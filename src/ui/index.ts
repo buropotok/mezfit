@@ -7,6 +7,9 @@ export { DatePicker, type DatePickerDayStatus, type DatePickerDayStatusEntry, ty
 export { TimePicker, type TimePickerLensMode, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
 export { NumPicker, type NumPickerProps } from './num-picker/NumPicker';
 export { WeightRepsPicker, type WeightRepsPickerProps, type WeightRepsPickerValue } from './weight-reps-picker/WeightRepsPicker';
+export { DurationPicker, formatDurationSeconds, type DurationPickerProps } from './duration-picker/DurationPicker';
+export { DistancePicker, type DistancePickerProps } from './distance-picker/DistancePicker';
+export { WeightPicker, type WeightPickerProps } from './weight-picker/WeightPicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
 export { IdentityAction, type IdentityActionAvatar, type IdentityActionItem, type IdentityActionProps, type IdentityActionTitleRole } from './IdentityAction';
 export { MezfitNavbar, type MezfitNavbarIdentity, type MezfitNavbarProps } from './MezfitNavbar';

@@ -34,6 +34,21 @@ function renderPicker({
     onChange,
     onClose,
     ...renderResult,
+    setValue(nextValue: { reps: number; weightKg: number }, opened = true) {
+      renderResult.rerender(
+        <KonstaProvider theme="ios" dark>
+          <div className="k-ios dark">
+            <WeightRepsPicker
+              opened={opened}
+              target={target}
+              value={nextValue}
+              onChange={onChange}
+              onClose={onClose}
+            />
+          </div>
+        </KonstaProvider>,
+      );
+    },
   };
 }
 
@@ -117,15 +132,54 @@ describe('WeightRepsPicker', () => {
     const fraction = screen.getByRole('listbox', { name: 'Доли килограмма' });
     const options = within(fraction).getAllByRole('option');
 
-    expect(options.map((option) => option.textContent)).toEqual(['00', '25', '5']);
+    expect(options.map((option) => option.textContent)).toEqual(['00', '25', '5', '75']);
+  });
+
+  it('supports 70.75 and the 399.75 kg maximum without rounding', () => {
+    const onChange = vi.fn();
+    renderPicker({ value: { reps: 100, weightKg: 399.75 }, onChange });
+    const fractions = screen.getByRole('listbox', { name: 'Доли килограмма' });
+    expect(within(fractions).getByRole('option', { name: '0,75' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Килограммы' })).getByRole('option', { name: '70' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 100, weightKg: 70.75 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fire for an already-selected value or mere dismissal', () => {
+    const onChange = vi.fn();
+    const onClose = vi.fn();
+    renderPicker({ value: { reps: 0, weightKg: 0 }, onChange, onClose });
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Доли килограмма' })).getByRole('option', { name: '0,00' }));
+    expect(onChange).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('reopens with an updated controlled value without writing it back', () => {
+    const onChange = vi.fn();
+    const picker = renderPicker({ value: { reps: 8, weightKg: 70.75 }, onChange });
+    picker.setValue({ reps: 100, weightKg: 399.75 }, false);
+    picker.setValue({ reps: 100, weightKg: 399.75 }, true);
+    expect(within(screen.getByRole('listbox', { name: 'Повторения' }))
+      .getByRole('option', { name: '100' }).getAttribute('aria-selected')).toBe('true');
+    expect(within(screen.getByRole('listbox', { name: 'Килограммы' }))
+      .getByRole('option', { name: '399' }).getAttribute('aria-selected')).toBe('true');
+    expect(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
+      .getByRole('option', { name: '0,75' }).getAttribute('aria-selected')).toBe('true');
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('rejects values outside the component contract', () => {
     expect(() => renderPicker({ value: { reps: 101, weightKg: 80 } })).toThrow(
       'WeightRepsPicker reps must be an integer from 0 to 100',
     );
-    expect(() => renderPicker({ value: { reps: 8, weightKg: 80.75 } })).toThrow(
-      'WeightRepsPicker weightKg must use 0, 0.25 or 0.5 fractions',
+    expect(() => renderPicker({ value: { reps: 8, weightKg: 400 } })).toThrow(
+      'WeightRepsPicker weightKg must be from 0 to 399.75',
+    );
+    expect(() => renderPicker({ value: { reps: 8, weightKg: 80.125 } })).toThrow(
+      'WeightRepsPicker weightKg must use 0.25 kg increments',
     );
   });
 });
