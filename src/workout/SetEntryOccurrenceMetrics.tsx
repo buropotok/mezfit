@@ -204,25 +204,25 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     </MezfitDialog>, host) : null}
     {keys.map(key => createPortal(<span key={key}>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
-        value={draft.metrics.durationSeconds ?? 0} target={targets.current[key] ?? null}
+        value={valid('durationSeconds', draft.metrics.durationSeconds ?? 0) ? (draft.metrics.durationSeconds ?? 0) : 0} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, durationSeconds: value },
         }))} /> : null}
       {key === 'distanceMeters' ? <DistancePicker opened={picker === key}
-        value={draft.metrics.distanceMeters ?? 0} target={targets.current[key] ?? null}
+        value={valid('distanceMeters', draft.metrics.distanceMeters ?? 0) ? (draft.metrics.distanceMeters ?? 0) : 0} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, distanceMeters: value },
         }))} /> : null}
       {key === 'reps' ? <NumPicker opened={picker === key}
-        value={draft.metrics.reps ?? 0} target={targets.current[key] ?? null}
+        value={valid('reps', draft.metrics.reps ?? 0) ? (draft.metrics.reps ?? 0) : 0} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, reps: value },
         }))} /> : null}
       {key === 'weightKg' ? <WeightPicker opened={picker === key}
-        value={draft.metrics.weightKg ?? 0} target={targets.current[key] ?? null}
+        value={valid('weightKg', draft.metrics.weightKg ?? 0) ? (draft.metrics.weightKg ?? 0) : 0} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, weightKg: value },
