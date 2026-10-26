@@ -236,7 +236,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             {saving ? 'Сохраняем изменения…' : error ? 'Не удалось сохранить · повторите' : 'Изменения сохраняются автоматически'}
           </Text>
           {isPlan && props.onDeleteSet ? <KonstaButton clear className="set-entry-weight-reps__delete"
-            onClick={() => setDeleteConfirm(true)}>Удалить подход</KonstaButton> : null}
+            onClick={() => setDeleteConfirm(true)}><Text variant="body">Удалить подход</Text></KonstaButton> : null}
           {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
             <Text variant="body">Повторить сохранение</Text>
           </KonstaButton> : null}
