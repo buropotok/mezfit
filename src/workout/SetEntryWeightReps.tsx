@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { BadgeChoice, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { BadgeChoice, Divider, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
+import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
 
 type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
@@ -43,7 +44,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const [error, setError] = useState('');
   const [pickerOpened, setPickerOpened] = useState(false);
   const [bandOpen, setBandOpen] = useState(false);
-  const target = useRef<HTMLButtonElement>(null);
+  const target = useRef<HTMLElement>(null);
   const bandTarget = useRef<HTMLButtonElement>(null);
   const requestCloseRef = useRef<() => void>(() => undefined);
 
@@ -163,14 +164,10 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="footnote">Показатели подхода</Text>
             <Text variant="caption" tone="muted">2 показателя</Text>
           </div>
-          <GlassSurface component="button" ref={target} shape="auto" contentClassName="set-entry-weight-reps__metric-content" preset="modalTuned" optics={false} blur={glass.blur} halo="lifted"
-            className="set-entry-weight-reps__metric-tile"
-            onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }}
-            aria-disabled={!validPicker || inputLocked}
-            aria-label="Изменить вес и повторения">
-            <Text variant="body">Повторения × Вес</Text>
-            <Text variant="body">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
-          </GlassSurface>
+          <SetEntryMetricTile metric="weight_reps" buttonRef={target} blur={glass.blur}
+            value={metricsText(draft.metrics.weightKg, draft.metrics.reps)}
+            ariaLabel="Изменить вес и повторения" disabled={!validPicker || inputLocked}
+            onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }} />
           {!validPicker ? <Text variant="footnote" role="alert">{isPlan
             ? 'Плановое значение не поддерживается текущим пикером'
             : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
