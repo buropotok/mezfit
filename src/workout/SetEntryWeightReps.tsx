@@ -5,6 +5,7 @@ import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type'
 import { BadgeChoice, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
+import { SetEntryChatButton } from './SetEntryChatButton';
 import './set-entry-weight-reps.css';
 
 type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
@@ -162,7 +163,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="footnote">Показатели подхода</Text>
             <Text variant="caption" tone="muted">2 показателя</Text>
           </div>
-          <GlassSurface component="button" ref={target} wrapContent={false} shape="auto" preset="modalTuned" optics={false} blur={glass.blur} halo="lifted"
+          <GlassSurface component="button" ref={target} shape="auto" contentClassName="set-entry-weight-reps__metric-content" preset="modalTuned" optics={false} blur={glass.blur} halo="lifted"
             className="set-entry-weight-reps__metric-tile"
             onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }}
             aria-disabled={!validPicker || inputLocked}
@@ -184,7 +185,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray"
+              {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray" textVariant="body"
                 selected={(draft.setType ?? null) === type} disabled={inputLocked}
                 onClick={() => change(old => ({
                   ...old, setType: old.setType === type ? null : type,
@@ -209,22 +210,21 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
                 onChange={event => change(old => ({ ...old, comment: event.currentTarget.value || null }))} /></List>
             </div>
           </> : null}
-          {props.onOpenChat ? <KonstaButton className="set-entry-weight-reps__chat" onClick={props.onOpenChat}>
-            <Text variant="body">Открыть чат</Text>
-          </KonstaButton> : null}
+          <SetEntryChatButton onOpenChat={props.onOpenChat} saving={saving} />
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-          {isPlan && !readOnly && props.onDeleteSet ? <KonstaButton clear className="set-entry-weight-reps__delete"
-            onClick={() => setDeleteConfirm(true)}><Text variant="body">Удалить подход</Text></KonstaButton> : null}
+          {isPlan && !readOnly && props.onDeleteSet ? <KonstaButton clear
+            colors={{ textIos: 'text-red-500', textMaterial: 'text-red-500' }} className="set-entry-weight-reps__delete"
+            onClick={() => setDeleteConfirm(true)}><Text variant="body" style={{ color: 'inherit' }}>Удалить подход</Text></KonstaButton> : null}
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
     {isPlan && !readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
-        <MezfitDialogButton strong onClick={() => {
+        <MezfitDialogButton strong tone="danger" onClick={() => {
           void props.onDeleteSet?.().then(() => { setDeleteConfirm(false); props.onClose(); })
             .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход'));
-        }}><Text variant="body">Удалить</Text></MezfitDialogButton></>}>
+        }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, portalHost) : null}
     {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
