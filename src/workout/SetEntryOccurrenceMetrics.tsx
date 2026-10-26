@@ -78,6 +78,14 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     return valid(key, planned) ? planned : 0;
   };
   const selectedBand = draft.bands[0] ?? null;
+  const change = (update: (value: typeof draft) => typeof draft) => {
+    const next = update(draftRef.current);
+    draftRef.current = next;
+    setDraft(next);
+    changed.current += 1;
+    setRevision(changed.current);
+    setError('');
+  };
   const bandItems: LiquidPopoverItem[] = [
     ...([['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
       ['blue', 'Синяя'], ['purple', 'Фиолетовая'], ['black', 'Чёрная']] as const)
@@ -89,33 +97,27 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
   ];
 
-  const change = (update: (value: typeof draft) => typeof draft) => {
-    const next = update(draftRef.current);
-    draftRef.current = next;
-    setDraft(next);
-    changed.current += 1;
-    setRevision(changed.current);
-    setError('');
-  };
   const persist = (): Promise<void> => {
     const at = changed.current;
     if (at <= saved.current) return queue.current;
-    const metrics = { ...draftRef.current.metrics };
-    const setType = draftRef.current.setType ?? null;
+    const snapshot = { ...draftRef.current, metrics: { ...draftRef.current.metrics },
+      bands: [...draftRef.current.bands] };
+    const metrics = snapshot.metrics;
+    const setType = snapshot.setType ?? null;
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
       if (props.mode === 'occurrence-plan' || props.mode === 'program-plan') {
         await props.onPlanSave({ ...metrics, setType });
       } else {
         await props.onSave({
-          ...draftRef.current, metrics, setType, setLabel: null,
-          bands: [...draftRef.current.bands],
+          ...snapshot, metrics, setType, setLabel: null,
         });
       }
       saved.current = Math.max(saved.current, at);
       setError('');
     }).catch(reason => {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить план');
+      setError(reason instanceof Error ? reason.message
+        : isPlan ? 'Не удалось сохранить план' : 'Не удалось сохранить результат');
       throw reason;
     }).finally(() => setSaving(false));
     return queue.current;
