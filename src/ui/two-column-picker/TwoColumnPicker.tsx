@@ -435,7 +435,7 @@ export function TwoColumnPicker({
     let cancelled = false;
     const view = documentRef.defaultView;
     const build = () => {
-      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef));
+      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef, LENS_COLUMN_XS));
     };
 
     if (!view || typeof view.requestAnimationFrame !== 'function') {
