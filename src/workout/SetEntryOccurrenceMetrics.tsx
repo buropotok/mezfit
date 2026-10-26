@@ -19,6 +19,12 @@ const LABELS: Record<EditableMetric, string> = {
   reps: 'Повторения',
   weightKg: 'Вес',
 };
+const EDIT_LABELS: Record<EditableMetric, string> = {
+  durationSeconds: 'Изменить продолжительность',
+  distanceMeters: 'Изменить дистанцию',
+  reps: 'Изменить повторения',
+  weightKg: 'Изменить вес',
+};
 const FIELDS: Record<Exclude<Props['data']['trackingType'], 'weight_reps'>, EditableMetric[]> = {
   time: ['durationSeconds'],
   time_distance: ['durationSeconds', 'distanceMeters'],
@@ -77,6 +83,13 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     if (current !== null) return current;
     const planned = !isPlan ? props.data.plan?.[key] ?? 0 : 0;
     return valid(key, planned) ? planned : 0;
+  };
+  // A closed UI Kit picker still validates its controlled value during render.
+  // Preserve unsupported historical values in the draft/label and disable edits,
+  // but never pass them into a picker that cannot represent them.
+  const pickerValue = (key: EditableMetric) => {
+    const value = suggested(key);
+    return valid(key, value) ? value : 0;
   };
   const selectedBand = draft.bands[0] ?? null;
   const change = (update: (value: typeof draft) => typeof draft) => {
@@ -193,7 +206,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               optics={false} blur={glass.blur} halo="lifted" className="set-entry-weight-reps__metric-tile"
               ref={node => { targets.current[key] = node as HTMLButtonElement | null; }}
               aria-disabled={closing || !valid(key, suggested(key))}
-              aria-label={`Изменить ${LABELS[key].toLowerCase()}`}
+              aria-label={EDIT_LABELS[key]}
               onClick={() => {
                 if (!closing && valid(key, suggested(key))) setPicker(key);
               }}>
@@ -283,25 +296,25 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     </MezfitDialog>, host) : null}
     {keys.map(key => createPortal(<>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
-        value={suggested('durationSeconds')} target={targets.current[key] ?? null}
+        value={pickerValue('durationSeconds')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, durationSeconds: value },
         }))} /> : null}
       {key === 'distanceMeters' ? <DistancePicker opened={picker === key}
-        value={suggested('distanceMeters')} target={targets.current[key] ?? null}
+        value={pickerValue('distanceMeters')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, distanceMeters: value },
         }))} /> : null}
       {key === 'reps' ? <NumPicker opened={picker === key}
-        value={suggested('reps')} target={targets.current[key] ?? null}
+        value={pickerValue('reps')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, reps: value },
         }))} /> : null}
       {key === 'weightKg' ? <WeightPicker opened={picker === key}
-        value={suggested('weightKg')} target={targets.current[key] ?? null}
+        value={pickerValue('weightKg')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, weightKg: value },
