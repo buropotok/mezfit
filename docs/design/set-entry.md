@@ -2,10 +2,11 @@
 
 ## Scope
 
-`SetEntry` is the shared controlled React modal for one set and has two explicit domain modes:
+`SetEntry` is the shared controlled React editor for one set and has three explicit domain modes:
 
 - `workout` edits FACT for a live workout session;
-- `plan` lets a coach author a planned set for a program exercise.
+- `occurrence-plan` edits numeric PLAN only in a scheduled calendar occurrence;
+- `plan` is the legacy coach planned-set flow; it is not the reusable program-template editor.
 
 Opening `SetEntry` never triggers a read request. The parent supplies the complete rendering context, including the previous analogous set. Persistence is mode-specific.
 
@@ -61,8 +62,13 @@ In `workout` mode:
 - PLAN is the frozen session prescription and is read-only;
 - PREVIOUS is read-only comparison context;
 - FACT is the editable/persisted result;
-- initial editable metrics follow `existing FACT -> PLAN -> empty metrics`;
-- the visible `План: ...` line, set assessment, RPE, comment and fitness-band controls retain their existing workout behavior.
+- initial editable metrics follow `existing FACT -> matching PLAN fields -> empty metrics`, using only metrics relevant to the tracking type;
+- set type is prefilled from the current set, but RPE defaults to unset (displayed `RPE: 0`) when there is no saved FACT;
+- the `План: ...` and `Пред.: ...` lines are comparison context, not new FACT;
+- the user may edit metrics, set type, RPE, resistance bands and comment locally;
+- **only** the top-center, borderless **Сохранить** action persists FACT, even when the prefilled values were not changed;
+- **X**, app Back and Telegram Back never persist FACT. If there are unsaved changes, show `Изменения не сохранятся!` with `Продолжить` (discard and leave) / `Отмена` (return to editor). Without changes, close silently;
+- the editor never autosaves FACT and has no PLAN-to-FACT copy/confirmation button.
 
 In `plan` mode:
 
@@ -99,15 +105,15 @@ type SetEntryProps =
 
 `plan` is always explicit. The workout variant keeps omission as a backward-compatible default so existing direct consumers cannot silently break; production live-workout ownership is nevertheless explicit and `SessionExercise` passes `mode="workout"`. Coach program authoring passes `mode="plan"` plus the planned exercise parent ID.
 
-The parent controls whether the dialog is open. `SetEntry` uses the shared UI Kit `Modal` and its `actions` contract for the Save action instead of rendering a parallel local confirmation button.
+The parent controls whether the editor is open. Current `workout` and `occurrence-plan` surfaces use the UI Kit `MezfitBottomSheet`. Only FACT has the top-center `Сохранить` action; the independent scheduled occurrence PLAN retains its existing persistence flow. The legacy `plan` mode still uses the shared `Modal`.
 
 ## UI Kit reuse
 
 The module must prefer shared UI Kit primitives over local equivalents:
 
-- `Modal` owns dialog behavior, close behavior and Save actions;
-- `TextInput` is used for numeric inputs with `type="number"`, including unit labels (`КГ`, `ПОВТ.`, `КМ`, `МИН`, `СЕК`);
-- `TextArea` owns the existing comment field;
+- `MezfitBottomSheet` owns the workout and scheduled PLAN bottom sheets; `MezfitDialog` owns the unsaved-changes confirmation;
+- `WeightRepsPicker`, `DurationPicker`, `DistancePicker`, `WeightPicker` and `NumPicker` own numeric entry according to the tracking type;
+- `MezfitAutosizeTextarea` owns the workout comment; `MezfitSlider size="small"` owns RPE (0 maps to `null`);
 - `Button`, `IconButton`, `Badge`, `Divider`, `Surface` and `Text` are reused for their corresponding roles;
 - shared icon assets are reused for plus/minus and the Tabler `ripple` / `library` controls.
 
@@ -131,7 +137,9 @@ The component renders only fields relevant to the supplied tracking type.
 
 ### Workout mode
 
-Pressing Save invokes the parent `onSave` with the complete editable FACT draft: actual metrics, set label, RPE, comment and selected fitness bands. The parent combines that FACT with stable session identity, calls the typed workout API and reconciles canonical session state.
+Pressing the centered `Сохранить` action invokes the parent `onSave` with the complete local FACT draft: actual metrics, set label, set type, RPE, comment and selected fitness bands. The parent combines FACT with stable session identity, calls the typed workout API and reconciles canonical session state. The sheet closes only after successful persistence; on failure it remains open for retry. Dismissing through X or Back never writes.
+
+All tracked metrics are prefilled from the matching scheduled PLAN when there is no existing FACT; this initialization does not persist anything. `RPE: 0` is unset (`rpe: null`), never an invalid numeric zero.
 
 This is the existing workout contract and must not change as a side effect of plan-mode work.
 
