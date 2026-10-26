@@ -144,7 +144,8 @@ describe('WorkoutSessionScreen mutation reconciliation', () => {
     fireEvent.click(screen.getByText('Exercise 1').closest('button')!);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Кластер' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    // FACT is committed only by explicit Save, and must wait for the reorder.
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     expect(saveSetMock).not.toHaveBeenCalled();
 
     await act(async () => resolveReorder({ session: reorderedSession }));
