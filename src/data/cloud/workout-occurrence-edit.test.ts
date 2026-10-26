@@ -25,6 +25,49 @@ describe('occurrence PLAN structured editing', () => {
     expect(removeOccurrenceSet(next, id, next.exercises[0].sets[0].id)).toEqual(base);
     expect(base.exercises[0].sets).toHaveLength(0);
   });
+  it('copies the previous scheduled set including technique and numeric PLAN without reusing its identity', () => {
+    const withExercise = appendOccurrenceExercise(empty, exercise);
+    const exerciseId = withExercise.exercises[0].id;
+    const withBlankSet = appendOccurrenceSet(withExercise, exerciseId);
+    const filled: WorkoutOccurrencePlan = {
+      ...withBlankSet,
+      exercises: withBlankSet.exercises.map(ex => ({
+        ...ex,
+        sets: ex.sets.map(set => ({
+          ...set, sourceProgramSetId: 'template-set-1',
+          setType: 'cluster' as const, setLabel: 'easy' as const,
+          comment: 'Медленная эксцентрика',
+          materialLinks: ['material:1'], chatLinks: ['chat:1'],
+          plannedWeightKg: 57, plannedReps: 19,
+          plannedDurationSeconds: 0, plannedDistanceMeters: 250,
+        })),
+      })),
+    };
+    const added = appendOccurrenceSet(filled, exerciseId);
+    const [previous, copy] = added.exercises[0].sets;
+    expect(copy).toMatchObject({
+      sourceProgramSetId: null, position: 1,
+      setType: 'cluster', setLabel: 'easy',
+      comment: 'Медленная эксцентрика',
+      materialLinks: ['material:1'], chatLinks: ['chat:1'],
+      plannedWeightKg: 57, plannedReps: 19,
+      plannedDurationSeconds: 0, plannedDistanceMeters: 250,
+    });
+    expect(copy.id).not.toBe(previous.id);
+    expect(copy.materialLinks).not.toBe(previous.materialLinks);
+    expect(copy.chatLinks).not.toBe(previous.chatLinks);
+    expect(filled.exercises[0].sets).toHaveLength(1);
+
+    const again = appendOccurrenceSet(added, exerciseId);
+    expect(again.exercises[0].sets[2]).toMatchObject({
+      sourceProgramSetId: null, position: 2, plannedWeightKg: 57,
+      plannedReps: 19, setType: 'cluster',
+    });
+    expect(new Set(again.exercises[0].sets.map(set => set.id)).size).toBe(3);
+    expect(again.exercises[0].sets[2].materialLinks)
+      .not.toBe(again.exercises[0].sets[1].materialLinks);
+  });
+
   it('treats independent numeric PLAN edits as occurrence-only, never program changes', () => {
     const base = appendOccurrenceExercise(empty, exercise);
     const withSet = appendOccurrenceSet(base, base.exercises[0].id);
