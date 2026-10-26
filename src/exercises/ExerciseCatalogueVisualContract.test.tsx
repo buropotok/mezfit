@@ -57,12 +57,15 @@ describe('exercise catalogue real UI composition', () => {
     const leading = chest.querySelector('.ui-list-item__leading');
     expect(leading?.classList.contains('ui-list-item__leading--square')).toBe(false);
     const artwork = chest.querySelector('img');
-    expect(artwork?.getAttribute('src')).toBe('/gym-keeper/categories/muscles_chest.svg');
+    expect(artwork?.getAttribute('src')).toBe('/muscles_chest.webp');
     expect(artwork?.getAttribute('width')).toBe('72');
     expect(artwork?.getAttribute('height')).toBe('72');
+    expect(artwork?.getAttribute('loading')).toBe('eager');
     expect(container.querySelectorAll('.mezfit-public-exercises__category-fallback img').length).toBe(8);
     const other = screen.getByRole('button', { name: /Другое/ });
     expect(other.querySelector('svg')?.getAttribute('width')).toBe('72');
+    expect(other.querySelector('svg')?.getAttribute('stroke')).toBe('#fff');
+    expect(other.querySelector('svg')?.getAttribute('stroke-width')).toBe('2');
   });
 
 });
