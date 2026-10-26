@@ -195,7 +195,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
                 if (!closing && valid(key, suggested(key))) setPicker(key);
               }}>
               <Text variant="body">{LABELS[key]}</Text>
-              <Text variant="headline">{display(key, draft.metrics[key])}</Text>
+              <Text variant="body">{display(key, draft.metrics[key])}</Text>
             </GlassSurface>
             {!valid(key, suggested(key))
               ? <Text variant="footnote" role="alert">Существующее значение не поддерживается пикером</Text> : null}
