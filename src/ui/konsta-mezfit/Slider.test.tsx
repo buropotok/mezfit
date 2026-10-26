@@ -80,14 +80,14 @@ describe('MezfitSlider', () => {
       <MezfitSlider size="small" start={0} end={10} value={7} ariaLabel="RPE" onValueChange={onValueChange} />
     </KonstaProvider>;
     const view = render(initial);
-    const input = view.getByRole<HTMLInputElement>('slider', { name: 'RPE' });
+    const input = view.getByRole('slider', { name: 'RPE' }) as HTMLInputElement;
     expect(input.value).toBe('7');
     fireEvent.input(input, { target: { value: '9' } });
     expect(onValueChange).toHaveBeenLastCalledWith(9);
     view.rerender(<KonstaProvider theme="ios" dark>
       <MezfitSlider size="small" start={0} end={10} value={9} ariaLabel="RPE" onValueChange={onValueChange} />
     </KonstaProvider>);
-    expect(view.getByRole<HTMLInputElement>('slider', { name: 'RPE' }).value).toBe('9');
+    expect((view.getByRole('slider', { name: 'RPE' }) as HTMLInputElement).value).toBe('9');
   });
 
   it('starts at Start and emits Value continuously from the Konsta range input', () => {
