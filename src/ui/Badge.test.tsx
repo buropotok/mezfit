@@ -1,8 +1,13 @@
+// @vitest-environment jsdom
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { KonstaProvider } from 'konsta/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Badge, BadgeChoice, type BadgeColor } from './Badge';
 
 const colors: BadgeColor[] = ['green', 'yellow', 'blue', 'red', 'orange', 'purple', 'cyan', 'gray'];
+
+afterEach(() => cleanup());
 
 describe('Badge', () => {
   it('renders caller-provided content without business-status coupling', () => {
@@ -23,14 +28,27 @@ describe('Badge', () => {
     expect(unselected).not.toContain('ui-badge--selected');
   });
 
-  it('provides native button semantics with selected and disabled states', () => {
-    const pressed = renderToStaticMarkup(<BadgeChoice selected onClick={() => {}}>Кластер</BadgeChoice>);
-    expect(pressed).toContain('<button');
-    expect(pressed).toContain('aria-pressed="true"');
-    expect(pressed).toContain('ui-badge--selected');
-    const disabled = renderToStaticMarkup(<BadgeChoice disabled onClick={() => {}}>Дропсет</BadgeChoice>);
-    expect(disabled).toContain('disabled=""');
-    expect(disabled).toContain('aria-pressed="false"');
+  it('uses Konsta button interactions while preserving Badge selected styling', () => {
+    const onClick = vi.fn();
+    const view = render(<KonstaProvider theme="ios" dark>
+      <BadgeChoice selected onClick={onClick}>Кластер</BadgeChoice>
+    </KonstaProvider>);
+    const button = screen.getByRole<HTMLButtonElement>('button', { name: 'Кластер' });
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.querySelector('.ui-badge--selected')).not.toBeNull();
+    expect(button.querySelector('.ui-badge--gray')).not.toBeNull();
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledOnce();
+
+    view.rerender(<KonstaProvider theme="ios" dark>
+      <BadgeChoice disabled onClick={onClick}>Дропсет</BadgeChoice>
+    </KonstaProvider>);
+    const disabledButton = screen.getByRole<HTMLButtonElement>('button', { name: 'Дропсет' });
+    expect(disabledButton.disabled).toBe(true);
+    expect(disabledButton.getAttribute('aria-pressed')).toBe('false');
+    expect(disabledButton.querySelector('.ui-badge--selected')).toBeNull();
+    fireEvent.click(disabledButton);
+    expect(onClick).toHaveBeenCalledOnce();
   });
 
   it('uses gray as the default color', () => {
