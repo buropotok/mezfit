@@ -52,6 +52,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const requestCloseRef = useRef<() => void>(() => undefined);
 
   const change = (mutate: (current: SetEntryFactDraft) => SetEntryFactDraft) => {
+    if (!isPlan && factSavingRef.current) return;
     const next = mutate(draftRef.current);
     draftRef.current = next;
     setDraft(next);
@@ -114,6 +115,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     setSaving(true);
     setError('');
     const snapshot = draftRef.current;
+    setPickerOpened(false);
+    setBandOpen(false);
     try {
       // FACT exists only after the user explicitly taps Save. Untouched fields
       // start from PLAN, but that prefill never writes anything on its own.
@@ -167,6 +170,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const validPicker = pickerCompatible(currentWeight, currentReps);
   const needsFactSelection = weightFallback || repsFallback;
   const selectedBand = draft.bands[0] ?? null;
+  const inputLocked = closing || (!isPlan && saving);
   const bandItems: LiquidPopoverItem[] = [
     ...bands.map(([value, label]) => ({
       id: value,
@@ -203,7 +207,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             </div>
             {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
               triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
-              trigger={<IconButton ref={bandTarget} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}><span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" /></IconButton>} /> : null}
+              trigger={<IconButton ref={bandTarget} disabled={inputLocked} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}><span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" /></IconButton>} /> : null}
             {props.onOpenHistory ? <IconButton icon="history" label="История упражнения" onClick={props.onOpenHistory} /> : null}
           </div>
           <Divider />
@@ -213,8 +217,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           </div>
           <GlassSurface component="button" ref={target} wrapContent={false} shape="auto" preset="modalTuned" optics={false} blur={glass.blur} halo="lifted"
             className="set-entry-weight-reps__metric-tile"
-            onClick={() => { if (validPicker && !closing) setPickerOpened(true); }}
-            aria-disabled={!validPicker || closing}
+            onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }}
+            aria-disabled={!validPicker || inputLocked}
             aria-label="Изменить вес и повторения">
             <Text variant="body">Повторения × Вес</Text>
             <Text variant="body">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
@@ -234,7 +238,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
               {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray"
-                selected={(draft.setType ?? null) === type} disabled={closing}
+                selected={(draft.setType ?? null) === type} disabled={inputLocked}
                 onClick={() => change(old => ({
                   ...old, setType: old.setType === type ? null : type,
                 }))}>{SET_TYPE_LABELS[type]}</BadgeChoice>)}
@@ -248,13 +252,13 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
                 <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0} ariaLabel="RPE"
-                  onValueChange={value => { if (!closing) change(old => ({ ...old, rpe: value === 0 ? null : value })); }} />
+                  onValueChange={value => { if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value })); }} />
               </div>
             </div>
             <div className="set-entry-weight-reps__section">
               <Text variant="footnote">Комментарий</Text>
               <List nested strong dividers={false}><MezfitAutosizeTextarea label="Как прошёл подход?" floatingLabel outline
-                value={draft.comment ?? ''} disabled={closing} maxLength={1000}
+                value={draft.comment ?? ''} disabled={inputLocked} maxLength={1000}
                 onChange={event => change(old => ({ ...old, comment: event.currentTarget.value || null }))} /></List>
             </div>
           </> : null}
@@ -293,7 +297,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
       </>}>
       <Text variant="body">Выйти без сохранения введённых данных?</Text>
     </MezfitDialog>, portalHost) : null}
-    {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker}
+    {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker && !saving}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
       target={target.current} onClose={() => setPickerOpened(false)}
       onChange={value => change(old => ({ ...old, metrics: { ...old.metrics, reps: value.reps, weightKg: value.weightKg } }))} />, portalHost)}
