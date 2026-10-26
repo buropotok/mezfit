@@ -8,6 +8,7 @@ import { appendOccurrenceExercise, appendOccurrenceSet, occurrencePlanChanged,
 import { readProgramCatalogueExercise, programExerciseSnapshot } from '../data/cloud/program-exercise-selection';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
+import type { ExerciseTrackingType } from '../data/exercises/publicExerciseTypes';
 import { SetEntry } from '../workout/SetEntry';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
@@ -100,7 +101,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const timeSelectionRef = useRef<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
   const [exercisePickerOpened, setExercisePickerOpened] = useState(false);
   const [exerciseInformationId, setExerciseInformationId] = useState<string | null>(null);
-  const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string } | null>(null);
+  const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string; trackingType: ExerciseTrackingType } | null>(null);
   const [openingSet, setOpeningSet] = useState(false);
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -344,8 +345,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
               if (!exercise || openingSet || !planner) return;
               setOpeningSet(true);
               void planner.programs.trackingTypeForExercise(exercise.exercise).then(type => {
-                if (type === 'weight_reps') setEditingSet({ exerciseId, setId });
-                else setError('Пока доступен редактор подходов «Вес + повторения»');
+                if (type) setEditingSet({ exerciseId, setId, trackingType: type });
+                else setError('Не удалось определить тип учёта упражнения');
               }).catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход'))
                 .finally(() => setOpeningSet(false));
             } : undefined}
@@ -394,11 +395,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             sourceProgramSetId: selectedSet.sourceProgramSetId,
             sessionSetId: null,
           },
-          trackingType: 'weight_reps',
+          trackingType: editingSet.trackingType,
           setType: selectedSet.setType ?? null,
           plan: {
             weightKg: selectedSet.plannedWeightKg, reps: selectedSet.plannedReps,
-            durationSeconds: null, distanceMeters: null,
+            durationSeconds: selectedSet.plannedDurationSeconds,
+            distanceMeters: selectedSet.plannedDistanceMeters,
           },
           previous: null, fact: null,
         }}
