@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { Badge, Divider, GlassSurface, Icon, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { Badge, Divider, GlassSurface, Icon, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, DurationPicker, DistancePicker, WeightPicker, NumPicker, formatDurationSeconds, type LiquidPopoverItem } from '../ui';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import './set-entry-weight-reps.css';
@@ -11,6 +11,11 @@ type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' 
   Extract<SetEntryProps, { mode?: 'workout' }>;
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+type MetricPicker = 'weight_reps' | 'duration' | 'distance' | 'reps' | 'weight';
+const validDuration = (x: number) => Number.isInteger(x) && x >= 0 && x <= 86399;
+const validDistance = (x: number) => Number.isInteger(x) && x >= 0 && x <= 100999;
+const validReps = (x: number) => Number.isInteger(x) && x >= 0 && x <= 999;
+const validWeight = (x: number) => pickerCompatible(x, 0);
 const bands = [
   ['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
   ['blue', 'Синяя'], ['purple', 'Фиолетовая'], ['black', 'Чёрная'],
@@ -24,7 +29,7 @@ function metricsText(weightKg: number | null, reps: number | null): string {
 function pickerCompatible(weightKg: number, reps: number): boolean {
   const fraction = Math.round(weightKg * 100) % 100;
   return Number.isInteger(reps) && reps >= 0 && reps <= 100
-    && weightKg >= 0 && weightKg <= 399.5 && [0, 25, 50].includes(fraction)
+    && weightKg >= 0 && weightKg <= 399.75 && [0, 25, 50, 75].includes(fraction)
     && Math.abs(weightKg * 100 - Math.round(weightKg * 100)) < 0.001;
 }
 
@@ -45,9 +50,13 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const [revision, setRevision] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [pickerOpened, setPickerOpened] = useState(false);
+  const [activePicker, setActivePicker] = useState<MetricPicker | null>(null);
   const [bandOpen, setBandOpen] = useState(false);
   const target = useRef<HTMLButtonElement>(null);
+  const durationTarget = useRef<HTMLButtonElement>(null);
+  const distanceTarget = useRef<HTMLButtonElement>(null);
+  const repsTarget = useRef<HTMLButtonElement>(null);
+  const weightTarget = useRef<HTMLButtonElement>(null);
   const bandTarget = useRef<HTMLButtonElement>(null);
   const [closing, setClosing] = useState(false);
   const requestCloseRef = useRef<() => void>(() => undefined);
@@ -70,11 +79,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
       if (props.mode === 'occurrence-plan') {
-        await props.onPlanSave({
-          weightKg: snapshot.metrics.weightKg,
-          reps: snapshot.metrics.reps,
-          setType: snapshot.setType ?? null,
-        });
+        await props.onPlanSave({ ...snapshot.metrics, setType: snapshot.setType ?? null });
       } else {
         await props.onSave({ ...snapshot, setLabel: null, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands] });
       }
@@ -103,7 +108,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     try {
       await persist();
       if (dirtyRevision.current !== savedRevision.current) await persist();
-      setPickerOpened(false);
+      setActivePicker(null);
       setBandOpen(false);
       props.onClose();
     } catch {
@@ -136,7 +141,53 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const currentWeight = weightFallback ? 0 : suggestedWeight;
   const currentReps = repsFallback ? 0 : suggestedReps;
   const validPicker = pickerCompatible(currentWeight, currentReps);
-  const needsFactSelection = weightFallback || repsFallback;
+  const suggestedDuration = draft.metrics.durationSeconds ?? props.data.plan?.durationSeconds ?? 0;
+  const suggestedDistance = draft.metrics.distanceMeters ?? props.data.plan?.distanceMeters ?? 0;
+  const suggestedStandaloneReps = draft.metrics.reps ?? props.data.plan?.reps ?? 0;
+  const suggestedStandaloneWeight = draft.metrics.weightKg ?? props.data.plan?.weightKg ?? 0;
+  const currentDuration = validDuration(suggestedDuration) ? suggestedDuration : 0;
+  const currentDistance = validDistance(suggestedDistance) ? suggestedDistance : 0;
+  const currentStandaloneReps = validReps(suggestedStandaloneReps) ? suggestedStandaloneReps : 0;
+  const currentStandaloneWeight = validWeight(suggestedStandaloneWeight) ? suggestedStandaloneWeight : 0;
+  const tracking = props.data.trackingType;
+  const isWeightReps = tracking === 'weight_reps';
+  const hasDuration = tracking !== 'weight_reps';
+  const hasDistance = tracking === 'time_distance';
+  const hasReps = tracking === 'time_reps';
+  const hasWeight = tracking === 'time_weight';
+  const metricCount = tracking === 'time' ? 1 : 2;
+  const fieldIsValid = (kind: MetricPicker): boolean => {
+    if (kind === 'weight_reps') return validPicker;
+    if (kind === 'duration') return validDuration(suggestedDuration) || draft.metrics.durationSeconds === null;
+    if (kind === 'distance') return validDistance(suggestedDistance) || draft.metrics.distanceMeters === null;
+    if (kind === 'reps') return validReps(suggestedStandaloneReps) || draft.metrics.reps === null;
+    return validWeight(suggestedStandaloneWeight) || draft.metrics.weightKg === null;
+  };
+  const needsFactSelection = isWeightReps
+    ? weightFallback || repsFallback
+    : (hasDuration && draft.metrics.durationSeconds === null && !validDuration(suggestedDuration))
+      || (hasDistance && draft.metrics.distanceMeters === null && !validDistance(suggestedDistance))
+      || (hasReps && draft.metrics.reps === null && !validReps(suggestedStandaloneReps))
+      || (hasWeight && draft.metrics.weightKg === null && !validWeight(suggestedStandaloneWeight));
+  const missingFact = isWeightReps
+    ? draft.metrics.weightKg === null || draft.metrics.reps === null
+    : (hasDuration && draft.metrics.durationSeconds === null)
+      || (hasDistance && draft.metrics.distanceMeters === null)
+      || (hasReps && draft.metrics.reps === null)
+      || (hasWeight && draft.metrics.weightKg === null);
+  const factMetrics = {
+    weightKg: isWeightReps ? currentWeight : hasWeight ? currentStandaloneWeight : null,
+    reps: isWeightReps ? currentReps : hasReps ? currentStandaloneReps : null,
+    durationSeconds: hasDuration ? currentDuration : null,
+    distanceMeters: hasDistance ? currentDistance : null,
+  };
+  const confirmLabel = isWeightReps
+    ? metricsText(currentWeight, currentReps)
+    : [hasDuration ? formatDurationSeconds(currentDuration) : null,
+      hasDistance ? `${numberFormatter.format(currentDistance / 1000)} км` : null,
+      hasReps ? `${currentStandaloneReps} повт.` : null,
+      hasWeight ? `${numberFormatter.format(currentStandaloneWeight)} кг` : null]
+      .filter(Boolean).join(' · ');
   const selectedBand = draft.bands[0] ?? null;
   const bandItems: LiquidPopoverItem[] = [
     ...bands.map(([value, label]) => ({
@@ -146,6 +197,22 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     })),
     { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
   ];
+
+  const metricTile = (kind: MetricPicker, label: string, text: string,
+    trigger: RefObject<HTMLButtonElement | null>) => (
+    <GlassSurface component="button" ref={trigger} wrapContent={false} shape="auto"
+      preset="modalTuned" blur={glass.blur} optics={false} halo="lifted"
+      className="set-entry-weight-reps__metric-tile"
+      onClick={() => { if (fieldIsValid(kind) && !closing) setActivePicker(kind); }}
+      aria-disabled={!fieldIsValid(kind) || closing}
+      aria-label={kind === 'weight_reps' ? 'Изменить вес и повторения' : `Изменить ${label.toLowerCase()}`}>
+      <Text variant="headline">{label}</Text>
+      <span className="set-entry-weight-reps__metric-value">
+        <Text variant="headline">{text}</Text>
+        <Icon name="chevron-right" aria-hidden="true" />
+      </span>
+    </GlassSurface>
+  );
 
   // Both overlays must be siblings of the app surface, never descendants of
   // transformed SortableList rows or the animated sheet. Keep React context.
@@ -176,28 +243,30 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           <Divider />
           <div className="set-entry-weight-reps__section-heading">
             <Text variant="footnote">Показатели подхода</Text>
-            <Text variant="caption" tone="muted">2 показателя</Text>
+            <Text variant="caption" tone="muted">{metricCount} {metricCount === 1 ? 'показатель' : 'показателя'}</Text>
           </div>
-          <GlassSurface component="button" ref={target} wrapContent={false} shape="auto"
-            preset="modalTuned" blur={glass.blur} optics={false} halo="lifted"
-            className="set-entry-weight-reps__metric-tile"
-            onClick={() => { if (validPicker && !closing) setPickerOpened(true); }}
-            aria-disabled={!validPicker || closing}
-            aria-label="Изменить вес и повторения">
-            <Text variant="headline">Повторения × Вес</Text>
-            <span className="set-entry-weight-reps__metric-value">
-              <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
-              <Icon name="chevron-right" aria-hidden="true" />
-            </span>
-          </GlassSurface>
-          {!validPicker ? <Text variant="footnote" role="alert">{isPlan
-            ? 'Плановое значение не поддерживается текущим пикером'
-            : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
+          {isWeightReps ? metricTile('weight_reps', 'Повторения × Вес',
+            metricsText(draft.metrics.weightKg, draft.metrics.reps), target) : null}
+          {hasDuration ? metricTile('duration', 'Время', draft.metrics.durationSeconds === null
+            ? 'Не заполнено' : formatDurationSeconds(draft.metrics.durationSeconds), durationTarget) : null}
+          {hasDistance ? metricTile('distance', 'Дистанция', draft.metrics.distanceMeters === null
+            ? 'Не заполнено' : `${numberFormatter.format(draft.metrics.distanceMeters / 1000)} км`, distanceTarget) : null}
+          {hasReps ? metricTile('reps', 'Повторения', draft.metrics.reps === null
+            ? 'Не заполнено' : String(draft.metrics.reps), repsTarget) : null}
+          {hasWeight ? metricTile('weight', 'Вес', draft.metrics.weightKg === null
+            ? 'Не заполнено' : `${numberFormatter.format(draft.metrics.weightKg)} кг`, weightTarget) : null}
+          {!fieldIsValid(isWeightReps ? 'weight_reps' : hasDuration ? 'duration' : hasDistance ? 'distance' : hasReps ? 'reps' : 'weight')
+            ? <Text variant="footnote" role="alert">{isPlan
+              ? 'Плановое значение не поддерживается текущим пикером'
+              : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
           {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
-          {!isPlan && validPicker && !needsFactSelection && (draft.metrics.weightKg === null || draft.metrics.reps === null)
+          {!isPlan && !needsFactSelection && missingFact &&
+            (isWeightReps ? validPicker : [hasDuration && fieldIsValid('duration'),
+              hasDistance && fieldIsValid('distance'), hasReps && fieldIsValid('reps'), hasWeight && fieldIsValid('weight')]
+              .every(v => v !== false))
             ? <KonstaButton tonal small disabled={closing} onClick={() => change(old => ({
-              ...old, metrics: { ...old.metrics, weightKg: currentWeight, reps: currentReps },
-            }))}><Text variant="body">Записать {metricsText(currentWeight, currentReps)} как факт</Text></KonstaButton> : null}
+              ...old, metrics: { ...old.metrics, ...factMetrics },
+            }))}><Text variant="body">Записать {confirmLabel} как факт</Text></KonstaButton> : null}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
             {props.data.plan?.reps !== null && props.data.plan?.reps !== undefined
               ? <Text variant="caption" className="set-entry-weight-reps__plan-context">План: {props.data.plan.reps} повт.</Text> : null}
