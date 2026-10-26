@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
 import { MezfitPopover } from '../konsta-mezfit';
+import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
   resolveTwoColumnPickerLensMode,
@@ -24,10 +25,7 @@ const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 
-function centeredLensScale(x: number, y: number, scale: number) {
-  // Keep the iOS magnification centered on the numeric column's anchor.
-  return `matrix(${scale} 0 0 ${scale} ${(1 - scale) * x} ${(1 - scale) * y})`;
-}
+
 
 export type ThreeColumnPickerPart = 'first' | 'second' | 'third';
 
