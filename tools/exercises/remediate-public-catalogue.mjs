@@ -30,13 +30,13 @@ const IDS = Object.keys(FIELDS);
 const COUNTS = Object.freeze({
   publicExerciseDefinitions: 1324, publicExerciseTaxonomy: 69, publicExerciseCatalogues: 1,
 });
-const AUDIT_STAGE_SHA256 = Object.freeze([
+export const AUDIT_STAGE_SHA256 = Object.freeze([
   "3ea5a0ada89329723a1f484251db4dab8d7de4a2c064121b915cc8bca647e65b",
   "1c84d19c4f8f88205fd592f871ce8ca657a18683f906942661b579e57b8e0650",
-  "4af4b16f54cfcc38fec5a8bc7b10404080e7c0b7",
-  "0ca4f3725e2f5ffba361c2e90294692033a45812b39f22fc157",
+  "4af4b16f54cfcc38fec5a8bc7b10404080e7aee3c72a09f212f98fe8367f1de5",
+  "0ca4f3725e2f5ffba361c2e919c768856e2e90294692033a45812b39f22fc157",
   "aad5264e10f951f6684e857672e7a32fc919a57bc8c422a48b2308d1f483688a",
-  "f91390cd01912a30414fe44e952f1f8cf3883177f23e8a189e53be5a9c4098be",
+  "f91390cd01912a30414fe44a952f1f8cf3883177f23e8a189e53be5a9c4098be",
   "8e576dd8b4681acc42660bfeb007ef5de793459d257844082786de917e1224c5",
   "a77837712c360cb9d28ef2e4aed3284e54bab298be096c1d4d2cf4c115057db6",
   "5581fdd2cb5428bbc226b29aff5734c35f7be87c55be7fc301a5ea429e60966a",
@@ -318,8 +318,18 @@ async function main() {
   } else console.log(JSON.stringify(result));
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch(() => {
-    console.error('REM-01 operation refused or failed; inspect preview/backup/readback');
+  main().catch(error => {
+    const safeMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Do not print raw error details: HTTP errors may contain credentials or exported data.
+    const safeCodes = [
+      'Unexpected audited catalogue manifest', 'Invalid audited stage manifest',
+      'Audited catalogue stage SHA-256 mismatch', 'Audited stage count mismatch',
+      'Invalid audited catalogue root', 'Invalid remediation operation/database',
+      'Wrong public table size', 'Unexpected public row',
+      'Immutable source SHA-256 mismatch', 'Missing Dexie credential',
+    ];
+    const diagnostic = safeCodes.find(code => safeMessage.startsWith(code));
+    console.error('REM-01 operation refused or failed: ' + (diagnostic ?? 'internal verification or cloud error'));
     process.exitCode = 1;
   });
 }
