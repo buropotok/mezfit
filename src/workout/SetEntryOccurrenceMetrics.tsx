@@ -278,7 +278,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         }}>Удалить</MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, host) : null}
-    {keys.map(key => createPortal(<span key={key}>
+    {keys.map(key => createPortal(<>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
         value={suggested('durationSeconds')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
@@ -303,6 +303,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, weightKg: value },
         }))} /> : null}
-    </span>, host))}
+    </>, host, key))}
   </>;
 }
