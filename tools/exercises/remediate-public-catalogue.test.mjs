@@ -141,6 +141,17 @@ describe('REM-01 protected catalogue correction operator', () => {
       patchSha256: DIGEST, backupApproved: false })).rejects.toThrow(/confirmed GitHub artifact backup/);
     expect(db.writes).toHaveLength(0);
   });
+  it('refuses to write when public state changed after artifact backup', async () => {
+    const f = fixture(), db = fakeSession(f.current);
+    f.proposal.approval_state = 'approved';
+    f.proposal.exercises.forEach(item => { item.approval_state = 'approved'; });
+    const staleDigest = backupDigest(f.current);
+    db.state.publicExerciseDefinitions[0].name = 'Concurrent external edit';
+    await expect(executeRemediation({ session: db.session, source: f.source, patch: f.proposal,
+      patchSha256: DIGEST, backupApproved: true, backupDigest: staleDigest }))
+      .rejects.toThrow(/differs from successfully uploaded backup/);
+    expect(db.writes).toHaveLength(0);
+  });
   it('writes only six definitions, then verifies all records and activates marker last; replay is idempotent', async () => {
     const f = fixture(), db = fakeSession(f.current);
     f.proposal.approval_state = 'approved';
