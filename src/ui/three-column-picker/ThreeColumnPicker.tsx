@@ -24,6 +24,11 @@ const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 
+function centeredLensScale(x: number, y: number, scale: number) {
+  // Keep the iOS magnification centered on the numeric column's anchor.
+  return `matrix(${scale} 0 0 ${scale} ${(1 - scale) * x} ${(1 - scale) * y})`;
+}
+
 export type ThreeColumnPickerPart = 'first' | 'second' | 'third';
 
 export interface ThreeColumnPickerParts {
@@ -141,7 +146,7 @@ function LensText({
       {visibleLensItems(column.values, scrollTop).map(({ index, value, y }) => {
         const scale = lensMode === 'ios' ? iosLensScale(y) : 1;
         const transform = lensMode === 'ios' && scale !== 1
-          ? `translate(${x} ${y}) scale(${scale}) translate(${-x} ${-y})`
+          ? centeredLensScale(x, y, scale)
           : undefined;
 
         return (
@@ -199,7 +204,7 @@ function PickerLens({
           x={x}
           y={LENS_HEIGHT / 2}
           transform={lensMode === 'ios'
-            ? `translate(${x} ${LENS_HEIGHT / 2}) scale(${IOS_LENS_MAGNIFICATION}) translate(${-x} ${-LENS_HEIGHT / 2})`
+            ? centeredLensScale(x, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
             : undefined}
           textAnchor="middle"
           dominantBaseline="central"
