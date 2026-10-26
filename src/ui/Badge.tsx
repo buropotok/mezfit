@@ -8,12 +8,13 @@ export type BadgeProps = Omit<HTMLAttributes<HTMLSpanElement>, 'color'> & {
   color?: BadgeColor;
   textVariant?: 'body' | 'caption';
   selected?: boolean;
+  appearance?: 'default' | 'outline';
   children: ReactNode;
 };
 
-export function Badge({ color = 'gray', textVariant = 'body', selected = false, className = '', children, ...props }: BadgeProps) {
+export function Badge({ color = 'gray', textVariant = 'body', selected = false, appearance = 'default', className = '', children, ...props }: BadgeProps) {
   return (
-    <span {...props} className={`ui-badge ui-text--${textVariant} ui-badge--${color} ${selected ? 'ui-badge--selected' : ''} ${className}`.trim()}>
+    <span {...props} className={`ui-badge ui-text--${textVariant} ui-badge--${color} ${appearance === 'outline' ? 'ui-badge--outline' : ''} ${selected ? 'ui-badge--selected' : ''} ${className}`.trim()}>
       {children}
     </span>
   );
@@ -25,15 +26,16 @@ export type BadgeChoiceProps = {
   color?: BadgeColor;
   textVariant?: 'body' | 'caption';
   selected?: boolean;
+  appearance?: 'default' | 'outline';
   disabled?: boolean;
   onClick: () => void;
   className?: string;
 };
 
-export function BadgeChoice({ children, color = 'gray', textVariant = 'caption',
+export function BadgeChoice({ children, color = 'gray', textVariant = 'caption', appearance = 'default',
   selected = false, disabled = false, onClick, className = '' }: BadgeChoiceProps) {
   return <KonstaButton clear small inline rounded disabled={disabled} onClick={onClick}
-    aria-pressed={selected} className={className}>
-    <Badge color={color} textVariant={textVariant} selected={selected}>{children}</Badge>
+    aria-pressed={selected} className={`ui-badge-choice ${className}`.trim()}>
+    <Badge color={color} textVariant={textVariant} selected={selected} appearance={appearance}>{children}</Badge>
   </KonstaButton>;
 }
