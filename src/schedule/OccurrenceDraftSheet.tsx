@@ -10,6 +10,7 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
 import type { ExerciseTrackingType } from '../data/exercises/publicExerciseTypes';
 import { SetEntry } from '../workout/SetEntry';
+import type { SetEntryProgramIdentity } from '../workout/setEntryTypes';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   Badge, Text, TimePicker, Icon, IconButton, LiquidPopover, type LocalDate, type LocalTime } from '../ui';
@@ -271,6 +272,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
   const editingExercise = draft?.plan.exercises.find(item => item.id === editingSet?.exerciseId);
   const selectedSet = editingExercise?.sets.find(item => item.id === editingSet?.setId);
+  const programIdentity: SetEntryProgramIdentity = draft?.trainingPlanId && sourceProgramName
+    ? { programId: draft.trainingPlanId, programName: sourceProgramName }
+    : { programId: null, programName: null };
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
   return <>
@@ -386,8 +390,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         key={selectedSet.id} mode="occurrence-plan" isOpen
         data={{
           identity: {
-            programId: draft.trainingPlanId ?? null,
-            programName: sourceProgramName ?? null,
+            ...programIdentity,
             exerciseDefinitionId: editingExercise.exercise.exerciseDefinitionId,
             exerciseName: editingExercise.exercise.name,
             setNumber: selectedSet.position + 1,
