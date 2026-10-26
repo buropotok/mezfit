@@ -196,6 +196,25 @@ function PickerLens({
     ? centeredLensScale(LENS_WIDTH / 2, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
     : undefined;
 
+  // Fixed units are composited after the displacement filter so they never
+  // shift optically or scroll with any numeric ribbon.
+  const fixedUnitLabels = (
+    <>
+      {columns.map((column, index) => column.fixedUnit ? (
+        <text
+          key={column.ariaLabel}
+          x={LENS_COLUMN_XS[index] + UNIT_OFFSET_X}
+          y={LENS_HEIGHT / 2}
+          textAnchor="start"
+          dominantBaseline="central"
+          className="ui-time-picker__lens-unit ui-text--footnote"
+        >
+          {column.fixedUnit}
+        </text>
+      ) : null)}
+    </>
+  );
+
   const lensContent = (
     <>
       <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
@@ -223,18 +242,7 @@ function PickerLens({
         scrollTop={scrollTops.right}
         lensMode={lensMode}
       />
-      {columns.map((column, index) => column.fixedUnit ? (
-        <text
-          key={column.ariaLabel}
-          x={LENS_COLUMN_XS[index] + UNIT_OFFSET_X}
-          y={LENS_HEIGHT / 2}
-          textAnchor="start"
-          dominantBaseline="central"
-          className="ui-time-picker__lens-unit ui-text--footnote"
-        >
-          {column.fixedUnit}
-        </text>
-      ) : null)}
+
     </>
   );
 
@@ -310,12 +318,13 @@ function PickerLens({
         </defs>
 
         {lensMode === 'ios' ? (
-          <g clipPath={`url(#${clipId})`}>{lensContent}</g>
+          <g clipPath={`url(#${clipId})`}>{lensContent}{fixedUnitLabels}</g>
         ) : (
           <g clipPath={`url(#${clipId})`}>
             <g filter={assets ? `url(#${filterId})` : undefined}>
               <g clipPath={`url(#${sourceClipId})`}>{lensContent}</g>
             </g>
+            {fixedUnitLabels}
           </g>
         )}
       </svg>
