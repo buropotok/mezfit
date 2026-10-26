@@ -63,7 +63,7 @@ export function removeOccurrenceSet(
 /** Numeric PLAN is an occurrence-level value, never a program-template mutation. */
 export function updateOccurrenceSetPlan(
   plan: WorkoutOccurrencePlan, exerciseId: string, setId: string,
-  changes: Pick<OccurrencePlanSet, 'plannedWeightKg' | 'plannedReps' | 'setType'>,
+  changes: Pick<OccurrencePlanSet, 'plannedWeightKg' | 'plannedReps' | 'plannedDurationSeconds' | 'plannedDistanceMeters' | 'setType'>,
 ): WorkoutOccurrencePlan {
   if (!plan.exercises.some(ex => ex.id === exerciseId && ex.sets.some(set => set.id === setId)))
     throw new Error('OCCURRENCE_SET_NOT_FOUND');
