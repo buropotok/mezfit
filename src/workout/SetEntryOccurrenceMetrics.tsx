@@ -187,17 +187,31 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <GlassSurface component="button" wrapContent={false} shape="auto" preset="modalTuned"
               optics={false} blur={glass.blur} halo="lifted" className="set-entry-weight-reps__metric-tile"
               ref={node => { targets.current[key] = node as HTMLButtonElement | null; }}
-              aria-disabled={closing || !valid(key, draft.metrics[key] ?? 0)}
+              aria-disabled={closing || !valid(key, suggested(key))}
               aria-label={`Изменить ${LABELS[key].toLowerCase()}`}
               onClick={() => {
-                if (!closing && valid(key, draft.metrics[key] ?? 0)) setPicker(key);
+                if (!closing && valid(key, suggested(key))) setPicker(key);
               }}>
               <Text variant="body">{LABELS[key]}</Text>
               <Text variant="headline">{display(key, draft.metrics[key])}</Text>
             </GlassSurface>
-            {!valid(key, draft.metrics[key] ?? 0)
+            {!valid(key, suggested(key))
               ? <Text variant="footnote" role="alert">Существующее значение не поддерживается пикером</Text> : null}
           </div>)}
+          {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
+            {props.data.plan ? <Text variant="caption" tone="muted">
+              План: {keys.map(key => display(key, props.data.plan?.[key] ?? null)).join(' · ')}
+            </Text> : null}
+            {props.data.previous ? <Text variant="caption" tone="muted">
+              Пред.: {keys.map(key => display(key, props.data.previous?.metrics[key] ?? null)).join(' · ')}
+            </Text> : null}
+          </div> : null}
+          {!isPlan && props.data.plan && keys.some(key => draft.metrics[key] === null)
+            && keys.every(key => props.data.plan?.[key] === null || valid(key, props.data.plan?.[key] ?? 0))
+            ? <KonstaButton tonal small disabled={closing} onClick={() => change(old => ({
+              ...old, metrics: { ...old.metrics,
+                ...Object.fromEntries(keys.map(key => [key, props.data.plan?.[key] ?? null])) },
+            }))}>Записать значения плана как факт</KonstaButton> : null}
           <div className="set-entry-weight-reps__section">
             <div className="set-entry-weight-reps__section-heading">
               <Text variant="footnote">Тип подхода</Text>
@@ -235,25 +249,25 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     </MezfitDialog>, host) : null}
     {keys.map(key => createPortal(<span key={key}>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
-        value={valid('durationSeconds', draft.metrics.durationSeconds ?? 0) ? (draft.metrics.durationSeconds ?? 0) : 0} target={targets.current[key] ?? null}
+        value={suggested('durationSeconds')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, durationSeconds: value },
         }))} /> : null}
       {key === 'distanceMeters' ? <DistancePicker opened={picker === key}
-        value={valid('distanceMeters', draft.metrics.distanceMeters ?? 0) ? (draft.metrics.distanceMeters ?? 0) : 0} target={targets.current[key] ?? null}
+        value={suggested('distanceMeters')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, distanceMeters: value },
         }))} /> : null}
       {key === 'reps' ? <NumPicker opened={picker === key}
-        value={valid('reps', draft.metrics.reps ?? 0) ? (draft.metrics.reps ?? 0) : 0} target={targets.current[key] ?? null}
+        value={suggested('reps')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, reps: value },
         }))} /> : null}
       {key === 'weightKg' ? <WeightPicker opened={picker === key}
-        value={valid('weightKg', draft.metrics.weightKg ?? 0) ? (draft.metrics.weightKg ?? 0) : 0} target={targets.current[key] ?? null}
+        value={suggested('weightKg')} target={targets.current[key] ?? null}
         onClose={() => setPicker(null)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, weightKg: value },
