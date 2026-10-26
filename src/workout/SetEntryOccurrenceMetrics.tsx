@@ -207,10 +207,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             </Text> : null}
           </div> : null}
           {!isPlan && props.data.plan && keys.some(key => draft.metrics[key] === null)
+            && keys.some(key => props.data.plan?.[key] !== null)
             && keys.every(key => props.data.plan?.[key] === null || valid(key, props.data.plan?.[key] ?? 0))
             ? <KonstaButton tonal small disabled={closing} onClick={() => change(old => ({
               ...old, metrics: { ...old.metrics,
-                ...Object.fromEntries(keys.map(key => [key, props.data.plan?.[key] ?? null])) },
+                ...Object.fromEntries(keys.filter(key => old.metrics[key] === null)
+                  .map(key => [key, props.data.plan?.[key] ?? null])) },
             }))}>Записать значения плана как факт</KonstaButton> : null}
           <div className="set-entry-weight-reps__section">
             <div className="set-entry-weight-reps__section-heading">
