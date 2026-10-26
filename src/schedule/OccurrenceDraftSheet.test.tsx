@@ -153,9 +153,9 @@ describe('editing PLAN in one scheduled occurrence', () => {
     const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
     vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
     vi.spyOn(drafts, 'get').mockResolvedValue(scheduled);
-    let persisted: LocalWorkoutOccurrenceDraft | null = null;
+    const persisted: { current: LocalWorkoutOccurrenceDraft | null } = { current: null };
     const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockImplementation(async (_id, apply) => {
-      persisted = apply(structuredClone(scheduled));
+      persisted.current = apply(structuredClone(scheduled));
     });
 
     render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts}
@@ -165,7 +165,7 @@ describe('editing PLAN in one scheduled occurrence', () => {
     expect(screen.getByTestId('occurrence-plan-weight').textContent).toBe('—');
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить план подхода' }));
     await waitFor(() => expect(enqueue).toHaveBeenCalledOnce());
-    expect(persisted!.plan.exercises[0].sets[0]).toEqual(expect.objectContaining({
+    expect(persisted.current!.plan.exercises[0].sets[0]).toEqual(expect.objectContaining({
       plannedWeightKg: 80.75, plannedReps: 8, setType: 'cluster',
       sourceProgramSetId: 'template-set-1',
     }));
