@@ -35,3 +35,7 @@
   border-color: var(--ui-color-primary);
   background: color-mix(in srgb, var(--ui-color-surface-muted) 12%, transparent);
 }
+
+.ui-badge-button { display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; padding: 0; color: inherit; cursor: pointer; }
+.ui-badge-button:disabled { cursor: default; opacity: 0.55; }
+.ui-badge-button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 3px; border-radius: 999px; }
