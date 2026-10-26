@@ -23,7 +23,7 @@ const bands = [
 
 function metricsText(weightKg: number | null, reps: number | null): string {
   if (weightKg === null && reps === null) return 'Не заполнено';
-  return `${weightKg === null ? '—' : numberFormatter.format(weightKg)} кг × ${reps ?? '—'}`;
+  return `${reps ?? '—'} × ${weightKg === null ? '—' : numberFormatter.format(weightKg)} кг`;
 }
 
 function pickerCompatible(weightKg: number, reps: number): boolean {
