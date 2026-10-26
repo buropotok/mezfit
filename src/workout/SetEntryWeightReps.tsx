@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { Badge, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { BadgeChoice, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import './set-entry-weight-reps.css';
@@ -203,16 +203,11 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <Badge key={type} color="gray" textVariant="caption"
-                selected={(draft.setType ?? null) === type} role="button" tabIndex={closing ? -1 : 0}
-                aria-pressed={(draft.setType ?? null) === type} aria-disabled={closing}
-                onClick={() => { if (!closing) change(old => ({ ...old, setType: old.setType === type ? null : type })); }}
-                onKeyDown={event => {
-                  if (!closing && (event.key === 'Enter' || event.key === ' ')) {
-                    event.preventDefault();
-                    change(old => ({ ...old, setType: old.setType === type ? null : type }));
-                  }
-                }}>{SET_TYPE_LABELS[type]}</Badge>)}
+              {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray"
+                selected={(draft.setType ?? null) === type} disabled={closing}
+                onClick={() => change(old => ({
+                  ...old, setType: old.setType === type ? null : type,
+                }))}>{SET_TYPE_LABELS[type]}</BadgeChoice>)}
             </div>
           </div>
           {!isPlan ? <>
