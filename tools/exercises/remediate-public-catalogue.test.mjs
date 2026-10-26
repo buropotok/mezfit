@@ -1,7 +1,16 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { executeRemediation, remediationPlan } from './remediate-public-catalogue.mjs';
+import { AUDIT_STAGE_SHA256, executeRemediation, remediationPlan } from './remediate-public-catalogue.mjs';
 
+const auditedManifest = JSON.parse(readFileSync(new URL('../../audit/visual/input/manifest.json', import.meta.url), 'utf8'));
+describe('REM-01 audited GitHub source integrity', () => {
+  it('pins all 14 stage hashes to the committed audit manifest', () => {
+    expect(auditedManifest.records).toBe(1324);
+    expect(auditedManifest.stages).toHaveLength(14);
+    expect(AUDIT_STAGE_SHA256).toEqual(auditedManifest.stages.map(stage => stage.sha256));
+  });
+});
 const SHA = '5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c';
 const DIGEST = 'a'.repeat(64);
 const FIELDS = {
