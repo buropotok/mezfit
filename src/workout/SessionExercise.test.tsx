@@ -124,6 +124,26 @@ describe('SessionExercise rendering', () => {
     expect(screen.getByText('50% выполнено')).toBeTruthy();
   });
 
+  it('keeps recorded FACT in the workout row and PLAN beneath, including when FACT is empty', () => {
+    const { container } = renderExercise();
+    const rows = container.querySelectorAll<HTMLElement>('.session-exercise__set-row');
+    expect(rows).toHaveLength(2);
+
+    const completedTitle = rows[0].querySelector('.session-exercise__set-title');
+    expect(completedTitle?.textContent).toContain('Подход 1');
+    expect(completedTitle?.textContent).toContain('82,5 кг × 10');
+    expect(completedTitle?.textContent).not.toContain('80 кг × 10');
+    const completedPlan = within(rows[0]).getByText('План: 80 кг × 10');
+    expect(completedPlan.closest('.session-exercise__set-context')).not.toBeNull();
+
+    const pendingTitle = rows[1].querySelector('.session-exercise__set-title');
+    expect(pendingTitle?.textContent).toContain('Подход 2');
+    expect(pendingTitle?.textContent).toContain('ввести факт');
+    expect(pendingTitle?.textContent).not.toContain('85 кг × 8');
+    const pendingPlan = within(rows[1]).getByText('План: 85 кг × 8');
+    expect(pendingPlan.closest('.session-exercise__set-context')).not.toBeNull();
+  });
+
   it('does not apply legacy surface geometry when an outer component owns the tile material', () => {
     const { container } = renderExercise({ surface: 'transparent' });
     const card = container.querySelector('.session-exercise');
