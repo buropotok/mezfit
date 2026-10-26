@@ -162,6 +162,7 @@ async function downloadApkGif(url, id) {
 async function upload(plan) {
   if (process.env.GITHUB_ACTIONS !== 'true'
       || process.env.GITHUB_REPOSITORY !== REPO
+      || process.env.GITHUB_ACTOR !== process.env.GITHUB_REPOSITORY_OWNER
       || process.env.GITHUB_REF !== 'refs/heads/main'
       || process.env.GITHUB_EVENT_NAME !== 'workflow_dispatch'
       || !process.env.CLOUDFLARE_API_TOKEN) {
