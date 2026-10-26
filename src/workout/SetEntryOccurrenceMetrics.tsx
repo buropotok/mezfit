@@ -65,10 +65,29 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   const [closing, setClosing] = useState(false);
   const [picker, setPicker] = useState<EditableMetric | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [bandOpen, setBandOpen] = useState(false);
+  const bandTarget = useRef<HTMLButtonElement>(null);
   const targets = useRef<Partial<Record<EditableMetric, HTMLButtonElement | null>>>({});
   const requestClose = useRef<() => void>(() => undefined);
   const glass = loadBrowserGlassSettings();
   const keys = FIELDS[props.data.trackingType as keyof typeof FIELDS] ?? [];
+  const suggested = (key: EditableMetric) => {
+    const current = draft.metrics[key];
+    if (current !== null) return current;
+    const planned = !isPlan ? props.data.plan?.[key] ?? 0 : 0;
+    return valid(key, planned) ? planned : 0;
+  };
+  const selectedBand = draft.bands[0] ?? null;
+  const bandItems: LiquidPopoverItem[] = [
+    ...([['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
+      ['blue', 'Синяя'], ['purple', 'Фиолетовая'], ['black', 'Чёрная']] as const)
+      .map(([id, label]) => ({
+        id, label, onSelect: () => change(old => ({
+          ...old, bands: old.bands[0] === id ? [] : [id],
+        })),
+      })),
+    { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
+  ];
 
   const change = (update: (value: typeof draft) => typeof draft) => {
     const next = update(draftRef.current);
@@ -138,7 +157,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <header className="set-entry-weight-reps__header">
           <div>
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
-            <Text variant="caption" tone="muted">Планирование подхода</Text>
+            <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
           </div>
           <IconButton icon="x" label="Закрыть подход" disabled={closing}
             onClick={() => { void close(); }} />
@@ -150,6 +169,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               {props.data.identity.programName ? <Text variant="footnote" tone="muted">
                 {props.data.identity.programName}</Text> : null}
             </div>
+            {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
+              triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
+              trigger={<IconButton ref={bandTarget}
+                label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}>
+                <span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" />
+              </IconButton>} /> : null}
             {props.onOpenHistory ? <IconButton icon="history" label="История упражнения"
               onClick={props.onOpenHistory} /> : null}
           </div>
