@@ -14,25 +14,46 @@ const overlayProbe = vi.hoisted(() => ({ animated: false, zeroDuration: false, d
 
 vi.mock('./WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => cloudEnabled.value
-  ? { db: {}, actorUserId: 'tg:101' } : null }));
+  ? { db: { publicExerciseDefinitions: { get: async () => ({ tracking_type: 'weight_reps' }) } },
+      actorUserId: 'tg:101' } : null }));
 vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSelectionSheet: () => {
   overlayProbe.selectors += 1;
   return null;
 } }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
-  WorkoutPlanCard: ({ onAddSet, onExerciseInformation, programName, hideProgramName, day }: {
-    onAddSet?: (id: string) => void; onExerciseInformation?: (id: string) => void;
+  WorkoutPlanCard: ({ onAddSet, onOpenSet, onExerciseInformation, programName, hideProgramName, day }: {
+    onAddSet?: (id: string) => void; onOpenSet?: (exerciseId: string, setId: string) => void;
+    onExerciseInformation?: (id: string) => void;
     programName?: string; hideProgramName?: boolean; day?: CloudProgramDayOutline;
   }) => <>
     <span data-testid="scheduled-program-name">{hideProgramName ? null : programName}</span>
     <span data-testid="scheduled-set-techniques">{day?.exercises.flatMap(exercise =>
       exercise.sets.map(set => set.setType ?? 'ordinary')).join(',') ?? ''}</span>
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>
+    {day?.exercises.flatMap(exercise => exercise.sets.map(set =>
+      <button key={set.id} onClick={() => onOpenSet?.(exercise.exercise.id, set.id)}>
+        Открыть план подхода {set.position + 1}
+      </button>))}
     {onExerciseInformation ? <button onClick={() => onExerciseInformation('exercise')}>
       Информация упражнения
     </button> : null}
   </>,
 }));
+vi.mock('../workout/SetEntry', () => ({
+  SetEntry: ({ data, onPlanSave, onClose, onDeleteSet }: {
+    data: { plan: { weightKg: number | null; reps: number | null } };
+    onPlanSave: (metrics: { weightKg: number; reps: number; setType: 'cluster' }) => Promise<void>;
+    onClose: () => void; onDeleteSet?: () => Promise<void>;
+  }) => <div role="dialog" aria-label="План конкретной тренировки">
+    <span data-testid="occurrence-plan-weight">{data.plan.weightKg ?? '—'}</span>
+    <button onClick={() => { void onPlanSave({ weightKg: 80.75, reps: 8, setType: 'cluster' }); }}>
+      Сохранить план подхода
+    </button>
+    <button onClick={() => { void onDeleteSet?.(); }}>Удалить план подхода</button>
+    <button onClick={onClose}>Закрыть план</button>
+  </div>,
+}));
+
 vi.mock('../program/ProgramExerciseInformationSheet', () => ({
   ProgramExerciseInformationSheet: ({ snapshot, onClose }: {
     snapshot?: { exerciseDefinitionId: string }; onClose: () => void;
