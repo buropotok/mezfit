@@ -247,7 +247,6 @@ export function SetEntry(props: SetEntryProps) {
   if (props.mode === undefined || props.mode === 'workout' || props.mode === 'occurrence-plan') {
     return <SetEntryWeightReps key={setEntryIdentityKey(props.data)} {...props} />;
   }
-  if (props.mode === 'occurrence-plan') return null;
   const lifecycleKey = `${props.mode}:${setEntryIdentityKey(props.data)}:${props.isOpen ? 'open' : 'closed'}`;
   return <SetEntryEditor key={lifecycleKey} {...props} />;
 }
