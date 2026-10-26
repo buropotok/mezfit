@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button as KonstaButton } from 'konsta/react';
+import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { loadBrowserGlassSettings } from '../glassSettings';
-import { BadgeChoice, Divider, DistancePicker, DurationPicker, GlassSurface, IconButton, MezfitBottomSheet,
-  MezfitDialog, MezfitDialogButton, NumPicker, Text, WeightPicker } from '../ui';
-import { createSetEntryDraft, type SetEntryProps, type SetMetrics } from './setEntryTypes';
+import { BadgeChoice, Divider, DistancePicker, DurationPicker, GlassSurface, IconButton, LiquidPopover,
+  MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
+  MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
+import { createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
-type Props = Extract<SetEntryProps, { mode: 'program-plan' | 'occurrence-plan' }>;
+type Props = Extract<SetEntryProps, { mode: 'program-plan' | 'occurrence-plan' }> |
+  Extract<SetEntryProps, { mode?: 'workout' }>;
 type MetricKey = keyof SetMetrics;
 type EditableMetric = Exclude<MetricKey, never>;
 const LABELS: Record<EditableMetric, string> = {
@@ -48,7 +50,11 @@ function display(key: EditableMetric, value: number | null) {
 
 /** An occurrence-scoped editor for non-weight/reps PLAN metrics. Never writes program template rows. */
 export function SetEntryOccurrenceMetrics(props: Props) {
-  const [draft, setDraft] = useState(() => createSetEntryDraft(props.data));
+  const isPlan = props.mode === 'occurrence-plan' || props.mode === 'program-plan';
+  const [draft, setDraft] = useState(() => {
+    const initial = createSetEntryDraft(props.data);
+    return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
+  });
   const draftRef = useRef(draft);
   const changed = useRef(0);
   const saved = useRef(0);
@@ -79,7 +85,14 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     const setType = draftRef.current.setType ?? null;
     queue.current = queue.current.catch(() => undefined).then(async () => {
       setSaving(true);
-      await props.onPlanSave({ ...metrics, setType });
+      if (props.mode === 'occurrence-plan' || props.mode === 'program-plan') {
+        await props.onPlanSave({ ...metrics, setType });
+      } else {
+        await props.onSave({
+          ...draftRef.current, metrics, setType, setLabel: null,
+          bands: [...draftRef.current.bands],
+        });
+      }
       saved.current = Math.max(saved.current, at);
       setError('');
     }).catch(reason => {
