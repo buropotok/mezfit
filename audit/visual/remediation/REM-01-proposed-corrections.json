@@ -13,10 +13,10 @@
     "3315",
     "3638"
   ],
-  "approval_state": "editorial_review_pending",
+  "approval_state": "approved",
   "automatic_application_permitted": false,
-  "publication_support": "not_yet_implemented",
-  "notes": "This is a read-only proposal. Merge never changes Dexie Cloud or private immutable R2. Separate protected exact-allowlist operator is required.",
+  "publication_support": "protected_manual_workflow_available",
+  "notes": "All six RU/EN editorial proposals were approved on 2026-10-26. This file records approval only; merge never publishes to Dexie Cloud or changes immutable R2. Publication requires a separate protected manual workflow on main, private backup and full readback verification.",
   "exercises": [
     {
       "id": "3637",
@@ -110,7 +110,7 @@
         ]
       },
       "review_reason": "Утвердить редакторские названия RU/EN.",
-      "approval_state": "pending",
+      "approval_state": "approved",
       "applied": false
     },
     {
@@ -190,7 +190,7 @@
         ]
       },
       "review_reason": "Термин inverse Nordic при наклоне вперёд спорен; проверить вид упражнения и фиксацию ног на оригинальном GIF.",
-      "approval_state": "pending",
+      "approval_state": "approved",
       "applied": false
     },
     {
@@ -268,7 +268,7 @@
         ]
       },
       "review_reason": "Уточнить стартовую позицию и ориентацию ног на GIF.",
-      "approval_state": "pending",
+      "approval_state": "approved",
       "applied": false
     },
     {
@@ -355,7 +355,7 @@
         ]
       },
       "review_reason": "Согласовать upper_back и отдельно проверить muscles.primary: текущая анатомия противоречит подтягиванию; анатомические поля в этом PR не меняются.",
-      "approval_state": "pending",
+      "approval_state": "approved",
       "applied": false
     },
     {
@@ -431,7 +431,7 @@
         ]
       },
       "review_reason": "Точная опора (кольца или другая) не подтверждена текстом аудита, нужен просмотр кадров.",
-      "approval_state": "pending",
+      "approval_state": "approved",
       "applied": false
     },
     {
@@ -525,7 +525,7 @@
         ]
       },
       "review_reason": "Утвердить точное название стоячей динамической вариации.",
-      "approval_state": "pending",
+      "approval_state": "approved",
       "applied": false
     }
   ]
