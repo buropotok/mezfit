@@ -418,7 +418,7 @@ export function ThreeColumnPicker({
     let cancelled = false;
     const view = documentRef.defaultView;
     const build = () => {
-      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef));
+      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef, lensXs));
     };
 
     if (!view || typeof view.requestAnimationFrame !== 'function') {
@@ -433,7 +433,7 @@ export function ThreeColumnPicker({
       cancelled = true;
       view.cancelAnimationFrame(frame);
     };
-  }, [lensAssets, opened, resolvedLensMode, target]);
+  }, [lensAssets, lensXs, opened, resolvedLensMode, target]);
 
   useEffect(() => {
     const view = target?.ownerDocument.defaultView ?? window;
