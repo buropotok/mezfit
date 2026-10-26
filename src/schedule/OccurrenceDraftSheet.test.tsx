@@ -137,6 +137,58 @@ describe('calendar plan technique projection', () => {
   });
 });
 
+describe('editing PLAN in one scheduled occurrence', () => {
+  it('writes weight, repetitions and technique only to this occurrence and not its template', async () => {
+    cloudEnabled.value = true;
+    const set = {
+      id: 'set-1', sourceProgramSetId: 'template-set-1', position: 0,
+      setType: null, setLabel: null, comment: null,
+      materialLinks: [], chatLinks: [], plannedWeightKg: null, plannedReps: null,
+      plannedDurationSeconds: null, plannedDistanceMeters: null,
+    };
+    const scheduled: LocalWorkoutOccurrenceDraft = { ...draft,
+      plan: { ...plan, exercises: [{ ...plan.exercises[0], sets: [set] }] },
+    };
+    const untouchedOccurrence = structuredClone(scheduled.plan);
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue(scheduled);
+    let persisted: LocalWorkoutOccurrenceDraft | null = null;
+    const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockImplementation(async (_id, apply) => {
+      persisted = apply(structuredClone(scheduled));
+    });
+
+    render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts}
+      sourceProgramName="Сила" onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть план подхода 1' }));
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'План конкретной тренировки' })).toBeTruthy());
+    expect(screen.getByTestId('occurrence-plan-weight').textContent).toBe('—');
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить план подхода' }));
+    await waitFor(() => expect(enqueue).toHaveBeenCalledOnce());
+    expect(persisted!.plan.exercises[0].sets[0]).toEqual(expect.objectContaining({
+      plannedWeightKg: 80.75, plannedReps: 8, setType: 'cluster',
+      sourceProgramSetId: 'template-set-1',
+    }));
+    expect(scheduled.plan).toEqual(untouchedOccurrence);
+    expect(scheduled.plan.exercises[0].sets[0].plannedWeightKg).toBeNull();
+  });
+
+  it('does not open a PLAN editor for read-only scheduled workouts', () => {
+    cloudEnabled.value = true;
+    const set = {
+      id: 'set-1', sourceProgramSetId: 'template-set-1', position: 0,
+      setType: null, setLabel: null, comment: null, materialLinks: [], chatLinks: [],
+      plannedWeightKg: null, plannedReps: null, plannedDurationSeconds: null, plannedDistanceMeters: null,
+    };
+    const scheduled = { ...draft, plan: { ...plan, exercises: [{ ...plan.exercises[0], sets: [set] }] } };
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts} readOnly onClose={vi.fn()} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть план подхода 1' }));
+    expect(screen.queryByRole('dialog', { name: 'План конкретной тренировки' })).toBeNull();
+  });
+});
+
 describe('deferred editor auxiliaries', () => {
   it('renders the real form during slide but mounts closed pickers and dialogs only after opening', async () => {
     overlayProbe.animated = true;
