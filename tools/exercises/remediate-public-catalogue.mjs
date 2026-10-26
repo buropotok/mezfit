@@ -6,6 +6,7 @@
  */
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
@@ -44,6 +45,32 @@ function setAt(row, path, value) {
   node[keys.at(-1)] = structuredClone(value);
 }
 function digest(bytes) { return createHash('sha256').update(bytes).digest('hex'); }
+/** The audited GitHub projections are lossless at the object level, not byte-identical to the R2 JSON. */
+async function readAuditedSource(dir) {
+  const manifest = JSON.parse(await readFile(join(dir, 'manifest.json'), 'utf8'));
+  if (manifest.source_catalogue_sha256 !== SOURCE_SHA || manifest.records !== 1324
+    || !Array.isArray(manifest.stages) || manifest.stages.length !== 14)
+    fail('Unexpected audited catalogue manifest');
+  const exercises = [];
+  for (let index = 0; index < 14; index++) {
+    const stage = manifest.stages[index];
+    const filename = 'catalogue_stage_' + String(index + 1).padStart(2, '0') + '.jsonl';
+    if (stage.stage !== index + 1 || stage.file !== 'input/' + filename
+      || stage.count !== (index === 13 ? 24 : 100)
+      || !/^[a-f0-9]{64}$/.test(stage.sha256)) fail('Invalid audited stage manifest');
+    const bytes = await readFile(join(dir, filename));
+    if (digest(bytes) !== stage.sha256) fail('Audited catalogue stage SHA-256 mismatch: ' + filename);
+    const rows = bytes.toString('utf8').trimEnd().split('\\n').map(line => JSON.parse(line));
+    if (rows.length !== stage.count) fail('Audited stage count mismatch: ' + filename);
+    exercises.push(...rows);
+  }
+  const root = JSON.parse(await readFile(join(dir, 'taxonomy.json'), 'utf8'));
+  if (!root || Object.hasOwn(root, 'exercises') || root.schema_version !== '2.0.0'
+    || exercises.length !== 1324) fail('Invalid audited catalogue root');
+  const source = { ...root, exercises };
+  validateCatalogue(source);
+  return source;
+}
 function table(rows, expected, name) {
   if (!Array.isArray(rows) || rows.length !== expected) fail('Wrong public table size: ' + name);
   const map = new Map();
@@ -197,11 +224,13 @@ function backupPayload(snapshot) {
     ([name, rows]) => [name, Object.fromEntries(rows.map(row => [row.id, row]))],
   )) } };
 }
-export async function executeRemediation({ session, source, patch, patchSha256, backupApproved }) {
+export async function executeRemediation({ session, source, patch, patchSha256, backupApproved, backupDigest }) {
   if (!backupApproved || patch.approval_state !== 'approved'
     || patch.exercises.some(item => item.approval_state !== 'approved'))
-    fail('REM-01 requires private R2 backup and approved editorial values');
+    fail('REM-01 requires confirmed GitHub artifact backup and approved editorial values');
   const before = await readPublic(session);
+  if (!backupDigest || digest(Buffer.from(JSON.stringify(backupPayload(before)))) !== backupDigest)
+    fail('Live public state differs from successfully uploaded backup');
   const plan = remediationPlan(before, source, patch, patchSha256);
   if (!plan.approved) fail('Editorial approval is missing');
   // Repeat the full remote read immediately before mutation, including 1318 untouched rows.
@@ -225,11 +254,13 @@ export async function executeRemediation({ session, source, patch, patchSha256, 
     updated: plan.updates.length, verifiedExercises: 1324, verifiedTaxonomy: 69 };
 }
 export async function runRemediation({ sourceBytes, proposalBytes, dbUrl, rawKey, mode,
-  backupApproved = false, fetchFn = fetch }) {
+  backupApproved = false, backupDigest, source, fetchFn = fetch }) {
   if (dbUrl !== DATABASE_URL || !['preview', 'backup', 'publish'].includes(mode))
     fail('Invalid remediation operation/database');
-  if (digest(sourceBytes) !== SOURCE_SHA) fail('Immutable source SHA-256 mismatch');
-  const source = JSON.parse(sourceBytes.toString('utf8'));
+  if (!source) {
+    if (digest(sourceBytes) !== SOURCE_SHA) fail('Immutable source SHA-256 mismatch');
+    source = JSON.parse(sourceBytes.toString('utf8'));
+  }
   const patch = JSON.parse(proposalBytes.toString('utf8'));
   const patchSha256 = digest(proposalBytes);
   const session = await openPublicSession({ dbUrl, rawKey, mode, fetchFn });
@@ -239,17 +270,18 @@ export async function runRemediation({ sourceBytes, proposalBytes, dbUrl, rawKey
     pending: plan.updates.length, alreadyCorrect: 6 - plan.updates.length,
     editorApproved: plan.approved, publishAllowed: plan.approved, proposalSha256: patchSha256 };
   if (mode === 'backup') return { status: 'backup', payload: backupPayload(current) };
-  return executeRemediation({ session, source, patch, patchSha256, backupApproved });
+  return executeRemediation({ session, source, patch, patchSha256, backupApproved, backupDigest });
 }
 function options(args) {
   const opt = {};
   for (let i = 0; i < args.length; i += 2) {
-    if (!['--mode', '--source', '--out'].includes(args[i]) || !args[i + 1]
+    if (!['--mode', '--source', '--source-dir', '--out', '--backup-file'].includes(args[i]) || !args[i + 1]
       || Object.hasOwn(opt, args[i])) fail('Unexpected CLI argument');
     opt[args[i]] = args[i + 1];
   }
-  if (!['preview', 'backup', 'publish'].includes(opt['--mode']) || !opt['--source']
-    || ((opt['--mode'] === 'backup') !== Boolean(opt['--out'])))
+  if (!['preview', 'backup', 'publish'].includes(opt['--mode']) || (Boolean(opt['--source']) === Boolean(opt['--source-dir']))
+    || ((opt['--mode'] === 'backup') !== Boolean(opt['--out']))
+    || ((opt['--mode'] === 'publish') !== Boolean(opt['--backup-file'])))
     fail('Missing/invalid REM-01 CLI arguments');
   return opt;
 }
@@ -259,9 +291,11 @@ async function main() {
   const mode = opt['--mode'];
   const rawKey = mode === 'preview' ? process.env.DEXIE_CLOUD_KEY_JSON : process.env.DEXIE_CLOUD_WRITE_KEY;
   if (!rawKey) fail('Missing Dexie credential for this operation');
-  const result = await runRemediation({ sourceBytes: await readFile(opt['--source']),
+  const source = opt['--source-dir'] ? await readAuditedSource(opt['--source-dir']) : undefined;
+  const backupDigest = opt['--backup-file'] ? digest(await readFile(opt['--backup-file'])) : undefined;
+  const result = await runRemediation({ sourceBytes: source ? undefined : await readFile(opt['--source']), source, backupDigest,
     proposalBytes: await readFile(PROPOSAL_URL), dbUrl: config.dbUrl, rawKey, mode,
-    backupApproved: process.env.DEXIE_PRIVATE_R2_BACKUP_READY === 'yes' });
+    backupApproved: process.env.DEXIE_GITHUB_ARTIFACT_BACKUP_READY === 'yes' });
   if (mode === 'backup') {
     await writeFile(opt['--out'], JSON.stringify(result.payload), { flag: 'wx', mode: 0o600 });
     console.log('REM-01 private backup generated');
