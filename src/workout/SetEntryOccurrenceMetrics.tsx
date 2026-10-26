@@ -225,8 +225,35 @@ export function SetEntryOccurrenceMetrics(props: Props) {
                 }))}>{SET_TYPE_LABELS[type]}</BadgeChoice>)}
             </div>
           </div>
+          {!isPlan ? <>
+            <div className="set-entry-weight-reps__section">
+              <div className="set-entry-weight-reps__section-heading">
+                <Text variant="footnote">RPE: {draft.rpe ?? 0}</Text>
+                <Text variant="caption" tone="muted">необязательно</Text>
+              </div>
+              <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
+                <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0}
+                  ariaLabel="RPE" onValueChange={value => {
+                    if (!closing) change(old => ({ ...old, rpe: value }));
+                  }} />
+              </div>
+            </div>
+            <div className="set-entry-weight-reps__section">
+              <div className="set-entry-weight-reps__section-heading">
+                <Text variant="footnote">Комментарий</Text>
+                <Text variant="caption" tone="muted">необязательно</Text>
+              </div>
+              <List nested strong dividers={false}>
+                <MezfitAutosizeTextarea label="Как прошёл подход?" floatingLabel outline
+                  value={draft.comment ?? ''} disabled={closing} maxLength={1000}
+                  onChange={event => change(old => ({
+                    ...old, comment: event.currentTarget.value || null,
+                  }))} />
+              </List>
+            </div>
+          </> : null}
           {props.onOpenChat ? <KonstaButton onClick={props.onOpenChat}>Открыть чат</KonstaButton> : null}
-          {props.onDeleteSet ? <KonstaButton clear onClick={() => setDeleteConfirm(true)}>
+          {isPlan && props.onDeleteSet ? <KonstaButton clear onClick={() => setDeleteConfirm(true)}>
             Удалить подход
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
@@ -239,7 +266,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         </div>
       </div>
     </MezfitBottomSheet>, host)}
-    {props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} title="Удалить подход?"
+    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} title="Удалить подход?"
       buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}>Отмена</MezfitDialogButton>
         <MezfitDialogButton strong onClick={() => {
           void props.onDeleteSet?.().then(() => { setDeleteConfirm(false); props.onClose(); })
