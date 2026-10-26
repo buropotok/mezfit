@@ -285,7 +285,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         }}>Удалить</MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, portalHost) : null}
-    {!isPlan ? createPortal(<MezfitDialog opened={discardConfirm} title={<Text variant="headline">Изменения не сохранятся!</Text>}
+    {!isPlan ? createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
+      title={<Text variant="headline">Изменения не сохранятся!</Text>}
       buttons={<>
         <MezfitDialogButton onClick={() => setDiscardConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong onClick={() => {
