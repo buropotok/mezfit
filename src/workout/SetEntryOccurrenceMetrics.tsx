@@ -69,17 +69,11 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     return { ...initial, metrics };
   });
   const initialDraftRef = useRef(draft);
-  const factSavingRef = useRef(false);
+  const saveInFlightRef = useRef(false);
   const [discardConfirm, setDiscardConfirm] = useState(false);
   const draftRef = useRef(draft);
-  const changed = useRef(0);
-  const saved = useRef(0);
-  const queued = useRef(0);
-  const queue = useRef<Promise<void>>(Promise.resolve());
-  const [revision, setRevision] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [closing, setClosing] = useState(false);
   const [picker, setPicker] = useState<EditableMetric | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [bandOpen, setBandOpen] = useState(false);
@@ -102,14 +96,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     return valid(key, value) ? value : 0;
   };
   const selectedBand = draft.bands[0] ?? null;
-  const inputLocked = closing || (!isPlan && saving);
+  const inputLocked = saving;
   const change = (update: (value: typeof draft) => typeof draft) => {
-    if (!isPlan && factSavingRef.current) return;
+    if (saveInFlightRef.current) return;
     const next = update(draftRef.current);
     draftRef.current = next;
     setDraft(next);
-    changed.current += 1;
-    setRevision(changed.current);
     setError('');
   };
   const bandItems: LiquidPopoverItem[] = [
@@ -123,79 +115,39 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
   ];
 
-  const persist = (): Promise<void> => {
-    const at = changed.current;
-    if (!isPlan || at <= Math.max(saved.current, queued.current)) return queue.current;
-    queued.current = at;
-    const snapshot = { ...draftRef.current, metrics: { ...draftRef.current.metrics },
-      bands: [...draftRef.current.bands] };
-    const metrics = snapshot.metrics;
-    const setType = snapshot.setType ?? null;
-    queue.current = queue.current.catch(() => undefined).then(async () => {
-      setSaving(true);
-      if (props.mode === 'occurrence-plan') {
-        await props.onPlanSave({ ...metrics, setType });
-      }
-      saved.current = Math.max(saved.current, at);
-      setError('');
-    }).catch(reason => {
-      queued.current = saved.current;
-      setError(reason instanceof Error ? reason.message
-        : isPlan ? 'Не удалось сохранить план' : 'Не удалось сохранить результат');
-      throw reason;
-    }).finally(() => setSaving(false));
-    return queue.current;
-  };
-  useEffect(() => {
-    if (!isPlan || revision === 0) return;
-    const timer = window.setTimeout(() => { void persist().catch(() => undefined); }, 300);
-    return () => window.clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revision]);
-  const closePlan = async () => {
-    if (closing) return;
-    setClosing(true);
-    try {
-      await persist();
-      if (changed.current !== saved.current) await persist();
-      setPicker(null);
-      props.onClose();
-    } catch { setClosing(false); }
-  };
-  const saveFact = async () => {
-    if (props.mode === 'occurrence-plan' || factSavingRef.current) return;
-    factSavingRef.current = true;
+  // PLAN and FACT are committed only by the explicit Save action.
+  const saveEntry = async () => {
+    if (saveInFlightRef.current) return;
+    saveInFlightRef.current = true;
     setSaving(true);
     setError('');
-    const snapshot = draftRef.current;
+    const snapshot = { ...draftRef.current, metrics: { ...draftRef.current.metrics },
+      bands: [...draftRef.current.bands] };
     setPicker(null);
     setBandOpen(false);
     try {
-      await props.onSave({
-        ...snapshot, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands],
-      });
-      setPicker(null);
-      setBandOpen(false);
+      if (props.mode === 'occurrence-plan') {
+        await props.onPlanSave({ ...snapshot.metrics, setType: snapshot.setType ?? null });
+      } else {
+        await props.onSave(snapshot);
+      }
       props.onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить факт');
+      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить подход');
     } finally {
-      factSavingRef.current = false;
+      saveInFlightRef.current = false;
       setSaving(false);
     }
   };
-  const discardFact = () => {
-    if (saving || factSavingRef.current) return;
+  const discardEntry = () => {
+    if (saveInFlightRef.current) return;
     if (JSON.stringify(draftRef.current) !== JSON.stringify(initialDraftRef.current)) {
       setDiscardConfirm(true);
     } else {
       props.onClose();
     }
   };
-  requestClose.current = () => {
-    if (isPlan) void closePlan();
-    else discardFact();
-  };
+  requestClose.current = discardEntry;
   useEffect(() => {
     const register = props.onNavigationContextChange;
     if (!props.isOpen || !register) return;
@@ -218,11 +170,11 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
           </div>
-          {!isPlan ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
-            disabled={saving || closing} onClick={() => { void saveFact(); }}>
+          <KonstaButton clear small inline className="set-entry-weight-reps__save"
+            disabled={saving} onClick={() => { void saveEntry(); }}>
             <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
-          </KonstaButton> : null}
-          <IconButton icon="x" label="Закрыть подход" disabled={closing || saving}
+          </KonstaButton>
+          <IconButton icon="x" label="Закрыть подход" disabled={saving}
             onClick={() => requestClose.current()} />
         </header>
         <div className="set-entry-weight-reps__body">
@@ -314,24 +266,19 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="body">Удалить подход</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-          {isPlan ? <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
-            {saving ? 'Сохраняем изменения…' : 'Изменения сохраняются автоматически'}
-          </Text> : null}
-          {isPlan && error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
-            <Text variant="body">Повторить сохранение</Text>
-          </KonstaButton> : null}
         </div>
       </div>
     </MezfitBottomSheet>, host)}
-    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} title="Удалить подход?"
-      buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}>Отмена</MezfitDialogButton>
+    {isPlan && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+      title={<Text variant="headline">Удалить подход?</Text>}
+      buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong onClick={() => {
           void props.onDeleteSet?.().then(() => { setDeleteConfirm(false); props.onClose(); })
             .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход'));
-        }}>Удалить</MezfitDialogButton></>}>
+        }}><Text variant="body">Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, host) : null}
-    {!isPlan ? createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
+    {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
       title={<Text variant="headline">Изменения не сохранятся!</Text>}
       buttons={<>
         <MezfitDialogButton onClick={() => setDiscardConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
@@ -343,7 +290,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         }}><Text variant="body">Продолжить</Text></MezfitDialogButton>
       </>}>
       <Text variant="body">Выйти без сохранения введённых данных?</Text>
-    </MezfitDialog>, host) : null}
+    </MezfitDialog>, host)}
     {keys.map(key => createPortal(<>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
         value={pickerValue('durationSeconds')} target={targets.current[key] ?? null}
