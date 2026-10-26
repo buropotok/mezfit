@@ -62,18 +62,16 @@ separate reviewed versioned catalogue/media mapping change.
 
 The owner must confirm the following before any upload:
 
-1. In **Settings → Environments**, create `r2-media-import`, restrict it to
-   the `main` branch, add required human reviewers, and disable bypass.
-   Set the **environment-level variable** `R2_MEDIA_IMPORT_APPROVAL=APPROVED`.
-   This variable is a deliberate fail-closed activation gate: if the protected
-   environment has not been configured, the upload script refuses to run.
-   Do not set this value as a repository-wide variable.
-2. The existing `CLOUDFLARE_API_TOKEN` GitHub secret must permit remote object
-   reads/writes in the existing `mezfit` R2 bucket. Use least privilege where
-   possible. Do **not** put credentials in source code or PR/push workflows.
-3. Merge the reviewed workflow and staging data into `main`. A new
+1. The existing `CLOUDFLARE_API_TOKEN` repository secret must permit remote
+   object reads/writes in the existing `mezfit` R2 bucket. Use least privilege
+   where possible; never put credentials in source code or PR/push workflows.
+2. Merge the reviewed workflow and staging data into `main`. A new
    `workflow_dispatch` workflow is normally available in the Actions UI only
    after the workflow exists on `main`.
+
+No GitHub Environment, protected environment variable, or extra confirmation
+phrase is required. Selecting `upload` and pressing **Run workflow** is the
+user's explicit instruction to copy the 112 GIFs.
 
 ## Manual operation (nothing runs automatically)
 
@@ -82,15 +80,14 @@ select the `main` branch:
 
 1. Choose `preview` first. It requires no Cloudflare credential and checks all
    112 IDs/source paths and prints the destination plan; it does not contact R2.
-2. Review the plan, select `upload`, enter the exact confirmation
-   `IMPORT_GYM_KEEPER_112_V1`, and approve the protected `r2-media-import`
-   environment when prompted.
+2. Review the plan, select `upload`, then press **Run workflow**.
+   The existing Cloudflare repository secret is used only in this upload job.
 3. Inspect the Actions summary for uploaded/existing counts; there must be 112
    verified destination objects. A skipped object is only accepted when its
    SHA-256 matches the source.
 
 The workflow refuses pushes, pull requests, non-`main` branches,
-non-repository-owner dispatches and absent/incorrect confirmation.
+non-repository-owner dispatches. An upload cannot occur in `preview` mode.
 No `DEXIE_CLOUD_WRITE_KEY` or privileged Dexie Cloud role is involved.
 
 ## Rights and attribution
