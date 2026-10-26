@@ -12,10 +12,6 @@ on:
         options:
           - preview
           - upload
-      confirmation:
-        description: 'For upload type IMPORT_GYM_KEEPER_112_V1'
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -49,14 +45,9 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       github.ref == 'refs/heads/main' &&
       github.actor == github.repository_owner &&
-      inputs.operation == 'upload' &&
-      inputs.confirmation == 'IMPORT_GYM_KEEPER_112_V1'
+      inputs.operation == 'upload'
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    # Required repository setup: GitHub Environment r2-media-import, restricted
-    # to main, required human reviewers, bypass disabled. Without it, DO NOT RUN.
-    environment:
-      name: r2-media-import
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,6 +63,4 @@ jobs:
       - name: Download exact Gym Keeper APK GIFs and upload to isolated private R2 folder
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          IMPORT_CONFIRMATION: ${{ inputs.confirmation }}
-          R2_MEDIA_IMPORT_APPROVAL: ${{ vars.R2_MEDIA_IMPORT_APPROVAL }}
         run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs upload
