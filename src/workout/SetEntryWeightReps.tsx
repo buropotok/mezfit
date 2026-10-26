@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { List } from 'konsta/react';
+import { createPortal } from 'react-dom';
+import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { Button, Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { Divider, GlassSurface, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
@@ -143,8 +144,12 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
   ];
 
+  // Both overlays must be siblings of the app surface, never descendants of
+  // transformed SortableList rows or the animated sheet. Keep React context.
+  const portalHost = document.getElementById('root') ?? document.body;
   return (
-    <MezfitBottomSheet opened={props.isOpen} label={`Подход ${props.data.identity.setNumber}`} lazyMount>
+    <>
+    {createPortal(<MezfitBottomSheet opened={props.isOpen} label={`Подход ${props.data.identity.setNumber}`} lazyMount>
       <div className="set-entry-weight-reps">
         <header className="set-entry-weight-reps__header">
           <div>
@@ -183,9 +188,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
           {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
           {!isPlan && validPicker && !needsFactSelection && (draft.metrics.weightKg === null || draft.metrics.reps === null)
-            ? <Button variant="secondary" disabled={closing} onClick={() => change(old => ({
+            ? <KonstaButton tonal small disabled={closing} onClick={() => change(old => ({
               ...old, metrics: { ...old.metrics, weightKg: currentWeight, reps: currentReps },
-            }))}>Записать {metricsText(currentWeight, currentReps)} как факт</Button> : null}
+            }))}><Text variant="body">Записать {metricsText(currentWeight, currentReps)} как факт</Text></KonstaButton> : null}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
             {props.data.plan ? <Text variant="caption" tone="muted">План: {metricsText(props.data.plan.weightKg, props.data.plan.reps)}</Text> : null}
             {props.data.previous ? <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous.metrics.weightKg, props.data.previous.metrics.reps)}</Text> : null}
@@ -196,12 +201,13 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <Button key={type} variant="secondary" size="compact"
-                selected={(draft.setType ?? null) === type}
+              {SET_TYPES.map((type: SetType) => <KonstaButton key={type} small rounded
+                tonal={(draft.setType ?? null) !== type}
+                aria-pressed={(draft.setType ?? null) === type}
                 disabled={closing}
                 onClick={() => change(old => ({ ...old, setType: old.setType === type ? null : type }))}>
-                {SET_TYPE_LABELS[type]}
-              </Button>)}
+                <Text variant="body">{SET_TYPE_LABELS[type]}</Text>
+              </KonstaButton>)}
             </div>
           </div>
           {!isPlan ? <>
@@ -212,8 +218,10 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
                 {Array.from({ length: 10 }, (_, index) => index + 1).map(rpe =>
-                  <Button key={rpe} variant="secondary" size="compact" selected={draft.rpe === rpe}
-                    disabled={closing} onClick={() => change(old => ({ ...old, rpe: old.rpe === rpe ? null : rpe }))}>{rpe}</Button>)}
+                  <KonstaButton key={rpe} small rounded tonal={draft.rpe !== rpe} aria-pressed={draft.rpe === rpe}
+                    disabled={closing} onClick={() => change(old => ({ ...old, rpe: old.rpe === rpe ? null : rpe }))}>
+                    <Text variant="body">{rpe}</Text>
+                  </KonstaButton>)}
               </div>
             </div>
             <div className="set-entry-weight-reps__section">
@@ -223,17 +231,23 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
                 onChange={event => change(old => ({ ...old, comment: event.currentTarget.value || null }))} /></List>
             </div>
           </> : null}
-          {props.onOpenChat ? <Button className="set-entry-weight-reps__chat" onClick={props.onOpenChat}>Открыть чат</Button> : null}
+          {props.onOpenChat ? <KonstaButton className="set-entry-weight-reps__chat" onClick={props.onOpenChat}>
+            <Text variant="body">Открыть чат</Text>
+          </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
             {saving ? 'Сохраняем изменения…' : error ? 'Не удалось сохранить · повторите' : 'Изменения сохраняются автоматически'}
           </Text>
-          {error ? <Button variant="secondary" onClick={() => { void persist().catch(() => undefined); }}>Повторить сохранение</Button> : null}
+          {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
+            <Text variant="body">Повторить сохранение</Text>
+          </KonstaButton> : null}
         </div>
       </div>
-      <WeightRepsPicker opened={pickerOpened && validPicker} value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
-        target={target.current} onClose={() => setPickerOpened(false)}
-        onChange={value => change(old => ({ ...old, metrics: { ...old.metrics, reps: value.reps, weightKg: value.weightKg } }))} />
-    </MezfitBottomSheet>
+    </MezfitBottomSheet>, portalHost)}
+    {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker}
+      value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
+      target={target.current} onClose={() => setPickerOpened(false)}
+      onChange={value => change(old => ({ ...old, metrics: { ...old.metrics, reps: value.reps, weightKg: value.weightKg } }))} />, portalHost)}
+    </>
   );
 }
