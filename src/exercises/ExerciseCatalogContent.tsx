@@ -49,7 +49,7 @@ const CLIENT_CATALOG_TABS = [
 const EMPTY_FAVOURITES: ReadonlySet<string> = new Set();
 
 function TablerBarbell() {
-  return <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h2m2 0h12m2 0h2M4 9v6m2-9v12m12-12v12m2-9v6" /></svg>;
+  return <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h2m2 0h12m2 0h2M4 9v6m2-9v12m12-12v12m2-9v6" /></svg>;
 }
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
@@ -325,7 +325,7 @@ export function ExerciseCatalogContent({
               subtitle={`${tabExercises.filter((row) => row.category === id).length} упражнений`}
               leading={<span className="mezfit-public-exercises__category-fallback">
                 {publicExerciseCategoryArtwork(id)
-                  ? <img src={publicExerciseCategoryArtwork(id)!} alt="" width={72} height={72} decoding="async" />
+                  ? <img src={publicExerciseCategoryArtwork(id)!} alt="" width={72} height={72} decoding="async" loading="eager" />
                   : <TablerBarbell /> }
               </span>}
               onClick={() => { setCategory(id); setVisibleLimit(PAGE_SIZE); }}
