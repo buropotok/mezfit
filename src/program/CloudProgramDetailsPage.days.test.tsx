@@ -296,9 +296,10 @@ describe('days inside program phases', () => {
       onMove={() => {}} onDuplicate={() => {}} onDelete={() => {}} />);
     // Preserve lazy rendering while the exercise is collapsed.
     expect(screen.queryByText('Тип подхода: Дропсет')).toBeNull();
-    expect(screen.queryByText('Подход 1. План: 123 кг × 15')).toBeNull();
+    expect(screen.queryByText('Подход 1')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
-    expect(screen.getByText('Подход 1. План: 123 кг × 15')).toBeTruthy();
+    expect(screen.getByText('Подход 1')).toBeTruthy();
+    expect(screen.queryByText(/123 кг|15 повт\.|ввести план/)).toBeNull();
     expect(screen.getByText('Тип подхода: Дропсет')).toBeTruthy();
     expect(screen.getByText('Контроль техники')).toBeTruthy();
     // A program PLAN must not expose an execution result or an editor in read-only mode.
