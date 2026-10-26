@@ -42,7 +42,7 @@ export function appendOccurrenceSet(
   return { ...plan, exercises: plan.exercises.map(ex => {
     if (ex.id !== exerciseId) return ex;
     if (ex.sets.length >= 100) throw new Error('OCCURRENCE_SET_LIMIT');
-    const previous = ex.sets.at(-1);
+    const previous = ex.sets[ex.sets.length - 1];
     const item: OccurrencePlanSet = {
       id: crypto.randomUUID(), sourceProgramSetId: null, position: ex.sets.length,
       setType: previous?.setType ?? null,
