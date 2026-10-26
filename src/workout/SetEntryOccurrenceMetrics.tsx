@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button as KonstaButton } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { loadBrowserGlassSettings } from '../glassSettings';
-import { Badge, Divider, DistancePicker, DurationPicker, GlassSurface, IconButton, MezfitBottomSheet,
+import { BadgeChoice, Divider, DistancePicker, DurationPicker, GlassSurface, IconButton, MezfitBottomSheet,
   MezfitDialog, MezfitDialogButton, NumPicker, Text, WeightPicker } from '../ui';
 import { createSetEntryDraft, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import './set-entry-weight-reps.css';
@@ -166,18 +166,11 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <Badge key={type} color="gray" textVariant="caption"
-                selected={(draft.setType ?? null) === type} role="button" tabIndex={closing ? -1 : 0}
-                aria-pressed={(draft.setType ?? null) === type} aria-disabled={closing}
-                onClick={() => { if (!closing) change(old => ({
+              {SET_TYPES.map((type: SetType) => <BadgeChoice key={type} color="gray"
+                selected={(draft.setType ?? null) === type} disabled={closing}
+                onClick={() => change(old => ({
                   ...old, setType: old.setType === type ? null : type,
-                })); }}
-                onKeyDown={event => {
-                  if (!closing && (event.key === 'Enter' || event.key === ' ')) {
-                    event.preventDefault();
-                    change(old => ({ ...old, setType: old.setType === type ? null : type }));
-                  }
-                }}>{SET_TYPE_LABELS[type]}</Badge>)}
+                }))}>{SET_TYPE_LABELS[type]}</BadgeChoice>)}
             </div>
           </div>
           {props.onOpenChat ? <KonstaButton onClick={props.onOpenChat}>Открыть чат</KonstaButton> : null}
