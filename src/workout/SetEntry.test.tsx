@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { KonstaProvider } from 'konsta/react';
 import { SetEntry } from './SetEntry';
 import { createSetEntryDraft, type SetEntryData } from './setEntryTypes';
 
@@ -78,7 +79,9 @@ describe('weight and repetitions SetEntry', () => {
   it('auto-saves the chosen set type and RPE through the parent FACT callback on close', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
-    render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
     const technique = screen.getByRole('button', { name: 'Кластер' });
     const exertion = screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' });
     expect(technique.getAttribute('aria-pressed')).toBe('false');
@@ -190,9 +193,11 @@ describe('weight and repetitions SetEntry', () => {
   it('uses the existing DurationPicker and Mezfit RPE slider for time-based FACT', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
-    render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType: 'time',
-      plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
-    }} onClose={onClose} onSave={onSave} />);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{ ...baseData, trackingType: 'time',
+        plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
+      }} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
     expect(screen.getByRole('button', { name: 'Изменить продолжительность' })).toBeTruthy();
     expect(screen.getByText('План: 00:02:05')).toBeTruthy();
     expect(screen.getByText('RPE: 0')).toBeTruthy();
