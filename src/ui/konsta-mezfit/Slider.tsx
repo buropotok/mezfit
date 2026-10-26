@@ -17,6 +17,8 @@ export type MezfitSliderProps = {
   size: MezfitSliderSize;
   start: number;
   end: number;
+  /** Optional controlled value; omit for legacy uncontrolled slider behavior. */
+  value?: number;
   ariaLabel?: string;
   onValueChange?: (value: number) => void;
 };
@@ -64,6 +66,7 @@ export function MezfitSlider({
   size,
   start,
   end,
+  value: controlledValue,
   ariaLabel = 'Slider',
   onValueChange,
 }: MezfitSliderProps) {
@@ -71,7 +74,8 @@ export function MezfitSlider({
   const min = Math.min(start, end);
   const max = Math.max(start, end);
   const isStatic = min === max;
-  const [value, setValue] = useState(() => clamp(start, min, max));
+  const [internalValue, setValue] = useState(() => clamp(start, min, max));
+  const value = controlledValue === undefined ? internalValue : clamp(controlledValue, min, max);
   const [isActive, setIsActive] = useState(false);
   const [measuredWidth, setMeasuredWidth] = useState(BASE_TRACK_WIDTH * scale);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -129,7 +133,8 @@ export function MezfitSlider({
 
   const handleInput = (event: FormEvent<HTMLInputElement>) => {
     const nextValue = clamp(Number(event.currentTarget.value), min, max);
-    setValue(nextValue);
+    if (nextValue === value) return;
+    if (controlledValue === undefined) setValue(nextValue);
     onValueChange?.(nextValue);
   };
 
