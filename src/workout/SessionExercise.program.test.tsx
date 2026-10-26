@@ -148,7 +148,6 @@ describe('calendar PLAN versus reusable template', () => {
     expect(screen.queryByText(/^План:/)).toBeNull();
   });
 
-
   it('shows numeric assignments and opens a read-only calendar set without authoring controls', () => {
     const open = vi.fn();
     const view = render(<WorkoutPlanCard mode="planning" showPlanMetrics readOnly
