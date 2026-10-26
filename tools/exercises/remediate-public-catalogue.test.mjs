@@ -83,7 +83,7 @@ function fixture() {
 function backupDigest(current) {
   const payload = { data: { 'rlm-public': Object.fromEntries(
     Object.entries(current).map(([name, rows]) =>
-      [name, Object.fromEntries(rows.map(row => [row.id, row]))]),
+      [name, Object.fromEntries(rows.slice().sort((a, b) => a.id.localeCompare(b.id)).map(row => [row.id, row]))]),
   ) } };
   return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 }
