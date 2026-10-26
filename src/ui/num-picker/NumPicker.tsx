@@ -3,7 +3,7 @@ import {
   type TwoColumnPickerColumn,
 } from '../two-column-picker/TwoColumnPicker';
 
-const HUNDREDS_VALUES = [0, 1, 2, 3] as const;
+const HUNDREDS_VALUES = Array.from({ length: 10 }, (_, index) => index);
 const LOWER_VALUES = Array.from({ length: 100 }, (_, index) => index);
 
 function formatHundreds(value: number) {
@@ -42,8 +42,8 @@ export interface NumPickerProps {
 }
 
 function assertNumPickerValue(value: number) {
-  if (!Number.isInteger(value) || value < 0 || value > 399) {
-    throw new Error('NumPicker value must be an integer from 0 to 399');
+  if (!Number.isInteger(value) || value < 0 || value > 999) {
+    throw new Error('NumPicker value must be an integer from 0 to 999');
   }
 }
 
