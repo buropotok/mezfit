@@ -76,7 +76,7 @@ function parseFact(value: unknown): WorkoutSetFactInput | null {
 
   if (raw.setLabel !== null && raw.setLabel !== undefined && (typeof raw.setLabel !== 'string' || !setLabels.has(raw.setLabel as WorkoutSetLabel))) return null;
   if (raw.setType !== undefined && raw.setType !== null && !isSetType(raw.setType)) return null;
-  if (raw.rpe !== null && (typeof raw.rpe !== 'number' || !Number.isInteger(raw.rpe) || raw.rpe < 1 || raw.rpe > 10)) return null;
+  if (raw.rpe !== null && (typeof raw.rpe !== 'number' || !Number.isInteger(raw.rpe) || raw.rpe < 0 || raw.rpe > 10)) return null;
   if (raw.comment !== null && typeof raw.comment !== 'string') return null;
   if (!Array.isArray(raw.bands)) return null;
 
