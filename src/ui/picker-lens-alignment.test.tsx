@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DistancePicker } from './distance-picker/DistancePicker';
 import { TimePicker } from './time-picker/TimePicker';
 import { centeredLensScale } from './time-picker/centeredLensScale';
+import { buildTimeLensVectorFields } from './time-picker/timePickerLens';
 import { DurationPicker } from './duration-picker/DurationPicker';
 import { WeightRepsPicker } from './weight-reps-picker/WeightRepsPicker';
 
@@ -26,6 +27,27 @@ afterEach(() => {
 });
 
 describe('picker lens numeric alignment', () => {
+  it.each([
+    [[62, 226]],
+    [[48, 144, 240]],
+    [[80, 176, 240]],
+  ])('zooms each Android SVG column without moving its numeric center (%j)', (centers) => {
+    const { zoom } = buildTimeLensVectorFields({ includeSpecular: false, zoomCenters: centers });
+    const redAt = (x: number, y = 36) => {
+      const px = Math.floor(x * zoom.width / 288);
+      const py = Math.floor(y * zoom.height / 72);
+      return zoom.pixels[(py * zoom.width + px) * 4];
+    };
+    for (const x of centers) {
+      expect(Math.abs(redAt(x) - 128)).toBeLessThanOrEqual(1);
+      expect(redAt(x - 8)).toBeGreaterThan(128);
+      expect(redAt(x + 8)).toBeLessThan(128);
+    }
+    for (let index = 1; index < centers.length; index += 1) {
+      const midpoint = (centers[index - 1] + centers[index]) / 2;
+      expect(Math.abs(redAt(midpoint) - 128)).toBeLessThanOrEqual(1);
+    }
+  });
   it.each([
     [48, 36, 1.55],
     [62, 36, 1.55],
