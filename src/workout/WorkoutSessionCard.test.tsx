@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
@@ -142,12 +142,12 @@ describe('WorkoutSessionCard capability ownership', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     act(() => navigation.onBack?.());
-    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    const discardDialog = screen.getByRole('alertdialog', { name: 'Изменения не сохранятся!' });
     expect(onSaveSet).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    fireEvent.click(within(discardDialog).getByRole('button', { name: 'Отмена' }));
     expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
     act(() => navigation.onBack?.());
-    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    fireEvent.click(within(discardDialog).getByRole('button', { name: 'Продолжить' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
     expect(onSaveSet).not.toHaveBeenCalled();
   });
