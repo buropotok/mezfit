@@ -6,7 +6,7 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import { BadgeChoice, Divider, DistancePicker, DurationPicker, GlassSurface, IconButton, LiquidPopover,
   MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
-import { createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
+import { createSetEntryDraft, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import './set-entry-weight-reps.css';
 
 type Props = Extract<SetEntryProps, { mode: 'occurrence-plan' }> |
@@ -57,10 +57,10 @@ function display(key: EditableMetric, value: number | null) {
 /** An occurrence-scoped editor for non-weight/reps PLAN metrics. Never writes program template rows. */
 export function SetEntryOccurrenceMetrics(props: Props) {
   const isPlan = props.mode === 'occurrence-plan';
-  const [draft, setDraft] = useState(() => {
-    const initial = createSetEntryDraft(props.data);
-    return !isPlan && !props.data.fact ? { ...initial, metrics: emptySetMetrics() } : initial;
-  });
+  const [draft, setDraft] = useState(() => createSetEntryDraft(props.data));
+  const initialDraftRef = useRef(draft);
+  const factSavingRef = useRef(false);
+  const [discardConfirm, setDiscardConfirm] = useState(false);
   const draftRef = useRef(draft);
   const changed = useRef(0);
   const saved = useRef(0);
@@ -113,7 +113,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
 
   const persist = (): Promise<void> => {
     const at = changed.current;
-    if (at <= Math.max(saved.current, queued.current)) return queue.current;
+    if (!isPlan || at <= Math.max(saved.current, queued.current)) return queue.current;
     queued.current = at;
     const snapshot = { ...draftRef.current, metrics: { ...draftRef.current.metrics },
       bands: [...draftRef.current.bands] };
@@ -123,10 +123,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
       setSaving(true);
       if (props.mode === 'occurrence-plan') {
         await props.onPlanSave({ ...metrics, setType });
-      } else {
-        await props.onSave({
-          ...snapshot, metrics, setType,
-        });
       }
       saved.current = Math.max(saved.current, at);
       setError('');
@@ -139,12 +135,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     return queue.current;
   };
   useEffect(() => {
-    if (revision === 0) return;
+    if (!isPlan || revision === 0) return;
     const timer = window.setTimeout(() => { void persist().catch(() => undefined); }, 300);
     return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revision]);
-  const close = async () => {
+  const closePlan = async () => {
     if (closing) return;
     setClosing(true);
     try {
@@ -154,7 +150,38 @@ export function SetEntryOccurrenceMetrics(props: Props) {
       props.onClose();
     } catch { setClosing(false); }
   };
-  requestClose.current = () => { void close(); };
+  const saveFact = async () => {
+    if (props.mode === 'occurrence-plan' || factSavingRef.current) return;
+    factSavingRef.current = true;
+    setSaving(true);
+    setError('');
+    const snapshot = draftRef.current;
+    try {
+      await props.onSave({
+        ...snapshot, metrics: { ...snapshot.metrics }, bands: [...snapshot.bands],
+      });
+      setPicker(null);
+      setBandOpen(false);
+      props.onClose();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить факт');
+    } finally {
+      factSavingRef.current = false;
+      setSaving(false);
+    }
+  };
+  const discardFact = () => {
+    if (saving || factSavingRef.current) return;
+    if (JSON.stringify(draftRef.current) !== JSON.stringify(initialDraftRef.current)) {
+      setDiscardConfirm(true);
+    } else {
+      props.onClose();
+    }
+  };
+  requestClose.current = () => {
+    if (isPlan) void closePlan();
+    else discardFact();
+  };
   useEffect(() => {
     const register = props.onNavigationContextChange;
     if (!props.isOpen || !register) return;
@@ -177,8 +204,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? 'Планирование подхода' : 'Фиксация результата'}</Text>
           </div>
-          <IconButton icon="x" label="Закрыть подход" disabled={closing}
-            onClick={() => { void close(); }} />
+          {!isPlan ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
+            disabled={saving || closing} onClick={() => { void saveFact(); }}>
+            <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
+          </KonstaButton> : null}
+          <IconButton icon="x" label="Закрыть подход" disabled={closing || saving}
+            onClick={() => requestClose.current()} />
         </header>
         <div className="set-entry-weight-reps__body">
           <div className="set-entry-weight-reps__exercise">
@@ -224,14 +255,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               Пред.: {keys.map(key => display(key, props.data.previous?.metrics[key] ?? null)).join(' · ')}
             </Text> : null}
           </div> : null}
-          {!isPlan && props.data.plan && keys.some(key => draft.metrics[key] === null)
-            && keys.some(key => props.data.plan?.[key] !== null)
-            && keys.every(key => props.data.plan?.[key] === null || valid(key, props.data.plan?.[key] ?? 0))
-            ? <KonstaButton tonal small disabled={closing} onClick={() => change(old => ({
-              ...old, metrics: { ...old.metrics,
-                ...Object.fromEntries(keys.filter(key => old.metrics[key] === null)
-                  .map(key => [key, props.data.plan?.[key] ?? null])) },
-            }))}><Text variant="body">Записать значения плана как факт</Text></KonstaButton> : null}
           <div className="set-entry-weight-reps__section">
             <div className="set-entry-weight-reps__section-heading">
               <Text variant="footnote">Тип подхода</Text>
@@ -277,10 +300,10 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="body">Удалить подход</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-          <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
+          {isPlan ? <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
             {saving ? 'Сохраняем изменения…' : 'Изменения сохраняются автоматически'}
-          </Text>
-          {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
+          </Text> : null}
+          {isPlan && error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
             <Text variant="body">Повторить сохранение</Text>
           </KonstaButton> : null}
         </div>
@@ -293,6 +316,18 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход'));
         }}>Удалить</MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
+    </MezfitDialog>, host) : null}
+    {!isPlan ? createPortal(<MezfitDialog opened={discardConfirm} title={<Text variant="headline">Изменения не сохранятся!</Text>}
+      buttons={<>
+        <MezfitDialogButton onClick={() => setDiscardConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
+        <MezfitDialogButton strong onClick={() => {
+          setDiscardConfirm(false);
+          setPicker(null);
+          setBandOpen(false);
+          props.onClose();
+        }}><Text variant="body">Продолжить</Text></MezfitDialogButton>
+      </>}>
+      <Text variant="body">Выйти без сохранения введённых данных?</Text>
     </MezfitDialog>, host) : null}
     {keys.map(key => createPortal(<>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
