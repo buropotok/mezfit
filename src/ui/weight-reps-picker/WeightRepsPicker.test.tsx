@@ -34,6 +34,21 @@ function renderPicker({
     onChange,
     onClose,
     ...renderResult,
+    setValue(nextValue: { reps: number; weightKg: number }, opened = true) {
+      renderResult.rerender(
+        <KonstaProvider theme="ios" dark>
+          <div className="k-ios dark">
+            <WeightRepsPicker
+              opened={opened}
+              target={target}
+              value={nextValue}
+              onChange={onChange}
+              onClose={onClose}
+            />
+          </div>
+        </KonstaProvider>,
+      );
+    },
   };
 }
 
@@ -139,6 +154,20 @@ describe('WeightRepsPicker', () => {
     const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
     fireEvent.click(dialog.previousElementSibling as Element);
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('reopens with an updated controlled value without writing it back', () => {
+    const onChange = vi.fn();
+    const picker = renderPicker({ value: { reps: 8, weightKg: 70.75 }, onChange });
+    picker.setValue({ reps: 100, weightKg: 399.75 }, false);
+    picker.setValue({ reps: 100, weightKg: 399.75 }, true);
+    expect(within(screen.getByRole('listbox', { name: 'Повторения' }))
+      .getByRole('option', { name: '100' }).getAttribute('aria-selected')).toBe('true');
+    expect(within(screen.getByRole('listbox', { name: 'Килограммы' }))
+      .getByRole('option', { name: '399' }).getAttribute('aria-selected')).toBe('true');
+    expect(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
+      .getByRole('option', { name: '0,75' }).getAttribute('aria-selected')).toBe('true');
     expect(onChange).not.toHaveBeenCalled();
   });
 
