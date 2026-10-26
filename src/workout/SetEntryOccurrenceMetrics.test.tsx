@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { KonstaProvider } from 'konsta/react';
 import { SetEntry } from './SetEntry';
 import type { SetEntryData } from './setEntryTypes';
 
@@ -54,9 +55,11 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
   it('saves only the explicit FACT and RPE chosen through the Mezfit slider', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
-    render(<SetEntry mode="workout" isOpen
-      data={{ ...base, trackingType: 'time_distance', fact: null }}
-      onClose={onClose} onSave={onSave} />);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen
+        data={{ ...base, trackingType: 'time_distance', fact: null }}
+        onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
     expect(screen.getByText('RPE: 0')).toBeTruthy();
     expect(screen.getByText('План: 00:02:05 · 2 км 500 м')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
