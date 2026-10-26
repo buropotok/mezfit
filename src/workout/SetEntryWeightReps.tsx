@@ -182,8 +182,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             onClick={() => { if (validPicker && !closing) setPickerOpened(true); }}
             aria-disabled={!validPicker || closing}
             aria-label="Изменить вес и повторения">
-            <Text variant="headline">Повторения × Вес</Text>
-            <Text variant="headline">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
+            <Text variant="body">Повторения × Вес</Text>
+            <Text variant="body">{metricsText(draft.metrics.weightKg, draft.metrics.reps)}</Text>
           </GlassSurface>
           {!validPicker ? <Text variant="footnote" role="alert">{isPlan
             ? 'Плановое значение не поддерживается текущим пикером'
