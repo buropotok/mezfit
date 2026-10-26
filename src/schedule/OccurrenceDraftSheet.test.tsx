@@ -153,9 +153,9 @@ describe('adding sets to a scheduled PLAN', () => {
     const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
     vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
     vi.spyOn(drafts, 'get').mockResolvedValue(scheduled);
-    let updated: LocalWorkoutOccurrenceDraft | null = null;
+    const persisted: { current: LocalWorkoutOccurrenceDraft | null } = { current: null };
     const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockImplementation(async (_id, change) => {
-      updated = change(structuredClone(scheduled));
+      persisted.current = change(structuredClone(scheduled));
     });
 
     render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts}
@@ -163,7 +163,7 @@ describe('adding sets to a scheduled PLAN', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
     await waitFor(() => expect(enqueue).toHaveBeenCalledOnce());
 
-    const [source, copy] = updated!.plan.exercises[0].sets;
+    const [source, copy] = persisted.current!.plan.exercises[0].sets;
     expect(copy).toMatchObject({
       sourceProgramSetId: null, position: 1,
       plannedWeightKg: 57, plannedReps: 19,
