@@ -49,9 +49,10 @@ export function snapshotProgramDay(outline: CloudProgramDayOutline): WorkoutOccu
           id: freshId(), sourceProgramSetId: set.id, position: setPosition,
           setType: set.setType ?? null, setLabel: set.setLabel ?? null, comment: set.comment ?? null,
           materialLinks: [...(set.materialLinks ?? [])], chatLinks: [...(set.chatLinks ?? [])],
-          plannedReps: set.plannedReps, plannedWeightKg: set.plannedWeightKg,
-          plannedDurationSeconds: set.plannedDurationSeconds,
-          plannedDistanceMeters: set.plannedDistanceMeters,
+          // A reusable program gives structure; numeric PLAN starts empty
+          // and belongs exclusively to this scheduled workout occurrence.
+          plannedReps: null, plannedWeightKg: null,
+          plannedDurationSeconds: null, plannedDistanceMeters: null,
         })),
       })),
   };

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   completeWorkoutSession,
@@ -144,7 +144,10 @@ describe('WorkoutSessionScreen mutation reconciliation', () => {
     fireEvent.click(screen.getByText('Exercise 1').closest('button')!);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Кластер' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    // FACT is committed only by the set editor's Save, not by the two
+    // unrelated Save actions visible in the exercise/workout layout.
+    const factSheet = screen.getByRole('dialog', { name: 'Подход 1' });
+    fireEvent.click(within(factSheet).getByRole('button', { name: 'Сохранить' }));
     expect(saveSetMock).not.toHaveBeenCalled();
 
     await act(async () => resolveReorder({ session: reorderedSession }));

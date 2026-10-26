@@ -200,10 +200,10 @@
 }
 
 .set-entry__rpe-row {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  justify-items: center;
-  gap: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
 }
 
 .set-entry__comment {

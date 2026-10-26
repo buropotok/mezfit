@@ -19,6 +19,9 @@
 .ui-badge--cyan { color: #67d9e8; border-color: color-mix(in srgb, #67d9e8 26%, transparent); background: color-mix(in srgb, #176a76 30%, transparent); }
 .ui-badge--gray { color: var(--ui-color-surface-muted); border-color: color-mix(in srgb, var(--ui-color-surface-muted) 24%, transparent); background: color-mix(in srgb, var(--ui-color-surface-muted) 12%, transparent); }
 
+
+.ui-badge--selected { border-color: #315e85; background: color-mix(in srgb, #315e85 13%, transparent); color: var(--ui-color-text, #fff); }
+
 @media (max-width: 430px) {
   .ui-badge { padding-inline: 8px; }
 }

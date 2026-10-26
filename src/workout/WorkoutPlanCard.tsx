@@ -8,6 +8,8 @@ import { SpotlightTarget } from '../ui/SpotlightHint';
 
 export interface WorkoutPlanCardProps {
   mode: 'planning';
+  /** Numeric assignments belong only to a scheduled occurrence. */
+  showPlanMetrics?: boolean;
   programName?: string;
   hideProgramName?: boolean;
   canScheduleCoached?: boolean;
@@ -55,7 +57,7 @@ export function WorkoutPlanCard({
   onReorderExercises, portalDragOverlay = false, preserveDragHeight = false,
   creatorName, creatorAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
-  onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt,
+  onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const authoringVisible = !readOnly;
@@ -86,6 +88,7 @@ export function WorkoutPlanCard({
   const items = exercises.map((item) => ({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
+      showPlanMetrics={showPlanMetrics}
       collapsed={!expandedExercises.has(item.exercise.id)}
       onCollapsedChange={(collapsed) => setExpandedExercises((current) => {
         const next = new Set(current);
@@ -94,7 +97,10 @@ export function WorkoutPlanCard({
         return next;
       })}
       busy={busy} onAddSet={authoringVisible && (onMutationAttempt || onAddSet) ? () => mutate(() => onAddSet?.(item.exercise.id)) : undefined}
-      onOpenSet={authoringVisible && (onMutationAttempt || onOpenSet) ? setId => mutate(() => onOpenSet?.(item.exercise.id, setId)) : undefined}
+      onOpenSet={onOpenSet || (authoringVisible && onMutationAttempt) ? setId => {
+        if (onMutationAttempt && authoringVisible) onMutationAttempt();
+        else onOpenSet?.(item.exercise.id, setId);
+      } : undefined}
       onDeleteSet={authoringVisible && (onMutationAttempt || onDeleteSet) ? setId => mutate(() => onDeleteSet?.(item.exercise.id, setId)) : undefined}
       onDelete={authoringVisible && (onMutationAttempt || onDeleteExercise) ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,

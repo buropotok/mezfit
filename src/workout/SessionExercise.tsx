@@ -236,7 +236,8 @@ function SessionExerciseLayout({
   );
 }
 
-function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet }: {
+function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, showPlanMetrics = false }: {
+  showPlanMetrics?: boolean;
   sets: ProgramSessionExerciseProps['data']['sets'];
   onOpenSet?: ProgramSessionExerciseProps['onOpenSet'];
   onDeleteSet?: ProgramSessionExerciseProps['onDeleteSet'];
@@ -249,8 +250,12 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet }: {
           trailing={onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
             onClick={(event) => { event.stopPropagation(); onDeleteSet?.(set.id); }} /> : undefined}
           leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
-          title={<Text variant="body">Подход {index + 1}. План: {formatSessionSetMetrics({ weightKg: set.plannedWeightKg, reps: set.plannedReps, durationSeconds: null, distanceMeters: null }, 'weight_reps') ?? 'ввести план'}</Text>}
+          title={<Text variant="body">Подход {index + 1}</Text>}
           subtitle={<span className="session-exercise__set-recommendations">
+            {showPlanMetrics ? <Text variant="caption" tone="muted">План: {joinMetrics([
+              formatWeight(set.plannedWeightKg), formatReps(set.plannedReps),
+              formatDuration(set.plannedDurationSeconds), formatDistance(set.plannedDistanceMeters),
+            ]) ?? 'Не заполнено'}</Text> : null}
             {set.setType ? <Text variant="footnote">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : null}
             {set.comment ? <Text variant="footnote" tone="muted">{set.comment}</Text> : null}
             {set.materialLinks?.length ? <Text variant="caption" tone="muted">Материалы: {set.materialLinks.length}</Text> : null}
@@ -277,7 +282,8 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
         onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
     >
-      <ProgramExerciseSets sets={sets} onOpenSet={props.onOpenSet} onDeleteSet={props.onDeleteSet} />
+      <ProgramExerciseSets sets={sets} onOpenSet={props.onOpenSet} onDeleteSet={props.onDeleteSet}
+        showPlanMetrics={props.showPlanMetrics} />
     </SessionExerciseLayout>
   );
 }

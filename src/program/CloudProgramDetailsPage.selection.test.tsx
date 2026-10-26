@@ -108,8 +108,12 @@ describe('program source selection', () => {
       fireEvent.click(within(card).getByRole('button', { name }));
       notice();
     }
-    fireEvent.click(within(card).getByText('Подход 1. План: ввести план'));
+    // The program is a structural template; tapping a set must not offer numeric editing.
+    fireEvent.click(within(card).getByText('Подход 1'));
+    // Selection mode still reports attempts to mutate the source template.
+    // The deleted numeric editor itself must stay absent.
     notice();
+    expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull();
     const exerciseMenu = within(card).getByRole('menu', { name: 'Меню упражнения' });
     expect(within(exerciseMenu).getByRole('button', { name: 'Информация' })).toBeTruthy();
     fireEvent.click(within(exerciseMenu).getByRole('button', { name: 'Удалить' }));
@@ -153,7 +157,7 @@ describe('program source selection', () => {
     expect(screen.queryByRole('menu', { name: 'Действия с фазой Фаза' })).toBeNull();
     expect(within(card).getByRole('button', { name: 'Запланировать' })).toBeTruthy();
     expect(within(card).getByRole('menu', { name: 'Меню упражнения' }).textContent).toContain('Информация');
-    fireEvent.click(within(card).getByText('Подход 1. План: ввести план'));
+    fireEvent.click(within(card).getByText('Подход 1'));
     expect(screen.queryByRole('dialog', { name: 'Планирование тренировки' })).toBeNull();
     for (const [key, method] of Object.entries(repository))
       if (key !== 'observeDetails' && key !== 'observeAthleteDetails' && typeof method === 'function')

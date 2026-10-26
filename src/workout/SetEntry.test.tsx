@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { KonstaProvider } from 'konsta/react';
 import { SetEntry } from './SetEntry';
 import { createSetEntryDraft, type SetEntryData } from './setEntryTypes';
 
@@ -65,7 +66,8 @@ describe('weight and repetitions SetEntry', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
       fireEvent.click(within(picker).getByRole('listbox', { name: 'Повторения' })
         .querySelector<HTMLButtonElement>('button[aria-label="9"]')!);
-      fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+      expect(onSave).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
       await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
         metrics: { weightKg: 80, reps: 9, durationSeconds: null, distanceMeters: null },
       })));
@@ -75,139 +77,238 @@ describe('weight and repetitions SetEntry', () => {
     }
   });
 
-  it('auto-saves the chosen set type and RPE through the parent FACT callback on close', async () => {
+  it('persists chosen type and RPE only after explicitly pressing Save', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
-    render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
     const technique = screen.getByRole('button', { name: 'Кластер' });
-    const exertion = screen.getByRole('button', { name: '8' });
+    const exertion = screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' });
     expect(technique.getAttribute('aria-pressed')).toBe('false');
-    expect(exertion.getAttribute('aria-pressed')).toBe('false');
+    expect(exertion.value).toBe('0');
     fireEvent.click(technique);
-    fireEvent.click(exertion);
+    fireEvent.input(exertion, { target: { value: '8' } });
     expect(technique.getAttribute('aria-pressed')).toBe('true');
-    expect(exertion.getAttribute('aria-pressed')).toBe('true');
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(screen.getByText('RPE: 8')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    const save = screen.getByRole('button', { name: 'Сохранить' });
+    expect(save.querySelector('.ui-text--body')).not.toBeNull();
+    fireEvent.click(save);
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
       setType: 'cluster', setLabel: null, rpe: 8,
-      metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
+      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
     }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('clears an existing optional weight/reps RPE when slider returns to zero', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{
+        ...baseData, fact: {
+          metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+          setLabel: null, setType: null, rpe: 8, comment: null, bands: [],
+        },
+      }} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    expect(screen.getByText('RPE: 8')).toBeTruthy();
+    fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '0' } });
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      rpe: null, setLabel: null,
+      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+    })));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
   it('saves cloud PLAN without showing FACT-only controls or PREVIOUS', async () => {
     const onPlanSave = vi.fn(async () => undefined);
-    render(<SetEntry mode="program-plan" isOpen data={{ ...baseData, setType: null }}
+    render(<SetEntry mode="occurrence-plan" isOpen data={{ ...baseData, setType: null }}
       onClose={vi.fn()} onPlanSave={onPlanSave} />);
     expect(screen.queryByRole('group', { name: 'RPE' })).toBeNull();
     expect(screen.queryByText(/Пред\.:/)).toBeNull();
     expect(screen.queryByText(/^План:/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({ weightKg: 80, reps: 10, setType: 'dropset' }));
   });
 
-  it('accepts a supported new FACT without rounding an unsupported PLAN', async () => {
-    const onSave = vi.fn(async () => undefined);
-    const onClose = vi.fn();
-    render(<SetEntry mode="workout" isOpen data={{ ...baseData,
-      plan: { ...baseData.plan!, weightKg: 80.75 },
-    }} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
-    expect(screen.getByText('Не заполнено')).toBeTruthy();
-    expect(screen.getByText(/Значение PLAN недоступно в пикере/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
-    expect(onSave).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
-    const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
-    fireEvent.click(within(picker).getByRole('listbox', { name: 'Килограммы' })
-      .querySelector<HTMLButtonElement>('button[aria-label="80"]')!);
-    // Selecting a valid FACT does not rewrite the immutable PLAN comparison.
-    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
+  it('supports 80,75 kg in a scheduled PLAN without rounding', async () => {
+    const onPlanSave = vi.fn(async () => undefined);
+    render(<SetEntry mode="occurrence-plan" isOpen data={{
+      ...baseData, plan: { ...baseData.plan!, weightKg: 80.75 },
+    }} onClose={vi.fn()} onPlanSave={onPlanSave} />);
+    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
+    const trigger = screen.getByRole('button', { name: 'Изменить вес и повторения' });
+    expect(trigger.getAttribute('aria-disabled')).toBe('false');
+    fireEvent.click(trigger);
+    expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
-      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
-    })));
-    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onPlanSave).not.toHaveBeenCalled();
   });
 
-  it('preserves unsupported existing FACT and disables editing without converting its weight', async () => {
+  it('opens existing 80,75 kg FACT and retains its RPE unchanged', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, fact: {
       metrics: { weightKg: 80.75, reps: 10, durationSeconds: null, distanceMeters: null },
-      setLabel: null, rpe: null, comment: null, bands: [],
+      setLabel: null, rpe: 7, comment: null, bands: [],
     } }} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('Существующее значение FACT не поддерживается текущим пикером')).toBeTruthy();
-    const metricButton = screen.getByRole('button', { name: 'Изменить вес и повторения' });
-    expect(metricButton.getAttribute('aria-disabled')).toBe('true');
     expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
-
-    // UI Kit retains its closed popover in the DOM for animation. Its DOM
-    // presence is not proof that the picker opened.
-    fireEvent.click(metricButton);
-    expect(metricButton.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
-    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText('RPE: 7')).toBeTruthy();
+    const trigger = screen.getByRole('button', { name: 'Изменить вес и повторения' });
+    expect(trigger.getAttribute('aria-disabled')).toBe('false');
+    fireEvent.click(trigger);
+    expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('records the displayed PLAN values as FACT only after explicit confirmation', async () => {
+  it('prefills FACT from PLAN and saves without a separate copy-plan action', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('Не заполнено')).toBeTruthy();
+    expect(screen.getByText('80 кг × 10')).toBeTruthy();
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
     expect(onSave).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Записать 80 кг × 10 как факт' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+      rpe: null,
     })));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
-  it('saves PLAN changes through the registered navigation Back action before closing', async () => {
-    const onPlanSave = vi.fn(async () => undefined);
+  it('discards edited FACT only after Continue in the unsaved-changes dialog', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('does not autosave FACT changes even after the previous debounce interval', async () => {
+    const onSave = vi.fn(async () => undefined);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData}
+        onClose={vi.fn()} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '8' } });
+    await new Promise<void>(resolve => { window.setTimeout(resolve, 750); });
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  });
+
+  it('uses the same discard dialog for navigation Back, without saving FACT', async () => {
+    const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     let back: (() => void) | undefined;
-    const onNavigationContextChange = vi.fn((context: { onBack?: () => void } | null) => {
-      back = context?.onBack;
-    });
-    render(<SetEntry mode="program-plan" isOpen data={baseData}
-      onClose={onClose} onPlanSave={onPlanSave}
-      onNavigationContextChange={onNavigationContextChange} />);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData}
+        onClose={onClose} onSave={onSave}
+        onNavigationContextChange={context => { back = context?.onBack; }} />
+    </KonstaProvider>);
     expect(back).toBeTypeOf('function');
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
-    // Back before the 300ms debounce must still persist the latest value.
     back?.();
-    await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({
-      weightKg: 80, reps: 10, setType: 'cluster',
-    }));
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('keeps FACT editor open on Save failure and permits retry', async () => {
+    const onSave = vi.fn().mockRejectedValueOnce(new Error('Сервер недоступен'))
+      .mockResolvedValueOnce(undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={baseData}
+        onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Сервер недоступен'));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
-  it('does not navigate away when saving through Back fails', async () => {
-    const onPlanSave = vi.fn(async () => { throw new Error('Нет доступа к хранилищу'); });
+  it('never saves scheduled PLAN through Back and confirms discarding changed values', async () => {
+    const onPlanSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     let back: (() => void) | undefined;
-    render(<SetEntry mode="program-plan" isOpen data={baseData}
+    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
       onClose={onClose} onPlanSave={onPlanSave}
       onNavigationContextChange={context => { back = context?.onBack; }} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
+    expect(back).toBeTypeOf('function');
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     back?.();
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Нет доступа к хранилищу'));
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
     expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onPlanSave).not.toHaveBeenCalled();
   });
 
-  it('preserves the previous non-weight entry until its UI Kit picker exists', () => {
-    render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType: 'time',
-      plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
-    }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
-    expect(screen.getByLabelText('Время, минуты')).toBeTruthy();
-    expect(screen.getByLabelText('Время, секунды')).toBeTruthy();
+  it('does not autosave scheduled PLAN and retries only after explicit Save failure', async () => {
+    const onPlanSave = vi.fn().mockRejectedValueOnce(new Error('Нет доступа к хранилищу'))
+      .mockResolvedValueOnce(undefined);
+    const onClose = vi.fn();
+    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
+      onClose={onClose} onPlanSave={onPlanSave} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
+    await new Promise<void>(resolve => { window.setTimeout(resolve, 450); });
+    expect(onPlanSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Нет доступа к хранилищу'));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onPlanSave).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('uses the existing DurationPicker and Mezfit RPE slider for time-based FACT', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{ ...baseData, trackingType: 'time',
+        plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
+      }} onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    expect(screen.getByRole('button', { name: 'Изменить продолжительность' })).toBeTruthy();
+    expect(screen.getByText('План: 00:02:05')).toBeTruthy();
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    fireEvent.input(screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' }),
+      { target: { value: '7' } });
+    expect(screen.getByText('RPE: 7')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
+      rpe: 7, metrics: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
+    })));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 });

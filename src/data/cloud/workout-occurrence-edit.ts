@@ -60,6 +60,24 @@ export function removeOccurrenceSet(
     ? { ...ex, sets: ordered(ex.sets.filter(set => set.id !== setId)) } : ex) };
 }
 
+/** Program templates own structural recommendations, never occurrence metric prescriptions. */
+export function occurrenceTemplateChanged(plan: WorkoutOccurrencePlan, original: WorkoutOccurrencePlan): boolean {
+  const template = (value: WorkoutOccurrencePlan) => ({
+    name: value.name, category: value.category ?? null, comment: value.comment,
+    exercises: value.exercises.map(exercise => ({
+      sourceProgramExerciseId: exercise.sourceProgramExerciseId,
+      definitionId: exercise.exercise.exerciseDefinitionId,
+      notes: exercise.notes,
+      sets: exercise.sets.map(set => ({
+        sourceProgramSetId: set.sourceProgramSetId, setType: set.setType ?? null,
+        setLabel: set.setLabel, comment: set.comment,
+        materialLinks: set.materialLinks, chatLinks: set.chatLinks,
+      })),
+    })),
+  });
+  return JSON.stringify(template(plan)) !== JSON.stringify(template(original));
+}
+
 /** Compare semantic prescription content, not transient local IDs. */
 export function occurrencePlanChanged(plan: WorkoutOccurrencePlan,
   original: WorkoutOccurrencePlan): boolean {

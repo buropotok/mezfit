@@ -284,7 +284,7 @@ describe('days inside program phases', () => {
     Reflect.deleteProperty(HTMLElement.prototype, 'animate');
   });
 
-  it('shows the weight/reps PLAN and technique on a read-only program without FACT controls', () => {
+  it('shows structural sets and technique without occurrence-specific PLAN on a read-only program', () => {
     render(<WorkoutSessionCard mode="planning" day={{ ...day, exercises: [{
       exercise: { id: 'exercise', realmId: 'tg:101', owner: 'tg:101', programDayId: day.day.id,
         position: 0, status: 'active', notes: null, exercise: { exerciseDefinitionId: 'catalogue-id',
@@ -296,9 +296,9 @@ describe('days inside program phases', () => {
       onMove={() => {}} onDuplicate={() => {}} onDelete={() => {}} />);
     // Preserve lazy rendering while the exercise is collapsed.
     expect(screen.queryByText('Тип подхода: Дропсет')).toBeNull();
-    expect(screen.queryByText('Подход 1. План: 123 кг × 15')).toBeNull();
+    expect(screen.queryByText('Подход 1')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
-    expect(screen.getByText('Подход 1. План: 123 кг × 15')).toBeTruthy();
+    expect(screen.getByText('Подход 1')).toBeTruthy();
     expect(screen.getByText('Тип подхода: Дропсет')).toBeTruthy();
     expect(screen.getByText('Контроль техники')).toBeTruthy();
     // A program PLAN must not expose an execution result or an editor in read-only mode.
