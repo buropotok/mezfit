@@ -248,7 +248,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           {isWeightReps ? metricTile('weight_reps', 'Повторения × Вес',
             metricsText(draft.metrics.weightKg, draft.metrics.reps), target) : null}
           {hasDuration ? metricTile('duration', 'Время', draft.metrics.durationSeconds === null
-            ? 'Не заполнено' : formatDurationSeconds(draft.metrics.durationSeconds), durationTarget) : null}
+            ? 'Не заполнено' : validDuration(draft.metrics.durationSeconds)
+              ? formatDurationSeconds(draft.metrics.durationSeconds)
+              : `${draft.metrics.durationSeconds} с`, durationTarget) : null}
           {hasDistance ? metricTile('distance', 'Дистанция', draft.metrics.distanceMeters === null
             ? 'Не заполнено' : `${numberFormatter.format(draft.metrics.distanceMeters / 1000)} км`, distanceTarget) : null}
           {hasReps ? metricTile('reps', 'Повторения', draft.metrics.reps === null
@@ -321,8 +323,10 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
           {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
             <Text variant="body">Повторить сохранение</Text>
           </KonstaButton> : null}
-          {props.onDelete ? <button type="button" className="set-entry-weight-reps__delete"
-            disabled={closing} onClick={() => setDeleteOpen(true)}>Удалить подход</button> : null}
+          {props.onDelete ? <KonstaButton clear className="set-entry-weight-reps__delete"
+            disabled={closing} onClick={() => setDeleteOpen(true)}>
+            <Text variant="body">Удалить подход</Text>
+          </KonstaButton> : null}
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
