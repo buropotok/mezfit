@@ -249,15 +249,15 @@ export function SetEntry(props: SetEntryProps) {
     && props.data.trackingType !== 'weight_reps') {
     return <SetEntryOccurrenceMetrics key={setEntryIdentityKey(props.data)} {...props} />;
   }
-  if (props.data.trackingType === 'weight_reps' && (props.mode === undefined || props.mode === 'workout' || props.mode === 'program-plan' || props.mode === 'occurrence-plan')) {
+  if (props.data.trackingType === 'weight_reps' && (props.mode === undefined || props.mode === 'workout' || props.mode === 'occurrence-plan')) {
     return <SetEntryWeightReps key={setEntryIdentityKey(props.data)} {...props} />;
   }
-  if (props.mode === 'program-plan' || props.mode === 'occurrence-plan') return null;
+  if (props.mode === 'occurrence-plan') return null;
   const lifecycleKey = `${props.mode}:${setEntryIdentityKey(props.data)}:${props.isOpen ? 'open' : 'closed'}`;
   return <SetEntryEditor key={lifecycleKey} {...props} />;
 }
 
-function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'program-plan' | 'occurrence-plan' }>) {
+function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'occurrence-plan' }>) {
   const { isOpen, data, onClose, onOpenHistory, onOpenChat } = props;
   const isPlan = props.mode === 'plan';
   const bandsId = useId();
