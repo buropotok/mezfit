@@ -80,13 +80,13 @@ describe('weight and repetitions SetEntry', () => {
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
     const technique = screen.getByRole('button', { name: 'Кластер' });
-    const exertion = screen.getByRole('button', { name: '8' });
+    const exertion = screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' });
     expect(technique.getAttribute('aria-pressed')).toBe('false');
-    expect(exertion.getAttribute('aria-pressed')).toBe('false');
+    expect(exertion.value).toBe('0');
     fireEvent.click(technique);
-    fireEvent.click(exertion);
+    fireEvent.input(exertion, { target: { value: '8' } });
     expect(technique.getAttribute('aria-pressed')).toBe('true');
-    expect(exertion.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('RPE: 8')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onSave).toHaveBeenCalled());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
@@ -98,7 +98,7 @@ describe('weight and repetitions SetEntry', () => {
 
   it('saves cloud PLAN without showing FACT-only controls or PREVIOUS', async () => {
     const onPlanSave = vi.fn(async () => undefined);
-    render(<SetEntry mode="program-plan" isOpen data={{ ...baseData, setType: null }}
+    render(<SetEntry mode="occurrence-plan" isOpen data={{ ...baseData, setType: null }}
       onClose={vi.fn()} onPlanSave={onPlanSave} />);
     expect(screen.queryByRole('group', { name: 'RPE' })).toBeNull();
     expect(screen.queryByText(/Пред\.:/)).toBeNull();
@@ -177,7 +177,7 @@ describe('weight and repetitions SetEntry', () => {
     const onNavigationContextChange = vi.fn((context: { onBack?: () => void } | null) => {
       back = context?.onBack;
     });
-    render(<SetEntry mode="program-plan" isOpen data={baseData}
+    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
       onClose={onClose} onPlanSave={onPlanSave}
       onNavigationContextChange={onNavigationContextChange} />);
     expect(back).toBeTypeOf('function');
@@ -194,7 +194,7 @@ describe('weight and repetitions SetEntry', () => {
     const onPlanSave = vi.fn(async () => { throw new Error('Нет доступа к хранилищу'); });
     const onClose = vi.fn();
     let back: (() => void) | undefined;
-    render(<SetEntry mode="program-plan" isOpen data={baseData}
+    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
       onClose={onClose} onPlanSave={onPlanSave}
       onNavigationContextChange={context => { back = context?.onBack; }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
