@@ -138,6 +138,43 @@ describe('calendar plan technique projection', () => {
   });
 });
 
+describe('adding sets to a scheduled PLAN', () => {
+  it('persists a copy of the previous set through the existing local-first edit flow', async () => {
+    const previous = {
+      id: 'set-one', sourceProgramSetId: 'template-set-one', position: 0,
+      setType: 'cluster' as const, setLabel: null, comment: 'Контроль техники',
+      materialLinks: ['material:1'], chatLinks: [],
+      plannedReps: 19, plannedWeightKg: 57,
+      plannedDurationSeconds: null, plannedDistanceMeters: null,
+    };
+    const scheduled: LocalWorkoutOccurrenceDraft = {
+      ...draft, plan: { ...plan, exercises: [{ ...plan.exercises[0], sets: [previous] }] },
+    };
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue(scheduled);
+    const persisted: { current: LocalWorkoutOccurrenceDraft | null } = { current: null };
+    const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockImplementation(async (_id, change) => {
+      persisted.current = change(structuredClone(scheduled));
+    });
+
+    render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts}
+      onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
+    await waitFor(() => expect(enqueue).toHaveBeenCalledOnce());
+
+    const [source, copy] = persisted.current!.plan.exercises[0].sets;
+    expect(copy).toMatchObject({
+      sourceProgramSetId: null, position: 1,
+      plannedWeightKg: 57, plannedReps: 19,
+      setType: 'cluster', comment: 'Контроль техники', materialLinks: ['material:1'],
+    });
+    expect(copy.id).not.toBe(source.id);
+    expect(scheduled.plan.exercises[0].sets).toHaveLength(1);
+    expect(scheduled.originalPlan).toBe(draft.originalPlan);
+  });
+});
+
 describe('editing PLAN in one scheduled occurrence', () => {
   it('writes weight, repetitions and technique only to this occurrence and not its template', async () => {
     cloudEnabled.value = true;

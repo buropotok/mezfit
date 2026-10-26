@@ -133,7 +133,7 @@ describe('existing exercise component in program mode', () => {
 });
 
 describe('calendar PLAN versus reusable template', () => {
-  it('renders a compact body line for planned repetitions × weight with caption technique', () => {
+  it('renders a compact body line with planned weight in kg before repetitions and caption technique', () => {
     const planItem: typeof item = {
       ...item, sets: [{ ...item.sets[0], plannedReps: 10, plannedWeightKg: 80.75,
         plannedDurationSeconds: null, plannedDistanceMeters: null }],
@@ -141,7 +141,7 @@ describe('calendar PLAN versus reusable template', () => {
     const { container } = render(<SessionExercise mode="program" data={planItem}
       showPlanMetrics defaultCollapsed={false} />);
     const line = container.querySelector('.session-exercise__set-plan-line');
-    expect(line?.textContent?.trim()).toBe('Подход 1. План: 10×80.75');
+    expect(line?.textContent?.trim()).toBe('Подход 1. План 80,75 кг × 10');
     expect(line?.classList.contains('ui-text--body')).toBe(true);
     const technique = screen.getByText('Тип подхода: Дропсет');
     expect(technique.classList.contains('ui-text--caption')).toBe(true);
@@ -157,7 +157,7 @@ describe('calendar PLAN versus reusable template', () => {
       onEdit={() => {}} onComment={() => {}} onMove={() => {}}
       onDuplicate={() => {}} onDelete={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
-    const planLine = screen.getByText(/^Подход 1\. План: 15×123 · 1:00 · 0,10 км$/);
+    const planLine = screen.getByText(/^Подход 1\. План 123 кг × 15 · 1:00 · 0,10 км$/);
     expect(planLine.classList.contains('ui-text--body')).toBe(true);
     fireEvent.click(planLine);
     expect(open).toHaveBeenCalledWith('program-exercise', 'program-set');
@@ -165,6 +165,6 @@ describe('calendar PLAN versus reusable template', () => {
     expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();
     view.unmount();
     render(<SessionExercise mode="program" data={item} defaultCollapsed={false} />);
-    expect(screen.queryByText(/План:/)).toBeNull();
+    expect(screen.queryByText(/^Подход 1\. План\b/)).toBeNull();
   });
 });

@@ -42,10 +42,18 @@ export function appendOccurrenceSet(
   return { ...plan, exercises: plan.exercises.map(ex => {
     if (ex.id !== exerciseId) return ex;
     if (ex.sets.length >= 100) throw new Error('OCCURRENCE_SET_LIMIT');
+    const previous = ex.sets[ex.sets.length - 1];
     const item: OccurrencePlanSet = {
       id: crypto.randomUUID(), sourceProgramSetId: null, position: ex.sets.length,
-      setType: null, setLabel: null, comment: null, materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
-      plannedDurationSeconds: null, plannedDistanceMeters: null,
+      setType: previous?.setType ?? null,
+      setLabel: previous?.setLabel ?? null,
+      comment: previous?.comment ?? null,
+      materialLinks: [...(previous?.materialLinks ?? [])],
+      chatLinks: [...(previous?.chatLinks ?? [])],
+      plannedReps: previous?.plannedReps ?? null,
+      plannedWeightKg: previous?.plannedWeightKg ?? null,
+      plannedDurationSeconds: previous?.plannedDurationSeconds ?? null,
+      plannedDistanceMeters: previous?.plannedDistanceMeters ?? null,
     };
     return { ...ex, sets: [...ex.sets, item] };
   }) };
