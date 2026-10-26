@@ -37,10 +37,12 @@ describe('weight and repetitions SetEntry', () => {
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
     expect(screen.getByRole('dialog', { name: 'Подход 3' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Изменить вес и повторения' })).toBeTruthy();
-    expect(screen.getByText('План: 80 кг × 10')).toBeTruthy();
-    expect(screen.getByText('Пред.: 77,5 кг × 10')).toBeTruthy();
+    expect(screen.getByText('План: 80 кг')).toBeTruthy();
+    expect(screen.getByText('Пред.: 77,5 кг')).toBeTruthy();
     expect(screen.getByRole('group', { name: 'Тип подхода' })).toBeTruthy();
-    expect(screen.getByRole('group', { name: 'RPE' })).toBeTruthy();
+    expect(screen.getByText('RPE: 0')).toBeTruthy();
+    expect(screen.getByRole('slider', { name: 'RPE' })).toBeTruthy();
+    expect(document.querySelector('.set-entry-weight-reps__metric-tile')?.getAttribute('data-glass-preset')).toBe('modalTuned');
   });
 
   it('keeps the sheet and weight picker outside card transforms and sheet clipping', async () => {
@@ -80,13 +82,14 @@ describe('weight and repetitions SetEntry', () => {
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
     const technique = screen.getByRole('button', { name: 'Кластер' });
-    const exertion = screen.getByRole('button', { name: '8' });
+    const slider = screen.getByRole('slider', { name: 'RPE' });
     expect(technique.getAttribute('aria-pressed')).toBe('false');
-    expect(exertion.getAttribute('aria-pressed')).toBe('false');
+    expect(slider.getAttribute('min')).toBe('0');
+    expect(slider.getAttribute('max')).toBe('10');
     fireEvent.click(technique);
-    fireEvent.click(exertion);
+    fireEvent.input(slider, { target: { value: '8' } });
     expect(technique.getAttribute('aria-pressed')).toBe('true');
-    expect(exertion.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('RPE: 8')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onSave).toHaveBeenCalled());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
@@ -96,25 +99,25 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
-  it('saves cloud PLAN without showing FACT-only controls or PREVIOUS', async () => {
+  it('saves only occurrence PLAN without showing FACT-only controls or PREVIOUS', async () => {
     const onPlanSave = vi.fn(async () => undefined);
-    render(<SetEntry mode="program-plan" isOpen data={{ ...baseData, setType: null }}
+    render(<SetEntry mode="occurrence-plan" isOpen data={{ ...baseData, setType: null }}
       onClose={vi.fn()} onPlanSave={onPlanSave} />);
-    expect(screen.queryByRole('group', { name: 'RPE' })).toBeNull();
+    expect(screen.queryByRole('slider', { name: 'RPE' })).toBeNull();
     expect(screen.queryByText(/Пред\.:/)).toBeNull();
     expect(screen.queryByText(/^План:/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({ weightKg: 80, reps: 10, setType: 'dropset' }));
+    await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({ weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null, setType: 'dropset' }));
   });
 
   it('accepts a supported new FACT without rounding an unsupported PLAN', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={{ ...baseData,
-      plan: { ...baseData.plan!, weightKg: 80.75 },
+      plan: { ...baseData.plan!, weightKg: 80.1 },
     }} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
+    expect(screen.getByText('План: 80,1 кг × 10')).toBeTruthy();
     expect(screen.getByText('Не заполнено')).toBeTruthy();
     expect(screen.getByText(/Значение PLAN недоступно в пикере/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
@@ -125,7 +128,7 @@ describe('weight and repetitions SetEntry', () => {
     fireEvent.click(within(picker).getByRole('listbox', { name: 'Килограммы' })
       .querySelector<HTMLButtonElement>('button[aria-label="80"]')!);
     // Selecting a valid FACT does not rewrite the immutable PLAN comparison.
-    expect(screen.getByText('План: 80,75 кг × 10')).toBeTruthy();
+    expect(screen.getByText('План: 80,1 кг × 10')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
@@ -137,19 +140,19 @@ describe('weight and repetitions SetEntry', () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, fact: {
-      metrics: { weightKg: 80.75, reps: 10, durationSeconds: null, distanceMeters: null },
+      metrics: { weightKg: 80.1, reps: 10, durationSeconds: null, distanceMeters: null },
       setLabel: null, rpe: null, comment: null, bands: [],
     } }} onClose={onClose} onSave={onSave} />);
     expect(screen.getByText('Существующее значение FACT не поддерживается текущим пикером')).toBeTruthy();
     const metricButton = screen.getByRole('button', { name: 'Изменить вес и повторения' });
     expect(metricButton.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
+    expect(screen.getByText('80,1 кг × 10')).toBeTruthy();
 
     // UI Kit retains its closed popover in the DOM for animation. Its DOM
     // presence is not proof that the picker opened.
     fireEvent.click(metricButton);
     expect(metricButton.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('80,75 кг × 10')).toBeTruthy();
+    expect(screen.getByText('80,1 кг × 10')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
@@ -177,7 +180,7 @@ describe('weight and repetitions SetEntry', () => {
     const onNavigationContextChange = vi.fn((context: { onBack?: () => void } | null) => {
       back = context?.onBack;
     });
-    render(<SetEntry mode="program-plan" isOpen data={baseData}
+    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
       onClose={onClose} onPlanSave={onPlanSave}
       onNavigationContextChange={onNavigationContextChange} />);
     expect(back).toBeTypeOf('function');
@@ -185,7 +188,7 @@ describe('weight and repetitions SetEntry', () => {
     // Back before the 300ms debounce must still persist the latest value.
     back?.();
     await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({
-      weightKg: 80, reps: 10, setType: 'cluster',
+      weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null, setType: 'cluster',
     }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
@@ -194,7 +197,7 @@ describe('weight and repetitions SetEntry', () => {
     const onPlanSave = vi.fn(async () => { throw new Error('Нет доступа к хранилищу'); });
     const onClose = vi.fn();
     let back: (() => void) | undefined;
-    render(<SetEntry mode="program-plan" isOpen data={baseData}
+    render(<SetEntry mode="occurrence-plan" isOpen data={baseData}
       onClose={onClose} onPlanSave={onPlanSave}
       onNavigationContextChange={context => { back = context?.onBack; }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
@@ -203,11 +206,13 @@ describe('weight and repetitions SetEntry', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('preserves the previous non-weight entry until its UI Kit picker exists', () => {
+  it('uses the existing DurationPicker for time tracking instead of legacy number inputs', () => {
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType: 'time',
       plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
     }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
-    expect(screen.getByLabelText('Время, минуты')).toBeTruthy();
-    expect(screen.getByLabelText('Время, секунды')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Изменить время' })).toBeTruthy();
+    expect(screen.getByText('1 показатель')).toBeTruthy();
+    expect(screen.queryByLabelText('Время, минуты')).toBeNull();
+    expect(screen.getByRole('slider', { name: 'RPE' })).toBeTruthy();
   });
 });
