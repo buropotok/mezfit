@@ -245,7 +245,8 @@ function setEntryIdentityKey(data: SetEntryProps['data']): string {
 }
 
 export function SetEntry(props: SetEntryProps) {
-  if (props.mode === 'occurrence-plan' && props.data.trackingType !== 'weight_reps') {
+  if ((props.mode === 'occurrence-plan' || props.mode === 'workout' || props.mode === undefined)
+    && props.data.trackingType !== 'weight_reps') {
     return <SetEntryOccurrenceMetrics key={setEntryIdentityKey(props.data)} {...props} />;
   }
   if (props.data.trackingType === 'weight_reps' && (props.mode === undefined || props.mode === 'workout' || props.mode === 'program-plan' || props.mode === 'occurrence-plan')) {
