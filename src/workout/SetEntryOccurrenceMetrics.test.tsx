@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KonstaProvider } from 'konsta/react';
 import { SetEntry } from './SetEntry';
@@ -62,10 +62,13 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     fireEvent.click(screen.getByRole('button', { name: 'Изменить продолжительность' }));
     const picker = screen.getByRole('dialog', { name: 'Выбор продолжительности' });
-    expect(picker.getAttribute('aria-hidden')).not.toBe('true');
     await new Promise<void>(resolve => { window.setTimeout(resolve, 440); });
     expect(onPlanSave).not.toHaveBeenCalled();
-    expect(picker.getAttribute('aria-hidden')).not.toBe('true');
+    // The wheel must still accept an edit after the old background-save interval.
+    const minutes = within(picker).getByRole('listbox', { name: 'Минуты продолжительности' });
+    fireEvent.click(within(minutes).getByRole('option', { name: '03' }));
+    expect(screen.getByText('00:03:05')).toBeTruthy();
+    expect(onPlanSave).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
     expect(onPlanSave).not.toHaveBeenCalled();
@@ -187,7 +190,11 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
         setLabel: 'hard', setType: 'cluster', rpe: 6, comment: 'Выполнено', bands: [],
       } }} onClose={vi.fn()} onSave={onSave} />);
     expect(screen.getByText(first)).toBeTruthy();
-    if (second) expect(screen.getByText(second)).toBeTruthy();
+    if (second) {
+      const target = trackingType === 'time_distance' ? 'Изменить дистанцию'
+        : trackingType === 'time_reps' ? 'Изменить повторения' : 'Изменить вес';
+      expect(within(screen.getByRole('button', { name: target })).getByText(second)).toBeTruthy();
+    }
     expect(screen.getByText('RPE: 6')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Кластер' }).getAttribute('aria-pressed')).toBe('true');
     expect(onSave).not.toHaveBeenCalled();
