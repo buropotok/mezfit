@@ -129,6 +129,63 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
+  it.each([
+    ['time', { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null }],
+    ['time_distance', { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: 2500 }],
+    ['time_reps', { weightKg: null, reps: 8, durationSeconds: 125, distanceMeters: null }],
+    ['time_weight', { weightKg: 70.75, reps: null, durationSeconds: 125, distanceMeters: null }],
+  ] as const)('%s records relevant PLAN values as FACT with Save only, even without edits', async (trackingType, expectedMetrics) => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen
+        data={{ ...base, trackingType, fact: null }}
+        onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+    expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
+      rpe: null, metrics: expectedMetrics,
+    }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('shows discard confirmation for edited time-based FACT and never writes on X', async () => {
+    const onSave = vi.fn(async () => undefined);
+    const onClose = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen
+        data={{ ...base, trackingType: 'time_distance' }}
+        onClose={onClose} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('never autosaves edits in time-based FACT before an explicit Save action', async () => {
+    const onSave = vi.fn(async () => undefined);
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{ ...base, trackingType: 'time' }}
+        onClose={vi.fn()} onSave={onSave} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+    await new Promise<void>(resolve => { window.setTimeout(resolve, 400); });
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  });
+
   it('does not write a FACT when a time-based set is opened and closed unchanged', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
