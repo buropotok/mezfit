@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { Badge, Divider, GlassSurface, Icon, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, DurationPicker, DistancePicker, WeightPicker, NumPicker, formatDurationSeconds, type LiquidPopoverItem } from '../ui';
+import { BadgeButton, Divider, GlassSurface, Icon, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, DurationPicker, DistancePicker, WeightPicker, NumPicker, formatDurationSeconds, type LiquidPopoverItem } from '../ui';
 import { createSetEntryDraft, emptySetMetrics, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import './set-entry-weight-reps.css';
@@ -209,7 +209,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
       <Text variant="headline">{label}</Text>
       <span className="set-entry-weight-reps__metric-value">
         <Text variant="headline">{text}</Text>
-        <Icon name="chevron-right" aria-hidden="true" />
+        <Icon name="chevron-right" className="set-entry-weight-reps__metric-chevron" aria-hidden="true" />
       </span>
     </GlassSurface>
   );
@@ -285,14 +285,11 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               <Text variant="caption" tone="muted">необязательно</Text>
             </div>
             <div className="set-entry-weight-reps__choices" role="group" aria-label="Тип подхода">
-              {SET_TYPES.map((type: SetType) => <button key={type} type="button"
-                className="set-entry-weight-reps__type-button"
-                aria-pressed={(draft.setType ?? null) === type}
-                disabled={closing}
+              {SET_TYPES.map((type: SetType) => <BadgeButton key={type} color="gray"
+                selected={(draft.setType ?? null) === type} disabled={closing}
                 onClick={() => change(old => ({ ...old, setType: old.setType === type ? null : type }))}>
-                <Badge color="gray" textVariant="body" variant="outline"
-                  selected={(draft.setType ?? null) === type}>{SET_TYPE_LABELS[type]}</Badge>
-              </button>)}
+                {SET_TYPE_LABELS[type]}
+              </BadgeButton>)}
             </div>
           </div>
           {!isPlan ? <>
