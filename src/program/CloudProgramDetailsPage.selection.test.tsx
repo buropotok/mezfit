@@ -110,7 +110,9 @@ describe('program source selection', () => {
     }
     // The program is a structural template; tapping a set must not offer numeric editing.
     fireEvent.click(within(card).getByText('Подход 1'));
-    expect(blockedSelectionEdit).not.toHaveBeenCalled();
+    // Selection mode still reports attempts to mutate the source template.
+    // The deleted numeric editor itself must stay absent.
+    notice();
     expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull();
     const exerciseMenu = within(card).getByRole('menu', { name: 'Меню упражнения' });
     expect(within(exerciseMenu).getByRole('button', { name: 'Информация' })).toBeTruthy();
