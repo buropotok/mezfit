@@ -42,7 +42,7 @@ describe('all five tracking types use the approved UI Kit pickers', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onPlanSave).toHaveBeenCalledWith({
-      ...data(tracking).plan, setType: 'dropset',
+      ...data(tracking).plan!, setType: 'dropset',
     }));
   });
 
