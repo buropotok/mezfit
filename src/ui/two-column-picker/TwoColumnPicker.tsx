@@ -31,8 +31,6 @@ const IOS_LENS_MAGNIFICATION = 1.55;
 const LENS_COLUMN_XS = [62, 226] as const;
 const UNIT_OFFSET_X = 36;
 
-
-
 export type TwoColumnPickerSide = 'left' | 'right';
 
 export interface TwoColumnPickerParts {
