@@ -8,17 +8,6 @@ import { centeredLensScale } from './time-picker/centeredLensScale';
 import { DurationPicker } from './duration-picker/DurationPicker';
 import { WeightRepsPicker } from './weight-reps-picker/WeightRepsPicker';
 
-function mount(node: React.ReactNode) {
-  const target = document.createElement('button');
-  document.body.appendChild(target);
-  const renderResult = render(
-    <KonstaProvider theme="ios" dark>
-      <div className="k-ios dark">{node}</div>
-    </KonstaProvider>,
-  );
-  return { ...renderResult, target };
-}
-
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
