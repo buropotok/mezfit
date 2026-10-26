@@ -43,12 +43,50 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.getByRole('group', { name: 'RPE' })).toBeTruthy();
   });
 
+  it('keeps the sheet and weight picker outside card transforms and sheet clipping', async () => {
+    const appRoot = document.createElement('div');
+    appRoot.id = 'root';
+    appRoot.className = 'k-ios dark';
+    const cardHost = document.createElement('div');
+    cardHost.className = 'transformed-card';
+    appRoot.appendChild(cardHost);
+    document.body.appendChild(appRoot);
+    try {
+      const onSave = vi.fn(async () => undefined);
+      const { unmount } = render(<SetEntry mode="workout" isOpen data={baseData}
+        onClose={vi.fn()} onSave={onSave} />, { container: cardHost });
+      const sheet = screen.getByRole('dialog', { name: 'Подход 3' });
+      const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+      expect(appRoot.contains(sheet)).toBe(true);
+      expect(cardHost.contains(sheet)).toBe(false);
+      expect(sheet.contains(picker)).toBe(false);
+      expect(appRoot.contains(picker)).toBe(true);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+      fireEvent.click(within(picker).getByRole('listbox', { name: 'Повторения' })
+        .querySelector<HTMLButtonElement>('button[aria-label="9"]')!);
+      fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+      await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+        metrics: { weightKg: 80, reps: 9, durationSeconds: null, distanceMeters: null },
+      })));
+      unmount();
+    } finally {
+      appRoot.remove();
+    }
+  });
+
   it('auto-saves the chosen set type and RPE through the parent FACT callback on close', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
-    fireEvent.click(screen.getByRole('button', { name: '8' }));
+    const technique = screen.getByRole('button', { name: 'Кластер' });
+    const exertion = screen.getByRole('button', { name: '8' });
+    expect(technique.getAttribute('aria-pressed')).toBe('false');
+    expect(exertion.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(technique);
+    fireEvent.click(exertion);
+    expect(technique.getAttribute('aria-pressed')).toBe('true');
+    expect(exertion.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onSave).toHaveBeenCalled());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
