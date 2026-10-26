@@ -30,7 +30,7 @@ const IDS = Object.keys(FIELDS);
 const COUNTS = Object.freeze({
   publicExerciseDefinitions: 1324, publicExerciseTaxonomy: 69, publicExerciseCatalogues: 1,
 });
-const AUDIT_STAGE_SHA256 = Object.freeze([
+export const AUDIT_STAGE_SHA256 = Object.freeze([
   "3ea5a0ada89329723a1f484251db4dab8d7de4a2c064121b915cc8bca647e65b",
   "1c84d19c4f8f88205fd592f871ce8ca657a18683f906942661b579e57b8e0650",
   "4af4b16f54cfcc38fec5a8bc7b10404080e7aee3c72a09f212f98fe8367f1de5",
