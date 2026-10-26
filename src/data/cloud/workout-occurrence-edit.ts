@@ -60,6 +60,18 @@ export function removeOccurrenceSet(
     ? { ...ex, sets: ordered(ex.sets.filter(set => set.id !== setId)) } : ex) };
 }
 
+/** Numeric PLAN is an occurrence-level value, never a program-template mutation. */
+export function updateOccurrenceSetPlan(
+  plan: WorkoutOccurrencePlan, exerciseId: string, setId: string,
+  changes: Pick<OccurrencePlanSet, 'plannedWeightKg' | 'plannedReps' | 'setType'>,
+): WorkoutOccurrencePlan {
+  if (!plan.exercises.some(ex => ex.id === exerciseId && ex.sets.some(set => set.id === setId)))
+    throw new Error('OCCURRENCE_SET_NOT_FOUND');
+  return { ...plan, exercises: plan.exercises.map(ex => ex.id === exerciseId
+    ? { ...ex, sets: ex.sets.map(set => set.id === setId ? { ...set, ...changes } : set) }
+    : ex) };
+}
+
 /** Compare semantic prescription content, not transient local IDs. */
 export function occurrencePlanChanged(plan: WorkoutOccurrencePlan,
   original: WorkoutOccurrencePlan): boolean {
