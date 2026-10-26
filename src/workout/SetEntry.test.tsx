@@ -146,13 +146,13 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.getByText('Существующее значение FACT не поддерживается текущим пикером')).toBeTruthy();
     const metricButton = screen.getByRole('button', { name: 'Изменить вес и повторения' });
     expect(metricButton.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('80,1 кг × 10')).toBeTruthy();
+    expect(screen.getByText('10 × 80,1 кг')).toBeTruthy();
 
     // UI Kit retains its closed popover in the DOM for animation. Its DOM
     // presence is not proof that the picker opened.
     fireEvent.click(metricButton);
     expect(metricButton.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('80,1 кг × 10')).toBeTruthy();
+    expect(screen.getByText('10 × 80,1 кг')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
@@ -165,7 +165,7 @@ describe('weight and repetitions SetEntry', () => {
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
     expect(screen.getByText('Не заполнено')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Записать 80 кг × 10 как факт' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Записать 10 × 80 кг как факт' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
