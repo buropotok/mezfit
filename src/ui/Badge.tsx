@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import './badge.css';
 
 export type BadgeColor = 'green' | 'yellow' | 'blue' | 'red' | 'orange' | 'purple' | 'cyan' | 'gray';
@@ -18,4 +18,18 @@ export function Badge({ color = 'gray', textVariant = 'body', variant = 'filled'
       {children}
     </span>
   );
+}
+
+/** Clickable badge choice with native button semantics and the canonical Badge material. */
+export type BadgeButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color' | 'children'> & {
+  color?: BadgeColor;
+  selected?: boolean;
+  children: ReactNode;
+};
+export function BadgeButton({ color = 'gray', selected = false, className = '', children,
+  type = 'button', ...props }: BadgeButtonProps) {
+  return <button {...props} type={type} aria-pressed={selected}
+    className={`ui-badge-button ${className}`.trim()}>
+    <Badge color={color} variant="outline" selected={selected}>{children}</Badge>
+  </button>;
 }
