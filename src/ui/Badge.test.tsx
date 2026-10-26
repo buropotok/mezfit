@@ -51,6 +51,17 @@ describe('Badge', () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
+  it('exposes the transparent outline appearance through the selectable UI kit primitive', () => {
+    render(<KonstaProvider theme="ios" dark>
+      <BadgeChoice appearance="outline" color="gray" textVariant="body" selected onClick={() => {}}>Кластер</BadgeChoice>
+    </KonstaProvider>);
+    const choice = screen.getByRole('button', { name: 'Кластер' });
+    expect(choice.classList.contains('ui-badge-choice')).toBe(true);
+    expect(choice.getAttribute('aria-pressed')).toBe('true');
+    expect(choice.querySelector('.ui-badge--gray.ui-badge--outline.ui-badge--selected.ui-text--body'))
+      .not.toBeNull();
+  });
+
   it('uses gray as the default color', () => {
     const html = renderToStaticMarkup(<Badge>Badge</Badge>);
     expect(html).toContain('ui-badge--gray');
