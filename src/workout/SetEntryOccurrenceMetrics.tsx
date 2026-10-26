@@ -231,7 +231,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               ...old, metrics: { ...old.metrics,
                 ...Object.fromEntries(keys.filter(key => old.metrics[key] === null)
                   .map(key => [key, props.data.plan?.[key] ?? null])) },
-            }))}>Записать значения плана как факт</KonstaButton> : null}
+            }))}><Text variant="body">Записать значения плана как факт</Text></KonstaButton> : null}
           <div className="set-entry-weight-reps__section">
             <div className="set-entry-weight-reps__section-heading">
               <Text variant="footnote">Тип подхода</Text>
@@ -272,16 +272,16 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               </List>
             </div>
           </> : null}
-          {props.onOpenChat ? <KonstaButton onClick={props.onOpenChat}>Открыть чат</KonstaButton> : null}
+          {props.onOpenChat ? <KonstaButton onClick={props.onOpenChat}><Text variant="body">Открыть чат</Text></KonstaButton> : null}
           {isPlan && props.onDeleteSet ? <KonstaButton clear onClick={() => setDeleteConfirm(true)}>
-            Удалить подход
+            <Text variant="body">Удалить подход</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           <Text variant="caption" tone="muted" className="set-entry-weight-reps__save-hint">
             {saving ? 'Сохраняем изменения…' : 'Изменения сохраняются автоматически'}
           </Text>
           {error ? <KonstaButton tonal onClick={() => { void persist().catch(() => undefined); }}>
-            Повторить сохранение
+            <Text variant="body">Повторить сохранение</Text>
           </KonstaButton> : null}
         </div>
       </div>
