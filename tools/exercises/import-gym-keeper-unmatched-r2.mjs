@@ -164,10 +164,8 @@ async function upload(plan) {
       || process.env.GITHUB_REPOSITORY !== REPO
       || process.env.GITHUB_REF !== 'refs/heads/main'
       || process.env.GITHUB_EVENT_NAME !== 'workflow_dispatch'
-      || process.env.IMPORT_CONFIRMATION !== 'IMPORT_GYM_KEEPER_112_V1'
-      || process.env.R2_MEDIA_IMPORT_APPROVAL !== 'APPROVED'
       || !process.env.CLOUDFLARE_API_TOKEN) {
-    fail('Protected GitHub Actions upload context required');
+    fail('Manual owner-only GitHub Actions upload context and Cloudflare token required');
   }
   const root = await mkdtemp(join(tmpdir(), 'mezfit-gym-keeper-r2-'));
   const counts = { downloadedFromApkCdn: 0, alreadyPresent: 0, uploaded: 0 };
