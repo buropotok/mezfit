@@ -404,6 +404,14 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         }}
         onNavigationContextChange={onNavigationContextChange}
         onClose={() => setEditingSet(null)}
+        onDelete={async () => {
+          const writing = edit(current => ({
+            ...current,
+            plan: removeOccurrenceSet(current.plan, editingSet.exerciseId, editingSet.setId),
+          }));
+          if (!writing) throw new Error('Удаление подхода недоступно');
+          await writing;
+        }}
         onPlanSave={async input => {
           const writing = edit(current => ({
             ...current,
