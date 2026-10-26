@@ -492,7 +492,7 @@ function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'occurrence-plan' 
               <div className="set-entry__rpe-row" role="group" aria-label="RPE">
                 <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0}
                   ariaLabel="RPE" onValueChange={value => {
-                    if (!saving) setDraft(current => ({ ...current, rpe: value }));
+                    if (!saving) setDraft(current => ({ ...current, rpe: value === 0 ? null : value }));
                   }} />
               </div>
             </div>
