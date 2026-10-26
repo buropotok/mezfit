@@ -16,6 +16,13 @@ describe('Badge', () => {
     expect(html).toContain(`ui-badge--${color}`);
   });
 
+  it('marks only the selected neutral technique badge', () => {
+    const selected = renderToStaticMarkup(<Badge color="gray" selected>Дропсет</Badge>);
+    const unselected = renderToStaticMarkup(<Badge color="gray">Дропсет</Badge>);
+    expect(selected).toContain('ui-badge--selected');
+    expect(unselected).not.toContain('ui-badge--selected');
+  });
+
   it('uses gray as the default color', () => {
     const html = renderToStaticMarkup(<Badge>Badge</Badge>);
     expect(html).toContain('ui-badge--gray');
