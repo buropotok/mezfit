@@ -149,6 +149,12 @@ export function buildTimeLensVectorFields({
   const zoomMaxX = halfWidth * zoomFactor;
   const sortedCenters = zoomCenters && zoomCenters.length > 0
     ? [...zoomCenters].sort((a, b) => a - b) : null;
+  const localZoomColumns = sortedCenters?.map((center, index) => {
+    const leftGap = index > 0 ? center - sortedCenters[index - 1] : Infinity;
+    const rightGap = index < sortedCenters.length - 1 ? sortedCenters[index + 1] - center : Infinity;
+    const nearestGap = Math.min(leftGap, rightGap);
+    return { center, radius: Number.isFinite(nearestGap) ? Math.max(1, nearestGap / 2) : halfWidth };
+  });
   const zoomMaxY = halfHeight * zoomFactor;
   const zoomScale = Math.max(1, Math.hypot(zoomMaxX, zoomMaxY));
   const lightX = Math.cos(SPECULAR_ANGLE);
@@ -169,25 +175,17 @@ export function buildTimeLensVectorFields({
       // moving the left and right wheel numbers sideways when selected.
       // Keep each glyph anchored to its own wheel and soften transitions.
       let zoomX = -x * zoomFactor;
-      if (sortedCenters) {
+      if (localZoomColumns) {
         const logicalX = x + halfWidth;
-        let nearest = 0;
-        for (let index = 1; index < sortedCenters.length; index += 1) {
-          if (Math.abs(logicalX - sortedCenters[index]) < Math.abs(logicalX - sortedCenters[nearest])) {
-            nearest = index;
-          }
+        let nearest = localZoomColumns[0];
+        for (let index = 1; index < localZoomColumns.length; index += 1) {
+          const candidate = localZoomColumns[index];
+          if (Math.abs(logicalX - candidate.center) < Math.abs(logicalX - nearest.center)) nearest = candidate;
         }
-        const center = sortedCenters[nearest];
-        const adjacentDistances = [
-          nearest > 0 ? center - sortedCenters[nearest - 1] : Infinity,
-          nearest < sortedCenters.length - 1 ? sortedCenters[nearest + 1] - center : Infinity,
-        ];
-        const nearestGap = Math.min(...adjacentDistances);
-        const radius = Number.isFinite(nearestGap) ? nearestGap / 2 : halfWidth;
-        const progress = clamp(Math.abs(logicalX - center) / Math.max(radius, 1), 0, 1);
+        const progress = clamp(Math.abs(logicalX - nearest.center) / nearest.radius, 0, 1);
         const edge = clamp((progress - 0.7) / 0.3, 0, 1);
         const fade = 1 - edge * edge * (3 - 2 * edge);
-        zoomX = -(logicalX - center) * zoomFactor * fade;
+        zoomX = -(logicalX - nearest.center) * zoomFactor * fade;
       }
       const zoomY = -y * zoomFactor;
       writeVector(zoomPixels, offset, zoomX / zoomScale, zoomY / zoomScale);
