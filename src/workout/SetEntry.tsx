@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { createCoachProgramSet } from '../api';
 import { getTelegramWebApp } from '../telegram';
-import { Button, Divider, IconButton, Modal, Surface, Text, TextArea, TextInput, type ButtonColor } from '../ui';
+import { Button, Divider, IconButton, MezfitSlider, Modal, Surface, Text, TextArea, TextInput, type ButtonColor } from '../ui';
 import {
   createSetEntryDraft,
   type ResistanceBandCode,
@@ -481,23 +481,14 @@ function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'program-plan' | '
 
             <div className="set-entry__section">
               <div className="set-entry__section-heading">
-                <Text variant="footnote" className="set-entry__section-label">RPE</Text>
+                <Text variant="footnote" className="set-entry__section-label">RPE: {draft.rpe ?? 0}</Text>
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
               <div className="set-entry__rpe-row" role="group" aria-label="RPE">
-                {[6, 7, 8, 9, 10].map((rpe) => (
-                  <Button
-                    key={rpe}
-                    disabled={saving}
-                    variant="secondary"
-                    size="compact"
-                    selected={draft.rpe === rpe}
-                    shadow
-                    onClick={() => setDraft((current) => ({ ...current, rpe: current.rpe === rpe ? null : rpe }))}
-                  >
-                    {rpe}
-                  </Button>
-                ))}
+                <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0}
+                  ariaLabel="RPE" onValueChange={value => {
+                    if (!saving) setDraft(current => ({ ...current, rpe: value }));
+                  }} />
               </div>
             </div>
 
