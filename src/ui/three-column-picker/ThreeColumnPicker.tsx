@@ -25,8 +25,6 @@ const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 
-
-
 export type ThreeColumnPickerPart = 'first' | 'second' | 'third';
 
 export interface ThreeColumnPickerParts {
