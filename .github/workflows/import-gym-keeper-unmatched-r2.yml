@@ -21,31 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  preview:
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.ref == 'refs/heads/main' &&
-      github.actor == github.repository_owner &&
-      inputs.operation == 'preview'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Validate the 112 identities and inspect destination paths (no credentials)
-        run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs preview
-
-  upload:
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.ref == 'refs/heads/main' &&
-      github.actor == github.repository_owner &&
-      inputs.operation == 'upload'
+  import:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -56,11 +32,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Preflight: verify exactly 112 distinct APK identities
+      - name: Require manual launch from main by repository owner
+        shell: bash
+        run: |
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "buropotok/mezfit"
+          test "$GITHUB_ACTOR" = "$GITHUB_REPOSITORY_OWNER"
+      - name: Preview and validate all 112 exercise GIF identities
         run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs preview
-      - name: Download exact Gym Keeper APK GIFs and upload to isolated private R2 folder
+      - name: Upload 112 exact APK GIFs to isolated private R2 prefix
+        if: ${{ inputs.operation == 'upload' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: node tools/exercises/import-gym-keeper-unmatched-r2.mjs upload
+        run: |
+          npm ci
+          node tools/exercises/import-gym-keeper-unmatched-r2.mjs upload
