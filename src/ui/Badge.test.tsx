@@ -33,7 +33,7 @@ describe('Badge', () => {
     const view = render(<KonstaProvider theme="ios" dark>
       <BadgeChoice selected onClick={onClick}>Кластер</BadgeChoice>
     </KonstaProvider>);
-    const button = screen.getByRole<HTMLButtonElement>('button', { name: 'Кластер' });
+    const button = screen.getByRole('button', { name: 'Кластер' }) as HTMLButtonElement;
     expect(button.getAttribute('aria-pressed')).toBe('true');
     expect(button.querySelector('.ui-badge--selected')).not.toBeNull();
     expect(button.querySelector('.ui-badge--gray')).not.toBeNull();
@@ -43,7 +43,7 @@ describe('Badge', () => {
     view.rerender(<KonstaProvider theme="ios" dark>
       <BadgeChoice disabled onClick={onClick}>Дропсет</BadgeChoice>
     </KonstaProvider>);
-    const disabledButton = screen.getByRole<HTMLButtonElement>('button', { name: 'Дропсет' });
+    const disabledButton = screen.getByRole('button', { name: 'Дропсет' }) as HTMLButtonElement;
     expect(disabledButton.disabled).toBe(true);
     expect(disabledButton.getAttribute('aria-pressed')).toBe('false');
     expect(disabledButton.querySelector('.ui-badge--selected')).toBeNull();
