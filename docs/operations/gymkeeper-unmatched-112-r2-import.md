@@ -62,6 +62,10 @@ The owner must confirm the following before any upload:
 
 1. In **Settings → Environments**, create `r2-media-import`, restrict it to
    the `main` branch, add required human reviewers, and disable bypass.
+   Set the **environment-level variable** `R2_MEDIA_IMPORT_APPROVAL=APPROVED`.
+   This variable is a deliberate fail-closed activation gate: if the protected
+   environment has not been configured, the upload script refuses to run.
+   Do not set this value as a repository-wide variable.
 2. The existing `CLOUDFLARE_API_TOKEN` GitHub secret must permit remote object
    reads/writes in the existing `mezfit` R2 bucket. Use least privilege where
    possible. Do **not** put credentials in source code or PR/push workflows.
