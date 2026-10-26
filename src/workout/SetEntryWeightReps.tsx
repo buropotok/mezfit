@@ -218,7 +218,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
                 <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0} ariaLabel="RPE"
-                  onValueChange={value => { if (!closing) change(old => ({ ...old, rpe: value })); }} />
+                  onValueChange={value => { if (!closing) change(old => ({ ...old, rpe: value === 0 ? null : value })); }} />
               </div>
             </div>
             <div className="set-entry-weight-reps__section">
