@@ -240,7 +240,6 @@ function PickerLens({
         scrollTop={scrollTops.right}
         lensMode={lensMode}
       />
-
     </>
   );
 
