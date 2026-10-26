@@ -121,7 +121,7 @@ async function r2Get(key, file) {
   if (response.code === 0) return readFile(file);
   // Only a definitively missing OBJECT may be imported; auth/network/bucket
   // errors fail closed. Never treat an arbitrary failed get as a missing key.
-  if (/\b10007\b|NoSuchKey|Object not found|object does not exist/i.test(response.output)) {
+  if (/\b10007\b|NoSuchKey|Object not found|object does not exist|The specified key does not exist/i.test(response.output)) {
     return null;
   }
   fail('R2 read failed (not a confirmed missing object): ' + key
@@ -162,6 +162,7 @@ async function upload(plan) {
       || process.env.GITHUB_REF !== 'refs/heads/main'
       || process.env.GITHUB_EVENT_NAME !== 'workflow_dispatch'
       || process.env.IMPORT_CONFIRMATION !== 'IMPORT_GYM_KEEPER_112_V1'
+      || process.env.R2_MEDIA_IMPORT_APPROVAL !== 'APPROVED'
       || !process.env.CLOUDFLARE_API_TOKEN) {
     fail('Protected GitHub Actions upload context required');
   }
