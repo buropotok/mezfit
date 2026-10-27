@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/sphinx-stretch/",
+  "name": "Sphinx Stretch",
+  "how_to": "Hold for up to 10 breaths. To release, exhale as you slowly lower your torso, chest, and head to the floor.\n\nSphinx Pose Benefits\n- The Sphinx is a wonderful yoga pose to open the upper body and gain more strength and mobility in the mid-back and the thoracic spine. This move strengthens the erector spinae muscles that provide support to the spine. Strong back muscles can prevent postural deviations that lead to poor posture and discomfort, such as kyphosis (“hunchback”). Sphinx movement improves your posture by extending your back muscles and reducing the tension between your lower back and core areas. It also enhances your lower back’s strength, making it easier to stay upright throughout the day.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Sphinx-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Erector Spinae"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Neck"
+  ],
+  "name_ru": "Поза сфинкса",
+  "tracking_type": "time"
+}
