@@ -1,0 +1,30 @@
+{
+  "source": "https://fitnessprogramer.com/exercise-primary-muscle/trapezius/",
+  "count": 53,
+  "source_exercise_count": 53,
+  "listing_pages": 6,
+  "imported_at": "2026-10-27T16:39:38.315845+00:00",
+  "missing_gif": [],
+  "missing_how_to": [
+    "behind-the-back-barbell-shrug.json",
+    "kneeling-high-pulley-row.json",
+    "smith-machine-shrug.json",
+    "bent-over-rear-delt-fly-gymstick.json",
+    "elbow-reverse-push-up.json",
+    "scapula-dips.json",
+    "foam-roller-rhomboids.json",
+    "foam-roller-upper-back.json",
+    "scapula-pull-up.json",
+    "serratus-wall-slide-with-foam-roller.json",
+    "dip-shrugs-serratus-shrugs.json",
+    "wide-grip-barbell-bent-over-row-plus.json",
+    "wide-grip-alternate-barbell-bent-over-row-plus.json",
+    "one-arm-dumbbell-upright-row.json",
+    "cable-y-raise.json",
+    "resistance-band-bent-over-rear-delt-fly.json",
+    "resistance-band-pull-apart.json",
+    "single-arm-upright-row-gymstick.json",
+    "face-pull-with-resistance-band.json"
+  ],
+  "instructions": "Full post-GIF instruction text; source HTML list structure."
+}
