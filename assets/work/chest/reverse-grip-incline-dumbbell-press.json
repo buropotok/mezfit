@@ -1,0 +1,45 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-grip-incline-dumbbell-press/",
+  "name": "Reverse Grip Incline Dumbbell Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Adjust the bench to an incline angle of 30–45 degrees."
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Grab a pair of dumbbells and sit on the bench with feet flat on"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Reverse-Grip-Incline-Dumbbell-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Clavicular"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Triceps"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Жим гантелей обратным хватом на наклонной скамье",
+  "tracking_type": "weight_reps"
+}
