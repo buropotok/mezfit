@@ -248,3 +248,40 @@ describe('WorkoutSessionCard capability ownership', () => {
       .toBe('Исходный комментарий');
   });
 });
+
+describe('client read-only Coach FACT card', () => {
+  it('shows recorded values without allowing set edits, exercise changes or reordering', () => {
+    const session: ActiveWorkoutSession = { ...baseSession, exercises: [{
+      sessionExerciseId: 200, workoutSessionId: 501, sourceProgramExerciseId: null,
+      position: 0, status: 'active', notes: null,
+      exercise: {
+        id: 20, scope: 'global', name: 'Жим лёжа', description: null,
+        tracking_type: 'weight_reps', category_code: 'chest', equipment_code: 'barbell',
+        reference_source: null, reference_key: null, reference_media_url: null,
+        is_favourite: false, can_edit: false,
+      },
+      sets: [{
+        sessionSetId: 301, sourceProgramSetId: null, position: 0, status: 'completed',
+        plan: null, previous: null,
+        fact: { metrics: { reps: 19, weightKg: 57, durationSeconds: null, distanceMeters: null },
+          setType: 'cluster', setLabel: null, rpe: null, comment: null, bands: [] },
+      }],
+    }] };
+    const addSet = vi.fn(), addExercise = vi.fn();
+    const saveSet = vi.fn(async () => undefined);
+    const reorder = vi.fn();
+    render(<WorkoutSessionCard session={session} readOnly
+      onSaveSet={saveSet} onReorderExerciseIds={reorder}
+      onAddSet={addSet} onAddExercise={addExercise} />);
+    expect(screen.getByTestId('workout-card').getAttribute('data-disabled')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    expect(screen.getByText('57 кг × 19')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
+    expect(addSet).not.toHaveBeenCalled();
+    expect(addExercise).not.toHaveBeenCalled();
+    expect(saveSet).not.toHaveBeenCalled();
+    expect(reorder).not.toHaveBeenCalled();
+  });
+});
