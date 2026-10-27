@@ -104,3 +104,43 @@ describe('one active ad-hoc session per creator', () => {
     expect(await repo.get(shared.id)).toBeNull();
   });
 });
+
+
+describe('safe unavailable-session diagnostics', () => {
+  it('distinguishes missing records, invalid source and invalid ownership without exposing rejected data', async () => {
+    const { database, repo } = await fixture();
+    const created = await repo.createQuick();
+    const original = await database.adHocSessions.get(created.id);
+    if (!original) throw new Error('Missing fixture');
+    const next = vi.fn(), error = vi.fn();
+    const subscription = repo.observe(created.id, next, error);
+    try {
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.sessionId).toBe(created.id));
+      await database.adHocSessions.update(created.id, { programId: 'program', programName: null });
+      await vi.waitFor(() => expect(next.mock.lastCall).toEqual([null, undefined, 'ADHOC_INVALID_SOURCE']));
+      expect(await repo.get(created.id)).toBeNull();
+      await database.adHocSessions.put({ ...original, owner: 'tg:303' });
+      await vi.waitFor(() => expect(next.mock.lastCall).toEqual([null, undefined, 'ADHOC_INVALID_IDENTITY']));
+      expect(await repo.getRow(created.id)).toBeNull();
+      await database.adHocSessions.put(original);
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.sessionId).toBe(created.id));
+      await database.adHocSessions.delete(created.id);
+      await vi.waitFor(() => expect(next.mock.lastCall).toEqual([null, undefined, 'ADHOC_LOCAL_RECORD_MISSING']));
+      expect(error).not.toHaveBeenCalled();
+    } finally { subscription.unsubscribe(); }
+  });
+
+  it('reports revoked relationship access and keeps its header and exercises hidden', async () => {
+    const { database, pair, repo } = await fixture();
+    const created = await repo.createForAthlete('tg:202');
+    const next = vi.fn(), error = vi.fn();
+    const subscription = repo.observe(created.id, next, error);
+    try {
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.sessionId).toBe(created.id));
+      await database.members.delete(pair.members[1].id);
+      await vi.waitFor(() => expect(next.mock.lastCall).toEqual([null, undefined, 'ADHOC_RELATIONSHIP_UNAVAILABLE']));
+      expect(await repo.getRow(created.id)).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+    } finally { subscription.unsubscribe(); }
+  });
+});

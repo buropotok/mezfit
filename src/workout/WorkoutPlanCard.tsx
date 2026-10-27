@@ -142,7 +142,7 @@ export function WorkoutPlanCard({
         {authoringVisible ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
           className="workout-session-card__add-exercise" aria-disabled={busy || (!onMutationAttempt && !onAddExercise)}
           onClick={() => { if (!busy) mutate(onAddExercise); }}>
-          <Icon name="plus" className="workout-session-card__add-exercise-icon" />
+          <span className="workout-session-card__add-exercise-icon"><Icon name="plus" /></span>
           <Text variant="body">Добавить упражнение</Text>
         </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
@@ -152,7 +152,7 @@ export function WorkoutPlanCard({
             glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled={busy}
             onClick={() => { if (!busy) onStart(); }} className="workout-plan-card__action">
             <span className="workout-plan-card__start-group">
-              <Icon name="treadmill" className="workout-plan-card__action-icon" />
+              <span className="workout-plan-card__action-icon"><Icon name="treadmill" /></span>
               <Text variant="body" className="workout-plan-card__start-label">Начать тренировку</Text>
             </span>
           </GlassSurface> : null}
@@ -185,7 +185,7 @@ export function WorkoutPlanCard({
           {!onStart && !readOnly && !onMutationAttempt ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
             glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled="true"
             className="workout-plan-card__action">
-            <Icon name="treadmill" className="workout-plan-card__action-icon" />
+            <span className="workout-plan-card__action-icon"><Icon name="treadmill" /></span>
             <Text variant="body">Начать</Text>
           </GlassSurface> : null}
         </div> : null}

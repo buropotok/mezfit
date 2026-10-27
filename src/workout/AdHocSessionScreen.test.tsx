@@ -223,3 +223,12 @@ describe('AdHocSessionScreen mutation and observation ownership', () => {
     expect(addSet).not.toHaveBeenCalled();
   });
 });
+
+
+it('shows the safe repository diagnosis when an observed session becomes unavailable', async () => {
+  const { observations } = fixture();
+  act(() => observations[0].next(null, undefined, 'ADHOC_INVALID_SOURCE'));
+  expect(screen.getByRole('alert').textContent).toContain('ADHOC_INVALID_SOURCE');
+  expect(screen.queryByTestId('session-card')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Повторить' })).toBeTruthy();
+});

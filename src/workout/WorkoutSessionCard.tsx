@@ -364,7 +364,7 @@ function WorkoutFactCard<Id extends string | number = number>({
                 aria-label="Добавить упражнение"
                 onClick={() => onAddExercise?.()}
               >
-                <Icon name="plus" variant="outline" className="workout-session-card__add-exercise-icon" />
+                <span className="workout-session-card__add-exercise-icon"><Icon name="plus" variant="outline" /></span>
                 <Text variant="body" className="workout-session-card__add-exercise-label">Добавить упражнение</Text>
               </GlassSurface>
             ) : null}
