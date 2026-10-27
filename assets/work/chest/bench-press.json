@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/bench-press/",
   "name": "Bench Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup Lie on a flat bench with eyes directly under the bar. Feet flat on the ground, knees bent at ~90°. Grip the bar"
-      ]
-    }
-  ],
+  "how_to": "1. Setup\n  - Lie on a flat bench with eyes directly under the bar.\n  - Feet flat on the ground, knees bent at ~90°.\n  - Grip the bar with a slightly wider than shoulder-width grip (wrists stacked over elbows).\n  - Retract and depress the scapulae to stabilize the upper back.\n  - Maintain a natural arch in the lower back.\n2. Unrack and Descent\n  - Unrack the bar and bring it over your chest, elbows fully extended.\n  - Inhale, brace your core, and lower the bar slowly to the lower portion of your chest (around nipple level), keeping elbows at ~45° from the torso.\n3. Press Phase\n  - Push the bar upward in a slight arc back toward your eyes.\n  - Exhale as you drive through the chest and triceps, locking out the elbows at the top.\n4. Reset and Repeat\n  - Maintain upper back tightness and repeat for prescribed reps.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Bench-Press.gif",
   "muscles": {
     "target": [
@@ -35,6 +27,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Barbell-Bench-Press.gif",
   "name_ru": "Жим штанги лёжа",
   "tracking_type": "weight_reps"
 }
