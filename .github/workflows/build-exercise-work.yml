@@ -1,12 +1,7 @@
 name: Build reviewed exercise work catalogue
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - tools/exercise-work/build.py
-      - tools/exercise-work/ru-names-reference.json
-      - .github/workflows/build-exercise-work.yml
+  workflow_dispatch:
 
 permissions:
   contents: write
