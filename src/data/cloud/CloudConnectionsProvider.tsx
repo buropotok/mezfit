@@ -53,7 +53,7 @@ interface CloudConnectionsValue {
   syncStatus: CloudSyncStatus;
   syncError: string;
   /** Session-local technical state changes; never part of Dexie Cloud. */
-  syncHistory: SessionSyncHistory;
+  syncHistory?: SessionSyncHistory;
   refresh: () => Promise<void>;
   retrySync: () => Promise<void>;
   loadAvatar: (contact: CloudContact, variant?: 'small' | 'large') => Promise<Blob | null>;
