@@ -1,0 +1,46 @@
+{
+  "source": "https://fitnessprogramer.com/exercise-primary-muscle/full-body/",
+  "count": 84,
+  "source_exercise_count": 85,
+  "listing_pages": 9,
+  "imported_at": "2026-10-27T16:50:10.412599+00:00",
+  "missing_gif": [
+    {
+      "name": "Lean Planche",
+      "source_url": "https://fitnessprogramer.com/exercise/lean-planche/",
+      "reason": "No GIF URL found in the source exercise page"
+    }
+  ],
+  "missing_how_to": [
+    "dumbbell-power-clean.json",
+    "dumbbell-devil-press.json",
+    "overhead-squat.json",
+    "tire-sledge-hammer.json",
+    "barbell-snatch.json",
+    "power-snatch.json",
+    "muscle-snatch.json",
+    "heaving-snatch-balance.json",
+    "barbell-hang-clean.json",
+    "push-up-toe-touch.json",
+    "power-clean.json",
+    "burpees.json",
+    "l-sit-pull-up.json",
+    "back-lever.json",
+    "front-lever-pull-up.json",
+    "archer-pull-up.json",
+    "cross-body-push-up.json",
+    "trap-bar-jump-squat.json",
+    "medicine-ball-sit-up-throw.json",
+    "barbell-jump-squat.json",
+    "kettlebell-clean-and-press.json",
+    "climbing-monkey-bars.json",
+    "barbell-thruster.json",
+    "wall-ball.json",
+    "kettlebell-renegade-row.json",
+    "modified-hindu-push-up.json",
+    "kettlebell-figure-8.json",
+    "dumbbell-iron-cross.json",
+    "battle-rope.json"
+  ],
+  "instructions": "Full post-GIF instruction text; source HTML list structure."
+}

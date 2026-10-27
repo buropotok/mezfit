@@ -1,0 +1,46 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-bent-over-row/",
+  "name": "Barbell Bent Over Row",
+  "how_to": "Setup: Stand with your feet shoulder-width apart, toes pointing forward, and the barbell in front of you on the floor. You can choose to use an overhand grip (palms facing you) or an underhand grip (palms facing away) on the bar, depending on your preference and comfort.\n\nBend at the Hips: Hinge at your hips while keeping your back straight. Lower your torso until it is almost parallel to the floor. Keep your knees slightly bent throughout the movement.\n\nGrasp the Barbell: Reach down and grip the barbell with your hands slightly wider than shoulder-width apart. Your arms should be fully extended, and your grip should be firm.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Bent-Over-Row.gif",
+  "muscles": {
+    "target": [
+      "Back"
+    ],
+    "synergists": [
+      "Latissimus Dorsi",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids",
+      "Brachialis",
+      "Brachioradialis",
+      "Pectoralis Major"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Triceps",
+        "Erector Spinae",
+        "Hamstrings",
+        "Gluteus Maximus",
+        "Quadriceps",
+        "Adductor Magnus"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae",
+    "Full Body"
+  ]
+}

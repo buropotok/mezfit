@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/plate-push/",
+  "name": "Plate Push",
+  "how_to": "1. Place a weight plate flat on a smooth floor (turf, rubber, wood, or tile).\n2. Get into a low athletic stance: hips back, chest down, hands on the edge of the plate, arms extended.\n3. Engage your core, and drive through the balls of your feet to push the plate forward.\n4. Keep your back flat, head in line with your spine, and avoid rounding your shoulders.\n5. Continue pushing for distance or time, using short, powerful steps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/plate-push.gif",
+  "muscles": {
+    "target": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstring",
+      "Calves",
+      "Rectus Abdominis",
+      "Obliques"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Plate"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ]
+}

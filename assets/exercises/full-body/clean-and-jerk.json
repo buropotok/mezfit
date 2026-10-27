@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/clean-and-jerk/",
+  "name": "Clean and Jerk",
+  "how_to": "1. Set up with feet hip-width apart, barbell over mid-foot, and hands slightly wider than shoulder-width.\n2. Clean Phase:\n  - Keep the back flat and chest up as you lift the bar from the ground.\n  - Explosively extend through the hips and shrug, pulling the bar upward.\n  - Drop under the bar and catch it in a front rack position with elbows high.\n3. Jerk Phase:\n  - Dip slightly by bending the knees, then drive upward through the legs.\n  - Split or push under the bar quickly, locking out the arms overhead.\n  - Stabilize and stand upright to complete the lift.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/06/clean-and-jerk.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ]
+}

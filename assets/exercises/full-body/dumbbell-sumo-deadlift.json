@@ -1,0 +1,40 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-sumo-deadlift/",
+  "name": "Dumbbell Sumo Deadlift",
+  "how_to": "1. Setup:\n  - Stand with your feet wider apart than shoulder-width, with your toes pointing slightly outward. The wider stance is a key characteristic of the sumo deadlift.\n  - Place a dumbbell on the ground between your feet. You can use one or two dumbbells, depending on your preference and the weight you’re comfortable with.\n2. Grip the Dumbbells:\n  - Bend at your hips and knees to lower your body down. Keep your back straight, chest up, and your core engaged.\n  - Grasp the dumbbells with both hands using an overhand grip (palms facing each other) between your legs.\n3. Lift:\n  - As you exhale, stand up by driving through your heels, extending your hips and knees simultaneously. Keep the dumbbells close to your body as you lift them.\n  - Make sure to maintain a neutral spine throughout the movement. Do not round your lower back.\n4. Finish:\n  - At the top of the movement, stand tall with your hips fully extended, and your shoulders back.\n  - Pause for a moment, and then reverse the movement by bending at your hips and knees to lower the dumbbells back to the ground.\n  - Control the descent to avoid slamming the weights on the floor.\n5. Repeat:\n  - Perform the desired number of repetitions, and then carefully return the dumbbells to the starting position.\nTips:\n- Start with a light weight to ensure proper form and gradually increase the weight as you become more comfortable with the movement.\n- Keep the dumbbell close to your body throughout the lift to minimize strain on your lower back.\n- Maintain a neutral spine and avoid rounding or arching your back.\n- Push through your heels when lifting and lowering the weight to engage your hamstrings and glutes effectively.\n- Don’t rush the movement; focus on control and proper technique.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/09/dumbbell-sumo-deadlift.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Adductors",
+      "Quadriceps",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Latissimus Dorsi",
+        "Trapezius",
+        "Levator Scapulae",
+        "Rhomboids"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Full Body",
+    "Hip",
+    "Leg"
+  ]
+}

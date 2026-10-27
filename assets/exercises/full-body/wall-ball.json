@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/wall-ball/",
+  "name": "Wall Ball",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/wall-ball.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Hip",
+    "Leg",
+    "Shoulders"
+  ]
+}
