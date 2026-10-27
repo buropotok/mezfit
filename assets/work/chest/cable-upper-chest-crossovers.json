@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/cable-upper-chest-crossovers/",
   "name": "Cable Upper Chest Crossovers",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the cables: Adjust the cables to the highest position on both sides of the cable machine. Attach the handles to each cable."
-      ]
-    }
-  ],
+  "how_to": "1. Adjust the cables: Adjust the cables to the highest position on both sides of the cable machine. Attach the handles to each cable.\n2. Stand in the center: Stand in the center of the machine, facing away from it. Hold the handles with your palms facing down.\n3. Position yourself: Take a step forward with one leg or lean forward slightly, keeping your feet shoulder-width apart. Your arms should be extended out to your sides, parallel to the floor.\n4. Cross the handles: Slowly bring both handles towards each other, crossing them in front of your body. Your arms should be slightly bent at the elbow.\n5. Squeeze your chest: Pause for a moment and squeeze your chest muscles.\n6. Return to the starting position: Slowly lower the handles back to the starting position, keeping your arms slightly bent.\n7. Repeat: Repeat the exercise for the desired number of repetitions.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Cable-Upper-Chest-Crossovers.gif",
   "muscles": {
     "target": [
@@ -41,6 +33,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Cable-Upper-Chest-Crossovers.gif",
   "name_ru": "Сведение рук на блоках с акцентом на верх груди",
   "tracking_type": "weight_reps"
 }
