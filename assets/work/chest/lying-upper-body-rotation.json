@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lying-upper-body-rotation/",
+  "name": "Lying Upper Body Rotation",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "1- Lie on your left side with your hips, knees, and feet stacked one above the other, and your hips and knees bent at"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Lying-Upper-Body-Rotation.gif",
+  "muscles": {
+    "target": [
+      "Abs",
+      "Back / Wing",
+      "Chest",
+      "Erector Spinae",
+      "Shoulders"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Back / Wing",
+    "Chest",
+    "Erector Spinae",
+    "Shoulders"
+  ],
+  "name_ru": "Повороты верхней части корпуса лёжа",
+  "tracking_type": "weight_reps"
+}
