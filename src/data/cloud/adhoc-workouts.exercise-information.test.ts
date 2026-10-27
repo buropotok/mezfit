@@ -42,7 +42,7 @@ it('loads only an authorized exercise snapshot, including after workout completi
   await db.table('publicExerciseCatalogues').add({
     id: 'mezfit:exercise-catalogue', realmId: 'rlm-public',
     owner: null, sourceSha256: sha, schemaVersion: '2.0.0',
-    catalogue: 'mezfit.exercise_catalogue.ru_anatomy',
+    catalogue: 'mezfit.exercise_catalog.ru_anatomy',
     exerciseCount: 1324, taxonomyCount: 69, subcategoryLabelsRu: {},
     movementFamilyReferences: {}, metadata: {}, publishedAt: '2026-10-27',
   });
