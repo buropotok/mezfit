@@ -128,6 +128,43 @@ describe('three-wheel native inertia with per-value feedback', () => {
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(6);
   });
 
+  it('does not rewrite scrollTop when a delayed parent acknowledgement arrives mid-inertia', () => {
+    const target = document.createElement('button');
+    document.body.appendChild(target);
+    const onChange = vi.fn();
+    const view = (value: number) => (
+      <KonstaProvider theme="ios" dark>
+        <div className="k-ios dark">
+          <WeightRepsPicker
+            opened value={{ reps: 8, weightKg: value }} target={target}
+            onChange={onChange} onClose={vi.fn()}
+          />
+        </div>
+      </KonstaProvider>
+    );
+    const wrapper = render(view(77.5));
+    const kilograms = observeNativeScroll('Килограммы', 77);
+    const callbacks = new Map<number, FrameRequestCallback>();
+    let id = 2;
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { callbacks.set(id, cb); return id++; });
+    vi.stubGlobal('cancelAnimationFrame', (cancelId: number) => { callbacks.delete(cancelId); });
+    const flush = () => {
+      const pending = [...callbacks.values()];
+      callbacks.clear();
+      pending.forEach(cb => cb(0));
+    };
+
+    act(() => { kilograms.moveTo(78); flush(); });
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 78.5 });
+    act(() => { kilograms.moveTo(83); flush(); });
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 83.5 });
+    wrapper.rerender(view(78.5)); // A previously emitted value arrives late.
+    expect(kilograms.appWrites).toEqual([]);
+    act(() => { kilograms.moveTo(84); flush(); });
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 84.5 });
+    expect(kilograms.appWrites).toEqual([]);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(7);
+  });
   it('preserves an in-flight kilogram choice while reps scroll before parent acknowledges', () => {
     const { onChange } = mountUnacknowledged();
     const kilograms = observeNativeScroll('Килограммы', 77);
