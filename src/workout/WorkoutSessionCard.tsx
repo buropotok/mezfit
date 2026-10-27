@@ -91,6 +91,8 @@ export type WorkoutSessionCardMode = 'planning' | 'active-program' | 'active-own
 
 export interface WorkoutFactCardProps<Id extends string | number = number> {
   mode?: 'workout';
+  /** Viewing a coach-authored FACT must not expose mutation controls to clients. */
+  readOnly?: boolean;
   session: ActiveWorkoutSession<Id>;
   title?: string;
   comment?: string | null;
@@ -121,6 +123,7 @@ export function WorkoutSessionCard<Id extends string | number = number>(props: W
 
 function WorkoutFactCard<Id extends string | number = number>({
   session,
+  readOnly = false,
   title,
   comment,
   onReorderExerciseIds,
@@ -155,7 +158,7 @@ function WorkoutFactCard<Id extends string | number = number>({
   const [commentSaving, setCommentSaving] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
 
-  const active = session.status === 'active';
+  const active = session.status === 'active' && !readOnly;
   const mode: WorkoutSessionCardMode = session.status === 'completed'
     ? 'completed'
     : session.program
