@@ -8,6 +8,7 @@ import { ClientSharedWorkoutScreen } from './ClientSharedWorkoutScreen';
 
 const state = vi.hoisted(() => ({
   emitList: null as ((rows: AdHocOpenSession[]) => void) | null,
+  emitError: null as (() => void) | null,
   emitDetail: null as ((value: ActiveWorkoutSession<string> | null, row?: { name: string }) => void) | null,
   unsubscribeList: vi.fn(),
   unsubscribeDetail: vi.fn(),
@@ -19,8 +20,9 @@ vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
 }));
 vi.mock('../data/cloud/adhoc-workouts', () => ({
   AdHocWorkoutRepository: class {
-    observeForClient(callback: (rows: AdHocOpenSession[]) => void) {
+    observeForClient(callback: (rows: AdHocOpenSession[]) => void, onError: () => void) {
       state.emitList = callback;
+      state.emitError = onError;
       return { unsubscribe: state.unsubscribeList };
     }
     observe(_id: string, callback: (value: ActiveWorkoutSession<string> | null, row?: { name: string }) => void) {
@@ -57,7 +59,7 @@ const renderScreen = () => render(<ClientSharedWorkoutScreen
 
 beforeEach(() => {
   vi.clearAllMocks();
-  state.emitList = null; state.emitDetail = null;
+  state.emitList = null; state.emitError = null; state.emitDetail = null;
 });
 afterEach(cleanup);
 
@@ -87,6 +89,13 @@ describe('client Training tab displays Coach-owned FACT', () => {
     expect(screen.getByRole('button', { name: 'Вторая тренировка' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Вторая тренировка' }));
     expect(state.unsubscribeDetail).toHaveBeenCalled();
+  });
+
+  it('does not block the previous client workout when shared FACT observation fails', () => {
+    renderScreen();
+    act(() => state.emitError?.());
+    expect(screen.getByText('Старая тренировка')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toContain('Не удалось прочитать тренировки');
   });
 
   it('unsubscribes when the Training screen is closed', () => {
