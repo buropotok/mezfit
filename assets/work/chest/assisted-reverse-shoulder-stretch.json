@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/assisted-reverse-shoulder-stretch/",
+  "name": "Assisted Reverse Stretch (Chest And Shoulder)",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Reverse-Shoulder-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Chest",
+      "Shoulders"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Shoulders"
+  ],
+  "name_ru": "Растяжка грудных мышц и плеч с помощью партнёра",
+  "tracking_type": "time"
+}
