@@ -69,7 +69,9 @@ export function ClientSharedWorkoutScreen({ legacy, onNavigationContextChange }:
 
   if (!repository) return <>{legacy}</>;
   if (!loaded) return <section className="adhoc-workouts"><Text variant="body">Загружаем тренировки…</Text></section>;
-  if (error) return <section className="adhoc-workouts"><Text variant="footnote" role="alert">{error}</Text></section>;
+  if (error) return <>{legacy}<section className="adhoc-workouts">
+    <Text variant="footnote" role="alert">{error}</Text>
+  </section></>;
   if (!sessions.length) return <>{legacy}</>;
 
   const activeId = sessions.some(row => row.id === selectedId) ? selectedId : sessions[0].id;
