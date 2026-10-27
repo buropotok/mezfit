@@ -82,9 +82,9 @@ export function WorkoutPlanCard({
     { id: 'duplicate', label: 'Дублировать', icon: 'copy-outline', disabled: busy, onSelect: () => defer(() => mutate(onDuplicate)) },
     { id: 'comment', label: 'Комментарий', icon: 'message-circle', disabled: busy, onSelect: () => defer(() => mutate(onComment)) },
     ...(!onMutationAttempt ? [{ id: 'start', label: 'Начать тренировку', icon: 'treadmill' as const, disabled: true, dividerBefore: true }] : []),
-    { id: 'schedule', label: 'Запланировать', icon: 'calendar-plus', disabled: busy || !onSchedule,
+    ...(!onStart ? [{ id: 'schedule', label: 'Запланировать', icon: 'calendar-plus' as const, disabled: busy || !onSchedule,
       onSelect: () => defer(() => canScheduleCoached
-        ? setSchedulePopoverOpen(true) : onSchedule?.('independent')) },
+        ? setSchedulePopoverOpen(true) : onSchedule?.('independent')) }] : []),
     { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(() => mutate(onDelete)) },
   ];
   const items = exercises.map((item) => ({
@@ -147,12 +147,14 @@ export function WorkoutPlanCard({
         </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
 
-        {!hideWorkoutActions && (authoringVisible || onSchedule || onStart) ? <div className="workout-plan-card__actions">
+        {!hideWorkoutActions && (authoringVisible || onSchedule || onStart) ? <div className={`workout-plan-card__actions${onStart && !onSchedule ? ' workout-plan-card__actions--start' : ''}`}>
           {onStart ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
             glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled={busy}
             onClick={() => { if (!busy) onStart(); }} className="workout-plan-card__action">
-            <Icon name="treadmill" className="workout-plan-card__action-icon" />
-            <Text variant="body">Начать тренировку</Text>
+            <span className="workout-plan-card__start-group">
+              <Icon name="treadmill" className="workout-plan-card__action-icon" />
+              <Text variant="body" className="workout-plan-card__start-label">Начать тренировку</Text>
+            </span>
           </GlassSurface> : null}
           {onSchedule ? <SpotlightTarget>{canScheduleCoached ? (
             <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}

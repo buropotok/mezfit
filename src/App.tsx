@@ -429,7 +429,6 @@ export function App() {
           {destination === 'training' && state.activeRole === 'coach' ? (
             <CoachAdHocWorkoutsScreen initData={state.initData}
               actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
-              onClose={() => changeDestination('today')}
               onNavigationContextChange={handleNavigationContextChange} />
           ) : destination === 'training' ? (
             <WorkoutSessionScreen

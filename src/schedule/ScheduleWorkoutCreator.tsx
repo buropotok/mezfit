@@ -15,7 +15,9 @@ import './workout-planning.css';
 
 type Step = 'athlete' | 'client' | 'source' | 'format' | 'programs' | 'details';
 
-export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated, onNavigationContextChange }: {
+export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated, onNavigationContextChange, mode = 'schedule', onStartWorkout }: {
+  mode?: 'start' | 'schedule';
+  onStartWorkout?: (input: { athleteUserId: string; programId?: string; dayId?: string }) => Promise<void>;
   intent: 'workout' | null; role: 'coach' | 'client'; actor?: ProgramActor;
   onClose: () => void;
   onCreated: (id: string, clientUserId: string | null, notice: string) => void;
@@ -47,18 +49,19 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
   useEffect(() => {
     ++generation.current; running.current = false; setBusy(false); setError(''); setPlanId(null);
     setNestedNavigation(null); setAthlete(cloud?.actorUserId ?? '');
-    setStep(role === 'coach' ? 'athlete' : 'source');
+    setStep(role === 'coach' || mode === 'start' ? 'athlete' : 'source');
     return () => { ++generation.current; };
-  }, [intent, role, cloud?.actorUserId]);
+  }, [intent, role, mode, cloud?.actorUserId]);
   const back = useCallback(() => {
     if (running.current) return;
     setError(''); setNestedNavigation(null);
     if (step === 'client') setStep('athlete');
     else if (step === 'source') { if (role === 'coach') setStep('athlete'); else onClose(); }
+    else if (step === 'programs' && mode === 'start') { if (role === 'coach') setStep('athlete'); else onClose(); }
     else if (step === 'format' || step === 'programs') setStep('source');
     else if (step === 'details') { setPlanId(null); setStep('programs'); }
     else onClose();
-  }, [step, role, onClose]);
+  }, [step, role, mode, onClose]);
   useEffect(() => {
     if (!intent) return;
     const title = step === 'client' ? 'Выбрать клиента'
@@ -81,16 +84,27 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       format === 'independent' && athlete !== planner.actorUserId ? athlete : null,
       result.createdProgram ? 'Создана программа «Программа тренировок» с фазой и днём «Тренировка».' : '');
   });
-  const fromProgram = () => run(async token => {
+  const fromProgram = (athleteUserId = athlete) => run(async token => {
     if (!planner) return;
     // Source selection includes coach assignments; export targets stay authorable-only.
     const rows = role === 'client'
       ? await planner.programs.listForAthlete()
-      : await planner.programs.listForScheduling(athlete);
+      : await planner.programs.listForScheduling(athleteUserId);
     if (token !== generation.current) return;
+    if (mode === 'start' && !rows.length) {
+      if (!onStartWorkout) throw new Error('Не удалось начать тренировку');
+      await onStartWorkout({ athleteUserId });
+      return;
+    }
     setPrograms(rows);
     setPlanId(null); setStep('programs');
   });
+  const chooseAthlete = (athleteUserId: string) => {
+    if (running.current) return;
+    setAthlete(athleteUserId);
+    if (mode === 'start') { setStep('athlete'); void fromProgram(athleteUserId); }
+    else setStep('source');
+  };
   const programOwner = (plan: CloudTrainingPlanRow) => {
     const ownerId = planAuthorUserId(plan);
     const self = ownerId === cloud?.actorUserId;
@@ -111,8 +125,8 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       buttons={<MezfitDialogButton disabled={busy} onClick={back}>Назад</MezfitDialogButton>}>
       <KonstaList nested>
         {step === 'athlete' ? <>
-          <KonstaListItem link title="Моя тренировка" onClick={() => { setAthlete(cloud?.actorUserId ?? ''); setStep('source'); }} />
-          <KonstaListItem link title="Выбрать клиента" onClick={() => setStep('client')} />
+          <KonstaListItem link title="Моя тренировка" onClick={() => chooseAthlete(cloud?.actorUserId ?? '')} />
+          {role === 'coach' ? <KonstaListItem link title="Выбрать клиента" onClick={() => { if (!busy) setStep('client'); }} /> : null}
         </> : step === 'source' ? <>
           <KonstaListItem link title="Создать с нуля" onClick={() => {
             if (busy) return;
@@ -129,7 +143,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
     </MezfitDialog>
     <ProgramClientPicker opened={intent === 'workout' && step === 'client'} clients={cloud?.clients ?? []}
       loading={cloud?.status === 'loading'} onClose={back}
-      onSelect={client => { setAthlete(client.userId); setStep('source'); }} />
+      onSelect={client => chooseAthlete(client.userId)} />
     <MezfitBottomSheet opened={sheetOpen} label="Выбрать программу" lazyMount>
       <SpotlightSurface ref={planningSurfaceRef}>
       <section className="workout-planning-sheet">
@@ -140,6 +154,10 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
         <>
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {step === 'details' && planId && planner && cloud ? <CloudProgramDetailsPage key={planId}
+            onStartDay={mode === 'start' ? dayId => run(async () => {
+              if (!onStartWorkout) throw new Error('Не удалось начать тренировку');
+              await onStartWorkout({ athleteUserId: athlete, programId: planId, dayId });
+            }) : undefined}
             repository={planner.programs} planId={planId} viewerRole={role} actor={actor} selectionMode onSelectionMutationAttempt={showEditToast} selectionFeedbackVisible={editToastVersion > 0} planningSurfaceRef={planningSurfaceRef}
             readOnly={role === 'client' && Boolean(programs.find(plan => plan.id === planId)?.coachUserId)}
             cloudStatus={cloud.status} cloudError={cloud.error} syncStatus={cloud.syncStatus} syncError={cloud.syncError}
@@ -147,7 +165,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
           {step === 'programs' ? <>
             <Text variant="headline">Выбрать программу</Text>
             <KonstaList nested>{programs.map(plan => <KonstaListItem key={plan.id} link title={plan.name} media={programOwner(plan)}
-              subtitle={role === 'client' && plan.coachUserId && plan.status !== 'active'
+              subtitle={mode === 'schedule' && role === 'client' && plan.coachUserId && plan.status !== 'active'
                 ? 'Только просмотр: для планирования тренер должен активировать программу и фазу.' : undefined}
               after={<Badge color={plan.status === 'active' ? 'green' : plan.status === 'finished' ? 'blue' : plan.status === 'cancelled' ? 'red' : 'gray'}>
                 {plan.status === 'active' ? 'Активная' : plan.status === 'draft' ? 'Черновик' : plan.status === 'finished' ? 'Завершена' : 'Отменена'}
@@ -155,13 +173,13 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
               onClick={() => { setPlanId(plan.id); setStep('details'); }} />)}</KonstaList>
             {!programs.length ? <Text variant="body">У атлета пока нет программ</Text> : null}
           </> : null}
-          <KonstaButton tonal onClick={() => setStep('source')}>Создать с нуля</KonstaButton>
+          {mode === 'schedule' ? <KonstaButton rounded tonal onClick={() => setStep('source')}>Создать с нуля</KonstaButton> : null}
         </>
       </section>
       </SpotlightSurface>
     </MezfitBottomSheet>
     <KonstaToast opened={step === 'details' && editToastVersion > 0} position="center" role="status" aria-live="polite">
-      <Text variant="body">Нажмите Запланировать, чтобы начать изменение плана тренировки</Text>
+      <Text variant="body">Нажмите {mode === 'start' ? 'Начать тренировку' : 'Запланировать'}, чтобы начать изменение плана тренировки</Text>
     </KonstaToast>
   </>;
 }

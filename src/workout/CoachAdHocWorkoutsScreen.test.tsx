@@ -9,7 +9,7 @@ import { CoachAdHocWorkoutsScreen } from './CoachAdHocWorkoutsScreen';
 const state = vi.hoisted(() => ({
   action: null as NavigationFloatingAction | null,
   createQuick: vi.fn(), createForAthlete: vi.fn(), listPrograms: vi.fn(),
-  unsubscribe: vi.fn(),
+  unsubscribe: vi.fn(), rows: [] as { id: string; name: string; status: 'active' | 'completed' }[],
 }));
 vi.mock('../NavigationShell', () => ({
   useNavigationFloatingAction: (_destination: string, action: NavigationFloatingAction | null) => { state.action = action; },
@@ -24,8 +24,8 @@ vi.mock('../data/cloud/adhoc-workouts', () => ({
     createQuick = state.createQuick;
     createForAthlete = state.createForAthlete;
     listPrograms = state.listPrograms;
-    observeOpen(onChange: (rows: { id: string; name: string }[]) => void) {
-      onChange([]); return { unsubscribe: state.unsubscribe };
+    observeOpen(onChange: (rows: typeof state.rows) => void) {
+      onChange(state.rows); return { unsubscribe: state.unsubscribe };
     }
   },
 }));
@@ -44,13 +44,14 @@ vi.mock('../ui', () => ({
   MezfitBottomSheet: ({ opened, label, children }: { opened: boolean; label: string; children?: ReactNode }) =>
     opened ? <div role="dialog" aria-label={label}>{children}</div> : null,
 }));
-vi.mock('../program/ProgramClientPicker', () => ({
-  ProgramClientPicker: ({ opened, onSelect }: { opened: boolean; onSelect: (client: { userId: string }) => void }) =>
-    opened ? <button onClick={() => onSelect({ userId: 'tg:202' })}>Выбрать Анну</button> : null,
-}));
-vi.mock('./AdHocProgramPicker', () => ({
-  AdHocProgramPicker: ({ onStart }: { onStart: (programId: string, dayId: string) => void }) =>
-    <button onClick={() => onStart('program-one', 'day-one')}>Начать тренировку</button>,
+vi.mock('../schedule/ScheduleWorkoutCreator', () => ({
+  ScheduleWorkoutCreator: ({ intent, mode, onStartWorkout }: {
+    intent: string | null; mode: string;
+    onStartWorkout: (input: { athleteUserId: string; programId?: string; dayId?: string }) => Promise<void>;
+  }) => intent ? <div role="dialog" aria-label="Общий выбор программы" data-mode={mode}>
+    <button onClick={() => void onStartWorkout({ athleteUserId: 'tg:101', programId: 'program-one', dayId: 'day-one' })}>Начать тренировку</button>
+    <button onClick={() => void onStartWorkout({ athleteUserId: 'tg:202' })}>Клиент без программы</button>
+  </div> : null,
 }));
 vi.mock('./AdHocSessionScreen', () => ({
   AdHocSessionScreen: ({ sessionId }: { sessionId: string }) => <div>Сессия {sessionId}</div>,
@@ -64,10 +65,10 @@ async function pick(id: string) {
   });
   await act(async () => { state.action?.onPresentationChange?.(false); });
 }
-const renderScreen = () => render(<CoachAdHocWorkoutsScreen initData="signed" onClose={() => {}}
+const renderScreen = () => render(<CoachAdHocWorkoutsScreen initData="signed"
   onNavigationContextChange={() => {}} />);
 beforeEach(() => {
-  vi.clearAllMocks(); state.action = null;
+  vi.clearAllMocks(); state.action = null; state.rows = [];
   cloud.db = {};
   state.createQuick.mockResolvedValue({ id: 'quick-one', createdProgram: false });
   state.createForAthlete.mockResolvedValue({ id: 'from-one', createdProgram: false });
@@ -86,7 +87,6 @@ describe('Coach ad-hoc entry points', () => {
   });
   it('starts a selected own program day with stable string provenance', async () => {
     renderScreen(); await pick('program');
-    fireEvent.click(screen.getByText('Моя тренировка'));
     fireEvent.click(await screen.findByText('Начать тренировку'));
     await waitFor(() => expect(state.createForAthlete).toHaveBeenCalledWith('tg:101', 'program-one', 'day-one'));
     expect(await screen.findByText('Сессия from-one')).toBeTruthy();
@@ -95,11 +95,9 @@ describe('Coach ad-hoc entry points', () => {
     state.listPrograms.mockResolvedValue([]);
     state.createForAthlete.mockResolvedValue({ id: 'auto-one', createdProgram: true });
     renderScreen(); await pick('program');
-    fireEvent.click(screen.getByText('Выбрать клиента'));
-    fireEvent.click(screen.getByText('Выбрать Анну'));
+    fireEvent.click(screen.getByText('Клиент без программы'));
     expect(await screen.findByText('Сессия auto-one')).toBeTruthy();
-    expect(state.listPrograms).toHaveBeenCalledWith('tg:202');
-    expect(state.createForAthlete).toHaveBeenCalledWith('tg:202');
+    expect(state.createForAthlete).toHaveBeenCalledWith('tg:202', undefined, undefined);
     expect(screen.getByText('Была создана программа.')).toBeTruthy();
     expect(screen.queryByText('Начать тренировку')).toBeNull();
   });
@@ -119,22 +117,39 @@ describe('Coach ad-hoc entry points', () => {
     expect(screen.queryByText('Сессия late')).toBeNull();
     expect(state.unsubscribe).toHaveBeenCalled();
   });
-  it('publishes nested navigation without a parent-render update loop', async () => {
+  it('keeps an active workout at the root and blocks + without opening a creation menu', async () => {
+    const navigation = vi.fn();
+    render(<CoachAdHocWorkoutsScreen initData="signed" onNavigationContextChange={navigation} />);
+    await pick('quick');
+    expect(await screen.findByText('Сессия quick-one')).toBeTruthy();
+    expect(navigation.mock.calls.every(([value]) => value === null)).toBe(true);
+    expect(state.action?.popoverItems).toBeUndefined();
+    act(() => state.action?.onClick?.());
+    expect(screen.getByRole('dialog', { name: 'Завершите текущую тренировку, чтобы начать новую.' })).toBeTruthy();
+    expect(state.createQuick).toHaveBeenCalledTimes(1);
+    expect(state.createForAthlete).not.toHaveBeenCalled();
+  });
+  it('resumes an active session after reopening the Training tab', async () => {
+    state.rows = [{ id: 'resumed', name: 'День', status: 'active' }];
+    renderScreen();
+    expect(await screen.findByText('Сессия resumed')).toBeTruthy();
+    expect(state.action?.popoverItems).toBeUndefined();
+    expect(state.createQuick).not.toHaveBeenCalled();
+  });
+  it('reuses the shared source flow without a parent-render update loop', async () => {
     function Parent() {
-      const [navigation, setNavigation] = useState<NavigationContext | null>(null);
-      return <><CoachAdHocWorkoutsScreen initData="signed" onClose={() => {}}
-        onNavigationContextChange={setNavigation} /><output>{navigation?.title}</output></>;
+      const [, setNavigation] = useState<NavigationContext | null>(null);
+      return <CoachAdHocWorkoutsScreen initData="signed" onNavigationContextChange={setNavigation} />;
     }
     render(<Parent />); await pick('program');
-    expect(screen.getByRole('dialog', { name: 'Из программы' })).toBeTruthy();
-    expect(screen.getByRole('status').textContent).toBe('Из программы');
+    expect(screen.getByRole('dialog', { name: 'Общий выбор программы' }).getAttribute('data-mode')).toBe('start');
   });
   it('releases stale creation ownership when the repository is replaced', async () => {
     let resolve: (value: { id: string; createdProgram: boolean }) => void = () => {};
     state.createQuick.mockImplementationOnce(() => new Promise(value => { resolve = value; }));
     const view = renderScreen(); await pick('quick');
     cloud.db = {};
-    view.rerender(<CoachAdHocWorkoutsScreen initData="signed" onClose={() => {}} onNavigationContextChange={() => {}} />);
+    view.rerender(<CoachAdHocWorkoutsScreen initData="signed" onNavigationContextChange={() => {}} />);
     state.createQuick.mockResolvedValueOnce({ id: 'fresh', createdProgram: false });
     await pick('quick');
     expect(await screen.findByText('Сессия fresh')).toBeTruthy();

@@ -125,7 +125,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       </GlassSurface> : null}
     </> : null}
     {error ? <><Text variant="footnote" role="alert">{error}</Text>
-      {!session ? <Button tonal onClick={() => setRetry(value => value + 1)}>Повторить</Button> : null}</> : null}
+      {!session ? <Button rounded tonal onClick={() => setRetry(value => value + 1)}>Повторить</Button> : null}</> : null}
     <WorkoutExerciseSelectionSheet opened={selection} initData={initData} personalCatalogueRole="coach"
       saving={busy} actionError={error} onNavigationContextChange={setNestedNavigation}
       onClose={closeOverlay} onConfirm={ids => {

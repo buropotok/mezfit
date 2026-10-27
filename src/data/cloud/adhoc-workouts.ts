@@ -16,6 +16,8 @@ import type { ExistingSetFact, SetEntryFactDraft, SetType } from '../../workout/
 
 export type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 
+export type AdHocOpenSession = Pick<AdHocSessionRow, 'id' | 'name' | 'status'>;
+
 const executionTables = ['adHocSessions', 'adHocExercises', 'adHocSets', 'realms', 'members'];
 const programTables = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'localProgramSync', 'roles'];
@@ -122,6 +124,7 @@ export class AdHocWorkoutRepository {
   }
   createQuick(): Promise<{ id: string; createdProgram: boolean }> {
     return this.write([], async () => {
+      await this.requireNoActiveSession();
       const timestamp = now();
       const id = await this.db.adHocSessions.add({
         realmId: this.actorUserId, owner: this.actorUserId, athleteUserId: this.actorUserId,
@@ -138,6 +141,7 @@ export class AdHocWorkoutRepository {
       || (dayId !== undefined && (typeof dayId !== 'string' || !dayId || !programId)))
       return Promise.reject(new Error('ADHOC_INVALID_TARGET'));
     return this.write([...programTables, ...catalogueTables], async () => {
+      await this.requireNoActiveSession();
       // Eligibility, default graph and execution snapshot share one transaction.
       const programs = await this.listPrograms(athleteUserId);
       let selectedProgramId = programId, selectedDayId = dayId;
@@ -360,15 +364,28 @@ export class AdHocWorkoutRepository {
       return { session: row ? await this.project(row) : null, row: row ?? undefined };
     })).subscribe({ next: result => onChange(result.session, result.row), error: onError });
   }
-  async list(): Promise<{ id: string; name: string }[]> {
-    const result: { id: string; name: string }[] = [];
+  /** Called in the creation transaction so competing local starts serialize. */
+  private async findActive(): Promise<{ id: string; name: string } | null> {
+    const rows = await this.db.adHocSessions.where('status').equals('active').toArray();
+    for (const row of rows) if (row.creatorUserId === this.actorUserId && await this.accessible(row))
+      return { id: row.id, name: row.name };
+    return null;
+  }
+  getActive(): Promise<{ id: string; name: string } | null> {
+    return this.db.transaction('r', executionTables, () => this.findActive());
+  }
+  private async requireNoActiveSession(): Promise<void> {
+    if (await this.findActive()) throw new Error('ADHOC_ACTIVE_SESSION_EXISTS');
+  }
+  async list(): Promise<AdHocOpenSession[]> {
+    const result: AdHocOpenSession[] = [];
     const rows = (await this.db.adHocSessions.toArray()).filter(isAdHocSessionRow).sort((a, b) => b.startedAt.localeCompare(a.startedAt) || a.id.localeCompare(b.id));
     for (const row of rows) if (row.creatorUserId === this.actorUserId
       && (row.status === 'active' || (row.status === 'completed' && row.autoCreatedProgram && row.templateSaveDecision === 'pending'))
-      && await this.accessible(row)) result.push({ id: row.id, name: row.name });
+      && await this.accessible(row)) result.push({ id: row.id, name: row.name, status: row.status });
     return result;
   }
-  observeOpen(onChange: (rows: { id: string; name: string }[]) => void,
+  observeOpen(onChange: (rows: AdHocOpenSession[]) => void,
     onError: (reason: unknown) => void): { unsubscribe(): void } {
     return liveQuery(() => this.list()).subscribe({ next: onChange, error: onError });
   }
