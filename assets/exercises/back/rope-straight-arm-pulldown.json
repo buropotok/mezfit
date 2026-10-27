@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/rope-straight-arm-pulldown/",
+  "name": "Rope Straight Arm Pulldown",
+  "how_to": "Rope Straight Arm Pulldown Benefits\n- The rope straight-arm pulldown trains the lats through a long range of motion, and is helpful for people who have trouble feeling their backs work on conventional pulldown exercises. Cable movements provide constant tension throughout the entire movement. Using cables allows you to work both the concentric and eccentric portions of the exercise. More tension equals more muscle activation.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Rope-Straight-Arm-Pulldown.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Pectoralis",
+      "Triceps Brachii",
+      "Teres Major",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ]
+}

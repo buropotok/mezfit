@@ -1,0 +1,46 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bent-over-dumbbell-row/",
+  "name": "Bent Over Dumbbell Row",
+  "how_to": "1. Starting Position: Hold a dumbbell in each hand with palms facing your torso. Stand with feet shoulder-width apart, knees slightly bent.\n2. Hip Hinge: Push your hips back and lean your torso forward to about a 45-degree angle. Keep your back flat and core engaged.\n3. Rowing Movement: Pull the dumbbells toward your ribcage by driving your elbows straight back, keeping them close to your body.\n4. Squeeze and Hold: At the top of the movement, squeeze your shoulder blades together for a brief pause.\n5. Controlled Lowering: Slowly lower the dumbbells back to the starting position, maintaining form and control.\n6. Repeat: Perform 8–12 repetitions per set.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Bent-Over-Dumbbell-Row.gif",
+  "muscles": {
+    "target": [
+      "Back"
+    ],
+    "synergists": [
+      "Latissimus Dorsi",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids",
+      "Brachialis",
+      "Brachioradialis",
+      "Pectoralis Major"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Triceps",
+        "Erector Spinae",
+        "Hamstrings",
+        "Gluteus Maximus",
+        "Quadriceps",
+        "Adductor Magnus"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae",
+    "Full Body"
+  ]
+}
