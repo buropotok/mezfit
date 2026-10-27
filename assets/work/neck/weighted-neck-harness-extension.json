@@ -1,0 +1,22 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-neck-harness-extension/",
+  "name": "Weighted Neck Harness Extension",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Weighted-Neck-Harness-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Neck"
+  ],
+  "name_ru": "Разгибание шеи с отягощением на головной лямке",
+  "tracking_type": "weight_reps"
+}
