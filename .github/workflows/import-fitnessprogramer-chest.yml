@@ -39,5 +39,5 @@ jobs:
           git add assets/exercises/chest/
           if ! git diff --cached --quiet; then
             git commit -m 'data: import FitnessProgramer Chest exercises'
-            git push origin HEAD:refs/heads/data/fitnessprogramer-chest-verified-20261027
+            git push origin HEAD:refs/heads/data/fitnessprogramer-chest-patched-20261027
           fi
