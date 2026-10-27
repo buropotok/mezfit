@@ -175,11 +175,8 @@ def verify_colliding_urls(collisions):
         if not same:
             incompatible.append(name)
     if incompatible:
-        raise RuntimeError(
-            "Cannot keep multiple different GIFs under one original filename "
-            "in one flat directory. Conflicting names: " +
-            ", ".join(incompatible)
-        )
+        print("UNRESOLVED: distinct GIF contents share original filename(s): " +
+              ", ".join(incompatible), flush=True)
 
 
 def main():
@@ -201,7 +198,10 @@ def main():
     records = groups[args.category]
     if not records:
         raise RuntimeError(f"Empty category {args.category}")
-    to_get = {name: urls[name] for _, name in records.values()}
+    # Do not arbitrarily choose which distinct source GIF owns a shared name.
+    # These exercises remain without image_id until the naming conflict is resolved.
+    to_get = {name: urls[name] for _, name in records.values()
+              if name not in collisions}
     MEDIA.mkdir(parents=True, exist_ok=True)
     results = {}
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
@@ -215,6 +215,8 @@ def main():
     if set(results) != set(to_get):
         raise RuntimeError(f"Incomplete GIF downloads for {args.category}")
     for path, (doc, name) in records.items():
+        if name in collisions:
+            continue
         doc["image_id"] = name
         path.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n",
                         encoding="utf-8")
@@ -223,7 +225,10 @@ def main():
         "records": len(records),
         "unique_files": len(to_get),
         "downloaded": sum(1 for v in results.values() if v[2]),
-        "status": "complete",
+        "unresolved_conflicting_image_ids": sum(
+            1 for _, name in records.values() if name in collisions),
+        "status": "complete_with_explicit_exceptions" if any(
+            name in collisions for _, name in records.values()) else "complete",
     }), flush=True)
 
 
