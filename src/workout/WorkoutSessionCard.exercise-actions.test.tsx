@@ -48,7 +48,8 @@ describe('workout exercise actions', () => {
       onDeleteExercise={() => {}} />);
     const disclosure = screen.getByRole('button', { name: 'Развернуть упражнение' });
     fireEvent.click(screen.getByRole('button', { name: 'Информация об упражнении: Жим лёжа' }));
-    expect(information).toHaveBeenCalledExactlyOnceWith('exercise-x');
+    expect(information).toHaveBeenCalledOnce();
+    expect(information).toHaveBeenCalledWith('exercise-x');
     expect(disclosure.getAttribute('aria-expanded')).toBe('false');
   });
 
@@ -60,12 +61,14 @@ describe('workout exercise actions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Удалить' }));
     expect(remove).not.toHaveBeenCalled();
     act(() => finishClosing?.());
-    expect(remove).toHaveBeenCalledExactlyOnceWith('exercise-x');
+    expect(remove).toHaveBeenCalledOnce();
+    expect(remove).toHaveBeenCalledWith('exercise-x');
     fireEvent.click(screen.getByRole('button', { name: 'Меню упражнения' }));
     fireEvent.click(screen.getByRole('button', { name: 'Информация' }));
     expect(information).not.toHaveBeenCalled();
     act(() => finishClosing?.());
-    expect(information).toHaveBeenCalledExactlyOnceWith('exercise-x');
+    expect(information).toHaveBeenCalledOnce();
+    expect(information).toHaveBeenCalledWith('exercise-x');
   });
 
   it('keeps information available for a completed session but disables deletion', () => {
