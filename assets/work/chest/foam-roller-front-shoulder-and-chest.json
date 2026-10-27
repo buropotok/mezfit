@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/foam-roller-front-shoulder-and-chest/",
+  "name": "Foam Roller Front Shoulder and Chest",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Roll-Front-Shoulder-and-Chest-Lying-on-Floor.gif",
+  "muscles": {
+    "target": [
+      "Chest",
+      "Shoulders"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Foam Roller",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Shoulders"
+  ],
+  "name_ru": "Растяжка передней поверхности плеча и грудных мышц на ролике",
+  "tracking_type": "time"
+}
