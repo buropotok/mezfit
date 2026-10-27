@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kneeling-incline-press-gymstick/",
+  "name": "Kneeling Incline Press | Gymstick",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Kneeling-Incline-Press-Gymstick.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Жим гимстика с коленей под углом вверх",
+  "tracking_type": "weight_reps"
+}
