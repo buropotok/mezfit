@@ -38,6 +38,10 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
   const running = useRef(false);
   const activeId = useRef<string | null>(null);
   const hasActive = sessions.some(row => row.status === 'active') || busy;
+  const loadSessionExerciseInformation = useCallback((exerciseId: string) => {
+    if (!repository || !sessionId) return Promise.reject(new Error('Тренировка недоступна'));
+    return repository.exerciseInformation(sessionId, exerciseId);
+  }, [repository, sessionId]);
   useEffect(() => {
     ++generation.current; running.current = false; activeId.current = null;
     setBusy(false); setError(''); setSessionId(null); setSourceOpen(false); setPlannedOpen(false);
@@ -122,7 +126,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
   return <>
     {sessionId && repository ? <AdHocSessionScreen key={sessionId} repository={repository} sessionId={sessionId}
       initData={initData} actor={actor}
-      onExerciseInformation={exerciseId => repository.exerciseInformation(sessionId, exerciseId)}
+      onExerciseInformation={loadSessionExerciseInformation}
       onNavigationContextChange={setChildNavigation} /> : <section className="adhoc-workouts">
       <Text variant="headline">Тренировка</Text>
       <Text variant="body">Нажмите «+», чтобы начать тренировку.</Text>
