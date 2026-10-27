@@ -1,0 +1,40 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-pullover/",
+  "name": "Lying Cable Pullover",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set up the cable machine : Attach a rope or straight bar to the pulley. Lie face up on a flat bench or the"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lying-Extension-Pullover.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Levator Scapulae",
+      "Pectoralis",
+      "Triceps Brachii",
+      "Teres Major",
+      "Posterior Deltoid",
+      "Infraspinatus",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Chest"
+  ],
+  "name_ru": "Пуловер на блоке лёжа",
+  "tracking_type": "weight_reps"
+}
