@@ -1,0 +1,54 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kneeling-landmine-press/",
+  "name": "Kneeling Landmine Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup:"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Secure one end of the barbell in a landmine attachment or against a stable surface."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Load the free end with an appropriate weight."
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Kneeling-Landmine-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Clavicular"
+    ],
+    "synergists": [
+      "Pectoralis Major, Sternal",
+      "Deltoid, Anterior",
+      "Triceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Shoulders"
+  ],
+  "name_ru": "Жим лэндмайн-грифа стоя на коленях",
+  "tracking_type": "weight_reps"
+}
