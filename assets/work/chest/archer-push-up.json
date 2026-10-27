@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/archer-push-up/",
   "name": "Archer Push-Up",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "To perform the Archer Push-Up properly, follow these steps:"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Start in a Wide Push-Up Position : Begin in a push-up stance with your hands"
-      ]
-    }
-  ],
+  "how_to": "To perform the Archer Push-Up properly, follow these steps:\n\n1. Start in a Wide Push-Up Position: Begin in a push-up stance with your hands placed wider than shoulder-width. Turn your fingers slightly outward.\n2. Shift Your Weight to One Side: Lower your chest toward the working arm, bending that elbow while the opposite arm remains extended straight.\n3. Keep the Other Arm Straight: As you descend, your extended arm should remain straight and act as a support beam, sliding outward across the ground.\n4. Reach Full Range of Motion: Lower until your chest nearly touches the working-side hand while keeping your core tight and back flat.\n5. Push Back to the Top: Drive through the working arm to return to the start position, then repeat on the same side or alternate sides.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Archer-Push-Up.gif",
   "muscles": {
     "target": [
@@ -53,6 +38,7 @@
     "Full Body",
     "Triceps"
   ],
+  "image_id": "Archer-Push-Up.gif",
   "name_ru": "Отжимания «лучник»",
   "tracking_type": "weight_reps"
 }
