@@ -157,7 +157,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onClose, onNavigatio
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     </MezfitBottomSheet>
     <MezfitBottomSheet opened={step === 'planned'} label="Плановая тренировка" lazyMount />
-    <Toast opened={toast} position="bottom" role="status" aria-live="polite">
+    <Toast opened={toast} position="center" role="status" aria-live="polite">
       <Text variant="body">Была создана программа.</Text>
     </Toast>
   </>;
