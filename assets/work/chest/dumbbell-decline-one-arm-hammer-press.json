@@ -1,0 +1,52 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-decline-one-arm-hammer-press/",
+  "name": "Dumbbell Decline One-Arm Hammer Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Step 1: Set Up Properly"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Adjust a decline bench to approximately 15 to 30 degrees."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Secure your feet under the bench pads to maintain"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Dumbbell-Decline-One-Arm-Hammer-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ],
+  "name_ru": "Жим гантели нейтральным хватом одной рукой на скамье с отрицательным наклоном",
+  "tracking_type": "weight_reps"
+}
