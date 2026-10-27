@@ -74,6 +74,10 @@ function valueIndex(column: ThreeColumnPickerColumn, value: number) {
   return index;
 }
 
+function partsKey(value: ThreeColumnPickerParts) {
+  return `${value.first}:${value.second}:${value.third}`;
+}
+
 function partsEqual(left: ThreeColumnPickerParts, right: ThreeColumnPickerParts) {
   return left.first === right.first
     && left.second === right.second
@@ -302,6 +306,7 @@ function ThreeColumnPickerColumnWheel({
   column,
   selected,
   onScroll,
+  onScrollEnd,
   onSelect,
   setColumnRef,
 }: {
@@ -309,6 +314,7 @@ function ThreeColumnPickerColumnWheel({
   column: ThreeColumnPickerColumn;
   selected: number;
   onScroll: (part: ThreeColumnPickerPart, event: UIEvent<HTMLDivElement>) => void;
+  onScrollEnd: (part: ThreeColumnPickerPart) => void;
   onSelect: (part: ThreeColumnPickerPart, index: number) => void;
   setColumnRef: (part: ThreeColumnPickerPart, element: HTMLDivElement | null) => void;
 }) {
@@ -319,6 +325,7 @@ function ThreeColumnPickerColumnWheel({
       role="listbox"
       aria-label={column.ariaLabel}
       onScroll={(event) => onScroll(part, event)}
+      onScrollEnd={() => onScrollEnd(part)}
     >
       {column.values.map((value, index) => {
         const isSelected = value === selected;
@@ -375,6 +382,8 @@ export function ThreeColumnPicker({
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const reconcileFrameRef = useRef<number | null>(null);
+  // Parent acknowledgements can arrive after further native scroll frames.
+  const locallyEmittedRef = useRef<Set<string>>(new Set());
   const feedbackValueRef = useRef<ThreeColumnPickerParts>(valueParts);
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, valueParts));
 
@@ -438,6 +447,7 @@ export function ThreeColumnPicker({
 
     if (!opened) {
       wasOpenedRef.current = false;
+      locallyEmittedRef.current.clear();
       cancelScheduledFrames(view);
       return;
     }
@@ -446,6 +456,9 @@ export function ThreeColumnPicker({
     wasOpenedRef.current = true;
     const valueChanged = !partsEqual(draftRef.current, valueParts);
     if (!justOpened && !valueChanged) return;
+    // Delayed echoes of earlier steps must not steer a moving wheel.
+    if (!justOpened && locallyEmittedRef.current.has(partsKey(valueParts))) return;
+    locallyEmittedRef.current.clear();
 
     cancelScheduledFrames(view);
     draftRef.current = valueParts;
@@ -466,52 +479,67 @@ export function ThreeColumnPicker({
     cancelScheduledFrames(view);
   }, [target]);
 
+  const signalCrossedValues = (part: ThreeColumnPickerPart, index: number, fromScroll: boolean) => {
+    const values = columns[part].values;
+    const nextIndex = Math.max(0, Math.min(values.length - 1, index));
+    const lastIndex = valueIndex(columns[part], feedbackValueRef.current[part]);
+    if (lastIndex === nextIndex) return;
+
+    // Scroll events may skip multiple rows: issue one tick per crossed value,
+    // even if React commits only the most recent position this animation frame.
+    if (fromScroll) {
+      const step = nextIndex > lastIndex ? 1 : -1;
+      for (let cursor = lastIndex + step; cursor !== nextIndex + step; cursor += step) {
+        triggerTelegramSelectionHaptic();
+      }
+    } else {
+      triggerTelegramSelectionHaptic();
+    }
+    feedbackValueRef.current = { ...feedbackValueRef.current, [part]: values[nextIndex] };
+  };
+
   const commitIndex = (part: ThreeColumnPickerPart, index: number) => {
     const column = columns[part];
     const clampedIndex = Math.max(0, Math.min(column.values.length - 1, index));
     const nextPartValue = column.values[clampedIndex];
-    const current = controlledRef.current;
+    const current = draftRef.current;
     const next = { ...current, [part]: nextPartValue };
-
-    if (feedbackValueRef.current[part] !== nextPartValue) {
-      feedbackValueRef.current = {
-        ...feedbackValueRef.current,
-        [part]: nextPartValue,
-      };
-      triggerTelegramSelectionHaptic();
-    }
-
-    if (partsEqual(next, current)) {
-      draftRef.current = current;
-      setDraft(current);
-      return;
-    }
+    if (partsEqual(next, current)) return;
 
     draftRef.current = next;
     setDraft(next);
+    locallyEmittedRef.current.add(partsKey(next));
     onChangeRef.current(next);
+  };
 
-    const view = target?.ownerDocument.defaultView ?? window;
-    if (reconcileFrameRef.current !== null) {
-      view.cancelAnimationFrame(reconcileFrameRef.current);
-    }
+  const handleScrollEnd = (part: ThreeColumnPickerPart) => {
+    if (!openedRef.current) return;
+    const column = columns[part];
+    const element = columnRefs.current[part];
+    if (!element) return;
+    const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)));
+    signalCrossedValues(part, index, true);
+    commitIndex(part, index);
+
+    // Only reconcile a rejected controlled value after inertia stops.
+    const view = element.ownerDocument.defaultView ?? window;
+    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     reconcileFrameRef.current = view.requestAnimationFrame(() => {
       reconcileFrameRef.current = null;
       if (!openedRef.current) return;
-
       const canonical = controlledRef.current;
-      if (partsEqual(canonical, next)) return;
-
-      draftRef.current = canonical;
-      feedbackValueRef.current = canonical;
-      setDraft(canonical);
-      const canonicalScrollTops = partsToScrollTops(columns, canonical);
-      pendingScrollRef.current = canonicalScrollTops;
-      setScrollTops(canonicalScrollTops);
-      syncColumns(canonical);
+      if (!partsEqual(draftRef.current, canonical)) {
+        draftRef.current = canonical;
+        feedbackValueRef.current = canonical;
+        setDraft(canonical);
+        const tops = partsToScrollTops(columns, canonical);
+        pendingScrollRef.current = tops;
+        setScrollTops(tops);
+        syncColumns(canonical);
+      }
+      locallyEmittedRef.current.clear();
     });
   };
-
   const handleScroll = (
     part: ThreeColumnPickerPart,
     event: UIEvent<HTMLDivElement>,
@@ -523,6 +551,7 @@ export function ThreeColumnPicker({
       ...pendingScrollRef.current,
       [part]: top,
     };
+    signalCrossedValues(part, Math.round(top / ROW_HEIGHT), true);
 
     if (frameRefs.current[part] !== null) return;
 
@@ -540,6 +569,7 @@ export function ThreeColumnPicker({
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
     if (!openedRef.current) return;
 
+    signalCrossedValues(part, index, false);
     commitIndex(part, index);
     const nextTop = index * ROW_HEIGHT;
     pendingScrollRef.current = {
@@ -582,6 +612,7 @@ export function ThreeColumnPicker({
                 column={columns[part]}
                 selected={draft[part]}
                 onScroll={handleScroll}
+                onScrollEnd={handleScrollEnd}
                 onSelect={handleSelect}
                 setColumnRef={setColumnRef}
               />
