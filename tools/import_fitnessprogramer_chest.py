@@ -99,6 +99,15 @@ def extract_metadata(soup, heading_text, fallback):
 def extract_muscles(soup, fallback):
     main = soup.select_one('main') or soup
     out = {'target': [], 'synergists': [], 'stabilizers': {'dynamic': [], 'antagonist': []}}
+    # No explicit muscles-worked section: use the site's primary muscle group.
+    # Do not scan unrelated navigation, preview widgets or the footer.
+    muscle_heading = next((
+        h for h in main.find_all(['h2', 'h3', 'h4'])
+        if re.search(r'\bmuscles?\s+worked\b', h.get_text(' ', strip=True), re.I)
+    ), None)
+    if muscle_heading is None:
+        out['target'] = uniq(fallback)
+        return out
 
     def assign(label, muscle):
         key = label.lower()
@@ -158,54 +167,60 @@ def extract_muscles(soup, fallback):
     return out
 
 
+# These headings end the exercise instructions even when nested deeper than
+# their "How to" heading. In particular, the preview/sidebar never contains steps.
+INSTRUCTION_BOUNDARY = re.compile(
+    r'^(?:preview|muscle groups?|equipment|print exercise|'
+    r'workout planner(?: app)?|about us|tips for|common mistakes|'
+    r'benefits?|variations?|frequently asked|faqs?|how to incorporate)\b',
+    re.I
+)
+
+
 def instruction_excerpt(soup):
-    main_area = soup.select_one('main') or soup
-    paragraphs = []
-    for heading in main_area.find_all(['h2', 'h3', 'h4']):
+    article = soup.select_one('main') or soup
+    for heading in article.find_all(['h2', 'h3', 'h4']):
         title = heading.get_text(' ', strip=True)
-        if not re.search(r'\bhow\s+to\s+(perform|do|use|execute)|\binstructions\b|\bexecution\b', title, re.I):
+        if not re.search(r'^how\s+to\s+(?:do|perform|use|execute)\b|^instructions\b|^execution\b', title, re.I):
             continue
-        if re.search(r'incorporat|benefits|choose', title, re.I):
-            continue
-        level = int(heading.name[1])
+        steps = []
+        heading_level = int(heading.name[1])
         for node in heading.next_elements:
             if not isinstance(node, Tag):
                 continue
-            if node.name in ('h2', 'h3', 'h4') and int(node.name[1]) <= level:
-                if node.find('img') is not None or node.get_text(' ', strip=True).lower().startswith('image:'):
-                    continue
+            if node.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
+                next_title = node.get_text(' ', strip=True)
+                if INSTRUCTION_BOUNDARY.match(next_title):
+                    break
+                if int(node.name[1]) <= heading_level:
+                    break
+            if node.name not in ('p', 'li'):
+                continue
+            # An outer list item may wrap further instruction items; use leaves.
+            if node.name == 'li' and node.find('li') is not None:
+                continue
+            value = node.get_text(' ', strip=True)
+            if not value or value in steps:
+                continue
+            steps.append(value)
+        # The image-only exercise case deliberately has no fallback to page text.
+        result = []
+        remaining = 24
+        for value in steps:
+            if INSTRUCTION_BOUNDARY.match(value):
                 break
-            if node.name in ('p', 'li'):
-                value = node.get_text(' ', strip=True)
-                if value and value not in paragraphs:
-                    paragraphs.append(value)
-                if len(paragraphs) >= 10:
-                    break
-        if paragraphs:
-            break
-    if not paragraphs:
-        # Text-only fallback for atypical source markup.
-        rows = [' '.join(x.split()) for x in main_area.get_text('\n', strip=True).splitlines() if x.strip()]
-        starts = [i for i, value in enumerate(rows)
-                  if re.match(r'^how\s+to\s+(perform|do|use|execute)\b|^instructions\s*:?\s*$|^execution\s*:?\s*$', value, re.I)]
-        if starts:
-            for value in rows[starts[0] + 1: starts[0] + 80]:
-                if re.search(r'^(tips for|coach tips|common mistakes|benefits|preview|muscle groups|equipment|frequently asked)|\bbenefits\b|\bvariations\b', value, re.I):
-                    break
-                if value and len(value) < 400:
-                    paragraphs.append(value)
-    steps = []
-    remaining = 24
-    for paragraph in paragraphs:
-        if re.match(r'^(here are|the following|follow these|steps to perform)', paragraph.strip(), re.I):
-            continue
-        words = paragraph.split()
-        if not words or remaining < 4:
-            break
-        excerpt = ' '.join(words[:remaining])
-        remaining -= len(excerpt.split())
-        steps.append({'step': len(steps) + 1, 'title': 'Instruction excerpt', 'instructions': [excerpt]})
-    return steps
+            words = value.split()
+            if not words or remaining < 4:
+                break
+            excerpt = ' '.join(words[:remaining])
+            remaining -= len(excerpt.split())
+            result.append({
+                'step': len(result) + 1,
+                'title': 'Instruction excerpt',
+                'instructions': [excerpt],
+            })
+        return result
+    return []
 
 
 def get_gif(html, soup, slug):
@@ -258,11 +273,33 @@ def main():
     results = {}
     for i, (url, card) in enumerate(cards.items(), 1):
         slug = urlparse(url).path.rstrip('/').split('/')[-1]
-        results[slug + '.json'] = exercise(read(session, url), url, card)
+        fresh = exercise(read(session, url), url, card)
+        # This correction only changes how_to and muscles in existing records.
+        existing_path = Path('assets/exercises/chest') / (slug + '.json')
+        if existing_path.is_file():
+            saved = json.loads(existing_path.read_text(encoding='utf-8'))
+            if saved.get('source_url') != url:
+                raise RuntimeError('Source URL mismatch: ' + slug)
+            saved['how_to'] = fresh['how_to']
+            saved['muscles'] = fresh['muscles']
+            results[slug + '.json'] = saved
+        else:
+            results[slug + '.json'] = fresh
         print(f'{i}/{len(cards)} {slug}', flush=True)
     if len(results) != len(cards) or sum(bool(x['gif_url']) for x in results.values()) < len(results)*.7:
         raise RuntimeError('Validation failed: duplicate files or too few GIF links')
     # Known exercises serve as source-backed parser regression sentinels.
+    cobra = results.get('cobra-push-up.json', {})
+    if (cobra.get('how_to') != []
+            or cobra.get('muscles', {}).get('target') != ['Chest']
+            or cobra.get('muscles', {}).get('synergists') != []):
+        raise RuntimeError('Cobra Push-up image-only regression')
+    for filename, record in results.items():
+        for instruction in record.get('how_to', []):
+            for paragraph in instruction.get('instructions', []):
+                if (paragraph.strip().lower() in ('chest', 'full gym', 'no equipment')
+                        or 'online workout planner' in paragraph.lower()):
+                    raise RuntimeError('Unrelated text captured as an instruction: ' + filename)
     bench = results.get('bench-press.json', {})
     cable = results.get('high-cable-crossover.json', {})
     arm = results.get('arm-scissors.json', {})
