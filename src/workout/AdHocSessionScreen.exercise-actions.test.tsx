@@ -85,7 +85,7 @@ it('opens session exercise information and keeps deletion behind confirmation', 
   act(() => observer.notify?.(workout));
 
   fireEvent.click(screen.getByRole('button', { name: 'Иконка упражнения' }));
-  const infoSheet = screen.getByRole('dialog', { name: 'Информация об упражнении' });
+  const infoSheet = await screen.findByRole('dialog', { name: 'Информация об упражнении' });
   fireEvent.click(within(infoSheet).getByRole('button', { name: 'Загрузить карточку' }));
   await waitFor(() => expect(information).toHaveBeenCalledWith('exercise-1'));
   expect(deleteExercise).not.toHaveBeenCalled();
