@@ -46,9 +46,10 @@ vi.mock('./WorkoutExerciseSelectionSheet', () => ({
   },
 }));
 vi.mock('./WorkoutSessionCard', () => ({
-  WorkoutSessionCard: ({ session, title, onAddSet, onAddExercise }: WorkoutFactCardProps<string>) => (
+  WorkoutSessionCard: ({ session, title, onAddSet, onAddExercise, onDeleteExercise }: WorkoutFactCardProps<string>) => (
     <div data-testid="session-card">
       <span>{title ?? 'Без названия'}</span>
+      {onDeleteExercise ? <button onClick={() => onDeleteExercise('exercise-x1')}>Удалить упражнение</button> : null}
       <button onClick={onAddExercise}>Добавить упражнение</button>
       {session.exercises.map(exercise => <button key={exercise.sessionExerciseId}
         onClick={() => onAddSet?.(exercise.sessionExerciseId)}>Добавить подход</button>)}
@@ -231,4 +232,18 @@ it('shows the safe repository diagnosis when an observed session becomes unavail
   expect(screen.getByRole('alert').textContent).toContain('ADHOC_INVALID_SOURCE');
   expect(screen.queryByTestId('session-card')).toBeNull();
   expect(screen.getByRole('button', { name: 'Повторить' })).toBeTruthy();
+});
+
+
+it.each([null, 'occurrence-one'])('offers exercise deletion only for unplanned sessions (occurrence=%s)', occurrenceId => {
+  const { observations } = fixture();
+  act(() => observations[0].next({ ...session, occurrenceId }, row));
+  if (occurrenceId) {
+    expect(screen.queryByRole('button', { name: 'Удалить упражнение' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Завершить тренировку' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Добавить подход' })).toBeTruthy();
+  } else {
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить упражнение' }));
+    expect(screen.getByRole('dialog', { name: 'Удалить упражнение?' })).toBeTruthy();
+  }
 });
