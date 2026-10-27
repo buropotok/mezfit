@@ -127,7 +127,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}
         onAddSet={id => { if (!pending.current) void mutate(() => repository.addSet(sessionId, id)).catch(report); }}
         onDeleteSet={id => mutate(() => repository.deleteSet(sessionId, id))}
-        onDeleteExercise={id => { if (!pending.current) setDeleteExerciseId(id); }}
+        onDeleteExercise={session?.occurrenceId ? undefined : id => { if (!pending.current) setDeleteExerciseId(id); }}
         onExerciseInformation={onExerciseInformation ? id => {
           if (!pending.current) setInformationExerciseId(id);
         } : undefined}
