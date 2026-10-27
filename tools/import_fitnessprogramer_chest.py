@@ -102,9 +102,17 @@ def extract_muscles(soup):
               'stabilizers': {'dynamic': [], 'antagonist': []}}
     main = soup.select_one('main') or soup
     rows = [' '.join(x.split()).strip('• ') for x in main.get_text('\n', strip=True).splitlines()]
+    title = soup.find('h1')
+    if title is None:
+        return result
+    exercise_name = title.get_text(' ', strip=True)
+    h1_position = next((i for i, row in enumerate(rows) if row == exercise_name), -1)
+    if h1_position < 0:
+        return result
     starts = [
         i for i, value in enumerate(rows)
-        if (re.search(r'\bmuscles?\s+worked\b', value, re.I)
+        if (i > h1_position
+            and re.search(r'\bmuscles?\s+worked\b', value, re.I)
             and len(value) < 90
             and not re.match(r'^(?:image:|overview|preview)', value, re.I)
             and not re.search(r'[.!?]', value))
@@ -278,7 +286,7 @@ def main():
     if (cobra.get('how_to') != []
             or cobra.get('muscles', {}).get('target') != []
             or cobra.get('muscles', {}).get('synergists') != []):
-        raise RuntimeError('Cobra Push-up image-only regression')
+        raise RuntimeError('Cobra Push-up image-only regression: ' + repr(cobra))
     for filename, record in results.items():
         for instruction in record.get('how_to', []):
             for paragraph in instruction.get('instructions', []):
