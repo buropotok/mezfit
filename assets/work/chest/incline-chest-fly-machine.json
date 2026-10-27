@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/incline-chest-fly-machine/",
   "name": "Incline Chest Fly Machine",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "1. Adjust the Machine: Set the machine’s seat and arms to an incline that targets your upper chest. Ensure that the handles are positioned"
-      ]
-    }
-  ],
+  "how_to": "1. Adjust the Machine: Set the machine’s seat and arms to an incline that targets your upper chest. Ensure that the handles are positioned at a height comfortable for your reach.\n\n2. Seat Positioning: Sit on the machine with your back flat against the backrest and your feet firmly planted on the floor. Grab the handles with an overhand grip, palms facing inward.\n\n3. Initial Position: Start with your arms extended straight out to the sides, slightly bent at the elbows. Your elbows should be at a level slightly below your shoulders.\n\n4. Movement: Keeping a slight bend in your elbows, exhale and bring the handles or levers together in front of you. Focus on using your chest muscles to perform the movement. Visualize hugging a large tree as you bring your arms together.\n\n5. Contraction: Hold the fully contracted position for a moment, feeling the tension in your chest muscles.\n\n6. Return: Inhale and slowly reverse the movement, bringing your arms back to the starting position in a controlled manner. Ensure a smooth and controlled motion without locking out your elbows.\n\n7. Repeat: Aim for a specific number of repetitions and sets, considering a weight that challenges your muscles without compromising your form.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Incline-Chest-Fly-Machine.gif",
   "muscles": {
     "target": [
@@ -34,6 +26,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Incline-Chest-Fly-Machine.gif",
   "name_ru": "Сведение рук в тренажёре с акцентом на верх груди",
   "tracking_type": "weight_reps"
 }
