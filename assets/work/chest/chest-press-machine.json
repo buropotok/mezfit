@@ -1,7 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/chest-press-machine/",
   "name": "Chest Press Machine",
-  "how_to": [],
+  "how_to": "Chest Press Machine",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Chest-Press-Machine.gif",
   "muscles": {
     "target": [
@@ -25,6 +25,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Chest-Press-Machine.gif",
   "name_ru": "Жим от груди в тренажёре",
   "tracking_type": "weight_reps"
 }
