@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/dumbbell-pullover/",
   "name": "Dumbbell Pullover",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Set Up: Lie on a flat bench with only your upper back and shoulders supported. Keep your feet flat on the ground."
-      ]
-    }
-  ],
+  "how_to": "1. Set Up: Lie on a flat bench with only your upper back and shoulders supported. Keep your feet flat on the ground.\n2. Grip the Dumbbell: Hold one dumbbell with both hands under the inner plate, arms extended above your chest.\n3. Brace and Lower: Inhale, brace your core, and slowly arc the dumbbell back and down behind your head. Maintain a slight bend in the elbows.\n4. Stretch and Return: Once you feel a stretch in your lats and chest, reverse the motion by pulling the dumbbell back over your chest using your lats or chest.\n5. Finish Controlled: Exhale at the top and repeat for desired reps with smooth, controlled movement.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Pullover.gif",
   "muscles": {
     "target": [
@@ -43,6 +35,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Dumbbell-Pullover.gif",
   "name_ru": "Пуловер с гантелью",
   "tracking_type": "weight_reps"
 }
