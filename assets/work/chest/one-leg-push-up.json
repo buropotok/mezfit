@@ -1,0 +1,86 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-leg-push-up/",
+  "name": "One Leg Push-Up",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Chest"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Full Gym"
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "NO EQUIPMENT"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Online workout planner lets you create 5 free personalized workout plans to help you reach your fitness goals."
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/One-Leg-Push-Up.gif",
+  "muscles": {
+    "target": [
+      "Home",
+      "Calculators",
+      "Body Mass Index (BMI)",
+      "Body Fat Index",
+      "Calories Burned",
+      "Daily Calorie Calculator",
+      "One Rep Max Calculator",
+      "Grip Strength Calculator",
+      "Exercises",
+      "Neck",
+      "Trapezius",
+      "Shoulder",
+      "Chest",
+      "Back / Wing",
+      "Erector Spinae",
+      "Biceps",
+      "Triceps",
+      "Forearm",
+      "Abs / Core",
+      "Leg",
+      "Calf",
+      "Hips",
+      "Cardio",
+      "Full Body",
+      "Single Workouts",
+      "Workout Plans",
+      "My Profile",
+      "Login / Reg",
+      "Search",
+      "Cart",
+      "Menu",
+      "One Leg Push-Up",
+      "Exercise / Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Отжимания с опорой на одну ногу",
+  "tracking_type": "weight_reps"
+}
