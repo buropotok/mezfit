@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/side-neck-stretch/",
+  "name": "Side Neck Stretch",
+  "how_to": "How to Lateral Neck Flexion: Hold the head in the midline. Gently flex the head to the left side to let the ears touch the shoulders. Flex the neck as far as it can go without causing pain. Hold the position for 10-20 seconds. Bring back the head in its original position and do the lateral flexion on the opposite side.\n\nSide Neck Stretch Benefits\n- Neck stretches are also involved in physical therapy that aims to rehabilitate the neck muscles, joints and bones. Neck stretches aims to increase the strength, tone and flexibility of the neck muscles. It also allows the ligaments on the neck joints to become more flexible and withstand increased stress to the area.\n- When the head and shoulders drift forward due to poor posture, some muscles in the chest and neck can shorten and become tight over time, which can perpetuate the poor posture that is causing neck pain. The neck stretching exercises can help loosen postural muscles and may reduce neck pain.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Side-Neck-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Levator Scapula",
+      "Middle Scalene",
+      "Anterior Scalene",
+      "Sternocleidomastoid",
+      "Omohyoid",
+      "Trapezius"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Neck"
+  ],
+  "name_ru": "Боковая растяжка шеи",
+  "tracking_type": "time"
+}
