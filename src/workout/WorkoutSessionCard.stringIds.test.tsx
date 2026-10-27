@@ -134,7 +134,8 @@ describe('WorkoutSessionCard string identities', () => {
     fireEvent.click(screen.getByRole('button', { name: 'История упражнения' }));
     expect(onOpenExerciseHistory).toHaveBeenCalledWith('definition-d1');
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Подход 1' }))
+      .getByRole('button', { name: 'Сохранить' }));
     await waitFor(() => expect(onSaveSet).toHaveBeenCalledWith({
       workoutSessionId: 'session-a1', sessionExerciseId: 'exercise-x1', sessionSetId: 'set-s1',
       fact: {
