@@ -1,0 +1,44 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-medicine-ball-slam/",
+  "name": "One Arm Medicine Ball Slam",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold the medicine ball in one hand overhead."
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Ensure your torso remains upright, and avoid leaning back"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2024/06/One-Arm-Medicine-Ball-Slam.gif",
+  "muscles": {
+    "target": [
+      "Abs",
+      "Chest",
+      "Full Body",
+      "Shoulders"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Chest",
+    "Full Body",
+    "Shoulders"
+  ]
+}

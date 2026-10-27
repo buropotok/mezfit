@@ -1,0 +1,45 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/alternate-dumbbell-bench-press/",
+  "name": "Alternate Dumbbell Bench Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup:"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Choose Appropriate Dumbbells Select dumbbells that allow you to maintain proper form throughout the exercise."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set Up the Bench Lie flat on a"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Alternate-Dumbbell-Bench-Press.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

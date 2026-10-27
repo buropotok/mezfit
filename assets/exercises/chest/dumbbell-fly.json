@@ -1,0 +1,53 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-fly/",
+  "name": "Dumbbell Fly",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup :"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Lie flat on a bench."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Hold a dumbbell in each hand with a neutral grip (palms facing each other)."
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Extend your arms"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Fly.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

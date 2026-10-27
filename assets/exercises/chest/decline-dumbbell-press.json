@@ -1,0 +1,46 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/decline-dumbbell-press/",
+  "name": "Decline Dumbbell Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set a decline bench at a 15–30 degree angle."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Grab a pair of dumbbells and sit on the bench with your feet secured"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Decline-Dumbbell-Press.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

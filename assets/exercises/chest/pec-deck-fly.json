@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pec-deck-fly/",
+  "name": "Pec Deck Fly",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pec-Deck-Fly.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

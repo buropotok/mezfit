@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-chest-press-machine/",
+  "name": "Incline Chest Press Machine",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Sit on the machine with your back firmly against the backrest. Position your feet flat on the floor, shoulder-width apart. Maintain a neutral spine"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Chest-Press-Machine.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

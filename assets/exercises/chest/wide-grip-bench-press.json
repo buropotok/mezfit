@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/wide-grip-bench-press/",
+  "name": "Wide Grip Bench Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Step-by-Step Guide"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup: Lie flat on a bench press station with your feet firmly planted on the ground. Position your eyes directly under the"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/07/Wide-Grip-Barbell-Bench-Press.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

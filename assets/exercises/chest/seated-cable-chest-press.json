@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-cable-chest-press/",
+  "name": "Seated Cable Chest Press",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Seated-Cable-Chest-Press.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

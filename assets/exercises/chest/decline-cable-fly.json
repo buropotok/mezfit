@@ -1,0 +1,52 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/decline-cable-fly/",
+  "name": "Decline Cable Fly",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set the pulleys on a cable machine to a high position, above shoulder level."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Attach D-handles to each cable."
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Stand in the middle"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Decline-Cable-Fly.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

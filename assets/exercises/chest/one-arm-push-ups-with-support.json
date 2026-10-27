@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-push-ups-with-support/",
+  "name": "One Arm Push Ups With Support",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Step-by-Step Guide"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup: Find a sturdy bench, box, or elevated surface for support. Get into a push-up position with your feet slightly wider than"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/One-Arm-Push-Ups-With-Support.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

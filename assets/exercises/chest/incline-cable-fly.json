@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-cable-fly/",
+  "name": "İncline Cable Fly",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "İncline Cable Fly Benefits"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Muscle Worked in the İncline Cable Fly"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Cable-Fly.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

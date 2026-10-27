@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/assisted-chest-dip/",
+  "name": "Assisted Chest Dip",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Using an Assisted Dip Machine"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set the Resistance : Adjust the machine’s counterweight to an appropriate level. A higher weight provides more assistance, making"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Assisted-Chest-Dip.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

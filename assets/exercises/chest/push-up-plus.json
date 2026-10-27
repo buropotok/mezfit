@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/push-up-plus/",
+  "name": "Push-Up Plus",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Starting Position : Begin in a high plank position, with your hands placed shoulder-width apart and directly under your shoulders. Keep your body in"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Push-Up-Plus.gif",
+  "muscles": {
+    "target": [
+      "Chest",
+      "Trapezius"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Trapezius"
+  ]
+}

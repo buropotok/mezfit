@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-chest-fly-machine/",
+  "name": "Incline Chest Fly Machine",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "1. Adjust the Machine: Set the machine’s seat and arms to an incline that targets your upper chest. Ensure that the handles are positioned"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Incline-Chest-Fly-Machine.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

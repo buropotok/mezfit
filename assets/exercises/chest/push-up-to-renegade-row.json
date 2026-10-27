@@ -1,0 +1,42 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/push-up-to-renegade-row/",
+  "name": "Push-Up to Renegade Row",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Step 1: Grab a pair of weights and get in push-up plank position with your hands grasping the handles of the weights."
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Step 2:"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Push-Up-to-Renegade-Row.gif",
+  "muscles": {
+    "target": [
+      "Back / Wing",
+      "Chest",
+      "Full Body"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Chest",
+    "Full Body"
+  ]
+}

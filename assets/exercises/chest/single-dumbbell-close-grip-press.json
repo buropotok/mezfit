@@ -1,0 +1,47 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-dumbbell-close-grip-press/",
+  "name": "Single Dumbbell Close-grip Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Step 1: Setup and Starting Position"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Lie on a flat bench , ensuring your feet are planted firmly on the ground."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Hold a single"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Single-Dumbbell-Close-grip-Press.gif",
+  "muscles": {
+    "target": [
+      "Chest",
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ]
+}
