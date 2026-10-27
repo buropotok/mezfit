@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/middle-chest-fly-with-resistance-band/",
+  "name": "Middle Chest fly With Resistance Band",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Middle-fly.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Сведение рук с эспандером на уровне груди",
+  "tracking_type": "weight_reps"
+}
