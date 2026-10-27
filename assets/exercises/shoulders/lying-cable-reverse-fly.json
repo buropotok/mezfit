@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lying-cable-reverse-fly/",
+  "name": "Lying Cable Reverse Fly",
+  "how_to": "Lying Cable Reverse Fly / Benefits\n- The focus of the Lying cable reverse fly exercise is the back shoulder muscles. It is a great strengthening exercise that effectively works many muscles, including the shoulder, rotator cuff, and trapezius muscles. By affecting the infraspinatus muscle that cover the scapula, it can help protect you from ailments caused by muscle weakness such as posture disorder and scapula protrusion. in addition strengthening these muscles using the cable reverse fly exercise will help improve poor posture, promote an upright stance, and improve balance.\n- Lying cable reverse fly exercise will help you build defined back and shoulders. It is one of the exercises you should do If you want a defined and more shred shoulder muscle.\nLying Cable Reverse Fly / Muscles Worked\nTarget - Posterior Deltoid\nSynergists - Infraspinatus\nSynergists - Teres Minor\nSynergists - Lateral Deltoid\nSynergists - Trapezius\nSynergists - Rhomboids\nStabilizers - Triceps Brachii\nStabilizers - Wrist Extensors",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lying-Cable-Reverse-Fly.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Triceps Brachii",
+        "Wrist Extensors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

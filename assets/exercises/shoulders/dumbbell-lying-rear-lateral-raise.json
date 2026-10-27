@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-lying-rear-lateral-raise/",
+  "name": "Dumbbell Lying Rear Lateral Raise",
+  "how_to": "Dumbbell Lying Rear Lateral Raise / Benefits\n- Dumbbell Lying Rear Lateral Raise is an exercise used to strengthen the posterior and lateral shoulder muscles and the smaller muscle groups attached to them. Lifting too much weight in this movement may not be healthy, doing the exercise with light weights with high repetitions may be more beneficial for the deltoid and rotator cuff muscles.\nDumbbell Lying Rear Lateral Raise /",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/03/Dumbbell-Lying-Rear-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Rhomboids",
+      "Infraspinatus",
+      "Teres Minor",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

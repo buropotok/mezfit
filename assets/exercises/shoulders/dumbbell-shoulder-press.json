@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-shoulder-press/",
+  "name": "Dumbbell Shoulder Press",
+  "how_to": "1. Starting Position: Sit on a bench with back support or stand with your feet hip-width apart. Hold a dumbbell in each hand at shoulder height with palms facing forward or slightly inward.\n2. Brace and align: Engage your core, keep your spine neutral, and retract your shoulder blades lightly.\n3. Press overhead: Press the dumbbells upward and slightly inward until your arms are fully extended without locking out at the elbows.\n4. Lower under control: Slowly lower the dumbbells back to shoulder height while maintaining control and tension.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Shoulder-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Supraspinatus",
+      "Triceps",
+      "Trapezius",
+      "Serratus Anterior",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

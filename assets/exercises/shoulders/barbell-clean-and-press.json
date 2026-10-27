@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-clean-and-press/",
+  "name": "Barbell Clean and Press",
+  "how_to": "Barbell Clean and Press",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Barbell-Clean-and-Press-.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Leg",
+    "Shoulders"
+  ]
+}

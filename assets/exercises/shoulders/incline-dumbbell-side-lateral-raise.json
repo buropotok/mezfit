@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-dumbbell-side-lateral-raise/",
+  "name": "Incline Dumbbell Side Lateral Raise",
+  "how_to": "Incline Dumbbell Side Lateral Raise Benefits\n- The single-arm incline lateral raise is an exercise targeting the lateral head of the shoulder muscles. Many of the movements that work the same muscle group may look alike, but they focus on different parts of the muscles because they are at different angles. If you want to develeop better muscle specifically, keep in mind that it is more beneficial to include exercises that focus on different aspects to your training program.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Incline-Dumbbell-Side-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Anterior Deltoid",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

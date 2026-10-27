@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/45-degree-incline-row/",
+  "name": "45 Degree Incline Dumbbell Row",
+  "how_to": "1. Starting Position: Adjust an incline bench to a 45-degree angle. Lie face down on the bench with your chest firmly pressed against it. Hold dumbbells with arms extended directly below shoulders, palms facing inward.\n2. Alignment and Grip: Keep your neck neutral, spine aligned, and core slightly engaged to stabilize your body.\n3. Pulling Movement: Pull the dumbbells upward, bending your elbows and retracting your shoulder blades, lifting until elbows align with your torso or slightly higher.\n4. Controlled Lowering: Slowly lower the dumbbells back to the initial position, fully extending your arms without releasing shoulder tension.\n5. Repeat: Complete 8–12 controlled repetitions per set, focusing on smooth, deliberate movements.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/45-Degree-Incline-Row.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Trapezius",
+      "Rhomboids",
+      "Infraspinatus",
+      "Teres Minor",
+      "Latissimus Dorsi",
+      "Brachioradialis",
+      "Brachialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Biceps Brachii",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ]
+}

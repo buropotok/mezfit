@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kettlebell-shoulder-press/",
+  "name": "Kettlebell Shoulder Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/11/Kettlebell-Shoulder-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

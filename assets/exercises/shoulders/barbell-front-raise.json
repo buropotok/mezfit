@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-front-raise/",
+  "name": "Barbell Front Raise",
+  "how_to": "Starting Position: Begin by grasping a barbell or body bar with your palms facing down. Keep your arms about shoulder width apart. Slightly bend your knees and keep your back in good posture.\n\nForm: While keeping your core muscles engaged, lift your arms up to shoulder height. Hold for a brief second and then slowly lower to the starting position.\n\nPersonal Trainer Tips: Posture is very important during this exercise. During this exercise, many people have a tendency to excessively arch the lower back, so make sure you keep your core muscles engaged.\n\nAlso make sure you move in a slow and controlled manner so that momentum doesn’t take over.\n\nVariation:\n\nYou can vary your hand position to get a slightly different emphasis. Bringing the hands closer together will place increased emphasis on the anterior deltoid, and moving the hands farther apart than shoulder width will place more emphasis on the middle deltoid.\n\nBarbell Front Raise – Benefits\n- The barbell front raise is a simple barbell exercise that targets the anterior and lateral heads of the shoulders. Suitable for all levels, this shoulder flexion exercise is a good option for building strength, improving shoulder mobility and shaping your shoulder heads.\nBarbell Front Raise – Muscles Worked\nTarget - Anterior Deltoid\nSynergists - Pectoralis Major, Clavicular\nSynergists - Lateral Deltoid\nSynergists - Trapezius\nSynergists - Serratus Anterior\nStabilizers - Trapezius, Upper\nStabilizers - Wrist Extensors\nStabilizers - Levator Scapulae",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Front-Raise.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Trapezius, Upper",
+        "Wrist Extensors",
+        "Levator Scapulae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

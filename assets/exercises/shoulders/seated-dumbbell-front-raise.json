@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-dumbbell-front-raise/",
+  "name": "Seated Dumbbell Front Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/seated-dumbbell-front-raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

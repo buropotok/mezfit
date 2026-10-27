@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-alternating-dumbbell-shoulder-press/",
+  "name": "Standing Alternating Dumbbell Shoulder Press",
+  "how_to": "Standing Alternating Dumbbell Shoulder Press – Benefits\n- Standing alternating dumbbell shoulder press is one of the exercises that benefits to strengthen and enlarge your deltoids. Alternating dumbbell shoulder press is a unilateral exercise. This means that you can focus on each individual shoulder in your training. If one side of your body is stronger or larger than the other, you can use this exercise to correct these muscle imbalances that develop over time.\nStanding Alternating Dumbbell Shoulder Press – Muscles Worked\nTarget - Anterior Deltoid\nSynergists - Lateral Deltoid\nSynergists - Trapezius\nSynergists - Serratus Anterior\nSynergists - Pectoralis Major, Clavicular\nStabilizers - Levatos Scapula\nStabilizers - Wrist Extensors",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Standing-Alternating-Dumbbell-Shoulder-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Wrist Extensors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

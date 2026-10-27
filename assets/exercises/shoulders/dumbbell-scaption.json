@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-scaption/",
+  "name": "Dumbbell Scaption",
+  "how_to": "Dumbbell Scaption Benefits\n- Dumbbell scaption is an isolation exercise that supports the development of the shoulder muscles and especially the supraspinatus muscle. By targeting your stabilising muscles it protects the shoulder joint and ligaments surrounding it. However, it is also used to strengthen your shoulder and prevent injury to your rotator cuffs. It is recommended to do it with low weight instead of lifting too much weight.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Dumbbell-Scaption.gif",
+  "muscles": {
+    "target": [
+      "Supraspinatus"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Extensors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

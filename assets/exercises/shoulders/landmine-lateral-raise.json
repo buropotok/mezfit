@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/landmine-lateral-raise/",
+  "name": "Landmine Lateral Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Landmine-Lateral-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/band-single-arm-shoulder-press/",
+  "name": "Band Single Arm Shoulder Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Band-Single-Arm-Shoulder-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}
