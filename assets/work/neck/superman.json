@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/superman/",
+  "name": "Superman",
+  "how_to": "Superman Exercise Benefits\n- Superman exercises are an excellent workout that strengthens your core, lower back, glutes, and hamstrings.\n- This move strengthens the erector spinae muscles that provide support to the spine. Strong back muscles can prevent postural deviations that lead to poor posture and discomfort, such as kyphosis (“hunchback”). Superman movement improves your posture by extending your back muscles and reducing the tension between your lower back and core areas. It also enhances your lower back’s strength, making it easier to stay upright throughout the day.\n- It’s also beneficial for lower back health as some lower back pain can stem from weak glutes and tight hamstrings.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Superman-exercise.gif",
+  "muscles": {
+    "target": [
+      "Erector Spinae"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Neck"
+  ],
+  "name_ru": "«Супермен» лёжа на животе",
+  "tracking_type": "weight_reps"
+}
