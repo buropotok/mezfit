@@ -90,6 +90,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   document.body.innerHTML = '';
@@ -192,6 +193,76 @@ describe('three-wheel native inertia with per-value feedback', () => {
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(5);
   });
 
+  it('falls back to inactivity when legacy WebView does not support scrollend, then restores a rejected value', () => {
+    mountUnacknowledged();
+    const kilograms = observeNativeScroll('Килограммы', 77);
+    Object.defineProperty(kilograms.element, 'onscrollend', { configurable: true, value: undefined });
+    Object.defineProperty(kilograms.element, 'scrollTo', {
+      configurable: true,
+      value: ({ top }: { top: number }) => { kilograms.element.scrollTop = top; },
+    });
+    vi.useFakeTimers();
+
+    act(() => kilograms.moveTo(80));
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
+    expect(kilograms.appWrites).toEqual([]);
+    act(() => vi.advanceTimersByTime(199));
+    expect(kilograms.appWrites).toEqual([]);
+    act(() => vi.advanceTimersByTime(1));
+    expect(kilograms.appWrites).toContain(77 * ROW_HEIGHT);
+    expect(within(kilograms.element).getByRole('option', { name: '77' }).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('restarts the legacy fallback while momentum is still generating scroll events', () => {
+    mountUnacknowledged();
+    const kilograms = observeNativeScroll('Килограммы', 77);
+    Object.defineProperty(kilograms.element, 'onscrollend', { configurable: true, value: undefined });
+    Object.defineProperty(kilograms.element, 'scrollTo', {
+      configurable: true,
+      value: ({ top }: { top: number }) => { kilograms.element.scrollTop = top; },
+    });
+    vi.useFakeTimers();
+
+    act(() => kilograms.moveTo(80));
+    act(() => vi.advanceTimersByTime(150));
+    act(() => kilograms.moveTo(81));
+    act(() => vi.advanceTimersByTime(150));
+    expect(kilograms.appWrites).toEqual([]);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(4);
+    act(() => vi.advanceTimersByTime(50));
+    expect(kilograms.appWrites).toContain(77 * ROW_HEIGHT);
+  });
+
+  it('does not recenter on the legacy fallback when the parent accepted the scrolling value', () => {
+    const { onChange } = mountControlled();
+    const kilograms = observeNativeScroll('Килограммы', 77);
+    Object.defineProperty(kilograms.element, 'onscrollend', { configurable: true, value: undefined });
+    vi.useFakeTimers();
+
+    act(() => kilograms.moveTo(83));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 83.5 });
+    act(() => vi.advanceTimersByTime(200));
+    expect(kilograms.appWrites).toEqual([]);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(6);
+  });
+
+  it('uses native scrollend instead of an inactivity timer where supported', () => {
+    mountUnacknowledged();
+    const kilograms = observeNativeScroll('Килограммы', 77);
+    Object.defineProperty(kilograms.element, 'onscrollend', { configurable: true, value: null });
+    Object.defineProperty(kilograms.element, 'scrollTo', {
+      configurable: true,
+      value: ({ top }: { top: number }) => { kilograms.element.scrollTop = top; },
+    });
+    vi.useFakeTimers();
+
+    act(() => kilograms.moveTo(80));
+    act(() => vi.advanceTimersByTime(500));
+    expect(kilograms.appWrites).toEqual([]);
+    act(() => fireEvent(kilograms.element, new Event('scrollend')));
+    expect(kilograms.appWrites).toContain(77 * ROW_HEIGHT);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
+  });
   it('keeps a direct tap to a distant value as one tactile selection, not hundreds of ticks', () => {
     mountUnacknowledged();
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Килограммы' }))
