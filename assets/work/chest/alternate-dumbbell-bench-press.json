@@ -1,29 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/alternate-dumbbell-bench-press/",
   "name": "Alternate Dumbbell Bench Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup:"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Choose Appropriate Dumbbells Select dumbbells that allow you to maintain proper form throughout the exercise."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Select dumbbells that allow you to maintain proper"
-      ]
-    }
-  ],
+  "how_to": "Setup:\n\n1. Choose Appropriate Dumbbells\n  - Select dumbbells that allow you to maintain proper form throughout the exercise.\n2. Set Up the Bench\n  - Lie flat on a sturdy bench with your feet planted firmly on the ground.\n3. Position Yourself\n  - Hold a dumbbell in each hand with your arms extended directly above your shoulders, palms facing forward.\nExecution:\n\n1. Starting Position\n  - Lower one dumbbell slowly to the side of your chest while keeping the other arm extended above your shoulder.\n2. Press the Dumbbell Up\n  - Exhale as you press the dumbbell back to the starting position.\n3. Switch Arms\n  - Lower the opposite dumbbell while keeping the first arm extended at the top.\n4. Alternate Repetitions\n  - Continue alternating arms for the desired number of repetitions, maintaining control throughout the movement.\n5. Completion\n  - Once you finish your set, carefully lower both dumbbells to your chest and sit up with control.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Alternate-Dumbbell-Bench-Press.gif",
   "muscles": {
     "target": [
@@ -48,6 +26,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Alternate-Dumbbell-Bench-Press.gif",
   "name_ru": "Попеременный жим гантелей лёжа",
   "tracking_type": "weight_reps"
 }
