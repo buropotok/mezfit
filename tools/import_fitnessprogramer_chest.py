@@ -16,7 +16,7 @@ ROOT = 'https://fitnessprogramer.com'
 LIST = ROOT + '/exercise-primary-muscle/chest/'
 EXERCISE = re.compile(r'^/exercise/[a-z0-9-]+/$', re.I)
 GIF = re.compile(r'/wp-content/uploads/[^\s\"\'<>]+?\.gif', re.I)
-MUSCLE = re.compile(r'^(Target|Synergists?|Dynamic Stabilizers?|Stabilizers?)\s*[-:–]\s*(.+)$', re.I)
+MUSCLE = re.compile(r'^(Target|Synergists?|Dynamic Stabilizers?|Antagonist Stabilizers?|Stabilizers?)\s*[-:–]\s*(.+)$', re.I)
 STOP = re.compile(r'^(Preview|Muscle Groups?|Equipment|Benefits?|Variations?|FAQ|How To|Workout Planner|Print Exercise)', re.I)
 
 
@@ -70,6 +70,8 @@ def section(soup, pattern):
         for node in heading.next_siblings:
             if isinstance(node, Tag):
                 if node.name in ['h2', 'h3', 'h4'] and int(node.name[1]) <= int(heading.name[1]):
+                    if node.find('img') is not None or node.get_text(' ', strip=True).lower().startswith('image:'):
+                        continue
                     break
                 nodes.append(node)
         if nodes:
@@ -99,7 +101,7 @@ def extract_muscles(soup, fallback):
     text = '\n'.join(n.get_text('\n', strip=True) for n in nodes)
     if not text:
         text = (soup.select_one('main') or soup).get_text('\n', strip=True)
-    out = {'target': [], 'synergists': [], 'stabilizers': {'dynamic': []}}
+    out = {'target': [], 'synergists': [], 'stabilizers': {'dynamic': [], 'antagonist': []}}
     for row in text.splitlines():
         row = ' '.join(row.split()).strip('• ')
         if STOP.match(row):
@@ -107,14 +109,15 @@ def extract_muscles(soup, fallback):
         match = MUSCLE.match(row)
         if match:
             label, muscle = match.groups()
-            bucket = out['target'] if label.lower() == 'target' else out['synergists'] if label.lower().startswith('synergist') else out['stabilizers']['dynamic']
+            bucket = (out['target'] if label.lower() == 'target' else out['synergists'] if label.lower().startswith('synergist') else out['stabilizers']['antagonist'] if label.lower().startswith('antagonist') else out['stabilizers']['dynamic'])
             bucket.append(muscle)
         elif nodes and row and len(row.split()) <= 5 and len(row) < 65 and not re.search(r'[.:?!]', row):
             out['target'].append(row)
     out['target'] = uniq(out['target'])
     out['synergists'] = uniq(out['synergists'])
     out['stabilizers']['dynamic'] = uniq(out['stabilizers']['dynamic'])
-    if not any([out['target'], out['synergists'], out['stabilizers']['dynamic']]):
+    out['stabilizers']['antagonist'] = uniq(out['stabilizers']['antagonist'])
+    if not any([out['target'], out['synergists'], out['stabilizers']['dynamic'], out['stabilizers']['antagonist']]):
         out['target'] = fallback[:]
     return out
 
@@ -134,6 +137,8 @@ def instruction_excerpt(soup):
     steps = []
     remaining = 24
     for p in paragraphs:
+        if re.match(r'^(here are|the following|follow these|steps to perform)', p.strip(), re.I):
+            continue
         words = p.split()
         if not words or remaining == 0:
             continue
