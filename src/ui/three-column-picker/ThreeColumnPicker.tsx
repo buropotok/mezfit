@@ -384,6 +384,7 @@ export function ThreeColumnPicker({
   const reconcileFrameRef = useRef<number | null>(null);
   // Parent acknowledgements can arrive after further native scroll frames.
   const locallyEmittedRef = useRef<Set<string>>(new Set());
+  const scrollingPartsRef = useRef<Set<ThreeColumnPickerPart>>(new Set());
   const feedbackValueRef = useRef<ThreeColumnPickerParts>(valueParts);
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, valueParts));
 
@@ -448,6 +449,7 @@ export function ThreeColumnPicker({
     if (!opened) {
       wasOpenedRef.current = false;
       locallyEmittedRef.current.clear();
+      scrollingPartsRef.current.clear();
       cancelScheduledFrames(view);
       return;
     }
@@ -514,19 +516,21 @@ export function ThreeColumnPicker({
 
   const handleScrollEnd = (part: ThreeColumnPickerPart) => {
     if (!openedRef.current) return;
+    scrollingPartsRef.current.delete(part);
     const column = columns[part];
     const element = columnRefs.current[part];
     if (!element) return;
     const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)));
     signalCrossedValues(part, index, true);
     commitIndex(part, index);
+    if (scrollingPartsRef.current.size > 0) return;
 
-    // Only reconcile a rejected controlled value after inertia stops.
+    // Only reconcile a rejected controlled value after all wheels stop.
     const view = element.ownerDocument.defaultView ?? window;
     if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     reconcileFrameRef.current = view.requestAnimationFrame(() => {
       reconcileFrameRef.current = null;
-      if (!openedRef.current) return;
+      if (!openedRef.current || scrollingPartsRef.current.size > 0) return;
       const canonical = controlledRef.current;
       if (!partsEqual(draftRef.current, canonical)) {
         draftRef.current = canonical;
@@ -547,6 +551,11 @@ export function ThreeColumnPicker({
     if (!openedRef.current) return;
 
     const top = event.currentTarget.scrollTop;
+    scrollingPartsRef.current.add(part);
+    if (reconcileFrameRef.current !== null) {
+      (event.currentTarget.ownerDocument.defaultView ?? window).cancelAnimationFrame(reconcileFrameRef.current);
+      reconcileFrameRef.current = null;
+    }
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
       [part]: top,
