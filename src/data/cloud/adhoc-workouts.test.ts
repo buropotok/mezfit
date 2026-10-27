@@ -417,6 +417,10 @@ describe('client visibility of coach-owned FACT over the shared realm', () => {
         expect(await client.get(id)).toMatchObject({
           exercises: [{ sets: [{ fact: { metrics: fact.metrics } }] }],
         });
+        const revisedFact = { ...fact, metrics: { ...fact.metrics, weightKg: 62, reps: 12 } };
+        await repo.saveSet(id, setId, revisedFact);
+        await vi.waitFor(() => expect(details.mock.lastCall?.[0]?.exercises[0]?.sets[0]?.fact?.metrics)
+          .toEqual(revisedFact.metrics));
         await expect(client.saveSet(id, setId, fact)).rejects.toThrow('ADHOC_WRITE_FORBIDDEN');
         await db.table('members').delete(pair.members[1].id);
         await vi.waitFor(() => expect(rows.mock.lastCall?.[0]).toEqual([]));
