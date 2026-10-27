@@ -204,6 +204,10 @@ def instruction_excerpt(soup):
                 label = node.get_text(' ', strip=True)
                 if INSTRUCTION_BOUNDARY.match(label):
                     break
+                # The source sometimes wraps a GIF in a heading of the
+                # same rank as the instructions heading.
+                if node.find('img') is not None or label.lower().startswith('image:'):
+                    continue
                 if int(node.name[1]) <= depth:
                     break
             if node.name not in ('p', 'li') or node.find(['p', 'li']) is not None:
@@ -217,10 +221,27 @@ def instruction_excerpt(soup):
         for statement in instructions:
             if INSTRUCTION_BOUNDARY.match(statement):
                 break
+            if re.match(r'^(here are|the following|follow these|steps to perform)\b', statement, re.I):
+                continue
             words = statement.split()
-            if not words or budget <= 0:
+            if len(words) < 4:
+                # Section/stage labels are not instructions.
+                continue
+            if budget <= 0:
                 break
-            value = ' '.join(words[:budget])
+            if len(words) > budget:
+                # Keep only a complete short sentence, never a mid-phrase cut.
+                sentences = re.findall(r'[^.!?]+[.!?](?=\s|$)', statement)
+                value = ''
+                for sentence in sentences:
+                    sentence = sentence.strip()
+                    if sentence and len(sentence.split()) <= budget:
+                        value = sentence
+                        break
+                if not value:
+                    break
+            else:
+                value = statement
             budget -= len(value.split())
             out.append({'step': len(out) + 1, 'instructions': [value]})
         return out
