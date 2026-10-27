@@ -53,20 +53,23 @@ export async function isApprovedAssignedPair(
   const coach = telegramId(coachUserId);
   const client = telegramId(clientUserId);
   if (!coach || !client || coach === client || !realm) return false;
-  // WebCrypto is external to Dexie. Preserve the liveQuery observation context
-  // so table reads after this authorization check still subscribe to changes.
-  const expectedRealmId = await Dexie.waitFor(relationshipRealmId(coach, client));
-  if (realm.realmId !== expectedRealmId || realm.owner !== null
-    || realm.name !== 'Mezfit coach-client pilot') return false;
+  // Keep the entire external computation in one waitFor scope, including early
+  // rejection. Separate waits leave native-promise continuations between them
+  // where IndexedDB can auto-commit (notably for revoked memberships).
+  return Dexie.waitFor((async () => {
+    const expectedRealmId = await relationshipRealmId(coach, client);
+    if (realm.realmId !== expectedRealmId || realm.owner !== null
+      || realm.name !== 'Mezfit coach-client pilot') return false;
 
-  const pairMembers = members.filter((member) => member.realmId === expectedRealmId);
-  if (pairMembers.length !== 2) return false;
-  const [coachMemberId, clientMemberId] = await Dexie.waitFor(Promise.all([
-    stableCloudRelationshipId('mmb', expectedRealmId + ':coach'),
-    stableCloudRelationshipId('mmb', expectedRealmId + ':client'),
-  ]));
-  return pairMembers.some((member) => approvedMember(member, coachMemberId, coachUserId, 'coach'))
-    && pairMembers.some((member) => approvedMember(member, clientMemberId, clientUserId, 'client'));
+    const pairMembers = members.filter((member) => member.realmId === expectedRealmId);
+    if (pairMembers.length !== 2) return false;
+    const [coachMemberId, clientMemberId] = await Promise.all([
+      stableCloudRelationshipId('mmb', expectedRealmId + ':coach'),
+      stableCloudRelationshipId('mmb', expectedRealmId + ':client'),
+    ]);
+    return pairMembers.some((member) => approvedMember(member, coachMemberId, coachUserId, 'coach'))
+      && pairMembers.some((member) => approvedMember(member, clientMemberId, clientUserId, 'client'));
+  })());
 }
 
 /** Canonical order is persisted; generated cloud IDs are only tie-breakers. */
