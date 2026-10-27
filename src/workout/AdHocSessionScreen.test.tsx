@@ -4,7 +4,7 @@ import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
 import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
-import { AdHocSessionScreen } from './AdHocSessionScreen';
+import { AdHocSessionScreen, type AdHocSessionRepository } from './AdHocSessionScreen';
 import type { WorkoutFactCardProps } from './WorkoutSessionCard';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
 
@@ -93,11 +93,16 @@ function fixture() {
   const addSet = vi.fn<AdHocWorkoutRepository['addSet']>().mockResolvedValue(undefined);
   const complete = vi.fn<AdHocWorkoutRepository['complete']>().mockResolvedValue(undefined);
   const addExercises = vi.fn<AdHocWorkoutRepository['addExercises']>().mockResolvedValue(undefined);
-  const narrowRepository = { actorUserId: 'tg:101', observe, addSet, complete, addExercises } satisfies
-    Pick<AdHocWorkoutRepository, 'actorUserId' | 'observe' | 'addSet' | 'complete' | 'addExercises'>;
-  // Only these public capabilities are used in the scenarios below. Keep the
-  // concrete repository assertion at this test fixture boundary.
-  const repository = narrowRepository as AdHocWorkoutRepository;
+  const repository = {
+    actorUserId: 'tg:101', observe, addSet, complete, addExercises,
+    reorder: vi.fn<AdHocWorkoutRepository['reorder']>().mockResolvedValue(undefined),
+    saveSet: vi.fn<AdHocWorkoutRepository['saveSet']>().mockResolvedValue(undefined),
+    deleteSet: vi.fn<AdHocWorkoutRepository['deleteSet']>().mockResolvedValue(undefined),
+    rename: vi.fn<AdHocWorkoutRepository['rename']>().mockResolvedValue(undefined),
+    comment: vi.fn<AdHocWorkoutRepository['comment']>().mockResolvedValue(undefined),
+    resolveTemplate: vi.fn<AdHocWorkoutRepository['resolveTemplate']>().mockResolvedValue(undefined),
+    deleteExercise: vi.fn<AdHocWorkoutRepository['deleteExercise']>().mockResolvedValue(undefined),
+  } satisfies AdHocSessionRepository;
   const view = render(<AdHocSessionScreen repository={repository} sessionId={session.sessionId}
     initData="signed" onNavigationContextChange={vi.fn()} />);
   return { ...view, observations, observe, addSet, complete, addExercises };
