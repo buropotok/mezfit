@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-barbell-concentration-curl/",
+  "name": "Standing Barbell Concentration Curl",
+  "how_to": "1. Begin by standing with your feet shoulder-width apart.\n2. Hold a barbell with both hands using a supinated (palms facing forward) grip, with your hands slightly wider than shoulder-width apart.\n3. Lean your upper body forward at the hips until it is nearly parallel to the floor. This forward lean helps isolate the biceps and engage the stabilizer muscles.\n4. Place your elbows on your thighs or knees for support, allowing your arms to hang straight down, fully extended.\n5. With your upper arms stationary, curl the barbell upwards towards your chest by flexing your elbows.\n6. Squeeze your biceps at the top of the movement.\n7. Slowly lower the barbell back down to the starting position, fully extending your arms.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/10/Standing-Barbell-Concentration-Curl.gif",
+  "muscles": {
+    "target": [
+      "Brachialis"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors",
+        "Erector Spinae",
+        "Hamstring",
+        "Gluteus Maximus",
+        "Quadriceps",
+        "Adductor Magnus"
+      ],
+      "antagonist": [
+        "R. Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

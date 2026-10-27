@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/double-arm-dumbbell-curl/",
+  "name": "Double Arm Dumbbell Curl",
+  "how_to": "1. Hold a dumbbell in each hand with your palms facing forward.\n2. Slowly raise both dumbbells at the same time by bending your elbows, while keeping your upper arms stationary. Keep your palms facing forward throughout the movement.\n3. Continue to curl the dumbbells until they are level with your shoulders or until you feel a good contraction in your biceps.\n4. Pause for a second at the top of the movement, then slowly lower the dumbbells back down to the starting position.\n5. Repeat for your desired number of reps.\nDumbbell Curl Benefits\n- The double arm curl is an isolated exercise commonly used in weight training programs to build and strengthen the biceps muscle group. It can be modified by changing the weight or the number of repetitions, or by incorporating variations such as preacher curls, hammer curls, or incline curls to target different areas of the biceps.\nDouble Arm Dumbbell Curl – Muscles Worked\nTarget - Biceps\nSynergists - Brachialis\nSynergists - Brachioradialis\nStabilizers - Wrist Flexors",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Double-Arm-Dumbbell-Curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

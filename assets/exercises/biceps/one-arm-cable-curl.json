@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-cable-curl/",
+  "name": "One Arm Cable Curl",
+  "how_to": "1. Begin by attaching a single-handled cable attachment to the lowest setting on a cable machine.\n2. Stand with your back facing the cable machine, feet shoulder-width apart, and knees slightly bent.\n3. Grasp the handle with an underhand grip (palm facing up) and stand far enough away from the cable machine so that your arm is fully extended and there is tension on the cable.\n4. Keeping your elbow tucked in at your side, exhale and curl the handle toward your shoulder, contracting your bicep muscles.\n5. Hold the contraction for a second, then inhale and slowly lower the handle back down to the starting position, keeping tension on the cable.\n6. Repeat for the desired number of reps, then switch arms and repeat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/One-Arm-Cable-Curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}
