@@ -1,0 +1,45 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-incline-chest-press/",
+  "name": "Lever Incline Chest Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Adjust the Seat : Set the seat height so that the handles are aligned with your chest. This is important for ensuring that"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Incline-Chest-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Clavicular"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Triceps"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Жим от груди под углом вверх в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}
