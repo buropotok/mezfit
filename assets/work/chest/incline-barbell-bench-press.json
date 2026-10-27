@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/incline-barbell-bench-press/",
   "name": "Incline Barbell Bench Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Set up the incline bench at the desired angle. (30 to 45 degrees)"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Load the barbell with an appropriate weight for your fitness level"
-      ]
-    }
-  ],
+  "how_to": "Here are the steps to perform an incline barbell bench press:\n\n1. Set up the incline bench at the desired angle. (30 to 45 degrees)\n2. Load the barbell with an appropriate weight for your fitness level and goals.\n3. Lie down on the bench with your feet firmly on the ground and your head resting on the bench.\n4. Grab the barbell with a grip slightly wider than shoulder-width apart.\n5. Unrack the barbell and bring it down to your upper chest, with your elbows flared out to the sides.\n6. Press the barbell back up to the starting position, exhaling as you push.\n7. Repeat for the desired number of reps.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Barbell-Bench-Press.gif",
   "muscles": {
     "target": [
@@ -42,6 +27,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Incline-Barbell-Bench-Press.gif",
   "name_ru": "Жим штанги лёжа на наклонной скамье",
   "tracking_type": "weight_reps"
 }
