@@ -1,7 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/hammer-press/",
   "name": "Hammer Press",
-  "how_to": [],
+  "how_to": "Hammer Press",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Hammer-Press.gif",
   "muscles": {
     "target": [
@@ -26,6 +26,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Hammer-Press.gif",
   "name_ru": "Жим от груди в тренажёре «Хаммер»",
   "tracking_type": "weight_reps"
 }
