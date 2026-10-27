@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/arm-scissors/",
   "name": "Arm Scissors",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Start Position : Stand tall with your feet hip-width apart."
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Extend Arms : Stretch your arms out to the sides at shoulder height."
-      ]
-    }
-  ],
+  "how_to": "- Start Position: Stand tall with your feet hip-width apart.\n- Extend Arms: Stretch your arms out to the sides at shoulder height.\n- Cross Over: Swing your arms across your chest, overlapping one over the other like scissors.\n- Return and Repeat: Open your arms back to the sides and repeat for 15-20 reps.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Arm-Scissors.gif",
   "muscles": {
     "target": [
@@ -38,6 +23,7 @@
     "Chest",
     "Shoulders"
   ],
+  "image_id": "Arm-Scissors.gif",
   "name_ru": "Скрестные махи руками («ножницы»)",
   "tracking_type": "weight_reps"
 }
