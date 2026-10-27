@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/assisted-chest-dip/",
   "name": "Assisted Chest Dip",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Set the Resistance : Adjust the machine’s counterweight to an appropriate level. A higher weight provides more assistance, making the exercise easier."
-      ]
-    }
-  ],
+  "how_to": "Using an Assisted Dip Machine\n1. Set the Resistance: Adjust the machine’s counterweight to an appropriate level. A higher weight provides more assistance, making the exercise easier.\n2. Position Yourself: Place your knees or feet on the assistance platform, and grip the handles firmly with your palms facing inward or slightly forward.\n3. Lean Forward: To emphasize the chest, slightly lean your torso forward, keeping your shoulders down and elbows slightly flared (at about a 45-degree angle).\n4. Lower Your Body: Slowly bend your elbows to lower your body until your upper arms are parallel to the floor or slightly below.\n5. Press Up: Push yourself back up to the starting position, focusing on engaging your chest and triceps.\n6. Repeat: Perform the desired number of repetitions with control.\nTips for Effectiveness\n- Progress Gradually: Gradually decrease the level of assistance over time to build strength and work toward unassisted dips.\n- Focus on Form: Keep your core tight, shoulders down, and chest engaged throughout the movement.\n- Breathing: Exhale as you press up and inhale as you lower your body.\n- Stretch and Warm-Up: Warm up your shoulders, chest, and triceps before performing dips to prevent strain or injury.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Assisted-Chest-Dip.gif",
   "muscles": {
     "target": [
@@ -39,6 +31,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Assisted-Chest-Dip.gif",
   "name_ru": "Отжимания на брусьях с помощью (акцент на грудь)",
   "tracking_type": "weight_reps"
 }
