@@ -106,6 +106,8 @@ export interface WorkoutFactCardProps<Id extends string | number = number> {
   onShare?: () => void | Promise<void>;
   onCommentChange?: (comment: string) => void | Promise<void>;
   onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
+  onDeleteExercise?: (sessionExerciseId: Id) => void;
+  onExerciseInformation?: (sessionExerciseId: Id) => void;
   onOpenExerciseHistory?: (exerciseDefinitionId: Id) => void;
   onOpenChat?: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -133,6 +135,8 @@ function WorkoutFactCard<Id extends string | number = number>({
   onShare,
   onCommentChange,
   onOpenExerciseMenu,
+  onDeleteExercise,
+  onExerciseInformation,
   onOpenExerciseHistory,
   onOpenChat,
   onNavigationContextChange,
@@ -190,6 +194,8 @@ function WorkoutFactCard<Id extends string | number = number>({
         onSaveSet={onSaveSet}
         onDeleteSet={active ? onDeleteSet : undefined}
         onOpenExerciseMenu={active ? onOpenExerciseMenu : undefined}
+        onDeleteExercise={active ? onDeleteExercise : undefined}
+        onInformation={onExerciseInformation ? () => onExerciseInformation(exercise.sessionExerciseId) : undefined}
         onOpenHistory={onOpenExerciseHistory}
         onOpenChat={onOpenChat}
         onNavigationContextChange={onNavigationContextChange}
