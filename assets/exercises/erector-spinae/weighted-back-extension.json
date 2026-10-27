@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-back-extension/",
+  "name": "Weighted Back Extension",
+  "how_to": "Weighted Back Extension Benefits\n- Weighted back extension exercises are an excellent workout that strengthens your core, lower back, glutes, and hamstrings.\n- Weighted back extension movement improves your posture by extending your back muscles and reducing the tension between your lower back and core areas. It also enhances your lower back’s strength, making it easier to stay upright throughout the day.\n- It’s also beneficial for lower back health as some lower back pain can stem from weak glutes and tight hamstrings.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Weighted-Back-Extension.gif",
+  "muscles": {
+    "target": [
+      "Erector Spinae"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Erector Spinae"
+  ]
+}

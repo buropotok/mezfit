@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/landmine-t-bar-row/",
+  "name": "Landmine T-Bar Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/t-bar-rows.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae"
+  ]
+}

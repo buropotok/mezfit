@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/deadlift/",
+  "name": "Deadlift",
+  "how_to": "Here are the steps to perform a conventional deadlift:\n\n1. Begin by standing with your feet shoulder-width apart, with your toes pointed straight ahead. The barbell should be on the ground in front of you.\n2. Bend down and grasp the bar with your hands slightly wider than shoulder-width apart, using an overhand or mixed grip (one hand overhand, one hand underhand).\n3. Bend your knees and lower your hips, keeping your back straight and your chest up. Keep your head and neck in a neutral position, and focus on looking forward.\n4. Take a deep breath and brace your core muscles. This will help to stabilize your spine and protect your lower back.\n5. Keep the bar close to your body as you lift, and use your legs, glutes, and back muscles to power the lift.\n6. Once you have lifted the bar to a standing position, pause for a moment, then lower it back down to the ground, keeping your back straight and your core engaged.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Deadlift.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Quadriceps",
+      "Adductor Magnus",
+      "Hamstrings",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Trapezius",
+        "Levator Scapulae",
+        "Latissimus Dorsi",
+        "Rhomboids",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae",
+    "Hip",
+    "Leg"
+  ]
+}
