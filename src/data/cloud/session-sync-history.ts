@@ -18,14 +18,20 @@ const phases = new Set(['initial', 'not-in-sync', 'pushing', 'pulling', 'in-sync
 const statuses = new Set(['not-started', 'connecting', 'connected', 'disconnected', 'error', 'offline']);
 const websocketStatuses = new Set(['not-started', 'connecting', 'connected', 'disconnected', 'error']);
 
-function isEvent(value: unknown): value is SyncHistoryEvent {
-  if (typeof value !== 'object' || value === null) return false;
+function parseEvent(value: unknown): SyncHistoryEvent | null {
+  if (typeof value !== 'object' || value === null) return null;
   const entry = value as Record<string, unknown>;
-  if (typeof entry.at !== 'number' || !Number.isFinite(entry.at)) return false;
-  if (entry.source === 'sync') return typeof entry.phase === 'string' && phases.has(entry.phase)
-    && typeof entry.status === 'string' && statuses.has(entry.status);
-  return entry.source === 'websocket'
-    && typeof entry.status === 'string' && websocketStatuses.has(entry.status);
+  if (typeof entry.at !== 'number' || !Number.isFinite(entry.at)) return null;
+  if (entry.source === 'sync'
+    && typeof entry.phase === 'string' && phases.has(entry.phase)
+    && typeof entry.status === 'string' && statuses.has(entry.status)) {
+    return { at: entry.at, source: 'sync', phase: entry.phase, status: entry.status };
+  }
+  if (entry.source === 'websocket'
+    && typeof entry.status === 'string' && websocketStatuses.has(entry.status)) {
+    return { at: entry.at, source: 'websocket', status: entry.status };
+  }
+  return null;
 }
 
 function sessionStorageOrNull(): SessionStorageLike | null {
@@ -54,7 +60,7 @@ export class SessionSyncHistory {
       const raw = this.storage?.getItem(this.key);
       if (raw) {
         const saved: unknown = JSON.parse(raw);
-        if (Array.isArray(saved)) this.events = this.recent(saved.filter(isEvent));
+        if (Array.isArray(saved)) this.events = this.recent(saved.map(parseEvent).filter((event): event is SyncHistoryEvent => event !== null));
       }
     } catch {
       // Corrupt/unavailable storage must not impact the app or cloud sync.
