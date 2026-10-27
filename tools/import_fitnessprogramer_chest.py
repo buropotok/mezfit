@@ -253,10 +253,18 @@ def main():
         raise RuntimeError('Cobra Push-up must have empty instruction and muscles')
     bench_text = bench.get('how_to', '')
     if not all(part in bench_text for part in
-               ('Setup', 'Unrack and Descent', 'Press Phase', 'Reset and Repeat')):
-        raise RuntimeError('Bench Press instruction missing named stages')
+               ('1. Setup', '2. Unrack and Descent',
+                '3. Press Phase', '4. Reset and Repeat')):
+        raise RuntimeError('Bench Press instruction must retain ordered stage numbers')
+    if not re.search(r'(?m)^  - Lie on a flat bench', bench_text):
+        raise RuntimeError('Bench Press nested unordered bullets missing')
+    incline_text = results.get('incline-dumbbell-fly.json', {}).get('how_to', '')
+    if not ('Setup\n\n1. Adjust' in incline_text
+            and 'Execution\n\n1. Inhale' in incline_text):
+        raise RuntimeError('Incline Dumbbell Fly headings or ordered list structure lost')
     cable_text = cable.get('how_to', '')
-    if not ('Adjust the cables' in cable_text and 'Repeat' in cable_text
+    if not ('1. Adjust the cables' in cable_text
+            and '7. Repeat' in cable_text
             and 'Coach Tips' not in cable_text):
         raise RuntimeError('High Cable Crossover instruction incomplete or contaminated')
     if not pec_deck.get('how_to'):

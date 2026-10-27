@@ -51,6 +51,63 @@ def find_image(root, gif_url):
     return None
 
 
+def _letters(number):
+    result = ""
+    while number > 0:
+        number, digit = divmod(number - 1, 26)
+        result = chr(ord("a") + digit) + result
+    return result
+
+
+def _roman(number):
+    if number < 1 or number > 3999:
+        return str(number)
+    parts = ((1000, "M"), (900, "CM"), (500, "D"), (400, "CD"),
+             (100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
+             (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"))
+    answer = ""
+    for amount, letters in parts:
+        while number >= amount:
+            answer += letters
+            number -= amount
+    return answer
+
+
+def _list_marker(item):
+    parent = item.find_parent(("ol", "ul"))
+    if parent is None or parent.name == "ul":
+        return "-"
+    children = parent.find_all("li", recursive=False)
+    if not children or item not in children:
+        return "-"
+    reversed_order = parent.has_attr("reversed")
+    direction = -1 if reversed_order else 1
+    try:
+        value = int(parent["start"]) if parent.has_attr("start") else (
+            len(children) if reversed_order else 1)
+    except (ValueError, TypeError):
+        value = len(children) if reversed_order else 1
+    for child in children:
+        if child.has_attr("value"):
+            try:
+                value = int(child["value"])
+            except (TypeError, ValueError):
+                pass
+        if child is item:
+            kind = parent.get("type", "1")
+            if kind == "a":
+                return _letters(value) + "." if value > 0 else str(value) + "."
+            if kind == "A":
+                return _letters(value).upper() + "." if value > 0 else str(value) + "."
+            if kind == "i":
+                return _roman(value).lower() + "."
+            if kind == "I":
+                return _roman(value) + "."
+            return str(value) + "."
+        value += direction
+    return "-"
+
+
 def extract_how_to(html, gif_url):
     """Return text after the given GIF up to the first explicit section boundary."""
     soup = BeautifulSoup(html, "html.parser")
@@ -95,14 +152,39 @@ def extract_how_to(html, gif_url):
             blocks[-1][2].append(str(node))
 
     lines = []
+    marked_items = set()
     for block, depth, fragments in blocks:
         value = " ".join("".join(fragments).split())
         if not value:
             if lines and lines[-1] != "":
                 lines.append("")
             continue
-        prefix = ("  " * max(depth - 1, 0) + "- ") if depth else ""
-        lines.append(prefix + value)
+
+        # A literal text bullet is a bullet even outside an HTML list.
+        bullet = re.match(r"^[•◦▪●○∙‣⁃]\s*", value)
+        if bullet:
+            value = value[bullet.end():].lstrip()
+
+        item = block if block.name == "li" else block.find_parent("li")
+        if item is not None:
+            indent = "  " * max(depth - 1, 0)
+            identity = id(item)
+            if identity not in marked_items:
+                marked_items.add(identity)
+                marker = _list_marker(item)
+                # Avoid rendering the same marker twice if present in the
+                # HTML text as well as in the list structure.
+                if not (marker != "-" and value.startswith(marker + " ")):
+                    value = marker + " " + value
+            else:
+                # Continuation paragraphs inside one <li> are not new bullets.
+                indent += "  "
+            lines.append(indent + value)
+        elif bullet:
+            lines.append("- " + value)
+        else:
+            lines.append(value)
+
         if block.name in ("p", "blockquote") and depth == 0:
             lines.append("")
     return "\n".join(lines).strip()
