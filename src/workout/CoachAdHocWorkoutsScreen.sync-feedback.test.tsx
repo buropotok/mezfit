@@ -4,7 +4,10 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CoachAdHocWorkoutsScreen } from './CoachAdHocWorkoutsScreen';
 
-const state = vi.hoisted(() => ({ syncStatus: 'synced' as 'synced' | 'offline' | 'error' }));
+const state = vi.hoisted(() => ({
+  syncStatus: 'synced' as 'synced' | 'offline' | 'error',
+  rows: [] as Array<{ id: string; name: string; status: 'active' | 'completed' }>,
+}));
 const db = {};
 
 vi.mock('../NavigationShell', () => ({
@@ -15,8 +18,8 @@ vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
 }));
 vi.mock('../data/cloud/adhoc-workouts', () => ({
   AdHocWorkoutRepository: class {
-    observeOpen(onChange: (rows: []) => void) {
-      onChange([]);
+    observeOpen(onChange: (rows: typeof state.rows) => void) {
+      onChange(state.rows);
       return { unsubscribe: () => {} };
     }
   },
@@ -34,14 +37,18 @@ vi.mock('../ui', () => ({
   MezfitBottomSheet: () => null,
 }));
 vi.mock('../schedule/ScheduleWorkoutCreator', () => ({ ScheduleWorkoutCreator: () => null }));
-vi.mock('./AdHocSessionScreen', () => ({ AdHocSessionScreen: () => null }));
+vi.mock('./AdHocSessionScreen', () => ({
+  AdHocSessionScreen: ({ sessionId }: { sessionId: string }) => <div>Сессия {sessionId}</div>,
+}));
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); state.rows = []; });
 
 describe('Coach training sync feedback', () => {
   it('does not claim changes are waiting when Dexie reports offline without an error', () => {
     state.syncStatus = 'offline';
+    state.rows = [{ id: 'shared', name: 'День 1', status: 'active' }];
     render(<CoachAdHocWorkoutsScreen initData="signed" onNavigationContextChange={() => {}} />);
+    expect(screen.getByText('Сессия shared')).toBeTruthy();
     expect(screen.queryByText(/Изменения ожидают синхронизации/)).toBeNull();
     expect(screen.queryByText(/Нет соединения с Mezfit облаком/)).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
