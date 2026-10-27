@@ -259,7 +259,7 @@ describe('three-wheel native inertia with per-value feedback', () => {
     act(() => kilograms.moveTo(80));
     act(() => vi.advanceTimersByTime(500));
     expect(kilograms.appWrites).toEqual([]);
-    act(() => fireEvent(kilograms.element, new Event('scrollend')));
+    act(() => fireEvent(kilograms.element, new Event('scrollend', { bubbles: true })));
     expect(kilograms.appWrites).toContain(77 * ROW_HEIGHT);
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
   });
