@@ -1,0 +1,51 @@
+name: Build reviewed exercise work catalogue
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/exercise-work/build.py
+      - tools/exercise-work/ru-names-reference.json
+      - .github/workflows/build-exercise-work.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: exercise-work-catalogue-main
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    if: github.repository == 'buropotok/mezfit' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Make work catalogue without modifying original exercise JSON
+        run: python tools/exercise-work/build.py
+      - name: Verify source JSON remain untouched
+        run: |
+          if ! git diff --quiet -- assets/exercises; then
+            echo 'Input exercise JSON was modified' >&2
+            exit 1
+          fi
+      - name: Commit all generated exercise copies to main
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/work tools/exercise-work/work-generation-report.json
+          if git diff --cached --quiet; then
+            echo 'Work catalogue already current'
+            exit 0
+          fi
+          git commit -m 'data: enrich exercise work JSON with Russian names and tracking types'
+          git push origin HEAD:refs/heads/main
