@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/smith-machine-bench-press/",
+  "name": "Smith Machine Bench Press",
+  "how_to": "Setup\n\n1. Position a flat bench underneath the Smith machine bar.\n2. Adjust the bench so that the bar is aligned with the middle of your chest when lying down.\n3. Lie back on the bench with your feet flat on the floor and your back slightly arched.\n4. Grip the bar slightly wider than shoulder-width apart with your palms facing forward.\n5. Unrack the bar by rotating your wrists to disengage the safety hooks.\nExecution\n\n1. Lowering Phase:\n  - Slowly lower the bar toward your chest by bending your elbows.\n  - Keep your elbows at about a 45-degree angle to your torso.\n  - Stop when the bar is just above your chest or lightly touches it without bouncing.\n2. Pressing Phase:\n  - Push the bar upward to return to the starting position.\n  - Fully extend your arms but avoid locking your elbows at the top.\n3. Repeat: Perform the desired number of repetitions, maintaining control throughout the movement.\nTips for Maximum Effectiveness\n1. Adjust the Bench Properly: Ensure the bench is aligned correctly for effective chest targeting.\n2. Engage the Core: Keep your core tight to maintain stability and protect your lower back.\n3. Control the Movement: Perform the exercise with slow, controlled movements for maximum muscle activation.\n4. Use an Appropriate Weight: Start with a manageable weight to focus on form before increasing resistance.\n5. Experiment with Hand Placement: A wider grip targets the chest more, while a narrower grip shifts emphasis to the triceps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Smith-Machine-Bench-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Triceps",
+      "Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "image_id": "Smith-Machine-Bench-Press.gif",
+  "name_ru": "Жим лёжа в машине Смита",
+  "tracking_type": "weight_reps"
+}
