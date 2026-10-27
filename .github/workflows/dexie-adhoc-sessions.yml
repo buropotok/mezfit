@@ -1,0 +1,95 @@
+name: Apply Dexie Cloud ad-hoc session schema and ACL
+
+# Explicit approved combined schema/ACL exception. Never run on PR or push.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        description: 'Preview or install only reviewed ad-hoc tables and Coach grants'
+        required: true
+        default: preview
+        options: [preview, apply]
+      confirmation:
+        type: string
+        description: 'For apply enter APPLY_ADHOC_SESSION_SCHEMA_AND_COACH_ACL'
+        required: false
+
+permissions:
+  contents: read
+
+# Serialize all privileged Dexie Cloud CLI writes against existing schema/catalogue workflows.
+concurrency:
+  group: dexie-public-catalogue-publishing
+  cancel-in-progress: false
+
+jobs:
+  adhoc-session-configuration:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: dexie-production
+    env:
+      DEXIE_ADHOC_OPERATION: ${{ inputs.operation }}
+      DEXIE_ADHOC_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate manual dispatch and explicit confirmation
+        run: node tools/dexie-roles/adhoc-sessions.mjs preflight
+      - name: Prepare protected Dexie CLI credentials
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/dexie-schema/manage.mjs prepare
+      - name: Export schema and roles before mutation
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
+      - name: Plan exact additive schema and Coach role delta
+        id: plan
+        run: node tools/dexie-roles/adhoc-sessions.mjs plan
+      - name: Re-export live configuration immediately before apply
+        if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema current-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles current-roles.json
+          cd "$GITHUB_WORKSPACE"
+          node tools/dexie-roles/adhoc-sessions.mjs recheck
+      # Remember that the next operation may write to the server even if its CLI exits nonzero.
+      - name: Record configuration import attempt before mutation
+        id: import_attempt
+        if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'
+        run: echo "attempted=true" >> "$GITHUB_OUTPUT"
+      - name: Import only missing reviewed tables and exact expanded Coach role
+        if: inputs.operation == 'apply' && steps.import_attempt.outputs.attempted == 'true'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud import adhoc-import.json
+      # !cancelled() prevents Actions' implicit success() from suppressing readback
+      # when an import reaches Dexie Cloud but reports an error to the runner.
+      - name: Export schema and roles after any configuration import attempt
+        if: ${{ !cancelled() && inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0') }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
+      - name: Verify exact schema and roles including all untouched configuration
+        if: ${{ !cancelled() && inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0') }}
+        run: node tools/dexie-roles/adhoc-sessions.mjs verify
+      - name: Remove temporary credentials and private exports
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"

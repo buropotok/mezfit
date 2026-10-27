@@ -235,6 +235,32 @@ This retires an installed cloud permission; it does not restore the old runtime.
 Reject any other difference in the installed policy. Keep source PLAN, FACT,
 membership, schema and unrelated roles unchanged.
 
+### Approved Coach ad-hoc session exception
+
+The user explicitly approved local atomic Dexie Start and completion for Coach
+ad-hoc sessions only, synchronized by Addon, using new `adHocSessions`,
+`adHocExercises`, `adHocSets` tables (`@id`). Scheduled Start/completion and
+existing session/FACT permissions remain unchanged. Relationship rows use
+`owner: realmId` as a non-user sentinel; personal rows use the actor as owner.
+Client has read-only access to these new relationship tables. Exercise/set
+removal uses `deletedAt`; no DELETE, identity/owner/realm/athlete/creator/parent
+updates are granted.
+
+As a specific exception to §21's separate schema/ACL operator restriction,
+`tools/dexie-roles/adhoc-sessions.mjs` and
+`.github/workflows/dexie-adhoc-sessions.yml` may combine only the additive tables
+in `cloud/schema-adhoc-sessions.json` with the exact Coach add/field-update
+overlay in `cloud/adhoc-session-roles.json`. Preserve every existing role grant
+and unrelated configuration byte-semantically; do not change `cloud/roles.json`.
+Use only the existing protected publisher environment secret, owner/main manual
+preview/apply with explicit confirmation, shared writer concurrency, immediate
+full schema/roles recheck and exact full readback even after an import error.
+No business writes, new keys or PR/push execution are authorized. This exception
+does not widen any existing operator. See
+`docs/architecture/adhoc-workout-sessions.md` for the exact allowlists, recovery
+limits and mandatory real-server permission/activation checklist; configuration
+readback alone does not prove per-user authorization.
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.

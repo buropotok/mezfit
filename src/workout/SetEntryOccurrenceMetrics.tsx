@@ -136,6 +136,24 @@ export function SetEntryOccurrenceMetrics(props: Props) {
       setSaving(false);
     }
   };
+  const deleteEntry = async () => {
+    if (saveInFlightRef.current || readOnly || !props.onDeleteSet) return;
+    saveInFlightRef.current = true;
+    setSaving(true);
+    setError('');
+    try {
+      await props.onDeleteSet();
+      setDeleteConfirm(false);
+      props.onClose();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход');
+      setDeleteConfirm(false);
+    } finally {
+      saveInFlightRef.current = false;
+      setSaving(false);
+    }
+  };
+
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
     if (JSON.stringify(draftRef.current) !== JSON.stringify(initialDraftRef.current)) {
@@ -256,21 +274,18 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             </div>
           </> : null}
           <SetEntryChatButton onOpenChat={props.onOpenChat} saving={saving} />
-          {isPlan && !readOnly && props.onDeleteSet ? <KonstaButton clear
-            colors={{ textIos: 'text-red-500', textMaterial: 'text-red-500' }} onClick={() => setDeleteConfirm(true)}>
+          {!readOnly && props.onDeleteSet ? <KonstaButton clear
+            colors={{ textIos: 'text-red-500', textMaterial: 'text-red-500' }} disabled={saving} onClick={() => { if (!saveInFlightRef.current) setDeleteConfirm(true); }}>
             <Text variant="body" style={{ color: 'inherit' }}>Удалить подход</Text>
           </KonstaButton> : null}
           {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
       </div>
     </MezfitBottomSheet>, host)}
-    {isPlan && !readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+    {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
       title={<Text variant="headline">Удалить подход?</Text>}
-      buttons={<><MezfitDialogButton onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
-        <MezfitDialogButton strong tone="danger" onClick={() => {
-          void props.onDeleteSet?.().then(() => { setDeleteConfirm(false); props.onClose(); })
-            .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход'));
-        }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
+      buttons={<><MezfitDialogButton disabled={saving} onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
+        <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, host) : null}
     {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"

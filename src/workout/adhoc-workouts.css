@@ -1,0 +1,2 @@
+.adhoc-workouts { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px; }
+.adhoc-workouts__phase { display: flex; flex-direction: column; gap: 16px; min-width: 0; }

@@ -7,18 +7,18 @@ import type { SetType } from '../../shared/set-type';
 export type SessionExerciseStatus = 'planned' | 'active' | 'completed' | 'skipped' | 'inactive';
 export type SessionSetStatus = 'pending' | 'completed' | 'skipped';
 
-export interface SessionExerciseContext {
-  workoutSessionId: number;
+export interface SessionExerciseContext<Id extends string | number = number> {
+  workoutSessionId: Id;
   workoutDate: string;
   program: {
-    id: number;
+    id: Id;
     name: string;
   } | null;
 }
 
-export interface SessionExerciseSetData {
-  sessionSetId: number;
-  sourceProgramSetId: number | null;
+export interface SessionExerciseSetData<Id extends string | number = number> {
+  sessionSetId: Id;
+  sourceProgramSetId: Id | null;
   position: number;
   status: SessionSetStatus;
   setType?: SetType | null;
@@ -27,44 +27,47 @@ export interface SessionExerciseSetData {
   fact: ExistingSetFact | null;
 }
 
-export interface SessionExerciseData {
-  sessionExerciseId: number;
-  workoutSessionId: number;
-  sourceProgramExerciseId: number | null;
+export interface SessionExerciseData<Id extends string | number = number> {
+  sessionExerciseId: Id;
+  workoutSessionId: Id;
+  sourceProgramExerciseId: Id | null;
   position: number;
   status: SessionExerciseStatus;
   notes: string | null;
-  exercise: ExerciseDefinition;
-  sets: SessionExerciseSetData[];
+  exercise: Omit<ExerciseDefinition, 'id'> & { id: Id };
+  mediaUrl?: string | null;
+  showPreviousPlaceholder?: boolean;
+  sets: SessionExerciseSetData<Id>[];
 }
 
-export interface SaveSessionSetInput {
-  workoutSessionId: number;
-  sessionExerciseId: number;
-  sessionSetId: number;
+export interface SaveSessionSetInput<Id extends string | number = number> {
+  workoutSessionId: Id;
+  sessionExerciseId: Id;
+  sessionSetId: Id;
   fact: SetEntryFactDraft;
 }
 
-interface SessionExerciseSharedProps {
-  context: SessionExerciseContext;
-  data: SessionExerciseData;
+interface SessionExerciseSharedProps<Id extends string | number = number> {
+  context: SessionExerciseContext<Id>;
+  data: SessionExerciseData<Id>;
   collapsed?: boolean;
   defaultCollapsed?: boolean;
   surface?: 'default' | 'transparent';
   onCollapsedChange?: (collapsed: boolean) => void;
   editable?: boolean;
-  onAddSet?: (sessionExerciseId: number) => void;
-  onOpenExerciseMenu?: (sessionExerciseId: number) => void;
+  onAddSet?: (sessionExerciseId: Id) => void;
+  onDeleteSet?: (sessionSetId: Id) => Promise<void>;
+  onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
   onInformation?: () => void;
-  onOpenHistory?: (exerciseDefinitionId: number) => void;
+  onOpenHistory?: (exerciseDefinitionId: Id) => void;
   onOpenChat?: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
-export type WorkoutSessionExerciseProps =
-  | (SessionExerciseSharedProps & {
+export type WorkoutSessionExerciseProps<Id extends string | number = number> =
+  | (SessionExerciseSharedProps<Id> & {
       mode?: 'workout';
-      onSaveSet: (input: SaveSessionSetInput) => Promise<void>;
+      onSaveSet: (input: SaveSessionSetInput<Id>) => Promise<void>;
     })
   | (SessionExerciseSharedProps & {
       mode: 'plan';
@@ -93,4 +96,4 @@ export interface ProgramSessionExerciseProps {
   onDeleteSet?: (setId: string) => void;
 }
 
-export type SessionExerciseProps = WorkoutSessionExerciseProps | ProgramSessionExerciseProps;
+export type SessionExerciseProps<Id extends string | number = number> = WorkoutSessionExerciseProps<Id> | ProgramSessionExerciseProps;

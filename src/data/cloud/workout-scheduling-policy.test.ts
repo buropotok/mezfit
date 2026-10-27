@@ -24,7 +24,7 @@ describe('occurrence scheduling policy', () => {
   });
 
   it('drops only the retired local intent table and retains drafts and workout data', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(11);
+    expect(CLOUD_DATABASE_VERSION).toBe(12);
     expect(CLOUD_DATABASE_STORES_V10.workoutScheduleRequests).toBeNull();
     const { workoutScheduleRequests: retired, ...previous } = CLOUD_DATABASE_STORES_V9;
     const { workoutScheduleRequests: removed, ...current } = CLOUD_DATABASE_STORES_V10;

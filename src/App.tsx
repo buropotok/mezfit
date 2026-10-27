@@ -34,6 +34,7 @@ import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypo
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
+import { CoachAdHocWorkoutsScreen } from './workout/CoachAdHocWorkoutsScreen';
 import { WorkedMuscleAssetsPrefetch } from './workout/WorkedMuscleAssetsPrefetch';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -425,7 +426,12 @@ export function App() {
           glassOptics={glassSettings.optics}
           previewWidth={previewWidth}
         >
-          {destination === 'training' ? (
+          {destination === 'training' && state.activeRole === 'coach' ? (
+            <CoachAdHocWorkoutsScreen initData={state.initData}
+              actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
+              onClose={() => changeDestination('today')}
+              onNavigationContextChange={handleNavigationContextChange} />
+          ) : destination === 'training' ? (
             <WorkoutSessionScreen
               initData={state.initData}
               onClose={() => changeDestination('today')}
