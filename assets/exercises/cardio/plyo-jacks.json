@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/plyo-jacks/",
+  "name": "Plyo Jacks",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Plyo-Jacks.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ]
+}

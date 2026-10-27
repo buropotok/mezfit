@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/vibration-plate/",
+  "name": "Vibration Plate",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Vibrate-Plate-Standing.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ]
+}

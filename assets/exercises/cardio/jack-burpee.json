@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/jack-burpee/",
+  "name": "Jack Burpees",
+  "how_to": "Jack Burpees Benefits\n- Jack Burpees are one of the most effective full-body exercises that help burn calories quickly while targeting all the muscles of your body. Jack Burpees are a plyometric exercise. Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.\n- This exercise target the abdominal muscles, hip muscles and hip flexors and also work on the thighs, knee tendons, quadriceps and shoulders.\n- Jumps are beneficial to your health because they combine cardiovascular conditioning with strength work. Since jumps elevate your heart rate, they can also improve your cardiovascular fitness. Start slowly until you are used to the exercise and gradually work up to more repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Jack-Burpees.gif",
+  "muscles": {
+    "target": [
+      "Abs"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-treadmill/",
+  "name": "Incline Treadmill",
+  "how_to": "1. Start by warming up with 3 to 5 minutes of flat walking.\n2. Gradually increase the incline between 5 and 12 percent, depending on your fitness level.\n3. Maintain a steady walking pace or light jog while keeping your posture upright.\n4. Avoid leaning forward, and let your glutes and hamstrings do the work.\n5. Use the incline for 15 to 30 minutes, then lower it and cool down for 3 to 5 minutes.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Incline-Treadmill.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps",
+      "Gluteus Maximus",
+      "Hamstrings",
+      "Sartorius",
+      "Adductor Magnus",
+      "Adductor Longus",
+      "Adductor Brevis",
+      "Pectineus",
+      "Obliques",
+      "Calves"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ]
+}
