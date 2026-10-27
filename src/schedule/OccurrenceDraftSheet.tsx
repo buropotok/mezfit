@@ -143,6 +143,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
     return () => window.clearTimeout(timer);
   }, [lockToastVersion]);
   const [error, setError] = useState(() => draft ? drafts.pendingEditError(draft.id) : '');
+  const reportPlanError = (reason: unknown, fallback: string) => {
+    if (!startAlive.current) return;
+    if (reason instanceof Error && reason.message === lockedPlanMessage) {
+      setError(''); onMutationAttempt();
+    } else setError(reason instanceof Error ? reason.message : fallback);
+  };
   const [optimisticOrder, setOptimisticOrder] = useState<{ previous: string; next: string[] } | null>(null);
   const canonicalOrder = JSON.stringify(draft?.plan.exercises.map(exercise => exercise.id) ?? []);
   useEffect(() => {
@@ -160,7 +166,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
     // Reattach to pending/failed writes when reopening, including writes which
     // failed after the previous editor unmounted through Back or a tab change.
     void drafts.flushEdits(draft.id).catch(reason => {
-      if (active) setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
+      if (active) reportPlanError(reason, 'Не удалось сохранить черновик');
     });
     return () => { active = false; };
   }, [draft?.id, drafts, readOnly, planLocked]);
@@ -207,7 +213,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
     void validating.current.catch(() => undefined);
     void next.catch(reason => {
       if (timing && intent !== timingIntent.current) return;
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
+      reportPlanError(reason, 'Не удалось сохранить черновик');
     });
     return next;
   };
@@ -223,7 +229,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
       await onSave(latest, updateProgram);
       setProgramUpdateOpen(false);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить тренировку');
+      reportPlanError(reason, 'Не удалось сохранить тренировку');
     } finally { setBusy(false); }
   };
   const beginSave = async () => {
@@ -243,7 +249,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
         await onSave(latest, false);
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить тренировку');
+      reportPlanError(reason, 'Не удалось сохранить тренировку');
     } finally { setBusy(false); }
   };
   const startWorkout = async () => {
@@ -326,7 +332,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
       setExercisePickerOpened(false);
       await writing;
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось добавить упражнения');
+      reportPlanError(reason, 'Не удалось добавить упражнения');
     } finally { setBusy(false); }
   };
   const mayEditStructure = Boolean(draft && !readOnly && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);

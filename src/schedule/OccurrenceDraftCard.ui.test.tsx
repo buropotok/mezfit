@@ -312,4 +312,12 @@ describe('shared scheduled occurrence UI', () => {
     expect(screen.getByRole('button', { name: /Дата:/ }).hasAttribute('disabled')).toBe(true);
     expect(props.drafts.enqueueEdit).not.toHaveBeenCalled();
   });
+  it('shows the started-PLAN toast when the repository rejects a stale edit before lock props arrive', async () => {
+    const props = setup();
+    vi.mocked(props.drafts.enqueueEdit).mockRejectedValueOnce(new Error(lockedMessage));
+    render(<OccurrenceDraftCard {...props} collapsed={false} onCollapsedChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
+    expect((await screen.findByRole('status')).textContent).toBe(lockedMessage);
+  });
+
 });
