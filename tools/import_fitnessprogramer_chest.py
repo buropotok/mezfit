@@ -161,40 +161,52 @@ def extract_muscles(soup, fallback):
 
 
 def instruction_excerpt(soup):
-    nodes = section(soup, r'how\s+to|instructions|execution')
+    main_area = soup.select_one('main') or soup
     paragraphs = []
-    for n in nodes:
-        if n.name in ('ul', 'ol'):
-            paragraphs += [li.get_text(' ', strip=True) for li in n.find_all('li', recursive=False)]
-        else:
-            paragraphs += [x.get_text(' ', strip=True) for x in n.find_all(['p', 'li'], recursive=False)]
-            if not n.find(['p', 'li']):
-                paragraphs.append(n.get_text(' ', strip=True))
-    if not paragraphs:
-        # Fallback when WordPress places instruction text in another wrapper.
-        main_area = soup.select_one('main') or soup
-        rows = [' '.join(x.split()) for x in main_area.get_text('\n', strip=True).splitlines() if x.strip()]
-        starts = [
-            i for i, row in enumerate(rows)
-            if re.match(r'^how\s+to\s+(perform|do|use|execute)\b|^instructions\s*:?\s*$|^execution\s*:?\s*$', row, re.I)
-        ]
-        if starts:
-            for row in rows[starts[0] + 1: starts[0] + 81]:
-                if re.search(r'^(tips for|coach tips|common mistakes|benefits|preview|muscle groups|equipment|frequently asked)|\bbenefits\b|\bvariations\b', row, re.I):
+    for heading in main_area.find_all(['h2', 'h3', 'h4']):
+        title = heading.get_text(' ', strip=True)
+        if not re.search(r'\bhow\s+to\s+(perform|do|use|execute)|\binstructions\b|\bexecution\b', title, re.I):
+            continue
+        if re.search(r'incorporat|benefits|choose', title, re.I):
+            continue
+        level = int(heading.name[1])
+        for node in heading.next_elements:
+            if not isinstance(node, Tag):
+                continue
+            if node.name in ('h2', 'h3', 'h4') and int(node.name[1]) <= level:
+                if node.find('img') is not None or node.get_text(' ', strip=True).lower().startswith('image:'):
+                    continue
+                break
+            if node.name in ('p', 'li'):
+                value = node.get_text(' ', strip=True)
+                if value and value not in paragraphs:
+                    paragraphs.append(value)
+                if len(paragraphs) >= 10:
                     break
-                if row and len(row) < 400:
-                    paragraphs.append(row)
+        if paragraphs:
+            break
+    if not paragraphs:
+        # Text-only fallback for atypical source markup.
+        rows = [' '.join(x.split()) for x in main_area.get_text('\n', strip=True).splitlines() if x.strip()]
+        starts = [i for i, value in enumerate(rows)
+                  if re.match(r'^how\s+to\s+(perform|do|use|execute)\b|^instructions\s*:?\s*$|^execution\s*:?\s*$', value, re.I)]
+        if starts:
+            for value in rows[starts[0] + 1: starts[0] + 80]:
+                if re.search(r'^(tips for|coach tips|common mistakes|benefits|preview|muscle groups|equipment|frequently asked)|\bbenefits\b|\bvariations\b', value, re.I):
+                    break
+                if value and len(value) < 400:
+                    paragraphs.append(value)
     steps = []
     remaining = 24
-    for p in paragraphs:
-        if re.match(r'^(here are|the following|follow these|steps to perform)', p.strip(), re.I):
+    for paragraph in paragraphs:
+        if re.match(r'^(here are|the following|follow these|steps to perform)', paragraph.strip(), re.I):
             continue
-        words = p.split()
+        words = paragraph.split()
         if not words or remaining < 4:
-            continue
-        clip = ' '.join(words[:remaining])
-        remaining -= len(clip.split())
-        steps.append({'step': len(steps) + 1, 'title': 'Instruction excerpt', 'instructions': [clip]})
+            break
+        excerpt = ' '.join(words[:remaining])
+        remaining -= len(excerpt.split())
+        steps.append({'step': len(steps) + 1, 'title': 'Instruction excerpt', 'instructions': [excerpt]})
     return steps
 
 
