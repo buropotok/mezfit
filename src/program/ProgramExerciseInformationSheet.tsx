@@ -7,16 +7,17 @@ import { ExerciseMedia } from '../ExerciseMedia';
 import { Button, MezfitBottomSheet, Text } from '../ui';
 
 type ProgramExerciseInformationSheetProps = {
-  repository: ProgramManagementRepository;
   exerciseId: string;
   onClose: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 } & (
-  | { programId: string; dayId: string; snapshot?: never; realmId?: never }
-  | { snapshot: CloudProgramExerciseSnapshot; realmId: string; programId?: never; dayId?: never }
+  | { repository: ProgramManagementRepository; programId: string; dayId: string; snapshot?: never; realmId?: never; load?: never }
+  | { repository: ProgramManagementRepository; snapshot: CloudProgramExerciseSnapshot; realmId: string; programId?: never; dayId?: never; load?: never }
+  | { repository?: never; programId?: never; dayId?: never; snapshot?: never; realmId?: never;
+      load: () => Promise<ProgramExerciseInformation> }
 );
 
-export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, snapshot, realmId, onClose, onNavigationContextChange }: ProgramExerciseInformationSheetProps) {
+export function ProgramExerciseInformationSheet({ repository, programId, dayId, exerciseId, snapshot, realmId, load, onClose, onNavigationContextChange }: ProgramExerciseInformationSheetProps) {
   const [open, setOpen] = useState(true);
   const [data, setData] = useState<ProgramExerciseInformation | null>(null);
   const [error, setError] = useState('');
@@ -24,16 +25,17 @@ export function ProgramExerciseInformationSheet({ repository, programId, dayId, 
     let active = true;
     setData(null);
     setError('');
-    const request = snapshot && realmId
-      ? repository.snapshotExerciseInformation(snapshot, realmId)
-      : programId && dayId
-        ? repository.exerciseInformation(programId, dayId, exerciseId)
-        : Promise.reject(new Error('Не указан источник информации об упражнении'));
+    const request = load ? load()
+      : repository && snapshot && realmId
+        ? repository.snapshotExerciseInformation(snapshot, realmId)
+        : repository && programId && dayId
+          ? repository.exerciseInformation(programId, dayId, exerciseId)
+          : Promise.reject(new Error('Не указан источник информации об упражнении'));
     void request.then(value => {
       if (active) setData(value);
     }).catch(() => { if (active) setError('Не удалось открыть информацию об упражнении.'); });
     return () => { active = false; };
-  }, [repository, programId, dayId, exerciseId, snapshot, realmId]);
+  }, [repository, programId, dayId, exerciseId, snapshot, realmId, load]);
   useEffect(() => {
     if (!open) return;
     onNavigationContextChange?.({ title: 'Информация об упражнении', scrollKey: `exercise-info:${exerciseId}`, onBack: () => setOpen(false) });

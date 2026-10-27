@@ -212,6 +212,14 @@ export class AdHocWorkoutRepository {
       setType });
   }
 
+  /** Resolve the exercise card from the session snapshot, with current session access checks. */
+  async exerciseInformation(sessionId: string, exerciseId: string) {
+    const session = await this.require(sessionId, false);
+    const exercise = await this.exercise(session, exerciseId);
+    return new ProgramManagementRepository(this.db, this.actorUserId)
+      .snapshotExerciseInformation(exercise.exercise, session.realmId);
+  }
+
   async addExercises(sessionId: string, ids: string[]): Promise<void> {
     if (!idsValid(ids)) throw new Error('ADHOC_INVALID_EXERCISE_IDS');
     await this.write(catalogueTables, async () => {

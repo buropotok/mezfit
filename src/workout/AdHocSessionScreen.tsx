@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import type { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
@@ -6,11 +6,16 @@ import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { GlassSurface, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
+
+import type { ProgramExerciseInformation } from '../data/cloud/program-management';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
 import type { PreviousSet } from './setEntryTypes';
 import { adHocErrorMessage } from './adhoc-workout-errors';
 import './workout-session-screen.css';
+
+const ProgramExerciseInformationSheet = lazy(() => import('../program/ProgramExerciseInformationSheet')
+  .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
 /** History is supplied later; missing entries intentionally remain empty. */
 export type AdHocPreviousSets = Readonly<Record<string, readonly (PreviousSet | null)[]>>;
@@ -21,13 +26,14 @@ export type AdHocSessionRepository = Pick<AdHocWorkoutRepository,
   'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>;
 
 export function AdHocSessionScreen({ repository, sessionId, initData, actor, previousSets,
-  onNavigationContextChange }: {
+  onNavigationContextChange, onExerciseInformation }: {
   repository: AdHocSessionRepository;
   sessionId: string;
   initData: string;
   actor?: ProgramActor;
   previousSets?: AdHocPreviousSets;
   onNavigationContextChange: (value: NavigationContext | null) => void;
+  onExerciseInformation?: (exerciseId: string) => Promise<ProgramExerciseInformation>;
 }) {
   const [session, setSession] = useState<ActiveWorkoutSession<string> | null>(null);
   const [row, setRow] = useState<AdHocSessionRow | null>(null);
@@ -38,13 +44,15 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   const [selection, setSelection] = useState(false);
   const [finishConfirm, setFinishConfirm] = useState(false);
   const [deleteExerciseId, setDeleteExerciseId] = useState<string | null>(null);
+  const [informationExerciseId, setInformationExerciseId] = useState<string | null>(null);
   const [nestedNavigation, setNestedNavigation] = useState<NavigationContext | null>(null);
   const alive = useRef(true);
   const pending = useRef(0);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const availableSession = useRef<ActiveWorkoutSession<string> | null>(null);
   const clearEditingSurfaces = useCallback(() => {
-    setSelection(false); setFinishConfirm(false); setDeleteExerciseId(null); setNestedNavigation(null);
+    setSelection(false); setFinishConfirm(false); setDeleteExerciseId(null); setInformationExerciseId(null);
+    setNestedNavigation(null);
   }, []);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
@@ -90,10 +98,15 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
     clearEditingSurfaces();
   }, [clearEditingSurfaces]);
   useEffect(() => {
-    onNavigationContextChange(nestedNavigation ?? (selection || finishConfirm || deleteExerciseId
+    onNavigationContextChange(nestedNavigation ?? (selection || finishConfirm || deleteExerciseId || informationExerciseId
       ? { level: 2, title: selection ? 'Упражнения' : 'Тренировка', onBack: closeOverlay } : null));
     return () => onNavigationContextChange(null);
-  }, [nestedNavigation, selection, finishConfirm, deleteExerciseId, closeOverlay, onNavigationContextChange]);
+  }, [nestedNavigation, selection, finishConfirm, deleteExerciseId, informationExerciseId, closeOverlay, onNavigationContextChange]);
+  const loadExerciseInformation = useCallback(() => {
+    if (!informationExerciseId || !onExerciseInformation)
+      return Promise.reject(new Error('Упражнение недоступно'));
+    return onExerciseInformation(informationExerciseId);
+  }, [informationExerciseId, onExerciseInformation]);
   const displaySession = useMemo(() => session ? {
     ...session,
     ...(actor ? { creator: { id: repository.actorUserId, firstName: actor.name, lastName: null,
@@ -114,7 +127,10 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}
         onAddSet={id => { if (!pending.current) void mutate(() => repository.addSet(sessionId, id)).catch(report); }}
         onDeleteSet={id => mutate(() => repository.deleteSet(sessionId, id))}
-        onOpenExerciseMenu={id => { if (!pending.current) setDeleteExerciseId(id); }}
+        onDeleteExercise={id => { if (!pending.current) setDeleteExerciseId(id); }}
+        onExerciseInformation={onExerciseInformation ? id => {
+          if (!pending.current) setInformationExerciseId(id);
+        } : undefined}
         onRename={name => mutate(() => repository.rename(sessionId, name))}
         onCommentChange={session?.status === 'active' ? comment => mutate(() => repository.comment(sessionId, comment)) : undefined}
         onNavigationContextChange={setNestedNavigation} />
@@ -135,6 +151,14 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
           if (alive.current) { setSelection(false); setNestedNavigation(null); }
         }).catch(report);
       }} />
+    {informationExerciseId && onExerciseInformation ? (
+      <Suspense fallback={<Text variant="body">Загружаем карточку упражнения…</Text>}>
+        <ProgramExerciseInformationSheet key={informationExerciseId}
+          exerciseId={informationExerciseId} load={loadExerciseInformation}
+          onClose={() => setInformationExerciseId(null)}
+          onNavigationContextChange={setNestedNavigation} />
+      </Suspense>
+    ) : null}
     <MezfitDialog opened={finishConfirm} title="Завершить тренировку?"
       buttons={<>
         <MezfitDialogButton disabled={busy} onClick={closeOverlay}>Отмена</MezfitDialogButton>
