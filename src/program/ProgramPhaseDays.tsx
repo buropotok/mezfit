@@ -22,7 +22,8 @@ import { programMutationMessage } from './programPresentation';
 const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
   .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
-export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft', onActivateForScheduling, onMutationAttempt }: {
+export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft', onActivateForScheduling, onMutationAttempt, onStartDay }: {
+  onStartDay?: (dayId: string) => Promise<void>;
   onMutationAttempt?: () => void;
   onActivateForScheduling?: (phaseId: string, onActivated: () => Promise<void>) => void;
   repository: ProgramManagementRepository;
@@ -149,6 +150,15 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
       if (alive.current) setBusy(false);
     }
   };
+  const start = async (dayId: string) => {
+    if (running.current || !onStartDay) return;
+    running.current = true;
+    setBusy(true);
+    setError('');
+    try { await onStartDay(dayId); }
+    catch (reason) { if (alive.current) setError(programMutationMessage(reason)); }
+    finally { running.current = false; if (alive.current) setBusy(false); }
+  };
   const selected = dialog?.item.day;
   return <>
     <div ref={viewport} id={bodyId} className="cloud-plan-days-viewport" aria-hidden={collapsed} inert={collapsed}>
@@ -177,8 +187,9 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
           });
         }} creatorName={creatorName} creatorAvatar={creatorAvatar}
         readOnly={readOnly} onMutationAttempt={onMutationAttempt} busy={busy || exerciseDayId !== null}
+        onStart={onStartDay ? () => { void start(item.day.id); } : undefined}
         canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
-          && program.clientUserId !== null} onSchedule={planning && ((program.status === 'active' && phaseStatus === 'active') || (!readOnly && onActivateForScheduling)) ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
+          && program.clientUserId !== null} onSchedule={!onStartDay && planning && ((program.status === 'active' && phaseStatus === 'active') || (!readOnly && onActivateForScheduling)) ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => setExerciseDayId(item.day.id)}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
         onDeleteSet={!readOnly ? (exerciseId, setId) => setDeletingSet({ dayId: item.day.id, exerciseId, setId }) : undefined}

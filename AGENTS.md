@@ -174,6 +174,12 @@ Drag state, ordering, and persistence need explicit ownership. Visual and persis
 
 ## 19. UI libraries and CSS
 
+Mezfit does not use square or rectangular action buttons. Use the established
+capsule or circular UI Kit buttons and their public shape/rounded props. Do not
+override primitive geometry, add local corner-radius fixes, or use the default
+rectangular Konsta button in product screens. This also applies to retry/error
+actions. Inline text links and list rows remain their own existing primitives.
+
 **Konsta UI 5.4.0 (`konsta/react`) is the canonical Mezfit UI kit for new and modified product UI.** The repository pins this exact version in both `package.json` and the lockfile; do not upgrade it as part of feature work unless the product decision explicitly changes. When Konsta provides a suitable primitive, Mezfit-owned UI should normally use, compose, or wrap that primitive. The directory `src/ui/konsta-mezfit/*` is the intentional version-pinned adapter layer for Konsta 5.4.0 and may use Konsta internals when the public API is insufficient for an approved Mezfit primitive. Any Konsta version change must explicitly review and revalidate every such adapter before merge.
 
 The canonical Konsta theme is **iOS + dark**. Keep `KonstaProvider theme="ios" dark` and the required public `k-ios dark` theme-root classes at the application root unless the user explicitly changes the product-wide theme decision.

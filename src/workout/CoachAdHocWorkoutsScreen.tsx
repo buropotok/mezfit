@@ -1,49 +1,47 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, List, ListItem, Toast } from 'konsta/react';
-import { useNavigationFloatingAction, type NavigationContext } from '../NavigationShell';
+import { useNavigationFloatingAction, type NavigationContext, type NavigationFloatingAction } from '../NavigationShell';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
-import type { CloudTrainingPlanRow } from '../data/cloud/database';
+import { AdHocWorkoutRepository, type AdHocOpenSession } from '../data/cloud/adhoc-workouts';
 import type { ProgramActor } from '../program/ProgramSummary';
-import { ProgramClientPicker } from '../program/ProgramClientPicker';
+import { ScheduleWorkoutCreator } from '../schedule/ScheduleWorkoutCreator';
 import { MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text } from '../ui';
-import { AdHocProgramPicker } from './AdHocProgramPicker';
 import { AdHocSessionScreen } from './AdHocSessionScreen';
 import { adHocErrorMessage } from './adhoc-workout-errors';
-import '../schedule/workout-planning.css';
 import './adhoc-workouts.css';
 
-type Step = 'athlete' | 'client' | 'programs' | 'planned' | null;
+type StartInput = { athleteUserId: string; programId?: string; dayId?: string };
+const alreadyActive = (reason: unknown) => reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS';
+const ignoreScheduledCreation = () => {};
 
-export function CoachAdHocWorkoutsScreen({ initData, actor, onClose, onNavigationContextChange }: {
+export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextChange }: {
   initData: string;
   actor?: ProgramActor;
-  onClose: () => void;
   onNavigationContextChange: (value: NavigationContext | null) => void;
 }) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
-  const [step, setStep] = useState<Step>(null);
-  const [pendingStep, setPendingStep] = useState<'quick' | 'athlete' | 'planned' | null>(null);
-  const [athleteId, setAthleteId] = useState('');
-  const [programs, setPrograms] = useState<CloudTrainingPlanRow[]>([]);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  const [plannedOpen, setPlannedOpen] = useState(false);
+  const [pendingStep, setPendingStep] = useState<'quick' | 'program' | 'planned' | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<{ id: string; name: string }[]>([]);
+  const [sessions, setSessions] = useState<AdHocOpenSession[]>([]);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [childNavigation, setChildNavigation] = useState<NavigationContext | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [blocked, setBlocked] = useState(false);
   const [toast, setToast] = useState(false);
   const [retry, setRetry] = useState(0);
   const generation = useRef(0);
   const running = useRef(false);
-  const onCloseRef = useRef(onClose);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  const activeId = useRef<string | null>(null);
+  const hasActive = sessions.some(row => row.status === 'active') || busy;
   useEffect(() => {
-    ++generation.current;
-    running.current = false;
-    setBusy(false); setError(''); setSessionId(null); setStep(null);
-    setPendingStep(null); setChildNavigation(null); setSessions([]);
+    ++generation.current; running.current = false; activeId.current = null;
+    setBusy(false); setError(''); setSessionId(null); setSourceOpen(false); setPlannedOpen(false);
+    setPendingStep(null); setChildNavigation(null); setSessions([]); setSessionsLoaded(false); setBlocked(false);
     return () => { ++generation.current; };
   }, [repository]);
   useEffect(() => {
@@ -54,74 +52,72 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onClose, onNavigatio
   useEffect(() => {
     if (!repository) return;
     let active = true;
-    const subscription = repository.observeOpen(rows => { if (active) setSessions(rows); }, reason => {
-      if (active) setError(adHocErrorMessage(reason, 'Не удалось прочитать тренировки'));
+    const subscription = repository.observeOpen(rows => {
+      if (!active) return;
+      const current = rows.find(row => row.status === 'active');
+      activeId.current = current?.id ?? null;
+      setSessions(rows); setSessionsLoaded(true);
+      // The Training tab resumes local work; it is not a separate navigation destination.
+      if (current) setSessionId(id => id ?? current.id);
+    }, reason => {
+      if (active) { setError(adHocErrorMessage(reason, 'Не удалось прочитать тренировки')); setSessionsLoaded(false); }
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retry]);
-  const run = useCallback(async (operation: () => Promise<void>) => {
-    if (running.current || !repository) return;
-    const token = generation.current;
-    running.current = true; setBusy(true); setError('');
-    try { await operation(); }
-    catch (reason) { if (token === generation.current) setError(adHocErrorMessage(reason, 'Не удалось создать тренировку')); }
-    finally { if (token === generation.current) { running.current = false; setBusy(false); } }
-  }, [repository]);
+  const closeSource = useCallback(() => { setSourceOpen(false); setChildNavigation(null); }, []);
+  const closePlanned = useCallback(() => { setPlannedOpen(false); setChildNavigation(null); }, []);
+  useEffect(() => {
+    onNavigationContextChange(childNavigation ?? (plannedOpen
+      ? { level: 2, title: 'Плановая тренировка', contentMode: 'viewport', onBack: closePlanned } : null));
+    return () => onNavigationContextChange(null);
+  }, [plannedOpen, closePlanned, childNavigation, onNavigationContextChange]);
   const openCreated = useCallback((result: { id: string; createdProgram: boolean }, token: number) => {
     if (token !== generation.current) return;
-    setSessionId(result.id); setStep(null); setChildNavigation(null);
+    activeId.current = result.id;
+    setSessionId(result.id); setSourceOpen(false); setChildNavigation(null);
+    setSessions(rows => [{ id: result.id, name: 'Тренировка', status: 'active' }, ...rows.filter(row => row.id !== result.id)]);
     if (result.createdProgram) setToast(true);
   }, []);
-  const quick = useCallback(() => run(async () => {
-    if (!repository) return;
+  const quick = useCallback(async () => {
+    if (running.current || !repository) return;
+    if (activeId.current) { setBlocked(true); return; }
     const token = generation.current;
-    openCreated(await repository.createQuick(), token);
-  }), [repository, run, openCreated]);
-  const selectAthlete = useCallback((id: string) => run(async () => {
-    if (!repository) return;
+    running.current = true; setBusy(true); setError('');
+    try { openCreated(await repository.createQuick(), token); }
+    catch (reason) {
+      if (token !== generation.current) return;
+      if (alreadyActive(reason)) setBlocked(true);
+      else setError(adHocErrorMessage(reason, 'Не удалось создать тренировку'));
+    } finally { if (token === generation.current) { running.current = false; setBusy(false); } }
+  }, [repository, openCreated]);
+  const startFromProgram = useCallback(async (input: StartInput) => {
+    if (!repository) throw new Error('Не удалось прочитать тренировки');
     const token = generation.current;
-    const rows = await repository.listPrograms(id);
-    if (token !== generation.current) return;
-    setAthleteId(id);
-    if (!rows.length) openCreated(await repository.createForAthlete(id), token);
-    else { setPrograms(rows); setStep('programs'); setChildNavigation(null); }
-  }), [repository, run, openCreated]);
-  const startDay = useCallback((programId: string, dayId: string) => { void run(async () => {
-    if (!repository) return;
-    const token = generation.current;
-    openCreated(await repository.createForAthlete(athleteId, programId, dayId), token);
-  }); }, [repository, athleteId, run, openCreated]);
-  const back = useCallback(() => {
-    if (running.current) return;
-    setError(''); setChildNavigation(null);
-    if (step === 'client' || step === 'programs') setStep('athlete');
-    else if (step) setStep(null);
-    else if (sessionId) setSessionId(null);
-    else onCloseRef.current();
-  }, [step, sessionId]);
-  useEffect(() => {
-    const title = step === 'planned' ? 'Плановая тренировка' : step === 'client' ? 'Выбрать клиента'
-      : step === 'programs' ? 'Выбрать программу' : step === 'athlete' ? 'Из программы' : 'Тренировка';
-    onNavigationContextChange(childNavigation ?? (step || sessionId
-      ? { level: 2, title, contentMode: 'viewport', onBack: back } : null));
-    return () => onNavigationContextChange(null);
-  }, [step, sessionId, back, childNavigation, onNavigationContextChange]);
-  const action = useMemo(() => step || sessionId ? null : {
-    label: 'Создать тренировку', icon: 'plus' as const, disabled: busy || !repository,
-    popoverItems: [
-      { id: 'quick', label: 'Быстрая тренировка', icon: 'treadmill' as const,
-        onSelect: () => setPendingStep('quick') },
-      { id: 'program', label: 'Из программы', icon: 'barbell' as const,
-        onSelect: () => setPendingStep('athlete') },
-      { id: 'planned', label: 'Плановая тренировка', icon: 'calendar' as const,
-        onSelect: () => setPendingStep('planned') },
-    ],
-    onPresentationChange: (presented: boolean) => {
+    try {
+      openCreated(await repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), token);
+    } catch (reason) {
+      if (token !== generation.current) return;
+      if (alreadyActive(reason)) { closeSource(); setBlocked(true); }
+      else throw new Error(adHocErrorMessage(reason));
+    }
+  }, [repository, openCreated, closeSource]);
+  const action = useMemo<NavigationFloatingAction | null>(() => {
+    if (sourceOpen || plannedOpen) return null;
+    const common = { label: 'Создать тренировку', icon: 'plus' as const, disabled: busy || !repository || !sessionsLoaded };
+    if (hasActive) return { ...common, disabled: busy, onClick: () => setBlocked(true) };
+    return { ...common, popoverItems: [
+      { id: 'quick', label: 'Быстрая тренировка', icon: 'treadmill', onSelect: () => setPendingStep('quick') },
+      { id: 'program', label: 'Из программы', icon: 'barbell', onSelect: () => setPendingStep('program') },
+      { id: 'planned', label: 'Плановая тренировка', icon: 'calendar', onSelect: () => setPendingStep('planned') },
+    ], onPresentationChange: presented => {
       if (presented || !pendingStep) return;
       const next = pendingStep; setPendingStep(null); setError('');
-      if (next === 'quick') void quick(); else setStep(next);
-    },
-  }, [step, sessionId, busy, repository, pendingStep, quick]);
+      if (activeId.current) { setBlocked(true); return; }
+      if (next === 'quick') void quick();
+      else if (next === 'program') setSourceOpen(true);
+      else setPlannedOpen(true);
+    } };
+  }, [sourceOpen, plannedOpen, busy, repository, sessionsLoaded, hasActive, pendingStep, quick]);
   useNavigationFloatingAction('training', action);
   return <>
     {sessionId && repository ? <AdHocSessionScreen key={sessionId} repository={repository} sessionId={sessionId}
@@ -138,25 +134,14 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onClose, onNavigatio
         : 'Не удалось синхронизировать данные с Mezfit облаком.'}</Text>
     </section> : null}
     {error ? <section className="adhoc-workouts"><Text variant="footnote" role="alert">{error}</Text>
-      <Button tonal disabled={busy} onClick={() => { setError(''); setRetry(value => value + 1); }}>Повторить</Button></section> : null}
-    <MezfitDialog opened={step === 'athlete'} title="Из программы"
-      onBackdropClick={busy ? undefined : back}
-      buttons={<MezfitDialogButton disabled={busy} onClick={back}>Отмена</MezfitDialogButton>}>
-      <List nested>
-        <ListItem link title="Моя тренировка" onClick={() => { if (cloud && !busy) void selectAthlete(cloud.actorUserId); }} />
-        <ListItem link title="Выбрать клиента" onClick={() => { if (!busy) setStep('client'); }} />
-      </List>
-      {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-    </MezfitDialog>
-    <ProgramClientPicker opened={step === 'client'} clients={cloud?.clients ?? []}
-      loading={cloud?.status === 'loading' || busy} onClose={back}
-      onSelect={client => { if (!busy) void selectAthlete(client.userId); }} />
-    <MezfitBottomSheet opened={step === 'programs'} label="Выбрать программу" lazyMount>
-      {repository && step === 'programs' ? <AdHocProgramPicker repository={repository} programs={programs}
-        actor={actor} busy={busy} onStart={startDay} onBack={back} onNavigationContextChange={setChildNavigation} /> : null}
-      {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-    </MezfitBottomSheet>
-    <MezfitBottomSheet opened={step === 'planned'} label="Плановая тренировка" lazyMount />
+      <Button rounded tonal disabled={busy} onClick={() => { setError(''); setRetry(value => value + 1); }}>Повторить</Button></section> : null}
+    <ScheduleWorkoutCreator intent={sourceOpen ? 'workout' : null} role="coach" actor={actor} mode="start"
+      onClose={closeSource} onCreated={ignoreScheduledCreation} onStartWorkout={startFromProgram}
+      onNavigationContextChange={setChildNavigation} />
+    <MezfitBottomSheet opened={plannedOpen} label="Плановая тренировка" lazyMount />
+    <MezfitDialog opened={blocked} title="Завершите текущую тренировку, чтобы начать новую."
+      onBackdropClick={() => setBlocked(false)}
+      buttons={<MezfitDialogButton strong onClick={() => setBlocked(false)}>Понятно</MezfitDialogButton>} />
     <Toast opened={toast} position="center" role="status" aria-live="polite">
       <Text variant="body">Была создана программа.</Text>
     </Toast>

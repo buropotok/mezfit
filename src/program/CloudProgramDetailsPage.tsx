@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { List as KonstaList, ListInput } from 'konsta/react';
+import { Button as KonstaButton, List as KonstaList, ListInput } from 'konsta/react';
 import type { CloudProgramPhaseRow } from '../data/cloud/workout-foundation-types';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { isOtherActiveProgramInScope, type ProgramDetails, type ProgramManagementRepository } from '../data/cloud/program-management';
 import { useNavigationSurfaceFloatingAction, type NavigationContext } from '../NavigationShell';
-import { Badge, Button, Icon, IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
+import { Badge, Icon, IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type BadgeColor, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { ProgramSummary, type ProgramActor } from './ProgramSummary';
 import { programMutationMessage, weekLabel } from './programPresentation';
@@ -97,18 +97,19 @@ function PhaseHeading({
       </div>
       {children?.(collapsed, bodyId)}
       {!readOnly && phase.status === 'draft' ? (
-        <Button variant="secondary" disabled={disabled} onClick={() => onPublish(phase)}>
+        <KonstaButton rounded tonal disabled={disabled} onClick={() => onPublish(phase)}>
           Завершить заполнение фазы
-        </Button>
+        </KonstaButton>
       ) : null}
     </section>
   );
 }
 
 export function CloudProgramDetailsPage({
-  repository, planId, viewerRole = 'coach', readOnly = false, selectionMode = false, onSelectionMutationAttempt, selectionFeedbackVisible = false, planningSurfaceRef, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
+  repository, planId, onStartDay, viewerRole = 'coach', readOnly = false, selectionMode = false, onSelectionMutationAttempt, selectionFeedbackVisible = false, planningSurfaceRef, actor, cloudStatus, cloudError, syncStatus, syncError, onRetryCloud, onRetrySync, onNavigationContextChange,
 }: {
   repository: ProgramManagementRepository;
+  onStartDay?: (dayId: string) => Promise<void>;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   planId: string;
   viewerRole?: 'coach' | 'client';
@@ -215,7 +216,7 @@ export function CloudProgramDetailsPage({
       onConfirm: async (phaseId) => { setDialog(null); setDayCreatePhaseId(phaseId); },
     });
   }, [details, readOnly, busy, phaseCreateBusy, selectionMode, explainSelection]);
-  const floatingAction = useMemo(() => details && !readOnly ? {
+  const floatingAction = useMemo(() => details && !readOnly && !onStartDay ? {
     label: 'Добавить',
     onPresentationChange: setFabPresented,
     icon: 'plus' as const,
@@ -223,7 +224,7 @@ export function CloudProgramDetailsPage({
       { id: 'add-phase', icon: 'plus' as const, label: 'Фаза', onSelect: addPhase, disabled: busy || phaseCreateBusy },
       { id: 'add-day', icon: 'plus' as const, label: 'День', onSelect: addDay, disabled: busy || phaseCreateBusy || !details.phases.length },
     ],
-  } : null, [details, readOnly, selectionMode, addPhase, addDay, busy, phaseCreateBusy]);
+  } : null, [details, readOnly, selectionMode, onStartDay, addPhase, addDay, busy, phaseCreateBusy]);
   useNavigationSurfaceFloatingAction(floatingAction);
 
   const activate = async (phaseId: string, previousPhaseStatus?: 'draft' | 'pending' | 'finished' | 'cancelled', onActivated?: () => Promise<void>) => {
@@ -342,10 +343,10 @@ export function CloudProgramDetailsPage({
     <section className="cloud-plan-loading">
       {syncNotice}
       <Text variant="headline">{error || (syncStatus === 'synced' ? 'Программа не найдена' : 'Программа ещё не загружена на устройство')}</Text>
-      <Button onClick={() => setRetryKey((n) => n + 1)}>Повторить</Button>
+      <KonstaButton rounded onClick={() => setRetryKey((n) => n + 1)}>Повторить</KonstaButton>
     </section>
   );
-  const schedulingUnavailable = selectionMode && readOnly
+  const schedulingUnavailable = selectionMode && !onStartDay && readOnly
     ? details.program.status !== 'active'
       ? 'Эта программа доступна только для просмотра. Запланировать тренировку можно после того, как тренер активирует программу и фазу.'
       : !details.phases.some(phase => phase.status === 'active')
@@ -357,7 +358,7 @@ export function CloudProgramDetailsPage({
     : null;
   return (
     <SpotlightHint hintId="schedule.program.pick-day" version={1} userId={repository.actorUserId}
-      enabled={selectionMode} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || selectionFeedbackVisible || phaseCreateOpen || dayCreatePhaseId)}
+      enabled={selectionMode && !onStartDay} autoScroll surfaceRef={planningSurfaceRef} paused={Boolean(fabPresented || schedulingUnavailable || dialog || selectionFeedbackVisible || phaseCreateOpen || dayCreatePhaseId)}
       text={readOnly ? 'Нажмите «Запланировать» у нужного дня, чтобы выбрать дату и время.'
         : 'Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.'}>
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
@@ -396,10 +397,11 @@ export function CloudProgramDetailsPage({
           }); }}
         >
           {(collapsed, bodyId) => <>
-            {selectionMode && readOnly && !schedulingUnavailable && phase.status !== 'active'
+            {selectionMode && !onStartDay && readOnly && !schedulingUnavailable && phase.status !== 'active'
               ? <Text variant="footnote">Из этой фазы пока нельзя запланировать тренировку. Фазу должен активировать тренер.</Text> : null}
             <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
-            onActivateForScheduling={(phaseId, onActivated) => {
+            onStartDay={onStartDay}
+            onActivateForScheduling={onStartDay ? undefined : (phaseId, onActivated) => {
               const target = details.phases.find(item => item.id === phaseId);
               if (!target || readOnly || busy) return;
               setDialog({ kind: 'confirm', title: details.program.status === 'active' ? 'Фаза будет активирована.' : 'Программа будет активирована.',

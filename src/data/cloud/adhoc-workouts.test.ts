@@ -84,6 +84,7 @@ describe('local ad-hoc execution', () => {
     expect((await repo.get(first.id))?.exercises).toEqual([]);
     await repo.programs.createPersonal('Уже существует');
     creating.mockClear();
+    await repo.complete(first.id);
     const second = await repo.createQuick();
     expect(second.createdProgram).toBe(false);
     expect(await db.table('trainingPlans').count()).toBe(1);
@@ -119,7 +120,7 @@ describe('local ad-hoc execution', () => {
       const completedAt = (await repo.getRow(created.id))?.completedAt;
       await repo.complete(created.id);
       expect((await repo.getRow(created.id))?.completedAt).toBe(completedAt);
-      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toEqual([{ id: created.id, name: 'Вечерняя' }]));
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toEqual([{ id: created.id, name: 'Вечерняя', status: 'completed' }]));
       db.close(); await db.open();
       const reopened = new AdHocWorkoutRepository(database, 'tg:101');
       expect(await reopened.getRow(created.id)).toMatchObject({ autoCreatedProgram: true,
@@ -140,6 +141,10 @@ describe('local ad-hoc execution', () => {
     const result = await Promise.allSettled([repo.createForAthlete('tg:101'), repo.createForAthlete('tg:101')]);
     expect(result.filter(row => row.status === 'fulfilled')).toHaveLength(1);
     expect(result.filter(row => row.status === 'rejected')).toHaveLength(1);
+    const active = await repo.getActive();
+    if (!active) throw new Error('Missing session');
+    await expect(repo.createForAthlete('tg:101')).rejects.toThrow('ADHOC_ACTIVE_SESSION_EXISTS');
+    await repo.complete(active.id);
     await expect(repo.createForAthlete('tg:101')).rejects.toThrow('ADHOC_PROGRAM_SELECTION_REQUIRED');
     expect(await sessionTable(db).count()).toBe(1);
     expect(await db.table('trainingPlans').count()).toBe(1);
@@ -212,6 +217,7 @@ describe('local ad-hoc execution', () => {
     expect((await repo.get(created.id))?.exercises[0].exercise).toMatchObject({ scope: 'coach', tracking_type: 'time_weight' });
     await repo.programs.addDayExercises(programId, dayId, ['0002']);
     await db.table('publicExerciseDefinitions').delete('0002');
+    await repo.complete(created.id);
     await expect(repo.createForAthlete('tg:101', programId, dayId)).rejects.toThrow('ADHOC_EXERCISE_TRACKING_REQUIRED');
     expect(await sessionTable(db).count()).toBe(1);
     expect(await exerciseTable(db).count()).toBe(1);
@@ -222,6 +228,7 @@ describe('local ad-hoc execution', () => {
     const first = await repo.createForAthlete('tg:101');
     const row = await repo.getRow(first.id);
     const otherProgram = await repo.programs.createPersonal('Другая');
+    await repo.complete(first.id);
     await expect(repo.createForAthlete('tg:101', otherProgram, row?.dayId)).rejects.toThrow('ADHOC_DAY_NOT_FOUND');
     await expect(repo.createForAthlete('tg:202', row?.programId, row?.dayId)).rejects.toThrow('ADHOC_PROGRAM_NOT_FOUND');
     expect(await sessionTable(db).count()).toBe(1);
@@ -258,11 +265,13 @@ describe('local ad-hoc execution', () => {
     const { exerciseId, setId } = await oneExercise(repo, first.id);
     const row = await repo.getRow(first.id);
     if (!row?.programId) throw new Error('Missing program');
+    await setTable(db).update(setId, { realmId: 'tg:303' });
+    await expect(repo.deleteSet(first.id, setId)).rejects.toThrow('ADHOC_SET_NOT_FOUND');
+    await repo.complete(first.id);
     const second = await repo.createForAthlete('tg:101', row.programId);
     await expect(repo.saveSet(second.id, setId, fact)).rejects.toThrow('ADHOC_SET_NOT_FOUND');
     await expect(repo.addSet(second.id, exerciseId)).rejects.toThrow('ADHOC_EXERCISE_NOT_FOUND');
-    await setTable(db).update(setId, { realmId: 'tg:303' });
-    await expect(repo.deleteSet(first.id, setId)).rejects.toThrow('ADHOC_SET_NOT_FOUND');
+    await repo.complete(second.id);
     const shared = await repo.createForAthlete('tg:202');
     await sessionTable(db).update(shared.id, { owner: 'tg:101' });
     expect(await repo.get(shared.id)).toBeNull();

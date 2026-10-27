@@ -1,4 +1,5 @@
 const messages: Readonly<Record<string, string>> = {
+  ADHOC_ACTIVE_SESSION_EXISTS: 'Завершите текущую тренировку, чтобы начать новую.',
   ADHOC_SESSION_NOT_FOUND: 'Тренировка недоступна. Вернитесь к списку тренировок.',
   ADHOC_SESSION_COMPLETED: 'Тренировка уже завершена.',
   ADHOC_WRITE_FORBIDDEN: 'Нет доступа к изменению этой тренировки.',
