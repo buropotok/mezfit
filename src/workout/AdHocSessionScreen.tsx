@@ -51,12 +51,12 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
     let active = true;
     availableSession.current = null;
     setLoading(true); setError('');
-    const subscription = repository.observe(sessionId, (value, metadata) => {
+    const subscription = repository.observe(sessionId, (value, metadata, issue) => {
       if (!active) return;
       availableSession.current = value;
       setSession(value); setRow(metadata ?? null); setLoading(false);
       if (!value || value.status !== 'active') clearEditingSurfaces();
-      if (!value) setError('Тренировка недоступна');
+      if (!value) setError(issue ? adHocErrorMessage(new Error(issue)) : 'Тренировка недоступна');
     }, reason => {
       if (!active) return;
       availableSession.current = null;

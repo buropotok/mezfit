@@ -1,6 +1,6 @@
 import { liveQuery } from 'dexie';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
-import { isAdHocSessionRow, isAdHocExerciseRow, isAdHocSetRow, isAdHocFactDraft,
+import { adHocSessionValidationIssue, type AdHocSessionValidationIssue, isAdHocSessionRow, isAdHocExerciseRow, isAdHocSetRow, isAdHocFactDraft,
   type AdHocExerciseRow, type AdHocSessionRow, type AdHocSetRow } from './adhoc-workout-types';
 import { isApprovedAssignedPair } from './assigned-programs';
 import { ProgramManagementRepository } from './program-management';
@@ -17,6 +17,9 @@ import type { ExistingSetFact, SetEntryFactDraft, SetType } from '../../workout/
 export type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 
 export type AdHocOpenSession = Pick<AdHocSessionRow, 'id' | 'name' | 'status'>;
+
+export type AdHocSessionAccessIssue = AdHocSessionValidationIssue | 'ADHOC_LOCAL_RECORD_MISSING'
+  | 'ADHOC_PERSONAL_ACCESS_INVALID' | 'ADHOC_RELATIONSHIP_IDENTITY_INVALID' | 'ADHOC_RELATIONSHIP_UNAVAILABLE';
 
 const executionTables = ['adHocSessions', 'adHocExercises', 'adHocSets', 'realms', 'members'];
 const programTables = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
@@ -70,15 +73,22 @@ export class AdHocWorkoutRepository {
   private write<T>(extra: string[], task: () => Promise<T>): Promise<T> {
     return this.db.transaction('rw', [...new Set([...executionTables, ...extra])], task);
   }
-  private async accessible(row: AdHocSessionRow): Promise<boolean> {
-    if (!isAdHocSessionRow(row)) return false;
+  private async accessIssue(row: AdHocSessionRow): Promise<AdHocSessionAccessIssue | null> {
+    const invalid = adHocSessionValidationIssue(row);
+    if (invalid) return invalid;
     if (row.realmId === this.actorUserId) return row.athleteUserId === this.actorUserId
-      && row.creatorUserId === this.actorUserId && row.coachUserId === null && row.clientUserId === null;
+      && row.creatorUserId === this.actorUserId && row.coachUserId === null && row.clientUserId === null
+      ? null : 'ADHOC_PERSONAL_ACCESS_INVALID';
     if (!row.coachUserId || !row.clientUserId || row.athleteUserId !== row.clientUserId
       || (row.creatorUserId !== row.coachUserId && row.creatorUserId !== row.clientUserId)
-      || (this.actorUserId !== row.coachUserId && this.actorUserId !== row.clientUserId)) return false;
-    return isApprovedAssignedPair(await this.db.realms.get(row.realmId),
-      await this.db.members.where('realmId').equals(row.realmId).toArray(), row.coachUserId, row.clientUserId);
+      || (this.actorUserId !== row.coachUserId && this.actorUserId !== row.clientUserId))
+      return 'ADHOC_RELATIONSHIP_IDENTITY_INVALID';
+    return await isApprovedAssignedPair(await this.db.realms.get(row.realmId),
+      await this.db.members.where('realmId').equals(row.realmId).toArray(), row.coachUserId, row.clientUserId)
+      ? null : 'ADHOC_RELATIONSHIP_UNAVAILABLE';
+  }
+  private async accessible(row: AdHocSessionRow): Promise<boolean> {
+    return (await this.accessIssue(row)) === null;
   }
   async getRow(id: string): Promise<AdHocSessionRow | null> {
     const row = await this.db.adHocSessions.get(id);
@@ -357,13 +367,16 @@ export class AdHocWorkoutRepository {
       return row ? this.project(row) : null;
     });
   }
-  observe(id: string, onChange: (session: ActiveWorkoutSession<string> | null, row?: AdHocSessionRow) => void,
+  observe(id: string, onChange: (session: ActiveWorkoutSession<string> | null, row?: AdHocSessionRow, issue?: AdHocSessionAccessIssue) => void,
     onError: (reason: unknown) => void): { unsubscribe(): void } {
     return liveQuery(() => this.db.transaction('r', executionTables, async () => {
-      const row = await this.getRow(id);
-      return { session: row ? await this.project(row) : null, row: row ?? undefined };
-    })).subscribe({ next: result => onChange(result.session, result.row), error: onError });
+      const row = await this.db.adHocSessions.get(id);
+      const issue: AdHocSessionAccessIssue | null = row ? await this.accessIssue(row) : 'ADHOC_LOCAL_RECORD_MISSING';
+      if (issue || !row) return { session: null, row: undefined, issue: issue ?? undefined };
+      return { session: await this.project(row), row, issue: undefined };
+    })).subscribe({ next: result => onChange(result.session, result.row, result.issue), error: onError });
   }
+
   /** Called in the creation transaction so competing local starts serialize. */
   private async findActive(): Promise<{ id: string; name: string } | null> {
     const rows = await this.db.adHocSessions.where('status').equals('active').toArray();

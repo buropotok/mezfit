@@ -80,27 +80,36 @@ const rpe = (value: unknown): boolean => value === null
 const bands = (value: unknown): boolean => Array.isArray(value) && value.every(band =>
   typeof band === 'string' && ['yellow', 'red', 'green', 'blue', 'purple', 'black'].includes(band));
 
-export function isAdHocSessionRow(value: unknown): value is AdHocSessionRow {
-  if (!object(value)) return false;
-  return id(value.id) && id(value.realmId) && value.owner === value.realmId
-    && user(value.athleteUserId) && user(value.creatorUserId)
-    && (value.coachUserId === null || user(value.coachUserId))
-    && (value.clientUserId === null || user(value.clientUserId))
-    && typeof value.name === 'string' && value.name.trim().length > 0 && value.name.length <= 120
-    && nullableText(value.comment, 4000)
-    && (value.programId === undefined || id(value.programId))
-    && (value.dayId === undefined || (id(value.dayId) && id(value.programId)))
-    && (value.programId === undefined ? value.programName === null
+/** Safe diagnostic codes contain no record values or participant identifiers. */
+export type AdHocSessionValidationIssue = 'ADHOC_INVALID_IDENTITY' | 'ADHOC_INVALID_PARTICIPANTS'
+  | 'ADHOC_INVALID_TITLE' | 'ADHOC_INVALID_SOURCE' | 'ADHOC_INVALID_TIMESTAMPS' | 'ADHOC_INVALID_LIFECYCLE';
+
+export function adHocSessionValidationIssue(value: unknown): AdHocSessionValidationIssue | null {
+  if (!object(value) || !id(value.id) || !id(value.realmId) || value.owner !== value.realmId)
+    return 'ADHOC_INVALID_IDENTITY';
+  if (!user(value.athleteUserId) || !user(value.creatorUserId)
+    || !(value.coachUserId === null || user(value.coachUserId))
+    || !(value.clientUserId === null || user(value.clientUserId))) return 'ADHOC_INVALID_PARTICIPANTS';
+  if (!(typeof value.name === 'string' && value.name.trim().length > 0 && value.name.length <= 120)
+    || !nullableText(value.comment, 4000)) return 'ADHOC_INVALID_TITLE';
+  if (!(value.programId === undefined || id(value.programId))
+    || !(value.dayId === undefined || (id(value.dayId) && id(value.programId)))
+    || !(value.programId === undefined ? value.programName === null
       : typeof value.programName === 'string' && value.programName.trim().length > 0 && value.programName.length <= 120)
-    && typeof value.autoCreatedProgram === 'boolean'
-    && (!value.autoCreatedProgram || (id(value.programId) && id(value.dayId)))
-    && timestamp(value.startedAt) && timestamp(value.createdAt) && timestamp(value.updatedAt)
-    && ((value.status === 'active' && value.completedAt === null && value.templateSaveDecision === undefined)
-      || (value.status === 'completed' && timestamp(value.completedAt)
-        && (value.autoCreatedProgram
-          ? typeof value.templateSaveDecision === 'string'
-            && ['pending', 'saved', 'declined'].includes(value.templateSaveDecision)
-          : value.templateSaveDecision === undefined)));
+    || typeof value.autoCreatedProgram !== 'boolean'
+    || (value.autoCreatedProgram && !(id(value.programId) && id(value.dayId)))) return 'ADHOC_INVALID_SOURCE';
+  if (!timestamp(value.startedAt) || !timestamp(value.createdAt) || !timestamp(value.updatedAt))
+    return 'ADHOC_INVALID_TIMESTAMPS';
+  if (!((value.status === 'active' && value.completedAt === null && value.templateSaveDecision === undefined)
+    || (value.status === 'completed' && timestamp(value.completedAt)
+      && (value.autoCreatedProgram
+        ? typeof value.templateSaveDecision === 'string' && ['pending', 'saved', 'declined'].includes(value.templateSaveDecision)
+        : value.templateSaveDecision === undefined)))) return 'ADHOC_INVALID_LIFECYCLE';
+  return null;
+}
+
+export function isAdHocSessionRow(value: unknown): value is AdHocSessionRow {
+  return adHocSessionValidationIssue(value) === null;
 }
 
 export function isAdHocExerciseRow(value: unknown): value is AdHocExerciseRow {
