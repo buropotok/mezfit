@@ -1,0 +1,84 @@
+name: Import FitnessProgramer remaining muscle categories
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/import_fitnessprogramer_categories.py
+      - .github/workflows/import-fitnessprogramer-rest.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-fitnessprogramer-rest
+  cancel-in-progress: false
+
+jobs:
+  neck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    if: github.ref == 'refs/heads/main' && github.repository == 'buropotok/mezfit'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check 'requests>=2.31,<3' 'beautifulsoup4>=4.12,<5'
+      - run: python tools/import_fitnessprogramer_categories.py neck
+      - name: Commit Neck data to review branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/exercises/neck/
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: import FitnessProgramer Neck exercise JSON'
+            git push origin HEAD:refs/heads/data/fitnessprogramer-20261027-neck
+          fi
+
+  remaining:
+    needs: neck
+    if: github.ref == 'refs/heads/main' && github.repository == 'buropotok/mezfit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        category:
+          - trapezius
+          - shoulders
+          - back
+          - erector-spinae
+          - biceps
+          - triceps
+          - forearm
+          - abs
+          - leg
+          - calf
+          - hip
+          - cardio
+          - full-body
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check 'requests>=2.31,<3' 'beautifulsoup4>=4.12,<5'
+      - run: python tools/import_fitnessprogramer_categories.py "${{ matrix.category }}"
+      - name: Commit JSON to category review branch
+        env:
+          CATEGORY: ${{ matrix.category }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "assets/exercises/${CATEGORY}/"
+          if ! git diff --cached --quiet; then
+            git commit -m "data: import FitnessProgramer ${CATEGORY} exercise JSON"
+            git push origin "HEAD:refs/heads/data/fitnessprogramer-20261027-${CATEGORY}"
+          fi
