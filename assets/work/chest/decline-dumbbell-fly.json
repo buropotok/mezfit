@@ -1,0 +1,55 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/decline-dumbbell-fly/",
+  "name": "Decline Dumbbell Fly",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Choose a Decline Bench"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Select Appropriate Dumbbells"
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Position Yourself : Lie back on the bench with your head lower than your torso and dumbbells"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Decline-Dumbbell-Fly.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Lower"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Deltoid, Anterior",
+      "Biceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Brachialis",
+        "Triceps",
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Разведение гантелей лёжа на скамье с отрицательным наклоном",
+  "tracking_type": "weight_reps"
+}
