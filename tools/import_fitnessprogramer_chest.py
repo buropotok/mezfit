@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import requests
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Tag
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -97,65 +97,74 @@ def extract_metadata(soup, heading_text, fallback):
 
 
 def extract_muscles(soup):
-    """Read only the explicit 'Muscles Worked' section; no cross-field fallback."""
-    empty = {'target': [], 'synergists': [],
-             'stabilizers': {'dynamic': [], 'antagonist': []}}
+    """Extract role-labelled or unlabelled names only under 'Muscles Worked'."""
+    result = {'target': [], 'synergists': [],
+              'stabilizers': {'dynamic': [], 'antagonist': []}}
     main = soup.select_one('main') or soup
-    heading = next((
-        h for h in main.find_all(['h2', 'h3', 'h4'])
-        if re.search(r'\bmuscles?\s+worked\b', h.get_text(' ', strip=True), re.I)
-    ), None)
-    if heading is None:
-        return empty
+    rows = [' '.join(x.split()).strip('• ') for x in main.get_text('\n', strip=True).splitlines()]
+    starts = [
+        i for i, value in enumerate(rows)
+        if (re.search(r'\bmuscles?\s+worked\b', value, re.I)
+            and len(value) < 90
+            and not re.match(r'^(?:image:|overview|preview)', value, re.I)
+            and not re.search(r'[.!?]', value))
+    ]
+    if not starts:
+        # No list of worked muscles: not even a muscle-group fallback.
+        return result
 
-    explicit = False
+    # Prefer the final actual section heading if the page has references earlier.
+    lines = []
+    start = starts[-1]
+    for value in rows[start + 1: start + 80]:
+        if STOP.match(value) or re.search(r'\b(how can you incorporate|related exercises)\b', value, re.I):
+            break
+        lines.append(value)
+    labeled = False
     unlabeled = []
-    section_level = int(heading.name[1])
-    for node in heading.next_elements:
-        if isinstance(node, Tag) and node.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
-            title = node.get_text(' ', strip=True)
-            if (STOP.match(title) or int(node.name[1]) <= section_level):
+    i = 0
+    while i < len(lines):
+        value = lines[i]
+        found = None
+        consumed = 1
+        for n in (1, 2, 3):
+            candidate = ' '.join(lines[i:i + n])
+            match = MUSCLE.fullmatch(candidate)
+            if match:
+                found = match
+                consumed = n
                 break
-        if isinstance(node, Tag) and node.name in ('p', 'li'):
-            if node.find(['p', 'li']) is not None:
-                continue
-            value = node.get_text(' ', strip=True)
-            found = MUSCLE.fullmatch(value)
-            if found:
-                explicit = True
-                role, name = found.groups()
-                role = role.lower()
-                if role.startswith('target'):
-                    empty['target'].append(name)
-                elif role.startswith('synergist'):
-                    empty['synergists'].append(name)
-                elif role.startswith('antagonist'):
-                    empty['stabilizers']['antagonist'].append(name)
-                else:
-                    empty['stabilizers']['dynamic'].append(name)
-        if not isinstance(node, NavigableString):
+        if found:
+            labeled = True
+            role, muscle = found.groups()
+            role = role.lower()
+            if role.startswith('target'):
+                result['target'].append(muscle)
+            elif role.startswith('synergist'):
+                result['synergists'].append(muscle)
+            elif role.startswith('antagonist'):
+                result['stabilizers']['antagonist'].append(muscle)
+            else:
+                result['stabilizers']['dynamic'].append(muscle)
+            i += consumed
             continue
-        parent = node.parent
-        if parent is None or parent.name not in ('p', 'li', 'span', 'div', 'b', 'strong'):
-            continue
-        if parent.find_parent(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'script', 'style']) is not None:
-            continue
-        value = ' '.join(str(node).split())
-        if (value and len(value) <= 70 and len(value.split()) <= 7
-                and not re.search(r'[.!?:]', value)
-                and not STOP.match(value)
-                and not re.fullmatch(r'(?:target|synergists?|dynamic stabilizers?|antagonist stabilizers?|stabilizers?)', value, re.I)):
+        # Plain, standalone muscle names without role labels are targets only
+        # when this section contains no role labels at all.
+        if (value and len(value) < 70 and len(value.split()) <= 6
+                and not re.search(r'[.:?!]', value)
+                and not re.match(r'^(?:image|target|synergists?|stabilizers?)$', value, re.I)
+                and all(word[:1].isupper() or word.lower() in ('of', 'and', 'the')
+                        for word in value.replace(',', ' ').replace('/', ' ').split())):
             unlabeled.append(value)
-
-    if not explicit:
-        # Only actual names listed in the section without role markers.
-        empty['target'] = uniq(unlabeled)
+        i += 1
+    if not labeled:
+        result['target'] = uniq(unlabeled)
     else:
-        empty['target'] = uniq(empty['target'])
-    empty['synergists'] = uniq(empty['synergists'])
-    for role in empty['stabilizers']:
-        empty['stabilizers'][role] = uniq(empty['stabilizers'][role])
-    return empty
+        result['target'] = uniq(result['target'])
+    result['synergists'] = uniq(result['synergists'])
+    for role in result['stabilizers']:
+        result['stabilizers'][role] = uniq(result['stabilizers'][role])
+    return result
 
 
 # These headings end the exercise instructions even when nested deeper than
