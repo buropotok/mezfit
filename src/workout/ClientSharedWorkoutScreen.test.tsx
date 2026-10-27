@@ -37,7 +37,7 @@ vi.mock('konsta/react', () => ({
     <button onClick={onClick}>{title}</button>,
 }));
 vi.mock('../ui', () => ({
-  Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
 }));
 vi.mock('./WorkoutSessionCard', () => ({
   WorkoutSessionCard: ({ session, readOnly }: {
