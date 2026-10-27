@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import type { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
@@ -6,13 +6,16 @@ import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { GlassSurface, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
-import { ProgramExerciseInformationSheet } from '../program/ProgramExerciseInformationSheet';
+
 import type { ProgramExerciseInformation } from '../data/cloud/program-management';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
 import type { PreviousSet } from './setEntryTypes';
 import { adHocErrorMessage } from './adhoc-workout-errors';
 import './workout-session-screen.css';
+
+const ProgramExerciseInformationSheet = lazy(() => import('../program/ProgramExerciseInformationSheet')
+  .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
 /** History is supplied later; missing entries intentionally remain empty. */
 export type AdHocPreviousSets = Readonly<Record<string, readonly (PreviousSet | null)[]>>;
@@ -149,10 +152,12 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         }).catch(report);
       }} />
     {informationExerciseId && onExerciseInformation ? (
-      <ProgramExerciseInformationSheet key={informationExerciseId}
-        exerciseId={informationExerciseId} load={loadExerciseInformation}
-        onClose={() => setInformationExerciseId(null)}
-        onNavigationContextChange={setNestedNavigation} />
+      <Suspense fallback={<Text variant="body">Загружаем карточку упражнения…</Text>}>
+        <ProgramExerciseInformationSheet key={informationExerciseId}
+          exerciseId={informationExerciseId} load={loadExerciseInformation}
+          onClose={() => setInformationExerciseId(null)}
+          onNavigationContextChange={setNestedNavigation} />
+      </Suspense>
     ) : null}
     <MezfitDialog opened={finishConfirm} title="Завершить тренировку?"
       buttons={<>
