@@ -59,12 +59,12 @@ const workout: ActiveWorkoutSession<string> = {
 afterEach(cleanup);
 
 it('opens session exercise information and keeps deletion behind confirmation', async () => {
-  let notify: Parameters<AdHocWorkoutRepository['observe']>[1] | null = null;
+  const observer: { notify: Parameters<AdHocWorkoutRepository['observe']>[1] | null } = { notify: null };
   const deleteExercise = vi.fn<AdHocWorkoutRepository['deleteExercise']>().mockResolvedValue(undefined);
   const repository = {
     actorUserId: 'tg:101',
     observe: vi.fn<AdHocWorkoutRepository['observe']>((_id, next) => {
-      notify = next;
+      observer.notify = next;
       return { unsubscribe: vi.fn() };
     }),
     deleteExercise,
@@ -82,7 +82,7 @@ it('opens session exercise information and keeps deletion behind confirmation', 
     name: 'Жим лёжа', mediaUrl: null }));
   render(<AdHocSessionScreen repository={repository} sessionId="session-1" initData="signed"
     onNavigationContextChange={vi.fn()} onExerciseInformation={information} />);
-  act(() => notify?.(workout));
+  act(() => observer.notify?.(workout));
 
   fireEvent.click(screen.getByRole('button', { name: 'Иконка упражнения' }));
   const infoSheet = screen.getByRole('dialog', { name: 'Информация об упражнении' });
