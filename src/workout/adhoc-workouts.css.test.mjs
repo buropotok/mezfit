@@ -34,7 +34,8 @@ describe('workout screen gutters', () => {
 
     const gutters = element => {
       const css = getComputedStyle(element);
-      return [css.paddingLeft, css.paddingRight, css.paddingTop];
+      const px = value => Number.parseFloat(value) || 0;
+      return [px(css.paddingLeft), px(css.paddingRight), px(css.paddingTop)];
     };
     expect(gutters(workout)).toEqual(gutters(programs));
     expect(getComputedStyle(workout).display).toBe('flex');
