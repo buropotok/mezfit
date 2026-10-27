@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-calf-raise/",
+  "name": "Bodyweight Standing Calf Raise",
+  "how_to": "1. Starting Position: Stand upright with feet hip-width apart, maintaining good posture with shoulders back, chest open, and core engaged.\n2. Foot and Body Alignment: Place your toes flat on the end of a high platform and distribute your weight evenly across both legs.\n3. Lift Movement: Slowly rise onto the balls of your feet, lifting heels off the ground as high as comfortably possible, contracting the calves fully.\n4. Controlled Lowering: Gently lower your heels back to the floor, maintaining control throughout the movement.\n5. Repeat: Perform 15–25 repetitions per set, emphasizing controlled and deliberate movements.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Standing-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Soleus",
+      "Plantaris",
+      "Tibialis posterior",
+      "Intrinsic foot muscles",
+      "Peroneals"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ]
+}

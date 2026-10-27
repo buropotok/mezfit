@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-calf-raise/",
+  "name": "Single Leg Calf Raise",
+  "how_to": "1. Setup: Stand near a bench, rack, or other support for balance. Place the ball of one foot on a raised surface (like a step or plate) with the heel hanging off.\n2. Position the Non-Working Leg: Lift the opposite foot off the ground, bending the knee so it doesn’t assist.\n3. Start in a Full Stretch: Allow your heel to drop below the step to feel a stretch in the calf of the working leg.\n4. Lift Through the Forefoot: Press through the ball of the foot and raise your heel as high as possible in a controlled motion.\n5. Pause and Contract: Squeeze the calf at the top for 1–2 seconds.\n6. Lower Slowly: Let the heel return below the step in a slow, controlled descent to emphasize eccentric loading.\n7. Repeat: Perform the desired number of reps, then switch sides.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Single-Leg-Calf-Raises.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Plantaris",
+      "Tibialis posterior",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Soleus"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ]
+}

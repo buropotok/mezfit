@@ -1,0 +1,25 @@
+{
+  "source": "https://fitnessprogramer.com/exercise-primary-muscle/calf/",
+  "count": 40,
+  "source_exercise_count": 40,
+  "listing_pages": 4,
+  "imported_at": "2026-10-27T16:42:41.754535+00:00",
+  "missing_gif": [],
+  "missing_how_to": [
+    "hack-machine-one-leg-calf-raise.json",
+    "single-heel-drop-calf-stretch.json",
+    "seated-straight-leg-calf-stretch.json",
+    "lunging-straight-leg-calf-stretch.json",
+    "posterior-tibialis-stretch.json",
+    "foot-and-ankles-stretches.json",
+    "feet-and-ankle-rotation.json",
+    "calves-stretch-static-position.json",
+    "single-leg-calves-stretch.json",
+    "calf-stretch-with-rope.json",
+    "crouching-heel-back-calf-stretch.json",
+    "seated-calf-press-on-leg-press-machine.json",
+    "single-calf-raise-on-leg-press-machine.json",
+    "single-leg-donkey-calf-raise.json"
+  ],
+  "instructions": "Full post-GIF instruction text; source HTML list structure."
+}
