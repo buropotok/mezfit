@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-hip-thrusts/",
+  "name": "Barbell Hip Thrusts",
+  "how_to": "1. Sit on the floor with your upper back against a bench and a barbell over your hips.\n2. Roll the bar to rest across the crease of your hips, placing a pad or towel underneath for comfort.\n3. Bend your knees and plant your feet flat, hip-width apart.\n4. Brace your core and drive through your heels to lift the hips upward.\n5. At the top, squeeze your glutes and pause when your torso is parallel to the floor.\n6. Lower slowly back down and repeat for your desired number of reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Hip-Thrust.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Quadriceps",
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hip External Rotators",
+        "Scapular Stabilizers",
+        "Hamstrings",
+        "Tibialis Anterior"
+      ],
+      "antagonist": [
+        "Obliques",
+        "Rectus Abdominis",
+        "Hip Flexors"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip"
+  ]
+}

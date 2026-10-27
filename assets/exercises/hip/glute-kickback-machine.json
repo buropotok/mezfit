@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/glute-kickback-machine/",
+  "name": "Glute Kickback Machine",
+  "how_to": "Glute Kickback Machine Benefits\n- The primary muscle that the Glute Kickback Machine engages is the Gluteus Maximus. It is one of the exercises you can include in your workouts to tighten and tone the glutes, improve hip mobility, and strengthen your lower back.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Glute-Kickback-Machine.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Gluteus Minimus"
+      ],
+      "antagonist": [
+        "Hamstrings",
+        "Rectus Abdominis"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip"
+  ]
+}

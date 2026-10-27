@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hip-circles/",
+  "name": "Hip Circles",
+  "how_to": "1. Stand upright with your hands on your hips, your legs straight, and feet shoulder-width apart.\n2. Start to rotate your hips slowly in a clockwise direction. Keep your back straight.\n3. Continue the rotation back toward the start position with a smooth, controlled movement.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/01/hip-circles.gif",
+  "muscles": {
+    "target": [
+      "Adductors"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

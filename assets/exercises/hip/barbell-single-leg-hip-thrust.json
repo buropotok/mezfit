@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-single-leg-hip-thrust/",
+  "name": "Barbell Single Leg Hip Thrust",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Barbell-Single-Leg-Hip-Thrust.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip"
+  ]
+}
