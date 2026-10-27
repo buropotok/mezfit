@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/triceps-dip-machine/",
+  "name": "Triceps Dip Machine",
+  "how_to": "Step 1: Adjust the Machine\n- Set the seat height so that your upper arms are in line with the handles.\n- Choose a weight that allows for proper form and controlled movement.\nStep 2: Setup and Positioning\n- Grip the handles firmly.\n- Keep your elbows tucked in close to your body.\n- Place your feet flat on the ground to stabilize your position.\nStep 3: Execution\n- Press the handles downward, fully extending your arms while engaging your triceps.\n- Pause for a second at the bottom to maximize muscle activation.\n- Slowly return to the starting position, controlling the weight as you bend your elbows.\n- Repeat for the desired number of reps, keeping movements controlled and steady.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Triceps-Dip-Machine.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Deltoid, Anterior",
+      "Pectoralis Major",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

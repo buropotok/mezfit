@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-kickback/",
+  "name": "Dumbbell Kickback",
+  "how_to": "1. Set Up Your Position\n  - Hold a dumbbell in one hand with a neutral grip.\n  - Place your opposite hand on a bench for support.\n  - Keep your feet shoulder-width apart for balance.\n2. Maintain Proper Posture\n  - Hinge at the hips and lean slightly forward.\n  - Keep your back straight and engage your core.\n  - Your upper arm should be parallel to the floor, with your elbow bent at a 90-degree angle.\n3. Perform the Movement\n  - Exhale as you extend your arm fully backward, keeping your elbow stationary.\n  - Squeeze your triceps at the top of the movement.\n  - Inhale as you slowly return to the starting position with control.\n4. Repeat and Switch Sides\n  - Perform the desired number of repetitions before switching arms.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Kickback.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/close-grip-dumbbell-push-up/",
+  "name": "Close-grip Dumbbell Push-Up",
+  "how_to": "To perform the Close-Grip Dumbbell Push-Up (One Dumbbell Version) correctly, follow these steps:\n\n1. Set up your dumbbell: Place one dumbbell upright on the floor so the handle is vertical and easy to grip with both hands. A hex or rubber dumbbell is best for stability.\n2. Grip the handle: Hold the handle with both hands, stacking them securely around the center. Position your thumbs around the top for added control.\n3. Extend into plank position: Step your feet back so your body forms a straight line from head to heels, with your shoulders stacked directly above the dumbbell.\n4. Lower your body: Bend your elbows and keep them close to your ribs as you lower your chest toward your hands. Keep your core tight to avoid dipping.\n5. Push back up: Press through the dumbbell to return to the top position, fully extending your elbows while keeping the dumbbell stable.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/08/Close-grip-Dumbbell-Push-Up.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Rectus Abdominis",
+        "Pectoralis Minor",
+        "Serratus Anterior",
+        "Obliques",
+        "Quadriceps"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ]
+}

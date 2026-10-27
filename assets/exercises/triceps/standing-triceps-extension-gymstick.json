@@ -1,0 +1,22 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-triceps-extension-gymstick/",
+  "name": "Standing Triceps Extension | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Standing-Triceps-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

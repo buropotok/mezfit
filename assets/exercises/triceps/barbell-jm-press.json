@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-jm-press/",
+  "name": "Barbell JM Press",
+  "how_to": "1. Lie on a flat bench with a barbell positioned above you on a rack.\n2. Grip the barbell with your hands slightly narrower than shoulder-width (a close grip).\n3. Unrack the barbell and position it over your chest, with your arms fully extended.\n4. Lower the barbell toward your chest, but allow your elbows to drift slightly forward as if performing a triceps extension.\n5. Stop the barbell about 1–2 inches above your chest, ensuring your elbows remain bent and under control.\n6. Press the barbell back to the starting position by extending your elbows fully.\n7. Repeat for the desired number of reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2024/12/Barbell-JM-Press.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii",
+      "Pectoralis Major",
+      "Anterior Deltoid",
+      "Forearms"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

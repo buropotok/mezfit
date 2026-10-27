@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-single-leg-bench-dips/",
+  "name": "One-Arm Single-Leg Bench Dips",
+  "how_to": "1. Sit on the edge of a flat bench with your legs extended in front of you and hands resting on the bench just outside your hips.\n2. Lift one leg off the ground and extend it straight.\n3. Place your opposite hand behind you on the bench and lift your hips off the surface, supporting your body with that arm and your grounded heel.\n4. Lower your body by bending the working elbow, keeping your back close to the bench.\n5. Descend until your elbow forms a 90-degree angle or as low as your mobility allows.\n6. Push through your palm to return to the starting position.\n7. Repeat for reps, then switch sides to balance the training.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/04/One-arm-Single-leg-Bench-Dips.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Scapular Stabilizers",
+        "Quadriceps",
+        "Rectus Abdominis, Obliques",
+        "Gluteus Maximus",
+        "Quadratus Lumborum"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}
