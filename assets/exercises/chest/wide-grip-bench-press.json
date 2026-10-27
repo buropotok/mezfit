@@ -4,9 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Setup: Lie flat on a bench press station with your feet firmly planted on the ground. Position your eyes directly under the barbell before"
+        "Setup:"
+      ]
+    },
+    {
+      "step": 2,
+      "instructions": [
+        "Lie flat on a bench press station with your feet firmly planted on the ground."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Position your eyes directly under the barbell before"
       ]
     }
   ],

@@ -4,9 +4,14 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "Adjust the cables: Adjust the cables to the highest position on both sides of the cable machine. Attach the handles to each cable."
+      ]
+    },
+    {
+      "step": 2,
+      "instructions": [
+        "Stand"
       ]
     }
   ],

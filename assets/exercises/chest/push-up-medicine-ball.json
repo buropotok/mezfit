@@ -4,23 +4,32 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "Setup"
       ]
     },
     {
       "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Choose a Stable Medicine Ball Use a medicine ball that provides a firm grip and doesn’t roll excessively."
+        "Choose a Stable Medicine Ball"
       ]
     },
     {
       "step": 3,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Choose a Stable Medicine Ball"
+        "Use a medicine ball that provides a firm grip and doesn’t roll excessively."
+      ]
+    },
+    {
+      "step": 4,
+      "instructions": [
+        "Get into Position"
+      ]
+    },
+    {
+      "step": 5,
+      "instructions": [
+        "Place the"
       ]
     }
   ],

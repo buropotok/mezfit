@@ -4,16 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "Setup:"
       ]
     },
     {
       "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Adjust the Machine Set the seat height so the handles align with your mid to upper chest when seated. Adjust the weight stack"
+        "Set the seat height so the handles align with your mid to upper chest when seated."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Adjust the weight stack or plate load"
       ]
     }
   ],

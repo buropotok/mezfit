@@ -4,23 +4,32 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "Setup"
       ]
     },
     {
       "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Choose the Right Stability Ball Use a properly inflated stability ball that supports your weight without excessive wobbling."
+        "Choose the Right Stability Ball"
       ]
     },
     {
       "step": 3,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Choose the Right Stability Ball"
+        "Use a properly inflated stability ball that supports your weight without excessive wobbling."
+      ]
+    },
+    {
+      "step": 4,
+      "instructions": [
+        "Get into Position"
+      ]
+    },
+    {
+      "step": 5,
+      "instructions": [
+        "Place the"
       ]
     }
   ],

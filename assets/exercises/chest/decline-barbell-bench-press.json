@@ -4,9 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Setup: Adjust a decline bench to an angle of 15 to 30 degrees. Lie down and secure your feet under the foot pads to"
+        "Setup:"
+      ]
+    },
+    {
+      "step": 2,
+      "instructions": [
+        "Adjust a decline bench to an angle of 15 to 30 degrees."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Lie down and secure your feet under the foot pads to"
       ]
     }
   ],

@@ -4,23 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Starting Position Begin with the handles close to your chest."
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
         "Begin with the handles close to your chest."
       ]
     },
     {
-      "step": 3,
-      "title": "Instruction excerpt",
+      "step": 2,
       "instructions": [
-        "Press Phase Push the handles forward"
+        "Push the handles forward and slightly inward, fully extending your arms without locking your elbows."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Focus"
       ]
     }
   ],

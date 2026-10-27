@@ -4,16 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "Setup:"
       ]
     },
     {
       "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Select a Weight Plate Start with a lightweight plate (5–10 kg or 10–25 lbs) and increase as you build strength and control."
+        "Start with a lightweight plate (5–10 kg or 10–25 lbs) and increase as you build strength and control."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Hold the weight plate between"
       ]
     }
   ],

@@ -4,23 +4,26 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "Setup :"
       ]
     },
     {
       "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
         "Lie flat on a bench."
       ]
     },
     {
       "step": 3,
-      "title": "Instruction excerpt",
       "instructions": [
         "Hold a dumbbell in each hand with a neutral grip (palms facing each other)."
+      ]
+    },
+    {
+      "step": 4,
+      "instructions": [
+        "Extend your arms"
       ]
     }
   ],

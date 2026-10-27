@@ -4,9 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Starting Position: Begin in a high plank position with hands placed slightly wider than shoulder-width apart. Keep your body in a straight line from"
+        "Starting Position:"
+      ]
+    },
+    {
+      "step": 2,
+      "instructions": [
+        "Begin in a high plank position with hands placed slightly wider than shoulder-width apart."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Keep your body in a straight line from"
       ]
     }
   ],

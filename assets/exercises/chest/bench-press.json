@@ -4,9 +4,26 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Setup Lie on a flat bench with eyes directly under the bar. Feet flat on the ground, knees bent at ~90°. Grip the bar"
+        "Setup"
+      ]
+    },
+    {
+      "step": 2,
+      "instructions": [
+        "Lie on a flat bench with eyes directly under the bar."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Feet flat on the ground, knees bent at ~90°."
+      ]
+    },
+    {
+      "step": 4,
+      "instructions": [
+        "Grip the bar"
       ]
     }
   ],

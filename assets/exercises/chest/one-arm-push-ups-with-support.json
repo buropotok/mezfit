@@ -4,9 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Setup: Find a sturdy bench, box, or elevated surface for support. Get into a push-up position with your feet slightly wider than shoulder-width apart"
+        "Setup:"
+      ]
+    },
+    {
+      "step": 2,
+      "instructions": [
+        "Find a sturdy bench, box, or elevated surface for support."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Get into a push-up position with your feet slightly wider than shoulder-width apart"
       ]
     }
   ],
