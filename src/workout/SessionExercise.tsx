@@ -371,6 +371,7 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
     onDeleteSet,
     onCollapsedChange,
     onOpenExerciseMenu,
+    onDeleteExercise,
     onInformation,
     onOpenHistory,
     onOpenChat,
@@ -402,7 +403,11 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
       defaultCollapsed={defaultCollapsed}
       onCollapsedChange={onCollapsedChange}
       onInformation={onInformation}
-      onOpenExerciseMenu={onOpenExerciseMenu ? () => onOpenExerciseMenu(data.sessionExerciseId) : undefined}
+      actions={onDeleteExercise || onInformation ? <ExerciseActionsMenu
+        onDelete={editable && onDeleteExercise ? () => onDeleteExercise(data.sessionExerciseId) : undefined}
+        onInformation={onInformation} /> : undefined}
+      onOpenExerciseMenu={onDeleteExercise || onInformation ? undefined
+        : onOpenExerciseMenu ? () => onOpenExerciseMenu(data.sessionExerciseId) : undefined}
       onAddSet={props.mode !== 'plan' && editable && onAddSet ? () => onAddSet(data.sessionExerciseId) : undefined}
       summary={(
         <div className="session-exercise__summary">
