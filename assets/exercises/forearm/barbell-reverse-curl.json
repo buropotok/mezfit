@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-reverse-curl/",
+  "name": "Barbell Reverse Curl",
+  "how_to": "Barbell Reverse Curl Benefits\n- Barbell reverse curl is one of the most effective arm exercises targeting your wrists and biceps.\n- This exercise can increase your ability to lift heavier weights during standard biceps curl. Also, it can correct the muscular imbalance between the extensor and flexor muscles. In addition, it is a effective exercise for developing larger arms and improving biceps flexibility.\n- If you build up your wrists and forearms you will be able to lift more weight while performing other exercises. The reason you cannot lift your body weight may be due to weak wrists and arms. Adding wrist and forearm exercise to your workout program will create strong wrist flexors.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Reverse-Curl.gif",
+  "muscles": {
+    "target": [
+      "Brachioradialis"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Biceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Anterior Deltoid",
+        "Wrist Extensors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ]
+}

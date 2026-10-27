@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-barbell-finger-curl/",
+  "name": "Seated Barbell Finger Curl",
+  "how_to": "1. Sit on a flat bench with your feet flat on the floor and knees bent to 90 degrees.\n2. Hold a barbell with an underhand grip (palms up), hands shoulder-width apart.\n3. Rest your forearms on your thighs so that your wrists hang just past your knees.\n4. Let the bar slowly roll down your fingers toward the fingertips.\n5. Curl the barbell back up by flexing your fingers and squeezing tightly at the top.\n6. Perform for 10–15 slow, controlled reps, focusing on the contraction in the forearms.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/seated-barbell-finger-curl.gif",
+  "muscles": {
+    "target": [
+      "Flexor Digitorum Profundus and Superficialis",
+      "Flexor Carpi Radialis",
+      "Palmaris Longus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ]
+}
