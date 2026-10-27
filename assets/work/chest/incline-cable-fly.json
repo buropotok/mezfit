@@ -1,7 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/incline-cable-fly/",
   "name": "İncline Cable Fly",
-  "how_to": [],
+  "how_to": "İncline Cable Fly",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Cable-Fly.gif",
   "muscles": {
     "target": [
@@ -28,6 +28,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Incline-Cable-Fly.gif",
   "name_ru": "Сведение рук на блоках на наклонной скамье",
   "tracking_type": "weight_reps"
 }
