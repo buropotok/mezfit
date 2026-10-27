@@ -29,22 +29,22 @@ const workoutTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   minute: '2-digit',
 });
 
-function workoutTitle(session: ActiveWorkoutSession): string {
+function workoutTitle<Id extends string | number>(session: ActiveWorkoutSession<Id>): string {
   return session.day?.name ?? session.phase?.name ?? 'Своя тренировка';
 }
 
-function workoutProgramName(session: ActiveWorkoutSession): string {
+function workoutProgramName<Id extends string | number>(session: ActiveWorkoutSession<Id>): string {
   return session.program?.name ?? 'Без программы';
 }
 
-function workoutCreatorName(session: ActiveWorkoutSession): string {
+function workoutCreatorName<Id extends string | number>(session: ActiveWorkoutSession<Id>): string {
   const creator = session.creator;
   if (!creator) return 'Создатель тренировки';
   const fullName = [creator.firstName, creator.lastName].filter(Boolean).join(' ').trim();
   return fullName || creator.username || 'Создатель тренировки';
 }
 
-function workoutProgressPercent(session: ActiveWorkoutSession): number {
+function workoutProgressPercent<Id extends string | number>(session: ActiveWorkoutSession<Id>): number {
   if (session.exercises.length === 0) return 0;
   const progressSum = session.exercises.reduce((sum, exercise) => {
     const totalSets = exercise.sets.length;
@@ -64,7 +64,7 @@ function parseWorkoutTimestamp(value: string | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatWorkoutDate(session: ActiveWorkoutSession): string {
+function formatWorkoutDate<Id extends string | number>(session: ActiveWorkoutSession<Id>): string {
   const startedAt = parseWorkoutTimestamp(session.startedAt);
   if (startedAt) return workoutDateFormatter.format(startedAt);
 
@@ -79,7 +79,7 @@ function formatWorkoutTime(value: string | null | undefined): string | null {
   return date ? workoutTimeFormatter.format(date) : null;
 }
 
-function workoutTimeRange(session: ActiveWorkoutSession): string {
+function workoutTimeRange<Id extends string | number>(session: ActiveWorkoutSession<Id>): string {
   const start = formatWorkoutTime(session.startedAt);
   const end = formatWorkoutTime(session.completedAt);
   if (start && end) return `${start} — ${end}`;
@@ -89,34 +89,35 @@ function workoutTimeRange(session: ActiveWorkoutSession): string {
 
 export type WorkoutSessionCardMode = 'planning' | 'active-program' | 'active-own' | 'completed';
 
-export interface WorkoutFactCardProps {
+export interface WorkoutFactCardProps<Id extends string | number = number> {
   mode?: 'workout';
-  session: ActiveWorkoutSession;
+  session: ActiveWorkoutSession<Id>;
   title?: string;
   comment?: string | null;
-  onReorderExerciseIds: (ids: number[]) => void;
-  onSaveSet: (input: SaveSessionSetInput) => Promise<void>;
+  onReorderExerciseIds: (ids: Id[]) => void;
+  onSaveSet: (input: SaveSessionSetInput<Id>) => Promise<void>;
   onAddExercise?: () => void;
-  onAddSet?: (sessionExerciseId: number) => void | Promise<void>;
+  onAddSet?: (sessionExerciseId: Id) => void | Promise<void>;
+  onDeleteSet?: (sessionSetId: Id) => Promise<void>;
   onRename?: (title: string) => void | Promise<void>;
   onTransfer?: () => void | Promise<void>;
   onEditResults?: () => void | Promise<void>;
   onWorkoutHistory?: () => void | Promise<void>;
   onShare?: () => void | Promise<void>;
   onCommentChange?: (comment: string) => void | Promise<void>;
-  onOpenExerciseMenu?: (sessionExerciseId: number) => void;
-  onOpenExerciseHistory?: (exerciseDefinitionId: number) => void;
+  onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
+  onOpenExerciseHistory?: (exerciseDefinitionId: Id) => void;
   onOpenChat?: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
-export type WorkoutSessionCardProps = WorkoutFactCardProps | WorkoutPlanCardProps;
+export type WorkoutSessionCardProps<Id extends string | number = number> = WorkoutFactCardProps<Id> | WorkoutPlanCardProps;
 
-export function WorkoutSessionCard(props: WorkoutSessionCardProps) {
-  return props.mode === 'planning' ? <WorkoutPlanCard {...props} /> : <WorkoutFactCard {...props} />;
+export function WorkoutSessionCard<Id extends string | number = number>(props: WorkoutSessionCardProps<Id>) {
+  return props.mode === 'planning' ? <WorkoutPlanCard {...props} /> : <WorkoutFactCard<Id> {...props} />;
 }
 
-function WorkoutFactCard({
+function WorkoutFactCard<Id extends string | number = number>({
   session,
   title,
   comment,
@@ -124,6 +125,7 @@ function WorkoutFactCard({
   onSaveSet,
   onAddExercise,
   onAddSet,
+  onDeleteSet,
   onRename,
   onTransfer,
   onEditResults,
@@ -134,12 +136,12 @@ function WorkoutFactCard({
   onOpenExerciseHistory,
   onOpenChat,
   onNavigationContextChange,
-}: WorkoutFactCardProps) {
+}: WorkoutFactCardProps<Id>) {
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = title ?? workoutTitle(session);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingDialog, setPendingDialog] = useState<'rename' | 'comment' | null>(null);
-  const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Record<number, boolean>>({});
+  const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Partial<Record<Id, boolean>>>({});
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState(sourceTitle);
   const [renameSaving, setRenameSaving] = useState(false);
@@ -168,7 +170,7 @@ function WorkoutFactCard({
   const items = session.exercises.map((exercise) => ({
     id: exercise.sessionExerciseId,
     content: (
-      <SessionExercise
+      <SessionExercise<Id>
         context={{
           workoutSessionId: session.sessionId,
           workoutDate: session.workoutDate,
@@ -186,6 +188,7 @@ function WorkoutFactCard({
         }}
         onAddSet={active ? onAddSet : undefined}
         onSaveSet={onSaveSet}
+        onDeleteSet={active ? onDeleteSet : undefined}
         onOpenExerciseMenu={active ? onOpenExerciseMenu : undefined}
         onOpenHistory={onOpenExerciseHistory}
         onOpenChat={onOpenChat}
@@ -298,7 +301,13 @@ function WorkoutFactCard({
         showSeparators={false}
         onReorder={(nextItems) => {
           if (!active) return;
-          onReorderExerciseIds(nextItems.map((item) => Number(item.id)));
+          const reorderedIds: Id[] = [];
+          for (const item of nextItems) {
+            const exercise = session.exercises.find((entry) => entry.sessionExerciseId === item.id);
+            if (!exercise) return;
+            reorderedIds.push(exercise.sessionExerciseId);
+          }
+          onReorderExerciseIds(reorderedIds);
         }}
         header={(
           <div className="workout-session-card__header">

@@ -1,5 +1,6 @@
 import cloudConfig from '../../dexie-cloud.json';
 import roleConfig from '../../cloud/roles.json';
+import adHocRoleConfig from '../../cloud/adhoc-session-roles.json';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../shared/relationship-id';
 
 export interface CloudMembershipEnv {
@@ -222,7 +223,7 @@ function sameStrings(value: unknown, expected: string[]): boolean {
     && value.every((item) => typeof item === 'string');
 }
 
-function assertRemoteRoles(value: unknown): void {
+export function assertRemoteRoles(value: unknown): void {
   if (!Array.isArray(value)) failUnavailable();
   const expected = roleConfig.roles;
   const expectedFacts = expected.client.permissions.update.sessionSetFacts;
@@ -231,13 +232,25 @@ function assertRemoteRoles(value: unknown): void {
       && candidate.realmId === 'rlm-public' && candidate.name === name);
     if (!isObject(remote) || !isObject(remote.permissions)) failUnavailable();
     const permissions = remote.permissions;
+    // Accept only a complete reviewed profile. Installing the ad-hoc overlay
+    // must not break invitations or weaken the existing PLAN/FACT preflight.
+    const adHoc = name === 'coach' && sameStrings(permissions.add,
+      [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]);
+    const expectedUpdates: Record<string, string[]> = {
+      ...expected[name].permissions.update,
+      ...(adHoc ? adHocRoleConfig.roles.coach.permissions.update : {}),
+    };
+    const expectedAdd = adHoc
+      ? [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]
+      : expected[name].permissions.add;
     const keys = name === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
     if (!sameStrings(Object.keys(permissions), keys)
       || (name === 'coach' && !sameStrings(permissions.manage, expected.coach.permissions.manage))
       || !isObject(permissions.update)
-      || !sameStrings(permissions.add, ['workoutOccurrences'])
-      || !sameStrings(Object.keys(permissions.update), ['sessionSetFacts', 'workoutOccurrences'])
-      || !sameStrings(permissions.update.workoutOccurrences, expected[name].permissions.update.workoutOccurrences)
+      || !sameStrings(permissions.add, expectedAdd)
+      || !sameStrings(Object.keys(permissions.update), Object.keys(expectedUpdates))
+      || Object.entries(expectedUpdates).some(([table, fields]) =>
+        !isObject(permissions.update) || !sameStrings(permissions.update[table], fields))
       || !sameStrings(permissions.update.sessionSetFacts, expectedFacts)) failUnavailable();
   }
 }

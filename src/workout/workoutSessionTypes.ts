@@ -1,24 +1,24 @@
 import type { NavigationContext } from '../NavigationShell';
 import type { SessionExerciseData } from './sessionExerciseTypes';
 
-export interface WorkoutProgramSummary {
-  id: number;
+export interface WorkoutProgramSummary<Id extends string | number = number> {
+  id: Id;
   name: string;
 }
 
-export interface WorkoutPhaseSummary {
-  id: number;
+export interface WorkoutPhaseSummary<Id extends string | number = number> {
+  id: Id;
   name: string;
 }
 
-export interface WorkoutDaySummary {
-  id: number;
+export interface WorkoutDaySummary<Id extends string | number = number> {
+  id: Id;
   name: string;
   position: number;
 }
 
-export interface WorkoutCreatorSummary {
-  id: number;
+export interface WorkoutCreatorSummary<Id extends string | number = number> {
+  id: Id;
   firstName: string;
   lastName: string | null;
   username: string | null;
@@ -43,18 +43,18 @@ export interface DraftWorkoutSession {
   availableDays: WorkoutDayOption[];
 }
 
-export interface ActiveWorkoutSession {
-  sessionId: number;
-  occurrenceId: number | null;
+export interface ActiveWorkoutSession<Id extends string | number = number> {
+  sessionId: Id;
+  occurrenceId: Id | null;
   status: 'active' | 'completed';
   workoutDate: string;
   startedAt: string | null;
   completedAt: string | null;
-  program: WorkoutProgramSummary | null;
-  phase: WorkoutPhaseSummary | null;
-  day: WorkoutDaySummary | null;
-  creator?: WorkoutCreatorSummary;
-  exercises: SessionExerciseData[];
+  program: WorkoutProgramSummary<Id> | null;
+  phase: WorkoutPhaseSummary<Id> | null;
+  day: WorkoutDaySummary<Id> | null;
+  creator?: WorkoutCreatorSummary<Id>;
+  exercises: SessionExerciseData<Id>[];
 }
 
 export type WorkoutSessionState = DraftWorkoutSession | ActiveWorkoutSession;

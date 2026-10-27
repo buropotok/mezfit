@@ -6,6 +6,10 @@ import { getMe } from './api';
 import { App } from './App';
 import { getUiIconAsset } from './ui/icons/registry';
 
+vi.mock('./workout/CoachAdHocWorkoutsScreen', () => ({
+  CoachAdHocWorkoutsScreen: () => <div>Coach local workout</div>,
+}));
+
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>();
   return {
@@ -91,6 +95,6 @@ describe('workout primary-tab artwork', () => {
 
     expect(icon?.style.maskImage).toContain(getUiIconAsset('barbell', 'outline'));
     fireEvent.click(trainingTab);
-    expect(screen.getByText('Workout session')).toBeTruthy();
+    expect(screen.getByText('Coach local workout')).toBeTruthy();
   });
 });

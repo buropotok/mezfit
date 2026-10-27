@@ -39,7 +39,7 @@ export type SetEntryIdentity = SetEntryProgramIdentity & {
   setNumber: number;
   workoutDate: string;
   sourceProgramSetId: number | string | null;
-  sessionSetId: number | null;
+  sessionSetId: string | number | null;
 };
 
 export interface SetEntryData {
@@ -68,7 +68,7 @@ interface SetEntrySharedProps {
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   onOpenHistory?: () => void;
   onOpenChat?: () => void;
-  /** Available only for a scheduled occurrence PLAN, never a program template. */
+  /** Explicit occurrence PLAN or session FACT deletion capability; never a program template. */
   onDeleteSet?: () => Promise<void>;
 }
 

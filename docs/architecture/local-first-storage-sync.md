@@ -103,6 +103,20 @@ Workout Start/session materialization remains a separate existing concern.
 
 **Workout Start:** Existing server-confirmed Start semantics materialize a consistent PLAN snapshot and change the workout lifecycle. Preserve this domain invariant when replacing D1: implement any required privileged atomic operation through a verified Dexie Cloud capability or a narrowly scoped Worker control operation. Do not assume multi-request REST calls are atomic. Do not silently switch to a non-atomic client-side sequence.
 
+**Approved Coach ad-hoc exception:** The user explicitly approved atomic local
+Dexie Start and completion with Addon replication for ad-hoc sessions only.
+Use new `adHocSessions`, `adHocExercises`, `adHocSets` tables (`@id`), separate
+from scheduled lifecycle tables. Relationship rows use `owner: realmId` as a
+non-user sentinel; personal rows use the actor as owner. Coach may add rows and
+update only the exact reviewed fields; Client is read-only on these new
+relationship tables. Exercise/set deletion uses tombstones. Identity, realm,
+owner, athlete, creator and parent keys are immutable. This supersedes the
+server-confirmed Start rule above only for this slice; planned/scheduled Start
+and completion remain unchanged. The explicitly approved protected combined
+additive-schema/Coach-ACL exception, exact overlay and live activation evidence
+are specified in `adhoc-workout-sessions.md` and AGENTS.md §21. No live permission
+validation is implied by this approval or by configuration readback.
+
 **Completion and status:** Keep occurrence/session lifecycle consistent. Derive display state from the linked local session where possible rather than writing duplicate optimistic statuses. Session FACT history must not mutate when later PLAN changes.
 
 ## 7. Telegram identity and invitations

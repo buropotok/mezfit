@@ -1,0 +1,25 @@
+const messages: Readonly<Record<string, string>> = {
+  ADHOC_SESSION_NOT_FOUND: 'Тренировка недоступна. Вернитесь к списку тренировок.',
+  ADHOC_SESSION_COMPLETED: 'Тренировка уже завершена.',
+  ADHOC_WRITE_FORBIDDEN: 'Нет доступа к изменению этой тренировки.',
+  ADHOC_PROGRAM_SELECTION_REQUIRED: 'Программа уже существует. Выберите её и нужный день.',
+  ADHOC_PROGRAM_NOT_FOUND: 'Программа недоступна. Выберите другую программу.',
+  ADHOC_DAY_NOT_FOUND: 'День программы недоступен. Выберите другой день.',
+  ADHOC_EXERCISE_TRACKING_REQUIRED: 'У упражнения не указан тип учёта. Выберите другое упражнение.',
+  ADHOC_EXERCISE_NOT_FOUND: 'Упражнение больше недоступно в этой тренировке.',
+  ADHOC_SET_NOT_FOUND: 'Подход больше недоступен в этой тренировке.',
+  ADHOC_EXERCISES_CHANGED: 'Список упражнений изменился. Повторите перемещение.',
+  ADHOC_INVALID_FACT: 'Проверьте значения подхода.',
+  ADHOC_INVALID_NAME: 'Название должно содержать от 1 до 120 символов.',
+  ADHOC_INVALID_COMMENT: 'Комментарий слишком длинный.',
+  ADHOC_TEMPLATE_TARGET_MISSING: 'Созданный день программы недоступен. Результаты тренировки сохранены.',
+  ADHOC_TEMPLATE_ALREADY_RESOLVED: 'Решение о сохранении шаблона уже принято.',
+  ADHOC_TEMPLATE_FORBIDDEN: 'Сохранить шаблон в эту программу нельзя.',
+  ADHOC_TOO_MANY_EXERCISES: 'В тренировку можно добавить не более 100 упражнений.',
+  ADHOC_TOO_MANY_SETS: 'В упражнение можно добавить не более 100 подходов.',
+};
+
+export function adHocErrorMessage(reason: unknown, fallback = 'Не удалось сохранить изменения. Повторите действие.'): string {
+  if (!(reason instanceof Error)) return fallback;
+  return messages[reason.message] ?? (/^[A-Z0-9_]+$/.test(reason.message) ? fallback : reason.message || fallback);
+}

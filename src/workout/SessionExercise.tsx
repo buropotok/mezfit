@@ -93,7 +93,7 @@ export function formatSessionSetMetrics(metrics: SetMetrics | null, trackingType
   }
 }
 
-function exerciseMeta(data: SessionExerciseData): string {
+function exerciseMeta<Id extends string | number>(data: SessionExerciseData<Id>): string {
   const parts: string[] = [];
   if (data.exercise.category_code) parts.push(categoryLabels[data.exercise.category_code]);
   if (data.exercise.equipment_code) parts.push(equipmentLabels[data.exercise.equipment_code]);
@@ -101,16 +101,17 @@ function exerciseMeta(data: SessionExerciseData): string {
   return parts.join(' · ');
 }
 
-function SetStatus({ set }: { set: SessionExerciseSetData }) {
+function SetStatus<Id extends string | number>({ set }: { set: SessionExerciseSetData<Id> }) {
   if (set.status === 'completed') {
     return <span className="session-exercise__set-status session-exercise__set-status--completed"><SharedIcon name="check" /></span>;
   }
   return <span className="session-exercise__set-status"><Text variant="footnote">{set.position + 1}</Text></span>;
 }
 
-function setSubtitle(set: SessionExerciseSetData, trackingType: TrackingType, planMode: boolean): ReactNode | undefined {
+function setSubtitle<Id extends string | number>(set: SessionExerciseSetData<Id>, trackingType: TrackingType, planMode: boolean, showPreviousPlaceholder = false): ReactNode | undefined {
   const plan = formatSessionSetMetrics(set.plan, trackingType);
-  const previous = formatSessionSetMetrics(set.previous?.metrics ?? null, trackingType);
+  const previous = formatSessionSetMetrics(set.previous?.metrics ?? null, trackingType)
+    ?? (showPreviousPlaceholder && set.previous === null ? '—' : null);
   if (planMode) return set.setType ? <Text variant="caption" tone="muted">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : undefined;
   if (!plan && !previous) return undefined;
 
@@ -295,13 +296,26 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
   );
 }
 
-export function SessionExercise(props: SessionExerciseProps) {
-  return props.mode === 'program' ? <ProgramExercise {...props} /> : <WorkoutExercise {...props} />;
+export function SessionExercise<Id extends string | number = number>(props: SessionExerciseProps<Id>) {
+  if (props.mode === 'program') return <ProgramExercise {...props} />;
+  if (props.mode === 'plan') return <WorkoutExercise<number> {...props} />;
+  return <WorkoutExercise<Id> {...props} />;
 }
 
-function WorkoutExerciseSets({ exercise, onSelectSet }: {
-  exercise: WorkoutSessionExerciseProps;
-  onSelectSet: (id: number) => void;
+// The public PLAN branch stays numeric. This private view shares its mechanics
+// with FACT after the public dispatcher has narrowed each branch.
+type WorkoutExerciseFactProps<Id extends string | number> = Extract<WorkoutSessionExerciseProps<Id>, { mode?: 'workout' }>;
+type WorkoutExerciseViewProps<Id extends string | number> = WorkoutExerciseFactProps<Id> |
+  (Omit<WorkoutExerciseFactProps<Id>, 'mode' | 'onSaveSet'> & {
+    mode: 'plan';
+    programExerciseId: number;
+    createSet: SessionExerciseSetData<Id>;
+    onPlanSetSaved: () => void;
+  });
+
+function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet }: {
+  exercise: WorkoutExerciseViewProps<Id>;
+  onSelectSet: (id: Id) => void;
 }) {
   const data = exercise.data;
   const planMode = exercise.mode === 'plan';
@@ -329,7 +343,7 @@ function WorkoutExerciseSets({ exercise, onSelectSet }: {
                 </span>
               </span>
             )}
-            subtitle={setSubtitle(set, exercise.data.exercise.tracking_type, planMode)}
+            subtitle={setSubtitle(set, exercise.data.exercise.tracking_type, planMode, exercise.data.showPreviousPlaceholder)}
             trailing={(
               <span className="session-exercise__set-trailing">
                 {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
@@ -345,7 +359,7 @@ function WorkoutExerciseSets({ exercise, onSelectSet }: {
   );
 }
 
-function WorkoutExercise(props: WorkoutSessionExerciseProps) {
+function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewProps<Id>) {
   const {
     context,
     data,
@@ -354,6 +368,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
     surface = 'default',
     editable = true,
     onAddSet,
+    onDeleteSet,
     onCollapsedChange,
     onOpenExerciseMenu,
     onInformation,
@@ -361,7 +376,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
     onOpenChat,
     onNavigationContextChange,
   } = props;
-  const [selectedSessionSetId, setSelectedSessionSetId] = useState<number | null>(null);
+  const [selectedSessionSetId, setSelectedSessionSetId] = useState<Id | null>(null);
   const completedSets = data.sets.filter((set) => set.status === 'completed').length;
   const totalSets = data.sets.length;
   const progress = totalSets === 0 ? 0 : Math.round((completedSets / totalSets) * 100);
@@ -378,7 +393,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
     <SessionExerciseLayout
       exerciseId={data.sessionExerciseId}
       exerciseName={exerciseName}
-      media={<ExerciseMedia exercise={data.exercise} variant="thumbnail" />}
+      media={<ExerciseMedia exercise={data.exercise} sourceUrl={data.mediaUrl} variant="thumbnail" />}
       subtitle={exerciseMeta(data)}
       badge={<Badge color="blue">{completedSets} / {totalSets}</Badge>}
       notes={data.notes}
@@ -447,6 +462,7 @@ function WorkoutExercise(props: WorkoutSessionExerciseProps) {
             }}
             onClose={() => setSelectedSessionSetId(null)}
             onNavigationContextChange={onNavigationContextChange}
+            onDeleteSet={editable && onDeleteSet ? () => onDeleteSet(selectedSet.sessionSetId) : undefined}
             onSave={(fact) => props.onSaveSet({
               workoutSessionId: context.workoutSessionId,
               sessionExerciseId: data.sessionExerciseId,

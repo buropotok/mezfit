@@ -14,6 +14,8 @@ export interface WorkoutPlanCardProps {
   hideProgramName?: boolean;
   canScheduleCoached?: boolean;
   onSchedule?: (format: WorkoutScheduleFormat) => void;
+  /** Ad-hoc source picking starts immediately, without creating calendar PLAN. */
+  onStart?: () => void;
   /** Source-selection mode: keep controls visible, explain instead of mutating. */
   onMutationAttempt?: () => void;
   hideProgramMenu?: boolean;
@@ -52,7 +54,7 @@ PlanGlassButton.displayName = 'PlanGlassButton';
 /** Program template mode deliberately has neither a session nor numeric PLAN/FACT.
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
-  day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule,
+  day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule, onStart,
   hideProgramMenu = false, hideWorkoutActions = false, hideProgramName = false,
   onReorderExercises, portalDragOverlay = false, preserveDragHeight = false,
   creatorName, creatorAvatar, readOnly = false, busy = false,
@@ -145,7 +147,13 @@ export function WorkoutPlanCard({
         </GlassSurface> : null}
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
 
-        {!hideWorkoutActions && (authoringVisible || onSchedule) ? <div className="workout-plan-card__actions">
+        {!hideWorkoutActions && (authoringVisible || onSchedule || onStart) ? <div className="workout-plan-card__actions">
+          {onStart ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+            glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled={busy}
+            onClick={() => { if (!busy) onStart(); }} className="workout-plan-card__action">
+            <Icon name="treadmill" className="workout-plan-card__action-icon" />
+            <Text variant="body">Начать тренировку</Text>
+          </GlassSurface> : null}
           {onSchedule ? <SpotlightTarget>{canScheduleCoached ? (
             <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}
               triggerRef={scheduleTriggerRef} label="Формат тренировки"
@@ -172,7 +180,7 @@ export function WorkoutPlanCard({
               <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
             </GlassSurface>
           )}</SpotlightTarget> : null}
-          {!readOnly && !onMutationAttempt ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
+          {!onStart && !readOnly && !onMutationAttempt ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
             glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled="true"
             className="workout-plan-card__action">
             <Icon name="treadmill" className="workout-plan-card__action-icon" />

@@ -1,0 +1,7 @@
+{
+  "schema": {
+    "adHocSessions": "@id",
+    "adHocExercises": "@id",
+    "adHocSets": "@id"
+  }
+}

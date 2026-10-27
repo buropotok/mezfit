@@ -1,0 +1,42 @@
+{
+  "roles": {
+    "coach": {
+      "permissions": {
+        "add": [
+          "adHocSessions",
+          "adHocExercises",
+          "adHocSets"
+        ],
+        "update": {
+          "adHocSessions": [
+            "name",
+            "comment",
+            "status",
+            "completedAt",
+            "templateSaveDecision",
+            "updatedAt"
+          ],
+          "adHocExercises": [
+            "position",
+            "deletedAt",
+            "notes"
+          ],
+          "adHocSets": [
+            "position",
+            "deletedAt",
+            "setType",
+            "actualReps",
+            "actualWeightKg",
+            "actualDurationSeconds",
+            "actualDistanceMeters",
+            "setLabel",
+            "rpe",
+            "comment",
+            "bands",
+            "setStatus"
+          ]
+        }
+      }
+    }
+  }
+}

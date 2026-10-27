@@ -27,6 +27,10 @@ vi.mock('./coach/CoachShell', () => ({
   CoachShell: () => <div>Coach home</div>,
 }));
 
+vi.mock('./workout/CoachAdHocWorkoutsScreen', () => ({
+  CoachAdHocWorkoutsScreen: () => <div>Coach local workout</div>,
+}));
+
 vi.mock('./schedule/TodayPage', () => ({
   TodayPage: () => <div>Client home</div>,
 }));
@@ -115,7 +119,8 @@ describe('App workout navigation', () => {
 
     fireEvent.click(trainingTab);
 
-    expect(await screen.findByText('Workout session')).toBeTruthy();
+    expect(await screen.findByText('Coach local workout')).toBeTruthy();
+    expect(getCurrentWorkoutSessionMock).not.toHaveBeenCalled();
   });
 
   it('hydrates an already active client workout after reload before labeling the FAB', async () => {
