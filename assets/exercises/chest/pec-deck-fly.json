@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pec-deck-fly/",
+  "name": "Pec Deck Fly",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pec-Deck-Fly.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal",
+      "Frequently Asked Questions"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Deltoid, Anterior",
+      "Biceps, Short Head",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Brachialis",
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

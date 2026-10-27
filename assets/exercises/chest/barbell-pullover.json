@@ -1,0 +1,52 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-pullover/",
+  "name": "Barbell Pullover",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Lie on a flat bench, holding the barbell over your chest with a slight bend in your elbows."
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Inhale deeply, brace your core, and"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Barbell-Bent-Arm-Pullover.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major",
+      "Latissimus Dorsi",
+      "Frequently Asked Questions",
+      "A",
+      "study",
+      "chest-dominant movement"
+    ],
+    "synergists": [
+      "Posterior Deltoid",
+      "Infraspinatus",
+      "Levator Scapulae",
+      "Triceps Brachii",
+      "Teres Major",
+      "Rhomboids",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Chest"
+  ]
+}

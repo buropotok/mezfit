@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/close-grip-dumbbell-press/",
+  "name": "Close-Grip Dumbbell Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup: Lie flat on a bench with a dumbbell in each hand. Position the dumbbells directly over your chest, palms facing each other (neutral"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Close-Grip-Dumbbell-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal",
+      "Triceps",
+      "Deltoid, Anterior"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ]
+}
