@@ -518,7 +518,7 @@ export class AdHocWorkoutRepository {
     return null;
   }
   getActive(): Promise<{ id: string; name: string } | null> {
-    return this.db.transaction('r', executionTables, () => this.findActive());
+    return this.db.transaction('r', executionTables, async () => this.findActive());
   }
   private async requireNoActiveSession(): Promise<void> {
     if (await this.findActive()) throw new Error('ADHOC_ACTIVE_SESSION_EXISTS');

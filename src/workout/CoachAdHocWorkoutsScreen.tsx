@@ -135,10 +135,8 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
         onClick={() => { if (!busy) { setError(''); setSessionId(session.id); } }} />)}</List> : null}
     </section>}
     {busy ? <Text variant="body" role="status">Создаём тренировку…</Text> : null}
-    {cloud?.syncStatus === 'offline' || cloud?.syncStatus === 'error' ? <section className="adhoc-workouts">
-      <Text variant="footnote" role="status">{cloud.syncStatus === 'offline'
-        ? 'Нет соединения с Mezfit облаком. Изменения ожидают синхронизации.'
-        : 'Не удалось синхронизировать данные с Mezfit облаком.'}</Text>
+    {cloud?.syncStatus === 'error' ? <section className="adhoc-workouts">
+      <Text variant="footnote" role="alert">Не удалось синхронизировать данные с Mezfit облаком.</Text>
     </section> : null}
     {error ? <section className="adhoc-workouts"><Text variant="footnote" role="alert">{error}</Text>
       <Button rounded tonal disabled={busy} onClick={() => { setError(''); setRetry(value => value + 1); }}>Повторить</Button></section> : null}
