@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/battle-rope/",
+  "name": "Battle Rope",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2015/07/Battle-Rope.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Cardio",
+    "Full Body",
+    "Shoulders"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/rowing-machine/",
+  "name": "Rowing Machine",
+  "how_to": "1. Start Position (The Catch): Sit on the seat with feet strapped in. Bend your knees, lean slightly forward at the hips, and hold the handle with an overhand grip.\n2. Drive Phase: Push explosively through the legs, extend hips, then pull the handle toward your upper abdomen while keeping elbows close to the body.\n3. Finish Position: Legs fully extended, torso leaning slightly back, handle pulled just below the chest.\n4. Recovery Phase: Extend arms forward first, then hinge at the hips, and finally bend knees to return to the catch.\n5. Maintain a steady rhythm, coordinating legs, core, and arms smoothly.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Rowing-Machine.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps",
+      "Hamstring",
+      "Latissimus Dorsi",
+      "Triceps",
+      "Glutes",
+      "Rhomboids",
+      "Deltoids",
+      "Trapezius",
+      "Calves",
+      "Abs",
+      "Obliques",
+      "Biceps",
+      "Serratus Anterior",
+      "Erector Spinae",
+      "Rectus Abdominus",
+      "Hamstrings",
+      "Tibialis Anterior",
+      "Gastrocnemius",
+      "Legs Emphasis",
+      "Body Swing Emphasis",
+      "Arm Pull Through",
+      "Teres Major",
+      "Soleus",
+      "Gluteus Maximus",
+      "Brachialis",
+      "Brachioradialis",
+      "Pectoralis Major",
+      "Flexor Carpi Ulnaris",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Extensor Carpi Ulnaris",
+      "Forearm Extensors",
+      "Anterior Deltoid",
+      "Wrist Extensors"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Full Body"
+  ]
+}

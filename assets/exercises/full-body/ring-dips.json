@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/ring-dips/",
+  "name": "Ring Dips",
+  "how_to": "To correctly perform the Ring Dip, follow these steps:\n\n1. Set the Rings to Chest Height: Adjust the gymnastic rings so they hang around chest level and are securely fastened.\n2. Mount the Rings: Jump or step into a support position, arms straight, body upright, and rings held close to your sides.\n3. Lower Yourself with Control: Bend your elbows and lean slightly forward as you lower your chest between the rings. Keep your elbows at about a 45-degree angle.\n4. Descend Below Ring Level: Lower until your shoulders dip just below your elbows, maintaining tension in your chest and arms.\n5. Push Back Up: Press through your palms and straighten your arms to return to the starting position, locking out at the top while keeping the rings close.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Ring-Dips.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "TRX Suspension"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Chest",
+    "Full Body",
+    "Triceps"
+  ]
+}

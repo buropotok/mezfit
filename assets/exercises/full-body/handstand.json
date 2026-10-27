@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/handstand/",
+  "name": "Handstand",
+  "how_to": "Step 1: Warm Up Properly\n\n- Stretch and mobilize the wrists, shoulders, and core.\n- Perform plank holds, pike push-ups, and shoulder shrugs to activate key muscles.\nStep 2: Choose Your Starting Position\n\n- Wall-Assisted Handstand: Face a wall, kick up, and use the wall for balance.\n- Freestanding Handstand: Kick up into a handstand and balance without assistance.\nStep 3: Kick Up into Position\n\n- Place your hands shoulder-width apart on the ground.\n- Kick one leg up while keeping your core tight and arms straight.\n- Engage your shoulders, core, and glutes to stabilize the position.\nStep 4: Maintain the Hold\n\n- Keep your legs straight and toes pointed.\n- Balance by making small hand adjustments if necessary.\n- Focus on slow, controlled breathing to stay relaxed.\nStep 5: Safely Exit the Handstand\n\n- Lower one leg at a time back to the ground.\n- If you lose balance, tuck your chin and roll forward to avoid injury.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/handstand-holds.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Triceps",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Full Body"
+  ]
+}

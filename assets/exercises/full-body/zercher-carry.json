@@ -1,0 +1,43 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/zercher-carry/",
+  "name": "Zercher Carry",
+  "how_to": "1. Set a barbell in a squat rack at waist height.\n2. Step up to the bar, bend your arms, and place the bar in the crook of your elbows. Keep your fists close together and elbows under the bar.\n3. Lift the bar by standing tall, bracing your core and keeping your chest high.\n4. Walk forward with small, controlled steps, staying upright and avoiding leaning back or rounding your spine.\n5. Continue walking for a set distance or time, then lower the bar carefully back into the rack or onto pads.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/zercher-carry.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Deltoid, Anterior - Lateral",
+        "Supraspinatus",
+        "Pectoralis Major",
+        "Trapezius",
+        "Levator Scapulae",
+        "Serratus Anterior",
+        "Biceps Brachii",
+        "Brachialis",
+        "Brachioradialis"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ]
+}
