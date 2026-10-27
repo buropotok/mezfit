@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kettlebell-thruster/",
+  "name": "Kettlebell Thruster",
+  "how_to": "Kettlebell Thruster",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Kettlebell-Thruster.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid",
+      "Gluteus Maximus",
+      "Quadriceps",
+      "Hamstring",
+      "Triceps",
+      "Trapezius",
+      "Serratus Anterior",
+      "Rectus Abdominis",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg",
+    "Shoulders"
+  ]
+}

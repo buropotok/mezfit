@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bent-over-barbell-reverse-raise/",
+  "name": "Bent-Over Barbell Reverse Raise",
+  "how_to": "Bent-Over Barbell Reverse Raise Benefits\n- The Bent-over barbell reverse raise is a isole exercise that targets the posterior and sides of the shoulders. Suitable for all levels, this shoulder workout is a good option to build strength, improve shoulder mobility and shape your posterior shoulder muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Bent-Over-Barbell-Reverse-Raise.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Pectoralis Major",
+      "Trapezius",
+      "Teres Major"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Triceps",
+        "Latissimus Dorsi",
+        "Levator Scapulae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ]
+}

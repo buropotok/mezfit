@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-upright/",
+  "name": "Cable Upright Row",
+  "how_to": "Cable Upright Row Benefits\n- The cable upright row is an isolation exercise targeting the trapezius and deltoids that are responsible for adding width to your shoulders.\n- The cable upright row is one of the effective exercises for building bigger traps, but it’s also a move that’s easy to get mistake. One of the easiest ways to ensure your form is on point is to avoid using dumbbells that are too heavy.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Cable-Upright-Row.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Trapezius",
+      "Supraspinatus",
+      "Anterior Deltoid",
+      "İnfraspinatus",
+      "Teres Minor",
+      "Brachialis",
+      "Brachioradialis",
+      "Biceps",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levator Scapulae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ]
+}

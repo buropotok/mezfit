@@ -1,0 +1,22 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-shoulder-extension/",
+  "name": "Banded Shoulder Extension",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Banded-Shoulder-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Shoulders"
+  ]
+}

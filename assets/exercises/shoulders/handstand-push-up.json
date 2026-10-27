@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/handstand-push-up/",
+  "name": "Handstand Push-Up",
+  "how_to": "Setup\n\n1. Find a Wall for Support (for beginners)\n  - Face a wall and place your hands shoulder-width apart on the ground.\n  - Kick your legs up into a handstand position with your heels touching the wall for balance.\n2. Freestanding Option (for advanced athletes)\n  - Start in a handstand position without wall support.\n  - Engage your core and glutes to maintain balance.\nExecution\n\n1. Lower your body by bending your elbows until your head gently touches the ground.\n2. Keep your elbows at a 45-degree angle to protect your shoulders.\n3. Push back up to the starting position by extending your arms fully.\n4. Repeat for 4 to 12 repetitions depending on your strength level.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/handstand-push-up.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Lateral Deltoid",
+      "Supraspinatus",
+      "Triceps",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Shoulders"
+  ]
+}

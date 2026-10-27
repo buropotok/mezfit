@@ -1,0 +1,40 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/push-up-plus/",
+  "name": "Push-Up Plus",
+  "how_to": "1. Starting Position:\n  - Begin in a high plank position, with your hands placed shoulder-width apart and directly under your shoulders.\n  - Keep your body in a straight line from head to heels, engaging your core and glutes.\n2. Lowering Phase:\n  - Slowly lower your chest towards the floor by bending your elbows.\n  - Maintain a controlled motion, keeping your elbows at a 45-degree angle to your torso.\n3. Pushing Up:\n  - Push yourself back up to the starting plank position.\n4. Scapular Protraction:\n  - Once at the top, extend your arms slightly further by rounding your upper back and pushing your shoulder blades away from each other.\n  - Hold for a second to feel the engagement in your serratus anterior.\n5. Reset:\n  - Return to the neutral plank position and repeat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Push-Up-Plus.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Serratus Anterior",
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Rectus Abdominis",
+        "Pectoralis Minor",
+        "Serratus Anterior",
+        "Obliques",
+        "Quadriceps"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Trapezius"
+  ]
+}

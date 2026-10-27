@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/double-cable-front-raise/",
+  "name": "Double Cable Front Raise",
+  "how_to": "Double Cable Front Raise Benefits\n- Double cable front raise is an exercise that targets the front deltoid and is used to develop and strengthen the shoulder muscles. This exercise focuses on the front shoulder muscles and benefits the better development of the anterior shoulder heads.\n- Front raise exercise with cable machines provides constant tension and continuous resistance while lifting and lowering the weight. Because muscle growth and strength gains are directly dependent on how much the muscle is stretched during exercise, cable machines tire the muscles faster and provide greater strength gain.\n- Double cable front raise exercise strengthens the stabilizing muscles in your shoulders and improves your muscular balance",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Double-Cable-Front-Raise.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Wrist Extensors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

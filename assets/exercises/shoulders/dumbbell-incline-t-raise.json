@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-incline-t-raise/",
+  "name": "Dumbbell Incline T-Raise",
+  "how_to": "Dumbbell Incline T-Raise Benefits\n- Dumbbell incline t-raise exercise particularly targets the side and rear regions of the shoulders. It is a rehabilitation exercise that increases range of motion and strength throughout the entire shoulder complex. It is an effective exercise that you can include in your training program with light to medium weights to isolate the posterior shoulder muscles, strengthen the rotator cuff muscles, and improve stability and flexibility.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Dumbbell-Incline-T-Raise.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ]
+}

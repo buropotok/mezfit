@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/resistance-band-seated-shoulder-press/",
+  "name": "Resistance Band Seated Shoulder Press",
+  "how_to": "Resistance Band Seated Shoulder Press / Benefits\n- Seated shoulder press with resistance bands is an alternative to dumbbell shoulder presses. Since bands do not create momentum your reps with bands will not place wear and tear on the spine and joints. Although the focus of this exercise is on the front shoulder muscles, it is a useful move often used to strengthen the upper body.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Resistance-Band-Seated-Shoulder-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Supraspinatus",
+      "Triceps",
+      "Trapezius",
+      "Serratus Anterior",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

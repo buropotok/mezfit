@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-shoulder-flexion/",
+  "name": "Banded Shoulder Flexion",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Banded-Shoulder-Flexion.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

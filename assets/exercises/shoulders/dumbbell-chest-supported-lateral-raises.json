@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-chest-supported-lateral-raises/",
+  "name": "Dumbbell Chest Supported Lateral Raises",
+  "how_to": "Chest Supported Lateral Raises /",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Dumbbell-Chest-Supported-Lateral-Raises.gif",
+  "muscles": {
+    "target": [
+      "Deltoid, Lateral and Posterior"
+    ],
+    "synergists": [
+      "Trapezius",
+      "Supraspinatus",
+      "Rhomboids",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-y-raise/",
+  "name": "Cable Y Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/cable-y-raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ]
+}

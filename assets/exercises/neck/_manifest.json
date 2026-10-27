@@ -1,0 +1,35 @@
+{
+  "source": "https://fitnessprogramer.com/exercise-primary-muscle/neck/",
+  "count": 23,
+  "source_exercise_count": 26,
+  "listing_pages": 3,
+  "imported_at": "2026-10-27T16:38:46.792467+00:00",
+  "missing_gif": [
+    {
+      "name": "Diagonal Neck Stretch",
+      "source_url": "https://fitnessprogramer.com/exercise/diagonal-neck-stretch/",
+      "reason": "No GIF URL found in the source exercise page"
+    },
+    {
+      "name": "Neck Flexion Stretch",
+      "source_url": "https://fitnessprogramer.com/exercise/neck-flexion-stretch/",
+      "reason": "No GIF URL found in the source exercise page"
+    },
+    {
+      "name": "Neck Extension Stretch",
+      "source_url": "https://fitnessprogramer.com/exercise/neck-extension-stretch/",
+      "reason": "No GIF URL found in the source exercise page"
+    }
+  ],
+  "missing_how_to": [
+    "prone-cervical-extension.json",
+    "weighted-neck-harness-extension.json",
+    "lying-weighted-neck-flexion.json",
+    "lying-weighted-neck-extension.json",
+    "lever-neck-right-side-flexion-plate-loaded.json",
+    "lever-neck-extension-plate-loaded.json",
+    "cable-seated-neck-flexion-with-head-harness.json",
+    "cable-seated-neck-extension-with-head-harness.json"
+  ],
+  "instructions": "Full post-GIF instruction text; source HTML list structure."
+}

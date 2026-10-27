@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-shoulder-press/",
+  "name": "Lever Shoulder Press",
+  "how_to": "1. Starting Position: Sit upright on the lever shoulder press machine, ensuring your back is firmly against the pad. Adjust the seat height so the handles are at shoulder level.\n2. Grip and Alignment: Grasp the machine’s handles with an overhand grip. Your arms should be out to the side, facing forward, with your elbows positioned directly beneath your hands.\n3. Pressing Movement: Press the handles upward by extending your elbows fully, pushing through your shoulders until your arms are straight overhead, but avoid locking your elbows completely.\n4. Controlled Lowering: Slowly lower the handles back down to shoulder level, maintaining control and tension throughout the movement.\n5. Repeat: Perform the exercise for 8–12 repetitions per set, ensuring smooth and controlled motions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Shoulder-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Supraspinatus",
+      "Pectoralis Major, Clavicular",
+      "Triceps",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Levator Scapula"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}

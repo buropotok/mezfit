@@ -1,0 +1,22 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-dumbbell-upright-row/",
+  "name": "One-Arm Dumbbell Upright Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/One-Arm-Dumbbell-Upright-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ]
+}

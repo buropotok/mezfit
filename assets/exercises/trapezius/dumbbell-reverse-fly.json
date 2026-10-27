@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-reverse-fly/",
+  "name": "Incline Dumbbell Reverse Fly",
+  "how_to": "Incline Dumbbell Reverse Fly Benefits\n- Dumbbell reverse fly is a free weights exercise that primarily targets the rear shoulders. It is an effective exercise that you can include in your program to isolate the rear shoulder muscles and strengthen the rotator cuff muscles.\n- It also activates the trapezius muscles, and may benefit discomfort caused by muscle weakness such as postural posture and shoulder blade protrusion by affecting the infraspinatus and subscapula muscles that cover the scapula.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Reverse-Fly.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ]
+}

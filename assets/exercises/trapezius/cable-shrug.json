@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-shrug/",
+  "name": "Cable Shrug",
+  "how_to": "Cable Shrug Benefits\n- It is an isolated exercise that develop the neck muscles. Strengthening your trapezius muscles helps stabilize your neck and back, as well as reduce the tension in your neck and shoulder muscles. If you’re looking to boost the strength of your shoulder, neck, or upper back muscles, or you want to improve your posture, you can add cable shrug to your workout routine.\nMany of the movements that work the same muscle group may look alike, but they focus on different parts of the muscles because they are at different angles. If you want to build better muscle specifically, keep in mind that it is more beneficial to include exercises that focus on different aspects to your training program.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Cable-Shrug.gif",
+  "muscles": {
+    "target": [
+      "Trapezius"
+    ],
+    "synergists": [
+      "Levator Scapulae"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Trapezius"
+  ]
+}

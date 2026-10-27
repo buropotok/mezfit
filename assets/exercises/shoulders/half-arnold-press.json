@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/half-arnold-press/",
+  "name": "Half Arnold Press",
+  "how_to": "Half Arnold Press Benefits\n- Another version of the Arnold press targets the deltoid muscles, just like the Arnold press. The Arnold press works many muscles in the shoulder, but because of the rotation it requires, it may be a more risky exercise than a standard press if you have shoulder discomfort. The half Arnold press can be used as a more practical exercise for those who have difficulty doing the standard Arnold press.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Half-Arnold-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Triceps",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ]
+}
