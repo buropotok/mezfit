@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-seated-neck-extension-with-head-harness/",
+  "name": "Cable Seated Neck Extension with head harness",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Seated-Neck-Extension-with-head-harness.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Neck"
+  ],
+  "name_ru": "Разгибание шеи сидя на блоке с головной лямкой",
+  "tracking_type": "weight_reps"
+}
