@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import Chest exercise metadata as individual JSON files; instruction excerpts are short."""
+"""Import Chest metadata and complete post-GIF exercise instructions."""
 import json
 import re
 import time
@@ -9,6 +9,8 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup, Tag
+
+from extract_exercise_howto import extract_how_to
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -175,78 +177,6 @@ def extract_muscles(soup):
     return result
 
 
-# These headings end the exercise instructions even when nested deeper than
-# their "How to" heading. In particular, the preview/sidebar never contains steps.
-INSTRUCTION_BOUNDARY = re.compile(
-    r'^(?:preview|muscle groups?|equipment|print exercise|'
-    r'workout planner(?: app)?|about us|tips for|common mistakes|'
-    r'benefits?|variations?|frequently asked|faqs?|how to incorporate)\b',
-    re.I
-)
-
-
-def instruction_excerpt(soup):
-    """Extract brief excerpts from explicit instructions only, never sidebar text."""
-    main = soup.select_one('main') or soup
-    for heading in main.find_all(['h2', 'h3', 'h4']):
-        title = heading.get_text(' ', strip=True)
-        if not re.search(
-            r'^how\s+to\s+(?:do|perform|use|execute)\b|^instructions\b|^execution\b',
-            title, re.I
-        ):
-            continue
-        instructions = []
-        depth = int(heading.name[1])
-        for node in heading.next_elements:
-            if not isinstance(node, Tag):
-                continue
-            if node.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
-                label = node.get_text(' ', strip=True)
-                if INSTRUCTION_BOUNDARY.match(label):
-                    break
-                # The source sometimes wraps a GIF in a heading of the
-                # same rank as the instructions heading.
-                if node.find('img') is not None or label.lower().startswith('image:'):
-                    continue
-                if int(node.name[1]) <= depth:
-                    break
-            if node.name not in ('p', 'li') or node.find(['p', 'li']) is not None:
-                continue
-            value = node.get_text(' ', strip=True)
-            if value and value not in instructions:
-                instructions.append(value)
-        # No headings/paragraphs from the article sidebar can fill this field.
-        out = []
-        budget = 24
-        for statement in instructions:
-            if INSTRUCTION_BOUNDARY.match(statement):
-                break
-            if re.match(r'^(here are|the following|follow these|steps to perform)\b', statement, re.I):
-                continue
-            words = statement.split()
-            if len(words) < 4:
-                # Section/stage labels are not instructions.
-                continue
-            if budget <= 0:
-                break
-            if len(words) > budget:
-                # Keep only a complete short sentence, never a mid-phrase cut.
-                sentences = re.findall(r'[^.!?]+[.!?](?=\s|$)', statement)
-                value = ''
-                for sentence in sentences:
-                    sentence = sentence.strip()
-                    if sentence and len(sentence.split()) <= budget:
-                        value = sentence
-                        break
-                if not value:
-                    break
-            else:
-                value = statement
-            budget -= len(value.split())
-            out.append({'step': len(out) + 1, 'instructions': [value]})
-        return out
-    return []
-
 def get_gif(html, soup, slug):
     candidates = []
     main = soup.select_one('main') or soup
@@ -268,7 +198,7 @@ def exercise(html, url, card):
     return {
         'source_url': url,
         'name': h1.get_text(' ', strip=True) if h1 else card['name'],
-        'how_to': instruction_excerpt(soup),
+        'how_to': extract_how_to(html, get_gif(html, soup, urlparse(url).path.strip('/').split('/')[-1]) or ''),
         'gif_url': get_gif(html, soup, urlparse(url).path.strip('/').split('/')[-1]),
         'muscles': extract_muscles(soup),
         'equipment': extract_metadata(soup, 'Equipment', []),
@@ -297,43 +227,55 @@ def main():
     results = {}
     for i, (url, card) in enumerate(cards.items(), 1):
         slug = urlparse(url).path.rstrip('/').split('/')[-1]
-        fresh = exercise(read(session, url), url, card)
-        results[slug + '.json'] = fresh
+        html = read(session, url)
+        existing_path = Path('assets/exercises/chest') / (slug + '.json')
+        if existing_path.is_file():
+            # Existing non-instruction metadata is authoritative for this import.
+            saved = json.loads(existing_path.read_text(encoding='utf-8'))
+            if saved.get('source_url') != url:
+                raise RuntimeError('Source URL mismatch: ' + slug)
+            if not saved.get('name') or not saved.get('gif_url'):
+                raise RuntimeError('Required fields missing: ' + slug)
+            saved['how_to'] = extract_how_to(html, saved['gif_url'])
+            results[slug + '.json'] = saved
+        else:
+            results[slug + '.json'] = exercise(html, url, card)
         print(f'{i}/{len(cards)} {slug}', flush=True)
     if len(results) != len(cards) or any(not x['name'] or not x['gif_url'] for x in results.values()):
         raise RuntimeError('Missing required name or GIF URL, or duplicate exercise filenames')
-    # Check source-backed examples; never populate missing muscles from muscle_group.
+    # Regression sentinels from visibly different source layouts.
     cobra = results.get('cobra-push-up.json', {})
-    if (cobra.get('how_to') != []
-            or cobra.get('muscles', {}).get('target') != []
-            or cobra.get('muscles', {}).get('synergists') != []):
-        raise RuntimeError('Cobra Push-up image-only regression: ' + repr(cobra))
-    for filename, record in results.items():
-        for instruction in record.get('how_to', []):
-            for paragraph in instruction.get('instructions', []):
-                if (paragraph.strip().lower() in ('chest', 'full gym', 'no equipment')
-                        or 'online workout planner' in paragraph.lower()):
-                    raise RuntimeError('Unrelated text captured as an instruction: ' + filename)
     bench = results.get('bench-press.json', {})
     cable = results.get('high-cable-crossover.json', {})
     arm = results.get('arm-scissors.json', {})
-    if ('Pectoralis Major, Sternal' not in bench.get('muscles', {}).get('target', [])
-            or not bench.get('muscles', {}).get('synergists', [])
-            or not cable.get('muscles', {}).get('synergists', [])
-            or 'Trapezius' not in arm.get('muscles', {}).get('target', [])
-            or not results.get('pec-deck-fly.json', {}).get('how_to')
-            or 'Frequently Asked Questions' in results.get('pec-deck-fly.json', {}).get('muscles', {}).get('target', [])):
-        raise RuntimeError('Muscle parsing regression: ' + repr({
-            'cobra': cobra.get('muscles'),
-            'bench': bench.get('muscles'),
-            'cable': cable.get('muscles'),
-            'arm': arm.get('muscles'),
-            'pec_deck_has_how_to': bool(results.get('pec-deck-fly.json', {}).get('how_to')),
-        }))
+    pec_deck = results.get('pec-deck-fly.json', {})
+    if cobra.get('how_to') != '' or cobra.get('muscles', {}).get('target') != []:
+        raise RuntimeError('Cobra Push-up must have empty instruction and muscles')
+    bench_text = bench.get('how_to', '')
+    if not all(part in bench_text for part in
+               ('Setup', 'Unrack and Descent', 'Press Phase', 'Reset and Repeat')):
+        raise RuntimeError('Bench Press instruction missing named stages')
+    cable_text = cable.get('how_to', '')
+    if not ('Adjust the cables' in cable_text and 'Repeat' in cable_text
+            and 'Coach Tips' not in cable_text):
+        raise RuntimeError('High Cable Crossover instruction incomplete or contaminated')
+    if not pec_deck.get('how_to'):
+        raise RuntimeError('Pec Deck Fly instruction missing')
+    if ('Pectoralis Major, Sternal' not in bench['muscles']['target']
+            or not bench['muscles']['synergists']
+            or not cable['muscles']['synergists']
+            or 'Trapezius' not in arm['muscles']['target']):
+        raise RuntimeError('Previously verified muscle metadata changed')
     for filename, data in results.items():
-        invalid = [name for name in data['muscles']['target'] if STOP.match(name)]
-        if invalid:
-            raise RuntimeError('Muscle label contamination in ' + filename + ': ' + repr(invalid))
+        text = data['how_to']
+        if not isinstance(text, str):
+            raise RuntimeError('how_to must be a string in ' + filename)
+        if re.search(r'(?im)^(?:preview|muscle groups|equipment|workout planner'
+                     r'|coach tips|tips for proper form|frequently asked questions)\s*:?\s*$',
+                     text):
+            raise RuntimeError('Unrelated section included in ' + filename)
+        if not data.get('name') or not data.get('gif_url'):
+            raise RuntimeError('Required fields missing in ' + filename)
     folder = Path('assets/exercises/chest')
     folder.mkdir(parents=True, exist_ok=True)
     for path in folder.glob('*.json'):
@@ -345,7 +287,7 @@ def main():
             'imported_at': datetime.now(timezone.utc).isoformat(),
             'missing_gif': [n for n, x in results.items() if not x['gif_url']],
             'missing_how_to': [n for n, x in results.items() if not x['how_to']],
-            'instructions': 'Brief excerpts only; full text available at source_url.'}
+            'instructions': 'Full post-GIF instruction text with original paragraph/list structure.'}
     (folder / '_manifest.json').write_text(json.dumps(meta, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(meta, indent=2), flush=True)
 

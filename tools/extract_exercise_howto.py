@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Read the instruction after an exercise GIF in locally supplied HTML.
-
-This utility does not fetch pages or publish copyrighted material. Output is
-a single string; paragraphs and nested list bullets are preserved.
-"""
+"""Read complete instruction text after an exercise GIF, preserving lists and breaks."""
 import argparse
 import json
 import re
@@ -62,6 +58,10 @@ def extract_how_to(html, gif_url):
     image = find_image(root, gif_url)
     if image is None:
         return ""
+    # Keep the traversal inside the exercise content when possible.
+    article = image.find_parent("article")
+    content = image.find_parent(class_=re.compile(r"(?:entry-content|post-content|article-content)"))
+    root = content or article or root
 
     blocks = []
     for node in image.next_elements:
