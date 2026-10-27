@@ -392,3 +392,58 @@ describe('local ad-hoc execution', () => {
     expect(await db.table('programSets').count()).toBe(0);
   });
 });
+
+describe('client visibility of coach-owned FACT over the shared realm', () => {
+  it('streams newly created sessions and revised FACT to the assigned client only', async () => {
+    const { repo, client, stranger, db, pair } = await fixture();
+    const rows = vi.fn(), details = vi.fn(), errors = vi.fn();
+    const open = client.observeForClient(rows, errors);
+    try {
+      await vi.waitFor(() => expect(rows.mock.lastCall?.[0]).toEqual([]));
+      const { id } = await repo.createForAthlete('tg:202');
+      const { setId } = await oneExercise(repo, id);
+      await vi.waitFor(() => expect(rows.mock.lastCall?.[0]).toEqual([
+        { id, name: 'Тренировка', status: 'active' },
+      ]));
+      expect(await stranger.listForClient()).toEqual([]);
+      expect(await repo.listForClient()).toEqual([]);
+      expect(await client.list()).toEqual([]); // creator-only list is unchanged
+      const observation = client.observe(id, details, errors);
+      try {
+        await vi.waitFor(() => expect(details.mock.lastCall?.[0]?.exercises[0]?.sets[0]?.sessionSetId).toBe(setId));
+        await repo.saveSet(id, setId, fact);
+        await vi.waitFor(() => expect(details.mock.lastCall?.[0]?.exercises[0]?.sets[0]?.fact?.metrics)
+          .toEqual(fact.metrics));
+        expect(await client.get(id)).toMatchObject({
+          exercises: [{ sets: [{ fact: { metrics: fact.metrics } }] }],
+        });
+        await expect(client.saveSet(id, setId, fact)).rejects.toThrow('ADHOC_WRITE_FORBIDDEN');
+        await db.table('members').delete(pair.members[1].id);
+        await vi.waitFor(() => expect(rows.mock.lastCall?.[0]).toEqual([]));
+        await vi.waitFor(() => expect(details.mock.lastCall?.[0]).toBeNull());
+        expect(await client.listForClient()).toEqual([]);
+        expect(await client.get(id)).toBeNull();
+      } finally {
+        observation.unsubscribe();
+      }
+      expect(errors).not.toHaveBeenCalled();
+    } finally {
+      open.unsubscribe();
+    }
+  });
+
+  it('does not expose personal, unrelated, or completed workouts in the client active view', async () => {
+    const { repo, client, stranger } = await fixture();
+    const personal = await repo.createQuick();
+    expect(await client.listForClient()).toEqual([]);
+    await repo.complete(personal.id);
+    const created = await repo.createForAthlete('tg:202');
+    expect((await client.listForClient()).map(row => row.id)).toEqual([created.id]);
+    expect(await stranger.listForClient()).toEqual([]);
+    await repo.complete(created.id);
+    expect(await client.listForClient()).toEqual([]);
+    // Completed sessions remain readable when an authorized detail ID is known;
+    // history placement is outside this PR.
+    expect((await client.get(created.id))?.status).toBe('completed');
+  });
+});
