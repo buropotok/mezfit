@@ -97,14 +97,15 @@ export class SessionSyncHistory {
   }
 
   private record(next: SyncHistoryEvent): void {
-    const previous = [...this.events].reverse().find(event => event.source === next.source);
+    const recent = this.recent(this.events);
+    const previous = [...recent].reverse().find(event => event.source === next.source);
     if (previous && previous.status === next.status
       && (previous.source === 'websocket'
         || (previous.source === 'sync' && next.source === 'sync' && previous.phase === next.phase))) {
-      this.prune();
+      if (recent.length !== this.events.length) this.publish(recent);
       return;
     }
-    this.publish(this.recent([...this.events, next]));
+    this.publish(this.recent([...recent, next]));
   }
 
   private publish(events: readonly SyncHistoryEvent[]): void {
