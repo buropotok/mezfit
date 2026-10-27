@@ -36,6 +36,7 @@ import { hsvToHex } from '../ui/colorMath';
 import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkedMuscleId, type WorkoutSessionCardMode } from '../workout';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import { ScreenDiagnostics } from './ScreenDiagnostics';
+import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import './settings-page.css';
 
 // Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
@@ -270,6 +271,7 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const [screenDiagnosticsOpen, setScreenDiagnosticsOpen] = useState(initialScreenDiagnosticsOpen);
   const [modulesOpen, setModulesOpen] = useState(false);
+  const [syncHistoryOpen, setSyncHistoryOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
   const [backgroundSettingsOpen, setBackgroundSettingsOpen] = useState(false);
   const [typographySettingsOpen, setTypographySettingsOpen] = useState(false);
@@ -296,6 +298,7 @@ export function SettingsPage({
     setHapticProbe({ kind, result: runHapticProbe(kind, telegramWebApp) });
   };
   const closeScreenDiagnostics = useCallback(() => setScreenDiagnosticsOpen(false), []);
+  const closeSyncHistory = useCallback(() => setSyncHistoryOpen(false), []);
   useEffect(() => {
     if (initialScreenDiagnosticsOpen) onScreenDiagnosticsDeepLinkConsumed?.();
   }, [initialScreenDiagnosticsOpen, onScreenDiagnosticsDeepLinkConsumed]);
@@ -317,6 +320,10 @@ export function SettingsPage({
   }, []);
 
   useEffect(() => {
+    if (syncHistoryOpen) {
+      onNavigationContextChange({ title: 'История синхронизации', scrollKey: 'settings:sync-history', onBack: closeSyncHistory });
+      return () => onNavigationContextChange(null);
+    }
     if (screenDiagnosticsOpen) {
       onNavigationContextChange({ title: 'Диагностика экрана', scrollKey: 'settings:diagnostics', onBack: closeScreenDiagnostics });
       return () => onNavigationContextChange(null);
@@ -344,9 +351,9 @@ export function SettingsPage({
 
     onNavigationContextChange(null);
     return undefined;
-  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeScreenDiagnostics, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, screenDiagnosticsOpen, typographySettingsOpen]);
+  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeScreenDiagnostics, closeSyncHistory, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, screenDiagnosticsOpen, syncHistoryOpen, typographySettingsOpen]);
 
-  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen) {
+  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen && !syncHistoryOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__diagnostics-entry">
@@ -374,13 +381,16 @@ export function SettingsPage({
           <Text variant="footnote" tone="muted">
             Временные инструменты для просмотра собранных интерфейсных модулей.
           </Text>
-          <span className="settings-page__action">
+          <div className="settings-page__actions">
             <Button onClick={() => setModulesOpen(true)}>Модули</Button>
-          </span>
+            <Button variant="secondary" onClick={() => setSyncHistoryOpen(true)}>История синхронизации</Button>
+          </div>
         </GlassSurface>
       </section>
     );
   }
+
+  if (syncHistoryOpen) return <SyncHistoryPanel glassBlur={effectiveGlassBlur} />;
 
   if (screenDiagnosticsOpen) return <ScreenDiagnostics glassBlur={effectiveGlassBlur} previewWidth={previewWidth} onPreviewWidthChange={onPreviewWidthChange} />;
 

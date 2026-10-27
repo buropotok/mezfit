@@ -2,6 +2,7 @@ import { ContactAvatarUrls } from './contact-avatar-urls';
 import { observeWorkoutSyncConfirmation } from './workout-sync';
 import { confirmProgramSync, observeProgramSyncConfirmation } from './program-sync';
 import { createSyncNotificationBudget, SyncNotificationBudgetContext } from './sync-notification-budget';
+import { SessionSyncHistory } from './session-sync-history';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
@@ -51,6 +52,8 @@ interface CloudConnectionsValue {
   /** Real Dexie Cloud upload/download state; contacts can be ready while sync is offline. */
   syncStatus: CloudSyncStatus;
   syncError: string;
+  /** Session-local technical state changes; never part of Dexie Cloud. */
+  syncHistory?: SessionSyncHistory;
   refresh: () => Promise<void>;
   retrySync: () => Promise<void>;
   loadAvatar: (contact: CloudContact, variant?: 'small' | 'large') => Promise<Blob | null>;
@@ -211,6 +214,7 @@ export function CloudConnectionsProvider({
   useEffect(() => () => avatarUrls.dispose(), [avatarUrls]);
   const notificationBudget = useMemo(() => createSyncNotificationBudget(), []);
   const actorUserId = `tg:${telegramUserId}`;
+  const syncHistory = useMemo(() => new SessionSyncHistory(actorUserId), [actorUserId]);
   const [clients, setClients] = useState<CloudContact[]>([]);
   const [coaches, setCoaches] = useState<CloudContact[]>([]);
   const [selfAvatars, setSelfAvatars] = useState<CloudContact[]>([]);
@@ -320,6 +324,7 @@ export function CloudConnectionsProvider({
     setSyncError('');
     const subscription = db.cloud.syncState?.subscribe({
       next: (state) => {
+        syncHistory.recordSync(state.phase, state.status);
         const next = projectCloudSyncState(state);
         if (next.status === 'synced') notificationBudget.reset();
         setSyncStatus(next.status);
@@ -330,8 +335,11 @@ export function CloudConnectionsProvider({
         setSyncError(reason instanceof Error ? reason.message : 'Не удалось отследить синхронизацию с Mezfit облаком.');
       },
     });
-    return () => subscription?.unsubscribe();
-  }, [db, notificationBudget]);
+    const webSocketSubscription = db.cloud.webSocketStatus?.subscribe((status) => {
+      syncHistory.recordWebSocket(status);
+    });
+    return () => { subscription?.unsubscribe(); webSocketSubscription?.unsubscribe(); };
+  }, [db, notificationBudget, syncHistory]);
 
   // Blob downloads are independent of contact metadata sync. A first lookup may
   // observe a BlobRef before its bytes are available; retry after hydration.
@@ -447,9 +455,9 @@ export function CloudConnectionsProvider({
   }, [db]);
 
   const value = useMemo<CloudConnectionsValue>(() => ({
-    db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError,
+    db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError, syncHistory,
     refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision,
-  }), [db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError,
+  }), [db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError, syncHistory,
     refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision]);
 
   return <Context.Provider value={value}>

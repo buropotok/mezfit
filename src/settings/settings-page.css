@@ -45,6 +45,20 @@
   justify-self: start;
 }
 
+.settings-page__sync-history-list {
+  display: grid;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
+.settings-page__sync-history-item {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
 .settings-page__actions {
   display: flex;
   flex-wrap: wrap;
