@@ -1,20 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/inner-chest-press-machine/",
   "name": "Inner Chest Press Machine",
-  "how_to": [
-    {
-      "step": 1,
-      "instructions": [
-        "Begin with the handles close to your chest."
-      ]
-    },
-    {
-      "step": 2,
-      "instructions": [
-        "Push the handles forward and slightly inward, fully extending your arms without locking your elbows."
-      ]
-    }
-  ],
+  "how_to": "- Starting Position\n  - Begin with the handles close to your chest.\n- Press Phase\n  - Push the handles forward and slightly inward, fully extending your arms without locking your elbows.\n  - Focus on squeezing your chest muscles at the end of the movement.\n- Return Phase\n  - Slowly bring the handles back to the starting position while maintaining control.\n  - Avoid letting the weights slam back into the stack.\n- Repeat: Perform the desired number of repetitions, maintaining a steady tempo.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Inner-Chest-Press-Machine.gif",
   "muscles": {
     "target": [

@@ -1,20 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/dumbbell-fly/",
   "name": "Dumbbell Fly",
-  "how_to": [
-    {
-      "step": 1,
-      "instructions": [
-        "Lie flat on a bench."
-      ]
-    },
-    {
-      "step": 2,
-      "instructions": [
-        "Hold a dumbbell in each hand with a neutral grip (palms facing each other)."
-      ]
-    }
-  ],
+  "how_to": "Setup:\n\n- Lie flat on a bench.\n- Hold a dumbbell in each hand with a neutral grip (palms facing each other).\n- Extend your arms straight above your chest, keeping a slight bend in your elbows to reduce joint strain.\nMovement:\n\n- Slowly lower the dumbbells in a wide arc, maintaining the slight bend in your elbows. Your arms should move outward and downward until they are level with your chest or slightly below.\n- Focus on feeling a stretch in your chest muscles without overstretching or compromising shoulder stability.\n- Reverse the motion by squeezing your chest muscles and bringing the dumbbells back up in the same arc to the starting position.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Fly.gif",
   "muscles": {
     "target": [
