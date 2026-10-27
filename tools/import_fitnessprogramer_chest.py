@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, NavigableString, Tag
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -112,37 +112,39 @@ def extract_muscles(soup):
     unlabeled = []
     section_level = int(heading.name[1])
     for node in heading.next_elements:
-        if not isinstance(node, Tag):
-            continue
-        if node.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
+        if isinstance(node, Tag) and node.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
             title = node.get_text(' ', strip=True)
-            if (STOP.match(title) or 'Frequently Asked Questions' in title
-                    or int(node.name[1]) <= section_level):
+            if (STOP.match(title) or int(node.name[1]) <= section_level):
                 break
-        if node.name not in ('p', 'li'):
+        if isinstance(node, Tag) and node.name in ('p', 'li'):
+            if node.find(['p', 'li']) is not None:
+                continue
+            value = node.get_text(' ', strip=True)
+            found = MUSCLE.fullmatch(value)
+            if found:
+                explicit = True
+                role, name = found.groups()
+                role = role.lower()
+                if role.startswith('target'):
+                    empty['target'].append(name)
+                elif role.startswith('synergist'):
+                    empty['synergists'].append(name)
+                elif role.startswith('antagonist'):
+                    empty['stabilizers']['antagonist'].append(name)
+                else:
+                    empty['stabilizers']['dynamic'].append(name)
+        if not isinstance(node, NavigableString):
             continue
-        # Nested list containers are not individual muscle values.
-        if node.find(['p', 'li']) is not None:
+        parent = node.parent
+        if parent is None or parent.name not in ('p', 'li', 'span', 'div', 'b', 'strong'):
             continue
-        value = node.get_text(' ', strip=True)
-        if not value:
+        if parent.find_parent(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'script', 'style']) is not None:
             continue
-        found = MUSCLE.fullmatch(value)
-        if found:
-            explicit = True
-            role, name = found.groups()
-            role = role.lower()
-            if role.startswith('target'):
-                empty['target'].append(name)
-            elif role.startswith('synergist'):
-                empty['synergists'].append(name)
-            elif role.startswith('antagonist'):
-                empty['stabilizers']['antagonist'].append(name)
-            else:
-                empty['stabilizers']['dynamic'].append(name)
-        elif (len(value) <= 70 and len(value.split()) <= 7
-              and not re.search(r'[.!?]', value)
-              and not STOP.match(value)):
+        value = ' '.join(str(node).split())
+        if (value and len(value) <= 70 and len(value.split()) <= 7
+                and not re.search(r'[.!?:]', value)
+                and not STOP.match(value)
+                and not re.fullmatch(r'(?:target|synergists?|dynamic stabilizers?|antagonist stabilizers?|stabilizers?)', value, re.I)):
             unlabeled.append(value)
 
     if not explicit:
@@ -283,7 +285,13 @@ def main():
             or 'Trapezius' not in arm.get('muscles', {}).get('target', [])
             or not results.get('pec-deck-fly.json', {}).get('how_to')
             or 'Frequently Asked Questions' in results.get('pec-deck-fly.json', {}).get('muscles', {}).get('target', [])):
-        raise RuntimeError('Muscle parsing regression: expected source-backed groups not found')
+        raise RuntimeError('Muscle parsing regression: ' + repr({
+            'cobra': cobra.get('muscles'),
+            'bench': bench.get('muscles'),
+            'cable': cable.get('muscles'),
+            'arm': arm.get('muscles'),
+            'pec_deck_has_how_to': bool(results.get('pec-deck-fly.json', {}).get('how_to')),
+        }))
     for filename, data in results.items():
         invalid = [name for name in data['muscles']['target'] if STOP.match(name)]
         if invalid:
