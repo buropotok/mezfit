@@ -97,28 +97,66 @@ def extract_metadata(soup, heading_text, fallback):
 
 
 def extract_muscles(soup, fallback):
-    nodes = section(soup, r'muscles?\s+(worked|targeted)|muscles?\s+involved')
-    text = '\n'.join(n.get_text('\n', strip=True) for n in nodes)
-    if not text:
-        text = (soup.select_one('main') or soup).get_text('\n', strip=True)
+    main = soup.select_one('main') or soup
     out = {'target': [], 'synergists': [], 'stabilizers': {'dynamic': [], 'antagonist': []}}
-    for row in text.splitlines():
-        row = ' '.join(row.split()).strip('• ')
-        if STOP.match(row):
-            break
-        match = MUSCLE.match(row)
-        if match:
-            label, muscle = match.groups()
-            bucket = (out['target'] if label.lower() == 'target' else out['synergists'] if label.lower().startswith('synergist') else out['stabilizers']['antagonist'] if label.lower().startswith('antagonist') else out['stabilizers']['dynamic'])
-            bucket.append(muscle)
-        elif nodes and row and len(row.split()) <= 5 and len(row) < 65 and not re.search(r'[.:?!]', row):
-            out['target'].append(row)
+
+    def assign(label, muscle):
+        key = label.lower()
+        if key.startswith('target'):
+            bucket = out['target']
+        elif key.startswith('synergist'):
+            bucket = out['synergists']
+        elif key.startswith('antagonist'):
+            bucket = out['stabilizers']['antagonist']
+        else:
+            bucket = out['stabilizers']['dynamic']
+        bucket.append(muscle)
+
+    # Paragraph text preserves inline bold/span labels even when HTML nesting
+    # prevents detecting the heading's siblings.
+    for el in main.find_all(['p', 'li']):
+        row = el.get_text(' ', strip=True)
+        if len(row) < 160:
+            match = MUSCLE.match(row)
+            if match:
+                assign(*match.groups())
+
+    rows = [' '.join(x.split()).strip('• ') for x in main.get_text('\n', strip=True).splitlines()]
+    starts = [i for i, row in enumerate(rows)
+              if re.search(r'\bmuscles?\s+worked\b', row, re.I) and len(row) < 100]
+    unlabeled = []
+    if starts:
+        i = starts[-1] + 1
+        while i < min(len(rows), starts[-1] + 80):
+            row = rows[i]
+            if STOP.match(row) or re.search(r'\b(variations|benefits|how can you incorporate)\b', row, re.I):
+                break
+            matched = None
+            consumed = 1
+            for length in (1, 2, 3):
+                candidate = ' '.join(rows[i:i + length])
+                match = MUSCLE.match(candidate)
+                if match:
+                    matched = match
+                    consumed = length
+                    break
+            if matched:
+                assign(*matched.groups())
+                i += consumed
+                continue
+            if row and len(row.split()) <= 5 and len(row) <= 65 and not re.search(r'[.:?!]', row):
+                if not re.fullmatch(r'(target|synergists?|dynamic stabilizers?|antagonist stabilizers?|stabilizers?)', row, re.I):
+                    unlabeled.append(row)
+            i += 1
+    # Without category labels, every plain muscle name is a target.
+    if not (out['target'] or out['synergists'] or out['stabilizers']['dynamic'] or out['stabilizers']['antagonist']):
+        out['target'] = unlabeled or fallback[:]
+    else:
+        out['target'].extend(x for x in unlabeled if x not in out['target'] and not x.startswith('-'))
     out['target'] = uniq(out['target'])
     out['synergists'] = uniq(out['synergists'])
-    out['stabilizers']['dynamic'] = uniq(out['stabilizers']['dynamic'])
-    out['stabilizers']['antagonist'] = uniq(out['stabilizers']['antagonist'])
-    if not any([out['target'], out['synergists'], out['stabilizers']['dynamic'], out['stabilizers']['antagonist']]):
-        out['target'] = fallback[:]
+    for key in out['stabilizers']:
+        out['stabilizers'][key] = uniq(out['stabilizers'][key])
     return out
 
 
@@ -202,6 +240,15 @@ def main():
         print(f'{i}/{len(cards)} {slug}', flush=True)
     if len(results) != len(cards) or sum(bool(x['gif_url']) for x in results.values()) < len(results)*.7:
         raise RuntimeError('Validation failed: duplicate files or too few GIF links')
+    # Known exercises serve as source-backed parser regression sentinels.
+    bench = results.get('bench-press.json', {})
+    cable = results.get('high-cable-crossover.json', {})
+    arm = results.get('arm-scissors.json', {})
+    if ('Pectoralis Major, Sternal' not in bench.get('muscles', {}).get('target', [])
+            or not bench.get('muscles', {}).get('synergists', [])
+            or not cable.get('muscles', {}).get('synergists', [])
+            or 'Trapezius' not in arm.get('muscles', {}).get('target', [])):
+        raise RuntimeError('Muscle parsing regression: expected source-backed groups not found')
     folder = Path('assets/exercises/chest')
     folder.mkdir(parents=True, exist_ok=True)
     for path in folder.glob('*.json'):
