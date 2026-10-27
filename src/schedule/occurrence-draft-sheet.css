@@ -15,3 +15,8 @@
 
 .occurrence-draft-sheet__format { display: flex; align-items: center; gap: 8px; }
 .occurrence-draft-sheet__coach-avatar { display: inline-flex; align-items: center; flex-shrink: 0; }
+
+.occurrence-draft-sheet--inline { height: auto; gap: 16px; }
+.occurrence-draft-sheet--inline .occurrence-draft-sheet__body { overflow: visible; flex: none; }
+.occurrence-draft-sheet__start { padding: 0 16px max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; }
+.occurrence-draft-sheet__identity { padding: 16px 16px 0; }

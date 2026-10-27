@@ -1,3 +1,6 @@
+import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
+import { WorkoutSchedulingRepository } from './workout-scheduling';
+import { markWorkoutChanged } from './workout-sync';
 import { liveQuery } from 'dexie';
 import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import { adHocSessionValidationIssue, type AdHocSessionValidationIssue, isAdHocSessionRow, isAdHocExerciseRow, isAdHocSetRow, isAdHocFactDraft,
@@ -25,6 +28,17 @@ const executionTables = ['adHocSessions', 'adHocExercises', 'adHocSets', 'realms
 const programTables = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'localProgramSync', 'roles'];
 const catalogueTables = ['publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'];
+function hasPlannedLifecycleGrant(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || !('realmId' in value) || value.realmId !== 'rlm-public'
+    || !('name' in value) || value.name !== 'coach' || !('permissions' in value)) return false;
+  const permissions = value.permissions;
+  if (!permissions || typeof permissions !== 'object' || !('add' in permissions) || !('update' in permissions)) return false;
+  const add = permissions.add, update = permissions.update;
+  if (!Array.isArray(add) || !['adHocSessions', 'adHocExercises', 'adHocSets'].every(table => add.includes(table))
+    || !update || typeof update !== 'object' || !('workoutOccurrences' in update)) return false;
+  const fields = update.workoutOccurrences;
+  return Array.isArray(fields) && ['status', 'workoutSessionId'].every(field => fields.includes(field));
+}
 const now = () => new Date().toISOString();
 function localWorkoutDate(startedAt: string): string {
   const date = new Date(startedAt);
@@ -192,6 +206,73 @@ export class AdHocWorkoutRepository {
     });
   }
 
+  private async requirePlannedLifecycleGrant(realmId: string): Promise<void> {
+    if (realmId === this.actorUserId) return;
+    const roles = await this.db.table<unknown>('roles').toArray();
+    if (!roles.some(hasPlannedLifecycleGrant)) throw new Error('PLANNED_START_ACL_REQUIRED');
+  }
+
+  /** One local transaction freezes the occurrence PLAN and creates execution.
+   * Approved Coach scheduled Start; shared writes require the installed lifecycle ACL.
+   */
+  async createFromOccurrence(occurrenceId: string): Promise<{ id: string; createdProgram: false }> {
+    if (typeof occurrenceId !== 'string' || !occurrenceId) throw new Error('PLANNED_WORKOUT_NOT_FOUND');
+    return this.write(['workoutOccurrences', 'localWorkoutSync', 'trainingPlans', 'roles', ...catalogueTables], async () => {
+      const occurrence = (await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace())
+        .find(row => row.id === occurrenceId && row.entryKind !== 'personal_event');
+      if (!occurrence || occurrence.cancelledAt || occurrence.status === 'cancelled'
+        || (occurrence.coachUserId ? occurrence.coachUserId !== this.actorUserId
+          : occurrence.realmId !== this.actorUserId || occurrence.athleteUserId !== this.actorUserId))
+        throw new Error('PLANNED_WORKOUT_NOT_FOUND');
+      const existing = await this.getOccurrenceSession(occurrenceId, occurrence.workoutSessionId);
+      if (existing) {
+        if (existing.status !== 'active') throw new Error('PLANNED_WORKOUT_ALREADY_COMPLETED');
+        return { id: existing.id, createdProgram: false };
+      }
+      if (occurrence.status !== 'scheduled' || occurrence.workoutSessionId) throw new Error('PLANNED_WORKOUT_ALREADY_STARTED');
+      await this.requireNoActiveSession();
+      await this.requirePlannedLifecycleGrant(occurrence.realmId);
+      const timestamp = now();
+      const source = occurrence.trainingPlanId ? await this.db.trainingPlans.get(occurrence.trainingPlanId) : undefined;
+      const programName = source?.realmId === occurrence.realmId ? source.name : 'Программа';
+      const id = await this.db.adHocSessions.add({ realmId: occurrence.realmId, owner: occurrence.realmId,
+        athleteUserId: occurrence.athleteUserId, coachUserId: occurrence.coachUserId, clientUserId: occurrence.clientUserId,
+        creatorUserId: this.actorUserId, name: occurrence.plan.name, comment: occurrence.plan.comment,
+        ...(occurrence.trainingPlanId ? { programId: occurrence.trainingPlanId, programName } : { programName: null }),
+        ...(occurrence.programDayId ? { dayId: occurrence.programDayId } : {}),
+        occurrenceId, occurrencePlan: structuredClone(occurrence.plan), autoCreatedProgram: false,
+        startedAt: timestamp, completedAt: null, status: 'active', createdAt: timestamp, updatedAt: timestamp });
+      const session = await this.require(id);
+      for (const [position, item] of occurrence.plan.exercises.entries()) {
+        const snapshot = await this.resolveSnapshot(item.exercise);
+        const exerciseId = await this.db.adHocExercises.add({ realmId: session.realmId, owner: owner(session),
+          sessionId: id, occurrenceExerciseId: item.id, position, exercise: snapshot, notes: item.notes, deletedAt: null });
+        for (const [setPosition, set] of item.sets.entries()) {
+          await this.db.adHocSets.add({ realmId: session.realmId, owner: owner(session), sessionId: id, exerciseId,
+            occurrenceSetId: set.id, position: setPosition, deletedAt: null, ...blankFact(), setType: set.setType ?? null });
+        }
+      }
+      await this.db.workoutOccurrences.update(occurrenceId, { status: 'in_progress', workoutSessionId: id,
+        publicationStatus: 'published', publishedPlan: structuredClone(occurrence.plan), updatedAt: timestamp });
+      await markWorkoutChanged(this.db, occurrenceId);
+      return { id, createdProgram: false };
+    });
+  }
+
+  /** Local readable snapshot wins over stale occurrence edits after Start. */
+  async getOccurrenceSession(occurrenceId: string, linkedId?: string | null): Promise<AdHocSessionRow | null> {
+    if (linkedId) {
+      const linked = await this.getRow(linkedId);
+      if (linked?.occurrenceId === occurrenceId) return linked;
+      return null;
+    }
+    const rows = (await this.db.adHocSessions.toArray())
+      .filter(row => isAdHocSessionRow(row) && row.occurrenceId === occurrenceId)
+      .sort((a, b) => a.startedAt.localeCompare(b.startedAt) || a.id.localeCompare(b.id));
+    for (const row of rows) if (await this.accessible(row)) return row;
+    return null;
+  }
+
   private async resolveSnapshot(snapshot: CloudProgramExerciseSnapshot): Promise<CloudWorkoutExerciseSnapshot> {
     // Definition first, immutable full snapshot fallback. Unknown tracking is an error.
     const trackingType = await this.programs.trackingTypeForExercise(snapshot)
@@ -263,7 +344,8 @@ export class AdHocWorkoutRepository {
   async deleteSet(sessionId: string, setId: string): Promise<void> {
     await this.write([], async () => {
       const session = await this.require(sessionId);
-      await this.set(session, setId);
+      const set = await this.set(session, setId);
+      if (session.occurrenceId && set.occurrenceSetId) throw new Error(STARTED_PLAN_MESSAGE);
       await this.db.adHocSets.update(setId, { deletedAt: now() });
       await this.touch(sessionId);
     });
@@ -271,7 +353,8 @@ export class AdHocWorkoutRepository {
   async deleteExercise(sessionId: string, exerciseId: string): Promise<void> {
     await this.write([], async () => {
       const session = await this.require(sessionId);
-      await this.exercise(session, exerciseId);
+      const exercise = await this.exercise(session, exerciseId);
+      if (session.occurrenceId && exercise.occurrenceExerciseId) throw new Error(STARTED_PLAN_MESSAGE);
       const timestamp = now();
       await this.db.adHocExercises.update(exerciseId, { deletedAt: timestamp });
       for (const row of await this.sets(session)) if (row.exerciseId === exerciseId)
@@ -284,6 +367,10 @@ export class AdHocWorkoutRepository {
     await this.write([], async () => {
       const session = await this.require(sessionId), rows = await this.exercises(session);
       if (rows.length !== ids.length || rows.some(row => !ids.includes(row.id))) throw new Error('ADHOC_EXERCISES_CHANGED');
+      if (session.occurrenceId) {
+        const frozen = rows.filter(row => row.occurrenceExerciseId);
+        if (frozen.some((row, index) => ids[index] !== row.id)) throw new Error(STARTED_PLAN_MESSAGE);
+      }
       for (const [position, id] of ids.entries()) if (rows.find(row => row.id === id)?.position !== position)
         await this.db.adHocExercises.update(id, { position });
       await this.touch(sessionId);
@@ -292,7 +379,8 @@ export class AdHocWorkoutRepository {
   async rename(sessionId: string, rawName: string): Promise<void> {
     const next = name(rawName);
     await this.write([], async () => {
-      await this.require(sessionId);
+      const session = await this.require(sessionId);
+      if (session.occurrenceId) throw new Error(STARTED_PLAN_MESSAGE);
       await this.db.adHocSessions.update(sessionId, { name: next, updatedAt: now() });
     });
   }
@@ -304,10 +392,19 @@ export class AdHocWorkoutRepository {
     });
   }
   async complete(sessionId: string): Promise<void> {
-    await this.write([], async () => {
+    const initial = await this.getRow(sessionId);
+    await this.write(initial?.occurrenceId ? ['workoutOccurrences', 'localWorkoutSync', 'roles'] : [], async () => {
       const row = await this.require(sessionId, false);
       if (row.status === 'completed') return;
       const timestamp = now();
+      if (row.occurrenceId) {
+        await this.requirePlannedLifecycleGrant(row.realmId);
+        const occurrence = await this.db.workoutOccurrences.get(row.occurrenceId);
+        if (!occurrence || occurrence.realmId !== row.realmId || occurrence.workoutSessionId !== row.id)
+          throw new Error('PLANNED_WORKOUT_LINK_INVALID');
+        await this.db.workoutOccurrences.update(occurrence.id, { status: 'completed', updatedAt: timestamp });
+        await markWorkoutChanged(this.db, occurrence.id);
+      }
       await this.db.adHocSessions.update(sessionId, { status: 'completed', completedAt: timestamp,
         updatedAt: timestamp, ...(row.autoCreatedProgram ? { templateSaveDecision: 'pending' as const } : {}) });
     });
@@ -349,13 +446,14 @@ export class AdHocWorkoutRepository {
   private async project(session: AdHocSessionRow): Promise<ActiveWorkoutSession<string>> {
     const sets = await this.sets(session);
     return {
-      sessionId: session.id, occurrenceId: null, status: session.status,
+      sessionId: session.id, occurrenceId: session.occurrenceId ?? null, status: session.status,
       workoutDate: localWorkoutDate(session.startedAt), startedAt: session.startedAt, completedAt: session.completedAt,
       program: session.programId ? { id: session.programId, name: session.programName ?? '' } : null,
       phase: null, day: session.dayId ? { id: session.dayId, name: session.name, position: 0 } : null,
       exercises: (await this.exercises(session)).map((row): SessionExerciseData<string> => {
         if (!isWorkoutExerciseSnapshot(row.exercise)) throw new Error('ADHOC_INVALID_EXERCISE_SNAPSHOT');
         const exerciseSets = sets.filter(set => set.exerciseId === row.id);
+        const plannedExercise = session.occurrencePlan?.exercises.find(item => item.id === row.occurrenceExerciseId);
         return { sessionExerciseId: row.id, workoutSessionId: session.id, sourceProgramExerciseId: null,
           position: row.position, status: exerciseSets.length > 0 && exerciseSets.every(set => set.setStatus !== 'pending')
             ? 'completed' : 'active', notes: row.notes, mediaUrl: row.exercise.mediaUrl,
@@ -363,8 +461,14 @@ export class AdHocWorkoutRepository {
             description: null, tracking_type: row.exercise.trackingType, category_code: null, equipment_code: null,
             reference_source: null, reference_key: null, reference_media_url: row.exercise.mediaUrl,
             is_favourite: false, can_edit: false },
-          sets: exerciseSets.map((set): SessionExerciseSetData<string> => ({ sessionSetId: set.id, sourceProgramSetId: null, position: set.position,
-            status: set.setStatus, setType: set.setType, plan: null, previous: null, fact: factOf(set) })),
+          sets: exerciseSets.map((set): SessionExerciseSetData<string> => {
+            const prescription = plannedExercise?.sets.find(item => item.id === set.occurrenceSetId);
+            return { sessionSetId: set.id, sourceProgramSetId: prescription?.sourceProgramSetId ?? null, position: set.position,
+              status: set.setStatus, setType: set.setType,
+              plan: prescription ? { reps: prescription.plannedReps, weightKg: prescription.plannedWeightKg,
+                durationSeconds: prescription.plannedDurationSeconds, distanceMeters: prescription.plannedDistanceMeters } : null,
+              previous: null, fact: factOf(set) };
+          }),
         };
       }),
     };

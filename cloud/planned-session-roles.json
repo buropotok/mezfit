@@ -1,0 +1,11 @@
+{
+  "roles": {
+    "coach": {
+      "permissions": {
+        "update": {
+          "workoutOccurrences": ["status", "workoutSessionId"]
+        }
+      }
+    }
+  }
+}

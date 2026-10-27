@@ -25,6 +25,8 @@ export interface LocalWorkoutOccurrenceDraft {
   originalPlan: WorkoutOccurrencePlan;
   /** View of a saved occurrence. Only content edits change publication status to draft. */
   saved?: boolean;
+  executionStatus?: CloudWorkoutOccurrenceRow['status'];
+  workoutSessionId?: string | null;
   previouslyPublished?: boolean;
   targetOccurrenceId?: string;
   createdAt: string;
@@ -115,6 +117,8 @@ export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWor
 export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurrenceRow): LocalWorkoutOccurrenceDraft {
   const now = new Date().toISOString();
   return { id: 'draft:' + row.id, actorUserId, realmId: row.realmId, saved: row.publicationStatus !== 'draft',
+    ...(row.status !== 'scheduled' || row.workoutSessionId
+      ? { executionStatus: row.status, workoutSessionId: row.workoutSessionId } : {}),
     previouslyPublished: row.publicationStatus !== 'draft' || !!row.publishedPlan,
     targetOccurrenceId: row.id, trainingPlanId: row.trainingPlanId, programDayId: row.programDayId,
     autoCreatedProgram: row.autoCreatedProgram,

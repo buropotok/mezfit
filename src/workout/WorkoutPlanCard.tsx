@@ -3,11 +3,17 @@ import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-typ
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
+import { StartWorkoutButton } from './StartWorkoutButton';
 import { SessionExercise } from './SessionExercise';
 import { SpotlightTarget } from '../ui/SpotlightHint';
+import './workout-session-card.css';
 
 export interface WorkoutPlanCardProps {
   mode: 'planning';
+  collapsed?: boolean;
+  onCollapsedChange?: () => void;
+  scheduledTiming?: { date: string; time: string };
+  hideHeader?: boolean;
   /** Numeric assignments belong only to a scheduled occurrence. */
   showPlanMetrics?: boolean;
   programName?: string;
@@ -45,6 +51,49 @@ export interface WorkoutPlanCardProps {
   onDelete: () => void;
 }
 
+export interface WorkoutPlanCardHeaderProps {
+  name: string;
+  programName?: string;
+  hideProgramName?: boolean;
+  creatorName: string;
+  creatorAvatar?: ReactNode;
+  scheduledTiming?: { date: string; time: string };
+  collapsed?: boolean;
+  onCollapsedChange?: () => void;
+  children?: ReactNode;
+}
+
+/** Shared program/scheduled day identity, timing and owner header. */
+export function WorkoutPlanCardHeader({ name, programName = 'Без программы', hideProgramName = false,
+  creatorName, creatorAvatar, scheduledTiming, collapsed = false, onCollapsedChange, children,
+}: WorkoutPlanCardHeaderProps) {
+  return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}`}>
+    <span className="workout-session-card__icon">
+      <Icon name="barbell" className="workout-session-card__icon-artwork" />
+    </span>
+    <div className="workout-session-card__copy">
+      <Text variant="body" className="workout-session-card__workout-name">{name}</Text>
+      {!hideProgramName ? <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
+        {programName}
+      </Text> : null}
+    </div>
+    {scheduledTiming ? <div className="workout-session-card__time">
+      <Text variant="footnote">{scheduledTiming.date}</Text>
+      <Text variant="footnote" tone="muted">{scheduledTiming.time}</Text>
+    </div> : null}
+    {onCollapsedChange ? <IconButton
+      label={collapsed ? 'Развернуть тренировку' : 'Свернуть тренировку'}
+      aria-expanded={!collapsed} onClick={onCollapsedChange}>
+      <span className={`workout-plan-card__chevron${collapsed ? '' : ' workout-plan-card__chevron--expanded'}`}>
+        <Icon name="chevron-right" />
+      </span>
+    </IconButton> : children ?? <span className="workout-session-card__menu-placeholder" aria-hidden="true" />}
+    <div className="workout-plan-card__avatar" aria-label={`Автор: ${creatorName}`}>
+      {creatorAvatar ?? <Avatar name={creatorName} />}
+    </div>
+  </div>;
+}
+
 const PlanGlassButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
   ({ 'aria-disabled': disabled, ...props }, ref) =>
     <button type="button" ref={ref} disabled={disabled === true || disabled === 'true'} {...props} />,
@@ -54,6 +103,7 @@ PlanGlassButton.displayName = 'PlanGlassButton';
 /** Program template mode deliberately has neither a session nor numeric PLAN/FACT.
  * The future set editor plugs into this domain instead of the legacy numeric API. */
 export function WorkoutPlanCard({
+  collapsed = false, onCollapsedChange, scheduledTiming, hideHeader = false,
   day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule, onStart,
   hideProgramMenu = false, hideWorkoutActions = false, hideProgramName = false,
   onReorderExercises, portalDragOverlay = false, preserveDragHeight = false,
@@ -87,7 +137,7 @@ export function WorkoutPlanCard({
         ? setSchedulePopoverOpen(true) : onSchedule?.('independent')) }] : []),
     { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy, dividerBefore: true, onSelect: () => defer(() => mutate(onDelete)) },
   ];
-  const items = exercises.map((item) => ({
+  const items = collapsed ? [] : exercises.map((item) => ({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
       showPlanMetrics={showPlanMetrics}
@@ -112,16 +162,9 @@ export function WorkoutPlanCard({
       lockToVerticalAxis syncDropLayout portalOverlay={portalDragOverlay} preserveListHeightOnDrag={preserveDragHeight}
       onDragStart={() => setExpandedExercises(new Set())}
       onReorder={(rows) => mutate(() => onReorderExercises?.(rows.map((row) => String(row.id))))}
-      header={<div className="workout-session-card__header">
-        <span className="workout-session-card__icon">
-          <Icon name="barbell" className="workout-session-card__icon-artwork" />
-        </span>
-        <div className="workout-session-card__copy">
-          <Text variant="body" className="workout-session-card__workout-name">{day.name}</Text>
-          {!hideProgramName ? <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
-            {programName}
-          </Text> : null}
-        </div>
+      header={hideHeader ? undefined : <WorkoutPlanCardHeader name={day.name} programName={programName}
+        hideProgramName={hideProgramName} creatorName={creatorName} creatorAvatar={creatorAvatar}
+        scheduledTiming={scheduledTiming} collapsed={collapsed} onCollapsedChange={onCollapsedChange}>
         {menu.length ? <LiquidPopover isOpen={menuOpen} onOpenChange={setMenuOpen}
           triggerRef={triggerRef} label={`Меню дня ${day.name}`} items={menu}
           preset={glass.preset} optics={glass.optics}
@@ -133,11 +176,8 @@ export function WorkoutPlanCard({
           }}
           trigger={<IconButton ref={triggerRef} icon="dots-vertical" label={`Меню дня ${day.name}`} />} />
           : <span className="workout-session-card__menu-placeholder" aria-hidden="true" />}
-        <div className="workout-plan-card__avatar" aria-label={`Автор: ${creatorName}`}>
-          {creatorAvatar ?? <Avatar name={creatorName} />}
-        </div>
-      </div>}
-      footer={<div className="workout-session-card__footer">
+      </WorkoutPlanCardHeader>}
+      footer={collapsed ? undefined : <div className="workout-session-card__footer">
         {!exercises.length ? <Text variant="footnote" tone="muted">В этом дне пока нет упражнений</Text> : null}
         {authoringVisible ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
           className="workout-session-card__add-exercise" aria-disabled={busy || (!onMutationAttempt && !onAddExercise)}
@@ -148,14 +188,7 @@ export function WorkoutPlanCard({
         {day.comment ? <Text variant="body" className="workout-plan-card__comment">{day.comment}</Text> : null}
 
         {!hideWorkoutActions && (authoringVisible || onSchedule || onStart) ? <div className={`workout-plan-card__actions${onStart && !onSchedule ? ' workout-plan-card__actions--start' : ''}`}>
-          {onStart ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
-            glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled={busy}
-            onClick={() => { if (!busy) onStart(); }} className="workout-plan-card__action">
-            <span className="workout-plan-card__start-group">
-              <span className="workout-plan-card__action-icon"><Icon name="treadmill" /></span>
-              <Text variant="body" className="workout-plan-card__start-label">Начать тренировку</Text>
-            </span>
-          </GlassSurface> : null}
+          {onStart ? <StartWorkoutButton disabled={busy} onClick={onStart} /> : null}
           {onSchedule ? <SpotlightTarget>{canScheduleCoached ? (
             <LiquidPopover isOpen={schedulePopoverOpen} onOpenChange={setSchedulePopoverOpen}
               triggerRef={scheduleTriggerRef} label="Формат тренировки"
@@ -182,12 +215,7 @@ export function WorkoutPlanCard({
               <Text variant="body" className="workout-plan-card__action-label">Запланировать</Text>
             </GlassSurface>
           )}</SpotlightTarget> : null}
-          {!onStart && !readOnly && !onMutationAttempt ? <GlassSurface component={PlanGlassButton} wrapContent={false} shape="capsule" preset="modalTuned"
-            glass={{ tintR: 155, tintG: 222, tintB: 175, tintA: 0.14 }} aria-disabled="true"
-            className="workout-plan-card__action">
-            <span className="workout-plan-card__action-icon"><Icon name="treadmill" /></span>
-            <Text variant="body">Начать</Text>
-          </GlassSurface> : null}
+          {!onStart && !readOnly && !onMutationAttempt ? <StartWorkoutButton disabled label="Начать" /> : null}
         </div> : null}
       </div>} />
   </article>;

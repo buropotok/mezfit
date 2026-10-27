@@ -1,6 +1,7 @@
 import cloudConfig from '../../dexie-cloud.json';
 import roleConfig from '../../cloud/roles.json';
 import adHocRoleConfig from '../../cloud/adhoc-session-roles.json';
+import plannedRoleConfig from '../../cloud/planned-session-roles.json';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../shared/relationship-id';
 
 export interface CloudMembershipEnv {
@@ -232,13 +233,18 @@ export function assertRemoteRoles(value: unknown): void {
       && candidate.realmId === 'rlm-public' && candidate.name === name);
     if (!isObject(remote) || !isObject(remote.permissions)) failUnavailable();
     const permissions = remote.permissions;
-    // Accept only a complete reviewed profile. Installing the ad-hoc overlay
-    // must not break invitations or weaken the existing PLAN/FACT preflight.
+    // Accept complete calendar/ad-hoc/planned profiles during the reviewed rollout.
+    // Partial lifecycle grants or changes to PLAN/FACT/Client remain forbidden.
     const adHoc = name === 'coach' && sameStrings(permissions.add,
       [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]);
+    const plannedFields = [...expected.coach.permissions.update.workoutOccurrences,
+      ...plannedRoleConfig.roles.coach.permissions.update.workoutOccurrences];
+    const planned = adHoc && isObject(permissions.update)
+      && sameStrings(permissions.update.workoutOccurrences, plannedFields);
     const expectedUpdates: Record<string, string[]> = {
       ...expected[name].permissions.update,
       ...(adHoc ? adHocRoleConfig.roles.coach.permissions.update : {}),
+      ...(planned ? { workoutOccurrences: plannedFields } : {}),
     };
     const expectedAdd = adHoc
       ? [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]

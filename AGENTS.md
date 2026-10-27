@@ -245,7 +245,8 @@ membership, schema and unrelated roles unchanged.
 
 The user explicitly approved local atomic Dexie Start and completion for Coach
 ad-hoc sessions only, synchronized by Addon, using new `adHocSessions`,
-`adHocExercises`, `adHocSets` tables (`@id`). Scheduled Start/completion and
+`adHocExercises`, `adHocSets` tables (`@id`). The separate Coach planned-session
+exception below extends scheduled Start only within its reviewed scope; other
 existing session/FACT permissions remain unchanged. Relationship rows use
 `owner: realmId` as a non-user sentinel; personal rows use the actor as owner.
 Client has read-only access to these new relationship tables. Exercise/set
@@ -266,6 +267,33 @@ does not widen any existing operator. See
 `docs/architecture/adhoc-workout-sessions.md` for the exact allowlists, recovery
 limits and mandatory real-server permission/activation checklist; configuration
 readback alone does not prove per-user authorization.
+
+### Approved Coach planned session exception
+
+The user explicitly approved atomic local Dexie Start and completion for Coach
+planned workouts on 2026-10-27. This extends the ad-hoc exception above for this
+slice only: reuse `adHocSessions`, `adHocExercises`, `adHocSets` with immutable
+occurrence provenance and an accepted `occurrencePlan` snapshot. Link the same
+`workoutOccurrences` row and create its full execution graph in one transaction;
+completion updates the linked occurrence in one transaction. Preserve frozen
+PLAN, source program skeletons, realm isolation, ownership sentinels, Client
+read-only execution grants and existing FACT policy. No custom synchronization,
+server business revalidation or multi-request REST materialization is introduced.
+Other legacy scheduled lifecycle paths remain unchanged.
+
+`tools/dexie-roles/planned-sessions.mjs` and
+`.github/workflows/dexie-planned-sessions.yml` may install only the exact
+`cloud/planned-session-roles.json` Coach overlay: append `status` and
+`workoutSessionId` to occurrence field updates on the complete reviewed ad-hoc
+baseline. No schema, source PLAN, Client, FACT, membership or business data writes.
+Reuse the existing protected environment secret, main/owner manual preview/apply,
+literal apply confirmation, shared writer concurrency, immediate full schema/roles
+recheck and exact complete readback after any attempted import, including errors
+and no-op applies. No new credentials or PR/push/issue trigger is authorized.
+Membership preflight may accept the complete old or new reviewed profiles, never
+partial lifecycle grants or unrelated drift. Readback is not proof of ordinary
+account authorization; the live structural permission checklist remains required.
+See `docs/architecture/planned-workout-sessions.md`.
 
 ## 22. Performance and failure isolation
 

@@ -34,6 +34,7 @@ import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypo
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
+import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
 import { CoachAdHocWorkoutsScreen } from './workout/CoachAdHocWorkoutsScreen';
 import { ClientSharedWorkoutScreen } from './workout/ClientSharedWorkoutScreen';
 import { WorkedMuscleAssetsPrefetch } from './workout/WorkedMuscleAssetsPrefetch';
@@ -415,6 +416,7 @@ export function App() {
           openDraft: (id, clientUserId = null) => { setRequestedScheduleClientId(clientUserId); setRequestedScheduleDraftId(id); changeDestination('today'); },
           clearDraft: () => setRequestedScheduleDraftId(null),
         }}>
+        <PlannedWorkoutStartProvider role={state.activeRole} enabled={destination === 'today' || destination === 'training'} onStarted={() => { setRequestedScheduleDraftId(null); changeDestination('training'); }}>
         <NavigationShell
           me={state.me}
           activeRole={state.activeRole}
@@ -475,6 +477,7 @@ export function App() {
           />
           )}
         </NavigationShell>
+        </PlannedWorkoutStartProvider>
         </SchedulePlanningContext.Provider>
         </AssignedProgramsProvider>
       </ClientCoachProvider>

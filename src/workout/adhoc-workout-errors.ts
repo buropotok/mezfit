@@ -1,4 +1,9 @@
 const messages: Readonly<Record<string, string>> = {
+  PLANNED_START_ACL_REQUIRED: 'Для запуска плановых тренировок нужно установить согласованные права Coach в Dexie Cloud.',
+  PLANNED_WORKOUT_NOT_FOUND: 'Плановая тренировка недоступна.',
+  PLANNED_WORKOUT_ALREADY_STARTED: 'Плановая тренировка уже была запущена.',
+  PLANNED_WORKOUT_ALREADY_COMPLETED: 'Плановая тренировка уже завершена.',
+  PLANNED_WORKOUT_LINK_INVALID: 'Не удалось подтвердить связь с записью расписания.',
   ADHOC_LOCAL_RECORD_MISSING: 'Тренировка недоступна: запись отсутствует на устройстве. Код: ADHOC_LOCAL_RECORD_MISSING.',
   ADHOC_INVALID_IDENTITY: 'Тренировка недоступна: некорректные идентификаторы или владелец записи. Код: ADHOC_INVALID_IDENTITY.',
   ADHOC_INVALID_PARTICIPANTS: 'Тренировка недоступна: некорректные поля участников. Код: ADHOC_INVALID_PARTICIPANTS.',
