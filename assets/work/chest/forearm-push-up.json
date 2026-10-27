@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/forearm-push-up/",
   "name": "Forearm Push-up",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Start in a forearm plank position with your elbows directly under your shoulders."
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Keep your forearms flat on the ground with palms facing down"
-      ]
-    }
-  ],
+  "how_to": "Step 1: Setup\n- Start in a forearm plank position with your elbows directly under your shoulders.\n- Keep your forearms flat on the ground with palms facing down or in a neutral position.\n- Engage your core, glutes, and legs to maintain a straight body line from head to heels.\nStep 2: Execution\n- Lower your body by bending your elbows, bringing your torso toward the ground while keeping your forearms on the floor.\n- Maintain a tight core and neutral spine to prevent excessive arching or sagging.\n- Press through your forearms and elbows to push yourself back to the starting position.\n- Repeat for the desired number of reps while maintaining controlled movement.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Forearm-Push-up.gif",
   "muscles": {
     "target": [
@@ -39,6 +24,7 @@
     "Chest",
     "Triceps"
   ],
+  "image_id": "Forearm-Push-up.gif",
   "name_ru": "Отжимания с опорой на предплечья",
   "tracking_type": "weight_reps"
 }
