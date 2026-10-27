@@ -386,6 +386,18 @@ def main() -> None:
     destinations = set()
     all_results = []
     by_source: dict[str, tuple[str,str,str,str]] = {}
+    # Reviewed work records take precedence over automatic suggestions and
+    # keep duplicate catalogue appearances identical across muscle categories.
+    for existing_path in sorted(TARGET.glob("*/*.json")):
+        reviewed = json.loads(existing_path.read_text(encoding="utf-8"))
+        if not isinstance(reviewed, dict) or not reviewed.get("name_ru") or reviewed.get("tracking_type") not in VALID_TYPES:
+            raise ValueError("Invalid existing work record: " + str(existing_path))
+        identity = str(reviewed.get("source_url") or reviewed["name"].strip().lower())
+        previous = by_source.get(identity)
+        reviewed_pair = (reviewed["name_ru"], reviewed["tracking_type"])
+        if previous and previous[:2] != reviewed_pair:
+            raise ValueError("Conflicting reviewed exercise duplicates: " + identity)
+        by_source[identity] = (reviewed_pair[0], reviewed_pair[1], "existing_reviewed", "existing_reviewed")
     issues = []
     type_reasons = Counter()
     translation_reasons = Counter()
@@ -413,6 +425,8 @@ def main() -> None:
         enriched = dict(data)
         enriched["name_ru"] = name_ru
         enriched["tracking_type"] = typ
+        if dest.exists() and json.loads(dest.read_text(encoding="utf-8")) != enriched:
+            raise ValueError("Refusing to overwrite reviewed work record: " + str(dest))
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(json.dumps(enriched, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         if (set(enriched) - set(data)) != {"name_ru", "tracking_type"} or any(enriched[k] != v for k,v in data.items()):
