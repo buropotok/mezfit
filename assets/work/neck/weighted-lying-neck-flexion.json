@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-lying-neck-flexion/",
+  "name": "Weighted Lying Neck Flexion (Neck Harness)",
+  "how_to": "1. Set Up Your Equipment:\n  - Use a neck harness designed for weightlifting. Securely attach a small weight plate to the harness chain.\n  - Ensure the harness fits snugly around your head without causing discomfort.\n2. Prepare the Bench:\n  - Position a workout bench at a 45-degree incline.\n  - Sit on the bench and lean back so your upper back is supported while your head extends beyond the edge of the bench.\n3. Starting Position:\n  - Place the neck harness on your head, ensuring it is centered.\n  - Let your head hang slightly back in a neutral position.\n4. Execute the Movement:\n  - Flex your neck forward, bringing your chin toward your chest in a slow and controlled motion.\n  - Pause briefly at the top of the movement to fully contract the neck muscles.\n  - Slowly return your head to the starting position, resisting the weight as you lower.\n5. Repetitions:\n  - Perform 2–4 sets of 8–15 repetitions depending on your fitness level and goals.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Weighted-Lying-Neck-Flexion.gif",
+  "muscles": {
+    "target": [
+      "Sternocleidomastoid"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Neck"
+  ],
+  "name_ru": "Сгибание шеи лёжа с отягощением на головной лямке",
+  "tracking_type": "weight_reps"
+}
