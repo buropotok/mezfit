@@ -93,12 +93,21 @@ def run(slug):
     destination = Path('assets/exercises') / slug
     destination.mkdir(parents=True, exist_ok=True)
     results = {}
+    skipped_missing_gif = []
     for i, (url, card) in enumerate(cards.items(), 1):
         path_slug = urlparse(url).path.rstrip('/').split('/')[-1]
         if not re.fullmatch(r'[a-z0-9-]+', path_slug):
             raise RuntimeError('Unexpected exercise slug: ' + url)
         html = read(session, url)
         data = exercise(html, url, card)
+        if not data.get('gif_url'):
+            skipped_missing_gif.append({
+                'name': data.get('name', ''),
+                'source_url': url,
+                'reason': 'No GIF URL found in the source exercise page',
+            })
+            print(f'CATEGORY {slug}: SKIPPED {path_slug} (no GIF)', flush=True)
+            continue
         validate_record(data, url)
         filename = path_slug + '.json'
         if filename in results:
@@ -106,7 +115,7 @@ def run(slug):
         results[filename] = data
         print(f'CATEGORY {slug}: {i}/{len(cards)} {path_slug}', flush=True)
 
-    if len(results) != len(cards):
+    if len(results) + len(skipped_missing_gif) != len(cards):
         raise RuntimeError(f'Incomplete exercise count in {slug}')
     existing = list(destination.glob('*.json'))
     obsolete = [p for p in existing if p.name != '_manifest.json' and p.name not in results]
@@ -121,9 +130,10 @@ def run(slug):
     manifest = {
         'source': base,
         'count': len(results),
+        'source_exercise_count': len(cards),
         'listing_pages': pages,
         'imported_at': datetime.now(timezone.utc).isoformat(),
-        'missing_gif': [],
+        'missing_gif': skipped_missing_gif,
         'missing_how_to': [name for name, item in results.items()
                            if not item['how_to']],
         'instructions': 'Full post-GIF instruction text; source HTML list structure.',
@@ -134,6 +144,7 @@ def run(slug):
     )
     print('FINISHED', json.dumps({
         'category': slug, 'count': manifest['count'], 'pages': pages,
+        'skipped_missing_gif': len(skipped_missing_gif),
         'missing_how_to': len(manifest['missing_how_to'])
     }), flush=True)
 
