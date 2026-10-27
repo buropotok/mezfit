@@ -51,9 +51,30 @@ function emit(rows: AdHocOpenSession[]) {
   act(() => state.emitList?.(rows));
 }
 const active = (id: string): AdHocOpenSession => ({ id, name: 'Тренировка клиента', status: 'active' });
-const factSession = (weight: number) => ({
-  sessionId: 'shared-1', exercises: [{ sets: [{ fact: { metrics: { weightKg: weight } } }] }],
-}) as ActiveWorkoutSession<string>;
+function factSession(weight: number): ActiveWorkoutSession<string> {
+  return {
+    sessionId: 'shared-1', occurrenceId: null, status: 'active', workoutDate: '2026-10-27',
+    startedAt: null, completedAt: null, program: null, phase: null, day: null,
+    exercises: [{
+      sessionExerciseId: 'exercise-1', workoutSessionId: 'shared-1',
+      sourceProgramExerciseId: null, position: 0, status: 'active', notes: null,
+      exercise: {
+        id: 'definition-1', scope: 'global', name: 'Жим лёжа',
+        description: null, tracking_type: 'weight_reps', category_code: 'chest',
+        equipment_code: 'barbell', reference_source: null, reference_key: null,
+        reference_media_url: null, is_favourite: false, can_edit: false,
+      },
+      sets: [{
+        sessionSetId: 'set-1', sourceProgramSetId: null, position: 0, status: 'completed',
+        plan: null, previous: null,
+        fact: {
+          metrics: { weightKg: weight, reps: 19, durationSeconds: null, distanceMeters: null },
+          setLabel: null, rpe: null, comment: null, bands: [],
+        },
+      }],
+    }],
+  };
+}
 const renderScreen = () => render(<ClientSharedWorkoutScreen
   onNavigationContextChange={() => {}} legacy={<p>Старая тренировка</p>} />);
 
