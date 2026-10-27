@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-incline-chest-press-with-resistance-band/",
+  "name": "Standing incline chest press With Resistance Band",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Standing-incline-chest-press.gif",
+  "muscles": {
+    "target": [
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Жим от груди с эспандером стоя под углом вверх",
+  "tracking_type": "weight_reps"
+}
