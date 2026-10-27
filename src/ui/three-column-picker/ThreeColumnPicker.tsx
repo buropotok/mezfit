@@ -544,6 +544,7 @@ export function ThreeColumnPicker({
       locallyEmittedRef.current.clear();
     });
   };
+
   const handleScroll = (
     part: ThreeColumnPickerPart,
     event: UIEvent<HTMLDivElement>,
