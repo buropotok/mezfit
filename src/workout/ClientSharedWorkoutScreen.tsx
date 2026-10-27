@@ -74,7 +74,8 @@ export function ClientSharedWorkoutScreen({ legacy, onNavigationContextChange }:
   </section></>;
   if (!sessions.length) return <>{legacy}</>;
 
-  const activeId = sessions.some(row => row.id === selectedId) ? selectedId : sessions[0].id;
+  const activeId = selectedId !== null && sessions.some(row => row.id === selectedId)
+    ? selectedId : sessions[0].id;
   return <section className="adhoc-workouts">
     {sessions.length > 1 ? <List nested>{sessions.map(row =>
       <ListItem key={row.id} title={row.name} link onClick={() => setSelectedId(row.id)} />
