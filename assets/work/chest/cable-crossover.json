@@ -1,36 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/cable-crossover/",
   "name": "Cable Crossover",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "1. Set Up the Machine :"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the pulleys to the desired height:"
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "High Pulley : Targets the lower chest."
-      ]
-    },
-    {
-      "step": 4,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Mid Pulley : Works"
-      ]
-    }
-  ],
+  "how_to": "Follow these steps for proper form and technique:\n\n1. Set Up the Machine:\n\n- Adjust the pulleys to the desired height:\n- High Pulley: Targets the lower chest.\n- Mid Pulley: Works the middle chest.\n- Low Pulley: Engages the upper chest.\n- Attach D-handles to each pulley.\n2. Position Yourself:\n\n- Stand in the center of the machine with one foot slightly forward for balance.\n- Grasp the handles with your palms facing each other and step forward slightly to create tension on the cables.\n3. Execute the Movement:\n\n- Start with your arms outstretched to the sides, elbows slightly bent.\n- Pull the handles downward and together in a wide arc, as if hugging a barrel.\n- Squeeze your chest at the peak of the movement.\n- Slowly return to the starting position, maintaining control.\nTips for Form:\n- Avoid locking your elbows or using momentum.\n- Keep your core engaged and your back straight.\n- Adjust the weight to allow for controlled, smooth repetitions.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Cable-Crossover.gif",
   "muscles": {
     "target": [
@@ -57,6 +28,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Cable-Crossover.gif",
   "name_ru": "Сведение рук в кроссовере",
   "tracking_type": "weight_reps"
 }
