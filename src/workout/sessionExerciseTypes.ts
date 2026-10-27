@@ -58,6 +58,7 @@ interface SessionExerciseSharedProps<Id extends string | number = number> {
   onAddSet?: (sessionExerciseId: Id) => void;
   onDeleteSet?: (sessionSetId: Id) => Promise<void>;
   onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
+  onDeleteExercise?: (sessionExerciseId: Id) => void;
   onInformation?: () => void;
   onOpenHistory?: (exerciseDefinitionId: Id) => void;
   onOpenChat?: () => void;
