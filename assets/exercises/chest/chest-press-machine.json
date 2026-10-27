@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/chest-press-machine/",
+  "name": "Chest Press Machine",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Chest-Press-Machine.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal",
+      "Synergits - Pectoralis Major, Clavicular"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Triceps"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

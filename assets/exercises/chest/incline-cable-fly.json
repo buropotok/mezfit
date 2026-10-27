@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-cable-fly/",
+  "name": "İncline Cable Fly",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Cable-Fly.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Clavicular",
+      "Cable",
+      "Fly"
+    ],
+    "synergists": [
+      "Deltoid, Anterior",
+      "Biceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Brachialis",
+        "Triceps Brachii",
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

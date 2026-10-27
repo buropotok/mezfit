@@ -1,0 +1,51 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/shoulder-stretch-behind-back/",
+  "name": "Shoulder Stretch Behind The Back",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Standing Variation:"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Stand in a neutral posture with your feet shoulder-width apart."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Raise one arm overhead and bend the elbow to reach behind your"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Shoulder-Stretch-Behind-Back.gif",
+  "muscles": {
+    "target": [
+      "Shoulder",
+      "Triceps",
+      "Back",
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Chest",
+    "Shoulders",
+    "Triceps"
+  ]
+}

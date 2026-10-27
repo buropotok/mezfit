@@ -1,0 +1,42 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/machine-fly/",
+  "name": "Machine Fly",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Adjust the seat height so the handles are at chest level."
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Sit on the machine with your back firmly pressed against the pad."
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/10301301-Lever-Pec-Deck-Fly_Chest_720.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Biceps Brachii",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

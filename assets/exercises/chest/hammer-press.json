@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hammer-press/",
+  "name": "Hammer Press",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Hammer-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Deltoid, Anterior",
+      "Triceps"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

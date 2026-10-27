@@ -1,0 +1,52 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-push-up/",
+  "name": "Weighted Push-up",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup: Start in a traditional push-up position with hands slightly wider than shoulder-width apart and feet together or hip-width apart."
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Add Weight: Have a"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Weighted-Push-up.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Rectus Abdominis",
+        "Pectoralis Minor",
+        "Serratus Anterior",
+        "Obliques",
+        "Quadriceps"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

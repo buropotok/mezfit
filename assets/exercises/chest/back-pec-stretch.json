@@ -1,0 +1,57 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/back-pec-stretch/",
+  "name": "Back and Pec Stretch",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup:"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Find a sturdy bench, elevated platform, or table at waist height. Ensure the surface is stable and secure."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Execution:"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Stand and Position Yourself"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Back-Pec-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Back",
+      "Chest",
+      "Shoulder",
+      "Arms",
+      "Trapezius"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Chest"
+  ]
+}

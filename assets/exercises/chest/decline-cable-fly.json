@@ -1,0 +1,86 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/decline-cable-fly/",
+  "name": "Decline Cable Fly",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Home"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Calculators"
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Body Mass Index (BMI)"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Body Fat Index"
+      ]
+    },
+    {
+      "step": 5,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Calories Burned"
+      ]
+    },
+    {
+      "step": 6,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Daily Calorie Calculator"
+      ]
+    },
+    {
+      "step": 7,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "One Rep Max Calculator"
+      ]
+    },
+    {
+      "step": 8,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Grip Strength Calculator"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Decline-Cable-Fly.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, (Sternal, Abdominal head)"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

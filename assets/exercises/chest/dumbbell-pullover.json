@@ -1,0 +1,47 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-pullover/",
+  "name": "Dumbbell Pullover",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set Up: Lie on a flat bench with only your upper back and shoulders supported. Keep your feet flat on the ground."
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Pullover.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal",
+      "Frequently Asked Questions"
+    ],
+    "synergists": [
+      "Latissimus Dorsi",
+      "Posterior Deltoid",
+      "Teres Major",
+      "Triceps (Long Head)",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Serratus Anterior",
+      "Levator Scapulae"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors",
+        "Triceps Brachii",
+        "Pectoralis Major, Clavicular",
+        "Anterior Deltoid"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}
