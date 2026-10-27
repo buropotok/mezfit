@@ -385,6 +385,27 @@ export class AdHocWorkoutRepository {
     })).subscribe({ next: result => onChange(result.session, result.row, result.issue), error: onError });
   }
 
+  /** Client-visible active FACT sessions from authorized Coach/Client realms only.
+   * Never infer access from athleteUserId alone: validate the realm membership
+   * before exposing headers to a Client subscriber.
+   */
+  async listForClient(): Promise<AdHocOpenSession[]> {
+    const rows = await this.db.adHocSessions.where('athleteUserId').equals(this.actorUserId).toArray();
+    const visible: AdHocSessionRow[] = [];
+    for (const row of rows) {
+      if (!isAdHocSessionRow(row) || row.status !== 'active'
+        || row.clientUserId !== this.actorUserId || row.creatorUserId === this.actorUserId) continue;
+      if (await this.accessible(row)) visible.push(row);
+    }
+    return visible.sort((a, b) => b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id))
+      .map(row => ({ id: row.id, name: row.name, status: row.status }));
+  }
+
+  observeForClient(onChange: (rows: AdHocOpenSession[]) => void,
+    onError: (reason: unknown) => void): { unsubscribe(): void } {
+    return liveQuery(() => this.listForClient()).subscribe({ next: onChange, error: onError });
+  }
+
   /** Called in the creation transaction so competing local starts serialize. */
   private async findActive(): Promise<{ id: string; name: string } | null> {
     const rows = await this.db.adHocSessions.where('status').equals('active').toArray();

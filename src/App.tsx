@@ -35,6 +35,7 @@ import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp }
 import { Button, GlassSurfaceProvider } from './ui';
 import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
 import { CoachAdHocWorkoutsScreen } from './workout/CoachAdHocWorkoutsScreen';
+import { ClientSharedWorkoutScreen } from './workout/ClientSharedWorkoutScreen';
 import { WorkedMuscleAssetsPrefetch } from './workout/WorkedMuscleAssetsPrefetch';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
@@ -431,16 +432,17 @@ export function App() {
               actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
               onNavigationContextChange={handleNavigationContextChange} />
           ) : destination === 'training' ? (
-            <WorkoutSessionScreen
-              initData={state.initData}
-              onClose={() => changeDestination('today')}
-              onNavigationContextChange={handleNavigationContextChange}
-              onSessionLifecycleChange={({ status }) => {
-                workoutStatusVersionRef.current += 1;
-                setWorkoutStatus(status);
-                setWorkoutStatusLoadFailed(false);
-              }}
-            />
+            <ClientSharedWorkoutScreen onNavigationContextChange={handleNavigationContextChange}
+              legacy={<WorkoutSessionScreen
+                initData={state.initData}
+                onClose={() => changeDestination('today')}
+                onNavigationContextChange={handleNavigationContextChange}
+                onSessionLifecycleChange={({ status }) => {
+                  workoutStatusVersionRef.current += 1;
+                  setWorkoutStatus(status);
+                  setWorkoutStatusLoadFailed(false);
+                }}
+              />} />
           ) : destination === 'settings' ? (
           <SettingsPage
             backgroundSettings={backgroundSettings}

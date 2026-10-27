@@ -7,8 +7,11 @@ not change scheduled workout Start, occurrence lifecycle, or existing FACT grant
 
 ## Coach entry points
 
-The Training tab uses the cloud repository; Client mode retains its existing
-session screen. The shell-owned plus action opens LiquidPopover with Quick,
+The Coach Training tab uses the cloud repository. The Client Training tab
+subscribes to active Coach-owned FACT sessions in the client's authorized shared
+realms and displays them read-only, including subsequent FACT updates. When no
+such active session is available, Client mode retains its existing session
+screen. Completed FACT history and calendar placement are separate decisions. The shell-owned plus action opens LiquidPopover with Quick,
 From program and Planned workout. Quick immediately opens a blank personal
 session and never creates a program. From program asks for the coach or a client,
 then reuses program-day cards with a treadmill Start action. Starting copies only
