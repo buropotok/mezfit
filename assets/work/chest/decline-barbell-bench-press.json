@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/decline-barbell-bench-press/",
   "name": "Decline Barbell Bench Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup: Adjust a decline bench to an angle of 15 to 30 degrees. Lie down and secure your feet under the foot pads to"
-      ]
-    }
-  ],
+  "how_to": "Step-by-Step Guide\n1. Setup:\n  - Adjust a decline bench to an angle of 15 to 30 degrees.\n  - Lie down and secure your feet under the foot pads to maintain stability.\n2. Grip and Positioning:\n  - Grab the barbell with an overhand grip, hands slightly wider than shoulder-width apart.\n  - Unrack the barbell and hold it with arms fully extended above your chest.\n3. Lowering Phase:\n  - Slowly lower the barbell toward your lower chest, keeping your elbows at about a 45-degree angle.\n  - Lower until the bar lightly touches your chest without bouncing.\n4. Pressing Phase:\n  - Push the barbell back up in a controlled motion until your arms are fully extended.\n  - Engage your chest, shoulders, and triceps to complete the lift.\n5. Repeat:\n  - Perform 3 to 5 sets of 6 to 12 reps, depending on your training goals.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/03/Decline-Barbell-Bench-Press.gif",
   "muscles": {
     "target": [],
@@ -33,6 +25,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Decline-Barbell-Bench-Press.gif",
   "name_ru": "Жим штанги лёжа на скамье с отрицательным наклоном",
   "tracking_type": "weight_reps"
 }
