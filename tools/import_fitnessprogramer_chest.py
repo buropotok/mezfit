@@ -96,75 +96,64 @@ def extract_metadata(soup, heading_text, fallback):
     return fallback
 
 
-def extract_muscles(soup, fallback):
+def extract_muscles(soup):
+    """Read only the explicit 'Muscles Worked' section; no cross-field fallback."""
+    empty = {'target': [], 'synergists': [],
+             'stabilizers': {'dynamic': [], 'antagonist': []}}
     main = soup.select_one('main') or soup
-    out = {'target': [], 'synergists': [], 'stabilizers': {'dynamic': [], 'antagonist': []}}
-    # No explicit muscles-worked section: use the site's primary muscle group.
-    # Do not scan unrelated navigation, preview widgets or the footer.
-    muscle_heading = next((
+    heading = next((
         h for h in main.find_all(['h2', 'h3', 'h4'])
         if re.search(r'\bmuscles?\s+worked\b', h.get_text(' ', strip=True), re.I)
     ), None)
-    if muscle_heading is None:
-        out['target'] = uniq(fallback)
-        return out
+    if heading is None:
+        return empty
 
-    def assign(label, muscle):
-        key = label.lower()
-        if key.startswith('target'):
-            bucket = out['target']
-        elif key.startswith('synergist'):
-            bucket = out['synergists']
-        elif key.startswith('antagonist'):
-            bucket = out['stabilizers']['antagonist']
-        else:
-            bucket = out['stabilizers']['dynamic']
-        bucket.append(muscle)
-
-    # Paragraph text preserves inline bold/span labels even when HTML nesting
-    # prevents detecting the heading's siblings.
-    for el in main.find_all(['p', 'li']):
-        row = el.get_text(' ', strip=True)
-        if len(row) < 160:
-            match = MUSCLE.match(row)
-            if match:
-                assign(*match.groups())
-
-    rows = [' '.join(x.split()).strip('• ') for x in main.get_text('\n', strip=True).splitlines()]
-    starts = [i for i, row in enumerate(rows)
-              if re.search(r'\bmuscles?\s+worked\b', row, re.I) and len(row) < 100]
+    explicit = False
     unlabeled = []
-    if starts:
-        i = starts[-1] + 1
-        while i < min(len(rows), starts[-1] + 80):
-            row = rows[i]
-            if STOP.match(row) or re.search(r'\b(variations|benefits|how can you incorporate)\b', row, re.I):
+    section_level = int(heading.name[1])
+    for node in heading.next_elements:
+        if not isinstance(node, Tag):
+            continue
+        if node.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
+            title = node.get_text(' ', strip=True)
+            if (STOP.match(title) or 'Frequently Asked Questions' in title
+                    or int(node.name[1]) <= section_level):
                 break
-            matched = None
-            consumed = 1
-            for length in (1, 2, 3):
-                candidate = ' '.join(rows[i:i + length])
-                match = MUSCLE.match(candidate)
-                if match:
-                    matched = match
-                    consumed = length
-                    break
-            if matched:
-                assign(*matched.groups())
-                i += consumed
-                continue
-            if row and len(row.split()) <= 5 and len(row) <= 65 and not re.search(r'[.:?!]', row):
-                if not re.fullmatch(r'(target|synergists?|dynamic stabilizers?|antagonist stabilizers?|stabilizers?)', row, re.I):
-                    unlabeled.append(row)
-            i += 1
-    # Without category labels, every plain muscle name is a target.
-    if not (out['target'] or out['synergists'] or out['stabilizers']['dynamic'] or out['stabilizers']['antagonist']):
-        out['target'] = unlabeled or fallback[:]
-    out['target'] = uniq(out['target'])
-    out['synergists'] = uniq(out['synergists'])
-    for key in out['stabilizers']:
-        out['stabilizers'][key] = uniq(out['stabilizers'][key])
-    return out
+        if node.name not in ('p', 'li'):
+            continue
+        # Nested list containers are not individual muscle values.
+        if node.find(['p', 'li']) is not None:
+            continue
+        value = node.get_text(' ', strip=True)
+        if not value:
+            continue
+        found = MUSCLE.fullmatch(value)
+        if found:
+            explicit = True
+            role, name = found.groups()
+            role = role.lower()
+            if role.startswith('target'):
+                empty['target'].append(name)
+            elif role.startswith('synergist'):
+                empty['synergists'].append(name)
+            elif role.startswith('antagonist'):
+                empty['stabilizers']['antagonist'].append(name)
+            else:
+                empty['stabilizers']['dynamic'].append(name)
+        elif (len(value) <= 70 and len(value.split()) <= 7
+              and not re.search(r'[.!?]', value)
+              and not STOP.match(value)):
+            unlabeled.append(value)
+
+    if not explicit:
+        # Only actual names listed in the section without role markers.
+        empty['target'] = uniq(unlabeled)
+    else:
+        empty['target'] = uniq(empty['target'])
+    empty['synergists'] = uniq(empty['synergists'])
+    for role in empty['stabilizers']:
+        empty['stabilizers'][role] = uniq(empty['stabilizers'][role])
+    return empty
 
 
 # These headings end the exercise instructions even when nested deeper than
@@ -178,50 +167,45 @@ INSTRUCTION_BOUNDARY = re.compile(
 
 
 def instruction_excerpt(soup):
-    article = soup.select_one('main') or soup
-    for heading in article.find_all(['h2', 'h3', 'h4']):
+    """Extract brief excerpts from explicit instructions only, never sidebar text."""
+    main = soup.select_one('main') or soup
+    for heading in main.find_all(['h2', 'h3', 'h4']):
         title = heading.get_text(' ', strip=True)
-        if not re.search(r'^how\s+to\s+(?:do|perform|use|execute)\b|^instructions\b|^execution\b', title, re.I):
+        if not re.search(
+            r'^how\s+to\s+(?:do|perform|use|execute)\b|^instructions\b|^execution\b',
+            title, re.I
+        ):
             continue
-        steps = []
-        heading_level = int(heading.name[1])
+        instructions = []
+        depth = int(heading.name[1])
         for node in heading.next_elements:
             if not isinstance(node, Tag):
                 continue
             if node.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
-                next_title = node.get_text(' ', strip=True)
-                if INSTRUCTION_BOUNDARY.match(next_title):
+                label = node.get_text(' ', strip=True)
+                if INSTRUCTION_BOUNDARY.match(label):
                     break
-                if int(node.name[1]) <= heading_level:
+                if int(node.name[1]) <= depth:
                     break
-            if node.name not in ('p', 'li'):
-                continue
-            # An outer list item may wrap further instruction items; use leaves.
-            if node.name == 'li' and node.find('li') is not None:
+            if node.name not in ('p', 'li') or node.find(['p', 'li']) is not None:
                 continue
             value = node.get_text(' ', strip=True)
-            if not value or value in steps:
-                continue
-            steps.append(value)
-        # The image-only exercise case deliberately has no fallback to page text.
-        result = []
-        remaining = 24
-        for value in steps:
-            if INSTRUCTION_BOUNDARY.match(value):
+            if value and value not in instructions:
+                instructions.append(value)
+        # No headings/paragraphs from the article sidebar can fill this field.
+        out = []
+        budget = 24
+        for statement in instructions:
+            if INSTRUCTION_BOUNDARY.match(statement):
                 break
-            words = value.split()
-            if not words or remaining < 4:
+            words = statement.split()
+            if not words or budget <= 0:
                 break
-            excerpt = ' '.join(words[:remaining])
-            remaining -= len(excerpt.split())
-            result.append({
-                'step': len(result) + 1,
-                'title': 'Instruction excerpt',
-                'instructions': [excerpt],
-            })
-        return result
+            value = ' '.join(words[:budget])
+            budget -= len(value.split())
+            out.append({'step': len(out) + 1, 'instructions': [value]})
+        return out
     return []
-
 
 def get_gif(html, soup, slug):
     candidates = []
@@ -240,14 +224,14 @@ def get_gif(html, soup, slug):
 def exercise(html, url, card):
     soup = BeautifulSoup(html, 'html.parser')
     h1 = soup.find('h1')
-    group = extract_metadata(soup, 'Muscle Groups', card['muscle_group'])
+    group = extract_metadata(soup, 'Muscle Groups', [])
     return {
         'source_url': url,
         'name': h1.get_text(' ', strip=True) if h1 else card['name'],
         'how_to': instruction_excerpt(soup),
         'gif_url': get_gif(html, soup, urlparse(url).path.strip('/').split('/')[-1]),
-        'muscles': extract_muscles(soup, group),
-        'equipment': extract_metadata(soup, 'Equipment', card['equipment']),
+        'muscles': extract_muscles(soup),
+        'equipment': extract_metadata(soup, 'Equipment', []),
         'muscle_group': group,
     }
 
@@ -274,24 +258,14 @@ def main():
     for i, (url, card) in enumerate(cards.items(), 1):
         slug = urlparse(url).path.rstrip('/').split('/')[-1]
         fresh = exercise(read(session, url), url, card)
-        # This correction only changes how_to and muscles in existing records.
-        existing_path = Path('assets/exercises/chest') / (slug + '.json')
-        if existing_path.is_file():
-            saved = json.loads(existing_path.read_text(encoding='utf-8'))
-            if saved.get('source_url') != url:
-                raise RuntimeError('Source URL mismatch: ' + slug)
-            saved['how_to'] = fresh['how_to']
-            saved['muscles'] = fresh['muscles']
-            results[slug + '.json'] = saved
-        else:
-            results[slug + '.json'] = fresh
+        results[slug + '.json'] = fresh
         print(f'{i}/{len(cards)} {slug}', flush=True)
-    if len(results) != len(cards) or sum(bool(x['gif_url']) for x in results.values()) < len(results)*.7:
-        raise RuntimeError('Validation failed: duplicate files or too few GIF links')
-    # Known exercises serve as source-backed parser regression sentinels.
+    if len(results) != len(cards) or any(not x['name'] or not x['gif_url'] for x in results.values()):
+        raise RuntimeError('Missing required name or GIF URL, or duplicate exercise filenames')
+    # Check source-backed examples; never populate missing muscles from muscle_group.
     cobra = results.get('cobra-push-up.json', {})
     if (cobra.get('how_to') != []
-            or cobra.get('muscles', {}).get('target') != ['Chest']
+            or cobra.get('muscles', {}).get('target') != []
             or cobra.get('muscles', {}).get('synergists') != []):
         raise RuntimeError('Cobra Push-up image-only regression')
     for filename, record in results.items():
