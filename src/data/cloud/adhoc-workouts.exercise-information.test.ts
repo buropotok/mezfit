@@ -58,8 +58,9 @@ it('loads only an authorized exercise snapshot, including after workout completi
 
   const details = await owner.exerciseInformation(created.id, exerciseId);
   expect(details.name).toBe('Жим');
-  expect(details.row?.id).toBe('0001');
-  await expect(foreign.exerciseInformation(created.id, exerciseId)).rejects.toThrow('ADHOC_WRITE_FORBIDDEN');
+  // This small fixture has no complete 1324-row release; the immutable snapshot remains readable.
+  expect(details.row).toBeNull();
+  await expect(foreign.exerciseInformation(created.id, exerciseId)).rejects.toThrow('ADHOC_SESSION_NOT_FOUND');
   await expect(owner.exerciseInformation(created.id, 'unknown')).rejects.toThrow('ADHOC_EXERCISE_NOT_FOUND');
 
   await owner.complete(created.id);
