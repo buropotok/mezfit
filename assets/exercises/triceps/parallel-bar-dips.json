@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/parallel-bar-dips/",
+  "name": "Parallel Bar Dips",
+  "how_to": "Setup\n\n1. Position yourself between the parallel bars.\n2. Grip the bars firmly with your palms facing inward.\n3. Lift your body off the ground, supporting your weight with your arms.\nExecution\n\nChest-Focused Dips:\n\n1. Slightly lean your torso forward with your chin tucked and legs bent backward.\n2. Lower your body by bending your elbows, keeping them flared outward at about a 45-degree angle.\n3. Stop when your upper arms are parallel to the ground or slightly below.\n4. Push yourself back up to the starting position by straightening your arms.\nTriceps-Focused Dips:\n\n1. Keep your torso upright with your legs straight beneath you.\n2. Lower your body by bending your elbows, keeping them close to your sides.\n3. Stop when your upper arms are parallel to the ground.\n4. Push yourself back up to the starting position.\nTips for Maximum Effectiveness\n1. Adjust Your Lean: Forward lean targets the chest; upright posture emphasizes the triceps.\n2. Control the Tempo: Slow and controlled movements improve muscle engagement and prevent injury.\n3. Warm Up Properly: Mobilize your shoulders and wrists to prepare for the range of motion required.\n4. Use Assistance if Necessary: Beginners can use resistance bands or an assisted dip machine to build strength.\n5. Incorporate Progressions: Add weight with a dip belt or perform explosive dips to increase intensity.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/parallel-bar-dip.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Pectoralis Major, Sternal",
+      "Anterior Deltoid",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius",
+        "Rectus Abdominis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Chest",
+    "Triceps"
+  ]
+}

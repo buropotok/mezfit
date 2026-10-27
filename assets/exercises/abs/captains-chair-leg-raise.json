@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/captains-chair-leg-raise/",
+  "name": "Captains Chair Leg Raise",
+  "how_to": "Captains Chair Leg Raise Benefits\n- This exercise that works the hip flexors improves your core muscles, especially the lower abdominal muscles. In addition, the back, chest and trapezius muscles act as stabilizers during the exercise.\n- According to a study by the American Exercise Council, this exercise is one of the most effective exercises for strengthening the obliques and the second most effective for strengthening the abdominal muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Captains-Chair-Leg-Raise.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques",
+      "Hip Flexor"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Chest",
+        "Latissimus Dorsi",
+        "Trapezius",
+        "Shoulder"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Calisthenic"
+  ]
+}

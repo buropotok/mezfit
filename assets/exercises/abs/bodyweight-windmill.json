@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-windmill/",
+  "name": "Bodyweight Windmill",
+  "how_to": "Bodyweight Windmill Benefits\n- A dynamic flexibility exercise that you can do before starting workouts. It can help you increase flexibility and range of motion, including back, shoulder, arm, legs and abdominal muscles",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Bodyweight-Windmill.gif",
+  "muscles": {
+    "target": [
+      "Obliques"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Leg"
+  ]
+}

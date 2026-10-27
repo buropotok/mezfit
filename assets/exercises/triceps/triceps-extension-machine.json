@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/triceps-extension-machine/",
+  "name": "Triceps Extension Machine",
+  "how_to": "Step 1: Adjust the Machine\n- Select an appropriate weight that allows controlled movement without sacrificing form.\n- Adjust the seat height so that your upper arms rest comfortably on the pad and elbows align with the machine’s pivot point.\nStep 2: Setup and Positioning\n- Sit upright with your back firmly against the pad and feet flat on the floor.\n- Grip the handles in a neutral position with your palms facing your body.\n- Ensure your elbows are aligned with the machine’s axis to optimize movement efficiency.\nStep 3: Execution\n- Push the handles downward, extending your arms fully while contracting the triceps.\n- Hold the contraction for a second at the bottom of the movement.\n- Slowly return to the starting position, controlling the weight as you bend your elbows.\n- Repeat for the desired reps, keeping your movements smooth and controlled.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Triceps-Extension-Machine.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

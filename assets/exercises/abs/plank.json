@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/plank/",
+  "name": "Plank",
+  "how_to": "1- Lie face down on an exercise mat with your elbows to your sides, your head facing forward, and palms flat on the floor.\n\n2- Engaging your core and glutes, raise your body from the floor, supporting your weight on your forearms and toes while breathing freely. Concentrate on maintaining a straight line through your core and legs.\n\n3- Hold the plank position, maintaining good form and keeping your glutes tensed, then return to the start position slowly and with good control.\n\nTips:\n- Keep the spine neutral; engage in “abdominal stabilization” by pulling abdominal muscles.\n- Lower the shoulder blades, activating the anterior dentate muscles and the lower parts of the trapezius muscles.\n- Do not round or bend your back. Keep your pelvis in a neutral position.\n- Do not slouch or hunch. Keep your chest flat and the shoulder blades flattened.\n- Do not hold your breath. Breathe freely and naturally.\nIts main goal is to maintain stabilization and balance of all parts of the body. Start at 10 second intervals and gradually move on to 60 second intervals.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/plank.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Iliopsoas",
+        "Quadriceps",
+        "Tensor Fasciae Latae",
+        "Sartorius",
+        "Pectoralis major",
+        "Serratus Anterior"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ]
+}

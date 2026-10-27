@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/v-bar-pushdown/",
+  "name": "V-bar Pushdown",
+  "how_to": "To correctly perform the V-Bar Pushdown, follow these steps:\n\n1. Set Up the Cable Machine: Attach the V-bar to the high pulley. Adjust the weight stack to an appropriate resistance level.\n2. Stand Tall and Grip the Bar: Face the cable machine and grip the V-bar with both hands using a neutral grip, elbows tucked close to your sides.\n3. Position Your Body: Keep your chest up, core braced, and feet shoulder-width apart. Slightly lean forward to stabilize your body.\n4. Push the Bar Down: Press the bar down by extending your elbows, keeping your upper arms stationary. Squeeze the triceps at the bottom of the movement.\n5. Control the Return: Slowly allow the bar to return to the starting position without letting your elbows drift forward. Maintain tension in the triceps throughout.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/V-bar-Pushdown.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

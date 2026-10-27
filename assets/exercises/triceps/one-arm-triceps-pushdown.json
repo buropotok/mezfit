@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-triceps-pushdown/",
+  "name": "One Arm Triceps Pushdown",
+  "how_to": "1. Set Up the Equipment\n  - Attach a single handle to the high pulley of a cable machine.\n  - Select an appropriate weight that allows for controlled movement.\n2. Position Yourself\n  - Stand with feet shoulder-width apart for balance.\n  - Grip the handle with an overhand grip (palm facing down).\n  - Keep your elbow close to your torso and maintain a slight bend in your knees.\n3. Execution\n  - Exhale as you push the handle down by extending your elbow fully.\n  - Keep your wrist neutral and avoid bending it during the movement.\n  - Lower the handle until your arm is fully extended but not locked out.\n  - Pause briefly at the bottom to maximize triceps engagement.\n  - Inhale as you slowly return to the starting position with control.\n4. Repeat\n  - Perform the desired number of repetitions before switching arms.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/11/One-arm-triceps-pushdown.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

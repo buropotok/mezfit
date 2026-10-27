@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/crunch/",
+  "name": "Crunches",
+  "how_to": "Crunches – Benefits\n- Crunch movement is one of the most basic exercises designed to strengthen the core muscles of the body. Exercise helps to strengthen core muscles, improve posture, and increase muscle mobility and flexibility.\n- Improves six pack muscles: When crunch exercise is done, the rectus abdominus and oblique muscles are tightened, so the upper abdominal muscles and six pack muscles develop.\n- Increases the strength of the abdominal muscles: The primary role of your abdominal muscles is to stabilize your mid-section. It supports you while lifting heavy objects, allowing you to twist and rotate your body. These are all day long actions that you do not notice, so it is important that your abdominal muscles can sustain long hours of work. Crunch exercise helps build this important endurance in the abdominal muscles. Muscular endurance is the ability of these fibers to resist resistance for a long time.\nCrunches – Muscles Worked\nTarget - Rectus Abdominis\nSynergists - Obliques",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2015/11/Crunch.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ]
+}

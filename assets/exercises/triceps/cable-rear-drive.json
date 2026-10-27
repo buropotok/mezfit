@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-rear-drive/",
+  "name": "Cable Rear Drive",
+  "how_to": "1. Set Up the Cable Machine\n  - Attach a single handle to the high pulley of a cable machine.\n  - Select an appropriate weight that allows you to maintain control and proper form.\n2. Position Yourself\n  - Stand with your side facing the cable machine.\n  - Grab the handle with an overhand grip using your far hand.\n  - Position your hand near your opposite shoulder with your elbow bent.\n  - Keep your feet shoulder-width apart and engage your core for stability.\n3. Execution\n  - Begin by extending your arm backward in a controlled motion.\n  - Keep your elbow in place while moving only your forearm.\n  - Fully extend your arm until your triceps are fully contracted.\n  - Pause briefly at the end of the movement before returning to the starting position.\n  - Maintain a slow and controlled motion throughout the exercise.\n4. Repeat\n  - Complete the desired number of repetitions before switching to the other arm.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Cable-Rear-Drive.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Deltoids"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

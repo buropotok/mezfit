@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/wall-push-up/",
+  "name": "Wall Push-up",
+  "how_to": "Setup\n\n1. Stand facing a wall, about 2–3 feet away, depending on your arm length.\n2. Place your hands on the wall at shoulder height and slightly wider than shoulder-width apart.\n3. Keep your body straight from head to heels, engaging your core to maintain a neutral spine.\nExecution\n\n1. Lowering Phase\n  - Slowly bend your elbows and lower your chest toward the wall, keeping your elbows at a 45-degree angle from your body.\n  - Stop when your chest is about an inch away from the wall.\n2. Pressing Phase\n  - Push through your palms to straighten your arms, returning to the starting position.\n  - Keep your movements controlled and avoid locking out your elbows.\n3. Repeat: Perform for the desired number of repetitions while maintaining good form.\nTips for Maximum Effectiveness\n1. Adjust Hand Placement: A wider grip emphasizes the chest, while a narrower grip targets the triceps more.\n2. Gradually Increase Difficulty: To progress, move your feet further from the wall or transition to incline or floor push-ups.\n3. Breathe Properly: Inhale as you lower yourself and exhale as you push away from the wall.\n4. Focus on Form: Prioritize good form over the number of repetitions to avoid injury and maximize results.\n5. Combine with Other Exercises: Pair wall push-ups with other bodyweight exercises like squats or lunges for a full-body workout.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Wall-Push-ups.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Pectoralis Major, Sternal",
+      "Anterior Deltoid",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Rectus Abdominis",
+        "Obliques",
+        "Quadriceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ]
+}

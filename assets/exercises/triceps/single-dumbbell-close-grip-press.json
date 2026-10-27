@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-dumbbell-close-grip-press/",
+  "name": "Single Dumbbell Close-grip Press",
+  "how_to": "Step 1: Setup and Starting Position\n- Lie on a flat bench, ensuring your feet are planted firmly on the ground.\n- Hold a single dumbbell with both hands, gripping it by the sides of the weight plates.\n- Position the dumbbell above your chest, keeping your elbows tucked in.\nStep 2: Execution\n1. Lower the dumbbell slowly toward your chest, keeping it under control.\n2. Maintain a tight core and prevent excessive flaring of the elbows.\n3. Once the dumbbell reaches just above your chest, pause briefly.\n4. Press the dumbbell upward, extending your arms fully while squeezing your triceps.\n5. Repeat for 3 to 4 sets of 8 to 12 reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Single-Dumbbell-Close-grip-Press.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ]
+}

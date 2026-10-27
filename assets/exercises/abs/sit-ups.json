@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/sit-ups/",
+  "name": "Sit-ups",
+  "how_to": "1- Lie on your back with your feet on the floor and your knees bent. Place the tips of your fingers on either side of your head.\n\n2- Engage your core muscles and raise your torso upward, leaving just your buttocks and feet on the floor. Drive the movement entirely with your core.\n\n3- Pause at the edge of the movement, then slowly lower your upper body to the start position, controlling the movement with your core.\n\nSit-ups Benefits\n- Sit-ups exercise helps strengthen, tighten and shape core muscles. A strong core allows you to perform at higher levels during any sport or physical activity.\n- It helps strengthen the diaphragm: Sit-ups exercise causes abdominal tension that can have a positive effect on your diaphragm. A strong, healthy diaphragm can improve your breathing patterns and increase athletic endurance. One study examined the effects of various abdominal exercises in terms of diaphragm pressure and observed that sit-ups are beneficial in strengthening the diaphragm and improving respiratory function.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Sit-ups.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ]
+}

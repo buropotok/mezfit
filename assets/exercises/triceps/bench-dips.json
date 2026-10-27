@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bench-dips/",
+  "name": "Bench Dips",
+  "how_to": "1. Set Up Your Position\n  - Sit on the edge of a sturdy bench or elevated surface.\n  - Place your hands next to your hips, gripping the bench with fingers pointing forward.\n2. Position Your Feet\n  - Place your legs on a high bench.\n  - Keep your knees bent at 90 degrees with feet flat on the floor for an easier version.\n3. Execution\n  - Slide your hips off the bench, supporting your weight with your arms.\n  - Lower your body by bending your elbows until they form a 90-degree angle.\n  - Keep your elbows close to your torso and maintain control throughout the movement.\n  - Press through your palms to extend your arms and return to the starting position.\n4. Repeat\n  - Perform the desired number of repetitions while maintaining proper form.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Bench-Dips.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

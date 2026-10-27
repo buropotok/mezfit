@@ -1,0 +1,31 @@
+{
+  "source": "https://fitnessprogramer.com/exercise-primary-muscle/forearm/",
+  "count": 33,
+  "source_exercise_count": 33,
+  "listing_pages": 4,
+  "imported_at": "2026-10-27T16:41:42.976785+00:00",
+  "missing_gif": [],
+  "missing_how_to": [
+    "dumbbell-seated-neutral-wrist-curl.json",
+    "dumbbell-wrist-curl.json",
+    "barbell-reverse-wrist-curl.json",
+    "wrist-circles-stretch.json",
+    "cable-one-arm-wrist-curl-on-floor.json",
+    "hand-gripper.json",
+    "behind-the-back-barbell-wrist-curl.json",
+    "standing-one-arm-chest-stretch.json",
+    "wrist-ulnar-deviator-and-extensor-stretch.json",
+    "reverse-wrist-stretch.json",
+    "wrist-stretch.json",
+    "dumbbell-preacher-hammer-curl.json",
+    "single-dumbbell-spider-hammer-curl.json",
+    "hammer-curl-with-resistance-band.json",
+    "cable-reverse-grip-ez-bar-biceps-curl.json",
+    "barbell-finger-curl.json",
+    "dumbbell-finger-curl.json",
+    "single-arm-reverse-grip-cable-bicep-curl.json",
+    "barbell-reverse-wrist-curl-over-a-bench.json",
+    "water-bottle-hammer-curl.json"
+  ],
+  "instructions": "Full post-GIF instruction text; source HTML list structure."
+}

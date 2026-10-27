@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dead-bug/",
+  "name": "Dead Bug",
+  "how_to": "This progression adds dynamic movement and rotational instability. Begin with your arms vertical and your feet off the floor, knees bent. Lower your left arm behind you, drawing your left knee to your chest and extending your right leg as far as possible without arching your back. Repeat as required.\n\nDead Bug Benefits\n- Dead bug movement, which is frequently used in Pilates, yoga and abdominal training, is an exercise designed to strengthen your general stability and core. This movement is a functional core strengthening exercise that works the muscles in the lower and upper body.\n- Dead bug is also an exercise that requires mental focus, forces movements to be made in harmony, and helps improve balance and coordination.\n- This exercise, which is also applied as a warm-up exercise, can work even the smallest muscle fibers from different angles to strengthen the core muscles. It is also a safe and effective way to strengthen and balance your spine, back and neck muscles. A solid spine structure and strong back muscles can help improve your posture and relieve and prevent back pain.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Dead-Bug.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis",
+      "Transverse Abdominis",
+      "Latissimus Dorsi",
+      "Erector Spinae",
+      "Multifidus",
+      "Gluteus Maximus",
+      "Quadriceps",
+      "Shoulder"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-barbell-triceps-extension/",
+  "name": "Standing Barbell Triceps Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Stand shoulder-width apart, keeping your feet firmly planted for balance.\n- Hold a barbell with an overhand grip (palms facing forward), placing your hands closer than shoulder-width apart.\n- Lift the barbell overhead, fully extending your arms while keeping your elbows close to your head.\nStep 2: Execution\n1. Lower the barbell slowly behind your head by bending your elbows.\n2. Keep your upper arms stationary and avoid flaring your elbows outward.\n3. Lower the bar until your forearms are parallel to the floor or slightly lower.\n4. Press the barbell back up by extending your elbows until your arms are fully straightened.\n5. Repeat for 3 to 4 sets of 8 to 12 reps, maintaining control throughout the movement.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Standing-Barbell-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Deltoid, Anterior",
+        "Trapezius (upper back)",
+        "Core Muscles"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "source": "https://fitnessprogramer.com/exercise-primary-muscle/triceps/",
+  "count": 105,
+  "source_exercise_count": 105,
+  "listing_pages": 11,
+  "imported_at": "2026-10-27T16:41:53.611556+00:00",
+  "missing_gif": [],
+  "missing_how_to": [
+    "reverse-push-up.json",
+    "standing-triceps-stretch.json",
+    "ez-bar-lying-close-grip-triceps-extension-behind-head.json",
+    "one-arm-high-pulley-overhead-tricep-extension.json",
+    "cable-rope-lying-tricep-extension.json",
+    "cable-lying-triceps-extension.json",
+    "close-grip-knee-push-up.json",
+    "supine-medicine-ball-chest-throw.json",
+    "reverse-dips.json",
+    "rear-drive-with-resistance-band.json",
+    "standing-triceps-extension-gymstick.json",
+    "banded-overhead-triceps-extension.json",
+    "overhead-triceps-extension-gymstick.json"
+  ],
+  "instructions": "Full post-GIF instruction text; source HTML list structure."
+}

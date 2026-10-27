@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/push-down/",
+  "name": "Push-down",
+  "how_to": "1. Set Up the Equipment\n  - Attach a straight bar, rope, or V-bar to the high pulley of a cable machine.\n  - Select a moderate weight that allows for controlled movement.\n2. Position Yourself\n  - Stand with feet shoulder-width apart for stability.\n  - Grip the attachment with an overhand grip (palms facing down).\n  - Keep your elbows close to your torso and bend them at a 90-degree angle.\n3. Execution\n  - Exhale as you push the bar down by extending your elbows fully.\n  - Keep your wrists neutral and your elbows stationary.\n  - Lower the handle until your arms are fully extended but not locked out.\n  - Pause briefly at the bottom to maximize triceps engagement.\n  - Inhale as you slowly return to the starting position with control.\n4. Repeat\n  - Perform the desired number of repetitions while maintaining proper form.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pushdown.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

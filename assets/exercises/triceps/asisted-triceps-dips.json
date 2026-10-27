@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/asisted-triceps-dips/",
+  "name": "Assisted Triceps Dips",
+  "how_to": "Step 1: Set Up the Machine\n- Adjust the assistance weight on the machine. The heavier the assistance, the easier the exercise.\n- Step onto the platform and grab the parallel dip bars with a neutral grip (palms facing inward).\n- Position your knees or feet on the pad, depending on the machine’s design.\nStep 2: Starting Position\n- Maintain an upright posture with your chest up and core engaged.\n- Grip the bars firmly with your arms fully extended.\n- Keep your elbows close to your body to target the triceps effectively.\nStep 3: Lowering Phase\n- Slowly lower your body by bending your elbows while keeping them tucked in.\n- Descend until your upper arms are parallel to the ground or slightly below.\n- Keep your shoulders stable and avoid shrugging.\nStep 4: Pressing Phase\n- Push through your palms to extend your arms, bringing your body back to the starting position.\n- Focus on engaging your triceps during the upward movement.\n- Avoid locking out your elbows at the top to maintain muscle tension.\nStep 5: Repeat for Desired Reps\n- Perform 3 to 4 sets of 8 to 15 reps, adjusting assistance as needed.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/11/Asisted-Triceps-Dips.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}

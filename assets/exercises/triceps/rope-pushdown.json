@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/rope-pushdown/",
+  "name": "Rope Pushdown",
+  "how_to": "Step 1: Setup and Starting Position\n- Attach a rope handle to a high pulley cable machine.\n- Select an appropriate weight that allows for controlled movement.\n- Stand facing the machine with a slight forward lean, keeping your feet shoulder-width apart.\n- Grasp the rope with both hands, using a neutral grip (palms facing each other).\n- Keep your elbows close to your torso, and engage your core.\nStep 2: Execution\n1. Push the rope down by extending your elbows, keeping your upper arms stationary.\n2. As you reach the bottom, separate the rope handles, emphasizing a full contraction of the triceps.\n3. Hold the contraction for a second, then slowly return to the starting position while controlling the resistance.\n4. Repeat for 3 to 4 sets of 10 to 12 reps with proper form.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Rope-Pushdown.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ]
+}
