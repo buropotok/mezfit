@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/leg-press-calf-raise/",
+  "name": "Leg Press Calf Raise",
+  "how_to": "1. Setup: Sit on the leg press machine and place the balls of your feet shoulder-width apart on the lower portion of the footplate, with heels hanging off.\n2. Adjust the Load: Load the machine with a moderate to heavy weight that allows full range of motion without bouncing or locking the knees.\n3. Starting Position: Extend your knees fully (without locking out) to stabilize the position. Keep your legs straight and hips braced against the pad.\n4. Raise: Press through the balls of your feet and lift your heels as high as possible, engaging the calves at the peak of contraction.\n5. Pause and Contract: Hold the top position for 1–2 seconds to emphasize maximal muscular recruitment.\n6. Lower Slowly: Lower your heels under control until you feel a deep stretch in the calves.\n7. Repeat: Perform the desired number of repetitions, maintaining consistent tempo and tension throughout.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Leg-Press-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Soleus",
+      "Plantaris",
+      "Tibialis posterior",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Calf"
+  ]
+}

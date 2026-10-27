@@ -1,0 +1,40 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/plank-with-arm-and-leg-lift/",
+  "name": "Plank With Arm And Leg Lift",
+  "how_to": "Plank with Arm and Leg Lift Benefits\n- Unlike other plank exercises, it is a more difficult type of plank that is performed by lifting the arms and legs in opposite directions at the same time.\n- Planks are a versatile exercise that targets many of the most important muscle groups in the body, so they can be applied by anyone to improve endurance and overall body strength.\n- As a multi-functional movement, the plank not only targets your abdominal muscles but also the spine and hip. Plank strengthens and tightens your entire body, improves your posture and balance, reduces body fat, and can help boost your metabolism.\n- Plank is an effective exercise that increases stability in the core, spine and hip areas by providing an isometric contraction. You can add it to your workouts to shape and strengthen your hip, core and leg muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Plank-with-Arm-and-Leg-Lift.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques",
+      "Iliopsoas",
+      "Hamstrings",
+      "Gluteus Maximus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Quadriceps",
+        "Tensor Fasciae Latae",
+        "Sartorius",
+        "Pectoralis major",
+        "Serratus Anterior"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Hip",
+    "Leg"
+  ]
+}

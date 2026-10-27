@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-jefferson-curl/",
+  "name": "Dumbbell Jefferson Curl",
+  "how_to": "1. Setup: Stand on a small platform or step to allow for a greater range of motion. Hold a light dumbbell in each hand with arms extended in front of your thighs.\n2. Controlled Descent: Begin by tucking your chin, then slowly flexing your upper back, mid-back, and lower back in sequence. Allow the dumbbells to move downward as you gradually roll through each vertebra.\n3. Stretch Phase: At the bottom, let the dumbbells hang naturally while maintaining slight tension, feeling a deep hamstring and spinal stretch.\n4. Return to Start: Slowly reverse the movement to return to an upright position.\n5. Repeat: Perform the desired sets and reps, focusing on control and spinal segmentation.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/08/Dumbbell-jefferson-curl.gif",
+  "muscles": {
+    "target": [
+      "Hamstrings",
+      "Gluteus maximus",
+      "Erector spinae"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip",
+    "Leg"
+  ]
+}

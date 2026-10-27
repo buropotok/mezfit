@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-straight-leg-deadlift/",
+  "name": "Dumbbell Straight Leg Deadlift",
+  "how_to": "Dumbbell Straight Leg Deadlift / Benefits\n- The Leg deadlift targets many of the same muscles that a conventional deadlift develops, but emphasizes more of the back, hamstrings, and hip muscles. It is the most popular movement of strength and strength training as it works many muscle groups.\n- Dumbbell straight leg deadlift targets all the muscles responsible for your posture and helps keep your back straight during daily activities.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Dumbbell-Straight-Leg-Deadlift.gif",
+  "muscles": {
+    "target": [
+      "Erector Spinae"
+    ],
+    "synergists": [
+      "Adductor Magnus",
+      "Gluteus Maximus",
+      "Hamstrings"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Latissimus Dorsi",
+        "Trapezius",
+        "Levator Scapulae",
+        "Rhomboids"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae",
+    "Leg"
+  ]
+}

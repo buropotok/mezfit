@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/calf-raise/",
+  "name": "Standing Calf Raise With Dumbbell",
+  "how_to": "1. Starting Position: Stand upright with feet hip-width apart, holding a dumbbell in each hand, arms relaxed by your sides, maintaining proper posture and alignment.\n2. Alignment and Stability: Engage your core muscles for stability, keep shoulders back, and maintain neutral spine alignment throughout the movement.\n3. Lift Movement: Slowly rise onto the balls of your feet by lifting your heels as high as possible, fully contracting the calf muscles.\n4. Controlled Lowering: Gradually lower your heels back down to the starting position in a controlled manner, ensuring steady muscular tension.\n5. Repeat: Perform the desired repetitions, typically 10–15 reps per set, emphasizing slow and controlled movements.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Soleus",
+      "Plantaris",
+      "Tibialis posterior",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis",
+      "Intrinsic foot muscles"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Calf"
+  ]
+}

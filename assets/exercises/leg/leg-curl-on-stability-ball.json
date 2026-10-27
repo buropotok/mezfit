@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/leg-curl-on-stability-ball/",
+  "name": "Leg Curl On Stability Ball",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/leg-curl-on-stability-ball.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

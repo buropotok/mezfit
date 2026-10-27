@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-bulgarian-split-squat/",
+  "name": "Barbell Bulgarian Split Squat",
+  "how_to": "Step 1: Setup and Positioning\n- Set up a bench behind you at about knee height.\n- Load a barbell onto your upper back in a low-bar or high-bar position.\n- Stand about two feet in front of the bench with your feet hip-width apart.\n- Place the top of your back foot on the bench and engage your core.\nStep 2: Execution\n- Lower yourself by bending your front knee, keeping your chest upright.\n- Descend until your front thigh is parallel to the floor or slightly below.\n- Press through your front heel to drive back up to the starting position.\n- Repeat for the desired reps, then switch legs.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Barbell-Bulgarian-Split-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Gluteus Medius",
+        "Gluteus Minimus"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Bench",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

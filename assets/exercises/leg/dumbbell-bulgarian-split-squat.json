@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-bulgarian-split-squat/",
+  "name": "Dumbbell Bulgarian Split Squat",
+  "how_to": "Step 1: Setup and Positioning\n- Stand about two feet in front of a bench or step, holding a dumbbell in each hand at your sides.\n- Place your rear foot on the bench with the top of your foot resting on it.\n- Keep your front foot planted firmly, with your toes pointing forward and your stance hip-width apart.\nStep 2: Execution\n- Engage your core and keep your chest upright.\n- Lower your back knee toward the ground while keeping your front knee in line with your toes.\n- Descend until your front thigh is parallel to the ground or slightly below, ensuring your knee does not go past your toes.\n- Push through the heel of your front foot to return to the starting position.\n- Perform 8 to 12 reps per leg, then switch sides.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Dumbbell-Bulgarian-Split-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Gluteus Medius",
+        "Gluteus Minimus"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

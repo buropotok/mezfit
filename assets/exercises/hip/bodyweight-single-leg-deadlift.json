@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-single-leg-deadlift/",
+  "name": "Bodyweight Single Leg Deadlift",
+  "how_to": "How to do:\n1- Stand upright with your shoulder and hips aligned, and your back in a neutral position, and your feet shoulder-width apart.\n\n2- Bend forward at your hips, lifting your right leg back and transferring the weight onto your left leg, bending your knee slightly, and lifting your arms as you do so.\n\n3- Continue until your body is as close as you can get to parallel with the floor. Hold, then reverse the movement slowly and with control. Repeat as required and switch sides.\n\nBodyweight Single Leg Deadlift – Benefits\n- The single leg deadlift is an effective exercise to strengthen, tone, tighten the butt muscles and improve balance.\n- The single leg deadlift secondarily works your core muscles, as your abdominals and obliques contract to stabilize your body. This exercise also works the erector spinae muscles in your back that help support your spine and provide flexibility when bending in multiple directions.\n- Single-leg deadlifts can improve balance and correct strength imbalances in the hips. Every time you stand on one leg, you use the same muscles for balance and stability that are often used to build strength. Improving the ability of each leg to work and produce force will help skyrocket your back squat and deadlift numbers!\nBodyweight Single Leg Deadlift – Muscles Worked\nTarget - Gluteus Maximus\nSynergists - Hamstring\nSynergists - Adductor Magnus\nStabilizers - Erector Spinae\nStabilizers - Quadriceps\nStabilizers - Trapezius\nStabilizers - Rhomboids\nStabilizers - Latissimus Dorsi\nStabilizers - Levator Scapulae\nStabilizers - Gluteus Medius, Minius\nStabilizers - Quadratus Lumborum\nStabilizers - Obliques\nDynamic Stabilizers - Rectus Abdominis\nDynamic Stabilizers - Obliques",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Bodyweight-Single-Leg-Deadlift.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Hamstring",
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Quadriceps",
+        "Trapezius",
+        "Rhomboids",
+        "Latissimus Dorsi",
+        "Levator Scapulae",
+        "Gluteus Medius, Minius",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Rectus Abdominis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip"
+  ]
+}

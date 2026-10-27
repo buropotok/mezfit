@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-lateral-lunge/",
+  "name": "Barbell Lateral Lunge",
+  "how_to": "Barbell Lateral Lunge Benefits\n- Barbell lateral lunges develop balance, stability, and strength. They work your inner and outer thighs and may even help to reduce the appearance of cellulite.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Barbell-Lateral-Lunge.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Quadriceps",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Tibialis Anterior"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

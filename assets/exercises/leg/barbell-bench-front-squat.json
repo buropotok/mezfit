@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-bench-front-squat/",
+  "name": "Barbell Bench Front Squat",
+  "how_to": "1. Set up a bench behind you and load a barbell into a front rack position across your shoulders.\n2. Stand tall with feet shoulder-width apart and toes slightly turned out.\n3. Brace your core, keep your chest up, and retract your shoulder blades.\n4. Begin the descent by pushing your hips back and bending your knees, lowering until your glutes lightly touch the bench.\n5. Pause briefly on contact without fully sitting down, keeping tension in your legs.\n6. Drive through your heels to return to the standing position while maintaining an upright torso.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Barbell-Bench-Front-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Deltoid (Anterior, Lateral)",
+        "Trapezius",
+        "Levator Scapulae",
+        "Pectoralis Major",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

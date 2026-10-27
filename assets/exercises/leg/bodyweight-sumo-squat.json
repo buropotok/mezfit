@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-sumo-squat/",
+  "name": "Bodyweight Sumo Squat",
+  "how_to": "1. Stand with feet wider than shoulder-width apart and toes turned slightly outward.\n2. Brace your core and keep your chest lifted throughout the movement.\n3. Lower your body by bending at the knees and hips, sinking your hips straight down.\n4. Descend until your thighs are parallel to the floor or as low as mobility allows.\n5. Drive through your heels to return to the starting position, squeezing your glutes at the top.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/BODYWEIGHT-SUMO-SQUAT.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Adductor Longus, Brevis",
+      "Pectineus",
+      "Soleus",
+      "Gracilis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

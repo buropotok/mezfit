@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cossack-squat/",
+  "name": "Cossack Squat",
+  "how_to": "1. Stand with your feet wide apart, toes slightly turned out.\n2. Shift your weight to one side, bending that knee while keeping the opposite leg straight.\n3. Keep your chest tall and torso upright as you squat as low as possible on the bent leg.\n4. Allow the heel of the straight leg to lift slightly if flexibility is limited.\n5. Push through the bent leg to return to the starting position, then repeat on the other side.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Cossack-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Hamstring",
+      "Gluteus Medius & Minimus",
+      "Hip Adductors",
+      "Tensor Fasciae Latae",
+      "Calves"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Tibialis Anterior",
+        "Rectus Abdominis, Obliques",
+        "Anterior Deltoid",
+        "Scapular Stabilizers",
+        "Erector Spinae",
+        "Hip External Rotators"
+      ],
+      "antagonist": [
+        "Hip Flexors"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

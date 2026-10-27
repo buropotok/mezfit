@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-hip-thrust/",
+  "name": "Bodyweight Hip Thrust",
+  "how_to": "Bodyweight Hip Thrust / Benefits\n- The target muscle group of the hip thrust exercise is the hip muscles. You can include it in your exercise program to tighten and tone the hip muscles as well as improve hip mobility and strengthen your waist.\n- This exercise also strengthens the core muscles. Bodyweight hip thrust exercise activates all the core muscles, including the transverse abdominis, rectus abdominis, and obliques. The Hip thrust will help you stabilize the center of the body, hamstrings, back, belly and also the butt.Although the exercise targets the butt area, the hip thrusts does a great job of activating and strengthening your core stabilizer muscles.\n- Bodyweight hip thrusts exercises are generally safe for people with chronic back problems and can aid in pain management.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/bodyweight-hip-thrust.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Rectus Abdominis",
+        "Iliopsoas",
+        "Tensor Fasciae Latae",
+        "Pectineus",
+        "Sartorius",
+        "Adductor Longus",
+        "Adductor Brevis",
+        "Quadriceps",
+        "Erector Spinae",
+        "Hamstring"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip"
+  ]
+}

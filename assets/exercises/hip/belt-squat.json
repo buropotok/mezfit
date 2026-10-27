@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/belt-squat/",
+  "name": "Belt Squat",
+  "how_to": "1. Secure the squat belt around your waist and attach it to the weight on the machine or loading pin.\n2. Step onto the platforms so that the weight hangs between your legs and your feet are shoulder-width apart.\n3. Stand tall and brace your core. Begin the descent by pushing your hips back and bending the knees.\n4. Lower down until your thighs are at least parallel to the ground.\n5. Push through your heels to rise back to the standing position, keeping your torso upright.\n6. Repeat for the desired reps, maintaining a neutral spine and controlled tempo.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/belt-squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

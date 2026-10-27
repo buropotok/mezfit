@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/smith-machine-squat/",
+  "name": "Smith Machine Squat",
+  "how_to": "To perform the Smith Machine Squat correctly, follow these steps:\n\n1. Set the bar at upper chest height, and load desired weight. Position your feet slightly in front of the bar.\n2. Step under the bar, place it across your upper traps, and grip just wider than shoulder width.\n3. Unrack the bar by rotating it slightly, then brace your core and stand tall.\n4. Lower into a squat by bending your knees and hips, keeping your chest lifted and knees tracking your toes.\n5. Descend until your thighs are at least parallel to the floor or lower if mobility allows.\n6. Drive through your heels to push back up to the starting position, fully extending the hips and knees.\n7. Repeat for reps, then rerack the bar by rotating it back onto the hooks.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2024/10/smith-machine-squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

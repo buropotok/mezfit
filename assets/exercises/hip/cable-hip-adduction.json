@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-hip-adduction/",
+  "name": "Cable Hip Adduction",
+  "how_to": "Cable Hip Adduction Benefits\n- The cable hip adduction is an effective isolation exercise for the inner hips which builds strength and muscle in the adductors responsible for rotation of the hip joint.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Cable-Hips-Adduction.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

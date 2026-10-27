@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/leg-curl/",
+  "name": "Leg Curl",
+  "how_to": "Leg Curl Benefits\nStrengthening the Hamstrings: Leg curls primarily target the hamstrings, which consist of three muscles: the biceps femoris, semitendinosus, and semimembranosus. By performing leg curls, you can specifically strengthen and develop these muscles, leading to improved muscular balance in the lower body.\n\nEnhanced Lower Body Strength: Leg curls are an effective exercise for increasing lower body strength, particularly in the hamstrings. Strengthening these muscles can contribute to improved athletic performance in activities such as running, jumping, and squatting.\n\nInjury Prevention and Rehabilitation: Strong hamstrings play a crucial role in knee stability and help prevent injuries, such as strains or tears. By regularly performing leg curls, you can strengthen the hamstrings and reduce the risk of potential injuries. Leg curls can also be beneficial during rehabilitation after hamstring injuries, as they provide controlled and targeted strengthening of the affected muscles.\n\nBalanced Lower Body Development: Many lower body exercises tend to focus more on the quadriceps (front thigh muscles) rather than the hamstrings. Including leg curls in your workout routine helps create a balance between the anterior and posterior thigh muscles, promoting symmetrical and proportional leg development.\n\nVaried Exercise Options: Leg curls can be performed using various equipment, such as leg curl machines, resistance bands, or even bodyweight exercises. This versatility allows you to choose the variation that best suits your fitness level, preferences, and the equipment available.\n\nLeg Curl Muscles Worked\nTarget - Hamstrings\nGastrocnemius\nSartorius\nGracilis\nPopliteus",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Leg-Curl.gif",
+  "muscles": {
+    "target": [
+      "Hamstrings"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

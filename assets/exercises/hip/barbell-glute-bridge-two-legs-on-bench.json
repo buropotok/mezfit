@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-glute-bridge-two-legs-on-bench/",
+  "name": "Barbell Glute Bridge Two Legs on Bench",
+  "how_to": "To perform this exercise, you lie flat on your back on the ground, with your feet on a bench and a barbell placed across your hips. You then lift your hips up towards the ceiling, pressing the barbell upwards until your body forms a straight line from your shoulders to your knees. You pause briefly at the top of the movement before lowering your hips back down to the ground. Repeat for the desired number of repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/03/Barbell-Glute-Bridge-Two-Legs-on-Bench.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Rectus Abdominis",
+        "Iliopsoas",
+        "Tensor Fasciae Latae",
+        "Pectineus",
+        "Sartorius",
+        "Adductor Longus",
+        "Adductor Brevis",
+        "Quadriceps",
+        "Erector Spinae",
+        "Hamstring"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip"
+  ]
+}

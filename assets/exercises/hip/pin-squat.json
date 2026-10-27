@@ -1,0 +1,22 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pin-squat/",
+  "name": "Pin Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/05/Pin-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

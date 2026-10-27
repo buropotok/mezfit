@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-thigh-fly/",
+  "name": "Banded Thigh Fly",
+  "how_to": "Lying Banded Thigh Fly (Floor Variation)\nStarting Position:\n\n- Lie on your back with your legs extended straight up toward the ceiling.\n- Loop a resistance band around your ankles or just above your knees.\n- Keep your lower back pressed against the floor and engage your core.\nMovement:\n\n1. Slowly open your legs outward against the band’s resistance.\n2. Pause when you feel a deep stretch in your inner thighs.\n3. With control, bring your legs back together to the starting position.\n4. Repeat for 10 to 15 repetitions for three sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Banded-Thigh-Fly.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus",
+      "Gluteus Medius",
+      "Gluteus Minimus",
+      "Tensor Fasciae Latae",
+      "Adductor Longus",
+      "Adductor Brevis",
+      "Gracilis",
+      "Piriformis",
+      "Adductor Magnus",
+      "Hamstring"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip"
+  ]
+}
