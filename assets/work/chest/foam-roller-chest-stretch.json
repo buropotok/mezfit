@@ -1,12 +1,10 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/foam-roller-chest-stretch/",
   "name": "Foam Roller Chest Stretch",
-  "how_to": [],
+  "how_to": "",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Foam-Roller-Chest-Stretch.gif",
   "muscles": {
-    "target": [
-      "Chest"
-    ],
+    "target": [],
     "synergists": [],
     "stabilizers": {
       "dynamic": [],
@@ -20,6 +18,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Foam-Roller-Chest-Stretch.gif",
   "name_ru": "Растяжка грудных мышц на массажном ролике",
   "tracking_type": "time"
 }
