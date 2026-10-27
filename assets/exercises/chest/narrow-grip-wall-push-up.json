@@ -4,25 +4,14 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "Stand facing a wall, about 1 to 2 feet away, depending on your comfort level and strength."
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Place your hands on the wall at"
       ]
     }
   ],
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Narrow-Grip-Wall-Push-Up.gif",
   "muscles": {
-    "target": [
-      "Chest",
-      "Triceps"
-    ],
+    "target": [],
     "synergists": [],
     "stabilizers": {
       "dynamic": [],

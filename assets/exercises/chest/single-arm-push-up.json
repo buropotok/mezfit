@@ -4,30 +4,14 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Choose a Stable Surface Perform on a flat, non-slippery surface to ensure balance."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
       "instructions": [
         "Choose a Stable Surface"
       ]
     },
     {
-      "step": 4,
-      "title": "Instruction excerpt",
+      "step": 2,
       "instructions": [
-        "Perform on a flat, non-slippery surface"
+        "Perform on a flat, non-slippery surface to ensure balance."
       ]
     }
   ],

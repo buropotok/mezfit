@@ -4,23 +4,8 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
         "Adjust a bench to an incline angle of 30–45 degrees."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Grab a dumbbell in each hand and sit on the bench, feet flat"
       ]
     }
   ],

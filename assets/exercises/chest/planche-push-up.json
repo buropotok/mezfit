@@ -4,16 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "To execute the Full Planche Push-Up , follow these steps with precision:"
       ]
     },
     {
       "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Begin in a Full Planche Hold : Start with your body parallel"
+        "Keep your entire body rigid."
+      ]
+    },
+    {
+      "step": 3,
+      "instructions": [
+        "Do not let your hips drop."
       ]
     }
   ],

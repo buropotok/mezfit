@@ -4,16 +4,8 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the Seat : Set the seat height so that the handles are aligned with your chest. This is important for ensuring that"
+        "Adjust the Seat : Set the seat height so that the handles are aligned with your chest."
       ]
     }
   ],

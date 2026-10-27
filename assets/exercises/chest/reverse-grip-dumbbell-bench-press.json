@@ -4,23 +4,8 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
-        "Setup:"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Choose Your Dumbbells Select a weight that allows you to maintain proper form throughout the exercise."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Select a weight that allows you to"
+        "Select a weight that allows you to maintain proper form throughout the exercise."
       ]
     }
   ],

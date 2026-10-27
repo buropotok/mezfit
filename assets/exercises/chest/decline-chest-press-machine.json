@@ -4,23 +4,8 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
         "Adjust the seat so that the handles are at chest level when seated."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Sit on the machine with your back firmly against the"
       ]
     }
   ],

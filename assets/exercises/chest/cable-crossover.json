@@ -4,30 +4,20 @@
   "how_to": [
     {
       "step": 1,
-      "title": "Instruction excerpt",
       "instructions": [
         "1. Set Up the Machine :"
       ]
     },
     {
       "step": 2,
-      "title": "Instruction excerpt",
       "instructions": [
         "Adjust the pulleys to the desired height:"
       ]
     },
     {
       "step": 3,
-      "title": "Instruction excerpt",
       "instructions": [
         "High Pulley : Targets the lower chest."
-      ]
-    },
-    {
-      "step": 4,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Mid Pulley : Works"
       ]
     }
   ],
