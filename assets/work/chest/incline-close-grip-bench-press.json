@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-close-grip-bench-press/",
+  "name": "Incline Close-Grip Bench Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Incline close-grip bench press is an upper body compound exercise that targets the triceps muscles and is useful for build up your upper and"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Incline-Close-Grip-Bench-Press.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Жим штанги узким хватом на наклонной скамье",
+  "tracking_type": "weight_reps"
+}
