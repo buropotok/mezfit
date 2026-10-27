@@ -335,10 +335,10 @@ export function CloudConnectionsProvider({
         setSyncError(reason instanceof Error ? reason.message : 'Не удалось отследить синхронизацию с Mezfit облаком.');
       },
     });
-    const webSocketSubscription = db.cloud.webSocketStatus.subscribe((status) => {
+    const webSocketSubscription = db.cloud.webSocketStatus?.subscribe((status) => {
       syncHistory.recordWebSocket(status);
     });
-    return () => { subscription?.unsubscribe(); webSocketSubscription.unsubscribe(); };
+    return () => { subscription?.unsubscribe(); webSocketSubscription?.unsubscribe(); };
   }, [db, notificationBudget, syncHistory]);
 
   // Blob downloads are independent of contact metadata sync. A first lookup may
