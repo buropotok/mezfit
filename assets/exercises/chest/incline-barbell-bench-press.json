@@ -1,0 +1,45 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-barbell-bench-press/",
+  "name": "Incline Barbell Bench Press",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set up the incline bench at the desired angle. (30 to 45 degrees)"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Load the barbell with an appropriate weight for your fitness level"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Barbell-Bench-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Clavicular"
+    ],
+    "synergists": [
+      "Pectoralis Major, Sternal",
+      "Deltoid, Anterior",
+      "Triceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Bench",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

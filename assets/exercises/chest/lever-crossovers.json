@@ -1,0 +1,47 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-crossovers/",
+  "name": "Lever Crossovers",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup:"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Adjust the Machine Set the seat height so the handles align with the middle of your chest when seated. Adjust the backrest for"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Lever-Crossovers.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Deltoid, Anterior",
+      "Rhomboids",
+      "Levator Scapulae"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Brachialis",
+        "Triceps",
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Chest"
+  ]
+}

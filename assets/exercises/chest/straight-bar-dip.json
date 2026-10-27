@@ -1,0 +1,66 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/straight-bar-dip/",
+  "name": "Straight Bar Dip",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Setup"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Find a Sturdy Bar Use a pull-up bar or any horizontal bar at chest height."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Find a Sturdy Bar"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Use a pull-up bar"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/Straight-Bar-Dip.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major"
+    ],
+    "synergists": [
+      "Triceps",
+      "Anterior Deltoid",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius",
+        "Rectus Abdominis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Chest",
+    "Full Body",
+    "Triceps"
+  ]
+}
