@@ -566,7 +566,7 @@ export function ThreeColumnPicker({
   const scheduleScrollEndFallback = (part: ThreeColumnPickerPart, element: HTMLDivElement) => {
     // Modern WebViews dispatch scrollend. Older ones need an inactivity
     // fallback; restarting its timer never interferes with native deceleration.
-    if ('onscrollend' in element) return;
+    if (typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend !== 'undefined') return;
     const view = element.ownerDocument.defaultView ?? window;
     const previous = scrollEndFallbackRefs.current[part];
     if (previous !== null) view.clearTimeout(previous);
