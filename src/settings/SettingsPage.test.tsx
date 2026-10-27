@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
 
@@ -203,5 +203,23 @@ describe('SettingsPage modules gallery', () => {
     expect(screen.getByRole('dialog', { name: 'Выбор времени' })).toBeTruthy();
     expect(screen.getByRole('listbox', { name: 'Часы' })).toBeTruthy();
     expect(screen.getByRole('listbox', { name: 'Минуты' })).toBeTruthy();
+  });
+});
+
+describe('SettingsPage development diagnostics navigation', () => {
+  it('opens the session-only sync history and returns through the existing Back context', () => {
+    const onNavigationContextChange = vi.fn();
+    render(<SettingsPage onNavigationContextChange={onNavigationContextChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'История синхронизации' }));
+    expect(screen.getByRole('region', { name: 'История синхронизации' })).toBeTruthy();
+    expect(screen.getByText('История Dexie Cloud')).toBeTruthy();
+
+    const context = onNavigationContextChange.mock.calls
+      .map(([value]) => value as { title?: string; onBack?: () => void } | null)
+      .find(value => value?.title === 'История синхронизации');
+    expect(context?.onBack).toBeTypeOf('function');
+    act(() => context?.onBack?.());
+    expect(screen.getByRole('button', { name: 'История синхронизации' })).toBeTruthy();
+    expect(screen.queryByText('История Dexie Cloud')).toBeNull();
   });
 });
