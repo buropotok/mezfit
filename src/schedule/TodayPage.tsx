@@ -17,6 +17,7 @@ import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation
 import { Badge, DaySchedule, DayScheduleEventCard, Text, getDayScheduleValue,
   Icon, type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
 import { useSchedulePlanning } from './SchedulePlanningContext';
+import { usePlannedWorkoutStart } from '../workout/PlannedWorkoutStartContext';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 import { ScheduleFilterBar } from './ScheduleFilterBar';
 import { ScheduleClientFilter } from './ScheduleClientFilter';
@@ -72,6 +73,7 @@ export function TodayPage({
   notice?: string;
 }) {
   const cloud = useCloudConnections();
+  const plannedStart = usePlannedWorkoutStart();
   const planning = useSchedulePlanning();
   const [clientUserIds, setClientUserIds] = useState<string[]>([]);
   const [filterOpened, setFilterOpened] = useState(false);
@@ -95,6 +97,7 @@ export function TodayPage({
   const [programUpdateError, setProgramUpdateError] = useState('');
   const [selectedProgramTitle, setSelectedProgramTitle] = useState<{ id: string; name: string | null } | null>(null);
   const activeRepository = useRef<WorkoutOccurrenceDraftRepository | null>(null);
+  const editorGeneration = useRef(0);
   const [timingOverrides, setTimingOverrides] = useState<Record<string, { startsAtUtc: string; durationMinutes: number }>>({});
   const draftRepository = useMemo(() => cloud
     ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
@@ -102,6 +105,7 @@ export function TodayPage({
 
   useEffect(() => {
     if (!draftRepository) return undefined;
+    ++editorGeneration.current;
     activeRepository.current = draftRepository;
     setProgramUpdateError(''); setTimingOverrides({});
     setLoading(true); setOccurrences([]); setDrafts([]); setOpenedDraftId(null); setViewed(null);
@@ -122,10 +126,11 @@ export function TodayPage({
     };
   }, [draftRepository]);
 
-  useEffect(() => { setClientUserIds([]); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setPersonalEventId(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
+  useEffect(() => { ++editorGeneration.current; setClientUserIds([]); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setPersonalEventId(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
 
   useEffect(() => {
     if (!planning?.requestedDraftId) return;
+    ++editorGeneration.current;
     setClientUserIds(role === 'coach' && planning.requestedClientUserId ? [planning.requestedClientUserId] : []);
     setCreation(null);
     setOpenedDraftId(planning.requestedDraftId);
@@ -154,7 +159,7 @@ export function TodayPage({
   }, [selected?.trainingPlanId, planner]);
   const sourceProgramName = selectedProgramTitle && selectedProgramTitle.id === selected?.trainingPlanId
     ? selectedProgramTitle.name : null;
-  const closeEditor = useCallback(() => { setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
+  const closeEditor = useCallback(() => { ++editorGeneration.current; setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
   const closePersonalEvent = useCallback(() => { setPersonalEventId(null); setCreation(current => current === 'event' ? null : current); }, []);
   const createAction = useMemo(() => !selected && !personalEventId && !creation && !filterOpened ? {
     label: 'Создать', icon: 'plus' as const,
@@ -252,6 +257,7 @@ export function TodayPage({
   };
 
   const openEvent = async (event: TimelineItem) => {
+    ++editorGeneration.current;
     if (event.type === 'draft') { setViewed(null); setOpenedDraftId(event.draft.id); return; }
     if (!cloud || !draftRepository) return;
     setViewed(null);
@@ -355,6 +361,14 @@ export function TodayPage({
           setCreation(null); setPersonalEventId(null); setClientUserIds([]); setDate(datePart(instant));
         }} />
       {draftRepository ? <OccurrenceDraftSheet draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
+        planLocked={Boolean(selected?.workoutSessionId || (selected?.executionStatus && selected.executionStatus !== 'scheduled'))}
+        onStart={role === 'coach' && plannedStart ? async draft => {
+          const token = editorGeneration.current;
+          const id = await plannedStart.start(draft);
+          if (token === editorGeneration.current && activeRepository.current === draftRepository) {
+            closeEditor(); plannedStart.showSession(id);
+          }
+        } : undefined}
         sourceProgramName={sourceProgramName} onClose={closeEditor} onSave={save} saveNotice={programUpdateError || creationNotice}
         onNavigationContextChange={setEditorNavigation} /> : null}
     </section>

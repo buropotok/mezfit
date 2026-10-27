@@ -53,6 +53,10 @@ vi.mock('../schedule/ScheduleWorkoutCreator', () => ({
     <button onClick={() => void onStartWorkout({ athleteUserId: 'tg:202' })}>Клиент без программы</button>
   </div> : null,
 }));
+vi.mock('./PlannedWorkoutsSheet', () => ({
+  PlannedWorkoutsSheet: ({ opened }: { opened: boolean }) => opened
+    ? <div role="dialog" aria-label="Плановая тренировка">Выберите запланированный день и настройте план.</div> : null,
+}));
 vi.mock('./AdHocSessionScreen', () => ({
   AdHocSessionScreen: ({ sessionId }: { sessionId: string }) => <div>Сессия {sessionId}</div>,
 }));
@@ -101,9 +105,9 @@ describe('Coach ad-hoc entry points', () => {
     expect(screen.getByText('Была создана программа.')).toBeTruthy();
     expect(screen.queryByText('Начать тренировку')).toBeNull();
   });
-  it('opens only the empty planned sheet without a session mutation', async () => {
+  it('opens the shared planned list without a session mutation', async () => {
     renderScreen(); await pick('planned');
-    expect(screen.getByRole('dialog', { name: 'Плановая тренировка' }).childElementCount).toBe(0);
+    expect(screen.getByRole('dialog', { name: 'Плановая тренировка' }).textContent).toBe('Выберите запланированный день и настройте план.');
     expect(state.createQuick).not.toHaveBeenCalled();
     expect(state.createForAthlete).not.toHaveBeenCalled();
     expect(state.listPrograms).not.toHaveBeenCalled();

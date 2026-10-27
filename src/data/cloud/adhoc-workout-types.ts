@@ -1,3 +1,4 @@
+import { isWorkoutOccurrencePlan, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { isSetType } from '../../../shared/set-type';
 import { isWorkoutExerciseSnapshot } from './workout-foundation-types';
 import type { SetEntryFactDraft } from '../../workout/setEntryTypes';
@@ -16,6 +17,9 @@ export interface AdHocSessionRow {
   creatorUserId: string;
   name: string;
   comment: string | null;
+  /** Scheduled execution: immutable link and complete accepted PLAN. */
+  occurrenceId?: string;
+  occurrencePlan?: WorkoutOccurrencePlan;
   programId?: string;
   dayId?: string;
   programName: string | null;
@@ -33,6 +37,7 @@ export interface AdHocExerciseRow {
   realmId: string;
   owner: string;
   sessionId: string;
+  occurrenceExerciseId?: string;
   position: number;
   /** Immutable identity, full snapshot and resolved tracking metadata. */
   exercise: CloudWorkoutExerciseSnapshot;
@@ -47,6 +52,7 @@ export interface AdHocSetRow {
   owner: string;
   sessionId: string;
   exerciseId: string;
+  occurrenceSetId?: string;
   position: number;
   deletedAt: string | null;
   setType: SetType | null;
@@ -97,7 +103,9 @@ export function adHocSessionValidationIssue(value: unknown): AdHocSessionValidat
     || !(value.programId === undefined ? value.programName === null
       : typeof value.programName === 'string' && value.programName.trim().length > 0 && value.programName.length <= 120)
     || typeof value.autoCreatedProgram !== 'boolean'
-    || (value.autoCreatedProgram && !(id(value.programId) && id(value.dayId)))) return 'ADHOC_INVALID_SOURCE';
+    || (value.autoCreatedProgram && !(id(value.programId) && id(value.dayId)))
+    || !(value.occurrenceId === undefined ? value.occurrencePlan === undefined
+      : id(value.occurrenceId) && isWorkoutOccurrencePlan(value.occurrencePlan) && !value.autoCreatedProgram)) return 'ADHOC_INVALID_SOURCE';
   if (!timestamp(value.startedAt) || !timestamp(value.createdAt) || !timestamp(value.updatedAt))
     return 'ADHOC_INVALID_TIMESTAMPS';
   if (!((value.status === 'active' && value.completedAt === null && value.templateSaveDecision === undefined)
@@ -114,13 +122,13 @@ export function isAdHocSessionRow(value: unknown): value is AdHocSessionRow {
 
 export function isAdHocExerciseRow(value: unknown): value is AdHocExerciseRow {
   return object(value) && id(value.id) && id(value.realmId) && value.owner === value.realmId
-    && id(value.sessionId) && position(value.position) && nullableText(value.notes, 4000)
+    && id(value.sessionId) && (value.occurrenceExerciseId === undefined || id(value.occurrenceExerciseId)) && position(value.position) && nullableText(value.notes, 4000)
     && (value.deletedAt === null || timestamp(value.deletedAt)) && isWorkoutExerciseSnapshot(value.exercise);
 }
 
 export function isAdHocSetRow(value: unknown): value is AdHocSetRow {
   return object(value) && id(value.id) && id(value.realmId) && value.owner === value.realmId
-    && id(value.sessionId) && id(value.exerciseId) && position(value.position)
+    && id(value.sessionId) && id(value.exerciseId) && (value.occurrenceSetId === undefined || id(value.occurrenceSetId)) && position(value.position)
     && (value.deletedAt === null || timestamp(value.deletedAt))
     && (value.setType === null || isSetType(value.setType))
     && integer(value.actualReps) && number(value.actualWeightKg)

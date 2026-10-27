@@ -1,3 +1,5 @@
+import { AdHocWorkoutRepository } from './adhoc-workouts';
+import { STARTED_PLAN_MESSAGE } from './planned-session-release';
 import { liveQuery } from 'dexie';
 import type { LocalProgramSyncRow, MezfitCloudDatabase } from './database';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
@@ -29,7 +31,24 @@ export class WorkoutOccurrenceDraftRepository {
 
   private transaction<T>(work: () => Promise<T>): Promise<T> {
     return this.db.transaction('rw', ['workoutOccurrences',
-      'localWorkoutSync', 'realms', 'members'], work);
+      'localWorkoutSync', 'realms', 'members',
+      ...this.executionTables()], work);
+  }
+
+  private executionTables(): string[] {
+    return this.db.tables.some(table => table.name === 'adHocSessions') ? ['adHocSessions'] : [];
+  }
+  private async executionView(row: CloudWorkoutOccurrenceRow): Promise<CloudWorkoutOccurrenceRow> {
+    if (!row.workoutSessionId || !this.executionTables().length || row.entryKind === 'personal_event') return row;
+    const execution = await new AdHocWorkoutRepository(this.db, this.actorUserId)
+      .getOccurrenceSession(row.id, row.workoutSessionId);
+    return execution?.occurrencePlan && execution.realmId === row.realmId
+      ? { ...row, status: execution.status === 'active' ? 'in_progress' : 'completed', workoutSessionId: execution.id,
+        plan: structuredClone(execution.occurrencePlan) } : row;
+  }
+  private assertPlanEditable(draft: LocalWorkoutOccurrenceDraft): void {
+    if (draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled'))
+      throw new WorkoutEditRejected(STARTED_PLAN_MESSAGE);
   }
 
   private async authorize(row: Pick<LocalWorkoutOccurrenceDraft, 'realmId' | 'athleteUserId' | 'coachUserId' | 'clientUserId' | 'format'>): Promise<void> {
@@ -104,11 +123,12 @@ export class WorkoutOccurrenceDraftRepository {
       && (row.draftAuthorUserId ?? row.createdByUserId) !== this.actorUserId) return null;
     try { await this.authorize(row); }
     catch (reason) { if (reason instanceof WorkoutEditRejected) return null; throw reason; }
-    return draftFromOccurrence(this.actorUserId, row);
+    return draftFromOccurrence(this.actorUserId, await this.executionView(row));
   }
 
   async list(): Promise<LocalWorkoutOccurrenceDraft[]> {
-    const rows = await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
+    const rows = await Promise.all((await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace())
+      .map(row => this.executionView(row)));
     return rows.filter(row => row.entryKind !== 'personal_event' && row.publicationStatus === 'draft')
       .map(row => draftFromOccurrence(this.actorUserId, row));
   }
@@ -121,7 +141,7 @@ export class WorkoutOccurrenceDraftRepository {
     onError: (reason: unknown) => void) {
     const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
     return liveQuery(async () => {
-      const rows = await scheduling.listWorkspace();
+      const rows = await Promise.all((await scheduling.listWorkspace()).map(row => this.executionView(row)));
       return { occurrences: rows.filter(row => row.entryKind === 'personal_event' || row.publicationStatus !== 'draft'),
         drafts: rows.filter(row => row.entryKind !== 'personal_event' && row.publicationStatus === 'draft')
           .map(row => draftFromOccurrence(this.actorUserId, row)) };
@@ -185,11 +205,13 @@ export class WorkoutOccurrenceDraftRepository {
         || changed.targetOccurrenceId !== current.targetOccurrenceId
         || changed.realmId !== current.realmId || changed.programDayId !== current.programDayId
         || changed.trainingPlanId !== current.trainingPlanId
+        || changed.executionStatus !== current.executionStatus || changed.workoutSessionId !== current.workoutSessionId
         || changed.autoCreatedProgram !== current.autoCreatedProgram
         || changed.clientUserId !== current.clientUserId || changed.coachUserId !== current.coachUserId
         || changed.athleteUserId !== current.athleteUserId || changed.format !== current.format
         || !isWorkoutOccurrencePlan(changed.plan)) throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
       const contentChanged = occurrencePlanChanged(changed.plan, current.plan);
+      if (contentChanged) this.assertPlanEditable(current);
       if (contentChanged && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId)
         throw new WorkoutEditRejected('SCHEDULE_PLAN_FORBIDDEN');
       try { validateScheduleTiming(changed); }
@@ -221,6 +243,7 @@ export class WorkoutOccurrenceDraftRepository {
       const draft = await this.get(id);
       if (!draft) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       await this.authorize(draft);
+      this.assertPlanEditable(draft);
       await assertLocalWorkoutSlot(this.db, draft);
       const occurrenceId = id.slice(6);
       await this.db.workoutOccurrences.update(occurrenceId, {
@@ -237,6 +260,7 @@ export class WorkoutOccurrenceDraftRepository {
       const row = await this.db.workoutOccurrences.get(occurrenceId);
       if (!row || row.entryKind === 'personal_event') throw new Error('OCCURRENCE_NOT_FOUND');
       await this.authorize(row);
+      this.assertPlanEditable(draftFromOccurrence(this.actorUserId, await this.executionView(row)));
       await this.db.workoutOccurrences.update(occurrenceId, { cancelledAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       await markWorkoutChanged(this.db, occurrenceId);
     });
@@ -247,8 +271,10 @@ export class WorkoutOccurrenceDraftRepository {
     await queue.running.catch(() => undefined);
     await this.transaction(async () => {
       const draft = await this.get(id);
-      if (!draft || draft.saved) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
+      if (!draft) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       await this.authorize(draft);
+      this.assertPlanEditable(draft);
+      if (draft.saved) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       const row = await this.db.workoutOccurrences.get(id.slice(6));
       if (!row) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       const author = (row.coachUserId ?? row.athleteUserId) === this.actorUserId;

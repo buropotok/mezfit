@@ -1,0 +1,2 @@
+.planned-workouts { display: flex; flex-direction: column; gap: var(--ui-space-3); padding: var(--ui-space-4); min-width: 0; }
+.planned-workouts__header { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-2); }

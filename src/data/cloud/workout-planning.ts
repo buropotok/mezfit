@@ -20,6 +20,10 @@ export class WorkoutPlanningRepository {
     this.drafts = new WorkoutOccurrenceDraftRepository(db, actorUserId);
   }
 
+  private authoringTables(): string[] {
+    return [...AUTHORING_TABLES, ...(this.db.tables.some(table => table.name === 'adHocSessions') ? ['adHocSessions'] : [])];
+  }
+
   private async scope(athleteUserId: string) {
     if (athleteUserId === this.actorUserId)
       return { realmId: this.actorUserId, athleteUserId, coachUserId: null, clientUserId: null };
@@ -61,7 +65,7 @@ export class WorkoutPlanningRepository {
     const scope = await this.scope(athleteUserId);
     if (format === 'coached' && !scope.coachUserId) throw new Error('Для своей тренировки выберите самостоятельный формат');
     const startsAtUtc = await this.suggestSlot(athleteUserId, scope.coachUserId, format);
-    return this.db.transaction('rw', AUTHORING_TABLES, async () => {
+    return this.db.transaction('rw', this.authoringTables(), async () => {
       // The existence check and graph creation share one transaction, including rapid creates.
       const programs = await this.programs.listForScheduling(athleteUserId);
       let trainingPlanId: string | undefined;
@@ -92,7 +96,7 @@ export class WorkoutPlanningRepository {
     const draft = await this.drafts.get(id);
     if (!draft) throw new Error('Тренировка не найдена');
     if (!draft.autoCreatedProgram || draft.previouslyPublished) return this.drafts.save(id);
-    return this.db.transaction('rw', AUTHORING_TABLES, async () => {
+    return this.db.transaction('rw', this.authoringTables(), async () => {
       const current = await this.drafts.get(id);
       if (!current?.trainingPlanId || !current.programDayId) throw new Error('Программа тренировки не найдена');
       if (!current.previouslyPublished) {
@@ -113,9 +117,8 @@ export class WorkoutPlanningRepository {
   }): Promise<string> {
     await this.drafts.flushEdits(id);
     // Read current accepted content, rather than the editor's potentially stale projection.
-    return this.db.transaction('rw', AUTHORING_TABLES, async () => {
-      const rows = await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
-      const occurrence = rows.find(row => 'draft:' + row.id === id);
+    return this.db.transaction('rw', this.authoringTables(), async () => {
+      const occurrence = await this.drafts.get(id);
       if (!occurrence) throw new Error('Тренировка недоступна');
       return this.programs.saveWorkoutAsDay(occurrence.athleteUserId, target, occurrence.plan);
     });

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Toast } from 'konsta/react';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { isWorkoutEditRejected, type WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -7,12 +8,13 @@ import { appendOccurrenceExercise, appendOccurrenceSet, occurrenceTemplateChange
   removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises } from '../data/cloud/workout-occurrence-edit';
 import { readProgramCatalogueExercise, programExerciseSnapshot } from '../data/cloud/program-exercise-selection';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { WorkoutPlanCard } from '../workout/WorkoutPlanCard';
+import { WorkoutPlanCard, WorkoutPlanCardHeader } from '../workout/WorkoutPlanCard';
+import { StartWorkoutButton } from '../workout/StartWorkoutButton';
 import { SetEntry } from '../workout/SetEntry';
 import type { ExerciseTrackingType } from '../data/exercises/publicExerciseTypes';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
-  Badge, Text, TimePicker, Icon, IconButton, LiquidPopover, type LocalDate, type LocalTime } from '../ui';
+  Badge, Text, TimePicker, GlassSurface, Icon, IconButton, LiquidPopover, type LocalDate, type LocalTime } from '../ui';
 import { localScheduleInstant, localScheduleEnd } from './calendar-time';
 import { useWorkoutPerson } from './WorkoutPerson';
 import type { NavigationContext } from '../NavigationShell';
@@ -77,6 +79,10 @@ export interface OccurrenceDraftSheetProps {
   drafts: WorkoutOccurrenceDraftRepository;
   actor?: ProgramActor;
   readOnly?: boolean;
+  /** Owner-controlled lock; pass the frozen occurrence PLAN in draft after Start. */
+  planLocked?: boolean;
+  /** Called with the latest locally persisted draft after all pending edits flush. */
+  onStart?: (draft: LocalWorkoutOccurrenceDraft) => Promise<void>;
   saveNotice?: string;
   sourceProgramName?: string | null;
   onNavigationContextChange?: (value: NavigationContext | null) => void;
@@ -84,7 +90,18 @@ export interface OccurrenceDraftSheetProps {
   onSave: (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => Promise<void>;
 }
 
-function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly = false, saveNotice = '', sourceProgramName, container, onNavigationContextChange, auxiliaryReady }: OccurrenceDraftSheetProps & { container: HTMLDivElement; auxiliaryReady: boolean }) {
+export interface OccurrenceDraftCardProps extends OccurrenceDraftSheetProps {
+  collapsed: boolean;
+  onCollapsedChange: () => void;
+}
+
+const lockedPlanMessage = 'Тренировка была запущена. Изменить план нельзя';
+
+function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLocked = false,
+  actor, readOnly = false, saveNotice = '', sourceProgramName, container,
+  onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
+}: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
+  inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
   const cloud = useCloudConnections();
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
@@ -105,6 +122,25 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const starting = useRef(false);
+  const startAlive = useRef(true);
+  useEffect(() => {
+    startAlive.current = true;
+    return () => { startAlive.current = false; };
+  }, []);
+  const access = useRef({ planLocked, readOnly });
+  access.current = { planLocked, readOnly };
+  const [lockToastVersion, setLockToastVersion] = useState(0);
+  const onMutationAttempt = () => setLockToastVersion(version => version + 1);
+  const mutationBlocked = () => {
+    if (access.current.planLocked) { onMutationAttempt(); return true; }
+    return access.current.readOnly;
+  };
+  useEffect(() => {
+    if (!lockToastVersion) return;
+    const timer = window.setTimeout(() => setLockToastVersion(0), 3000);
+    return () => window.clearTimeout(timer);
+  }, [lockToastVersion]);
   const [error, setError] = useState(() => draft ? drafts.pendingEditError(draft.id) : '');
   const [optimisticOrder, setOptimisticOrder] = useState<{ previous: string; next: string[] } | null>(null);
   const canonicalOrder = JSON.stringify(draft?.plan.exercises.map(exercise => exercise.id) ?? []);
@@ -118,7 +154,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const timingIntent = useRef(0);
   const pendingTiming = useRef(false);
   useEffect(() => {
-    if (!draft || readOnly) return;
+    if (!draft || readOnly || planLocked) return;
     let active = true;
     // Reattach to pending/failed writes when reopening, including writes which
     // failed after the previous editor unmounted through Back or a tab change.
@@ -126,7 +162,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       if (active) setError(reason instanceof Error ? reason.message : 'Не удалось сохранить черновик');
     });
     return () => { active = false; };
-  }, [draft?.id, drafts, readOnly]);
+  }, [draft?.id, drafts, readOnly, planLocked]);
 
   const flushEdits = async () => {
     await validating.current;
@@ -141,7 +177,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     }
   };
   const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1], timing = false) => {
-    if (!draft || busy || readOnly) return;
+    if (mutationBlocked() || !draft || busy || starting.current) return;
     const intent = timing ? ++timingIntent.current : 0;
     if (timing) { rejectedTiming.current = null; pendingTiming.current = true; }
     setError(rejectedTiming.current ?? '');
@@ -149,8 +185,13 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     const next = validating.current.catch(() => undefined).then(async () => {
       const current = await drafts.get(draft.id);
       if (!current) throw new Error('Черновик не найден');
+      if (mutationBlocked()) return;
       accepted = true;
-      await drafts.enqueueEdit(draft.id, apply);
+      await drafts.enqueueEdit(draft.id, current => {
+        // Returning the unchanged draft drains a stale intent without a content/timing write.
+        if (mutationBlocked()) return current;
+        return apply(current);
+      });
       if (timing && intent === timingIntent.current) pendingTiming.current = false;
     });
     // Invalid local choices block Save. A storage failure is retained by the
@@ -170,13 +211,14 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     return next;
   };
   const save = async (updateProgram: boolean) => {
-    if (!draft || busy || readOnly) return;
+    if (mutationBlocked() || !draft || busy || starting.current) return;
     setBusy(true);
     setError('');
     try {
       await flushEdits();
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
+      if (mutationBlocked()) return;
       await onSave(latest, updateProgram);
       setProgramUpdateOpen(false);
     } catch (reason) {
@@ -184,13 +226,14 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     } finally { setBusy(false); }
   };
   const beginSave = async () => {
-    if (!draft || busy || readOnly) return;
+    if (mutationBlocked() || !draft || busy || starting.current) return;
     setBusy(true);
     setError('');
     try {
       await flushEdits();
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
+      if (mutationBlocked()) return;
       const owner = (latest.coachUserId ?? latest.athleteUserId) === latest.actorUserId;
       if (!latest.autoCreatedProgram && latest.trainingPlanId && latest.programDayId
         && !latest.previouslyPublished && owner && occurrenceTemplateChanged(latest.plan, latest.originalPlan)) {
@@ -202,7 +245,28 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
       setError(reason instanceof Error ? reason.message : 'Не удалось сохранить тренировку');
     } finally { setBusy(false); }
   };
+  const startWorkout = async () => {
+    if (!startAlive.current || !draft || !onStart || busy || starting.current
+      || access.current.planLocked || access.current.readOnly) return;
+    starting.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await flushEdits();
+      if (!startAlive.current || access.current.planLocked || access.current.readOnly) return;
+      const latest = await drafts.get(draft.id);
+      if (!latest) throw new Error('Черновик не найден');
+      if (!startAlive.current || access.current.planLocked || access.current.readOnly) return;
+      await onStart(latest);
+    } catch (reason) {
+      if (startAlive.current) setError(reason instanceof Error ? reason.message : 'Не удалось начать тренировку');
+    } finally {
+      starting.current = false;
+      if (startAlive.current) setBusy(false);
+    }
+  };
   const editStart = (date: LocalDate, time: LocalTime) => {
+    if (mutationBlocked()) return;
     try {
       const utc = localScheduleInstant(date, time);
       edit(current => ({ ...current, startsAtUtc: utc }), true);
@@ -213,11 +277,13 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     }
   };
   const openTimePicker = (kind: 'start' | 'end') => {
+    if (mutationBlocked()) return;
     timeSelectionRef.current = null;
     setTimeSelection(null);
     setTimeOpened(kind);
   };
   const chooseTime = (kind: 'start' | 'end', value: LocalTime) => {
+    if (mutationBlocked()) return;
     timeSelectionRef.current = { kind, value };
     setTimeSelection({ kind, value });
   };
@@ -226,7 +292,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     timeSelectionRef.current = null;
     setTimeSelection(null);
     setTimeOpened(null);
-    if (!choice || !draft || busy || readOnly) return;
+    if (!choice || mutationBlocked() || !draft || busy || starting.current) return;
     const start = new Date(draft.startsAtUtc);
     const end = currentEnd(draft);
     if (choice.kind === 'start') {
@@ -245,15 +311,17 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
     }
   };
   const selectExercises = async (ids: string[]) => {
-    if (!draft || !cloud || busy) return;
+    if (mutationBlocked() || !draft || !cloud || busy || starting.current) return;
     setBusy(true); setError('');
     try {
       const selected = await Promise.all(ids.map(async id => programExerciseSnapshot(
         await readProgramCatalogueExercise(cloud.db, draft.actorUserId, id), draft.actorUserId)));
       await flushEdits();
-      const writing = drafts.enqueueEdit(draft.id, current => ({
-        ...current, plan: selected.reduce(appendOccurrenceExercise, current.plan),
-      }));
+      if (mutationBlocked()) return;
+      const writing = drafts.enqueueEdit(draft.id, current => {
+        if (mutationBlocked()) return current;
+        return { ...current, plan: selected.reduce(appendOccurrenceExercise, current.plan) };
+      });
       setExercisePickerOpened(false);
       await writing;
     } catch (reason) {
@@ -262,7 +330,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   };
   const mayEditStructure = Boolean(draft && !readOnly && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
   let displayedDay = draft ? outline(draft) : null;
-  if (displayedDay && optimisticOrder) {
+  if (displayedDay && optimisticOrder && !planLocked) {
     const positions = new Map(optimisticOrder.next.map((id, index) => [id, index]));
     displayedDay = { ...displayedDay, exercises: [...displayedDay.exercises].sort((a, b) =>
       (positions.get(a.exercise.id) ?? a.exercise.position) - (positions.get(b.exercise.id) ?? b.exercise.position)) };
@@ -271,6 +339,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   const activeExercise = draft?.plan.exercises.find(item => item.id === editingSet?.exerciseId);
   const activeSet = activeExercise?.sets.find(item => item.id === editingSet?.setId);
   const openSet = async (exerciseId: string, setId: string) => {
+    if (access.current.planLocked) { onMutationAttempt(); return; }
     if (!draft || !planner || busy) return;
     const exercise = draft.plan.exercises.find(item => item.id === exerciseId);
     if (!exercise?.sets.some(item => item.id === setId)) return;
@@ -280,6 +349,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         setError('Не удалось определить тип учёта упражнения');
         return;
       }
+      if (access.current.planLocked) { onMutationAttempt(); return; }
       setEditingSet({ exerciseId, setId, trackingType: type });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
@@ -287,22 +357,29 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
   };
   const start = draft ? new Date(draft.startsAtUtc) : new Date();
   const end = draft ? currentEnd(draft) : new Date();
-  return <>
-      {draft ? createPortal(<section className="occurrence-draft-sheet">
+  const scheduledTiming = { date: localDate(start).split('-').reverse().join('.'),
+    time: `${localTime(start)} – ${localTime(end)}` };
+  const content = draft ? <section className={`occurrence-draft-sheet${inlineCard ? ' occurrence-draft-sheet--inline' : ''}`}>
+        {inlineCard ? <div className="occurrence-draft-sheet__identity"><WorkoutPlanCardHeader name={draft.plan.name}
+          programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
+          creatorName={owner.name} creatorAvatar={owner.avatar}
+          scheduledTiming={scheduledTiming}
+          collapsed={collapsed} onCollapsedChange={onCollapsedChange} /></div> : null}
+        {!collapsed ? <>
         <header className="occurrence-draft-sheet__header">
-          <Text variant="headline">Запланированная тренировка</Text>
+          {!inlineCard ? <Text variant="headline">Запланированная тренировка</Text> : null}
           {planner ? <LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
             triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
             trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
             items={[{ id: 'program', label: 'Добавить в программу', icon: 'copy', disabled: busy,
-              onSelect: () => { setOpenProgramAfterMenu(true); setActionsOpen(false); } }]}
+              onSelect: () => { if (mutationBlocked()) return; setOpenProgramAfterMenu(true); setActionsOpen(false); } }]}
             onPresentationChange={presented => {
               if (presented || !openProgramAfterMenu) return;
               setOpenProgramAfterMenu(false);
-              void flushEdits().then(() => setProgramSheetOpen(true))
+              void flushEdits().then(() => { if (!mutationBlocked()) setProgramSheetOpen(true); })
                 .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось сохранить правки'));
             }} /> : null}
-          <IconButton label="Закрыть" onClick={onClose}>✕</IconButton>
+          {!inlineCard ? <IconButton label="Закрыть" onClick={onClose}>✕</IconButton> : null}
         </header>
         <div className="occurrence-draft-sheet__body">
           {error || saveNotice ? <Text variant="footnote" role="alert">{error || saveNotice}</Text> : null}
@@ -317,7 +394,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>
           </div>
           <div className="occurrence-draft-sheet__timing">
-            <Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => setDateOpened(true)}>
+            <Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
             <div className="occurrence-draft-sheet__time-row">
@@ -330,10 +407,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
             </div>
           </div>
           <Text variant="body">План на тренировку</Text>
-          <WorkoutPlanCard mode="planning" showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
+          <WorkoutPlanCard mode="planning" hideHeader={inlineCard} onCollapsedChange={inlineCard ? undefined : onClose}
+            scheduledTiming={scheduledTiming} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
             creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
+            onMutationAttempt={planLocked ? onMutationAttempt : undefined}
             onEdit={() => {}} onComment={() => {}} onMove={() => {}}
             onDuplicate={() => {}} onDelete={() => {}}
             onReorderExercises={mayEditStructure ? ids => {
@@ -344,7 +423,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
               if (!write) setOptimisticOrder(null);
               else void write.catch(() => setOptimisticOrder((current) => current?.next === ids ? null : current));
             } : undefined}
-            onAddExercise={mayEditStructure ? () => setExercisePickerOpened(true) : undefined}
+            onAddExercise={mayEditStructure ? () => { if (!mutationBlocked()) setExercisePickerOpened(true); } : undefined}
             onAddSet={mayEditStructure ? id => edit(current => ({
               ...current, plan: appendOccurrenceSet(current.plan, id),
             })) : undefined}
@@ -359,19 +438,30 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
           />
         </div>
         {!readOnly && !draft.saved ? <footer className="occurrence-draft-sheet__footer">
-          <Button variant="secondary" color="red" disabled={busy || readOnly} onClick={() => setDeleteOpen(true)}>
+          <Button variant="secondary" color="red" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDeleteOpen(true); }}>
             {draft.previouslyPublished ? 'Отменить изменения' : 'Удалить черновик'}
           </Button>
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer> : null}
-      </section>, container) : null}
-    {draft && auxiliaryReady ? <>
+        {onStart ? <div className="occurrence-draft-sheet__start">
+          <StartWorkoutButton disabled={busy || planLocked || readOnly}
+            onClick={() => { void startWorkout(); }} />
+        </div> : null}
+        </> : null}
+      </section> : null;
+  return <>
+    {container ? createPortal(content, container) : inlineCard
+      ? <GlassSurface preset="modalTuned" optics={glass.optics}>{content}</GlassSurface> : content}
+    {lockToastVersion > 0 ? <Toast opened position="center" role="status" aria-live="polite">
+      <Text variant="body">{lockedPlanMessage}</Text>
+    </Toast> : null}
+    {draft && auxiliaryReady && !collapsed ? <>
       {planner && informationExercise ? <Suspense fallback={<Text variant="footnote">Загружаем информацию…</Text>}>
         <ProgramExerciseInformationSheet key={informationExercise.id} repository={planner.programs}
           exerciseId={informationExercise.id} snapshot={informationExercise.exercise} realmId={draft.realmId}
           onClose={() => setExerciseInformationId(null)} onNavigationContextChange={onNavigationContextChange} />
       </Suspense> : null}
-      {planner ? <WorkoutProgramSheet opened={programSheetOpen} planner={planner} draft={draft}
+      {planner ? <WorkoutProgramSheet opened={programSheetOpen && !planLocked && !readOnly} planner={planner} draft={draft}
         onClose={closeProgramSheet} onNavigationContextChange={onNavigationContextChange} /> : null}
       <DatePicker opened={dateOpened} value={localDate(start)}
         onChange={date => editStart(date, localTime(start))}
@@ -388,7 +478,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         onConfirm={ids => { void selectExercises(ids); }}
         onClose={() => setExercisePickerOpened(false)} />
       {activeExercise && activeSet && editingSet ? <SetEntry
-        key={activeSet.id} mode="occurrence-plan" isOpen readOnly={!mayEditStructure}
+        key={activeSet.id} mode="occurrence-plan" isOpen readOnly={!mayEditStructure || planLocked}
         onNavigationContextChange={onNavigationContextChange}
         data={{
           identity: {
@@ -408,6 +498,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         }}
         onClose={() => setEditingSet(null)}
         onPlanSave={async input => {
+          if (mutationBlocked()) throw new Error(access.current.planLocked ? lockedPlanMessage : 'План тренера доступен только для просмотра');
           if (!mayEditStructure) throw new Error('План тренера доступен только для просмотра');
           const writing = edit(current => ({
             ...current, plan: { ...current.plan,
@@ -443,7 +534,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, actor, readOnly
         buttons={<>
           <MezfitDialogButton onClick={() => setDeleteOpen(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
           <MezfitDialogButton strong onClick={() => {
-            if (!draft) return;
+            if (mutationBlocked() || !draft || busy || starting.current) return;
             setBusy(true);
             void drafts.delete(draft.id).then(() => { setDeleteOpen(false); onClose(); })
               .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось удалить'))
@@ -512,4 +603,10 @@ export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
     {draft && container ? <OccurrenceDraftEditor key={draft.id} {...props} draft={draft}
       container={container} auxiliaryReady={opened && auxiliaryReady} /> : null}
   </>;
+}
+
+/** Inline scheduled occurrence; the owner supplies live or frozen PLAN and lock state. */
+export function OccurrenceDraftCard({ collapsed, onCollapsedChange, ...props }: OccurrenceDraftCardProps) {
+  return props.draft ? <OccurrenceDraftEditor key={props.draft.id} {...props}
+    inlineCard collapsed={collapsed} onCollapsedChange={onCollapsedChange} auxiliaryReady /> : null;
 }

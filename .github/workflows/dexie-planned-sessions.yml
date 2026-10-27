@@ -1,0 +1,73 @@
+name: Preview DRAFT Dexie planned session Coach ACL
+
+# DRAFT local scheduled exception and ACL maintenance are not yet user-approved.
+# No apply job, bypass input, import command, or PR/push/issue trigger.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        description: 'Read-only preview of the draft Coach occurrence ACL proposal'
+        required: true
+        default: preview
+        options: [preview]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dexie-public-catalogue-publishing
+  cancel-in-progress: false
+
+jobs:
+  planned-session-preview:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: dexie-production
+    env:
+      DEXIE_PLANNED_OPERATION: ${{ inputs.operation }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate protected preview dispatch
+        run: node tools/dexie-roles/planned-sessions.mjs preflight
+      - name: Prepare existing protected Dexie CLI credentials
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/dexie-schema/manage.mjs prepare
+      - name: Export complete initial schema and roles
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
+      - name: Generate exact draft role proposal without importing
+        run: node tools/dexie-roles/planned-sessions.mjs plan
+      - name: Re-export and recheck complete configuration
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema current-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles current-roles.json
+          cd "$GITHUB_WORKSPACE"
+          node tools/dexie-roles/planned-sessions.mjs recheck
+      - name: Export final preview schema and roles
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
+      - name: Verify preview left full configuration unchanged
+        run: node tools/dexie-roles/planned-sessions.mjs verify
+      - name: Remove temporary credentials and private exports
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"

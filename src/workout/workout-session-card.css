@@ -159,18 +159,6 @@
 .workout-plan-card__comment { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .workout-plan-card__actions--start { grid-template-columns: minmax(0, 1fr); }
-.workout-plan-card__actions--start .workout-plan-card__action {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  height: 44px;
-}
-.workout-plan-card__start-label { flex: 0 0 auto; white-space: nowrap; }
-
-.workout-plan-card__start-group {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ui-space-1);
-}
+.workout-session-card__header--scheduled { grid-template-columns: 44px minmax(0, 1fr) auto 44px 44px; gap: 6px; }
+.workout-plan-card__chevron { display: inline-flex; width: 20px; height: 20px; }
+.workout-plan-card__chevron--expanded { transform: rotate(90deg); }

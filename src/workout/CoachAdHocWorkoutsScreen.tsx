@@ -5,7 +5,8 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { AdHocWorkoutRepository, type AdHocOpenSession } from '../data/cloud/adhoc-workouts';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { ScheduleWorkoutCreator } from '../schedule/ScheduleWorkoutCreator';
-import { MezfitBottomSheet, MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { PlannedWorkoutsSheet } from './PlannedWorkoutsSheet';
 import { AdHocSessionScreen } from './AdHocSessionScreen';
 import { adHocErrorMessage } from './adhoc-workout-errors';
 import './adhoc-workouts.css';
@@ -144,7 +145,9 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
     <ScheduleWorkoutCreator intent={sourceOpen ? 'workout' : null} role="coach" actor={actor} mode="start"
       onClose={closeSource} onCreated={ignoreScheduledCreation} onStartWorkout={startFromProgram}
       onNavigationContextChange={setChildNavigation} />
-    <MezfitBottomSheet opened={plannedOpen} label="Плановая тренировка" lazyMount />
+    <PlannedWorkoutsSheet opened={plannedOpen} actor={actor} onClose={closePlanned}
+      onStarted={id => { setSessionId(id); setPlannedOpen(false); setChildNavigation(null); }}
+      onNavigationContextChange={setChildNavigation} />
     <MezfitDialog opened={blocked} title="Завершите текущую тренировку, чтобы начать новую."
       onBackdropClick={() => setBlocked(false)}
       buttons={<MezfitDialogButton strong onClick={() => setBlocked(false)}>Понятно</MezfitDialogButton>} />
