@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/decline-sit-up/",
+  "name": "Decline Sit-up",
+  "how_to": "Decline Sit-up Benefits\n- Decline sit-ups target the rectus abdominus and oblique muscles to strengthen the core muscles. It is an exercise that you can apply to shape the upper abdominal muscles and six pack muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Decline-Sit-up.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ]
+}

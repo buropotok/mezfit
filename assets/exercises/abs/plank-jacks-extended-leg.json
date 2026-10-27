@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/plank-jacks-extended-leg/",
+  "name": "Plank Jacks / Extended Leg",
+  "how_to": "Plank Jacks",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2015/06/Plank-Jacks-Extended-Leg.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Iliopsoas",
+        "Quadriceps",
+        "Tensor Fasciae Latae",
+        "Sartorius",
+        "Pectoralis major",
+        "Serratus Anterior"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Lower Back",
+    "Middle Back"
+  ]
+}

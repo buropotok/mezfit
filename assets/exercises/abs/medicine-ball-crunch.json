@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/medicine-ball-crunch/",
+  "name": "Medicine Ball Crunch",
+  "how_to": "Holding the ball firmly with both hands, assume the normal starting position, then raise the ball in the air with your arms straight. Hold the ball in this position while you carry out the desired number of repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Medicine-Ball-Crunch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ]
+}
