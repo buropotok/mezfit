@@ -56,7 +56,7 @@ export async function isApprovedAssignedPair(
   // Keep the entire external computation in one waitFor scope, including early
   // rejection. Separate waits leave native-promise continuations between them
   // where IndexedDB can auto-commit (notably for revoked memberships).
-  return Dexie.waitFor(async () => {
+  return Dexie.waitFor((async () => {
     const expectedRealmId = await relationshipRealmId(coach, client);
     if (realm.realmId !== expectedRealmId || realm.owner !== null
       || realm.name !== 'Mezfit coach-client pilot') return false;
@@ -69,7 +69,7 @@ export async function isApprovedAssignedPair(
     ]);
     return pairMembers.some((member) => approvedMember(member, coachMemberId, coachUserId, 'coach'))
       && pairMembers.some((member) => approvedMember(member, clientMemberId, clientUserId, 'client'));
-  });
+  })());
 }
 
 /** Canonical order is persisted; generated cloud IDs are only tie-breakers. */
