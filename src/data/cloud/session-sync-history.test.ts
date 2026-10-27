@@ -77,9 +77,9 @@ describe('session-local Dexie Cloud timeline', () => {
     ]));
     const sanitized = new SessionSyncHistory('tg:303', storage, () => now);
     expect(sanitized.getSnapshot()).toEqual([
-      { at: now, source: 'sync', phase: 'in-sync', status: 'connected', token: 'ignored' },
+      { at: now, source: 'sync', phase: 'in-sync', status: 'connected' },
     ]);
-    // The diagnostic view only renders documented phase/status, not extra keys from cached data.
+    // Unknown fields from tampered sessionStorage never reach rendering or future writes.
   });
 
   it('bounds high-frequency event history and supports a manual clear', () => {
