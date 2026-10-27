@@ -1,0 +1,22 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/trx-pistol-squat/",
+  "name": "TRX Pistol Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/TRX-Pistol-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "TRX Suspension"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

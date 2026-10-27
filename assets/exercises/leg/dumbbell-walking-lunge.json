@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-walking-lunge/",
+  "name": "Dumbbell Walking Lunge",
+  "how_to": "1. Hold a dumbbell in each hand, arms extended by your sides with palms facing inward.\n2. Stand tall with your feet hip-width apart and engage your core.\n3. Take a big step forward with your right leg, lowering both knees until your back knee hovers just above the ground.\n4. Keep your chest upright and front knee directly above the ankle.\n5. Push through the front heel to rise and bring your back leg forward into the next step.\n6. Continue alternating legs as you walk forward for the desired number of reps or distance.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/09/dumbbell-lunges.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Tibialis Anterior",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Levator Scapulae",
+        "Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Hip",
+    "Leg"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hack-squats-machine/",
+  "name": "Hack Squats Machine",
+  "how_to": "1. Step onto the platform and position your back flat against the pad with shoulders under the support pads.\n2. Place your feet shoulder-width apart with toes slightly turned out on the footplate.\n3. Unlock the safety handles, brace your core, and begin to lower the sled by bending your knees.\n4. Descend until your thighs are parallel or slightly below while keeping heels flat and knees aligned.\n5. Push through your heels to extend your legs and return to the starting position without locking your knees.\n6. Repeat for desired reps, maintaining control and tension throughout the movement.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Sled-Hack-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

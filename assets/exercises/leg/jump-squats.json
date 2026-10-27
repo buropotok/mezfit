@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/jump-squats/",
+  "name": "Jump Squats",
+  "how_to": "1. Stand tall with your feet shoulder-width apart and arms at your sides.\n2. Lower into a squat by bending your knees and hips until your thighs are parallel to the floor.\n3. Explode upward, jumping as high as you can while swinging your arms for momentum.\n4. Land softly by bending your knees and absorbing the impact through your legs.\n5. Reset immediately into your next squat and repeat for the desired reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Jump-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ]
+}

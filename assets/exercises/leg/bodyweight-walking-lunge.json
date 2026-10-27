@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-walking-lunge/",
+  "name": "Bodyweight Walking Lunge",
+  "how_to": "1. Starting Position: Stand upright with feet hip-width apart, arms at your sides or hands on your hips.\n2. Step Forward: Take a controlled step forward with one leg, lowering your hips until both knees bend at 90 degrees.\n3. Lowering Phase: Keep your torso upright and core engaged as the back knee hovers just above the ground.\n4. Push Through Heel: Press through the heel of your front foot to rise and bring the rear leg forward into the next step.\n5. Continue Walking: Alternate legs in a smooth, continuous motion until all repetitions are complete.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/09/bodyweight-walking-lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Tibialis Anterior",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Levator Scapulae",
+        "Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-deadlift/",
+  "name": "Lever Deadlift",
+  "how_to": "Lever Deadlift Benefits\n- It is suitable for beginners. Since this exercise is done on a machine and while doing this you don’t need to focus on your balancing muscles, it allows you to add more weight to gain more muscle.\n- Deadlift is one of the most effective compound exercises. It is expressed as a basic strength exercise in strength sports such as powerlifting. It is the most popular movement of strength and strength training as it works many muscle groups.\n- Increases Testosterone: It has been proven by research that weight exercises help increase short and long term testosterone levels. Exercises such as bench press, squat, and deadlift are the most effective exercises that increase testosterone levels.\n- It strengthens the ability to grip. It allows you to grasp an object more firmly when you hold it. In addition, studies show that deadlift is an effective exercise for improving explosive strength and vertical jumping performance.\n- Deadlift helps the development of leg muscles, hip muscles and core muscles while also supporting the formation of muscle and strength in the body. Also, adding deadlifts to your workouts helps strengthen your tendons, ligaments and bones.\n- The deadlift also activate you glutes and back muscles. Functional exercises such as deadlift are those that facilitate the real-life activities of the body.\n- Deadlift targets all the muscles responsible for your posture and allows you to keep your back straight during regular daily activities.\n- Correct form is very important in this exercise. For starters, doing wrong can lead to injury. After a few tries with the empty bar or accompanied by a trainer, the process of adapting to the movement may be shortened.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Lever-Deadlift.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Quadriceps",
+      "Adductor Magnus",
+      "Hamstrings",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Trapezius",
+        "Levator Scapulae",
+        "Rhomboids",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pistol-squat/",
+  "name": "Pistol Squat",
+  "how_to": "Pistol Squat Benefits\n- Pistol squat exercise requires a high level of balance, coordination, basic stability and leg strength. This movement is one of the most hard exercises, even for advanced exercisers.\n- The benefits of Pistol squat are remarkable in many ways. The purpose of this exercise with body weight is to improve balance, strength and coordination. Pistol squat increases mobility and flexibility of the ankle joint. It is a great exercise to strengthen the stabilizing muscles and increase stamina in the leg.\n- Bodyweight exercises are highly effective for building muscle and strength, as well as improving your coordination and functional fitness. Thanks to the Pistol squat, you can develop your single leg strength and muscles equally and thus benefit your overall athletic structure.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pistol-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "liopsoas",
+        "Tensor Fasciae Latae",
+        "Pectineus"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

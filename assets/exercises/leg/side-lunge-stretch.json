@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/side-lunge-stretch/",
+  "name": "Side Lunge",
+  "how_to": "Side Lunge Benefits\n- By doing the side lunges you increase your joint stability as you recruit smaller muscles around the hip joint that are responsible for keeping your joint stable.\n- Side lunges develop balance, stability, and strength. They work your inner and outer thighs and may even help to reduce the appearance of cellulite.\n- Side lunges, which is a versatile exercise, can be dynamic warm-up before the workout when applied slowly, but when applied quickly, you can turn it into a cardio exercise.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Side-Lunge-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Tibialis Anterior"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Leg"
+  ]
+}

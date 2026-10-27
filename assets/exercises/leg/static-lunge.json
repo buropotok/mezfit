@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/static-lunge/",
+  "name": "Static Lunge",
+  "how_to": "1. Stand with your feet hip-width apart.\n2. Take a step forward with one foot, and then take a larger step backward with your other foot. Your feet should be positioned so that when you lower your body into the lunge, both knees form 90-degree angles.\n3. Keep your torso upright with your chest lifted and your shoulders relaxed. Your core should be engaged for stability.\n4. Lower your body by bending both knees simultaneously.\n5. Hold the lowered position for a moment, and then push through the heel of your front foot to return to the starting position.\n6. Repeat the movement for the desired number of repetitions on one leg before switching to the other leg.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/10/Static-Lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Tibialis Anterior",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

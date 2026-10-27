@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/squat/",
+  "name": "Barbell Squat",
+  "how_to": "1. Set the barbell on a squat rack just below shoulder height. Step under it and rest the bar across your upper traps or rear delts.\n2. Grip the bar firmly, pull your elbows down and under, and lift the bar off the rack.\n3. Step back, set your feet shoulder-width apart, and brace your core.\n4. Lower your body by pushing your hips back and bending the knees, keeping your chest upright.\n5. Descend until your thighs are parallel to the ground or lower if mobility allows.\n6. Drive through your heels to return to the standing position, keeping the spine neutral.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/BARBELL-SQUAT.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

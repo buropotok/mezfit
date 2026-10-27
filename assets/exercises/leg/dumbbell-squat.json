@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-squat/",
+  "name": "Dumbbell Squat",
+  "how_to": "1. Setup: Stand with your feet shoulder-width apart. You can either hold a dumbbell in each hand at your sides or use a single dumbbell held with both hands in front of your chest (goblet squat style).\n2. Posture: Keep your chest up and your shoulders back. Maintain a natural arch in your lower back, and engage your core muscles for stability.\n3. Descent: Begin the movement by pushing your hips back, as if you’re sitting down into a chair. Keep your knees in line with your toes and allow them to bend as you lower yourself. It’s important to maintain a neutral spine throughout the motion.\n4. Depth: Lower your body until your thighs are at least parallel to the ground, or go deeper if you can without compromising form. Ideally, your thighs should be parallel to the floor or go below parallel for a full range of motion.\n5. Ascent: Push through your heels and drive your hips forward to stand back up. Keep your back straight as you rise. Exhale as you return to the starting position.\n6. Repetition: Repeat the squat for the desired number of repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/09/Dumbbell-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids",
+        "Levator Scapulae",
+        "Biceps Brachii",
+        "Forearms",
+        "Deltoids"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

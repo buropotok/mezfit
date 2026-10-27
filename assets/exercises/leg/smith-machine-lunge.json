@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/smith-machine-lunge/",
+  "name": "Smith Machine Lunge",
+  "how_to": "1. Set Up:\n  - Adjust the Smith machine bar to a suitable height. It should be positioned at about chest or shoulder level.\n  - Load an appropriate amount of weight onto the bar.\n2. Starting Position:\n  - Stand with your feet hip-width apart, facing away from the Smith machine.\n  - Position yourself in a way that the barbell is resting on your upper back and shoulders.\n3. Foot Placement:\n  - Take a step forward with one foot, ensuring it is a comfortable distance from the Smith machine. The distance will depend on your own stride length.\n  - Keep your feet in a split stance, with one foot forward and the other foot back.\n4. Lunging Movement:\n  - Lower your body by bending both knees, ensuring that your front knee is directly above your ankle, and your back knee is pointing down toward the floor.\n  - Aim to lower your back knee towards the ground without letting it touch.\n  - Keep your torso upright and maintain a straight line from your head to your hips.\n5. Pushing Back:\n  - Push through the heel of your front foot to return to the starting position.\n  - Continue alternating legs for the desired number of repetitions.\nTips:\n- Engage your core muscles to maintain balance and stability.\n- Keep your chest up and shoulders back throughout the movement.\n- Ensure that your knee does not go past your toes when lunging forward.\n- Control the descent and ascent of the movement to work the muscles effectively.\n- Start with a light weight to master the technique before adding more resistance.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Smith-Machine-Lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Tibialis Anterior",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ]
+}

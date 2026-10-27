@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/landmine-press/",
+  "name": "Landmine Squat to Press",
+  "how_to": "Landmine Press",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Landmine-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Pectoralis Major, Clavicular",
+      "Trapezius",
+      "Serratus Anterior",
+      "Abdominals",
+      "Triceps",
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Quadriceps",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Hip",
+    "Leg",
+    "Shoulders"
+  ]
+}
