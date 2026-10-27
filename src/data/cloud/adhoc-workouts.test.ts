@@ -171,6 +171,7 @@ describe('local ad-hoc execution', () => {
     const dayId = await repo.programs.createDay(programId, details.phases[0].id, 'День А');
     await repo.programs.addDayExercises(programId, dayId, ['0001']);
     const templateExercise = (await db.table('programExercises').toArray())[0];
+    await repo.programs.addExerciseSet(programId, dayId, templateExercise.id);
     const templateSet = (await db.table('programSets').toArray())[0];
     await db.table('programSets').update(templateSet.id, { plannedReps: 12, plannedWeightKg: 50,
       plannedDurationSeconds: 60, plannedDistanceMeters: 100, setType: 'rest_pause', comment: 'source only' });
@@ -203,6 +204,7 @@ describe('local ad-hoc execution', () => {
     await db.table('coachExerciseDefinitions').put(custom);
     await repo.programs.addDayExercises(programId, dayId, [customId]);
     const source = (await db.table('programExercises').toArray())[0];
+    await repo.programs.addExerciseSet(programId, dayId, source.id);
     await db.table('programExercises').update(source.id, { exercise: { ...source.exercise,
       catalogueDefinition: { ...source.exercise.catalogueDefinition, tracking_type: 'time_weight' } } });
     await db.table('coachExerciseDefinitions').delete(customId);
@@ -355,7 +357,8 @@ describe('local ad-hoc execution', () => {
     expect(templateSets).toHaveLength(3);
     for (const row of templateSets) {
       expect(row).toMatchObject({ plannedReps: null, plannedWeightKg: null, plannedDurationSeconds: null,
-        plannedDistanceMeters: null, comment: null, setLabel: null });
+        plannedDistanceMeters: null, comment: null });
+      expect(row.setLabel ?? null).toBeNull();
       for (const forbidden of ['actualReps', 'actualWeightKg', 'metrics', 'fact', 'rpe', 'bands'])
         expect(row).not.toHaveProperty(forbidden);
     }
