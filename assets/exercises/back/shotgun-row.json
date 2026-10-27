@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/shotgun-row/",
+  "name": "Shotgun Row",
+  "how_to": "Shotgun Row Benefits\n- Shotgun Row is a pulling exercise that works the back muscles in general, particularly the latissimus dorsi. This exercise performed on the cable machine is one-sided and provides constant resistance, so it is very beneficial in terms of equal development of the muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/shotgun-row.gif",
+  "muscles": {
+    "target": [
+      "Back"
+    ],
+    "synergists": [
+      "Latissimus Dorsi",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ]
+}

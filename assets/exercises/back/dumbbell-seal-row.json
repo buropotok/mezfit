@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-seal-row/",
+  "name": "Dumbbell Seal Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/11/Dumbbell-Seal-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ]
+}

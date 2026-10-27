@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-reverse-t-bar-row/",
+  "name": "Lever Reverse T-Bar Row",
+  "how_to": "Reverse T-Bar Row Benefits\n- T-bar row are a strength training exercise that mimics the movement of rowing a boat. The goal is to strengthen the muscles that bring the arms toward the body, as well as those that move the shoulder blades toward the spine. The t-bar row can allow you to lift more weight. Due to the nature of this movement, you are able to leverage more weight.\n- The T bar, which targets the entire back chain, targets the latissimus dorsi, infraspinatus, trapezius, posterior deltoids and rhomboids, so adding exercises such as barbell rows and t-bar rows to your training programs will be beneficial for the development of back muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Lever-Reverse-T-Bar-Row.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Erector Spinae",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Teres Major",
+      "Rhomboids",
+      "Brachialis"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ]
+}

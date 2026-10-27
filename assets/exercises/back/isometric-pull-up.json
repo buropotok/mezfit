@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/isometric-pull-up/",
+  "name": "Isometric Pull-Up",
+  "how_to": "1. Grip the pull-up bar with your hands shoulder-width apart, palms facing away (pronated).\n2. Pull yourself to the desired position (top, middle, or near-bottom).\n3. Hold the position by engaging your back, arms, and core muscles.\n4. Maintain a still posture without swinging or moving for 10–30 seconds.\n5. Lower with control or drop safely if fatigued.\n6. Repeat for multiple sets, depending on your training goal.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/08/Isometric-Pull-Up.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Trapezius",
+      "Rhomboids",
+      "Posterior Deltoid",
+      "Teres Major",
+      "Biceps Brachii",
+      "Brachioradialis",
+      "Brachialis",
+      "Pectoralis Minor"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Obliques",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ]
+}

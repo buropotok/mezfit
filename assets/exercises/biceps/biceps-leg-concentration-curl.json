@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/biceps-leg-concentration-curl/",
+  "name": "Biceps Leg Concentration Curl",
+  "how_to": "Biceps Leg Concentration Curl Benefits\n- Biceps leg concentration curl is an isolation exercise that can be performed at body weight without the need for equipment.\n- Leg concentration curl are a great arm movement to stimulate the muscle fibers at the top of the brachialis muscle and biceps. Because you turn your arm in toward your body when you do concentration curls, it helps to place more focus on the long head of the biceps, which makes up the mass of the biceps peak.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Biceps-Leg-Concentration-Curl.gif",
+  "muscles": {
+    "target": [
+      "Brachialis"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

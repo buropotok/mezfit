@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/waiter-curl/",
+  "name": "Waiter Curl",
+  "how_to": "1. Starting Position: Stand tall with your feet shoulder-width apart, holding a dumbbell vertically in front of you with both hands cupping the top plate.\n2. Grip Setup: Keep your elbows close to your torso and your palms facing upward, supporting the dumbbell from underneath.\n3. Curl the Dumbbell: Bend your elbows to lift the dumbbell toward your chest while keeping your wrists stable.\n4. Squeeze at the Top: Pause for 1–2 seconds, contracting the biceps fully.\n5. Lower Under Control: Slowly return the dumbbell to the starting position without letting it drop.\n6. Repeat: Perform the desired number of repetitions while maintaining strict form.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/09/waiter-curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps Brachii"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Forearm Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

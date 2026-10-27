@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-curl/",
+  "name": "Barbell Curl",
+  "how_to": "1. Stand up straight with your feet shoulder-width apart and grasp the barbell with an underhand grip, with your hands shoulder-width apart.\n2. Keep your elbows close to your sides and lift the barbell towards your chest, while contracting your biceps. Make sure to keep your elbows stationary and avoid swinging the weight.\n3. Slowly lower the barbell back to the starting position, keeping your biceps engaged throughout the movement.\n4. Repeat for the desired number of repetitions.\nBarbell Curl Benefits\n- Effective for building biceps strength and size\nThe barbell curl primarily targets the biceps, which are composed of two heads: the long head and the short head. The primary benefit of barbell curls is that they target and build strength in the biceps muscles. During the barbell curl, both heads of the biceps are activated, as well as other muscles in the upper body, including the brachialis, brachioradialis, and forearms. This exercise is particularly effective for those who are looking to increase the size and definition of their biceps.\n\nMuscle growth, also known as hypertrophy, occurs when muscle fibers undergo microtears during exercise and then repair and grow larger during rest periods. The barbell curl is effective for stimulating muscle growth in the biceps because it places the muscles under tension and creates microtears in the muscle fibers. By progressively increasing the weight and volume of the exercise over time, you can continue to stimulate muscle growth and increase bicep size and strength.\n\n- Improved Grip Strength:\nThe barbell curl exercise requires you to grip and hold onto a heavy weight, which can help to improve your grip strength over time. A stronger grip can be beneficial for a wide range of activities, including sports, weightlifting, and daily tasks.\n\nThe muscles that work according to the barbell curl grip styles\nBarbell Curl Muscles Worked\nTarget - Biceps\nSynergists - Brachialis\nSynergists - Brachioradialis\nStabilizers - Wrist Flexors",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

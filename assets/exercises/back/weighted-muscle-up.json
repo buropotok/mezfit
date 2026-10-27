@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-muscle-up/",
+  "name": "Weighted Muscle-Up",
+  "how_to": "1. Attach weights securely to a dip belt, vest, or backpack. Use moderate weight to begin.\n2. Grip the bar slightly wider than shoulder-width, with a false grip or standard overhand grip.\n3. Initiate a powerful pull-up, driving your elbows down and back aggressively.\n4. Explosively transition over the bar, pulling your chest high and shifting the wrists on top.\n5. Press your body up, finishing in a locked-out dip position above the bar.\n6. Lower yourself under control and repeat for desired reps or hold the top position for stability work.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/Weighted-Muscle-Up.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Levator Scapulae",
+      "Rhomboids",
+      "Teres Major",
+      "Brachialis",
+      "Pectoralis Minor"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Obliques",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Calisthenic"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-cable-rope-row/",
+  "name": "Seated Cable Rope Row",
+  "how_to": "Many of the movements that work the same muscle group may look alike, but they focus on different parts of the muscles because they are at different angles. If you want to build better muscle specifically, keep in mind that it is more beneficial to include exercises that focus on different aspects to your training program.\n\nSeated Cable Rope Row Benefits\n- It is one of the most effective exercises when it comes to back muscles. Allows you to build both the width and thickness of the back simultaneously. Cable movements provide constant tension throughout the entire movement. Using cables allows you to work both the concentric and eccentric portions of the exercise. More tension equals more muscle activation.\n- Having a strong back helps to keep the spinal column in proper alignment and allows for completion of everyday tasks with reduced injury risk. In addition to helping strengthen the back, the exercise secondarily works the arms and shoulders.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Seated-Cable-Rope-Row.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Erector Spinae",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Teres Major",
+      "Rhomboids",
+      "Brachioradialis",
+      "Brachialis"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae"
+  ]
+}

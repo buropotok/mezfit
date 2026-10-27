@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-row/",
+  "name": "Dumbbell Row",
+  "how_to": "1. Place your left knee and left hand on a bench, keeping your back flat and torso parallel to the ground.\n2. Hold a dumbbell in your right hand, arm fully extended toward the floor, palm facing in.\n3. Engage your core and pull the dumbbell up, driving your elbow toward your hip.\n4. Pause at the top, squeezing your shoulder blade toward your spine.\n5. Lower the dumbbell slowly to the starting position under control.\n6. Complete reps, then switch sides.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Row.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Trapezius, Middle",
+      "Trapezius, Lower",
+      "Rhomboids",
+      "Teres Major",
+      "Deltoid, Posterior",
+      "Infraspinatus",
+      "Teres Minor",
+      "Brachialis",
+      "Brachioradialis",
+      "Pectoralis Major, Sternal"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Triceps, Long Head",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ]
+}

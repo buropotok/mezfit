@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-curl-on-arm-blaster/",
+  "name": "Barbell Curl On Arm Blaster",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Barbell-Curl-On-Arm-Blaster.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

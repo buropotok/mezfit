@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-scott-curl/",
+  "name": "Dumbbell Scott Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/dumbbell-scot-curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

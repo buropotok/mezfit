@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-prone-dumbbell-curl/",
+  "name": "One Arm Prone Dumbbell Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/One-Arm-Prone-Dumbbell-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ]
+}

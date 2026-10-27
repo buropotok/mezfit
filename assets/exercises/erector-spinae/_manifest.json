@@ -1,0 +1,33 @@
+{
+  "source": "https://fitnessprogramer.com/exercise-primary-muscle/erector-spinae/",
+  "count": 60,
+  "source_exercise_count": 60,
+  "listing_pages": 6,
+  "imported_at": "2026-10-27T16:40:33.365757+00:00",
+  "missing_gif": [],
+  "missing_how_to": [
+    "seated-back-extension.json",
+    "cable-pull-through.json",
+    "twisting-hyperextension.json",
+    "reverse-hyperextensions.json",
+    "standing-toe-touches.json",
+    "stiff-leg-deadlift.json",
+    "kneeling-back-rotation.json",
+    "bow-pose.json",
+    "kneeling-t-spine-rotation.json",
+    "supine-spinal-twist.json",
+    "landmine-t-bar-row.json",
+    "dumbbell-pull-through.json",
+    "glute-ham-raise.json",
+    "push-up-with-rotation.json",
+    "side-plank-rotation.json",
+    "kettlebell-figure-8.json",
+    "barbell-single-leg-deadlift.json",
+    "dumbbell-single-leg-deadlift.json",
+    "good-morning-with-resistance-band.json",
+    "dhanurasana-rocking-bow-pose.json",
+    "swing-gymstick.json",
+    "single-leg-reverse-hyperextension-gymstick.json"
+  ],
+  "instructions": "Full post-GIF instruction text; source HTML list structure."
+}

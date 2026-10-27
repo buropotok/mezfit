@@ -1,0 +1,21 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-pullover/",
+  "name": "Lever Pullover",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Lever-Pullover-plate-loaded.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ]
+}
