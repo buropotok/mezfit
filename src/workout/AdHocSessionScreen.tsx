@@ -15,9 +15,14 @@ import './workout-session-screen.css';
 /** History is supplied later; missing entries intentionally remain empty. */
 export type AdHocPreviousSets = Readonly<Record<string, readonly (PreviousSet | null)[]>>;
 
+/** Public session capabilities consumed by the screen, independent of storage internals. */
+export type AdHocSessionRepository = Pick<AdHocWorkoutRepository,
+  'actorUserId' | 'observe' | 'reorder' | 'saveSet' | 'addSet' | 'deleteSet' |
+  'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>;
+
 export function AdHocSessionScreen({ repository, sessionId, initData, actor, previousSets,
   onNavigationContextChange }: {
-  repository: AdHocWorkoutRepository;
+  repository: AdHocSessionRepository;
   sessionId: string;
   initData: string;
   actor?: ProgramActor;
