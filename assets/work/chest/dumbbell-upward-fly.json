@@ -1,0 +1,40 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-upward-fly/",
+  "name": "Dumbbell Upward Fly",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set Up: Stand with your feet shoulder-width apart. Hold a dumbbell in each hand, with your palms facing forward. Choose an appropriate weight for"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Dumbbell-Upward-Fly.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Clavicular"
+    ],
+    "synergists": [
+      "Deltoid, Anterior",
+      "Biceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Brachialis",
+        "Triceps Brachii",
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Разведение гантелей снизу вверх",
+  "tracking_type": "weight_reps"
+}
