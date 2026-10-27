@@ -1,0 +1,48 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/decline-push-up/",
+  "name": "Decline Push-up",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Set Up Your Position: Place your feet on an elevated surface (bench, step, or sturdy platform). Position your hands shoulder-width apart on the floor."
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2015/07/Decline-Push-Up.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Rectus Abdominis",
+        "Pectoralis Minor",
+        "Serratus Anterior",
+        "Obliques",
+        "Quadriceps"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest"
+  ],
+  "name_ru": "Отжимания с ногами на возвышении",
+  "tracking_type": "weight_reps"
+}
