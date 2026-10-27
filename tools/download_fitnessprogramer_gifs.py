@@ -46,7 +46,7 @@ def filename_for(url):
 
 
 def catalogue():
-    groups, urls, folded = {}, {}, {}
+    groups, urls, folded, collisions = {}, {}, {}, {}
     for cat in CATEGORIES:
         folder = CATALOGUE / cat
         if not folder.is_dir():
@@ -67,15 +67,14 @@ def catalogue():
                 pass
             folded[folded_name] = name
             if name in urls and urls[name] != url:
-                raise RuntimeError(
-                    f"Different URLs share original GIF filename {name}: "
-                    f"{urls[name]} / {url}")
-            urls[name] = url
+                collisions.setdefault(name, {urls[name]}).add(url)
+            else:
+                urls[name] = url
             if "image_id" in data and data["image_id"] != name:
                 raise RuntimeError(f"Existing image_id does not match GIF: {path}")
             records[path] = (data, name)
         groups[cat] = records
-    return groups, urls
+    return groups, urls, collisions
 
 
 def session_for_thread():
@@ -140,6 +139,49 @@ def download(name, url):
         temporary.unlink(missing_ok=True)
 
 
+def verify_colliding_urls(collisions):
+    """Allow one original basename for multiple URLs only if all GIFs are identical."""
+    print(f"Original filenames shared by different URLs: {len(collisions)}", flush=True)
+    incompatible = []
+    for name, sources in sorted(collisions.items()):
+        fingerprints = {}
+        for url in sorted(sources):
+            hash_value = hashlib.sha256()
+            count = 0
+            with session_for_thread().get(url, stream=True, timeout=(20, 70)) as response:
+                response.raise_for_status()
+                final = urlsplit(response.url)
+                if final.scheme != "https" or final.hostname != HOST:
+                    raise RuntimeError(f"Unexpected source redirect: {response.url}")
+                signature = b""
+                for part in response.iter_content(128 * 1024):
+                    if not part:
+                        continue
+                    if not signature:
+                        signature = part[:6]
+                        if signature not in (b"GIF87a", b"GIF89a"):
+                            raise RuntimeError(f"Not a GIF: {url}")
+                    count += len(part)
+                    if count > LIMIT:
+                        raise RuntimeError(f"GIF exceeds 50 MiB: {url}")
+                    hash_value.update(part)
+            fingerprints[url] = hash_value.hexdigest()
+        same = len(set(fingerprints.values())) == 1
+        print(json.dumps({
+            "filename": name,
+            "same_bytes": same,
+            "sources": fingerprints,
+        }), flush=True)
+        if not same:
+            incompatible.append(name)
+    if incompatible:
+        raise RuntimeError(
+            "Cannot keep multiple different GIFs under one original filename "
+            "in one flat directory. Conflicting names: " +
+            ", ".join(incompatible)
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("category", choices=(*CATEGORIES, "preflight"))
@@ -147,13 +189,14 @@ def main():
     args = parser.parse_args()
     if not 1 <= args.workers <= 8:
         parser.error("--workers must be between 1 and 8")
-    groups, urls = catalogue()
+    groups, urls, collisions = catalogue()
     print(json.dumps({
         "total_records": sum(len(group) for group in groups.values()),
         "unique_original_filenames": len(urls),
         "categories": {key: len(value) for key, value in groups.items()},
     }), flush=True)
     if args.category == "preflight":
+        verify_colliding_urls(collisions)
         return
     records = groups[args.category]
     if not records:
