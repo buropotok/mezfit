@@ -1,0 +1,63 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-dips/",
+  "name": "Reverse Dips",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Chest"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Triceps"
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Full Gym"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "NO EQUIPMENT"
+      ]
+    },
+    {
+      "step": 5,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Online workout planner lets you create 5 free personalized workout plans to help you reach your fitness goals."
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Reverse-Dips.gif",
+  "muscles": {
+    "target": [
+      "Chest",
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ],
+  "name_ru": "Обратные отжимания",
+  "tracking_type": "weight_reps"
+}
