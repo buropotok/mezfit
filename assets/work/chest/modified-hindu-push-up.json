@@ -1,0 +1,58 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/modified-hindu-push-up/",
+  "name": "Modified Hindu Push-up",
+  "how_to": [],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Modified-Hindu-Push-up.gif",
+  "muscles": {
+    "target": [
+      "Home",
+      "Calculators",
+      "Body Mass Index (BMI)",
+      "Body Fat Index",
+      "Calories Burned",
+      "Daily Calorie Calculator",
+      "One Rep Max Calculator",
+      "Grip Strength Calculator",
+      "Exercises",
+      "Neck",
+      "Trapezius",
+      "Shoulder",
+      "Chest",
+      "Back / Wing",
+      "Erector Spinae",
+      "Biceps",
+      "Triceps",
+      "Forearm",
+      "Abs / Core",
+      "Leg",
+      "Calf",
+      "Hips",
+      "Cardio",
+      "Full Body",
+      "Single Workouts",
+      "Workout Plans",
+      "My Profile",
+      "Login / Reg",
+      "Search",
+      "Cart",
+      "Menu",
+      "Modified Hindu Push-up",
+      "Exercise / Chest, Full Body"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Full Body"
+  ],
+  "name_ru": "Упрощённые индуистские отжимания",
+  "tracking_type": "weight_reps"
+}
