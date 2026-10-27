@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/bosu-ball-push-up/",
   "name": "Bosu Ball Push-Up",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Place the Bosu ball dome-side down on the floor."
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Position your hands on the flat platform, slightly wider than shoulder-width apart."
-      ]
-    }
-  ],
+  "how_to": "Starting Position:\n1. Place the Bosu ball dome-side down on the floor.\n2. Position your hands on the flat platform, slightly wider than shoulder-width apart.\n3. Extend your legs behind you into a standard push-up position, ensuring your body forms a straight line from head to heels.\n4. Engage your core to maintain stability.\nExecution:\n- Lowering: Slowly bend your elbows, lowering your chest towards the Bosu ball while maintaining control and alignment.\n- Bottom Position: Lower yourself until your chest is close to or lightly touches the Bosu ball.\n- Pushing Up: Press through your hands to straighten your elbows, returning to the starting position. Keep your core engaged and movements controlled.\n- Repetition: Repeat for the desired number of repetitions.\nImportant Considerations:\n- Balance: The Bosu ball introduces instability, so focus on maintaining balance and control. Beginners can start with a wider hand placement for more stability.\n- Core Engagement: Keep your core activated throughout the exercise to prevent your hips from sagging and to enhance stability.\n- Body Alignment: Maintain a straight line from head to heels. Avoid arching your back or allowing your hips to drop.\n- Controlled Movements: Perform the exercise slowly and deliberately, avoiding momentum or rushing through repetitions.\n- Wrist Position: Ensure your wrists are directly under your shoulders to reduce strain and improve joint alignment.\nProgression & Modifications:\nIf the full Bosu ball push-up is too challenging, try these modifications:\n\n- Perform push-ups with your knees on the ground for reduced intensity.\n- Place your hands on the ground and feet on the Bosu ball for an alternative challenge.\nBy focusing on proper form and control, you can effectively enhance upper body strength and core stability with Bosu ball push-ups.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Bosu-Ball-Push-Up.gif",
   "muscles": {
     "target": [
@@ -50,6 +35,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Bosu-Ball-Push-Up.gif",
   "name_ru": "Отжимания с опорой на BOSU",
   "tracking_type": "weight_reps"
 }
