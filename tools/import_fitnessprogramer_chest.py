@@ -17,7 +17,7 @@ LIST = ROOT + '/exercise-primary-muscle/chest/'
 EXERCISE = re.compile(r'^/exercise/[a-z0-9-]+/$', re.I)
 GIF = re.compile(r'/wp-content/uploads/[^\s\"\'<>]+?\.gif', re.I)
 MUSCLE = re.compile(r'^(Target|Synergists?|Dynamic Stabilizers?|Antagonist Stabilizers?|Stabilizers?)\s*[-:–]\s*(.+)$', re.I)
-STOP = re.compile(r'^(Preview|Muscle Groups?|Equipment|Benefits?|Variations?|FAQ|How To|Workout Planner|Print Exercise)', re.I)
+STOP = re.compile(r'^(Preview|Frequently Asked Questions|Muscle Groups?|Equipment|Benefits?|Variations?|FAQ|How To|Workout Planner|Print Exercise)', re.I)
 
 
 def uniq(values):
@@ -151,8 +151,6 @@ def extract_muscles(soup, fallback):
     # Without category labels, every plain muscle name is a target.
     if not (out['target'] or out['synergists'] or out['stabilizers']['dynamic'] or out['stabilizers']['antagonist']):
         out['target'] = unlabeled or fallback[:]
-    else:
-        out['target'].extend(x for x in unlabeled if x not in out['target'] and not x.startswith('-'))
     out['target'] = uniq(out['target'])
     out['synergists'] = uniq(out['synergists'])
     for key in out['stabilizers']:
@@ -272,8 +270,13 @@ def main():
             or not bench.get('muscles', {}).get('synergists', [])
             or not cable.get('muscles', {}).get('synergists', [])
             or 'Trapezius' not in arm.get('muscles', {}).get('target', [])
-            or not results.get('pec-deck-fly.json', {}).get('how_to')):
+            or not results.get('pec-deck-fly.json', {}).get('how_to')
+            or 'Frequently Asked Questions' in results.get('pec-deck-fly.json', {}).get('muscles', {}).get('target', [])):
         raise RuntimeError('Muscle parsing regression: expected source-backed groups not found')
+    for filename, data in results.items():
+        invalid = [name for name in data['muscles']['target'] if STOP.match(name)]
+        if invalid:
+            raise RuntimeError('Muscle label contamination in ' + filename + ': ' + repr(invalid))
     folder = Path('assets/exercises/chest')
     folder.mkdir(parents=True, exist_ok=True)
     for path in folder.glob('*.json'):
