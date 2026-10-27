@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/decline-dumbbell-press/",
   "name": "Decline Dumbbell Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Set a decline bench at a 15–30 degree angle."
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Grab a pair of dumbbells and sit on the bench with your feet secured under"
-      ]
-    }
-  ],
+  "how_to": "Setup\n1. Set a decline bench at a 15–30 degree angle.\n2. Grab a pair of dumbbells and sit on the bench with your feet secured under the support pads.\n3. Lie back with the dumbbells held at shoulder level, palms facing forward, and elbows bent at about a 90-degree angle.\nExecution\n1. Press Upward: Exhale as you press the dumbbells upward in a smooth, controlled motion until your arms are fully extended (but not locked).\n2. Lower Slowly: Inhale as you lower the dumbbells back to the starting position, maintaining control and ensuring the elbows stay slightly below chest level for a deep stretch.\n3. Repeat for the desired number of repetitions.\nTips for Effectiveness\n- Focus on Form: Prioritize proper form over heavy weights to maximize effectiveness and safety.\n- Squeeze at the Top: Contract your chest muscles at the peak of the movement for optimal engagement.\n- Controlled Tempo: Use a slow and controlled tempo to maintain tension on the chest muscles.\n- Pair with Incline and Flat Presses: Combine with other bench press variations for complete chest development.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Decline-Dumbbell-Press.gif",
   "muscles": {
     "target": [],
@@ -40,6 +25,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Decline-Dumbbell-Press.gif",
   "name_ru": "Жим гантелей лёжа на скамье с отрицательным наклоном",
   "tracking_type": "weight_reps"
 }
