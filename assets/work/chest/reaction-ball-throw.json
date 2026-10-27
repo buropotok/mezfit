@@ -1,0 +1,44 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reaction-ball-throw/",
+  "name": "Reaction Ball Throw",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Here’s how you can perform a Reaction Ball Drill:"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Stand facing the wall or chosen surface with the reaction ball in one hand (e.g.,"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/08/Reaction-Ball-Throw-Agility-Ball-Drill-.gif",
+  "muscles": {
+    "target": [
+      "Chest",
+      "Shoulders",
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Shoulders",
+    "Triceps"
+  ],
+  "name_ru": "Бросок реакционного мяча",
+  "tracking_type": "weight_reps"
+}
