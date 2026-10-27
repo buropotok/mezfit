@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-/** DRAFT proposal: read-only preview CLI and pure configuration verification. No import path. */
-import { readFile, writeFile } from 'node:fs/promises';
+/** Approved scoped Coach ACL operator; the protected workflow alone invokes cloud import. */
+import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { ADHOC_SCHEMA, EXPECTED_ADHOC_ROLES } from './adhoc-sessions.mjs';
 
-// Reserved for a future reviewed activation PR; this literal authorizes nothing today.
 export const CONFIRMATION = 'APPLY_PLANNED_SESSION_COACH_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 const fail = code => { throw new Error(code); };
@@ -36,7 +35,7 @@ function assertStructure(schema, roles) {
   if (!record(schema) || !record(schema.schema) || !record(roles) || !record(roles.roles)) {
     fail('INVALID_CLOUD_STRUCTURE');
   }
-  // Prerequisites must already exist: this proposal never repairs schema.
+  // Prerequisites must already exist: this operator never repairs schema.
   for (const name of ['workoutOccurrences', ...Object.keys(ADHOC_SCHEMA.schema)]) {
     equal(schema.schema[name], '@id', 'MISSING_OR_INCOMPATIBLE_SESSION_TABLE');
   }
@@ -64,7 +63,7 @@ export function assertUnchangedBeforeApply(beforeSchema, beforeRoles, currentSch
   equal(currentSchema, beforeSchema, 'CLOUD_CONFIGURATION_CHANGED_SINCE_PREVIEW');
   equal(currentRoles, beforeRoles, 'CLOUD_CONFIGURATION_CHANGED_SINCE_PREVIEW');
 }
-/** Future post-attempt verifier, including failed imports and no-op applies; no I/O. */
+/** Exact post-attempt verifier, including failed imports and no-op applies; no I/O. */
 export function verifyPlannedSessions(overlay, beforeSchema, beforeRoles, afterSchema, afterRoles) {
   planPlannedSessions(overlay, beforeSchema, beforeRoles);
   const expectedRoles = structuredClone(beforeRoles);
@@ -78,13 +77,10 @@ export function validatePlannedDispatch(env) {
     || !env.GITHUB_ACTOR || env.GITHUB_ACTOR !== env.GITHUB_REPOSITORY_OWNER) {
     fail('UNAUTHORIZED_PLANNED_DISPATCH');
   }
+  if (!['preview', 'apply'].includes(env.DEXIE_PLANNED_OPERATION)) fail('INVALID_PLANNED_OPERATION');
   if (env.DEXIE_PLANNED_OPERATION === 'apply') {
-    if (env.PLANNED_SESSION_LOCAL_START_APPROVED !== 'true') fail('LOCAL_START_NOT_APPROVED');
-    // Even a forged approval marker/confirmation cannot enable this draft operator.
-    fail('PLANNED_APPLY_NOT_IMPLEMENTED');
-  }
-  if (env.DEXIE_PLANNED_OPERATION !== 'preview') fail('INVALID_PLANNED_OPERATION');
-  if (env.DEXIE_PLANNED_CONFIRMATION) fail('PREVIEW_MUST_NOT_HAVE_APPLY_CONFIRMATION');
+    if (env.DEXIE_PLANNED_CONFIRMATION !== CONFIRMATION) fail('INVALID_PLANNED_CONFIRMATION');
+  } else if (env.DEXIE_PLANNED_CONFIRMATION) fail('PREVIEW_MUST_NOT_HAVE_APPLY_CONFIRMATION');
 }
 
 const load = async path => JSON.parse(await readFile(path, 'utf8'));
@@ -95,7 +91,7 @@ async function main() {
     fail('INVALID_PLANNED_OPERATOR_COMMAND');
   }
   if (mode === 'preflight') {
-    console.log('Protected main/owner preview authorized; planned activation remains unapproved.');
+    console.log('Protected main/owner planned session ACL dispatch authorized.');
     return;
   }
   if ((await load('dexie-cloud.json')).dbUrl !== DB_URL) fail('UNEXPECTED_DATABASE_URL');
@@ -107,24 +103,36 @@ async function main() {
   const beforeRoles = await load(join(dir, 'before-roles.json'));
   const plan = planPlannedSessions(overlay, beforeSchema, beforeRoles);
   if (mode === 'plan') {
+    if (!env.GITHUB_OUTPUT) fail('GITHUB_OUTPUT_REQUIRED');
     await writeFile(join(dir, 'planned-proposal.json'), JSON.stringify(plan.importPayload, null, 2),
       { flag: 'wx', mode: 0o600 });
-    console.log('DRAFT Coach occurrence update additions: status, workoutSessionId.');
-    console.log('Proposed changed roles: ' + (plan.changedRoles.join(', ') || 'none'));
-    console.log('No schema, membership or business data changes; apply unavailable.');
+    await appendFile(env.GITHUB_OUTPUT, 'change_count=' + plan.changeCount + '\n');
+    console.log('Approved Coach occurrence update additions: status, workoutSessionId.');
+    console.log('Approved changed roles: ' + (plan.changedRoles.join(', ') || 'none'));
+    console.log('No schema, membership or business data changes.');
     return;
   }
-  const prefix = mode === 'recheck' ? 'current' : 'after';
-  // Preview proves zero mutation, rather than claiming the target ACL was installed.
-  assertUnchangedBeforeApply(beforeSchema, beforeRoles,
-    await load(join(dir, prefix + '-schema.json')), await load(join(dir, prefix + '-roles.json')));
   assertExactImportPayload(plan.importPayload, await load(join(dir, 'planned-proposal.json')));
-  console.log('Exact complete schema/roles and draft payload unchanged; no activation claimed.');
+  if (mode === 'recheck') {
+    assertUnchangedBeforeApply(beforeSchema, beforeRoles,
+      await load(join(dir, 'current-schema.json')), await load(join(dir, 'current-roles.json')));
+    console.log('Exact full schema/roles and approved payload rechecked immediately before import.');
+    return;
+  }
+  const afterSchema = await load(join(dir, 'after-schema.json'));
+  const afterRoles = await load(join(dir, 'after-roles.json'));
+  if (env.DEXIE_PLANNED_OPERATION === 'preview') {
+    assertUnchangedBeforeApply(beforeSchema, beforeRoles, afterSchema, afterRoles);
+    console.log('Preview verified exact complete schema and roles unchanged.');
+  } else {
+    verifyPlannedSessions(overlay, beforeSchema, beforeRoles, afterSchema, afterRoles);
+    console.log('Exact Coach ACL and unchanged full schema/other roles verified; no per-user permission test performed.');
+  }
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   main().catch(error => {
     console.error(error instanceof Error && /^[A-Z0-9_]+$/.test(error.message)
-      ? error.message : 'PLANNED_CONFIGURATION_PREVIEW_FAILED');
+      ? error.message : 'PLANNED_CONFIGURATION_OPERATION_FAILED');
     process.exitCode = 1;
   });
 }

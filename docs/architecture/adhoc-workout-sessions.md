@@ -4,6 +4,8 @@ Status: implementation and protected activation contract; **not live validated**
 The user explicitly approved replacing server-confirmed ad-hoc Start and completion
 with atomic local Dexie transactions and Addon replication. This exception does
 not change scheduled workout Start, occurrence lifecycle, or existing FACT grants.
+The separately approved Coach planned-session extension is documented in
+`planned-workout-sessions.md`.
 
 ## Coach entry points
 
@@ -22,8 +24,8 @@ creates the default program, phase, day and blank session. The bottom toast says
 automatically linked case asks “Сохранить шаблон тренировки в программе?” Yes
 updates that day with exercises/order and sets/order/type only. No leaves the
 program unchanged. A pending choice survives reopening. Existing program days
-are not automatically overwritten. Planned workout opens only an empty animated
-BottomSheet; the two-week list and collapsible day card remain out of scope.
+are not automatically overwritten. The former Planned-workout placeholder is replaced by the separate two-week list
+and shared collapsible editor described in `planned-workout-sessions.md`.
 
 ## Persistence and lifecycle
 

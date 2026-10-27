@@ -1,48 +1,47 @@
-# Planned workout sessions — DRAFT proposal
+# Planned workout sessions
 
-Status: **not user-approved and not activated**. Both the local scheduled Start
-exception and new protected ACL maintenance require an explicit reviewed user
-activation decision. This proposal does not supersede AGENTS.md §21 or the
-server-confirmed scheduled Start contract in `local-first-storage-sync.md`.
-The approved ad-hoc exception does not authorize scheduled Start.
+Status: **local atomic scheduled Start and scoped Coach ACL maintenance explicitly
+user-approved; live activation pending protected manual ACL installation and
+ordinary-account real-server permission evidence**. Approval covers this code and
+operator, not execution of a cloud write in this development session. No workflow
+was dispatched or cloud mutation performed here.
 
-## Proposed local execution contract
+## Local execution contract
 
-After approval only, the typed local repository would materialize a complete
-scheduled execution graph and link its occurrence in one atomic Dexie transaction.
-Execution reuses the existing `adHocSessions`, `adHocExercises`, `adHocSets` tables;
-there is no table, index or schema change. Header insertion may include optional
-immutable `occurrenceId` and an immutable `occurrencePlan` snapshot. Exercise/set
-insertion may include optional immutable `occurrenceExerciseId`/`occurrenceSetId`.
-These are add-time fields, **not new update grants**. Keep source PLAN unchanged;
-later occurrence/source edits cannot rewrite the accepted execution snapshot.
-Existing non-scheduled ad-hoc records remain valid without those optional fields.
+The typed local repository materializes a complete scheduled execution graph and
+links its occurrence in one atomic Dexie transaction. Addon owns replication;
+Start does not await HTTP, a cloud push or cloud-template business revalidation.
+This approved scheduled exception extends the approved ad-hoc local lifecycle.
+It replaces the earlier scheduled server-confirmed Start requirement for this
+slice. It does not introduce a server transaction or cross-device uniqueness claim.
 
-The proposed transaction includes occurrence `status`/`workoutSessionId` updates,
-the header and all initial children. A failure must leave no partial graph or link;
-repeated Start must reuse the accepted graph. Local eligibility uses the authorized
-local subset and accepted occurrence snapshot, without HTTP, wait-for-sync or
-cloud-template revalidation. Addon owns replication. No server-atomic import or
-cross-device uniqueness guarantee is implied by a local transaction.
+Execution reuses existing `adHocSessions`, `adHocExercises`, `adHocSets`; there is
+no table, index or schema change. Header insertion may include optional immutable
+`occurrenceId` and an immutable `occurrencePlan` snapshot. Exercise/set insertion
+may include optional immutable `occurrenceExerciseId`/`occurrenceSetId`. These are
+add-time fields, **not new update grants**. Existing ad-hoc rows remain valid
+without them. Source PLAN remains unchanged; later source/occurrence edits cannot
+rewrite the accepted execution snapshot.
 
-Relationship rows retain their own relationship `realmId` and `owner: realmId`
-sentinel on every row. Personal rows retain the actor's personal realm/ownership.
-Parent IDs and provenance do not grant access. Existing identity, realm, owner,
-athlete, creator and parent keys remain immutable. Existing tombstone and FACT
-rules remain unchanged. A role add grant alone cannot enforce insertion ownership
-or cross-record linkage; real-server structural permission evidence is required.
+The transaction includes occurrence `status`/`workoutSessionId` updates, header and
+initial children. Failure leaves no partial graph/link; repeated Start reuses the
+accepted active graph. Eligibility is checked against the authorized local subset.
+Each relationship row retains its relationship `realmId` and `owner: realmId`
+sentinel; personal rows retain actor realm/ownership. Identity, realm, owner,
+athlete, creator and parent keys remain immutable. Parent/provenance IDs grant no
+access. Existing tombstone and FACT rules remain unchanged. An add grant alone
+cannot enforce insertion ownership or cross-record linkage.
 
-`src/data/cloud/planned-session-release.ts` owns the disabled release gate
-`PLANNED_SESSION_LOCAL_START_APPROVED`. Until an
-explicit reviewed activation decision, **personal scheduled Start is also gated
-locally**, even though personal owner privileges may already permit writes without
-this role delta. UI visibility, successful preview, merged code, an environment
-variable or the existing ad-hoc approval must not enable this exception. This gate does not replace structural authorization.
+`src/data/cloud/planned-session-policy.ts` owns the shared `STARTED_PLAN_MESSAGE`.
+Personal self Start commits locally; shared `createFromOccurrence` checks installed Coach
+grants and realm access. This operator has no approval environment marker or
+checkbox. Installing ACL does not replace structural authorization, and code
+approval alone does not establish live permissions.
 
-## Exact role proposal
+## Exact role delta
 
-`cloud/planned-session-roles.json` is a draft overlay, not a standalone CLI import.
-The operator imports the exact `EXPECTED_ADHOC_ROLES` baseline from
+`cloud/planned-session-roles.json` is an exact overlay, not a standalone CLI import.
+The operator imports `EXPECTED_ADHOC_ROLES` from
 `tools/dexie-roles/adhoc-sessions.mjs`, clones it and appends only:
 
 | Target | Additional update fields |
@@ -50,89 +49,80 @@ The operator imports the exact `EXPECTED_ADHOC_ROLES` baseline from
 | `coach.permissions.update.workoutOccurrences` | `status`, `workoutSessionId` |
 
 Every other Coach property/grant and the complete Client role remain unchanged.
-In particular no new source PLAN, FACT, manage, delete, add, membership, schema
-or business data changes are proposed. Snapshot/provenance fields above are not
-added to any update allowlist. `cloud/roles.json`, existing ACL operators and
-membership verification are untouched; membership-profile compatibility must be reviewed before activation.
-Client receives no scheduled lifecycle write grant in a relationship realm.
+No source PLAN, FACT, manage, delete, add, membership, schema or business data grant
+is added. Snapshot/provenance fields are not added to update allowlists.
+`cloud/roles.json`, existing ACL operators and membership verification are untouched;
+membership-profile compatibility must be reviewed before live activation.
+Client receives no relationship scheduled lifecycle write grant.
 
-The pure planner accepts only the exact ad-hoc Coach profile or exact proposed
-Coach profile, plus exact baseline Client. Partial field installation, reordered
-field arrays, historical calendar-only roles and arbitrary drift fail closed.
-Unrelated roles and export metadata are retained, never normalized. Existing
-`workoutOccurrences` and all three ad-hoc tables must already have `@id` keys;
-missing/incompatible tables fail closed rather than being repaired.
+Only the exact ad-hoc Coach baseline or exact installed target is supported, with
+exact baseline Client. Partial installation, reordered field arrays, historical
+calendar-only profiles and any other drift fail closed. Unrelated roles and export
+metadata are retained, never normalized. Existing `workoutOccurrences` and all
+three ad-hoc tables must already have `@id` keys; incompatible/missing tables fail
+closed rather than being repaired. JSON object key order/formatting is immaterial;
+arrays and all values are exact.
 
-The generated review payload contains only the full proposed Coach replacement
-(or `{}` when already installed), never schema, Client, other roles or data.
-JSON object key order/formatting is immaterial; arrays and every value are exact.
+The generated payload is only a full target Coach replacement or `{}` for an
+already installed target. It contains no schema, Client, other roles or data.
 
-## Preview only today
+## Protected manual preview/apply
 
-`.github/workflows/dexie-planned-sessions.yml` has only manual `workflow_dispatch`
-with `operation` choices `[preview]`, main/ref and repository-owner restrictions,
-the existing reviewer-protected `dexie-production` environment and existing
-`DEXIE_CLOUD_WRITE_KEY` environment secret. It reuses
-`tools/dexie-schema/manage.mjs prepare`, pinned CLI `dexie-cloud@3.0.7` and the
-shared writer concurrency group `dexie-public-catalogue-publishing`. Keep required
-reviewers and main-only environment protections. No new credentials or accounts.
-There are no PR/push/issue triggers, bypass checkbox, apply job or import command.
-No workflow was dispatched and no cloud write was performed for this proposal.
+`.github/workflows/dexie-planned-sessions.yml` accepts only manual
+`workflow_dispatch`, on main by the repository owner, with operation choices
+`[preview, apply]`. It reuses the reviewer-protected, main-only `dexie-production`
+environment, existing `DEXIE_CLOUD_WRITE_KEY` environment secret,
+`tools/dexie-schema/manage.mjs prepare`, pinned CLI `dexie-cloud@3.0.7` and shared
+writer concurrency group `dexie-public-catalogue-publishing`. No new credential,
+account, environment or PR/push/issue trigger is introduced. Keep required
+reviewers and main-only environment protection configured.
 
-Preview exports full schema/roles before planning, re-exports/rechecks the entire
-configuration, then exports/verifies final schema/roles equal the originals.
-It validates the exact generated payload at recheck/readback. It does not claim
-the target was installed. Payload and exports stay private in the credential
-directory and are removed with `always()`; they are never uploaded as artifacts.
-Errors report fixed codes instead of unknown cloud values or third-party bodies.
+Apply requires literal `APPLY_PLANNED_SESSION_COACH_ACL`; preview requires blank
+confirmation. There is no approval environment variable requirement. Each run
+exports its own full initial schema/roles, validates the exact manifest/baseline,
+and writes the private `planned-proposal.json` plus `change_count` to
+`GITHUB_OUTPUT`. A prior run's payload cannot be reused.
 
-The CLI supports only `preflight`, `plan`, `recheck`, `verify` for preview. An
-`apply` operation is refused unless `PLANNED_SESSION_LOCAL_START_APPROVED` is
-exactly `'true'`, and **is still unconditionally refused when it is true** because
-no apply implementation exists. The marker is not a workflow input. The reserved
-future fixed confirmation is `APPLY_PLANNED_SESSION_COACH_ACL`; it authorizes
-nothing in this draft. There is no runnable apply path, including a disabled job.
+Immediately before import, fresh full schema/roles exports must exactly equal
+that run's initial envelopes; the generated payload must exactly equal the
+freshly recomputed plan. Preview and no-op apply also perform this recheck.
+For a nonempty apply the workflow records `import_attempt` before invoking CLI
+import. It then exports full schema/roles and verifies them even when import
+exits nonzero. Explicit `!cancelled()` conditions prevent implicit Actions
+`success()` from suppressing failure readback. A no-op apply skips import but
+still exports and verifies live full readback. Cancellation may prevent readback
+and blocks activation.
 
-## Requirements for a future approved activation PR
+Preview verification requires complete schema and roles unchanged. Apply
+verification requires the full schema unchanged (including seal, old tables and
+metadata), and full roles equal the initial envelope with only the exact target
+Coach replacement. The exact generated payload is checked again. An import error
+may leave none, part or all of the delta: none/part fails target verification;
+fully committed changes may pass readback, but the failed job remains failed and
+blocks activation pending investigation. Do not swallow errors or auto-retry.
 
-Only after explicit user approval may a subsequent reviewed PR enable apply.
-It must require the release-approved local Start decision, the exact approval
-environment marker and fixed confirmation, with no user-input bypass checkbox.
-Main decides how the trusted approval marker and local runtime gate are released.
-Preserve the protected environment, existing credential preparation, manual
-main/owner restrictions and shared writer lock.
+Credentials, payload and private exports remain in the isolated credential
+directory, are cleaned with `always()` and are never uploaded as artifacts.
+Operator errors emit fixed codes rather than unknown cloud values or potentially
+secret-bearing third-party responses.
 
-That future operator must create its own initial preview, export both complete
-schema and role envelopes immediately before import, use
-`assertUnchangedBeforeApply` on those full envelopes and
-`assertExactImportPayload` on the exact freshly planned payload. Unknown baselines
-fail closed. Import only the proposed Coach replacement, with no schema/data.
-Mark an import attempt **before** invoking the CLI. Read back full schema and
-roles after every attempt, including a nonzero/failed import; do not let Actions'
-implicit `success()` suppress readback. A no-op apply still exports and verifies
-live full readback. Cancellation may prevent readback and must block activation.
+## Recovery and activation evidence
 
-`verifyPlannedSessions` is pure and available for review now: it requires unchanged
-full schema (including seal, tables and metadata) and exact full roles equal to
-the before envelope with only the proposed Coach replacement. It supports an
-already installed exact target for no-op verification. A failed import that
-committed none/part of the delta fails verification; a fully committed delta can
-pass readback even when the CLI failed, but the failed job still blocks activation
-pending investigation. Do not swallow the import failure or automatically retry.
+Configuration import is not a server compare-and-swap. The shared workflow lock
+cannot exclude out-of-band administrators; exclude those writers during apply.
+On failure, cancellation or drift, block activation and obtain a fresh protected
+preview. Only the exact baseline or already installed exact target may proceed;
+a partial field grant is not an accepted recovery baseline. Never force recovery
+by restoring a stale full export, changing schema or broadening baseline checks.
 
-Configuration import is not a server compare-and-swap or claimed server-atomic
-transaction. The workflow lock cannot exclude other administrative writers.
-Exclude out-of-band administrators during a future apply; on failure/drift obtain
-a fresh protected preview. Never restore a stale full export, roll back schema,
-or accept an arbitrary partial baseline to force recovery.
-
-Before activation, main must resolve membership-preflight compatibility separately,
-review the runtime release guard for both personal and relationship scheduled
-Start, and obtain ordinary-account real-server evidence for Coach's two new
-fields, Client denial, immutable provenance/ownership, foreign realm/link rejection
-and unchanged source PLAN/FACT access. Configuration readback does not establish
-per-user permissions. Required CI and offline transaction/retry verification remain
-future integration work; no tests, build or live permission checks were run here.
+Live activation remains pending: review membership-profile compatibility and
+the personal/shared structural checks, run the protected main preview and separately authorized
+manual apply, then obtain ordinary authenticated account evidence for Coach's two
+new fields, Client denial, immutable provenance/ownership, foreign realm/link
+rejection and unchanged source PLAN/FACT access. Verify offline atomicity,
+repeated Start and completion/reconnection behavior. Configuration readback does
+not prove per-user authorization. No npm, install, tests, build or real-server
+permission checks were executed in this operator update; PR CI owns code checks.
 
 ## Exports for integration review
 

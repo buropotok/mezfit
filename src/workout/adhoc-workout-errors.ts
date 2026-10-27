@@ -1,5 +1,4 @@
 const messages: Readonly<Record<string, string>> = {
-  PLANNED_START_NOT_APPROVED: 'Локальный запуск плановых тренировок подготовлен, но ещё не активирован.',
   PLANNED_START_ACL_REQUIRED: 'Для запуска плановых тренировок нужно установить согласованные права Coach в Dexie Cloud.',
   PLANNED_WORKOUT_NOT_FOUND: 'Плановая тренировка недоступна.',
   PLANNED_WORKOUT_ALREADY_STARTED: 'Плановая тренировка уже была запущена.',

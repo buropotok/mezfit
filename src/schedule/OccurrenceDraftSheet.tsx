@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { STARTED_PLAN_MESSAGE as lockedPlanMessage } from '../data/cloud/planned-session-policy';
 import { createPortal } from 'react-dom';
 import { Toast } from 'konsta/react';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
@@ -95,7 +96,7 @@ export interface OccurrenceDraftCardProps extends OccurrenceDraftSheetProps {
   onCollapsedChange: () => void;
 }
 
-const lockedPlanMessage = 'Тренировка была запущена. Изменить план нельзя';
+
 
 function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLocked = false,
   actor, readOnly = false, saveNotice = '', sourceProgramName, container,

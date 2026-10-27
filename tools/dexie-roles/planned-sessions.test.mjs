@@ -1,4 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ADHOC_SCHEMA, EXPECTED_ADHOC_ROLES, EXPECTED_CALENDAR_ROLES } from './adhoc-sessions.mjs';
 import {
@@ -20,7 +24,7 @@ const plan = (s = schema, r = roles) => planPlannedSessions(overlay, s, r);
 const trusted = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main',
   GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok', DEXIE_PLANNED_OPERATION: 'preview' };
 
-describe('DRAFT planned session role proposal; no activation', () => {
+describe('approved protected planned session Coach ACL operator', () => {
   it('pins the overlay and derives only two appended fields from the exact ad-hoc baseline', () => {
     expect(overlay).toEqual(PLANNED_ROLE_OVERLAY);
     expect(() => assertApprovedManifest(overlay)).not.toThrow();
@@ -95,7 +99,7 @@ describe('DRAFT planned session role proposal; no activation', () => {
     expect(() => assertExactImportPayload(payload, { ...payload, data: {} })).toThrow();
   });
 
-  it('requires exact target readback after any future import attempt, even failed or no-op', () => {
+  it('requires exact target readback after any import attempt, even failed or no-op', () => {
     const verify = (s, r) => verifyPlannedSessions(overlay, schema, roles, s, r);
     expect(() => verify(structuredClone(schema), targetRoles())).not.toThrow();
     // An import error may have committed the whole delta, none, or only part.
@@ -121,27 +125,31 @@ describe('DRAFT planned session role proposal; no activation', () => {
     }
   });
 
-  it('allows only protected manual preview and refuses apply even with approval and confirmation', () => {
+  it('requires protected manual dispatch, exact apply confirmation and blank preview confirmation', () => {
     expect(CONFIRMATION).toBe('APPLY_PLANNED_SESSION_COACH_ACL');
     expect(() => validatePlannedDispatch(trusted)).not.toThrow();
+    const apply = { ...trusted, DEXIE_PLANNED_OPERATION: 'apply', DEXIE_PLANNED_CONFIRMATION: CONFIRMATION };
+    expect(() => validatePlannedDispatch(apply)).not.toThrow();
     for (const change of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_EVENT_NAME: 'issues' },
       { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' },
       { GITHUB_ACTOR: 'outsider' }, { GITHUB_ACTOR: '' }, { DEXIE_PLANNED_OPERATION: 'other' },
       { DEXIE_PLANNED_CONFIRMATION: CONFIRMATION }]) {
       expect(() => validatePlannedDispatch({ ...trusted, ...change })).toThrow();
     }
-    for (const marker of [undefined, '', 'false', 'TRUE']) {
-      expect(() => validatePlannedDispatch({ ...trusted, DEXIE_PLANNED_OPERATION: 'apply',
-        PLANNED_SESSION_LOCAL_START_APPROVED: marker })).toThrow('LOCAL_START_NOT_APPROVED');
+    for (const change of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_EVENT_NAME: 'issues' },
+      { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' }, { GITHUB_ACTOR: 'outsider' }]) {
+      expect(() => validatePlannedDispatch({ ...apply, ...change })).toThrow('UNAUTHORIZED_PLANNED_DISPATCH');
     }
-    expect(() => validatePlannedDispatch({ ...trusted, DEXIE_PLANNED_OPERATION: 'apply',
-      PLANNED_SESSION_LOCAL_START_APPROVED: 'true', DEXIE_PLANNED_CONFIRMATION: CONFIRMATION }))
-      .toThrow('PLANNED_APPLY_NOT_IMPLEMENTED');
+    for (const confirmation of [undefined, '', ' ', CONFIRMATION + ' ', 'APPLY_ADHOC_SESSION_SCHEMA_AND_COACH_ACL']) {
+      expect(() => validatePlannedDispatch({ ...apply, DEXIE_PLANNED_CONFIRMATION: confirmation }))
+        .toThrow('INVALID_PLANNED_CONFIRMATION');
+    }
   });
 
-  it('keeps the workflow preview-only with existing protected credentials and shared writer lock', () => {
+  it('protects manual preview/apply, immediate recheck, failure and no-op readback with existing credentials', () => {
     const workflow = read('../../.github/workflows/dexie-planned-sessions.yml');
-    expect(workflow).toContain('options: [preview]');
+    expect(workflow).toContain('options: [preview, apply]');
+    expect(workflow).toContain('DEXIE_PLANNED_CONFIRMATION: ${{ inputs.confirmation }}');
     expect(workflow).toContain('name: dexie-production');
     expect(workflow).toContain('secrets.DEXIE_CLOUD_WRITE_KEY');
     expect(workflow).toContain('node tools/dexie-schema/manage.mjs prepare');
@@ -149,7 +157,7 @@ describe('DRAFT planned session role proposal; no activation', () => {
     expect(workflow).toContain("github.actor == github.repository_owner");
     expect(workflow).toContain("github.ref == 'refs/heads/main'");
     expect(workflow).not.toMatch(/^\s+(push|pull_request|issues|issue_comment|schedule):/m);
-    expect(workflow).not.toMatch(/dexie-cloud import|options:.*apply|type: boolean|PLANNED_SESSION_LOCAL_START_APPROVED:/);
+    expect(workflow).not.toContain('type: boolean');
     expect(workflow).not.toContain('upload-artifact');
     for (const prefix of ['before', 'current', 'after']) {
       expect(workflow).toContain(`export --schema ${prefix}-schema.json`);
@@ -157,7 +165,61 @@ describe('DRAFT planned session role proposal; no activation', () => {
     }
     expect(workflow).toContain('planned-sessions.mjs recheck');
     expect(workflow).toContain('planned-sessions.mjs verify');
+    expect(workflow).toContain('id: plan');
+    expect(workflow).toContain('id: import_attempt');
+    expect(workflow).toContain('dexie-cloud import planned-proposal.json');
+    expect(workflow.indexOf('planned-sessions.mjs recheck')).toBeLessThan(workflow.indexOf('id: import_attempt'));
+    expect(workflow.indexOf('id: import_attempt')).toBeLessThan(workflow.indexOf('dexie-cloud import'));
+    expect(workflow).toContain("if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'");
+    const readbackCondition = "if: ${{ !cancelled() && (inputs.operation == 'preview' || (inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0'))) }}";
+    expect(workflow.split(readbackCondition)).toHaveLength(3);
+    expect(workflow).not.toContain('continue-on-error');
     expect(workflow).toContain('if: always()');
     expect(workflow).toContain('dexie-cloud@3.0.7');
+  });
+
+  it.each(['preview', 'apply'])('CLI %s plans, rechecks and verifies full snapshots without cloud calls', operation => {
+    const temp = mkdtempSync(join(tmpdir(), 'planned-acl-'));
+    const dir = join(temp, 'dexie-schema-123-1');
+    mkdirSync(dir);
+    const put = (name, value) => writeFileSync(join(dir, name), JSON.stringify(value));
+    const env = { ...process.env, ...trusted, DEXIE_PLANNED_OPERATION: operation,
+      DEXIE_PLANNED_CONFIRMATION: operation === 'apply' ? CONFIRMATION : '',
+      RUNNER_TEMP: temp, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1', GITHUB_OUTPUT: join(temp, 'output') };
+    const run = (mode, change = {}) => spawnSync(process.execPath, ['tools/dexie-roles/planned-sessions.mjs', mode], {
+      cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8', env: { ...env, ...change },
+    });
+    try {
+      put('before-schema.json', schema); put('before-roles.json', roles);
+      expect(run('preflight').status).toBe(0);
+      const missingOutput = run('plan', { GITHUB_OUTPUT: '' });
+      expect(missingOutput.stderr.trim()).toBe('GITHUB_OUTPUT_REQUIRED');
+      expect(existsSync(join(dir, 'planned-proposal.json'))).toBe(false);
+      expect(run('plan').status).toBe(0);
+      expect(readFileSync(env.GITHUB_OUTPUT, 'utf8')).toBe('change_count=1\n');
+      expect(JSON.parse(readFileSync(join(dir, 'planned-proposal.json'), 'utf8'))).toEqual(plan().importPayload);
+      put('current-schema.json', schema); put('current-roles.json', roles);
+      expect(run('recheck').status).toBe(0);
+      put('current-roles.json', targetRoles());
+      expect(run('recheck').stderr.trim()).toBe('CLOUD_CONFIGURATION_CHANGED_SINCE_PREVIEW');
+      put('current-roles.json', roles);
+      put('planned-proposal.json', { ...plan().importPayload, data: {} });
+      expect(run('recheck').stderr.trim()).toBe('PLANNED_IMPORT_PAYLOAD_CHANGED');
+      put('planned-proposal.json', plan().importPayload);
+      put('after-schema.json', schema); put('after-roles.json', roles);
+      expect(run('verify').status).toBe(operation === 'preview' ? 0 : 1);
+      put('after-roles.json', targetRoles());
+      expect(run('verify').status).toBe(operation === 'apply' ? 0 : 1);
+      // Exact already-installed target: no import, but live final readback remains mandatory.
+      put('before-roles.json', targetRoles()); put('current-roles.json', targetRoles());
+      rmSync(join(dir, 'planned-proposal.json')); rmSync(env.GITHUB_OUTPUT);
+      expect(run('plan').status).toBe(0);
+      expect(readFileSync(env.GITHUB_OUTPUT, 'utf8')).toBe('change_count=0\n');
+      expect(JSON.parse(readFileSync(join(dir, 'planned-proposal.json'), 'utf8'))).toEqual({});
+      expect(run('recheck').status).toBe(0);
+      expect(run('verify').status).toBe(0);
+      const drifted = targetRoles(); drifted.metadata = 'changed'; put('after-roles.json', drifted);
+      expect(run('verify').status).toBe(1);
+    } finally { rmSync(temp, { recursive: true, force: true }); }
   });
 });

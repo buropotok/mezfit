@@ -111,11 +111,26 @@ non-user sentinel; personal rows use the actor as owner. Coach may add rows and
 update only the exact reviewed fields; Client is read-only on these new
 relationship tables. Exercise/set deletion uses tombstones. Identity, realm,
 owner, athlete, creator and parent keys are immutable. This supersedes the
-server-confirmed Start rule above only for this slice; planned/scheduled Start
-and completion remain unchanged. The explicitly approved protected combined
+server-confirmed Start rule above only for this slice. The separate Coach
+planned-session exception below governs scheduled execution; other lifecycle
+paths remain unchanged. The explicitly approved protected combined
 additive-schema/Coach-ACL exception, exact overlay and live activation evidence
 are specified in `adhoc-workout-sessions.md` and AGENTS.md §21. No live permission
 validation is implied by this approval or by configuration readback.
+
+**Approved Coach planned-session exception (2026-10-27):** The user approved
+atomic local Dexie Start/completion for planned Coach workouts, extending the
+ad-hoc exception above for this slice. Reuse its synchronized execution tables,
+freeze the accepted occurrence PLAN on the execution header and atomically link
+the same occurrence. Normal Coach lifecycle writes require only the exact reviewed
+`status`/`workoutSessionId` field overlay; Client remains read-only on these
+execution tables. Preserve source programs, immutable origin IDs and realm
+boundaries. UI and repository reject later PLAN edits; FACT stays separate. Addon
+owns synchronization; no HTTP or cloud push barrier participates in acceptance.
+The protected operator and real-server validation requirements are documented in
+`planned-workout-sessions.md` and AGENTS.md §21. This supersedes the older
+server-confirmed scheduled Start requirement only for the Coach slice; other
+scheduled lifecycle paths and existing FACT grants remain unchanged.
 
 **Completion and status:** Keep occurrence/session lifecycle consistent. Derive display state from the linked local session where possible rather than writing duplicate optimistic statuses. Session FACT history must not mutate when later PLAN changes.
 

@@ -1,5 +1,5 @@
 import { AdHocWorkoutRepository } from './adhoc-workouts';
-import { STARTED_PLAN_MESSAGE } from './planned-session-release';
+import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { liveQuery } from 'dexie';
 import type { LocalProgramSyncRow, MezfitCloudDatabase } from './database';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';

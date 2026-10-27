@@ -6,18 +6,12 @@ import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membersh
 import { CLOUD_DATABASE_STORES_V12, type MezfitCloudDatabase } from './database';
 import { AdHocWorkoutRepository, type AdHocExerciseRow, type AdHocSetRow } from './adhoc-workouts';
 import { PlannedWorkoutsRepository, plannedWorkoutRange } from './planned-workouts';
-import { STARTED_PLAN_MESSAGE } from './planned-session-release';
+import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 import { snapshotProgramDay } from './workout-occurrence-plan';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 import type { PublicExerciseRow } from '../exercises/publicExerciseTypes';
 import type { SetEntryFactDraft } from '../../workout/setEntryTypes';
-
-// Domain scenarios only: this does not activate the release gate in production.
-vi.mock('./planned-session-release', async original => ({
-  ...await original<typeof import('./planned-session-release')>(),
-  PLANNED_SESSION_LOCAL_START_APPROVED: true,
-}));
 
 const databases: Dexie[] = [];
 afterEach(async () => {
@@ -120,7 +114,7 @@ async function expectNoExecution(db: Dexie, before: CloudWorkoutOccurrenceRow) {
   expect(await occurrences(db).get(before.id)).toEqual(before);
 }
 
-describe('planned workout execution (domain gate enabled only in this file)', () => {
+describe('planned workout execution', () => {
   it.each([false, true])('atomically freezes PLAN, links the same occurrence and keeps FACT separate (shared=%s)', async shared => {
     const { db, repo, row, drafts } = await fixture(shared);
     const before = await sourceGraph(db);
@@ -208,6 +202,17 @@ describe('planned workout execution (domain gate enabled only in this file)', ()
     await expect(repo.createFromOccurrence(row.id)).rejects.toThrow('PLANNED_START_ACL_REQUIRED');
     await expectNoExecution(db, row);
     expect(await sourceGraph(db)).toEqual(before);
+  });
+
+  it('keeps the session and occurrence active if shared lifecycle grants are removed before completion', async () => {
+    const { db, repo, row } = await fixture(true);
+    const created = await repo.createFromOccurrence(row.id);
+    await db.table('roles').update(['rlm-public', 'coach'], {
+      'permissions.update.workoutOccurrences': roles.roles.coach.permissions.update.workoutOccurrences,
+    });
+    await expect(repo.complete(created.id)).rejects.toThrow('PLANNED_START_ACL_REQUIRED');
+    expect((await repo.getRow(created.id))?.status).toBe('active');
+    expect(await occurrences(db).get(row.id)).toMatchObject({ status: 'in_progress', workoutSessionId: created.id });
   });
 
   it('denies clients, foreign actors and revoked canonical membership without mutations', async () => {

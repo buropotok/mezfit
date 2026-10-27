@@ -1,4 +1,4 @@
-import { PLANNED_SESSION_LOCAL_START_APPROVED, STARTED_PLAN_MESSAGE } from './planned-session-release';
+import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
 import { markWorkoutChanged } from './workout-sync';
 import { liveQuery } from 'dexie';
@@ -28,7 +28,7 @@ const executionTables = ['adHocSessions', 'adHocExercises', 'adHocSets', 'realms
 const programTables = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'localProgramSync', 'roles'];
 const catalogueTables = ['publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'];
-function hasPlannedStartGrant(value: unknown): boolean {
+function hasPlannedLifecycleGrant(value: unknown): boolean {
   if (!value || typeof value !== 'object' || !('realmId' in value) || value.realmId !== 'rlm-public'
     || !('name' in value) || value.name !== 'coach' || !('permissions' in value)) return false;
   const permissions = value.permissions;
@@ -206,11 +206,16 @@ export class AdHocWorkoutRepository {
     });
   }
 
+  private async requirePlannedLifecycleGrant(realmId: string): Promise<void> {
+    if (realmId === this.actorUserId) return;
+    const roles = await this.db.table<unknown>('roles').toArray();
+    if (!roles.some(hasPlannedLifecycleGrant)) throw new Error('PLANNED_START_ACL_REQUIRED');
+  }
+
   /** One local transaction freezes the occurrence PLAN and creates execution.
-   * Release remains disabled pending approval of scheduled Start and its ACL.
+   * Approved Coach scheduled Start; shared writes require the installed lifecycle ACL.
    */
   async createFromOccurrence(occurrenceId: string): Promise<{ id: string; createdProgram: false }> {
-    if (!PLANNED_SESSION_LOCAL_START_APPROVED) throw new Error('PLANNED_START_NOT_APPROVED');
     if (typeof occurrenceId !== 'string' || !occurrenceId) throw new Error('PLANNED_WORKOUT_NOT_FOUND');
     return this.write(['workoutOccurrences', 'localWorkoutSync', 'trainingPlans', 'roles', ...catalogueTables], async () => {
       const occurrence = (await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace())
@@ -226,12 +231,7 @@ export class AdHocWorkoutRepository {
       }
       if (occurrence.status !== 'scheduled' || occurrence.workoutSessionId) throw new Error('PLANNED_WORKOUT_ALREADY_STARTED');
       await this.requireNoActiveSession();
-      // Personal owner privileges do not prove that shared lifecycle grants exist.
-      if (occurrence.realmId !== this.actorUserId) {
-        const roles = await this.db.table<unknown>('roles').toArray();
-        if (!roles.some(hasPlannedStartGrant))
-          throw new Error('PLANNED_START_ACL_REQUIRED');
-      }
+      await this.requirePlannedLifecycleGrant(occurrence.realmId);
       const timestamp = now();
       const source = occurrence.trainingPlanId ? await this.db.trainingPlans.get(occurrence.trainingPlanId) : undefined;
       const programName = source?.realmId === occurrence.realmId ? source.name : 'Программа';
@@ -393,11 +393,12 @@ export class AdHocWorkoutRepository {
   }
   async complete(sessionId: string): Promise<void> {
     const initial = await this.getRow(sessionId);
-    await this.write(initial?.occurrenceId ? ['workoutOccurrences', 'localWorkoutSync'] : [], async () => {
+    await this.write(initial?.occurrenceId ? ['workoutOccurrences', 'localWorkoutSync', 'roles'] : [], async () => {
       const row = await this.require(sessionId, false);
       if (row.status === 'completed') return;
       const timestamp = now();
       if (row.occurrenceId) {
+        await this.requirePlannedLifecycleGrant(row.realmId);
         const occurrence = await this.db.workoutOccurrences.get(row.occurrenceId);
         if (!occurrence || occurrence.realmId !== row.realmId || occurrence.workoutSessionId !== row.id)
           throw new Error('PLANNED_WORKOUT_LINK_INVALID');

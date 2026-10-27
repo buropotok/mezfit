@@ -1,16 +1,20 @@
-name: Preview DRAFT Dexie planned session Coach ACL
+name: Apply Dexie planned session Coach ACL
 
-# DRAFT local scheduled exception and ACL maintenance are not yet user-approved.
-# No apply job, bypass input, import command, or PR/push/issue trigger.
+# Explicitly approved local scheduled Start and scoped Coach ACL maintenance.
+# Manual protected operation only; never run on PR/push/issues.
 on:
   workflow_dispatch:
     inputs:
       operation:
         type: choice
-        description: 'Read-only preview of the draft Coach occurrence ACL proposal'
+        description: 'Preview or install only reviewed Coach occurrence lifecycle grants'
         required: true
         default: preview
-        options: [preview]
+        options: [preview, apply]
+      confirmation:
+        type: string
+        description: 'For apply enter APPLY_PLANNED_SESSION_COACH_ACL; leave blank for preview'
+        required: false
 
 permissions:
   contents: read
@@ -20,7 +24,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  planned-session-preview:
+  planned-session-configuration:
     if: >-
       github.event_name == 'workflow_dispatch' &&
       github.ref == 'refs/heads/main' &&
@@ -31,6 +35,7 @@ jobs:
       name: dexie-production
     env:
       DEXIE_PLANNED_OPERATION: ${{ inputs.operation }}
+      DEXIE_PLANNED_CONFIRMATION: ${{ inputs.confirmation }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,7 +43,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate protected preview dispatch
+      - name: Validate protected dispatch and explicit confirmation
         run: node tools/dexie-roles/planned-sessions.mjs preflight
       - name: Prepare existing protected Dexie CLI credentials
         env:
@@ -50,9 +55,10 @@ jobs:
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
-      - name: Generate exact draft role proposal without importing
+      - name: Plan exact Coach role delta
+        id: plan
         run: node tools/dexie-roles/planned-sessions.mjs plan
-      - name: Re-export and recheck complete configuration
+      - name: Re-export and recheck complete configuration immediately before import
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
@@ -60,13 +66,27 @@ jobs:
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles current-roles.json
           cd "$GITHUB_WORKSPACE"
           node tools/dexie-roles/planned-sessions.mjs recheck
-      - name: Export final preview schema and roles
+      # The CLI may reach the server and still report failure; mark the attempt first.
+      - name: Record configuration import attempt before mutation
+        id: import_attempt
+        if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'
+        run: echo "attempted=true" >> "$GITHUB_OUTPUT"
+      - name: Import only the exact expanded Coach role
+        if: inputs.operation == 'apply' && steps.import_attempt.outputs.attempted == 'true'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud import planned-proposal.json
+      # Override implicit success() so a failed import cannot suppress full readback.
+      - name: Export final schema and roles including failed import and no-op apply
+        if: ${{ !cancelled() && (inputs.operation == 'preview' || (inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0'))) }}
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
-      - name: Verify preview left full configuration unchanged
+      - name: Verify exact full schema and roles for preview or apply
+        if: ${{ !cancelled() && (inputs.operation == 'preview' || (inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0'))) }}
         run: node tools/dexie-roles/planned-sessions.mjs verify
       - name: Remove temporary credentials and private exports
         if: always()
