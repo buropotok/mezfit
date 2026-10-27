@@ -1,0 +1,52 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/planche-push-up/",
+  "name": "Full Planche Push-Up",
+  "how_to": [
+    {
+      "step": 1,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "To execute the Full Planche Push-Up , follow these steps with precision:"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Instruction excerpt",
+      "instructions": [
+        "Begin in a Full Planche Hold : Start with your body parallel"
+      ]
+    }
+  ],
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Planche-Push-Up.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major",
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Rectus Abdominis",
+      "Obliques",
+      "Upper Back",
+      "Biceps Brachii",
+      "Forearms",
+      "Erector Spinae",
+      "Gluteus Maximus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Chest",
+    "Full Body",
+    "Triceps"
+  ],
+  "name_ru": "Отжимания в горизонте (планше)",
+  "tracking_type": "weight_reps"
+}
