@@ -62,7 +62,9 @@ def catalogue():
             name = filename_for(url)
             folded_name = name.casefold()
             if folded_name in folded and folded[folded_name] != name:
-                raise RuntimeError(f"Case-insensitive name conflict: {folded[folded_name]} / {name}")
+                # Git and GitHub support both case-distinct original filenames.
+                # Do not rename either file; only exact filename reuse conflicts.
+                pass
             folded[folded_name] = name
             if name in urls and urls[name] != url:
                 raise RuntimeError(
