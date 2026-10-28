@@ -34,6 +34,9 @@ const SCROLL_END_FALLBACK_MS = 200;
 // mode. The threshold still recognizes a deliberate swipe before the hold.
 const HOLD_TO_FINE_MS = 240;
 const SWIPE_THRESHOLD_PX = 14;
+// A first reported movement this large is swipe intent even if WebView
+// delayed its event beyond the hold window. Preserve slow swipe-by-tens.
+const UNAMBIGUOUS_SWIPE_PX = 64;
 const FLING_MAX_DECADES = 18;
 
 type StepGesture = {
@@ -757,10 +760,12 @@ export function ThreeColumnPicker({
       // Long-press detection must not rely solely on a timer. WKWebView may
       // delay the timer while a finger is down; touch timestamps still preserve
       // the elapsed time when a move is finally delivered.
-      if (event.timeStamp - gesture.startTime >= HOLD_TO_FINE_MS) {
-        gesture.mode = 'fine';
-      } else if (Math.abs(gesture.startY - y) >= SWIPE_THRESHOLD_PX) {
+      const distance = Math.abs(gesture.startY - y);
+      if (distance >= UNAMBIGUOUS_SWIPE_PX
+        || (distance >= SWIPE_THRESHOLD_PX && event.timeStamp - gesture.startTime < HOLD_TO_FINE_MS)) {
         gesture.mode = 'coarse';
+      } else if (event.timeStamp - gesture.startTime >= HOLD_TO_FINE_MS) {
+        gesture.mode = 'fine';
       }
       if (gesture.mode !== 'pending' && gesture.holdTimer !== null) {
         (event.currentTarget.ownerDocument.defaultView ?? window).clearTimeout(gesture.holdTimer);
@@ -778,8 +783,12 @@ export function ThreeColumnPicker({
     if (gesture.mode === 'pending') {
       // A delayed timer must also be recognized when the next event is touchend.
       // With no displacement this remains a tap, not a fine-drag mutation.
-      if (time - gesture.startTime >= HOLD_TO_FINE_MS) gesture.mode = 'fine';
-      else if (Math.abs(distance) >= SWIPE_THRESHOLD_PX) gesture.mode = 'coarse';
+      if (Math.abs(distance) >= UNAMBIGUOUS_SWIPE_PX
+        || (Math.abs(distance) >= SWIPE_THRESHOLD_PX && time - gesture.startTime < HOLD_TO_FINE_MS)) {
+        gesture.mode = 'coarse';
+      } else if (time - gesture.startTime >= HOLD_TO_FINE_MS) {
+        gesture.mode = 'fine';
+      }
     }
     if (gesture.mode === 'pending') {
       delete gestureRef.current[part];
