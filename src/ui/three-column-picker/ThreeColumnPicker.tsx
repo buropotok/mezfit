@@ -67,6 +67,8 @@ export interface ThreeColumnPickerProps {
   lensXs: readonly [number, number, number];
   separators?: readonly ThreeColumnPickerSeparator[];
   header?: ReactNode;
+  /** Static interactive lens slots replacing individual wheels when supplied. */
+  staticLens?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
   popoverClassName?: string;
   pickerClassName?: string;
   columnsClassName?: string;
@@ -184,6 +186,7 @@ function PickerLens({
   columns,
   lensXs,
   separators = [],
+  staticLens,
 }: {
   assets: TimeLensAssets | null;
   scrollTops: ScrollTops;
@@ -191,6 +194,7 @@ function PickerLens({
   columns: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>;
   lensXs: readonly [number, number, number];
   separators?: readonly ThreeColumnPickerSeparator[];
+  staticLens?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
 }) {
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-three-column-picker-lens-${reactId}`;
@@ -199,7 +203,7 @@ function PickerLens({
   const lensContent = (
     <>
       <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
-      {PARTS.map((part, index) => (
+      {PARTS.map((part, index) => staticLens?.[part] ? null : (
         <LensText
           key={part}
           x={lensXs[index]}
@@ -307,6 +311,19 @@ function PickerLens({
           </g>
         )}
       </svg>
+      {staticLens ? (
+        <div className="ui-time-picker__lens-actions">
+          {PARTS.map((part, index) => staticLens[part] ? (
+            <div
+              key={part}
+              className="ui-time-picker__lens-action-slot"
+              style={{ left: `${lensXs[index] / LENS_WIDTH * 100}%` }}
+            >
+              {staticLens[part]}
+            </div>
+          ) : null)}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -400,6 +417,7 @@ export function ThreeColumnPicker({
   lensXs,
   separators,
   header,
+  staticLens,
   popoverClassName,
   pickerClassName,
   columnsClassName,
@@ -894,7 +912,9 @@ export function ThreeColumnPicker({
         {header}
         <div className="ui-time-picker__wheel">
           <div className={`ui-time-picker__columns${columnsClassName ? ` ${columnsClassName}` : ''}`}>
-            {PARTS.map((part) => (
+            {PARTS.map((part) => staticLens?.[part] ? (
+              <div key={part} className="ui-time-picker__static-column" aria-hidden="true" />
+            ) : (
               <ThreeColumnPickerColumnWheel
                 key={part}
                 part={part}
@@ -919,6 +939,7 @@ export function ThreeColumnPicker({
             columns={wheelColumns}
             lensXs={lensXs}
             separators={separators}
+            staticLens={staticLens}
           />
         </div>
       </div>
