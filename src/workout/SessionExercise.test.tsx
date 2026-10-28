@@ -365,6 +365,9 @@ describe('SessionExercise and SetEntry boundary', () => {
     const keypad = screen.getByRole('dialog', { name: 'Ввод повторений' });
     fireEvent.click(within(keypad).getByRole('button', { name: 'Цифра 9' }));
     fireEvent.click(within(keypad).getByRole('button', { name: 'Сохранить' }));
+    expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
+      .toContain('85 кг × 9');
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(saved).toHaveBeenCalledOnce());
