@@ -19,6 +19,23 @@ describe('MezfitBottomSheet', () => {
     expect(document.querySelector('.ui-mezfit-bottom-sheet__backdrop')).toBeNull();
   });
 
+  it('lifts only explicitly nested sheets above a standard Konsta Popover', () => {
+    const view = render(
+      <MezfitBottomSheet opened label="Числовой ввод" layer="abovePopover">
+        <div>Клавиатура</div>
+      </MezfitBottomSheet>,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Числовой ввод' });
+    expect(dialog.classList.contains('ui-mezfit-bottom-sheet--above-popover')).toBe(true);
+    view.rerender(
+      <MezfitBottomSheet opened label="Числовой ввод">
+        <div>Клавиатура</div>
+      </MezfitBottomSheet>,
+    );
+    expect(dialog.classList.contains('ui-mezfit-bottom-sheet--above-popover')).toBe(false);
+  });
+
   it('removes closed content from interaction and accessibility', () => {
     render(<MezfitBottomSheet opened={false} label="Событие" />);
 
