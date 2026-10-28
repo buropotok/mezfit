@@ -65,8 +65,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     }
     return { ...initial, metrics };
   });
-  const initialDraftRef = useRef(draft);
   const saveInFlightRef = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
   const [discardConfirm, setDiscardConfirm] = useState(false);
   const draftRef = useRef(draft);
   const [saving, setSaving] = useState(false);
@@ -112,10 +116,11 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
   ];
 
-  // PLAN and FACT are committed only by the explicit Save action.
+  // PLAN and FACT are committed only after confirming Save on close.
   const saveEntry = async () => {
     if (saveInFlightRef.current || readOnly) return;
     saveInFlightRef.current = true;
+    setDiscardConfirm(false);
     setSaving(true);
     setError('');
     const snapshot = { ...draftRef.current, metrics: { ...draftRef.current.metrics },
@@ -128,12 +133,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
       } else {
         await props.onSave(snapshot);
       }
-      props.onClose();
+      if (mounted.current) props.onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить подход');
+      if (mounted.current) setError(reason instanceof Error ? reason.message : 'Не удалось сохранить подход');
     } finally {
       saveInFlightRef.current = false;
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   };
   const deleteEntry = async () => {
@@ -144,23 +149,20 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     try {
       await props.onDeleteSet();
       setDeleteConfirm(false);
-      props.onClose();
+      if (mounted.current) props.onClose();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход');
       setDeleteConfirm(false);
     } finally {
       saveInFlightRef.current = false;
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   };
 
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
-    if (JSON.stringify(draftRef.current) !== JSON.stringify(initialDraftRef.current)) {
-      setDiscardConfirm(true);
-    } else {
-      props.onClose();
-    }
+    if (readOnly) props.onClose();
+    else setDiscardConfirm(true);
   };
   requestClose.current = discardEntry;
   useEffect(() => {
@@ -185,10 +187,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
           </div>
-          {!readOnly ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
-            disabled={saving} onClick={() => { void saveEntry(); }}>
-            <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
-          </KonstaButton> : null}
           <IconButton icon="x" label="Закрыть подход" disabled={saving}
             onClick={() => requestClose.current()} />
         </header>
@@ -288,19 +286,17 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, host) : null}
-    {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
-      title={<Text variant="headline">Изменения не сохранятся!</Text>}
+    {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Сохранить изменения?" aria-modal="true"
+      title={<Text variant="headline">Сохранить изменения?</Text>}
       buttons={<>
-        <MezfitDialogButton onClick={() => setDiscardConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
-        <MezfitDialogButton strong onClick={() => {
+        <MezfitDialogButton disabled={saving} onClick={() => {
           setDiscardConfirm(false);
           setPicker(null);
           setBandOpen(false);
           props.onClose();
-        }}><Text variant="body">Продолжить</Text></MezfitDialogButton>
-      </>}>
-      <Text variant="body">Выйти без сохранения введённых данных?</Text>
-    </MezfitDialog>, host)}
+        }}><Text variant="body">Нет</Text></MezfitDialogButton>
+        <MezfitDialogButton strong disabled={saving} onClick={() => { void saveEntry(); }}><Text variant="body">Да</Text></MezfitDialogButton>
+      </>} />, host)}
     {keys.map(key => createPortal(<>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
         value={pickerValue('durationSeconds')} target={targets.current[key] ?? null}

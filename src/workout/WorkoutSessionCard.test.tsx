@@ -142,12 +142,10 @@ describe('WorkoutSessionCard capability ownership', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     act(() => navigation.onBack?.());
-    const discardDialog = screen.getByRole('alertdialog', { name: 'Изменения не сохранятся!' });
+    const discardDialog = screen.getByRole('alertdialog', { name: 'Сохранить изменения?' });
     expect(onSaveSet).not.toHaveBeenCalled();
-    fireEvent.click(within(discardDialog).getByRole('button', { name: 'Отмена' }));
     expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
-    act(() => navigation.onBack?.());
-    fireEvent.click(within(discardDialog).getByRole('button', { name: 'Продолжить' }));
+    fireEvent.click(within(discardDialog).getByRole('button', { name: 'Нет' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
     expect(onSaveSet).not.toHaveBeenCalled();
   });

@@ -36,9 +36,13 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const glass = loadBrowserGlassSettings();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data));
-  const initialDraftRef = useRef(draft);
   const [discardConfirm, setDiscardConfirm] = useState(false);
   const saveInFlightRef = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
   const draftRef = useRef(draft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -56,10 +60,11 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     setError('');
   };
 
-  // Neither FACT nor the scheduled PLAN is persisted until Save is tapped.
+  // PLAN and FACT are committed only after confirming Save on close.
   const saveEntry = async () => {
     if (saveInFlightRef.current || readOnly) return;
     saveInFlightRef.current = true;
+    setDiscardConfirm(false);
     setSaving(true);
     setError('');
     const snapshot = { ...draftRef.current,
@@ -76,12 +81,12 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
       } else {
         await props.onSave(snapshot);
       }
-      props.onClose();
+      if (mounted.current) props.onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось сохранить подход');
+      if (mounted.current) setError(reason instanceof Error ? reason.message : 'Не удалось сохранить подход');
     } finally {
       saveInFlightRef.current = false;
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   };
 
@@ -93,24 +98,21 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     try {
       await props.onDeleteSet();
       setDeleteConfirm(false);
-      props.onClose();
+      if (mounted.current) props.onClose();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Не удалось удалить подход');
       setDeleteConfirm(false);
     } finally {
       saveInFlightRef.current = false;
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   };
 
-  // X and Telegram Back discard unsaved values; warn only if anything changed.
+  // X and navigation Back use the same explicit save/discard decision.
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
-    if (JSON.stringify(draftRef.current) !== JSON.stringify(initialDraftRef.current)) {
-      setDiscardConfirm(true);
-    } else {
-      props.onClose();
-    }
+    if (readOnly) props.onClose();
+    else setDiscardConfirm(true);
   };
   requestCloseRef.current = discardEntry;
   useEffect(() => {
@@ -159,10 +161,6 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
           </div>
-          {!readOnly ? <KonstaButton clear small inline className="set-entry-weight-reps__save"
-            disabled={saving} onClick={() => { void saveEntry(); }}>
-            <Text variant="body">{saving ? 'Сохраняем…' : 'Сохранить'}</Text>
-          </KonstaButton> : null}
           <IconButton icon="x" label="Закрыть подход" disabled={saving}
             onClick={() => requestCloseRef.current()} />
         </header>
@@ -239,19 +237,17 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, portalHost) : null}
-    {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Изменения не сохранятся!" aria-modal="true"
-      title={<Text variant="headline">Изменения не сохранятся!</Text>}
+    {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Сохранить изменения?" aria-modal="true"
+      title={<Text variant="headline">Сохранить изменения?</Text>}
       buttons={<>
-        <MezfitDialogButton onClick={() => setDiscardConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
-        <MezfitDialogButton strong onClick={() => {
+        <MezfitDialogButton disabled={saving} onClick={() => {
           setDiscardConfirm(false);
           setPickerOpened(false);
           setBandOpen(false);
           props.onClose();
-        }}><Text variant="body">Продолжить</Text></MezfitDialogButton>
-      </>}>
-      <Text variant="body">Выйти без сохранения введённых данных?</Text>
-    </MezfitDialog>, portalHost)}
+        }}><Text variant="body">Нет</Text></MezfitDialogButton>
+        <MezfitDialogButton strong disabled={saving} onClick={() => { void saveEntry(); }}><Text variant="body">Да</Text></MezfitDialogButton>
+      </>} />, portalHost)}
     {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker && !saving}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
       target={target.current} onClose={() => setPickerOpened(false)}

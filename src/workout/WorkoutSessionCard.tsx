@@ -94,6 +94,7 @@ export interface WorkoutFactCardProps<Id extends string | number = number> {
   mode?: 'workout';
   /** Viewing a coach-authored FACT must not expose mutation controls to clients. */
   readOnly?: boolean;
+  showStatus?: boolean;
   session: ActiveWorkoutSession<Id>;
   title?: string;
   athleteName?: string;
@@ -127,6 +128,7 @@ export function WorkoutSessionCard<Id extends string | number = number>(props: W
 function WorkoutFactCard<Id extends string | number = number>({
   session,
   readOnly = false,
+  showStatus = true,
   title,
   athleteName,
   athleteAvatar,
@@ -333,7 +335,7 @@ function WorkoutFactCard<Id extends string | number = number>({
               <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
                 {workoutProgramName(session)}
               </Text>
-              <Badge textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+              {showStatus ? <Badge color={session.status === 'active' ? 'green' : 'gray'} textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : null}
             </div>
             {menuItems.length > 0 ? (
               <LiquidPopover

@@ -338,15 +338,16 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             title={(
               <span className="session-exercise__set-title">
                 <span>{planMode ? `Подход ${setNumber}. План:` : `Подход ${setNumber}`}</span>
-                <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
+                {planMode || !metrics ? <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
                   {metrics ?? (planMode ? 'ввести план' : 'ввести факт')}
-                </span>
+                </span> : null}
               </span>
             )}
             subtitle={setSubtitle(set, exercise.data.exercise.tracking_type, planMode, exercise.data.showPreviousPlaceholder)}
             trailing={(
               <span className="session-exercise__set-trailing">
                 {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
+                {!planMode && metrics ? <Text variant="headline" className="session-exercise__set-fact">{metrics}</Text> : null}
                 {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
               </span>
             )}

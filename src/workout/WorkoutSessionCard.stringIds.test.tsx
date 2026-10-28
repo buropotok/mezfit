@@ -135,7 +135,8 @@ describe('WorkoutSessionCard string identities', () => {
     expect(onOpenExerciseHistory).toHaveBeenCalledWith('definition-d1');
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Подход 1' }))
-      .getByRole('button', { name: 'Сохранить' }));
+      .getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSaveSet).toHaveBeenCalledWith({
       workoutSessionId: 'session-a1', sessionExerciseId: 'exercise-x1', sessionSetId: 'set-s1',
       fact: {
@@ -186,7 +187,9 @@ describe.each(trackingTypes)('SetEntry %s explicit deletion capability', trackin
     const remove = screen.getByRole('button', { name: 'Удалить' });
     fireEvent.click(remove);
     fireEvent.click(remove);
-    fireEvent.click(screen.getByRole('button', { name: 'Сохраняем…' }));
+    const close = screen.getByRole('button', { name: 'Закрыть подход' });
+    expect(close.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(close);
     expect(onDeleteSet).toHaveBeenCalledTimes(1);
     expect(onSave).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();

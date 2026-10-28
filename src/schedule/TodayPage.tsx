@@ -85,10 +85,11 @@ function BookingCard({ event, state, actor, onClick }: {
     cancelled={cancelled} variant={personalEvent ? 'event' : 'workout'}
     corner={<Icon name={personalEvent ? 'calendar-event' : row.format === 'coached' ? 'users' : 'user'} />}
     cornerSize={32}
-    status={event.type === 'session' ? <Badge textVariant="caption">{event.session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+    status={event.type === 'session' ? <Badge color={event.session.status === 'active' ? 'green' : 'gray'} textVariant="caption">{event.session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
       : cancelled ? <Badge textVariant="caption">Отменена</Badge> : event.type === 'draft' ? <Badge color="yellow" textVariant="caption">Черновик</Badge> : undefined}
     compactStatus={event.type === 'session' ? event.session.status === 'completed' ? 'Завершена' : 'Запущена'
       : cancelled ? 'Отменена' : event.type === 'draft' ? 'Черновик' : undefined}
+    compactStatusColor={event.type === 'session' && event.session.status === 'active' ? 'green' : undefined}
     timeLabel={event.type === 'session' ? event.timeLabel : undefined}
     state={state} onClick={onClick} />;
 }

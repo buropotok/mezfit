@@ -131,7 +131,10 @@ describe('SessionExercise rendering', () => {
 
     const completedTitle = rows[0].querySelector('.session-exercise__set-title');
     expect(completedTitle?.textContent).toContain('Подход 1');
-    expect(completedTitle?.textContent).toContain('82,5 кг × 10');
+    expect(completedTitle?.textContent).not.toContain('82,5 кг × 10');
+    const fact = within(rows[0]).getByText('82,5 кг × 10');
+    expect(fact.classList.contains('ui-text--headline')).toBe(true);
+    expect(fact.closest('.session-exercise__set-trailing')).not.toBeNull();
     expect(completedTitle?.textContent).not.toContain('80 кг × 10');
     const completedPlan = within(rows[0]).getByText('План: 80 кг × 10');
     expect(completedPlan.closest('.session-exercise__set-context')).not.toBeNull();
@@ -165,8 +168,7 @@ describe('SessionExercise rendering', () => {
     const previous = within(row!).getByText('Пред.: 77,5 кг × 10');
     expect(previous.classList.contains('ui-text--caption')).toBe(true);
     expect(previous.closest('.session-exercise__set-context')).not.toBeNull();
-    expect(row?.querySelector('.session-exercise__set-title')?.textContent)
-      .toContain('82,5 кг × 10');
+    expect(within(row!).getByText('82,5 кг × 10').closest('.session-exercise__set-trailing')).not.toBeNull();
     expect(row?.querySelector('.session-exercise__set-title')?.textContent)
       .not.toContain('77,5 кг × 10');
   });
@@ -313,7 +315,8 @@ describe('SessionExercise and SetEntry boundary', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
     expect(onSaveSet).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
 
     await waitFor(() => expect(onSaveSet).toHaveBeenCalledTimes(1));
     expect(onSaveSet).toHaveBeenCalledWith({
@@ -362,9 +365,10 @@ describe('SessionExercise and SetEntry boundary', () => {
     const nine = repetitions.querySelector<HTMLButtonElement>('button[aria-label="9"]');
     expect(nine).not.toBeNull();
     fireEvent.click(nine!);
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(saved).toHaveBeenCalledOnce());
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 2' })).toBeNull());
 
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
     expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)

@@ -264,7 +264,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     } finally { setBusy(false); }
   };
   const startWorkout = async () => {
-    if (!startAlive.current || !draft || !onStart || busy || starting.current
+    if (!startAlive.current || !draft || !draft.saved || !onStart || busy || starting.current
       || access.current.planLocked || access.current.readOnly) return;
     starting.current = true;
     setBusy(true);
@@ -274,6 +274,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       if (!startAlive.current || access.current.planLocked || access.current.readOnly) return;
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
+      if (!latest.saved) throw new Error('Сначала сохраните тренировку');
       if (!startAlive.current || access.current.planLocked || access.current.readOnly) return;
       await onStart(latest);
     } catch (reason) {
@@ -395,7 +396,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
           creatorName={owner.name} creatorAvatar={owner.avatar} athleteName={athlete.name} athleteAvatar={athlete.avatar}
           status={collapsed && (draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed')
-            ? <Badge textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : undefined}
+            ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : undefined}
           scheduledTiming={collapsed ? scheduledTiming : undefined}
           collapsed={collapsed} onCollapsedChange={onCollapsedChange}>{!collapsed ? actionsMenu : null}</WorkoutPlanCardHeader></div> : null}
         {!collapsed ? <>
@@ -417,7 +418,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             <WorkoutSyncStatus draft={draft} repository={drafts} />
             {cancelled ? <Badge textVariant="body">Отменена</Badge>
               : draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed'
-                ? <Badge textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+                ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
               : <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
           </div>
           <div className="occurrence-draft-sheet__timing">
@@ -435,7 +436,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           </div>
           {actual ? <Text variant="footnote" tone="muted">Запланировано: {localDate(new Date(draft.startsAtUtc))}, {localTime(new Date(draft.startsAtUtc))} – {localTime(currentEnd(draft))}</Text> : null}
           <Text variant="body">План на тренировку</Text>
-          <WorkoutPlanCard mode="planning" hideHeader={inlineCard} collapsed={planCollapsed}
+          <WorkoutPlanCard mode="planning" surface={inlineCard ? 'transparent' : 'default'} hideHeader={inlineCard} collapsed={planCollapsed}
             onCollapsedChange={inlineCard ? undefined : () => setPlanCollapsed(value => !value)}
             scheduledTiming={planCollapsed ? scheduledTiming : undefined} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
@@ -465,24 +466,24 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             onOpenSet={planner ? (exerciseId, setId) => { void openSet(exerciseId, setId); } : undefined}
             onExerciseInformation={planner ? setExerciseInformationId : undefined}
           />
-        </div>
         {!readOnly && !draft.saved ? <footer className="occurrence-draft-sheet__footer">
           {draft.previouslyPublished || !onDelete ? <Button variant="secondary" color="red" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDeleteOpen(true); }}>
             {draft.previouslyPublished ? 'Отменить изменения' : 'Удалить черновик'}
           </Button> : null}
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer> : null}
-        {onStart ? <div className="occurrence-draft-sheet__start">
+        {draft.saved && onStart ? <div className="occurrence-draft-sheet__start">
           <StartWorkoutButton disabled={busy || planLocked || readOnly}
             onClick={() => { void startWorkout(); }} />
         </div> : null}
         {onCancel || onDelete ? <div className="occurrence-draft-sheet__actions">
-          {!readOnly && !planLocked && !cancelled && onCancel ? <KonstaButton rounded tonal disabled={busy} onClick={() => {
+          {draft.saved && !readOnly && !planLocked && !cancelled && onCancel ? <KonstaButton rounded tonal disabled={busy} onClick={() => {
             if (mutationBlocked() || starting.current) return;
             setBusy(true);
             void flushEdits().then(async () => {
               const latest = await drafts.get(draft.id);
               if (!latest) throw new Error('Тренировка недоступна');
+              if (!latest.saved) throw new Error('Сначала сохраните тренировку');
               if (startAlive.current) onCancel(latest);
             }).catch(reason => reportPlanError(reason, 'Не удалось отменить тренировку'))
               .finally(() => { if (startAlive.current) setBusy(false); });
@@ -490,6 +491,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           {onDelete ? <KonstaButton rounded colors={{ fillBgIos: 'bg-red-500', fillBgMaterial: 'bg-red-500', fillTextMaterial: 'text-white' }} disabled={busy}
             onClick={() => setDeactivateOpen(true)}>Удалить</KonstaButton> : null}
         </div> : null}
+        </div>
         </> : null}
       </section> : null;
   return <>

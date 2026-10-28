@@ -321,6 +321,7 @@ export function WorkoutSessionScreen({
       {activeSession ? (
         <>
           <WorkoutSessionCard
+            showStatus={activeSession.status !== 'active'}
             session={activeSession} athleteName={athlete.name} athleteAvatar={athlete.avatar}
             onReorderExerciseIds={handleReorder}
             onSaveSet={handleSaveSet}
