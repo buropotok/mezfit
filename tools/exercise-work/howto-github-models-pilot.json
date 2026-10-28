@@ -1,0 +1,22 @@
+{
+  "model": "openai/gpt-4.1-mini",
+  "source": [
+    {
+      "id": "1",
+      "name": "4-Point Tummy Vacuum",
+      "how_to": "Here is how you can perform the 4-point tummy vacuum exercise:\n1. Start on your hands and knees.\n2. Maintain a neutral spine.\n3. Inhale deeply through your nose.\n4. Exhale and pull your belly button toward your spine."
+    },
+    {
+      "id": "2",
+      "name": "Adductor Magnus Stretch",
+      "how_to": "The Thigh Fly as a static stretch:\n1. Starting Position: Lie on your back with your legs together, lifted towards the ceiling.\n2. Stretching Movement: Slowly open your legs to the sides as far as comfortable. Hold for 10-15 seconds."
+    },
+    {
+      "id": "3",
+      "name": "Plate Push",
+      "how_to": "1. Place a weight plate flat on a smooth floor.\n2. Get into a low athletic stance: hips back, chest down, hands on the edge of the plate, arms extended.\n3. Engage your core, and drive through the balls of your feet to push the plate forward."
+    }
+  ],
+  "status": "error",
+  "error": "Expecting value: line 1 column 1 (char 0)"
+}
