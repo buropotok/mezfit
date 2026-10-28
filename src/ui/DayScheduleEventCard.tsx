@@ -10,6 +10,8 @@ export type DayScheduleEventCardProps = {
   /** Display actual timestamps when minimum card geometry exceeds the elapsed interval. */
   timeLabel?: string;
   status?: ReactNode;
+  /** Plain status for the single-line compact layout; no full-height badge. */
+  compactStatus?: string;
   media?: ReactNode;
   corner?: ReactNode;
   cornerSize?: number;
@@ -33,6 +35,7 @@ export function DayScheduleEventCard({
   detail,
   timeLabel,
   status,
+  compactStatus,
   media,
   corner,
   cornerSize = 24,
@@ -49,9 +52,12 @@ export function DayScheduleEventCard({
     <Text variant="footnote" className="ui-day-schedule-event-card__fixed">{timeLabel ?? timeRange}</Text>
     {detail && !state.compact ? <Text variant="footnote" className="ui-day-schedule-event-card__truncate">{detail}</Text> : null}
   </div>;
-  const resolvedMedia = !state.compact && media ? (
+  const resolvedMedia = !state.compact && (state.height ?? 62) >= 50 && media ? (
     <span className="ui-day-schedule-event-card__media">{media}</span>
   ) : undefined;
+  const iconSize = Math.min(cornerSize, Math.max(0, state.height ?? 62));
+  const icon = corner ? <span className={`ui-day-schedule-event-card__corner${state.compact ? ' ui-day-schedule-event-card__corner--inline' : ''}`}
+    style={{ width: iconSize, height: iconSize }}>{corner}</span> : null;
 
   return (
     <div
@@ -68,8 +74,14 @@ export function DayScheduleEventCard({
       ].filter(Boolean).join(' ')}
     >
       <div id={contentId} className="ui-day-schedule-event-card__content" aria-hidden="true"
-        style={corner ? { paddingInlineEnd: cornerSize + 10 } : undefined}>
-      <List nested dividers={false} className="w-full">
+        style={corner && !state.compact ? { paddingInlineEnd: iconSize + 10 } : undefined}>
+      {state.compact ? <div className="ui-day-schedule-event-card__compact-row">
+        {detail ? <Text variant="caption" className="ui-day-schedule-event-card__truncate">{detail}</Text> : null}
+        <Text variant="caption" className="ui-day-schedule-event-card__truncate">{title}</Text>
+        <Text variant="caption" className="ui-day-schedule-event-card__fixed">{timeLabel ?? timeRange}</Text>
+        {compactStatus ? <Text variant="caption" className="ui-day-schedule-event-card__fixed">{compactStatus}</Text> : null}
+        {icon}
+      </div> : <List nested dividers={false} className="w-full">
         <ListItem
           contentClassName="!ps-[6px] min-h-0"
           mediaClassName="!py-0 !me-[6px]"
@@ -82,10 +94,9 @@ export function DayScheduleEventCard({
           </div>}
           subtitle={subtitle}
         />
-      </List>
+      </List>}
       </div>
-      {corner ? <span className="ui-day-schedule-event-card__corner"
-        style={{ width: cornerSize, height: cornerSize }}>{corner}</span> : null}
+      {!state.compact ? icon : null}
       <button type="button" className="ui-day-schedule-event-card__touch"
         data-ui-dnd-handle="" aria-labelledby={contentId} onClick={onClick} />
     </div>
