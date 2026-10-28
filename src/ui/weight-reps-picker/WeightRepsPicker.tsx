@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { loadBrowserGlassSettings } from '../../glassSettings';
-import { Button, FloatingActionButton, Icon, IconButton, Text, type UiIconName } from '../index';
+import { FloatingActionButton } from '../components';
+import { Icon, type UiIconName } from '../Icon';
+import { Button, IconButton, Text } from '../primitives';
 import { MezfitBottomSheet } from '../konsta-mezfit';
 import {
   ThreeColumnPicker,
@@ -124,6 +126,13 @@ export function WeightRepsPicker({
   const lensAction = (field: NumericField) => {
     const isEditing = editing === field;
     const label = field === 'reps' ? 'Изменить повторения' : 'Изменить целые килограммы';
+    if (isEditing) {
+      return (
+        <span className="ui-weight-reps-picker__lens-status" role="status" aria-label={label}>
+          <Icon name="letter-i" className="ui-weight-reps-picker__input-active" style={{ width: 40, height: 40 }} />
+        </span>
+      );
+    }
     return (
       <IconButton
         label={label}
@@ -131,11 +140,7 @@ export function WeightRepsPicker({
         className="ui-weight-reps-picker__lens-edit"
         onClick={() => openNumberSheet(field)}
       >
-        <Icon
-          name={isEditing ? 'letter-i' : 'pencil-plus'}
-          className={isEditing ? 'ui-weight-reps-picker__input-active' : ''}
-          style={{ width: 40, height: 40 }}
-        />
+        <Icon name="pencil-plus" style={{ width: 40, height: 40 }} />
       </IconButton>
     );
   };
@@ -182,6 +187,7 @@ export function WeightRepsPicker({
           opened={opened && editing !== null}
           label={editing === 'reps' ? 'Ввод повторений' : 'Ввод килограммов'}
           lazyMount
+          layer="abovePopover"
           className="ui-weight-reps-picker__number-sheet"
         >
           <div className="ui-weight-reps-picker__number-content">
