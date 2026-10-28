@@ -44,10 +44,10 @@ jobs:
           try:
             with urllib.request.urlopen(request,timeout=75) as response:
               body=json.loads(response.read().decode())
-            result=json.loads(body['choices'][0]['message']['content'])
-            report['translated']=result
-            report['usage']=body.get('usage')
-            report['status']='success'
+            report['raw_response']={'model':body.get('model'),'choices':body.get('choices'),'usage':body.get('usage'),'error':body.get('error')}
+            msg=(body.get('choices') or [{}])[0].get('message',{}).get('content')
+            report['translated']=json.loads(msg) if isinstance(msg,str) and msg.strip() else None
+            report['status']='success' if report['translated'] else 'empty_content'
           except urllib.error.HTTPError as e:
             report['status']='http_error'
             report['code']=e.code
