@@ -150,7 +150,7 @@ describe('WeightRepsPicker numeric lens editor', () => {
 
   it('uses 50px pencil icons and centers a 50px cursor after the measured final digit', () => {
     renderPicker();
-    const pencil = screen.getByRole('button', { name: 'Изменить повторения' }).querySelector('svg');
+    const pencil = screen.getByRole('button', { name: 'Изменить повторения' }).querySelector<HTMLElement>('.ui-icon');
     expect(pencil?.style.width).toBe('50px');
     expect(pencil?.style.height).toBe('50px');
     const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
