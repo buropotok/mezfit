@@ -97,16 +97,18 @@ describe('three-wheel native scroll handling shared with TimePicker', () => {
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(4);
   });
 
-  it('uses native scrolling for the kilogram wheel with a 10kg value per row', () => {
+  it('uses the same native scroll position for every kilogram, including precise 1kg moves', () => {
     const { onChange } = mountControlled();
-    // 77kg belongs to the 7, 17, 27, ... 397kg native snap row set.
-    const kg = observeNativeScroll('Килограммы', 7);
-    act(() => kg.moveTo(8));
+    const kg = observeNativeScroll('Килограммы', 77);
+    act(() => kg.moveTo(78));
     flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 87.5 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 78.5 });
+    act(() => kg.moveTo(79));
+    flushFrame();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 79.5 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
     expect(kg.appWrites).toEqual([]);
-    expect(within(kg.element).getByRole('option', { name: '87' })
+    expect(within(kg.element).getByRole('option', { name: '79' })
       .getAttribute('aria-selected')).toBe('true');
   });
 
@@ -151,7 +153,7 @@ describe('three-wheel native scroll handling shared with TimePicker', () => {
     expect(reps.appWrites).toContain(8 * ROW_HEIGHT);
   });
 
-  it('retains one tactile event for a direct coarse-row tap', () => {
+  it('retains one tactile event for an exact distant kilogram tap', () => {
     const { onChange } = mountControlled();
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Килограммы' }))
       .getByRole('option', { name: '307' }));
