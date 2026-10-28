@@ -29,12 +29,12 @@ const IOS_LENS_MAGNIFICATION = 1.55;
 // Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
 // of native scroll events instead of changing scrollTop during momentum.
 const SCROLL_END_FALLBACK_MS = 200;
-// A deliberate hold unlocks fine 1kg control; swipes advance in decades.
+// A deliberate hold unlocks one-unit control; swipes advance by configured strides.
 const HOLD_TO_FINE_MS = 240;
 const SWIPE_THRESHOLD_PX = 7;
 const FLING_MAX_DECADES = 18;
 
-type WeightGesture = {
+type StepGesture = {
   startY: number;
   startTime: number;
   startIndex: number;
@@ -419,7 +419,7 @@ export function ThreeColumnPicker({
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const reconcileFrameRef = useRef<number | null>(null);
-  const gestureRef = useRef<Partial<Record<ThreeColumnPickerPart, WeightGesture>>>({});
+  const gestureRef = useRef<Partial<Record<ThreeColumnPickerPart, StepGesture>>>({});
   const flingFrameRef = useRef<Record<ThreeColumnPickerPart, number | null>>({
     first: null, second: null, third: null,
   });
@@ -706,7 +706,7 @@ export function ThreeColumnPicker({
     });
   };
 
-  const updateGesturePosition = (part: ThreeColumnPickerPart, gesture: WeightGesture, y: number) => {
+  const updateGesturePosition = (part: ThreeColumnPickerPart, gesture: StepGesture, y: number) => {
     const distance = gesture.startY - y;
     const step = columns[part].gestureStep ?? 1;
     const index = gesture.mode === 'fine'
@@ -723,7 +723,7 @@ export function ThreeColumnPicker({
     cancelFling(part, view);
     const old = gestureRef.current[part];
     if (old?.holdTimer != null) view.clearTimeout(old.holdTimer);
-    const gesture: WeightGesture = {
+    const gesture: StepGesture = {
       startY: touch.clientY, startTime: event.timeStamp,
       startIndex: valueIndex(columns[part], draftRef.current[part]),
       lastY: touch.clientY, lastTime: event.timeStamp,
@@ -838,6 +838,9 @@ export function ThreeColumnPicker({
     event.preventDefault();
     const view = event.currentTarget.ownerDocument.defaultView ?? window;
     cancelFling(part, view);
+    const gesture = gestureRef.current[part];
+    if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
+    delete gestureRef.current[part];
     const current = valueIndex(columns[part], draftRef.current[part]);
     setGestureIndex(part, current + Math.sign(event.deltaY), 1);
     finishGesture(part);
