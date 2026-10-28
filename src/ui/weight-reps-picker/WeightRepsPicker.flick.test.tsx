@@ -9,182 +9,244 @@ import { WeightRepsPicker } from './WeightRepsPicker';
 
 vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn() }));
 
-const ROW_HEIGHT = 48;
+let frames: Map<number, FrameRequestCallback>;
+let nextFrame: number;
 
-function gesture(element: HTMLElement, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel', y: number, at: number) {
-  const event = new Event(type, { bubbles: true });
-  Object.defineProperty(event, 'timeStamp', { value: at });
+function flushFrame(timestamp: number) {
+  const callbacks = [...frames.values()];
+  frames.clear();
+  act(() => callbacks.forEach(callback => callback(timestamp)));
+}
+
+function finishMomentum() {
+  for (let i = 0; i < 100 && frames.size; i += 1) flushFrame(i * 16);
+  expect(frames.size).toBe(0);
+}
+
+function touch(element: HTMLElement, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel', y: number, time: number) {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'timeStamp', { value: time });
   Object.defineProperty(event, 'touches', { value: type === 'touchend' || type === 'touchcancel' ? [] : [{ clientY: y }] });
   Object.defineProperty(event, 'changedTouches', { value: [{ clientY: y }] });
   fireEvent(element, event);
+  return event;
 }
 
-function mountWeight(initialKg = 280.5) {
+function mountWeight(initialKg = 100.5) {
   const target = document.createElement('button');
   document.body.appendChild(target);
   const onChange = vi.fn();
   const onClose = vi.fn();
-  function Controlled() {
+  function ControlledPicker() {
     const [value, setValue] = useState({ reps: 8, weightKg: initialKg });
     return (
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
-          <WeightRepsPicker
-            opened target={target} value={value}
-            onChange={next => { onChange(next); setValue(next); }}
-            onClose={onClose}
-          />
+          <WeightRepsPicker opened target={target} value={value}
+            onChange={next => { onChange(next); setValue(next); }} onClose={onClose} />
         </div>
       </KonstaProvider>
     );
   }
-  render(<Controlled />);
+  render(<ControlledPicker />);
+  flushFrame(0); // Mount's initial positioning frame.
   return { onChange, onClose };
 }
 
 beforeEach(() => {
+  frames = new Map();
+  nextFrame = 1;
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.mocked(triggerTelegramSelectionHaptic).mockClear();
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    callback(0);
-    return 1;
+    const id = nextFrame++;
+    frames.set(id, callback);
+    return id;
   });
-  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 });
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   document.body.innerHTML = '';
 });
 
-describe('WeightRepsPicker 10kg native flick snapping', () => {
-  it('activates only after TimePicker-fast gesture and marks every tenth kilogram as a snap stop', () => {
+describe('WeightRepsPicker hold-versus-swipe kilogram control', () => {
+  it('uses a private gesture controller for kilograms but keeps other wheels native', () => {
     mountWeight();
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
-    gesture(kilograms, 'touchstart', 200, 100);
-    gesture(kilograms, 'touchmove', 152, 180);
-    expect(kilograms.className).toContain('ui-time-picker__column--flick-snap');
-    gesture(kilograms, 'touchend', 128, 230);
-    expect(kilograms.className).toContain('ui-time-picker__column--flick-snap');
-
-    for (const kilogram of [0, 10, 280, 290, 300, 390]) {
-      expect(within(kilograms).getByRole('option', { name: String(kilogram) }).className)
-        .toContain('ui-time-picker__option--flick-stop');
-    }
-    for (const kilogram of [1, 281, 299, 301, 399]) {
-      expect(within(kilograms).getByRole('option', { name: String(kilogram) }).className)
-        .not.toContain('ui-time-picker__option--flick-stop');
-    }
+    expect(screen.getByRole('listbox', { name: 'Килограммы' }).className)
+      .toContain('ui-time-picker__column--gesture-scrub');
     expect(screen.getByRole('listbox', { name: 'Повторения' }).className)
-      .not.toContain('ui-time-picker__column--flick-snap');
+      .not.toContain('ui-time-picker__column--gesture-scrub');
     expect(screen.getByRole('listbox', { name: 'Доли килограмма' }).className)
-      .not.toContain('ui-time-picker__column--flick-snap');
+      .not.toContain('ui-time-picker__column--gesture-scrub');
   });
 
-  it('retains 1kg precision for slow swipes and direct row selection', () => {
-    const { onChange } = mountWeight(280.25);
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement;
-    gesture(kilograms, 'touchstart', 200, 100);
-    gesture(kilograms, 'touchmove', 160, 400);
-    gesture(kilograms, 'touchend', 154, 800);
-    expect(kilograms.className).not.toContain('ui-time-picker__column--flick-snap');
-
-    act(() => { kilograms.scrollTop = 281 * ROW_HEIGHT; fireEvent.scroll(kilograms); });
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.25 });
-    fireEvent.click(within(kilograms).getByRole('option', { name: '283' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 283.25 });
-    // One tick for 281 by scroll, one tick for the direct tap on 283.
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
-    expect(kilograms.className).not.toContain('ui-time-picker__column--flick-snap');
-  });
-
-  it('preserves each crossed-value haptic and intermediate values while fast flick is active', () => {
+  it('a slow swipe still selects tens, not one-kilogram increments', () => {
     const { onChange } = mountWeight();
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement;
-    gesture(kilograms, 'touchstart', 200, 100);
-    gesture(kilograms, 'touchmove', 148, 200);
-    gesture(kilograms, 'touchend', 120, 260);
-
-    // Model the browser's deferred animation frames. The global immediate RAF
-    // stub runs a callback before the component assigns its frame ID, leaving
-    // that ID incorrectly pending and swallowing a second scroll event.
-    const frames = new Map<number, FrameRequestCallback>();
-    let nextFrame = 2;
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      const id = nextFrame++;
-      frames.set(id, callback);
-      return id;
-    });
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
-    const flushFrame = () => {
-      const callbacks = [...frames.values()];
-      frames.clear();
-      callbacks.forEach(callback => callback(0));
-    };
-
-    act(() => {
-      kilograms.scrollTop = 299 * ROW_HEIGHT;
-      fireEvent.scroll(kilograms);
-      flushFrame();
-    });
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 299.5 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(19);
-    act(() => {
-      kilograms.scrollTop = 300 * ROW_HEIGHT;
-      fireEvent.scroll(kilograms);
-      flushFrame();
-    });
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 300.5 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(20);
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 120, 500); // Two physical tick distances, slowly.
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 120.5 });
+    touch(wheel, 'touchend', 120, 550);
+    finishMomentum();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 130.5 });
+    expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 0.5)).toBe(true);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
   });
 
-  it('chooses the nearest ten-kilogram stop on dismissal during a fast flick', () => {
-    const { onChange, onClose } = mountWeight();
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement;
-    gesture(kilograms, 'touchstart', 200, 100);
-    gesture(kilograms, 'touchmove', 148, 200);
-    gesture(kilograms, 'touchend', 120, 260);
+  it('a fast swipe covers many more tens with velocity-scaled deceleration', () => {
+    const { onChange } = mountWeight();
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 120, 150); // Same 80px, eight times faster.
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 120.5 });
+    touch(wheel, 'touchend', 120, 175);
+    finishMomentum();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 220.5 });
+    expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 0.5)).toBe(true);
+    // 100 -> 120 during the finger gesture, then ten more decade ticks.
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(12);
+  });
 
-    // The browser has not yet completed its native momentum/snap.
-    kilograms.scrollTop = 307.6 * ROW_HEIGHT;
+  it('holding and then moving the finger selects exact kilograms without an inertial fling', () => {
+    const { onChange } = mountWeight(280.25);
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    act(() => vi.advanceTimersByTime(240));
+    touch(wheel, 'touchmove', 104, 400); // 96px / 48px = 2kg.
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 282.25 });
+    touch(wheel, 'touchend', 104, 420);
+    finishMomentum();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 282.25 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
+  });
+
+  it('advances by ten relative to an arbitrary starting kilogram without rounding it', () => {
+    const { onChange } = mountWeight(77.75);
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 160, 200);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 87.75 });
+    touch(wheel, 'touchend', 160, 220);
+    finishMomentum();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 107.75 });
+    expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 7.75)).toBe(true);
+  });
+
+  it('works across 299 -> 300 with one tactile event per decade', () => {
+    const { onChange } = mountWeight(290.75);
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 160, 200);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 300.75 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    touch(wheel, 'touchend', 160, 220);
+    finishMomentum();
+    expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 0.75)).toBe(true);
+  });
+
+  it('cancels an active fling on the next touch and allows fine adjustment', () => {
+    const { onChange } = mountWeight();
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 120, 150);
+    touch(wheel, 'touchend', 120, 175);
+    flushFrame(0);
+    flushFrame(48);
+    const stoppedAt = onChange.mock.lastCall?.[0].weightKg as number;
+    touch(wheel, 'touchstart', 200, 300);
+    expect(frames.size).toBe(0);
+    act(() => vi.advanceTimersByTime(240));
+    touch(wheel, 'touchmove', 152, 550);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: stoppedAt + 1 });
+    touch(wheel, 'touchend', 152, 580);
+    finishMomentum();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: stoppedAt + 1 });
+  });
+
+  it('keeps direct taps exact and does not synthesize a click from a swipe', () => {
+    const { onChange } = mountWeight(280.5);
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    fireEvent.click(within(wheel).getByRole('option', { name: '283' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 283.5 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 160, 180);
+    const endEvent = touch(wheel, 'touchend', 160, 200);
+    expect(endEvent.defaultPrevented).toBe(true);
+  });
+
+  it('preserves the upper boundary without wrapping or infinite momentum', () => {
+    const { onChange } = mountWeight(385.75);
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 120, 130);
+    touch(wheel, 'touchend', 120, 150);
+    finishMomentum();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 395.75 });
+    expect(frames.size).toBe(0);
+  });
+
+  it('ignores programmatic scroll events during the gesture instead of vibrating repeatedly', () => {
+    const { onChange } = mountWeight();
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement;
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 160, 150);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 110.5 });
+    const emitted = onChange.mock.calls.length;
+    fireEvent.scroll(wheel);
+    fireEvent(wheel, new Event('scrollend', { bubbles: true }));
+    expect(onChange).toHaveBeenCalledTimes(emitted);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    touch(wheel, 'touchend', 160, 180);
+    finishMomentum();
+    expect(frames.size).toBe(0);
+  });
+
+  it('stops ongoing inertia immediately when the popover closes', () => {
+    const { onClose } = mountWeight();
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 120, 150);
+    touch(wheel, 'touchend', 120, 180);
+    flushFrame(0);
+    flushFrame(48);
+    const pulses = vi.mocked(triggerTelegramSelectionHaptic).mock.calls.length;
     const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
     fireEvent.click(dialog.previousElementSibling as Element);
-
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 310.5 });
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(frames.size).toBe(0);
+    finishMomentum();
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(pulses);
   });
 
-  it('resets coarse snapping on direct taps, keeping exact one-kilogram selection', () => {
+  it('preserves fine adjustment by desktop wheel without starting a flick', () => {
     const { onChange } = mountWeight();
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
-    gesture(kilograms, 'touchstart', 200, 100);
-    gesture(kilograms, 'touchmove', 150, 200);
-    gesture(kilograms, 'touchend', 120, 250);
-    expect(kilograms.className).toContain('ui-time-picker__column--flick-snap');
-
-    fireEvent.click(within(kilograms).getByRole('option', { name: '283' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 283.5 });
-    expect(kilograms.className).not.toContain('ui-time-picker__column--flick-snap');
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    fireEvent.wheel(wheel, { deltaY: 40 });
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 101.5 });
+    finishMomentum();
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps TimePicker-style native snapping isolated to kilograms, not DurationPicker', () => {
+  it('leaves the existing duration picker unchanged', () => {
     const target = document.createElement('button');
     document.body.appendChild(target);
     render(
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
-          <DurationPicker opened value={125} target={target} onChange={vi.fn()} onClose={vi.fn()} />
+          <DurationPicker opened value={125} target={target}
+            onChange={vi.fn()} onClose={vi.fn()} />
         </div>
       </KonstaProvider>,
     );
-    const minutes = screen.getByRole('listbox', { name: 'Минуты продолжительности' });
-    gesture(minutes, 'touchstart', 200, 100);
-    gesture(minutes, 'touchmove', 150, 200);
-    gesture(minutes, 'touchend', 125, 240);
-    expect(minutes.className).not.toContain('ui-time-picker__column--flick-snap');
+    expect(screen.getByRole('listbox', { name: 'Минуты продолжительности' }).className)
+      .not.toContain('ui-time-picker__column--gesture-scrub');
   });
 });

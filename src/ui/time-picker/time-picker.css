@@ -73,10 +73,15 @@
   scroll-snap-align: none;
 }
 
-/* Three-column fast flicks share TimePicker's native coarse snap strategy.
-   Keep the intervening rows visible and haptic-active while they pass. */
-.ui-time-picker__column--flick-snap .ui-time-picker__option:not(.ui-time-picker__option--flick-stop) {
-  scroll-snap-align: none;
+/* Touch is fully owned by the kilogram gesture controller: no native fling
+   remains active to fight the velocity-based decade animation. */
+.ui-time-picker__column--gesture-scrub {
+  overflow-y: hidden;
+  touch-action: none;
+  scroll-snap-type: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .ui-time-picker__option--selected {
