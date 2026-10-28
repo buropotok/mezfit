@@ -562,6 +562,10 @@ export function ThreeColumnPicker({
     if (!opened) {
       cancelScheduledFrames(view);
       gestureRef.current = {};
+      if (PARTS.some((part) => finePartsRef.current[part])) {
+        finePartsRef.current = { first: false, second: false, third: false };
+        setFineParts(finePartsRef.current);
+      }
       wasOpenedRef.current = false;
       locallyEmittedRef.current.clear();
       scrollingPartsRef.current.clear();
@@ -607,12 +611,14 @@ export function ThreeColumnPicker({
 
     // Scroll events may skip multiple rows: issue one tick per crossed value,
     // even if React commits only the most recent position this animation frame.
-    if (fromScroll) {
+    if (fromScroll && !columns[part].gestureStep) {
       const step = nextIndex > lastIndex ? 1 : -1;
       for (let cursor = lastIndex + step; cursor !== nextIndex + step; cursor += step) {
         triggerTelegramSelectionHaptic();
       }
     } else {
+      // TimePicker's native wheel emits one pulse for each reported change.
+      // Never queue an entire skipped run of coarse rows in one WebView event.
       triggerTelegramSelectionHaptic();
     }
     feedbackValueRef.current = { ...feedbackValueRef.current, [part]: values[nextIndex] };
@@ -663,10 +669,12 @@ export function ThreeColumnPicker({
         draftRef.current = canonical;
         feedbackValueRef.current = canonical;
         setDraft(canonical);
-        const tops = partsToScrollTops(columns, canonical);
-        pendingScrollRef.current = tops;
-        setScrollTops(tops);
-        syncColumns(canonical);
+        if (PARTS.every((candidate) => displayedColumns[candidate].values.includes(canonical[candidate]))) {
+          const tops = partsToScrollTops(displayedColumns, canonical);
+          pendingScrollRef.current = tops;
+          setScrollTops(tops);
+          syncColumns(canonical);
+        }
       }
       locallyEmittedRef.current.clear();
     });
