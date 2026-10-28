@@ -19,7 +19,7 @@ async function fixture() {
   databases.push(db);
   const stores: Record<string, string | null> = {};
   for (const [table, schema] of Object.entries(CLOUD_DATABASE_STORES_V12)) stores[table] = schema?.replaceAll('@', '') ?? null;
-  db.version(12).stores({ ...stores, localProgramSync: 'id' });
+  db.version(12).stores({ ...stores, localProgramSync: 'id', localWorkoutSync: 'id' });
   for (const table of ['adHocSessions', 'adHocExercises', 'adHocSets', 'trainingPlans', 'programPhases', 'programDays'])
     db.table(table).hook('creating', key => key === undefined ? crypto.randomUUID() : undefined);
   for (const client of ['202', '303']) {
