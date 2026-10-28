@@ -73,12 +73,9 @@
   scroll-snap-align: none;
 }
 
-/* Touch is fully owned by the kilogram gesture controller: no native fling
-   remains active to fight the velocity-based decade animation. */
+/* Native pan-y, WebKit momentum and mandatory snap stay identical to
+   TimePicker. Only the value-row density changes between coarse and fine. */
 .ui-time-picker__column--gesture-scrub {
-  overflow-y: hidden;
-  touch-action: none;
-  scroll-snap-type: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
