@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/pec-deck-fly/",
   "name": "Pec Deck Fly",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the Machine: Set the seat so handles are at chest level. Adjust arm pads so your arms are slightly behind your torso to"
-      ]
-    }
-  ],
+  "how_to": "Here are the steps to perform the Pec deck fly:\n\n1. Adjust the Machine: Set the seat so handles are at chest level. Adjust arm pads so your arms are slightly behind your torso to begin.\n2. Sit Tall: Place your feet flat, back pressed against the pad, and grasp the handles or rest forearms against pads (depending on machine type).\n3. Set Arm Position: Keep a slight bend in the elbows to protect your joints.\n4. Initiate the Movement: Exhale and bring the arms together in front of your chest in a hugging motion. Focus on squeezing your chest muscles at the peak.\n5. Return With Control: Slowly reverse the movement until you feel a mild stretch in the chest. Avoid letting weights slam or overstretching.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pec-Deck-Fly.gif",
   "muscles": {
     "target": [
@@ -38,6 +30,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Pec-Deck-Fly.gif",
   "name_ru": "Сведение рук в тренажёре «бабочка»",
   "tracking_type": "weight_reps"
 }

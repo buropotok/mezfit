@@ -1,29 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/incline-dumbbell-press/",
   "name": "Incline Dumbbell Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust a bench to an incline angle of 30–45 degrees."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Grab a dumbbell in each hand and sit on the bench, feet flat"
-      ]
-    }
-  ],
+  "how_to": "Setup\n\n1. Adjust a bench to an incline angle of 30–45 degrees.\n2. Grab a dumbbell in each hand and sit on the bench, feet flat on the floor.\n3. Rest the dumbbells on your thighs, then lie back while bringing the weights to shoulder level.\n4. Position the dumbbells with your palms facing forward and elbows bent at about 90 degrees.\nExecution\n\n1. Exhale as you press the dumbbells upward in a smooth, controlled motion until your arms are fully extended (but not locked).\n2. Slowly lower the dumbbells back to the starting position, keeping your elbows at a 45-degree angle to your torso.\n3. Repeat for the desired number of reps.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Dumbbell-Press.gif",
   "muscles": {
     "target": [
@@ -47,6 +25,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Incline-Dumbbell-Press.gif",
   "name_ru": "Жим гантелей на наклонной скамье",
   "tracking_type": "weight_reps"
 }

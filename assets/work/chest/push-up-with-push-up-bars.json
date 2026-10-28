@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/push-up-with-push-up-bars/",
   "name": "Push-up With Push-up Bars",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Position the Bars Place the push-up bars shoulder-width apart on a stable surface. Ensure they are secure and won’t slip."
-      ]
-    }
-  ],
+  "how_to": "Setup\n\n1. Position the Bars\n  - Place the push-up bars shoulder-width apart on a stable surface. Ensure they are secure and won’t slip.\n2. Grip the Bars\n  - Hold the bars firmly with a neutral grip, keeping your wrists straight and aligned with your forearms.\nExecution\n\n1. Starting Position\n  - Assume a high plank position with your hands gripping the bars, arms fully extended, and body in a straight line from head to heels.\n2. Lower Your Body\n  - Inhale as you bend your elbows, lowering your chest until it’s just below the height of your hands. Keep your elbows at a 45-degree angle to your torso.\n3. Push Back Up\n  - Exhale as you press through the bars to return to the starting position.\n4. Repeat\n  - Perform 10–15 repetitions for 2–3 sets, maintaining proper form throughout.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Push-up-With-Push-up-Bars.gif",
   "muscles": {
     "target": [
@@ -49,6 +34,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Push-up-With-Push-up-Bars.gif",
   "name_ru": "Отжимания на упорах",
   "tracking_type": "weight_reps"
 }

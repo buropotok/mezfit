@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/lever-incline-hammer-chest-press/",
   "name": "Lever Incline Hammer Chest Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup:"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the Machine Set the seat height so the handles align with your mid to upper chest when seated. Adjust the weight stack"
-      ]
-    }
-  ],
+  "how_to": "Setup:\n\n1. Adjust the Machine\n  - Set the seat height so the handles align with your mid to upper chest when seated.\n  - Adjust the weight stack or plate load to a manageable resistance.\n2. Position Yourself\n  - Sit back on the incline bench with your back pressed firmly against the pad.\n  - Grasp the handles with a neutral grip (palms facing inward).\n  - Place your feet flat on the ground for stability.\nExecution:\n\n1. Starting Position\n  - Begin with your arms bent, elbows slightly below shoulder level.\n  - Keep your chest up and shoulders pulled back.\n2. Press the Handles\n  - Exhale and push the handles upward and slightly inward in a controlled motion.\n  - Fully extend your arms without locking the elbows.\n3. Lower the Handles\n  - Inhale and slowly lower the handles back to the starting position.\n  - Maintain control and avoid letting the weight stack slam.\n4. Repeat\n  - Perform 8–12 repetitions for hypertrophy or 12–15 for endurance, depending on your fitness goal.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Lever-Incline-Hammer-Chest-Press.gif",
   "muscles": {
     "target": [
@@ -41,6 +26,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Lever-Incline-Hammer-Chest-Press.gif",
   "name_ru": "Жим от груди под углом вверх в тренажёре «Хаммер»",
   "tracking_type": "weight_reps"
 }

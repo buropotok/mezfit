@@ -1,29 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/one-arm-decline-cable-fly/",
   "name": "One Arm Decline Cable Fly",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup:"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the cable machine to a low position. Attach a single handle to the cable."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Set up a decline bench (around 15-30 degrees)"
-      ]
-    }
-  ],
+  "how_to": "Setup:\n\n1. Adjust the cable machine to a low position. Attach a single handle to the cable.\n2. Set up a decline bench (around 15-30 degrees) near the cable machine.\n3. Secure your feet in the bench’s foot pads to maintain stability.\n4. Grab the handle with one hand and lie back on the bench, keeping your non-working hand on your torso or gripping the bench for support.\nExecution:\n\n1. Starting Position:\n  - Extend your arm straight above your chest with a slight bend in the elbow.\n  - Keep your palm facing inward (neutral or slight pronation).\n2. Lowering Phase (Eccentric Movement):\n  - Slowly lower your arm in a wide arc to the side.\n  - Stop when you feel a deep stretch in your chest (your elbow should be slightly below shoulder level).\n3. Lifting Phase (Concentric Movement):\n  - Engage your chest and bring your arm back up in a smooth arc.\n  - Squeeze your pec at the top of the movement.\n4. Repeat for the desired number of reps (8-15 reps is a good range).\n5. Switch Sides and perform the same movement on the other arm.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/One-Arm-Decline-Cable-Fly.gif",
   "muscles": {
     "target": [
@@ -48,6 +26,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "One-Arm-Decline-Cable-Fly.gif",
   "name_ru": "Сведение одной руки на блоке с акцентом на низ груди",
   "tracking_type": "weight_reps"
 }

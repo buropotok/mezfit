@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/single-arm-cable-crossover/",
   "name": "Single-Arm Cable Crossover",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Set Up the Cable Machine Adjust the pulley to shoulder height. Attach a single handle to the pulley and select an appropriate weight."
-      ]
-    }
-  ],
+  "how_to": "1. Set Up the Cable Machine\n  - Adjust the pulley to shoulder height.\n  - Attach a single handle to the pulley and select an appropriate weight.\n2. Position Yourself\n  - Stand with your feet staggered for balance.\n  - Grasp the handle with one hand and step slightly away from the machine to create tension in the cable.\n3. Engage Your Core\n  - Tighten your abdominal muscles to stabilize your body.\n  - Keep your shoulders down and back to maintain proper posture.\n4. Perform the Movement\n  - Start with your arm extended to the side at shoulder height.\n  - Pull the handle in front of your body with control, squeezing your chest at the peak.\n  - Slowly return to the starting position while maintaining tension in the cable.\n5. Repeat\n  - Complete the desired number of repetitions before switching to the other arm.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Single-Arm-Cable-Crossover.gif",
   "muscles": {
     "target": [
@@ -43,6 +35,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Single-Arm-Cable-Crossover.gif",
   "name_ru": "Сведение одной руки на блоке",
   "tracking_type": "weight_reps"
 }

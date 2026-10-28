@@ -1,29 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/medicine-ball-overhead-throw/",
   "name": "Medicine Ball Overhead Throw",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "1. Setup:"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Stand with feet shoulder-width apart, facing a sturdy wall or a partner."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Hold the medicine ball with both hands, gripping it firmly."
-      ]
-    }
-  ],
+  "how_to": "1. Setup:\n\n- Stand with feet shoulder-width apart, facing a sturdy wall or a partner.\n- Hold the medicine ball with both hands, gripping it firmly.\n- Position the medicine ball above your head with your elbows bent back.\n2. Throw the Medicine Ball:\n\n- Initiate the movement by forcefully throwing the medicine ball directly overhead toward the wall or your partner.\n- Utilize your entire body for power, engaging your legs, hips, and core.\n- Aim for a high and powerful throw.\n3. Catch and Reset:\n\n- After throwing the ball, quickly prepare to catch it as it rebounds off the wall or is returned by your partner.\n- Keep your eyes on the ball and be ready to react.\n4. Repeat:\n\n- As soon as you catch the ball, immediately go into the next throw.\n- Perform the Medicine Ball Overhead Throw continuously for the desired number of repetitions or a specific duration.\nMaster The Medicine Ball Overhead Throw\nMastering the Medicine Ball Overhead Throw requires proper technique and strength. Pay attention to your form, ensuring a smooth and controlled motion. Here are some techniques and tips that will be useful to you:\n\nTechnique:\n- Start by standing with feet shoulder-width apart, holding the ball above your head.\n- Engage your core, bend your knees slightly, and explosively throw the ball forward, extending your arms. Aim for height and distance.\n- Use your whole body to generate power, focusing on the core, shoulders, and legs.\nTips:\n- Begin with a thorough warm-up to prepare your muscles and joints for the dynamic movements involved in medicine ball throws.\n- Use a medicine ball weight that challenges you but allows you to maintain proper form.\n- Focus on explosive power and a controlled motion throughout the exercise.\n- Maintain proper body mechanics, keeping back straight and core engaged.\n- If you are new to this exercise, start with a lighter medicine ball and gradually increase the weight as your strength improves.\nDifficulty:\nSingle-Leg Stance: Perform the overhead throws while balancing on one leg to increase stability and engage additional stabilizing muscles.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/09/Medicine-Ball-Overhead-Throw.gif",
   "muscles": {
     "target": [
@@ -47,6 +25,7 @@
     "Shoulders",
     "Triceps"
   ],
+  "image_id": "Medicine-Ball-Overhead-Throw.gif",
   "name_ru": "Бросок медицинбола из-за головы",
   "tracking_type": "weight_reps"
 }

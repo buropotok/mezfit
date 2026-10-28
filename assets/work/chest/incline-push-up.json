@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/incline-push-up/",
   "name": "Incline Push-up",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup:"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Choose an Elevated Surface Use a sturdy bench, countertop, or even a wall for higher inclines. The lower the incline, the more challenging"
-      ]
-    }
-  ],
+  "how_to": "Setup:\n\n1. Choose an Elevated Surface\n  - Use a sturdy bench, countertop, or even a wall for higher inclines. The lower the incline, the more challenging the exercise.\n2. Position Yourself\n  - Place your hands shoulder-width apart on the elevated surface. Ensure your fingers are pointing forward and your palms are flat.\nExecution:\n\n1. Starting Position\n  - Step your feet back until your body forms a straight line from head to heels.\n  - Engage your core and glutes to maintain a neutral spine.\n2. Lower Your Body\n  - Inhale as you slowly bend your elbows, lowering your chest toward the surface.\n  - Keep your elbows at a 45-degree angle to your torso, avoiding flaring them out.\n3. Push Back Up\n  - Exhale as you press your hands into the surface, straightening your arms to return to the starting position.\n  - Focus on squeezing your chest and triceps as you push up.\n4. Repeat\n  - Perform 10–15 repetitions for 2–3 sets, depending on your fitness level.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Incline-Push-Up.gif",
   "muscles": {
     "target": [
@@ -50,6 +35,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Incline-Push-Up.gif",
   "name_ru": "Отжимания с руками на возвышении",
   "tracking_type": "weight_reps"
 }

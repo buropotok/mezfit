@@ -1,29 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/smith-machine-incline-bench-press/",
   "name": "Smith Machine Incline Bench Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the incline bench to an angle of 30–45 degrees and place it under the Smith machine bar."
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Sit on the bench with"
-      ]
-    }
-  ],
+  "how_to": "Setup\n\n1. Adjust the incline bench to an angle of 30–45 degrees and place it under the Smith machine bar.\n2. Sit on the bench with your feet flat on the floor, your back firmly pressed against the bench, and the bar aligned with your upper chest.\n3. Grip the bar slightly wider than shoulder-width, with your palms facing forward.\n4. Unrack the bar by rotating your wrists to disengage the safety hooks.\nExecution\n\n1. Lowering Phase:\n  - Slowly lower the bar toward your upper chest, keeping your elbows at a 45-degree angle to your torso.\n  - Stop when the bar is just above or lightly touches your chest.\n2. Pressing Phase:\n  - Push the bar upward to the starting position in a controlled motion.\n  - Fully extend your arms without locking your elbows.\n3. Repeat: Perform the desired number of repetitions with smooth and controlled movements.\nTips for Maximum Effectiveness\n1. Grip Placement: Adjust your grip width to find a position that feels comfortable and targets the upper chest effectively.\n2. Controlled Tempo: Lower the bar slowly to maximize time under tension and improve muscle activation.\n3. Engage Your Core: Keep your core tight throughout the exercise to maintain stability.\n4. Warm Up First: Perform light warm-up sets to prepare your muscles and joints for heavier loads.\n5. Incorporate Variations: Combine with flat and decline presses for comprehensive chest development.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Smith-Machine-Incline-Bench-Press.gif",
   "muscles": {
     "target": [
@@ -47,6 +25,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Smith-Machine-Incline-Bench-Press.gif",
   "name_ru": "Жим на наклонной скамье в машине Смита",
   "tracking_type": "weight_reps"
 }

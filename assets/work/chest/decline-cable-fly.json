@@ -1,64 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/decline-cable-fly/",
   "name": "Decline Cable Fly",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Home"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Calculators"
-      ]
-    },
-    {
-      "step": 3,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Body Mass Index (BMI)"
-      ]
-    },
-    {
-      "step": 4,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Body Fat Index"
-      ]
-    },
-    {
-      "step": 5,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Calories Burned"
-      ]
-    },
-    {
-      "step": 6,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Daily Calorie Calculator"
-      ]
-    },
-    {
-      "step": 7,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "One Rep Max Calculator"
-      ]
-    },
-    {
-      "step": 8,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Grip Strength Calculator"
-      ]
-    }
-  ],
+  "how_to": "Setup\n\n1. Set the pulleys on a cable machine to a high position, above shoulder level.\n2. Attach D-handles to each cable.\n3. Stand in the middle of the cable machine with one handle in each hand.\n4. Lean your torso slightly forward and extend your arms out to the sides with a slight bend in the elbows.\nExecution\n\n1. Starting Position:\n  - Begin with your arms extended to the sides, palms facing forward, and a slight bend in your elbows.\n  - Engage your core to stabilize your body.\n2. Contraction Phase:\n  - Pull the handles downward and inward in a wide arc, bringing your hands together in front of your hips.\n  - Squeeze your chest muscles at the bottom of the movement.\n3. Return Phase:\n  - Slowly reverse the motion, allowing your arms to return to the starting position.\n  - Maintain control to keep tension on the cables throughout.\n4. Repeat: Perform for the desired number of repetitions with smooth and controlled movements.\nTips for Maximum Effectiveness\n1. Focus on the Chest: Concentrate on squeezing your chest muscles during the contraction phase.\n2. Control the Eccentric Phase: Lower the cables slowly to maximize time under tension and stimulate muscle growth.\n3. Adjust the Pulleys Properly: Ensure the cables are set at an appropriate height to target the lower chest effectively.\n4. Breathe Correctly: Exhale as you pull the handles downward and inhale as you return to the starting position.\n5. Incorporate into a Balanced Routine: Pair with incline and flat chest exercises for comprehensive chest development.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Decline-Cable-Fly.gif",
   "muscles": {
     "target": [],
@@ -81,6 +24,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Decline-Cable-Fly.gif",
   "name_ru": "Сведение рук в кроссовере с акцентом на низ груди",
   "tracking_type": "weight_reps"
 }

@@ -1,12 +1,10 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/low-chest-fly-with-resistance-band/",
   "name": "Low Chest Fly With Resistance Band",
-  "how_to": [],
+  "how_to": "",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Low-fly.gif",
   "muscles": {
-    "target": [
-      "Chest"
-    ],
+    "target": [],
     "synergists": [],
     "stabilizers": {
       "dynamic": [],
@@ -21,6 +19,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Low-fly.gif",
   "name_ru": "Сведение рук с эспандером снизу вверх",
   "tracking_type": "weight_reps"
 }

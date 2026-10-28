@@ -1,19 +1,10 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/seated-chest-stretch/",
   "name": "Seated Chest Stretch",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Start in a Seated Position: Sit on the floor with your legs bent and feet flat on the ground . Put your hands behind"
-      ]
-    }
-  ],
+  "how_to": "Step-by-Step Guide\n1. Start in a Seated Position:\n  - Sit on the floor with your legs bent and feet flat on the ground.\n  - Put your hands behind your back, fingers facing your body.\n2. Engage the Stretch:\n  - Push your chest upward and forward, opening your shoulders and chest.\n  - Keep your arms slightly bent but stable to avoid excessive pressure on the wrists.\n3. Hold the Position:\n  - Maintain the stretch for 10 to 20 seconds while breathing deeply.\n  - Feel the gentle stretch across your chest and shoulders without straining.\n4. Release Slowly:\n  - Relax and return to the starting position.\n  - Repeat for 2 to 3 sets, adjusting intensity as needed.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Seated-Chest-Stretch.gif",
   "muscles": {
     "target": [
-      "Pectoralis Major (Chest)",
       "Anterior Deltoid",
       "Biceps Brachii",
       "Upper Back",
@@ -32,6 +23,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Seated-Chest-Stretch.gif",
   "name_ru": "Растяжка грудных мышц сидя",
   "tracking_type": "time"
 }

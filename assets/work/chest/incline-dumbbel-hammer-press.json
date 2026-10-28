@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/incline-dumbbel-hammer-press/",
   "name": "Incline Dumbbell Hammer Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the Bench : Set the incline bench to an angle of 30–45 degrees."
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Select Dumbbells : Choose a weight that allows you to"
-      ]
-    }
-  ],
+  "how_to": "Setup\n1. Adjust the Bench: Set the incline bench to an angle of 30–45 degrees.\n2. Select Dumbbells: Choose a weight that allows you to maintain proper form.\n3. Position Yourself: Sit back on the bench with your feet flat on the floor and your back fully supported.\n4. Grip: Hold the dumbbells with a neutral (hammer) grip, palms facing each other.\nExecution\n1. Starting Position:\n  - Begin with the dumbbells at shoulder level, elbows bent, and hands in line with your torso.\n2. Pressing Phase:\n  - Push the dumbbells upward and slightly inward in a controlled manner, keeping your palms facing each other.\n  - Fully extend your arms without locking your elbows.\n3. Lowering Phase:\n  - Slowly lower the dumbbells back to the starting position, maintaining the neutral grip and control.\n4. Repeat: Perform the desired number of repetitions.\nTips for Maximum Effectiveness\n1. Focus on Form: Maintain proper alignment and control throughout the movement.\n2. Squeeze at the Top: Consciously engage your chest muscles at the peak of the press.\n3. Warm Up: Prepare your shoulders and chest with light exercises to prevent injury.\n4. Use Moderate Weight: Start with a weight that allows you to perform the exercise with perfect form.\n5. Combine with Other Chest Exercises: Pair with flat and decline presses for comprehensive chest development.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Incline-Dumbbel-Hammer-Press.gif",
   "muscles": {
     "target": [],
@@ -39,6 +24,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Incline-Dumbbel-Hammer-Press.gif",
   "name_ru": "Жим гантелей нейтральным хватом на наклонной скамье",
   "tracking_type": "weight_reps"
 }

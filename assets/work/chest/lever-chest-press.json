@@ -1,44 +1,10 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/lever-chest-press/",
   "name": "Lever Chest Press",
-  "how_to": [],
+  "how_to": "",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Chest-Press.gif",
   "muscles": {
-    "target": [
-      "Home",
-      "Calculators",
-      "Body Mass Index (BMI)",
-      "Body Fat Index",
-      "Calories Burned",
-      "Daily Calorie Calculator",
-      "One Rep Max Calculator",
-      "Grip Strength Calculator",
-      "Exercises",
-      "Neck",
-      "Trapezius",
-      "Shoulder",
-      "Chest",
-      "Back / Wing",
-      "Erector Spinae",
-      "Biceps",
-      "Triceps",
-      "Forearm",
-      "Abs / Core",
-      "Leg",
-      "Calf",
-      "Hips",
-      "Cardio",
-      "Full Body",
-      "Single Workouts",
-      "Workout Plans",
-      "My Profile",
-      "Login / Reg",
-      "Search",
-      "Cart",
-      "Menu",
-      "Lever Chest Press",
-      "Exercise / Chest"
-    ],
+    "target": [],
     "synergists": [],
     "stabilizers": {
       "dynamic": [],
@@ -52,6 +18,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Lever-Chest-Press.gif",
   "name_ru": "Жим от груди в рычажном тренажёре",
   "tracking_type": "weight_reps"
 }

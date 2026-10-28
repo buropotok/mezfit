@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/one-arm-kettlebell-chest-press-on-the-bench/",
   "name": "One-Arm Kettlebell Chest Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Set-Up : Lie flat on a bench or the floor with your knees bent and feet firmly planted. Hold a kettlebell in one hand,"
-      ]
-    }
-  ],
+  "how_to": "1. Set-Up:\n  - Lie flat on a bench or the floor with your knees bent and feet firmly planted.\n  - Hold a kettlebell in one hand, keeping your wrist straight and your palm facing forward.\n2. Starting Position:\n  - Press the kettlebell directly above your chest, locking your elbow.\n  - Ensure the kettlebell rests against the back of your forearm for stability.\n3. Lowering Phase:\n  - Slowly lower the kettlebell toward your chest, keeping your elbow at a 45-degree angle from your torso.\n  - Focus on controlling the descent to engage your stabilizing muscles.\n4. Pressing Phase:\n  - Push the kettlebell back to the starting position in a straight line.\n  - Exhale as you press up and maintain control throughout the movement.\n5. Switch Arms:\n  - Complete the desired repetitions and then switch to the other arm.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/One-Arm-Kettlebell-Chest-Press-on-the-Bench.gif",
   "muscles": {
     "target": [
@@ -34,6 +26,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "One-Arm-Kettlebell-Chest-Press-on-the-Bench.gif",
   "name_ru": "Жим гири одной рукой лёжа",
   "tracking_type": "weight_reps"
 }

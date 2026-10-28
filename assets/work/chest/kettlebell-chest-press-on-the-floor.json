@@ -1,15 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/kettlebell-chest-press-on-the-floor/",
   "name": "Kettlebell Chest Press on the Floor",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup: Lie flat on your back with your knees bent and feet planted firmly on the floor. Hold a kettlebell in each hand with"
-      ]
-    }
-  ],
+  "how_to": "Step-by-Step Guide\n1. Setup:\n  - Lie flat on your back with your knees bent and feet planted firmly on the floor.\n  - Hold a kettlebell in each hand with a neutral grip (palms facing each other).\n2. Positioning:\n  - Keep your elbows bent at about a 45-degree angle from your torso.\n  - Ensure your upper arms are resting on the floor, and your wrists are aligned with your elbows.\n3. Pressing Phase:\n  - Press the kettlebells upward until your arms are fully extended.\n  - Keep the movement controlled and avoid locking out your elbows.\n4. Lowering Phase:\n  - Slowly lower the kettlebells back down until your upper arms touch the floor.\n  - Maintain tension in your chest and triceps throughout the movement.\n5. Repeat:\n  - Perform the desired number of repetitions while maintaining proper form.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Kettlebell-Chest-Press-on-the-Floor.gif",
   "muscles": {
     "target": [
@@ -35,6 +27,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Kettlebell-Chest-Press-on-the-Floor.gif",
   "name_ru": "Жим гирь лёжа на полу",
   "tracking_type": "weight_reps"
 }

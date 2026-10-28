@@ -1,13 +1,10 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/supine-medicine-ball-chest-throw/",
   "name": "Supine Medicine Ball Chest Throw",
-  "how_to": [],
+  "how_to": "",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/06/Supine-Medicine-Ball-Chest-Throw-exercise.gif",
   "muscles": {
-    "target": [
-      "Chest",
-      "Triceps"
-    ],
+    "target": [],
     "synergists": [],
     "stabilizers": {
       "dynamic": [],
@@ -22,6 +19,7 @@
     "Chest",
     "Triceps"
   ],
+  "image_id": "Supine-Medicine-Ball-Chest-Throw-exercise.gif",
   "name_ru": "Бросок медицинбола от груди лёжа",
   "tracking_type": "weight_reps"
 }

@@ -1,43 +1,10 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/push-up-to-renegade-row/",
   "name": "Push-Up to Renegade Row",
-  "how_to": [],
+  "how_to": "Step 1: Grab a pair of weights and get in push-up plank position with your hands grasping the handles of the weights.\n\nStep 2: Lower your body to the floor, pause, then push yourself back up.\n\nStep 3: Once you’re back in the starting plank position, pull the weight in your right hand upward, bending at the elbow. Try to graze your right side when you “row” the dumbbell up, keeping your elbow straight.\n\nStep 4: Pause, then lower the dumbbell back down, and repeat the same movement with your left arm.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Push-Up-to-Renegade-Row.gif",
   "muscles": {
-    "target": [
-      "Home",
-      "Calculators",
-      "Body Mass Index (BMI)",
-      "Body Fat Index",
-      "Calories Burned",
-      "Daily Calorie Calculator",
-      "One Rep Max Calculator",
-      "Grip Strength Calculator",
-      "Exercises",
-      "Neck",
-      "Trapezius",
-      "Shoulder",
-      "Chest",
-      "Back / Wing",
-      "Erector Spinae",
-      "Biceps",
-      "Triceps",
-      "Forearm",
-      "Abs / Core",
-      "Leg",
-      "Calf",
-      "Hips",
-      "Cardio",
-      "Full Body",
-      "Single Workouts",
-      "Workout Plans",
-      "My Profile",
-      "Login / Reg",
-      "Search",
-      "Cart",
-      "Menu",
-      "Push-Up to Renegade Row"
-    ],
+    "target": [],
     "synergists": [],
     "stabilizers": {
       "dynamic": [],
@@ -53,6 +20,7 @@
     "Chest",
     "Full Body"
   ],
+  "image_id": "Push-Up-to-Renegade-Row.gif",
   "name_ru": "Отжимание с переходом в тягу гантели в планке",
   "tracking_type": "weight_reps"
 }

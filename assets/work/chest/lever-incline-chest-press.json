@@ -1,22 +1,7 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/lever-incline-chest-press/",
   "name": "Lever Incline Chest Press",
-  "how_to": [
-    {
-      "step": 1,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Setup"
-      ]
-    },
-    {
-      "step": 2,
-      "title": "Instruction excerpt",
-      "instructions": [
-        "Adjust the Seat : Set the seat height so that the handles are aligned with your chest. This is important for ensuring that"
-      ]
-    }
-  ],
+  "how_to": "Setup\n\n1. Adjust the Seat: Set the seat height so that the handles are aligned with your chest. This is important for ensuring that the press effectively targets the upper chest.\n2. Choose the Weight: Select the appropriate weight that you can control through the full range of motion.\n3. Grip the Handles: Sit down on the machine with your back firmly against the pad. Grasp the handles with your palms facing forward (typically, the machine has neutral or pronated grips).\n4. Position Your Feet: Place your feet flat on the floor for stability.\nExecution\n\n1. Press the Handles Up: Push the handles forward in a controlled motion, fully extending your arms without locking your elbows.\n2. Squeeze at the Top: At the peak of the movement, briefly squeeze your chest to maximize muscle engagement.\n3. Lower Slowly: Slowly bring the handles back toward your chest, feeling a stretch in your upper chest and shoulders.\n4. Repeat: Perform the desired number of repetitions, focusing on maintaining a controlled movement throughout.\nTips for Effectiveness\n- Mind-Muscle Connection: Focus on squeezing the chest at the top of each rep to maximize activation of the pectoral muscles.\n- Controlled Tempo: Perform the exercise with a slow tempo to keep constant tension on the chest muscles, which enhances muscle growth.\n- Full Range of Motion: Ensure you press fully without locking out your elbows and bring the handles back to your chest for a full stretch.",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Incline-Chest-Press.gif",
   "muscles": {
     "target": [
@@ -40,6 +25,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Lever-Incline-Chest-Press.gif",
   "name_ru": "Жим от груди под углом вверх в рычажном тренажёре",
   "tracking_type": "weight_reps"
 }

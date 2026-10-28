@@ -1,12 +1,10 @@
 {
   "source_url": "https://fitnessprogramer.com/exercise/resistance-band-alternating-chest-fly/",
   "name": "Resistance Band Alternating Chest Fly",
-  "how_to": [],
+  "how_to": "",
   "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/Resistance-Band-Alternating-Chest-Fly.gif",
   "muscles": {
-    "target": [
-      "Chest"
-    ],
+    "target": [],
     "synergists": [],
     "stabilizers": {
       "dynamic": [],
@@ -20,6 +18,7 @@
   "muscle_group": [
     "Chest"
   ],
+  "image_id": "Resistance-Band-Alternating-Chest-Fly.gif",
   "name_ru": "Попеременное сведение рук с эспандером",
   "tracking_type": "weight_reps"
 }
