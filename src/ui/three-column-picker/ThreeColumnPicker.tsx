@@ -464,7 +464,7 @@ export function ThreeColumnPicker({
   }), [columns, fineParts.first, fineParts.second, fineParts.third,
     residues[0], residues[1], residues[2]]);
   const previousDisplayedColumnsRef = useRef(displayedColumns);
-  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(displayedColumns, valueParts));
+  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(displayedColumns, draft));
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
 
