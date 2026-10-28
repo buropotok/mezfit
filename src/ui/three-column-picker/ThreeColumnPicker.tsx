@@ -1,6 +1,7 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type UIEvent,
@@ -64,6 +65,7 @@ export interface ThreeColumnPickerProps {
   staticLens?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
   /** Text at a static slot, rendered through the same optics as wheel values. */
   staticLensValues?: Partial<Record<ThreeColumnPickerPart, string>>;
+  staticLensCursors?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
   popoverRef?: Ref<HTMLElement>;
   onPositioned?: (element: HTMLElement) => void;
   popoverClassName?: string;
@@ -144,11 +146,13 @@ function LensText({
   column,
   scrollTop,
   lensMode,
+  textRef,
 }: {
   x: number;
   column: ThreeColumnPickerColumn;
   scrollTop: number;
   lensMode: ResolvedTwoColumnPickerLensMode;
+  textRef?: Ref<SVGTextElement>;
 }) {
   return (
     <>
@@ -160,6 +164,7 @@ function LensText({
 
         return (
           <text
+            ref={textRef}
             key={index}
             x={x}
             y={y}
@@ -176,6 +181,66 @@ function LensText({
   );
 }
 
+/** Owns the measured text and its trailing 50 CSS px cursor. */
+function StaticLensValue({ part, x, value, column, lensMode, cursor }: {
+  part: ThreeColumnPickerPart;
+  x: number;
+  value: string;
+  column: ThreeColumnPickerColumn;
+  lensMode: ResolvedTwoColumnPickerLensMode;
+  cursor?: ReactNode;
+}) {
+  const textRef = useRef<SVGTextElement | null>(null);
+  const groupRef = useRef<SVGGElement | null>(null);
+  const [geometry, setGeometry] = useState({ halfText: 0, width: 50, height: 50, gap: 0 });
+  useLayoutEffect(() => {
+    if (!cursor) return;
+    const group = groupRef.current;
+    if (!group) return;
+    let cancelled = false;
+    const measure = () => {
+      if (cancelled) return;
+      const svg = group.ownerSVGElement?.getBoundingClientRect();
+      const scaleX = svg?.width ? LENS_WIDTH / svg.width : 1;
+      const scaleY = svg?.height ? LENS_HEIGHT / svg.height : 1;
+      const next = {
+        halfText: (textRef.current?.getBoundingClientRect().width ?? 0) * scaleX / 2,
+        width: 50 * scaleX,
+        height: 50 * scaleY,
+        gap: value ? 2 * scaleX : 0,
+      };
+      setGeometry(current => current.halfText === next.halfText && current.width === next.width
+        && current.height === next.height && current.gap === next.gap ? current : next);
+    };
+    measure();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (textRef.current) observer?.observe(textRef.current);
+    if (group.ownerSVGElement) observer?.observe(group.ownerSVGElement);
+    void group.ownerDocument.fonts?.ready.then(measure);
+    return () => { cancelled = true; observer?.disconnect(); };
+  }, [value, lensMode, cursor]);
+
+  return (
+    <g ref={groupRef} data-ui-picker-static-value={part}>
+      {value !== '' ? (
+        <LensText x={x} column={{ ...column, values: [0], format: () => value }}
+          scrollTop={0} lensMode={lensMode} textRef={textRef} />
+      ) : null}
+      {cursor ? (
+        <foreignObject
+          data-ui-picker-cursor={part}
+          x={x + geometry.halfText + geometry.gap - geometry.width / 2}
+          y={(LENS_HEIGHT - geometry.height) / 2}
+          width={geometry.width}
+          height={geometry.height}
+        >
+          {cursor}
+        </foreignObject>
+      ) : null}
+    </g>
+  );
+}
+
 function PickerLens({
   assets,
   scrollTops,
@@ -185,6 +250,7 @@ function PickerLens({
   separators = [],
   staticLens,
   staticLensValues,
+  staticLensCursors,
 }: {
   assets: TimeLensAssets | null;
   scrollTops: ScrollTops;
@@ -194,6 +260,7 @@ function PickerLens({
   separators?: readonly ThreeColumnPickerSeparator[];
   staticLens?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
   staticLensValues?: Partial<Record<ThreeColumnPickerPart, string>>;
+  staticLensCursors?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
 }) {
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-three-column-picker-lens-${reactId}`;
@@ -211,15 +278,10 @@ function PickerLens({
           lensMode={lensMode}
         />
       ))}
-      {PARTS.map((part, index) => staticLensValues?.[part] ? (
-        <g key={part} data-ui-picker-static-value={part}>
-          <LensText
-            x={lensXs[index]}
-            column={{ ...columns[part], values: [0], format: () => staticLensValues?.[part] ?? '' }}
-            scrollTop={0}
-            lensMode={lensMode}
-          />
-        </g>
+      {PARTS.map((part, index) => staticLensValues?.[part] !== undefined ? (
+        <StaticLensValue key={part} part={part} x={lensXs[index]}
+          value={staticLensValues?.[part] ?? ''} column={columns[part]}
+          lensMode={lensMode} cursor={staticLensCursors?.[part]} />
       ) : null)}
       {separators.map(({ x, label }, index) => (
         <text
@@ -399,6 +461,7 @@ export function ThreeColumnPicker({
   header,
   staticLens,
   staticLensValues,
+  staticLensCursors,
   popoverRef,
   onPositioned,
   popoverClassName,
@@ -710,6 +773,7 @@ export function ThreeColumnPicker({
             separators={separators}
             staticLens={staticLens}
             staticLensValues={staticLensValues}
+            staticLensCursors={staticLensCursors}
           />
         </div>
       </div>
