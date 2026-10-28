@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Button as KonstaButton } from 'konsta/react';
 import { loadBrowserGlassSettings } from '../../glassSettings';
 import { FloatingActionButton } from '../components';
 import { Icon, type UiIconName } from '../Icon';
@@ -191,13 +192,14 @@ export function WeightRepsPicker({
         >
           <div className="ui-weight-reps-picker__number-content">
             <header className="ui-weight-reps-picker__number-header">
-              <button
-                type="button"
+              <KonstaButton
+                clear
+                inline
                 className="ui-weight-reps-picker__cancel"
                 onClick={cancelEdit}
               >
                 <Text variant="body">Отменить</Text>
-              </button>
+              </KonstaButton>
               <Text variant="headline">
                 {editing === 'reps' ? 'Повторения' : 'Килограммы'}
               </Text>
