@@ -31,7 +31,7 @@ function touch(element: HTMLElement, type: 'touchstart' | 'touchmove' | 'touchen
   fireEvent(element, event);
 }
 
-function mountWeight(initialWeight = 280.25) {
+function mountWeight(initialWeight = 280.25, acknowledgeChanges = true) {
   const target = document.createElement('button');
   document.body.appendChild(target);
   const onChange = vi.fn();
@@ -42,7 +42,7 @@ function mountWeight(initialWeight = 280.25) {
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
           <WeightRepsPicker opened target={target} value={value}
-            onChange={next => { onChange(next); setValue(next); }} onClose={onClose} />
+            onChange={next => { onChange(next); if (acknowledgeChanges) setValue(next); }} onClose={onClose} />
         </div>
       </KonstaProvider>
     );
@@ -130,6 +130,21 @@ describe('WeightRepsPicker native hold-to-one-kilogram precision', () => {
     nativeMove(wheel, 12);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 120.5 });
     touch(wheel, 'touchend', 120, 550);
+  });
+
+  it('does not reset a fine-grained wheel during delayed parent acknowledgements', () => {
+    const { onChange, wheel } = mountWeight(280.25, false);
+    touch(wheel, 'touchstart', 200, 100);
+    act(() => vi.advanceTimersByTime(240));
+    const appScrollTo = vi.fn();
+    Object.defineProperty(wheel, 'scrollTo', { configurable: true, value: appScrollTo });
+    nativeMove(wheel, 281);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.25 });
+    nativeMove(wheel, 282);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 282.25 });
+    expect(within(wheel).getByRole('option', { name: '282' })
+      .getAttribute('aria-selected')).toBe('true');
+    expect(appScrollTo).not.toHaveBeenCalled();
   });
 
   it('changes 299 -> 300 -> 301 individually without a programmatic fling', () => {
