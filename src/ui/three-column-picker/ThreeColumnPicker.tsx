@@ -430,8 +430,6 @@ export function ThreeColumnPicker({
 
   const cancelScheduledFrames = (view: Window) => {
     PARTS.forEach((part) => {
-      const gesture = gestureRef.current[part];
-      if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
       const fallbackTimer = scrollEndFallbackRefs.current[part];
       if (fallbackTimer !== null) {
         view.clearTimeout(fallbackTimer);
