@@ -67,6 +67,11 @@
   scroll-snap-stop: normal;
 }
 
+/* Keep native kinetic movement; choose only the nearest row when it ends. */
+.ui-time-picker__column--snap-on-end {
+  scroll-snap-type: none;
+}
+
 /* Fast minute flicks use native inertial scroll snapping to quarter-hour rows.
    Intermediate rows stay visible, but cannot be the final snap point. */
 .ui-time-picker__column--quarter-snap .ui-time-picker__option:not(.ui-time-picker__option--quarter-stop) {
