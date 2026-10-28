@@ -5,6 +5,7 @@ import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membersh
 import { CLOUD_DATABASE_STORES_V12, type MezfitCloudDatabase } from './database';
 import { AdHocWorkoutRepository } from './adhoc-workouts';
 import type { AdHocSessionRow } from './adhoc-workout-types';
+import { bookingsShareParticipant } from './workout-slot-validation';
 
 const databases: Dexie[] = [];
 afterEach(async () => { for (const db of databases.splice(0)) await db.delete(); });
@@ -31,11 +32,26 @@ it('projects authorized completed history and its original schedule without rewr
   const coach = new AdHocWorkoutRepository(database, 'tg:101');
   const client = new AdHocWorkoutRepository(database, 'tg:202');
   const foreign = new AdHocWorkoutRepository(database, 'tg:303');
-  expect(await coach.listForCalendar()).toEqual([session]);
-  expect(await client.listForCalendar()).toEqual([session]);
+  expect(await coach.listForCalendar()).toEqual([{ ...session, format: 'coached' }]);
+  expect(await client.listForCalendar()).toEqual([{ ...session, format: 'coached' }]);
   expect(await foreign.listForCalendar()).toEqual([]);
   expect((await coach.get(session.id))?.plannedTiming).toEqual({ startsAtUtc: '2026-10-29T08:00:00.000Z', durationMinutes: 60 });
   expect((await db.table('workoutOccurrences').get('booking')).startsAtUtc).toBe('2026-10-29T08:00:00.000Z');
+  await db.table('workoutOccurrences').update('booking', { format: 'independent' });
+  const [independent] = await coach.listForCalendar();
+  expect(independent.format).toBe('independent');
+  expect((await client.listForCalendar())[0].format).toBe('independent');
+  const executionBooking = { ...independent, startsAtUtc: independent.startedAt, durationMinutes: 40 };
+  expect(bookingsShareParticipant(executionBooking, { athleteUserId: 'tg:101', coachUserId: null,
+    format: 'independent', startsAtUtc: independent.startedAt, durationMinutes: 60 })).toBe(false);
+  expect(bookingsShareParticipant(executionBooking, { athleteUserId: 'tg:202', coachUserId: null,
+    format: 'independent', startsAtUtc: independent.startedAt, durationMinutes: 60 })).toBe(true);
+  // Partial replication may deliver the reverse link after the execution header.
+  await db.table('workoutOccurrences').update('booking', { workoutSessionId: null });
+  expect((await coach.listForCalendar())[0].format).toBe('independent');
+  // A conflicting reverse link must not supply another execution's format.
+  await db.table('workoutOccurrences').update('booking', { workoutSessionId: 'other-session' });
+  expect((await coach.listForCalendar())[0].format).toBe('coached');
   await db.table('members').delete(pair.members[1].id);
   expect(await coach.listForCalendar()).toEqual([]);
   expect(await client.listForCalendar()).toEqual([]);
