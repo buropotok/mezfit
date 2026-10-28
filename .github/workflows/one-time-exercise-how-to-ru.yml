@@ -1,0 +1,75 @@
+name: Inspect exercise how_to and translation route
+
+on:
+  push:
+    branches: [data/exercise-how-to-ru-20261028]
+    paths:
+      - .github/workflows/one-time-exercise-how-to-ru.yml
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: data/exercise-how-to-ru-20261028
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Count instructions and probe translation endpoint
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import collections
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+          files=sorted(Path('assets/work').glob('*/*.json'))
+          items=[(p,json.loads(p.read_text(encoding='utf-8'))) for p in files]
+          nonempty=[(p,v) for p,v in items if isinstance(v.get('how_to'),str) and v['how_to'].strip()]
+          texts={x['how_to'] for _,x in nonempty}
+          summary={
+            'total_json':len(items),
+            'nonempty_how_to':len(nonempty),
+            'unique_nonempty_texts':len(texts),
+            'already_with_how_to_ru':sum('how_to_ru' in x for _,x in items),
+            'empty_how_to':sum(not x.get('how_to') for _,x in items),
+            'category_nonempty':dict(sorted(collections.Counter(p.parent.name for p,v in nonempty).items())),
+            'total_chars':sum(len(v['how_to']) for _,v in nonempty),
+            'unique_chars':sum(len(t) for t in texts),
+            'max_len':max((len(t) for t in texts),default=0),
+            'length_buckets':dict(sorted(collections.Counter('0-300' if len(t)<=300 else '301-1000' if len(t)<=1000 else '1001-3000' if len(t)<=3000 else '3001+' for t in texts).items())),
+          }
+          def api(text):
+            q=urllib.parse.urlencode({'client':'gtx','sl':'en','tl':'ru','dt':'t','q':text})
+            request=urllib.request.Request('https://translate.googleapis.com/translate_a/single?'+q,headers={'User-Agent':'Mozilla/5.0'})
+            with urllib.request.urlopen(request,timeout=18) as response: result=json.loads(response.read())
+            return ''.join(part[0] for part in result[0] if part and part[0])
+          samples=[]
+          candidates=[nonempty[0],nonempty[len(nonempty)//2],nonempty[-1]]
+          longest=sorted(nonempty,key=lambda p:len(p[1]['how_to']),reverse=True)
+          candidates+=longest[:2]
+          for p,v in candidates:
+            src=v['how_to']
+            try: ru=api(src); error=None
+            except Exception as exc: ru=None;error=str(exc)
+            samples.append({'path':p.as_posix(),'source':src[:1000],'translated':ru[:1500] if ru else None,'error':error})
+          summary['translation_probe']=samples
+          out=Path('tools/exercise-work/howto-translation-inventory.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('HOWTO_INVENTORY='+json.dumps(summary,ensure_ascii=False)[:13000],flush=True)
+          PY
+      - name: Persist inventory for review
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/exercise-work/howto-translation-inventory.json
+          git commit -m 'chore: inventory how-to instructions and translation sample'
+          git push origin HEAD:refs/heads/data/exercise-how-to-ru-20261028
