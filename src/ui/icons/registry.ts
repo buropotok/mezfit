@@ -44,7 +44,32 @@ import editUrl from './edit-outline.svg';
 import usersFilledUrl from './liquid-glass-users-filled.svg';
 import usersOutlineUrl from './liquid-glass-users-outline.svg';
 
+import tablerPencilPlusUrl from './tabler-pencil-plus.svg';
+import tablerLetterIUrl from './tabler-letter-i.svg';
+import tablerNumber0Url from './tabler-number-0.svg';
+import tablerNumber1Url from './tabler-number-1.svg';
+import tablerNumber2Url from './tabler-number-2.svg';
+import tablerNumber3Url from './tabler-number-3.svg';
+import tablerNumber4Url from './tabler-number-4.svg';
+import tablerNumber5Url from './tabler-number-5.svg';
+import tablerNumber6Url from './tabler-number-6.svg';
+import tablerNumber7Url from './tabler-number-7.svg';
+import tablerNumber8Url from './tabler-number-8.svg';
+import tablerNumber9Url from './tabler-number-9.svg';
+
 const uiIconRegistry = {
+  'pencil-plus': { outline: tablerPencilPlusUrl, filled: tablerPencilPlusUrl },
+  'letter-i': { outline: tablerLetterIUrl, filled: tablerLetterIUrl },
+  'number-0': { outline: tablerNumber0Url, filled: tablerNumber0Url },
+  'number-1': { outline: tablerNumber1Url, filled: tablerNumber1Url },
+  'number-2': { outline: tablerNumber2Url, filled: tablerNumber2Url },
+  'number-3': { outline: tablerNumber3Url, filled: tablerNumber3Url },
+  'number-4': { outline: tablerNumber4Url, filled: tablerNumber4Url },
+  'number-5': { outline: tablerNumber5Url, filled: tablerNumber5Url },
+  'number-6': { outline: tablerNumber6Url, filled: tablerNumber6Url },
+  'number-7': { outline: tablerNumber7Url, filled: tablerNumber7Url },
+  'number-8': { outline: tablerNumber8Url, filled: tablerNumber8Url },
+  'number-9': { outline: tablerNumber9Url, filled: tablerNumber9Url },
   'trash-outline': { outline: trashThinUrl, filled: trashThinUrl },
   'copy-outline': { outline: copyThinUrl, filled: copyThinUrl },
   'treadmill': { outline: treadmillUrl, filled: treadmillUrl },
