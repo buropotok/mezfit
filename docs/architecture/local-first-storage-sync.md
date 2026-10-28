@@ -132,6 +132,19 @@ The protected operator and real-server validation requirements are documented in
 server-confirmed scheduled Start requirement only for the Coach slice; other
 scheduled lifecycle paths and existing FACT grants remain unchanged.
 
+**Client execution foundation (2026-10-28):** The first Client slice reuses the
+Coach execution graph through an explicit Client repository context: atomic local
+personal/published-occurrence Start, athlete FACT edits and linked completion.
+The Client overlay changes only the reviewed execution add/update and occurrence
+lifecycle fields; source PLAN, frozen snapshot, immutable identity and realm
+boundaries remain protected. Sequential handoff uses normal Addon replication,
+without a server ownership-transfer lock. The old Coach context and Client viewer
+remain unchanged until UI integration. The protected workflow is prepared, not
+executed by this slice; live activation and real-account authorization checks are
+separate. See `client-workout-sessions.md` and AGENTS.md §21. This scoped Client
+extension supersedes the prior read-only exception only after explicit adoption
+and activation, without changing older operators or legacy runtime.
+
 **Completion and status:** Keep occurrence/session lifecycle consistent. Derive display state from the linked local session where possible rather than writing duplicate optimistic statuses. Session FACT history must not mutate when later PLAN changes.
 
 ## 7. Telegram identity and invitations
