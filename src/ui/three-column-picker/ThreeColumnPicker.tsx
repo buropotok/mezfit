@@ -359,7 +359,7 @@ function ThreeColumnPickerColumnWheel({
   onTouchStart: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
   onTouchMove: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
-  onTouchCancel: (part: ThreeColumnPickerPart) => void;
+  onTouchCancel: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
   setColumnRef: (part: ThreeColumnPickerPart, element: HTMLDivElement | null) => void;
 }) {
   return (
@@ -373,7 +373,7 @@ function ThreeColumnPickerColumnWheel({
       onTouchStart={(event) => onTouchStart(part, event)}
       onTouchMove={(event) => onTouchMove(part, event)}
       onTouchEnd={(event) => onTouchEnd(part, event)}
-      onTouchCancel={() => onTouchCancel(part)}
+      onTouchCancel={(event) => onTouchCancel(part, event)}
       onContextMenu={(event) => {
         // Suppress WebView's button/text long-press callout for the gesture wheel.
         // A native context menu may cancel the touch sequence before fine drag.
@@ -779,6 +779,17 @@ export function ThreeColumnPicker({
     // No custom scrollTop writes: CSS pan-y and the WebView own the movement.
   };
 
+  const recognizeLateHold = (part: ThreeColumnPickerPart, at: number) => {
+    const gesture = gestureRef.current[part];
+    if (!gesture || gesture.mode !== 'pending') return;
+    // WKWebView may deliver touchcancel/touchend before any touchmove and
+    // postpone the timer. Elapsed touch time still identifies a real hold.
+    if (at - gesture.startTime >= HOLD_TO_FINE_MS) {
+      gesture.mode = 'fine';
+      setNativeFineMode(part, true);
+    }
+  };
+
   const finishTouch = (part: ThreeColumnPickerPart, view: Window) => {
     const gesture = gestureRef.current[part];
     if (!gesture) return;
@@ -792,12 +803,14 @@ export function ThreeColumnPicker({
 
   const handleTouchEnd = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
     if (!columns[part].gestureStep) return;
+    recognizeLateHold(part, event.timeStamp);
     finishTouch(part, event.currentTarget.ownerDocument.defaultView ?? window);
   };
 
-  const handleTouchCancel = (part: ThreeColumnPickerPart) => {
+  const handleTouchCancel = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
     if (!columns[part].gestureStep) return;
-    const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
+    recognizeLateHold(part, event.timeStamp);
+    const view = event.currentTarget.ownerDocument.defaultView ?? window;
     finishTouch(part, view);
     // WebView touchcancel can mean native pan/kinetic scroll took ownership.
     // Keep fine snap targets through the entire native scroll and scrollend;
