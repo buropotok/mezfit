@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, expect, it } from 'vitest';
 import roles from '../../../cloud/roles.json';
+import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { CLOUD_DATABASE_STORES_V12, type MezfitCloudDatabase } from './database';
 import { AdHocWorkoutRepository } from './adhoc-workouts';
 import type { PublicExerciseRow } from '../exercises/publicExerciseTypes';
@@ -26,13 +27,13 @@ const exercise: PublicExerciseRow = {
   anatomy_evidence: { classification_family: '', basis: '', external_individual_match: false },
 };
 
-it('loads only an authorized exercise snapshot, including after workout completion', async () => {
+it.each(['personal', 'shared'] as const)('loads only an authorized %s exercise snapshot, including after workout completion', async context => {
   const db = new Dexie('adhoc-info-' + crypto.randomUUID(), { addons: [] });
   databases.push(db);
   const stores: Record<string, string | null> = {};
   for (const [table, schema] of Object.entries(CLOUD_DATABASE_STORES_V12))
     stores[table] = schema?.replaceAll('@', '') ?? null;
-  db.version(12).stores({ ...stores, localProgramSync: 'id' });
+  db.version(12).stores({ ...stores, localProgramSync: 'id', localWorkoutSync: 'id' });
   for (const table of ['adHocSessions', 'adHocExercises', 'adHocSets',
     'trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets']) {
     db.table(table).hook('creating', key => key === undefined ? crypto.randomUUID() : undefined);
@@ -49,8 +50,12 @@ it('loads only an authorized exercise snapshot, including after workout completi
 
   const database = db as unknown as MezfitCloudDatabase;
   const owner = new AdHocWorkoutRepository(database, 'tg:101');
+  const client = new AdHocWorkoutRepository(database, 'tg:202');
   const foreign = new AdHocWorkoutRepository(database, 'tg:303');
-  const created = await owner.createQuick();
+  const pair = await relationshipMembership('101', '202');
+  await db.table('realms').add(pair.realm);
+  await db.table('members').bulkAdd(pair.members);
+  const created = context === 'shared' ? await owner.createForAthlete('tg:202') : await owner.createQuick();
   await owner.addExercises(created.id, ['0001']);
   const session = await owner.get(created.id);
   const exerciseId = session?.exercises[0]?.sessionExerciseId;
@@ -63,6 +68,24 @@ it('loads only an authorized exercise snapshot, including after workout completi
   await expect(foreign.exerciseInformation(created.id, exerciseId)).rejects.toThrow('ADHOC_SESSION_NOT_FOUND');
   await expect(owner.exerciseInformation(created.id, 'unknown')).rejects.toThrow('ADHOC_EXERCISE_NOT_FOUND');
 
+  if (context === 'shared') {
+    expect((await client.exerciseInformation(created.id, exerciseId)).name).toBe('Жим');
+    await expect(client.rename(created.id, 'Изменено')).rejects.toThrow('ADHOC_WRITE_FORBIDDEN');
+    await expect(client.complete(created.id)).rejects.toThrow('ADHOC_WRITE_FORBIDDEN');
+    const row = await db.table('adHocExercises').get(exerciseId);
+    await db.table('adHocExercises').put({ ...row, id: 'other-exercise', sessionId: 'other-session' });
+    await expect(client.exerciseInformation(created.id, 'other-exercise')).rejects.toThrow('ADHOC_EXERCISE_NOT_FOUND');
+    await db.table('adHocExercises').put({ ...row, id: 'foreign-realm-exercise', realmId: 'foreign-realm' });
+    await expect(client.exerciseInformation(created.id, 'foreign-realm-exercise')).rejects.toThrow('ADHOC_EXERCISE_NOT_FOUND');
+  } else {
+    await expect(client.exerciseInformation(created.id, exerciseId)).rejects.toThrow('ADHOC_SESSION_NOT_FOUND');
+  }
+
   await owner.complete(created.id);
   expect((await owner.exerciseInformation(created.id, exerciseId)).name).toBe('Жим');
+  if (context === 'shared') {
+    expect((await client.exerciseInformation(created.id, exerciseId)).name).toBe('Жим');
+    await db.table('members').delete(pair.members[1].id);
+    await expect(client.exerciseInformation(created.id, exerciseId)).rejects.toThrow('ADHOC_SESSION_NOT_FOUND');
+  }
 });

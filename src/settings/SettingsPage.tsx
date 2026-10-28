@@ -734,7 +734,7 @@ export function SettingsPage({
           </Button>
         </div>
         <WorkoutSessionCard
-          session={workoutCardSession}
+          session={workoutCardSession} athleteName="Атлет"
           title={workoutCardOwn ? workoutCardTitle : undefined}
           comment={workoutCardComment}
           onReorderExerciseIds={reorderWorkoutCardExercises}

@@ -7,6 +7,7 @@ import { AdHocSessionScreen, type AdHocSessionRepository } from './AdHocSessionS
 import type { WorkoutFactCardProps } from './WorkoutSessionCard';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
 
+vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({ name: 'Атлет', avatar: <span>Фото атлета</span>, compactAvatar: null }) }));
 vi.mock('konsta/react', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,

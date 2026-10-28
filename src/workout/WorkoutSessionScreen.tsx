@@ -7,6 +7,8 @@ import {
   saveWorkoutSessionSet,
   startWorkoutSession,
 } from '../api';
+import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
+import { useWorkoutPerson } from '../schedule/WorkoutPerson';
 import { useNavigationBackTransition } from '../NavigationShell';
 import { Button, GlassSurface, List, ListItem, Modal, Text } from '../ui';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
@@ -57,6 +59,7 @@ function reorderExerciseData(session: ActiveWorkoutSession, ids: number[]): Acti
 
 export function WorkoutSessionScreen({
   initData,
+  actor,
   trainingPlanId = null,
   onClose,
   onOpenExerciseMenu,
@@ -65,6 +68,8 @@ export function WorkoutSessionScreen({
   onSessionLifecycleChange,
   onNavigationContextChange,
 }: WorkoutSessionScreenProps) {
+  const cloud = useCloudConnections();
+  const athlete = useWorkoutPerson(cloud?.actorUserId ?? null, cloud?.actorUserId ?? '', actor);
   const requestBackTransition = useNavigationBackTransition();
   const [session, setSession] = useState<WorkoutSessionState | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
@@ -245,7 +250,7 @@ export function WorkoutSessionScreen({
       <section className="workout-session-screen">
         <Text variant="large-title">Тренировка</Text>
         <div className="workout-session-screen__message">
-          <Text tone="muted">{initializationError}</Text>
+          <Text variant="body" tone="muted">{initializationError}</Text>
         </div>
         <div className="workout-session-screen__actions">
           <Button onClick={() => setRetryVersion((version) => version + 1)}>Повторить</Button>
@@ -304,7 +309,7 @@ export function WorkoutSessionScreen({
             </>
           ) : (
             <>
-              <Text tone="muted">Активной программы нет. Можно начать свою тренировку.</Text>
+              <Text variant="body" tone="muted">Активной программы нет. Можно начать свою тренировку.</Text>
               <div className="workout-session-screen__actions">
                 <Button onClick={() => void startDraft({ type: 'own' })}>Своя тренировка</Button>
               </div>
@@ -316,7 +321,7 @@ export function WorkoutSessionScreen({
       {activeSession ? (
         <>
           <WorkoutSessionCard
-            session={activeSession}
+            session={activeSession} athleteName={athlete.name} athleteAvatar={athlete.avatar}
             onReorderExerciseIds={handleReorder}
             onSaveSet={handleSaveSet}
             onNavigationContextChange={onNavigationContextChange}
@@ -372,7 +377,7 @@ export function WorkoutSessionScreen({
       >
         <div className="workout-session-screen__loader">
           <span className="workout-session-screen__spinner" aria-hidden="true" />
-          <Text tone="muted">{busyLabel ?? 'Получаем актуальные данные…'}</Text>
+          <Text variant="body" tone="muted">{busyLabel ?? 'Получаем актуальные данные…'}</Text>
         </div>
       </Modal>
 

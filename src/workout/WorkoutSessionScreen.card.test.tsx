@@ -6,6 +6,10 @@ import { WorkoutSessionScreen } from './WorkoutSessionScreen';
 import type { SessionExerciseData, SessionExerciseSetData } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
 
+vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({
+  name: 'Иван Атлет', avatar: <img src="https://example.com/athlete.jpg" alt="" />, compactAvatar: null,
+}) }));
+
 vi.mock('../api', () => ({
   addWorkoutSessionExercises: vi.fn(),
   completeWorkoutSession: vi.fn(),
@@ -118,7 +122,7 @@ afterEach(() => {
 });
 
 describe('WorkoutSessionScreen workout card', () => {
-  it('renders workout identity in the header and averages exercise progress in the footer', async () => {
+  it('renders athlete identity in the header and averages exercise progress in the footer', async () => {
     const { container } = render(
       <WorkoutSessionScreen initData="telegram-init" onClose={vi.fn()} />,
     );
@@ -129,8 +133,9 @@ describe('WorkoutSessionScreen workout card', () => {
     expect(header.textContent).toContain('День B');
     expect(header.textContent).toContain('Силовой блок');
 
-    const avatar = header.querySelector('.workout-session-card__avatar');
-    expect(avatar?.getAttribute('src')).toBe('https://example.com/coach.jpg');
+    const avatar = header.querySelector('[aria-label="Атлет: Иван Атлет"] img');
+    expect(avatar?.getAttribute('src')).toBe('https://example.com/athlete.jpg');
+    expect(header.querySelector('img[src="https://example.com/coach.jpg"]')).toBeNull();
     expect(header.querySelector('.workout-session-card__icon-artwork')).not.toBeNull();
 
     const progress = screen.getByRole('progressbar', { name: 'Прогресс тренировки' });
@@ -144,7 +149,7 @@ describe('WorkoutSessionScreen workout card', () => {
     expect(screen.queryByRole('button', { name: 'Комментарий' })).toBeNull();
     expect(screen.queryByText('7 октября 2026 г.')).toBeNull();
     expect(screen.getByText(/октября 2026/)).toBeTruthy();
-    expect(screen.getByText(/^\d{2}:\d{2} — …$/)).toBeTruthy();
+    expect(screen.getByText(/^\d{2}:\d{2} — \d{2}:\d{2}$/)).toBeTruthy();
   });
 
   it('renders a completed interval and disables workout reordering', async () => {

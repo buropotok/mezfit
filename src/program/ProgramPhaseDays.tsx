@@ -12,6 +12,7 @@ import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import { ProgramDayDialog } from './ProgramDayDialog';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
+import { useWorkoutPerson } from '../schedule/WorkoutPerson';
 import { useSchedulePlanning } from '../schedule/SchedulePlanningContext';
 import { PlanActionDialog } from './PlanActionDialog';
 import type { ProgramActor } from './ProgramSummary';
@@ -47,6 +48,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const [optimisticExerciseOrders, setOptimisticExerciseOrders] = useState<Record<string, { previous: string[]; next: string[] }>>({});
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
+  const athlete = useWorkoutPerson(program.clientUserId ?? program.athleteUserId ?? null, program.realmId, actor);
   const authorId = planAuthorUserId(program);
   const self = authorId === repository.actorUserId;
   const contact = (self ? cloud?.selfAvatars ?? [] : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])])
@@ -185,7 +187,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
               throw reason;
             }
           });
-        }} creatorName={creatorName} creatorAvatar={creatorAvatar}
+        }} creatorName={creatorName} creatorAvatar={creatorAvatar} athleteName={athlete.name} athleteAvatar={athlete.avatar}
         readOnly={readOnly} onMutationAttempt={onMutationAttempt} busy={busy || exerciseDayId !== null}
         onStart={onStartDay ? () => { void start(item.day.id); } : undefined}
         canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId

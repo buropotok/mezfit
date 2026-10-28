@@ -7,6 +7,8 @@ import './DayScheduleEventCard.css';
 export type DayScheduleEventCardProps = {
   title: ReactNode;
   detail?: ReactNode;
+  /** Display actual timestamps when minimum card geometry exceeds the elapsed interval. */
+  timeLabel?: string;
   status?: ReactNode;
   media?: ReactNode;
   corner?: ReactNode;
@@ -29,6 +31,7 @@ function formatMinutes(totalMinutes: number): string {
 export function DayScheduleEventCard({
   title,
   detail,
+  timeLabel,
   status,
   media,
   corner,
@@ -43,7 +46,7 @@ export function DayScheduleEventCard({
   const endMinutes = state.startMinutes + state.durationMinutes;
   const timeRange = `${formatMinutes(state.startMinutes)}–${formatMinutes(endMinutes)}`;
   const subtitle = <div className="ui-day-schedule-event-card__row">
-    <Text variant="footnote" className="ui-day-schedule-event-card__fixed">{timeRange}</Text>
+    <Text variant="footnote" className="ui-day-schedule-event-card__fixed">{timeLabel ?? timeRange}</Text>
     {detail && !state.compact ? <Text variant="footnote" className="ui-day-schedule-event-card__truncate">{detail}</Text> : null}
   </div>;
   const resolvedMedia = !state.compact && media ? (

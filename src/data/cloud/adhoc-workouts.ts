@@ -21,6 +21,8 @@ import type { ExistingSetFact, SetEntryFactDraft, SetType } from '../../workout/
 export type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 
 export type AdHocOpenSession = Pick<AdHocSessionRow, 'id' | 'name' | 'status'>;
+/** Read-only calendar projection; format is not persisted on the execution row. */
+export type CalendarWorkoutSession = AdHocSessionRow & Pick<CloudWorkoutOccurrenceRow, 'format'>;
 
 export type AdHocSessionAccessIssue = AdHocSessionValidationIssue | 'ADHOC_LOCAL_RECORD_MISSING'
   | 'ADHOC_PERSONAL_ACCESS_INVALID' | 'ADHOC_RELATIONSHIP_IDENTITY_INVALID' | 'ADHOC_RELATIONSHIP_UNAVAILABLE';
@@ -104,6 +106,20 @@ export class AdHocWorkoutRepository {
   }
   private async accessible(row: AdHocSessionRow): Promise<boolean> {
     return (await this.accessIssue(row)) === null;
+  }
+  /** Authorized execution headers for the calendar, including completed history. */
+  async listForCalendar(): Promise<CalendarWorkoutSession[]> {
+    const result: CalendarWorkoutSession[] = [];
+    for (const row of await this.db.adHocSessions.toArray()) {
+      if (!isAdHocSessionRow(row) || !await this.accessible(row)) continue;
+      const occurrence = row.occurrenceId ? await this.db.workoutOccurrences.get(row.occurrenceId) : null;
+      const linked = occurrence && occurrence.realmId === row.realmId
+        && occurrence.athleteUserId === row.athleteUserId && occurrence.coachUserId === row.coachUserId
+        && occurrence.clientUserId === row.clientUserId
+        && (!occurrence.workoutSessionId || occurrence.workoutSessionId === row.id);
+      result.push({ ...row, format: linked ? occurrence.format : row.coachUserId ? 'coached' : 'independent' });
+    }
+    return result;
   }
   async getRow(id: string): Promise<AdHocSessionRow | null> {
     const row = await this.db.adHocSessions.get(id);
@@ -306,7 +322,8 @@ export class AdHocWorkoutRepository {
 
   /** Resolve the exercise card from the session snapshot, with current session access checks. */
   async exerciseInformation(sessionId: string, exerciseId: string) {
-    const session = await this.require(sessionId, false);
+    const session = await this.getRow(sessionId);
+    if (!session) throw new Error('ADHOC_SESSION_NOT_FOUND');
     const exercise = await this.exercise(session, exerciseId);
     return new ProgramManagementRepository(this.db, this.actorUserId)
       .snapshotExerciseInformation(exercise.exercise, session.realmId);
@@ -456,7 +473,13 @@ export class AdHocWorkoutRepository {
 
   private async project(session: AdHocSessionRow): Promise<ActiveWorkoutSession<string>> {
     const sets = await this.sets(session);
+    const planned = session.occurrenceId ? await this.db.workoutOccurrences.get(session.occurrenceId) : null;
+    const plannedTiming = planned && planned.realmId === session.realmId && planned.workoutSessionId === session.id
+      ? { startsAtUtc: planned.startsAtUtc, durationMinutes: planned.durationMinutes } : undefined;
     return {
+      ...(plannedTiming ? { plannedTiming } : {}),
+      format: planned && planned.realmId === session.realmId && planned.workoutSessionId === session.id
+        ? planned.format : session.coachUserId ? 'coached' : 'independent',
       sessionId: session.id, occurrenceId: session.occurrenceId ?? null, status: session.status,
       workoutDate: localWorkoutDate(session.startedAt), startedAt: session.startedAt, completedAt: session.completedAt,
       program: session.programId ? { id: session.programId, name: session.programName ?? '' } : null,
@@ -485,14 +508,14 @@ export class AdHocWorkoutRepository {
     };
   }
   async get(id: string): Promise<ActiveWorkoutSession<string> | null> {
-    return this.db.transaction('r', executionTables, async () => {
+    return this.db.transaction('r', [...executionTables, 'workoutOccurrences'], async () => {
       const row = await this.getRow(id);
       return row ? this.project(row) : null;
     });
   }
   observe(id: string, onChange: (session: ActiveWorkoutSession<string> | null, row?: AdHocSessionRow, issue?: AdHocSessionAccessIssue) => void,
     onError: (reason: unknown) => void): { unsubscribe(): void } {
-    return liveQuery(() => this.db.transaction('r', executionTables, async () => {
+    return liveQuery(() => this.db.transaction('r', [...executionTables, 'workoutOccurrences'], async () => {
       const row = await this.db.adHocSessions.get(id);
       const issue: AdHocSessionAccessIssue | null = row ? await this.accessIssue(row) : 'ADHOC_LOCAL_RECORD_MISSING';
       if (issue || !row) return { session: null, row: undefined, issue: issue ?? undefined };

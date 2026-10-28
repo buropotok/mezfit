@@ -54,6 +54,8 @@ export interface ActiveWorkoutSession<Id extends string | number = number> {
   phase: WorkoutPhaseSummary<Id> | null;
   day: WorkoutDaySummary<Id> | null;
   creator?: WorkoutCreatorSummary<Id>;
+  format?: 'independent' | 'coached';
+  plannedTiming?: { startsAtUtc: string; durationMinutes: number };
   exercises: SessionExerciseData<Id>[];
 }
 
@@ -70,6 +72,7 @@ export type WorkoutStartInput =
 
 export interface WorkoutSessionScreenProps {
   initData: string;
+  actor?: { name: string; photoUrl?: string | null };
   trainingPlanId?: number | null;
   onClose: () => void;
   onOpenExerciseMenu?: (sessionExerciseId: number) => void;

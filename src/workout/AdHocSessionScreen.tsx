@@ -11,6 +11,7 @@ import type { ProgramExerciseInformation } from '../data/cloud/program-managemen
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
 import type { PreviousSet } from './setEntryTypes';
+import { useWorkoutPerson } from '../schedule/WorkoutPerson';
 import { adHocErrorMessage } from './adhoc-workout-errors';
 import './workout-session-screen.css';
 
@@ -26,8 +27,9 @@ export type AdHocSessionRepository = Pick<AdHocWorkoutRepository,
   'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>;
 
 export function AdHocSessionScreen({ repository, sessionId, initData, actor, previousSets,
-  onNavigationContextChange, onExerciseInformation }: {
+  onNavigationContextChange, onExerciseInformation, readOnly = false }: {
   repository: AdHocSessionRepository;
+  readOnly?: boolean;
   sessionId: string;
   initData: string;
   actor?: ProgramActor;
@@ -37,6 +39,8 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
 }) {
   const [session, setSession] = useState<ActiveWorkoutSession<string> | null>(null);
   const [row, setRow] = useState<AdHocSessionRow | null>(null);
+  const athlete = useWorkoutPerson(row?.athleteUserId ?? null, row?.realmId ?? '', actor);
+  const coach = useWorkoutPerson(row?.coachUserId ?? null, row?.realmId ?? '', actor);
   const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
   const [error, setError] = useState('');
@@ -77,6 +81,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   // Serialize local intents, including completion after a set Save. Read models
   // come only from the repository observer, never from an older mutation result.
   const mutate = useCallback((operation: () => Promise<void>) => {
+    if (readOnly) return Promise.reject(new Error('Редактирование доступно только тренеру'));
     if (availableSession.current?.sessionId !== sessionId)
       return Promise.reject(new Error('Тренировка недоступна. Повторите чтение данных.'));
     ++pending.current;
@@ -89,7 +94,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       --pending.current;
       if (alive.current) setBusy(pending.current > 0);
     });
-  }, [sessionId]);
+  }, [sessionId, readOnly]);
   const report = useCallback((reason: unknown) => {
     if (alive.current) setError(adHocErrorMessage(reason));
   }, []);
@@ -121,7 +126,10 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   return <section className="adhoc-workouts">
     {loading ? <Text variant="body">Загружаем тренировку…</Text> : null}
     {displaySession ? <>
-      <WorkoutSessionCard session={displaySession} title={row?.name} comment={row?.comment}
+      <Text variant="body">Атлет: {athlete.name}</Text>
+      <div className="workout-participants"><Text variant="body">{session?.format === 'coached' || (!session?.format && row?.coachUserId) ? 'С тренером в зале' : 'Самостоятельная'}</Text>
+        {(session?.format === 'coached' || (!session?.format && row?.coachUserId)) ? coach.compactAvatar : null}</div>
+      <WorkoutSessionCard readOnly={readOnly} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
         onReorderExerciseIds={ids => { void mutate(() => repository.reorder(sessionId, ids)).catch(report); }}
         onSaveSet={input => mutate(() => repository.saveSet(sessionId, input.sessionSetId, input.fact))}
         onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}
@@ -131,10 +139,10 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         onExerciseInformation={onExerciseInformation ? id => {
           if (!pending.current) setInformationExerciseId(id);
         } : undefined}
-        onRename={name => mutate(() => repository.rename(sessionId, name))}
-        onCommentChange={session?.status === 'active' ? comment => mutate(() => repository.comment(sessionId, comment)) : undefined}
+        onRename={!readOnly ? name => mutate(() => repository.rename(sessionId, name)) : undefined}
+        onCommentChange={!readOnly && session?.status === 'active' ? comment => mutate(() => repository.comment(sessionId, comment)) : undefined}
         onNavigationContextChange={setNestedNavigation} />
-      {session?.status === 'active' ? <GlassSurface component="button" wrapContent={false} shape="capsule"
+      {!readOnly && session?.status === 'active' ? <GlassSurface component="button" wrapContent={false} shape="capsule"
         preset="modalTuned" className="workout-session-screen__lifecycle-button" aria-disabled={busy}
         onClick={() => { if (!pending.current) setFinishConfirm(true); }}>
         <Text variant="body">Завершить тренировку</Text>
@@ -173,7 +181,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       <Text variant="body">Тренировка сохранится в истории.</Text>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     </MezfitDialog>
-    <MezfitDialog opened={row?.status === 'completed' && row.templateSaveDecision === 'pending'}
+    <MezfitDialog opened={!readOnly && row?.status === 'completed' && row.templateSaveDecision === 'pending'}
       title="Сохранить шаблон тренировки в программе?" buttons={<>
         <MezfitDialogButton disabled={busy} onClick={() => {
           if (!pending.current) void mutate(() => repository.resolveTemplate(sessionId, false)).catch(report);

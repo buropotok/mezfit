@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
 }));
 const cloud = { db: {}, actorUserId: 'tg:202' };
 
+vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({ name: 'Атлет', avatar: <span>Фото атлета</span>, compactAvatar: null }) }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => cloud,
 }));

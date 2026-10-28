@@ -108,7 +108,7 @@ describe('shared scheduled occurrence UI', () => {
     expect(probes.exerciseMounts).toBe(0);
     expect(screen.queryByText('План на тренировку')).toBeNull();
     const chevron = screen.getByRole('button', { name: 'Развернуть тренировку' });
-    expect(chevron.nextElementSibling?.getAttribute('aria-label')).toBe('Автор: Тренер');
+    expect(chevron.nextElementSibling?.getAttribute('aria-label')).toBe('Атлет: Тренер');
     fireEvent.click(chevron);
     expect(toggle).toHaveBeenCalledOnce();
     rerender(<OccurrenceDraftCard {...props} collapsed={false} onCollapsedChange={toggle} />);
