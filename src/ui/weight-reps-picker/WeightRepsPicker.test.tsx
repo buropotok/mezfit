@@ -171,6 +171,9 @@ describe('WeightRepsPicker numeric lens editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
     expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-max-height')).toBe('248px');
+    vi.stubGlobal('innerHeight', 620);
+    fireEvent(window, new Event('resize'));
+    expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-max-height')).toBe('168px');
     expect(sheet.querySelector('.ui-weight-reps-picker__number-readout')).toBeNull();
   });
 
