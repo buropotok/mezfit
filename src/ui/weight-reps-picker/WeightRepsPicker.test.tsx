@@ -85,8 +85,85 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(fractionTexts).toHaveLength(3); // Prev/current/next of the sole remaining wheel.
     expect(Array.from(fractionTexts ?? []).every(node => node.getAttribute('x') === '240')).toBe(true);
     expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(0);
-    expect(Array.from(lens?.querySelectorAll('.ui-weight-reps-picker__lens-value') ?? [])
-      .map(node => node.textContent)).toEqual(['8', '77']);
+    expect(lens?.querySelector('.ui-weight-reps-picker__lens-value')).toBeNull();
+  });
+
+  it('renders each draft digit in the cursor position with the fractional lens typography and optics', () => {
+    const picker = renderPicker();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    enter('1');
+    const draft = () => document.querySelector('[data-ui-picker-static-value="first"] text');
+    expect(draft()?.textContent).toBe('1');
+    enter('2');
+    expect(draft()?.textContent).toBe('12');
+    const fraction = document.querySelector('.ui-time-picker__lens-text[x="240"][y="36"]');
+    expect(draft()?.getAttribute('class')).toBe(fraction?.getAttribute('class'));
+    expect(draft()?.getAttribute('y')).toBe(fraction?.getAttribute('y'));
+    expect(draft()?.getAttribute('x')).toBe('80');
+    expect(document.querySelector('[data-ui-picker-cursor="first"]')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Стереть последнюю цифру' }));
+    expect(draft()?.textContent).toBe('1');
+    fireEvent.click(screen.getByRole('button', { name: 'Очистить ввод' }));
+    expect(draft()).toBeNull();
+    expect(document.querySelector('.ui-weight-reps-picker__input-active')).toBeTruthy();
+    enter('0');
+    expect(draft()?.textContent).toBe('0');
+    expect(picker.onChange).not.toHaveBeenCalled();
+  });
+
+  it('switches between fields, preserves both drafts and saves them together', () => {
+    const picker = renderPicker({ value: { reps: 8, weightKg: 77.75 } });
+    const reps = () => screen.getByRole('button', { name: 'Изменить повторения' });
+    const kilograms = () => screen.getByRole('button', { name: 'Изменить целые килограммы' });
+    fireEvent.click(reps());
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('8');
+    enter('1', '2');
+    fireEvent.click(kilograms());
+    expect(document.querySelector('[data-ui-picker-cursor="first"]')).toBeNull();
+    expect(document.querySelector('[data-ui-picker-cursor="second"]')).toBeTruthy();
+    enter('2', '3');
+    fireEvent.click(reps());
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('12');
+    expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('23');
+    enter('3');
+    fireEvent.click(screen.getByRole('button', { name: 'Стереть последнюю цифру' }));
+    fireEvent.click(kilograms());
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('12');
+    expect(picker.onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 12, weightKg: 23.75 });
+    expect(picker.onClose).toHaveBeenCalledOnce();
+  });
+
+  it('keeps an empty inactive draft invalid and cancels the entire editing session', () => {
+    const picker = renderPicker();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Очистить ввод' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    enter('2');
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toHaveProperty('disabled', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
+    expect(picker.onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('8');
+  });
+
+  it('uses 50px pencil icons and centers a 50px cursor after the measured final digit', () => {
+    renderPicker();
+    const pencil = screen.getByRole('button', { name: 'Изменить повторения' }).querySelector<HTMLElement>('.ui-icon');
+    expect(pencil?.style.width).toBe('50px');
+    expect(pencil?.style.height).toBe('50px');
+    const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      return { width: this.tagName.toLowerCase() === 'text' ? 40 : 0, height: 0 } as DOMRect;
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    const caret = document.querySelector('[data-ui-picker-cursor="first"]');
+    expect(caret?.getAttribute('x')).toBe('77'); // 80 + 40/2 + 2 - 50/2
+    expect(caret?.getAttribute('y')).toBe('11'); // (72 - 50) / 2
+    expect(caret?.getAttribute('width')).toBe('50');
+    expect(caret?.getAttribute('height')).toBe('50');
+    expect(caret?.querySelector('.ui-weight-reps-picker__input-active')).toBeTruthy();
+    rect.mockRestore();
   });
 
   it('keeps a closed picker out of the accessibility and interaction tree', () => {
@@ -112,8 +189,8 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(sheet.className).toContain('ui-mezfit-bottom-sheet--above-popover');
     const lens = document.querySelector('.ui-time-picker__lens');
     expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(1);
-    expect(screen.queryByRole('button', { name: 'Изменить повторения' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Изменить повторения' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toHaveProperty('disabled', false);
     expect(within(sheet).getByRole('button', { name: 'Отменить' }).className).toContain('k-button');
     const save = within(sheet).getByRole('button', { name: 'Сохранить' });
     expect(save.className).toContain('ui-button--primary');
@@ -138,7 +215,7 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(controls.map(button => button.getAttribute('aria-label')).slice(-3))
       .toEqual(['Очистить ввод', 'Цифра 0', 'Стереть последнюю цифру']);
     expect(controls.every(button => button.className.includes('ui-fab'))).toBe(true);
-    expect(fabs[9].parentElement?.className).toContain('ui-weight-reps-picker__number-cell--zero');
+    expect(fabs[9].parentElement?.parentElement?.className).toContain('ui-weight-reps-picker__number-cell--zero');
   });
 
   it('clears only the active number and can backspace one digit without affecting the other field', () => {
@@ -161,7 +238,7 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(picker.onChange).toHaveBeenLastCalledWith({ reps: 2, weightKg: 12.75 });
   });
 
-  it('fits the keypad to the free area below the native picker and input card', () => {
+  it('fills the visual viewport below the input popover with a 10px gap', () => {
     const picker = renderPicker();
     const popover = document.querySelector('.ui-weight-reps-picker__popover') as HTMLElement;
     vi.spyOn(popover, 'getBoundingClientRect').mockReturnValue({ bottom: 360 } as DOMRect);
@@ -170,11 +247,32 @@ describe('WeightRepsPicker numeric lens editor', () => {
     vi.stubGlobal('innerHeight', 700);
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
-    expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-max-height')).toBe('248px');
+    expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-height')).toBe('330px');
     vi.stubGlobal('innerHeight', 620);
     fireEvent(window, new Event('resize'));
-    expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-max-height')).toBe('168px');
+    expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-height')).toBe('250px');
     expect(sheet.querySelector('.ui-weight-reps-picker__number-readout')).toBeNull();
+  });
+
+  it('keeps the sheet bottom inside the visual viewport and remeasures when it scrolls', () => {
+    renderPicker();
+    const popover = document.querySelector('.ui-weight-reps-picker__popover') as HTMLElement;
+    vi.spyOn(popover, 'getBoundingClientRect').mockReturnValue({ bottom: 360 } as DOMRect);
+    const viewport = document.createElement('div');
+    Object.defineProperties(viewport, {
+      offsetTop: { configurable: true, value: 20 },
+      height: { value: 600 },
+    });
+    vi.stubGlobal('visualViewport', viewport);
+    vi.stubGlobal('innerHeight', 700);
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
+    expect(sheet.style.bottom).toBe('80px');
+    expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-height')).toBe('250px');
+    Object.defineProperty(viewport, 'offsetTop', { value: 40 });
+    fireEvent(viewport, new Event('scroll'));
+    expect(sheet.style.bottom).toBe('60px');
+    expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-height')).toBe('270px');
   });
 
   it('renders the number FABs with the currently selected app glass preset', () => {
@@ -220,7 +318,9 @@ describe('WeightRepsPicker numeric lens editor', () => {
     picker.setValue({ reps: 12, weightKg: 77.5 }, false);
     expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
     picker.setValue({ reps: 12, weightKg: 77.5 });
-    expect(document.querySelector('.ui-weight-reps-picker__lens-value')?.textContent).toBe('12');
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Стереть последнюю цифру' }));
+    expect(document.querySelector('[data-ui-picker-static-value="first"]')?.textContent).toBe('1');
   });
 
   it('cancels edits without changing the controlled value and restores the pencil icon', () => {
@@ -246,8 +346,9 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(picker.onClose).toHaveBeenCalledOnce();
     picker.setValue({ reps: 9, weightKg: 23.75 }, false);
     picker.setValue({ reps: 9, weightKg: 23.75 });
-    expect(Array.from(document.querySelectorAll('.ui-weight-reps-picker__lens-value'))
-      .map(node => node.textContent)).toEqual(['9', '23']);
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Стереть последнюю цифру' }));
+    expect(document.querySelector('[data-ui-picker-static-value="second"]')?.textContent).toBe('2');
   });
 
   it('keeps the native fractional wheel and emits changes without opening the keypad', () => {
@@ -285,8 +386,8 @@ describe('WeightRepsPicker numeric lens editor', () => {
     picker.setValue({ reps: 8, weightKg: 70.25 }, false);
     picker.setValue({ reps: 8, weightKg: 70.25 }, true);
     fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
-    expect(Array.from(document.querySelectorAll('.ui-weight-reps-picker__lens-value'))
-      .map(node => node.textContent)).toEqual(['8', '70']);
+    fireEvent.click(screen.getByRole('button', { name: 'Стереть последнюю цифру' }));
+    expect(document.querySelector('[data-ui-picker-static-value="second"]')?.textContent).toBe('7');
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(onChange).not.toHaveBeenCalled();
   });

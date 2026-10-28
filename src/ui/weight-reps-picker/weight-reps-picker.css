@@ -13,35 +13,6 @@
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
-/* The icon stays the same 40px UIKit control; the current value
-   remains visible immediately beneath it within the 72px lens. */
-.ui-weight-reps-picker__lens-field {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 5.5rem;
-  max-width: 100%;
-}
-
-.ui-weight-reps-picker__lens-value {
-  display: block;
-  width: 100%;
-  overflow: hidden;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.ui-weight-reps-picker__lens-status {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  color: var(--ui-color-surface-text);
-}
-
 .ui-weight-reps-picker__input-active {
   animation: ui-weight-reps-input-blink 1s steps(2, start) infinite;
 }
@@ -55,22 +26,28 @@
   .ui-weight-reps-picker__input-active { animation: none; }
 }
 
-/* The shared Sheet fills the navigation-safe viewport by default.
-   Only this numeric keypad sizes to its contents and the measured
-   space below the picker/metric card (on short viewports it scrolls). */
+/* Fill the visual viewport below the input popover, with a 10px gap.
+   The content slot includes the shared bottom safe-area padding. */
 .ui-mezfit-bottom-sheet.ui-weight-reps-picker__number-sheet {
-  height: auto;
-  max-height: var(--ui-weight-reps-number-sheet-max-height, calc(100dvh - 16px));
+  height: var(--ui-weight-reps-number-sheet-height, 0px);
+  max-height: var(--ui-weight-reps-number-sheet-height, 0px);
+}
+
+.ui-weight-reps-picker__sheet-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .ui-weight-reps-picker__number-content {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
 }
 
 .ui-weight-reps-picker__number-header {
   display: grid;
+  flex: 0 0 auto;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: var(--ui-space-2);
@@ -87,27 +64,43 @@
 
 .ui-weight-reps-picker__number-body {
   display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-4);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 var(--ui-space-3) var(--ui-space-2);
+}
+
+.ui-weight-reps-picker__number-grid-area {
+  container-type: size;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
 }
 
 .ui-weight-reps-picker__number-grid {
+  --ui-weight-reps-key-cell: min(calc(100cqw / 3), calc(100cqh / 4));
   display: grid;
-  grid-template-columns: repeat(3, 5.5rem);
-  gap: var(--ui-space-1);
+  grid-template-columns: repeat(3, var(--ui-weight-reps-key-cell));
+  grid-template-rows: repeat(4, var(--ui-weight-reps-key-cell));
   justify-content: center;
-  width: 100%;
 }
 
 .ui-weight-reps-picker__number-cell {
-  position: relative;
-  width: 5.5rem;
-  height: 5.5rem;
+  display: grid;
+  place-items: center;
+  width: var(--ui-weight-reps-key-cell);
+  height: var(--ui-weight-reps-key-cell);
 }
 
 .ui-weight-reps-picker__number-cell--zero {
   grid-column: 2;
+}
+
+/* The stock FAB remains 3.5rem with its stock 1rem placement in this dock.
+   Only the surrounding square cell grows or shrinks. */
+.ui-weight-reps-picker__key-dock {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
 }
