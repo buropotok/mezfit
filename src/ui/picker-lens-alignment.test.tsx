@@ -110,7 +110,7 @@ describe('picker lens numeric alignment', () => {
     expect(lensTexts.some(node => node.textContent === '058' && node.getAttribute('x') === '226')).toBe(true);
   });
 
-  it('preserves the three-wheel column anchors for duration and weight/repetitions', () => {
+  it('preserves duration's three-wheel alignment and aligns the two static weight/reps lens actions', () => {
     const target = document.createElement('button');
     document.body.appendChild(target);
     const ui = render(
@@ -131,6 +131,12 @@ describe('picker lens numeric alignment', () => {
       </KonstaProvider>,
     );
     const updated = Array.from(document.querySelectorAll('.ui-time-picker__lens-text'));
-    for (const x of ['80', '176', '240']) expect(updated.some(node => node.getAttribute('x') === x)).toBe(true);
+    expect(updated.map(node => node.getAttribute('x'))).toEqual(['240']);
+    const slots = Array.from(document.querySelectorAll<HTMLElement>('.ui-time-picker__lens-action-slot'));
+    expect(slots).toHaveLength(2);
+    expect(Number.parseFloat(slots[0].style.left)).toBeCloseTo(80 / 288 * 100);
+    expect(Number.parseFloat(slots[1].style.left)).toBeCloseTo(176 / 288 * 100);
+    expect(screen.getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
   });
 });
