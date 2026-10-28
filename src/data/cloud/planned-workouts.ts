@@ -33,11 +33,11 @@ export class PlannedWorkoutsRepository {
     for (const row of rows) {
       const start = Date.parse(row.startsAtUtc);
       if (row.entryKind === 'personal_event' || row.status !== 'scheduled' || row.workoutSessionId
-        || row.cancelledAt || start < from || start >= until
+        || row.publicationStatus === 'draft' || row.cancelledAt || start < from || start >= until
         || (row.coachUserId ? row.coachUserId !== this.actorUserId
           : row.realmId !== this.actorUserId || row.athleteUserId !== this.actorUserId)) continue;
       const draft = await this.drafts.get('draft:' + row.id);
-      if (!draft || draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled')) continue;
+      if (!draft || !draft.saved || draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled')) continue;
       const program = row.trainingPlanId ? await this.db.trainingPlans.get(row.trainingPlanId) : null;
       result.push({ id: row.id, draft, programName: program?.realmId === row.realmId ? program.name : null });
     }
