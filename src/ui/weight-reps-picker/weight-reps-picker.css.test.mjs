@@ -19,7 +19,7 @@ describe('WeightRepsPicker CSS contract', () => {
   });
 
   it('lays out the FAB keypad as equally sized square cells with the zero in column two', () => {
-    expect(weightRepsPickerCss).toContain('grid-template-columns: repeat(3, 5.5rem)');
+    expect(weightRepsPickerCss).toContain('grid-template-columns: repeat(3, var(--ui-weight-reps-key-cell))');
     expect(weightRepsPickerCss).toContain('width: 5.5rem');
     expect(weightRepsPickerCss).toContain('height: 5.5rem');
     expect(weightRepsPickerCss).toContain('grid-column: 2');
@@ -27,11 +27,12 @@ describe('WeightRepsPicker CSS contract', () => {
     expect(weightRepsPickerCss).toContain('ui-weight-reps-input-blink');
   });
 
-  it('shows controlled lens values and fits the sheet beneath its measured anchor', () => {
-    expect(weightRepsPickerCss).toContain('.ui-weight-reps-picker__lens-value');
+  it('removes the small readout and fills the measured space with an adaptive square grid', () => {
+    expect(weightRepsPickerCss).not.toContain('.ui-weight-reps-picker__lens-value');
     expect(weightRepsPickerCss).toContain('.ui-mezfit-bottom-sheet.ui-weight-reps-picker__number-sheet');
-    expect(weightRepsPickerCss).toContain('height: auto');
-    expect(weightRepsPickerCss).toContain('--ui-weight-reps-number-sheet-max-height');
+    expect(weightRepsPickerCss).toContain('container-type: size');
+    expect(weightRepsPickerCss).toContain('min(calc(100cqw / 3), calc(100cqh / 4))');
+    expect(weightRepsPickerCss).toContain('--ui-weight-reps-number-sheet-height');
     expect(weightRepsPickerCss).not.toContain('min-height: 100%');
     expect(weightRepsPickerCss).not.toContain('.ui-weight-reps-picker__number-readout');
   });
