@@ -598,7 +598,7 @@ export function ThreeColumnPicker({
       if (!openedRef.current) return;
       syncColumns(valueParts);
     });
-  }, [opened, target, columns, displayedColumns, valueParts.first, valueParts.second, valueParts.third]);
+  }, [opened, target, columns, valueParts.first, valueParts.second, valueParts.third]);
 
   useEffect(() => () => {
     const view = target?.ownerDocument.defaultView ?? window;
