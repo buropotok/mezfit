@@ -698,6 +698,21 @@ export function ThreeColumnPicker({
     if (element) scheduleScrollEndFallback(part, element);
   };
 
+  const handleClose = () => {
+    // Like TimePicker, settle the chosen value to the active fast-flick stop
+    // when the popover is dismissed before native inertia completes.
+    PARTS.forEach((part) => {
+      const column = columns[part];
+      if (!column.flickSnapStep || !flickSnapRef.current[part]) return;
+      const element = columnRefs.current[part];
+      if (!element) return;
+      const nearest = Math.round(element.scrollTop / ROW_HEIGHT / column.flickSnapStep) * column.flickSnapStep;
+      const lastStop = Math.floor((column.values.length - 1) / column.flickSnapStep) * column.flickSnapStep;
+      commitIndex(part, Math.max(0, Math.min(lastStop, nearest)));
+    });
+    onClose();
+  };
+
   const setColumnRef = (
     part: ThreeColumnPickerPart,
     element: HTMLDivElement | null,
@@ -712,7 +727,7 @@ export function ThreeColumnPicker({
       angle={false}
       backdrop
       iosHighlight={false}
-      onBackdropClick={onClose}
+      onBackdropClick={handleClose}
       className={`ui-time-picker__popover${popoverClassName ? ` ${popoverClassName}` : ''}`}
       style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
