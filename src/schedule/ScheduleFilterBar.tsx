@@ -2,7 +2,8 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Chip } from 'konsta/react';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
-import { GlassSurface, Icon, Text } from '../ui';
+import { Text } from '../ui';
+import { ScheduleActionButton } from './ScheduleActionButton';
 
 /** Measure our own chip slots; never inspect Konsta's private DOM. */
 export function ScheduleFilterBar({ clients, selected, onRemove, onOpen }: {
@@ -51,11 +52,7 @@ export function ScheduleFilterBar({ clients, selected, onRemove, onOpen }: {
     };
   }, [selected, clients]);
   return <div ref={root} className="today-page__filter-bar">
-    <button type="button" className="today-page__search-button" aria-label="Поиск клиента" onClick={onOpen}>
-      <GlassSurface preset="modalTuned" shape="capsule" className="today-page__search-glass" wrapContent={false}>
-        <Icon name="search" style={{ width: 24, height: 24 }} />
-      </GlassSurface>
-    </button>
+    <ScheduleActionButton icon="search" label="Поиск клиента" onClick={onOpen} />
     <div className="today-page__filter-chips" aria-label="Выбранные клиенты">
       {people.slice(0, count).map(({ id, contact }) => <Chip key={id} deleteButton
         media={contact ? <CloudContactAvatar contact={contact} className="schedule-client-avatar" /> : undefined}
