@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { MezfitCloudDatabase } from '../data/cloud/database';
@@ -56,7 +56,7 @@ it('closes before cancellation, toggles the basket and logically deletes without
   fireEvent.click(screen.getByRole('button', { name: 'Отменённые тренировки' }));
   fireEvent.click(await screen.findByRole('button', { name: /Силовая/ }));
   expect(screen.queryByRole('button', { name: 'Отменить тренировку' })).toBeNull();
-  fireEvent.click(screen.getByRole('button', { name: 'Удалить' }));
+  fireEvent.click(within(screen.getByLabelText('Открытая тренировка')).getByRole('button', { name: 'Удалить' }));
   await waitFor(() => expect(screen.queryByRole('button', { name: /Силовая/ })).toBeNull());
   expect(await db.table('workoutOccurrences').get('workout')).toMatchObject({ inactive: true, cancelledAt: expect.any(String), plan: { name: 'Силовая' } });
   fireEvent.click(screen.getByRole('button', { name: 'Отменённые тренировки' }));
