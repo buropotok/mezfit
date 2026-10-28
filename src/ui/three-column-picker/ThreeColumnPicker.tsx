@@ -464,6 +464,8 @@ export function ThreeColumnPicker({
   }), [columns, fineParts.first, fineParts.second, fineParts.third,
     residues[0], residues[1], residues[2]]);
   const previousDisplayedColumnsRef = useRef(displayedColumns);
+  const displayedColumnsRef = useRef(displayedColumns);
+  displayedColumnsRef.current = displayedColumns;
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(displayedColumns, draft));
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
@@ -496,7 +498,7 @@ export function ThreeColumnPicker({
 
   const syncColumns = (parts: ThreeColumnPickerParts) => {
     PARTS.forEach((part) => {
-      const index = displayedColumns[part].values.indexOf(parts[part]);
+      const index = displayedColumnsRef.current[part].values.indexOf(parts[part]);
       if (index >= 0) scrollColumn(columnRefs.current[part], index);
     });
   };
@@ -669,8 +671,9 @@ export function ThreeColumnPicker({
         draftRef.current = canonical;
         feedbackValueRef.current = canonical;
         setDraft(canonical);
-        if (PARTS.every((candidate) => displayedColumns[candidate].values.includes(canonical[candidate]))) {
-          const tops = partsToScrollTops(displayedColumns, canonical);
+        const currentColumns = displayedColumnsRef.current;
+        if (PARTS.every((candidate) => currentColumns[candidate].values.includes(canonical[candidate]))) {
+          const tops = partsToScrollTops(currentColumns, canonical);
           pendingScrollRef.current = tops;
           setScrollTops(tops);
           syncColumns(canonical);
