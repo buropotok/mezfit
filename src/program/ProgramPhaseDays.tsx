@@ -48,7 +48,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const [optimisticExerciseOrders, setOptimisticExerciseOrders] = useState<Record<string, { previous: string[]; next: string[] }>>({});
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
-  const athlete = useWorkoutPerson(program.clientUserId ?? program.athleteUserId, program.realmId, actor);
+  const athlete = useWorkoutPerson(program.clientUserId ?? program.athleteUserId ?? null, program.realmId, actor);
   const authorId = planAuthorUserId(program);
   const self = authorId === repository.actorUserId;
   const contact = (self ? cloud?.selfAvatars ?? [] : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])])
