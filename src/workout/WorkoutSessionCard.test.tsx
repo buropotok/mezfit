@@ -130,9 +130,13 @@ describe('WorkoutSessionCard capability ownership', () => {
     // Active workouts render inside SortableList. Neither overlay may inherit
     // its transform/clipping, or the animated Sheet's transform/clipping.
     const sheet = screen.getByRole('dialog', { name: 'Подход 1' });
+    expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
     const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
     expect(screen.getByTestId('workout-card').contains(sheet)).toBe(false);
     expect(sheet.contains(picker)).toBe(false);
+    fireEvent.click(picker.previousElementSibling as Element);
+    expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
     const navigation = await waitFor(() => {
       const context = onNavigationContextChange.mock.calls
         .map(([value]) => value as { onBack?: () => void } | null)
