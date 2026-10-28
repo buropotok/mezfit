@@ -1,4 +1,4 @@
-name: Pilot NLLB sports instruction translation
+name: Pilot faithful sports translation via GitHub Models
 
 on:
   push:
@@ -8,72 +8,61 @@ on:
 
 permissions:
   contents: write
+  models: read
 
 jobs:
   pilot:
     runs-on: ubuntu-latest
-    timeout-minutes: 24
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
           ref: data/exercise-how-to-ru-20261028
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install CPU translation engine
-        run: |
-          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
-          python -m pip install --disable-pip-version-check 'transformers==4.45.2' sentencepiece sacremoses
-      - name: Download model and translate exercise text
+      - name: Translate samples with sports terminology and check JSON
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           python - <<'PY'
-          import json
-          import time
-          import traceback
+          import json,os,urllib.request,urllib.error,time
           from pathlib import Path
-          report={'model':'facebook/nllb-200-distilled-600M','samples':[]}
-          start=time.monotonic()
+          srcs=[
+             {"id":"1","name":"4-Point Tummy Vacuum","how_to":"Here is how you can perform the 4-point tummy vacuum exercise:\n1. Start on your hands and knees.\n2. Maintain a neutral spine.\n3. Inhale deeply through your nose.\n4. Exhale and pull your belly button toward your spine."},
+             {"id":"2","name":"Adductor Magnus Stretch","how_to":"The Thigh Fly as a static stretch:\n1. Starting Position: Lie on your back with your legs together, lifted towards the ceiling.\n2. Stretching Movement: Slowly open your legs to the sides as far as comfortable. Hold for 10-15 seconds."},
+             {"id":"3","name":"Plate Push","how_to":"1. Place a weight plate flat on a smooth floor.\n2. Get into a low athletic stance: hips back, chest down, hands on the edge of the plate, arms extended.\n3. Engage your core, and drive through the balls of your feet to push the plate forward."}
+          ]
+          report={'model':'openai/gpt-4.1-mini','source':srcs}
+          system="You translate professional fitness exercise instructions from English into natural, accurate Russian for an athlete-facing app. Translate exactly: no new steps, no invented claims, no omissions. Preserve all measurements, digits, ordering, lists and safety restrictions. Use accepted athletic terminology: belly button = пупок; weight plate = диск от штанги; balls of the feet = передняя часть стопы; core = мышцы корпуса. Do not translate exercise names as literal nonsense. Respond with ONLY a valid JSON object with keys 1, 2, 3 mapping to fully translated how_to text. Preserve source line breaks and list numbering."
+          req={
+            'model':'openai/gpt-4.1-mini',
+            'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(srcs,ensure_ascii=False)}],
+            'temperature':0,
+            'response_format':{'type':'json_object'},
+            'max_tokens':1800
+          }
+          request=urllib.request.Request('https://models.github.ai/inference/chat/completions',data=json.dumps(req).encode(),headers={'Authorization':'Bearer '+os.environ['GITHUB_TOKEN'],'Content-Type':'application/json','Accept':'application/json'},method='POST')
           try:
-              import torch
-              from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-              model_id='facebook/nllb-200-distilled-600M'
-              tokenizer=AutoTokenizer.from_pretrained(model_id,src_lang='eng_Latn')
-              model=AutoModelForSeq2SeqLM.from_pretrained(model_id)
-              model.eval()
-              report['load_seconds']=round(time.monotonic()-start,1)
-              segments=[
-                'Lie flat on your back with your knees bent and feet flat on the ground. Engage your abs, then lift your shoulders and upper back off the floor.',
-                "Here is how you can perform the 4-point tummy vacuum exercise.",
-                "As you exhale, contract your abdominal muscles and pull your belly button in towards your spine.",
-                "The Thigh Fly as a static stretch.",
-                "Starting Position: Lie on your back with your legs together, lifted towards the ceiling.",
-                "Get into a low athletic stance: hips back, chest down, hands on the edge of the weight plate, arms extended.",
-                "Engage your core, and drive through the balls of your feet to push the weight plate forward.",
-                "Perform wrist, shoulder, and triceps stretches to increase mobility.",
-                "Place your hands shoulder-width apart on the ground, about 6 to 12 inches away from a wall."
-              ]
-              t0=time.monotonic()
-              for text in segments:
-                  batch=tokenizer(text,return_tensors='pt')
-                  with torch.inference_mode():
-                      encoded=model.generate(**batch,forced_bos_token_id=tokenizer.convert_tokens_to_ids('rus_Cyrl'),max_new_tokens=160,num_beams=3)
-                  ru=tokenizer.batch_decode(encoded,skip_special_tokens=True)[0]
-                  report['samples'].append({'en':text,'ru':ru})
-                  print('TRANSLATION',text[:60],'=>' ,ru,flush=True)
-              report['translate_seconds']=round(time.monotonic()-t0,1)
-          except Exception as exc:
-              report['error']=type(exc).__name__+': '+str(exc)
-              report['traceback']=traceback.format_exc()[-6000:]
-          report['total_seconds']=round(time.monotonic()-start,1)
-          out=Path('tools/exercise-work/howto-nllb-pilot.json')
+            with urllib.request.urlopen(request,timeout=75) as response:
+              body=json.loads(response.read().decode())
+            result=json.loads(body['choices'][0]['message']['content'])
+            report['translated']=result
+            report['usage']=body.get('usage')
+            report['status']='success'
+          except urllib.error.HTTPError as e:
+            report['status']='http_error'
+            report['code']=e.code
+            report['error_body']=e.read(2500).decode(errors='replace')
+          except Exception as e:
+            report['status']='error'
+            report['error']=str(e)
+          out=Path('tools/exercise-work/howto-github-models-pilot.json')
           out.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
-          print('RESULT='+json.dumps(report,ensure_ascii=False)[:13000],flush=True)
+          print('PILOT_STATUS',report.get('status'),'HTTP_CODE',report.get('code'),flush=True)
           PY
-      - name: Commit pilot
+      - name: Commit pilot result
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tools/exercise-work/howto-nllb-pilot.json
-          git commit -m 'chore: assess NLLB instruction translation accuracy'
+          git add tools/exercise-work/howto-github-models-pilot.json
+          git commit -m 'chore: assess GitHub Models EN-RU translation'
           git push origin HEAD:refs/heads/data/exercise-how-to-ru-20261028
