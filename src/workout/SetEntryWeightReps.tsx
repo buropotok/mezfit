@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button as KonstaButton, List } from 'konsta/react';
+import { Button as KonstaButton, List, Toast } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { BadgeChoice, Divider, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -46,6 +46,11 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const draftRef = useRef(draft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  useEffect(() => {
+    if (!error) return;
+    const timer = window.setTimeout(() => setError(''), 4000);
+    return () => window.clearTimeout(timer);
+  }, [error]);
   const [pickerOpened, setPickerOpened] = useState(false);
   const [bandOpen, setBandOpen] = useState(false);
   const target = useRef<HTMLElement>(null);
@@ -138,6 +143,11 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const currentReps = repsFallback ? 0 : suggestedReps;
   const validPicker = pickerCompatible(currentWeight, currentReps);
   const needsFactSelection = weightFallback || repsFallback;
+  useEffect(() => {
+    if (!validPicker) setError(isPlan
+      ? 'Плановое значение не поддерживается текущим пикером'
+      : 'Существующее значение FACT не поддерживается текущим пикером');
+  }, [validPicker, isPlan]);
   const selectedBand = draft.bands[0] ?? null;
   const inputLocked = saving || readOnly;
   const bandItems: LiquidPopoverItem[] = [
@@ -184,9 +194,6 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             value={metricsText(draft.metrics.weightKg, draft.metrics.reps)}
             ariaLabel="Изменить вес и повторения" disabled={!validPicker || inputLocked}
             onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }} />
-          {!validPicker ? <Text variant="footnote" role="alert">{isPlan
-            ? 'Плановое значение не поддерживается текущим пикером'
-            : 'Существующее значение FACT не поддерживается текущим пикером'}</Text> : null}
           {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
             {props.data.plan ? <Text variant="caption" tone="muted">План: {metricsText(props.data.plan.weightKg, props.data.plan.reps)}</Text> : null}
@@ -212,7 +219,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
-                <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0} ariaLabel="RPE"
+                <MezfitSlider fullWidth size="small" start={0} end={10} value={draft.rpe ?? 0} ariaLabel="RPE"
                   onValueChange={value => { if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value })); }} />
               </div>
             </div>
@@ -224,13 +231,13 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             </div>
           </> : null}
           <SetEntryChatButton onOpenChat={props.onOpenChat} saving={saving} />
-          {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
           {!readOnly && props.onDeleteSet ? <KonstaButton clear
             colors={{ textIos: 'text-red-500', textMaterial: 'text-red-500' }} className="set-entry-weight-reps__delete"
             disabled={saving} onClick={() => { if (!saveInFlightRef.current) setDeleteConfirm(true); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить подход</Text></KonstaButton> : null}
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
+    {error ? createPortal(<Toast opened position="bottom" role="alert"><Text variant="body">{error}</Text></Toast>, portalHost) : null}
     {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton disabled={saving} onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
