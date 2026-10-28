@@ -201,7 +201,8 @@ describe('three-wheel native inertia with per-value feedback', () => {
       configurable: true,
       value: ({ top }: { top: number }) => { kilograms.element.scrollTop = top; },
     });
-    vi.useFakeTimers();
+    // Test scroll idle-time detection, leaving the picker RAF mock intact.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
     act(() => kilograms.moveTo(80));
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
@@ -221,7 +222,8 @@ describe('three-wheel native inertia with per-value feedback', () => {
       configurable: true,
       value: ({ top }: { top: number }) => { kilograms.element.scrollTop = top; },
     });
-    vi.useFakeTimers();
+    // Test scroll idle-time detection, leaving the picker RAF mock intact.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
     act(() => kilograms.moveTo(80));
     act(() => vi.advanceTimersByTime(150));
@@ -237,7 +239,8 @@ describe('three-wheel native inertia with per-value feedback', () => {
     const { onChange } = mountControlled();
     const kilograms = observeNativeScroll('Килограммы', 77);
     Object.defineProperty(kilograms.element, 'onscrollend', { configurable: true, value: undefined });
-    vi.useFakeTimers();
+    // Test scroll idle-time detection, leaving the picker RAF mock intact.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
     act(() => kilograms.moveTo(83));
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 83.5 });
@@ -254,7 +257,8 @@ describe('three-wheel native inertia with per-value feedback', () => {
       configurable: true,
       value: ({ top }: { top: number }) => { kilograms.element.scrollTop = top; },
     });
-    vi.useFakeTimers();
+    // Test scroll idle-time detection, leaving the picker RAF mock intact.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
     act(() => kilograms.moveTo(80));
     act(() => vi.advanceTimersByTime(500));
