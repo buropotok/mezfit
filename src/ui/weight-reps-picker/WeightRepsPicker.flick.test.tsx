@@ -36,10 +36,10 @@ function renderWeight(valueKg = 23.5) {
   document.body.appendChild(target);
   const onChange = vi.fn();
   const onClose = vi.fn();
-  let setExternally: ((nextKg: number) => void) | null = null;
+  const externalSetter: { current: ((nextKg: number) => void) | null } = { current: null };
   function Controlled() {
     const [value, setValue] = useState({ reps: 8, weightKg: valueKg });
-    setExternally = (nextKg) => setValue((previous) => ({ ...previous, weightKg: nextKg }));
+    externalSetter.current = (nextKg) => setValue((previous) => ({ ...previous, weightKg: nextKg }));
     return (
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
@@ -56,7 +56,7 @@ function renderWeight(valueKg = 23.5) {
     onChange,
     onClose,
     setExternalKg(nextKg: number) {
-      act(() => setExternally?.(nextKg));
+      act(() => externalSetter.current?.(nextKg));
     },
     kilograms: screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement,
   };
