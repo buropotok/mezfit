@@ -800,8 +800,8 @@ export function ThreeColumnPicker({
       relativeFlickOriginRef.current[part] = touchStartRef.current[part]?.index
         ?? valueIndex(columns[part], draftRef.current[part]);
     }
-    // Enable coarse native scroll snapping while the finger is moving:
-    // the browser chooses one final quarter-hour stop as part of its inertia.
+    // Keep TimePicker's fast-swipe detection and native momentum. Relative
+    // columns switch physical rows to the gesture-origin 10-unit sequence.
     if (isFastSwipe(part, touch.clientY, event.timeStamp)) setQuarterSnapMode(part, true);
   };
 
