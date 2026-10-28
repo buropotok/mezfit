@@ -823,7 +823,6 @@ export function ThreeColumnPicker({
     if (!openedRef.current) return;
 
     delete touchStartRef.current[part];
-    setQuarterSnapMode(part, false);
     signalCrossedValues(part, index, false);
     commitIndex(part, index);
     if (quarterSnapRef.current[part] && columns[part].relativeFlickStep) {
@@ -833,6 +832,7 @@ export function ThreeColumnPicker({
       setQuarterSnapMode(part, false);
       return;
     }
+    setQuarterSnapMode(part, false);
     const nextTop = index * ROW_HEIGHT;
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
