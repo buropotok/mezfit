@@ -102,9 +102,9 @@ vi.mock('../ui', () => ({
       style={overlayProbe.animated ? { transitionProperty: 'transform',
         transitionDuration: overlayProbe.zeroDuration ? '0ms' : '400ms', transitionDelay: '0ms' } : undefined}
       onTransitionEnd={onTransitionEnd}>{children}</div>,
-  MezfitDialog: ({ opened, children, buttons }: { opened: boolean; children: ReactNode; buttons: ReactNode }) => {
+  MezfitDialog: ({ opened, title, children, buttons }: { opened: boolean; title?: ReactNode; children?: ReactNode; buttons: ReactNode }) => {
     overlayProbe.dialogs += 1;
-    return opened ? <div>{children}{buttons}</div> : null;
+    return opened ? <div>{title}{children}{buttons}</div> : null;
   },
   MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
@@ -618,4 +618,80 @@ describe('client access to assigned calendar PLAN', () => {
     expect(enqueue).not.toHaveBeenCalled();
     expect(scheduled.plan.exercises[0].sets[0].plannedWeightKg).toBe(70.75);
   });
+});
+
+describe('closing a previously published workout after PLAN edits', () => {
+  it.each([false, true])('offers publication and closes after the choice (publish=%s)', async publish => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    const edited = { ...draft, saved: false, previouslyPublished: true };
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue(edited);
+    const close = vi.fn(), save = vi.fn(async () => undefined);
+    const view = render(<OccurrenceDraftSheet draft={{ ...draft, saved: true, previouslyPublished: true }}
+      drafts={drafts} onClose={close} onSave={save} />);
+    view.rerender(<OccurrenceDraftSheet draft={edited} drafts={drafts} onClose={close} onSave={save} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(close).not.toHaveBeenCalled();
+    expect(await screen.findByText('Тренировка в статусе Черновик. Перевести в статус Запланирована?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: publish ? 'Да' : 'Нет' }));
+    await waitFor(() => expect(close).toHaveBeenCalledOnce());
+    if (publish) expect(save).toHaveBeenCalledWith(edited, false);
+    else expect(save).not.toHaveBeenCalled();
+  });
+
+  it('keeps the editor open on failure, reports a bottom toast and allows one retry', async () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue({ ...draft, saved: false, previouslyPublished: true });
+    const close = vi.fn();
+    let reject!: (reason: Error) => void;
+    const save = vi.fn(() => new Promise<void>((_resolve, fail) => { reject = fail; }));
+    render(<OccurrenceDraftSheet draft={{ ...draft, saved: false, previouslyPublished: true }}
+      drafts={drafts} onClose={close} onSave={save} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    const yes = await screen.findByRole('button', { name: 'Да' });
+    fireEvent.click(yes); fireEvent.click(yes);
+    await waitFor(() => expect(save).toHaveBeenCalledOnce());
+    await act(async () => reject(new Error('Не удалось опубликовать')));
+    expect(screen.getByRole('alert').textContent).toContain('Не удалось опубликовать');
+    expect(close).not.toHaveBeenCalled();
+    save.mockResolvedValueOnce(undefined);
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+    await waitFor(() => expect(close).toHaveBeenCalledOnce());
+    expect(save).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not close another screen after an unmounted publication completes', async () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue({ ...draft, saved: false, previouslyPublished: true });
+    let finish!: () => void;
+    const save = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+    const close = vi.fn();
+    const view = render(<OccurrenceDraftSheet draft={{ ...draft, saved: false, previouslyPublished: true }}
+      drafts={drafts} onClose={close} onSave={save} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Да' }));
+    await waitFor(() => expect(save).toHaveBeenCalledOnce());
+    view.unmount();
+    await act(async () => finish());
+    expect(close).not.toHaveBeenCalled();
+  });
+});
+
+it('waits for accepted PLAN edits before deciding whether closing needs publication', async () => {
+  const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+  const flush = vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+  vi.spyOn(drafts, 'get').mockResolvedValue({ ...draft, saved: false, previouslyPublished: true });
+  const close = vi.fn();
+  render(<OccurrenceDraftSheet draft={{ ...draft, saved: true }} drafts={drafts} onClose={close} onSave={vi.fn()} />);
+  let finish!: () => void;
+  flush.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+  await waitFor(() => expect(finish).toBeTypeOf('function'));
+  expect(screen.queryByRole('button', { name: 'Да' })).toBeNull();
+  expect(close).not.toHaveBeenCalled();
+  await act(async () => finish());
+  expect(await screen.findByRole('button', { name: 'Да' })).toBeTruthy();
+  expect(close).not.toHaveBeenCalled();
 });
