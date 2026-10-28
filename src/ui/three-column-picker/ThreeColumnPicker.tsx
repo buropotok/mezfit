@@ -801,7 +801,13 @@ export function ThreeColumnPicker({
   const handleTouchEnd = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
     if (!columns[part].gestureStep) return;
     const touch = event.changedTouches[0];
-    if (touch) completeGesture(part, touch.clientY, event.timeStamp,
+    const gesture = gestureRef.current[part];
+    if (!touch || !gesture) return;
+    if (gesture.mode !== 'pending' || Math.abs(touch.clientY - gesture.startY) >= SWIPE_THRESHOLD_PX) {
+      // Do not synthesize a button click after a drag or a decade fling.
+      event.preventDefault();
+    }
+    completeGesture(part, touch.clientY, event.timeStamp,
       event.currentTarget.ownerDocument.defaultView ?? window);
   };
 
@@ -834,7 +840,7 @@ export function ThreeColumnPicker({
     setScrollTops((current) => ({ ...current, [part]: nextTop }));
     const element = columnRefs.current[part];
     scrollColumn(element, index);
-    if (element) scheduleScrollEndFallback(part, element);
+    if (element && !columns[part].gestureStep) scheduleScrollEndFallback(part, element);
   };
 
   const handleClose = () => {
