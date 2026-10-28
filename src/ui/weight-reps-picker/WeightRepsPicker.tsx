@@ -21,6 +21,7 @@ import {
 import './weight-reps-picker.css';
 
 type NumericField = 'reps' | 'kilograms';
+type NumericDraft = { digits: string; hasTyped: boolean };
 
 const FRACTION_COLUMN: ThreeColumnPickerColumn = {
   ariaLabel: 'Доли килограмма',
@@ -65,8 +66,7 @@ export function WeightRepsPicker({
   target,
 }: WeightRepsPickerProps) {
   const [editing, setEditing] = useState<NumericField | null>(null);
-  const [digits, setDigits] = useState('');
-  const [hasTyped, setHasTyped] = useState(false);
+  const [drafts, setDrafts] = useState<Partial<Record<NumericField, NumericDraft>>>({});
   const [popover, setPopover] = useState<HTMLElement | null>(null);
   const [sheetGeometry, setSheetGeometry] = useState<{ height: number; bottom: number } | null>(null);
 
@@ -86,8 +86,7 @@ export function WeightRepsPicker({
   useEffect(() => {
     if (!opened) {
       setEditing(null);
-      setDigits('');
-      setHasTyped(false);
+      setDrafts({});
     }
   }, [opened]);
 
@@ -123,72 +122,70 @@ export function WeightRepsPicker({
   }, [opened, editing, popover, measureSheet]);
 
   const openNumberSheet = (field: NumericField) => {
+    setDrafts(current => current[field] ? current : {
+      ...current,
+      [field]: { digits: String(field === 'reps' ? value.reps : weight.kilograms), hasTyped: false },
+    });
     setEditing(field);
-    setDigits(String(field === 'reps' ? value.reps : weight.kilograms));
-    setHasTyped(false);
+  };
+
+  const updateActiveDraft = (update: (draft: NumericDraft) => NumericDraft) => {
+    if (!editing) return;
+    setDrafts(current => {
+      const draft = current[editing];
+      return draft ? { ...current, [editing]: update(draft) } : current;
+    });
   };
 
   const appendDigit = (digit: string) => {
-    setDigits((current) => {
-      if (!hasTyped) return digit;
-      return current === '0' ? digit : current + digit;
-    });
-    setHasTyped(true);
+    updateActiveDraft(draft => ({
+      digits: !draft.hasTyped || draft.digits === '0' ? digit : draft.digits + digit,
+      hasTyped: true,
+    }));
   };
 
-  const clearDigits = () => {
-    setDigits('');
-    setHasTyped(true);
-  };
-
-  const backspaceDigit = () => {
-    setDigits((current) => current.slice(0, -1));
-    setHasTyped(true);
-  };
+  const clearDigits = () => updateActiveDraft(() => ({ digits: '', hasTyped: true }));
+  const backspaceDigit = () => updateActiveDraft(draft => ({
+    digits: draft.digits.slice(0, -1), hasTyped: true,
+  }));
 
   const cancelEdit = () => {
     setEditing(null);
-    setHasTyped(false);
+    setDrafts({});
   };
 
-  // No product-specific upper bound. Guard only against values JS cannot
-  // represent exactly as integers or quarter-kilograms.
-  const validDigits = /^\d+$/.test(digits)
-    && Number.isSafeInteger(Number(digits))
-    && (editing !== 'kilograms' || Number.isSafeInteger(Number(digits) * 4 + weight.fraction / 25));
+  // Validate the whole editing session so an invalid inactive field cannot be saved.
+  const validNumber = (digits: string) => /^\d+$/.test(digits) && Number.isSafeInteger(Number(digits));
+  const validDigits = (!drafts.reps || validNumber(drafts.reps.digits))
+    && (!drafts.kilograms || (validNumber(drafts.kilograms.digits)
+      && Number.isSafeInteger(Number(drafts.kilograms.digits) * 4 + weight.fraction / 25)));
   const saveEdit = () => {
     if (!editing || !validDigits) return;
-    const number = Number(digits);
-    if (editing === 'reps') {
-      if (number !== value.reps) onChange({ ...value, reps: number });
-    } else {
-      const nextWeight = combineWeightKg(number, weight.fraction);
-      if (nextWeight !== value.weightKg) onChange({ ...value, weightKg: nextWeight });
-    }
+    const next = {
+      reps: drafts.reps ? Number(drafts.reps.digits) : value.reps,
+      weightKg: drafts.kilograms
+        ? combineWeightKg(Number(drafts.kilograms.digits), weight.fraction)
+        : value.weightKg,
+    };
+    if (next.reps !== value.reps || next.weightKg !== value.weightKg) onChange(next);
     cancelEdit();
     onClose();
   };
 
   const lensAction = (field: NumericField) => {
-    const isEditing = editing === field;
     const label = field === 'reps' ? 'Изменить повторения' : 'Изменить целые килограммы';
-    if (isEditing) {
-      return (
-        <span className="ui-weight-reps-picker__lens-status" role="status" aria-label={label} aria-live="polite">
-          {hasTyped && digits !== '' ? (
-            <span className="ui-visually-hidden">{digits}</span>
-          ) : (
-            <Icon name="letter-i" className="ui-weight-reps-picker__input-active" style={{ width: 40, height: 40 }} />
-          )}
-        </span>
-      );
-    }
     return (
-      <IconButton label={label} disabled={editing !== null} onClick={() => openNumberSheet(field)}>
-        <Icon name="pencil-plus" style={{ width: 40, height: 40 }} />
+      <IconButton label={label} aria-pressed={editing === field} onClick={() => openNumberSheet(field)}>
+        {drafts[field] ? (
+          <span className="ui-visually-hidden" aria-live="polite">{drafts[field]?.digits}</span>
+        ) : (
+          <Icon name="pencil-plus" style={{ width: 50, height: 50 }} />
+        )}
       </IconButton>
     );
   };
+
+  const cursor = <Icon name="letter-i" className="ui-weight-reps-picker__input-active" style={{ width: '100%', height: '100%' }} />;
 
   const portalHost = typeof document !== 'undefined'
     ? document.getElementById('root') ?? document.body
@@ -215,8 +212,12 @@ export function WeightRepsPicker({
           second: lensAction('kilograms'),
         }}
         staticLensValues={{
-          first: editing === 'reps' && hasTyped ? digits : '',
-          second: editing === 'kilograms' && hasTyped ? digits : '',
+          first: drafts.reps?.digits,
+          second: drafts.kilograms?.digits,
+        }}
+        staticLensCursors={{
+          first: editing === 'reps' ? cursor : undefined,
+          second: editing === 'kilograms' ? cursor : undefined,
         }}
         ariaLabel="Повторения и вес"
         popoverClassName="ui-weight-reps-picker__popover"
