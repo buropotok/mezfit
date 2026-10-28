@@ -36,7 +36,7 @@ export function PlannedWorkoutConflictSheet({ occurrence, opened, onDecision, on
     {occurrence ? <Block className="flex flex-col gap-3">
       <Text variant="headline">На это время назначена тренировка: {person.name}</Text>
       <Text variant="body">Отмените её или перенесите, чтобы начать тренировку другого клиента.</Text>
-      <Button rounded strong onClick={() => onDecision('cancel')}>Отменить тренировку</Button>
+      <Button rounded onClick={() => onDecision('cancel')}>Отменить тренировку</Button>
       <Button rounded tonal disabled>Перенести тренировку</Button>
       <Button rounded tonal onClick={() => onDecision('back')}>Назад</Button>
     </Block> : null}

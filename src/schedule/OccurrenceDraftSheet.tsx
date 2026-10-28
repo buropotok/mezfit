@@ -472,7 +472,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             }).catch(reason => reportPlanError(reason, 'Не удалось отменить тренировку'))
               .finally(() => { if (startAlive.current) setBusy(false); });
           }}>Отменить тренировку</KonstaButton> : null}
-          {onDelete ? <KonstaButton rounded strong colors={{ strongBgIos: 'bg-red-500', strongBgMaterial: 'bg-red-500' }} disabled={busy}
+          {onDelete ? <KonstaButton rounded colors={{ fillBgIos: 'bg-red-500', fillBgMaterial: 'bg-red-500', fillTextMaterial: 'text-white' }} disabled={busy}
             onClick={() => setDeactivateOpen(true)}>Удалить</KonstaButton> : null}
         </div> : null}
         </> : null}
