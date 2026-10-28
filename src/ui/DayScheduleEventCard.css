@@ -58,3 +58,5 @@
   user-select: none;
   -webkit-user-select: none;
 }
+
+.ui-day-schedule-event-card--cancelled { filter: grayscale(1); --ui-day-schedule-event-card-color: 130 130 130; opacity: 0.65; }

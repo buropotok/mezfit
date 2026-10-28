@@ -84,6 +84,9 @@ export interface OccurrenceDraftSheetProps {
   planLocked?: boolean;
   /** Called with the latest locally persisted draft after all pending edits flush. */
   onStart?: (draft: LocalWorkoutOccurrenceDraft) => Promise<void>;
+  onCancel?: (draft: LocalWorkoutOccurrenceDraft) => void;
+  onClosed?: () => void;
+  suspended?: boolean;
   saveNotice?: string;
   sourceProgramName?: string | null;
   onNavigationContextChange?: (value: NavigationContext | null) => void;
@@ -98,7 +101,7 @@ export interface OccurrenceDraftCardProps extends OccurrenceDraftSheetProps {
 
 
 
-function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLocked = false,
+function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, planLocked = false,
   actor, readOnly = false, saveNotice = '', sourceProgramName, container,
   onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
@@ -444,6 +447,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
             onExerciseInformation={planner ? setExerciseInformationId : undefined}
           />
         </div>
+        {!readOnly && !planLocked && onCancel ? <Button variant="secondary" disabled={busy} onClick={() => {
+          if (!mutationBlocked() && !starting.current) onCancel(draft);
+        }}>Отменить тренировку</Button> : null}
         {!readOnly && !draft.saved ? <footer className="occurrence-draft-sheet__footer">
           <Button variant="secondary" color="red" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDeleteOpen(true); }}>
             {draft.previouslyPublished ? 'Отменить изменения' : 'Удалить черновик'}
@@ -556,7 +562,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, planLo
 
 /** Keep the animated shell mounted closed before opening; reset each editor by ID. */
 export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
-  const opened = props.draft !== null;
+  const opened = props.draft !== null && !props.suspended;
   const sheetId = useId();
   const [retained, setRetained] = useState(props.draft);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
@@ -603,7 +609,7 @@ export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
       if (opened && event.target === event.currentTarget
         && (event.propertyName === 'transform' || event.propertyName === 'translate')) finishOpening();
     }}
-    onClosed={() => { if (!props.draft) setRetained(null); }}>
+    onClosed={() => { if (!props.draft) setRetained(null); props.onClosed?.(); }}>
     <div ref={setContainer} className="occurrence-draft-sheet__host" />
   </MezfitBottomSheet>
     {/* Form renders during slide; closed pickers/dialogs mount only after it finishes. */}

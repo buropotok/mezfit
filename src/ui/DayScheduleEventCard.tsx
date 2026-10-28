@@ -14,6 +14,7 @@ export type DayScheduleEventCardProps = {
   state: DayScheduleRenderState;
   /** Visual color only; scheduling interactions remain identical. */
   variant?: 'workout' | 'event';
+  cancelled?: boolean;
   className?: string;
   onClick?: () => void;
 };
@@ -35,6 +36,7 @@ export function DayScheduleEventCard({
   state,
   variant = 'workout',
   className = '',
+  cancelled = false,
   onClick,
 }: DayScheduleEventCardProps) {
   const contentId = useId();
@@ -54,6 +56,7 @@ export function DayScheduleEventCard({
       onDragStart={event => event.preventDefault()}
       className={[
         'ui-day-schedule-event-card',
+        cancelled ? 'ui-day-schedule-event-card--cancelled' : '',
         variant === 'event' ? 'ui-day-schedule-event-card--event' : '',
         state.lifted ? 'ui-day-schedule-event-card--lifted' : '',
         state.editing ? 'ui-day-schedule-event-card--editing' : '',
