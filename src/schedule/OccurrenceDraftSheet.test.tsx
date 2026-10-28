@@ -120,6 +120,22 @@ const draft: LocalWorkoutOccurrenceDraft = {
 };
 
 describe('calendar plan technique projection', () => {
+  it.each([false, true])('keeps lifecycle actions in the scrolling body and hides them on drafts (saved=%s)', saved => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={{ ...draft, saved }} drafts={drafts} onClose={vi.fn()}
+      onSave={vi.fn()} onStart={vi.fn()} onCancel={vi.fn()} onDelete={vi.fn()} />);
+    const remove = screen.getByRole('button', { name: 'Удалить' });
+    expect(remove.closest('.occurrence-draft-sheet__body')).not.toBeNull();
+    if (saved) {
+      expect(screen.getByRole('button', { name: 'Начать тренировку' }).closest('.occurrence-draft-sheet__body')).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Отменить тренировку' }).closest('.occurrence-draft-sheet__body')).not.toBeNull();
+    } else {
+      expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Отменить тренировку' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Сохранить' }).closest('.occurrence-draft-sheet__body')).not.toBeNull();
+    }
+  });
   it('delivers the specialized set technique from the scheduled plan to its rendered card', () => {
     const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
     vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
