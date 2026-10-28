@@ -458,7 +458,10 @@ export function ThreeColumnPicker({
   const previousWheelColumnsRef = useRef(wheelColumns);
   const wheelColumnsRef = useRef(wheelColumns);
   wheelColumnsRef.current = wheelColumns;
-  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(wheelColumns, valueParts));
+  // useRef's initializer expression is evaluated on *every* render.
+  // Always use the full validated values: an external controlled update may
+  // temporarily have a different remainder from active coarse rows.
+  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, valueParts));
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
 
