@@ -46,7 +46,7 @@ export function ExerciseTrackingPickersCatalog() {
 
       <Surface as="section" className="ui-kit-section">
         <Text variant="title">Вес + повторения</Text>
-        <Text variant="caption" tone="muted">Повторения 0–100 и вес 0–399,75 кг с шагом 0,25 кг. Три колеса, дроби 00 / 25 / 5 / 75.</Text>
+        <Text variant="caption" tone="muted">Повторения 0–100 и вес 0–399,75 кг с шагом 0,25 кг. Цифровой ввод повторений и целых кг, колесо дроби 00 / 25 / 5 / 75.</Text>
         <Divider />
         <div className="ui-kit-stack">
           <Text>Повторения: {weightRepsValue.reps} · Вес: {weightRepsValue.weightKg} кг</Text>
