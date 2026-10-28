@@ -2,6 +2,7 @@ import cloudConfig from '../../dexie-cloud.json';
 import roleConfig from '../../cloud/roles.json';
 import adHocRoleConfig from '../../cloud/adhoc-session-roles.json';
 import plannedRoleConfig from '../../cloud/planned-session-roles.json';
+import clientSessionRoleConfig from '../../cloud/client-session-roles.json';
 import cancellationRoleConfig from '../../cloud/calendar-cancellation-roles.json';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../shared/relationship-id';
 
@@ -239,6 +240,13 @@ export function assertRemoteRoles(value: unknown): void {
   // Only the complete old profile or the complete reviewed new profile is valid.
   if (cancellationProfile.some(Boolean) && !cancellationProfile.every(Boolean)) failUnavailable();
   const cancellation = cancellationProfile.every(Boolean);
+  const clientRole = value.find((candidate: unknown) => isObject(candidate)
+    && candidate.realmId === 'rlm-public' && candidate.name === 'client');
+  const clientPermissions = isObject(clientRole) && isObject(clientRole.permissions) ? clientRole.permissions : null;
+  const clientAdd = clientPermissions?.add;
+  const clientExecution = Array.isArray(clientAdd)
+    && clientSessionRoleConfig.roles.client.permissions.add.some(table => clientAdd.includes(table));
+  if (clientExecution && !cancellation) failUnavailable();
   for (const name of ['coach', 'client'] as const) {
     const remote = value.find((candidate: unknown) => isObject(candidate)
       && candidate.realmId === 'rlm-public' && candidate.name === name);
@@ -260,7 +268,15 @@ export function assertRemoteRoles(value: unknown): void {
     };
     if (cancellation) expectedUpdates.workoutOccurrences = [...expectedUpdates.workoutOccurrences,
       ...cancellationRoleConfig.roles[name].permissions.update.workoutOccurrences];
-    const expectedAdd = adHoc
+    if (clientExecution && name === 'client') {
+      const overlay = clientSessionRoleConfig.roles.client.permissions.update;
+      Object.assign(expectedUpdates, overlay, {
+        workoutOccurrences: [...expectedUpdates.workoutOccurrences, ...overlay.workoutOccurrences],
+      });
+    }
+    const expectedAdd = clientExecution && name === 'client'
+      ? [...expected.client.permissions.add, ...clientSessionRoleConfig.roles.client.permissions.add]
+      : adHoc
       ? [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]
       : expected[name].permissions.add;
     const keys = name === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];

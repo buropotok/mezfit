@@ -319,6 +319,31 @@ Membership preflight accepts only complete old or complete new reviewed profiles
 The workflow is prepared in this PR, not automatically executed on PR/push.
 See `docs/architecture/calendar-cancellation.md` for rollout and activation checks.
 
+### Client execution foundation (2026-10-28)
+
+The user authorized the first Client execution foundation slice. The explicit
+`ClientWorkoutRepository` context may reuse `adHocSessions`, `adHocExercises`,
+`adHocSets` for atomic local personal/published-occurrence Start, athlete FACT
+and linked completion. The original Coach context and existing Client viewer
+stay unchanged until the UI integration slice. Shared Client writes require the
+reviewed installed execution grants. Source program PLAN and the frozen session
+snapshot stay protected; sequential FACT handoff is a convention, without locks.
+
+`tools/dexie-roles/client-sessions.mjs` and
+`.github/workflows/dexie-client-sessions.yml` may prepare the exact Client-only
+`cloud/client-session-roles.json` overlay on the complete calendar-cancellation
+baseline. No schema, Coach, old scheduled FACT, source PLAN, membership or
+business-data writes are authorized. This supersedes Client read-only execution
+only for the explicitly adopted new Client context after activation. Preserve
+owner sentinels and immutable identity/provenance. Reuse the existing protected
+environment secret, owner/main manual preview/apply, literal apply confirmation,
+shared writer concurrency, immediate full configuration recheck and exact full
+readback after failed/no-op imports. No PR/push execution or new credentials.
+Live ACL installation is a separate authorized operation; this implementation
+and configuration comparison do not prove ordinary-account server permissions.
+See `docs/architecture/client-workout-sessions.md` for exact grants and rollout.
+
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.

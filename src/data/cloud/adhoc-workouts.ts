@@ -1,3 +1,4 @@
+import clientExecutionGrants from '../../../cloud/client-session-roles.json';
 import { PlannedWorkoutConflict, currentStartConflicts } from './planned-workout-conflicts';
 import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
@@ -31,9 +32,9 @@ const executionTables = ['adHocSessions', 'adHocExercises', 'adHocSets', 'realms
 const programTables = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'localProgramSync', 'roles'];
 const catalogueTables = ['publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'];
-function hasPlannedLifecycleGrant(value: unknown): boolean {
+function hasPlannedLifecycleGrant(value: unknown, role = 'coach'): boolean {
   if (!value || typeof value !== 'object' || !('realmId' in value) || value.realmId !== 'rlm-public'
-    || !('name' in value) || value.name !== 'coach' || !('permissions' in value)) return false;
+    || !('name' in value) || value.name !== role || !('permissions' in value)) return false;
   const permissions = value.permissions;
   if (!permissions || typeof permissions !== 'object' || !('add' in permissions) || !('update' in permissions)) return false;
   const add = permissions.add, update = permissions.update;
@@ -41,6 +42,19 @@ function hasPlannedLifecycleGrant(value: unknown): boolean {
     || !update || typeof update !== 'object' || !('workoutOccurrences' in update)) return false;
   const fields = update.workoutOccurrences;
   return Array.isArray(fields) && ['status', 'workoutSessionId'].every(field => fields.includes(field));
+}
+/** Local activation guard only; cloud ACL remains the authorization boundary. */
+function hasClientExecutionGrant(value: unknown): boolean {
+  if (!hasPlannedLifecycleGrant(value, 'client') || !value || typeof value !== 'object'
+    || !('permissions' in value) || !value.permissions || typeof value.permissions !== 'object'
+    || !('update' in value.permissions)) return false;
+  const update = value.permissions.update;
+  if (!update || typeof update !== 'object') return false;
+  return Object.entries(clientExecutionGrants.roles.client.permissions.update).every(([table, fields]) => {
+    if (!(table in update)) return false;
+    const actual: unknown = Reflect.get(update, table);
+    return Array.isArray(actual) && fields.every(field => actual.includes(field));
+  });
 }
 const now = () => new Date().toISOString();
 function localWorkoutDate(startedAt: string): string {
@@ -81,6 +95,8 @@ function factPatch(fact: SetEntryFactDraft) {
 
 /** All execution writes commit locally; Dexie Cloud Addon owns replication. */
 export class AdHocWorkoutRepository {
+  /** The existing Coach slice stays unchanged until Client UI adopts its explicit repository. */
+  protected get clientExecution(): boolean { return false; }
   readonly programs: ProgramManagementRepository;
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {
     if (!/^tg:[1-9]\d*$/.test(actorUserId)) throw new Error('ADHOC_INVALID_ACTOR');
@@ -88,7 +104,7 @@ export class AdHocWorkoutRepository {
   }
 
   private write<T>(extra: string[], task: () => Promise<T>): Promise<T> {
-    return this.db.transaction('rw', [...new Set([...executionTables, ...extra])], task);
+    return this.db.transaction('rw', [...new Set([...executionTables, ...(this.clientExecution ? ['roles'] : []), ...extra])], task);
   }
   private async accessIssue(row: AdHocSessionRow): Promise<AdHocSessionAccessIssue | null> {
     const invalid = adHocSessionValidationIssue(row);
@@ -128,9 +144,13 @@ export class AdHocWorkoutRepository {
   private async require(id: string, active = true): Promise<AdHocSessionRow> {
     const row = await this.getRow(id);
     if (!row) throw new Error('ADHOC_SESSION_NOT_FOUND');
-    if (row.creatorUserId !== this.actorUserId
-      || (row.realmId !== this.actorUserId && row.coachUserId !== this.actorUserId))
+    if (this.clientExecution) {
+      if (row.athleteUserId !== this.actorUserId) throw new Error('ADHOC_WRITE_FORBIDDEN');
+      await this.requireClientExecutionGrant(row.realmId);
+    } else if (row.creatorUserId !== this.actorUserId
+      || (row.realmId !== this.actorUserId && row.coachUserId !== this.actorUserId)) {
       throw new Error('ADHOC_WRITE_FORBIDDEN');
+    }
     if (active && row.status !== 'active') throw new Error('ADHOC_SESSION_COMPLETED');
     return row;
   }
@@ -166,8 +186,9 @@ export class AdHocWorkoutRepository {
   private async assertStartAvailable(athleteUserId: string, timestamp: string,
     occurrenceId?: string, workspace?: readonly CloudWorkoutOccurrenceRow[]): Promise<void> {
     const rows = workspace ?? await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
-    // These are Coach Start operations: the actor is occupied even by a personal workout.
-    const conflicts = currentStartConflicts({ id: occurrenceId, athleteUserId, coachUserId: this.actorUserId }, rows, timestamp);
+    // Client Start occupies the athlete, never the client as a fictitious Coach.
+    const conflicts = currentStartConflicts({ id: occurrenceId, athleteUserId,
+      coachUserId: this.clientExecution ? null : this.actorUserId }, rows, timestamp);
     if (conflicts.length) throw new PlannedWorkoutConflict(conflicts);
   }
   createQuick(): Promise<{ id: string; createdProgram: boolean }> {
@@ -185,6 +206,7 @@ export class AdHocWorkoutRepository {
     });
   }
   createForAthlete(athleteUserId: string, programId?: string, dayId?: string): Promise<{ id: string; createdProgram: boolean }> {
+    if (this.clientExecution) return Promise.reject(new Error('CLIENT_SOURCE_PLAN_FORBIDDEN'));
     if (typeof athleteUserId !== 'string' || !/^tg:[1-9]\d*$/.test(athleteUserId)
       || (programId !== undefined && (typeof programId !== 'string' || !programId))
       || (dayId !== undefined && (typeof dayId !== 'string' || !dayId || !programId)))
@@ -232,10 +254,17 @@ export class AdHocWorkoutRepository {
     });
   }
 
-  private async requirePlannedLifecycleGrant(realmId: string): Promise<void> {
+  private async requireClientExecutionGrant(realmId: string): Promise<void> {
     if (realmId === this.actorUserId) return;
     const roles = await this.db.table<unknown>('roles').toArray();
-    if (!roles.some(hasPlannedLifecycleGrant)) throw new Error('PLANNED_START_ACL_REQUIRED');
+    if (!roles.some(hasClientExecutionGrant)) throw new Error('CLIENT_EXECUTION_ACL_REQUIRED');
+  }
+
+  private async requirePlannedLifecycleGrant(realmId: string): Promise<void> {
+    if (this.clientExecution) return this.requireClientExecutionGrant(realmId);
+    if (realmId === this.actorUserId) return;
+    const roles = await this.db.table<unknown>('roles').toArray();
+    if (!roles.some(role => hasPlannedLifecycleGrant(role))) throw new Error('PLANNED_START_ACL_REQUIRED');
   }
 
   /** One local transaction freezes the occurrence PLAN and creates execution.
@@ -247,8 +276,10 @@ export class AdHocWorkoutRepository {
       const workspace = await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
       const occurrence = workspace.find(row => row.id === occurrenceId && row.entryKind !== 'personal_event');
       if (!occurrence || occurrence.cancelledAt || occurrence.status === 'cancelled'
-        || (occurrence.coachUserId ? occurrence.coachUserId !== this.actorUserId
-          : occurrence.realmId !== this.actorUserId || occurrence.athleteUserId !== this.actorUserId))
+        || (this.clientExecution
+          ? occurrence.athleteUserId !== this.actorUserId || occurrence.publicationStatus !== 'published'
+          : occurrence.coachUserId ? occurrence.coachUserId !== this.actorUserId
+            : occurrence.realmId !== this.actorUserId || occurrence.athleteUserId !== this.actorUserId))
         throw new Error('PLANNED_WORKOUT_NOT_FOUND');
       const existing = await this.getOccurrenceSession(occurrenceId, occurrence.workoutSessionId);
       if (existing) {
@@ -280,7 +311,8 @@ export class AdHocWorkoutRepository {
         }
       }
       await this.db.workoutOccurrences.update(occurrenceId, { status: 'in_progress', workoutSessionId: id,
-        publicationStatus: 'published', publishedPlan: structuredClone(occurrence.plan), updatedAt: timestamp });
+        ...(!this.clientExecution ? { publicationStatus: 'published' as const,
+          publishedPlan: structuredClone(occurrence.plan) } : {}), updatedAt: timestamp });
       await markWorkoutChanged(this.db, occurrenceId);
       return { id, createdProgram: false };
     });
@@ -547,7 +579,8 @@ export class AdHocWorkoutRepository {
   /** Called in the creation transaction so competing local starts serialize. */
   private async findActive(): Promise<{ id: string; name: string } | null> {
     const rows = await this.db.adHocSessions.where('status').equals('active').toArray();
-    for (const row of rows) if (row.creatorUserId === this.actorUserId && await this.accessible(row))
+    for (const row of rows) if ((this.clientExecution ? row.athleteUserId === this.actorUserId
+      : row.creatorUserId === this.actorUserId) && await this.accessible(row))
       return { id: row.id, name: row.name };
     return null;
   }
@@ -560,8 +593,9 @@ export class AdHocWorkoutRepository {
   async list(): Promise<AdHocOpenSession[]> {
     const result: AdHocOpenSession[] = [];
     const rows = (await this.db.adHocSessions.toArray()).filter(isAdHocSessionRow).sort((a, b) => b.startedAt.localeCompare(a.startedAt) || a.id.localeCompare(b.id));
-    for (const row of rows) if (row.creatorUserId === this.actorUserId
-      && (row.status === 'active' || (row.status === 'completed' && row.autoCreatedProgram && row.templateSaveDecision === 'pending'))
+    for (const row of rows) if ((this.clientExecution ? row.athleteUserId === this.actorUserId
+      : row.creatorUserId === this.actorUserId)
+      && (row.status === 'active' || (!this.clientExecution && row.status === 'completed' && row.autoCreatedProgram && row.templateSaveDecision === 'pending'))
       && await this.accessible(row)) result.push({ id: row.id, name: row.name, status: row.status });
     return result;
   }
