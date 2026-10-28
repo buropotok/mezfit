@@ -95,7 +95,8 @@ describe('WeightRepsPicker 10kg native flick snapping', () => {
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.25 });
     fireEvent.click(within(kilograms).getByRole('option', { name: '283' }));
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 283.25 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
+    // One tick for 281 by scroll, one tick for the direct tap on 283.
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
     expect(kilograms.className).not.toContain('ui-time-picker__column--flick-snap');
   });
 
