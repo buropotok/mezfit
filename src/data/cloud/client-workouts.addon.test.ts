@@ -21,7 +21,7 @@ describe('Client execution with pinned Dexie Cloud Addon', () => {
     const fetch = vi.fn(() => Promise.reject(new Error('offline'))); vi.stubGlobal('fetch', fetch);
     const db = new Dexie('client-addon-' + crypto.randomUUID(), { addons: [dexieCloud] });
     databases.push(db);
-    db.version(12).stores(CLOUD_DATABASE_STORES_V12);
+    db.version(12).stores({ ...CLOUD_DATABASE_STORES_V12, localProgramSync: 'id', localWorkoutSync: 'id' });
     db.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true,
       disableWebSocket: true, tryUseServiceWorker: false,
       unsyncedTables: ['localProgramSync', 'localWorkoutSync', 'localWorkoutOccurrenceDrafts'] });
