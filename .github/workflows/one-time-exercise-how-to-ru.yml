@@ -1,4 +1,4 @@
-name: Pilot offline exercise instruction translation
+name: Pilot NLLB sports instruction translation
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 jobs:
   pilot:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,45 +20,60 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install local EN-RU translation engine
+      - name: Install CPU translation engine
         run: |
-          python -m pip install --disable-pip-version-check 'argostranslate==1.10.0'
-      - name: Download offline model and translate samples
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check 'transformers==4.45.2' sentencepiece sacremoses
+      - name: Download model and translate exercise text
         shell: bash
         run: |
           python - <<'PY'
           import json
           import time
+          import traceback
           from pathlib import Path
-          from argostranslate import package, translate
-          started=time.monotonic()
-          print("INDEX_START",flush=True)
-          package.update_package_index()
-          packages=package.get_available_packages()
-          model=next(x for x in packages if x.from_code=='en' and x.to_code=='ru')
-          print("MODEL",model,flush=True)
-          package.install_from_path(model.download())
-          print("MODEL_READY_SECONDS",round(time.monotonic()-started,1),flush=True)
-          texts=[
-            'Lie flat on your back with your knees bent and feet flat on the ground. Engage your abs, then lift your shoulders and upper back off the floor.',
-            "Here's how you can perform the 4-point tummy vacuum exercise:\n1. Start on your hands and knees.\n2. Maintain a neutral spine.\n3. Inhale deeply through your nose.\n4. Exhale and pull your belly button toward your spine.",
-            'The Thigh Fly as a static stretch:\n1. Starting Position: Lie on your back with your legs together, lifted towards the ceiling.\n2. Stretching Movement: Slowly open your legs to the sides as far as comfortable. Hold for 10-15 seconds.',
-            '1. Place a weight plate flat on a smooth floor.\n2. Get into a low athletic stance: hips back, chest down, hands on the edge of the plate, arms extended.\n3. Engage your core, and drive through the balls of your feet to push the plate forward.'
-          ]
-          entries=[]
-          for t in texts:
-            t0=time.monotonic()
-            ru=translate.translate(t,'en','ru')
-            entries.append({'en':t,'ru':ru,'seconds':round(time.monotonic()-t0,2)})
-          report={'model':'Argos EN-RU offline','initialization_seconds':round(time.monotonic()-started,2),'samples':entries}
-          out=Path('tools/exercise-work/howto-translation-pilot.json')
+          report={'model':'facebook/nllb-200-distilled-600M','samples':[]}
+          start=time.monotonic()
+          try:
+              import torch
+              from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+              model_id='facebook/nllb-200-distilled-600M'
+              tokenizer=AutoTokenizer.from_pretrained(model_id,src_lang='eng_Latn')
+              model=AutoModelForSeq2SeqLM.from_pretrained(model_id)
+              model.eval()
+              report['load_seconds']=round(time.monotonic()-start,1)
+              segments=[
+                'Lie flat on your back with your knees bent and feet flat on the ground. Engage your abs, then lift your shoulders and upper back off the floor.',
+                "Here is how you can perform the 4-point tummy vacuum exercise.",
+                "As you exhale, contract your abdominal muscles and pull your belly button in towards your spine.",
+                "The Thigh Fly as a static stretch.",
+                "Starting Position: Lie on your back with your legs together, lifted towards the ceiling.",
+                "Get into a low athletic stance: hips back, chest down, hands on the edge of the weight plate, arms extended.",
+                "Engage your core, and drive through the balls of your feet to push the weight plate forward.",
+                "Perform wrist, shoulder, and triceps stretches to increase mobility.",
+                "Place your hands shoulder-width apart on the ground, about 6 to 12 inches away from a wall."
+              ]
+              t0=time.monotonic()
+              for text in segments:
+                  batch=tokenizer(text,return_tensors='pt')
+                  with torch.inference_mode():
+                      encoded=model.generate(**batch,forced_bos_token_id=tokenizer.convert_tokens_to_ids('rus_Cyrl'),max_new_tokens=160,num_beams=3)
+                  ru=tokenizer.batch_decode(encoded,skip_special_tokens=True)[0]
+                  report['samples'].append({'en':text,'ru':ru})
+                  print('TRANSLATION',text[:60],'=>' ,ru,flush=True)
+              report['translate_seconds']=round(time.monotonic()-t0,1)
+          except Exception as exc:
+              report['error']=type(exc).__name__+': '+str(exc)
+              report['traceback']=traceback.format_exc()[-6000:]
+          report['total_seconds']=round(time.monotonic()-start,1)
+          out=Path('tools/exercise-work/howto-nllb-pilot.json')
           out.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
-          print("PILOT_REPORT="+json.dumps(report,ensure_ascii=False)[:18000],flush=True)
+          print('RESULT='+json.dumps(report,ensure_ascii=False)[:13000],flush=True)
           PY
-      - name: Commit pilot result
+      - name: Commit pilot
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tools/exercise-work/howto-translation-pilot.json
-          git commit -m 'chore: evaluate offline EN-RU exercise translation'
+          git add tools/exercise-work/howto-nllb-pilot.json
+          git commit -m 'chore: assess NLLB instruction translation accuracy'
           git push origin HEAD:refs/heads/data/exercise-how-to-ru-20261028
