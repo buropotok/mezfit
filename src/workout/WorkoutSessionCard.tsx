@@ -1,7 +1,8 @@
 import { ListInput } from 'konsta/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Avatar,
+  Badge,
   GlassSurface,
   Icon,
   IconButton,
@@ -17,6 +18,7 @@ import { WorkoutPlanCard, type WorkoutPlanCardProps } from './WorkoutPlanCard';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
+import { useSessionClock } from './useSessionClock';
 import './workout-session-card.css';
 
 const workoutDateFormatter = new Intl.DateTimeFormat('ru-RU', {
@@ -95,6 +97,8 @@ export interface WorkoutFactCardProps<Id extends string | number = number> {
   readOnly?: boolean;
   session: ActiveWorkoutSession<Id>;
   title?: string;
+  athleteName?: string;
+  athleteAvatar?: ReactNode;
   comment?: string | null;
   onReorderExerciseIds: (ids: Id[]) => void;
   onSaveSet: (input: SaveSessionSetInput<Id>) => Promise<void>;
@@ -125,6 +129,8 @@ function WorkoutFactCard<Id extends string | number = number>({
   session,
   readOnly = false,
   title,
+  athleteName,
+  athleteAvatar,
   comment,
   onReorderExerciseIds,
   onSaveSet,
@@ -144,6 +150,10 @@ function WorkoutFactCard<Id extends string | number = number>({
   onOpenChat,
   onNavigationContextChange,
 }: WorkoutFactCardProps<Id>) {
+  const now = useSessionClock(session.status === 'active');
+  const actualStart = parseWorkoutTimestamp(session.startedAt);
+  const actualSession = session.status === 'active' && actualStart
+    ? { ...session, completedAt: new Date(Math.max(actualStart.getTime(), now)).toISOString() } : session;
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = title ?? workoutTitle(session);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -328,6 +338,7 @@ function WorkoutFactCard<Id extends string | number = number>({
               <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
                 {workoutProgramName(session)}
               </Text>
+              <Badge textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
             </div>
             {menuItems.length > 0 ? (
               <LiquidPopover
@@ -355,11 +366,9 @@ function WorkoutFactCard<Id extends string | number = number>({
             ) : (
               <span className="workout-session-card__menu-placeholder" aria-hidden="true" />
             )}
-            <Avatar
-              className="workout-session-card__avatar"
-              name={workoutCreatorName(session)}
-              src={session.creator?.photoUrl ?? undefined}
-            />
+            <div className="workout-plan-card__avatar" aria-label={`Атлет: ${athleteName ?? workoutCreatorName(session)}`}>
+              {athleteAvatar ?? <Avatar name={athleteName ?? workoutCreatorName(session)} src={!athleteName ? session.creator?.photoUrl ?? undefined : undefined} />}
+            </div>
           </div>
         )}
         footer={(
@@ -378,6 +387,7 @@ function WorkoutFactCard<Id extends string | number = number>({
               </GlassSurface>
             ) : null}
 
+            {session.plannedTiming ? <Text variant="footnote" tone="muted">Запланировано: {workoutDateFormatter.format(new Date(session.plannedTiming.startsAtUtc))}, {workoutTimeFormatter.format(new Date(session.plannedTiming.startsAtUtc))} — {workoutTimeFormatter.format(new Date(Date.parse(session.plannedTiming.startsAtUtc) + session.plannedTiming.durationMinutes * 60_000))}</Text> : null}
             <div className="workout-session-card__footer-meta">
               {onCommentChange ? (
                 <GlassSurface
@@ -393,7 +403,7 @@ function WorkoutFactCard<Id extends string | number = number>({
               ) : null}
               <div className="workout-session-card__time">
                 <Text variant="footnote" tone="muted">{formatWorkoutDate(session)}</Text>
-                <Text variant="caption" tone="muted">{workoutTimeRange(session)}</Text>
+                <Text variant="caption" tone="muted">{workoutTimeRange(actualSession)}</Text>
               </div>
             </div>
 

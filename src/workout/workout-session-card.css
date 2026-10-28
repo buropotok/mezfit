@@ -162,3 +162,7 @@
 .workout-session-card__header--scheduled { grid-template-columns: 44px minmax(0, 1fr) auto 44px 44px; gap: 6px; }
 .workout-plan-card__chevron { display: inline-flex; width: 20px; height: 20px; }
 .workout-plan-card__chevron--expanded { transform: rotate(90deg); }
+
+.workout-plan-card__header--menu { grid-template-columns: 44px minmax(0, 1fr) 44px 44px 44px; }
+
+.workout-participants { display: flex; align-items: center; gap: 8px; }

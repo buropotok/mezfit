@@ -27,6 +27,8 @@ export interface LocalWorkoutOccurrenceDraft {
   saved?: boolean;
   executionStatus?: CloudWorkoutOccurrenceRow['status'];
   workoutSessionId?: string | null;
+  /** Derived from the linked session; never persisted into the scheduled PLAN. */
+  executionTiming?: { startedAt: string; completedAt: string | null };
   previouslyPublished?: boolean;
   targetOccurrenceId?: string;
   createdAt: string;
@@ -114,9 +116,10 @@ export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWor
   } catch { return false; }
 }
 
-export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurrenceRow): LocalWorkoutOccurrenceDraft {
+export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurrenceRow & Pick<LocalWorkoutOccurrenceDraft, 'executionTiming'>): LocalWorkoutOccurrenceDraft {
   const now = new Date().toISOString();
   return { id: 'draft:' + row.id, actorUserId, realmId: row.realmId, saved: row.publicationStatus !== 'draft',
+    ...(row.executionTiming ? { executionTiming: row.executionTiming } : {}),
     ...(row.status !== 'scheduled' || row.workoutSessionId
       ? { executionStatus: row.status, workoutSessionId: row.workoutSessionId } : {}),
     previouslyPublished: row.publicationStatus !== 'draft' || !!row.publishedPlan,

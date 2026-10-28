@@ -434,8 +434,9 @@ export function App() {
               actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
               onNavigationContextChange={handleNavigationContextChange} />
           ) : destination === 'training' ? (
-            <ClientSharedWorkoutScreen onNavigationContextChange={handleNavigationContextChange}
+            <ClientSharedWorkoutScreen actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }} onNavigationContextChange={handleNavigationContextChange}
               legacy={<WorkoutSessionScreen
+                actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
                 initData={state.initData}
                 onClose={() => changeDestination('today')}
                 onNavigationContextChange={handleNavigationContextChange}

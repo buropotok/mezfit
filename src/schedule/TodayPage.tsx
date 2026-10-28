@@ -22,12 +22,17 @@ import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 import { ScheduleFilterBar } from './ScheduleFilterBar';
 import { ScheduleActionButton } from './ScheduleActionButton';
 import { ScheduleClientFilter } from './ScheduleClientFilter';
-import { calendarSegments, localScheduleInstant } from './calendar-time';
+import { calendarSegments, calendarTime, localScheduleInstant } from './calendar-time';
+import { CalendarSessionSheet } from './CalendarSessionSheet';
+import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
+import { sessionTiming } from '../workout/session-timing';
+import { useSessionClock } from '../workout/useSessionClock';
 import './today-page.css';
 
 type TimelineItem = DayScheduleEvent & { date: string } & (
   | { type: 'draft'; draft: LocalWorkoutOccurrenceDraft }
   | { type: 'occurrence'; occurrence: CloudWorkoutOccurrenceRow }
+  | { type: 'session'; session: AdHocSessionRow; timeLabel: string }
 );
 
 function datePart(instant: string): LocalDate {
@@ -47,20 +52,41 @@ function timelineEvents(
   });
 }
 
+function sessionEvents(session: AdHocSessionRow, now: number): TimelineItem[] {
+  const timing = sessionTiming(session, now);
+  let boundary = Date.parse(session.startedAt);
+  return calendarSegments(timing.startsAtUtc, timing.durationMinutes).map((segment, index): TimelineItem => {
+    boundary += segment.durationMinutes * 60_000;
+    const until = Math.min(Date.parse(timing.endsAtUtc), boundary);
+    const startLabel = `${String(Math.floor(segment.startMinutes / 60)).padStart(2, '0')}:${String(segment.startMinutes % 60).padStart(2, '0')}`;
+    const endLabel = segment.startMinutes + segment.durationMinutes >= 1440 ? '24:00' : calendarTime(new Date(until));
+    return { ...segment, id: `session:${session.id}:${index}`, type: 'session', session, timeLabel: `${startLabel}–${endLabel}` };
+  });
+}
+function booking(event: TimelineItem) {
+  if (event.type === 'draft') return event.draft;
+  if (event.type === 'occurrence') return event.occurrence;
+  return { ...event.session, startsAtUtc: event.session.startedAt, durationMinutes: event.durationMinutes, format: event.session.coachUserId ? 'coached' as const : 'independent' as const };
+}
+
 function BookingCard({ event, state, actor, onClick }: {
   event: TimelineItem; state: Parameters<typeof DayScheduleEventCard>[0]['state'];
   actor?: ProgramActor; onClick: () => void;
 }) {
-  const row = event.type === 'draft' ? event.draft : event.occurrence;
+  const row = booking(event);
   const person = useWorkoutPerson(row.athleteUserId, row.realmId, actor);
   const cancelled = event.type === 'occurrence' && Boolean(event.occurrence.cancelledAt || event.occurrence.status === 'cancelled');
   const personalEvent = event.type === 'occurrence' && event.occurrence.entryKind === 'personal_event';
-  return <DayScheduleEventCard title={personalEvent ? row.plan.name : person.name}
-    detail={personalEvent ? row.plan.comment : row.plan.name} media={personalEvent ? undefined : person.avatar}
+  const name = event.type === 'session' ? event.session.name : event.type === 'draft' ? event.draft.plan.name : event.occurrence.plan.name;
+  const comment = event.type === 'occurrence' ? event.occurrence.plan.comment : null;
+  return <DayScheduleEventCard title={personalEvent ? name : person.name}
+    detail={personalEvent ? comment : name}
     cancelled={cancelled} variant={personalEvent ? 'event' : 'workout'}
-    corner={<Icon name={personalEvent ? 'calendar-event' : row.format === 'coached' ? 'users' : 'user'} />}
+    corner={personalEvent ? <Icon name="calendar-event" /> : <span className="today-page__athlete-avatar">{person.compactAvatar}</span>}
     cornerSize={Math.min(32, (state.height ?? 62) / 2)}
-    status={cancelled ? <Badge textVariant="caption">Отменена</Badge> : event.type === 'draft' ? <Badge color="yellow" textVariant="caption">Черновик</Badge> : undefined}
+    status={event.type === 'session' ? <Badge textVariant="caption">{event.session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+      : cancelled ? <Badge textVariant="caption">Отменена</Badge> : event.type === 'draft' ? <Badge color="yellow" textVariant="caption">Черновик</Badge> : undefined}
+    timeLabel={event.type === 'session' ? event.timeLabel : undefined}
     state={state} onClick={onClick} />;
 }
 
@@ -90,6 +116,9 @@ export function TodayPage({
     [cloud?.db, cloud?.actorUserId]);
   const clients = useMemo(() => [...new Map((cloud?.clients ?? []).map(client => [client.userId, client])).values()], [cloud?.clients]);
   const [date, setDate] = useState<LocalDate>(currentDate);
+  const [sessions, setSessions] = useState<AdHocSessionRow[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const now = useSessionClock(sessions.some(row => row.status === 'active'));
   const [occurrences, setOccurrences] = useState<CloudWorkoutOccurrenceRow[]>([]);
   const [cancelledRows, setCancelledRows] = useState<CloudWorkoutOccurrenceRow[]>([]);
   const [showCancelled, setShowCancelled] = useState(false);
@@ -117,9 +146,9 @@ export function TodayPage({
     ++editorGeneration.current;
     activeRepository.current = draftRepository;
     setProgramUpdateError(''); setTimingOverrides({}); setCollapse(null);
-    setLoading(true); setOccurrences([]); setCancelledRows([]); setShowCancelled(false); setDrafts([]); setOpenedDraftId(null); setViewed(null);
-    const subscription = draftRepository.observeWorkspace(({ occurrences, drafts, cancelled = [] }) => {
-      setCancelledRows(cancelled);
+    setLoading(true); setSessions([]); setSessionId(null); setOccurrences([]); setCancelledRows([]); setShowCancelled(false); setDrafts([]); setOpenedDraftId(null); setViewed(null);
+    const subscription = draftRepository.observeWorkspace(({ occurrences, drafts, cancelled = [], sessions = [] }) => {
+      setSessions(sessions); setCancelledRows(cancelled);
       setOccurrences(occurrences); setDrafts(drafts); setLoading(false); setError('');
       setTimingOverrides(current => Object.fromEntries(Object.entries(current).filter(([key, timing]) => {
         const row = key.startsWith('draft:') ? drafts.find(row => 'draft:' + row.id === key)
@@ -137,7 +166,7 @@ export function TodayPage({
     };
   }, [draftRepository]);
 
-  useEffect(() => { ++editorGeneration.current; setClientUserIds([]); setShowCancelled(false); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setPersonalEventId(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
+  useEffect(() => { ++editorGeneration.current; setClientUserIds([]); setShowCancelled(false); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setSessionId(null); setPersonalEventId(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
 
   useEffect(() => {
     if (!planning?.requestedDraftId) return;
@@ -178,15 +207,16 @@ export function TodayPage({
   }, [loading, viewed?.id, occurrences, cancelledRows, drafts]);
   const sourceProgramName = selectedProgramTitle && selectedProgramTitle.id === selected?.trainingPlanId
     ? selectedProgramTitle.name : null;
+  const closeSession = useCallback(() => { setSessionId(null); setEditorNavigation(null); }, []);
   const closeEditor = useCallback(() => { ++editorGeneration.current; setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
   const closePersonalEvent = useCallback(() => { setPersonalEventId(null); setCreation(current => current === 'event' ? null : current); }, []);
-  const createAction = useMemo(() => !selected && !personalEventId && !creation && !filterOpened ? {
+  const createAction = useMemo(() => !selected && !sessionId && !personalEventId && !creation && !filterOpened ? {
     label: 'Создать', icon: 'plus' as const,
     popoverItems: [
       { id: 'workout', label: '+ Тренировка', icon: 'barbell' as const, onSelect: () => setCreation('workout') },
       { id: 'event', label: '+ Событие', icon: 'calendar-event' as const, onSelect: () => setCreation('event') },
     ],
-  } : null, [selected?.id, personalEventId, creation, filterOpened]);
+  } : null, [selected?.id, sessionId, personalEventId, creation, filterOpened]);
   useNavigationSurfaceFloatingAction(createAction);
   const mayManage = (row: Pick<LocalWorkoutOccurrenceDraft, 'athleteUserId' | 'coachUserId' | 'format'>) => (row.athleteUserId === cloud?.actorUserId || row.coachUserId === cloud?.actorUserId)
     && (row.format !== 'coached' || row.coachUserId === cloud?.actorUserId);
@@ -202,6 +232,10 @@ export function TodayPage({
       onNavigationContextChange({ level: 2, title: 'Конфликт тренировок', contentMode: 'viewport', onBack: plannedStart.dismissConflict });
       return () => onNavigationContextChange(null);
     } else if (creation === 'workout') return;
+    if (sessionId) {
+      onNavigationContextChange(editorNavigation ?? { level: 2, title: 'Тренировка', contentMode: 'viewport', onBack: closeSession });
+      return () => onNavigationContextChange(null);
+    }
     if (creation === 'event' || personalEventId) {
       onNavigationContextChange({ level: 2, title: creation === 'event' ? 'Новое событие' : 'Личное событие',
         contentMode: 'viewport', onBack: closePersonalEvent });
@@ -229,7 +263,7 @@ export function TodayPage({
       });
     }
     return () => onNavigationContextChange(null);
-  }, [date, showCancelled, plannedStart?.conflictActive, plannedStart?.dismissConflict, selected?.id, personalEventId, filterOpened, creation, editorNavigation, closePersonalEvent, onNavigationContextChange]);
+  }, [date, showCancelled, plannedStart?.conflictActive, plannedStart?.dismissConflict, selected?.id, sessionId, closeSession, personalEventId, filterOpened, creation, editorNavigation, closePersonalEvent, onNavigationContextChange]);
 
   useEffect(() => {
     if (plannedStart?.conflictActive && plannedStart.conflictOccurrence) {
@@ -241,20 +275,25 @@ export function TodayPage({
   const merged = useMemo(() => {
     const withTiming = <T extends LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow>(row: T, type: string): T =>
       timingOverrides[type + ':' + row.id] ? { ...row, ...timingOverrides[type + ':' + row.id] } : row;
-    const visible = (row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow) => {
+    const visible = (row: Pick<CloudWorkoutOccurrenceRow, 'id' | 'athleteUserId' | 'coachUserId' | 'format'>) => {
       const conflictId = plannedStart?.conflictActive ? plannedStart.conflictOccurrence?.id : null;
       if (conflictId && (row.id === conflictId || row.id === 'draft:' + conflictId)) return true;
       if (role === 'coach' && clientUserIds.length) return clientUserIds.includes(row.athleteUserId);
       return row.athleteUserId === cloud?.actorUserId
         || (row.coachUserId === cloud?.actorUserId && row.format === 'coached');
     };
+    const executed = (row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow, id: string) => sessions.some(session =>
+      session.occurrenceId === id && session.realmId === row.realmId && session.athleteUserId === row.athleteUserId
+      && session.coachUserId === row.coachUserId && session.clientUserId === row.clientUserId
+      && (!row.workoutSessionId || row.workoutSessionId === session.id));
     if (showCancelled) return cancelledRows.filter(visible).flatMap(row => timelineEvents(row, 'occurrence'));
     return [
-      ...occurrences.filter(visible).filter(row => !drafts.some(draft => draft.targetOccurrenceId === row.id))
+      ...occurrences.filter(row => !executed(row, row.id)).filter(visible).filter(row => !drafts.some(draft => draft.targetOccurrenceId === row.id))
         .flatMap(row => timelineEvents(withTiming(row, 'occurrence'), 'occurrence')),
-      ...drafts.filter(visible).flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
+      ...drafts.filter(row => !executed(row, row.targetOccurrenceId ?? row.id.slice(6))).filter(visible).flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
+      ...sessions.filter(row => visible({ ...row, format: row.coachUserId ? 'coached' : 'independent' })).flatMap(row => sessionEvents(row, now)),
     ];
-  }, [occurrences, drafts, cancelledRows, showCancelled, timingOverrides, role, clientUserIds, cloud?.actorUserId, plannedStart?.conflictActive, plannedStart?.conflictOccurrence?.id]);
+  }, [occurrences, drafts, sessions, now, cancelledRows, showCancelled, timingOverrides, role, clientUserIds, cloud?.actorUserId, plannedStart?.conflictActive, plannedStart?.conflictOccurrence?.id]);
 
   const eventsByDate = useMemo<Record<LocalDate, TimelineItem[]>>(() => {
     const grouped: Record<string, TimelineItem[]> = {};
@@ -292,6 +331,7 @@ export function TodayPage({
 
   const openEvent = async (event: TimelineItem) => {
     ++editorGeneration.current;
+    if (event.type === 'session') { closeEditor(); setSessionId(event.session.id); return; }
     if (event.type === 'draft') { setViewed(null); setOpenedDraftId(event.draft.id); return; }
     if (!cloud || !draftRepository) return;
     setViewed(null);
@@ -306,7 +346,7 @@ export function TodayPage({
   const changeEvent = async (id: string, date?: LocalDate, minutes?: number, duration?: number, cancel = false) => {
     if (!cloud || !draftRepository) return;
     const event = merged.find(item => item.id === id);
-    if (!event) return;
+    if (!event || event.type === 'session') return;
     const current = event.type === 'draft' ? event.draft : event.occurrence;
     const start = date !== undefined && minutes !== undefined
       ? localScheduleInstant(date, `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}` as LocalTime)
@@ -351,6 +391,7 @@ export function TodayPage({
   };
   const animateCancellation = useCallback(async (id: string, commit: () => Promise<void>) => {
     const source = [...cardSources.current.values()].find(item => {
+      if (item.event.type === 'session') return false;
       const row = item.event.type === 'draft' ? item.event.draft : item.event.occurrence;
       const occurrenceId = item.event.type === 'draft' ? item.event.draft.targetOccurrenceId ?? row.id.slice(6) : row.id;
       const bounds = item.element.getBoundingClientRect();
@@ -380,14 +421,14 @@ export function TodayPage({
   const report = (operation: Promise<void>) => { void operation.catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось изменить запись в расписании')); };
 
   return (
-    <section className={`today-page${creation || selected || personalEventId || filterOpened ? ' today-page--sheet-open' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
+    <section className={`today-page${creation || selected || sessionId || personalEventId || filterOpened ? ' today-page--sheet-open' : ''}`} aria-label="Расписание" aria-busy={loading || undefined}>
       <DaySchedule date={date} eventsByDate={eventsByDate} onDateChange={setDate}
         className="today-page__schedule"
         eventsShareResource={(event, other) => bookingsShareParticipant(
-          event.type === 'draft' ? event.draft : event.occurrence,
-          other.type === 'draft' ? other.draft : other.occurrence)}
-        isEventEditable={event => !showCancelled && (event.type === 'draft'
-          ? event.durationMinutes === event.draft.durationMinutes
+          booking(event), booking(other))}
+        isEventEditable={event => event.type !== 'session' && !showCancelled && (event.type === 'draft'
+          ? !event.draft.workoutSessionId && (!event.draft.executionStatus || event.draft.executionStatus === 'scheduled')
+            && event.durationMinutes === event.draft.durationMinutes
           : mayEdit(event.occurrence) && event.durationMinutes === event.occurrence.durationMinutes)}
         onEventMove={move => report(changeEvent(move.eventId, move.targetDate, move.startMinutes))}
         onEventResize={resize => report(changeEvent(resize.eventId, resize.date, resize.startMinutes, resize.durationMinutes))}
@@ -398,15 +439,15 @@ export function TodayPage({
         }}><BookingCard event={event} state={state} actor={actor}
           onClick={() => report(openEvent(event))} /></div>} />
 
-      {role === 'coach' && (!selected || plannedStart?.conflictActive) && !personalEventId && !creation && !filterOpened ? <ScheduleFilterBar
+      {role === 'coach' && (!selected || plannedStart?.conflictActive) && !sessionId && !personalEventId && !creation && !filterOpened ? <ScheduleFilterBar
         clients={clients} selected={clientUserIds} onOpen={() => setFilterOpened(true)}
         onRemove={id => setClientUserIds(current => current.filter(value => value !== id))} /> : null}
-      {(!selected || plannedStart?.conflictActive) && !personalEventId && !creation && !filterOpened ? <div
+      {(!selected || plannedStart?.conflictActive) && !sessionId && !personalEventId && !creation && !filterOpened ? <div
         className={`today-page__basket${role === 'client' ? ' today-page__basket--first' : ''}`}>
         <ScheduleActionButton ref={basket} icon="trash" label="Отменённые тренировки" pressed={showCancelled}
           onClick={() => setShowCancelled(value => !value)} />
       </div> : null}
-      {showCancelled && !selected && !personalEventId && !creation && !filterOpened ? <div className={`today-page__cancelled-label${role === 'client' ? ' today-page__cancelled-label--first' : ''}`}><Text variant="footnote">Отменённые тренировки</Text></div> : null}
+      {showCancelled && !selected && !sessionId && !personalEventId && !creation && !filterOpened ? <div className={`today-page__cancelled-label${role === 'client' ? ' today-page__cancelled-label--first' : ''}`}><Text variant="footnote">Отменённые тренировки</Text></div> : null}
       {collapse ? <LiquidCollapse source={collapse.source} targetRef={basket} onFinished={() => {
         setCollapse(null); animationDone.current?.(); animationDone.current = null;
       }}><BookingCard event={collapse.event} state={collapse.state} actor={actor} onClick={() => undefined} /></LiquidCollapse> : null}
@@ -435,6 +476,8 @@ export function TodayPage({
         onSaved={instant => {
           setCreation(null); setPersonalEventId(null); setClientUserIds([]); setDate(datePart(instant));
         }} />
+      <CalendarSessionSheet sessionId={sessionId} role={role} actor={actor} initData={initData}
+        onClose={closeSession} onNavigationContextChange={setEditorNavigation} />
       {draftRepository ? <OccurrenceDraftSheet suspended={plannedStart?.conflictActive} draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
         planLocked={Boolean(selected?.workoutSessionId || (selected?.executionStatus && selected.executionStatus !== 'scheduled'))}
         onStart={role === 'coach' && plannedStart && !viewed ? async draft => {

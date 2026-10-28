@@ -17,6 +17,8 @@ import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelecti
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   Badge, Text, TimePicker, GlassSurface, Icon, IconButton, LiquidPopover, type LocalDate, type LocalTime } from '../ui';
 import { localScheduleInstant, localScheduleEnd } from './calendar-time';
+import { sessionTiming } from '../workout/session-timing';
+import { useSessionClock } from '../workout/useSessionClock';
 import { useWorkoutPerson } from './WorkoutPerson';
 import type { NavigationContext } from '../NavigationShell';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
@@ -119,6 +121,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const closeProgramSheet = useCallback(() => setProgramSheetOpen(false), []);
   const glass = loadBrowserGlassSettings();
   const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
+  const athlete = useWorkoutPerson(draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
+  const now = useSessionClock(Boolean(draft?.executionTiming && !draft.executionTiming.completedAt));
   const [dateOpened, setDateOpened] = useState(false);
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
   const [timeSelection, setTimeSelection] = useState<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
@@ -369,20 +373,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
     }
   };
-  const start = draft ? new Date(draft.startsAtUtc) : new Date();
-  const end = draft ? currentEnd(draft) : new Date();
+  const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
+  const start = new Date(actual?.startsAtUtc ?? draft?.startsAtUtc ?? now);
+  const end = actual ? new Date(actual.endsAtUtc) : draft ? currentEnd(draft) : new Date(now);
   const scheduledTiming = { date: localDate(start).split('-').reverse().join('.'),
     time: `${localTime(start)} – ${localTime(end)}` };
-  const content = draft ? <section className={`occurrence-draft-sheet${inlineCard ? ' occurrence-draft-sheet--inline' : ''}`}>
-        {inlineCard ? <div className="occurrence-draft-sheet__identity"><WorkoutPlanCardHeader name={draft.plan.name}
-          programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
-          creatorName={owner.name} creatorAvatar={owner.avatar}
-          scheduledTiming={collapsed ? scheduledTiming : undefined}
-          collapsed={collapsed} onCollapsedChange={onCollapsedChange} /></div> : null}
-        {!collapsed ? <>
-        <header className="occurrence-draft-sheet__header">
-          {!inlineCard ? <Text variant="headline">Запланированная тренировка</Text> : null}
-          {planner ? <LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
+  const actionsMenu = planner ? <LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
             triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
             trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
             items={[{ id: 'program', label: 'Добавить в программу', icon: 'copy', disabled: busy,
@@ -392,11 +388,24 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               setOpenProgramAfterMenu(false);
               void flushEdits().then(() => { if (!mutationBlocked()) setProgramSheetOpen(true); })
                 .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось сохранить правки'));
-            }} /> : null}
+            }} /> : null;
+  const content = draft ? <section className={`occurrence-draft-sheet${inlineCard ? ' occurrence-draft-sheet--inline' : ''}`}>
+        {inlineCard ? <div className="occurrence-draft-sheet__identity"><WorkoutPlanCardHeader name={draft.plan.name}
+          programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
+          creatorName={owner.name} creatorAvatar={owner.avatar} athleteName={athlete.name} athleteAvatar={athlete.avatar}
+          status={collapsed && (draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed')
+            ? <Badge textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : undefined}
+          scheduledTiming={collapsed ? scheduledTiming : undefined}
+          collapsed={collapsed} onCollapsedChange={onCollapsedChange}>{!collapsed ? actionsMenu : null}</WorkoutPlanCardHeader></div> : null}
+        {!collapsed ? <>
+        {!inlineCard ? <header className="occurrence-draft-sheet__header">
+          {!inlineCard ? <Text variant="headline">Запланированная тренировка</Text> : null}
+          {actionsMenu}
           {!inlineCard ? <IconButton label="Закрыть" onClick={onClose}>✕</IconButton> : null}
-        </header>
+        </header> : null}
         <div className="occurrence-draft-sheet__body">
           {error || saveNotice ? <Text variant="footnote" role="alert">{error || saveNotice}</Text> : null}
+          <Text variant="body">Атлет: {athlete.name}</Text>
           <div className="occurrence-draft-sheet__format">
             <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
             <Icon name={draft.format === 'coached' ? 'users' : 'user'} style={{ width: 22, height: 22 }} />
@@ -406,6 +415,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />
             {cancelled ? <Badge textVariant="body">Отменена</Badge>
+              : draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed'
+                ? <Badge textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
               : <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
           </div>
           <div className="occurrence-draft-sheet__timing">
@@ -421,12 +432,13 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               </Button></span>
             </div>
           </div>
+          {actual ? <Text variant="footnote" tone="muted">Запланировано: {localDate(new Date(draft.startsAtUtc))}, {localTime(new Date(draft.startsAtUtc))} – {localTime(currentEnd(draft))}</Text> : null}
           <Text variant="body">План на тренировку</Text>
           <WorkoutPlanCard mode="planning" hideHeader={inlineCard} collapsed={planCollapsed}
             onCollapsedChange={inlineCard ? undefined : () => setPlanCollapsed(value => !value)}
             scheduledTiming={planCollapsed ? scheduledTiming : undefined} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
-            creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
+            creatorName={owner.name} creatorAvatar={owner.avatar} athleteName={athlete.name} athleteAvatar={athlete.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
             onMutationAttempt={planLocked ? onMutationAttempt : undefined}
             onEdit={() => {}} onComment={() => {}} onMove={() => {}}

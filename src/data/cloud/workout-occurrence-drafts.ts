@@ -1,4 +1,5 @@
 import { AdHocWorkoutRepository } from './adhoc-workouts';
+import type { AdHocSessionRow } from './adhoc-workout-types';
 import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { liveQuery } from 'dexie';
 import type { LocalProgramSyncRow, MezfitCloudDatabase } from './database';
@@ -38,13 +39,14 @@ export class WorkoutOccurrenceDraftRepository {
   private executionTables(): string[] {
     return this.db.tables.some(table => table.name === 'adHocSessions') ? ['adHocSessions'] : [];
   }
-  private async executionView(row: CloudWorkoutOccurrenceRow): Promise<CloudWorkoutOccurrenceRow> {
+  private async executionView(row: CloudWorkoutOccurrenceRow): Promise<CloudWorkoutOccurrenceRow & { executionTiming?: { startedAt: string; completedAt: string | null } }> {
     if (!row.workoutSessionId || !this.executionTables().length || row.entryKind === 'personal_event') return row;
     const execution = await new AdHocWorkoutRepository(this.db, this.actorUserId)
       .getOccurrenceSession(row.id, row.workoutSessionId);
     return execution?.occurrencePlan && execution.realmId === row.realmId
       ? { ...row, status: execution.status === 'active' ? 'in_progress' : 'completed', workoutSessionId: execution.id,
-        plan: structuredClone(execution.occurrencePlan) } : row;
+        plan: structuredClone(execution.occurrencePlan),
+        executionTiming: { startedAt: execution.startedAt, completedAt: execution.completedAt } } : row;
   }
   private assertPlanEditable(draft: LocalWorkoutOccurrenceDraft): void {
     if (draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled'))
@@ -137,13 +139,15 @@ export class WorkoutOccurrenceDraftRepository {
     return liveQuery(() => this.list()).subscribe({ next: onChange, error: onError });
   }
 
-  observeWorkspace(onChange: (value: { occurrences: CloudWorkoutOccurrenceRow[]; drafts: LocalWorkoutOccurrenceDraft[]; cancelled?: CloudWorkoutOccurrenceRow[] }) => void,
+  observeWorkspace(onChange: (value: { occurrences: CloudWorkoutOccurrenceRow[]; drafts: LocalWorkoutOccurrenceDraft[]; cancelled?: CloudWorkoutOccurrenceRow[]; sessions?: AdHocSessionRow[] }) => void,
     onError: (reason: unknown) => void) {
     const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
     return liveQuery(async () => {
       const rows = await Promise.all((await scheduling.listWorkspace(true)).map(row => this.executionView(row)));
       const active = rows.filter(row => !row.cancelledAt && row.status !== 'cancelled');
-      return { cancelled: rows.filter(row => row.entryKind !== 'personal_event' && Boolean(row.cancelledAt || row.status === 'cancelled')),
+      const sessions = this.executionTables().length
+        ? await new AdHocWorkoutRepository(this.db, this.actorUserId).listForCalendar() : [];
+      return { sessions, cancelled: rows.filter(row => row.entryKind !== 'personal_event' && Boolean(row.cancelledAt || row.status === 'cancelled')),
         occurrences: active.filter(row => row.entryKind === 'personal_event' || row.publicationStatus !== 'draft'),
         drafts: active.filter(row => row.entryKind !== 'personal_event' && row.publicationStatus === 'draft')
           .map(row => draftFromOccurrence(this.actorUserId, row)) };
