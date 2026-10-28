@@ -300,11 +300,13 @@ describe('upcoming planned workout projection', () => {
     const { from, until } = plannedWorkoutRange(reference);
     await occurrences(db).delete(row.id);
     const at = (id: string, time: number, patch: Partial<CloudWorkoutOccurrenceRow> = {}): CloudWorkoutOccurrenceRow =>
-      ({ ...structuredClone(row), id, startsAtUtc: new Date(time).toISOString(), ...patch });
+      ({ ...structuredClone(row), publicationStatus: 'published', id, startsAtUtc: new Date(time).toISOString(), ...patch });
     await occurrences(db).bulkAdd([
       at('last', until - 1), at('tie-b', from + 3600000), at('first', from), at('tie-a', from + 3600000),
       at('before', from - 1), at('upper', until), at('cancelled', from, { status: 'cancelled' }),
       at('cancelled-at', from, { cancelledAt: row.startsAtUtc }),
+      at('draft', from, { publicationStatus: 'draft' }),
+      at('edited-draft', from, { publicationStatus: 'draft', publishedPlan: row.plan }),
       at('started', from, { status: 'in_progress', workoutSessionId: 'active-session' }),
       at('completed', from, { status: 'completed', workoutSessionId: 'completed-session' }),
       at('foreign-personal', from, { realmId: 'tg:303', owner: 'tg:303', athleteUserId: 'tg:303' }),
@@ -322,6 +324,8 @@ describe('upcoming planned workout projection', () => {
   it('includes coached client workouts for their coach, hides them from other scopes, and never leaks a foreign program name', async () => {
     const { db, database, pair, row, planned, programId } = await fixture(true);
     const reference = new Date(row.startsAtUtc);
+    expect(await planned.list(reference)).toEqual([]);
+    await occurrences(db).update(row.id, { publicationStatus: 'published' });
     expect((await planned.list(reference)).map(item => item.id)).toEqual([row.id]);
     expect(await new PlannedWorkoutsRepository(database, 'tg:202').list(reference)).toEqual([]);
     expect(await new PlannedWorkoutsRepository(database, 'tg:303').list(reference)).toEqual([]);
@@ -331,19 +335,35 @@ describe('upcoming planned workout projection', () => {
     expect(await planned.list(reference)).toEqual([]);
   });
 
+  it('excludes an occurrence changed back to draft between the workspace and editor reads', async () => {
+    const { db, row, planned } = await fixture();
+    await occurrences(db).update(row.id, { publicationStatus: 'published' });
+    const read = planned.drafts.get.bind(planned.drafts);
+    vi.spyOn(planned.drafts, 'get').mockImplementationOnce(async id => {
+      await occurrences(db).update(row.id, { publicationStatus: 'draft' });
+      return read(id);
+    });
+    expect(await planned.list(new Date(row.startsAtUtc))).toEqual([]);
+    expect(await occurrences(db).get(row.id)).toMatchObject({ status: 'scheduled', publicationStatus: 'draft' });
+  });
+
   it('observes edits from another editor, publication, and removal when the occurrence starts', async () => {
     const { database, repo, row, planned } = await fixture();
     const next = vi.fn(), error = vi.fn();
     const subscription = planned.observe(new Date(row.startsAtUtc), next, error);
     const editor = new WorkoutOccurrenceDraftRepository(database, 'tg:101');
     try {
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toEqual([]));
+      await editor.save('draft:' + row.id);
       await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.[0]?.draft.plan.name).toBe(row.plan.name));
       await editor.replacePlan('draft:' + row.id, { ...row.plan, name: 'Edited in another sheet' });
-      await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.[0]?.draft.plan.name).toBe('Edited in another sheet'));
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toEqual([]));
       await editor.enqueueEdit('draft:' + row.id, draft => ({ ...draft, durationMinutes: 90 }));
-      await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.[0]?.draft.durationMinutes).toBe(90));
+      expect(await planned.list(new Date(row.startsAtUtc))).toEqual([]);
       await editor.save('draft:' + row.id);
-      await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.[0]?.draft.saved).toBe(true));
+      await vi.waitFor(() => expect(next.mock.lastCall?.[0]?.[0]?.draft).toMatchObject({
+        saved: true, durationMinutes: 90, plan: { name: 'Edited in another sheet' },
+      }));
       const { id } = await repo.createFromOccurrence(row.id);
       await vi.waitFor(() => expect(next.mock.lastCall?.[0]).toEqual([]));
       expect(await repo.getRow(id)).toMatchObject({ occurrencePlan: { name: 'Edited in another sheet' } });
