@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type UIEvent,
+  type TouchEvent,
   type ReactNode,
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
@@ -42,6 +43,8 @@ export interface ThreeColumnPickerColumn {
   format: (value: number) => string;
   formatAria?: (value: number) => string;
   freeMomentum?: boolean;
+  /** On a fast flick, let native scroll snapping settle on each Nth value. */
+  flickSnapStep?: number;
 }
 
 export interface ThreeColumnPickerSeparator {
@@ -311,6 +314,11 @@ function ThreeColumnPickerColumnWheel({
   onScroll,
   onScrollEnd,
   onSelect,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel,
+  flickSnap,
   setColumnRef,
 }: {
   part: ThreeColumnPickerPart;
@@ -319,26 +327,36 @@ function ThreeColumnPickerColumnWheel({
   onScroll: (part: ThreeColumnPickerPart, event: UIEvent<HTMLDivElement>) => void;
   onScrollEnd: (part: ThreeColumnPickerPart) => void;
   onSelect: (part: ThreeColumnPickerPart, index: number) => void;
+  onTouchStart: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
+  onTouchMove: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
+  onTouchEnd: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
+  onTouchCancel: (part: ThreeColumnPickerPart) => void;
+  flickSnap: boolean;
   setColumnRef: (part: ThreeColumnPickerPart, element: HTMLDivElement | null) => void;
 }) {
   return (
     <div
       ref={(element) => setColumnRef(part, element)}
-      className={`ui-time-picker__column${column.freeMomentum ? ' ui-time-picker__column--free-momentum' : ''}`}
+      className={`ui-time-picker__column${column.freeMomentum ? ' ui-time-picker__column--free-momentum' : ''}${flickSnap ? ' ui-time-picker__column--flick-snap' : ''}`}
       role="listbox"
       aria-label={column.ariaLabel}
       onScroll={(event) => onScroll(part, event)}
       onScrollEnd={() => onScrollEnd(part)}
+      onTouchStart={(event) => onTouchStart(part, event)}
+      onTouchMove={(event) => onTouchMove(part, event)}
+      onTouchEnd={(event) => onTouchEnd(part, event)}
+      onTouchCancel={() => onTouchCancel(part)}
     >
       {column.values.map((value, index) => {
         const isSelected = value === selected;
         const label = column.format(value);
+        const flickStop = Boolean(column.flickSnapStep && index % column.flickSnapStep === 0);
 
         return (
           <button
             key={value}
             type="button"
-            className={`ui-time-picker__option ui-text--body${isSelected ? ' ui-time-picker__option--selected' : ''}`}
+            className={`ui-time-picker__option ui-text--body${isSelected ? ' ui-time-picker__option--selected' : ''}${flickStop ? ' ui-time-picker__option--flick-stop' : ''}`}
             role="option"
             aria-label={column.formatAria?.(value) ?? label}
             aria-selected={isSelected}
@@ -385,6 +403,13 @@ export function ThreeColumnPicker({
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const reconcileFrameRef = useRef<number | null>(null);
+  const flickStartRef = useRef<Partial<Record<ThreeColumnPickerPart, { y: number; time: number }>>>({});
+  const flickSnapRef = useRef<Record<ThreeColumnPickerPart, boolean>>({
+    first: false, second: false, third: false,
+  });
+  const [flickSnap, setFlickSnap] = useState<Record<ThreeColumnPickerPart, boolean>>({
+    first: false, second: false, third: false,
+  });
   // Parent acknowledgements can arrive after further native scroll frames.
   const locallyEmittedRef = useRef<Set<string>>(new Set());
   const scrollingPartsRef = useRef<Set<ThreeColumnPickerPart>>(new Set());
@@ -460,6 +485,9 @@ export function ThreeColumnPicker({
     const view = target?.ownerDocument.defaultView ?? window;
 
     if (!opened) {
+      flickStartRef.current = {};
+      flickSnapRef.current = { first: false, second: false, third: false };
+      setFlickSnap(flickSnapRef.current);
       wasOpenedRef.current = false;
       locallyEmittedRef.current.clear();
       scrollingPartsRef.current.clear();
@@ -608,9 +636,55 @@ export function ThreeColumnPicker({
     });
   };
 
+  const setFlickSnapMode = (part: ThreeColumnPickerPart, enabled: boolean) => {
+    if (flickSnapRef.current[part] === enabled) return;
+    flickSnapRef.current = { ...flickSnapRef.current, [part]: enabled };
+    setFlickSnap(flickSnapRef.current);
+  };
+
+  const isFastSwipe = (part: ThreeColumnPickerPart, y: number, time: number) => {
+    const start = flickStartRef.current[part];
+    if (!start) return false;
+    const distance = Math.abs(y - start.y);
+    const duration = Math.max(1, time - start.time);
+    return distance >= 36 && duration <= 500 && distance / duration >= 0.35;
+  };
+
+  const handleTouchStart = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    flickStartRef.current[part] = { y: touch.clientY, time: event.timeStamp };
+    setFlickSnapMode(part, false);
+  };
+
+  const handleTouchMove = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
+    if (!columns[part].flickSnapStep) return;
+    const touch = event.touches[0];
+    // Use the same fast-flick threshold as TimePicker and let the WebView
+    // choose a coarse native snap target rather than adjusting scrollTop.
+    if (touch && isFastSwipe(part, touch.clientY, event.timeStamp)) {
+      setFlickSnapMode(part, true);
+    }
+  };
+
+  const handleTouchEnd = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.changedTouches[0];
+    setFlickSnapMode(part, Boolean(columns[part].flickSnapStep && touch
+      && isFastSwipe(part, touch.clientY, event.timeStamp)));
+    delete flickStartRef.current[part];
+  };
+
+  const handleTouchCancel = (part: ThreeColumnPickerPart) => {
+    delete flickStartRef.current[part];
+    // WebView can dispatch touchcancel as it takes over the momentum gesture.
+    // Preserve the already-selected native snap targets until the next touch.
+  };
+
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
     if (!openedRef.current) return;
 
+    delete flickStartRef.current[part];
+    setFlickSnapMode(part, false);
     signalCrossedValues(part, index, false);
     commitIndex(part, index);
     const nextTop = index * ROW_HEIGHT;
@@ -658,6 +732,11 @@ export function ThreeColumnPicker({
                 onScroll={handleScroll}
                 onScrollEnd={handleScrollEnd}
                 onSelect={handleSelect}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+                flickSnap={flickSnap[part]}
                 setColumnRef={setColumnRef}
               />
             ))}
