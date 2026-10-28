@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button as KonstaButton, List } from 'konsta/react';
+import { Button as KonstaButton, List, Toast } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { BadgeChoice, Divider, DistancePicker, DurationPicker, IconButton, LiquidPopover,
@@ -75,6 +75,11 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   const draftRef = useRef(draft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  useEffect(() => {
+    if (!error) return;
+    const timer = window.setTimeout(() => setError(''), 4000);
+    return () => window.clearTimeout(timer);
+  }, [error]);
   const [picker, setPicker] = useState<EditableMetric | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [bandOpen, setBandOpen] = useState(false);
@@ -96,6 +101,10 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     const value = suggested(key);
     return valid(key, value) ? value : 0;
   };
+  const unsupported = keys.some(key => !valid(key, suggested(key)));
+  useEffect(() => {
+    if (unsupported) setError('Существующее значение не поддерживается пикером');
+  }, [unsupported]);
   const selectedBand = draft.bands[0] ?? null;
   const inputLocked = saving || readOnly;
   const change = (update: (value: typeof draft) => typeof draft) => {
@@ -220,8 +229,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               onClick={() => {
                 if (!inputLocked && valid(key, suggested(key))) setPicker(key);
               }} />
-            {!valid(key, suggested(key))
-              ? <Text variant="footnote" role="alert">Существующее значение не поддерживается пикером</Text> : null}
           </div>)}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
             {props.data.plan ? <Text variant="caption" tone="muted">
@@ -251,7 +258,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
-                <MezfitSlider size="small" start={0} end={10} value={draft.rpe ?? 0}
+                <MezfitSlider fullWidth size="small" start={0} end={10} value={draft.rpe ?? 0}
                   ariaLabel="RPE" onValueChange={value => {
                     if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value }));
                   }} />
@@ -276,7 +283,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             colors={{ textIos: 'text-red-500', textMaterial: 'text-red-500' }} disabled={saving} onClick={() => { if (!saveInFlightRef.current) setDeleteConfirm(true); }}>
             <Text variant="body" style={{ color: 'inherit' }}>Удалить подход</Text>
           </KonstaButton> : null}
-          {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
         </div>
       </div>
     </MezfitBottomSheet>, host)}
@@ -286,6 +292,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, host) : null}
+    {error ? createPortal(<Toast opened position="bottom" role="alert"><Text variant="body">{error}</Text></Toast>, host) : null}
     {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Сохранить изменения?" aria-modal="true"
       title={<Text variant="headline">Сохранить изменения?</Text>}
       buttons={<>
