@@ -144,10 +144,11 @@ describe('WorkoutSessionScreen mutation reconciliation', () => {
     fireEvent.click(screen.getByText('Exercise 1').closest('button')!);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Кластер' }));
-    // FACT is committed only by the set editor's Save, not by the two
-    // unrelated Save actions visible in the exercise/workout layout.
+    // FACT is committed only by Yes in the close confirmation, not by
+    // unrelated Save actions in the exercise/workout layout.
     const factSheet = screen.getByRole('dialog', { name: 'Подход 1' });
-    fireEvent.click(within(factSheet).getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(within(factSheet).getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     expect(saveSetMock).not.toHaveBeenCalled();
 
     await act(async () => resolveReorder({ session: reorderedSession }));
