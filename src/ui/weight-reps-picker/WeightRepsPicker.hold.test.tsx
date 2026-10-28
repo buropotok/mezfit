@@ -77,7 +77,7 @@ describe('WeightRepsPicker hold gesture reliability', () => {
   it('tolerates small finger drift before hold activation and then selects exact units', () => {
     const { onChange, wheel } = mountControlled();
     touch(wheel, 'touchstart', 200, 100);
-    touch(wheel, 'touchmove', 191, 160); // 9px: drift, not an intentional swipe.
+    touch(wheel, 'touchmove', 184, 160); // 16px: finger drift, not an intentional swipe.
     expect(onChange).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(240));
     touch(wheel, 'touchmove', 143, 410); // 57px from start, one 48px row.
