@@ -5,6 +5,7 @@ import {
   useState,
   type UIEvent,
   type TouchEvent,
+  type WheelEvent,
   type ReactNode,
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
@@ -333,6 +334,7 @@ function ThreeColumnPickerColumnWheel({
   onTouchMove,
   onTouchEnd,
   onTouchCancel,
+  onWheel,
   setColumnRef,
 }: {
   part: ThreeColumnPickerPart;
@@ -345,6 +347,7 @@ function ThreeColumnPickerColumnWheel({
   onTouchMove: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
   onTouchCancel: (part: ThreeColumnPickerPart) => void;
+  onWheel: (part: ThreeColumnPickerPart, event: WheelEvent<HTMLDivElement>) => void;
   setColumnRef: (part: ThreeColumnPickerPart, element: HTMLDivElement | null) => void;
 }) {
   return (
@@ -359,6 +362,7 @@ function ThreeColumnPickerColumnWheel({
       onTouchMove={(event) => onTouchMove(part, event)}
       onTouchEnd={(event) => onTouchEnd(part, event)}
       onTouchCancel={() => onTouchCancel(part)}
+      onWheel={(event) => onWheel(part, event)}
     >
       {column.values.map((value, index) => {
         const isSelected = value === selected;
@@ -518,6 +522,7 @@ export function ThreeColumnPicker({
     locallyEmittedRef.current.clear();
 
     cancelScheduledFrames(view);
+    gestureRef.current = {};
     draftRef.current = valueParts;
     feedbackValueRef.current = valueParts;
     setDraft(valueParts);
@@ -590,7 +595,9 @@ export function ThreeColumnPicker({
     if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     reconcileFrameRef.current = view.requestAnimationFrame(() => {
       reconcileFrameRef.current = null;
-      if (!openedRef.current || scrollingPartsRef.current.size > 0) return;
+      if (!openedRef.current || scrollingPartsRef.current.size > 0
+        || PARTS.some((candidate) => gestureRef.current[candidate]
+          || flingFrameRef.current[candidate] !== null)) return;
       const canonical = controlledRef.current;
       if (!partsEqual(draftRef.current, canonical)) {
         draftRef.current = canonical;
@@ -680,7 +687,9 @@ export function ThreeColumnPicker({
     if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     reconcileFrameRef.current = view.requestAnimationFrame(() => {
       reconcileFrameRef.current = null;
-      if (!openedRef.current || gestureRef.current[part] || flingFrameRef.current[part] !== null) return;
+      if (!openedRef.current || scrollingPartsRef.current.size > 0
+        || PARTS.some((candidate) => gestureRef.current[candidate]
+          || flingFrameRef.current[candidate] !== null)) return;
       const canonical = controlledRef.current;
       if (!partsEqual(draftRef.current, canonical)) {
         draftRef.current = canonical;
@@ -820,6 +829,17 @@ export function ThreeColumnPicker({
     finishGesture(part);
   };
 
+  const handleWheel = (part: ThreeColumnPickerPart, event: WheelEvent<HTMLDivElement>) => {
+    if (!openedRef.current || !columns[part].gestureStep || event.deltaY === 0) return;
+    // A mouse wheel/trackpad isn't a finger swipe: keep desktop fine control.
+    event.preventDefault();
+    const view = event.currentTarget.ownerDocument.defaultView ?? window;
+    cancelFling(part, view);
+    const current = valueIndex(columns[part], draftRef.current[part]);
+    setGestureIndex(part, current + Math.sign(event.deltaY), 1);
+    finishGesture(part);
+  };
+
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
     if (!openedRef.current) return;
 
@@ -893,6 +913,7 @@ export function ThreeColumnPicker({
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
+                onWheel={handleWheel}
                 setColumnRef={setColumnRef}
               />
             ))}
