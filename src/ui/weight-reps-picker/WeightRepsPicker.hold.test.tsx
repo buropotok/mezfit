@@ -112,6 +112,20 @@ describe('WeightRepsPicker hold gesture reliability', () => {
     expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 0.5)).toBe(true);
   });
 
+  it('continues 1kg at a time across 299 -> 300 after the long hold', () => {
+    const { onChange, wheel } = mountControlled(299.75);
+    touch(wheel, 'touchstart', 200, 100);
+    act(() => vi.advanceTimersByTime(240));
+    touch(wheel, 'touchmove', 152, 370);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 300.75 });
+    touch(wheel, 'touchmove', 104, 410);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 301.75 });
+    touch(wheel, 'touchend', 104, 440);
+    flushAnimation();
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
+  });
+
   it('suppresses the long-press context menu on kilogram rows without disabling exact taps', () => {
     const { onChange, wheel } = mountControlled();
     const option = within(wheel).getByRole('option', { name: '280' });
