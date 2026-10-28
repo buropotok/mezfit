@@ -62,6 +62,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   Reflect.deleteProperty(HTMLElement.prototype, 'animate');
+  window.localStorage.removeItem('mezfit.glassSettings');
   document.body.innerHTML = '';
 });
 
@@ -93,8 +94,9 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(1);
     expect(screen.queryByRole('button', { name: 'Изменить повторения' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toHaveProperty('disabled', true);
-    expect(within(sheet).getByRole('button', { name: 'Отменить' })).toBeTruthy();
-    expect(within(sheet).getByRole('button', { name: 'Сохранить' })).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Отменить' }).className).toContain('k-button');
+    expect(within(sheet).getByRole('button', { name: 'Сохранить' }).className)
+      .toContain('ui-button--color-blue');
   });
 
   it('lays out exactly ten built-in FABs in a 3 by 4 numeric grid with zero centered', () => {
@@ -109,6 +111,16 @@ describe('WeightRepsPicker numeric lens editor', () => {
     );
     expect(fabs.every(fab => fab.className.includes('ui-fab'))).toBe(true);
     expect(fabs[9].parentElement?.className).toContain('ui-weight-reps-picker__number-cell--zero');
+  });
+
+  it('renders the number FABs with the currently selected app glass preset', () => {
+    window.localStorage.setItem('mezfit.glassSettings', JSON.stringify({
+      preset: 'clear', optics: false, blur: 2,
+    }));
+    renderPicker();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    const one = screen.getByRole('button', { name: 'Цифра 1' });
+    expect(one.style.getPropertyValue('--ui-glass-surface-blur')).toBe('2px');
   });
 
   it('reuses the FAB built-in 1.5x grow-and-return press animation', () => {
