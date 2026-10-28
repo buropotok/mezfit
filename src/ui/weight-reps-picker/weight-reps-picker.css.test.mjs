@@ -26,4 +26,13 @@ describe('WeightRepsPicker CSS contract', () => {
     expect(weightRepsPickerCss).toContain('@media (prefers-reduced-motion: reduce)');
     expect(weightRepsPickerCss).toContain('ui-weight-reps-input-blink');
   });
+
+  it('shows controlled lens values and fits the sheet beneath its measured anchor', () => {
+    expect(weightRepsPickerCss).toContain('.ui-weight-reps-picker__lens-value');
+    expect(weightRepsPickerCss).toContain('.ui-mezfit-bottom-sheet.ui-weight-reps-picker__number-sheet');
+    expect(weightRepsPickerCss).toContain('height: auto');
+    expect(weightRepsPickerCss).toContain('--ui-weight-reps-number-sheet-max-height');
+    expect(weightRepsPickerCss).not.toContain('min-height: 100%');
+    expect(weightRepsPickerCss).not.toContain('.ui-weight-reps-picker__number-readout');
+  });
 });
