@@ -28,6 +28,7 @@ const COLUMNS: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>> 
     values: KILOGRAM_VALUES,
     format: String,
     freeMomentum: true,
+    flickSnapStep: 10,
   },
   third: {
     ariaLabel: 'Доли килограмма',
