@@ -1,4 +1,4 @@
-name: One-time visual review of exercise GIF frames
+name: One-time apply GIF-verified exercise metadata
 
 on:
   push:
@@ -10,109 +10,135 @@ permissions:
   contents: write
 
 jobs:
-  contact-sheets:
+  prepare-reviewed-commit:
     if: github.repository == 'buropotok/mezfit'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install image reader
-        run: python -m pip install --disable-pip-version-check pillow
-      - name: Download original GIFs and emit sampled animation frames
+      - name: Apply exact reviewed fields and verify original source integrity
         shell: bash
         run: |
           python - <<'PY'
-          import base64
-          import io
           import json
-          import math
-          import urllib.request
-          from concurrent.futures import ThreadPoolExecutor
+          from collections import Counter
           from pathlib import Path
-          from PIL import Image, ImageDraw, ImageFont
 
-          items = [
-              "cardio/wheel-run", "cardio/walk-wave-machine",
-              "cardio/vibration-plate", "shoulders/backhand-raise",
-              "shoulders/lever-reverse-shoulder-press", "leg/hawaiian-squat",
-              "hip/squat-mobility-complex", "cardio/hook-kick",
-              "abs/ab-roller-crunch", "full-body/plate-push",
-              "back/rope-climb", "abs/teaser-pilates",
-              "cardio/stationary-bike-run",
+          root = Path(".")
+          changes = {
+              "Wheel Run": ("Бег на месте с высоким подниманием коленей", "time"),
+              "Vibration Plate": ("Стойка на виброплатформе", "time"),
+              "Backhand Raise": ("Подъём прямых рук назад стоя", "weight_reps"),
+              "Hawaiian Squat": ("Гавайское приседание на одной ноге", "weight_reps"),
+              "Squat mobility Complex": ("Переход из глубокого приседа в наклон вперёд", "time_reps"),
+              "Ab Roller Crunch": ("Скручивания с опорной рамой Ab Roller", "weight_reps"),
+          }
+          paths = [
+              "cardio/wheel-run.json", "cardio/vibration-plate.json",
+              "shoulders/backhand-raise.json", "leg/hawaiian-squat.json",
+              "hip/squat-mobility-complex.json", "leg/squat-mobility-complex.json",
+              "abs/ab-roller-crunch.json",
           ]
-          def retrieve(path):
-              data = json.loads(Path("assets/work/" + path + ".json").read_text())
-              url = data["gif_url"]
-              if not url.startswith("https://fitnessprogramer.com/wp-content/uploads/"):
-                  raise ValueError("Unexpected media domain " + url)
-              headers = {
-                  "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36",
-                  "Referer": "https://fitnessprogramer.com/exercise/" + path.split("/")[-1] + "/",
-                  "Accept": "image/avif,image/webp,image/apng,image/gif,image/*;q=0.8,*/*;q=0.5",
+          reviewed = {}
+          modified = []
+          for rel in paths:
+              work = root / "assets/work" / rel
+              original = json.loads((root / "assets/exercises" / rel).read_text(encoding="utf-8"))
+              current = json.loads(work.read_text(encoding="utf-8"))
+              assert set(current) == set(original) | {"name_ru", "tracking_type"}, rel
+              assert all(current[k] == v and type(current[k]) is type(v) for k,v in original.items()), rel
+              en = original["name"]
+              ru, tracking = changes[en]
+              reviewed[rel] = {
+                  "previous": {"name_ru": current["name_ru"], "tracking_type": current["tracking_type"]},
+                  "corrected": {"name_ru": ru, "tracking_type": tracking},
               }
-              with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=20) as res:
-                  payload = res.read(18_000_000)
-              if not payload.startswith((b"GIF87a", b"GIF89a")):
-                  raise ValueError("Response not GIF; bytes " + repr(payload[:80]))
-              pic = Image.open(io.BytesIO(payload))
-              count = pic.n_frames
-              times = [max(10, pic.info.get("duration", 100))]
-              # Sample uniformly across all animation frames including the last.
-              indices = sorted(set(round(k*(count-1)/7) for k in range(8)))
-              durations = []
-              for i in range(count):
-                  pic.seek(i)
-                  durations.append(pic.info.get("duration", 100) or 100)
-              frames = []
-              for index in indices:
-                  pic.seek(index)
-                  frame = pic.convert("RGB").copy()
-                  frame.thumbnail((223, 212))
-                  frames.append((index, sum(durations[:index])/1000, frame))
-              return (path, frames, count, sum(durations)/1000, len(payload))
-          def load(path):
-              try:
-                  return retrieve(path)
-              except Exception as exc:
-                  print("FETCH_ERROR " + path + ": " + str(exc), flush=True)
-                  return (path, [], 0, 0, 0)
-          with ThreadPoolExecutor(max_workers=6) as pool:
-              results = list(pool.map(load, items))
-          for item in results:
-              print("GIF_INFO", item[0], "frames", item[2], "seconds", item[3], "bytes", item[4], flush=True)
-          font = ImageFont.load_default()
-          for k in range(0, len(results), 3):
-              batch = results[k:k+3]
-              out = Image.new("RGB", (8*236, 3*252), "white")
-              draw = ImageDraw.Draw(out)
-              for ri, (path, frames, count, total, byte_count) in enumerate(batch):
-                  draw.text((8, ri*252+4), f"{path} | GIF frames={count} | total={total:.1f}s | bytes={byte_count}", fill="black", font=font)
-                  if not frames:
-                      draw.text((16, ri*252+65), "GIF COULD NOT BE DOWNLOADED", fill="red", font=font)
-                  for ci, (index, seconds, frame) in enumerate(frames):
-                      x = ci*236 + (236-frame.width)//2
-                      y = ri*252+30+(212-frame.height)//2
-                      out.paste(frame, (x, y))
-                      draw.text((ci*236+12, ri*252+230), f"frame {index+1}/{count} @ {seconds:.2f}s", fill="black", font=font)
-              buf = io.BytesIO()
-              out.save(buf, "JPEG", quality=80, optimize=True)
-              payload = base64.b64encode(buf.getvalue()).decode("ascii")
-              group = k//3
-              print("SHEET_START", group, len(payload), flush=True)
-              for j in range(0, len(payload), 2048):
-                  print(f"SHEET_{group}_CHUNK_{j//2048:04d}:" + payload[j:j+2048], flush=True)
-              Path("tools/exercise-work/gif-frame-audit").mkdir(parents=True, exist_ok=True)
-              Path(f"tools/exercise-work/gif-frame-audit/sheet-{group}.b64").write_text(payload)
-              print("SHEET_END", group, flush=True)
+              current["name_ru"], current["tracking_type"] = ru, tracking
+              assert all(current[k] == v for k,v in original.items()), rel
+              work.write_text(json.dumps(current, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+              modified.append(rel)
+          editorial = {
+              "curated-cardio.json": ["Wheel Run", "Vibration Plate"],
+              "curated-shoulders.json": ["Backhand Raise"],
+              "curated-leg.json": ["Hawaiian Squat"],
+              "curated-hip.json": ["Squat mobility Complex"],
+              "curated-abs.json": ["Ab Roller Crunch"],
+          }
+          for filename, keys in editorial.items():
+              path = root / "tools/exercise-work" / filename
+              mapping = json.loads(path.read_text(encoding="utf-8"))
+              for key in keys:
+                  ru, tracking = changes[key]
+                  mapping[key] = {"name_ru": ru, "tracking_type": tracking}
+              path.write_text(json.dumps(mapping, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+          observations = [
+              ("cardio/wheel-run.json", "36 кадров, 7,5 с: бег на месте с циклическим высоким подъёмом коленей; колеса и перемещения по дистанции нет.", "corrected"),
+              ("cardio/walk-wave-machine.json", "12 кадров: ходьба на волновом кардиотренажёре; показания консоли в GIF не читаются.", "confirmed_metric_uncertain"),
+              ("cardio/vibration-plate.json", "12 кадров: статическое положение стоя на виброплатформе с опорой на поручни.", "corrected"),
+              ("shoulders/backhand-raise.json", "12 кадров: подъём обеих прямых рук назад, корпус слегка наклонён; отягощений нет.", "corrected"),
+              ("shoulders/lever-reverse-shoulder-press.json", "12 кадров: жим вверх сидя в рычажном тренажёре; точный хват на анимации различим недостаточно.", "confirmed"),
+              ("leg/hawaiian-squat.json", "12 кадров: приседание на одной опорной ноге, свободная нога согнута и уложена поверх опорной.", "corrected"),
+              ("hip/squat-mobility-complex.json", "12 кадров: повторяемый переход из глубокого приседа с захватом стоп в наклон на выпрямленных ногах.", "corrected"),
+              ("cardio/hook-kick.json", "18 кадров: дуговой удар ногой по подвесному мешку с возвратом в боевую стойку.", "confirmed"),
+              ("abs/ab-roller-crunch.json", "12 кадров: скручивания лёжа с опорной дугообразной рамой Ab Roller, без выкатывания ролика.", "corrected"),
+              ("full-body/plate-push.json", "16 кадров: продвижение весового диска по полу руками в низком положении тела; текущая схема не даёт учесть одновременно массу и дистанцию.", "confirmed_schema_limitation"),
+              ("back/rope-climb.json", "12 кадров: подъём по канату руками без опоры на ноги; один подъём можно учитывать как повторение.", "confirmed"),
+              ("abs/teaser-pilates.json", "12 кадров: повторяемый подъём и опускание в V-положение, не только статическое удержание.", "confirmed"),
+              ("cardio/stationary-bike-run.json", "12 кадров: педалирование на вертикальном велотренажёре; конкретные числовые показатели дисплея не читаются.", "confirmed_metric_uncertain"),
+          ]
+          cases = []
+          for rel, observation, state in observations:
+              path = root / "assets/work" / rel
+              work = json.loads(path.read_text(encoding="utf-8"))
+              item = {"path": rel, "gif_url": work["gif_url"], "visual_evidence": observation, "status": state, "name_ru": work["name_ru"], "tracking_type": work["tracking_type"]}
+              if rel in reviewed:
+                  item["before"] = reviewed[rel]["previous"]
+              cases.append(item)
+          all_work = sorted((root / "assets/work").glob("*/*.json"))
+          all_src = sorted((root / "assets/exercises").glob("*/*.json"))
+          all_src = [p for p in all_src if p.name != "_manifest.json"]
+          assert len(all_work) == len(all_src) == 1673
+          assert {p.relative_to(root / "assets/work") for p in all_work} == {p.relative_to(root / "assets/exercises") for p in all_src}
+          types = Counter()
+          for work_path in all_work:
+              rel = work_path.relative_to(root / "assets/work")
+              w = json.loads(work_path.read_text(encoding="utf-8"))
+              o = json.loads((root / "assets/exercises" / rel).read_text(encoding="utf-8"))
+              assert set(w) == set(o) | {"name_ru", "tracking_type"}, rel
+              assert all(w[k] == v and type(w[k]) is type(v) for k,v in o.items()), rel
+              types[w["tracking_type"]] += 1
+          report = {
+              "source": "Original fitnessprogramer.com GIF URLs from assets/exercises",
+              "method": "Downloaded original animated GIFs; visually inspected 8 uniformly sampled frames per GIF across each full cycle",
+              "reviewed_cases": len(cases),
+              "corrected_unique_exercises": len(changes),
+              "corrected_work_json_files": len(modified),
+              "tracking_changes_by_distinct_exercise": ["Wheel Run", "Squat mobility Complex"],
+              "source_json_files_modified": 0,
+              "all_original_fields_identical": True,
+              "catalogue_count": len(all_work),
+              "tracking_type_counts_after_review": dict(sorted(types.items())),
+              "limitations": [
+                  "GIF cannot establish which metrics an electronic cardio machine reports.",
+                  "Available tracking types cannot record plate load and pushed distance together.",
+                  "The prior work-generation-report.json describes the initial generation before this GIF review."
+              ],
+              "cases": cases
+          }
+          out = root / "tools/exercise-work/gif-review-report.json"
+          out.write_text(json.dumps(report, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+          print("REVIEWED",len(cases),"EXERCISES_CHANGED",len(changes),"WORK_FILES_CHANGED",len(modified))
+          print("TRACKING_COUNTS",dict(sorted(types.items())))
           PY
-      - name: Publish frame strips to isolated audit branch
+          git diff --check
+          git diff --exit-code -- assets/exercises/
+      - name: Publish exactly one scoped correction commit to review branch
+        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git checkout -b gif-frames-review-20261028
-          git add tools/exercise-work/gif-frame-audit/
-          git commit -m 'temp: sampled frames for disputed exercise GIFs'
-          git push origin HEAD:refs/heads/gif-frames-review-20261028
+          git checkout -b gif-reviewed-corrections-20261028
+          git add assets/work/ tools/exercise-work/curated-*.json tools/exercise-work/gif-review-report.json
+          git rm .github/workflows/one-time-exercise-gif-frames.yml
+          git commit -m 'data: correct exercise metadata after GIF frame review'
+          git push origin HEAD:refs/heads/gif-reviewed-corrections-20261028
