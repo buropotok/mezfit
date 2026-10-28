@@ -1,3 +1,10 @@
+/* Public material control for press feedback; only the outer halo fades. */
+@property --ui-glass-surface-halo-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
 .ui-glass-surface--standalone {
   position: relative;
 }
@@ -29,8 +36,8 @@
 
 .ui-glass-surface--halo-lifted {
   --ui-glass-surface-halo-shadow:
-    0 0 18px rgb(255 255 255 / 0.16),
-    0 0 36px rgb(170 205 255 / 0.10);
+    0 0 18px rgb(255 255 255 / calc(0.16 * var(--ui-glass-surface-halo-opacity, 1))),
+    0 0 36px rgb(170 205 255 / calc(0.10 * var(--ui-glass-surface-halo-opacity, 1)));
 }
 
 .ui-glass-surface[data-ui-glass-map-ready="true"] {
