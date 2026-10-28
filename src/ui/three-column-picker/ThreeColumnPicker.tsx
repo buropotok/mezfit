@@ -1,6 +1,8 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type UIEvent,
@@ -29,25 +31,18 @@ const IOS_LENS_MAGNIFICATION = 1.55;
 // Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
 // of native scroll events instead of changing scrollTop during momentum.
 const SCROLL_END_FALLBACK_MS = 200;
-// A deliberate hold unlocks one-unit control; swipes advance by configured strides.
-// A small finger drift during the hold must not permanently select coarse
-// mode. The threshold still recognizes a deliberate swipe before the hold.
+// Native gesture wheel: each coarse row represents N original values.
+// A stationary hold switches that same native scroller to one-value rows.
 const HOLD_TO_FINE_MS = 240;
 const SWIPE_THRESHOLD_PX = 20;
-// A first reported movement this large is swipe intent even if WebView
-// delayed its event beyond the hold window. Preserve slow swipe-by-tens.
 const UNAMBIGUOUS_SWIPE_PX = 64;
-const FLING_MAX_DECADES = 18;
 
-type StepGesture = {
+type NativeGesture = {
   startY: number;
   startTime: number;
-  startIndex: number;
-  lastY: number;
-  lastTime: number;
-  recentSpeed: number;
-  mode: 'pending' | 'fine' | 'coarse';
+  moved: boolean;
   holdTimer: number | null;
+  mode: 'pending' | 'coarse' | 'fine';
 };
 
 export type ThreeColumnPickerPart = 'first' | 'second' | 'third';
@@ -64,7 +59,7 @@ export interface ThreeColumnPickerColumn {
   format: (value: number) => string;
   formatAria?: (value: number) => string;
   freeMomentum?: boolean;
-  /** Opt-in decade swipes with velocity-scaled inertia and hold-to-scrub precision. */
+  /** Native kinetic swipe: each row advances by N; a stationary hold selects one-unit rows. */
   gestureStep?: number;
 }
 
@@ -328,6 +323,23 @@ function PickerLens({
   );
 }
 
+function nativeGestureColumn(
+  column: ThreeColumnPickerColumn,
+  selected: number,
+  fine: boolean,
+): ThreeColumnPickerColumn {
+  const step = column.gestureStep;
+  if (!step || fine) return column;
+  const selectedIndex = valueIndex(column, selected);
+  const residue = selectedIndex % step;
+  // Like TimePicker, each rendered row is a native scroll snap target.
+  // The coarse row occupies 48px but represents a 10kg semantic step.
+  return {
+    ...column,
+    values: column.values.filter((_value, index) => index % step === residue),
+  };
+}
+
 function ThreeColumnPickerColumnWheel({
   part,
   column,
@@ -429,10 +441,7 @@ export function ThreeColumnPicker({
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const reconcileFrameRef = useRef<number | null>(null);
-  const gestureRef = useRef<Partial<Record<ThreeColumnPickerPart, StepGesture>>>({});
-  const flingFrameRef = useRef<Record<ThreeColumnPickerPart, number | null>>({
-    first: null, second: null, third: null,
-  });
+  const gestureRef = useRef<Partial<Record<ThreeColumnPickerPart, NativeGesture>>>({});
   // Parent acknowledgements can arrive after further native scroll frames.
   const locallyEmittedRef = useRef<Set<string>>(new Set());
   const scrollingPartsRef = useRef<Set<ThreeColumnPickerPart>>(new Set());
@@ -442,9 +451,24 @@ export function ThreeColumnPicker({
     third: null,
   });
   const feedbackValueRef = useRef<ThreeColumnPickerParts>(valueParts);
-  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, valueParts));
-
   const [draft, setDraft] = useState<ThreeColumnPickerParts>(valueParts);
+  const [fineParts, setFineParts] = useState<Record<ThreeColumnPickerPart, boolean>>({
+    first: false, second: false, third: false,
+  });
+  const finePartsRef = useRef(fineParts);
+  // The selected value's residue stays fixed during a coarse swipe and
+  // changes only after a fine adjustment or external controlled update.
+  const residues = PARTS.map((part) => columns[part].gestureStep
+    ? valueIndex(columns[part], draft[part]) % columns[part].gestureStep!
+    : 0) as [number, number, number];
+  const displayedColumns = useMemo<Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>>(() => ({
+    first: nativeGestureColumn(columns.first, draft.first, fineParts.first),
+    second: nativeGestureColumn(columns.second, draft.second, fineParts.second),
+    third: nativeGestureColumn(columns.third, draft.third, fineParts.third),
+  }), [columns, fineParts.first, fineParts.second, fineParts.third,
+    residues[0], residues[1], residues[2]]);
+  const previousDisplayedColumnsRef = useRef(displayedColumns);
+  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(displayedColumns, valueParts));
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
 
@@ -456,11 +480,6 @@ export function ThreeColumnPicker({
     PARTS.forEach((part) => {
       const gesture = gestureRef.current[part];
       if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
-      const momentum = flingFrameRef.current[part];
-      if (momentum !== null) {
-        view.cancelAnimationFrame(momentum);
-        flingFrameRef.current[part] = null;
-      }
       const fallbackTimer = scrollEndFallbackRefs.current[part];
       if (fallbackTimer !== null) {
         view.clearTimeout(fallbackTimer);
@@ -481,7 +500,8 @@ export function ThreeColumnPicker({
 
   const syncColumns = (parts: ThreeColumnPickerParts) => {
     PARTS.forEach((part) => {
-      scrollColumn(columnRefs.current[part], valueIndex(columns[part], parts[part]));
+      const index = displayedColumns[part].values.indexOf(parts[part]);
+      if (index >= 0) scrollColumn(columnRefs.current[part], index);
     });
   };
 
