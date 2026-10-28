@@ -376,8 +376,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
   const start = new Date(actual?.startsAtUtc ?? draft?.startsAtUtc ?? now);
   const end = actual ? new Date(actual.endsAtUtc) : draft ? currentEnd(draft) : new Date(now);
+  const endLabel = draft?.executionTiming && !draft.executionTiming.completedAt ? '…' : localTime(end);
   const scheduledTiming = { date: localDate(start).split('-').reverse().join('.'),
-    time: `${localTime(start)} – ${localTime(end)}` };
+    time: `${localTime(start)} – ${endLabel}` };
   const actionsMenu = planner ? <LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
             triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
             trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
@@ -428,7 +429,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
                 <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
               </Button></span>
               <span ref={endRef}><Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => openTimePicker('end')}>
-                <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {localTime(end)}</span>
+                <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {endLabel}</span>
               </Button></span>
             </div>
           </div>
