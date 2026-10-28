@@ -35,7 +35,7 @@ export function PlannedWorkoutConflictSheet({ occurrence, opened, onDecision, on
     role="dialog" aria-label="Конфликт тренировок" aria-hidden={opened ? undefined : true} inert={opened ? undefined : true}>
     {occurrence ? <Block className="flex flex-col gap-3">
       <Text variant="headline">На это время назначена тренировка: {person.name}</Text>
-      <Text variant="body">Отмените её или перенесите, чтобы начать тренировку другого клиента.</Text>
+      <Text variant="body">Отмените её или перенесите, чтобы начать выбранную тренировку.</Text>
       <Button rounded onClick={() => onDecision('cancel')}>Отменить тренировку</Button>
       <Button rounded tonal disabled>Перенести тренировку</Button>
       <Button rounded tonal onClick={() => onDecision('back')}>Назад</Button>
