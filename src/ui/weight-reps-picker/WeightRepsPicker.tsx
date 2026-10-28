@@ -39,7 +39,6 @@ const DIGIT_KEYS: readonly { digit: string; icon: UiIconName }[] = [
   { digit: '7', icon: 'number-7' },
   { digit: '8', icon: 'number-8' },
   { digit: '9', icon: 'number-9' },
-  { digit: '0', icon: 'number-0' },
 ];
 
 const LENS_XS = [80, 176, 240] as const;
