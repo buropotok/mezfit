@@ -1,40 +1,46 @@
-name: Extract most-repeated exercise instructions for curated translation
+name: Probe GitHub Models plain text translation
 on:
   push:
     branches: [data/exercise-how-to-ru-20261028]
-    paths:
-      - .github/workflows/one-time-exercise-how-to-ru.yml
+    paths: [.github/workflows/one-time-exercise-how-to-ru.yml]
 permissions:
   contents: write
+  models: read
 jobs:
-  inventory:
+  probe:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: data/exercise-how-to-ru-20261028
-      - name: Rank exact instruction duplicates
+      - name: Probe model response (no JSON mode)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           python - <<'PY'
-          import json
-          from collections import defaultdict
+          import json,os,urllib.request,urllib.error
           from pathlib import Path
-          d=defaultdict(list)
-          for path in Path("assets/work").glob("*/*.json"):
-              j=json.loads(path.read_text())
-              if j.get('how_to') and j['how_to'].strip():
-                  d[j['how_to']].append({'path':str(path),'name_ru':j.get('name_ru')})
-          ranked=sorted(d.items(),key=lambda kv:(-len(kv[1]),-len(kv[0])))
-          report=[{'uses':len(paths),'length':len(text),'how_to':text,'paths':paths} for text,paths in ranked[:30]]
-          p=Path('tools/exercise-work/howto-high-reuse.json')
-          p.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
-          print('TOP_REUSE',[(r['uses'],r['length']) for r in report])
+          probes=[]
+          for model in ['openai/gpt-4o-mini','openai/gpt-4.1-mini']:
+              req={'model':model,'messages':[{'role':'user','content':'Translate into natural Russian fitness terminology, output only the translation: Engage your core and push the weight plate across the floor using the balls of your feet.'}],'max_tokens':250}
+              try:
+                  request=urllib.request.Request('https://models.github.ai/inference/chat/completions',data=json.dumps(req).encode(),headers={'Authorization':'Bearer '+os.environ['GITHUB_TOKEN'],'Content-Type':'application/json'},method='POST')
+                  with urllib.request.urlopen(request,timeout=35) as resp:
+                      body=resp.read().decode()
+                  probes.append({'model':model,'http':200,'body':body[:7000]})
+              except urllib.error.HTTPError as exc:
+                  probes.append({'model':model,'http':exc.code,'body':exc.read(1500).decode(errors='replace')})
+              except Exception as exc:
+                  probes.append({'model':model,'error':str(exc)})
+          p=Path('tools/exercise-work/howto-models-plain-probe.json')
+          p.write_text(json.dumps(probes,ensure_ascii=False,indent=2)+'\n')
+          print('PROBE_DONE',len(probes),flush=True)
           PY
-      - name: Persist reference
+      - name: Save response for inspection
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tools/exercise-work/howto-high-reuse.json
-          git commit -m 'chore: identify duplicated instruction texts for manual translation'
+          git add tools/exercise-work/howto-models-plain-probe.json
+          git commit -m 'chore: inspect raw translation model response'
           git push origin HEAD:refs/heads/data/exercise-how-to-ru-20261028
