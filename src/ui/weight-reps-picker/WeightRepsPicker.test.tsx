@@ -61,6 +61,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  Reflect.deleteProperty(HTMLElement.prototype, 'animate');
   document.body.innerHTML = '';
 });
 
@@ -91,7 +92,7 @@ describe('WeightRepsPicker numeric lens editor', () => {
     const lens = document.querySelector('.ui-time-picker__lens');
     expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(1);
     expect(screen.queryByRole('button', { name: 'Изменить повторения' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toHaveProperty('disabled', true);
     expect(within(sheet).getByRole('button', { name: 'Отменить' })).toBeTruthy();
     expect(within(sheet).getByRole('button', { name: 'Сохранить' })).toBeTruthy();
   });
@@ -124,7 +125,6 @@ describe('WeightRepsPicker numeric lens editor', () => {
       expect.arrayContaining([expect.objectContaining({ scale: '1.5' })]),
       expect.objectContaining({ duration: 530 }),
     );
-    delete (HTMLElement.prototype as HTMLElement & { animate?: typeof animation }).animate;
   });
 
   it('replaces the prefilled number with the first digit and appends subsequent digits', () => {
@@ -181,11 +181,11 @@ describe('WeightRepsPicker numeric lens editor', () => {
     renderPicker({ onChange });
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     enter('1', '0', '1');
-    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toHaveProperty('disabled', true);
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
     enter('4', '0', '0');
-    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toHaveProperty('disabled', true);
     expect(onChange).not.toHaveBeenCalled();
   });
 
